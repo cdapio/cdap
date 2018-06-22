@@ -42,7 +42,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.reporting.ProgramHeartbeatStore;
+import co.cask.cdap.reporting.ProgramHeartbeatDataset;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.gson.Gson;
@@ -236,7 +236,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private void handleProgramEvent(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
                                   Notification notification, byte[] messageIdBytes,
                                   AppMetadataStore appMetadataStore,
-                                  ProgramHeartbeatStore heartbeatStore) throws Exception {
+                                  ProgramHeartbeatDataset heartbeatStore) throws Exception {
     LOG.trace("Processing program status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
@@ -463,9 +463,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   }
 
   /**
-   * Returns an instance of {@link ProgramHeartbeatStore}.
+   * Returns an instance of {@link ProgramHeartbeatDataset}.
    */
-  private ProgramHeartbeatStore getProgramHeartbeatStore(DatasetContext context) {
-    return ProgramHeartbeatStore.create(cConf, context, datasetFramework);
+  private ProgramHeartbeatDataset getProgramHeartbeatStore(DatasetContext context) {
+    return ProgramHeartbeatDataset.getOrCreate(context, datasetFramework);
   }
 }

@@ -47,7 +47,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.reporting.ProgramHeartbeatStore;
+import co.cask.cdap.reporting.ProgramHeartbeatDataset;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.After;
@@ -70,7 +70,7 @@ public class ProgramNotificationSubscriberServiceTest {
   private static Table appMetaTable;
   private static Table heartbeatTable;
   private static AppMetadataStore metadataStoreDataset;
-  private static ProgramHeartbeatStore programHeartbeatStore;
+  private static ProgramHeartbeatDataset programHeartbeatDataset;
   private static TransactionExecutor txnl;
   private static TransactionExecutor heartBeatTxnl;
   private static ProgramStateWriter programStateWriter;
@@ -79,7 +79,8 @@ public class ProgramNotificationSubscriberServiceTest {
   public static void setupClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    cConf.set(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS, "1");
+    // we only want to process and check program status messages processed by heart beat store
+    cConf.set(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS, String.valueOf(TimeUnit.HOURS.toSeconds(1)));
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
@@ -91,10 +92,10 @@ public class ProgramNotificationSubscriberServiceTest {
     DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
     heartbeatTable = DatasetsUtil.getOrCreateDataset(datasetFramework, heartbeatDataset, Table.class.getName(),
                                                      DatasetProperties.EMPTY, Collections.emptyMap());
-    programHeartbeatStore = new ProgramHeartbeatStore(heartbeatTable, cConf);
+    programHeartbeatDataset = new ProgramHeartbeatDataset(heartbeatTable);
 
     txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
-    heartBeatTxnl = txExecutorFactory.createExecutor(Collections.singleton(programHeartbeatStore));
+    heartBeatTxnl = txExecutorFactory.createExecutor(Collections.singleton(programHeartbeatDataset));
     programStateWriter = injector.getInstance(ProgramStateWriter.class);
   }
 
@@ -140,8 +141,8 @@ public class ProgramNotificationSubscriberServiceTest {
   }
 
   @Test
-  public void testHeartBeatStore() throws Exception {
-    ProgramId programId = NamespaceId.DEFAULT.app("someapp").program(ProgramType.SERVICE, "s");
+  public void testHeartBeatStoreForProgramStatusMessages() throws Exception {
+    ProgramId programId = NamespaceId.DEFAULT.app("someapp", "1.0-SNAPSHOT").program(ProgramType.SERVICE, "s");
     Map<String, String> systemArguments = new HashMap<>();
     systemArguments.put(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString());
     ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
@@ -183,7 +184,10 @@ public class ProgramNotificationSubscriberServiceTest {
     heartBeatTxnl.execute(() -> {
       programStateWriter.resume(runId, programOptions);
     });
-    checkProgramStatus(artifactId, runId, ProgramRunStatus.RESUMING);
+    // app metadata records as RUNNING
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.RUNNING);
+    // heart beat messages wont have been sent due to high interval. resuming program status would be the most recent
+    // in heart beat store
     performStatusCheck(resumeTime, ProgramRunStatus.RESUMING);
     // killed status check after error
     TimeUnit.MILLISECONDS.sleep(5);
@@ -212,7 +216,7 @@ public class ProgramNotificationSubscriberServiceTest {
     throws InterruptedException, ExecutionException, TimeoutException {
     Tasks.waitFor(expectedStatus, () -> heartBeatTxnl.execute(() -> {
       Collection<Notification> notifications =
-        programHeartbeatStore.scan(Bytes.toBytes(startTime), null);
+        programHeartbeatDataset.scan(Bytes.toBytes(startTime), null);
       if (notifications.size() == 0) {
         return null;
       }

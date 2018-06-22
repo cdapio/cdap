@@ -57,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ProgramHeartBeatStoreTest {
+public class ProgramHeartBeatDatasetTest {
   private static DatasetFramework datasetFramework;
   private static CConfiguration cConf;
   private static TransactionExecutorFactory txExecutorFactory;
@@ -80,21 +80,21 @@ public class ProgramHeartBeatStoreTest {
 
   @Test
   public void testWritingScanningHeartBeats() throws Exception {
-    ProgramHeartbeatStore programHeartbeatStore = getHeartBeatStore("testBeats");
-    TransactionExecutor txnl = getTxExecutor(programHeartbeatStore);
+    ProgramHeartbeatDataset programHeartbeatDataset = getHeartBeatStore("testBeats");
+    TransactionExecutor txnl = getTxExecutor(programHeartbeatDataset);
 
     //  write program status "running" for program 1 starting at x
     long startTime1 = System.currentTimeMillis();
     Map<String, String> properties = getMockProgramProperties(RunIds.generate(), startTime1);
     Notification run1Notification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     txnl.execute(() -> {
-      programHeartbeatStore.writeProgramStatus(run1Notification);
+      programHeartbeatDataset.writeProgramStatus(run1Notification);
     });
 
     // write heart beat messages for 10 minutes (every minute) for this program run.
     long endTime = startTime1 + TimeUnit.MINUTES.toMillis(10);
     long interval = TimeUnit.MINUTES.toMillis(1);
-    setUpProgramHeartBeats(properties, startTime1, endTime, interval, txnl, programHeartbeatStore);
+    setUpProgramHeartBeats(properties, startTime1, endTime, interval, txnl, programHeartbeatDataset);
 
 
     //  write program status "running" for program 2 starting at x + 5
@@ -102,11 +102,11 @@ public class ProgramHeartBeatStoreTest {
     properties = getMockProgramProperties(RunIds.generate(), startTime2);
     Notification run2Notification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     txnl.execute(() -> {
-      programHeartbeatStore.writeProgramStatus(run2Notification);
+      programHeartbeatDataset.writeProgramStatus(run2Notification);
     });
 
     // write heart beat messages for 5 minutes (every minute) for this program run.
-    setUpProgramHeartBeats(properties, startTime2, endTime, interval, txnl, programHeartbeatStore);
+    setUpProgramHeartBeats(properties, startTime2, endTime, interval, txnl, programHeartbeatDataset);
 
     // program run1 runtime -> x     : x + 10
     // program run2 runtime -> x + 5 : x + 10
@@ -115,11 +115,11 @@ public class ProgramHeartBeatStoreTest {
       byte[] startRowKey2 = Bytes.toBytes(startTime2);
       byte[] endRowKey = Bytes.toBytes(endTime);
       // end row key is exclusive, scanning from x : x + 5 should only return run1
-      Assert.assertEquals(1 , programHeartbeatStore.scan(startRowKey1, startRowKey2).size());
+      Assert.assertEquals(1 , programHeartbeatDataset.scan(startRowKey1, startRowKey2).size());
       // scanning from x : x + 10, should return both
-      Assert.assertEquals(2 , programHeartbeatStore.scan(startRowKey1, endRowKey).size());
+      Assert.assertEquals(2 , programHeartbeatDataset.scan(startRowKey1, endRowKey).size());
       // scanning from x + 5 : x + 10, should return both
-      Assert.assertEquals(2 , programHeartbeatStore.scan(startRowKey2, endRowKey).size());
+      Assert.assertEquals(2 , programHeartbeatDataset.scan(startRowKey2, endRowKey).size());
     });
   }
 
@@ -128,13 +128,13 @@ public class ProgramHeartBeatStoreTest {
    */
   private void setUpProgramHeartBeats(Map<String, String> properties,
                                       long startTime, long endTime, long interval,
-                                      TransactionExecutor txnl, ProgramHeartbeatStore programHeartbeatStore)
+                                      TransactionExecutor txnl, ProgramHeartbeatDataset programHeartbeatDataset)
     throws InterruptedException, TransactionFailureException {
     for (long time = startTime + interval; time <= endTime; time += interval) {
       properties.put(ProgramOptionConstants.HEART_BEAT_TIME, String.valueOf(time));
       Notification heartbeat = new Notification(Notification.Type.HEART_BEAT, properties);
       txnl.execute(() -> {
-        programHeartbeatStore.writeProgramHeartBeatStatus(heartbeat);
+        programHeartbeatDataset.writeProgramHeartBeatStatus(heartbeat);
       });
     }
   }
@@ -167,21 +167,21 @@ public class ProgramHeartBeatStoreTest {
     // scanning from x -> x + 4 -> return one record with status running
     // scanning from x -> x + 5min + 1ms -> return one record with status killed
 
-    ProgramHeartbeatStore programHeartbeatStore = getHeartBeatStore("testStatusChange");
-    TransactionExecutor txnl = getTxExecutor(programHeartbeatStore);
+    ProgramHeartbeatDataset programHeartbeatDataset = getHeartBeatStore("testStatusChange");
+    TransactionExecutor txnl = getTxExecutor(programHeartbeatDataset);
 
     //  write program status "running" for program 1 starting at x
     long startTime1 = System.currentTimeMillis();
     Map<String, String> properties = getMockProgramProperties(RunIds.generate(), startTime1);
     Notification run1Notification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     txnl.execute(() -> {
-      programHeartbeatStore.writeProgramStatus(run1Notification);
+      programHeartbeatDataset.writeProgramStatus(run1Notification);
     });
 
     // write heart beat messages for 10 minutes (every minute) for this program run.
     long heartBeatEndTime = startTime1 + TimeUnit.MINUTES.toMillis(4);
     long interval = TimeUnit.MINUTES.toMillis(1);
-    setUpProgramHeartBeats(properties, startTime1, heartBeatEndTime, interval, txnl, programHeartbeatStore);
+    setUpProgramHeartBeats(properties, startTime1, heartBeatEndTime, interval, txnl, programHeartbeatDataset);
 
     long programEndTime = startTime1 + TimeUnit.MINUTES.toMillis(5);
 
@@ -190,7 +190,7 @@ public class ProgramHeartBeatStoreTest {
     properties.put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.KILLED.name());
     Notification run1End = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     txnl.execute(() -> {
-      programHeartbeatStore.writeProgramStatus(run1End);
+      programHeartbeatDataset.writeProgramStatus(run1End);
     });
 
     // perform scan checks
@@ -199,13 +199,13 @@ public class ProgramHeartBeatStoreTest {
       byte[] stillRunning = Bytes.toBytes(heartBeatEndTime);
       byte[] endRowKey = Bytes.toBytes(programEndTime + 1);
       // end row key is exclusive, scanning from x : x + 5 should only return run1
-      Collection<Notification> notificationCollection = programHeartbeatStore.scan(startRowKey1, stillRunning);
+      Collection<Notification> notificationCollection = programHeartbeatDataset.scan(startRowKey1, stillRunning);
       Assert.assertEquals(1 , notificationCollection.size());
       Assert.assertEquals(ProgramRunStatus.RUNNING.name(),
                           notificationCollection.iterator().next().
                             getProperties().get(ProgramOptionConstants.PROGRAM_STATUS));
       // scanning from x : x + (5 min + 1ms), should return run1 with status KILLED
-      notificationCollection = programHeartbeatStore.scan(startRowKey1, endRowKey);
+      notificationCollection = programHeartbeatDataset.scan(startRowKey1, endRowKey);
       Assert.assertEquals(1 , notificationCollection.size());
       Assert.assertEquals(ProgramRunStatus.KILLED.name(),
                           notificationCollection.iterator().next().
@@ -219,15 +219,15 @@ public class ProgramHeartBeatStoreTest {
 
   }
 
-  private TransactionExecutor getTxExecutor(ProgramHeartbeatStore programHeartbeatStore) {
-    return txExecutorFactory.createExecutor(Collections.singleton(programHeartbeatStore));
+  private TransactionExecutor getTxExecutor(ProgramHeartbeatDataset programHeartbeatDataset) {
+    return txExecutorFactory.createExecutor(Collections.singleton(programHeartbeatDataset));
   }
 
-  private ProgramHeartbeatStore getHeartBeatStore(String tableName) throws Exception {
+  private ProgramHeartbeatDataset getHeartBeatStore(String tableName) throws Exception {
     DatasetId storeTable = NamespaceId.SYSTEM.dataset(tableName);
     datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
     Table table = datasetFramework.getDataset(storeTable, ImmutableMap.of(), null);
     Assert.assertNotNull(table);
-    return new ProgramHeartbeatStore(table, cConf);
+    return new ProgramHeartbeatDataset(table);
   }
 }

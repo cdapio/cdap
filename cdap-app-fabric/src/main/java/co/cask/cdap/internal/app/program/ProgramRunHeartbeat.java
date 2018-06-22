@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.program;
 
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramRunStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,8 @@ public class ProgramRunHeartbeat implements Runnable {
 
   @Override
   public void run() {
+    LOG.info("Sending HeartBeat");
+    properties.put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name());
     properties.put(ProgramOptionConstants.HEART_BEAT_TIME, String.valueOf(System.currentTimeMillis()));
     programStatePublisher.publish(Notification.Type.HEART_BEAT, properties);
   }
