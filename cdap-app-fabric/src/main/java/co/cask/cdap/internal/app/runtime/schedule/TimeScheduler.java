@@ -55,13 +55,9 @@ import org.quartz.utils.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
@@ -289,6 +285,32 @@ public final class TimeScheduler {
   public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException {
     return getScheduledRuntime(program, programType, false);
+  }
+
+  public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType,
+                                                     long startTimeSecs, long endTimeSecs)
+    throws SchedulerException {
+    // decrease the start time by one second to include the next fire time that is equal to the start time
+    Date startTime = new Date(TimeUnit.SECONDS.toMillis(startTimeSecs - 1));
+    long endTimeMillis = TimeUnit.SECONDS.toMillis(endTimeSecs);
+    List<ScheduledRuntime> scheduledRuntimes = new ArrayList<>();
+    try {
+      for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
+        if (scheduler.getTriggerState(trigger.getKey()) == Trigger.TriggerState.PAUSED) {
+          // if the trigger is paused, then skip getting the next fire time
+          continue;
+        }
+        Date nextFireTime = trigger.getFireTimeAfter(startTime);
+        while (nextFireTime != null && nextFireTime.getTime() < endTimeMillis) {
+          ScheduledRuntime runtime = new ScheduledRuntime(trigger.getKey().toString(), nextFireTime.getTime());
+          scheduledRuntimes.add(runtime);
+          nextFireTime = trigger.getFireTimeAfter(nextFireTime);
+        }
+      }
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
+    }
+    return scheduledRuntimes;
   }
 
   private List<ScheduledRuntime> getScheduledRuntime(ProgramId program, SchedulableProgramType programType,
