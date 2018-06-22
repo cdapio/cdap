@@ -16,35 +16,29 @@
 
 package co.cask.cdap.internal.app.program;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.TopicId;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
@@ -53,16 +47,21 @@ import javax.inject.Inject;
  */
 public final class MessagingProgramStateWriter implements ProgramStateWriter {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingProgramStateWriter.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-  private final MessagingService messagingService;
-  private final TopicId topicId;
-  private final RetryStrategy retryStrategy;
+  private static final Gson GSON =
+    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
+
+  private final ProgramStatePublisher programStatePublisher;
+
 
   @Inject
   public MessagingProgramStateWriter(CConfiguration cConf, MessagingService messagingService) {
-    this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
-    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.program.state.");
-    this.messagingService = messagingService;
+    this.programStatePublisher =
+      new MessagingProgramStatePublisher(messagingService,
+                                         NamespaceId.SYSTEM.topic(cConf.get(
+                                           Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
+                                         RetryStrategies.fromConfiguration(cConf, "system.program.state."));
   }
 
   @Override
@@ -78,7 +77,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }
-    publish(properties);
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
   }
 
   @Override
@@ -90,7 +89,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }
-    publish(properties);
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
   }
 
   @Override
@@ -110,22 +109,23 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
 
   @Override
   public void suspend(ProgramRunId programRunId) {
-    publish(
-      ImmutableMap.<String, String>builder()
-        .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
-        .put(ProgramOptionConstants.SUSPEND_TIME, String.valueOf(System.currentTimeMillis()))
-        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.name())
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS,
+                                  ImmutableMap.<String, String>builder()
+                                    .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+                                    .put(ProgramOptionConstants.SUSPEND_TIME,
+                                         String.valueOf(System.currentTimeMillis()))
+                                    .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.name())
+                                    .build()
     );
   }
 
   @Override
   public void resume(ProgramRunId programRunId) {
-    publish(
-      ImmutableMap.<String, String>builder()
-        .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
-        .put(ProgramOptionConstants.RESUME_TIME, String.valueOf(System.currentTimeMillis()))
-        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name())
-    );
+    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.RESUME_TIME, String.valueOf(System.currentTimeMillis()))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name()).build();
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties);
   }
 
   private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause) {
@@ -136,48 +136,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     if (cause != null) {
       properties.put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(new BasicThrowable(cause)));
     }
-    publish(properties);
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
   }
 
-  private void publish(ImmutableMap.Builder<String, String> properties) {
-    // ProgramRunId is always required in a notification
-    Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties.build());
-
-    int failureCount = 0;
-    long startTime = -1L;
-    boolean done = false;
-    // TODO CDAP-12255 this code was basically copied from MessagingMetricsCollectionService.TopicPayload#publish.
-    // This should be refactored into a common class for publishing to TMS with a retry strategy
-    while (!done) {
-      try {
-        messagingService.publish(StoreRequestBuilder.of(topicId)
-                                   .addPayloads(GSON.toJson(programStatusNotification))
-                                   .build());
-        LOG.trace("Published program status notification: {}", programStatusNotification);
-        done = true;
-      } catch (IOException e) {
-        Throwables.propagate(e);
-      } catch (TopicNotFoundException | ServiceUnavailableException e) {
-        // These exceptions are retry-able due to TMS not completely started
-        if (startTime < 0) {
-          startTime = System.currentTimeMillis();
-        }
-        long retryMillis = retryStrategy.nextRetry(++failureCount, startTime);
-        if (retryMillis < 0) {
-          LOG.error("Failed to publish messages to TMS and exceeded retry limit.", e);
-          Throwables.propagate(e);
-        }
-        LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
-                  e.getMessage(), retryMillis);
-        try {
-          TimeUnit.MILLISECONDS.sleep(retryMillis);
-        } catch (InterruptedException e1) {
-          // Something explicitly stopping this thread. Simply just break and reset the interrupt flag.
-          LOG.warn("Publishing message to TMS interrupted.");
-          Thread.currentThread().interrupt();
-          done = true;
-        }
-      }
-    }
-  }
 }

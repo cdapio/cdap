@@ -46,7 +46,8 @@ public class Notification {
     TIME,
     STREAM_SIZE,
     PARTITION,
-    PROGRAM_STATUS
+    PROGRAM_STATUS,
+    PROGRAM_HEART_BEAT
   }
 
   private final Type notificationType;
