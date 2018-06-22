@@ -29,10 +29,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.cdap.proto.id.*;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -150,6 +147,22 @@ public class ProgramScheduleService {
     AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
                                    authenticationContext.getPrincipal());
     return scheduler.getScheduleStatus(scheduleId);
+  }
+
+  /**
+   * List the schedules for the given namespace that match the given predicate
+   *
+   * @param namespaceId the namespace to get schedules for
+   * @param predicate return schedules that match this predicate
+   * @return schedules for the given app that match the given predicate
+   * @throws NotFoundException if the application could not be found
+   * @throws UnauthorizedException if the principal is not authorized to access the application
+   * @throws Exception if any other errors occurred while performing the authorization enforcement check
+   */
+  public Collection<ProgramScheduleRecord> list(NamespaceId namespaceId,
+                                                Predicate<ProgramScheduleRecord> predicate) throws Exception {
+    AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, authenticationContext.getPrincipal());
+    return scheduler.listScheduleRecords(namespaceId).stream().filter(predicate).collect(Collectors.toList());
   }
 
   /**

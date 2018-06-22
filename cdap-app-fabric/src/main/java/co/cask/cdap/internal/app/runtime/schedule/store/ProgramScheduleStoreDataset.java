@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -42,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Joiner;
@@ -411,6 +413,17 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Retrieve all schedules for a given namespace.
+   *
+   * @param namespaceId the namespace for which to list the schedules.
+   * @return a list of schedules for the namespace; never null
+   */
+  public List<ProgramScheduleRecord> listScheduleRecords(NamespaceId namespaceId) {
+    byte[] prefix = keyPrefixForNamespaceScan(namespaceId);
+    return listSchedulesRecordsWithPrefix(prefix, schedule -> true);
+  }
+
+  /**
    * Retrieve all schedule records for a given application.
    *
    * @param appId the application for which to list the schedule records.
@@ -499,13 +512,28 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   private List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId, @Nullable ProgramId programId) {
     List<ProgramScheduleRecord> result = new ArrayList<>();
     byte[] prefix = keyPrefixForApplicationScan(appId);
+    return listSchedulesRecordsWithPrefix(prefix, schedule ->
+      programId == null || programId.equals(schedule.getProgramId()));
+  }
+
+  /**
+   * List schedule records with the given key prefix and only returns the schedules that can pass the filter.
+   *
+   * @param prefix the prefix of the schedule records to be listed
+   * @param filter a filter that only returns true if the schedule record will be returned in the result
+   * @return the schedule records with the given key prefix that can pass the filter
+   */
+  private List<ProgramScheduleRecord> listSchedulesRecordsWithPrefix(byte[] prefix,
+                                                                     Predicate<ProgramSchedule> filter) {
+    List<ProgramScheduleRecord> result = new ArrayList<>();
     try (Scanner scanner = store.scan(new Scan(prefix, Bytes.stopKeyForPrefix(prefix)))) {
       Row row;
       while ((row = scanner.next()) != null) {
         byte[] serialized = row.get(SCHEDULE_COLUMN_BYTES);
         if (serialized != null) {
           ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
-          if (programId == null || programId.equals(schedule.getProgramId())) {
+
+          if (filter.apply(schedule)) {
             result.add(new ProgramScheduleRecord(schedule, extractMetaFromRow(schedule.getScheduleId(), row)));
           }
         }
@@ -580,5 +608,10 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   private static byte[] keyPrefixForApplicationScan(ApplicationId appId) {
     return Bytes.toBytes(
       Joiner.on(ROW_KEY_SEPARATOR).join(appId.getNamespace(), appId.getApplication(), appId.getVersion(), ""));
+  }
+
+  private static byte[] keyPrefixForNamespaceScan(NamespaceId namespaceId) {
+    return Bytes.toBytes(
+      Joiner.on(ROW_KEY_SEPARATOR).join(namespaceId.getNamespace(), ""));
   }
 }

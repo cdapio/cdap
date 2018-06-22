@@ -49,6 +49,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This tests the indexing of the schedule store. Adding, retrieving. listing, deleting schedules is tested
@@ -57,19 +58,84 @@ import java.util.Set;
  */
 public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
 
-  private static final NamespaceId NS_ID = new NamespaceId("schedtest");
-  private static final ApplicationId APP1_ID = NS_ID.app("app1", "1");
-  private static final ApplicationId APP2_ID = NS_ID.app("app2");
+  private static final NamespaceId NS1_ID = new NamespaceId("schedtest");
+  private static final NamespaceId NS2_ID = new NamespaceId("schedtestNs2");
+  private static final ApplicationId APP1_ID = NS1_ID.app("app1", "1");
+  private static final ApplicationId APP2_ID = NS1_ID.app("app2");
+  private static final ApplicationId APP3_ID = NS2_ID.app("app3", "1");
   private static final WorkflowId PROG1_ID = APP1_ID.workflow("wf1");
   private static final WorkflowId PROG2_ID = APP2_ID.workflow("wf2");
   private static final WorkflowId PROG3_ID = APP2_ID.workflow("wf3");
-  private static final DatasetId DS1_ID = NS_ID.dataset("pfs1");
-  private static final DatasetId DS2_ID = NS_ID.dataset("pfs2");
+  private static final WorkflowId PROG4_ID = APP3_ID.workflow("wf4");
+  private static final WorkflowId PROG5_ID = APP3_ID.workflow("wf5");
+  private static final DatasetId DS1_ID = NS1_ID.dataset("pfs1");
+  private static final DatasetId DS2_ID = NS1_ID.dataset("pfs2");
 
   @Test
   public void checkDatasetType() throws DatasetManagementException {
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
     Assert.assertTrue(dsFramework.hasType(NamespaceId.SYSTEM.datasetType(Schedulers.STORE_TYPE_NAME)));
+  }
+
+  @Test
+  public void testListSchedules() throws Exception {
+    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
+    TransactionSystemClient txClient = getInjector().getInstance(TransactionSystemClient.class);
+    TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txClient);
+    dsFramework.truncateInstance(Schedulers.STORE_DATASET_ID);
+    final ProgramScheduleStoreDataset store =
+      dsFramework.getDataset(Schedulers.STORE_DATASET_ID, new HashMap<>(), null);
+    Assert.assertNotNull(store);
+    TransactionExecutor txExecutor = txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) store));
+
+    final ProgramSchedule sched1 = new ProgramSchedule("sched1", "one partition schedule", PROG1_ID,
+      Collections.EMPTY_MAP, new PartitionTrigger(DS1_ID, 1), Collections.emptyList());
+    final ProgramSchedule sched2 = new ProgramSchedule("sched2", "time schedule", PROG2_ID,
+      Collections.EMPTY_MAP, new TimeTrigger("* * * 1 1"), Collections.emptyList());
+    final ProgramSchedule sched3 = new ProgramSchedule("sched3", "two partitions schedule", PROG4_ID,
+      Collections.EMPTY_MAP, new PartitionTrigger(DS1_ID, 2), Collections.emptyList());
+    final ProgramSchedule sched4 = new ProgramSchedule("sched4", "time schedule", PROG5_ID,
+      Collections.EMPTY_MAP, new TimeTrigger("* * * 2 1"), Collections.emptyList());
+
+    txExecutor.execute(() -> {
+      // assert no schedules exists before adding schedules
+      Assert.assertTrue(store.listScheduleRecords(NS1_ID).isEmpty());
+      Assert.assertTrue(store.listScheduleRecords(NS2_ID).isEmpty());
+      Assert.assertTrue(store.listScheduleRecords(APP1_ID).isEmpty());
+      Assert.assertTrue(store.listScheduleRecords(APP2_ID).isEmpty());
+      Assert.assertTrue(store.listScheduleRecords(APP3_ID).isEmpty());
+      Assert.assertTrue(store.listScheduleRecords(PROG1_ID).isEmpty());
+      Assert.assertTrue(store.listScheduleRecords(PROG2_ID).isEmpty());
+      Assert.assertTrue(store.listScheduleRecords(PROG3_ID).isEmpty());
+      Assert.assertTrue(store.listScheduleRecords(PROG4_ID).isEmpty());
+    });
+    // add schedules to the store
+    txExecutor.execute(() -> {
+      store.addSchedules(ImmutableList.of(sched1, sched2, sched3, sched4));
+    });
+    txExecutor.execute(() -> {
+      // list schedules by namespace
+      Assert.assertEquals(ImmutableSet.of(sched1, sched2),
+        toScheduleSet(store.listScheduleRecords(NS1_ID)));
+      Assert.assertEquals(ImmutableSet.of(sched3, sched4),
+        toScheduleSet(store.listScheduleRecords(NS2_ID)));
+      // list schedules by app
+      Assert.assertEquals(ImmutableSet.of(sched1),
+        toScheduleSet(store.listScheduleRecords(APP1_ID)));
+      Assert.assertEquals(ImmutableSet.of(sched2),
+        toScheduleSet(store.listScheduleRecords(APP2_ID)));
+      Assert.assertEquals(ImmutableSet.of(sched3, sched4),
+        toScheduleSet(store.listScheduleRecords(APP3_ID)));
+      // list schedules by program
+      Assert.assertEquals(ImmutableSet.of(sched1),
+        toScheduleSet(store.listScheduleRecords(PROG1_ID)));
+      Assert.assertEquals(ImmutableSet.of(sched2),
+        toScheduleSet(store.listScheduleRecords(PROG2_ID)));
+      Assert.assertEquals(ImmutableSet.of(sched3),
+        toScheduleSet(store.listScheduleRecords(PROG4_ID)));
+      Assert.assertEquals(ImmutableSet.of(sched4),
+        toScheduleSet(store.listScheduleRecords(PROG5_ID)));
+    });
   }
 
   @Test
@@ -199,11 +265,7 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
   }
 
   private Set<ProgramSchedule> toScheduleSet(Collection<ProgramScheduleRecord> records) {
-    Set<ProgramSchedule> set = new HashSet<>();
-    for (ProgramScheduleRecord record : records) {
-      set.add(record.getSchedule());
-    }
-    return set;
+    return records.stream().map(ProgramScheduleRecord::getSchedule).collect(Collectors.toSet());
   }
 
   @Test

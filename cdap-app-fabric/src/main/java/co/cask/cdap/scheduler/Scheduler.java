@@ -25,6 +25,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 
@@ -162,12 +163,20 @@ public interface Scheduler {
   List<ProgramSchedule> listSchedules(ProgramId programId) throws NotFoundException;
 
   /**
+   * Retrieve all schedule records for a given namespace.
+   *
+   * @param namespaceId the namespace for which to list the schedule records.
+   * @return a list of schedule records for the application; never null
+   */
+  List<ProgramScheduleRecord> listScheduleRecords(NamespaceId namespaceId);
+
+  /**
    * Retrieve all schedule records for a given application.
    *
    * @param appId the application for which to list the schedule records.
    * @return a list of schedule records for the application; never null
    */
-  List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) throws NotFoundException;
+  List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId);
 
   /**
    * Retrieve all schedule records for a given program.
@@ -175,7 +184,7 @@ public interface Scheduler {
    * @param programId the program for which to list the schedule records.
    * @return a list of schedule records for the program; never null
    */
-  List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) throws NotFoundException;
+  List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId);
 
   /**
    * Find all schedules for a given trigger key

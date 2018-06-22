@@ -48,10 +48,7 @@ import co.cask.cdap.internal.profile.AdminEventPublisher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.*;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -447,12 +444,20 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) throws NotFoundException {
+  public List<ProgramScheduleRecord> listScheduleRecords(NamespaceId namespaceId) {
+    checkStarted();
+    return execute(store -> store.listScheduleRecords(namespaceId), RuntimeException.class);
+  }
+
+  @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) {
+    checkStarted();
     return execute(store -> store.listScheduleRecords(appId), RuntimeException.class);
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) throws NotFoundException {
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) {
+    checkStarted();
     return execute(store -> store.listScheduleRecords(programId), RuntimeException.class);
   }
 
