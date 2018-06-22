@@ -21,11 +21,12 @@ import {Dropdown, DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
 import {connect} from 'react-redux';
 import StatusMapper from 'services/StatusMapper';
-import ProfilesListView, {extractProfileName, isSystemProfile} from 'components/PipelineDetails/ProfilesListView';
+import ProfilesListView, {extractProfileName, isSystemProfile, DEFAULT_PROFILE_NAME} from 'components/PipelineDetails/ProfilesListView';
 import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {preventPropagation} from 'services/helpers';
+import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
 require('./ProfilesForSchedule.scss');
 
 export const PROFILES_DROPDOWN_DOM_CLASS = 'profiles-list-dropdown';
@@ -122,9 +123,16 @@ class ProfilesForSchedule extends Component {
 
   renderProfilesDropdown = () => {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
-    let provisionerLabel;
+    let provisionerLabel, selectedProfile;
     if (this.state.selectedProfile) {
       let {profileDetails = {}} = this.state;
+      if (profileDetails.status
+          && PROFILE_STATUSES[profileDetails.status] === 'disabled'
+          && !isScheduled) {
+        selectedProfile = DEFAULT_PROFILE_NAME;
+      } else {
+        selectedProfile = this.state.selectedProfile;
+      }
       let {provisioner = {}} = profileDetails;
       let {name: provisionerName} = provisioner;
       provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
@@ -146,9 +154,9 @@ class ProfilesForSchedule extends Component {
               <span>
                 {
                   provisionerLabel ?
-                    `${extractProfileName(this.state.selectedProfile)} (${provisionerLabel})`
+                    `${extractProfileName(selectedProfile)} (${provisionerLabel})`
                   :
-                    `${extractProfileName(this.state.selectedProfile)}`
+                    `${extractProfileName(selectedProfile)}`
                 }
               </span>
             :
