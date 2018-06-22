@@ -102,11 +102,11 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
 
     @Override
     public ProgramController run(Program program, ProgramOptions options) {
-      return addStateChangeListener(runner.run(program, options));
+      return addStateChangeListener(runner.run(program, options), options);
     }
 
-    private ProgramController addStateChangeListener(ProgramController controller) {
-      controller.addListener(new StateChangeListener(controller.getProgramRunId(), null, programStateWriter),
+    private ProgramController addStateChangeListener(ProgramController controller, ProgramOptions options) {
+      controller.addListener(new StateChangeListener(controller.getProgramRunId(), null, programStateWriter, options),
                              Threads.SAME_THREAD_EXECUTOR);
       return controller;
     }

@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
@@ -185,7 +186,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
     ProgramStateWriter programStateWriter = new NoOpProgramStateWriter() {
       @Override
-      public void error(ProgramRunId programRunId, Throwable failureCause) {
+      public void error(ProgramRunId programRunId, Throwable failureCause, ProgramOptions programOptions) {
         store.setStop(programRunId, System.currentTimeMillis(),
                       ProgramRunStatus.FAILED, new BasicThrowable(failureCause),
                       Bytes.toBytes(sourceId.getAndIncrement()));

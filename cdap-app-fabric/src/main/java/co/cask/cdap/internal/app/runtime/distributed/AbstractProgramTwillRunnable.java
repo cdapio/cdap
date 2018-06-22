@@ -169,7 +169,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     controllerFuture.thenAcceptAsync(
       c -> c.addListener(new StateChangeListener(c.getProgramRunId(), null,
-                                                 programStateWriter), Threads.SAME_THREAD_EXECUTOR),
+                                                 programStateWriter, programOptions), Threads.SAME_THREAD_EXECUTOR),
       command -> {
         Thread t = new Thread(command);
         t.start();

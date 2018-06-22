@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.common.twill;
 
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -52,6 +53,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
   private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
 
+  private final ProgramOptions programOptions;
+
   private RunId twillRunId;
   private ProgramRunId programRunId;
   private ProgramStateWriter programStateWriter;
@@ -67,10 +70,13 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
    * @param abortIfNotFull If {@code true}, it will abort the application if any runnable doesn't meet the expected
    *                       number of instances.
    * @param programRunId the program run id that this event handler is handling
+   * @param programOptions program options for this run
    */
-  public TwillAppLifecycleEventHandler(long abortTime, boolean abortIfNotFull, ProgramRunId programRunId) {
+  public TwillAppLifecycleEventHandler(long abortTime, boolean abortIfNotFull,
+                                       ProgramRunId programRunId, ProgramOptions programOptions) {
     super(abortTime, abortIfNotFull);
     this.programRunId = programRunId;
+    this.programOptions = programOptions;
   }
 
   @Override
@@ -140,7 +146,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
     if (runningPublished.compareAndSet(false, true)) {
       // The program is marked as running when the first container for the program is launched
-      programStateWriter.running(programRunId, twillRunId.getId());
+      programStateWriter.running(programRunId, twillRunId.getId(), programOptions);
     }
   }
 
@@ -149,7 +155,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     super.completed();
     // On normal AM completion, based on the last container failure to publish the state
     if (lastContainerFailure == null) {
-      programStateWriter.completed(programRunId);
+      programStateWriter.completed(programRunId, programOptions);
     } else {
       lastContainerFailure.writeError(programStateWriter, programRunId);
     }
@@ -159,7 +165,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   public void killed() {
     super.killed();
     // The AM is stopped explicitly, always record the state as killed.
-    programStateWriter.killed(programRunId);
+    programStateWriter.killed(programRunId, programOptions);
   }
 
   @Override
@@ -178,7 +184,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
         // For workflow, MapReduce, and spark, if there is an error, the program state is failure
         // We defer the actual publish to one of the completion methods (killed, completed, aborted)
         // as we need to know under what condition the container failed.
-        lastContainerFailure = new ContainerFailure(runnableName, instanceId, containerId, exitStatus);
+        lastContainerFailure = new ContainerFailure(runnableName, instanceId, containerId, exitStatus, programOptions);
         break;
       default:
         // For other programs, the container will be re-launched - the program state will continue to be RUNNING
@@ -192,7 +198,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   public void aborted() {
     super.aborted();
     programStateWriter.error(programRunId,
-                             new Exception(String.format("No containers for %s. Abort the application", programRunId)));
+                             new Exception(String.format("No containers for %s. Abort the application", programRunId)),
+                             programOptions);
   }
 
   @Override
@@ -211,18 +218,21 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     private final int instanceId;
     private final String containerId;
     private final int exitStatus;
+    private final ProgramOptions programOptions;
 
-    ContainerFailure(String runnableName, int instanceId, String containerId, int exitStatus) {
+    ContainerFailure(String runnableName, int instanceId,
+                     String containerId, int exitStatus, ProgramOptions programOptions) {
       this.runnableName = runnableName;
       this.instanceId = instanceId;
       this.containerId = containerId;
       this.exitStatus = exitStatus;
+      this.programOptions = programOptions;
     }
 
     void writeError(ProgramStateWriter writer, ProgramRunId programRunId) {
       String errorMessage = String.format("Container %s, instance %s stopped with exit status %d",
                                           containerId, instanceId, exitStatus);
-      writer.error(programRunId, new Exception(errorMessage));
+      writer.error(programRunId, new Exception(errorMessage), programOptions);
     }
   }
 }
