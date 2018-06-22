@@ -22,6 +22,8 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
+import co.cask.cdap.internal.app.program.ProgramStateWriterWithHeartBeat;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
@@ -54,7 +56,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
   private RunId twillRunId;
   private ProgramRunId programRunId;
-  private ProgramStateWriter programStateWriter;
+  private ProgramStateWriterWithHeartBeat programStateWriterWithHeartBeat;
   private ZKClientService zkClientService;
   private AtomicBoolean runningPublished;
   private ContainerFailure lastContainerFailure;
@@ -87,7 +89,6 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     this.runningPublished = new AtomicBoolean();
     this.twillRunId = context.getRunId();
     this.programRunId = GSON.fromJson(context.getSpecification().getConfigs().get("programRunId"), ProgramRunId.class);
-
     // Fetch cConf and hConf from resources jar
     File cConfFile = new File("resources.jar/resources/" + CDAP_CONF_FILE_NAME);
     File hConfFile = new File("resources.jar/resources/" + HADOOP_CONF_FILE_NAME);
@@ -127,8 +128,10 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
       zkClientService = injector.getInstance(ZKClientService.class);
       zkClientService.startAndWait();
 
-      programStateWriter = injector.getInstance(ProgramStateWriter.class);
-
+      ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
+      MessagingService messagingService = injector.getInstance(MessagingService.class);
+      programStateWriterWithHeartBeat =
+        new ProgramStateWriterWithHeartBeat(programRunId, programStateWriter, messagingService, cConf);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -140,7 +143,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
     if (runningPublished.compareAndSet(false, true)) {
       // The program is marked as running when the first container for the program is launched
-      programStateWriter.running(programRunId, twillRunId.getId());
+      programStateWriterWithHeartBeat.running(twillRunId.getId());
     }
   }
 
@@ -149,9 +152,9 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     super.completed();
     // On normal AM completion, based on the last container failure to publish the state
     if (lastContainerFailure == null) {
-      programStateWriter.completed(programRunId);
+      programStateWriterWithHeartBeat.completed();
     } else {
-      lastContainerFailure.writeError(programStateWriter, programRunId);
+      lastContainerFailure.writeError(programStateWriterWithHeartBeat);
     }
   }
 
@@ -159,7 +162,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   public void killed() {
     super.killed();
     // The AM is stopped explicitly, always record the state as killed.
-    programStateWriter.killed(programRunId);
+    programStateWriterWithHeartBeat.killed();
   }
 
   @Override
@@ -191,8 +194,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   @Override
   public void aborted() {
     super.aborted();
-    programStateWriter.error(programRunId,
-                             new Exception(String.format("No containers for %s. Abort the application", programRunId)));
+    programStateWriterWithHeartBeat.error(
+      new Exception(String.format("No containers for %s. Abort the application", programRunId)));
   }
 
   @Override
@@ -219,10 +222,10 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
       this.exitStatus = exitStatus;
     }
 
-    void writeError(ProgramStateWriter writer, ProgramRunId programRunId) {
+    void writeError(ProgramStateWriterWithHeartBeat writer) {
       String errorMessage = String.format("Container %s, instance %s stopped with exit status %d",
                                           containerId, instanceId, exitStatus);
-      writer.error(programRunId, new Exception(errorMessage));
+      writer.error(new Exception(errorMessage));
     }
   }
 }

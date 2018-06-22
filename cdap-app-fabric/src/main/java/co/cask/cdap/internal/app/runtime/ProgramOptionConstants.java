@@ -61,6 +61,8 @@ public final class ProgramOptionConstants {
 
   public static final String LOGICAL_START_TIME = "logical.start.time";
 
+  public static final String HEART_BEAT_TIME = "heartbeat.time";
+
   public static final String END_TIME = "endTime";
 
   public static final String PROGRAM_DESCRIPTOR = "programDescriptor";
