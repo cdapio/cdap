@@ -140,7 +140,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   public void testDashboardDetail() throws Exception {
     // a path to get ops dashboard results between time 100 and 100 + 1440 = 1540 from namespaces
     // TEST_NAMESPACE1 and TEST_NAMESPACE2
-    String opsDashboardQueryPath = BASE_PATH + "/dashboard?start=100&duration=1440&namespace=ns1&namespace=ns2";
+    String opsDashboardQueryPath = String.format("%s/dashboard?start=100&duration=1440&namespace=%s&namespace=%s",
+      BASE_PATH, TEST_NAMESPACE1, TEST_NAMESPACE2);
     // run1 will not be included in the query results since it stops before the query start time 100
     ProgramRunId run1 = PROG1_ID.run(RunIds.generate(TimeUnit.SECONDS.toMillis(10)));
     writeCompletedRunRecord(run1, ARTIFACT1_ID, 50);
