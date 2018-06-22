@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -39,12 +40,14 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.reporting.ProgramHeartbeatDataset;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.After;
@@ -52,25 +55,32 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests program run state persistence.
  */
 public class ProgramNotificationSubscriberServiceTest {
   private static Table appMetaTable;
+  private static Table heartbeatTable;
   private static AppMetadataStore metadataStoreDataset;
+  private static ProgramHeartbeatDataset programHeartbeatDataset;
   private static TransactionExecutor txnl;
+  private static TransactionExecutor heartBeatTxnl;
   private static ProgramStateWriter programStateWriter;
 
   @BeforeClass
   public static void setupClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-
+    // we only want to process and check program status messages processed by heart beat store
+    cConf.set(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS, String.valueOf(TimeUnit.HOURS.toSeconds(1)));
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
@@ -78,8 +88,14 @@ public class ProgramNotificationSubscriberServiceTest {
     appMetaTable = DatasetsUtil.getOrCreateDataset(datasetFramework, storeTable, Table.class.getName(),
                                                    DatasetProperties.EMPTY, Collections.emptyMap());
     metadataStoreDataset = new AppMetadataStore(appMetaTable, cConf);
-    txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
 
+    DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
+    heartbeatTable = DatasetsUtil.getOrCreateDataset(datasetFramework, heartbeatDataset, Table.class.getName(),
+                                                     DatasetProperties.EMPTY, Collections.emptyMap());
+    programHeartbeatDataset = new ProgramHeartbeatDataset(heartbeatTable);
+
+    txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
+    heartBeatTxnl = txExecutorFactory.createExecutor(Collections.singleton(programHeartbeatDataset));
     programStateWriter = injector.getInstance(ProgramStateWriter.class);
   }
 
@@ -122,5 +138,91 @@ public class ProgramNotificationSubscriberServiceTest {
                     return meta.getStatus();
                   }),
                   10, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testHeartBeatStoreForProgramStatusMessages() throws Exception {
+    ProgramId programId = NamespaceId.DEFAULT.app("someapp", "1.0-SNAPSHOT").program(ProgramType.SERVICE, "s");
+    Map<String, String> systemArguments = new HashMap<>();
+    systemArguments.put(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString());
+    ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
+                                                             new BasicArguments());
+    ProgramRunId runId = programId.run(RunIds.generate());
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+
+    ApplicationSpecification appSpec = new DefaultApplicationSpecification(
+      "name", "1.0.0", "desc", null, artifactId,
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.start(runId, programOptions, null, programDescriptor);
+    });
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.STARTING);
+    long startTime = System.currentTimeMillis();
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.running(runId, null, programOptions);
+    });
+
+    // perform scan on heart beat store - ensure latest message notification is running
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.RUNNING);
+    performStatusCheck(startTime, ProgramRunStatus.RUNNING);
+
+    // sleep for few milli seconds so the suspend time is different from running time
+    TimeUnit.MILLISECONDS.sleep(5);
+    long suspendTime = System.currentTimeMillis();
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.suspend(runId, programOptions);
+    });
+    // perform scan on heart beat store - ensure latest message notification is suspended
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.SUSPENDED);
+    performStatusCheck(suspendTime, ProgramRunStatus.SUSPENDED);
+    // similarly do running check after resuming
+    TimeUnit.MILLISECONDS.sleep(5);
+    long resumeTime = System.currentTimeMillis();
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.resume(runId, programOptions);
+    });
+    // app metadata records as RUNNING
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.RUNNING);
+    // heart beat messages wont have been sent due to high interval. resuming program status would be the most recent
+    // in heart beat store
+    performStatusCheck(resumeTime, ProgramRunStatus.RESUMING);
+    // killed status check after error
+    TimeUnit.MILLISECONDS.sleep(5);
+    long stopTime = System.currentTimeMillis();
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.error(runId, new Throwable("Testing"), programOptions);
+    });
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.FAILED);
+    performStatusCheck(stopTime, ProgramRunStatus.FAILED);
+  }
+
+  private void checkProgramStatus(ArtifactId artifactId, ProgramRunId runId, ProgramRunStatus expectedStatus)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    Tasks.waitFor(expectedStatus, () -> txnl.execute(() -> {
+                    RunRecordMeta meta = metadataStoreDataset.getRun(runId);
+                    if (meta == null) {
+                      return null;
+                    }
+                    Assert.assertEquals(artifactId, meta.getArtifactId());
+                    return meta.getStatus();
+                  }),
+                  10, TimeUnit.SECONDS);
+  }
+
+  private void performStatusCheck(long startTime, ProgramRunStatus expectedStatus)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    Tasks.waitFor(expectedStatus, () -> heartBeatTxnl.execute(() -> {
+      Collection<Notification> notifications =
+        programHeartbeatDataset.scan(Bytes.toBytes(startTime), null);
+      if (notifications.size() == 0) {
+        return null;
+      }
+      Assert.assertEquals(1, notifications.size());
+      return ProgramRunStatus.valueOf(
+        notifications.iterator().next().getProperties().get(ProgramOptionConstants.PROGRAM_STATUS));
+    }), 10, TimeUnit.SECONDS);
   }
 }

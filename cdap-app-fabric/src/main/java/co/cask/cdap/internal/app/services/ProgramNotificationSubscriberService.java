@@ -42,6 +42,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.reporting.ProgramHeartbeatDataset;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.gson.Gson;
@@ -217,20 +218,25 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
     if (programRunStatus != null) {
       handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
-                         appMetadataStore);
+                         appMetadataStore, getProgramHeartbeatStore(datasetContext));
     }
 
     if (clusterStatus == null) {
       return Optional.empty();
     }
-
+    if (notification.getNotificationType().equals(Notification.Type.HEART_BEAT)) {
+      getProgramHeartbeatStore(datasetContext).writeNotification(notification);
+      // we can skip from recording heartbeat messages in app meta.
+      return Optional.empty();
+    }
     return handleClusterEvent(programRunId, clusterStatus, notification,
                               messageIdBytes, datasetContext, appMetadataStore);
   }
 
   private void handleProgramEvent(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
                                   Notification notification, byte[] messageIdBytes,
-                                  AppMetadataStore appMetadataStore) throws Exception {
+                                  AppMetadataStore appMetadataStore,
+                                  ProgramHeartbeatDataset heartbeatStore) throws Exception {
     LOG.trace("Processing program status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
@@ -310,6 +316,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
     if (recordedRunRecord != null) {
       publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
+      // write the state to heart beat store
+      heartbeatStore.writeNotification(notification);
       if (programRunStatus.isEndState()) {
         // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
         // instead, we just record the state as deprovisioned without notifying the provisioner
@@ -455,5 +463,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private AppMetadataStore getAppMetadataStore(DatasetContext context) {
     return AppMetadataStore.create(cConf, context, datasetFramework);
+  }
+
+  /**
+   * Returns an instance of {@link ProgramHeartbeatDataset}.
+   */
+  private ProgramHeartbeatDataset getProgramHeartbeatStore(DatasetContext context) {
+    return ProgramHeartbeatDataset.getOrCreate(context, datasetFramework);
   }
 }
