@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,34 +28,39 @@ export default class PaginationWithTitle extends Component {
     handlePageChange: PropTypes.func
   };
 
-  state = {
-    title: this.props.title || 'Pages',
-    currentPage: this.props.currentPage,
-    totalPages: this.props.totalPages,
+  renderPaginationComponent() {
+    if (this.props.totalPages < 2) {
+      return null;
+    }
+
+    return (
+      <ReactPaginate
+        pageCount={this.props.totalPages}
+        pageRangeDisplayed={3}
+        marginPagesDisplayed={1}
+        breakLabel={<span>...</span>}
+        breakClassName={"ellipsis"}
+        previousLabel={<span className="fa fa-angle-left"></span>}
+        nextLabel={<span className="fa fa-angle-right"></span>}
+        onPageChange={this.props.handlePageChange.bind(this)}
+        disableInitialCallback={true}
+        initialPage={this.props.currentPage-1}
+        forcePage={this.props.currentPage-1}
+        containerClassName={"page-list"}
+        activeClassName={"current-page"}
+      />
+    );
   }
+
   render() {
     return (
       <span className="pagination-with-title">
         <ul className="total-entities">
           <span>
-            {this.props.numberOfEntities} {this.state.title}
+            {this.props.numberOfEntities} {this.props.title || 'Pages'}
           </span>
         </ul>
-        <ReactPaginate
-          pageCount={this.props.totalPages}
-          pageRangeDisplayed={3}
-          marginPagesDisplayed={1}
-          breakLabel={<span>...</span>}
-          breakClassName={"ellipsis"}
-          previousLabel={<span className="fa fa-angle-left"></span>}
-          nextLabel={<span className="fa fa-angle-right"></span>}
-          onPageChange={this.props.handlePageChange.bind(this)}
-          disableInitialCallback={true}
-          initialPage={this.props.currentPage-1}
-          forcePage={this.props.currentPage-1}
-          containerClassName={"page-list"}
-          activeClassName={"current-page"}
-        />
+        {this.renderPaginationComponent()}
       </span>
     );
   }
