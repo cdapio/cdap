@@ -16,34 +16,48 @@
 
 package co.cask.cdap.gateway.handlers;
 
-
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.ConflictException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTimeTriggerInfo;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
 import co.cask.cdap.reporting.ProgramHeartbeatDataset;
+import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -70,11 +84,21 @@ import java.util.concurrent.TimeUnit;
  * Tests for {@link OperationsDashboardHttpHandler}
  */
 public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
+
   private static final ArtifactId ARTIFACT_ID = NamespaceId.DEFAULT.artifact("testArtifact", "1.0");
+  private static final ArtifactId ARTIFACT_ID1 = new NamespaceId(TEST_NAMESPACE1).artifact("testArtifact1", "1.0");
+  private static final ArtifactId ARTIFACT_ID2 = new NamespaceId(TEST_NAMESPACE2).artifact("testArtifact2", "1.0");
   private static final Gson GSON =
     TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final ApplicationId APP1_ID = new ApplicationId(TEST_NAMESPACE1, "app1");
+  private static final ApplicationId APP2_ID = new ApplicationId(TEST_NAMESPACE2, "app2");
+  private static final WorkflowId SCHEDULED_PROG1_ID = APP1_ID.workflow("schedWf1");
+  private static final WorkflowId SCHEDULED_PROG2_ID = APP2_ID.workflow("schedWf2");
   private static final String BASE_PATH = Constants.Gateway.API_VERSION_3;
   private static final Type DASHBOARD_DETAIL_TYPE = new TypeToken<List<DashboardProgramRunRecord>>() { }.getType();
+  private static Store store;
+  private static long sourceId;
+  private static Scheduler scheduler;
   private static final byte[] SOURCE_ID = Bytes.toBytes("sourceId");
 
   private static ProgramHeartbeatDataset programHeartbeatDataset;
@@ -85,6 +109,11 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     Injector injector = getInjector();
     TransactionExecutorFactory txExecutorFactory =
       injector.getInstance(TransactionExecutorFactory.class);
+    scheduler = getInjector().getInstance(Scheduler.class);
+    if (scheduler instanceof Service) {
+      ((Service) scheduler).startAndWait();
+    }
+    store = getInjector().getInstance(DefaultStore.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
     Table heartbeatTable = DatasetsUtil.getOrCreateDataset(datasetFramework, heartbeatDataset, Table.class.getName(),
@@ -190,6 +219,115 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, dashboardDetail.size());
     Assert.assertEquals(OperationsDashboardHttpHandler.runRecordToDashboardRecord(meta2),
                         dashboardDetail.iterator().next());
+
+  }
+
+  @Test
+  public void testScheduledRuns() throws Exception {
+    // add app specs for APP1_ID and APP2_ID
+    addAppSpecs();
+    // add a schedule to be triggered every 5 minutes for SCHEDULED_PROG1_ID
+    int sched1Mins = 5;
+    ProgramSchedule sched1 = initializeSchedules(5, SCHEDULED_PROG1_ID);
+    // add a schedule to be triggered every 10 minutes for SCHEDULED_PROG2_ID
+    int sched2Mins = 10;
+    ProgramSchedule sched2 = initializeSchedules(10, SCHEDULED_PROG2_ID);
+    // the duration of the query time range
+    int durationSecs = 3600;
+    long currentTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    // get ops dashboard results between current time and current time + 3600 from TEST_NAMESPACE1 and TEST_NAMESPACE2
+    String opsDashboardQueryPath =
+      String.format("%s/dashboard?start=%d&duration=%d&namespace=%s&namespace=%s",
+                    BASE_PATH, currentTime, durationSecs, TEST_NAMESPACE1, TEST_NAMESPACE2);
+    List<DashboardProgramRunRecord> dashboardRecords = getDashboardRecords(opsDashboardQueryPath);
+    // calculate the expected number of scheduled runs according to the query duration and the schedules
+    long expectedScheduledProgram1 = durationSecs / TimeUnit.MINUTES.toSeconds(sched1Mins);
+    long expectedScheduledProgram2 = durationSecs / TimeUnit.MINUTES.toSeconds(sched2Mins);
+    // assert the number of scheduled runs are expected for both programs
+    Assert.assertEquals(expectedScheduledProgram1,
+                        dashboardRecords.stream()
+                          .filter(record -> SCHEDULED_PROG1_ID.getProgram().equals(record.getProgram())).count());
+    Assert.assertEquals(expectedScheduledProgram2,
+                        dashboardRecords.stream()
+                          .filter(record -> SCHEDULED_PROG2_ID.getProgram().equals(record.getProgram())).count());
+    // TODO: compare the actual DashboardProgramRunRecord objects after
+    // https://github.com/caskdata/cdap/pull/10254 is merged
+
+    // assert the artifact id is correct
+    Assert.assertTrue(dashboardRecords.stream()
+                        .filter(record -> SCHEDULED_PROG1_ID.getProgram().equals(record.getProgram()))
+                        .allMatch(schedule -> ArtifactSummary.from(ARTIFACT_ID1.toApiArtifactId()).equals(
+                          schedule.getArtifact())));
+    Assert.assertTrue(dashboardRecords.stream()
+                        .filter(record -> SCHEDULED_PROG2_ID.getProgram().equals(record.getProgram()))
+                        .allMatch(schedule -> ArtifactSummary.from(ARTIFACT_ID2.toApiArtifactId()).equals(
+                          schedule.getArtifact())));
+    // get ops dashboard results between current time - 7200 and current time - 3600
+    // from TEST_NAMESPACE1 and TEST_NAMESPACE2
+    String beforeCurrentTimeQueryPath =
+      String.format("%s/dashboard?start=%d&duration=%d&namespace=%s&namespace=%s",
+                    BASE_PATH, currentTime - 2 * durationSecs, durationSecs, TEST_NAMESPACE1, TEST_NAMESPACE2);
+    // assert that there's no scheduled runs returned when the end of query time range is before current time
+    Assert.assertEquals(0, getDashboardRecords(beforeCurrentTimeQueryPath).size());
+    // disable the schedules
+    scheduler.disableSchedule(sched1.getScheduleId());
+    scheduler.disableSchedule(sched2.getScheduleId());
+    // assert that there's no scheduled runs once the schedules are disabled
+    Assert.assertEquals(0, getDashboardRecords(opsDashboardQueryPath).size());
+  }
+
+  /**
+   * Adds {@link ApplicationSpecification} for APP1_ID and APP2_ID.
+   */
+  private void addAppSpecs() {
+    WorkflowSpecification scheduledWorfklow1 =
+      new WorkflowSpecification("DummyClass", SCHEDULED_PROG1_ID.getProgram(), "scheduled workflow",
+                                Collections.EMPTY_MAP, Collections.EMPTY_LIST, Collections.EMPTY_MAP);
+    ApplicationSpecification dummyAppSpec1 =
+      new DefaultApplicationSpecification(APP1_ID.getApplication(), "dummy app", null,
+                                          ARTIFACT_ID1.toApiArtifactId(), Collections.EMPTY_MAP,
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                          ImmutableMap.of(SCHEDULED_PROG1_ID.getProgram(), scheduledWorfklow1),
+                                          Collections.EMPTY_MAP,
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+    store.addApplication(APP1_ID, dummyAppSpec1);
+    WorkflowSpecification scheduledWorfklow2 =
+      new WorkflowSpecification("DummyClass", SCHEDULED_PROG2_ID.getProgram(), "scheduled workflow",
+                                Collections.EMPTY_MAP, Collections.EMPTY_LIST, Collections.EMPTY_MAP);
+    ApplicationSpecification dummyAppSpec2 =
+      new DefaultApplicationSpecification(APP2_ID.getApplication(), "dummy app", null,
+                                          ARTIFACT_ID2.toApiArtifactId(), Collections.EMPTY_MAP,
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                          ImmutableMap.of(SCHEDULED_PROG2_ID.getProgram(), scheduledWorfklow2),
+                                          Collections.EMPTY_MAP,
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+    store.addApplication(APP2_ID, dummyAppSpec2);
+  }
+
+  /**
+   * Adds and enables time based schedules for the given workflow at the given frequency.
+   *
+   * @param scheduleMins the number of minutes to wait before launching the given workflow each time
+   * @param workflowId the ID of the scheduled workflow
+   */
+  private ProgramSchedule initializeSchedules(int scheduleMins, WorkflowId workflowId)
+    throws ConflictException, BadRequestException, NotFoundException {
+    ProgramSchedule schedule =
+      new ProgramSchedule(String.format("%dMinSchedule", scheduleMins), "time schedule", workflowId,
+                          Collections.EMPTY_MAP, new TimeTrigger(String.format("*/%d * * * *", scheduleMins)),
+                          Collections.emptyList());
+    scheduler.addSchedule(schedule);
+    scheduler.enableSchedule(schedule.getScheduleId());
+    return schedule;
+  }
+
+  private static List<DashboardProgramRunRecord> getDashboardRecords(String path) throws Exception {
+    HttpResponse response = doGet(path);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
+    return GSON.fromJson(content, DASHBOARD_DETAIL_TYPE);
   }
 
   @Test

@@ -20,6 +20,8 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
@@ -33,6 +35,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
@@ -49,15 +52,18 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
@@ -65,13 +71,18 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Service that implements the Scheduler interface. This implements the actual Scheduler using
@@ -79,6 +90,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class CoreSchedulerService extends AbstractIdleService implements Scheduler {
   private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerService.class);
+  private static final Gson GSON = new Gson();
 
   private final CountDownLatch startedLatch;
   private final Transactional transactional;
@@ -86,6 +98,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private final DatasetFramework datasetFramework;
   private final TimeSchedulerService timeSchedulerService;
   private final AdminEventPublisher adminEventPublisher;
+  private final Store appMetaStore;
+  private final Impersonator impersonator;
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
@@ -93,7 +107,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
                        ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
                        ConstraintCheckerService constraintCheckerService,
                        MessagingService messagingService,
-                       CConfiguration cConf) {
+                       CConfiguration cConf, Store store, Impersonator impersonator) {
     this.startedLatch = new CountDownLatch(1);
     this.datasetFramework = datasetFramework;
     MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
@@ -104,6 +118,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
     this.timeSchedulerService = timeSchedulerService;
+    this.appMetaStore = store;
+    this.impersonator = impersonator;
     // Use a retry on failure service to make it resilience to transient service unavailability during startup
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
       @Override
@@ -447,12 +463,23 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) throws NotFoundException {
+  public List<ProgramSchedule> listSchedulesWithUserAndArtifactId(NamespaceId namespaceId,
+                                                                  Predicate<ProgramSchedule> filter) {
+    checkStarted();
+    return execute(store -> store.listSchedules(namespaceId, filter).stream()
+                     .map(this::getProgramScheduleWithUserAndArtifactId).collect(Collectors.toList()),
+                   RuntimeException.class);
+  }
+
+  @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) {
+    checkStarted();
     return execute(store -> store.listScheduleRecords(appId), RuntimeException.class);
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) throws NotFoundException {
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) {
+    checkStarted();
     return execute(store -> store.listScheduleRecords(programId), RuntimeException.class);
   }
 
@@ -460,6 +487,43 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   public Collection<ProgramScheduleRecord> findSchedules(String triggerKey) {
     checkStarted();
     return execute(store -> store.findSchedules(triggerKey), RuntimeException.class);
+  }
+
+  /**
+   * Gets a copy of the given {@link ProgramSchedule} and add user and artifact ID in the schedule properties
+   */
+  private ProgramSchedule getProgramScheduleWithUserAndArtifactId(ProgramSchedule schedule) {
+    Map<String, String> additionalProperties = new HashMap<>();
+    // add artifact id to the schedule property
+    ProgramDescriptor programDescriptor;
+    try {
+      programDescriptor = appMetaStore.loadProgram(schedule.getProgramId());
+    } catch (Exception e) {
+      LOG.error("Exception occurs when looking up program descriptor for program {} in schedule {}",
+                schedule.getProgramId(), schedule, e);
+      throw new RuntimeException(String.format("Exception occurs when looking up program descriptor for" +
+                                                 " program %s in schedule %s", schedule.getProgramId(), schedule), e);
+    }
+    additionalProperties.put(ProgramOptionConstants.ARTIFACT_ID,
+                             GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()));
+
+    String userId;
+    try {
+      userId = impersonator.getUGI(schedule.getProgramId()).getUserName();
+    } catch (IOException e) {
+      LOG.error("Exception occurs when looking up user group information for program {} in schedule {}",
+                schedule.getProgramId(), schedule, e);
+      throw new RuntimeException(String.format("Exception occurs when looking up user group information for" +
+                                                 " program %s in schedule %s", schedule.getProgramId(), schedule), e);
+    }
+    // add the user name to the schedule property
+    additionalProperties.put(ProgramOptionConstants.USER_ID, userId);
+    // make a copy of the existing schedule properties and add the additional properties in the copy
+    Map<String, String> newProperties = new HashMap<>(schedule.getProperties());
+    newProperties.putAll(additionalProperties);
+    // construct a copy of the schedule with the additional properties added
+    return new ProgramSchedule(schedule.getName(), schedule.getDescription(), schedule.getProgramId(), newProperties,
+                               schedule.getTrigger(), schedule.getConstraints(), schedule.getTimeoutMillis());
   }
 
   private interface StoreTxRunnable<V, T extends Throwable> {

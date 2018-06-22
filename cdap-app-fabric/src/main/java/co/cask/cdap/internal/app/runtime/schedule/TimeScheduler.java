@@ -57,11 +57,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
@@ -291,6 +293,51 @@ public final class TimeScheduler {
     return getScheduledRuntime(program, programType, false);
   }
 
+  /**
+   * Get all the scheduled run time of the program within the given time range in the future.
+   * A program may contain multiple schedules. This method returns the scheduled runtimes for all the schedules
+   * within the given time range. This method only takes
+   + into account schedules based on time. For schedules based on data, an empty list will
+   + be returned.
+   *
+   * @param program program to fetch the next runtime.
+   * @param programType type of program.
+   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
+   *                      equal to the start will be returned) If this is earlier than the current time,
+   *                      only scheduled runs later than the current time will be returned.
+   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
+   *                    will be returned)
+   * @return list of scheduled runtimes for the program. Empty list if there are no schedules
+   *         or if the program is not found
+   * @throws SchedulerException on unforeseen error.
+   */
+  public List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program, SchedulableProgramType programType,
+                                                        long startTimeSecs, long endTimeSecs)
+    throws SchedulerException {
+    // decrease the start time by one second to include the next fire time that is equal to the start time
+    Date startTime = new Date(TimeUnit.SECONDS.toMillis(startTimeSecs - 1));
+    long endTimeMillis = TimeUnit.SECONDS.toMillis(endTimeSecs);
+    List<ScheduledRuntime> scheduledRuntimes = new ArrayList<>();
+    try {
+      for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
+        // skip the trigger that is not enabled, since it cannot launch program as scheduled
+        if (scheduler.getTriggerState(trigger.getKey()) == Trigger.TriggerState.PAUSED) {
+          continue;
+        }
+        Date nextFireTime = trigger.getFireTimeAfter(startTime);
+        String triggerKeyString = trigger.getKey().toString();
+        while (nextFireTime != null && nextFireTime.getTime() < endTimeMillis) {
+          ScheduledRuntime runtime = new ScheduledRuntime(triggerKeyString, nextFireTime.getTime());
+          scheduledRuntimes.add(runtime);
+          nextFireTime = trigger.getFireTimeAfter(nextFireTime);
+        }
+      }
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
+    }
+    return scheduledRuntimes;
+  }
+
   private List<ScheduledRuntime> getScheduledRuntime(ProgramId program, SchedulableProgramType programType,
                                                      boolean previousRuntimeRequested) throws SchedulerException {
     List<ScheduledRuntime> scheduledRuntimes = new ArrayList<>();
@@ -304,8 +351,8 @@ public final class TimeScheduler {
           }
           time = trigger.getPreviousFireTime().getTime();
         } else {
+          // skip the trigger that is not enabled, since it cannot launch program as scheduled
           if (scheduler.getTriggerState(trigger.getKey()) == Trigger.TriggerState.PAUSED) {
-            // if the trigger is paused, then skip getting the next fire time
             continue;
           }
           time = trigger.getNextFireTime().getTime();

@@ -23,12 +23,14 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Noop scheduler.
@@ -105,12 +107,18 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) throws NotFoundException {
+  public List<ProgramSchedule> listSchedulesWithUserAndArtifactId(NamespaceId namespaceId,
+                                                                  Predicate<ProgramSchedule> filter) {
     return Collections.EMPTY_LIST;
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) throws NotFoundException {
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) {
+    return Collections.EMPTY_LIST;
+  }
+
+  @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) {
     return Collections.EMPTY_LIST;
   }
 

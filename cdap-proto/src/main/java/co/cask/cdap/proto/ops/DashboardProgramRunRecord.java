@@ -34,6 +34,7 @@ public class DashboardProgramRunRecord {
   private final ApplicationNameVersion application;
   private final String type;
   private final String program;
+  @Nullable
   private final String run;
   private final String user;
   private final String startMethod;
@@ -46,6 +47,7 @@ public class DashboardProgramRunRecord {
   private final Long resume;
   @Nullable
   private final Long end;
+  @Nullable
   private final ProgramRunStatus status;
 
   public DashboardProgramRunRecord(ProgramRunId runId, RunRecord runRecord, ArtifactId artifactId,
@@ -58,10 +60,10 @@ public class DashboardProgramRunRecord {
   }
 
   public DashboardProgramRunRecord(String namespace, ArtifactSummary artifact, ApplicationNameVersion application,
-                                   String type, String program, String run,
+                                   String type, String program, @Nullable String run,
                                    String user, String startMethod, long start,
                                    @Nullable Long running, @Nullable Long suspend, @Nullable Long resume,
-                                   @Nullable Long end, ProgramRunStatus status) {
+                                   @Nullable Long end, @Nullable ProgramRunStatus status) {
     this.namespace = namespace;
     this.artifact = artifact;
     this.application = application;
@@ -98,6 +100,10 @@ public class DashboardProgramRunRecord {
     return program;
   }
 
+  /**
+   * @return the run id of the program run or {@code null} if the program run is scheduled to run in the future
+   */
+  @Nullable
   public String getRun() {
     return run;
   }
@@ -149,6 +155,10 @@ public class DashboardProgramRunRecord {
     return end;
   }
 
+  /**
+   * @return the status of the program run or {@code null} if the program run is scheduled to run in the future
+   */
+  @Nullable
   public ProgramRunStatus getStatus() {
     return status;
   }
