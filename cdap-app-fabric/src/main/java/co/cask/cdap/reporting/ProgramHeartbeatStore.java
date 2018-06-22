@@ -52,6 +52,13 @@ public class ProgramHeartbeatStore {
     );
   }
 
+  public void writeNotification(Notification notification) {
+    Transactionals.execute(transactional, context -> {
+      ProgramHeartbeatDataset programHeartbeatDataset = ProgramHeartbeatDataset.getOrCreate(context, datasetFramework);
+      programHeartbeatDataset.writeNotification(notification);
+    });
+  }
+
   public Collection<Notification> scan(byte[] startRow, byte[] endRow) {
     return Transactionals.execute(transactional, context -> {
       ProgramHeartbeatDataset programHeartbeatDataset = ProgramHeartbeatDataset.getOrCreate(context, datasetFramework);

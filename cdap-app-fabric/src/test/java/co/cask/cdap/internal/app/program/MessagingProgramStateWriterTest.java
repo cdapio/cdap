@@ -42,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class MessagingProgramStateWriterTest {
-
   class MockProgramStatePublisher implements ProgramStatePublisher {
     long heartBeatCount = 0;
 

@@ -36,6 +36,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.tools.ant.taskdefs.condition.Not;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -83,7 +84,7 @@ public class ProgramHeartbeatDataset extends AbstractDataset {
    *
    * @param notification Row key design:
    */
-  public void writeProgramHeartBeatStatus(Notification notification) {
+  private void writeProgramHeartBeatStatus(Notification notification) {
     Map<String, String> properties = notification.getProperties();
     long timestamp = Long.parseLong(properties.get(ProgramOptionConstants.HEART_BEAT_TIME));
     table.put(createRowKey(timestamp, properties), COLUMN_NAME, Bytes.toBytes(GSON.toJson(notification)));
@@ -97,12 +98,24 @@ public class ProgramHeartbeatDataset extends AbstractDataset {
   }
 
   /**
+   * Write notification to heart beat dataset
+   * @param notification
+   */
+  public void writeNotification(Notification notification) {
+    if (notification.getNotificationType().equals(Notification.Type.HEART_BEAT)) {
+      writeProgramHeartBeatStatus(notification);
+    } else {
+      writeProgramStatus(notification);
+    }
+  }
+
+  /**
    * find timestamp, timestamp key changes based on the program status and
    * create rowkey timestamp:program-status:programRunId. perform a put of notification object with the created rowkey.
    *
    * @param notification
    */
-  public void writeProgramStatus(Notification notification) {
+  private void writeProgramStatus(Notification notification) {
     String programStatus = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
     ProgramRunStatus programRunStatus = ProgramRunStatus.valueOf(programStatus);
     if (programRunStatus.equals(ProgramRunStatus.STARTING)) {

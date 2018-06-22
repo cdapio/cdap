@@ -225,7 +225,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       return Optional.empty();
     }
     if (notification.getNotificationType().equals(Notification.Type.HEART_BEAT)) {
-      getProgramHeartbeatStore(datasetContext).writeProgramHeartBeatStatus(notification);
+      getProgramHeartbeatStore(datasetContext).writeNotification(notification);
       // we can skip from recording heartbeat messages in app meta.
       return Optional.empty();
     }
@@ -317,7 +317,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     if (recordedRunRecord != null) {
       publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
       // write the state to heart beat store
-      heartbeatStore.writeProgramStatus(notification);
+      heartbeatStore.writeNotification(notification);
       if (programRunStatus.isEndState()) {
         // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
         // instead, we just record the state as deprovisioned without notifying the provisioner

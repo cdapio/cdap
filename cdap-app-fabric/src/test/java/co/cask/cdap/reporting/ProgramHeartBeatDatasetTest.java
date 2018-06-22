@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -36,7 +35,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -51,7 +49,6 @@ import org.junit.Test;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,10 +56,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ProgramHeartBeatDatasetTest {
   private static DatasetFramework datasetFramework;
-  private static CConfiguration cConf;
   private static TransactionExecutorFactory txExecutorFactory;
-  private static final List<ProgramRunStatus> STOP_STATUSES =
-    ImmutableList.of(ProgramRunStatus.COMPLETED, ProgramRunStatus.FAILED, ProgramRunStatus.KILLED);
   private static final ArtifactId ARTIFACT_ID = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
@@ -75,7 +69,6 @@ public class ProgramHeartBeatDatasetTest {
     AppFabricTestHelper.ensureNamespaceExists(NamespaceId.DEFAULT);
     datasetFramework = injector.getInstance(DatasetFramework.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    cConf = injector.getInstance(CConfiguration.class);
   }
 
   @Test
@@ -88,7 +81,7 @@ public class ProgramHeartBeatDatasetTest {
     Map<String, String> properties = getMockProgramProperties(RunIds.generate(), startTime1);
     Notification run1Notification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     txnl.execute(() -> {
-      programHeartbeatDataset.writeProgramStatus(run1Notification);
+      programHeartbeatDataset.writeNotification(run1Notification);
     });
 
     // write heart beat messages for 10 minutes (every minute) for this program run.
@@ -102,7 +95,7 @@ public class ProgramHeartBeatDatasetTest {
     properties = getMockProgramProperties(RunIds.generate(), startTime2);
     Notification run2Notification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     txnl.execute(() -> {
-      programHeartbeatDataset.writeProgramStatus(run2Notification);
+      programHeartbeatDataset.writeNotification(run2Notification);
     });
 
     // write heart beat messages for 5 minutes (every minute) for this program run.
@@ -134,7 +127,7 @@ public class ProgramHeartBeatDatasetTest {
       properties.put(ProgramOptionConstants.HEART_BEAT_TIME, String.valueOf(time));
       Notification heartbeat = new Notification(Notification.Type.HEART_BEAT, properties);
       txnl.execute(() -> {
-        programHeartbeatDataset.writeProgramHeartBeatStatus(heartbeat);
+        programHeartbeatDataset.writeNotification(heartbeat);
       });
     }
   }
@@ -175,7 +168,7 @@ public class ProgramHeartBeatDatasetTest {
     Map<String, String> properties = getMockProgramProperties(RunIds.generate(), startTime1);
     Notification run1Notification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     txnl.execute(() -> {
-      programHeartbeatDataset.writeProgramStatus(run1Notification);
+      programHeartbeatDataset.writeNotification(run1Notification);
     });
 
     // write heart beat messages for 10 minutes (every minute) for this program run.
@@ -190,7 +183,7 @@ public class ProgramHeartBeatDatasetTest {
     properties.put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.KILLED.name());
     Notification run1End = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     txnl.execute(() -> {
-      programHeartbeatDataset.writeProgramStatus(run1End);
+      programHeartbeatDataset.writeNotification(run1End);
     });
 
     // perform scan checks

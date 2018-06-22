@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.program;
 
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -24,6 +25,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
@@ -50,7 +53,10 @@ import javax.inject.Inject;
  */
 public final class MessagingProgramStateWriter implements ProgramStateWriter {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingProgramStateWriter.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Gson GSON =
+    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
   // TODO move constant to right location after making it configurable
 
   private final ProgramStatePublisher programStatePublisher;
