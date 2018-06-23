@@ -112,16 +112,16 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     store.addApplication(APP2_ID, dummyAppSpec2);
     // add a schedule to be triggered every 5 minutes for SCHEDULED_PROG1_ID
     int sched1Mins = 5;
-    ProgramSchedule sched = new ProgramSchedule("tsched1", "five min schedule", SCHEDULED_PROG1_ID,
+    ProgramSchedule sched1 = new ProgramSchedule("tsched1", "five min schedule", SCHEDULED_PROG1_ID,
       Collections.EMPTY_MAP, new TimeTrigger(String.format("*/%d * * * *", sched1Mins)), Collections.emptyList());
-    scheduler.addSchedule(sched);
-    scheduler.enableSchedule(sched.getScheduleId());
+    scheduler.addSchedule(sched1);
+    scheduler.enableSchedule(sched1.getScheduleId());
     // add a schedule to be triggered every 10 minutes for SCHEDULED_PROG2_ID
     int sched2Mins = 10;
-    sched = new ProgramSchedule("tsched2", "ten min schedule", SCHEDULED_PROG2_ID,
+    ProgramSchedule sched2 = new ProgramSchedule("tsched2", "ten min schedule", SCHEDULED_PROG2_ID,
       Collections.EMPTY_MAP, new TimeTrigger(String.format("*/%d * * * *", sched2Mins)), Collections.emptyList());
-    scheduler.addSchedule(sched);
-    scheduler.enableSchedule(sched.getScheduleId());
+    scheduler.addSchedule(sched2);
+    scheduler.enableSchedule(sched2.getScheduleId());
     long currentTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // get ops dashboard results between current time and current time + 3600 from TEST_NAMESPACE1 and TEST_NAMESPACE2
     int durationSecs = 3600;
@@ -137,6 +137,11 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
       dashboardRecords.stream().filter(record -> SCHEDULED_PROG1_ID.getProgram().equals(record.getProgram())).count());
     Assert.assertEquals(expectedScheduledProgram2,
       dashboardRecords.stream().filter(record -> SCHEDULED_PROG2_ID.getProgram().equals(record.getProgram())).count());
+    // disable the schedules
+    scheduler.disableSchedule(sched1.getScheduleId());
+    scheduler.disableSchedule(sched2.getScheduleId());
+    // assert that there's no scheduled runs once the schedules are disabled
+    Assert.assertEquals(0, getDashboardRecords(opsDashboardQueryPath).size());
   }
 
   @Test

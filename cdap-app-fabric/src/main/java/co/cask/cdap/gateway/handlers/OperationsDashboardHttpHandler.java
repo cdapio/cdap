@@ -125,7 +125,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     // add combined historical runs and active runs to the result
     result.addAll(Stream.concat(historicalRecords, activeRecords).collect(Collectors.toList()));
     // if the end time is in the future, also add scheduled program runs to the result
-    if (endTimeSecs > TimeUnit.MICROSECONDS.toSeconds(System.currentTimeMillis())) {
+      if (endTimeSecs > TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())) {
       // get enabled time schedules from all given namespaces
       getEnabledTimeSchedules(namespaceIds)
         // for each schedule, add all the scheduled runs within given the time range to the result
