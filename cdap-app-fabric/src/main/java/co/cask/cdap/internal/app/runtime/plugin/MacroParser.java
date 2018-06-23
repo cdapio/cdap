@@ -102,6 +102,7 @@ public class MacroParser {
 
   /**
    * Find the rightmost macro in the specified string. If no macro is found, returns null.
+   * The search will start at the specified position, then move left through the string.
    * Macros to the right of the specified position will be ignored.
    *
    * @param str the string to find a macro in
@@ -167,6 +168,14 @@ public class MacroParser {
     }
   }
 
+  /**
+   * Get the start index of a macro in the string, starting from the specified position and searching left.
+   * In other words, the index of the rightmost '${' that is still left of the specified position.
+   *
+   * @param str the string to search for the macro start syntax in
+   * @param pos the position in the string to start the backwards search
+   * @return the start index of the macro
+   */
   private int getStartIndex(String str, int pos) {
     int startIndex = str.lastIndexOf("${", pos);
     while (isEscaped(startIndex, str)) {
