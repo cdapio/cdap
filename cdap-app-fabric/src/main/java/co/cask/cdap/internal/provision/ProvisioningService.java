@@ -394,7 +394,9 @@ public class ProvisioningService extends AbstractIdleService {
       context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(),
                               createSSHContext(taskInfo.getSecureKeyInfo()));
     } catch (InvalidMacroException e) {
-      LOG.error("Could not evaluate macros while provisioning. The run will be marked as failed.", e);
+      runWithProgramLogging(taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
+                            () -> LOG.error("Could not evaluate macros while provisoning. "
+                                              + "The run will be marked as failed.", e));
       provisionerNotifier.deprovisioned(taskInfo.getProgramRunId());
       return () -> { };
     }
@@ -423,7 +425,9 @@ public class ProvisioningService extends AbstractIdleService {
       context = createContext(taskInfo.getProgramRunId(), taskInfo.getUser(), properties,
                               createSSHContext(taskInfo.getSecureKeyInfo()));
     } catch (InvalidMacroException e) {
-      LOG.error("Could not evaluate macros while deprovisoning. The cluster will be marked as orphaned.", e);
+      runWithProgramLogging(taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
+                            () -> LOG.error("Could not evaluate macros while deprovisoning. "
+                                              + "The cluster will be marked as orphaned.", e));
       provisionerNotifier.orphaned(taskInfo.getProgramRunId());
       return () -> { };
     }
