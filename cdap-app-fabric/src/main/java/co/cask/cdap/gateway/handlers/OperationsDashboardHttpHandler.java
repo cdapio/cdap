@@ -110,6 +110,29 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
 
     Set<NamespaceId> namespaceIds = namespaces.stream().map(NamespaceId::new).collect(Collectors.toSet());
     long endTimeSecs = startTimeSecs + durationTimeSecs;
+
+    List<DashboardProgramRunRecord> result = new ArrayList<>();
+    // add combined historical runs and active runs to the result
+    result.addAll(getExistingRuns(namespaceIds, startTimeSecs, endTimeSecs));
+    // if the end time is in the future, also add scheduled program runs to the result
+      if (endTimeSecs > TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())) {
+      result.addAll(getAllScheduledRuns(namespaceIds, startTimeSecs, endTimeSecs));
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+  }
+
+  /**
+   * Gets historical program runs and active program runs within the time range from the given namespaces.
+   *
+   * @param namespaceIds the namespaces to get the program runs from
+   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. only program runs that stopped at
+   *                      or after the startTimeSecs will be returned)
+   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. only program runs that started before
+   *                    the endTimeSecs will be returned)
+   * @return a list of historical and active dashboard program run records
+   */
+  private List<DashboardProgramRunRecord> getExistingRuns(Set<NamespaceId> namespaceIds,
+                                                          long startTimeSecs, long endTimeSecs) {
     Map<ProgramRunId, RunRecordMeta> historicalRuns =
       // TODO: [CDAP-13352] Currently, to get active program runs within a time range,
       // a full table scan is required in AppMetaStore. Performance improvement will be done.
@@ -121,23 +144,33 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     Stream<DashboardProgramRunRecord> activeRecords =
       store.getActiveRuns(namespaceIds, run -> run.getStartTs() < endTimeSecs).values().stream()
         .map(OperationsDashboardHttpHandler::runRecordToDashboardRecord);
+    return Stream.concat(historicalRecords, activeRecords).collect(Collectors.toList());
+  }
+
+  /**
+   * Gets all the scheduled program run in the given time range from the given namespaces
+   *
+   * @param namespaceIds the namespaces to get the program runs from
+   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
+   *                      equal to the start will be returned)
+   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
+   *                    will be returned)
+   * @return a list of dashboard program run records with scheduled time as start time
+   */
+  private List<DashboardProgramRunRecord> getAllScheduledRuns(Set<NamespaceId> namespaceIds,
+                                   long startTimeSecs, long endTimeSecs) {
     List<DashboardProgramRunRecord> result = new ArrayList<>();
-    // add combined historical runs and active runs to the result
-    result.addAll(Stream.concat(historicalRecords, activeRecords).collect(Collectors.toList()));
-    // if the end time is in the future, also add scheduled program runs to the result
-      if (endTimeSecs > TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())) {
-      // get enabled time schedules from all given namespaces
-      getEnabledTimeSchedules(namespaceIds)
-        // for each schedule, add all the scheduled runs within given the time range to the result
-        .forEach(schedule -> {
-          try {
-            result.addAll(getScheduledDashboardRecords(schedule, startTimeSecs, endTimeSecs));
-          } catch (Exception e) {
-            LOG.error("Failed to get scheduled program runs for schedule {}", schedule, e);
-          }
-        });
-    }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+    // get enabled time schedules from all given namespaces
+    getEnabledTimeSchedules(namespaceIds)
+      // for each schedule, add all the scheduled runs within given the time range to the result
+      .forEach(schedule -> {
+        try {
+          result.addAll(getScheduledDashboardRecords(schedule, startTimeSecs, endTimeSecs));
+        } catch (Exception e) {
+          LOG.error("Failed to get scheduled program runs for schedule {}", schedule, e);
+        }
+      });
+    return result;
   }
 
   /**
@@ -179,8 +212,8 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
       new KerberosName(nsPrincipal).getServiceName() : null;
     // get all the scheduled runtimes within the given time range of the given program
     List<ScheduledRuntime> scheduledRuntimes =
-      timeSchedulerService.nextScheduledRuntime(programId, programId.getType().getSchedulableType(), startTimeSecs,
-        endTimeSecs);
+      timeSchedulerService.getAllScheduledRunTimes(programId, programId.getType().getSchedulableType(), startTimeSecs,
+                                                   endTimeSecs);
     // for each scheduled runtime, construct a dashboard record for it with the scheduled time as start time
     return scheduledRuntimes.stream()
       .map(scheduledRuntime -> new DashboardProgramRunRecord(programId.getNamespace(), artifactSummary,

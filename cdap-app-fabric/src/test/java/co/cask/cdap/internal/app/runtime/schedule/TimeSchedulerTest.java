@@ -61,8 +61,8 @@ public class TimeSchedulerTest extends AppFabricTestBase {
     timeScheduler.addProgramSchedule(sched);
     timeScheduler.resumeProgramSchedule(sched);
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + TimeUnit.HOURS.toSeconds(1);
-    List<ScheduledRuntime> nextRuntimes = timeScheduler.nextScheduledRuntime(PROG1_ID, SchedulableProgramType.WORKFLOW,
-      startTime, startTime + TimeUnit.HOURS.toSeconds(2));
+    List<ScheduledRuntime> nextRuntimes = timeScheduler.getAllScheduledRunTimes(PROG1_ID, SchedulableProgramType.WORKFLOW,
+                                                                                startTime, startTime + TimeUnit.HOURS.toSeconds(2));
     // since the time range is inclusive at the start and exclusive at the end,
     // in a 2-hour time range, the number of times that the schedule will be triggered is 2 hour / 5 min = 24
     Assert.assertEquals(TimeUnit.HOURS.toSeconds(2) / TimeUnit.MINUTES.toSeconds(5),

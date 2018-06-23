@@ -118,7 +118,7 @@ public interface TimeSchedulerService extends Service {
    *         or if the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType,
-                                              long startTimeSecs, long endTimeSecs)
+  List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program, SchedulableProgramType programType,
+                                                 long startTimeSecs, long endTimeSecs)
     throws SchedulerException;
 }
