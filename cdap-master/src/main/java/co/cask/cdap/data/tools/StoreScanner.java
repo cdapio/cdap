@@ -89,13 +89,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
- * Because the JobQueue is scanned over multiple transactions, it will be an inconsistent view.
- * The same Job will not be counted multiple times, but some Jobs may be missed if they were deleted or added during
- * the scan. The count of the Job State may also be inconsistent.
- *
- * The publish timestamp of the last message processed from the topics will also be inconsistent from the Jobs in the
- * JobQueue.
+ * Adds run records into Default store and measures the time of querying a given range of run records.
  */
 public class StoreScanner extends AbstractIdleService {
 
@@ -185,13 +179,13 @@ public class StoreScanner extends AbstractIdleService {
   public static void main(String[] args) throws Exception {
     Options options = new Options()
       .addOption(new Option("h", "help", false, "Print this usage message."))
+      .addOption(new Option("n", "number", true, "Number of run records to generate. Default is 0"))
       .addOption(new Option("s", "start", true, "Starting offset for generating records"))
-      .addOption(new Option("b", "begin", true, "Begin offset for querying records"))
-      .addOption(new Option("e", "end", true, "End offset for querying records"))
-      .addOption(new Option("ns", "namesapces", true, "namespaces to query"))
-      .addOption(new Option("n", "number", true, "Number of run records to generate"))
-      .addOption(new Option("d", "delete", false, "delete runs in the store"))
-      .addOption(new Option("t", "trace", false, "Trace mode. Prints all of the jobs being debugged."));
+      .addOption(new Option("b", "begin", true, "Begin offset for querying records. Default is 0"))
+      .addOption(new Option("e", "end", true, "End offset for querying records. Default is 10"))
+      .addOption(new Option("ns", "namespaces", true, "Comma separated namespaces to query. Available namespaces are " +
+        "are ns1, ns2, ..., ns6. If not specified, run records from all these namespaces will be queried."))
+      .addOption(new Option("d", "delete", false, "Delete all existing run records in the store"));
 
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
@@ -202,7 +196,8 @@ public class StoreScanner extends AbstractIdleService {
       HelpFormatter helpFormatter = new HelpFormatter();
       helpFormatter.printHelp(
         StoreScanner.class.getName(),
-        "Scans the JobQueueDataset and prints statistics about the Jobs in it.",
+        "Adds a given number of run records in the DefaultStore and measures the time spent on scanning " +
+          "a given range of run records.",
         options, "");
       System.exit(0);
     }
@@ -273,7 +268,7 @@ public class StoreScanner extends AbstractIdleService {
       scanner.getStore().getHistoricalRuns(ns, begin, end, 100);
 //    Set<ProgramRunId> runs =
 //      scanner.getStore().getHistoricalRunIds(ns, begin, end, 100);
-    System.out.println(String.format("Time used for query [%d, %d) = %d", begin, end,
+    System.out.println(String.format("Time used for query [%d, %d) = %d ms", begin, end,
                                      (System.currentTimeMillis() - before)));
     System.out.println("Runs: " + runs);
     scanner.stopAndWait();
