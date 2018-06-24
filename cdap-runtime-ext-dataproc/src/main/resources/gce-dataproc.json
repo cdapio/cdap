@@ -158,7 +158,7 @@
               8
             ],
             "size": "small",
-            "default": 4
+            "default": 1
           }
         },
         {
@@ -167,7 +167,7 @@
           "name": "masterMemoryMB",
           "description": "The amount of memory in GB to allocate for a master node",
           "widget-attributes": {
-            "default": 15360,
+            "default": 4096,
             "min": 256,
             "size": "small"
           }
@@ -204,7 +204,7 @@
               7,
               8
             ],
-            "default": 4,
+            "default": 2,
             "size": "small"
           }
         },
@@ -214,7 +214,7 @@
           "name": "workerMemoryMB",
           "description": "The amount of memory in GB to allocate for a worker node",
           "widget-attributes": {
-            "default": 15360,
+            "default": 8192,
             "min": 256,
             "size": "small"
           }
