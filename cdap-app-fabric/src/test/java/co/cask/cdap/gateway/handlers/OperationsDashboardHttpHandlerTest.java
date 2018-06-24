@@ -123,8 +123,9 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     scheduler.addSchedule(sched2);
     scheduler.enableSchedule(sched2.getScheduleId());
     long currentTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-    // get ops dashboard results between current time and current time + 3600 from TEST_NAMESPACE1 and TEST_NAMESPACE2
+    // the duration of the query time range
     int durationSecs = 3600;
+    // get ops dashboard results between current time and current time + 3600 from TEST_NAMESPACE1 and TEST_NAMESPACE2
     String opsDashboardQueryPath =
       String.format("%s/dashboard?start=%d&duration=%d&namespace=%s&namespace=%s",
         BASE_PATH, currentTime, durationSecs, TEST_NAMESPACE1, TEST_NAMESPACE2);
@@ -137,11 +138,19 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
       dashboardRecords.stream().filter(record -> SCHEDULED_PROG1_ID.getProgram().equals(record.getProgram())).count());
     Assert.assertEquals(expectedScheduledProgram2,
       dashboardRecords.stream().filter(record -> SCHEDULED_PROG2_ID.getProgram().equals(record.getProgram())).count());
+    // get ops dashboard results between current time - 7200 and current time - 3600
+    // from TEST_NAMESPACE1 and TEST_NAMESPACE2
+    String beforeCurrentTimeQueryPath =
+      String.format("%s/dashboard?start=%d&duration=%d&namespace=%s&namespace=%s",
+                    BASE_PATH, currentTime - 2 * durationSecs, durationSecs, TEST_NAMESPACE1, TEST_NAMESPACE2);
+    // assert that there's no scheduled runs returned when the end of query time range is before current time
+    Assert.assertEquals(0, getDashboardRecords(beforeCurrentTimeQueryPath).size());
     // disable the schedules
     scheduler.disableSchedule(sched1.getScheduleId());
     scheduler.disableSchedule(sched2.getScheduleId());
     // assert that there's no scheduled runs once the schedules are disabled
     Assert.assertEquals(0, getDashboardRecords(opsDashboardQueryPath).size());
+
   }
 
   @Test
