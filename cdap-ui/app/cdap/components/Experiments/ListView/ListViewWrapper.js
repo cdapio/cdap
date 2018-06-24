@@ -146,8 +146,8 @@ const renderGrid = (experiments, sortMethod, sortColumn) => {
               >
                 <div>
                   <h5>
-                    <div>{experiment.name}</div>
-                    <small>{experiment.description}</small>
+                    <div className="experiment-metadata">{experiment.name}</div>
+                    <small className="experiment-metadata">{experiment.description}</small>
                   </h5>
                 </div>
                 <div>{experiment.numOfModels}</div>

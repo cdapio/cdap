@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
-import {FormGroup, Label, Col, Input, Row} from 'reactstrap';
+import {FormGroup, Label, Col, Input} from 'reactstrap';
 import {
   onModelNameChange,
   onModelDescriptionChange,
@@ -80,25 +80,18 @@ CreateModelBtn.propTypes = {
   createModel: PropTypes.func
 };
 
-const ExperimentMetadata = ({experimentOutcome, experimentDescription}) => {
+const ExperimentMetadata = ({experimentOutcome}) => {
   return (
-    <div className="experiment-metadata-popover">
-      <Col xs="12">
-        <Row>
-          <Col xs="6">Outcome:</Col>
-          <Col xs="6">{experimentOutcome}</Col>
-        </Row>
-        <Row>
-          <Col xs="6">Description:</Col>
-          <Col xs="6">{experimentDescription}</Col>
-        </Row>
-      </Col>
-    </div>
+    <Col xs={12}>
+      <div className="experiment-metadata-wrapper">
+        <div>Outcome:</div>
+        <div>{experimentOutcome}</div>
+      </div>
+    </Col>
   );
 };
 ExperimentMetadata.propTypes = {
-  experimentOutcome: PropTypes.string,
-  experimentDescription: PropTypes.string
+  experimentOutcome: PropTypes.string
 };
 
 const NewModelPopoverWrapper = ({popover, experimentName}) => {
@@ -135,8 +128,7 @@ const mapDispatchToModelDescriptionProps = () => ({ onModelDescriptionChange });
 const mapStateToCreateModelBtnProps = (state) => ({ state: state.model_create});
 const mapDispatchToCreateModelBtnProps = () => ({ createModel });
 const mapStateToExperimentMetadataProps = (state) => ({
-  experimentOutcome: state.experiments_create.outcome,
-  experimentDescription: state.experiments_create.description
+  experimentOutcome: state.experiments_create.outcome
 });
 const mapNMPWStateToProps = (state) => ({
   popover: state.experiments_create.popover,

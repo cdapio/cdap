@@ -90,6 +90,13 @@
       small {
         color: $cdap-lightgray;
       }
+      .experiment-metadata {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+      }
     }
     a.grid-row {
       color: inherit;

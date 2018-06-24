@@ -31,9 +31,9 @@ const ExperimentMetadataWrapper = ({modelName, modelDescription, directives, alg
       <div>
         <strong>Model Name: </strong>
         <span>{modelName}</span>
-        <div>
+        <div className="model-description-wrapper">
           <strong>Model Description: </strong>
-          <span>{modelDescription}</span>
+          <p className="model-description">{modelDescription}</p>
         </div>
       </div>
       <div>
