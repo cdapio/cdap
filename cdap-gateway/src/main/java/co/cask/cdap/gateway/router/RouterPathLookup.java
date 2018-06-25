@@ -114,7 +114,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // SecureStoreHandler
       endsWith(uriParts, "metadata", "properties") || endsWith(uriParts, "metadata", "properties", "?") ||
       endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", "?") ||
-      endsWith(uriParts, "metadata", "search") || endsWith(uriParts, "lineage"))) {
+      endsWith(uriParts, "metadata", "search") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
+      matches(uriParts, "v3", "namespaces", null, "streams", null, "lineage"))) {
       return METADATA_SERVICE;
     } else if (matches(uriParts, "v3", "security", "authorization") ||
       matches(uriParts, "v3", "namespaces", null, "securekeys")) {
