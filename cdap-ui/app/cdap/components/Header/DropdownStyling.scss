@@ -16,7 +16,6 @@
 
 @import '../../styles/variables.scss';
 
-$menu_font_color: white;
 $dropdown_bg_color: #333333;
 $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
 
@@ -34,7 +33,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
     &:focus {
       outline: none;
       background: transparent;
-      color: $menu_font_color;
+      color: inherit;
     }
     .btn {
       background: transparent;
@@ -42,7 +41,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       &:focus {
         outline: none;
         background: transparent;
-        color: $menu_font_color;
+        color: inherit;
       }
     }
   }
@@ -53,14 +52,14 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       }
       &:active,
       &:hover {
-        color: white;
+        color: inherit;
         background: transparent;
       }
       &.active {
         &:hover,
         &:focus,
         &:active {
-          color: white;
+          color: inherit;
         }
       }
       &:after {
@@ -79,7 +78,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       background: transparent;
       padding: 0;
       display: block;
-      color: white;
+      color: inherit;
       box-shadow: none;
     }
     .dropdown-menu {
@@ -94,6 +93,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
         width: 160px;
         padding: 2px;
         margin: 0;
+        color: black;
 
         a {
           padding: 10px 16px;

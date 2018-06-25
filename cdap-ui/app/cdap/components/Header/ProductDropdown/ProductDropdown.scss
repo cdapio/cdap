@@ -66,10 +66,10 @@
       &:focus {
         background: transparent;
         outline: none;
-        color: white;
+        color: inherit;
         .cdap-secure-mode-icon,
         .cdap-mode {
-          color: white;
+          color: inherit;
         }
       }
       &:after {
@@ -86,7 +86,7 @@
         }
       }
       .cdap-mode {
-        color: white;
+        color: inherit;
         margin: 0 5px;
         vertical-align: bottom;
       }
@@ -101,7 +101,7 @@
     .dropdown-menu {
       border-radius: 0;
       background: $gcp-blue;
-      color: white;
+      color: inherit;
       min-width: 180px;
       max-width: 210px;
 

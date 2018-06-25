@@ -17,26 +17,21 @@
 @import '../../styles/variables.scss';
 @import './DropdownStyling.scss';
 
+$header-bg-color: rgba(204, 204, 204, 0.7);
+
 .global-navbar {
   height: 50px;
-  background: $gcp-blue;
+  background: $header-bg-color;
   position: fixed;
   width: 100%;
   top: 0;
   z-index: 1000;
   display: flex;
+  border-bottom: 2px solid $gcp-blue;
+  box-shadow: 0px 1px 5px 0px $gcp-blue;
 
-  a,
-  button,
-  i,
-  li,
-  li a,
-  .with-pointer,
-  .dropdown-item {
-    color: white;
-  }
   .with-pointer {
-    padding-left: 10px;
+    padding-left: 15px;
     cursor: pointer;
   }
 
@@ -66,6 +61,7 @@
     min-width: 108px;
     img {
       height: 50px;
+      filter: invert(80%);
     }
   }
 
@@ -78,11 +74,15 @@
       display: none;
       &.minimized {
         display: block;
-        background-color: inherit;
+        background-color: $grey-06;
         width: 100%;
         position: absolute;
         top: 50px;
         left: 0;
+        text-align: right;
+        #header-namespace-dropdown {
+          text-align: left;
+        }
       }
     }
     line-height: 50px;
@@ -144,14 +144,14 @@
 
     &.control-center {
       > li {
-        padding: 5px;
+        padding: 5px 10px;
         border-radius: 4px;
         margin: 0 5px;
 
         &:hover,
         &:active,
         &.active {
-          color: white;
+          color: $gcp-blue;
           background: rgba(255, 255, 255, 0.3);
         }
       }
@@ -162,12 +162,9 @@
     .dropdown {
       .dropdown-menu {
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
-        color: black;
+        color: inherit;
         background-color: white;
 
-        .dropdown-item {
-          color: black;
-        }
         .dropdown-divider {
           height: 1px;
           margin: 0;
@@ -181,7 +178,7 @@
         color: inherit;
         &.active {
           &:hover {
-            color: white;
+            color: inherit;
           }
         }
       }

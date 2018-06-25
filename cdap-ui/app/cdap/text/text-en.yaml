@@ -83,7 +83,7 @@ commons:
     reset: Reset
     valueLabel: Value
     valuePlaceholder: value
-  market: Repository
+  market: Hub
   milliSecondsShortLabel: ms
   nameLabel: Name
   noLabel: No
