@@ -18,6 +18,7 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import NamespaceStore from 'services/NamespaceStore';
+import {Link} from 'react-router-dom';
 
 export default function UsageTab({entity}) {
   let namespace = NamespaceStore.getState().selectedNamespace;
@@ -35,7 +36,7 @@ export default function UsageTab({entity}) {
   url += `&sourceUrl=${encodedSource}`;
 
   return (
-    <div className="embed-responsive embed-responsive-16by9">
+    <div className="dataset-lineage-tab embed-responsive embed-responsive-16by9">
       <iframe
         src={url}
         frameBorder="0"
@@ -44,6 +45,14 @@ export default function UsageTab({entity}) {
         className="embed-responsive-item"
       >
       </iframe>
+      <div className="field-lineage-link">
+        <Link
+          className="btn btn-secondary"
+          to={`/ns/${namespace}/datasets/${entity.id}/fields`}
+        >
+          Field Level Lineage
+        </Link>
+      </div>
     </div>
   );
 }

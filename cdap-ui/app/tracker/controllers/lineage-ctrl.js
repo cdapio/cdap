@@ -65,6 +65,12 @@ class TrackerLineageController{
 
     this.selectedTimeRange = this.findTimeRange();
     this.getLineage(this.$state.params.entityType, this.$state.params.entityId);
+
+    this.fieldLevelLineageLink = window.getAbsUIUrl({
+      namespaceId: this.$state.params.namespace,
+      entityType: 'datasets',
+      entityId: this.$state.params.entityId
+    }).concat('/fields');
   }
 
   findTimeRange() {
