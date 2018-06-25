@@ -249,7 +249,7 @@ public class ProvisioningServiceTest {
     Map<String, String> systemArgs = new HashMap<>();
     Map<String, String> userArgs = new HashMap<>();
 
-    Profile profile = new Profile(ProfileId.DEFAULT.getProfile(), "desc", provisionerInfo);
+    Profile profile = new Profile(ProfileId.NATIVE.getProfile(), "desc", provisionerInfo);
     SystemArguments.addProfileArgs(systemArgs, profile);
     ProgramOptions programOptions = new SimpleProgramOptions(programRunId.getParent(),
                                                              new BasicArguments(systemArgs),

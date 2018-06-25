@@ -28,9 +28,9 @@ import java.util.Objects;
  * environment. A profile is identified by name and must be assigned a provisioner and its related configuration.
  */
 public class Profile {
-  public static final Profile DEFAULT = new Profile("default", "Runs programs locally on the cluster",
-                                                    EntityScope.SYSTEM,
-                                                    new ProvisionerInfo("yarn", Collections.emptyList()));
+  public static final Profile NATIVE = new Profile("native", "Runs programs locally on the cluster",
+                                                   EntityScope.SYSTEM,
+                                                   new ProvisionerInfo("yarn", Collections.emptyList()));
   private final String name;
   private final String description;
   private final EntityScope scope;

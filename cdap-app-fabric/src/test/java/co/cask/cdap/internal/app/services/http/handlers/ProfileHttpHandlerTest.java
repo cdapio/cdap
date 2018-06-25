@@ -57,11 +57,11 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     // try to list all profiles including system namespace before putting a new one, there should only exist a default
     // profile
     profiles = listProfiles(NamespaceId.DEFAULT, true, 200);
-    Assert.assertEquals(Collections.singletonList(Profile.DEFAULT), profiles);
+    Assert.assertEquals(Collections.singletonList(Profile.NATIVE), profiles);
 
     // test get single profile endpoint
-    Profile defaultProfile = getProfile(NamespaceId.SYSTEM.profile("default"), 200).get();
-    Assert.assertEquals(Profile.DEFAULT, defaultProfile);
+    Profile defaultProfile = getProfile(ProfileId.NATIVE, 200).get();
+    Assert.assertEquals(Profile.NATIVE, defaultProfile);
 
     // get a nonexisting profile should get a not found code
     getProfile(NamespaceId.DEFAULT.profile("nonExisting"), 404);
@@ -86,7 +86,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
 
     // list all profiles, should get 2 profiles
     List<Profile> profiles = listProfiles(NamespaceId.DEFAULT, true, 200);
-    Set<Profile> expectedList = ImmutableSet.of(Profile.DEFAULT, expected);
+    Set<Profile> expectedList = ImmutableSet.of(Profile.NATIVE, expected);
     Assert.assertEquals(expectedList.size(), profiles.size());
     Assert.assertEquals(expectedList, new HashSet<>(profiles));
 

@@ -68,7 +68,7 @@ public final class DefaultEntityEnsurer extends AbstractService {
         }
 
         try {
-          profileService.createIfNotExists(ProfileId.DEFAULT, Profile.DEFAULT);
+          profileService.createIfNotExists(ProfileId.NATIVE, Profile.NATIVE);
         } catch (Exception e) {
           failed = true;
           if (failureException == null) {

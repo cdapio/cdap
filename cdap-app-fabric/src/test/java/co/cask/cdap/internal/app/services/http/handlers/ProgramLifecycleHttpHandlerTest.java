@@ -1278,7 +1278,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testStartProgramWithDisabledRuntimeArgs() throws Exception {
     // We will use default profile now for testing since we treat it as on premise and all other profiles as isolated
     // See ProgramLifeCycleService runInternal() method for more information
-    disableProfile(ProfileId.DEFAULT, 200);
+    disableProfile(ProfileId.NATIVE, 200);
 
     // deploy, check the status
     deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
@@ -1291,12 +1291,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(STOPPED, getProgramStatus(programId));
 
     // start workflow should give a 409 since we have a runtime argument associated with a disabled profile
-    ImmutableMap<String, String> args = ImmutableMap.of(SystemArguments.PROFILE_NAME, "SYSTEM:default");
+    ImmutableMap<String, String> args = ImmutableMap.of(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     startProgram(programId, args, 409);
     Assert.assertEquals(STOPPED, getProgramStatus(programId));
 
     // enable the profile and flow should be able to start
-    enableProfile(ProfileId.DEFAULT, 200);
+    enableProfile(ProfileId.NATIVE, 200);
 
     // start a flow and check the status
     startProgram(programId, args, 200);

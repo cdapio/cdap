@@ -168,18 +168,18 @@ public class SystemArgumentsTest {
     Assert.assertFalse(SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).isPresent());
 
     // without scope the profile will be considered in user scope
-    args.put("system.profile.name", "MyProfile");
     ProfileId expected = NamespaceId.DEFAULT.profile("MyProfile");
+    args.put("system.profile.name", expected.getProfile());
     Assert.assertEquals(expected, SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).get());
 
     // put a profile with scope SYSTEM, the profile we get should be in system namespace
-    args.put("system.profile.name", "SYSTEM:MyProfile");
     expected = NamespaceId.SYSTEM.profile("MyProfile");
+    args.put("system.profile.name", expected.getScopedName());
     Assert.assertEquals(expected, SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).get());
 
     // put a profile with scope USER, the profile we get should be in the user namespace
-    args.put("system.profile.name", "USER:MyProfile");
     expected = NamespaceId.DEFAULT.profile("MyProfile");
+    args.put("system.profile.name", expected.getScopedName());
     Assert.assertEquals(expected, SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).get());
   }
 }
