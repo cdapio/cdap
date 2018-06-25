@@ -20,13 +20,14 @@ import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.SparkConf;
 
+import java.util.List;
 import javax.annotation.Nullable;
-
 /**
  * Implementation of SparkPluginContext that delegates to a SparkContext.
  */

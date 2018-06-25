@@ -26,6 +26,7 @@ import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.spark.NoLookupProvider;
 import co.cask.cdap.etl.spark.SparkPipelineRuntime;
@@ -35,6 +36,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -167,6 +169,11 @@ public class SparkStreamingExecutionContext extends AbstractTransformContext imp
 
   @Override
   public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
+    throw new UnsupportedOperationException("Not supported in Spark Streaming.");
+  }
+
+  @Override
+  public void record(List<Operation> operations) {
     throw new UnsupportedOperationException("Not supported in Spark Streaming.");
   }
 }

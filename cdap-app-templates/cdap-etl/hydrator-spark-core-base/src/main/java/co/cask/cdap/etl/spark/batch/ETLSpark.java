@@ -40,6 +40,7 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
@@ -48,6 +49,7 @@ import co.cask.cdap.etl.batch.connector.SingleConnectorFactory;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.OperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
@@ -87,6 +89,7 @@ public class ETLSpark extends AbstractSpark {
     .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
     .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
     .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
+    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
 
   private final BatchPhaseSpec phaseSpec;
@@ -147,6 +150,8 @@ public class ETLSpark extends AbstractSpark {
     final Admin admin = context.getAdmin();
 
     PipelinePhase phase = phaseSpec.getPhase();
+    // Collect field operations emitted by various stages in this MapReduce program
+    final Map<String, List<Operation>> stageOperations = new HashMap<>();
     // go through in topological order so that arguments set by one stage are seen by stages after it
     for (final String stageName : phase.getDag().getTopologicalOrder()) {
       final StageSpec stageSpec = phase.getStage(stageName);
@@ -167,7 +172,13 @@ public class ETLSpark extends AbstractSpark {
               return new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, datasetContext, stageSpec);
             }
           };
-        submitterPlugin = new SubmitterPlugin(stageName, context, batchSource, contextProvider);
+        submitterPlugin = new SubmitterPlugin(stageName, context, batchSource, contextProvider,
+                new SubmitterPlugin.PrepareAction<SparkBatchSourceContext>() {
+          @Override
+          public void act(SparkBatchSourceContext context) {
+            stageOperations.put(stageName, context.getOperations());
+          }
+        });
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -179,7 +190,13 @@ public class ETLSpark extends AbstractSpark {
               return new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, datasetContext, stageSpec);
             }
           };
-        submitterPlugin = new SubmitterPlugin(stageName, context, transform, contextProvider);
+        submitterPlugin = new SubmitterPlugin(stageName, context, transform, contextProvider,
+                new SubmitterPlugin.PrepareAction<SparkBatchSourceContext>() {
+          @Override
+          public void act(SparkBatchSourceContext context) {
+            stageOperations.put(stageName, context.getOperations());
+          }
+        });
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
 
@@ -190,7 +207,13 @@ public class ETLSpark extends AbstractSpark {
             return new SparkBatchSinkContext(sinkFactory, context, pipelineRuntime, datasetContext, stageSpec);
           }
         };
-        submitterPlugin = new SubmitterPlugin(stageName, context, batchSink, contextProvider);
+        submitterPlugin = new SubmitterPlugin(stageName, context, batchSink, contextProvider,
+                new SubmitterPlugin.PrepareAction<SparkBatchSinkContext>() {
+          @Override
+          public void act(SparkBatchSinkContext context) {
+            stageOperations.put(stageName, context.getOperations());
+          }
+        });
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -209,7 +232,13 @@ public class ETLSpark extends AbstractSpark {
         BatchAggregator aggregator = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<DefaultAggregatorContext> contextProvider =
           new AggregatorContextProvider(pipelineRuntime, stageSpec, admin);
-        submitterPlugin = new SubmitterPlugin(stageName, context, aggregator, contextProvider);
+        submitterPlugin = new SubmitterPlugin(stageName, context, aggregator, contextProvider,
+                new SubmitterPlugin.PrepareAction<DefaultAggregatorContext>() {
+          @Override
+          public void act(DefaultAggregatorContext context) {
+            stageOperations.put(stageName, context.getOperations());
+          }
+        });
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -222,6 +251,7 @@ public class ETLSpark extends AbstractSpark {
             @Override
             public void act(DefaultJoinerContext sparkJoinerContext) {
               stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());
+              stageOperations.put(stageName, sparkJoinerContext.getOperations());
             }
           });
 
@@ -249,6 +279,8 @@ public class ETLSpark extends AbstractSpark {
       for (Map.Entry<String, String> entry : pipelineRuntime.getArguments().getAddedArguments().entrySet()) {
         token.put(entry.getKey(), entry.getValue());
       }
+      // Put the collected field operations in workflow token
+      token.put(Constants.FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN, GSON.toJson(stageOperations));
     }
   }
 
