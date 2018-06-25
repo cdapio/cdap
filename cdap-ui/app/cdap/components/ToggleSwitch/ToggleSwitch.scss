@@ -16,7 +16,7 @@
 
 @import '../../styles/variables.scss';
 $switch-btn-width: 14px;
-$widget-height: 25px;
+$widget-height: 32px;
 $switch-button-margin-top: 2px;
 $on-color: $green-02;
 $off-color: $blue-02;
@@ -34,7 +34,7 @@ $off-color: $blue-02;
     display: flex;
     align-items: center;
     justify-content: space-evenly;
-    padding: 5px;
+    padding: 2px;
 
     .switch-button {
       width: $switch-btn-width;
@@ -49,7 +49,7 @@ $off-color: $blue-02;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 5px;
+      padding: 0 8px;
     }
 
     &.on {

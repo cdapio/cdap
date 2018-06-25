@@ -19,6 +19,10 @@
   <div class="toggle-switch"
        ng-class="{'on': isOn, 'off': !isOn }"
        ng-click="onToggle()">
-      <span class="switch-button"></span>
+      <div class="switch-button"></div>
+      <div class="label"
+           ng-class="{'on-label': isOn, 'off-label': !isOn }">
+        <span ng-if="isOn">On</span>
+        <span ng-if="!isOn">Off</span>
   </div>
 </div>

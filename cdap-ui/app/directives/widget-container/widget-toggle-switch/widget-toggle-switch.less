@@ -15,11 +15,17 @@
  */
 
 @import "../../../styles/variables.less";
+@container-width: 50px;
+@switch-btn-width: 14px;
+@widget-height: 32px;
+@switch-button-margin-top: 2px;
+@on-color: @green-02;
+@off-color: @blue-02;
 
 .ng-toggle-switch-container {
   display: inline-block;
-  height: 32px;
-  width: 65px;
+  height: @widget-height;
+  width: @container-width;
 
   .toggle-switch {
     height: 100%;
@@ -34,40 +40,37 @@
 
     .switch-button {
       position: absolute;
-      top: 2px;
-      display: block;
-      width: 14px;
-      height: 28px;
+      top: @switch-button-margin-top;
+      width: @switch-btn-width;
+      height: @widget-height - (@switch-button-margin-top * 2);
       background-color: white;
       border-radius: 5px;
+    }
 
-      &:after,
-      &:before {
-        display: block;
-        font-size: 11px;
-        position: absolute;
-        top: 5px;
+    .label {
+      height: 100%;
+      width: @container-width - @switch-btn-width;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &.off-label {
+        margin-left: @switch-btn-width;
       }
     }
 
     &.on {
-      background-color: @brand-success;
+      background-color: @on-color;
       .switch-button {
         right: 2px;
-        &:after {
-          content: 'On';
-          right: 32px;
-        }
       }
     }
+
     &.off {
-      background-color: @blue-02;
+      background-color: @off-color;
       .switch-button {
         left: 2px;
-        &:before {
-          content: 'Off';
-          left: 32px;
-        }
       }
     }
   }
