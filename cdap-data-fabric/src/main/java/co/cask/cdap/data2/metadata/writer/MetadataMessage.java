@@ -37,7 +37,8 @@ public final class MetadataMessage {
     LINEAGE,
     USAGE,
     WORKFLOW_TOKEN,
-    WORKFLOW_STATE
+    WORKFLOW_STATE,
+    METADATA_OPERATION
   }
 
   private final Type type;

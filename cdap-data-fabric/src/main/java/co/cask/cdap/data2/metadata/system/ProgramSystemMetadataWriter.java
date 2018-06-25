@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,12 +25,10 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,13 +64,12 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected String[] getSystemTagsToAdd() {
-    List<String> tags = ImmutableList.<String>builder()
+  protected Set<String> getSystemTagsToAdd() {
+    return ImmutableSet.<String>builder()
       .add(programId.getType().getPrettyName())
       .add(getMode())
       .addAll(getWorkflowNodes())
       .build();
-    return tags.toArray(new String[tags.size()]);
   }
 
   private String getMode() {

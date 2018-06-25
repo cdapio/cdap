@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,7 +62,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -187,7 +186,7 @@ public class MetadataStoreTest {
   private static InMemoryAuditPublisher auditPublisher;
 
   @BeforeClass
-  public static void setup() throws IOException {
+  public static void setup() {
     Injector injector = Guice.createInjector(
       new ConfigModule(),
       Modules.override(
@@ -215,12 +214,12 @@ public class MetadataStoreTest {
   }
 
   @Before
-  public void clearAudit() throws Exception {
+  public void clearAudit() {
     auditPublisher.popMessages();
   }
 
   @Test
-  public void testPublishing() throws InterruptedException {
+  public void testPublishing() {
     generateMetadataUpdates();
 
     // Audit messages for metadata changes
@@ -239,7 +238,7 @@ public class MetadataStoreTest {
   }
 
   @Test
-  public void testPublishingDisabled() throws InterruptedException {
+  public void testPublishingDisabled() {
     boolean auditEnabled = cConf.getBoolean(Constants.Audit.ENABLED);
     cConf.setBoolean(Constants.Audit.ENABLED, false);
     generateMetadataUpdates();
@@ -272,16 +271,13 @@ public class MetadataStoreTest {
     Set<String> flowSysTags = ImmutableSet.of("sysTag1");
     store.setProperties(MetadataScope.USER, flow1.toMetadataEntity(), flowUserProps);
     store.setProperties(MetadataScope.SYSTEM, flow1.toMetadataEntity(), flowSysProps);
-    store.addTags(MetadataScope.USER, flow1.toMetadataEntity(),
-                  flowUserTags.toArray(new String[flowUserTags.size()]));
-    store.addTags(MetadataScope.SYSTEM, flow1.toMetadataEntity(),
-                  flowSysTags.toArray(new String[flowSysTags.size()]));
-    store.addTags(MetadataScope.USER, stream1.toMetadataEntity(),
-                  streamUserTags.toArray(new String[streamUserTags.size()]));
-    store.removeTags(MetadataScope.USER, stream1.toMetadataEntity(),
-                     streamUserTags.toArray(new String[streamUserTags.size()]));
+    store.addTags(MetadataScope.USER, flow1.toMetadataEntity(), flowUserTags);
+    store.addTags(MetadataScope.SYSTEM, flow1.toMetadataEntity(), flowSysTags);
+    store.addTags(MetadataScope.USER, stream1.toMetadataEntity(), streamUserTags);
+    store.removeTags(MetadataScope.USER, stream1.toMetadataEntity(), streamUserTags);
     store.setProperties(MetadataScope.USER, stream1.toMetadataEntity(), flowUserProps);
-    store.removeProperties(MetadataScope.USER, stream1.toMetadataEntity(), "key1", "key2", "multiword");
+    store.removeProperties(MetadataScope.USER, stream1.toMetadataEntity(),
+                           ImmutableSet.of("key1", "key2", "multiword"));
 
     Map<String, String> streamUserProps = ImmutableMap.of("sKey1", "sValue1 sValue2",
                                                           "Key1", "Value1");
@@ -299,9 +295,9 @@ public class MetadataStoreTest {
       ImmutableMap.of(MetadataScope.USER, new Metadata(flowUserProps, flowUserTags),
                       MetadataScope.SYSTEM, new Metadata(flowSysProps, flowSysTags));
     Map<MetadataScope, Metadata> expectedStreamMetadata =
-      ImmutableMap.of(MetadataScope.USER, new Metadata(streamUserProps, Collections.<String>emptySet()));
+      ImmutableMap.of(MetadataScope.USER, new Metadata(streamUserProps, Collections.emptySet()));
     Map<MetadataScope, Metadata> expectedDatasetMetadata =
-      ImmutableMap.of(MetadataScope.USER, new Metadata(datasetUserProps, Collections.<String>emptySet()));
+      ImmutableMap.of(MetadataScope.USER, new Metadata(datasetUserProps, Collections.emptySet()));
     List<MetadataSearchResultRecordV2> expected =
       Lists.newArrayList(
         new MetadataSearchResultRecordV2(flow1,
@@ -333,20 +329,19 @@ public class MetadataStoreTest {
   // Tests pagination for search results queries that do not have indexes stored in sorted order
   // The pagination for these queries is done in DefaultMetadataStore, so adding this test here.
   @Test
-  public void testSearchPagination() throws BadRequestException {
+  public void testSearchPagination() {
     NamespaceId nsId = new NamespaceId("ns");
-    MetadataEntity ns = nsId.toMetadataEntity();
     MetadataEntity flow = nsId.app("app").flow("flow").toMetadataEntity();
     MetadataEntity stream = nsId.stream("stream").toMetadataEntity();
     MetadataEntity dataset = nsId.dataset("dataset").toMetadataEntity();
     // add a dummy entity which starts with _ to test that it doesnt show up see: CDAP-7910
     MetadataEntity trackerDataset = nsId.dataset("_auditLog").toMetadataEntity();
 
-    store.addTags(MetadataScope.USER, flow, "tag", "tag1");
-    store.addTags(MetadataScope.USER, stream, "tag2", "tag3 tag4");
-    store.addTags(MetadataScope.USER, dataset, "tag5 tag6", "tag7 tag8");
+    store.addTags(MetadataScope.USER, flow, ImmutableSet.of("tag", "tag1"));
+    store.addTags(MetadataScope.USER, stream, ImmutableSet.of("tag2", "tag3 tag4"));
+    store.addTags(MetadataScope.USER, dataset, ImmutableSet.of("tag5 tag6", "tag7 tag8"));
     // add bunch of tags to ensure higher weight to this entity in search result
-    store.addTags(MetadataScope.USER, trackerDataset, "tag9", "tag10", "tag11", "tag12", "tag13");
+    store.addTags(MetadataScope.USER, trackerDataset, ImmutableSet.of("tag9", "tag10", "tag11", "tag12", "tag13"));
 
     MetadataSearchResultRecordV2 flowSearchResult = new MetadataSearchResultRecordV2(flow);
     MetadataSearchResultRecordV2 streamSearchResult = new MetadataSearchResultRecordV2(stream);
@@ -427,34 +422,33 @@ public class MetadataStoreTest {
   }
 
   private MetadataSearchResponseV2 search(String ns, String searchQuery,
-                                          int offset, int limit, int numCursors) throws BadRequestException {
+                                          int offset, int limit, int numCursors) {
     return search(ns, searchQuery, offset, limit, numCursors, false);
   }
 
   private MetadataSearchResponseV2 search(String ns, String searchQuery,
-                                          int offset, int limit, int numCursors, boolean showHidden)
-    throws BadRequestException {
+                                          int offset, int limit, int numCursors, boolean showHidden) {
     return search(ns, searchQuery, offset, limit, numCursors, showHidden, SortInfo.DEFAULT);
   }
 
   private MetadataSearchResponseV2 search(String ns, String searchQuery,
-                                          int offset, int limit, int numCursors, boolean showHidden, SortInfo sortInfo)
-    throws BadRequestException {
+                                          int offset, int limit, int numCursors, boolean showHidden,
+                                          SortInfo sortInfo) {
     return store.search(
       ns, searchQuery, EnumSet.allOf(EntityTypeSimpleName.class),
       sortInfo, offset, limit, numCursors, "", showHidden, EnumSet.allOf(EntityScope.class));
   }
 
   private void generateMetadataUpdates() {
-    store.addTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags.iterator().next());
+    store.addTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags);
     store.setProperties(MetadataScope.USER, app.toMetadataEntity(), appProperties);
-    store.addTags(MetadataScope.USER, app.toMetadataEntity(), appTags.iterator().next());
+    store.addTags(MetadataScope.USER, app.toMetadataEntity(), appTags);
     store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), streamProperties);
     store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), streamProperties);
     store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), updatedStreamProperties);
-    store.addTags(MetadataScope.USER, flow.toMetadataEntity(), flowTags.iterator().next());
+    store.addTags(MetadataScope.USER, flow.toMetadataEntity(), flowTags);
     store.removeTags(MetadataScope.USER, flow.toMetadataEntity());
-    store.removeTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags.iterator().next());
+    store.removeTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags);
     store.removeProperties(MetadataScope.USER, stream.toMetadataEntity());
     store.removeMetadata(MetadataScope.USER, app.toMetadataEntity());
   }

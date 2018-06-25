@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,9 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -62,10 +64,8 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected String[] getSystemTagsToAdd() {
-    return new String[] {
-      EXPLORE_TAG
-    };
+  protected Set<String> getSystemTagsToAdd() {
+    return Collections.singleton(EXPLORE_TAG);
   }
 
   @Nullable

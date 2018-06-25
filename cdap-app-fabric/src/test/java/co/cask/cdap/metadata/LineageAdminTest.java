@@ -19,7 +19,6 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
@@ -130,20 +129,16 @@ public class LineageAdminTest extends AppFabricTestBase {
     metadataStore.setProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),
                                 run1AppMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1.getParent().toMetadataEntity(),
-                          run1AppMeta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, program1.getParent().toMetadataEntity(), run1AppMeta.getTags());
     metadataStore.setProperties(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1.toMetadataEntity(),
-                          run1ProgramMeta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getTags());
     metadataStore.setProperties(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset1.toMetadataEntity(),
-                          run1Data1Meta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getTags());
     metadataStore.setProperties(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset2.toMetadataEntity(),
-                          run1Data2Meta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getTags());
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
     // We need to use current time here as metadata store stores access time using current time
@@ -596,20 +591,16 @@ public class LineageAdminTest extends AppFabricTestBase {
     metadataStore.setProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),
                                 run1AppMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1.getParent().toMetadataEntity(),
-                          run1AppMeta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, program1.getParent().toMetadataEntity(), run1AppMeta.getTags());
     metadataStore.setProperties(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1.toMetadataEntity(),
-                          run1ProgramMeta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getTags());
     metadataStore.setProperties(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset1.toMetadataEntity(),
-                          run1Data1Meta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getTags());
     metadataStore.setProperties(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset2.toMetadataEntity(),
-                          run1Data2Meta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getTags());
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
     // We need to use current time here as metadata store stores access time using current time
@@ -821,7 +812,7 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private static final class NoOpEntityExistenceVerifier implements EntityExistenceVerifier<EntityId> {
     @Override
-    public void ensureExists(EntityId entityId) throws NotFoundException {
+    public void ensureExists(EntityId entityId) {
       // no-op
     }
   }
