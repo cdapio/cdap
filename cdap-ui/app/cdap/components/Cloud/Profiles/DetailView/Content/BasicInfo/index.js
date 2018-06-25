@@ -200,15 +200,17 @@ export default class ProfileDetailViewBasicInfo extends Component {
           <h2 className="profile-name">
             {profile.name}
           </h2>
-          {this.renderToggleSwitch(profile, profileIsDefault, profileIsEnabled, profileStatus)}
-          {this.renderDivider(profileIsDefault)}
-          <ActionsPopover
-            target={actionsElem}
-            namespace={namespace}
-            profile={profile}
-            onDeleteClick={this.toggleDeleteModal}
-            className={classnames({"float-right": profileIsDefault})}
-          />
+          <div className="profile-actions-wrapper">
+            {this.renderToggleSwitch(profile, profileIsDefault, profileIsEnabled, profileStatus)}
+            {this.renderDivider(profileIsDefault)}
+            <ActionsPopover
+              target={actionsElem}
+              namespace={namespace}
+              profile={profile}
+              onDeleteClick={this.toggleDeleteModal}
+              className={classnames({"float-right": profileIsDefault})}
+            />
+          </div>
         </div>
         <div className="profile-description">
           {profile.description}

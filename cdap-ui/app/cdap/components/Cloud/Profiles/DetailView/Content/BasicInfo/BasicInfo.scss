@@ -27,13 +27,17 @@ $grey-font-color: $grey-03;
       .profile-detail-top-panel {
         display: flex;
         align-items: center;
+        justify-content: space-between;
 
         .profile-name {
           display: inline-block;
         }
 
+        .profile-actions-wrapper {
+          display: flex;
+          align-items: center;
+        }
         .toggle-switch-container {
-          margin-left: auto;
           .toggle-switch.off {
             background-color: $disabled-switch-color;
           }
