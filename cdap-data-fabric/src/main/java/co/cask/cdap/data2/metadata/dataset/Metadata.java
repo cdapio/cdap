@@ -16,37 +16,59 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents the complete metadata of a {@link NamespacedEntityId} including its properties and tags.
+ * Represents the complete metadata of a {@link MetadataEntity} including its properties and tags.
  */
 public class Metadata {
-  private final NamespacedEntityId namespacedEntityId;
+  private final MetadataEntity metadataEntity;
   private final Map<String, String> properties;
   private final Set<String> tags;
+
+
+  public Metadata(MetadataEntity metadataEntity) {
+    this(metadataEntity, Collections.emptyMap(), Collections.emptySet());
+  }
 
   /**
    * Returns an empty {@link Metadata}
    */
   public Metadata(NamespacedEntityId namespacedEntityId) {
-    this(namespacedEntityId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
+    this(namespacedEntityId.toMetadataEntity());
   }
 
   public Metadata(NamespacedEntityId namespacedEntityId, Map<String, String> properties, Set<String> tags) {
-    this.namespacedEntityId = namespacedEntityId;
+    this(namespacedEntityId.toMetadataEntity(), properties, tags);
+  }
+
+  public Metadata(MetadataEntity metadataEntity, Map<String, String> properties, Set<String> tags) {
+    this.metadataEntity = metadataEntity;
     this.properties = properties;
     this.tags = tags;
   }
 
+  public MetadataEntity getMetadataEntity() {
+    return metadataEntity;
+  }
+
+  /**
+   * @return {@link NamespacedEntityId} to which the {@link Metadata} belongs if it is a known cdap entity type for
+   * example datasets, applications etc. Custom resources likes fields etc cannot be converted into cdap
+   * {@link NamespacedEntityId} and calling this for {@link Metadata} associated with such resources will fail with a
+   * {@link IllegalArgumentException}.
+   * @throws IllegalArgumentException if the {@link Metadata} belong to a custom cdap resource and not a known cdap
+   * entity.
+   */
   public NamespacedEntityId getEntityId() {
-    return namespacedEntityId;
+    return EntityId.fromMetadataEntity(metadataEntity);
   }
 
   public Map<String, String> getProperties() {
@@ -68,20 +90,20 @@ public class Metadata {
 
     Metadata that = (Metadata) o;
 
-    return Objects.equals(namespacedEntityId, that.namespacedEntityId) &&
+    return Objects.equals(metadataEntity, that.metadataEntity) &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(tags, that.tags);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespacedEntityId, properties, tags);
+    return Objects.hash(metadataEntity, properties, tags);
   }
 
   @Override
   public String toString() {
     return "Metadata{" +
-      "namespacedEntityId=" + namespacedEntityId +
+      "metadataEntity=" + metadataEntity +
       ", properties=" + properties +
       ", tags=" + tags +
       '}';

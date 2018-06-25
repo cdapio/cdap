@@ -28,7 +28,10 @@ import java.util.Set;
  * Represents the complete metadata of a {@link NamespacedEntityId} including its properties, tags in a given
  * {@link MetadataScope}
  * this class was in cdap-api earlier and has been moved from cdap-common as its used only internally
+ *
+ * @deprecated As of release 5.0, replaced by {@link MetadataRecordV2}
  */
+@Deprecated
 public class MetadataRecord {
   private final NamespacedEntityId entityId;
   private final MetadataScope scope;
@@ -39,7 +42,7 @@ public class MetadataRecord {
    * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}.
    */
   public MetadataRecord(NamespacedEntityId entityId, MetadataScope scope) {
-    this(entityId, scope, Collections.<String, String>emptyMap(), Collections.<String>emptySet());
+    this(entityId, scope, Collections.emptyMap(), Collections.emptySet());
   }
 
   /**

@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data2.metadata.dataset;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Objects;
@@ -24,7 +26,7 @@ import javax.annotation.Nullable;
  * Represents a single Metadata entry for a CDAP Entity.
  */
 public class MetadataEntry {
-  private final NamespacedEntityId targetId;
+  private final MetadataEntity metadataEntity;
   private final String key;
   private final String value;
   private final String schema;
@@ -33,17 +35,37 @@ public class MetadataEntry {
     this(targetId, key, value, null);
   }
 
-  //TODO: Remove this constructor when it is finalized that schema need not be stored separately
-  public MetadataEntry(NamespacedEntityId targetId, String key, String value,
-                       @Nullable String schema) {
-    this.targetId = targetId;
+  public MetadataEntry(MetadataEntity metadataEntity, String key, String value, @Nullable String schema) {
+    this.metadataEntity = metadataEntity;
     this.key = key;
     this.value = value;
     this.schema = schema;
   }
 
+  public MetadataEntry(MetadataEntity metadataEntity, String key, String value) {
+    this(metadataEntity, key, value, null);
+  }
+
+  //TODO: Remove this constructor when it is finalized that schema need not be stored separately
+  public MetadataEntry(NamespacedEntityId targetId, String key, String value,
+                       @Nullable String schema) {
+    this(targetId.toMetadataEntity(), key, value, schema);
+  }
+
+  public MetadataEntity getMetadataEntity() {
+    return metadataEntity;
+  }
+
+  /**
+   * @return {@link NamespacedEntityId} to which the {@link MetadataEntry} belongs if it is a known cdap entity type,
+   * for example datasets, applications etc. Custom resources likes fields etc cannot be converted into cdap
+   * {@link NamespacedEntityId} and calling this for {@link MetadataEntry} associated with such resources will fail
+   * with a {@link IllegalArgumentException}.
+   * @throws IllegalArgumentException if the {@link MetadataEntry} belong to a custom cdap resource and not a known cdap
+   * entity.
+   */
   public NamespacedEntityId getTargetId() {
-    return targetId;
+    return EntityId.fromMetadataEntity(metadataEntity);
   }
 
   public String getKey() {
@@ -69,7 +91,7 @@ public class MetadataEntry {
 
     MetadataEntry that = (MetadataEntry) o;
 
-    return Objects.equals(targetId, that.targetId) &&
+    return Objects.equals(metadataEntity, that.metadataEntity) &&
       Objects.equals(key, that.key) &&
       Objects.equals(value, that.value) &&
       Objects.equals(schema, that.schema);
@@ -77,16 +99,16 @@ public class MetadataEntry {
 
   @Override
   public int hashCode() {
-    return Objects.hash(targetId, key, value, schema);
+    return Objects.hash(metadataEntity, key, value, schema);
   }
 
   @Override
   public String toString() {
-    return "{" +
-      "targetId='" + targetId + '\'' +
+    return "MetadataEntry{" +
+      "metadataEntity=" + metadataEntity +
       ", key='" + key + '\'' +
       ", value='" + value + '\'' +
-      ", schema='" + (schema != null ? schema : 0) +
+      ", schema='" + schema + '\'' +
       '}';
   }
 }

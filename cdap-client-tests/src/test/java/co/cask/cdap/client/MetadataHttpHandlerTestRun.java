@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.app.AllProgramsApp;
@@ -37,6 +38,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
@@ -60,8 +62,8 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
 import co.cask.common.http.HttpRequest;
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -87,6 +89,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -100,12 +103,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   private final DatasetId myds = NamespaceId.DEFAULT.dataset("myds");
   private final StreamId mystream = NamespaceId.DEFAULT.stream("mystream");
   private final StreamViewId myview = mystream.view("myview");
-  private final ApplicationId nonExistingApp = new ApplicationId("blah", AppWithDataset.class.getSimpleName());
-  private final ProgramId nonExistingService = nonExistingApp.service("PingService");
-  private final DatasetId nonExistingDataset = new DatasetId("blah", "myds");
-  private final StreamId nonExistingStream = new StreamId("blah", "mystream");
-  private final StreamViewId nonExistingView = nonExistingStream.view("myView");
-  private final ArtifactId nonExistingArtifact = new ArtifactId("blah", "art", "1.0.0");
+  private final MetadataEntity fieldEntity =
+    MetadataEntity.builder(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "myds"))
+      .appendAsType("field", "empname").build();
 
   @Before
   public void before() throws Exception {
@@ -241,10 +241,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // Should get empty
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "sKey:s");
-    Assert.assertTrue(searchProperties.size() == 0);
+    Assert.assertEquals(0, searchProperties.size());
 
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "s");
-    Assert.assertTrue(searchProperties.size() == 0);
+    Assert.assertEquals(0, searchProperties.size());
 
     // search non-existent property should return empty set
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "NullKey:s*");
@@ -280,19 +280,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertTrue(getProperties(mystream, MetadataScope.USER).isEmpty());
     Assert.assertTrue(getProperties(myview, MetadataScope.USER).isEmpty());
     Assert.assertTrue(getProperties(artifactId, MetadataScope.USER).isEmpty());
-
-    // non-existing namespace
-    addProperties(nonExistingApp, appProperties, NotFoundException.class);
-    addProperties(nonExistingService, serviceProperties, NotFoundException.class);
-    addProperties(nonExistingDataset, datasetProperties, NotFoundException.class);
-    addProperties(nonExistingStream, streamProperties, NotFoundException.class);
-    addProperties(nonExistingView, streamProperties, NotFoundException.class);
-    addProperties(nonExistingArtifact, artifactProperties, NotFoundException.class);
   }
 
   @Test
   public void testTags() throws Exception {
     // should fail because we haven't provided any metadata in the request
+    addTags(myds, null, BadRequestException.class);
+    Set<String> datasetTags = ImmutableSet.of("dTag", "dT");
+    addTags(myds, datasetTags);
     addTags(application, null, BadRequestException.class);
     Set<String> appTags = ImmutableSet.of("aTag", "aT", "Wow-WOW1", "WOW_WOW2");
     addTags(application, appTags);
@@ -300,9 +295,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     addTags(pingService, null, BadRequestException.class);
     Set<String> serviceTags = ImmutableSet.of("sTag", "sT");
     addTags(pingService, serviceTags);
-    addTags(myds, null, BadRequestException.class);
-    Set<String> datasetTags = ImmutableSet.of("dTag", "dT");
-    addTags(myds, datasetTags);
     addTags(mystream, null, BadRequestException.class);
     Set<String> streamTags = ImmutableSet.of("stTag", "stT", "Wow-WOW1", "WOW_WOW2");
     addTags(mystream, streamTags);
@@ -311,6 +303,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     addTags(myview, viewTags);
     Set<String> artifactTags = ImmutableSet.of("rTag", "rT");
     addTags(artifactId, artifactTags);
+    Set<String> fieldTags = ImmutableSet.of("fTag", "fT");
+    addTags(fieldEntity, fieldTags);
+
     // retrieve tags and verify
     Set<String> tags = getTags(application, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(appTags));
@@ -330,6 +325,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     tags = getTags(artifactId, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(artifactTags));
     Assert.assertTrue(artifactTags.containsAll(tags));
+    tags = getTags(fieldEntity, MetadataScope.USER);
+    Assert.assertTrue(tags.containsAll(fieldTags));
+    Assert.assertTrue(fieldTags.containsAll(tags));
     // test search for stream
     Set<MetadataSearchResultRecord> searchTags =
       searchMetadata(NamespaceId.DEFAULT, "stT", EntityTypeSimpleName.STREAM);
@@ -398,13 +396,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertTrue(getTags(myds, MetadataScope.USER).isEmpty());
     Assert.assertTrue(getTags(mystream, MetadataScope.USER).isEmpty());
     Assert.assertTrue(getTags(artifactId, MetadataScope.USER).isEmpty());
-    // non-existing namespace
-    addTags(nonExistingApp, appTags, NotFoundException.class);
-    addTags(nonExistingService, serviceTags, NotFoundException.class);
-    addTags(nonExistingDataset, datasetTags, NotFoundException.class);
-    addTags(nonExistingStream, streamTags, NotFoundException.class);
-    addTags(nonExistingView, streamTags, NotFoundException.class);
-    addTags(nonExistingArtifact, artifactTags, NotFoundException.class);
   }
 
   @Test
@@ -420,24 +411,28 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Map<String, String> streamProperties = ImmutableMap.of("stKey", "stValue");
     Map<String, String> viewProperties = ImmutableMap.of("viewKey", "viewValue");
     Map<String, String> artifactProperties = ImmutableMap.of("rKey", "rValue");
+    Map<String, String> fieldProperties = ImmutableMap.of("fKey", "fValue");
     Set<String> appTags = ImmutableSet.of("aTag");
     Set<String> serviceTags = ImmutableSet.of("sTag");
     Set<String> datasetTags = ImmutableSet.of("dTag");
     Set<String> streamTags = ImmutableSet.of("stTag");
     Set<String> viewTags = ImmutableSet.of("viewTag");
     Set<String> artifactTags = ImmutableSet.of("rTag");
+    Set<String> fieldTags = ImmutableSet.of("fTag");
     addProperties(application, appProperties);
     addProperties(pingService, serviceProperties);
     addProperties(myds, datasetProperties);
     addProperties(mystream, streamProperties);
     addProperties(myview, viewProperties);
     addProperties(artifactId, artifactProperties);
+    addProperties(fieldEntity, fieldProperties);
     addTags(application, appTags);
     addTags(pingService, serviceTags);
     addTags(myds, datasetTags);
     addTags(mystream, streamTags);
     addTags(myview, viewTags);
     addTags(artifactId, artifactTags);
+    addTags(fieldEntity, fieldTags);
     // verify app
     Set<MetadataRecord> metadataRecords = getMetadata(application, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
@@ -486,6 +481,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(artifactId, metadata.getEntityId());
     Assert.assertEquals(artifactProperties, metadata.getProperties());
     Assert.assertEquals(artifactTags, metadata.getTags());
+    // verify custom entity
+    Set<MetadataRecordV2> metadataRecordsV2 = getMetadata(fieldEntity, MetadataScope.USER);
+    Assert.assertEquals(1, metadataRecordsV2.size());
+    MetadataRecordV2 metadataRecordV2 = metadataRecordsV2.iterator().next();
+    Assert.assertEquals(MetadataScope.USER, metadataRecordV2.getScope());
+    Assert.assertEquals(fieldEntity, metadataRecordV2.getMetadataEntity());
+    Assert.assertEquals(fieldProperties, metadataRecordV2.getProperties());
+    Assert.assertEquals(fieldTags, metadataRecordV2.getTags());
     // cleanup
     removeAllMetadata();
     assertCleanState(MetadataScope.USER);
@@ -518,23 +521,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // Now try to get from invalid entity should throw 404.
     getPropertiesFromInvalidEntity(programId);
-  }
-
-  @Test
-  public void testInvalidEntities() throws IOException {
-    ProgramId nonExistingProgram = application.service("NonExistingService");
-    DatasetId nonExistingDataset = new DatasetId(NamespaceId.DEFAULT.getNamespace(),
-                                                                       "NonExistingDataset");
-    StreamId nonExistingStream = NamespaceId.DEFAULT.stream("NonExistingStream");
-    StreamViewId nonExistingView = nonExistingStream.view("NonExistingView");
-    ApplicationId nonExistingApp = NamespaceId.DEFAULT.app("NonExistingApp");
-
-    Map<String, String> properties = ImmutableMap.of("aKey", "aValue", "aK", "aV");
-    addProperties(nonExistingApp, properties, NotFoundException.class);
-    addProperties(nonExistingProgram, properties, NotFoundException.class);
-    addProperties(nonExistingDataset, properties, NotFoundException.class);
-    addProperties(nonExistingView, properties, NotFoundException.class);
-    addProperties(nonExistingStream, properties, NotFoundException.class);
   }
 
   @Test
@@ -716,7 +702,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       ImmutableSet.of(
         new MetadataRecord(artifactId, MetadataScope.SYSTEM,
                            ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, artifactId.getEntityName()),
-                           ImmutableSet.<String>of())
+                           ImmutableSet.of())
       ),
       removeCreationTime(getMetadata(artifactId, MetadataScope.SYSTEM))
     );
@@ -1039,6 +1025,32 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       Assert.assertFalse(systemMetadata.getProperties().isEmpty());
       Assert.assertFalse(systemMetadata.getTags().isEmpty());
     }
+
+    // add metadata to field (custom entity)
+    props = ImmutableMap.of("fKey1", "fValue1", "fKey2", "fValue2");
+    tags = ImmutableSet.of("fTag1");
+    MetadataEntity metadataEntity =
+      MetadataEntity.builder(streamId.toMetadataEntity()).appendAsType("field", "someField").build();
+    addProperties(metadataEntity, props);
+    addTags(metadataEntity, tags);
+    Map<MetadataEntity, Metadata> expectedUserMetadataV2 = new HashMap<>();
+    expectedUserMetadataV2.put(metadataEntity, new Metadata(props, tags));
+
+    Set<MetadataSearchResultRecordV2> resultsV2 = super.searchMetadata(NamespaceId.DEFAULT, "fValue*",
+                                                                       ImmutableSet.of(), null, 0, Integer.MAX_VALUE,
+                                                                       0, null, false, true).getResults();
+
+    // Verify results
+    Assert.assertEquals(expectedUserMetadataV2.keySet(), getMetadataEntities(resultsV2));
+    for (MetadataSearchResultRecordV2 result : resultsV2) {
+      // User metadata has to match exactly since we know what we have set
+      Assert.assertEquals(expectedUserMetadataV2.get(result.getMetadataEntity()),
+                          result.getMetadata().get(MetadataScope.USER));
+      // Make sure system metadata is returned, we cannot check for exact match since we haven't set it
+      Metadata systemMetadata = result.getMetadata().get(MetadataScope.SYSTEM);
+      // custom entity should not have any system metadata for it
+      Assert.assertNull(systemMetadata);
+    }
   }
 
   @Test
@@ -1223,6 +1235,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     }
   }
 
+
   @Test
   public void testSearchResultSorting() throws Exception {
     NamespaceId namespace = new NamespaceId("sorting");
@@ -1366,7 +1379,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                                                                         new MetadataSearchResultRecord(dataset),
                                                                         new MetadataSearchResultRecord(stream),
                                                                         new MetadataSearchResultRecord(view));
-    List<String>  expectedCursors = ImmutableList.of();
+    List<String> expectedCursors = ImmutableList.of();
     Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
     Assert.assertEquals(expectedCursors, searchResponse.getCursors());
 
@@ -1413,12 +1426,13 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   private Set<NamespacedEntityId> getEntities(Set<MetadataSearchResultRecord> results) {
     return Sets.newHashSet(
-      Iterables.transform(results, new Function<MetadataSearchResultRecord, NamespacedEntityId>() {
-        @Override
-        public NamespacedEntityId apply(MetadataSearchResultRecord input) {
-          return input.getEntityId();
-        }
-      })
+      results.stream().map(MetadataSearchResultRecord::getEntityId).collect(Collectors.toList())
+    );
+  }
+
+  private Set<MetadataEntity> getMetadataEntities(Set<MetadataSearchResultRecordV2> results) {
+    return Sets.newHashSet(
+      results.stream().map(MetadataSearchResultRecordV2::getMetadataEntity).collect(Collectors.toList())
     );
   }
 
@@ -1760,6 +1774,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     removeMetadata(mystream);
     removeMetadata(myview);
     removeMetadata(artifactId);
+    removeMetadata(fieldEntity);
   }
 
   private void assertCleanState(@Nullable MetadataScope scope) throws Exception {

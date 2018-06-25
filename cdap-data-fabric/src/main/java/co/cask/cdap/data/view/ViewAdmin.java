@@ -75,7 +75,7 @@ public class ViewAdmin {
     ViewSpecification spec = store.get(viewId);
     explore.disableExploreStream(viewId.getParent(), spec.getTableName());
     store.delete(viewId);
-    metadataStore.removeMetadata(viewId);
+    metadataStore.removeMetadata(viewId.toMetadataEntity());
   }
 
   public List<StreamViewId> list(StreamId streamId) {
