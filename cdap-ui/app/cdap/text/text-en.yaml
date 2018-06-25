@@ -250,7 +250,7 @@ features:
         totalRuns: Total runs
       DetailView:
         creation: Creation date and time
-        disableConfirmation: Are you sure you want to disable the profile *_{profile}_*?
+        disableConfirmation: Are you sure you want to disable the profile *_{profile}_*? The pipelines currently using this profile will start using the *_default_* profile.
         disableError: There was a problem disabling the profile
         disableNo: No, keep the profile enabled
         disableTitle: Disable profile
