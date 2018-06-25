@@ -889,8 +889,7 @@ public class CLIMainTest extends CLITestBase {
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream,app");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_STREAM_ID.toString(), FAKE_APP_ID.toString(),
-                                FAKE_APP_ID_V_1.toString());
+    expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_STREAM_ID.toString(), FAKE_APP_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata wfTag* filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
