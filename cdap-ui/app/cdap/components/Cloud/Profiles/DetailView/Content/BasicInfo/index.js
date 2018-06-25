@@ -28,7 +28,6 @@ import isEqual from 'lodash/isEqual';
 import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
 import ToggleSwitch from 'components/ToggleSwitch';
-import classnames from 'classnames';
 
 require('./BasicInfo.scss');
 
@@ -208,7 +207,6 @@ export default class ProfileDetailViewBasicInfo extends Component {
               namespace={namespace}
               profile={profile}
               onDeleteClick={this.toggleDeleteModal}
-              className={classnames({"float-right": profileIsDefault})}
             />
           </div>
         </div>

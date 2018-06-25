@@ -54,13 +54,13 @@ $off-color: $blue-02;
 
     &.on {
       background-color: $on-color;
+      .switch-button {
+        order: 2;
+      }
     }
 
     &.off {
       background-color: $off-color;
-      .switch-button {
-        order: 2;
-      }
     }
   }
 
