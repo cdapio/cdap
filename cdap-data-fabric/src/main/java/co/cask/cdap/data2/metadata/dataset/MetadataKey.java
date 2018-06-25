@@ -17,7 +17,11 @@ package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.proto.id.EntityId;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -30,6 +34,15 @@ class MetadataKey {
     new MDSKey.Builder().add(MetadataKey.VALUE_ROW_PREFIX).build().getKey();
   private static final byte[] INDEX_ROW_PREFIX_KEY =
     new MDSKey.Builder().add(MetadataKey.INDEX_ROW_PREFIX).build().getKey();
+
+  private static final Set<String> VERSIONED_ENTITIES;
+  static {
+    Set<String> versionedEntities = new HashSet<>();
+    versionedEntities.add(MetadataEntity.APPLICATION);
+    versionedEntities.add(MetadataEntity.SCHEDULE);
+    versionedEntities.add(MetadataEntity.PROGRAM);
+    VERSIONED_ENTITIES = Collections.unmodifiableSet(versionedEntities);
+  }
 
 
   static String extractMetadataKey(byte[] rowKey) {
@@ -124,7 +137,16 @@ class MetadataKey {
         break;
       }
     }
-    return builder.build();
+    MetadataEntity metadataEntity = builder.build();
+    if (VERSIONED_ENTITIES.contains(metadataEntity.getType())) {
+      // CDAP-13597 if it is a versioned entity then put the default version so that the EntityId created later or
+      // returned by Metadata API for backward compatibility have the default version
+
+      // EntityId.fromMetadataEntity already has the logic to add version information in the correct place depending
+      // on the type of the entity so use that
+      metadataEntity = EntityId.fromMetadataEntity(metadataEntity).toMetadataEntity();
+    }
+    return metadataEntity;
   }
 
   static byte[] getValueRowPrefix() {
@@ -141,6 +163,11 @@ class MetadataKey {
     builder.add(metadataEntity.getType());
     // add all the key value pairs from the metadata entity this is the targetId
     for (MetadataEntity.KeyValue keyValue : metadataEntity) {
+      // CDAP-13597 for versioned entities like application, schedule and programs their metadata is not versioned
+      if (VERSIONED_ENTITIES.contains(metadataEntity.getType()) &&
+        keyValue.getKey().equalsIgnoreCase(MetadataEntity.VERSION)) {
+        continue;
+      }
       builder.add(keyValue.getKey());
       builder.add(keyValue.getValue());
     }

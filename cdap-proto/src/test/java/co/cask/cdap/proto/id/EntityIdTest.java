@@ -290,8 +290,15 @@ public class EntityIdTest {
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKER, "testWorker");
     Assert.assertEquals(programId, EntityId.fromMetadataEntity(programId.toMetadataEntity()));
 
+    // artifact
     ArtifactId artifactId = new ArtifactId("testNs", "testArtifact-1.0.0.jar");
     Assert.assertEquals(artifactId, EntityId.fromMetadataEntity(artifactId.toMetadataEntity()));
+
+    // schedule
+    ScheduleId scheduleId = applicationId.schedule("sch");
+    metadataEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "testNs")
+      .append(MetadataEntity.APPLICATION, "app1").appendAsType(MetadataEntity.SCHEDULE, "sch").build();
+    Assert.assertEquals(scheduleId, EntityId.fromMetadataEntity(metadataEntity));
   }
 
   @Test

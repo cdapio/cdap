@@ -185,8 +185,8 @@ public abstract class EntityId {
       // application so append it
       extractedParts.add(new MetadataEntity.KeyValue(MetadataEntity.VERSION, version));
     }
-    if (entityType == EntityType.PROGRAM) {
-      // if the entity is program the add the version information at its correct position i.e. 2
+    if (entityType == EntityType.PROGRAM || entityType == EntityType.SCHEDULE) {
+      // if the entity is program or schedule then add the version information at its correct position i.e. 2
       // (namespace, application, version) if the version information is not present
       if (!metadataEntity.containsKey(MetadataEntity.VERSION)) {
         extractedParts.add(2, new MetadataEntity.KeyValue(MetadataEntity.VERSION, version));
