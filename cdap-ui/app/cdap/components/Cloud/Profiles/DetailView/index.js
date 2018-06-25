@@ -25,6 +25,7 @@ import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabC
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
+import {Observable} from 'rxjs/Observable';
 
 require('./DetailView.scss');
 
@@ -55,7 +56,7 @@ export default class ProfileDetailView extends Component {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
-  getProfile() {
+  getProfile = () => {
     let {namespace, profileId} = this.props.match.params;
     MyCloudApi
       .get({
@@ -76,7 +77,7 @@ export default class ProfileDetailView extends Component {
           });
         }
       );
-  }
+  };
 
   getProvisioners() {
     getProvisionersMap().subscribe((state) => {
@@ -89,23 +90,17 @@ export default class ProfileDetailView extends Component {
   toggleProfileStatus = (profile) => {
     const {namespace} = this.props.match.params;
     const action = PROFILE_STATUSES[profile.status] === 'enabled' ? 'disable' : 'enable';
-
-    MyCloudApi
+    const toggleProfileStatusObservable$ = MyCloudApi
       .toggleProfileStatus({
         namespace,
         profile: profile.name,
         action
-      })
-      .subscribe(
-        () => {
-          this.getProfile();
-        },
-        (error) => {
-          this.setState({
-            error: error.response || error
-          });
-        }
-      );
+      });
+    toggleProfileStatusObservable$.subscribe(
+      this.getProfile,
+      (err) => Observable.throw(err)
+    );
+    return toggleProfileStatusObservable$;
   };
 
   render() {

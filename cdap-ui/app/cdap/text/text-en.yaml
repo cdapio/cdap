@@ -239,7 +239,7 @@ features:
       common:
         deleteConfirmation: Are you sure you want to delete the profile *_{profile}_*?
         deleteError: There was a problem deleting the profile
-        deleteTitle: Delete Profile
+        deleteTitle: Delete profile
         disabled: Disabled
         enabled: Enabled
         export: Export
@@ -250,6 +250,11 @@ features:
         totalRuns: Total runs
       DetailView:
         creation: Creation date and time
+        disableConfirmation: Are you sure you want to disable the profile *_{profile}_*?
+        disableError: There was a problem disabling the profile
+        disableNo: No, keep the profile enabled
+        disableTitle: Disable profile
+        disableYes: Yes, disable profile
         hideDetails: Hide Details
         noProperties: No properties available for this profile
         profileDetails: Profile Details

@@ -39,6 +39,10 @@ export default class ProfileDetailViewBasicInfo extends Component {
     deleteErrMsg: '',
     extendedDeleteErrMsg: '',
     deleteLoading: false,
+    disableModalOpen: false,
+    disableErrMsg: '',
+    extendedDisableErrMsg: '',
+    disableLoading: false,
     redirectToListView: false,
     provisionerLabel: getProvisionerLabel(this.props.profile, this.props.provisioners)
   };
@@ -65,6 +69,33 @@ export default class ProfileDetailViewBasicInfo extends Component {
       extendedDeleteErrMsg: ''
     });
   };
+
+  toggleDisableModal = () => {
+    this.setState({
+      disableModalOpen: !this.state.disableModalOpen,
+      disableErrMsg: '',
+      extendedDisableErrMsg: '',
+      disableLoading: false
+    });
+  };
+
+  toggleProfileStatus = (profile) => {
+    this.setState({
+      disableLoading: true
+    });
+
+    const toggleProfileStatusObservable$ = this.props.toggleProfileStatus(profile);
+    toggleProfileStatusObservable$.subscribe(
+      this.toggleDisableModal,
+      (err) => {
+        this.setState({
+          disableErrMsg: T.translate(`${PREFIX}.DetailView.disableError`),
+          extendedDisableErrMsg: err,
+          disableLoading: false
+        });
+      }
+    );
+  }
 
   deleteProfile = () => {
     this.setState({
@@ -115,6 +146,30 @@ export default class ProfileDetailViewBasicInfo extends Component {
     );
   }
 
+  renderDisableConfirmationModal(profile) {
+    if (!this.state.disableModalOpen) {
+      return null;
+    }
+
+    const confirmationText = T.translate(`${PREFIX}.DetailView.disableConfirmation`, {profile: profile.name});
+
+    return (
+      <ConfirmationModal
+        headerTitle={T.translate(`${PREFIX}.DetailView.disableTitle`)}
+        toggleModal={this.toggleDisableModal}
+        confirmationText={confirmationText}
+        confirmButtonText={T.translate(`${PREFIX}.DetailView.disableYes`)}
+        cancelButtonText={T.translate(`${PREFIX}.DetailView.disableNo`)}
+        confirmFn={this.toggleProfileStatus.bind(this, profile)}
+        cancelFn={this.toggleDisableModal}
+        isOpen={this.state.disableModalOpen}
+        errorMessage={this.state.disableErrMsg}
+        extendedMessage={this.state.extendedDisableErrMsg}
+        isLoading={this.state.disableLoading}
+      />
+    );
+  }
+
   renderProfileInfoGrid() {
     let profile = this.props.profile;
 
@@ -156,10 +211,18 @@ export default class ProfileDetailViewBasicInfo extends Component {
       return null;
     }
 
+    const toggleCallback = () => {
+      if (profileIsEnabled) {
+        this.toggleDisableModal();
+      } else {
+        this.props.toggleProfileStatus(profile);
+      }
+    };
+
     return (
       <ToggleSwitch
         isOn={profileIsEnabled}
-        onToggle={this.props.toggleProfileStatus.bind(null, profile)}
+        onToggle={toggleCallback}
         onLabel={T.translate(`${PREFIX}.common.${profileStatus}`)}
         offLabel={T.translate(`${PREFIX}.common.${profileStatus}`)}
       />
@@ -215,6 +278,7 @@ export default class ProfileDetailViewBasicInfo extends Component {
         </div>
         {this.renderProfileInfoGrid()}
         {this.renderDeleteConfirmationModal()}
+        {this.renderDisableConfirmationModal(profile)}
         {
           this.state.redirectToListView ?
             <Redirect to={redirectToObj} />

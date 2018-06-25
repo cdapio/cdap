@@ -158,7 +158,11 @@ export default class ProfilesListViewInPipeline extends Component {
     }
   };
 
-  onProfileSelectWithoutCustomization = (profileName, e) => {
+  onProfileSelectWithoutCustomization = (profileName, profileIsEnabled, e) => {
+    if (!profileIsEnabled) {
+      return;
+    }
+
     this.onProfileSelect(profileName, {}, e);
   };
 
@@ -186,9 +190,9 @@ export default class ProfilesListViewInPipeline extends Component {
     selectedProfile = extractProfileName(selectedProfile);
     let provisionerName = profile.provisioner.name;
     let provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
-    const onProfileSelectHandler = this.onProfileSelectWithoutCustomization.bind(this, profileName);
     const profileStatus = PROFILE_STATUSES[profile.status];
     const profileIsEnabled = profileStatus === 'enabled';
+    const onProfileSelectHandler = this.onProfileSelectWithoutCustomization.bind(this, profileName, profileIsEnabled);
 
     const CustomizeLabel = () => {
       if (!profileIsEnabled) {
@@ -223,25 +227,25 @@ export default class ProfilesListViewInPipeline extends Component {
             This is to prevent the user from selecting a profile while trying to click on the details link
           */
         }
-        <div onClick={profileIsEnabled && onProfileSelectHandler}>
+        <div onClick={onProfileSelectHandler}>
           {
             this.state.selectedProfile === profileName ? (
               <IconSVG name="icon-check" className="text-success" />
             ) : null
           }
         </div>
-        <div onClick={profileIsEnabled && onProfileSelectHandler}>
+        <div onClick={onProfileSelectHandler}>
           {profile.name}
         </div>
-        <div onClick={profileIsEnabled && onProfileSelectHandler}>
+        <div onClick={onProfileSelectHandler}>
           {provisionerLabel}
         </div>
-        <div onClick={profileIsEnabled && onProfileSelectHandler}>
+        <div onClick={onProfileSelectHandler}>
           {profile.scope}
         </div>
         <div
           className="profile-status"
-          onClick={profileIsEnabled && onProfileSelectHandler}
+          onClick={onProfileSelectHandler}
         >
           {T.translate(`features.Cloud.Profiles.common.${profileStatus}`)}
         </div>
