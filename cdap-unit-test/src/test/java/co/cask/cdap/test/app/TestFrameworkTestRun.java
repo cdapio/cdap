@@ -36,6 +36,8 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
@@ -114,6 +116,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -135,6 +138,8 @@ import javax.annotation.Nullable;
 @Category(SlowTests.class)
 public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTestRun.class);
+  private static final Type MAP_METADATASCOPE_METADATA_TYPE = new TypeToken<Map<MetadataScope, Metadata>>() { }
+  .getType();
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
@@ -2179,6 +2184,39 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Files.touch(actionFile);
 
     workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 10L, TimeUnit.SECONDS);
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testMetadataAccessInService() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithMetadataPrograms.class);
+    LOG.info("Deployed.");
+    ServiceManager serviceManager =
+      applicationManager.getServiceManager(AppWithMetadataPrograms.METADATA_SERVICE_NAME).start();
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+    LOG.info("Service Started");
+
+    URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+    Assert.assertNotNull(serviceURL);
+
+    String result = callServiceGet(serviceManager.getServiceURL(), "metadata/" +
+      AppWithMetadataPrograms.METADATA_SERVICE_DATASET);
+    Map<MetadataScope, Metadata> scopeMetadata  = new Gson().fromJson(result, MAP_METADATASCOPE_METADATA_TYPE);
+
+    // test service is able to read metadata
+    Assert.assertTrue(scopeMetadata.containsKey(MetadataScope.SYSTEM));
+    Assert.assertTrue(scopeMetadata.containsKey(MetadataScope.USER));
+    Assert.assertFalse(scopeMetadata.get(MetadataScope.SYSTEM).getProperties().isEmpty());
+    Assert.assertFalse(scopeMetadata.get(MetadataScope.SYSTEM).getTags().isEmpty());
+    // we haven't added any user metadata
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getTags().isEmpty());
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.SYSTEM).getProperties().containsKey("entity-name"));
+    Assert.assertEquals(AppWithMetadataPrograms.METADATA_SERVICE_DATASET,
+                        scopeMetadata.get(MetadataScope.SYSTEM).getProperties().get("entity-name"));
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.SYSTEM).getTags()
+                        .containsAll(Arrays.asList("explore", "batch")));
   }
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {

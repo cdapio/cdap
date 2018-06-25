@@ -110,6 +110,8 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
 
   override def getMessagingContext = delegate.getMessagingContext
 
+  override def getMetadataReaderContext = delegate.getMetadataReaderContext
+
   override def getPluginContext = delegate.getPluginContext
 
   override def getMetrics = delegate.getMetrics

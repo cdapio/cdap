@@ -85,6 +85,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.BasicMessagingAdmin;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
+import co.cask.cdap.metadata.MetadataContextModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -254,6 +255,7 @@ public class TestBase {
       new ServiceStoreModules().getInMemoryModules(),
       new ProgramRunnerRuntimeModule(LocalStreamWriter.class).getInMemoryModules(),
       new SecureStoreModules().getInMemoryModules(),
+      new MetadataContextModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

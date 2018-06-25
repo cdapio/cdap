@@ -29,6 +29,7 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.messaging.MessagingContext;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -54,7 +55,8 @@ import javax.annotation.Nullable;
  */
 @Beta
 public abstract class JavaSparkExecutionContextBase implements SchedulableProgramContext, RuntimeContext, Transactional,
-                                                               WorkflowInfoProvider, SecureStore {
+                                                               WorkflowInfoProvider,
+                                                               SecureStore, MetadataReaderContext {
 
   /**
    * @return The specification used to configure this {@link Spark} job instance.
@@ -109,6 +111,14 @@ public abstract class JavaSparkExecutionContextBase implements SchedulableProgra
    * @return A {@link MessagingContext}
    */
   public abstract MessagingContext getMessagingContext();
+
+  /**
+   * Returns a {@link MetadataReaderContext} which can be used to read metadata. Currently the returned instance can
+   * only be used in the Spark driver process.
+   *
+   * @return A {@link MetadataReaderContext}
+   */
+  public abstract MetadataReaderContext getMetadataReaderContext();
 
   /**
    * Returns a {@link Serializable} {@link TaskLocalizationContext} which can be used to retrieve files localized to

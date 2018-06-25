@@ -17,6 +17,7 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -257,7 +258,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(MessagingService.class),
         serviceAnnouncer,
         injector.getInstance(PluginFinder.class),
-        injector.getInstance(LocationFactory.class)
+        injector.getInstance(LocationFactory.class),
+        injector.getInstance(MetadataReaderContext.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;

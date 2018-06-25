@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -32,7 +33,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -78,11 +78,11 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
                                  TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
                                  SecureStore secureStore, SecureStoreManager secureStoreManager,
                                  MessagingService messagingService,
-                                 ArtifactManager artifactManager) {
+                                 ArtifactManager artifactManager, MetadataReaderContext metadataReaderContext) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReaderContext);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

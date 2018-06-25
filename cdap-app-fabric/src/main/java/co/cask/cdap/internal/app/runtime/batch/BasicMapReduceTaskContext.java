@@ -31,6 +31,7 @@ import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -135,11 +136,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             SecureStoreManager secureStoreManager,
                             AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext,
-                            MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader) {
-    super(program, programOptions, cConf, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
+                            MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader,
+                            MetadataReaderContext metadataReaderContext) {
+    super(program, programOptions, cConf, ImmutableSet.of(), dsFramework, txClient, discoveryServiceClient,
           true, metricsCollectionService, createMetricsTags(programOptions,
                                                             taskId, type, workflowProgramInfo), secureStore,
-          secureStoreManager, messagingService, pluginInstantiator);
+          secureStoreManager, messagingService, pluginInstantiator, metadataReaderContext);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;

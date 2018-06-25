@@ -24,6 +24,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.InputContext;
 import co.cask.cdap.api.data.batch.PartitionedFileSetInputContext;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.workflow.Workflow;
@@ -41,7 +42,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends SchedulableProgramContext, RuntimeContext,
-  DatasetContext, ServiceDiscoverer, PluginContext, TaskLocalizationContext, SecureStore {
+  DatasetContext, ServiceDiscoverer, PluginContext, TaskLocalizationContext, SecureStore, MetadataReaderContext {
 
   /**
    * Write key and value to the named output Dataset. This method must only be used if the MapReduce writes to

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -177,6 +178,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     final MessagingService messagingService = injector.getInstance(MessagingService.class);
     // Multiple instances of BasicMapReduceTaskContext can share the same program.
     final AtomicReference<Program> programRef = new AtomicReference<>();
+    final MetadataReaderContext metadataReaderContext = injector.getInstance(MetadataReaderContext.class);
 
     return new CacheLoader<ContextCacheKey, BasicMapReduceTaskContext>() {
       @Override
@@ -247,7 +249,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           transaction, programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
-          authorizationEnforcer, authenticationContext, messagingService, mapReduceClassLoader
+          authorizationEnforcer, authenticationContext, messagingService, mapReduceClassLoader, metadataReaderContext
         );
       }
     };

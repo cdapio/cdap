@@ -21,13 +21,14 @@ import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.messaging.MessagingContext;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
 import co.cask.cdap.api.security.store.SecureStore;
 
 /**
  * This interface represents the Flowlet context.
  */
 public interface FlowletContext extends RuntimeContext, DatasetContext, ServiceDiscoverer,
-  SecureStore, Transactional, MessagingContext {
+  SecureStore, Transactional, MessagingContext, MetadataReaderContext {
   /**
    * @return Number of instances of this flowlet.
    */

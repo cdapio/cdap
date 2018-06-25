@@ -28,6 +28,9 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
@@ -395,5 +398,15 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   boolean isPySpark() {
     return getPySparkScript() != null || getPySparkScriptLocation() != null;
+  }
+
+  @Override
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
+    return sparkRuntimeContext.getMetadata(metadataEntity);
+  }
+
+  @Override
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+    return sparkRuntimeContext.getMetadata(scope, metadataEntity);
   }
 }

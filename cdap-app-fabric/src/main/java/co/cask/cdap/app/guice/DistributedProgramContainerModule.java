@@ -52,6 +52,7 @@ import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
+import co.cask.cdap.metadata.MetadataContextModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -154,6 +155,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new AuditModule().getDistributedModules());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new SecureStoreModules().getDistributedModules());
+    modules.add(new MetadataContextModule());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {

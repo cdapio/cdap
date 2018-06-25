@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -65,6 +66,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MessagingService messagingService;
   private final CConfiguration cConf;
   private final ProgramStateWriter programStateWriter;
+  private final MetadataReaderContext metadataReaderContext;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
@@ -72,7 +74,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                                WorkflowStateWriter workflowStateWriter, CConfiguration cConf, SecureStore secureStore,
                                SecureStoreManager secureStoreManager, MessagingService messagingService,
-                               ProgramStateWriter programStateWriter) {
+                               ProgramStateWriter programStateWriter, MetadataReaderContext metadataReaderContext) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.metricsCollectionService = metricsCollectionService;
@@ -85,6 +87,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.messagingService = messagingService;
     this.cConf = cConf;
     this.programStateWriter = programStateWriter;
+    this.metadataReaderContext = metadataReaderContext;
   }
 
   @Override
@@ -119,7 +122,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       WorkflowDriver driver = new WorkflowDriver(program, options, workflowSpec, programRunnerFactory,
                                                  metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                  txClient, workflowStateWriter, cConf, pluginInstantiator,
-                                                 secureStore, secureStoreManager, messagingService, programStateWriter);
+                                                 secureStore, secureStoreManager, messagingService,
+                                                 programStateWriter, metadataReaderContext);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.

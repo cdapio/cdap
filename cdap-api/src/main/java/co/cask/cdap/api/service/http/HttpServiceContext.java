@@ -22,6 +22,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.messaging.MessagingContext;
+import co.cask.cdap.api.metadata.MetadataReaderContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 
@@ -30,7 +31,7 @@ import co.cask.cdap.api.security.store.SecureStore;
  * {@link HttpServiceHandlerSpecification} and the runtime arguments passed by the user.
  */
 public interface HttpServiceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, MessagingContext,
-  PluginContext, SecureStore, Transactional, ArtifactManager {
+  PluginContext, SecureStore, Transactional, ArtifactManager, MetadataReaderContext {
 
   /**
    * @return the specification bound to this HttpServiceContext

@@ -26,6 +26,7 @@ import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.messaging.MessagingContext
+import co.cask.cdap.api.metadata.MetadataReaderContext
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
@@ -222,6 +223,8 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
 
   // TODO: CDAP-7807. Returns one that is serializable
   override def getMessagingContext: MessagingContext = runtimeContext
+
+  override def getMetadataReaderContext: MetadataReaderContext = runtimeContext
 
   override def getPluginContext: PluginContext = new SparkPluginContext(runtimeContext)
 
