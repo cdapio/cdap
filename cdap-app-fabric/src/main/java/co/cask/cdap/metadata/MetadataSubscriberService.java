@@ -20,7 +20,10 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessagingContext;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -31,6 +34,7 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
+import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.data2.registry.DatasetUsage;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
@@ -56,6 +60,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -70,6 +75,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
+  private final MetadataAdmin metadataAdmin; // TODO: Refactor metadataStore to run within existing transaction
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
 
@@ -79,7 +85,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
                             DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                            MetricsCollectionService metricsCollectionService) {
+                            MetricsCollectionService metricsCollectionService,
+                            MetadataAdmin metadataAdmin) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
       true, cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
@@ -97,6 +104,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.datasetFramework = datasetFramework;
+    this.metadataAdmin = metadataAdmin;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
@@ -134,26 +142,26 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
-  protected MetadataMessage decodeMessage(Message message) throws Exception {
+  protected MetadataMessage decodeMessage(Message message) {
     return GSON.fromJson(message.getPayloadAsString(), MetadataMessage.class);
   }
 
   @Nullable
   @Override
-  protected String loadMessageId(DatasetContext datasetContext) throws Exception {
+  protected String loadMessageId(DatasetContext datasetContext) {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
     return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
   }
 
   @Override
-  protected void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception {
+  protected void storeMessageId(DatasetContext datasetContext, String messageId) {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
     appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
   }
 
   @Override
   protected void processMessages(DatasetContext datasetContext,
-                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) throws Exception {
+                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
@@ -169,6 +177,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case WORKFLOW_TOKEN:
           case WORKFLOW_STATE:
             return new WorkflowProcessor(datasetContext);
+          case METADATA_OPERATION:
+            return new MetadataOperationProcessor();
           default:
             return null;
         }
@@ -283,6 +293,54 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         default:
           // This shouldn't happen
           LOG.warn("Unknown message type for workflow state information. Ignoring the message {}", message);
+      }
+    }
+  }
+
+  /**
+   * The {@link MetadataMessageProcessor} for metadata operations.
+   * It receives operations and applies them to the metadata store.
+   */
+  private class MetadataOperationProcessor implements MetadataMessageProcessor {
+
+    @Override
+    public void processMessage(MetadataMessage message)  {
+      MetadataOperation operation = message.getPayload(GSON, MetadataOperation.class);
+      Metadata metadata = operation.getMetadata();
+      MetadataEntity entity = operation.getEntity();
+
+      // TODO: Authorize that the operation is allowed. Currently MetadataMessage does not carry user info
+      switch (operation.getType()) {
+        case PUT: {
+          LOG.trace("Received PUT for entity {}: {}", entity, metadata);
+          try {
+            if (metadata.getProperties() != null && !metadata.getProperties().isEmpty()) {
+              metadataAdmin.addProperties(entity, metadata.getProperties());
+            }
+            if (metadata.getTags() != null && !metadata.getTags().isEmpty()) {
+              Set<String> toAdd = metadata.getTags();
+              metadataAdmin.addTags(entity, toAdd);
+
+            }
+          } catch (InvalidMetadataException e) {
+            LOG.warn("Ignoring invalid metadata operation from TMS: {}", GSON.toJson(message.getRawPayload()), e);
+          }
+          break;
+        }
+        case DELETE: {
+          LOG.trace("Received DELETE for entity {}: {}", entity, metadata);
+          if (metadata.getProperties() != null && !metadata.getProperties().isEmpty()) {
+            Set<String> toRemove = metadata.getProperties().keySet();
+            metadataAdmin.removeProperties(entity, toRemove);
+          }
+          if (metadata.getTags() != null && !metadata.getTags().isEmpty()) {
+            Set<String> toRemove = metadata.getTags();
+            metadataAdmin.removeTags(entity, toRemove);
+          }
+          break;
+        }
+        default:
+          LOG.warn("Ignoring MetadataOperation of unknown type {} for entity {}", operation.getType(), entity);
       }
     }
   }

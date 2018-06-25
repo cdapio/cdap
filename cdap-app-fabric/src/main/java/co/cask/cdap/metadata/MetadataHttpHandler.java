@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,7 +78,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
   private static final Type SET_METADATA_RECORD_V2_TYPE = new TypeToken<Set<MetadataRecordV2>>() { }.getType();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
@@ -152,7 +152,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void addTags(FullHttpRequest request, HttpResponder responder,
                       @QueryParam("type") String type) throws BadRequestException {
      MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
-    metadataAdmin.addTags(metadataEntity, readArray(request));
+    metadataAdmin.addTags(metadataEntity, readTags(request));
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata tags for %s added successfully.", metadataEntity));
   }
@@ -183,7 +183,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("property") String property,
                              @QueryParam("type") String type) {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
-    metadataAdmin.removeProperties(metadataEntity, property);
+    metadataAdmin.removeProperties(metadataEntity, Collections.singleton(property));
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata property %s for %s deleted successfully.", property, metadataEntity));
   }
@@ -204,7 +204,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                         @PathParam("tag") String tag,
                         @QueryParam("type") String type) {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
-    metadataAdmin.removeTags(metadataEntity, tag);
+    metadataAdmin.removeTags(metadataEntity, Collections.singleton(tag));
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata tag %s for %s deleted successfully.", tag, metadataEntity));
   }
@@ -313,15 +313,14 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     return metadata;
   }
 
-  private String[] readArray(FullHttpRequest request) throws BadRequestException {
+  private Set<String> readTags(FullHttpRequest request) throws BadRequestException {
     ByteBuf content = request.content();
     if (!content.isReadable()) {
       throw new BadRequestException("Unable to read a list of tags from the request.");
     }
-
-    List<String> toReturn;
+    Set<String> toReturn;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
-      toReturn = GSON.fromJson(reader, LIST_STRING_TYPE);
+      toReturn = GSON.fromJson(reader, SET_STRING_TYPE);
     } catch (IOException e) {
       throw new BadRequestException("Unable to read a list of tags from the request.", e);
     }
@@ -329,7 +328,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     if (toReturn == null) {
       throw new BadRequestException("Null tags were read from the request.");
     }
-    return toReturn.toArray(new String[toReturn.size()]);
+    return toReturn;
   }
 
   private Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity,

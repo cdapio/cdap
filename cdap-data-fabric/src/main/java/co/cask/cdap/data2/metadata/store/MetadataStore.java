@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,7 +69,7 @@ public interface MetadataStore {
    * @param metadataEntity the {@link MetadataEntity} to add the tags to
    * @param tagsToAdd the tags to add
    */
-  void addTags(MetadataScope scope, MetadataEntity metadataEntity, String... tagsToAdd);
+  void addTags(MetadataScope scope, MetadataEntity metadataEntity, Set<String> tagsToAdd);
 
   /**
    * @return a set of {@link MetadataRecordV2} representing all the metadata (including properties and tags) for the
@@ -143,7 +143,7 @@ public interface MetadataStore {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified keys for
    * @param keys the keys to remove
    */
-  void removeProperties(MetadataScope scope, MetadataEntity metadataEntity, String... keys);
+  void removeProperties(MetadataScope scope, MetadataEntity metadataEntity, Set<String> keys);
 
   /**
    * Removes tags of the {@link MetadataEntity} in the specified {@link MetadataScope}.
@@ -160,7 +160,7 @@ public interface MetadataStore {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified tags for
    * @param tagsToRemove the tags to remove
    */
-  void removeTags(MetadataScope scope, MetadataEntity metadataEntity, String ... tagsToRemove);
+  void removeTags(MetadataScope scope, MetadataEntity metadataEntity, Set<String> tagsToRemove);
 
   /**
    * Search the Metadata Dataset for the specified target types in both {@link MetadataScope#USER} and
@@ -190,16 +190,6 @@ public interface MetadataStore {
                                   Set<EntityScope> entityScope);
 
   /**
-   * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}
-   * and {@link MetadataScope#SYSTEM}.
-   *
-   * @param metadataEntitys entity ids
-   * @param timeMillis time in milliseconds
-   * @return the snapshot of the metadata for entities on or before the given time
-   */
-  Set<MetadataRecordV2> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntitys, long timeMillis);
-
-  /**
    * Returns the snapshot of the metadata for entities on or before the given time in the specified
    * {@link MetadataScope}.
    *
@@ -215,11 +205,6 @@ public interface MetadataStore {
    * Rebuild stale metadata indexes.
    */
   void rebuildIndexes(MetadataScope scope, RetryStrategy retryStrategy);
-
-  /**
-   * Delete all existing metadata indexes.
-   */
-  void deleteAllIndexes(MetadataScope scope) throws DatasetManagementException, IOException;
 
   /**
    * Creates the MetadataDataset if its not already created. Otherwise, upgrades it if required.
