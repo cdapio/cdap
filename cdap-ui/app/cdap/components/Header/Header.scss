@@ -17,7 +17,7 @@
 @import '../../styles/variables.scss';
 @import './DropdownStyling.scss';
 
-$header-bg-color: rgba(204, 204, 204, 0.7);
+$header-bg-color: $grey-02;
 
 .global-navbar {
   height: 50px;
@@ -27,8 +27,8 @@ $header-bg-color: rgba(204, 204, 204, 0.7);
   top: 0;
   z-index: 1000;
   display: flex;
-  border-bottom: 2px solid $gcp-blue;
   box-shadow: 0px 1px 5px 0px $gcp-blue;
+  color: white;
 
   .with-pointer {
     padding-left: 15px;
@@ -61,7 +61,6 @@ $header-bg-color: rgba(204, 204, 204, 0.7);
     min-width: 108px;
     img {
       height: 50px;
-      filter: invert(80%);
     }
   }
 
@@ -151,7 +150,7 @@ $header-bg-color: rgba(204, 204, 204, 0.7);
         &:hover,
         &:active,
         &.active {
-          color: $gcp-blue;
+          color: white;
           background: rgba(255, 255, 255, 0.3);
         }
       }
