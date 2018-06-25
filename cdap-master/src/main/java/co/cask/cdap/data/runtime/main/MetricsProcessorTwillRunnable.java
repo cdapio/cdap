@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,8 +40,6 @@ import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.cdap.metrics.runtime.MessagingMetricsProcessorRuntimeService;
-import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -55,10 +53,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
@@ -144,43 +140,11 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
     @Override
     protected void configure() {
-      // Single MetricDatasetFactory used by both KafkaMetricsProcessorService and MessagingMetricsProcessorService
-      bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
       bind(Integer.class).annotatedWith(Names.named(Constants.Metrics.TWILL_INSTANCE_ID)).toInstance(instanceId);
-
-      install(new FactoryModuleBuilder()
-                .build(MessagingMetricsProcessorServiceFactory.class));
+      install(new FactoryModuleBuilder().build(MessagingMetricsProcessorServiceFactory.class));
 
       bind(MessagingMetricsProcessorRuntimeService.class);
       expose(MessagingMetricsProcessorRuntimeService.class);
-    }
-
-    @SuppressWarnings("unused")
-    @Provides
-    @Named(Constants.Metrics.TOPIC_PREFIX)
-    public String providesTopicPrefix(CConfiguration cConf) {
-      return cConf.get(Constants.Metrics.TOPIC_PREFIX);
-    }
-
-    @SuppressWarnings("unused")
-    @Provides
-    @Named(Constants.Metrics.MESSAGING_TOPIC_NUM)
-    public int providesMessagingTopicPartition(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
-    }
-
-    @SuppressWarnings("unused")
-    @Provides
-    @Named(Constants.Metrics.PROCESSOR_MAX_DELAY_MS)
-    public long providesMadDelay(CConfiguration cConf) {
-      return cConf.getLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS);
-    }
-
-    @SuppressWarnings("unused")
-    @Provides
-    @Named(Constants.Metrics.QUEUE_SIZE)
-    public int providesQueueSize(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.QUEUE_SIZE);
     }
   }
 }

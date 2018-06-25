@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.store;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -38,17 +37,13 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
- *
+ * Default implementation of {@link MetricDatasetFactory}, which uses {@link DatasetFramework} for acquiring
+ * {@link MetricsTable} instances.
  */
 public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultMetricDatasetFactory.class);
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
@@ -123,7 +118,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
       // metrics tables are in the system namespace
       DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
-      MetricsTable v2Table = dsFramework.getDataset(v2TableId, ImmutableMap.<String, String>of(), null);
+      MetricsTable v2Table = dsFramework.getDataset(v2TableId, ImmutableMap.of(), null);
 
       props.add(HBaseTableAdmin.PROPERTY_SPLITS,
                 GSON.toJson(getV3MetricsTableSplits(cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS))));
@@ -159,8 +154,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
    *
    * @param factory : metrics dataset factory
    */
-  public static void setupDatasets(DefaultMetricDatasetFactory factory)
-    throws IOException, DatasetManagementException {
+  public static void setupDatasets(DefaultMetricDatasetFactory factory) {
     // adding all fact tables
     factory.getOrCreateFactTable(1);
     factory.getOrCreateFactTable(60);

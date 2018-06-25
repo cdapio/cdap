@@ -19,7 +19,6 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
@@ -67,9 +66,8 @@ import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
+import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -188,7 +186,7 @@ public class UpgradeTool {
   }
 
   @VisibleForTesting
-  Injector createInjector() throws Exception {
+  Injector createInjector() {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
@@ -231,14 +229,13 @@ public class UpgradeTool {
       new SecureStoreModules().getDistributedModules(),
       new DataFabricModules(UpgradeTool.class.getName()).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
+      // the DataFabricDistributedModule needs MetricsCollectionService binding
+      new MetricsStoreModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
-          // anything with Metrics we just bind it to NoOpMetricsCollectionService
+          // Since Upgrade tool does not do anything with Metrics we just bind it to NoOpMetricsCollectionService
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
-          bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-          bind(MetricStore.class).to(DefaultMetricStore.class);
         }
 
         @Provides

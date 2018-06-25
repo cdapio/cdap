@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -74,9 +74,9 @@ import javax.annotation.Nullable;
  * Default implementation of {@link MetricStore}.
  */
 public class DefaultMetricStore implements MetricStore {
-  public static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
   static final Map<String, Aggregation> AGGREGATIONS;
 
+  private static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
   private static final String BY_NAMESPACE = "namespace";
   private static final String BY_APP = "app";
   private static final String BY_FLOW = "flow";
@@ -210,16 +210,14 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Inject
-  public DefaultMetricStore(final MetricDatasetFactory dsFactory,
-                            final CConfiguration cConf) {
+  DefaultMetricStore(MetricDatasetFactory dsFactory, CConfiguration cConf) {
     this(dsFactory, new int[] {1, 60, 3600, TOTALS_RESOLUTION}, cConf);
   }
 
   // NOTE: should never be used apart from data migration during cdap upgrade
-  public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[],
-                            final CConfiguration cConf) {
+  private DefaultMetricStore(MetricDatasetFactory dsFactory, int resolutions[], CConfiguration cConf) {
     this.resolutions = resolutions;
-    final FactTableSupplier factTableSupplier = new FactTableSupplier() {
+    FactTableSupplier factTableSupplier = new FactTableSupplier() {
       @Override
       public FactTable get(int resolution, int ignoredRollTime) {
         // roll time will be taken from configuration todo: clean this up

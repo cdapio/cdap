@@ -52,6 +52,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
@@ -412,6 +413,7 @@ public class BaseHiveExploreServiceTest {
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new MessagingServerRuntimeModule().getInMemoryModules(),
       new NonCustomLocationUnitTestModule().getModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
@@ -473,6 +475,7 @@ public class BaseHiveExploreServiceTest {
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
+      new MessagingServerRuntimeModule().getStandaloneModules(),
       new NonCustomLocationUnitTestModule().getModule(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),

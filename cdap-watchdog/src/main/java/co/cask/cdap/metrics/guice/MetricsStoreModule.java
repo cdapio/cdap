@@ -20,18 +20,17 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import com.google.inject.PrivateModule;
+import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 
 /**
- * Guice module for providing bindings for {@link MetricStore}.
+ * Guice module for providing bindings for {@link MetricStore} and {@link MetricDatasetFactory}.
  */
-public final class MetricsStoreModule extends PrivateModule {
+public final class MetricsStoreModule extends AbstractModule {
 
   @Override
   protected void configure() {
     bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
     bind(MetricStore.class).to(DefaultMetricStore.class);
-    expose(MetricStore.class);
   }
 }
