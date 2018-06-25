@@ -158,6 +158,10 @@ public class StageSpec implements Serializable {
     return new Builder(name, plugin);
   }
 
+  public static Builder builder(StageSpec spec) {
+    return new Builder(spec);
+  }
+
   /**
    * Builder for a StageSpec.
    */
@@ -177,6 +181,18 @@ public class StageSpec implements Serializable {
       this.outputPortSchemas = new HashMap<>();
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
+    }
+
+    public Builder(StageSpec spec) {
+      this.name = spec.name;
+      this.plugin = spec.plugin;
+      this.inputSchemas = new HashMap<>();
+      this.inputSchemas.putAll(spec.getInputSchemas());
+      this.outputPortSchemas = new HashMap<>();
+      this.outputPortSchemas.putAll(spec.getOutputPorts());
+      this.errorSchema = spec.errorSchema;
+      this.stageLoggingEnabled = spec.stageLoggingEnabled;
+      this.processTimingEnabled = spec.processTimingEnabled;
     }
 
     public Builder addInputSchema(String stageName, Schema schema) {

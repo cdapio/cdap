@@ -19,10 +19,13 @@ package co.cask.cdap.etl.common.submit;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.SubmitterLifecycle;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 
 /**
  * Runs SubmitterLifecycle methods within a transaction.
@@ -37,6 +40,7 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
   private final SubmitterLifecycle<T> delegate;
   private final ContextProvider<U> contextProvider;
   private final PrepareAction<U> prepareAction;
+  private StageContext stageContext;
 
   public SubmitterPlugin(String stageName, Transactional transactional,
                          SubmitterLifecycle<T> delegate,
@@ -81,9 +85,17 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
       public void run(DatasetContext datasetContext) throws Exception {
         U context = contextProvider.getContext(datasetContext);
         delegate.prepareRun(context);
+        if (context instanceof StageContext) {
+          stageContext = (StageContext) context;
+        }
         prepareAction.act(context);
       }
     });
+  }
+
+  @Nullable
+  public StageContext getStageContext() {
+    return stageContext;
   }
 
   /**
