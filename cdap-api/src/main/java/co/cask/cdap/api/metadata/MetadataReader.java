@@ -20,20 +20,24 @@ import java.util.Map;
 /**
  * The context for reading metadata from program
  */
-public interface MetadataReaderContext {
+public interface MetadataReader {
 
   /**
    * Returns a Map of {@link MetadataScope} to {@link Metadata} representing all metadata (including properties
    * and tags) for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}. The map will be empty if the there is no metadata associated with the given
    * metadataEntity.
+   *
+   * @throws MetadataException if the metadata operation fails
    */
-  Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity);
+  Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) throws MetadataException;
 
   /**
    * Returns a {@link Metadata} representing all metadata (including properties and tags) for the specified
    * {@link MetadataEntity} in the specified {@link MetadataScope}. {@link Metadata} will be empty if the there is no
    * metadata associated with the given metadataEntity.
+   *
+   * @throws MetadataException if the metadata operation fails
    */
-  Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
+  Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException;
 }

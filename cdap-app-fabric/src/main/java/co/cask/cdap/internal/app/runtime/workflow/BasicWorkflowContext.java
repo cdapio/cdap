@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -61,12 +62,13 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
                        @Nullable PluginInstantiator pluginInstantiator,
                        SecureStore secureStore, SecureStoreManager secureStoreManager,
-                       MessagingService messagingService, @Nullable ConditionSpecification conditionSpecification) {
+                       MessagingService messagingService, @Nullable ConditionSpecification conditionSpecification,
+                       MetadataReader metadataReader) {
     super(program, programOptions, cConf, new HashSet(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
                                                              ProgramRunners.getRunId(programOptions).getId()),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader);
     this.workflowSpec = workflowSpec;
     this.conditionSpecification = conditionSpecification;
     this.token = token;

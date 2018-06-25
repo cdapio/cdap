@@ -41,6 +41,7 @@ import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
+import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
@@ -95,6 +96,7 @@ public class DefaultPreviewManagerTest {
       new StreamServiceRuntimeModule().getInMemoryModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
+      new MetadataReaderWriterModules().getInMemoryModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new SecureStoreModules().getInMemoryModules(),
