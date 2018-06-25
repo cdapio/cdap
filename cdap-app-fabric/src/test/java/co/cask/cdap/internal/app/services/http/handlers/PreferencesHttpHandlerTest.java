@@ -178,7 +178,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
   public void testSetPreferenceWithProfiles() throws Exception {
     // put my profile
     ProfileId myProfile = new ProfileId(TEST_NAMESPACE1, "MyProfile");
-    putProfile(myProfile, Profile.DEFAULT, 200);
+    putProfile(myProfile, Profile.NATIVE, 200);
 
     // put some properties with my profile, it should work fine
     Map<String, String> properties = new HashMap<>();

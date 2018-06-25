@@ -16,7 +16,6 @@
 
 package co.cask.cdap.config;
 
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.id.Id;
@@ -276,7 +275,7 @@ public class UserPreferencesStoreTest extends AppFabricTestBase {
 
     // add the profile and disable it
     ProfileId profileId = new ProfileId("myspace", "userProfile");
-    profileStore.saveProfile(profileId, Profile.DEFAULT);
+    profileStore.saveProfile(profileId, Profile.NATIVE);
     profileStore.disableProfile(profileId);
 
     // this set call should fail since the profile is disabled
