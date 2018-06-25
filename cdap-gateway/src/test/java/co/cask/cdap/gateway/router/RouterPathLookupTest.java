@@ -389,6 +389,12 @@ public class RouterPathLookupTest {
     // get metadata for accesses
     assertRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/runs/runid/metadata",
                   RouterPathLookup.METADATA_SERVICE);
+
+    // test field lineage path
+    assertRouting("/v3/namespaces/default/datasets/ds1/lineage/fields", RouterPathLookup.METADATA_SERVICE);
+    assertRouting("/v3/namespaces/default/datasets/ds1/lineage/fields/field1", RouterPathLookup.METADATA_SERVICE);
+    assertRouting("/v3/namespaces/default/datasets/ds1/lineage/fields/field1/operations",
+                  RouterPathLookup.METADATA_SERVICE);
   }
 
   @Test
