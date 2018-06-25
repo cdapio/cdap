@@ -37,7 +37,6 @@ import cloneDeep from 'lodash/cloneDeep';
 const ACTIONS = {
   INITIALIZE_CONFIG: 'INITIALIZE_CONFIG',
   SET_RUNTIME_ARGS: 'SET_RUNTIME_ARGS',
-  SET_SAVED_RUNTIME_ARGS: 'SET_SAVED_RUNTIME_ARGS',
   SET_RESOLVED_MACROS: 'SET_RESOLVED_MACROS',
   RESET_RUNTIME_ARG_TO_RESOLVED_VALUE: 'RESET_RUNTIME_ARG_TO_RESOLVED_VALUE',
   SET_ENGINE: 'SET_ENGINE',
@@ -57,19 +56,9 @@ const ACTIONS = {
   SET_STAGE_LOGGING: 'SET_STAGE_LOGGING',
   SET_CHECKPOINTING: 'SET_CHECKPOINTING',
   SET_NUM_RECORDS_PREVIEW: 'SET_NUM_RECORDS_PREVIEW',
-  SET_PIPELINE_EDIT_STATUS: 'SET_PIPELINE_EDIT_STATUS',
   SET_MODELESS_OPEN_STATUS: 'SET_MODELESS_OPEN_STATUS',
+  SET_PIPELINE_VISUAL_CONFIGURATION: 'SET_PIPELINE_VISUAL_CONFIGURATION',
   RESET: 'RESET'
-};
-
-const TAB_OPTIONS = {
-  RUNTIME_ARGS: 'runtimeArgs',
-  PREVIEW_CONFIG: 'previewConfig',
-  PIPELINE_CONFIG: 'pipelineConfig',
-  ENGINE_CONFIG: 'engineConfig',
-  RESOURCES: 'resources',
-  ALERTS: 'alerts',
-  COMPUTECONFIG: 'computeConfig'
 };
 
 const BATCH_INTERVAL_RANGE = range(1, 61);
@@ -96,12 +85,7 @@ const DEFAULT_RUNTIME_ARGS = {
 
 const DEFAULT_CONFIGURE_OPTIONS = {
 
-  // savedRuntimeArgs represent the runtime args the user has Saved for the current session
-  // runtimeArgs represent the current values in the modeless
-  // If the user changes runtime args values in the modeless but doesn't click Save, then we'll
-  // revert runtimeArgs to savedRuntimeArgs
   runtimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
-  savedRuntimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   resolvedMacros: {},
   customConfigKeyValuePairs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   postRunActions: [],
@@ -123,8 +107,15 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   schedule: HYDRATOR_DEFAULT_VALUES.cron,
   maxConcurrentRuns: 1,
   isMissingKeyValues: false,
-  pipelineEdited: false,
-  modelessOpen: false
+  modelessOpen: false,
+
+  pipelineVisualConfiguration: {
+    isBatch: false,
+    isHistoricalRun: false,
+    isPreview: false,
+    isDetailView: false
+  }
+
 };
 
 const getCustomConfigFromProperties = (properties) => {
@@ -180,7 +171,7 @@ const checkForReset = (runtimeArgs, resolvedMacros) => {
       }
     }
   });
-  return runtimeArgs;
+  return getRuntimeArgsForDisplay(runtimeArgs, resolvedMacros);
 };
 
 const resetRuntimeArgToResolvedValue = (index, runtimeArgs, resolvedMacros) => {
@@ -191,12 +182,14 @@ const resetRuntimeArgToResolvedValue = (index, runtimeArgs, resolvedMacros) => {
 
 const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
   let providedMacros = {};
+  let runtimeArgsMap = {};
 
   // holds provided macros in an object here even though we don't need the value,
   // because object hash is faster than Array.indexOf
   if (currentRuntimeArgs.pairs) {
     currentRuntimeArgs.pairs.forEach((currentPair) => {
       let key = currentPair.key;
+      runtimeArgsMap[key] = currentPair.value || '';
       if (currentPair.notDeletable && currentPair.provided) {
         providedMacros[key] = currentPair.value;
       }
@@ -208,7 +201,8 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
   let macros = Object.keys(macrosMap).map(macroKey => {
     return {
       key: macroKey,
-      value: macrosMap[macroKey],
+      value: runtimeArgsMap[macroKey] || '',
+      showReset: macrosMap[macroKey].showReset,
       uniqueId: 'id-' + uuidV4(),
       notDeletable: true,
       provided: providedMacros.hasOwnProperty(macroKey)
@@ -236,22 +230,15 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         runtimeArgs: checkForReset(action.payload.runtimeArgs, state.resolvedMacros),
         isMissingKeyValues: checkIfMissingKeyValues(action.payload.runtimeArgs, state.customConfigKeyValuePairs)
       };
-    case ACTIONS.SET_SAVED_RUNTIME_ARGS:
-      return {
-        ...state,
-        savedRuntimeArgs: action.payload.savedRuntimeArgs
-      };
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
       let runtimeArgs = getRuntimeArgsForDisplay(cloneDeep(state.runtimeArgs), resolvedMacros);
-      let savedRuntimeArgs = cloneDeep(runtimeArgs);
       let isMissingKeyValues = checkIfMissingKeyValues(runtimeArgs, state.customConfigKeyValuePairs);
 
       return {
         ...state,
         resolvedMacros,
         runtimeArgs,
-        savedRuntimeArgs,
         isMissingKeyValues
       };
     }
@@ -398,18 +385,21 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         numOfRecordsPreview: action.payload.numRecordsPreview
       };
-    case ACTIONS.SET_PIPELINE_EDIT_STATUS:
-      return {
-        ...state,
-        pipelineEdited: action.payload.pipelineEdited
-      };
     case ACTIONS.SET_MODELESS_OPEN_STATUS:
       return {
         ...state,
         modelessOpen: action.payload.open
       };
     case ACTIONS.RESET:
-      return DEFAULT_CONFIGURE_OPTIONS;
+      return cloneDeep(DEFAULT_CONFIGURE_OPTIONS);
+    case ACTIONS.SET_PIPELINE_VISUAL_CONFIGURATION:
+      return {
+        ...state,
+        pipelineVisualConfiguration: {
+          ...state.pipelineVisualConfiguration,
+          ...action.payload.pipelineVisualConfiguration
+        }
+      };
     default:
       return state;
   }
@@ -417,14 +407,13 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
 
 const PipelineConfigurationsStore = createStore(
   configure,
-  DEFAULT_CONFIGURE_OPTIONS,
+  cloneDeep(DEFAULT_CONFIGURE_OPTIONS),
   composeEnhancers('PipelineConfigurationsStore')()
 );
 
 export default PipelineConfigurationsStore;
 export {
   ACTIONS,
-  TAB_OPTIONS,
   BATCH_INTERVAL_RANGE,
   BATCH_INTERVAL_UNITS,
   NUM_EXECUTORS_OPTIONS,

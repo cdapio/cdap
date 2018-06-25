@@ -17,17 +17,12 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {
-  applyRuntimeArgs,
   updatePipeline,
   runPipeline,
   schedulePipeline,
   updatePreferences
 } from 'components/PipelineConfigurations/Store/ActionCreator';
-import ConfigModelessSaveAndRunBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveAndRunBtn';
-import ConfigModelessSaveAndScheduleBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveAndScheduleBtn';
 import ConfigModelessSaveBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveBtn';
-import ConfigModelessRuntimeArgsCount from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessRuntimeArgsCount';
-import ConfigModelessCopyRuntimeArgsBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessCopyRuntimeArgsBtn';
 import {Observable} from 'rxjs/Observable';
 
 require('./ConfigModelessActionButtons.scss');
@@ -42,13 +37,7 @@ export default class ConfigModelessActionButtons extends Component {
 
   static propTypes = {
     onClose: PropTypes.func,
-    activeTab: PropTypes.string,
-    action: PropTypes.string,
     isHistoricalRun: PropTypes.bool
-  };
-
-  static defaultProps = {
-    action: 'run'
   };
 
   closeModeless = () => {
@@ -67,25 +56,11 @@ export default class ConfigModelessActionButtons extends Component {
     schedulePipeline();
   };
 
-  saveAndRun = (pipelineEdited) => {
-    this.saveAndAction(pipelineEdited, 'saveAndRunLoading', this.closeModelessAndRun);
+  saveConfig = () => {
+    this.saveAndAction('saveLoading', this.closeModeless);
   };
 
-  saveAndSchedule = (pipelineEdited) => {
-    this.saveAndAction(pipelineEdited, 'saveAndScheduleLoading', this.closeModelessAndSchedule);
-  };
-
-  saveConfig = (pipelineEdited) => {
-    this.saveAndAction(pipelineEdited, 'saveLoading', this.closeModeless);
-  };
-
-  saveAndAction = (pipelineEdited, loadingState, actionFn) => {
-    if (!pipelineEdited) {
-      actionFn();
-      return;
-    }
-    applyRuntimeArgs();
-
+  saveAndAction = (loadingState, actionFn) => {
     this.setState({
       [loadingState]: true
     });
@@ -111,33 +86,9 @@ export default class ConfigModelessActionButtons extends Component {
   };
 
   render() {
-    let ActionComp;
-    if (this.props.action === 'run') {
-      ActionComp = (
-        <ConfigModelessSaveAndRunBtn
-          saveAndRun={this.saveAndRun}
-          saveAndRunLoading={this.state.saveAndRunLoading}
-        />
-      );
-    } else if (this.props.action === 'schedule') {
-      ActionComp = (
-        <ConfigModelessSaveAndScheduleBtn
-          saveAndSchedule={this.saveAndSchedule}
-          saveAndScheduleLoading={this.state.saveAndScheduleLoading}
-        />
-      );
-    } else if (this.props.action === 'copy') {
-      ActionComp = (
-        <ConfigModelessCopyRuntimeArgsBtn
-          setRuntimeArgsCopiedState={this.setRuntimeArgsCopiedState}
-          runtimeArgsCopied={this.state.runtimeArgsCopied}
-        />
-      );
-    }
     return (
       <div className="configuration-step-navigation">
         <div className="apply-action-container">
-          {ActionComp}
           {
             !this.props.isHistoricalRun ?
               <ConfigModelessSaveBtn
@@ -147,10 +98,6 @@ export default class ConfigModelessActionButtons extends Component {
             :
               null
           }
-          <ConfigModelessRuntimeArgsCount
-            activeTab={this.props.activeTab}
-            isHistoricalRun={this.props.isHistoricalRun}
-          />
         </div>
       </div>
     );

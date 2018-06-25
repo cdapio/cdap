@@ -21,7 +21,6 @@ import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.Resources';
@@ -39,14 +38,12 @@ const mapDispatchToProps = (dispatch) => {
         type: PipelineConfigurationsActions.SET_CLIENT_VIRTUAL_CORES,
         payload: { virtualCores: e.target.value }
       });
-      updatePipelineEditStatus();
     },
     onMemoryMBChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_CLIENT_MEMORY_MB,
         payload: { memoryMB: e.target.value }
       });
-      updatePipelineEditStatus();
     }
   };
 };

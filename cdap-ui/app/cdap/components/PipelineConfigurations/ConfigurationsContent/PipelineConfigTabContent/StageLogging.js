@@ -21,7 +21,6 @@ import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
 import Popover from 'components/Popover';
 import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
@@ -38,7 +37,6 @@ const mapDispatchToStageLoggingProps = (dispatch) => {
         type: PipelineConfigurationsActions.SET_STAGE_LOGGING,
         payload: { stageLogging: value }
       });
-      updatePipelineEditStatus();
     }
   };
 };

@@ -21,7 +21,7 @@ import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 
-const PREFIX = 'features.PipelineConfigurations.RuntimeArgs.ProvidedPopover';
+const PREFIX = 'features.PipelineDetails.PipelineRuntimeArgsDropdownBtn.RuntimeArgsTabContent.ProvidedPopover';
 
 const mapStateToProps = (state, ownProps) => {
   return {
@@ -34,14 +34,14 @@ const mapStateToProps = (state, ownProps) => {
 const ProvidedPopover = ({containsMacros, toggleAllProvided, disabled}) => {
   if (!containsMacros || disabled) { return null; }
 
+  const target = (
+    <IconSVG name="icon-caret-square-o-down" />
+  );
   return (
     <span>
-      <span className="provided-label">
-        {T.translate(`${PREFIX}.provided`)}
-      </span>
       <Popover
-        target={() => <IconSVG name="icon-caret-square-o-down" />}
-        placement="bottom"
+        target={() => target}
+        placement="left"
         className="provided-popover"
       >
         <ul>
@@ -53,6 +53,9 @@ const ProvidedPopover = ({containsMacros, toggleAllProvided, disabled}) => {
           </li>
         </ul>
       </Popover>
+      <span className="provided-label">
+        {T.translate(`${PREFIX}.provided`)}
+      </span>
     </span>
   );
 };

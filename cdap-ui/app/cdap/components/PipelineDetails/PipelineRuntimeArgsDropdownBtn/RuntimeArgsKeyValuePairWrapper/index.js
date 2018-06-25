@@ -18,16 +18,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {updateKeyValueStore} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import {convertMapToKeyValuePairs} from 'services/helpers';
-import RuntimeArgsPairs from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent/RuntimeArgsPairs';
-import ProvidedPopover from 'components/PipelineConfigurations/ConfigurationsContent/RuntimeArgsTabContent/ProvidedPopover';
+import RuntimeArgsPairs from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/RuntimeArgsPairs';
 import classnames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
-require('./RuntimeArgsTabContent.scss');
+import ProvidedPopover from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/ProvidedPopover';
+import {connect} from 'react-redux';
 
-const PREFIX = 'features.PipelineConfigurations.RuntimeArgs';
+require('./RuntimeArgsKeyValuePairWrapper.scss');
 
 const toggleAllProvided = (isProvided) => {
   let runtimeArgs = {...PipelineConfigurationsStore.getState().runtimeArgs};
@@ -70,67 +69,45 @@ const onPaste = (dataObj, index) => {
   updateKeyValueStore();
 };
 
-export default function RuntimeArgsTabContent({isHistoricalRun}) {
-  let runtimeArgs = PipelineConfigurationsStore.getState().runtimeArgs;
-  let runtimeArgsObj = convertKeyValuePairsObjToMap(runtimeArgs);
-  let noRuntimeArgs = isEmpty(runtimeArgsObj);
-
-  let stepContentHeading;
-  if (isHistoricalRun) {
-    if (noRuntimeArgs) {
-      stepContentHeading = (
-        <div className="step-content-heading">
-          {T.translate(`${PREFIX}.contentHeading3`)}
-        </div>
-      );
-    } else {
-      stepContentHeading = (
-        <div className="step-content-heading">
-          {T.translate(`${PREFIX}.contentHeading2`)}
-        </div>
-      );
-    }
-  } else {
-    stepContentHeading = (
-      <div>
-        <div className="step-content-heading">
-          {T.translate(`${PREFIX}.contentHeading1`)}
-        </div>
-        <div className="step-content-subtitle">
-          {T.translate(`${PREFIX}.contentSubtitle`)}
-        </div>
-      </div>
-    );
-  }
-
+function RuntimeArgsKeyValuePairWrapper({runtimeArgs}) {
   return (
     <div
-      id="runtime-arguments-tab-content"
+      id="runtime-arguments-key-value-pairs-wrapper"
       className="configuration-step-content configuration-content-container"
     >
-      {stepContentHeading}
-      <div className="runtime-arguments-labels key-value-pair-labels">
-        <span className={classnames("key-label", {"wider": isHistoricalRun})}>
+      <div className={classnames("runtime-arguments-labels key-value-pair-labels")}>
+        <span className="key-label">
           {T.translate('commons.nameLabel')}
         </span>
         <span className="value-label">
           {T.translate('commons.keyValPairs.valueLabel')}
         </span>
-        <ProvidedPopover
-          toggleAllProvided={toggleAllProvided}
-          disabled={isHistoricalRun}
-        />
+        <span/>
+         <ProvidedPopover
+            toggleAllProvided={toggleAllProvided}
+          />
       </div>
       <div className="runtime-arguments-values key-value-pair-values">
         <RuntimeArgsPairs
-          disabled={isHistoricalRun}
           onPaste={onPaste}
+          runtimeArgs={runtimeArgs}
         />
       </div>
     </div>
   );
 }
 
-RuntimeArgsTabContent.propTypes = {
-  isHistoricalRun: PropTypes.bool
+RuntimeArgsKeyValuePairWrapper.propTypes = {
+  isHistoricalRun: PropTypes.bool,
+  runtimeArgs: PropTypes.object
 };
+
+const mapStateToProps = (state, ownProps) => {
+  return {
+    runtimeArgs: ownProps.runtimeArgs
+  };
+};
+
+const ConnectedRuntimeArgsKeyValuePairWrapper = connect(mapStateToProps)(RuntimeArgsKeyValuePairWrapper);
+
+export default ConnectedRuntimeArgsKeyValuePairWrapper;

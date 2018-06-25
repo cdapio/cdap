@@ -19,12 +19,15 @@ import {Provider} from 'react-redux';
 import PropTypes from 'prop-types';
 import {Observable} from 'rxjs/Observable';
 import {isDescendant} from 'services/helpers';
-import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions, TAB_OPTIONS} from 'components/PipelineConfigurations/Store';
-import ConfigurationsSidePanel from 'components/PipelineConfigurations/ConfigurationsSidePanel';
-import ConfigurationsContent from 'components/PipelineConfigurations/ConfigurationsContent';
+import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import ConfigModelessActionButtons from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import ConfigurableTab from 'components/ConfigurableTab';
+import TabConfig from 'components/PipelineConfigurations/TabConfig';
+
 require('./PipelineConfigurations.scss');
+require('./ConfigurationsContent/ConfigurationsContent.scss');
 
 const PREFIX = 'features.PipelineConfigurations';
 
@@ -34,9 +37,9 @@ export default class PipelineConfigurations extends Component {
     isDetailView: PropTypes.bool,
     isPreview: PropTypes.bool,
     isBatch: PropTypes.bool,
-    pipelineName: PropTypes.string,
+    isHistoricalRun: PropTypes.bool,
     action: PropTypes.string,
-    isHistoricalRun: PropTypes.bool
+    pipelineName: PropTypes.string
   };
 
   static defaultProps = {
@@ -45,22 +48,28 @@ export default class PipelineConfigurations extends Component {
     isBatch: true
   };
 
-  state = {
-    activeTab: TAB_OPTIONS.RUNTIME_ARGS,
-    showAdvancedTabs: false
-  }
-
-  componentWillMount() {
-    PipelineConfigurationsStore.dispatch({
-      type: PipelineConfigurationsActions.SET_MODELESS_OPEN_STATUS,
-      payload: { open: true }
-    });
-  }
-
   componentDidMount() {
     if (!this.props.isDetailView) {
       return;
     }
+    PipelineConfigurationsStore.dispatch({
+      type: PipelineConfigurationsActions.SET_MODELESS_OPEN_STATUS,
+      payload: { open: true }
+    });
+
+    let {isBatch, isDetailView, isHistoricalRun, isPreview} = this.props;
+
+    PipelineConfigurationsStore.dispatch({
+      type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
+      payload: {
+        pipelineVisualConfiguration: {
+          isBatch,
+          isDetailView,
+          isHistoricalRun,
+          isPreview
+        }
+      }
+    });
 
     this.storeSubscription = PipelineConfigurationsStore.subscribe(() => {
       let state = PipelineConfigurationsStore.getState();
@@ -88,18 +97,6 @@ export default class PipelineConfigurations extends Component {
       this.storeSubscription();
     }
   }
-
-  setActiveTab = (tab) => {
-    this.setState({
-      activeTab: tab
-    });
-  };
-
-  toggleAdvancedTabs = () => {
-    this.setState({
-      showAdvancedTabs: !this.state.showAdvancedTabs
-    });
-  };
 
   renderHeader() {
     let headerLabel;
@@ -136,25 +133,9 @@ export default class PipelineConfigurations extends Component {
           ref={(ref) => this.configModeless = ref}
         >
           {this.renderHeader()}
-          <div className="pipeline-configurations-body modeless-content">
-            <ConfigurationsSidePanel
-              isDetailView={this.props.isDetailView}
-              isPreview={this.props.isPreview}
-              isBatch={this.props.isBatch}
-              isHistoricalRun={this.props.isHistoricalRun}
-              activeTab={this.state.activeTab}
-              onTabChange={this.setActiveTab}
-              showAdvancedTabs={this.state.showAdvancedTabs}
-              toggleAdvancedTabs={this.toggleAdvancedTabs}
-            />
-            <ConfigurationsContent
-              activeTab={this.state.activeTab}
-              isBatch={this.props.isBatch}
-              isDetailView={this.props.isDetailView}
-              isHistoricalRun={this.props.isHistoricalRun}
-              onClose={this.props.onClose}
-              action={this.props.action}
-            />
+          <div className="pipeline-config-tabs-wrapper">
+            <ConfigurableTab tabConfig={TabConfig} />
+            <ConfigModelessActionButtons onClose={this.props.onClose} />
           </div>
         </div>
       </Provider>

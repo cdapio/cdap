@@ -21,7 +21,6 @@ import IconSVG from 'components/IconSVG';
 import KeyValuePairs from 'components/KeyValuePairs';
 import Popover from 'components/Popover';
 import {getEngineDisplayLabel, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import T from 'i18n-react';
 
@@ -48,7 +47,6 @@ const mapDispatchToCustomConfigKeyValuesProps = (dispatch, ownProps) => {
           isBatch: ownProps.isBatch
         }
       });
-      updatePipelineEditStatus();
     }
   };
 };

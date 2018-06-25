@@ -20,12 +20,13 @@ import Instrumentation from 'components/PipelineConfigurations/ConfigurationsCon
 import StageLogging from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/StageLogging';
 import Checkpointing from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/Checkpointing';
 import BatchInterval from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/BatchInterval';
+import {connect} from 'react-redux';
 import T from 'i18n-react';
 require('./PipelineConfigTabContent.scss');
 
 const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
-export default function PipelineConfigTabContent({isBatch}) {
+function PipelineConfigTabContent({isBatch}) {
   return (
     <div
       id="pipeline-config-tab-content"
@@ -54,3 +55,12 @@ export default function PipelineConfigTabContent({isBatch}) {
 PipelineConfigTabContent.propTypes = {
   isBatch: PropTypes.bool
 };
+
+const mapStateToProps = (state) => {
+  return {
+    isBatch: state.pipelineVisualConfiguration.isBatch
+  };
+};
+const ConnectedPipelineConfigTabContent = connect(mapStateToProps)(PipelineConfigTabContent);
+
+export default ConnectedPipelineConfigTabContent;
