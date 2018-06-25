@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataException;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.stream.GenericStreamEventData;
@@ -40,6 +41,7 @@ import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -145,7 +147,12 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   }
 
   private void propogateMetadata(BatchRuntimeContext context, MetadataEntity source, MetadataEntity destination) {
-    Metadata metadata = context.getMetadata(MetadataScope.USER, source);
+    Metadata metadata;
+    try {
+      metadata = context.getMetadata(MetadataScope.USER, source);
+    } catch (MetadataException e) {
+      throw Throwables.propagate(e);
+    }
     context.addProperties(destination, metadata.getProperties());
     context.addTags(destination, metadata.getTags());
   }

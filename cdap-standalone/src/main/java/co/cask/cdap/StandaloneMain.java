@@ -63,6 +63,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
+import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metadata.MetadataSubscriberService;
@@ -495,6 +496,7 @@ public class StandaloneMain {
       new StreamAdminModules().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
+      new MetadataReaderWriterModules().getStandaloneModules(),
       new AuditModule().getStandaloneModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),

@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -65,13 +66,14 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
+  private final MetadataReader metadataReader;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
-                             MessagingService messagingService) {
+                             MessagingService messagingService, MetadataReader metadataReader) {
     super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
@@ -82,6 +84,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
+    this.metadataReader = metadataReader;
   }
 
   @Override
@@ -124,7 +127,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           metricsCollectionService, datasetFramework, txClient,
                                                           discoveryServiceClient, streamWriterFactory,
                                                           pluginInstantiator, secureStore, secureStoreManager,
-                                                          messagingService);
+                                                          messagingService, metadataReader);
 
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
