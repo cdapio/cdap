@@ -34,6 +34,14 @@
     on-done="LineageController.goToCustomTimeRangeEntityDetailView()"
     ng-if="LineageController.isCustom">
   </my-datetime-range>
+
+  <a
+    href="{{ LineageController.fieldLevelLineageLink }}"
+    class="pull-right field-level-lineage-link btn btn-secondary"
+    ng-if="!$state.params.iframe"
+  >
+    Field Level Lineage
+  </a>
 </div>
 
 <div class="content-loading text-center" ng-show="LineageController.loading">
