@@ -25,6 +25,8 @@ import co.cask.cdap.common.async.KeyedExecutor;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -36,6 +38,7 @@ import co.cask.cdap.internal.app.spark.SparkCompatReader;
 import co.cask.cdap.internal.provision.task.DeprovisionTask;
 import co.cask.cdap.internal.provision.task.ProvisionTask;
 import co.cask.cdap.internal.provision.task.ProvisioningTask;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
@@ -53,6 +56,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.KeyPair;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -235,9 +239,11 @@ public class ProvisioningService extends AbstractIdleService {
     Map<String, String> args = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(args);
     Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+    // any errors seen here will transition the state straight to deprovisioned since no cluster create was attempted
     if (provisioner == null) {
-      LOG.error("Could not provision cluster for program run {} because provisioner {} does not exist.",
-                programRunId, name);
+      runWithProgramLogging(
+        programRunId, args,
+        () -> LOG.error("Could not provision cluster for the run because provisioner {} does not exist.", name));
       provisionerNotifier.deprovisioned(programRunId);
       return () -> { };
     }
@@ -248,8 +254,10 @@ public class ProvisioningService extends AbstractIdleService {
       try {
         secureKeyInfo = generateSecureKeys(programRunId);
       } catch (Exception e) {
-        LOG.error("Failed to generate SSH key pair for program run {} with provisioner {}", programRunId, name, e);
-        provisionerNotifier.deprovisioning(programRunId);
+        runWithProgramLogging(
+          programRunId, args,
+          () -> LOG.error("Failed to generate keys for the program run with provisioner {}", name, e));
+        provisionerNotifier.deprovisioned(programRunId);
         return () -> { };
       }
     }
@@ -289,16 +297,20 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisioningTaskInfo existing =
       provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
     if (existing == null) {
-      LOG.error("Received request to de-provision a cluster for program run {}, but could not find information " +
-                  "about the cluster.", programRunId);
+      runWithProgramLogging(programRunId, existing.getProgramOptions().getArguments().asMap(),
+                            () -> LOG.error("No task state found while deprovisioning the cluster. "
+                                              + "The cluster will be marked as orphaned."));
+
       provisionerNotifier.orphaned(programRunId);
       return () -> { };
     }
 
     Provisioner provisioner = provisionerInfo.get().provisioners.get(existing.getProvisionerName());
     if (provisioner == null) {
-      LOG.error("Could not de-provision cluster for program run {} because provisioner {} does not exist.",
-                programRunId, existing.getProvisionerName());
+      runWithProgramLogging(programRunId, existing.getProgramOptions().getArguments().asMap(),
+                            () -> LOG.error("Could not deprovision the cluster because provisioner {} does not exist. "
+                                              + "The cluster will be marked as orphaned.",
+                                            existing.getProvisionerName()));
       provisionerNotifier.orphaned(programRunId);
       return () -> { };
     }
@@ -376,15 +388,17 @@ public class ProvisioningService extends AbstractIdleService {
     // TODO: (CDAP-13246) pick up timeout from profile instead of hardcoding
     ProvisioningTask task = new ProvisionTask(taskInfo, transactional, datasetFramework, provisioner, context,
                                               provisionerNotifier, 300);
-    return () -> {
-      try {
-        task.execute();
-      } catch (InterruptedException e) {
-        LOG.debug("Provision task for program run {} interrupted.", taskInfo.getProgramRunId());
-      } catch (Exception e) {
-        LOG.info("Provision task for program run {} failed.", taskInfo.getProgramRunId(), e);
-      }
-    };
+    return () -> runWithProgramLogging(
+      programRunId, taskInfo.getProgramOptions().getArguments().asMap(),
+      () -> {
+        try {
+          task.execute();
+        } catch (InterruptedException e) {
+          LOG.debug("Provision task for program run {} interrupted.", taskInfo.getProgramRunId());
+        } catch (Exception e) {
+          LOG.info("Provision task for program run {} failed.", taskInfo.getProgramRunId(), e);
+        }
+      });
   }
 
   private Runnable createDeprovisionTask(ProvisioningTaskInfo taskInfo, Provisioner provisioner,
@@ -395,21 +409,24 @@ public class ProvisioningService extends AbstractIdleService {
                                     sparkCompat, createSSHContext(taskInfo.getSecureKeyInfo()));
     DeprovisionTask task = new DeprovisionTask(taskInfo, transactional, datasetFramework, 300,
                                                provisioner, context, provisionerNotifier, locationFactory);
-    return () -> {
-      try {
-        task.execute();
-        taskCleanup.accept(taskInfo.getProgramRunId());
-      } catch (InterruptedException e) {
-        // We can get interrupted if the task is cancelled or CDAP is stopped. In either case, just return.
-        // If it was cancelled, state cleanup is left to the caller. If it was CDAP master stopping, the task
-        // will be resumed on master startup
-        LOG.debug("Deprovision task for program run {} interrupted.", taskInfo.getProgramRunId());
-      } catch (Exception e) {
-        // Otherwise, if there was an error deprovisioning, run the cleanup
-        LOG.info("Deprovision task for program run {} failed.", taskInfo.getProgramRunId(), e);
-        taskCleanup.accept(taskInfo.getProgramRunId());
-      }
-    };
+    return () -> runWithProgramLogging(
+      taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
+      () -> {
+        try {
+          // any logs within the task, and any errors caused by the task will be logged in the program run context
+          task.execute();
+          taskCleanup.accept(taskInfo.getProgramRunId());
+        } catch (InterruptedException e) {
+          // We can get interrupted if the task is cancelled or CDAP is stopped. In either case, just return.
+          // If it was cancelled, state cleanup is left to the caller. If it was CDAP master stopping, the task
+          // will be resumed on master startup
+          LOG.debug("Deprovision task for program run {} interrupted.", taskInfo.getProgramRunId());
+        } catch (Exception e) {
+          // Otherwise, if there was an error deprovisioning, run the cleanup
+          LOG.info("Deprovision task for program run {} failed.", taskInfo.getProgramRunId(), e);
+          taskCleanup.accept(taskInfo.getProgramRunId());
+        }
+      });
   }
 
   private List<ProvisioningTaskInfo> getInProgressTasks() {
@@ -498,6 +515,24 @@ public class ProvisioningService extends AbstractIdleService {
   @Nullable
   private SSHContext createSSHContext(@Nullable SecureKeyInfo keyInfo) {
     return keyInfo == null ? null : new DefaultSSHContext(locationFactory, keyInfo);
+  }
+
+  /**
+   * Runs the runnable with the logging context set to the program run's context. Anything logged within the runnable
+   * will be treated as if they were logs in the program run.
+   *
+   * @param programRunId the program run to log as
+   * @param systemArgs system arguments for the run
+   * @param runnable the runnable to run
+   */
+  private void runWithProgramLogging(ProgramRunId programRunId, Map<String, String> systemArgs, Runnable runnable) {
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, systemArgs);
+    Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
+    try {
+      runnable.run();
+    } finally {
+      cancellable.cancel();
+    }
   }
 
   /**

@@ -100,8 +100,8 @@ public class DeprovisionTask extends ProvisioningTask {
         case CREATING:
         case FAILED:
         case ORPHANED:
-          LOG.warn("Error deprovisioning cluster for program run {}. Cluster will be moved to orphaned state.",
-                   programRunId);
+          LOG.warn("Got unexpected cluster state {} while trying to delete the cluster. "
+                     + "The cluster will be marked as orphaned.", cluster.getStatus());
           provisionerNotifier.orphaned(programRunId);
           return Optional.of(ProvisioningOp.Status.ORPHANED);
       }
@@ -120,14 +120,11 @@ public class DeprovisionTask extends ProvisioningTask {
 
   @Override
   protected void handleSubtaskFailure(ProvisioningTaskInfo taskInfo, Exception e) {
-    LOG.warn("Error deprovisioning cluster for program run {} during {} step. Cluster will be moved to orphaned state.",
-             programRunId, taskInfo.getProvisioningOp().getStatus(), e);
     provisionerNotifier.orphaned(programRunId);
   }
 
   @Override
   protected void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, TransactionFailureException e) {
-    LOG.warn("Error saving deprovision task state for program run {}", programRunId, e);
     provisionerNotifier.orphaned(programRunId);
   }
 }

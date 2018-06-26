@@ -28,6 +28,8 @@ import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import org.apache.tephra.TransactionFailureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +43,7 @@ import java.util.concurrent.TimeUnit;
  * Handles retrying any subtasks that throw a RetryableProvisioningException.
  */
 public abstract class ProvisioningTask {
+  private static final Logger LOG = LoggerFactory.getLogger(ProvisioningTask.class);
   private final Transactional transactional;
   private final DatasetFramework datasetFramework;
   protected final ProvisioningTaskInfo initialTaskInfo;
@@ -65,6 +68,7 @@ public abstract class ProvisioningTask {
    * @throws Exception if there was a non-retryable exception while executing a subtask
    */
   public void execute() throws Exception {
+    LOG.info("Starting {} task.", initialTaskInfo.getProvisioningOp().getType());
     RetryStrategy retryStrategy =
       RetryStrategies.statefulTimeLimit(retryTimeLimitSecs, TimeUnit.SECONDS, System.currentTimeMillis(),
                                         RetryStrategies.exponentialDelay(100, 20000, TimeUnit.MILLISECONDS));
@@ -87,11 +91,14 @@ public abstract class ProvisioningTask {
       }
 
       try {
+        LOG.debug("Executing {} subtask {}.", taskInfo.getProvisioningOp().getType(), state);
         taskInfoOptional = Retries.callWithInterruptibleRetries(() -> subtask.execute(taskInfo), retryStrategy,
                                                                 t -> t instanceof RetryableProvisionException);
+        LOG.debug("Completed {} subtask {}.", taskInfo.getProvisioningOp().getType(), state);
       } catch (InterruptedException e) {
         throw e;
       } catch (Exception e) {
+        LOG.error("{} task failed in {} state.", taskInfo.getProvisioningOp().getType(), state, e);
         handleSubtaskFailure(taskInfo, e);
         ProvisioningOp failureOp = new ProvisioningOp(taskInfo.getProvisioningOp().getType(),
                                                       ProvisioningOp.Status.FAILED);
@@ -100,6 +107,7 @@ public abstract class ProvisioningTask {
         return;
       }
     }
+    LOG.info("Completed {} task.", initialTaskInfo.getProvisioningOp().getType());
   }
 
   /**
@@ -122,6 +130,8 @@ public abstract class ProvisioningTask {
         return null;
       }, retryStrategy, t -> true);
     } catch (TransactionFailureException e) {
+      LOG.error("{} task failed in to save state for {} subtask. The task will be failed.",
+                taskInfo.getProvisioningOp().getType(), taskInfo.getProvisioningOp().getStatus(), e);
       // this is thrown if we ran out of retries
       handleStateSaveFailure(taskInfo, e);
       throw e;

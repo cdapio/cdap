@@ -95,10 +95,11 @@ public interface Store {
    * Persists program run cluster status to {@link ProgramRunClusterStatus#DEPROVISIONED}.
    *
    * @param id run id of the program
+   * @param endTs timestamp for when the cluster was deprovisioned
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
-  void setDeprovisioned(ProgramRunId id, byte[] sourceId);
+  void setDeprovisioned(ProgramRunId id, long endTs, byte[] sourceId);
 
   /**
    * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.

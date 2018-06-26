@@ -477,8 +477,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     // if the previous state was provisioning, that means we've transitioned here from a failure
     ProgramRunStatus newStatus = clusterStatus == ProgramRunClusterStatus.PROVISIONING ?
       ProgramRunStatus.FAILED : existing.getStatus();
-    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONING,
-                                                      null, existing.getCluster().getNumNodes());
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONING, null,
+                                                      existing.getCluster().getNumNodes());
     RunRecordMeta meta = RunRecordMeta.builder(existing)
       .setCluster(cluster)
       .setSourceId(sourceId)
@@ -498,10 +498,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
+   * @param endTs timestamp in seconds for when the cluster was deprovisioned. This is null if the program is run
+   *              as part of a workflow
    * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramDeprovisioned(ProgramRunId programRunId, byte[] sourceId) {
+  public RunRecordMeta recordProgramDeprovisioned(ProgramRunId programRunId, @Nullable Long endTs, byte[] sourceId) {
     MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
 
     RunRecordMeta existing = getRun(programRunId);
@@ -521,8 +523,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     // if the previous state was provisioning, that means we've transitioned here from a failure
     ProgramRunStatus newStatus = clusterStatus == ProgramRunClusterStatus.PROVISIONING ?
       ProgramRunStatus.FAILED : existing.getStatus();
-    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED,
-                                                      null, existing.getCluster().getNumNodes());
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED, endTs,
+                                                      existing.getCluster().getNumNodes());
     RunRecordMeta meta = RunRecordMeta.builder(existing)
       .setCluster(cluster)
       .setSourceId(sourceId)
@@ -542,10 +544,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
+   * @param endTs timestamp in seconds for when the cluster was orphaned
    * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramOrphaned(ProgramRunId programRunId, byte[] sourceId) {
+  public RunRecordMeta recordProgramOrphaned(ProgramRunId programRunId, long endTs, byte[] sourceId) {
     MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
 
     RunRecordMeta existing = getRun(programRunId);
@@ -566,8 +569,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     // if the previous state was provisioning, that means we've transitioned here from a failure
     ProgramRunStatus newStatus = clusterStatus == ProgramRunClusterStatus.PROVISIONING ?
       ProgramRunStatus.FAILED : existing.getStatus();
-    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.ORPHANED,
-                                                      existing.getCluster().getExpiresAt(),
+    ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.ORPHANED, endTs,
                                                       existing.getCluster().getNumNodes());
     RunRecordMeta meta = RunRecordMeta.builder(existing)
       .setCluster(cluster)
