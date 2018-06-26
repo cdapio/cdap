@@ -17,7 +17,10 @@ package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import org.junit.Assert;
@@ -41,8 +44,6 @@ public class MetadataKeyTest {
     Assert.assertEquals("ns1", split.getString());
     Assert.assertEquals(MetadataEntity.APPLICATION, split.getString());
     Assert.assertEquals("app1", split.getString());
-    Assert.assertEquals(MetadataEntity.VERSION, split.getString());
-    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, split.getString());
     Assert.assertEquals("key1", split.getString());
     // asert that there is nothing more left in the key
     Assert.assertFalse(split.hasRemaining());
@@ -57,6 +58,48 @@ public class MetadataKeyTest {
     // assert that metadata key for both index and value column is key1
     Assert.assertEquals("key1", MetadataKey.extractMetadataKey(mdsValueKey.getKey()));
     Assert.assertEquals("key1", MetadataKey.extractMetadataKey(mdsIndexKey.getKey()));
+  }
+
+  @Test
+  public void testVersionedEntitiesKey() {
+    // CDAP-13597 Metadata for versioned entity is version independent i.e if there are two application version v1
+    // and v2 and a tag 'tag1' is added to either one it will be be reflected to both as we don't store the
+    // application/schedule/programs with it's version. Following tests test that for such versioned entity the keys
+    // are the same i.e default version
+    // Key for versioned application/schedule/program should be the same
+    // application
+    ApplicationId applicationId1 = new ApplicationId("ns", "app"); // default version
+    ApplicationId applicationId2 = new ApplicationId("ns", "app", "2"); // custom version
+    // non-version Application metadata entity
+
+    MDSKey mdsValueKey = MetadataKey.createValueRowKey(applicationId1.toMetadataEntity(), "key1");
+    MetadataEntity actual = MetadataKey.extractMetadataEntityFromKey(mdsValueKey.getKey());
+    Assert.assertEquals(applicationId1.toMetadataEntity(), actual);
+    mdsValueKey = MetadataKey.createValueRowKey(applicationId2.toMetadataEntity(), "key1");
+    actual = MetadataKey.extractMetadataEntityFromKey(mdsValueKey.getKey());
+    Assert.assertEquals(applicationId1.toMetadataEntity(), actual);
+
+    // program
+    ProgramId programId1 = new ApplicationId("ns", "app").program(ProgramType.FLOW, "f"); // default version
+    ProgramId programId2 = new ApplicationId("ns", "app", "2").program(ProgramType.FLOW, "f"); // custom version
+
+    mdsValueKey = MetadataKey.createValueRowKey(programId1.toMetadataEntity(), "key1");
+    actual = MetadataKey.extractMetadataEntityFromKey(mdsValueKey.getKey());
+    Assert.assertEquals(programId1.toMetadataEntity(), actual);
+    mdsValueKey = MetadataKey.createValueRowKey(programId2.toMetadataEntity(), "key1");
+    actual = MetadataKey.extractMetadataEntityFromKey(mdsValueKey.getKey());
+    Assert.assertEquals(programId1.toMetadataEntity(), actual);
+
+    // schedule
+    ScheduleId scheduleId1 = new ApplicationId("ns", "app").schedule("s"); // default version
+    ScheduleId scheduleId2 = new ApplicationId("ns", "app", "2").schedule("s"); // custom version
+
+    mdsValueKey = MetadataKey.createValueRowKey(scheduleId1.toMetadataEntity(), "key1");
+    actual = MetadataKey.extractMetadataEntityFromKey(mdsValueKey.getKey());
+    Assert.assertEquals(scheduleId1.toMetadataEntity(), actual);
+    mdsValueKey = MetadataKey.createValueRowKey(scheduleId2.toMetadataEntity(), "key1");
+    actual = MetadataKey.extractMetadataEntityFromKey(mdsValueKey.getKey());
+    Assert.assertEquals(scheduleId1.toMetadataEntity(), actual);
   }
 
   @Test
@@ -112,13 +155,11 @@ public class MetadataKeyTest {
     // assert target type
     Assert.assertEquals(MetadataEntity.APPLICATION, split.getString());
 
-    // assert key-valu pairs
+    // assert key-value pairs
     Assert.assertEquals(MetadataEntity.NAMESPACE, split.getString());
     Assert.assertEquals("ns1", split.getString());
     Assert.assertEquals(MetadataEntity.APPLICATION, split.getString());
     Assert.assertEquals("app1", split.getString());
-    Assert.assertEquals(MetadataEntity.VERSION, split.getString());
-    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, split.getString());
     Assert.assertEquals("key1", split.getString());
     Assert.assertEquals("value1", split.getString());
     Assert.assertFalse(split.hasRemaining());
