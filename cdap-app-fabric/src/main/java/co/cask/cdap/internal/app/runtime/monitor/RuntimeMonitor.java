@@ -391,7 +391,7 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
     // publish messages to tms
     MessagePublisher messagePublisher = messagingContext.getMessagePublisher();
     messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
-                             messages.stream().map(s -> s.getMessage().getBytes(StandardCharsets.UTF_8)).iterator());
+                             messages.stream().map(MonitorMessage::getMessage).iterator());
 
     // persist the last published message as offset in meta store
     MonitorMessage lastMessage = messages.getLast();
@@ -433,7 +433,8 @@ public class RuntimeMonitor extends AbstractExecutionThreadService {
    */
   private long findProgramFinishTime(Deque<MonitorMessage> monitorMessages) {
     for (MonitorMessage message : monitorMessages) {
-      Notification notification = GSON.fromJson(message.getMessage(), Notification.class);
+      Notification notification = GSON.fromJson(new String(message.getMessage(), StandardCharsets.UTF_8),
+                                                Notification.class);
       if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
         continue;
       }

@@ -828,6 +828,7 @@ public final class Constants {
     // Configuration keys for the runtime monitor server
     public static final String SERVER_HOST = "app.program.runtime.monitor.server.host";
     public static final String SERVER_PORT = "app.program.runtime.monitor.server.port";
+    public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
   }
 
   /**
