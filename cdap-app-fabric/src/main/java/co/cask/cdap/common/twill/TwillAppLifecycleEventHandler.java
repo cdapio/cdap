@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.common.twill;
 
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -22,11 +23,15 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
+import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -49,12 +54,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TwillAppLifecycleEventHandler.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON =
+    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
   private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
   private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
 
-  private final ProgramOptions programOptions;
-
+  private ProgramOptions programOptions;
   private RunId twillRunId;
   private ProgramRunId programRunId;
   private ProgramStateWriter programStateWriter;
@@ -83,6 +90,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   protected Map<String, String> getConfigs() {
     Map<String, String> configs = new HashMap<>(super.getConfigs());
     configs.put("programRunId", GSON.toJson(programRunId));
+    configs.put("programOptions", GSON.toJson(programOptions));
     return configs;
   }
 
@@ -93,7 +101,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     this.runningPublished = new AtomicBoolean();
     this.twillRunId = context.getRunId();
     this.programRunId = GSON.fromJson(context.getSpecification().getConfigs().get("programRunId"), ProgramRunId.class);
-
+    this.programOptions =
+      GSON.fromJson(context.getSpecification().getConfigs().get("programOptions"), ProgramOptions.class);
     // Fetch cConf and hConf from resources jar
     File cConfFile = new File("resources.jar/resources/" + CDAP_CONF_FILE_NAME);
     File hConfFile = new File("resources.jar/resources/" + HADOOP_CONF_FILE_NAME);

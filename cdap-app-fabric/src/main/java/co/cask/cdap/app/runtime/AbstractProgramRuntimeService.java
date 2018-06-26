@@ -132,30 +132,19 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
-    ProgramOptions runtimeProgramOptions;
-    ProgramOptions optionsWithPlugins;
-    Program executableProgram;
-
+    ArtifactId artifactId = programDescriptor.getArtifactId();
+    ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
     try {
       // Get the artifact details and save it into the program options.
-      ArtifactId artifactId = programDescriptor.getArtifactId();
       ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
-      runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
-
       // Take a snapshot of all the plugin artifacts used by the program
-      optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
-                                                programDescriptor.getApplicationSpecification());
+      ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
+                                                               programDescriptor.getApplicationSpecification());
 
       // Create program and cleanup task
-      executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
+      Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
-    } catch (Exception e) {
-      cleanUpTask.run();
-      LOG.error("Exception while trying to setup running program", e);
-      throw Throwables.propagate(e);
-    }
-    try {
-      // run the program
+
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId,
                                                   cleanUpTask, runtimeProgramOptions);
       monitorProgram(runtimeInfo, cleanUpTask);

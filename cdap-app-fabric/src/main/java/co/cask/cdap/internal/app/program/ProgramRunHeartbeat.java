@@ -40,7 +40,7 @@ public class ProgramRunHeartbeat implements Runnable {
     this.programStatePublisher = messagingProgramStatePublisher;
     this.properties = new HashMap<>(properties);
     // could be called from RESUMING state, so update status to running for heartbeat
-    properties.put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name());
+    this.properties.put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name());
     this.programRunId = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
   }
 

@@ -44,6 +44,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -357,6 +358,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           systemArgs.put(ProgramOptionConstants.CLUSTER_KEY_INFO,
                          properties.get(ProgramOptionConstants.CLUSTER_KEY_INFO));
         }
+        systemArgs.put(ProgramOptionConstants.ARTIFACT_ID,
+                       Joiner.on(':').join(programDescriptor.getArtifactId().toIdParts()));
+        systemArgs.put(ProgramOptionConstants.RUN_ID, programRunId.getRun());
         ProgramOptions newProgramOptions = new SimpleProgramOptions(programOptions.getProgramId(),
                                                                     new BasicArguments(systemArgs),
                                                                     programOptions.getUserArguments());
@@ -372,7 +376,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             try {
               programLifecycleService.startInternal(programDescriptor, newProgramOptions, programRunId);
             } catch (Exception e) {
-              programStateWriter.error(programRunId, e, programOptions);
+              programStateWriter.error(programRunId, e, newProgramOptions);
             }
           } finally {
             SecurityRequestContext.setUserId(oldUser);
