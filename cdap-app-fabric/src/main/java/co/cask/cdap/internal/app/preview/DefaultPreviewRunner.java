@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
@@ -87,7 +86,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final DatasetService datasetService;
   private final LogAppenderInitializer logAppenderInitializer;
   private final ApplicationLifecycleService applicationLifecycleService;
-  private final SystemArtifactLoader systemArtifactLoader;
   private final ProgramRuntimeService programRuntimeService;
   private final ProgramLifecycleService programLifecycleService;
   private final PreviewStore previewStore;
@@ -108,7 +106,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   DefaultPreviewRunner(MessagingService messagingService, DatasetService datasetService,
                        LogAppenderInitializer logAppenderInitializer,
                        ApplicationLifecycleService applicationLifecycleService,
-                       SystemArtifactLoader systemArtifactLoader, ProgramRuntimeService programRuntimeService,
+                       ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
                        NamespaceAdmin namespaceAdmin, ProgramStore programStore,
@@ -118,7 +116,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.systemArtifactLoader = systemArtifactLoader;
     this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
     this.previewStore = previewStore;
@@ -263,7 +260,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                                                                        Constants.Service.PREVIEW_HTTP));
     Futures.allAsList(
       applicationLifecycleService.start(),
-      systemArtifactLoader.start(),
       programRuntimeService.start(),
       metricsCollectionService.start(),
       programNotificationSubscriberService.start()
@@ -285,7 +281,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     }
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
-    systemArtifactLoader.stopAndWait();
     logAppenderInitializer.close();
     metricsCollectionService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
