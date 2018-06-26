@@ -100,4 +100,15 @@ public class Profile {
   public int hashCode() {
     return Objects.hash(name, description, scope, provisioner);
   }
+
+  @Override
+  public String toString() {
+    return "Profile{" +
+      "name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", scope=" + scope +
+      ", status=" + status +
+      ", provisioner=" + provisioner +
+      '}';
+  }
 }

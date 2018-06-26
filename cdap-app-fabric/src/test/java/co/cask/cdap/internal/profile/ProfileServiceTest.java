@@ -30,8 +30,11 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit test for profile store
@@ -47,8 +50,43 @@ public class ProfileServiceTest {
   private static ProfileService profileService;
 
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setup() {
     profileService = AppFabricTestHelper.getInjector().getInstance(ProfileService.class);
+  }
+
+  @Test
+  public void testProfileOverrides() throws Exception {
+    List<ProvisionerPropertyValue> provisionerProperties = new ArrayList<>();
+    provisionerProperties.add(new ProvisionerPropertyValue("editable1", "val", true));
+    provisionerProperties.add(new ProvisionerPropertyValue("editable2", "val", true));
+    provisionerProperties.add(new ProvisionerPropertyValue("final", "finalval", false));
+
+    ProvisionerInfo provisionerInfo = new ProvisionerInfo("provisioner", provisionerProperties);
+    Profile profile = new Profile("name", "desc", provisionerInfo);
+    ProfileId profileId = NamespaceId.DEFAULT.profile("p");
+    profileService.saveProfile(profileId, profile);
+
+    try {
+      Map<String, String> args = new HashMap<>();
+      args.put("editable1", "newval");
+      args.put("final", "shouldnotwork");
+      args.put("newarg", "val");
+
+      // resolved properties should include all the stored properties,
+      // with 'final' not overridden and 'editable1' overridden.
+      List<ProvisionerPropertyValue> expectedProperties = new ArrayList<>();
+      expectedProperties.add(new ProvisionerPropertyValue("editable1", "newval", true));
+      expectedProperties.add(new ProvisionerPropertyValue("editable2", "val", true));
+      expectedProperties.add(new ProvisionerPropertyValue("final", "finalval", false));
+      expectedProperties.add(new ProvisionerPropertyValue("newarg", "val", true));
+      provisionerInfo = new ProvisionerInfo(provisionerInfo.getName(), expectedProperties);
+      Profile expected = new Profile(profile.getName(), profile.getDescription(), provisionerInfo);
+      Profile actual = profileService.getProfile(profileId, args);
+      Assert.assertEquals(expected, actual);
+    } finally {
+      profileService.disableProfile(profileId);
+      profileService.deleteProfile(profileId);
+    }
   }
 
   @Test
