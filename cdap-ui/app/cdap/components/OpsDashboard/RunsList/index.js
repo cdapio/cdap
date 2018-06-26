@@ -72,7 +72,15 @@ function renderBody(data) {
           let duration = run.end ? run.end - run.start : '--';
           duration = humanReadableDuration(duration);
 
-          let displayStatus = StatusMapper.lookupDisplayStatus(run.status);
+          let displayStatus = StatusMapper.lookupDisplayStatus(run.status) || '';
+
+          const statusIcon = (
+            <IconSVG
+              name="icon-circle"
+              className={`${displayStatus.toLowerCase()}`}
+            />
+          );
+
           return (
             <div
               className="grid-row"
@@ -86,10 +94,7 @@ function renderBody(data) {
               <div>{run.user || '--'}</div>
               <div>{capitalize(run.startMethod)}</div>
               <div>
-                <IconSVG
-                  name="icon-circle"
-                  className={`${displayStatus.toLowerCase()}`}
-                />
+                { displayStatus ? statusIcon : '--' }
                 <span>
                   {displayStatus}
                 </span>
