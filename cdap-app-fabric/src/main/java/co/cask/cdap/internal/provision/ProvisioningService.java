@@ -297,7 +297,7 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisioningTaskInfo existing =
       provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
     if (existing == null) {
-      runWithProgramLogging(programRunId, existing.getProgramOptions().getArguments().asMap(),
+      runWithProgramLogging(programRunId, Collections.emptyMap(),
                             () -> LOG.error("No task state found while deprovisioning the cluster. "
                                               + "The cluster will be marked as orphaned."));
 
