@@ -26,7 +26,6 @@ import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,8 +40,8 @@ import java.util.Set;
  * Unit tests for profile http handler
  */
 public class ProfileHttpHandlerTest extends AppFabricTestBase {
-  private static final List<ProvisionerPropertyValue> PROPERTY_SUMMARIES =
-    ImmutableList.<ProvisionerPropertyValue>builder()
+  private static final Set<ProvisionerPropertyValue> PROPERTY_SUMMARIES =
+    ImmutableSet.<ProvisionerPropertyValue>builder()
       .add(new ProvisionerPropertyValue("1st property", "1st value", false))
       .add(new ProvisionerPropertyValue("2nd property", "2nd value", true))
       .add(new ProvisionerPropertyValue("3rd property", "3rd value", false))
@@ -162,7 +161,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     // Get the profile, it should not contain the null value, the property should be an empty list
     Profile actual = getProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200).get();
     Assert.assertNotNull(actual);
-    Assert.assertEquals(Collections.EMPTY_LIST, actual.getProvisioner().getProperties());
+    Assert.assertEquals(Collections.EMPTY_SET, actual.getProvisioner().getProperties());
 
     disableProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
     deleteProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);

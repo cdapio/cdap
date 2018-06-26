@@ -297,7 +297,8 @@ public class ProgramLifecycleService {
              programId.getProgram());
     ProfileId profileId =
       SystemArguments.getProfileIdFromArgs(programId.getNamespaceId(), userArgs).orElse(ProfileId.NATIVE);
-    Profile profile = profileService.getProfile(profileId);
+    Map<String, String> profileProperties = SystemArguments.getProfileProperties(userArgs);
+    Profile profile = profileService.getProfile(profileId, profileProperties);
     if (profile.getStatus() == ProfileStatus.DISABLED) {
       throw new ProfileConflictException(String.format("Profile %s in namespace %s is disabled. It cannot be " +
                                                          "used to start the program %s",
@@ -308,12 +309,9 @@ public class ProgramLifecycleService {
     if (spec == null) {
       throw new NotFoundException(String.format("Provisioner '%s' not found.", profile.getProvisioner().getName()));
     }
-    // add profile properties to the system arguments
-    Map<String, String> systemArgs = new HashMap<>();
-    systemArgs.putAll(sysArgs);
     // get and add any user overrides for profile properties
-    systemArgs.putAll(SystemArguments.getProfileProperties(userArgs));
-    // add the rest of the profile properties to system properties
+    Map<String, String> systemArgs = new HashMap<>(sysArgs);
+    // add profile properties to the system arguments
     SystemArguments.addProfileArgs(systemArgs, profile);
 
     // Set the ClusterMode. If it is NATIVE profile, then it is ON_PREMISE, otherwise is ISOLATED

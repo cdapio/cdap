@@ -19,6 +19,7 @@ package co.cask.cdap.proto.provisioner;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -26,19 +27,19 @@ import java.util.stream.Collectors;
  */
 public class ProvisionerInfo {
   private final String name;
-  private final Collection<ProvisionerPropertyValue> properties;
+  private final Set<ProvisionerPropertyValue> properties;
 
   public ProvisionerInfo(String name, Collection<ProvisionerPropertyValue> properties) {
     this.name = name;
-    this.properties = Collections.unmodifiableList(
-      properties.stream().filter(Objects::nonNull).collect(Collectors.toList()));
+    this.properties = Collections.unmodifiableSet(
+      properties.stream().filter(Objects::nonNull).collect(Collectors.toSet()));
   }
 
   public String getName() {
     return name;
   }
 
-  public Collection<ProvisionerPropertyValue> getProperties() {
+  public Set<ProvisionerPropertyValue> getProperties() {
     return properties;
   }
 
@@ -60,5 +61,13 @@ public class ProvisionerInfo {
   @Override
   public int hashCode() {
     return Objects.hash(name, properties);
+  }
+
+  @Override
+  public String toString() {
+    return "ProvisionerInfo{" +
+      "name='" + name + '\'' +
+      ", properties=" + properties +
+      '}';
   }
 }
