@@ -227,7 +227,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
-        // TODO (CDAP-13380): Use a LogAppender defined by the runtime provider
+        // TODO (CDAP-13380): Use a LogAppender defined by the runtime provider.
         bind(LogAppender.class).toInstance(new LogAppender() {
           @Override
           protected void appendEvent(LogMessage logMessage) {

@@ -848,6 +848,8 @@ public final class Constants {
 
     // Configuration keys
     public static final String KAFKA_TOPIC = "log.kafka.topic";
+    // TODO: add ConfigurationCheck
+    public static final String TMS_TOPIC_PREFIX = "log.tms.topic.prefix";
     public static final String NUM_PARTITIONS = "log.publish.num.partitions";
     public static final String LOG_PUBLISH_PARTITION_KEY = "log.publish.partition.key";
 
