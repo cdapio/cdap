@@ -95,6 +95,12 @@ object ReportGenerationHelper {
   @throws(classOf[IOException])
   def generateReport(sql: SQLContext, request: ReportGenerationRequest, inputURIs: java.util.List[String],
                      reportIdDir: Location): Unit = {
+    // if there is no input avro file, save 0 as the number of records in the report and mark the report generation
+    // as completed
+    if (Option(inputURIs).isEmpty || inputURIs.isEmpty) {
+      writeCountAndSuccessFiles(0, reportIdDir)
+      return
+    }
     val df = SparkCompat.readAvroFiles(sql, inputURIs)
     // Get the fields to be included in the final report and additional fields required for filtering and sorting
     val (reportFields: Set[String], additionalFields: Set[String]) = getReportAndAdditionalFields(request)
@@ -133,7 +139,17 @@ object ReportGenerationHelper {
     // TODO: [CDAP-13290] output reports as avro instead of json text files
     // TODO: [CDAP-13291] improve how the number of partitions is configured
     resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(reportDir)
-    val count = resultDf.count
+    writeCountAndSuccessFiles(resultDf.count, reportIdDir)
+  }
+
+  /**
+    * Saves the number of report records in a file called [[Constants.LocationName.COUNT_FILE]] and mark the
+    * report generation as completed by creating a file [[Constants.LocationName.SUCCESS_FILE]].
+    *
+    * @param count the total number of records in the report
+    * @param reportIdDir the directory where the files will be created
+    */
+  private def writeCountAndSuccessFiles(count: Long, reportIdDir: Location): Unit = {
     // Create a _COUNT file and write the total number of report records in it
     writeToFile(count.toString, Constants.LocationName.COUNT_FILE, reportIdDir)
     // Create a _SUCCESS file and write the current time in millis in it
@@ -141,7 +157,7 @@ object ReportGenerationHelper {
   }
 
   /**
-    * Create a file with given filename in the given directory and write the given content in the file
+    * Creates a file with given filename in the given directory and write the given content in the file
     *
     * @param content the content to write
     * @param fileName the name of the file
