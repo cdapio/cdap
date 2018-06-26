@@ -47,7 +47,9 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
+import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningService;
+import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
@@ -72,6 +74,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -86,9 +89,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -219,8 +224,8 @@ public class ProgramLifecycleService {
    * @param programId the {@link ProgramId program} for which the {@link ProgramSpecification} is requested
    * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
    */
-  private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec, ProgramId programId)
-    throws Exception {
+  private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec,
+                                                                  ProgramId programId) {
     String programName = programId.getProgram();
     ProgramType type = programId.getType();
     ProgramSpecification programSpec;
@@ -383,7 +388,7 @@ public class ProgramLifecycleService {
    * @param programOptions options for the program run
    * @param programRunId program run id
    * @return controller for the program
-   * @throws IOException
+   * @throws IOException if there was a failure starting the program
    */
   synchronized ProgramController startInternal(ProgramDescriptor programDescriptor,
                                                ProgramOptions programOptions,
@@ -428,13 +433,13 @@ public class ProgramLifecycleService {
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
   public void stop(ProgramId programId, @Nullable String runId) throws Exception {
-    List<ListenableFuture<ProgramController>> futures = issueStop(programId, runId);
+    List<ListenableFuture<ProgramRunId>> futures = issueStop(programId, runId);
 
     // Block until all stop requests completed. This call never throw ExecutionException
     Futures.successfulAsList(futures).get();
 
     Throwable failureCause = null;
-    for (ListenableFuture<ProgramController> f : futures) {
+    for (ListenableFuture<ProgramRunId> f : futures) {
       try {
         f.get();
       } catch (ExecutionException e) {
@@ -458,13 +463,13 @@ public class ProgramLifecycleService {
 
   /**
    * Issues a command to stop the specified {@link RunId} of the specified {@link ProgramId} and returns a
-   * {@link ListenableFuture} with the {@link ProgramController} for it.
+   * {@link ListenableFuture} with the {@link ProgramRunId} for the runs that were stopped.
    * Clients can wait for completion of the {@link ListenableFuture}.
    *
    * @param programId the {@link ProgramId program} to issue a stop for
    * @param runId the runId of the program run to stop. If null, all runs of the program as returned by
    *              {@link ProgramRuntimeService} are stopped.
-   * @return a list of {@link ListenableFuture} with a {@link ProgramController} that clients can wait on for stop
+   * @return a list of {@link ListenableFuture} with the {@link ProgramRunId} that clients can wait on for stop
    *         to complete.
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
@@ -472,8 +477,7 @@ public class ProgramLifecycleService {
    * @throws UnauthorizedException if the user issuing the command is not authorized to stop the program. To stop a
    *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
-  public List<ListenableFuture<ProgramController>> issueStop(ProgramId programId,
-                                                             @Nullable String runId) throws Exception {
+  public List<ListenableFuture<ProgramRunId>> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
 
     // See if the program is running as per the runtime service
@@ -499,9 +503,10 @@ public class ProgramLifecycleService {
                                              activeRunRecords.keySet().stream().map(ProgramRunId::getRun))
                                       .collect(Collectors.toSet());
 
-    List<ListenableFuture<ProgramController>> futures = new ArrayList<>();
+    List<ListenableFuture<ProgramRunId>> futures = new ArrayList<>();
     Stopwatch stopwatch = new Stopwatch().start();
 
+    Set<ProgramRunId> cancelledProvisionRuns = new HashSet<>();
     while (!pendingStops.isEmpty() && stopwatch.elapsedTime(TimeUnit.SECONDS) < 3L) {
       Iterator<String> iterator = pendingStops.iterator();
       while (iterator.hasNext()) {
@@ -520,15 +525,47 @@ public class ProgramLifecycleService {
         }
 
         RuntimeInfo runtimeInfo = runtimeService.lookup(programId, RunIds.fromString(activeRunId.getRun()));
+        // if there is a runtimeInfo, the run is in the 'starting' state or later
         if (runtimeInfo != null) {
-          futures.add(runtimeInfo.getController().stop());
+          ListenableFuture<ProgramController> future = runtimeInfo.getController().stop();
+          futures.add(Futures.transform(future, ProgramController::getProgramRunId));
           iterator.remove();
+          // if it was in this set, it means we cancelled a task, but it had already sent a PROVISIONED message
+          // by the time we cancelled it. We then waited for it to show up in the runtime service and got here.
+          // We added a future for this run in the lines above, but we don't want to add another duplicate future
+          // at the end of this loop, so remove this run from the cancelled provision runs.
+          cancelledProvisionRuns.remove(activeRunId);
+        } else {
+          // if there is no runtimeInfo, the run could be in the provisioning state.
+          Optional<ProvisioningTaskInfo> cancelledInfo = provisioningService.cancelProvisionTask(activeRunId);
+          cancelledInfo.ifPresent(taskInfo -> {
+            cancelledProvisionRuns.add(activeRunId);
+            // This state check is to handle a race condition where we cancel the provision task, but not in time
+            // to prevent it from sending the PROVISIONED notification.
+
+            // If the notification was sent, but not yet consumed, we are *not* done stopping the run.
+            // We have to wait for the notification to be consumed, which will start the run, and place the controller
+            // in the runtimeService. The next time we loop, we can find it in the runtimeService and tell it to stop.
+            // If the notification was not sent, then we *are* done stopping the run.
+
+            // Therefore, if the state is CREATED, we don't remove it from the iterator so that the run will get
+            // checked again in the next loop, when we may get the controller from the runtimeService to stop it.
+
+            // No other task states have this race condition, as the PROVISIONED notification is only sent
+            // after the state transitions to CREATED. Therefore it is safe to remove the runId from the iterator,
+            // as we know we are done stopping it.
+            ProvisioningOp.Status taskState = taskInfo.getProvisioningOp().getStatus();
+            if (taskState != ProvisioningOp.Status.CREATED) {
+              iterator.remove();
+            }
+          });
         }
       }
 
       if (!pendingStops.isEmpty()) {
-        // If not able to stop all of them, meaning there are some runs that doesn't have a runtime info, due to
-        // either the run was already finished or the run hasn't been registered with the runtime service.
+        // If not able to stop all of them, it means there were some runs that didn't have a runtime info and
+        // didn't have a provisioning task. This can happen if the run was already finished, or the run transitioned
+        // from the provisioning state to the starting state during this stop operation.
         // We'll get the active runs again and filter it by the pending stops. Stop will be retried for those.
         Set<String> finalPendingStops = pendingStops;
 
@@ -543,6 +580,11 @@ public class ProgramLifecycleService {
       }
     }
 
+    for (ProgramRunId cancelledProvisionRun : cancelledProvisionRuns) {
+      SettableFuture<ProgramRunId> future = SettableFuture.create();
+      future.set(cancelledProvisionRun);
+      futures.add(future);
+    }
     return futures;
   }
 

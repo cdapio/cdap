@@ -23,7 +23,6 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
@@ -1061,15 +1060,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
                                          program.getProgramId());
       try {
-        List<ListenableFuture<ProgramController>> stops = lifecycleService.issueStop(programId, null);
-        for (ListenableFuture<ProgramController> stop : stops) {
-          ListenableFuture<BatchProgramResult> issuedStop = Futures.transform(stop,
-            new Function<ProgramController, BatchProgramResult>() {
-              @Override
-              public BatchProgramResult apply(ProgramController input) {
-                return new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, input.getRunId().getId());
-              }
-            });
+        List<ListenableFuture<ProgramRunId>> stops = lifecycleService.issueStop(programId, null);
+        for (ListenableFuture<ProgramRunId> stop : stops) {
+          ListenableFuture<BatchProgramResult> issuedStop =
+            Futures.transform(stop, (Function<ProgramRunId, BatchProgramResult>) input ->
+              new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, input.getRun()));
           issuedStops.add(issuedStop);
         }
       } catch (NotFoundException e) {

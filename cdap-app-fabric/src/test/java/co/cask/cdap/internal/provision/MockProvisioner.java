@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -48,6 +49,8 @@ public class MockProvisioner implements Provisioner {
   public static final String FAIL_GET = "fail.get";
   public static final String FAIL_DELETE = "fail.delete";
   public static final String FIRST_CLUSTER_STATUS = "first.cluster.status";
+  public static final String WAIT_CREATE_MS = "wait.create";
+  public static final String WAIT_DELETE_MS = "wait.delete";
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "yarn", "Default YARN Provisioner",
     "Runs programs on the CDAP master cluster. Does not provision any resources.",
@@ -71,9 +74,10 @@ public class MockProvisioner implements Provisioner {
   }
 
   @Override
-  public Cluster createCluster(ProvisionerContext context) throws RetryableProvisionException {
+  public Cluster createCluster(ProvisionerContext context) throws RetryableProvisionException, InterruptedException {
     failIfConfigured(context, FAIL_CREATE);
     failRetryablyEveryN(context);
+    waitIfConfigured(context, WAIT_CREATE_MS);
     return new Cluster(context.getProgramRun().getRun(), ClusterStatus.CREATING,
                        Collections.emptyList(), Collections.emptyMap());
   }
@@ -110,9 +114,11 @@ public class MockProvisioner implements Provisioner {
   }
 
   @Override
-  public void deleteCluster(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
+  public void deleteCluster(ProvisionerContext context, Cluster cluster)
+    throws RetryableProvisionException, InterruptedException {
     failIfConfigured(context, FAIL_DELETE);
     failRetryablyEveryN(context);
+    waitIfConfigured(context, WAIT_DELETE_MS);
   }
 
   // throws a RetryableProvisionException every other time this is called
@@ -134,6 +140,11 @@ public class MockProvisioner implements Provisioner {
     }
   }
 
+  private void waitIfConfigured(ProvisionerContext context, String key) throws InterruptedException {
+    long dur = context.getProperties().containsKey(key) ? Long.parseLong(context.getProperties().get(key)) : -1L;
+    TimeUnit.MILLISECONDS.sleep(dur);
+  }
+
   /**
    * Builds properties supported by the MockProvisioner.
    */
@@ -143,6 +154,8 @@ public class MockProvisioner implements Provisioner {
     private boolean failGet = false;
     private boolean failInit = false;
     private boolean failDelete = false;
+    private long waitCreateMillis = -1L;
+    private long waitDeleteMillis = -1L;
     private ClusterStatus firstClusterStatus;
 
     /**
@@ -186,6 +199,22 @@ public class MockProvisioner implements Provisioner {
     }
 
     /**
+     * Configures the provisioner to wait for some time before creating a cluster.
+     */
+    public PropertyBuilder waitCreate(long dur, TimeUnit unit) {
+      waitCreateMillis = TimeUnit.MILLISECONDS.convert(dur, unit);
+      return this;
+    }
+
+    /**
+     * Configures the provisioner to wait for some time before deleting a cluster.
+     */
+    public PropertyBuilder waitDelete(long dur, TimeUnit unit) {
+      waitDeleteMillis = TimeUnit.MILLISECONDS.convert(dur, unit);
+      return this;
+    }
+
+    /**
      * Configures the provisioner to return the specified status as the cluster status the first time getCluster is
      * called for each program run.
      */
@@ -196,12 +225,15 @@ public class MockProvisioner implements Provisioner {
 
     public ProvisionerInfo build() {
       List<ProvisionerPropertyValue> properties = new ArrayList<>();
-      properties.add(new ProvisionerPropertyValue(FAIL_CREATE, String.valueOf(failCreate), true));
-      properties.add(new ProvisionerPropertyValue(FAIL_GET, String.valueOf(failGet), true));
-      properties.add(new ProvisionerPropertyValue(FAIL_INIT, String.valueOf(failInit), true));
-      properties.add(new ProvisionerPropertyValue(FAIL_DELETE, String.valueOf(failDelete), true));
+      properties.add(new ProvisionerPropertyValue(FAIL_CREATE, Boolean.toString(failCreate), true));
+      properties.add(new ProvisionerPropertyValue(FAIL_GET, Boolean.toString(failGet), true));
+      properties.add(new ProvisionerPropertyValue(FAIL_INIT, Boolean.toString(failInit), true));
+      properties.add(new ProvisionerPropertyValue(FAIL_DELETE, Boolean.toString(failDelete), true));
+      properties.add(new ProvisionerPropertyValue(WAIT_CREATE_MS, Long.toString(waitCreateMillis), true));
+      properties.add(new ProvisionerPropertyValue(WAIT_DELETE_MS, Long.toString(waitDeleteMillis), true));
       if (failRetryablyEveryN != null) {
-        properties.add(new ProvisionerPropertyValue(FAIL_RETRYABLY_EVERY_N, String.valueOf(failRetryablyEveryN), true));
+        properties.add(new ProvisionerPropertyValue(FAIL_RETRYABLY_EVERY_N,
+                                                    Integer.toString(failRetryablyEveryN), true));
       }
       if (firstClusterStatus != null) {
         properties.add(new ProvisionerPropertyValue(FIRST_CLUSTER_STATUS, firstClusterStatus.name(), true));

@@ -482,16 +482,24 @@ public class AppMetadataStore extends MetadataStoreDataset {
     ProgramRunClusterStatus clusterStatus = existing.getCluster().getStatus();
     delete(existing);
     key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
+    ProgramRunStatus programStatus = existing.getStatus();
 
-    // if the previous state was provisioning, that means we've transitioned here from a failure
-    ProgramRunStatus newStatus = clusterStatus == ProgramRunClusterStatus.PROVISIONING ?
-      ProgramRunStatus.FAILED : existing.getStatus();
+    // if the previous state was provisioning, that means we've transitioned here from a failure or from a stop
+    // if we've transitioned here from a stop, the program run status will be killed. This is because the deprovisioning
+    // message is sent by the subscriber that processed the killed message.
+    // if we've transitioned here from a failure, the program run status will be pending,
+    // which needs to be transitioned to failed. In this case, the provisioning service sent the message.
+    // TODO: (CDAP-13539) state transitions should be computed in a single place and not in the storage layer
+    ProgramRunStatus newProgramStatus = existing.getStatus();
+    if (clusterStatus == ProgramRunClusterStatus.PROVISIONING && programStatus == ProgramRunStatus.PENDING) {
+      newProgramStatus = ProgramRunStatus.FAILED;
+    }
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONING, null,
                                                       existing.getCluster().getNumNodes());
     RunRecordMeta meta = RunRecordMeta.builder(existing)
       .setCluster(cluster)
       .setSourceId(sourceId)
-      .setStatus(newStatus)
+      .setStatus(newProgramStatus)
       .build();
     write(key.build(), meta);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONING, programRunId);
@@ -798,7 +806,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
    */
   @Nullable
   public RunRecordMeta recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
-                                            @Nullable BasicThrowable failureCause, byte[] sourceId) {
+                                         @Nullable BasicThrowable failureCause, byte[] sourceId) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
     return recordProgramStop(programRunId, stopTs, runStatus, failureCause, builder, sourceId);
   }

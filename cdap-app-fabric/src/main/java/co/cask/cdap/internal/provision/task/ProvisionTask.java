@@ -90,6 +90,7 @@ public class ProvisionTask extends ProvisioningTask {
     subtasks.put(ProvisioningOp.Status.INITIALIZING, createInitializeSubtask());
     subtasks.put(ProvisioningOp.Status.FAILED, EndSubtask.INSTANCE);
     subtasks.put(ProvisioningOp.Status.CREATED, EndSubtask.INSTANCE);
+    subtasks.put(ProvisioningOp.Status.CANCELLED, EndSubtask.INSTANCE);
 
     return subtasks;
   }

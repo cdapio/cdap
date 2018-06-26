@@ -114,6 +114,7 @@ public class DeprovisionTask extends ProvisioningTask {
     // end states
     subtasks.put(ProvisioningOp.Status.ORPHANED, EndSubtask.INSTANCE);
     subtasks.put(ProvisioningOp.Status.DELETED, EndSubtask.INSTANCE);
+    subtasks.put(ProvisioningOp.Status.CANCELLED, EndSubtask.INSTANCE);
 
     return subtasks;
   }
