@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,9 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Artifact artifact}.
@@ -57,7 +59,7 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected String[] getSystemTagsToAdd() {
-    return new String[] { };
+  protected Set<String> getSystemTagsToAdd() {
+    return Collections.emptySet();
   }
 }

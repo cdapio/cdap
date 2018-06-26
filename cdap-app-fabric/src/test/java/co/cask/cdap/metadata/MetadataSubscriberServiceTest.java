@@ -16,18 +16,24 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
+import co.cask.cdap.data2.metadata.writer.MessagingMetadataWriter;
+import co.cask.cdap.data2.metadata.writer.MetadataWriter;
 import co.cask.cdap.data2.registry.BasicUsageRegistry;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -48,12 +54,15 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkflowId;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -185,6 +194,58 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
         store.getWorkflowNodeStates(workflowRunId).stream().findFirst()
              .map(WorkflowNodeStateDetail::getNodeStatus).orElse(null),
         10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    } finally {
+      subscriberService.stopAndWait();
+    }
+  }
+
+  @Test
+  public void testMetadata() throws InterruptedException, TimeoutException, ExecutionException {
+    ProgramRunId workflowRunId = workflow1.run(RunIds.generate());
+    MetadataEntity entity = MetadataEntity.ofDataset("myns", "myds");
+
+    // Try to read, should have nothing
+    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
+    MetadataRecordV2 meta = metadataStore.getMetadata(MetadataScope.USER, entity);
+    Assert.assertTrue(meta.getProperties().isEmpty());
+    Assert.assertTrue(meta.getTags().isEmpty());
+
+    // Start the MetadataSubscriberService
+    MetadataWriter metadataWriter = getInjector().getInstance(MessagingMetadataWriter.class);
+    MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
+    subscriberService.startAndWait();
+    try {
+
+      // publish metadata put
+      Map<String, String> propertiesToAdd = ImmutableMap.of("a", "x", "b", "z");
+      Set<String> tagsToAdd = ImmutableSet.of("t1", "t2");
+      metadataWriter.add(workflowRunId, entity, propertiesToAdd, tagsToAdd);
+
+      // wait until meta data is written
+      Tasks.waitFor(true, () -> {
+        MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.USER, entity);
+        return !record.getProperties().isEmpty() && !record.getTags().isEmpty();
+      }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+      // validate correctness of meta data written
+      meta = metadataStore.getMetadata(MetadataScope.USER, entity);
+      Assert.assertEquals(propertiesToAdd, meta.getProperties());
+      Assert.assertEquals(tagsToAdd, meta.getTags());
+
+      // publish metadata delete
+      metadataWriter.remove(workflowRunId, entity, ImmutableSet.of("a"), ImmutableSet.of("t1", "t3"));
+
+      // wait until meta data is written
+      Tasks.waitFor(true, () -> {
+        MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.USER, entity);
+        return record.getProperties().size() == 1 && record.getTags().size() == 1;
+      }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+      // validate correctness of meta data after delete
+      meta = metadataStore.getMetadata(MetadataScope.USER, entity);
+      Assert.assertEquals(ImmutableMap.of("b", "z"), meta.getProperties());
+      Assert.assertEquals(ImmutableSet.of("t2"), meta.getTags());
+
     } finally {
       subscriberService.stopAndWait();
     }

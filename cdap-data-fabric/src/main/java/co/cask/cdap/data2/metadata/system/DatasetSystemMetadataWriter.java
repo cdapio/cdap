@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,9 +36,9 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -110,8 +110,8 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected String[] getSystemTagsToAdd() {
-    List<String> tags = new ArrayList<>();
+  protected Set<String> getSystemTagsToAdd() {
+    Set<String> tags = new HashSet<>();
     if (dataset instanceof RecordScannable) {
       tags.add(EXPLORE_TAG);
     }
@@ -131,7 +131,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
     if (isLocalDataset) {
       tags.add(LOCAL_DATASET_TAG);
     }
-    return tags.toArray(new String[tags.size()]);
+    return tags;
   }
 
   @Nullable

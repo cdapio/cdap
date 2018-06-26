@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Cask Data, Inc.
+ * Copyright 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,7 +50,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
@@ -65,7 +64,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -76,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -172,7 +171,7 @@ public class MetadataDataset extends AbstractDataset {
    *                 dataset-id(ns+dataset)/stream-id(ns+stream)
    * @param tags the tags to set
    */
-  private void setTags(MetadataEntity metadataEntity, String ... tags) {
+  private void setTags(MetadataEntity metadataEntity, Set<String> tags) {
     setMetadata(new MetadataEntry(metadataEntity, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(tags)));
   }
 
@@ -183,11 +182,16 @@ public class MetadataDataset extends AbstractDataset {
    *                 dataset-id(ns+dataset)/stream-id(ns+stream).
    * @param tagsToAdd the tags to add
    */
-  public void addTags(MetadataEntity metadataEntity, String ... tagsToAdd) {
+  public void addTags(MetadataEntity metadataEntity, Set<String> tagsToAdd) {
     HashSet<String> newTags = Sets.newHashSet(getTags(metadataEntity));
-    newTags.addAll(Arrays.asList(tagsToAdd));
+    newTags.addAll(tagsToAdd);
     MetadataEntry newTagsEntry = new MetadataEntry(metadataEntity, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(newTags));
     setMetadata(newTagsEntry);
+  }
+
+  @VisibleForTesting
+  void addTags(MetadataEntity entity, String ... tags) {
+    addTags(entity, Sets.newHashSet(tags));
   }
 
   /**
@@ -288,9 +292,8 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which the specified metadata keys are to be removed
    * @param keys the keys to remove from the metadata of the specified {@link MetadataEntity}
    */
-  private void removeMetadata(MetadataEntity metadataEntity, String ... keys) {
-    final Set<String> keySet = Sets.newHashSet(keys);
-    removeMetadata(metadataEntity, keySet::contains);
+  private void removeMetadata(MetadataEntity metadataEntity, Set<String> keys) {
+    removeMetadata(metadataEntity, keys::contains);
   }
 
   /**
@@ -314,7 +317,7 @@ public class MetadataDataset extends AbstractDataset {
           continue;
         }
         String metadataKey = MetadataKey.extractMetadataKey(next.getRow());
-        if (filter.apply(metadataKey)) {
+        if (filter.test(metadataKey)) {
           indexedTable.delete(new Delete(next.getRow()));
           // store the key to delete its indexes later
           deletedMetadataKeys.add(metadataKey);
@@ -355,8 +358,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} from which to remove the specified keys
    * @param keys the keys to remove
    */
-  public void removeProperties(MetadataEntity metadataEntity, String ... keys) {
+  public void removeProperties(MetadataEntity metadataEntity, Set<String> keys) {
     removeMetadata(metadataEntity, keys);
+  }
+
+  @VisibleForTesting
+  void removeProperties(MetadataEntity entity, String ... names) {
+    removeProperties(entity, Sets.newHashSet(names));
   }
 
   /**
@@ -365,23 +373,28 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} from which to remove the specified tags
    * @param tagsToRemove the tags to remove
    */
-  public void removeTags(MetadataEntity metadataEntity, String... tagsToRemove) {
+  public void removeTags(MetadataEntity metadataEntity, Set<String> tagsToRemove) {
     Set<String> existingTags = getTags(metadataEntity);
     if (existingTags.isEmpty()) {
       // nothing to remove
       return;
     }
 
-    Iterables.removeAll(existingTags, Arrays.asList(tagsToRemove));
+    Iterables.removeAll(existingTags, tagsToRemove);
 
     // call remove metadata for tags which will delete all the existing indexes for tags of this metadataEntity
-    removeMetadata(metadataEntity, TAGS_KEY);
+    removeMetadata(metadataEntity, TAGS_KEY::equals);
     //check if tags are all deleted before set Tags, if tags are all deleted, a null value will be set to the
     // metadataEntity,
     //which will give a NPE later when search.
     if (!existingTags.isEmpty()) {
-      setTags(metadataEntity, Iterables.toArray(existingTags, String.class));
+      setTags(metadataEntity, existingTags);
     }
+  }
+
+  @VisibleForTesting
+  void removeTags(MetadataEntity entity, String ... tags) {
+    removeTags(entity, Sets.newHashSet(tags));
   }
 
   /**
@@ -390,8 +403,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which to remove the properties
    */
   public void removeProperties(MetadataEntity metadataEntity) {
-    removeMetadata(metadataEntity,
-                   input -> !TAGS_KEY.equals(input));
+    removeMetadata(metadataEntity, input -> !TAGS_KEY.equals(input));
   }
 
   /**
@@ -400,7 +412,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which to remove the tags
    */
   public void removeTags(MetadataEntity metadataEntity) {
-    removeMetadata(metadataEntity, input -> TAGS_KEY.equals(input));
+    removeMetadata(metadataEntity, TAGS_KEY::equals);
   }
 
   /**
@@ -556,6 +568,7 @@ public class MetadataDataset extends AbstractDataset {
       if (searchTerm.endsWith("*")) {
         // if prefixed search get start and stop key
         byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
+        @SuppressWarnings("ConstantConditions")
         byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
         scanner = indexedTable.scanByIndex(Bytes.toBytes(DEFAULT_INDEX_COLUMN), startKey, stopKey);
       } else {
@@ -566,9 +579,7 @@ public class MetadataDataset extends AbstractDataset {
         Row next;
         while ((next = scanner.next()) != null) {
           Optional<MetadataEntry> metadataEntry = parseRow(next, DEFAULT_INDEX_COLUMN, types, showHidden);
-          if (metadataEntry.isPresent()) {
-            results.add(metadataEntry.get());
-          }
+          metadataEntry.ifPresent(results::add);
         }
       } finally {
         scanner.close();
@@ -592,6 +603,7 @@ public class MetadataDataset extends AbstractDataset {
     List<String> cursors = new ArrayList<>(numCursors);
     for (String searchTerm : getSearchTerms(namespaceId, "*", entityScope)) {
       byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
+      @SuppressWarnings("ConstantConditions")
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
       // if a cursor is provided, then start at the cursor
       if (!Strings.isNullOrEmpty(cursor)) {

@@ -36,8 +36,6 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +44,6 @@ import java.util.Set;
  * Implementation of {@link MetadataAdmin} that interacts directly with {@link MetadataStore}.
  */
 public class DefaultMetadataAdmin implements MetadataAdmin {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataAdmin.class);
 
   private static final CharMatcher KEY_AND_TAG_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
@@ -84,7 +81,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void addTags(MetadataEntity metadataEntity, String... tags) throws InvalidMetadataException {
+  public void addTags(MetadataEntity metadataEntity, Set<String> tags) throws InvalidMetadataException {
     validateTags(metadataEntity, tags);
     metadataStore.addTags(MetadataScope.USER, metadataEntity, tags);
   }
@@ -130,7 +127,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void removeProperties(MetadataEntity metadataEntity, String... keys) {
+  public void removeProperties(MetadataEntity metadataEntity, Set<String> keys) {
     metadataStore.removeProperties(MetadataScope.USER, metadataEntity, keys);
   }
 
@@ -140,7 +137,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void removeTags(MetadataEntity metadataEntity, String... tags) {
+  public void removeTags(MetadataEntity metadataEntity, Set<String> tags) {
     metadataStore.removeTags(MetadataScope.USER, metadataEntity, tags);
   }
 
@@ -164,6 +161,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
    */
   private MetadataSearchResponseV2 filterAuthorizedSearchResult(final MetadataSearchResponseV2 results)
     throws Exception {
+    //noinspection ConstantConditions
     return new MetadataSearchResponseV2(
       results.getSort(), results.getOffset(), results.getLimit(), results.getNumCursors(), results.getTotal(),
       // For authorization either use the known entity and if it is custom entity do enforcement on the parent.
@@ -190,7 +188,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
     }
   }
 
-  private void validateTags(MetadataEntity metadataEntity, String... tags) throws InvalidMetadataException {
+  private void validateTags(MetadataEntity metadataEntity, Set<String> tags) throws InvalidMetadataException {
     for (String tag : tags) {
       validateKeyAndTagsFormat(metadataEntity, tag);
       validateLength(metadataEntity, tag);

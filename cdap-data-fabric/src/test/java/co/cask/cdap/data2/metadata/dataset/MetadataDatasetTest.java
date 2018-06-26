@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Cask Data, Inc.
+ * Copyright 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -581,7 +581,7 @@ public class  MetadataDatasetTest {
                           Sets.newHashSet(results));
 
       // Using empty filter should also search for all target types
-      results = searchByDefaultIndex("ns1", "  valu*  sVal* ", ImmutableSet.<EntityTypeSimpleName>of());
+      results = searchByDefaultIndex("ns1", "  valu*  sVal* ", ImmutableSet.of());
       Assert.assertEquals(Sets.newHashSet(flowEntry1, flowEntry2, streamEntry1, streamEntry2),
                           Sets.newHashSet(results));
     });
@@ -692,13 +692,13 @@ public class  MetadataDatasetTest {
     txnl.execute(() -> {
       Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key1", "value1")),
                           searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "value1",
-                                               ImmutableSet.<EntityTypeSimpleName>of()));
+                                               Collections.emptySet()));
       Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key2", "value2")),
                           searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "value2",
-                                               ImmutableSet.<EntityTypeSimpleName>of()));
+                                               Collections.emptySet()));
       Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, MetadataDataset.TAGS_KEY, "tag1,tag2")),
                           searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "tag2",
-                                               ImmutableSet.<EntityTypeSimpleName>of()));
+                                               Collections.emptySet()));
     });
 
     // Update key1
@@ -712,15 +712,15 @@ public class  MetadataDatasetTest {
       // Searching for value1 should be empty
       Assert.assertEquals(ImmutableList.of(),
                           searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "value1",
-                                               ImmutableSet.<EntityTypeSimpleName>of()));
+                                               Collections.emptySet()));
       // Instead key1 has value value3 now
       Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key1", "value3")),
                           searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "value3",
-                                               ImmutableSet.<EntityTypeSimpleName>of()));
+                                               Collections.emptySet()));
       // key2 was deleted
       Assert.assertEquals(ImmutableList.of(),
                           searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "value2",
-                                               ImmutableSet.<EntityTypeSimpleName>of()));
+                                               Collections.emptySet()));
       // tag2 was deleted
       Assert.assertEquals(
         ImmutableList.of(),
@@ -1077,7 +1077,7 @@ public class  MetadataDatasetTest {
   }
 
   private void assertSingleIndex(final MetadataDataset dataset, final String indexColumn, final String namespaceId,
-                                 final String value) throws InterruptedException, TransactionFailureException {
+                                 final String value) {
     final String searchQuery = namespaceId + MetadataDataset.KEYVALUE_SEPARATOR + value;
     try (Scanner scan = dataset.searchByIndex(indexColumn, searchQuery)) {
       Assert.assertNotNull(scan.next());
@@ -1285,10 +1285,12 @@ public class  MetadataDatasetTest {
     return ImmutableMap.of(prefix + k1, v1);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private Map<String, String> toProps(String prefix, String k1, String v1, String k2, String v2) {
     return ImmutableMap.of(prefix + k1, v1, prefix + k2, v2);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private Map<String, String>
   toProps(String prefix, String k1, String v1, String k2, String v2, String k3, String v3) {
     return ImmutableMap.of(prefix + k1, v1, prefix + k2, v2, prefix + k3, v3);

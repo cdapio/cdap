@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Cask Data, Inc.
+ * Copyright 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data2.metadata.store;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
@@ -24,10 +23,8 @@ import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
 import com.google.common.collect.ImmutableSet;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +46,7 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void addTags(MetadataScope scope, MetadataEntity metadataEntity, String... tagsToAdd) {
+  public void addTags(MetadataScope scope, MetadataEntity metadataEntity, Set<String> tagsToAdd) {
     // NO-OP
   }
 
@@ -105,7 +102,7 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void removeProperties(MetadataScope scope, MetadataEntity metadataEntity, String... keys) {
+  public void removeProperties(MetadataScope scope, MetadataEntity metadataEntity, Set<String> keys) {
     // NO-OP
   }
 
@@ -115,7 +112,7 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void removeTags(MetadataScope scope, MetadataEntity metadataEntity, String... tagsToRemove) {
+  public void removeTags(MetadataScope scope, MetadataEntity metadataEntity, Set<String> tagsToRemove) {
     // NO-OP
   }
 
@@ -125,16 +122,8 @@ public class NoOpMetadataStore implements MetadataStore {
                                          SortInfo sort, int offset, int limit, int numCursors, String cursor,
                                          boolean showHidden, Set<EntityScope> entityScope) {
     return new MetadataSearchResponseV2(sort.toString(), offset, limit, numCursors, 0,
-                                        Collections.<MetadataSearchResultRecordV2>emptySet(),
-                                        Collections.<String>emptyList(), showHidden, entityScope);
-  }
-
-  @Override
-  public Set<MetadataRecordV2> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntities, long timeMillis) {
-    return ImmutableSet.<MetadataRecordV2>builder()
-      .addAll(getSnapshotBeforeTime(MetadataScope.USER, metadataEntities, timeMillis))
-      .addAll(getSnapshotBeforeTime(MetadataScope.SYSTEM, metadataEntities, timeMillis))
-      .build();
+                                        Collections.emptySet(),
+                                        Collections.emptyList(), showHidden, entityScope);
   }
 
   @Override
@@ -153,22 +142,17 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void deleteAllIndexes(MetadataScope scope) {
+  public void createOrUpgrade(MetadataScope scope) {
     // NO-OP
   }
 
   @Override
-  public void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException {
-    return;
+  public void markUpgradeComplete(MetadataScope scope) {
+    // NO-OP
   }
 
   @Override
-  public void markUpgradeComplete(MetadataScope scope) throws DatasetManagementException, IOException {
-    return;
-  }
-
-  @Override
-  public boolean isUpgradeRequired(MetadataScope scope) throws DatasetManagementException {
+  public boolean isUpgradeRequired(MetadataScope scope) {
     return false;
   }
 }

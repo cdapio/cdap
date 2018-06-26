@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,7 @@ public interface MetadataAdmin {
    *
    * @throws InvalidMetadataException if some of the properties violate metadata validation rules
    */
-  void addTags(MetadataEntity metadataEntity, String... tags) throws InvalidMetadataException;
+  void addTags(MetadataEntity metadataEntity, Set<String> tags) throws InvalidMetadataException;
 
   /**
    * Returns a set of {@link MetadataRecordV2} representing all metadata (including properties and tags) for the
@@ -115,7 +115,7 @@ public interface MetadataAdmin {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified properties for
    * @param keys the metadata property keys to remove
    */
-  void removeProperties(MetadataEntity metadataEntity, String... keys);
+  void removeProperties(MetadataEntity metadataEntity, Set<String> keys);
 
   /**
    * Removes all tags from the specified {@link MetadataEntity}. This API only supports removing tags in
@@ -132,7 +132,7 @@ public interface MetadataAdmin {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified tags for
    * @param tags the tags to remove
    */
-  void removeTags(MetadataEntity metadataEntity, String ... tags);
+  void removeTags(MetadataEntity metadataEntity, Set<String> tags);
 
   /**
    * Executes a search for CDAP entities in the specified namespace with the specified search query and

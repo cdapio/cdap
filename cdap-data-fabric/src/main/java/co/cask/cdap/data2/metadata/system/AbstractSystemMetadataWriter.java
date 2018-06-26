@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -80,7 +80,7 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
    *
    * @return an array of tags to add to this {@link NamespacedEntityId entity} in {@link MetadataScope#SYSTEM}
    */
-  protected abstract String[] getSystemTagsToAdd();
+  protected abstract Set<String> getSystemTagsToAdd();
 
   /**
    * Define the {@link MetadataScope#SYSTEM system} schema to add for this entity.
@@ -101,8 +101,7 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
     Set<String> existingProperties = metadataStore.getProperties(MetadataScope.SYSTEM, metadataEntity).keySet();
     Sets.SetView<String> removeProperties = Sets.difference(existingProperties, PRESERVE_PROPERTIES);
     if (!removeProperties.isEmpty()) {
-      String[] propertiesArray = removeProperties.toArray(new String[removeProperties.size()]);
-      metadataStore.removeProperties(MetadataScope.SYSTEM, metadataEntity, propertiesArray);
+      metadataStore.removeProperties(MetadataScope.SYSTEM, metadataEntity, removeProperties);
     }
     metadataStore.removeTags(MetadataScope.SYSTEM, metadataEntity);
 
@@ -116,8 +115,8 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
     if (allProperties.size() > 0) {
       metadataStore.setProperties(MetadataScope.SYSTEM, metadataEntity, allProperties);
     }
-    String[] tags = getSystemTagsToAdd();
-    if (tags.length > 0) {
+    Set<String> tags = getSystemTagsToAdd();
+    if (!tags.isEmpty()) {
       metadataStore.addTags(MetadataScope.SYSTEM, metadataEntity, tags);
     }
     // store additional properties that we want to index separately
