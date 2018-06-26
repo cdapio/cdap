@@ -38,7 +38,7 @@ export const isSystemProfile = (name = '') => name.indexOf('system:') === 0;
 // NOTE: This is never actually saved to backend. This is hardcoded here until we figure out a 
 // clean way to add `system.profiles.name` to namespace preference. If there is no `system.profiles.name` set
 // at namespace or app level UI show "default" profile selected
-export const DEFAULT_PROFILE_NAME = 'system:default';
+export const DEFAULT_PROFILE_NAME = 'system:native';
 
 export default class ProfilesListViewInPipeline extends Component {
 
