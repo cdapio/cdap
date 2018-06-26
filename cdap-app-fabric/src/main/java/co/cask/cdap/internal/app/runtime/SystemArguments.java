@@ -28,6 +28,7 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.http.NettyHttpService;
@@ -344,6 +345,22 @@ public final class SystemArguments {
       builder.setExecThreadKeepAliveSeconds(keepAliveSecs);
     }
     return builder;
+  }
+
+  /**
+   * Get the profile id for the given program, given arguments for a run. All non-workflow program types will use the
+   * native profile. Workflow program types will use whatever profile is specified in its arguments, or the native
+   * profile if none is specified.
+   *
+   * @param programId program to get the profile for
+   * @param args arguments for a program run
+   * @return the profile id for the program run
+   */
+  public static ProfileId getProfileIdForProgram(ProgramId programId, Map<String, String> args) {
+    if (programId.getType() == ProgramType.WORKFLOW) {
+      return getProfileIdFromArgs(programId.getNamespaceId(), args).orElse(ProfileId.NATIVE);
+    }
+    return ProfileId.NATIVE;
   }
 
   /**

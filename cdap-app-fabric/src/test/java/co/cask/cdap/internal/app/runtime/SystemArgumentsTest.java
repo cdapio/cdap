@@ -23,8 +23,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.service.RetryStrategyType;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.Configs;
 import org.junit.Assert;
@@ -41,11 +43,32 @@ import java.util.Map;
 public class SystemArgumentsTest {
 
   @Test
+  public void testGetProgramProfile() {
+    ProfileId profileId = NamespaceId.DEFAULT.profile("p");
+    Map<String, String> args = Collections.singletonMap(SystemArguments.PROFILE_NAME, profileId.getScopedName());
+
+    ApplicationId appId = NamespaceId.DEFAULT.app("a");
+    ProgramId mrId = appId.mr("mr");
+    ProgramId serviceId = appId.service("serv");
+    ProgramId flowId = appId.flow("flow");
+    ProgramId sparkId = appId.spark("spark");
+    ProgramId workerId = appId.worker("worker");
+    ProgramId workflowID = appId.workflow("wf");
+
+    Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(mrId, args));
+    Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(serviceId, args));
+    Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(flowId, args));
+    Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(sparkId, args));
+    Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(workerId, args));
+    Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(workflowID, args));
+  }
+
+  @Test
   public void testSystemResources() {
     Resources defaultResources = new Resources();
 
     // Nothing specified
-    Resources resources = SystemArguments.getResources(ImmutableMap.<String, String>of(), defaultResources);
+    Resources resources = SystemArguments.getResources(ImmutableMap.of(), defaultResources);
     Assert.assertEquals(defaultResources, resources);
 
     // Specify memory
@@ -103,7 +126,7 @@ public class SystemArgumentsTest {
   }
 
   @Test
-  public void testRetryStrategies() throws InterruptedException {
+  public void testRetryStrategies() {
     CConfiguration cConf = CConfiguration.create();
     Map<String, String> args = Collections.emptyMap();
 
@@ -139,7 +162,7 @@ public class SystemArgumentsTest {
 
   @Test
   public void testLogLevels() {
-    Assert.assertTrue(SystemArguments.getLogLevels(Collections.<String, String>emptyMap()).isEmpty());
+    Assert.assertTrue(SystemArguments.getLogLevels(Collections.emptyMap()).isEmpty());
 
     Map<String, String> args = ImmutableMap.of(
       "system.log.level", "DEBUG",
