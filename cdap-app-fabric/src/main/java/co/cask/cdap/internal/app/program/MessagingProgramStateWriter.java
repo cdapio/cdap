@@ -184,7 +184,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
 
   /**
    * This method is only used for testing {@link MessagingProgramStateWriter}
-   * @return
+   * @return true if the heart beat thread is active, false otherwise
    */
   @VisibleForTesting
   boolean isHeartBeatThreadAlive() {

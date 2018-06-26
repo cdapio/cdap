@@ -26,6 +26,7 @@ public interface ProgramStatePublisher {
 
   /**
    * Publish message which is identified by notificationType and the properties.
+   *
    * @param notificationType type of the notification of the message
    * @param properties properties of the message to publish
    */

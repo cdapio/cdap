@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * publishes program state and heart beat messages through the messaging service
+ * Publishes program state and heartbeat messages through the messaging service
  */
 public class MessagingProgramStatePublisher implements ProgramStatePublisher {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingProgramStatePublisher.class);

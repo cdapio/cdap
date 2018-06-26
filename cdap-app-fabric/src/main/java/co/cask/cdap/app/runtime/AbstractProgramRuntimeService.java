@@ -141,7 +141,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
                                                                programDescriptor.getApplicationSpecification());
 
-      // Create program and cleanup task
+      // Create and run the program
       Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
 
