@@ -45,7 +45,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -92,19 +91,18 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
       messagingMetricsProcessorService.startAndWait();
 
       // Wait for the 1 aggregated counter metric (with value 50) and 50 gauge metrics to be stored in the metricStore
-      Tasks.waitFor(51, new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          return metricStore.getAllMetrics().size();
-        }
-      }, 15, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(51, () -> metricStore.getAllMetrics().size(), 15, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       assertMetricsResult(expected, metricStore.getAllMetrics());
 
       // validate metrics processor metrics
       // 50 counter and 50 gauge metrics are emitted in each iteration above
       Assert.assertEquals(100, metricStore.getMetricsProcessedByMetricsProcessor());
-      Assert.assertTrue(metricStore.isMetricsProcessorDelayEmitted());
+      // in MessagingMetricsProcessorService, before persisting the metrics and topic metas, a copy of the topic metas
+      // containing the metrics processor delay metrics is made before making a copy of metric values.
+      // Therefore, there can be a very small chance where all metric values are persisted but the corresponding
+      // topic metas are not yet persisted. Wait for all topic metas to be persisted
+      Tasks.waitFor(true, metricStore::isMetricsProcessorDelayEmitted, 15, TimeUnit.SECONDS);
 
       // Clear metricStore and expected results for the next iteration
       metricStore.deleteAll();
