@@ -151,6 +151,7 @@
                   <exclude>**/*.svg</exclude>
                   <exclude>**/*__mocks__/**</exclude>
                   <exclude>**/bower_components/**</exclude>
+                  <exclude>**/*.bowerrc</exclude>
                   <exclude>**/node_modules/**</exclude>
                   <exclude>**/coverage/**</exclude>
                   <exclude>**/dist/**</exclude>
