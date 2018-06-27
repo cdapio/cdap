@@ -28,7 +28,7 @@ import java.util.Objects;
  * Uniquely identifies an artifact.
  */
 public class ProfileId extends NamespacedEntityId implements ParentedId<NamespaceId> {
-  public static final ProfileId DEFAULT = NamespaceId.SYSTEM.profile("default");
+  public static final ProfileId NATIVE = NamespaceId.SYSTEM.profile("native");
   private final String profileName;
   private transient Integer hashCode;
 
@@ -58,6 +58,17 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
   @Override
   public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, profileName));
+  }
+
+  /**
+   * Return the scoped name. If it is a system profile, the profile name will be prefixed by 'SYSTEM:'. Otherwise,
+   * the profile name will be prefixed by 'USER:'.
+   *
+   * @return the scoped profile name
+   */
+  public String getScopedName() {
+    EntityScope scope = NamespaceId.SYSTEM.equals(getNamespaceId()) ? EntityScope.SYSTEM : EntityScope.USER;
+    return String.format("%s:%s", scope.name(), profileName);
   }
 
   @SuppressWarnings("unused")

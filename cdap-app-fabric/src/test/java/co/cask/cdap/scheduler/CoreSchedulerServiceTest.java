@@ -434,7 +434,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   public void testAddScheduleWithDisabledProfile() throws Exception {
     // put my profile and by default it is enabled
     ProfileId profileId = NS_ID.profile("MyProfile");
-    putProfile(profileId, Profile.DEFAULT, 200);
+    putProfile(profileId, Profile.NATIVE, 200);
 
     // add a schedule, it should succeed since the profile is enabled.
     ProgramSchedule tsched1 =

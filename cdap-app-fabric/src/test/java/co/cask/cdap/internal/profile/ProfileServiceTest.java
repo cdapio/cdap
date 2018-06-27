@@ -91,10 +91,10 @@ public class ProfileServiceTest {
     profileService.saveProfile(profileId2, profile2);
 
     // add default profile
-    profileService.saveProfile(ProfileId.DEFAULT, Profile.DEFAULT);
+    profileService.saveProfile(ProfileId.NATIVE, Profile.NATIVE);
 
     // get all profiles
-    List<Profile> profiles = ImmutableList.of(expected, profile2, Profile.DEFAULT);
+    List<Profile> profiles = ImmutableList.of(expected, profile2, Profile.NATIVE);
     Assert.assertEquals(profiles, profileService.getProfiles(NamespaceId.DEFAULT, true));
 
     // by default the profile status should be enabled

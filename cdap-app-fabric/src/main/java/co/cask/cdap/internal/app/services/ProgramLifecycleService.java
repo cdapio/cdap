@@ -296,7 +296,7 @@ public class ProgramLifecycleService {
     LOG.info("{} tries to run {} Program {}", authenticationContext.getPrincipal().getName(), programId.getType(),
              programId.getProgram());
     ProfileId profileId =
-      SystemArguments.getProfileIdFromArgs(programId.getNamespaceId(), userArgs).orElse(ProfileId.DEFAULT);
+      SystemArguments.getProfileIdFromArgs(programId.getNamespaceId(), userArgs).orElse(ProfileId.NATIVE);
     Profile profile = profileService.getProfile(profileId);
     if (profile.getStatus() == ProfileStatus.DISABLED) {
       throw new ProfileConflictException(String.format("Profile %s in namespace %s is disabled. It cannot be " +
@@ -316,11 +316,11 @@ public class ProgramLifecycleService {
     // add the rest of the profile properties to system properties
     SystemArguments.addProfileArgs(systemArgs, profile);
 
-    // Set the ClusterMode. If it is DEFAULT profile, then it is ON_PREMISE, otherwise is ISOLATED
+    // Set the ClusterMode. If it is NATIVE profile, then it is ON_PREMISE, otherwise is ISOLATED
     // This should probably move into the provisioner later once we have a better contract for the
     // provisioner to actually pick what launching mechanism it wants to use.
     systemArgs.put(ProgramOptionConstants.CLUSTER_MODE,
-                   (ProfileId.DEFAULT.equals(profileId) ? ClusterMode.ON_PREMISE : ClusterMode.ISOLATED).name());
+                   (ProfileId.NATIVE.equals(profileId) ? ClusterMode.ON_PREMISE : ClusterMode.ISOLATED).name());
 
     ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
                                                              new BasicArguments(userArgs), debug);

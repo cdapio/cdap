@@ -542,7 +542,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployAppWithDisabledProfileInSchedule() throws Exception {
     // put my profile and disable it
     ProfileId profileId = new NamespaceId(TEST_NAMESPACE1).profile("MyProfile");
-    putProfile(profileId, Profile.DEFAULT, 200);
+    putProfile(profileId, Profile.NATIVE, 200);
     disableProfile(profileId, 200);
 
     // deploy an app with schedule with some disabled profile in the schedule property
