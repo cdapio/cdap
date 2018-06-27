@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -45,48 +44,42 @@ public interface ProgramStateWriter {
    *
    * @param programRunId the id of the program run
    * @param twillRunId the run id of the twill application
-   * @param programOptions options passed to the program run
    */
-  void running(ProgramRunId programRunId, @Nullable String twillRunId, ProgramOptions programOptions);
+  void running(ProgramRunId programRunId, @Nullable String twillRunId);
 
   /**
    * Updates the program run's status to be completed
    *
    * @param programRunId the id of the program run
-   * @param programOptions options passed to the program run
    */
-  void completed(ProgramRunId programRunId, ProgramOptions programOptions);
+  void completed(ProgramRunId programRunId);
 
   /**
    * Updates the program run's status to be killed
    *
    * @param programRunId the id of the program run
-   * @param programOptions options passed to the program run
    */
-  void killed(ProgramRunId programRunId, ProgramOptions programOptions);
+  void killed(ProgramRunId programRunId);
 
   /**
    * Updates the program run's status to be failed with a specified failure cause
    *
    * @param programRunId the id of the program run
    * @param failureCause the cause of the failure
-   * @param programOptions options passed to the program run
    */
-  void error(ProgramRunId programRunId, Throwable failureCause, ProgramOptions programOptions);
+  void error(ProgramRunId programRunId, Throwable failureCause);
 
   /**
    * Updates the program run's status to be suspended
    *
    * @param programRunId the id of the program run
-   * @param programOptions options passed to the program run
    */
-  void suspend(ProgramRunId programRunId, ProgramOptions programOptions);
+  void suspend(ProgramRunId programRunId);
 
   /**
    * Updates the program run's status to be resumed
    *
    * @param programRunId the id of the program run
-   * @param programOptions options passed to the program run
    */
-  void resume(ProgramRunId programRunId, ProgramOptions programOptions);
+  void resume(ProgramRunId programRunId);
 }

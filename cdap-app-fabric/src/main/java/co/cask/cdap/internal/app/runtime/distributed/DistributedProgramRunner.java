@@ -245,7 +245,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
           ProgramTwillApplication twillApplication = new ProgramTwillApplication(
             programRunId, options, launchConfig.getRunnables(), launchConfig.getLaunchOrder(),
-            localizeResources, createEventHandler(cConf, programRunId, options));
+            localizeResources, createEventHandler(cConf, programRunId));
 
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
 
@@ -619,14 +619,12 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
    * Creates the {@link EventHandler} for handling the application events.
    */
   @Nullable
-  private EventHandler createEventHandler(CConfiguration cConf,
-                                          ProgramRunId programRunId, ProgramOptions programOptions) {
+  private EventHandler createEventHandler(CConfiguration cConf, ProgramRunId programRunId) {
     if (clusterMode != ClusterMode.ON_PREMISE) {
       return null;
     }
     return new TwillAppLifecycleEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
-                                             this instanceof LongRunningDistributedProgramRunner,
-                                             programRunId, programOptions);
+                                             this instanceof LongRunningDistributedProgramRunner, programRunId);
   }
 
   /**

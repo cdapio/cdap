@@ -17,8 +17,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
@@ -27,24 +25,19 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.LocalDatasetDeleterRunnable;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -136,8 +129,7 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
           String msg = String.format(
             "Fixed RunRecord for program run %s in %s state because it is actually not running",
             programRunId, record.getStatus());
-          programStateWriter.error(programRunId, new ProgramRunAbortedException(msg),
-                                   constructAndGetProgramOptions(record));
+          programStateWriter.error(programRunId, new ProgramRunAbortedException(msg));
           fixedPrograms.add(programRunId);
           LOG.warn(msg);
         }
@@ -151,23 +143,6 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
                fixedPrograms.size(), NOT_STOPPED_STATUSES);
     }
     return fixedPrograms;
-  }
-
-  private ProgramOptions constructAndGetProgramOptions(RunRecordMeta record) {
-    Map<String, String> systemProperties = new HashMap<>(record.getSystemArgs());
-    ArtifactId artifactId = new ArtifactId(record.getProgramRunId().getNamespace(),
-                                           record.getArtifactId().getName(),
-                                           record.getArtifactId().getVersion().getVersion());
-    systemProperties.put(ProgramOptionConstants.ARTIFACT_ID,
-                         Joiner.on(ArtifactId.IDSTRING_TYPE_SEPARATOR).join(artifactId.toIdParts()));
-    if (record.getPrincipal() != null) {
-      systemProperties.put(ProgramOptionConstants.PRINCIPAL, record.getPrincipal());
-    }
-    Arguments systemArguments = new BasicArguments(systemProperties);
-    Arguments userArguments = new BasicArguments(record.getProperties());
-    ProgramOptions programOptions =
-      new SimpleProgramOptions(record.getProgramRunId().getParent(), systemArguments, userArguments);
-    return programOptions;
   }
 
   @Override

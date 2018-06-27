@@ -132,11 +132,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
-    ArtifactId artifactId = programDescriptor.getArtifactId();
-    ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
     try {
       // Get the artifact details and save it into the program options.
+      ArtifactId artifactId = programDescriptor.getArtifactId();
       ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+      ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
+
       // Take a snapshot of all the plugin artifacts used by the program
       ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
                                                                programDescriptor.getApplicationSpecification());
@@ -146,12 +147,10 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
 
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId,
-                                                  cleanUpTask, runtimeProgramOptions);
+                                                  cleanUpTask);
       monitorProgram(runtimeInfo, cleanUpTask);
       return runtimeInfo;
     } catch (Exception e) {
-      // Set the program state to an error when an exception is thrown
-      programStateWriter.error(programId.run(runId), e, runtimeProgramOptions);
       cleanUpTask.run();
       LOG.error("Exception while trying to run program", e);
       throw Throwables.propagate(e);
@@ -331,8 +330,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                     new BasicArguments(userArguments), options.isDebug());
   }
 
-  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask,
-                                          ProgramOptions programOptions) {
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask) {
     return new SimpleRuntimeInfo(controller, programId);
   }
 

@@ -32,32 +32,32 @@ public class NoOpProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void running(ProgramRunId programRunId, @Nullable String twillRunId, ProgramOptions programOptions) {
+  public void running(ProgramRunId programRunId, @Nullable String twillRunId) {
     // no-op
   }
 
   @Override
-  public void completed(ProgramRunId programRunId, ProgramOptions programOptions) {
+  public void completed(ProgramRunId programRunId) {
     // no-op
   }
 
   @Override
-  public void killed(ProgramRunId programRunId, ProgramOptions programOptions) {
+  public void killed(ProgramRunId programRunId) {
     // no-op
   }
 
   @Override
-  public void error(ProgramRunId programRunId, Throwable failureCause, ProgramOptions programOptions) {
+  public void error(ProgramRunId programRunId, Throwable failureCause) {
     // no-op
   }
 
   @Override
-  public void suspend(ProgramRunId programRunId, ProgramOptions programOptions) {
+  public void suspend(ProgramRunId programRunId) {
     // no-op
   }
 
   @Override
-  public void resume(ProgramRunId programRunId, ProgramOptions programOptions) {
+  public void resume(ProgramRunId programRunId) {
     // no-op
   }
 }

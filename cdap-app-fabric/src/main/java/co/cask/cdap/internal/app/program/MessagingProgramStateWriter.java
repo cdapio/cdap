@@ -33,18 +33,12 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
@@ -60,23 +54,14 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
 
   private final ProgramStatePublisher programStatePublisher;
 
-  private ScheduledExecutorService scheduledExecutorService;
-
-  private final long heartBeatIntervalSeconds;
 
   @Inject
   public MessagingProgramStateWriter(CConfiguration cConf, MessagingService messagingService) {
-    this(new MessagingProgramStatePublisher(messagingService,
-                                            NamespaceId.SYSTEM.topic(cConf.get(
-                                              Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
-                                            RetryStrategies.fromConfiguration(cConf, "system.program.state.")),
-         cConf.getLong(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS));
-  }
-
-  @VisibleForTesting
-  MessagingProgramStateWriter(ProgramStatePublisher programStatePublisher, long heartBeatIntervalSeconds) {
-    this.programStatePublisher = programStatePublisher;
-    this.heartBeatIntervalSeconds = heartBeatIntervalSeconds;
+    this.programStatePublisher =
+      new MessagingProgramStatePublisher(messagingService,
+                                         NamespaceId.SYSTEM.topic(cConf.get(
+                                           Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
+                                         RetryStrategies.fromConfiguration(cConf, "system.program.state."));
   }
 
   @Override
@@ -96,98 +81,62 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void running(ProgramRunId programRunId, @Nullable String twillRunId, ProgramOptions programOptions) {
+  public void running(ProgramRunId programRunId, @Nullable String twillRunId) {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(System.currentTimeMillis()))
-      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name())
-      .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(programOptions));
-
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name());
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
-    scheduleHeartBeatThread(properties.build());
-  }
-
-  /**
-   * If executor service isn't initialized or if its shutdown
-   * create a new exector service and schedule a heartbeat thread
-   * @param properties
-   */
-  private void scheduleHeartBeatThread(Map<String, String> properties) {
-    if (scheduledExecutorService == null || scheduledExecutorService.isShutdown()) {
-      scheduledExecutorService =
-        Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("program-heart-beat"));
-      ProgramRunHeartbeat programRunHeartbeat = new ProgramRunHeartbeat(programStatePublisher, properties);
-      scheduledExecutorService.scheduleAtFixedRate(programRunHeartbeat, heartBeatIntervalSeconds,
-                                                   heartBeatIntervalSeconds, TimeUnit.SECONDS);
-    }
   }
 
   @Override
-  public void completed(ProgramRunId programRunId, ProgramOptions programOptions) {
-    stop(programRunId, ProgramRunStatus.COMPLETED, null, programOptions);
+  public void completed(ProgramRunId programRunId) {
+    stop(programRunId, ProgramRunStatus.COMPLETED, null);
   }
 
   @Override
-  public void killed(ProgramRunId programRunId, ProgramOptions programOptions) {
-    stop(programRunId, ProgramRunStatus.KILLED, null, programOptions);
+  public void killed(ProgramRunId programRunId) {
+    stop(programRunId, ProgramRunStatus.KILLED, null);
   }
 
   @Override
-  public void error(ProgramRunId programRunId, Throwable failureCause, ProgramOptions programOptions) {
-    stop(programRunId, ProgramRunStatus.FAILED, failureCause, programOptions);
+  public void error(ProgramRunId programRunId, Throwable failureCause) {
+    stop(programRunId, ProgramRunStatus.FAILED, failureCause);
   }
 
   @Override
-  public void suspend(ProgramRunId programRunId, ProgramOptions programOptions) {
+  public void suspend(ProgramRunId programRunId) {
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS,
                                   ImmutableMap.<String, String>builder()
                                     .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
                                     .put(ProgramOptionConstants.SUSPEND_TIME,
                                          String.valueOf(System.currentTimeMillis()))
                                     .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.name())
-                                    .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(programOptions)).build()
+                                    .build()
     );
-    if (scheduledExecutorService != null) {
-      scheduledExecutorService.shutdownNow();
-    }
   }
 
   @Override
-  public void resume(ProgramRunId programRunId, ProgramOptions programOptions) {
+  public void resume(ProgramRunId programRunId) {
     ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.RESUME_TIME, String.valueOf(System.currentTimeMillis()))
-      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name())
-      .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(programOptions)).build();
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name()).build();
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties);
-    scheduleHeartBeatThread(properties);
   }
 
-  private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause,
-                    ProgramOptions options) {
+  private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause) {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.END_TIME, String.valueOf(System.currentTimeMillis()))
-      .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.name())
-      .put(ProgramOptionConstants.PROGRAM_OPTIONS, GSON.toJson(options));
+      .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.name());
     if (cause != null) {
       properties.put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(new BasicThrowable(cause)));
     }
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
-    if (scheduledExecutorService != null) {
-      scheduledExecutorService.shutdownNow();
-    }
   }
 
-  /**
-   * This method is only used for testing {@link MessagingProgramStateWriter}
-   * @return true if the heart beat thread is active, false otherwise
-   */
-  @VisibleForTesting
-  boolean isHeartBeatThreadAlive() {
-    return scheduledExecutorService != null && !scheduledExecutorService.isShutdown();
-  }
 }

@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.program;
 
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -36,14 +35,12 @@ public class StateChangeListener extends AbstractListener {
   private final ProgramRunId programRunId;
   private final String twillRunId;
   private final ProgramStateWriter programStateWriter;
-  private final ProgramOptions options;
 
   public StateChangeListener(final ProgramRunId programRunId, @Nullable final String twillRunId,
-                             final ProgramStateWriter programStateWriter, final ProgramOptions options) {
+                             final ProgramStateWriter programStateWriter) {
     this.programRunId = programRunId;
     this.twillRunId = twillRunId;
     this.programStateWriter = programStateWriter;
-    this.options = options;
   }
 
   @Override
@@ -73,36 +70,36 @@ public class StateChangeListener extends AbstractListener {
   @Override
   public void alive() {
     LOG.trace("Program {} is alive.", programRunId);
-    programStateWriter.running(programRunId, twillRunId, options);
+    programStateWriter.running(programRunId, twillRunId);
   }
 
   @Override
   public void completed() {
     LOG.trace("Program {} completed successfully.", programRunId);
-    programStateWriter.completed(programRunId, options);
+    programStateWriter.completed(programRunId);
   }
 
   @Override
   public void killed() {
     LOG.trace("Program {} killed.", programRunId);
-    programStateWriter.killed(programRunId, options);
+    programStateWriter.killed(programRunId);
   }
 
   @Override
   public void suspended() {
     LOG.trace("Suspending Program {} .", programRunId);
-    programStateWriter.suspend(programRunId, options);
+    programStateWriter.suspend(programRunId);
   }
 
   @Override
   public void resuming() {
     LOG.trace("Resuming Program {}.", programRunId);
-    programStateWriter.resume(programRunId, options);
+    programStateWriter.resume(programRunId);
   }
 
   @Override
   public void error(Throwable cause) {
     LOG.trace("Program {} stopped with error: {}", programRunId, cause);
-    programStateWriter.error(programRunId, cause, options);
+    programStateWriter.error(programRunId, cause);
   }
 }

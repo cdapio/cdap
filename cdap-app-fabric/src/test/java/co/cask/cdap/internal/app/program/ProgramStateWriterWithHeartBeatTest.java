@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.program;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.utils.Tasks;
@@ -41,7 +42,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class MessagingProgramStateWriterTest {
+public class ProgramStateWriterWithHeartBeatTest {
   class MockProgramStatePublisher implements ProgramStatePublisher {
     long heartBeatCount = 0;
 
@@ -62,8 +63,7 @@ public class MessagingProgramStateWriterTest {
   public void testHeartBeatThread() throws InterruptedException, ExecutionException, TimeoutException {
     // configure program state writer to emit heart beat every second
     ProgramStatePublisher programStatePublisher = new MockProgramStatePublisher();
-    MessagingProgramStateWriter messagingProgramStateWriter =
-      new MessagingProgramStateWriter(programStatePublisher, 1L);
+    NoOpProgramStateWriter programStateWriter = new NoOpProgramStateWriter();
 
     // mock program configurations
     ProgramId programId = NamespaceId.DEFAULT.app("someapp").program(ProgramType.SERVICE, "s");
@@ -74,6 +74,8 @@ public class MessagingProgramStateWriterTest {
     ProgramRunId runId = programId.run(RunIds.generate());
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
 
+    ProgramStateWriterWithHeartBeat programStateWriterWithHeartBeat =
+      new ProgramStateWriterWithHeartBeat(runId, programStateWriter, 1, programStatePublisher);
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
       "name", "1.0.0", "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
@@ -82,29 +84,29 @@ public class MessagingProgramStateWriterTest {
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // start the program and ensure heart beat is 0 before we call running
-    messagingProgramStateWriter.start(runId, programOptions, null, programDescriptor);
+    programStateWriterWithHeartBeat.start(programOptions, null, programDescriptor);
     Assert.assertEquals(0, ((MockProgramStatePublisher) programStatePublisher).getHeartBeatCount());
-    messagingProgramStateWriter.running(runId, null, programOptions);
+    programStateWriterWithHeartBeat.running(null);
 
     // on running, we start receiving heart beat messages, verify if we heart beat count goes to 2.
     Tasks.waitFor(true , () -> ((MockProgramStatePublisher) programStatePublisher).getHeartBeatCount() > 1,
                   10, TimeUnit.SECONDS, "Didn't receive expected heartbeat after 10 seconds");
 
     // make sure suspending program suspended the heartbeat thread
-    messagingProgramStateWriter.suspend(runId, programOptions);
-    Tasks.waitFor(false , () -> messagingProgramStateWriter.isHeartBeatThreadAlive(),
+    programStateWriterWithHeartBeat.suspend();
+    Tasks.waitFor(false , () -> programStateWriterWithHeartBeat.isHeartBeatThreadAlive(),
                   5, TimeUnit.SECONDS, "Heartbeat thread did not stop after 5 seconds");
     long heartBeatAfterSuspend = ((MockProgramStatePublisher) programStatePublisher).getHeartBeatCount();
 
     // resume the program and make sure that the hear beat messages goes up after resuming program
-    messagingProgramStateWriter.resume(runId, programOptions);
+    programStateWriterWithHeartBeat.resume();
     long expected = heartBeatAfterSuspend + 1;
     Tasks.waitFor(true , () -> ((MockProgramStatePublisher) programStatePublisher).getHeartBeatCount() > expected,
                   10, TimeUnit.SECONDS, "Didn't receive expected heartbeat after 10 seconds after resuming program");
 
     // kill the program and make sure the heart beat thread also gets stopped
-    messagingProgramStateWriter.killed(runId, programOptions);
-    Tasks.waitFor(false , () -> messagingProgramStateWriter.isHeartBeatThreadAlive(),
+    programStateWriterWithHeartBeat.killed();
+    Tasks.waitFor(false , () -> programStateWriterWithHeartBeat.isHeartBeatThreadAlive(),
                   5, TimeUnit.SECONDS, "Heartbeat thread did not stop after 5 seconds");
   }
 }
