@@ -48,6 +48,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import Alert from 'components/Alert';
 import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
 import PredictionDatasetExploreModal from 'components/Experiments/DetailedView/PredictionDatasetExploreModal';
+import AddModelToPipelineBtn from 'components/Experiments/DetailedView/AddModelToPipelineBtn';
 
 require('./DetailedViewModelsTable.scss');
 const MODELSTATES = [
@@ -256,6 +257,7 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
         </div>
         <div>
           <PredictionDatasetExploreModal predictionDataset={model.predictionsDataset} />
+          <AddModelToPipelineBtn modelName={model.name} />
         </div>
       </div>
       <div>
