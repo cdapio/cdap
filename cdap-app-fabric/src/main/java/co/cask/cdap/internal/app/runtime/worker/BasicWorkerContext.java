@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
-import co.cask.cdap.api.metadata.MetadataReaderContext;
+import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -69,11 +69,11 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      @Nullable PluginInstantiator pluginInstantiator,
                      SecureStore secureStore,
                      SecureStoreManager secureStoreManager,
-                     MessagingService messagingService, MetadataReaderContext metadataReaderContext) {
+                     MessagingService messagingService, MetadataReader metadataReader) {
     super(program, programOptions, cConf, spec.getDatasets(),
           datasetFramework, transactionSystemClient, discoveryServiceClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReaderContext);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader);
 
     this.specification = spec;
     this.instanceId = instanceId;

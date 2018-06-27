@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
-import co.cask.cdap.api.metadata.MetadataReaderContext;
+import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -70,12 +70,12 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       SecureStore secureStore,
                       SecureStoreManager secureStoreManager,
                       MessagingService messagingService,
-                      MetadataReaderContext metadataReaderContext,
+                      MetadataReader metadataReader,
                       CConfiguration cConf) {
     super(program, programOptions, cConf, datasets, dsFramework, txClient, discoveryServiceClient, false,
           metricsService, ImmutableMap.of(Constants.Metrics.Tag.FLOWLET, flowletId.getFlowlet(),
                                           Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, messagingService, null, metadataReaderContext);
+          secureStore, secureStoreManager, messagingService, null, metadataReader);
 
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program.getId(), flowletId.getFlowlet());

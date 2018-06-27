@@ -18,10 +18,10 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataReaderContext;
+import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import com.google.inject.Inject;
 
 import java.util.HashMap;
@@ -29,17 +29,18 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Implementation for {@link MetadataReaderContext} which used {@link MetadataAdmin} to read metadata.
- * This implementation should only be used while running in-prem mode where the {@link MetadataStore} is accessible to
- * the program container.
- * Note: This implementation should not be used in cloud mode.
+ * <p>{@link MetadataReader} which should be used in local/in-memory mode where {@link MetadataAdmin} can be accessed
+ * directly i.e. the process is running as cdap system user and it can access the {@link MetadataDataset} which belongs
+ * to cdap user.</p>
+ *
+ * <p>This implementation should not be used in distributed program container or any process which is not running as
+ * cdap system user because the dataset operation will fail due to lack of privileges.</p>
  */
-public class InPremMetadataReader implements MetadataReaderContext {
-
+public class DefaultMetadataReader implements MetadataReader {
   private final MetadataAdmin metadataAdmin;
 
   @Inject
-  public InPremMetadataReader(MetadataAdmin metadataAdmin) {
+  public DefaultMetadataReader(MetadataAdmin metadataAdmin) {
     this.metadataAdmin = metadataAdmin;
   }
 

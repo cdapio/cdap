@@ -26,7 +26,7 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.metadata.MetadataReaderContext;
+import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -138,7 +138,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
-  private final MetadataReaderContext metadataReaderContext;
+  private final MetadataReader metadataReader;
 
   private volatile Thread runningThread;
   private boolean suspended;
@@ -151,7 +151,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  TransactionSystemClient txClient, WorkflowStateWriter workflowStateWriter, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
                  SecureStoreManager secureStoreManager, MessagingService messagingService,
-                 ProgramStateWriter programStateWriter, MetadataReaderContext metadataReaderContext) {
+                 ProgramStateWriter programStateWriter, MetadataReader metadataReader) {
     this.program = program;
     this.programOptions = options;
     this.workflowSpec = workflowSpec;
@@ -175,7 +175,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                     metricsCollectionService, this.datasetFramework, txClient,
                                                     discoveryServiceClient, nodeStates, pluginInstantiator,
                                                     secureStore, secureStoreManager, messagingService, null,
-                                                    metadataReaderContext);
+                                                    metadataReader);
 
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                                      program.getName(), workflowRunId.getRun());
@@ -183,7 +183,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
-    this.metadataReaderContext = metadataReaderContext;
+    this.metadataReader = metadataReader;
   }
 
   @Override
@@ -404,7 +404,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                     txClient, discoveryServiceClient,
                                                                     pluginInstantiator, secureStore,
                                                                     secureStoreManager, messagingService,
-                                                                    metadataReaderContext);
+                                                                    metadataReader);
     customActionExecutor = new CustomActionExecutor(context, instantiator, classLoader);
     status.put(node.getNodeId(), node);
     workflowStateWriter.addWorkflowNodeState(workflowRunId,
@@ -461,7 +461,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                   txClient, discoveryServiceClient, nodeStates,
                                                                   pluginInstantiator, secureStore, secureStoreManager,
                                                                   messagingService, node.getConditionSpecification(),
-                                                                  metadataReaderContext);
+                                                                  metadataReader);
     final Iterator<WorkflowNode> iterator;
     Class<?> clz = classLoader.loadClass(node.getPredicateClassName());
     Predicate<WorkflowContext> predicate = instantiator.get(

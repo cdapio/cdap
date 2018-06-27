@@ -33,7 +33,7 @@ import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.metadata.MetadataReaderContext;
+import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -148,7 +148,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messageService;
-  private final MetadataReaderContext metadataReaderContext;
+  private final MetadataReader metadataReader;
 
   @Inject
   public FlowletProgramRunner(CConfiguration cConfiguration,
@@ -164,7 +164,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               UsageWriter usageWriter,
                               SecureStore secureStore,
                               SecureStoreManager secureStoreManager,
-                              MessagingService messagingService, MetadataReaderContext metadataReaderContext) {
+                              MessagingService messagingService, MetadataReader metadataReader) {
     this.cConf = cConfiguration;
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
@@ -179,7 +179,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messageService = messagingService;
-    this.metadataReaderContext = metadataReaderContext;
+    this.metadataReader = metadataReader;
   }
 
   @SuppressWarnings("unchecked")
@@ -232,7 +232,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                flowletDef.getDatasets(), flowletDef.getFlowletSpec(),
                                                metricsCollectionService, discoveryServiceClient, txClient,
                                                dsFramework, secureStore, secureStoreManager, messageService,
-                                               metadataReaderContext, cConf);
+                                               metadataReader, cConf);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =

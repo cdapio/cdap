@@ -24,7 +24,7 @@ import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.messaging.MessagingContext
-import co.cask.cdap.api.metadata.MetadataReaderContext
+import co.cask.cdap.api.metadata.MetadataReader
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo
@@ -99,12 +99,12 @@ trait SparkExecutionContextBase extends RuntimeContext with Transactional {
   def getMessagingContext: MessagingContext
 
   /**
-    * Returns a [[co.cask.cdap.api.metadata.MetadataReaderContext]] which can be used to read metadata.
+    * Returns a [[co.cask.cdap.api.metadata.MetadataReader]] which can be used to read metadata.
     * Currently the returned instance can only be used in the Spark driver process.
     *
-    * @return A [[co.cask.cdap.api.metadata.MetadataReaderContext]]
+    * @return A [[co.cask.cdap.api.metadata.MetadataReader]]
     */
-  def getMetadataReaderContext: MetadataReaderContext
+  def getMetadataReader: MetadataReader
 
   /**
     * Returns the [[co.cask.cdap.api.workflow.WorkflowToken]] if the Spark program

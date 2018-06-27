@@ -44,6 +44,8 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.preview.DefaultPreviewStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
+import co.cask.cdap.metadata.DefaultMetadataAdmin;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.route.store.LocalRouteStore;
 import co.cask.cdap.route.store.RouteStore;
@@ -135,6 +137,9 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
     expose(NamespaceAdmin.class);
     expose(NamespaceQueryAdmin.class);
+
+    bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
+    expose(MetadataAdmin.class);
 
     bind(PreviewRunner.class).to(DefaultPreviewRunner.class).in(Scopes.SINGLETON);
     expose(PreviewRunner.class);

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.metadata.MetadataReaderContext;
+import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -94,10 +94,10 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       AuthenticationContext authenticationContext,
                       MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                       PluginFinder pluginFinder, LocationFactory locationFactory,
-                      MetadataReaderContext metadataReaderContext) {
+                      MetadataReader metadataReader) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReaderContext);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader);
     this.cConf = cConf;
     this.hConf = hConf;
     this.hostname = hostname;
