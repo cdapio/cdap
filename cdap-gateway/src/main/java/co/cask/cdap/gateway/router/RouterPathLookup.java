@@ -106,31 +106,31 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return new RouteDestination(ServiceDiscoverable.getName(uriParts[2], uriParts[4],
                                                               ProgramType.valueOfCategoryName(uriParts[5]),
                                                               uriParts[6]));
-    } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
+    } else if (beginsWith(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return METRICS;
-    } else if ((!matches(uriParts, "v3", "namespaces", null, "securekeys")) && (endsWith(uriParts, "metadata") ||
+    } else if ((!beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) && (endsWith(uriParts, "metadata") ||
       // do no intercept the namespaces/<namespace-name>/securekeys/<key>/metadata as that is handled by the
       // SecureStoreHandler
-      endsWith(uriParts, "metadata", "properties") || endsWith(uriParts, "metadata", "properties", "?") ||
-      endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", "?") ||
+      endsWith(uriParts, "metadata", "properties") || endsWith(uriParts, "metadata", "properties", null) ||
+      endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", null) ||
       endsWith(uriParts, "metadata", "search") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "lineage"))) {
+      beginsWith(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
+      beginsWith(uriParts, "v3", "namespaces", null, "streams", null, "lineage"))) {
       return METADATA_SERVICE;
-    } else if (matches(uriParts, "v3", "security", "authorization") ||
-      matches(uriParts, "v3", "namespaces", null, "securekeys")) {
+    } else if (beginsWith(uriParts, "v3", "security", "authorization") ||
+      beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) {
       // Authorization and Secure Store Handlers currently run in App Fabric
       return APP_FABRIC_HTTP;
-    } else if (matches(uriParts, "v3", "security", "store", "namespaces", null)) {
+    } else if (beginsWith(uriParts, "v3", "security", "store", "namespaces", null)) {
       return APP_FABRIC_HTTP;
-    } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
-      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
+    } else if ((beginsWith(uriParts, "v3", "namespaces", null, "streams", null, "programs")
+      || beginsWith(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
       requestMethod.equals(AllowedMethod.GET)) {
       return APP_FABRIC_HTTP;
-    } else if (matches(uriParts, "v3", "namespaces", null, "previews")) {
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "previews")) {
       return PREVIEW_HTTP;
-    } else if (matches(uriParts, "v3", "system", "serviceproviders")) {
+    } else if (beginsWith(uriParts, "v3", "system", "serviceproviders")) {
       return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
       return STREAMS_SERVICE;
@@ -155,8 +155,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return EXPLORE_HTTP_USER_SERVICE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
       return EXPLORE_HTTP_USER_SERVICE;
-    } else if (matches(uriParts, "v3", "system", "services", null, "status")
-      || matches(uriParts, "v3", "system", "services", null, "stacks")) {
+    } else if (beginsWith(uriParts, "v3", "system", "services", null, "status")
+      || beginsWith(uriParts, "v3", "system", "services", null, "stacks")) {
       switch (uriParts[3]) {
         case Constants.Service.LOGSAVER: return LOG_SAVER;
         case Constants.Service.TRANSACTION: return TRANSACTION;
@@ -194,48 +194,65 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   }
 
   /**
-   * Determines if actual matches expected.
+   * Determines if the beginning of an array of strings matches an expected sequence of strings.
    *
-   * - actual may be longer than expected, but we'll return true as long as expected was found
-   * - null in expected means "accept any string"
+   * <ul><li>
+   *   the actual sequence may be longer than the expected one as long as its beginning matches;
+   * </li><li>
+   *   a null in the expected sequence means "accept any string" in that position.
+   * </li></ul>
    *
-   * @param actual actual string array to check
-   * @param expected expected string array format
-   * @return true if actual matches expected
+   * @param actual the actual string array to check; must not contain nulls.
+   * @param expected the expected string array to match; may contain nulls as wildcards.
+   *                 
+   * @return true if the start of {@code actual} matches {@code expected}
    */
-  private boolean matches(String[] actual, String... expected) {
-    if (actual.length < expected.length) {
-      return false;
-    }
-
-    for (int i = 0; i < expected.length; i++) {
-      if (expected[i] == null) {
-        continue;
-      }
-      if (!expected[i].equals(actual[i])) {
-        return false;
-      }
-    }
-    return true;
+  @VisibleForTesting
+  static boolean beginsWith(String[] actual, String ... expected) {
+    return matches(actual, expected, false);
   }
 
   /**
-   * Determines if the actual ends with expected. If expected contains '?' at the end the the last element of actual
-   * is ignored as ? is considered to match one element regardless of what it is
+   * Determines if the end of an array of strings matches an expected sequence of strings.
+   *
+   * <ul><li>
+   *   the actual sequence may be longer than the expected one as long as its end matches;
+   * </li><li>
+   *   a null in the expected sequence means "accept any string" in that position.
+   * </li></ul>
+   *
+   * @param actual the actual string array to check; must not contain nulls.
+   * @param expected the expected string array to match; may contain nulls as wildcards.
+   *
+   * @return true if the end of {@code actual} matches {@code expected}
    */
   @VisibleForTesting
-  boolean endsWith(String[] actual, String... expectedEnd) {
-    if (expectedEnd.length > actual.length) {
+  static boolean endsWith(String[] actual, String ... expected) {
+    return matches(actual, expected, true);
+  }
+
+  /**
+   * Determines if the begin or end of an array of strings matches an expected sequence of strings.
+   *
+   * <ul><li>
+   *   the actual sequence may be longer than the expected one as long as its begin or end matches;
+   * </li><li>
+   *   a null in the expected sequence means "accept any string" in that position.
+   * </li></ul>
+   *
+   * @param actual the actual string array to check; must not contain nulls.
+   * @param expected the expected string array to match; may contain nulls as wildcards.
+   * @param matchEnd whether to match the end of the actual sequence
+   *
+   * @return true if the end of {@code actual} matches {@code expected}
+   */
+  private static boolean matches(String[] actual, String[] expected, boolean matchEnd) {
+    if (actual.length < expected.length) {
       return false;
     }
-    int offset = 1;
-    if (expectedEnd[expectedEnd.length - offset].equals("?")) {
-      offset++;
-    }
-    while (expectedEnd.length - offset >= 0) {
-      if (expectedEnd[expectedEnd.length - offset].equalsIgnoreCase(actual[actual.length - offset])) {
-        offset++;
-      } else {
+    int offset = matchEnd ? actual.length - expected.length : 0;
+    for (int i = 0; i < expected.length; i++) {
+      if (expected[i] != null && !expected[i].equals(actual[offset + i])) {
         return false;
       }
     }
