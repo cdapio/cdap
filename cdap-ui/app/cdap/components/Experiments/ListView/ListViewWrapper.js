@@ -146,12 +146,24 @@ const renderGrid = (experiments, sortMethod, sortColumn) => {
               >
                 <div>
                   <h5>
-                    <div className="experiment-metadata">{experiment.name}</div>
-                    <small className="experiment-metadata">{experiment.description}</small>
+                    <div className="experiment-list-name">{experiment.name}</div>
                   </h5>
+                  <div className="experiment-list-description">{experiment.description}</div>
                 </div>
                 <div>{experiment.numOfModels}</div>
-                <div>{!experiment.algorithmTypes.length ? '--' : <PieChart data={experiment.algorithmTypes} />}</div>
+                <div>
+                  {
+                    !experiment.algorithmTypes.length ?
+                      '--'
+                    :
+                      // This is to align with empty content beneath if happens.
+                      <PieChart
+                        data={experiment.algorithmTypes}
+                        translateX={15}
+                        translateY={25}
+                      />
+                  }
+                </div>
                 <div>{experiment.testData}</div>
               </Link>
             );

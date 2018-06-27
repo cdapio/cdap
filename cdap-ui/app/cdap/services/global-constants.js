@@ -148,6 +148,10 @@ const GLOBALS = {
     'cdap-data-streams': 'DataStreamsSparkStreaming'
   },
 
+  wrangler: {
+    pluginArtifactName: 'wrangler-transform'
+  },
+
   'en': {
     hydrator: {
       appLabel: 'Hydrator Pipeline',

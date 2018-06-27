@@ -27,7 +27,9 @@ export default class PieChart extends Component {
       value: PropTypes.string
     })),
     width: PropTypes.number,
-    height: PropTypes.number
+    height: PropTypes.number,
+    translateX: PropTypes.number,
+    translateY: PropTypes.number
   };
   state = {
     data: this.props.data,
@@ -47,7 +49,9 @@ export default class PieChart extends Component {
         width = +svg.attr("width"),
         height = +svg.attr("height"),
         radius = Math.min(width, height) / 2,
-        g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+        translateX = this.props.translateX || width / 2,
+        translateY = this.props.translateY || height / 2,
+        g = svg.append("g").attr("transform", "translate(" + translateX + "," + translateY + ")");
 
     var pie = d3Lib.pie()
         .sort(null)
