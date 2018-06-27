@@ -1183,6 +1183,7 @@ features:
 
   FieldLevelLineage:
     TimeRangeOptions:
+      CUSTOM: Custom
       last14d: Last 14 days
       last6M: Last 6 months
       last7d: Last 7 days

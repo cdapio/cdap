@@ -18,8 +18,9 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import { ButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
-import {setTimeRange} from 'components/FieldLevelLineage/store/ActionCreator';
+import {setTimeRange, setCustomTimeRange} from 'components/FieldLevelLineage/store/ActionCreator';
 import {TIME_OPTIONS} from 'components/FieldLevelLineage/store/Store';
+import ExpandableTimeRange from 'components/TimeRangePicker/ExpandableTimeRange';
 import T from 'i18n-react';
 
 const PREFIX = 'features.FieldLevelLineage.TimeRangeOptions';
@@ -38,6 +39,23 @@ class TimePickerView extends Component {
       dropdownOpen: !this.state.dropdownOpen
     });
   };
+
+  onDone = ({start, end}) => {
+    setCustomTimeRange({start, end});
+  };
+
+  renderCustomTimeRange() {
+    if (this.props.selections !== TIME_OPTIONS[0]) { return null; }
+
+    return (
+      <div  className="custom-time-range-container">
+        <ExpandableTimeRange
+          onDone={this.onDone}
+          inSeconds={true}
+        />
+      </div>
+    );
+  }
 
   render() {
     return (
@@ -65,6 +83,8 @@ class TimePickerView extends Component {
             }
           </DropdownMenu>
         </ButtonDropdown>
+
+        { this.renderCustomTimeRange() }
       </div>
     );
   }
