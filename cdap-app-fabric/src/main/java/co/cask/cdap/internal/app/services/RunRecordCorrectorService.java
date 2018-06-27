@@ -129,7 +129,6 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
           String msg = String.format(
             "Fixed RunRecord for program run %s in %s state because it is actually not running",
             programRunId, record.getStatus());
-
           programStateWriter.error(programRunId, new ProgramRunAbortedException(msg));
           fixedPrograms.add(programRunId);
           LOG.warn(msg);
@@ -160,7 +159,7 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     long initialDelay = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS);
     if (initialDelay <= 0) {
       LOG.warn("Invalid initial delay specified for the local dataset deleter {}. Setting it to 300 seconds.",
-                                initialDelay);
+               initialDelay);
       initialDelay = 300L;
     }
 
@@ -175,8 +174,8 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     localDatasetDeleterService.shutdown();
     try {
       if (!localDatasetDeleterService.awaitTermination(5, TimeUnit.SECONDS)) {
-          localDatasetDeleterService.shutdownNow();
-        }
+        localDatasetDeleterService.shutdownNow();
+      }
     } catch (InterruptedException ie) {
       Thread.currentThread().interrupt();
     }
