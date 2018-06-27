@@ -1074,10 +1074,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(service1, 404);
     startProgram(service2);
 
+    waitState(service2, RUNNING);
+
     Tasks.waitFor(200, () -> getServiceAvailability(service2).getStatusLine().getStatusCode(),
                   2, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
-
-    waitState(service2, RUNNING);
 
     // verify instances
     try {
