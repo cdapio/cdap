@@ -23,6 +23,7 @@ const ReportsActions = {
   setList: 'REPORTS_SET_LIST',
   setTimeRange: 'REPORTS_SET_TIME_RANGE',
   setRuns: 'REPORTS_SET_RUNS',
+  setRunsPagination: 'REPORTS_SET_RUNS_PAGINATION',
   setInfoStatus: 'REPORTS_SET_INFO_STATUS',
   clearSelection: 'REPORTS_CUSTOMIZER_CLEAR',
   setActiveId: 'REPORTS_SET_ACTIVE_ID',
@@ -86,6 +87,9 @@ const defaultDetailsState = {
   status: null,
   summary: {},
   runs: [],
+  runsOffset: 0,
+  runsLimit: 20,
+  totalRunsCount: 0,
   error: null,
   detailError: null
 };
@@ -196,7 +200,13 @@ const details = (state = defaultDetailsState, action = defaultAction) => {
     case ReportsActions.setRuns:
       return {
         ...state,
-        runs: action.payload.runs
+        runs: action.payload.runs,
+        totalRunsCount: action.payload.totalRunsCount
+      };
+    case ReportsActions.setRunsPagination:
+      return {
+        ...state,
+        runsOffset: action.payload.offset
       };
     case ReportsActions.setDetailsError:
       return {

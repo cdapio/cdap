@@ -179,6 +179,45 @@ export function listReports(id) {
     });
 }
 
+export function fetchRuns(reportId = ReportsStore.getState().details.reportId) {
+  let {runsOffset: offset, runsLimit: limit} = ReportsStore.getState().details;
+  let params = {
+    reportId,
+    offset,
+    limit
+  };
+
+  MyReportsApi.getDetails(params)
+    .subscribe((res) => {
+      ReportsStore.dispatch({
+        type: ReportsActions.setRuns,
+        payload: {
+          runs: res.details,
+          totalRunsCount: res.total
+        }
+      });
+    }, (err) => {
+      console.log('err', err);
+      ReportsStore.dispatch({
+        type: ReportsActions.setDetailsError,
+        payload: {
+          error: err.response
+        }
+      });
+    });
+}
+
+export function handleRunsPageChange({selected}) {
+  let {runsLimit} = ReportsStore.getState().details;
+  ReportsStore.dispatch({
+    type: ReportsActions.setRunsPagination,
+    payload: {
+      offset: selected * runsLimit
+    }
+  });
+  fetchRuns();
+}
+
 export function setNamespacesPick(namespacesPick) {
   ReportsStore.dispatch({
     type: ReportsActions.setNamespaces,
