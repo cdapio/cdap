@@ -18,29 +18,35 @@ package co.cask.cdap.report.proto.summary;
 
 import com.google.common.base.Objects;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents the statistics of the start time of all program runs.
  */
 public class StartStats {
-  private final long oldest;
-  private final long newest;
+  @Nullable
+  private final Long oldest;
+  @Nullable
+  private final Long newest;
 
-  public StartStats(long oldest, long newest) {
+  public StartStats(Long oldest, Long newest) {
     this.oldest = oldest;
     this.newest = newest;
   }
 
   /**
-   * @return the oldest start time of all program runs
+   * @return the oldest start time of all program runs, or {@code null} if there is no program run
    */
-  public long getOldest() {
+  @Nullable
+  public Long getOldest() {
     return oldest;
   }
 
   /**
-   * @return the newest start time of all program runs
+   * @return the newest start time of all program runs, or {@code null} if there is no program run
    */
-  public long getNewest() {
+  @Nullable
+  public Long getNewest() {
     return newest;
   }
 

@@ -24,7 +24,7 @@ import co.cask.cdap.report.proto.summary._
 import co.cask.cdap.report.proto.{Sort, _}
 import co.cask.cdap.report.util.Constants
 import com.databricks.spark._
-import com.google.gson._
+import com.google.gson.{GsonBuilder, _}
 import org.apache.avro.mapred._
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{avg, max, min}
@@ -39,7 +39,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 object ReportGenerationHelper {
 
-  val GSON = new Gson()
+  val GSON = new GsonBuilder().serializeNulls().create()
   val LOG = LoggerFactory.getLogger(ReportGenerationHelper.getClass)
   val RECORD_COL = "record"
   val REQUIRED_FIELDS = Set(Constants.PROGRAM)
@@ -98,6 +98,9 @@ object ReportGenerationHelper {
     // if there is no input avro file, save 0 as the number of records in the report and mark the report generation
     // as completed
     if (Option(inputURIs).isEmpty || inputURIs.isEmpty) {
+      // Save an enmpty report summary in the _SUMMARY file in the given directory
+      writeToFile(GSON.toJson(ReportSummary.getEmptyReportSummary(request.getStart, request.getEnd)),
+        Constants.LocationName.SUMMARY, reportIdDir)
       writeCountAndSuccessFiles(0, reportIdDir)
       return
     }
@@ -171,7 +174,8 @@ object ReportGenerationHelper {
         // use String.format to avoid log4j overloading issue in scala with 3 String arguments
         LOG.error(String.format("Failed to create file %s for in %s", fileName, baseLocation.toURI.toString))
       }
-      writer = Some(new PrintWriter(outputFile.getOutputStream))
+      writer = Some(new PrintWriter(
+        new OutputStreamWriter(outputFile.getOutputStream, StandardCharsets.UTF_8), true))
       writer.get.write(content)
     } catch {
       case e: IOException => {
@@ -225,16 +229,8 @@ object ReportGenerationHelper {
     // create the summary
     val summary = new ReportSummary(namespaces, request.getStart, request.getEnd, artifacts,
       durations, starts, owners, startMethods)
-    // Save the report summary request in the _SUMMARY file in the given directory
-    var writer: PrintWriter = null
-    try {
-      writer = new PrintWriter(
-        new OutputStreamWriter(reportIdDir.append(Constants.LocationName.SUMMARY).getOutputStream,
-          StandardCharsets.UTF_8), true)
-      writer.write(GSON.toJson(summary))
-    } finally {
-      if (writer != null) writer.close()
-    }
+    // Save the report summary in the _SUMMARY file in the given directory
+    writeToFile(GSON.toJson(summary), Constants.LocationName.SUMMARY, reportIdDir)
   }
 
   /**

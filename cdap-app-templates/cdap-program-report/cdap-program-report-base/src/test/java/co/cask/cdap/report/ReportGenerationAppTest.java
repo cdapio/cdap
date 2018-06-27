@@ -173,6 +173,13 @@ public class ReportGenerationAppTest extends TestBase {
     // generate a report and wait until it is completed
     String reportId = generateReport(request, reportURL);
     URL reportIdURL = reportURL.toURI().resolve(reportId + "/").toURL();
+    // get the report generation info
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+                                                                  REPORT_GEN_INFO_TYPE);
+    // assert the summary content is expected
+    ReportSummary summary = reportGenerationInfo.getSummary();
+    Assert.assertTrue(summary.getOwners().isEmpty());
+    Assert.assertEquals(null, summary.getDurations().getMax());
     // assert the report details is empty
     URL reportRunsURL = reportIdURL.toURI().resolve("details").toURL();
     ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
@@ -192,18 +199,18 @@ public class ReportGenerationAppTest extends TestBase {
     // generate a report and wait until it is completed
     reportId = generateReport(request, reportURL);
     reportIdURL = reportURL.toURI().resolve(reportId + "/").toURL();
-    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
-                                                                  REPORT_GEN_INFO_TYPE);
+    reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+                                             REPORT_GEN_INFO_TYPE);
     // assert the summary content is expected
-    ReportSummary summary = reportGenerationInfo.getSummary();
+    summary = reportGenerationInfo.getSummary();
     Assert.assertNotNull(summary);
     Assert.assertEquals(ImmutableSet.of(new NamespaceAggregate("ns1", 1), new NamespaceAggregate("ns2" , 1)),
                         new HashSet<>(summary.getNamespaces()));
     Assert.assertEquals(ImmutableSet.of(new ArtifactAggregate("Artifact", "1.0.0", "USER", 2)),
                         new HashSet<>(summary.getArtifacts()));
     DurationStats durationStats = summary.getDurations();
-    Assert.assertEquals(300L, durationStats.getMin());
-    Assert.assertEquals(300L, durationStats.getMax());
+    Assert.assertEquals(300L, (long) durationStats.getMin());
+    Assert.assertEquals(300L, (long) durationStats.getMax());
     // averages with difference smaller than 0.01 are considered equal
     Assert.assertTrue(Math.abs(300.0 - durationStats.getAverage()) < 0.01);
     Assert.assertEquals(new StartStats(startSecs, startSecs), summary.getStarts());
