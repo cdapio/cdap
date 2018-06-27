@@ -16,18 +16,21 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
+import co.cask.cdap.reporting.ProgramHeartbeatService;
 import co.cask.http.HttpResponder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -35,11 +38,10 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Map;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -53,12 +55,13 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(OperationsDashboardHttpHandler.class);
-  private static final Gson GSON = new Gson();
-  private final Store store;
+  private static final Gson GSON =
+    TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private final ProgramHeartbeatService programHeartbeatService;
 
   @Inject
-  public OperationsDashboardHttpHandler(Store store) {
-    this.store = store;
+  public OperationsDashboardHttpHandler(ProgramHeartbeatService programHeartbeatService) {
+    this.programHeartbeatService = programHeartbeatService;
   }
 
   // TODO: [CDAP-13351] Need to support getting scheduled program runs if start + duration is ahead of the current time
@@ -67,36 +70,30 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   public void readDashboardDetail(FullHttpRequest request, HttpResponder responder,
                                   @QueryParam("start") long startTimeSecs,
                                   @QueryParam("duration") int durationTimeSecs,
-                                  @QueryParam("namespace") Set<String> namespaces)
-    throws IOException, BadRequestException {
+                                  @QueryParam("namespace") Set<String> namespaces) throws BadRequestException {
     if (startTimeSecs < 0) {
       throw new BadRequestException("'start' time cannot be smaller than 0.");
     }
     if (durationTimeSecs < 0) {
       throw new BadRequestException("'duration' cannot be smaller than 0.");
     }
+    if (namespaces.isEmpty()) {
+      throw new BadRequestException("'namespace' cannot be empty, please provide at least one namespace.");
+    }
 
-    Set<NamespaceId> namespaceIds = namespaces.stream().map(NamespaceId::new).collect(Collectors.toSet());
-    Map<ProgramRunId, RunRecordMeta> historicalRuns =
-      // TODO: [CDAP-13352] Currently, to get active program runs within a time range,
-      // a full table scan is required in AppMetaStore. Performance improvement will be done.
-      store.getHistoricalRuns(namespaceIds, startTimeSecs, startTimeSecs + durationTimeSecs, Integer.MAX_VALUE);
-    // get historical runs within the query time range
-    Stream<DashboardProgramRunRecord> historicalRecords =
-      historicalRuns.values().stream().map(OperationsDashboardHttpHandler::runRecordToDashboardRecord);
-    // get active runs with start time earlier than the end of query time range
-    Stream<DashboardProgramRunRecord> activeRecords =
-      store.getActiveRuns(namespaceIds, run -> run.getStartTs() < startTimeSecs + durationTimeSecs).values().stream()
-      .map(OperationsDashboardHttpHandler::runRecordToDashboardRecord);
-    responder.sendJson(HttpResponseStatus.OK,
-                       // combine historical runs and active runs
-                       GSON.toJson(Stream.concat(historicalRecords, activeRecords).collect(Collectors.toSet())));
+    Collection<RunRecordMeta> runRecordMetas =
+      programHeartbeatService.scan(startTimeSecs, startTimeSecs + durationTimeSecs + 1, namespaces);
+    List<DashboardProgramRunRecord> result =
+      runRecordMetas.stream()
+        .map(OperationsDashboardHttpHandler::runRecordToDashboardRecord).collect(Collectors.toList());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
   /**
    * Converts a {@link RunRecordMeta} to a {@link DashboardProgramRunRecord}
    */
-  private static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordMeta meta) {
+  @VisibleForTesting
+  static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordMeta meta) {
     ProgramRunId runId = meta.getProgramRunId();
     String startMethod = "manual";
     String scheduleInfoJson = meta.getSystemArgs().get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO);
