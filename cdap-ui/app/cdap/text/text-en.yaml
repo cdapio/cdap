@@ -239,7 +239,9 @@ features:
       common:
         deleteConfirmation: Are you sure you want to delete the profile *_{profile}_*?
         deleteError: There was a problem deleting the profile
-        deleteTitle: Delete Profile
+        deleteTitle: Delete profile
+        disabled: Disabled
+        enabled: Enabled
         export: Export
         last24HrNodeHr: Last 24 hrs node/hr
         last24HrRuns: Last 24 hrs runs
@@ -248,6 +250,12 @@ features:
         totalRuns: Total runs
       DetailView:
         creation: Creation date and time
+        disableConfirmation: Are you sure you want to disable the profile *_{profile}_*? The pipelines currently using this profile will start using the *_native_* profile.
+        disableError: There was a problem disabling the profile
+        disableNo: No, keep the profile enabled
+        disableTitle: Disable profile
+        disableYes: Yes, disable profile
+        enableError: "There was a problem enabling the profile: {message}"
         hideDetails: Hide Details
         noProperties: No properties available for this profile
         profileDetails: Profile Details

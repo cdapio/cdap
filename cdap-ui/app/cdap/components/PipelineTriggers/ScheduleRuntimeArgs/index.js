@@ -31,7 +31,7 @@ import classnames from 'classnames';
 import {objectQuery} from 'services/helpers';
 import {Provider} from 'react-redux';
 import isNil from 'lodash/isNil';
-import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from  'components/PipelineDetails/ProfilesListView';
+import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
 import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 require('./ScheduleRuntimeArgs.scss');

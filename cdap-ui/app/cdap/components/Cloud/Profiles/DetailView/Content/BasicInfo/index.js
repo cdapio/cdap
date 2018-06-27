@@ -26,6 +26,8 @@ import T from 'i18n-react';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
 import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
+import ProfileStatusToggle from 'components/Cloud/Profiles/DetailView/Content/BasicInfo/ProfileStatusToggle';
+import {extractProfileName, DEFAULT_PROFILE_NAME} from 'components/PipelineDetails/ProfilesListView';
 
 require('./BasicInfo.scss');
 
@@ -44,7 +46,8 @@ export default class ProfileDetailViewBasicInfo extends Component {
   static propTypes = {
     profile: PropTypes.object,
     provisioners: PropTypes.array,
-    isSystem: PropTypes.bool
+    isSystem: PropTypes.bool,
+    toggleProfileStatusCallback: PropTypes.func
   };
 
   componentWillReceiveProps(nextProps) {
@@ -148,6 +151,13 @@ export default class ProfileDetailViewBasicInfo extends Component {
     );
   }
 
+  renderDivider(profileIsDefault) {
+    if (profileIsDefault) {
+      return null;
+    }
+    return <span className="divider"></span>;
+  }
+
   render() {
     let profile = this.props.profile;
     let redirectToObj = this.props.isSystem ? {
@@ -155,6 +165,7 @@ export default class ProfileDetailViewBasicInfo extends Component {
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
     } : `/ns/${getCurrentNamespace()}/details`;
     let namespace = this.props.isSystem ? 'system' : getCurrentNamespace();
+    const profileIsDefault = profile.name === extractProfileName(DEFAULT_PROFILE_NAME);
 
     const actionsElem = () => {
       return (
@@ -167,16 +178,24 @@ export default class ProfileDetailViewBasicInfo extends Component {
 
     return (
       <div className="detail-view-basic-info">
-        <div className="profile-name-delete">
+        <div className="profile-detail-top-panel">
           <h2 className="profile-name">
             {profile.name}
           </h2>
-          <ActionsPopover
-            target={actionsElem}
-            namespace={namespace}
-            profile={profile}
-            onDeleteClick={this.toggleDeleteModal}
-          />
+          <div className="profile-actions-wrapper">
+            <ProfileStatusToggle
+              profile={profile}
+              namespace={namespace}
+              toggleProfileStatusCallback={this.props.toggleProfileStatusCallback}
+            />
+            {this.renderDivider(profileIsDefault)}
+            <ActionsPopover
+              target={actionsElem}
+              namespace={namespace}
+              profile={profile}
+              onDeleteClick={this.toggleDeleteModal}
+            />
+          </div>
         </div>
         <div className="profile-description">
           {profile.description}

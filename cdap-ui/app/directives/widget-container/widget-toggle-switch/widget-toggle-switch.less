@@ -14,53 +14,64 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
-$switch-btn-width: 14px;
-$widget-height: 32px;
-$switch-button-margin-top: 2px;
-$on-color: $green-02;
-$off-color: $blue-02;
+@import "../../../styles/variables.less";
+@container-width: 50px;
+@switch-btn-width: 14px;
+@widget-height: 32px;
+@switch-button-margin-top: 2px;
+@on-color: @green-02;
+@off-color: @blue-02;
 
-.toggle-switch-container {
+.ng-toggle-switch-container {
   display: inline-block;
+  height: @widget-height;
+  width: @container-width;
 
   .toggle-switch {
+    height: 100%;
+    width: 100%;
+    position: relative;
     vertical-align: middle;
     border-radius: 5px;
     font-weight: 500;
     color: white;
     user-select: none;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    padding: 2px;
 
     .switch-button {
-      width: $switch-btn-width;
-      height: $widget-height - ($switch-button-margin-top * 2);
+      position: absolute;
+      top: @switch-button-margin-top;
+      width: @switch-btn-width;
+      height: @widget-height - (@switch-button-margin-top * 2);
       background-color: white;
       border-radius: 5px;
     }
 
     .label {
       height: 100%;
+      width: @container-width - @switch-btn-width;
       font-size: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 8px;
+
+      &.off-label {
+        margin-left: @switch-btn-width;
+      }
     }
 
     &.on {
-      background-color: $on-color;
+      background-color: @on-color;
       .switch-button {
-        order: 2;
+        right: 2px;
       }
     }
 
     &.off {
-      background-color: $off-color;
+      background-color: @off-color;
+      .switch-button {
+        left: 2px;
+      }
     }
   }
 

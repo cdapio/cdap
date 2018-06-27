@@ -17,6 +17,8 @@
 @import "../../../../styles/mixins.scss";
 @import "../../../../styles/variables.scss";
 $row-height: 50px;
+$enabled-color: $green-02;
+$disabled-color: $red-02;
 
 .profiles-list-view {
   .grid-wrapper {
@@ -81,6 +83,14 @@ $row-height: 50px;
               stroke: $blue-03;
             }
           }
+        }
+
+        .enabled-label {
+          color: $enabled-color;
+        }
+
+        .disabled-label {
+          color: $disabled-color;
         }
       }
     }
