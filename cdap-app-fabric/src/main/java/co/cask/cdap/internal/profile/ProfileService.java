@@ -21,26 +21,27 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
-import co.cask.cdap.config.Config;
-import co.cask.cdap.config.ConfigDataset;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.profile.ProfileDataset;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -48,6 +49,7 @@ import javax.inject.Inject;
  * it will directly get any underlying table.
  */
 public class ProfileService {
+  private static final Logger LOG = LoggerFactory.getLogger(ProfileService.class);
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
 
@@ -73,6 +75,46 @@ public class ProfileService {
     return Transactionals.execute(transactional, context -> {
       return getProfileDataset(context).getProfile(profileId);
     }, NotFoundException.class);
+  }
+
+  /**
+   * Get the profile information about the given profile with property overrides. If a non-editable property is
+   * in the overrides, it will be ignored, but a message will be logged.
+   *
+   * @param profileId the id of the profile to look up
+   * @param overrides overrides to the profile properties
+   * @return the profile information about the given profile
+   * @throws NotFoundException if the profile is not found
+   */
+  public Profile getProfile(ProfileId profileId, Map<String, String> overrides) throws NotFoundException {
+    Profile storedProfile = getProfile(profileId);
+
+    List<ProvisionerPropertyValue> properties = new ArrayList<>();
+    Set<String> remainingOverrides = new HashSet<>(overrides.keySet());
+
+    // add all  properties from the stored profile
+    for (ProvisionerPropertyValue storedProperty : storedProfile.getProvisioner().getProperties()) {
+      String propertyName = storedProperty.getName();
+      String storedVal = storedProperty.getValue();
+      if (!storedProperty.isEditable()) {
+        if (overrides.containsKey(propertyName)) {
+          LOG.info("Profile property {} cannot be edited. The original value will be used.", propertyName);
+        }
+        properties.add(storedProperty);
+      } else {
+        String val = overrides.getOrDefault(propertyName, storedVal);
+        properties.add(new ProvisionerPropertyValue(propertyName, val, true));
+      }
+      remainingOverrides.remove(propertyName);
+    }
+
+    // add all remaining overrides
+    for (String propertyName : remainingOverrides) {
+      properties.add(new ProvisionerPropertyValue(propertyName, overrides.get(propertyName), true));
+    }
+    ProvisionerInfo provisionerInfo = new ProvisionerInfo(storedProfile.getProvisioner().getName(), properties);
+    return new Profile(storedProfile.getName(), storedProfile.getDescription(),
+                       storedProfile.getScope(), storedProfile.getStatus(), provisionerInfo);
   }
 
   /**

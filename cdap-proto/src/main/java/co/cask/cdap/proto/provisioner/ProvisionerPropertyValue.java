@@ -65,4 +65,13 @@ public class ProvisionerPropertyValue {
   public int hashCode() {
     return Objects.hash(name, value, isEditable);
   }
+
+  @Override
+  public String toString() {
+    return "ProvisionerPropertyValue{" +
+      "name='" + name + '\'' +
+      ", value='" + value + '\'' +
+      ", isEditable=" + isEditable +
+      '}';
+  }
 }
