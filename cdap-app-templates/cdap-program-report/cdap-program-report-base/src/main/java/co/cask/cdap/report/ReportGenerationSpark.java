@@ -107,6 +107,11 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     private static final String DEFAULT_LIMIT = "10000";
     private static final String READ_LIMIT = "readLimit";
     private static final String START_FILE = "_START";
+    // If a report directory does not contain a file with the name "_RUN_<run-id>", where <run-id> is
+    // the current run ID of ReportGenerationSpark, and it does not contain a file with name "_SUCCESS" either,
+    // then the ReportGenerationSpark program run that created the report directory was killed
+    // before the report generation is completed. Therefore, such report will be marked as FAILED.
+    private static final String RUN_ID_FILE_PREFIX = "_RUN";
     private static final String FAILURE_FILE = "_FAILURE";
     private static final String SAVED_FILE = "_SAVED";
     // report files will expire after 48 hours after they are generated
@@ -165,7 +170,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       while (reportIdDirIter.hasNext() && reportStatuses.size() < limit) {
         Location reportIdDir = reportIdDirIter.next();
         String reportId = reportIdDir.getName();
-        ReportMetaInfo metaInfo = getReportMetaInfo(reportId, reportIdDir, getReportRequest(reportIdDir));
+        ReportMetaInfo metaInfo = getReportMetaInfo(reportFilesetLocation, reportIdDir, getReportRequest(reportIdDir));
         // skip adding reports that are expired, or the index of the current directory among existing directories
         // is smaller than the given offset
         if (ReportStatus.EXPIRED.equals(metaInfo.getStatus()) || existingReportDirIdx++ < offset) {
@@ -181,9 +186,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     public void getReportStatus(HttpServiceRequest request, HttpServiceResponder responder,
                                 @PathParam("report-id") String reportId,
                                 @QueryParam("share-id") String shareId) {
+      Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET);
       Location reportIdDir;
       try {
-        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+        reportIdDir = reportFilesetLocation.append(reportId);
       } catch (IOException e) {
         LOG.error("Failed to get location for report with id {}", reportId, e);
         responder.sendError(500, String.format("Failed to get location for report with id %s because of error: %s",
@@ -203,7 +209,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       ReportGenerationInfo reportGenerationInfo;
       try {
-        reportGenerationInfo = getReportGenerationInfo(reportId, reportIdDir);
+        reportGenerationInfo = getReportGenerationInfo(reportFilesetLocation, reportIdDir);
       } catch (Exception e) {
         LOG.error("Failed to get the status for report with id {}.", reportId, e);
         responder.sendError(500, String.format("Failed to get the status for report with id %s" +
@@ -222,15 +228,15 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * Gets the report generation information of the given report id with the information stored in files
      * under the given directory
      *
-     * @param reportId the id of the report
+     * @param reportFilesetLocation the location of the base directory of all report directories
      * @param reportIdDir the location of the directory containing files with the report generation information
      * @return the report generation information of the given report id
      * @throws Exception
      */
-    private static ReportGenerationInfo getReportGenerationInfo(String reportId, Location reportIdDir)
+    private ReportGenerationInfo getReportGenerationInfo(Location reportFilesetLocation, Location reportIdDir)
       throws Exception {
       ReportGenerationRequest reportRequest = getReportRequest(reportIdDir);
-      ReportMetaInfo metaInfo = getReportMetaInfo(reportId, reportIdDir, reportRequest);
+      ReportMetaInfo metaInfo = getReportMetaInfo(reportFilesetLocation, reportIdDir, reportRequest);
       // if the report generation completed, read the summary from _SUMMARY file and include the summary
       // in the response
       if (ReportStatus.COMPLETED.equals(metaInfo.getStatus())) {
@@ -240,7 +246,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       // if the report generation failed, read the error from _FAILURE file and include it in the response
       if (ReportStatus.FAILED.equals(metaInfo.getStatus())) {
-        return new ReportGenerationInfo(metaInfo, readStringFromFile(reportIdDir, FAILURE_FILE), reportRequest, null);
+        // get the reason of failure from _FAILURE file if it exists
+        if (reportIdDir.append(FAILURE_FILE).exists()) {
+          return new ReportGenerationInfo(metaInfo, readStringFromFile(reportIdDir, FAILURE_FILE), reportRequest, null);
+        }
+        // the report generation failed because the Spark program run was killed
+        return new ReportGenerationInfo(metaInfo, "The report generation was killed", reportRequest, null);
       }
       // if the report is neither COMPLETED nor FAILED, return response with error and summary as null
       return new ReportGenerationInfo(metaInfo, null, reportRequest, null);
@@ -276,17 +287,18 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * the report description from the report save request if the report is saved, or the report name from report
      * generation request if the report is not saved, and also the status of the report.
      *
-     * @param reportId the id of the report
+     * @param reportFilesetLocation the location of the base directory of all report directories
      * @param reportIdDir the location of the directory containing files with the report meta information
      * @param generationRequest the report generation request
      * @return the meta information of the report
      * @throws Exception if fails to get the status of the report or fails to access the file with report save request
      */
-    private static ReportMetaInfo getReportMetaInfo(String reportId, Location reportIdDir,
-                                                    ReportGenerationRequest generationRequest) throws Exception {
+    private ReportMetaInfo getReportMetaInfo(Location reportFilesetLocation, Location reportIdDir,
+                                             ReportGenerationRequest generationRequest) throws Exception {
       // Get the creation time from the report ID, which is time based UUID
+      String reportId = reportIdDir.getName();
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
-      ReportStatus status = getReportStatus(reportIdDir);
+      ReportStatus status = getReportStatus(reportFilesetLocation, reportIdDir);
       Location savedFile = reportIdDir.append(SAVED_FILE);
       // if the report is not saved, get the name of the report from the report generation request and include the
       // expiry time in the response if the report is COMPLETED
@@ -310,9 +322,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     @Path("/reports/{report-id}")
     public void deleteReport(HttpServiceRequest request, HttpServiceResponder responder,
                              @PathParam("report-id") String reportId) {
+      Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET);
       Location reportIdDir;
       try {
-        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+        reportIdDir = reportFilesetLocation.append(reportId);
         if (!reportIdDir.exists()) {
           responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
           return;
@@ -325,7 +338,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       ReportStatus status;
       try {
-        status = getReportStatus(reportIdDir);
+        status = getReportStatus(reportFilesetLocation, reportIdDir);
       } catch (Exception e) {
         LOG.error("Failed to get the status of the report {}", reportId, e);
         responder.sendError(500, String.format("Failed to get the status of the report %s becasue of error: %s",
@@ -357,10 +370,11 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     @POST
     @Path("/reports/{report-id}/save")
     public void saveReport(HttpServiceRequest request, HttpServiceResponder responder,
-                                @PathParam("report-id") String reportId) {
+                           @PathParam("report-id") String reportId) {
+      Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET);
       Location reportIdDir;
       try {
-        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+        reportIdDir = reportFilesetLocation.append(reportId);
         if (!reportIdDir.exists()) {
           responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
           return;
@@ -373,7 +387,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       ReportStatus status;
       try {
-        status = getReportStatus(reportIdDir);
+        status = getReportStatus(reportFilesetLocation, reportIdDir);
       } catch (Exception e) {
         LOG.error("Failed to get the status of the report {}", reportId, e);
         responder.sendError(500, String.format("Failed to get the status of the report %s because of error: %s",
@@ -472,7 +486,20 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         responder.sendError(400, "limit must cannot be larger than " + readLimit);
         return;
       }
-      Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+      Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET);
+      Location reportIdDir;
+      try {
+        reportIdDir = reportFilesetLocation.append(reportId);
+        if (!reportIdDir.exists()) {
+          responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
+          return;
+        }
+      } catch (IOException e) {
+        LOG.error("Failed to access the directory of the report with id {}", reportId, e);
+        responder.sendError(500, String.format("Failed to access the directory of the report with id %s " +
+                                                 "because of error: %s", reportId, e.getMessage()));
+        return;
+      }
       if (!reportIdDir.exists()) {
         responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
         return;
@@ -480,7 +507,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       // Get the status of the report and only COMPLETED report can be read
       ReportStatus status;
       try {
-        status = getReportStatus(reportIdDir);
+        status = getReportStatus(reportFilesetLocation, reportIdDir);
       } catch (Exception e) {
         LOG.error("Failed to get the status of the report {}", reportId, e);
         responder.sendError(500, String.format("Failed to get the status of the report %s because of error: %s",
@@ -554,9 +581,23 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         responder.sendError(400, e.getMessage());
         return;
       }
-
+      Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET);
       String reportId = ReportIds.generate().toString();
-      Location reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportId);
+      // Create a file to save the run id of the current Spark program run
+      Location runIdFile = getRunIdFileLocation(reportFilesetLocation, reportId);
+      if (!runIdFile.createNew()) {
+        responder.sendError(500, "Failed to create a file to save run id for " + reportId);
+        return;
+      }
+      Location reportIdDir;
+      try {
+        reportIdDir = reportFilesetLocation.append(reportId);
+      } catch (IOException e) {
+        LOG.error("Failed to access the directory of the report with id {}", reportId, e);
+        responder.sendError(500, String.format("Failed to access the directory of the report with id %s " +
+                                                 "because of error: %s", reportId, e.getMessage()));
+        return;
+      }
       if (!reportIdDir.mkdirs()) {
         responder.sendError(500, "Failed to create a new directory for report " + reportId);
         return;
@@ -573,6 +614,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(startFile.getOutputStream(),
                                                                        StandardCharsets.UTF_8), true)) {
         writer.write(requestJson);
+      } catch (Exception e) {
+        reportIdDir.delete();
+        LOG.error("Failed to write to _START file for report %s" + reportId, e);
+        responder.sendError(500, String.format("Failed to write to _START file for report %s with error %s",
+                                               reportId, e.getMessage()));
+        return;
       }
       LOG.debug("Wrote to startFile {}", startFile.toURI());
       // Generate the report asynchronously
@@ -580,6 +627,11 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         tryGenerateReport(reportRequest, reportIdDir, reportId);
       });
       responder.sendJson(200, ImmutableMap.of("id", reportId));
+    }
+
+    private Location getRunIdFileLocation(Location reportFilesetLocation, String reportId) throws IOException {
+      return reportFilesetLocation.append(String.format("%s_%s_%s",
+                                                        RUN_ID_FILE_PREFIX, reportId, getContext().getRunId().getId()));
     }
 
     /**
@@ -705,16 +757,19 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * TODO: [CDAP-13215] failure file may not be written if the Spark program is killed. Status of killed
      * report generation job might be returned as RUNNING
      *
+     * @param reportFilesetLocation the location of the base directory of all report directories
      * @param reportIdDir the base directory with report ID as directory name
      * @return status of the report generation
      */
-    private static ReportStatus getReportStatus(Location reportIdDir) throws Exception {
+    private ReportStatus getReportStatus(Location reportFilesetLocation, Location reportIdDir) throws Exception {
       // if the report is completed but has expired, return EXPIRED as its status too
       if (reportIdDir.append(LocationName.SUCCESS_FILE).exists() &&
         getExpiryTimeMillis(reportIdDir) < System.currentTimeMillis()) {
         return ReportStatus.EXPIRED;
       }
-      if (reportIdDir.append(FAILURE_FILE).exists()) {
+      // if there is a _FAILURE file or the report generation was killed in a previous run, the report is failed
+      if (reportIdDir.append(FAILURE_FILE).exists() ||
+        !getRunIdFileLocation(reportFilesetLocation, reportIdDir.getName()).exists()) {
         return ReportStatus.FAILED;
       }
       if (reportIdDir.append(LocationName.SUCCESS_FILE).exists()) {
