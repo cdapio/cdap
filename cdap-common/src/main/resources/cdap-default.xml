@@ -1345,7 +1345,7 @@
       service ZooKeeper quorum and namespace are shared by multiple CDAP
       instances, each CDAP instance needs to distinguish its Kafka topics
       from those of other CDAP instances with unique values for
-      ${log.kafka.topic}, log.tms.topic, and ${metrics.topic.prefix}.
+      ${log.kafka.topic}, ${log.tms.topic}, and ${metrics.topic.prefix}.
     </description>
   </property>
 
@@ -1383,6 +1383,14 @@
     <value>logs</value>
     <description>
       TMS topic prefix used to publish logs
+    </description>
+  </property>
+
+  <property>
+    <name>log.tms.queue.size</name>
+    <value>512</value>
+    <description>
+      The buffer size used in TMS Log Appender
     </description>
   </property>
 

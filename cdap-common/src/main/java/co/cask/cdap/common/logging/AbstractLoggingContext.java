@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.logging;
 
-import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
@@ -30,23 +29,8 @@ import java.util.Map;
  */
 public abstract class AbstractLoggingContext implements LoggingContext {
 
-  private static final Function<SystemTag, String> SYSTEM_TAG_TO_STRING = new Function<SystemTag, String>() {
-    @Override
-    public String apply(LoggingContext.SystemTag systemTag) {
-      return systemTag.getValue();
-    }
-  };
-
   // Map looks not efficient here, it might be better to use set
   private final Map<String, SystemTag> systemTags = Maps.newHashMap();
-
-  /**
-   * Returns the base dir for logs under the namespace directory
-   *
-   * @param logBaseDir the base dir
-   * @return log base dir in the namespace directory
-   */
-  protected abstract String getNamespacedLogBaseDir(String logBaseDir);
 
   /**
    * Sets system tag.
@@ -84,7 +68,7 @@ public abstract class AbstractLoggingContext implements LoggingContext {
 
   @Override
   public Map<String, String> getSystemTagsAsString() {
-    return Maps.transformValues(getSystemTagsMap(), SYSTEM_TAG_TO_STRING);
+    return Maps.transformValues(getSystemTagsMap(), SystemTag::getValue);
   }
 
   @Override

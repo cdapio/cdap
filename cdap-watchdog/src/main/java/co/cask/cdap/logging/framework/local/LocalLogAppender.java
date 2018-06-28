@@ -29,6 +29,7 @@ import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.framework.LogPipelineSpecification;
+import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
@@ -71,10 +72,8 @@ public class LocalLogAppender extends LogAppender {
   private final Set<Thread> pipelineThreads;
 
   @Inject
-  LocalLogAppender(CConfiguration cConf, DatasetFramework datasetFramework,
-                   TransactionSystemClient txClient,
-                   LocationFactory locationFactory,
-                   MetricsCollectionService metricsCollectionService) {
+  LocalLogAppender(CConfiguration cConf, DatasetFramework datasetFramework, TransactionSystemClient txClient,
+                   LocationFactory locationFactory, MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
     this.txClient = txClient;
@@ -83,7 +82,7 @@ public class LocalLogAppender extends LogAppender {
     this.pipelines = new ArrayList<>();
     this.started = new AtomicBoolean();
     this.stopped = new AtomicBoolean();
-    this.pipelineThreads = Collections.newSetFromMap(new IdentityHashMap<Thread, Boolean>());
+    this.pipelineThreads = Collections.newSetFromMap(new IdentityHashMap<>());
     setName(getClass().getName());
   }
 
@@ -154,6 +153,15 @@ public class LocalLogAppender extends LogAppender {
 
     for (LocalLogProcessorPipeline pipeline : pipelines) {
       pipeline.append(logMessage);
+    }
+  }
+
+  public void appendEvent(ILoggingEvent event) {
+    event.prepareForDeferredProcessing();
+    event.getCallerData();
+
+    for (LocalLogProcessorPipeline pipeline : pipelines) {
+      pipeline.append(event);
     }
   }
 
@@ -243,12 +251,9 @@ public class LocalLogAppender extends LogAppender {
           }
         }
 
-        // If event is not null, it means this pipeline stopped in between
-        // the event was dequeue and before callAppenders.
+        // Pipeline stopped in between the event was dequeue and before callAppenders.
         // We need to append this event before returning.
-        if (event != null) {
-          callAppenders(event);
-        }
+        callAppenders(event);
       } catch (InterruptedException e) {
         // Just ignore it. Not resetting the interrupt flag so that shutdown can operate without interruption.
       }

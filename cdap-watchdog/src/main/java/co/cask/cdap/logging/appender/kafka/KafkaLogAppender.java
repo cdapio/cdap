@@ -19,15 +19,11 @@ package co.cask.cdap.logging.appender.kafka;
 import ch.qos.logback.core.spi.ContextAware;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
-import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import kafka.producer.KeyedMessage;
@@ -94,6 +90,7 @@ public final class KafkaLogAppender extends LogAppender {
     private final LoggingEventSerializer loggingEventSerializer;
     private final ContextAware contextAware;
     private final RetryStrategy retryStrategy;
+    private final LogPartitionType logPartitionType;
     private SimpleKafkaProducer producer;
     private volatile Thread blockingThread;
 
@@ -104,6 +101,8 @@ public final class KafkaLogAppender extends LogAppender {
       this.loggingEventSerializer = new LoggingEventSerializer();
       this.contextAware = contextAware;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.log.process.");
+      this.logPartitionType =
+              LogPartitionType.valueOf(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY).toUpperCase());
     }
 
     @Override
@@ -235,32 +234,8 @@ public final class KafkaLogAppender extends LogAppender {
      * Creates a {@link KeyedMessage} for the given {@link LogMessage}.
      */
     private KeyedMessage<String, byte[]> createKeyedMessage(LogMessage logMessage) {
-      String partitionKey = getPartitionKey(logMessage.getLoggingContext());
+      String partitionKey = logPartitionType.getPartitionKey(logMessage.getLoggingContext());
       return new KeyedMessage<>(topic, partitionKey, loggingEventSerializer.toBytes(logMessage));
-    }
-
-    /**
-     * Computes the Kafka partition key based on the given {@link LoggingContext}.
-     */
-    private String getPartitionKey(LoggingContext loggingContext) {
-      String namespaceId = loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue();
-
-      if (NamespaceId.SYSTEM.getNamespace().equals(namespaceId)) {
-        return loggingContext.getLogPartition();
-      }
-
-      switch (LogPartitionType.valueOf(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY).toUpperCase())) {
-        case PROGRAM:
-          return loggingContext.getLogPartition();
-        case APPLICATION:
-          return namespaceId + ":" +
-            loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
-        default:
-          // this should never happen
-          throw new IllegalArgumentException(
-            String.format("Invalid log partition type %s. Allowed partition types are program/application",
-                          cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY)));
-      }
     }
   }
 }
