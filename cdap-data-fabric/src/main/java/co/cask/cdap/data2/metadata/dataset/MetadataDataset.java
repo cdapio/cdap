@@ -82,16 +82,18 @@ import javax.annotation.Nullable;
  * Dataset that manages Metadata using an {@link IndexedTable}. Supports writing tags and properties. Tags are single
  * elements, whereas properties are key-values.
  *
- * Tags and properties both get translated into a {@link MetadataEntry}. A {@link MetadataEntry} corresponds to all
- * metadata that is set on some {@link MetadataEntity}, like an application or a namespace. Each entry contains the
+ * Tags and properties both get translated into a {@link MetadataEntry}. A {@link MetadataEntry} corresponds to a
+ * single metadata property or a list of metadata tags that is set on some {@link MetadataEntity},
+ * like an application or a namespace. Each entry contains the
  * entity the metadata is for, a key, value, and schema. A metadata property is represented as a MetadataEntry
  * where the key is the property key and the value is the property value. Metadata tags are represented as a
  * MetadataEntry where the key is 'tags' and the value is a comma separated list of the tags.
  *
- * The value for a {@link MetadataEntry} is stored under the 'v' column as a string. The data here is not indexed.
+ * The value for a {@link MetadataEntry} is stored under the 'v' column as a string. The data in the 'v' column
+ * is not indexed by the underlying IndexedTable.
  * The row key used to store metadata entries is a composite MDSKey. It always begins with:
  *
- * v:[entity-type]
+ * v:[metadata-entity-type]
  *
  * where entity-type comes from {@link MetadataEntity#getType()}. Next is a series of pairs that comes from the
  * entity hierarchy. At the very end there is the key from {@link MetadataEntry#getKey()}.
@@ -627,7 +629,7 @@ public class MetadataDataset extends AbstractDataset {
 
   private SearchResults searchByDefaultIndex(SearchRequest request) {
     List<MetadataEntry> results = new LinkedList<>();
-    for (String searchTerm : getSearchTerms(request.getNamespace().getNamespace(), request.getQuery(),
+    for (String searchTerm : getSearchTerms(request.getNamespaceId().getNamespace(), request.getQuery(),
                                             request.getEntityScope())) {
       Scanner scanner;
       if (searchTerm.endsWith("*")) {
@@ -670,7 +672,7 @@ public class MetadataDataset extends AbstractDataset {
     // Note that there's a potential for overflow so we account by limiting it to Integer.MAX_VALUE
     int fetchSize = (int) Math.min(offset + ((numCursors + 1) * (long) limit), Integer.MAX_VALUE);
     List<String> cursors = new ArrayList<>(numCursors);
-    for (String searchTerm : getSearchTerms(request.getNamespace().getNamespace(), "*", request.getEntityScope())) {
+    for (String searchTerm : getSearchTerms(request.getNamespaceId().getNamespace(), "*", request.getEntityScope())) {
       byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
       @SuppressWarnings("ConstantConditions")
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);

@@ -17,6 +17,7 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -31,7 +32,7 @@ import javax.annotation.Nullable;
  * A Metadata search request.
  */
 public class SearchRequest {
-  private final NamespaceId namespace;
+  private final NamespaceId namespaceId;
   private final String query;
   private final Set<EntityTypeSimpleName> types;
   private final SortInfo sortInfo;
@@ -43,16 +44,42 @@ public class SearchRequest {
   private final boolean showHidden;
   private final Set<EntityScope> entityScope;
 
-  public SearchRequest(NamespaceId namespace, String query, Set<EntityTypeSimpleName> types, SortInfo sortInfo,
+  /**
+   * Represents a request for a search for CDAP entities in the specified namespace with the specified search query and
+   * an optional set of {@link EntityTypeSimpleName entity types} in the specified {@link MetadataScope}.
+   *
+   * @param namespaceId the namespace id to filter the search by
+   * @param query the search query
+   * @param types the types of CDAP entity to be searched. If empty all possible types will be searched
+   * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
+   *                 sorting (which implies that the sort order is by relevance to the search query)
+   * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
+   * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
+   * @param numCursors the number of cursors to return in the response. A cursor identifies the first index of the
+   *                   next page for pagination purposes. Defaults to {@code 0}
+   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
+   *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
+   *               the cursor. If {@code null}, the first row is used as the cursor
+   * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
+   *                    or not.
+   * @param entityScope a set which specifies which scope of entities to display.
+   */
+  public SearchRequest(NamespaceId namespaceId, String query, Set<EntityTypeSimpleName> types, SortInfo sortInfo,
                        int offset, int limit, int numCursors, @Nullable String cursor, boolean showHidden,
                        Set<EntityScope> entityScope) {
+    if (query == null || query.isEmpty()) {
+      throw new IllegalArgumentException("query must be specified");
+    }
     if (offset < 0) {
       throw new IllegalArgumentException("offset must not be negative");
     }
     if (limit < 0) {
       throw new IllegalArgumentException("limit must not be negative");
     }
-    this.namespace = namespace;
+    if (numCursors < 0) {
+      throw new IllegalArgumentException("numCursors must not be negative");
+    }
+    this.namespaceId = namespaceId;
     this.query = query;
     this.types = Collections.unmodifiableSet(new HashSet<>(types));
     this.sortInfo = sortInfo;
@@ -67,8 +94,8 @@ public class SearchRequest {
   /**
    * @return the namespace to search in
    */
-  public NamespaceId getNamespace() {
-    return namespace;
+  public NamespaceId getNamespaceId() {
+    return namespaceId;
   }
 
   /**
@@ -140,13 +167,15 @@ public class SearchRequest {
 
   /**
    * @return whether to display hidden entities (entities whose name start with '_').
+   *   Hidden entities are system entities like streams, dataset, programs for system applications like tracker.
    */
   public boolean shouldShowHidden() {
     return showHidden;
   }
 
   /**
-   * @return scope of entities to display
+   * @return whether the search is done on the system metadata table or user metadata table.
+   *   If a scope not defined the scan is performed on both and results are aggregated .
    */
   public Set<EntityScope> getEntityScope() {
     return entityScope;
@@ -165,7 +194,7 @@ public class SearchRequest {
       limit == that.limit &&
       numCursors == that.numCursors &&
       showHidden == that.showHidden &&
-      Objects.equals(namespace, that.namespace) &&
+      Objects.equals(namespaceId, that.namespaceId) &&
       Objects.equals(query, that.query) &&
       Objects.equals(types, that.types) &&
       Objects.equals(sortInfo, that.sortInfo) &&
@@ -175,13 +204,13 @@ public class SearchRequest {
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespace, query, types, sortInfo, offset, limit, numCursors, cursor, showHidden, entityScope);
+    return Objects.hash(namespaceId, query, types, sortInfo, offset, limit, numCursors, cursor, showHidden, entityScope);
   }
 
   @Override
   public String toString() {
     return "SearchRequest{" +
-      "namespace=" + namespace +
+      "namespaceId=" + namespaceId +
       ", query='" + query + '\'' +
       ", types=" + types +
       ", sortInfo=" + sortInfo +

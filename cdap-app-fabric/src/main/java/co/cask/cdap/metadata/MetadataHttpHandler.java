@@ -48,6 +48,8 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -77,6 +79,7 @@ import javax.ws.rs.QueryParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class MetadataHttpHandler extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
@@ -216,8 +219,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/metadata/search")
   public void searchMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @QueryParam("query") String searchQuery,
-                             @QueryParam("target") List<String> targets,
+                             @Nullable @QueryParam("query") String searchQuery,
+                             @Nullable @QueryParam("target") List<String> targets,
                              @QueryParam("sort") @DefaultValue("") String sort,
                              @QueryParam("offset") @DefaultValue("0") int offset,
                              // 2147483647 is Integer.MAX_VALUE
@@ -229,6 +232,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
     SearchRequest searchRequest = getValidatedSearchRequest(namespaceId, searchQuery, targets, sort, offset,
                                                             limit, numCursors, cursor, showHidden, entityScope);
+    LOG.trace("Received sesarch request {}", searchRequest);
 
     MetadataSearchResponseV2 response = metadataAdmin.search(searchRequest);
     if (showCustom) {
@@ -240,14 +244,10 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private SearchRequest getValidatedSearchRequest(String namespace, String searchQuery, List<String> targets,
-                                                  String sort, int offset, int limit, int numCursors, String cursor,
-                                                  boolean showHidden, String entityScope)
+  private SearchRequest getValidatedSearchRequest(String namespace, @Nullable String searchQuery,
+                                                  @Nullable List<String> targets, String sort, int offset, int limit,
+                                                  int numCursors, String cursor, boolean showHidden, String entityScope)
     throws BadRequestException, UnsupportedEncodingException {
-
-    if (searchQuery == null || searchQuery.isEmpty()) {
-      throw new BadRequestException("query is not specified");
-    }
 
     Set<EntityTypeSimpleName> types = Collections.emptySet();
     if (targets != null) {
