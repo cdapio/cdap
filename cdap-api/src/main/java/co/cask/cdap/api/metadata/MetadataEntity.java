@@ -75,9 +75,10 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   public static final String ARTIFACT = "artifact";
   public static final String VERSION = "version";
   public static final String DATASET = "dataset";
-  public static final String DATASET_INSTANCE = "DatasetInstance";
+  public static final String V1_DATASET_INSTANCE = "datasetinstance";
   public static final String STREAM = "stream";
   public static final String VIEW = "stream_view";
+  public static final String V1_VIEW = "view";
   public static final String TYPE = "type";
   public static final String FLOW = "flow";
   public static final String FLOWLET = "flowlet";

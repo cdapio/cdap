@@ -17,6 +17,7 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
@@ -28,6 +29,7 @@ import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
@@ -71,6 +73,7 @@ public class MetadataService extends AbstractIdleService {
     LOG.info("Starting Metadata Service");
     httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
       .setHttpHandlers(handlers)
+      .setExceptionHandler(new HttpExceptionHandler())
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.METADATA_SERVICE)))
       .setHost(cConf.get(Constants.Metadata.SERVICE_BIND_ADDRESS))

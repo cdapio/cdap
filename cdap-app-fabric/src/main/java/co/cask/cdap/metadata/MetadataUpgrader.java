@@ -23,7 +23,6 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +44,6 @@ public class MetadataUpgrader {
   private final MetadataStore metadataStore;
   private final DatasetFramework datasetFramework;
 
-  @Inject
   MetadataUpgrader(ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter,
                    MetadataStore metadataStore, DatasetFramework datasetFramework) {
     this.existingEntitySystemMetadataWriter = existingEntitySystemMetadataWriter;

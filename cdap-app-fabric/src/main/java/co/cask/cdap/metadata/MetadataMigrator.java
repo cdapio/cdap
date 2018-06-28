@@ -90,38 +90,44 @@ class MetadataMigrator extends AbstractRetryableScheduledService {
       stop();
     }
 
-    KeyValue<DatasetId, DatasetId> datasetIdEntry = datasetIds.peek();
-    if (!dsFramework.hasInstance(datasetIdEntry.getKey())) {
-      datasetIds.poll();
-      return 0;
-    }
-
-    // This thread migrates metadata in batches. It does following operations in a single transaction:
-    // 1.) Scan V1 metadata table for value and history rows in batch of batchSize.
-    // 2.) Write scanned MetadataEntries to V2 table.
-    // 3.) Delete successfully written metadata entries from V1 table.
-    Boolean dropV1Table = Transactionals.execute(transactional, context -> {
-      MetadataDataset v1 = getMetadataDataset(context, datasetIdEntry.getKey());
-      MetadataDataset v2 = getMetadataDataset(context, datasetIdEntry.getValue());
-
-      // All the metadata entries are written using setProperty because it does not modify the MetadataEntry
-      // keys
-      MetadataEntries entries = v1.scanFromV1Table(batchSize);
-
-      if (entries.getEntries().isEmpty()) {
-        // All the value and history rows have been migrated so stop this thread and drop V1 MetadataDataset
-        return true;
+    try {
+      KeyValue<DatasetId, DatasetId> datasetIdEntry = datasetIds.peek();
+      if (!dsFramework.hasInstance(datasetIdEntry.getKey())) {
+        datasetIds.poll();
+        return 0;
       }
 
-      v2.writeUpgradedRows(entries.getEntries());
-      // We do not need to keep checkpoints. Instead, we will just delete scanned rows from metadata dataset
-      v1.deleteRows(entries.getRows());
-      return false;
-    });
+      // This thread migrates metadata in batches. It does following operations in a single transaction:
+      // 1.) Scan V1 metadata table for value and history rows in batch of batchSize.
+      // 2.) Write scanned MetadataEntries to V2 table.
+      // 3.) Delete successfully written metadata entries from V1 table.
+      boolean dropV1Table = Transactionals.execute(transactional, context -> {
+        MetadataDataset v1 = context.getDataset(datasetIdEntry.getKey().getDataset());
+        MetadataDataset v2 = getMetadataDataset(context, datasetIdEntry.getValue());
 
-    if (dropV1Table) {
-      dsFramework.deleteInstance(datasetIdEntry.getKey());
-      LOG.debug("Migration for dataset {} is complete. This dataset is dropped.", datasetIdEntry.getKey());
+        // All the metadata entries are written using setProperty because it does not modify the MetadataEntry
+        // keys
+        MetadataEntries entries = v1.scanFromV1Table(batchSize);
+
+        if (entries.getEntries().isEmpty()) {
+          // All the value and history rows have been migrated so stop this thread and drop V1 MetadataDataset
+          return true;
+        }
+
+        v2.writeUpgradedRows(entries.getEntries());
+
+        // We do not need to keep checkpoints. Instead, we will just delete scanned rows from metadata dataset
+        v1.deleteRows(entries.getRows());
+        return false;
+      });
+
+      if (dropV1Table) {
+        dsFramework.deleteInstance(datasetIdEntry.getKey());
+        LOG.info("Migration for dataset {} is complete. This dataset is dropped.", datasetIdEntry.getKey());
+      }
+    } catch (Exception e) {
+      LOG.error("Error occurred while migrating metadata. ", e);
+      throw e;
     }
 
     // Immediately migrate next batch to finish migration faster.

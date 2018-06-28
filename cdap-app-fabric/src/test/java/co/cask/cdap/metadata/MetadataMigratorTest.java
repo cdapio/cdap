@@ -58,17 +58,14 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -80,8 +77,6 @@ import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -107,15 +102,9 @@ import java.util.concurrent.TimeUnit;
  * Unit tests for Metadata Migrator Service.
  */
 public class MetadataMigratorTest {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
-    .create();
-
   private final ApplicationId app1 = new ApplicationId("ns1", "app1");
-  private final ProgramId flow1 = new ProgramId("ns1", "app1", ProgramType.FLOW, "flow1");
   private final DatasetId dataset1 = new DatasetId("ns1", "ds1");
   private final StreamId stream1 = new StreamId("ns1", "s1");
-  private final StreamViewId view1 = new StreamViewId(stream1.getNamespace(), stream1.getStream(), "v1");
   private final ArtifactId artifact1 = new ArtifactId("ns1", "a1", "1.0.0");
 
   private static CConfiguration cConf;
@@ -150,7 +139,6 @@ public class MetadataMigratorTest {
         NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
-
   }
 
   @After
@@ -216,39 +204,31 @@ public class MetadataMigratorTest {
         total = total + scanCount;
       } while (scanCount != 0);
 
-      Assert.assertEquals(13, total);
+      Assert.assertEquals(9, total);
     });
   }
 
   private void assertProperties(MetadataDataset v2System, MetadataDataset v2Business) {
     Assert.assertEquals("avalue11", v2System.getProperties(app1.toMetadataEntity()).get("akey1"));
-    Assert.assertEquals("avalue2", v2System.getProperties(flow1.toMetadataEntity()).get("akey2"));
     Assert.assertEquals("avalue3", v2System.getProperties(dataset1.toMetadataEntity()).get("akey3"));
     Assert.assertEquals("avalue4", v2System.getProperties(stream1.toMetadataEntity()).get("akey4"));
-    Assert.assertEquals("avalue5", v2System.getProperties(view1.toMetadataEntity()).get("akey5"));
     Assert.assertEquals("avalue6", v2System.getProperties(artifact1.toMetadataEntity()).get("akey6"));
 
     Assert.assertEquals("avalue11", v2Business.getProperties(app1.toMetadataEntity()).get("akey1"));
-    Assert.assertEquals("avalue2", v2Business.getProperties(flow1.toMetadataEntity()).get("akey2"));
     Assert.assertEquals("avalue3", v2Business.getProperties(dataset1.toMetadataEntity()).get("akey3"));
     Assert.assertEquals("avalue4", v2Business.getProperties(stream1.toMetadataEntity()).get("akey4"));
-    Assert.assertEquals("avalue5", v2Business.getProperties(view1.toMetadataEntity()).get("akey5"));
     Assert.assertEquals("avalue6", v2Business.getProperties(artifact1.toMetadataEntity()).get("akey6"));
   }
 
   private void assertHistory(MetadataDataset v2System, MetadataDataset v2Business, long sTs, long bTs) {
     verifyhistory(v2System, app1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, flow1.toMetadataEntity(), sTs);
     verifyhistory(v2System, dataset1.toMetadataEntity(), sTs);
     verifyhistory(v2System, stream1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, view1.toMetadataEntity(), sTs);
     verifyhistory(v2System, artifact1.toMetadataEntity(), sTs);
 
     verifyhistory(v2Business, app1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, flow1.toMetadataEntity(), bTs);
     verifyhistory(v2Business, dataset1.toMetadataEntity(), bTs);
     verifyhistory(v2Business, stream1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, view1.toMetadataEntity(), bTs);
     verifyhistory(v2Business, artifact1.toMetadataEntity(), bTs);
   }
 
@@ -267,17 +247,16 @@ public class MetadataMigratorTest {
 
   private void verifyhistory(MetadataDataset v2, MetadataEntity entity, long timestamp) {
     for (Metadata metadata : v2.getSnapshotBeforeTime(ImmutableSet.of(entity), timestamp)) {
-      Assert.assertEquals(1, metadata.getProperties().size());
+      Map<String, String> properties = metadata.getProperties();
+      Assert.assertEquals(1, properties.size());
     }
   }
 
   private long generateMetadata(DatasetId datasetId) throws Exception {
     // Set some properties
     write(datasetId, app1, "akey1", "avalue1");
-    write(datasetId, flow1, "akey2", "avalue2");
     write(datasetId, dataset1, "akey3", "avalue3");
     write(datasetId, stream1, "akey4", "avalue4");
-    write(datasetId, view1, "akey5", "avalue5");
     write(datasetId, artifact1, "akey6", "avalue6");
     return write(datasetId, app1, "akey1", "avalue11");
   }
@@ -311,9 +290,98 @@ public class MetadataMigratorTest {
   private Put createHistoryPut(NamespacedEntityId targetId, long time) {
     MetadataV1 metadataV1 = getMetadataV1(targetId);
     byte[] row = MdsHistoryKey.getMdsKey(targetId, time).getKey();
+    String jsonValue = getJsonValue(targetId.getEntityType());
+
     Put put = new Put(row);
-    put.add(Bytes.toBytes("h"), Bytes.toBytes(GSON.toJson(metadataV1)));
+    put.add(Bytes.toBytes("h"), Bytes.toBytes(jsonValue));
     return put;
+  }
+
+  private String getJsonValue(EntityType entityType) {
+    String value = "";
+    switch (entityType) {
+      case APPLICATION:
+        value = "{\n" +
+          "  \"namespacedEntityId\": {\n" +
+          "    \"type\": \"application\",\n" +
+          "    \"id\": {\n" +
+          "      \"namespace\": {\n" +
+          "        \"id\": \"ns1\"\n" +
+          "      },\n" +
+          "      \"applicationId\": \"app1\"\n" +
+          "    }\n" +
+          "  },\n" +
+          "  \"properties\": {\n" +
+          "    \"akey1\" : \"avalue1\"\n" +
+          "  },\n" +
+          "  \"tags\": [\n" +
+          "    \"cdap-data-pipeline\"\n" +
+          "  ]\n" +
+          "}";
+        break;
+      case DATASET:
+        value = "{\n" +
+          "  \"namespacedEntityId\": {\n" +
+          "    \"type\": \"datasetinstance\",\n" +
+          "    \"id\": {\n" +
+          "      \"namespace\": {\n" +
+          "        \"id\": \"ns1\"\n" +
+          "      },\n" +
+          "      \"instanceId\": \"ds1\"\n" +
+          "    }\n" +
+          "  },\n" +
+          "  \"properties\": {\n" +
+          "    \"akey3\" : \"avalue3\"\n" +
+          "  },\n" +
+          "  \"tags\": [\n" +
+          "    \"explore\",\n" +
+          "    \"batch\"\n" +
+          "  ]\n" +
+          "}";
+        break;
+      case ARTIFACT:
+        value = "{\n" +
+          "  \"namespacedEntityId\": {\n" +
+          "    \"type\": \"artifact\",\n" +
+          "    \"id\": {\n" +
+          "      \"namespace\": {\n" +
+          "        \"id\": \"ns1\"\n" +
+          "      },\n" +
+          "      \"name\": \"a1\",\n" +
+          "      \"version\": {\n" +
+          "        \"version\": \"1.0.0\",\n" +
+          "        \"major\": 3,\n" +
+          "        \"minor\": 0,\n" +
+          "        \"fix\": 4\n" +
+          "      }\n" +
+          "    }\n" +
+          "  },\n" +
+          "  \"properties\": {\n" +
+          "    \"akey1\" : \"avalue1\"\n" +
+          "  },\n" +
+          "  \"tags\": []\n" +
+          "}";
+        break;
+      case STREAM:
+        value = "{\n" +
+          "  \"namespacedEntityId\": {\n" +
+          "    \"type\": \"stream\",\n" +
+          "    \"id\": {\n" +
+          "      \"namespace\": {\n" +
+          "        \"id\": \"ns1\"\n" +
+          "      },\n" +
+          "      \"streamName\": \"s1\"\n" +
+          "    }\n" +
+          "  },\n" +
+          "  \"properties\": {\n" +
+          "    \"akey4\" : \"avalue4\"\n" +
+          "  },\n" +
+          "  \"tags\": []\n" +
+          "}";
+        break;
+    }
+
+    return value;
   }
 
   private MetadataV1 getMetadataV1(NamespacedEntityId targetId) {

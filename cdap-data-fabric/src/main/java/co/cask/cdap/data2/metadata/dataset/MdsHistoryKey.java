@@ -20,12 +20,15 @@ import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
+import java.nio.ByteBuffer;
+
 import static co.cask.cdap.api.metadata.MetadataEntity.APPLICATION;
 import static co.cask.cdap.api.metadata.MetadataEntity.ARTIFACT;
 import static co.cask.cdap.api.metadata.MetadataEntity.DATASET;
-import static co.cask.cdap.api.metadata.MetadataEntity.DATASET_INSTANCE;
 import static co.cask.cdap.api.metadata.MetadataEntity.PROGRAM;
 import static co.cask.cdap.api.metadata.MetadataEntity.STREAM;
+import static co.cask.cdap.api.metadata.MetadataEntity.V1_DATASET_INSTANCE;
+import static co.cask.cdap.api.metadata.MetadataEntity.V1_VIEW;
 import static co.cask.cdap.api.metadata.MetadataEntity.VIEW;
 
 /**
@@ -53,6 +56,7 @@ public final class MdsHistoryKey {
     // Skip rowType
     keySplitter.skipBytes();
 
+    type = type.toLowerCase();
     switch (type) {
       case PROGRAM:
         keySplitter.skipString();
@@ -62,12 +66,13 @@ public final class MdsHistoryKey {
         break;
       case APPLICATION:
       case DATASET:
-      case DATASET_INSTANCE:
+      case V1_DATASET_INSTANCE:
       case STREAM:
         keySplitter.skipString();
         keySplitter.skipString();
         break;
       case VIEW:
+      case V1_VIEW:
       case ARTIFACT:
         keySplitter.skipString();
         keySplitter.skipString();
@@ -87,6 +92,10 @@ public final class MdsHistoryKey {
 
   private static long invertTime(long time) {
     return Long.MAX_VALUE - time;
+  }
+
+  static long getHistoryTime(byte[] rowKey) {
+    return ByteBuffer.wrap(rowKey).getLong(rowKey.length - 8);
   }
 
   private MdsHistoryKey() {

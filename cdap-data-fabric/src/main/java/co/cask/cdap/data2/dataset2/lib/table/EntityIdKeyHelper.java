@@ -123,6 +123,7 @@ public final class EntityIdKeyHelper {
   }
 
   public static NamespacedEntityId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
+    type = type.toLowerCase();
     if (type.equals(TYPE_MAP.get(NamespaceId.class))) {
       String namespaceId = keySplitter.getString();
       return new NamespaceId(namespaceId);
@@ -141,7 +142,7 @@ public final class EntityIdKeyHelper {
       String name = keySplitter.getString();
       String version = keySplitter.getString();
       return new ArtifactId(namespaceId, name, version);
-    } else if (type.equals(TYPE_MAP.get(DatasetId.class)) || type.equals(MetadataEntity.DATASET_INSTANCE)) {
+    } else if (type.equals(TYPE_MAP.get(DatasetId.class)) || type.equals(MetadataEntity.V1_DATASET_INSTANCE)) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return new DatasetId(namespaceId, instanceId);
@@ -149,7 +150,7 @@ public final class EntityIdKeyHelper {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return new StreamId(namespaceId, instanceId);
-    } else if (type.equals(TYPE_MAP.get(StreamViewId.class))) {
+    } else if (type.equals(TYPE_MAP.get(StreamViewId.class)) || type.equals(MetadataEntity.V1_VIEW)) {
       String namespaceId = keySplitter.getString();
       String streamId  = keySplitter.getString();
       String viewId = keySplitter.getString();
@@ -176,8 +177,16 @@ public final class EntityIdKeyHelper {
    * @return v1 type of the entity
    */
   public static String getV1TargetType(NamespacedEntityId namespacedEntityId) {
-    String type = TYPE_MAP.get(namespacedEntityId.getClass());
-    return type.equals(MetadataEntity.DATASET) ? MetadataEntity.DATASET_INSTANCE : type;
+    String v1Type = TYPE_MAP.get(namespacedEntityId.getClass());
+    switch (v1Type) {
+      case MetadataEntity.VIEW:
+        v1Type = MetadataEntity.V1_VIEW;
+        break;
+      case MetadataEntity.DATASET:
+        v1Type = MetadataEntity.V1_DATASET_INSTANCE;
+        break;
+    }
+    return v1Type;
   }
 
   private EntityIdKeyHelper() {
