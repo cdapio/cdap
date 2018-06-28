@@ -49,7 +49,7 @@ public class RemoteMetadataReader implements MetadataReader {
   }
 
   @Override
-  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) throws MetadataException {
     Map<MetadataScope, Metadata> scopeMetadata = new HashMap<>();
     Set<MetadataRecordV2> metadata;
     try {
@@ -64,18 +64,9 @@ public class RemoteMetadataReader implements MetadataReader {
   }
 
   @Override
-  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
-    final Metadata[] metadata = new Metadata[1];
-    try {
-      metadataClient.getMetadata(metadataEntity, scope).forEach(record -> {
-        if (record.getScope() == scope) {
-          metadata[0] = new Metadata(record.getProperties(), record.getTags());
-        }
-      });
-    } catch (Exception e) {
-      throw new MetadataException(e);
-    }
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
+    Metadata metadata = getMetadata(metadataEntity).get(scope);
     LOG.trace("Returning metadata {} for {} in scope {}", metadata, metadataEntity, scope);
-    return metadata[0];
+    return metadata;
   }
 }

@@ -38,6 +38,7 @@ import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataException;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.metrics.Metrics;
@@ -723,12 +724,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) throws MetadataException {
     return metadataReader.getMetadata(metadataEntity);
   }
 
   @Override
-  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
     return metadataReader.getMetadata(scope, metadataEntity);
   }
 

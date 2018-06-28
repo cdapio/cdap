@@ -20,7 +20,7 @@ package co.cask.cdap.api.metadata;
 /**
  * Exception which is thrown when a metadata operation fails
  */
-public class MetadataException extends RuntimeException {
+public class MetadataException extends Exception {
   public MetadataException(String message) {
     super(message);
   }

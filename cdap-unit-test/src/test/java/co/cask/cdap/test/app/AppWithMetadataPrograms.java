@@ -20,11 +20,15 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataException;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.Map;
@@ -51,8 +55,20 @@ public class AppWithMetadataPrograms extends AbstractApplication {
     @Path("metadata/{dataset}")
     public void ping(HttpServiceRequest request, HttpServiceResponder responder,
                      @PathParam("dataset") String dataset) {
-      Map<MetadataScope, Metadata> metadata =
-        getContext().getMetadata(MetadataEntity.ofDataset(getContext().getNamespace(), dataset));
+      Map<MetadataScope, Metadata> metadata = null;
+      try {
+        metadata = getContext().getMetadata(MetadataEntity.ofDataset(getContext().getNamespace(), dataset));
+      } catch (MetadataException e) {
+        if (e.getCause() instanceof UnauthorizedException) {
+          responder.sendStatus(((UnauthorizedException) e.getCause()).getStatusCode());
+        } else if (e.getCause() instanceof UnauthenticatedException) {
+          responder.sendStatus(((UnauthenticatedException) e.getCause()).getStatusCode());
+        } else if (e.getCause() instanceof BadRequestException) {
+          responder.sendStatus(((BadRequestException) e.getCause()).getStatusCode());
+        } else {
+          responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        }
+      }
       responder.sendJson(HttpResponseStatus.OK.code(), metadata);
     }
 

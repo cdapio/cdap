@@ -35,6 +35,7 @@ import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataException;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
@@ -329,12 +330,12 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
-  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) throws MetadataException {
   return delegate.getMetadata(metadataEntity);
   }
 
   @Override
-  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
     return delegate.getMetadata(scope, metadataEntity);
   }
 }
