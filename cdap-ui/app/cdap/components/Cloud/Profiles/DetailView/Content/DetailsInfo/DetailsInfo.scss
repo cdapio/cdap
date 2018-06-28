@@ -17,6 +17,7 @@
 @import "../../../../../../styles/variables.scss";
 $details-row-border-color: $grey-05;
 $label-width: 150px;
+$shield-color: $grey-03;
 
 .profile-detail-view {
   .detail-view-content {
@@ -73,6 +74,19 @@ $label-width: 150px;
             overflow: hidden;
             white-space: nowrap;
             padding-left: 10px;
+
+            .secure-key {
+              > div {
+                display: inline-block;
+                margin-left: 5px;
+
+                .icon-svg {
+                  font-size: 16px;
+                  color: $shield-color;
+                  vertical-align: text-bottom;
+                }
+              }
+            }
           }
         }
       }

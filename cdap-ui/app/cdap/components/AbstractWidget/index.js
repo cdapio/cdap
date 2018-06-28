@@ -27,7 +27,8 @@ export const WIDGET_PROPTYPES = {
     PropTypes.string,
     PropTypes.number
   ]),
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
+  extraConfig: PropTypes.object
 };
 export const DEFAULT_WIDGET_PROPS = {
   widgetProps: {},
@@ -50,6 +51,7 @@ export default class AbstractWidget extends Component {
           onChange={this.props.onChange}
           value={this.props.value}
           widgetProps={this.props.widgetProps}
+          extraConfig={this.props.extraConfig}
         />
       </div>
     );

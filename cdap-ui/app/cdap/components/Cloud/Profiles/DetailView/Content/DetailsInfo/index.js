@@ -18,6 +18,8 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import Popover from 'components/Popover';
+import {SECURE_KEY_PREFIX, SECURE_KEY_SUFFIX} from 'services/global-constants';
 
 require('./DetailsInfo.scss');
 
@@ -58,6 +60,34 @@ export default class ProfileDetailViewDetailsInfo extends Component {
     );
   }
 
+  getSecureKeyValue(value) {
+    const beginIndex = value.indexOf(SECURE_KEY_PREFIX);
+    const endIndex = value.lastIndexOf(SECURE_KEY_SUFFIX);
+
+    if (beginIndex === -1 || endIndex === -1) { return value; }
+
+    const stringLength = endIndex - beginIndex;
+    const secureKey = value.slice(SECURE_KEY_PREFIX.length, stringLength);
+
+    return (
+      <span className="secure-key">
+        {secureKey}
+
+        <Popover
+          target={() => <IconSVG name="icon-shield" />}
+          targetDimension={{
+            width: 16,
+            height: 21
+          }}
+          placement="top"
+          showOn="Hover"
+        >
+          {T.translate(`${PREFIX}.secureKeyPopover`)}
+        </Popover>
+      </span>
+    );
+  }
+
   renderDetailsTable(profile) {
     if (!profile.provisioner.properties.length) {
       return (
@@ -84,6 +114,12 @@ export default class ProfileDetailViewDetailsInfo extends Component {
             .properties
             .map(property => {
               let propertyLabel = propertyToLabelMap[property.name];
+              let value = property.value;
+
+              if (property.name === 'accountKey') {
+                value = this.getSecureKeyValue(value);
+              }
+
               return (
                 <div className="details-row">
                   <strong
@@ -96,7 +132,7 @@ export default class ProfileDetailViewDetailsInfo extends Component {
                     className="value-holder"
                     title={property.value}
                   >
-                    {property.value}
+                    {value}
                   </span>
                 </div>
               );
