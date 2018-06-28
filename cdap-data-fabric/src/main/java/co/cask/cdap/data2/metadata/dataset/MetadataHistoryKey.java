@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ class MetadataHistoryKey {
   private static final byte[] ROW_PREFIX = {'h'};
 
   static MDSKey getMDSKey(MetadataEntity targetId, long time) {
+    // [rowPrefix][targetType][targetId][time]
     MDSKey.Builder builder = getKeyPart(targetId);
     builder.add(invertTime(time));
     return builder.build();
@@ -48,6 +49,7 @@ class MetadataHistoryKey {
   private static MDSKey.Builder getKeyPart(MetadataEntity metadataEntity) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(ROW_PREFIX);
+    builder.add(metadataEntity.getType());
     for (MetadataEntity.KeyValue keyValue : metadataEntity) {
       builder.add(keyValue.getKey());
       builder.add(keyValue.getValue());
