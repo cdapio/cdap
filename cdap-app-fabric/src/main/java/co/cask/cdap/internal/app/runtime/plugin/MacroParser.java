@@ -139,6 +139,8 @@ public class MacroParser {
       if (lookupsEnabled) {
         return new MacroMetadata(macroEvaluator.lookup(macroStr), startIndex, endIndex, true);
       } else {
+        // if we are not evaluating lookups, return the original string with the surrounding ${},
+        // and turn off recursive evaluation to prevent it from getting evaluated in an infinite loop
         return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
       }
     }
@@ -161,9 +163,12 @@ public class MacroParser {
 
     String[] args = Iterables.toArray(Splitter.on(ARGUMENT_DELIMITER).split(arguments), String.class);
     // if function evaluation is disabled, or this is not a whitelisted function, don't perform any evaluation.
+    // if the whitelist is empty, that means no whitelist was set, so every function should be evaluated.
     if (functionsEnabled && (functionWhitelist.isEmpty() || functionWhitelist.contains(macroFunction))) {
       return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex, true);
     } else {
+      // if we are not evaluating this function, return the original string with the surrounding ${},
+      // and turn off recursive evaluation to prevent it from getting evaluated in an infinite loop
       return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
     }
   }
