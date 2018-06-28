@@ -79,7 +79,92 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
- * Dataset that manages Metadata using an {@link IndexedTable}.
+ * Dataset that manages Metadata using an {@link IndexedTable}. Supports writing tags and properties. Tags are single
+ * elements, whereas properties are key-values.
+ *
+ * Tags and properties both get translated into a {@link MetadataEntry}. A {@link MetadataEntry} corresponds to all
+ * metadata that is set on some {@link MetadataEntity}, like an application or a namespace. Each entry contains the
+ * entity the metadata is for, a key, value, and schema. A metadata property is represented as a MetadataEntry
+ * where the key is the property key and the value is the property value. Metadata tags are represented as a
+ * MetadataEntry where the key is 'tags' and the value is a comma separated list of the tags.
+ *
+ * The value for a {@link MetadataEntry} is stored under the 'v' column as a string. The data here is not indexed.
+ * The row key used to store metadata entries is a composite MDSKey. It always begins with:
+ *
+ * v:[entity-type]
+ *
+ * where entity-type comes from {@link MetadataEntity#getType()}. Next is a series of pairs that comes from the
+ * entity hierarchy. At the very end there is the key from {@link MetadataEntry#getKey()}.
+ * For example, suppose we have set two properties and two tags on an entity.
+ * The properties are 'owner'='sam' and 'final'='false.
+ * The tags are 'small', 'beta'.
+ * The entity is mapreduce 'mr' in app 'appX' in namespace 'ns1'.
+ *
+ * The table will look like:
+ *
+ * rowkey                                                                           column -> value
+ *
+ * v:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner         v -> sam
+ * v:program:namespace:ns1:application:appX:type:mapreduce:program:mr:final         v -> false
+ * v:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags          v -> small,beta
+ *
+ * If we set that same metadata on namespace 'ns2', we would be adding rows:
+ *
+ * v:namespace:namespace:ns2:owner                                                  v -> sam
+ * v:namespace:namespace:ns2:final                                                  v -> false
+ * v:namespace:namespace:ns2:tags                                                   v -> small,beta
+ *
+ * This is the write done on every {@link MetadataEntry}.
+ * In addition to each entry write, a set of index writes will be done for each entry.
+ * Indexes are written to the 'i', 'n', 'in', 'c', and 'ic' columns.
+ *
+ * The 'i' column is for default metadata indexes
+ * The 'n' column is for entity name indexes
+ * The 'in' column is for entity name indexes in reverse order
+ * The 'c' column is for creation-time indexes
+ * The 'ic' column is for creation-time indexes in reverse order
+ *
+ * Which indexes are used will depend on {@link #getIndexersForKey(MetadataEntity, String)}, which essentially
+ * looks for special keys that {@link AbstractSystemMetadataWriter} are known to write.
+ *
+ * Each index will generate one or more index values from the single {@link MetadataEntry} value.
+ * For example, the suppose an indexer is given a metadata property 'owner'='foo bar', and generates
+ * index values 'foo bar', 'owner:foo bar', 'foo', 'owner:foo', 'bar', and 'owner:bar'.
+ * That means a single {@link MetadataEntry} for 'owner'='foo bar' will generate six different index values.
+ *
+ * The rowkey for each index value is similar to the rowkey for the {@link MetadataEntry} except 'i' is used as the
+ * prefix instead of 'v', and it includes the index value at the end.
+ * The index value will also be prefixed by the namespace of the {@link MetadataEntity} before being written.
+ * With our previous example, the following data will be written:
+ *
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo bar       i -> ns1:foo bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo bar       i -> ns1:owner:foo bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo           i -> ns1:foo
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo           i -> ns1:owner:foo
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:bar           i -> ns1:bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:bar           i -> ns1:owner:bar
+ *
+ * Since tags are just a special property where the property key is 'tags',
+ * if 'foo bar' is set as a tag on a mapreduce program, the table will look like:
+ *
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo bar        i -> ns1:foo bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo bar        i -> ns1:tags:foo bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo            i -> ns1:foo
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo            i -> ns1:tags:foo
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:bar            i -> ns1:bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:bar            i -> ns1:tags:bar
+ *
+ * In addition to the entry and it's indexes, there is also history write done per {@link MetadataEntity}.
+ * The row key for history is similar to the index row key except it is prefixed by 'h' instead of 'v' and it
+ * contains an inverted timestamp at the end instead of the metadata key-value.
+ * The timestamp corresponds to the time of the write.
+ * The value is stored in the 'h' column and is a {@link Metadata} object.
+ * This will give a snapshot of all properties and tags for that entity at the time of that write.
+ * For example, for 'owner'='foo' set on a mapreduce program, the history row key will be:
+ *
+ * h:program:namespace:ns1:application:appX:type:mapreduce:program:mr:[inverted-timestamp]
+ *
+ * and the value written will contain all properties and tags for that mapreduce program at that time.
  */
 public class MetadataDataset extends AbstractDataset {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataDataset.class);
@@ -524,46 +609,26 @@ public class MetadataDataset extends AbstractDataset {
    * Searches entities that match the specified search query in the specified namespace and {@link NamespaceId#SYSTEM}
    * for the specified {@link EntityTypeSimpleName}.
    *
-   * @param namespaceId the namespace to search in
-   * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value] and can have '*'
-   *                    at the end for a prefix search
-   * @param types the {@link EntityTypeSimpleName} to restrict the search to, if empty all types are searched
-   * @param sortInfo the {@link SortInfo} to sort the results by
-   * @param offset index to start with in the search results. To return results from the beginning, pass {@code 0}.
-   *               Only applies when #sortInfo is not {@link SortInfo#DEFAULT}
-   * @param limit number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}.
-   *              Only applies when #sortInfo is not {@link SortInfo#DEFAULT}
-   * @param numCursors number of cursors to return in the response. A cursor identifies the first index of the
-   *                   next page for pagination purposes. Only applies when #sortInfo is not {@link SortInfo#DEFAULT}.
-   *                   Defaults to {@code 0}
-   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
-   *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
-   *               the cursor. If {@code null}, the first row is used as the cursor
-   * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
-   *                    or not.
-   * @param entityScope a set which specifies which scope of entities to display.
+   * @param request the search request
    * @return a {@link SearchResults} object containing a list of {@link MetadataEntry} containing each matching
    *         {@link MetadataEntity} with its associated metadata. It also optionally contains a list of cursors
    *         for subsequent queries to start with, if the specified #sortInfo is not {@link SortInfo#DEFAULT}.
    */
-  public SearchResults search(String namespaceId, String searchQuery, Set<EntityTypeSimpleName> types,
-                              SortInfo sortInfo, int offset, int limit, int numCursors, @Nullable String cursor,
-                              boolean showHidden, Set<EntityScope> entityScope) throws BadRequestException {
-    if (!SortInfo.DEFAULT.equals(sortInfo)) {
-      if (!"*".equals(searchQuery)) {
-        throw new BadRequestException("Cannot search with non-default sort with any query other than '*'");
-      }
-      return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
-                                 entityScope);
+  public SearchResults search(SearchRequest request) throws BadRequestException {
+    if (SortInfo.DEFAULT.equals(request.getSortInfo())) {
+      return searchByDefaultIndex(request);
     }
-    return searchByDefaultIndex(namespaceId, searchQuery, types, showHidden, entityScope);
+
+    if (!"*".equals(request.getQuery())) {
+      throw new BadRequestException("Cannot search with non-default sort with any query other than '*'");
+    }
+    return searchByCustomIndex(request);
   }
 
-  private SearchResults searchByDefaultIndex(String namespaceId, String searchQuery,
-                                             Set<EntityTypeSimpleName> types, boolean showHidden,
-                                             Set<EntityScope> entityScope) {
+  private SearchResults searchByDefaultIndex(SearchRequest request) {
     List<MetadataEntry> results = new LinkedList<>();
-    for (String searchTerm : getSearchTerms(namespaceId, searchQuery, entityScope)) {
+    for (String searchTerm : getSearchTerms(request.getNamespace().getNamespace(), request.getQuery(),
+                                            request.getEntityScope())) {
       Scanner scanner;
       if (searchTerm.endsWith("*")) {
         // if prefixed search get start and stop key
@@ -578,7 +643,8 @@ public class MetadataDataset extends AbstractDataset {
       try {
         Row next;
         while ((next = scanner.next()) != null) {
-          Optional<MetadataEntry> metadataEntry = parseRow(next, DEFAULT_INDEX_COLUMN, types, showHidden);
+          Optional<MetadataEntry> metadataEntry = parseRow(next, DEFAULT_INDEX_COLUMN, request.getTypes(),
+                                                           request.shouldShowHidden());
           metadataEntry.ifPresent(results::add);
         }
       } finally {
@@ -590,10 +656,13 @@ public class MetadataDataset extends AbstractDataset {
     return new SearchResults(results, Collections.emptyList());
   }
 
-  private SearchResults searchByCustomIndex(String namespaceId, Set<EntityTypeSimpleName> types,
-                                            SortInfo sortInfo, int offset, int limit, int numCursors,
-                                            @Nullable String cursor, boolean showHidden,
-                                            Set<EntityScope> entityScope) {
+  private SearchResults searchByCustomIndex(SearchRequest request) {
+    SortInfo sortInfo = request.getSortInfo();
+    String cursor = request.getCursor();
+    int offset = request.getOffset();
+    int limit = request.getLimit();
+    int numCursors = request.getNumCursors();
+
     List<MetadataEntry> results = new LinkedList<>();
     String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     // we want to return the first chunk of 'limit' elements after offset
@@ -601,7 +670,7 @@ public class MetadataDataset extends AbstractDataset {
     // Note that there's a potential for overflow so we account by limiting it to Integer.MAX_VALUE
     int fetchSize = (int) Math.min(offset + ((numCursors + 1) * (long) limit), Integer.MAX_VALUE);
     List<String> cursors = new ArrayList<>(numCursors);
-    for (String searchTerm : getSearchTerms(namespaceId, "*", entityScope)) {
+    for (String searchTerm : getSearchTerms(request.getNamespace().getNamespace(), "*", request.getEntityScope())) {
       byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
       @SuppressWarnings("ConstantConditions")
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
@@ -618,7 +687,8 @@ public class MetadataDataset extends AbstractDataset {
       try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey)) {
         Row next;
         while ((next = scanner.next()) != null && results.size() < fetchSize) {
-          Optional<MetadataEntry> metadataEntry = parseRow(next, indexColumn, types, showHidden);
+          Optional<MetadataEntry> metadataEntry =
+            parseRow(next, indexColumn, request.getTypes(), request.shouldShowHidden());
           if (!metadataEntry.isPresent()) {
             continue;
           }

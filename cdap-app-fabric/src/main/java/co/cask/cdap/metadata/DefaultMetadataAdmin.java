@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.EntityScope;
@@ -142,15 +143,8 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public MetadataSearchResponseV2 search(String namespaceId, String searchQuery,
-                                         Set<EntityTypeSimpleName> types,
-                                         SortInfo sortInfo, int offset, int limit,
-                                         int numCursors, String cursor, boolean showHidden,
-                                         Set<EntityScope> entityScope) throws Exception {
-    return filterAuthorizedSearchResult(
-      metadataStore.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
-                           entityScope)
-    );
+  public MetadataSearchResponseV2 search(SearchRequest searchRequest) throws Exception {
+    return filterAuthorizedSearchResult(metadataStore.search(searchRequest));
   }
 
   /**

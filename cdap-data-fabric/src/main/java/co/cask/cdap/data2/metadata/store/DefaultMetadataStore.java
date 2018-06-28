@@ -34,6 +34,7 @@ import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -341,14 +342,10 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public MetadataSearchResponseV2 search(String namespaceId, String searchQuery,
-                                         Set<EntityTypeSimpleName> types,
-                                         SortInfo sortInfo, int offset, int limit,
-                                         int numCursors, String cursor, boolean showHidden,
-                                         Set<EntityScope> entityScope) {
+  public MetadataSearchResponseV2 search(SearchRequest request) {
     Set<MetadataScope> searchScopes = EnumSet.allOf(MetadataScope.class);
-    if ("*".equals(searchQuery)) {
-      if (SortInfo.DEFAULT.equals(sortInfo)) {
+    if ("*".equals(request.getQuery())) {
+      if (SortInfo.DEFAULT.equals(request.getSortInfo())) {
         // Can't disallow this completely, because it is required for upgrade, but log a warning to indicate that
         // a full index search should not be done in production.
         LOG.warn("Attempt to search through all indexes. This query can have an adverse effect on performance and is " +
@@ -360,33 +357,25 @@ public class DefaultMetadataStore implements MetadataStore {
         searchScopes = EnumSet.of(MetadataScope.SYSTEM);
       }
     }
-    return search(searchScopes, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
-                  showHidden, entityScope);
+    return search(searchScopes, request);
   }
 
-  private MetadataSearchResponseV2 search(Set<MetadataScope> scopes, String namespaceId,
-                                          String searchQuery, Set<EntityTypeSimpleName> types,
-                                          SortInfo sortInfo, int offset, int limit,
-                                          int numCursors, String cursor, boolean showHidden,
-                                          Set<EntityScope> entityScope) {
-    if (offset < 0) {
-      throw new IllegalArgumentException("offset must not be negative");
-    }
-
-    if (limit < 0) {
-      throw new IllegalArgumentException("limit must not be negative");
-    }
-
+  private MetadataSearchResponseV2 search(Set<MetadataScope> scopes, SearchRequest request) {
     List<MetadataEntry> results = new LinkedList<>();
     List<String> cursors = new LinkedList<>();
     for (MetadataScope scope : scopes) {
-      SearchResults searchResults =
-        getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
-                         showHidden, entityScope);
+      SearchResults searchResults = execute(
+        mds -> {
+          return mds.search(request);
+        }, scope);
+
       results.addAll(searchResults.getResults());
       cursors.addAll(searchResults.getCursors());
     }
 
+    int offset = request.getOffset();
+    int limit = request.getLimit();
+    SortInfo sortInfo = request.getSortInfo();
     // sort if required
     Set<MetadataEntity> sortedEntities = getSortedEntities(results, sortInfo);
     int total = sortedEntities.size();
@@ -396,8 +385,9 @@ public class DefaultMetadataStore implements MetadataStore {
     // 2. Even when using custom sorting, we need to remove elements from the beginning to the offset and the cursors
     //    at the end
     // TODO: Figure out how all of this can be done server (HBase) side
-    int startIndex = Math.min(offset, sortedEntities.size());
-    int endIndex = (int) Math.min(Integer.MAX_VALUE, (long) offset + limit); // Account for overflow
+    int startIndex = Math.min(request.getOffset(), sortedEntities.size());
+    // Account for overflow
+    int endIndex = (int) Math.min(Integer.MAX_VALUE, (long) offset + limit);
     endIndex = Math.min(endIndex, sortedEntities.size());
 
     // add 1 to maxIndex because end index is exclusive
@@ -412,22 +402,9 @@ public class DefaultMetadataStore implements MetadataStore {
     Map<MetadataEntity, Metadata> userMetadata = fetchMetadata(sortedEntities, MetadataScope.USER);
 
     return new MetadataSearchResponseV2(
-      sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, numCursors, total,
-      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, showHidden,
-      entityScope);
-  }
-
-  private SearchResults getSearchResults(final MetadataScope scope, final String namespaceId,
-                                         final String searchQuery, final Set<EntityTypeSimpleName> types,
-                                         final SortInfo sortInfo, final int offset,
-                                         final int limit, final int numCursors,
-                                         final String cursor, final boolean showHidden,
-                                         final Set<EntityScope> entityScope) {
-    return execute(
-      mds -> {
-        return mds.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
-                            entityScope);
-      }, scope);
+      sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, request.getNumCursors(), total,
+      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, request.shouldShowHidden(),
+      request.getEntityScope());
   }
 
   private Set<MetadataEntity> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {
