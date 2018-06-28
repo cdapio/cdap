@@ -111,7 +111,8 @@ public interface TimeSchedulerService extends Service {
    * @param program program to fetch the next runtime.
    * @param programType type of program.
    * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
-   *                      equal to the start will be returned)
+   *                      equal to the start will be returned) If this is earlier than the current time,
+   *                      only scheduled runs later than the current time will be returned.
    * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
    *                    will be returned)
    * @return list of scheduled runtimes for the program. Empty list if there are no schedules

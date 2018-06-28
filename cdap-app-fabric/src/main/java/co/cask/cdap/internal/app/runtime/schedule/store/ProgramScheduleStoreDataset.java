@@ -430,7 +430,8 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * @return a list of schedule records for the application; never null
    */
   public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) {
-    return listScheduleRecords(appId, null);
+    byte[] prefix = keyPrefixForApplicationScan(appId);
+    return listSchedulesRecordsWithPrefix(prefix, schedule -> true);
   }
 
   /**
@@ -506,14 +507,11 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
-   * List schedule records in a given application and if the programId is not null, only return the schedules
-   * which can launch the given program
+   * List schedule records in a given application which can launch the given program.
    */
-  private List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId, @Nullable ProgramId programId) {
-    List<ProgramScheduleRecord> result = new ArrayList<>();
+  private List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId, ProgramId programId) {
     byte[] prefix = keyPrefixForApplicationScan(appId);
-    return listSchedulesRecordsWithPrefix(prefix, schedule ->
-      programId == null || programId.equals(schedule.getProgramId()));
+    return listSchedulesRecordsWithPrefix(prefix, schedule -> programId.equals(schedule.getProgramId()));
   }
 
   /**
@@ -532,8 +530,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
         byte[] serialized = row.get(SCHEDULE_COLUMN_BYTES);
         if (serialized != null) {
           ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
-
-          if (filter.apply(schedule)) {
+          if (schedule != null && filter.apply(schedule)) {
             result.add(new ProgramScheduleRecord(schedule, extractMetaFromRow(schedule.getScheduleId(), row)));
           }
         }
