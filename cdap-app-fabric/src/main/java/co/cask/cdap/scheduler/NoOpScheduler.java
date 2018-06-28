@@ -41,7 +41,7 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public void addSchedules(Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException {
+  public void addSchedules(Collection<? extends ProgramSchedule> schedules) throws AlreadyExistsException {
 
   }
 

@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -138,6 +139,13 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
       dashboardRecords.stream().filter(record -> SCHEDULED_PROG1_ID.getProgram().equals(record.getProgram())).count());
     Assert.assertEquals(expectedScheduledProgram2,
       dashboardRecords.stream().filter(record -> SCHEDULED_PROG2_ID.getProgram().equals(record.getProgram())).count());
+    // assert the artifact id is correct
+    Assert.assertTrue(dashboardRecords.stream()
+                        .filter(record -> SCHEDULED_PROG1_ID.getProgram().equals(record.getProgram()))
+                        .allMatch(schedule -> ArtifactSummary.from(ARTIFACT1_ID).equals(schedule.getArtifact())));
+    Assert.assertTrue(dashboardRecords.stream()
+                        .filter(record -> SCHEDULED_PROG2_ID.getProgram().equals(record.getProgram()))
+                        .allMatch(schedule -> ArtifactSummary.from(ARTIFACT2_ID).equals(schedule.getArtifact())));
     // get ops dashboard results between current time - 7200 and current time - 3600
     // from TEST_NAMESPACE1 and TEST_NAMESPACE2
     String beforeCurrentTimeQueryPath =

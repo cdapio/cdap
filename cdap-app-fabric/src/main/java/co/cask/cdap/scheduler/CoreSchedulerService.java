@@ -20,6 +20,8 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
@@ -27,14 +29,17 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
@@ -54,12 +59,16 @@ import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
@@ -73,6 +82,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  * Service that implements the Scheduler interface. This implements the actual Scheduler using
@@ -80,6 +90,9 @@ import java.util.concurrent.TimeoutException;
  */
 public class CoreSchedulerService extends AbstractIdleService implements Scheduler {
   private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerService.class);
+  private static final Gson GSON = new Gson();
+  private static final List<String> RESERVED_SCHEDULE_PROPERTIES =
+    ImmutableList.of(ProgramOptionConstants.ARTIFACT_ID, ProgramOptionConstants.USER_ID);
 
   private final CountDownLatch startedLatch;
   private final Transactional transactional;
@@ -87,14 +100,18 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private final DatasetFramework datasetFramework;
   private final TimeSchedulerService timeSchedulerService;
   private final AdminEventPublisher adminEventPublisher;
+  private final Store appMetaStore;
+  private final CConfiguration cConf;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                        TimeSchedulerService timeSchedulerService,
                        ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
                        ConstraintCheckerService constraintCheckerService,
-                       MessagingService messagingService,
-                       CConfiguration cConf) {
+                       Store store, CConfiguration cConf,
+                       NamespaceQueryAdmin namespaceQueryAdmin,
+                       MessagingService messagingService) {
     this.startedLatch = new CountDownLatch(1);
     this.datasetFramework = datasetFramework;
     MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
@@ -105,6 +122,9 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
     this.timeSchedulerService = timeSchedulerService;
+    this.appMetaStore = store;
+    this.cConf = cConf;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     // Use a retry on failure service to make it resilience to transient service unavailability during startup
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
       @Override
@@ -207,7 +227,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void addSchedules(Iterable<? extends ProgramSchedule> schedules)
+  public void addSchedules(Collection<? extends ProgramSchedule> schedules)
     throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException {
     checkStarted();
     for (ProgramSchedule schedule: schedules) {
@@ -216,10 +236,52 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           "Cannot schedule program %s of type %s: Only workflows can be scheduled",
           schedule.getProgramId().getProgram(), schedule.getProgramId().getType()));
       }
+      // check whether schedule contains reserved properties
+      for (String reservedProperty : RESERVED_SCHEDULE_PROPERTIES) {
+        if (schedule.getProperties().containsKey(reservedProperty)) {
+          throw new BadRequestException(String.format(
+            "Cannot add schedule %s since property '%s' is not allowed.",
+            schedule, reservedProperty));
+        }
+      }
     }
     try {
       execute((StoreAndProfileTxRunnable<Void, Exception>) (store, profileDataset) -> {
-        store.addSchedules(schedules);
+        store.addSchedules(schedules.stream().map(schedule -> {
+          ProgramScheduleBuilder scheduleBuilder = schedule.getBuilder();
+          // add artifact id to the schedule property
+          ProgramDescriptor programDescriptor;
+          try {
+            programDescriptor = appMetaStore.loadProgram(schedule.getProgramId());
+          } catch (Exception e) {
+            LOG.error("Exception occurs when looking up program descriptor for program {} when adding schedule {}",
+                      schedule.getProgramId(), schedule, e);
+            throw new RuntimeException(String.format("Exception occurs when looking up program descriptor for" +
+                                                       " program %s when adding schedule %s",
+                                                     schedule.getProgramId(), schedule), e);
+          }
+          scheduleBuilder.updateProperties(ProgramOptionConstants.ARTIFACT_ID,
+                         GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()));
+          // if the program has a namespace user configured then set that user in the security request context.
+          // See: CDAP-7396
+          String nsPrincipal;
+          try {
+            nsPrincipal = namespaceQueryAdmin.get(schedule.getProgramId().getNamespaceId()).getConfig().getPrincipal();
+          } catch (Exception e) {
+            LOG.error("Exception occurs when looking up namespace principal for namespace {} when adding schedule {}",
+                      schedule.getProgramId().getNamespace(), schedule, e);
+            throw new RuntimeException(String.format("Exception occurs when looking up namespace principal " +
+                                                       "for namespace for program %s when adding schedule %s",
+                                                     schedule.getProgramId().getNamespace(), schedule), e);
+          }
+          String userId = null;
+          if (nsPrincipal != null && SecurityUtil.isKerberosEnabled(cConf)) {
+            userId = new KerberosName(nsPrincipal).getServiceName();
+          }
+          // add the user name to the schedule property
+          scheduleBuilder.updateProperties(ProgramOptionConstants.USER_ID, userId);
+          return scheduleBuilder.build();
+        }).collect(Collectors.toList()));
         for (ProgramSchedule schedule : schedules) {
           if (schedule.getProperties() != null) {
             Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(

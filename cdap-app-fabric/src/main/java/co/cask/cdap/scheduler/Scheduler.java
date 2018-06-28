@@ -56,7 +56,7 @@ public interface Scheduler {
    * @throws NotFoundException if there is a profile assigned to the schedule and it does not exist
    * @throws ProfileConflictException if there is a profile assigned to the schedule and it is diabled
    */
-  void addSchedules(Iterable<? extends ProgramSchedule> schedules)
+  void addSchedules(Collection<? extends ProgramSchedule> schedules)
     throws AlreadyExistsException, BadRequestException, NotFoundException, ProfileConflictException;
 
   /**

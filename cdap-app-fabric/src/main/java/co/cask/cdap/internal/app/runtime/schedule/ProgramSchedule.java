@@ -59,6 +59,13 @@ public class ProgramSchedule {
     this.timeoutMillis = timeoutMillis;
   }
 
+  /**
+   * @return a {{@link ProgramScheduleBuilder}} with a copy of all fields in this schedule
+   */
+  public ProgramScheduleBuilder getBuilder() {
+    return new ProgramScheduleBuilder(this);
+  }
+
   public String getName() {
     return scheduleId.getSchedule();
   }

@@ -16,15 +16,13 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -39,7 +37,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
 import co.cask.cdap.scheduler.Scheduler;
-import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -47,10 +44,12 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,9 +57,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
 
 
 /**
@@ -79,21 +75,14 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   private final Store store;
   private final Scheduler scheduler;
   private final TimeSchedulerService timeSchedulerService;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final CConfiguration cConf;
 
   @Inject
-  public OperationsDashboardHttpHandler(Store store, Scheduler scheduler, TimeSchedulerService timeSchedulerService,
-                                        NamespaceQueryAdmin namespaceQueryAdmin,
-                                        CConfiguration cConf) {
+  public OperationsDashboardHttpHandler(Store store, Scheduler scheduler, TimeSchedulerService timeSchedulerService) {
     this.store = store;
     this.scheduler = scheduler;
     this.timeSchedulerService = timeSchedulerService;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.cConf = cConf;
   }
 
-  // TODO: [CDAP-13351] Need to support getting scheduled program runs if start + duration is ahead of the current time
   @GET
   @Path("/dashboard")
   public void readDashboardDetail(FullHttpRequest request, HttpResponder responder,
@@ -148,11 +137,12 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   }
 
   /**
-   * Gets all the scheduled program run in the given time range from the given namespaces
+   * Gets all the scheduled program run in the given time range from the given namespaces.
    *
    * @param namespaceIds the namespaces to get the program runs from
    * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
-   *                      equal to the start will be returned)
+   *                      equal to the start will be returned) If this is earlier than the current time,
+   *                      only scheduled runs later than the current time will be returned.
    * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
    *                    will be returned)
    * @return a list of dashboard program run records with scheduled time as start time
@@ -191,7 +181,8 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
    *
    * @param scheduleRecord the schedule to get scheduled program run with
    * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
-   *                      equal to the start will be returned)
+   *                      equal to the start will be returned) If this is earlier than the current time,
+   *                      only scheduled runs later than the current time will be returned.
    * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
    *                    will be returned)
    * @return a list of dashboard program run records with scheduled time as start time
@@ -202,18 +193,14 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     throws Exception {
     ProgramSchedule schedule = scheduleRecord.getSchedule();
     ProgramId programId = schedule.getProgramId();
-    ProgramDescriptor programDescriptor = store.loadProgram(programId);
-
-    ArtifactSummary artifactSummary = ArtifactSummary.from(programDescriptor.getArtifactId().toApiArtifactId());
-    // if the program has a namespace user configured then set that user in the security request context.
-    // See: CDAP-7396
-    String nsPrincipal = namespaceQueryAdmin.get(programId.getNamespaceId()).getConfig().getPrincipal();
-    String userId = nsPrincipal != null && SecurityUtil.isKerberosEnabled(cConf) ?
-      new KerberosName(nsPrincipal).getServiceName() : null;
     // get all the scheduled runtimes within the given time range of the given program
     List<ScheduledRuntime> scheduledRuntimes =
       timeSchedulerService.getAllScheduledRunTimes(programId, programId.getType().getSchedulableType(), startTimeSecs,
                                                    endTimeSecs);
+    String userId = schedule.getProperties().get(ProgramOptionConstants.USER_ID);
+    String artifactId = schedule.getProperties().get(ProgramOptionConstants.ARTIFACT_ID);
+    ArtifactSummary artifactSummary =
+      artifactId == null ? null : ArtifactSummary.from(GSON.fromJson(artifactId, ArtifactId.class));
     // for each scheduled runtime, construct a dashboard record for it with the scheduled time as start time
     return scheduledRuntimes.stream()
       .map(scheduledRuntime -> new DashboardProgramRunRecord(programId.getNamespace(), artifactSummary,
