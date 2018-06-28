@@ -490,6 +490,13 @@ public final class Constants {
   }
 
   /**
+   * Dataset Ops executor constants.
+   */
+  public static final class DatasetOpsExecutor {
+    public static final String INSTANCE_ID = "ops.executor.instance.id";
+  }
+
+  /**
    * Stream configurations and constants.
    */
   public static final class Stream {

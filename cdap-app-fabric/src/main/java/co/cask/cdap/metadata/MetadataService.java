@@ -28,7 +28,6 @@ import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
@@ -50,10 +49,8 @@ public class MetadataService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryService discoveryService;
   private final Set<HttpHandler> handlers;
-  private final MetadataUpgrader metadataUpgrader;
-  private final DatasetFramework dsFramework;
-  private final TransactionSystemClient txClient;
   private final Integer instanceId;
+  private final MetadataMigrator metadataMigrator;
 
   private NettyHttpService httpService;
   private Cancellable cancelDiscovery;
@@ -62,22 +59,19 @@ public class MetadataService extends AbstractIdleService {
   MetadataService(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                   DiscoveryService discoveryService,
                   @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers,
-                  MetadataUpgrader metadataUpgrader, DatasetFramework dsFramework, TransactionSystemClient txClient,
-                  @Assisted Integer instanceId) {
+                  DatasetFramework dsFramework, TransactionSystemClient txClient,
+                  @Named(Constants.DatasetOpsExecutor.INSTANCE_ID) Integer instanceId) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
-    this.metadataUpgrader = metadataUpgrader;
-    this.dsFramework = dsFramework;
-    this.txClient = txClient;
     this.instanceId = instanceId;
+    this.metadataMigrator = new MetadataMigrator(cConf, dsFramework, txClient);
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting Metadata Service");
-    metadataUpgrader.createOrUpgradeIfNecessary();
     httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
       .setHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
@@ -93,7 +87,6 @@ public class MetadataService extends AbstractIdleService {
 
     // Start migration only on the first instance of Dataset Ops Executor.
     if (instanceId == 0) {
-      MetadataMigrator metadataMigrator = new MetadataMigrator(cConf, dsFramework, txClient);
       metadataMigrator.start();
     }
 
@@ -109,6 +102,9 @@ public class MetadataService extends AbstractIdleService {
     LOG.debug("Shutting down Metadata Service");
     cancelDiscovery.cancel();
     httpService.stop();
+    if (metadataMigrator.isRunning()) {
+      metadataMigrator.stop();
+    }
     LOG.info("Metadata HTTP service stopped");
   }
 }

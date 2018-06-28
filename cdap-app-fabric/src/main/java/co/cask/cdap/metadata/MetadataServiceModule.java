@@ -24,6 +24,7 @@ import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import org.apache.twill.api.TwillContext;
 
 import java.util.Set;
 
@@ -31,9 +32,16 @@ import java.util.Set;
  * Guice module for metadata service.
  */
 public class MetadataServiceModule extends PrivateModule {
+  private final Integer instanceId;
+
+  public MetadataServiceModule(TwillContext twillContext) {
+    this.instanceId = twillContext.getInstanceId();
+  }
 
   @Override
   protected void configure() {
+    bind(Integer.class).annotatedWith(Names.named(Constants.DatasetOpsExecutor.INSTANCE_ID))
+      .toInstance(instanceId);
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
       binder(), HttpHandler.class, Names.named(Constants.Metadata.HANDLERS_NAME));
 
@@ -43,5 +51,7 @@ public class MetadataServiceModule extends PrivateModule {
     expose(Key.get(new TypeLiteral<Set<HttpHandler>>() { }, Names.named(Constants.Metadata.HANDLERS_NAME)));
     bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
     expose(MetadataAdmin.class);
+    bind(MetadataService.class);
+    expose(MetadataService.class);
   }
 }

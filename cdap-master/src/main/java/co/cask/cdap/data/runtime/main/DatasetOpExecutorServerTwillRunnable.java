@@ -89,7 +89,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
 
     String txClientId = String.format("cdap.service.%s.%d", Constants.Service.DATASET_EXECUTOR,
                                       context.getInstanceId());
-    injector = createInjector(cConf, hConf, txClientId);
+    injector = createInjector(cConf, hConf, txClientId, context);
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
@@ -99,7 +99,8 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
+  static Injector createInjector(CConfiguration cConf, Configuration hConf, String txClientId,
+                                 TwillContext twillContext) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
@@ -115,7 +116,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new LoggingModules().getDistributedModules(),
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
-      new MetadataServiceModule(),
+      new MetadataServiceModule(twillContext),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
