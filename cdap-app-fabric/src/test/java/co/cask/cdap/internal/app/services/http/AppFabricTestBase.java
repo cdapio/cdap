@@ -682,6 +682,15 @@ public abstract class AppFabricTestBase {
     return Collections.emptyList();
   }
 
+  protected List<Profile> listSystemProfiles(int expectedCode) throws Exception {
+    HttpResponse response = doGet("/v3/profiles");
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+    if (expectedCode == HttpResponseStatus.OK.code()) {
+      return GSON.fromJson(EntityUtils.toString(response.getEntity()), LIST_PROFILE);
+    }
+    return Collections.emptyList();
+  }
+
   protected Optional<Profile> getProfile(ProfileId profileId, int expectedCode) throws Exception {
     HttpResponse response = doGet(String.format("/v3/namespaces/%s/profiles/%s",
       profileId.getNamespace(), profileId.getProfile()));
@@ -692,17 +701,36 @@ public abstract class AppFabricTestBase {
     return Optional.empty();
   }
 
+  protected Optional<Profile> getSystemProfile(String profileName, int expectedCode) throws Exception {
+    HttpResponse response = doGet(String.format("/v3/profiles/%s", profileName));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+    if (expectedCode == HttpResponseStatus.OK.code()) {
+      return Optional.of(GSON.fromJson(EntityUtils.toString(response.getEntity()), Profile.class));
+    }
+    return Optional.empty();
+  }
+
   protected void putProfile(ProfileId profileId, Object profile,
-                          int expectedCode) throws Exception {
+                            int expectedCode) throws Exception {
     HttpResponse response = doPut(String.format("/v3/namespaces/%s/profiles/%s",
       profileId.getNamespace(),
       profileId.getProfile()), GSON.toJson(profile));
     Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
   }
 
+  protected void putSystemProfile(String profileName, Object profile, int expectedCode) throws Exception {
+    HttpResponse response = doPut(String.format("/v3/profiles/%s", profileName), GSON.toJson(profile));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+  }
+
   protected void deleteProfile(ProfileId profileId, int expectedCode) throws Exception {
     HttpResponse response = doDelete(String.format("/v3/namespaces/%s/profiles/%s",
       profileId.getNamespace(), profileId.getProfile()));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+  }
+
+  protected void deleteSystemProfile(String profileName, int expectedCode) throws Exception {
+    HttpResponse response = doDelete(String.format("/v3/profiles/%s", profileName));
     Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
   }
 
@@ -725,6 +753,11 @@ public abstract class AppFabricTestBase {
   protected void disableProfile(ProfileId profileId, int expectedCode) throws Exception {
     HttpResponse response = doPost(String.format("/v3/namespaces/%s/profiles/%s/disable",
       profileId.getNamespace(), profileId.getProfile()));
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+  }
+
+  protected void disableSystemProfile(String profileName, int expectedCode) throws Exception {
+    HttpResponse response = doPost(String.format("/v3/profiles/%s/disable", profileName));
     Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
   }
 

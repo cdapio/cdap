@@ -59,7 +59,7 @@ import javax.ws.rs.QueryParam;
 /**
  * {@link co.cask.http.HttpHandler} for managing profiles.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
+@Path(Constants.Gateway.API_VERSION_3)
 public class ProfileHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().create();
 
@@ -72,11 +72,63 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     this.provisioningService = provisioningService;
   }
 
+  @GET
+  @Path("/profiles")
+  public void getSystemProfiles(HttpRequest request, HttpResponder responder) {
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(NamespaceId.SYSTEM, true)));
+  }
+
+  @GET
+  @Path("/profiles/{profile-name}")
+  public void getSystemProfile(HttpRequest request, HttpResponder responder,
+                               @PathParam("profile-name") String profileName) throws NotFoundException {
+    ProfileId profileId = NamespaceId.SYSTEM.profile(profileName);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
+  }
+
+  @PUT
+  @Path("/profiles/{profile-name}")
+  public void writeSystemProfile(FullHttpRequest request, HttpResponder responder,
+                                 @PathParam("profile-name") String profileName)
+    throws BadRequestException, IOException {
+    ProfileId profileId = NamespaceId.SYSTEM.profile(profileName);
+    writeProfile(profileId, request);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("/profiles/{profile-name}/enable")
+  public void enableSystemProfile(HttpRequest request, HttpResponder responder,
+                                  @PathParam("profile-name") String profileName)
+    throws NotFoundException, ProfileConflictException {
+    profileService.enableProfile(NamespaceId.SYSTEM.profile(profileName));
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("/profiles/{profile-name}/disable")
+  public void disableSystemProfile(HttpRequest request, HttpResponder responder,
+                                   @PathParam("profile-name") String profileName)
+    throws NotFoundException, ProfileConflictException {
+    profileService.disableProfile(NamespaceId.SYSTEM.profile(profileName));
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @DELETE
+  @Path("/profiles/{profile-name}")
+  public void deleteSystemProfile(HttpRequest request, HttpResponder responder,
+                                  @PathParam("profile-name") String profileName)
+    throws NotFoundException, ProfileConflictException {
+    // TODO: add the check if there is any program or schedule associated with the profile
+    profileService.deleteProfile(NamespaceId.SYSTEM.profile(profileName));
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
   /**
    * List the profiles in the given namespace. By default the results will not contain profiles in system scope.
    */
   @GET
-  @Path("/profiles")
+  @Path("/namespaces/{namespace-id}/profiles")
   public void getProfiles(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
                           @QueryParam("includeSystem") @DefaultValue("false") String includeSystem) {
@@ -89,7 +141,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    * Get the information about a specific profile.
    */
   @GET
-  @Path("/profiles/{profile-name}")
+  @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void getProfile(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("profile-name") String profileName) throws NotFoundException {
@@ -101,23 +153,12 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    * Write a profile in a namespace.
    */
   @PUT
-  @Path("/profiles/{profile-name}")
+  @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void writeProfile(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @PathParam("profile-name") String profileName) throws BadRequestException, IOException {
-    ProfileCreateRequest profileCreateRequest;
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
-      profileCreateRequest = GSON.fromJson(reader, ProfileCreateRequest.class);
-      validateProvisionerProperties(profileCreateRequest);
-    } catch (JsonSyntaxException e) {
-      throw new BadRequestException("Unable to parse request body. Please make sure it is valid JSON", e);
-    }
     ProfileId profileId = new ProfileId(namespaceId, profileName);
-    Profile profile =
-      new Profile(profileName, profileCreateRequest.getDescription(),
-                  profileId.getNamespaceId().equals(NamespaceId.SYSTEM) ? EntityScope.SYSTEM : EntityScope.USER,
-                  profileCreateRequest.getProvisioner());
-    profileService.saveProfile(profileId, profile);
+    writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -127,7 +168,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    * and it cannot be in use by any running program.
    */
   @DELETE
-  @Path("/profiles/{profile-name}")
+  @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void deleteProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("profile-name") String profileName)
@@ -138,7 +179,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/profiles/{profile-name}/status")
+  @Path("/namespaces/{namespace-id}/profiles/{profile-name}/status")
   public void getProfileStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("profile-name") String profileName) throws NotFoundException {
@@ -151,7 +192,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    * and no new schedules/programs can be assigned to it.
    */
   @POST
-  @Path("/profiles/{profile-name}/disable")
+  @Path("/namespaces/{namespace-id}/profiles/{profile-name}/disable")
   public void disableProfile(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("profile-name") String profileName)
@@ -164,13 +205,28 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
    * Enable the profile, so that programs/schedules can be assigned to it.
    */
   @POST
-  @Path("/profiles/{profile-name}/enable")
+  @Path("/namespaces/{namespace-id}/profiles/{profile-name}/enable")
   public void enableProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("profile-name") String profileName)
     throws NotFoundException, ProfileConflictException {
     profileService.enableProfile(new ProfileId(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private void writeProfile(ProfileId profileId, FullHttpRequest request) throws BadRequestException, IOException {
+    ProfileCreateRequest profileCreateRequest;
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
+      profileCreateRequest = GSON.fromJson(reader, ProfileCreateRequest.class);
+      validateProvisionerProperties(profileCreateRequest);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Unable to parse request body. Please make sure it is valid JSON", e);
+    }
+    Profile profile =
+      new Profile(profileId.getProfile(), profileCreateRequest.getDescription(),
+                  profileId.getNamespaceId().equals(NamespaceId.SYSTEM) ? EntityScope.SYSTEM : EntityScope.USER,
+                  profileCreateRequest.getProvisioner());
+    profileService.saveProfile(profileId, profile);
   }
 
   private void validateProvisionerProperties(ProfileCreateRequest request) throws BadRequestException {
