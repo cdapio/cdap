@@ -495,17 +495,40 @@ public class RouterPathLookupTest {
   }
 
   @Test
+  public void testBeginsWith() {
+    // anything begins empty sequence
+    Assert.assertTrue(RouterPathLookup.beginsWith(new String[] { }));
+    Assert.assertTrue(RouterPathLookup.beginsWith(new String[] { "a" }));
+    // expected should not be longer than actual
+    Assert.assertFalse(RouterPathLookup.beginsWith(new String[] { }, "a"));
+    Assert.assertFalse(RouterPathLookup.beginsWith(new String[] { }, (String) null));
+    Assert.assertFalse(RouterPathLookup.beginsWith(new String[] { "a" }, "a", "b"));
+    Assert.assertFalse(RouterPathLookup.beginsWith(new String[] { "a" }, null, null));
+    // prefix matches
+    Assert.assertTrue(RouterPathLookup.beginsWith(new String[] { "a", "b" }, "a", "b"));
+    Assert.assertTrue(RouterPathLookup.beginsWith(new String[] { "a", "b", "c" }, "a", "b"));
+    // prefix with wildcards matches
+    Assert.assertTrue(RouterPathLookup.beginsWith(new String[] { "a", "b" }, null, "b"));
+    Assert.assertTrue(RouterPathLookup.beginsWith(new String[] { "a", "b" }, "a", null));
+    Assert.assertTrue(RouterPathLookup.beginsWith(new String[] { "a", "b", "c" }, "a", null));
+    // not matching
+    Assert.assertFalse(RouterPathLookup.beginsWith(new String[]{ "a", "b", "c"}, "b", "c"));
+    // should fail as actual has two extra string at end
+    Assert.assertFalse(RouterPathLookup.beginsWith(new String[]{"a", "b", "c", "d"}, null, "c", "d"));
+  }
+
+  @Test
   public void testEndsWith() {
     // expected should not be longer than actual
-    Assert.assertFalse(pathLookup.endsWith(new String[]{"a", "b", "c"}, "a", "b", "c", "d"));
+    Assert.assertFalse(RouterPathLookup.endsWith(new String[]{"a", "b", "c"}, "a", "b", "c", "d"));
     // should pass as ends with is correct
-    Assert.assertTrue(pathLookup.endsWith(new String[]{"a", "b", "c"}, "b", "c"));
+    Assert.assertTrue(RouterPathLookup.endsWith(new String[]{"a", "b", "c"}, "b", "c"));
     // should fail as actual does not end with 'c'
-    Assert.assertFalse(pathLookup.endsWith(new String[]{"a", "b", "c"}, "a", "b"));
+    Assert.assertFalse(RouterPathLookup.endsWith(new String[]{"a", "b", "c"}, "a", "b"));
     // should pass as actual has one extra string at end
-    Assert.assertTrue(pathLookup.endsWith(new String[]{"a", "b", "c"}, "a", "b", "?"));
+    Assert.assertTrue(RouterPathLookup.endsWith(new String[]{"a", "b", "c"}, "a", "b", null));
     // should fail as actual has two extra string at end
-    Assert.assertFalse(pathLookup.endsWith(new String[]{"a", "b", "c", "d"}, "a", "b", "?"));
+    Assert.assertFalse(RouterPathLookup.endsWith(new String[]{"a", "b", "c", "d"}, "a", "b", null));
   }
 
   private void assertRouting(String path, RouteDestination destination) {
