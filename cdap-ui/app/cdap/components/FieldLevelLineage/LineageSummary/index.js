@@ -25,7 +25,7 @@ import OperationsModal from 'components/FieldLevelLineage/OperationsModal';
 
 require('./LineageSummary.scss');
 
-function LineageSummaryView({activeField, datasetId, backwardLineage, close}) {
+function LineageSummaryView({activeField, datasetId, incomingLineage, close}) {
   if (!activeField) { return null; }
 
   return (
@@ -40,7 +40,7 @@ function LineageSummaryView({activeField, datasetId, backwardLineage, close}) {
         </div>
 
         <div className="lineage-count">
-          {backwardLineage.length} Datasets
+          {incomingLineage.length} Datasets
         </div>
 
         <IconSVG
@@ -51,7 +51,7 @@ function LineageSummaryView({activeField, datasetId, backwardLineage, close}) {
       </div>
 
       {
-        backwardLineage.map((entity) => {
+        incomingLineage.map((entity) => {
           return <SummaryRow entity={entity} />;
         })
       }
@@ -72,7 +72,7 @@ function LineageSummaryView({activeField, datasetId, backwardLineage, close}) {
 LineageSummaryView.propTypes = {
   activeField: PropTypes.string,
   datasetId: PropTypes.string,
-  backwardLineage: PropTypes.array,
+  incomingLineage: PropTypes.array,
   close: PropTypes.func
 };
 
@@ -80,7 +80,7 @@ const mapStateToProps = (state) => {
   return {
     activeField: state.lineage.activeField,
     datasetId: state.lineage.datasetId,
-    backwardLineage: state.lineage.backward
+    incomingLineage: state.lineage.incoming
   };
 };
 

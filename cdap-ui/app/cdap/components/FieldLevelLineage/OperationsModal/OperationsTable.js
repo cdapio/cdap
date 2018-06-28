@@ -105,7 +105,7 @@ export default class OperationsTable extends Component {
             return (
               <div
                 key={operation.id}
-                className={classnames('grid-row', {'active': operation.id === this.state.activeId})}
+                className={classnames('grid-row', {'active': operation.name === this.state.activeId})}
               >
                 <div>{ i + 1 }</div>
                 <div>{ this.renderInput(operation) }</div>
