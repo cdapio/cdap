@@ -83,7 +83,7 @@ class AddModelToPipelineBtn extends Component {
         }
       );
   }
-  geneartePipelineConfig = () => {
+  generatePipelineConfig = () => {
     let {experimentId, modelId, predictionField} = this.props;
     let {mmdsPluginsArtifact, datapipelineArtifact} = this.state;
     let pipelineConfig = getPipelineConfig({
@@ -106,7 +106,7 @@ class AddModelToPipelineBtn extends Component {
       <fielset className="add-model-to-pipeline" disabled={this.state.disabled}>
         <a
           className="btn btn-primary"
-          onClick={this.geneartePipelineConfig}
+          onClick={this.generatePipelineConfig}
           href={this.state.disabled ? null : this.batchPipelineUrl}
         >
           <span>Create a scoring pipeline</span>
