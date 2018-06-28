@@ -61,7 +61,9 @@ public final class FindPluginHelper {
                                   "Required property '%s' missing for plugin of type %s, name %s.",
                                   field.getName(), pluginType, pluginName);
       if (field.isMacroSupported()) {
-        MacroParser parser = new MacroParser(collectMacroEvaluator, field.isMacroEscapingEnabled());
+        MacroParser parser = MacroParser.builder(collectMacroEvaluator)
+          .setEscapingEnabled(field.isMacroEscapingEnabled())
+          .build();
         parser.parse(properties.getProperties().get(field.getName()));
       }
     }

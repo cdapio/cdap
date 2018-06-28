@@ -279,12 +279,16 @@ public class PluginInstantiator implements Closeable {
         // TODO: cleanup after endpoint to get plugin details is merged (#6089)
         if (configTime) {
           // parse for syntax check and check if trackingMacroEvaluator finds macro syntax present
-          MacroParser macroParser = new MacroParser(trackingMacroEvaluator, field.isMacroEscapingEnabled());
+          MacroParser macroParser = MacroParser.builder(trackingMacroEvaluator)
+            .setEscapingEnabled(field.isMacroEscapingEnabled())
+            .build();
           macroParser.parse(propertyValue);
           propertyValue = getOriginalOrDefaultValue(propertyValue, property.getKey(), field.getType(),
                                                     trackingMacroEvaluator);
         } else {
-          MacroParser macroParser = new MacroParser(macroEvaluator, field.isMacroEscapingEnabled());
+          MacroParser macroParser = MacroParser.builder(macroEvaluator)
+            .setEscapingEnabled(field.isMacroEscapingEnabled())
+            .build();
           propertyValue = macroParser.parse(propertyValue);
         }
       }
@@ -324,7 +328,9 @@ public class PluginInstantiator implements Closeable {
       if (pluginEntry.getValue() != null && pluginField.isMacroSupported()) {
         String macroValue = plugin.getProperties().getProperties().get(pluginEntry.getKey());
         if (macroValue != null) {
-          MacroParser macroParser = new MacroParser(trackingMacroEvaluator, pluginField.isMacroEscapingEnabled());
+          MacroParser macroParser = MacroParser.builder(trackingMacroEvaluator)
+            .setEscapingEnabled(pluginField.isMacroEscapingEnabled())
+            .build();
           macroParser.parse(macroValue);
           if (trackingMacroEvaluator.hasMacro()) {
             macroFields.add(pluginEntry.getKey());
