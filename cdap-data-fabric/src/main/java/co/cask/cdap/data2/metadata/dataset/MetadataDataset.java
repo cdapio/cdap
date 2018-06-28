@@ -19,6 +19,7 @@ package co.cask.cdap.data2.metadata.dataset;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
@@ -76,6 +77,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -524,6 +526,7 @@ public class MetadataDataset extends AbstractDataset {
     removeMetadata(metadataEntity, TAGS_KEY::equals);
   }
 
+
   /**
    * Returns the snapshot of the metadata for entities on or before the given time.
    * @param metadataEntitys entity ids
@@ -820,6 +823,11 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   private void write(MetadataEntity metadataEntity, MetadataEntry entry, Set<Indexer> indexers) {
+    writeWithoutHistory(metadataEntity, entry, indexers);
+    writeHistory(metadataEntity);
+  }
+
+  private void writeWithoutHistory(MetadataEntity metadataEntity, MetadataEntry entry, Set<Indexer> indexers) {
     String key = entry.getKey();
     MDSKey mdsValueKey = MetadataKey.createValueRowKey(metadataEntity, key);
     Put put = new Put(mdsValueKey.getKey());
@@ -828,7 +836,6 @@ public class MetadataDataset extends AbstractDataset {
     put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
     indexedTable.put(put);
     storeIndexes(metadataEntity, key, indexers, entry);
-    writeHistory(metadataEntity);
   }
 
   /**
@@ -893,10 +900,17 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity target id for which metadata needs snapshotting
    */
   private void writeHistory(MetadataEntity metadataEntity) {
+    writeHistory(metadataEntity, -1);
+  }
+
+  private void writeHistory(MetadataEntity metadataEntity, long time) {
     Map<String, String> properties = getProperties(metadataEntity);
     Set<String> tags = getTags(metadataEntity);
     Metadata metadata = new Metadata(metadataEntity, properties, tags);
-    byte[] row = MetadataHistoryKey.getMDSKey(metadataEntity, System.currentTimeMillis()).getKey();
+    if (time < 0) {
+      time = System.currentTimeMillis();
+    }
+    byte[] row = MetadataHistoryKey.getMDSKey(metadataEntity, time).getKey();
     indexedTable.put(row, Bytes.toBytes(HISTORY_COLUMN), Bytes.toBytes(GSON.toJson(metadata)));
   }
 
@@ -1085,7 +1099,7 @@ public class MetadataDataset extends AbstractDataset {
      * If the term is a [key]:[value] search, any whitespace around the ':' separator will be removed.
      * For example, 'foo : bar' will be changed to 'foo:bar'.
      * If it is a prefix search, the part before the ending '*' will be used taken as the term.
-     *
+     * <p>
      * For example, given raw term ' State : BETA* ', the result will be a prefix search where term = 'state:beta'.
      *
      * @param rawTerm the raw search term
@@ -1101,12 +1115,12 @@ public class MetadataDataset extends AbstractDataset {
      * For example, 'foo : bar' will be changed to 'foo:bar'.
      * If it is a prefix search, the part before the ending '*' will be used taken as the term.
      * If it is a namespace search, the namespace will be prefixed to the term.
-     *
+     * <p>
      * For example, given namespace 'ns1' and raw term ' State : BETA* ', the result will be a
      * prefix search where term = 'ns1:state:beta'.
      *
      * @param namespaceId the namespace id if it is a within-namespace search, or null if it is cross namespace
-     * @param rawTerm the raw search term
+     * @param rawTerm     the raw search term
      */
     static SearchTerm from(@Nullable NamespaceId namespaceId, String rawTerm) {
       String formattedTerm = rawTerm.trim().toLowerCase();
@@ -1127,6 +1141,111 @@ public class MetadataDataset extends AbstractDataset {
       }
 
       return new SearchTerm(namespaceId, formattedTerm, isPrefix);
+    }
+
+  }
+
+  /**
+   * Starts scanning/deleting of V1 table value row keys in batches. If there are no more value row keys available,
+   * it will scan history rows. If there are no value/history rows, it returns empty list.
+   *
+   * @param limit  Batch size for scan/delete.
+   * @param delete Determines if operation to perform is scan or delete.
+   * @return List of {@link KeyValue} where key is timestamp for history row other wise it is null,
+   * value is {@link MetadataEntry}
+   */
+  public List<KeyValue<Long, MetadataEntry>> scanOrDeleteFromV1Table(int limit, boolean delete) {
+    // Try to scan value rows first
+    byte[] rowPrefix = MdsKey.getValueRowPrefix();
+    byte[] stopRowKey = Bytes.stopKeyForPrefix(rowPrefix);
+
+    List<KeyValue<Long, MetadataEntry>> entries = scanOrDelete(rowPrefix, stopRowKey, limit, delete,
+                                                               this::convertFromV1Value);
+
+    // Scan History rows if all the Value rows are scanned
+    if (entries.size() < limit) {
+      rowPrefix = MdsHistoryKey.getHistoryRowPrefix();
+      stopRowKey = Bytes.stopKeyForPrefix(rowPrefix);
+      entries.addAll(scanOrDelete(rowPrefix, stopRowKey, limit - entries.size(), delete, this::convertFromV1History));
+    }
+
+    return entries;
+  }
+
+  private List<KeyValue<Long, MetadataEntry>> scanOrDelete(byte[] rowPrefix, byte[] stopRowKey,
+                                                           int limit, boolean delete,
+                                                           Function<Row, KeyValue<Long, MetadataEntry>> function) {
+    List<KeyValue<Long, MetadataEntry>> entries = new LinkedList<>();
+    try (Scanner scan = indexedTable.scan(rowPrefix, stopRowKey)) {
+      Row row;
+      while ((row = scan.next()) != null && limit > 0) {
+        KeyValue<Long, MetadataEntry> entry = function.apply(row);
+
+        if (entry != null) {
+          entries.add(entry);
+          limit--;
+        }
+
+        if (delete) {
+          indexedTable.delete(new Delete(row.getRow()));
+        }
+      }
+    }
+    return entries;
+  }
+
+  /**
+   * Deserializes value row key to get metadata entry.
+   *
+   * @param row value row.
+   * @return {@link KeyValue} key is null, value is {@link MetadataEntry}.
+   */
+  @Nullable
+  private KeyValue<Long, MetadataEntry> convertFromV1Value(Row row) {
+    byte[] rowKey = row.getRow();
+    String targetType = MdsKey.getTargetType(rowKey);
+    NamespacedEntityId namespacedEntityId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
+    String key = MdsKey.getMetadataKey(targetType, rowKey);
+    byte[] value = row.get(VALUE_COLUMN);
+    if (key == null || value == null) {
+      return null;
+    }
+    return new KeyValue<>(null, new MetadataEntry(namespacedEntityId, key, Bytes.toString(value)));
+  }
+
+  /**
+   * Deserializes history row key to get timestamp and metadata entry.
+   *
+   * @param row history row.
+   * @return {@link KeyValue} key is timestamp from history key, value is {@link MetadataEntry}.
+   */
+  @Nullable
+  private KeyValue<Long, MetadataEntry> convertFromV1History(Row row) {
+    byte[] rowKey = row.getRow();
+    long historyTime = MdsHistoryKey.getHistoryTime(rowKey);
+    MetadataV1 metadata = GSON.fromJson(row.getString(HISTORY_COLUMN), MetadataV1.class);
+    if (metadata == null) {
+      return null;
+    }
+    // For history we do not care about key and value for MetadataEntry as we are not going to extract that
+    // information for upgrade
+    return new KeyValue<>(historyTime, new MetadataEntry(metadata.getEntityId(), "", ""));
+  }
+
+  /**
+   * Writes entries to V2 MetadataTable.
+   *
+   * @param entries list of entries to be written.
+   */
+  public void writeUpgradedRow(List<KeyValue<Long, MetadataEntry>> entries) {
+    for (KeyValue<Long, MetadataEntry> kv : entries) {
+      MetadataEntry entry = kv.getValue();
+      if (kv.getKey() == null) {
+        writeWithoutHistory(entry.getMetadataEntity(), entry,
+                            getIndexersForKey(entry.getMetadataEntity(), entry.getKey()));
+      } else {
+        writeHistory(entry.getMetadataEntity());
+      }
     }
   }
 }

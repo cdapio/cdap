@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,12 +22,15 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -48,6 +51,9 @@ public class MetadataService extends AbstractIdleService {
   private final DiscoveryService discoveryService;
   private final Set<HttpHandler> handlers;
   private final MetadataUpgrader metadataUpgrader;
+  private final DatasetFramework dsFramework;
+  private final TransactionSystemClient txClient;
+  private final Integer instanceId;
 
   private NettyHttpService httpService;
   private Cancellable cancelDiscovery;
@@ -56,12 +62,16 @@ public class MetadataService extends AbstractIdleService {
   MetadataService(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                   DiscoveryService discoveryService,
                   @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers,
-                  MetadataUpgrader metadataUpgrader) {
+                  MetadataUpgrader metadataUpgrader, DatasetFramework dsFramework, TransactionSystemClient txClient,
+                  @Assisted Integer instanceId) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
     this.metadataUpgrader = metadataUpgrader;
+    this.dsFramework = dsFramework;
+    this.txClient = txClient;
+    this.instanceId = instanceId;
   }
 
   @Override
@@ -80,6 +90,12 @@ public class MetadataService extends AbstractIdleService {
       .build();
 
     httpService.start();
+
+    // Start migration only on the first instance of Dataset Ops Executor.
+    if (instanceId == 0) {
+      MetadataMigrator metadataMigrator = new MetadataMigrator(cConf, dsFramework, txClient);
+      metadataMigrator.start();
+    }
 
     InetSocketAddress socketAddress = httpService.getBindAddress();
     LOG.info("Metadata service running at {}", socketAddress);
