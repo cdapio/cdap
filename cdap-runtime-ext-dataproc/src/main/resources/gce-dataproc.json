@@ -14,7 +14,7 @@
           }
         },
         {
-          "widget-type": "textarea",
+          "widget-type": "securekey-textarea",
           "label": "Service Account Key",
           "name": "accountKey",
           "required": true,
