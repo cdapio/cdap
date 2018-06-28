@@ -21,11 +21,12 @@ import {Dropdown, DropdownToggle, DropdownMenu} from 'reactstrap';
 import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
 import {connect} from 'react-redux';
 import StatusMapper from 'services/StatusMapper';
-import ProfilesListView, {extractProfileName, isSystemProfile} from 'components/PipelineDetails/ProfilesListView';
+import ProfilesListView from 'components/PipelineDetails/ProfilesListView';
 import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {preventPropagation} from 'services/helpers';
+import {extractProfileName, isSystemProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
 require('./ProfilesForSchedule.scss');
 
 export const PROFILES_DROPDOWN_DOM_CLASS = 'profiles-list-dropdown';

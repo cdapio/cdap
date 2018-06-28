@@ -26,22 +26,32 @@ import orderBy from 'lodash/orderBy';
 import ViewAllLabel from 'components/ViewAllLabel';
 import ConfirmationModal from 'components/ConfirmationModal';
 import ProfilesStore, {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
-import {getProfiles, deleteProfile, setError} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {
+  getProfiles,
+  deleteProfile,
+  setError,
+  getDefaultProfile,
+  setDefaultProfile,
+  extractProfileName,
+  getProfileNameWithScope,
+  resetProfiles
+} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {connect, Provider} from 'react-redux';
 import Alert from 'components/Alert';
 import uuidV4 from 'uuid/v4';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
-import {DEFAULT_PROFILE_NAME, extractProfileName} from 'components/PipelineDetails/ProfilesListView';
+import {CLOUD} from 'services/global-constants';
 import {preventPropagation} from 'services/helpers';
+import findIndex from 'lodash/findIndex';
 require('./ListView.scss');
 
 const PREFIX = 'features.Cloud.Profiles';
 
 const PROFILES_TABLE_HEADERS = [
   {
-    label: ''
+    label: T.translate(`${PREFIX}.ListView.default`)
   },
   {
     property: 'name',
@@ -110,19 +120,39 @@ class ProfilesListView extends Component {
   static propTypes = {
     namespace: PropTypes.string.isRequired,
     profiles: PropTypes.array,
+    defaultProfile: PropTypes.string,
+    newProfile: PropTypes.string,
     error: PropTypes.any,
     loading: PropTypes.bool
   };
 
   componentDidMount() {
     getProfiles(this.props.namespace);
+    getDefaultProfile(this.props.namespace);
     this.getProvisioners();
+  }
+
+  componentWillUnmount() {
+    resetProfiles();
   }
 
   componentWillReceiveProps(nextProps) {
     if (!isEqual(nextProps.profiles, this.props.profiles)) {
+      let orderedProfiles = orderBy(nextProps.profiles, this.state.sortColumn, this.state.sortMethod);
+      let viewAll = this.state.viewAll;
+
+      if (this.props.newProfile
+          && orderedProfiles.length > NUM_PROFILES_TO_SHOW
+          && !this.state.viewAll) {
+        let newProfileName = extractProfileName(this.props.newProfile);
+        let newProfileIndex = findIndex(orderedProfiles, {name: newProfileName});
+        if (newProfileIndex >= NUM_PROFILES_TO_SHOW) {
+          viewAll = true;
+        }
+      }
       this.setState({
-        profiles: orderBy(nextProps.profiles, this.state.sortColumn, this.state.sortMethod)
+        profiles: orderedProfiles,
+        viewAll
       });
     }
   }
@@ -280,13 +310,23 @@ class ProfilesListView extends Component {
     );
   }
 
+  setProfileAsDefault = (profileName, e) => {
+    if (profileName !== this.props.defaultProfile) {
+      setDefaultProfile(this.props.namespace, profileName);
+    }
+    preventPropagation(e);
+  }
+
   renderProfilerow = (profile) => {
     let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
     let provisionerName = profile.provisioner.name;
     profile.provisioner.label = this.state.provisionersMap[provisionerName] || provisionerName;
     let profileStatus = PROFILE_STATUSES[profile.status];
     let Tag = Link;
-    let isNativeProfile = profile.name === extractProfileName(DEFAULT_PROFILE_NAME);
+    const profileName = getProfileNameWithScope(profile.name, profile.scope);
+    const isNativeProfile = profileName === CLOUD.DEFAULT_PROFILE_NAME;
+    const profileIsDefault = profileName === this.props.defaultProfile;
+
     const actionsElem = () => {
       if (isNativeProfile) {
         return (
@@ -307,11 +347,28 @@ class ProfilesListView extends Component {
       <Tag
         to={`/ns/${namespace}/profiles/details/${profile.name}`}
         className={classnames("grid-row grid-link", {
-          'native-profile': isNativeProfile
+          "native-profile": isNativeProfile,
+          "highlighted": profileName === this.props.newProfile
         })}
         key={uuidV4()}
       >
-        <div></div>
+        <div
+          className="default-star"
+          onClick={this.setProfileAsDefault.bind(this, profileName)}
+        >
+          {
+            profileIsDefault ?
+              <IconSVG
+                name="icon-star"
+                className="default-profile"
+              />
+            :
+              <IconSVG
+                name="icon-star-o"
+                className="not-default-profile"
+              />
+          }
+        </div>
         <div title={profile.name}>
           {profile.name}
         </div>
@@ -382,17 +439,14 @@ class ProfilesListView extends Component {
       return null;
     }
 
-    let error = T.translate(`${PREFIX}.ListView.importError`);
-    if (typeof this.props.error === 'string') {
-      error = `${error}: ${this.props.error}`;
-    }
+    let error = this.props.error.response || this.props.error;
 
     return (
       <Alert
         message={error}
         type='error'
         showAlert={true}
-        onClose={setError.bind(null, null)}
+        onClose={setError}
       />
     );
   }
@@ -430,6 +484,8 @@ class ProfilesListView extends Component {
 const mapStateToProps = (state) => {
   return {
     profiles: state.profiles,
+    defaultProfile: state.defaultProfile,
+    newProfile: state.newProfile,
     loading: state.loading,
     error: state.error
   };

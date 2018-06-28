@@ -67,6 +67,8 @@ $enabled-color: $green-02;
       }
     }
     .grid-header {
+      z-index: 1;
+
       .grid-row {
         background: $grey-07;
       }
@@ -88,6 +90,11 @@ $enabled-color: $green-02;
           height: 100%;
           display: flex;
           align-items: center;
+        }
+
+        .icon-star {
+          color: $orange-01;
+          margin-right: 5px;
         }
       }
     }

@@ -19,6 +19,8 @@ import {defaultAction, composeEnhancers} from 'services/helpers';
 
 const PROFILES_ACTIONS = {
   SET_PROFILES: 'SET_PROFILES',
+  SET_DEFAULT_PROFILE: 'SET_DEFAULT_PROFILE',
+  SET_NEW_PROFILE: 'SET_NEW_PROFILE',
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
   RESET: 'RESET'
@@ -26,6 +28,8 @@ const PROFILES_ACTIONS = {
 
 const DEFAULT_PROFILES_STATE = {
   profiles: [],
+  defaultProfile: null,
+  newProfile: "",
   loading: false,
   error: null,
 };
@@ -35,6 +39,7 @@ const PROFILE_STATUSES = {
   DISABLED: 'disabled'
 };
 
+
 const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
   switch (action.type) {
     case PROFILES_ACTIONS.SET_PROFILES:
@@ -43,6 +48,16 @@ const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
         profiles: action.payload.profiles,
         error: null,
         loading: false
+      };
+    case PROFILES_ACTIONS.SET_DEFAULT_PROFILE:
+      return {
+        ...state,
+        defaultProfile: action.payload.defaultProfile
+      };
+    case PROFILES_ACTIONS.SET_NEW_PROFILE:
+      return {
+        ...state,
+        newProfile: action.payload.newProfile
       };
     case PROFILES_ACTIONS.SET_LOADING:
       return {

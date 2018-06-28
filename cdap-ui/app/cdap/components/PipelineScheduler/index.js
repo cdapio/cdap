@@ -40,8 +40,7 @@ import {Observable} from 'rxjs/Observable';
 import {PROFILES_DROPDOWN_DOM_CLASS} from 'components/PipelineScheduler/ProfilesForSchedule';
 import {MyScheduleApi} from 'api/schedule';
 import T from 'i18n-react';
-import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
-import {GLOBALS} from 'services/global-constants';
+import {GLOBALS, CLOUD} from 'services/global-constants';
 import isEmpty from 'lodash/isEmpty';
 
 const PREFIX = 'features.PipelineScheduler';
@@ -79,7 +78,7 @@ export default class PipelineScheduler extends Component {
         return constraint.type === 'CONCURRENCY';
       }) || {};
       let profileNameFromBackend = objectQuery(
-        state, 'currentBackendSchedule', 'properties', PROFILE_NAME_PREFERENCE_PROPERTY
+        state, 'currentBackendSchedule', 'properties', CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY
       ) || null;
       if (
         currentCron !== objectQuery(currentBackendSchedule, 'trigger', 'cronExpression') ||
@@ -200,13 +199,13 @@ export default class PipelineScheduler extends Component {
     if (profiles.selectedProfile) {
       scheduleProperties = {
         ...scheduleProperties,
-        [PROFILE_NAME_PREFERENCE_PROPERTY]: profiles.selectedProfile
+        [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY]: profiles.selectedProfile
       };
     }
     if (!isEmpty(profiles.profileCustomizations)) {
       let profileCustomizations = {};
       Object.keys(profiles.profileCustomizations).forEach(profileProp => {
-        profileCustomizations[`${PROFILE_PROPERTIES_PREFERENCE}.${profileProp}`] = profiles.profileCustomizations[profileProp];
+        profileCustomizations[`${CLOUD.PROFILE_PROPERTIES_PREFERENCE}.${profileProp}`] = profiles.profileCustomizations[profileProp];
       });
       scheduleProperties = {
         ...scheduleProperties,

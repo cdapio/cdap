@@ -16,9 +16,11 @@
 
 import ProfilesStore, {PROFILES_ACTIONS} from 'components/Cloud/Profiles/Store';
 import {MyCloudApi} from 'api/cloud';
+import {MyPreferenceApi} from 'api/preference';
 import fileDownload from 'js-file-download';
 import {objectQuery} from 'services/helpers';
 import {Observable} from 'rxjs/Observable';
+import {CLOUD} from 'services/global-constants';
 
 export const getProfiles = (namespace) => {
   ProfilesStore.dispatch({
@@ -44,12 +46,7 @@ export const getProfiles = (namespace) => {
           payload: { profiles }
         });
       },
-      (error) => {
-        ProfilesStore.dispatch({
-          type: PROFILES_ACTIONS.SET_ERROR,
-          payload: { error }
-        });
-      }
+      setError
     );
 };
 
@@ -65,12 +62,7 @@ export const exportProfile = (namespace, profile) => {
         let fileName = `${profile.name}-${profile.provisioner.name}-profile.json`;
         fileDownload(json, fileName);
       },
-      (error) => {
-        ProfilesStore.dispatch({
-          type: PROFILES_ACTIONS.SET_ERROR,
-          payload: { error }
-        });
-      }
+      setError
     );
 };
 
@@ -79,9 +71,13 @@ export const deleteProfile = (namespace, profile, currentNamespace) => {
     namespace,
     profile
   });
-  deleteObservable.subscribe(() => {
-    getProfiles(currentNamespace);
-  });
+  deleteObservable.subscribe(
+    () => {
+      getProfiles(currentNamespace);
+    },
+    (err) => {
+      Observable.throw(err);
+    });
   return deleteObservable;
 };
 
@@ -116,6 +112,9 @@ export const importProfile = (namespace, e) => {
       .subscribe(
         () => {
           getProfiles(namespace);
+          let profilePrefix = namespace === 'system' ? 'SYSTEM' : 'USER';
+          let profileName = `${profilePrefix}:${jsonSpec.name}`;
+          highlightNewProfile(profileName);
         },
         (error) => {
           ProfilesStore.dispatch({
@@ -129,7 +128,7 @@ export const importProfile = (namespace, e) => {
   };
 };
 
-export const setError = (error) => {
+export const setError = (error = null) => {
   ProfilesStore.dispatch({
     type: PROFILES_ACTIONS.SET_ERROR,
     payload: { error }
@@ -152,4 +151,91 @@ export const getProvisionerLabel = (profile, provisioners) => {
     }
   }
   return profile.provisioner.name;
+};
+
+export const extractProfileName = (name = '') => {
+  return name.replace(/(USER|SYSTEM):/g, '');
+};
+
+export const getProfileNameWithScope = (name = '', scope) => {
+  if (name && scope) {
+    if (scope === 'SYSTEM') {
+      return `SYSTEM:${name}`;
+    }
+    return `USER:${name}`;
+  }
+  return name;
+};
+
+export const isSystemProfile = (name = '') => {
+  return name.indexOf('SYSTEM:') === 0;
+};
+
+export const getDefaultProfile = (namespace) => {
+  let preferenceApi;
+
+  if (namespace === 'system') {
+    preferenceApi = MyPreferenceApi.getSystemPreferences();
+  } else {
+    preferenceApi = MyPreferenceApi.getNamespacePreferences({namespace});
+  }
+
+  preferenceApi
+    .subscribe(
+      (preferences = {}) => {
+        let defaultProfile = preferences[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY];
+        if (!defaultProfile && namespace === 'system') {
+          defaultProfile = CLOUD.DEFAULT_PROFILE_NAME;
+        }
+        if (defaultProfile) {
+          ProfilesStore.dispatch({
+            type: PROFILES_ACTIONS.SET_DEFAULT_PROFILE,
+            payload: { defaultProfile }
+          });
+        }
+      },
+      setError
+    );
+};
+
+export const setDefaultProfile = (namespace, profileName) => {
+  let postBody = {
+    [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY]: profileName
+  };
+
+  let preferenceApi;
+
+  if (namespace === 'system') {
+    preferenceApi = MyPreferenceApi.setSystemPreferences({}, postBody);
+  } else {
+    preferenceApi = MyPreferenceApi.setNamespacePreferences({namespace}, postBody);
+  }
+
+  preferenceApi
+    .subscribe(
+      () => {
+        ProfilesStore.dispatch({
+          type: PROFILES_ACTIONS.SET_DEFAULT_PROFILE,
+          payload: { defaultProfile: profileName }
+        });
+      },
+      setError
+    );
+};
+
+export const highlightNewProfile = (profileName) => {
+  ProfilesStore.dispatch({
+    type: PROFILES_ACTIONS.SET_NEW_PROFILE,
+    payload: {
+      newProfile: profileName
+    }
+  });
+  setTimeout(() => {
+    ProfilesStore.dispatch({
+      type: PROFILES_ACTIONS.SET_NEW_PROFILE,
+      payload: {
+        newProfile: null
+      }
+    });
+  }, 3000);
 };

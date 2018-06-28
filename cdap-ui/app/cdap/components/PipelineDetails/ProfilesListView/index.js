@@ -30,18 +30,11 @@ import isEqual from 'lodash/isEqual';
 import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
+import {extractProfileName, getProfileNameWithScope} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {CLOUD} from 'services/global-constants';
 import T from 'i18n-react';
 
 require('./ProfilesListViewInPipeline.scss');
-
-export const PROFILE_NAME_PREFERENCE_PROPERTY = 'system.profile.name';
-export const PROFILE_PROPERTIES_PREFERENCE = 'system.profile.properties';
-export const extractProfileName = (name = '') => name.replace(/(user|system):/g, '');
-export const isSystemProfile = (name = '') => name.indexOf('system:') === 0;
-// NOTE: This is never actually saved to backend. This is hardcoded here until we figure out a
-// clean way to add `system.profiles.name` to namespace preference. If there is no `system.profiles.name` set
-// at namespace or app level UI show "default" profile selected
-export const DEFAULT_PROFILE_NAME = 'system:native';
 
 export default class ProfilesListViewInPipeline extends Component {
 
@@ -65,6 +58,7 @@ export default class ProfilesListViewInPipeline extends Component {
     provisionersMap: {},
     loading: true,
     selectedProfile: this.props.selectedProfile.name || '',
+    defaultProfile: '',
     profileCustomizations: this.props.selectedProfile.profileCustomizations || {}
   };
 
@@ -82,16 +76,19 @@ export default class ProfilesListViewInPipeline extends Component {
 
   componentWillMount() {
     let appId = PipelineDetailStore.getState().name;
+    let namespace = getCurrentNamespace();
+
     Observable.forkJoin(
       MyCloudApi.list({ namespace: getCurrentNamespace() }),
       MyCloudApi.list({ namespace: 'system' }),
       MyPreferenceApi.getAppPreferencesResolved({
-        namespace: getCurrentNamespace(),
+        namespace,
         appId
-      })
+      }),
+      MyPreferenceApi.getNamespacePreferencesResolved({namespace})
     )
       .subscribe(
-        ([profiles = [], systemProfiles = [], preferences = {}]) => {
+        ([profiles = [], systemProfiles = [], preferences = {}, namespacePreferences = {}]) => {
           let profileCustomizations = isNilOrEmpty(this.state.profileCustomizations) ?
             getCustomizationMap(preferences)
           :
@@ -99,8 +96,11 @@ export default class ProfilesListViewInPipeline extends Component {
 
           let allProfiles = profiles.concat(systemProfiles);
 
-          let selectedProfile = this.state.selectedProfile || preferences[PROFILE_NAME_PREFERENCE_PROPERTY] || DEFAULT_PROFILE_NAME;
+          let defaultProfile = namespacePreferences[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] || CLOUD.DEFAULT_PROFILE_NAME;
+
+          let selectedProfile = this.state.selectedProfile || preferences[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] || defaultProfile;
           let selectedProfileName = extractProfileName(selectedProfile);
+
 
           // This is to surface the selected profile to the top
           // instead of hiding somewhere in the bottom.
@@ -116,6 +116,7 @@ export default class ProfilesListViewInPipeline extends Component {
             loading: false,
             profiles: sortedProfiles,
             selectedProfile,
+            defaultProfile,
             profileCustomizations
           });
         },
@@ -172,7 +173,7 @@ export default class ProfilesListViewInPipeline extends Component {
   renderProfileRow = (profile) => {
     let profileNamespace = profile.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
     let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
-    let profileName = profile.scope === 'SYSTEM' ? `system:${profile.name}` : `user:${profile.name}`;
+    let profileName = getProfileNameWithScope(profile.name, profile.scope);
     let selectedProfile = this.state.selectedProfile || '';
     selectedProfile = extractProfileName(selectedProfile);
     let provisionerName = profile.provisioner.name;
@@ -200,12 +201,18 @@ export default class ProfilesListViewInPipeline extends Component {
       );
     };
 
+    const renderDefaultProfileStar = (profileName) => {
+      if (profileName !== this.state.defaultProfile) {
+        return null;
+      }
+      return <IconSVG name="icon-star" />;
+    };
+
     return (
       <div
         key={profileName}
         className={classnames(`grid-row grid-link ${profileStatus}`, {
-          "active": this.state.selectedProfile === profileName,
-          profileStatus
+          "active": this.state.selectedProfile === profileName
         })}
       >
         {
@@ -222,6 +229,7 @@ export default class ProfilesListViewInPipeline extends Component {
           }
         </div>
         <div onClick={onProfileSelectHandler}>
+          {renderDefaultProfileStar(profileName)}
           {profile.name}
         </div>
         <div onClick={onProfileSelectHandler}>

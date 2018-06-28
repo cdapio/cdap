@@ -20,9 +20,10 @@ import ConfirmationModal from 'components/ConfirmationModal';
 import ToggleSwitch from 'components/ToggleSwitch';
 import Alert from 'components/Alert';
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
+import {extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {MyCloudApi} from 'api/cloud';
-import {extractProfileName, DEFAULT_PROFILE_NAME} from 'components/PipelineDetails/ProfilesListView';
 import T from 'i18n-react';
+import {CLOUD} from 'services/global-constants';
 
 const PREFIX = 'features.Cloud.Profiles';
 
@@ -144,9 +145,9 @@ export default class ProfileStatusToggle extends Component {
 
   render() {
     const profile = this.props.profile;
-    const profileIsDefault = profile.name === extractProfileName(DEFAULT_PROFILE_NAME);
+    const isNativeProfile = profile.name === extractProfileName(CLOUD.DEFAULT_PROFILE_NAME);
 
-    if (profileIsDefault) {
+    if (isNativeProfile) {
       return null;
     }
 

@@ -26,7 +26,7 @@ $disabled-color: $red-02;
   .grid.grid-container {
     max-height: none;
     .grid-row {
-      grid-template-columns: 20px 1.5fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 30px;
+      grid-template-columns: 70px 1.5fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 30px;
 
       .sortable-header {
         cursor: pointer;
@@ -44,7 +44,7 @@ $disabled-color: $red-02;
         border: 0;
         padding: 0;
         color: $grey-05;
-        grid-template-columns: 20px 1.5fr 1.5fr 1fr 1fr 1fr 2fr 0fr 1fr 1fr 1fr 30px;
+        grid-template-columns: 70px 1.5fr 1.5fr 1fr 1fr 1fr 2fr 0fr 1fr 1fr 1fr 30px;
 
         .sub-title {
           border-bottom: 2px solid gray;
@@ -74,17 +74,51 @@ $disabled-color: $red-02;
 
         &.native-profile {
           cursor: not-allowed;
+
+          .default-star {
+            cursor: pointer;
+          }
+
+          .profile-actions-popover {
+            cursor: not-allowed;
+
+            &:hover {
+              .icon-cog-empty {
+                stroke: $grey-04;
+              }
+            }
+          }
         }
 
         &:last-child {
-          border-bottom: 0;
+          &:not(.highlighted) {
+            border-bottom: 0;
+          }
         }
 
         &:hover {
-          .profile-actions-popover {
-            .icon-cog-empty {
-              stroke: $blue-03;
+          &:not(.native-profile) {
+            .profile-actions-popover {
+              .icon-cog-empty {
+                stroke: $blue-03;
+              }
             }
+          }
+
+          .default-star {
+            .not-default-profile {
+              display: inline-block;
+            }
+          }
+        }
+
+        .default-star {
+          .default-profile {
+            color: $orange-01;
+          }
+
+          .not-default-profile {
+            display: none;
           }
         }
 
