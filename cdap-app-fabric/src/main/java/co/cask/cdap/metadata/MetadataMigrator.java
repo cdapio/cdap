@@ -38,7 +38,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
@@ -47,6 +47,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Metadata Migrator to migrate metadata from V1 metadata tables to V2 metadata tables.
@@ -58,18 +60,15 @@ class MetadataMigrator extends AbstractExecutionThreadService {
   // For outage, only log once per 60 seconds per message.
   private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.perMessage(
     () -> LogSamplers.limitRate(60000)));
-  private static final List<DatasetId> DATASET_IDS = ImmutableList.of(NamespaceId.SYSTEM.dataset("system.metadata"),
-                                                                      NamespaceId.SYSTEM.dataset("v2.system.metadata"),
-                                                                      NamespaceId.SYSTEM.dataset("business.metadata"),
-                                                                      NamespaceId.SYSTEM.dataset("v2.business.metadata")
-  );
+  private static final Map<DatasetId, DatasetId> DATASET_IDS = ImmutableMap.of(
+    NamespaceId.SYSTEM.dataset("system.metadata"), NamespaceId.SYSTEM.dataset("v2.system.metadata"),
+    NamespaceId.SYSTEM.dataset("business.metadata"), NamespaceId.SYSTEM.dataset("v2.business.metadata"));
 
   private final DatasetFramework dsFramework;
   private final Transactional transactional;
   private final int batchSize;
   private volatile Thread runThread;
   private volatile boolean stopped;
-  private volatile boolean hasV1Instance;
 
   MetadataMigrator(CConfiguration cConf, DatasetFramework dsFramework, TransactionSystemClient txClient) {
     this.dsFramework = dsFramework;
@@ -92,25 +91,23 @@ class MetadataMigrator extends AbstractExecutionThreadService {
     runThread = Thread.currentThread();
 
     try {
-      for (int i = 0; i < DATASET_IDS.size(); i = i + 2) {
+      for (Map.Entry<DatasetId, DatasetId> datasetIdEntry : DATASET_IDS.entrySet()) {
         // assume we already have v1 metadata table instance
-        hasV1Instance = true;
+        AtomicBoolean hasV1Instance = new AtomicBoolean(true);
 
-        while (!stopped && hasV1Instance) {
+        while (!stopped && hasV1Instance.get()) {
           try {
-            final int index = i;
+            if (!dsFramework.hasInstance(datasetIdEntry.getKey())) {
+              hasV1Instance.set(false);
+              break;
+            }
             // This thread migrates metadata in batches. It does following operations in a single transaction:
             // 1.) Scan V1 metadata table for value and history rows in batch of batchSize.
             // 2.) Write scanned MetadataEntries to V2 table.
             // 3.) Delete successfully written metadata entries from V1 table.
             Transactionals.execute(transactional, context -> {
-              if (!dsFramework.hasInstance(DATASET_IDS.get(index))) {
-                hasV1Instance = false;
-                return;
-              }
-
-              MetadataDataset v1 = getMetadataDataset(context, DATASET_IDS.get(index));
-              MetadataDataset v2 = getMetadataDataset(context, DATASET_IDS.get(index + 1));
+              MetadataDataset v1 = getMetadataDataset(context, datasetIdEntry.getKey());
+              MetadataDataset v2 = getMetadataDataset(context, datasetIdEntry.getValue());
 
               // All the metadata entries are written using setProperty because it does not modify the MetadataEntry
               // keys
@@ -118,8 +115,9 @@ class MetadataMigrator extends AbstractExecutionThreadService {
 
               if (entries.isEmpty()) {
                 // All the value and history rows have been migrated so stop this thread and drop V1 MetadataDataset
-                dropV1MetadataDataset(index);
-                LOG.debug("Migration for dataset {} is complete. This dataset is dropped.", DATASET_IDS.get(index));
+                dropV1MetadataDataset(datasetIdEntry.getKey());
+                LOG.debug("Migration for dataset {} is complete. This dataset is dropped.", datasetIdEntry.getKey());
+                hasV1Instance.set(false);
                 return;
               }
 
@@ -128,8 +126,8 @@ class MetadataMigrator extends AbstractExecutionThreadService {
               v1.scanOrDeleteFromV1Table(entries.size(), true);
             });
           } catch (Exception e) {
-            OUTAGE_LOG.error("Exception while migrating metadata from {} to {}, will be retried. ", DATASET_IDS.get(i),
-                             DATASET_IDS.get(i + 1), e);
+            OUTAGE_LOG.error("Exception while migrating metadata from {} to {}, will be retried. ",
+                             datasetIdEntry.getKey(), datasetIdEntry.getValue(), e);
             Thread.sleep(1000);
           }
         }
@@ -160,11 +158,10 @@ class MetadataMigrator extends AbstractExecutionThreadService {
     LOG.info("Stopping Metadata Migrator Service.");
   }
 
-  private void dropV1MetadataDataset(int index) throws DatasetManagementException, IOException {
-    DatasetAdmin admin = dsFramework.getAdmin(DATASET_IDS.get(index), null);
+  private void dropV1MetadataDataset(DatasetId datasetId) throws DatasetManagementException, IOException {
+    DatasetAdmin admin = dsFramework.getAdmin(datasetId, null);
     if (admin != null) {
       admin.drop();
-      hasV1Instance = false;
     }
   }
 
