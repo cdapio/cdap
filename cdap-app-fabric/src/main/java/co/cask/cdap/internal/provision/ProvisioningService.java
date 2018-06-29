@@ -547,6 +547,19 @@ public class ProvisioningService extends AbstractIdleService {
     return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext);
   }
 
+  /**
+   * Evaluates any macros in the property values and returns a copy of the map with the evaluations done.
+   * Only the secure macro will be evaluated. Lookups and any other functions will be ignored and left as-is.
+   * Secure store reads will be performed as the specified user, which should be the user that actually
+   * run program code. This is required because this service runs in the CDAP master, which may be a different user
+   * than the program user.
+   *
+   * @param secureStore the secure store to
+   * @param user the user to perform secure store reads as
+   * @param namespace the namespace of the program run
+   * @param properties the properties to evaluate
+   * @return a copy of the input properties with secure macros evaluated
+   */
   @VisibleForTesting
   static Map<String, String> evaluateMacros(SecureStore secureStore, String user, String namespace,
                                             Map<String, String> properties) {
@@ -554,6 +567,7 @@ public class ProvisioningService extends AbstractIdleService {
     MacroEvaluator evaluator = new ProvisionerMacroEvaluator(namespace, secureStore);
     MacroParser macroParser = MacroParser.builder(evaluator)
       .disableEscaping()
+      .disableLookups()
       .whitelistFunctions(ProvisionerMacroEvaluator.SECURE_FUNCTION)
       .build();
     Map<String, String> evaluated = new HashMap<>();
