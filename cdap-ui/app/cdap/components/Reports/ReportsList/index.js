@@ -27,6 +27,7 @@ import {listReports} from 'components/Reports/store/ActionCreator';
 import {Observable} from 'rxjs/Observable';
 import classnames from 'classnames';
 import ActionPopover from 'components/Reports/ReportsList/ActionPopover';
+import ReportsPagination from 'components/Reports/ReportsList/ReportsPagination';
 import NamespacesPicker from 'components/NamespacesPicker';
 import {setNamespacesPick} from 'components/Reports/store/ActionCreator';
 import T from 'i18n-react';
@@ -38,7 +39,8 @@ require('./ReportsList.scss');
 class ReportsListView extends Component {
   static propTypes = {
     reports: PropTypes.array,
-    activeId: PropTypes.string
+    activeId: PropTypes.string,
+    offset: PropTypes.number
   };
 
   componentWillMount() {
@@ -47,10 +49,26 @@ class ReportsListView extends Component {
       .subscribe(listReports);
   }
 
+  componentWillReceiveProps(nextProps) {
+    // If switching to a different page, stop reports polling on
+    // current page, and start polling on new page
+    if (nextProps.offset !== this.props.offset) {
+      this.pollReportsInNewPage();
+    }
+  }
+
   componentWillUnmount() {
     if (this.interval$) {
       this.interval$.unsubscribe();
     }
+  }
+
+  pollReportsInNewPage() {
+    if (this.interval$) {
+      this.interval$.unsubscribe();
+    }
+    this.interval$ = Observable.interval(10000)
+      .subscribe(listReports);
   }
 
   renderCreated(report) {
@@ -173,10 +191,13 @@ class ReportsListView extends Component {
     }
 
     return (
-      <div className="list-container grid-wrapper">
-        <div className="grid grid-container">
-          {this.renderHeader()}
-          {this.renderBody()}
+      <div>
+        <ReportsPagination />
+        <div className="list-container grid-wrapper">
+          <div className="grid grid-container">
+            {this.renderHeader()}
+            {this.renderBody()}
+          </div>
         </div>
       </div>
     );
@@ -211,7 +232,8 @@ class ReportsListView extends Component {
 const mapStateToProps = (state) => {
   return {
     reports: state.list.reports,
-    activeId: state.list.activeId
+    activeId: state.list.activeId,
+    offset: state.list.offset
   };
 };
 

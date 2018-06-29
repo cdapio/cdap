@@ -21,6 +21,7 @@ const ReportsActions = {
   toggleCustomizerOption: 'REPORTS_TOGGLE_CUSTOMIZER_OPTION',
   setSelections: 'REPORTS_SET_SELECTIONS',
   setList: 'REPORTS_SET_LIST',
+  setPagination: 'REPORTS_SET_PAGINATION',
   setTimeRange: 'REPORTS_SET_TIME_RANGE',
   setRuns: 'REPORTS_SET_RUNS',
   setRunsPagination: 'REPORTS_SET_RUNS_PAGINATION',
@@ -75,6 +76,7 @@ const defaultListState = {
   total: 0,
   reports: [],
   offset: 0,
+  limit: 20,
   activeId: null
 };
 
@@ -175,7 +177,13 @@ const list = (state = defaultListState, action = defaultAction) => {
         total: action.payload.list.total,
         reports: action.payload.list.reports,
         offset: action.payload.list.offset,
+        limit: action.payload.list.limit,
         activeId: action.payload.activeId
+      };
+    case ReportsActions.setPagination:
+      return {
+        ...state,
+        offset: action.payload.offset
       };
     case ReportsActions.setActiveId:
       return {

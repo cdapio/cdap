@@ -142,16 +142,20 @@ export function generateReport() {
 
   MyReportsApi.generateReport(null, requestBody)
     .subscribe((res) => {
-      listReports(res.id);
+      // Switch to 1st page after generating a report, so we can
+      // highlight the new report
+      handleReportsPageChange({selected: 0}, res.id);
     }, (err) => {
       console.log('error', err);
     });
 }
 
 export function listReports(id) {
+  let {offset, limit} = ReportsStore.getState().list;
+
   let params = {
-    offset: 0,
-    limit: 20
+    offset,
+    limit
   };
 
   MyReportsApi.list(params)
@@ -216,6 +220,17 @@ export function handleRunsPageChange({selected}) {
     }
   });
   fetchRuns();
+}
+
+export function handleReportsPageChange({selected}, id) {
+  let {limit} = ReportsStore.getState().list;
+  ReportsStore.dispatch({
+    type: ReportsActions.setPagination,
+    payload: {
+      offset: selected * limit
+    }
+  });
+  listReports(id);
 }
 
 export function setNamespacesPick(namespacesPick) {
