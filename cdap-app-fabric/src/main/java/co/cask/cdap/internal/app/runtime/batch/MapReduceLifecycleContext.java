@@ -338,4 +338,44 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
     return delegate.getMetadata(scope, metadataEntity);
   }
+
+  @Override
+  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
+    delegate.addProperties(metadataEntity, properties);
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, String... tags) {
+    delegate.addTags(metadataEntity, tags);
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
+    delegate.addTags(metadataEntity, tags);
+  }
+
+  @Override
+  public void removeMetadata(MetadataEntity metadataEntity) {
+    delegate.removeMetadata(metadataEntity);
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity) {
+    delegate.removeProperties(metadataEntity);
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity, String... keys) {
+    delegate.removeProperties(metadataEntity, keys);
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity) {
+    delegate.removeTags(metadataEntity);
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity, String... tags) {
+    delegate.removeTags(metadataEntity, tags);
+  }
 }

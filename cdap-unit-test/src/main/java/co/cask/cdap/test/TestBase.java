@@ -88,6 +88,7 @@ import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
+import co.cask.cdap.metadata.MetadataSubscriberService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -212,6 +213,7 @@ public class TestBase {
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
   private static ProvisioningService provisioningService;
+  private static MetadataSubscriberService metadataSubscriberService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -302,6 +304,8 @@ public class TestBase {
       }
     );
 
+    metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
+
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
@@ -376,6 +380,7 @@ public class TestBase {
     previewManager = injector.getInstance(PreviewManager.class);
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
+    metadataSubscriberService.startAndWait();
   }
 
   private static TestManager getTestManager() {
@@ -527,6 +532,7 @@ public class TestBase {
       ((Service) messagingService).stopAndWait();
     }
     provisioningService.stopAndWait();
+    metadataSubscriberService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {

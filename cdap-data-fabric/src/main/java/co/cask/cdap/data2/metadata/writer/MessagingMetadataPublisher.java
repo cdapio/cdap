@@ -16,8 +16,6 @@
 
 package co.cask.cdap.data2.metadata.writer;
 
-import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
@@ -31,17 +29,17 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 
 /**
- * An implementation of {@link LineageWriter} that publish lineage information to TMS.
+ * An implementation of {@link MetadataPublisher} that publish metadata information to {@link MessagingService}.
  */
-public class MessagingMetadataWriter implements MetadataWriter {
+public class MessagingMetadataPublisher implements MetadataPublisher {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetadataPublisher.class);
 
   private static final Gson GSON = new Gson();
 
@@ -50,38 +48,17 @@ public class MessagingMetadataWriter implements MetadataWriter {
   private final RetryStrategy retryStrategy;
 
   @Inject
-  MessagingMetadataWriter(CConfiguration cConf, MessagingService messagingService) {
+  MessagingMetadataPublisher(CConfiguration cConf, MessagingService messagingService) {
     this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC));
     this.messagingService = messagingService;
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.metadata.");
   }
 
   @Override
-  public void add(ProgramRunId run, MetadataEntity entity,
-                  @Nullable Map<String, String> propertiesToAdd,
-                  @Nullable Set<String> tagsToAdd) {
-    Metadata metadata = new Metadata(propertiesToAdd != null ? propertiesToAdd : Collections.emptyMap(),
-                                     tagsToAdd != null ? tagsToAdd : Collections.emptySet());
-    MetadataOperation operation = new MetadataOperation(entity, MetadataOperation.Type.PUT, metadata);
-    publish(run, operation);
-  }
-
-  @Override
-  public void remove(ProgramRunId run, MetadataEntity entity,
-                     @Nullable Set<String> propertiesToDelete,
-                     @Nullable Set<String> tagsToDelete) {
-    Map<String, String> props = new HashMap<>();
-    if (propertiesToDelete != null) {
-      propertiesToDelete.forEach(prop -> props.put(prop, ""));
-    }
-    Metadata metadata = new Metadata(props, tagsToDelete != null ? tagsToDelete : Collections.emptySet());
-    MetadataOperation operation = new MetadataOperation(entity, MetadataOperation.Type.DELETE, metadata);
-    publish(run, operation);
-  }
-
-  private void publish(ProgramRunId programRunId, MetadataOperation operation) {
+  public void publish(ProgramRunId programRunId, MetadataOperation operation) {
     MetadataMessage message = new MetadataMessage(Type.METADATA_OPERATION, programRunId, GSON.toJsonTree(operation));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    LOG.trace("Publishing message {} to topic {}", message, topic);
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {

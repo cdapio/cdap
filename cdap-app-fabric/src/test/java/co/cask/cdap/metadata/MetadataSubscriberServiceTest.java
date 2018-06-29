@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.workflow.NodeStatus;
@@ -32,8 +33,9 @@ import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
-import co.cask.cdap.data2.metadata.writer.MessagingMetadataWriter;
-import co.cask.cdap.data2.metadata.writer.MetadataWriter;
+import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.MetadataOperation;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.registry.BasicUsageRegistry;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -211,7 +213,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Assert.assertTrue(meta.getTags().isEmpty());
 
     // Start the MetadataSubscriberService
-    MetadataWriter metadataWriter = getInjector().getInstance(MessagingMetadataWriter.class);
+    MetadataPublisher metadataPublisher = getInjector().getInstance(MessagingMetadataPublisher.class);
     MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
     subscriberService.startAndWait();
     try {
@@ -219,13 +221,11 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       // publish metadata put
       Map<String, String> propertiesToAdd = ImmutableMap.of("a", "x", "b", "z");
       Set<String> tagsToAdd = ImmutableSet.of("t1", "t2");
-      metadataWriter.add(workflowRunId, entity, propertiesToAdd, tagsToAdd);
+      metadataPublisher.publish(workflowRunId, new MetadataOperation(entity, MetadataOperation.Type.PUT,
+                                                                     new Metadata(propertiesToAdd, tagsToAdd)));
 
       // wait until meta data is written
-      Tasks.waitFor(true, () -> {
-        MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.USER, entity);
-        return !record.getProperties().isEmpty() && !record.getTags().isEmpty();
-      }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      waitForMetadata(entity, metadataStore, 2, 2);
 
       // validate correctness of meta data written
       meta = metadataStore.getMetadata(MetadataScope.USER, entity);
@@ -233,22 +233,75 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       Assert.assertEquals(tagsToAdd, meta.getTags());
 
       // publish metadata delete
-      metadataWriter.remove(workflowRunId, entity, ImmutableSet.of("a"), ImmutableSet.of("t1", "t3"));
+      metadataPublisher.publish(workflowRunId, new MetadataOperation(entity, MetadataOperation.Type.DELETE,
+                                                                     new Metadata(ImmutableMap.of("a", ""),
+                                                                                  ImmutableSet.of("t1", "t3"))));
 
       // wait until meta data is written
-      Tasks.waitFor(true, () -> {
-        MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.USER, entity);
-        return record.getProperties().size() == 1 && record.getTags().size() == 1;
-      }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      waitForMetadata(entity, metadataStore, 1, 1);
 
       // validate correctness of meta data after delete
       meta = metadataStore.getMetadata(MetadataScope.USER, entity);
       Assert.assertEquals(ImmutableMap.of("b", "z"), meta.getProperties());
       Assert.assertEquals(ImmutableSet.of("t2"), meta.getTags());
 
+      // publish metadata put properties
+      metadataPublisher.publish(workflowRunId,
+                                new MetadataOperation(entity, MetadataOperation.Type.PUT,
+                                                      new Metadata(propertiesToAdd, Collections.emptySet())));
+
+      // wait until meta data is written
+      // one of the property key already exist so for that value will be just overwritten hence size is 2
+      waitForMetadata(entity, metadataStore, 2, 1);
+
+      // publish metadata put tags
+      metadataPublisher.publish(workflowRunId,
+                                new MetadataOperation(entity, MetadataOperation.Type.PUT,
+                                                      new Metadata(Collections.emptyMap(), tagsToAdd)));
+
+      // wait until meta data is written
+      // one of the tags already exists hence size is 2
+      waitForMetadata(entity, metadataStore, 2, 2);
+
+      // publish delete all properties
+      metadataPublisher.publish(workflowRunId,
+                                new MetadataOperation(entity, MetadataOperation.Type.DELETE_ALL_PROPERTIES, null));
+
+      // wait until meta data is written
+      waitForMetadata(entity, metadataStore, 0, 2);
+
+      // publish delete all tags
+      metadataPublisher.publish(workflowRunId,
+                                new MetadataOperation(entity, MetadataOperation.Type.DELETE_ALL_TAGS, null));
+
+      waitForMetadata(entity, metadataStore, 0, 0);
+
+      // publish metadata put tags
+      metadataPublisher.publish(workflowRunId,
+                                new MetadataOperation(entity, MetadataOperation.Type.PUT,
+                                                      new Metadata(propertiesToAdd, tagsToAdd)));
+
+      // wait until meta data is written
+      waitForMetadata(entity, metadataStore, 2, 2);
+
+      // publish delete all
+      metadataPublisher.publish(workflowRunId,
+                                new MetadataOperation(entity, MetadataOperation.Type.DELETE_ALL, null));
+
+      // wait until meta data is written
+      waitForMetadata(entity, metadataStore, 0, 0);
+
     } finally {
       subscriberService.stopAndWait();
     }
+  }
+
+  private void waitForMetadata(MetadataEntity entity, MetadataStore metadataStore, int propertiesSize,
+                               int tagSize) throws TimeoutException, InterruptedException, ExecutionException {
+    Tasks.waitFor(true, () -> {
+      MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.USER, entity);
+      return record.getProperties().size() == propertiesSize && record.getTags().size() == tagSize;
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   private DatasetFramework getDatasetFramework() {

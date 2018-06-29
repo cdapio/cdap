@@ -35,6 +35,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
@@ -94,6 +95,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
   private final MetadataReader metadataReader;
+  private final MetadataPublisher metadataPublisher;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -106,7 +108,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
-                                MessagingService messagingService, MetadataReader metadataReader) {
+                                MessagingService messagingService, MetadataReader metadataReader,
+                                MetadataPublisher metadataPublisher) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -123,6 +126,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
     this.metadataReader = metadataReader;
+    this.metadataPublisher = metadataPublisher;
   }
 
   @Override
@@ -172,7 +176,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         new BasicMapReduceContext(program, options, cConf, spec, workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager,
-                                  messagingService, metadataReader);
+                                  messagingService, metadataReader, metadataPublisher);
       closeables.add(context);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),

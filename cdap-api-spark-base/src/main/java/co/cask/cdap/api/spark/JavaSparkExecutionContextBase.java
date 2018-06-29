@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataReader;
+import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -56,7 +57,7 @@ import javax.annotation.Nullable;
 @Beta
 public abstract class JavaSparkExecutionContextBase implements SchedulableProgramContext, RuntimeContext, Transactional,
                                                                WorkflowInfoProvider,
-                                                               SecureStore, MetadataReader {
+                                                               SecureStore, MetadataReader, MetadataWriter {
 
   /**
    * @return The specification used to configure this {@link Spark} job instance.

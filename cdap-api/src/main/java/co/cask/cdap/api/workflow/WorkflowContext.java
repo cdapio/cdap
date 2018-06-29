@@ -25,6 +25,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataReader;
+import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 
@@ -35,7 +36,7 @@ import java.util.Map;
  * available to {@link Condition}.
  */
 public interface WorkflowContext extends SchedulableProgramContext, RuntimeContext, Transactional, MessagingContext,
-  ServiceDiscoverer, DatasetContext, PluginContext, SecureStore, MetadataReader {
+  ServiceDiscoverer, DatasetContext, PluginContext, SecureStore, MetadataReader, MetadataWriter {
 
   WorkflowSpecification getWorkflowSpecification();
 
