@@ -18,6 +18,7 @@ import {combineReducers, createStore} from 'redux';
 import {defaultAction, composeEnhancers} from 'services/helpers';
 
 export const TIME_OPTIONS = [
+  'CUSTOM',
   'last7d',
   'last14d',
   'lastMonth',
@@ -36,6 +37,7 @@ const Actions = {
   nextOperation: 'FLL_NEXT_OPERATION',
   prevOperation: 'FLL_PREV_OPERATION',
   setTimeSelection: 'FLL_SET_TIME_SELECTION',
+  setCustomTime: 'FLL_SET_CUSTOM_TIME',
   reset: 'FLL_RESET'
 };
 
@@ -45,7 +47,12 @@ const defaultInitialState = {
   incoming: [],
   activeField: null,
   search: '',
-  timeSelection: TIME_OPTIONS[0]
+  timeSelection: TIME_OPTIONS[1]
+};
+
+const customTimeInitialState = {
+  start: null,
+  end: null
 };
 
 const operationsInitialState = {
@@ -86,6 +93,21 @@ const lineage = (state = defaultInitialState, action = defaultAction) => {
       };
     case Actions.reset:
       return defaultInitialState;
+    default:
+      return state;
+  }
+};
+
+const customTime = (state = customTimeInitialState, action = defaultAction) => {
+  switch (action.type) {
+    case Actions.setCustomTime:
+      return {
+        ...state,
+        start: action.payload.start,
+        end: action.payload.end
+      };
+    case Actions.reset:
+      return customTimeInitialState;
     default:
       return state;
   }
@@ -134,11 +156,13 @@ const operations = (state = operationsInitialState, action = defaultAction) => {
 const Store = createStore(
   combineReducers({
     lineage,
-    operations
+    operations,
+    customTime
   }),
   {
     lineage: defaultInitialState,
-    operations: operationsInitialState
+    operations: operationsInitialState,
+    customTime: customTimeInitialState
   },
   composeEnhancers('FieldLevelLineageStore')()
 );

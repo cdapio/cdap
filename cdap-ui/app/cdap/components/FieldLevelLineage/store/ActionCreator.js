@@ -20,30 +20,38 @@ import Store, {Actions, TIME_OPTIONS} from 'components/FieldLevelLineage/store/S
 import debounce from 'lodash/debounce';
 
 const TIME_OPTIONS_MAP = {
-  [TIME_OPTIONS[0]]: {
+  [TIME_OPTIONS[1]]: {
     start: 'now-7d',
     end: 'now'
   },
-  [TIME_OPTIONS[1]]: {
+  [TIME_OPTIONS[2]]: {
     start: 'now-14d',
     end: 'now'
   },
-  [TIME_OPTIONS[2]]: {
+  [TIME_OPTIONS[3]]: {
     start: 'now-30d',
     end: 'now'
   },
-  [TIME_OPTIONS[3]]: {
+  [TIME_OPTIONS[4]]: {
     start: 'now-180d',
     end: 'now'
   },
-  [TIME_OPTIONS[4]]: {
+  [TIME_OPTIONS[5]]: {
     start: 'now-365d',
     end: 'now'
   }
 };
 
 function getTimeRange() {
-  const selection = Store.getState().lineage.timeSelection;
+  const store = Store.getState();
+  const selection = store.lineage.timeSelection;
+
+  if (selection === TIME_OPTIONS[0]) {
+    return {
+      start: store.customTime.start || 'now-7d',
+      end: store.customTime.end || 'now'
+    };
+  }
 
   return TIME_OPTIONS_MAP[selection];
 }
@@ -147,6 +155,20 @@ export function getOperations() {
     });
 }
 
+export function setCustomTimeRange({start, end}) {
+  Store.dispatch({
+    type: Actions.setCustomTime,
+    payload: {
+      start,
+      end
+    }
+  });
+
+  const state = Store.getState().lineage;
+
+  getFields(state.datasetId, state.search, start, end);
+}
+
 export function setTimeRange(option) {
   Store.dispatch({
     type: Actions.setTimeSelection,
@@ -154,6 +176,8 @@ export function setTimeRange(option) {
       timeSelection: option
     }
   });
+
+  if (option === TIME_OPTIONS[0]) { return; }
 
   const {start, end} = TIME_OPTIONS_MAP[option];
   const state = Store.getState().lineage;

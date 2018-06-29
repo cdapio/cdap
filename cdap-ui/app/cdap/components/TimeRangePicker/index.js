@@ -28,7 +28,13 @@ export default class TimeRangePicker extends Component {
   static propTypes = {
     onChange: PropTypes.func,
     start: PropTypes.number,
-    end: PropTypes.number
+    end: PropTypes.number,
+    displayOnly: PropTypes.bool,
+    onTimeClick: PropTypes.func
+  };
+
+  static defaultProps = {
+    displayOnly: false
   };
 
   state = {
@@ -41,6 +47,8 @@ export default class TimeRangePicker extends Component {
   };
 
   componentWillMount() {
+    if (this.props.displayOnly) { return; }
+
     // to set default
     this.changeDisplay('start');
   }
@@ -55,6 +63,10 @@ export default class TimeRangePicker extends Component {
   };
 
   changeDisplay = (type) => {
+    if (typeof this.props.onTimeClick === 'function') {
+      this.props.onTimeClick();
+    }
+
     if (type === this.state.displayCalendar) { return; }
 
     let date = this.state.date,
@@ -139,6 +151,8 @@ export default class TimeRangePicker extends Component {
   };
 
   renderCalendar = () => {
+    if (this.props.displayOnly) { return null; }
+
     let max = new Date();
     let min = null;
 
@@ -165,6 +179,8 @@ export default class TimeRangePicker extends Component {
   };
 
   renderHourMinuteSelector = () => {
+    if (this.props.displayOnly) { return null; }
+
     return (
       <div className="time-container">
         <div className="time-display">
@@ -209,7 +225,7 @@ export default class TimeRangePicker extends Component {
         <div className="time-range-selector">
           <div className="time">
             <div
-              className={classnames('time-wrapper', { 'active': this.state.displayCalendar === 'start' })}
+              className={classnames('time-wrapper', { 'active': !this.props.displayOnly && this.state.displayCalendar === 'start' })}
               onClick={this.changeDisplay.bind(this, 'start')}
             >
               {this.displayStartTime()}
@@ -222,7 +238,7 @@ export default class TimeRangePicker extends Component {
 
           <div className="time">
             <div
-              className={classnames('time-wrapper', { 'active': this.state.displayCalendar === 'end' })}
+              className={classnames('time-wrapper', { 'active': !this.props.displayOnly && this.state.displayCalendar === 'end' })}
               onClick={this.changeDisplay.bind(this, 'end')}
             >
               {this.displayEndTime()}

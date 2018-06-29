@@ -21,6 +21,8 @@ $active-border-color: $blue-03;
 $time-bg-color: $grey-08;
 $time-display-bg-color: $blue-grey01;
 
+$disabled-done-color: $grey-06;
+
 $track-color: $blue-grey01;
 $thumb-color: white;
 
@@ -43,6 +45,44 @@ $track-border-color: black;
 
 $track-radius: 5px;
 $contrast: 0;
+
+.expandable-time-range-picker {
+  position: absolute;
+  top: -22px;
+  width: 400px;
+
+  &.expanded {
+    box-shadow: 0 5px 15px 1px rgba(0, 0, 0, 0.4);
+    background-color: white;
+    border-radius: 4px;
+    z-index: 2;
+    top: -30px;
+
+    .time-range-selector {
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+  }
+
+  .time-range-picker-container .time-range-selector {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .done-button {
+    background-color: white;
+    cursor: pointer;
+    font-weight: 600;
+    line-height: 30px;
+    border-top: 1px solid $border-color;
+
+    &.disabled {
+      cursor: not-allowed;
+      background-color: $time-bg-color;
+      color: $disabled-done-color;
+    }
+  }
+}
 
 .time-range-picker-container {
   .time-range-selector {
