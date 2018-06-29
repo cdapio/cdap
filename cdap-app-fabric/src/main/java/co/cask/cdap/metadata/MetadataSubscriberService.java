@@ -184,6 +184,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         }
       });
 
+      // look like intellij doesn't understand return from closures and consider it as function return.
+      // noinspection ConstantConditions
       if (processor == null) {
         LOG.warn("Unsupported metadata message type {}. Message ignored.", message.getType());
         continue;
@@ -286,10 +288,10 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       switch (message.getType()) {
         case WORKFLOW_TOKEN:
           appMetadataStore.setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
-        break;
+          break;
         case WORKFLOW_STATE:
           appMetadataStore.addWorkflowNodeState(programRunId, message.getPayload(GSON, WorkflowNodeStateDetail.class));
-        break;
+          break;
         default:
           // This shouldn't happen
           LOG.warn("Unknown message type for workflow state information. Ignoring the message {}", message);
@@ -304,39 +306,49 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private class MetadataOperationProcessor implements MetadataMessageProcessor {
 
     @Override
-    public void processMessage(MetadataMessage message)  {
+    public void processMessage(MetadataMessage message) {
       MetadataOperation operation = message.getPayload(GSON, MetadataOperation.class);
       Metadata metadata = operation.getMetadata();
       MetadataEntity entity = operation.getEntity();
-
+      LOG.trace("Received {} for entity {}: {}", operation, entity, metadata);
       // TODO: Authorize that the operation is allowed. Currently MetadataMessage does not carry user info
       switch (operation.getType()) {
         case PUT: {
-          LOG.trace("Received PUT for entity {}: {}", entity, metadata);
           try {
-            if (metadata.getProperties() != null && !metadata.getProperties().isEmpty()) {
+            if (metadata != null && metadata.getProperties() != null && !metadata.getProperties().isEmpty()) {
               metadataAdmin.addProperties(entity, metadata.getProperties());
             }
-            if (metadata.getTags() != null && !metadata.getTags().isEmpty()) {
+            if (metadata != null && metadata.getTags() != null && !metadata.getTags().isEmpty()) {
               Set<String> toAdd = metadata.getTags();
               metadataAdmin.addTags(entity, toAdd);
-
             }
           } catch (InvalidMetadataException e) {
-            LOG.warn("Ignoring invalid metadata operation from TMS: {}", GSON.toJson(message.getRawPayload()), e);
+            LOG.warn("Ignoring invalid metadata operation {} from TMS: {}", operation,
+                     GSON.toJson(message.getRawPayload()), e);
           }
           break;
         }
         case DELETE: {
-          LOG.trace("Received DELETE for entity {}: {}", entity, metadata);
-          if (metadata.getProperties() != null && !metadata.getProperties().isEmpty()) {
+          if (metadata != null && metadata.getProperties() != null && !metadata.getProperties().isEmpty()) {
             Set<String> toRemove = metadata.getProperties().keySet();
             metadataAdmin.removeProperties(entity, toRemove);
           }
-          if (metadata.getTags() != null && !metadata.getTags().isEmpty()) {
+          if (metadata != null && metadata.getTags() != null && !metadata.getTags().isEmpty()) {
             Set<String> toRemove = metadata.getTags();
             metadataAdmin.removeTags(entity, toRemove);
           }
+          break;
+        }
+        case DELETE_ALL: {
+          metadataAdmin.removeMetadata(entity);
+          break;
+        }
+        case DELETE_ALL_PROPERTIES: {
+          metadataAdmin.removeProperties(entity);
+          break;
+        }
+        case DELETE_ALL_TAGS: {
+          metadataAdmin.removeTags(entity);
           break;
         }
         default:

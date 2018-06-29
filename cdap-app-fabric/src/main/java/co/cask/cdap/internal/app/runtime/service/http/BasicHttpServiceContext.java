@@ -30,6 +30,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
@@ -78,11 +79,12 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
                                  TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
                                  SecureStore secureStore, SecureStoreManager secureStoreManager,
                                  MessagingService messagingService,
-                                 ArtifactManager artifactManager, MetadataReader metadataReader) {
+                                 ArtifactManager artifactManager, MetadataReader metadataReader,
+                                 MetadataPublisher metadataPublisher) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

@@ -59,6 +59,7 @@ import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -149,6 +150,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messageService;
   private final MetadataReader metadataReader;
+  private final MetadataPublisher metadataPublisher;
 
   @Inject
   public FlowletProgramRunner(CConfiguration cConfiguration,
@@ -164,7 +166,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               UsageWriter usageWriter,
                               SecureStore secureStore,
                               SecureStoreManager secureStoreManager,
-                              MessagingService messagingService, MetadataReader metadataReader) {
+                              MessagingService messagingService, MetadataReader metadataReader,
+                              MetadataPublisher metadataPublisher) {
     this.cConf = cConfiguration;
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
@@ -180,6 +183,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.secureStoreManager = secureStoreManager;
     this.messageService = messagingService;
     this.metadataReader = metadataReader;
+    this.metadataPublisher = metadataPublisher;
   }
 
   @SuppressWarnings("unchecked")
@@ -232,7 +236,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                flowletDef.getDatasets(), flowletDef.getFlowletSpec(),
                                                metricsCollectionService, discoveryServiceClient, txClient,
                                                dsFramework, secureStore, secureStoreManager, messageService,
-                                               metadataReader, cConf);
+                                               metadataReader, metadataPublisher, cConf);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =

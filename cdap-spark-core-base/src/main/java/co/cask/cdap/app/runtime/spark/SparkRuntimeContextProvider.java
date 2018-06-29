@@ -40,6 +40,7 @@ import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
@@ -259,7 +260,8 @@ public final class SparkRuntimeContextProvider {
         serviceAnnouncer,
         injector.getInstance(PluginFinder.class),
         injector.getInstance(LocationFactory.class),
-        injector.getInstance(MetadataReader.class)
+        injector.getInstance(MetadataReader.class),
+        injector.getInstance(MetadataPublisher.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;

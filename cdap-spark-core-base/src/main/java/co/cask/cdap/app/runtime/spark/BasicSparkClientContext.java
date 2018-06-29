@@ -410,4 +410,44 @@ final class BasicSparkClientContext implements SparkClientContext {
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
     return sparkRuntimeContext.getMetadata(scope, metadataEntity);
   }
+
+  @Override
+  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
+    sparkRuntimeContext.addProperties(metadataEntity, properties);
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, String... tags) {
+    sparkRuntimeContext.addTags(metadataEntity, tags);
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
+    sparkRuntimeContext.addTags(metadataEntity, tags);
+  }
+
+  @Override
+  public void removeMetadata(MetadataEntity metadataEntity) {
+    sparkRuntimeContext.removeMetadata(metadataEntity);
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity) {
+    sparkRuntimeContext.removeProperties(metadataEntity);
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity, String... keys) {
+    sparkRuntimeContext.removeProperties(metadataEntity, keys);
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity) {
+    sparkRuntimeContext.removeTags(metadataEntity);
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity, String... tags) {
+    sparkRuntimeContext.removeTags(metadataEntity, tags);
+  }
 }

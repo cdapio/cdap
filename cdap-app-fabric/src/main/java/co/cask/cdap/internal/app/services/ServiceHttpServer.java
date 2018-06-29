@@ -37,6 +37,7 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
@@ -81,7 +82,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            @Nullable PluginInstantiator pluginInstantiator,
                            SecureStore secureStore, SecureStoreManager secureStoreManager,
                            MessagingService messagingService,
-                           ArtifactManager artifactManager, MetadataReader metadataReader) {
+                           ArtifactManager artifactManager, MetadataReader metadataReader,
+                           MetadataPublisher metadataPublisher) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -90,7 +92,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
     this.contextFactory = createContextFactory(program, programOptions, instanceId, this.instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
-                                               messagingService, artifactManager, metadataReader);
+                                               messagingService, artifactManager, metadataReader, metadataPublisher);
     this.context = contextFactory.create(null);
   }
 
@@ -141,11 +143,12 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               SecureStoreManager secureStoreManager,
                                                               MessagingService messagingService,
                                                               ArtifactManager artifactManager,
-                                                              MetadataReader metadataReader) {
+                                                              MetadataReader metadataReader,
+                                                              MetadataPublisher metadataPublisher) {
     return spec -> new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
-                                               messagingService, artifactManager, metadataReader);
+                                               messagingService, artifactManager, metadataReader, metadataPublisher);
   }
 
   /**

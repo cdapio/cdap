@@ -41,6 +41,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataException;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -73,6 +74,8 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.writer.MetadataOperation;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.transaction.RetryingShortTransactionSystemClient;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.preview.DataTracerFactoryProvider;
@@ -111,9 +114,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -125,7 +130,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext, MetadataReader, Closeable {
+  PluginContext, MessagingContext, MetadataReader, MetadataWriter, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
@@ -154,6 +159,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
   private final MetadataReader metadataReader;
+  private final MetadataPublisher metadataPublisher;
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
@@ -168,7 +174,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                             MessagingService messagingService,
                             @Nullable PluginInstantiator pluginInstantiator,
-                            MetadataReader metadataReader) {
+                            MetadataReader metadataReader, MetadataPublisher metadataPublisher) {
     super(program.getId());
 
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
@@ -223,6 +229,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
     this.metadataReader = metadataReader;
+    this.metadataPublisher = metadataPublisher;
   }
 
   private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
@@ -731,6 +738,66 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
     return metadataReader.getMetadata(scope, metadataEntity);
+  }
+
+  @Override
+  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
+    metadataPublisher.publish(programRunId,
+                             new MetadataOperation(metadataEntity, MetadataOperation.Type.PUT,
+                                                   new Metadata(properties, Collections.emptySet())));
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, String... tags) {
+    addTags(metadataEntity, Arrays.asList(tags));
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
+    Set<String> tagsToAdd = new HashSet<>();
+    tags.forEach(tagsToAdd::add);
+    metadataPublisher.publish(programRunId, new MetadataOperation(metadataEntity, MetadataOperation.Type.PUT,
+                                                                 new Metadata(Collections.emptyMap(), tagsToAdd)));
+  }
+
+  @Override
+  public void removeMetadata(MetadataEntity metadataEntity) {
+    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity, MetadataOperation.Type.DELETE_ALL,
+                                                                null);
+    metadataPublisher.publish(programRunId, metadataOperation);
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity) {
+    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity,
+                                                                MetadataOperation.Type.DELETE_ALL_PROPERTIES, null);
+    metadataPublisher.publish(programRunId, metadataOperation);
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity, String... keys) {
+    Map<String, String> props = new HashMap<>();
+    for (String key : keys) {
+      props.put(key, "");
+    }
+    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity, MetadataOperation.Type.DELETE,
+                                                        new Metadata(props, Collections.emptySet()));
+    metadataPublisher.publish(programRunId, metadataOperation);
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity) {
+    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity,
+                                                                MetadataOperation.Type.DELETE_ALL_TAGS, null);
+    metadataPublisher.publish(programRunId, metadataOperation);
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity, String... tags) {
+    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity, MetadataOperation.Type.DELETE,
+                                                                new Metadata(Collections.emptyMap(),
+                                                                             new HashSet<>(Arrays.asList(tags))));
+    metadataPublisher.publish(programRunId, metadataOperation);
   }
 
   /**

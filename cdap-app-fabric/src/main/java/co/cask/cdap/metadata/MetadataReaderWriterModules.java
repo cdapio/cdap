@@ -20,6 +20,8 @@ import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.common.metadata.AbstractMetadataClient;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 
@@ -35,6 +37,7 @@ public class MetadataReaderWriterModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(MetadataReader.class).to(DefaultMetadataReader.class);
+        bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
       }
     };
   }
@@ -45,6 +48,7 @@ public class MetadataReaderWriterModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(MetadataReader.class).to(DefaultMetadataReader.class);
+        bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
       }
     };
   }
@@ -60,6 +64,7 @@ public class MetadataReaderWriterModules extends RuntimeModule {
         bind(AbstractMetadataClient.class).to(RemoteMetadataClient.class);
         // TODO: Bind to cloud implementation in cloud mode. How to check cdap is in cloud mode?
         bind(MetadataReader.class).to(RemoteMetadataReader.class);
+        bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
       }
     };
   }

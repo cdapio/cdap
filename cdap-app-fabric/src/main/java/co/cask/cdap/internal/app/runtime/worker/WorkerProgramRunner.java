@@ -31,6 +31,7 @@ import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
@@ -67,13 +68,15 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
   private final MetadataReader metadataReader;
+  private final MetadataPublisher metadataPublisher;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
-                             MessagingService messagingService, MetadataReader metadataReader) {
+                             MessagingService messagingService, MetadataReader metadataReader,
+                             MetadataPublisher metadataPublisher) {
     super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
@@ -85,6 +88,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
     this.metadataReader = metadataReader;
+    this.metadataPublisher = metadataPublisher;
   }
 
   @Override
@@ -127,7 +131,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           metricsCollectionService, datasetFramework, txClient,
                                                           discoveryServiceClient, streamWriterFactory,
                                                           pluginInstantiator, secureStore, secureStoreManager,
-                                                          messagingService, metadataReader);
+                                                          messagingService, metadataReader, metadataPublisher);
 
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 

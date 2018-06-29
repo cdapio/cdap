@@ -31,6 +31,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -63,12 +64,12 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        @Nullable PluginInstantiator pluginInstantiator,
                        SecureStore secureStore, SecureStoreManager secureStoreManager,
                        MessagingService messagingService, @Nullable ConditionSpecification conditionSpecification,
-                       MetadataReader metadataReader) {
+                       MetadataReader metadataReader, MetadataPublisher metadataPublisher) {
     super(program, programOptions, cConf, new HashSet(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
                                                              ProgramRunners.getRunId(programOptions).getId()),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher);
     this.workflowSpec = workflowSpec;
     this.conditionSpecification = conditionSpecification;
     this.token = token;

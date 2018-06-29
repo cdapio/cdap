@@ -859,5 +859,45 @@ public class HttpHandlerGeneratorTest {
     public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
       return null;
     }
+
+    @Override
+    public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addTags(MetadataEntity metadataEntity, String... tags) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeMetadata(MetadataEntity metadataEntity) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeProperties(MetadataEntity metadataEntity) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeProperties(MetadataEntity metadataEntity, String... keys) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeTags(MetadataEntity metadataEntity) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeTags(MetadataEntity metadataEntity, String... tags) {
+      throw new UnsupportedOperationException();
+    }
   }
 }
