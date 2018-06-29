@@ -22,7 +22,6 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -34,7 +33,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
-import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.dataset.MetadataEntries;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -46,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -111,9 +109,9 @@ class MetadataMigrator extends AbstractExecutionThreadService {
 
               // All the metadata entries are written using setProperty because it does not modify the MetadataEntry
               // keys
-              List<KeyValue<Long, MetadataEntry>> entries = v1.scanOrDeleteFromV1Table(batchSize, false);
+              MetadataEntries entries = v1.scanFromV1Table(batchSize);
 
-              if (entries.isEmpty()) {
+              if (entries.getEntries().isEmpty()) {
                 // All the value and history rows have been migrated so stop this thread and drop V1 MetadataDataset
                 dropV1MetadataDataset(datasetIdEntry.getKey());
                 LOG.debug("Migration for dataset {} is complete. This dataset is dropped.", datasetIdEntry.getKey());
@@ -121,9 +119,9 @@ class MetadataMigrator extends AbstractExecutionThreadService {
                 return;
               }
 
-              v2.writeUpgradedRow(entries);
+              v2.writeUpgradedRows(entries.getEntries());
               // We do not need to keep checkpoints. Instead, we will just delete scanned rows from metadata dataset
-              v1.scanOrDeleteFromV1Table(entries.size(), true);
+              v1.deleteRows(entries.getRows());
             });
           } catch (Exception e) {
             OUTAGE_LOG.error("Exception while migrating metadata from {} to {}, will be retried. ",

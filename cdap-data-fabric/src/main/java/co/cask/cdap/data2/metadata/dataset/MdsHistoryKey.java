@@ -18,9 +18,13 @@ package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-
-import java.nio.ByteBuffer;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 
 /**
  * Key class to get v1 metadata history key information
@@ -36,6 +40,49 @@ public final class MdsHistoryKey {
     return builder.build();
   }
 
+  /**
+   * Extracts history time from the record
+   * @param rowKey row key from which time needs to be extracted
+   * @param type type of the entity
+   * @return timestamp in the rowKey
+   */
+  static long extractTime(byte[] rowKey, String type) {
+    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
+    // Skip rowType
+    keySplitter.skipBytes();
+
+    // Skip targetId
+    if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ProgramId.class))) {
+      keySplitter.skipString();
+      keySplitter.skipString();
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ApplicationId.class))) {
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(DatasetId.class))) {
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(StreamId.class))) {
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(StreamViewId.class))) {
+      // skip namespace, stream, view
+      keySplitter.skipString();
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ArtifactId.class))) {
+      // skip namespace, name, version
+      keySplitter.skipString();
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else {
+      throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
+    }
+
+    return Long.MAX_VALUE - keySplitter.getLong();
+  }
+
   static byte[] getHistoryRowPrefix() {
     MDSKey key = new MDSKey.Builder().add(ROW_PREFIX).build();
     return key.getKey();
@@ -43,10 +90,6 @@ public final class MdsHistoryKey {
 
   private static long invertTime(long time) {
     return Long.MAX_VALUE - time;
-  }
-
-  static long getHistoryTime(byte[] rowKey) {
-    return ByteBuffer.wrap(rowKey).getLong(rowKey.length - 8);
   }
 
   private MdsHistoryKey() {
