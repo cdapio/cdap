@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metadata.MetadataEntity;
@@ -25,6 +26,7 @@ import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesService;
@@ -41,6 +43,7 @@ import co.cask.cdap.data2.registry.BasicUsageRegistry;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.registry.UsageWriter;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -50,7 +53,11 @@ import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.internal.profile.AdminEventPublisher;
 import co.cask.cdap.internal.profile.ProfileService;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -266,6 +273,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     }
   }
 
+  @Test
   public void testProfileMetadata() throws Exception {
     Injector injector = getInjector();
 
@@ -273,7 +281,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     // it should not affect the mds
     PreferencesService preferencesService = injector.getInstance(PreferencesService.class);
     preferencesService.setProperties(NamespaceId.DEFAULT,
-                                     Collections.singletonMap(SystemArguments.PROFILE_NAME, "SYSTEM:default"));
+                                     Collections.singletonMap(SystemArguments.PROFILE_NAME,
+                                                              ProfileId.NATIVE.getScopedName()));
 
     // add a app with workflow to app meta store
     ApplicationSpecification appSpec = Specifications.from(new AppWithWorkflow());
@@ -295,7 +304,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Assert.assertEquals(Collections.emptyMap(), mds.getProperties(scheduleId.toMetadataEntity()));
 
     // Start the MetadataSubscriberService
-    MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
+    MetadataSubscriberService subscriberService = injector.getInstance(MetadataSubscriberService.class);
     subscriberService.startAndWait();
 
     // add a new profile in default namespace
@@ -332,7 +341,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                                        Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:MyProfile2"));
 
       // set instance level to system profile
-      preferencesService.setProperties(Collections.singletonMap(SystemArguments.PROFILE_NAME, "SYSTEM:default"));
+      preferencesService.setProperties(Collections.singletonMap(SystemArguments.PROFILE_NAME,
+                                                                ProfileId.NATIVE.getScopedName()));
 
       // Verify the workflow profile metadata is updated to MyProfile2 which is at app level
       Tasks.waitFor(myProfile2.toString(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
@@ -370,7 +380,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       // Verify the schedule profile metadata is updated to default profile
       Tasks.waitFor(ProfileId.NATIVE.toString(), () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
     } finally {
       // stop and clean up the store
       subscriberService.stopAndWait();
@@ -436,6 +445,56 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       profileService.disableProfile(myProfile);
       profileService.deleteProfile(myProfile);
       mds.removeMetadata(workflowId.toMetadataEntity());
+    }
+  }
+
+  @Test
+  public void testAppDeletionMessage() throws Exception {
+    Injector injector = getInjector();
+
+    // get the alert publisher
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    MessagingService messagingService = injector.getInstance(MessagingService.class);
+    MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
+    AdminEventPublisher publisher = new AdminEventPublisher(cConf, messagingContext);
+
+    // get the mds and put some workflow metadata in that, the publish of app deletion message should get the metadata
+    // deleted
+    MetadataStore mds = injector.getInstance(MetadataStore.class);
+
+    // use an app with all program types to get all specification tested
+    ApplicationId appId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    ProgramId workflowId = appId.workflow(AllProgramsApp.NoOpWorkflow.NAME);
+    // generate an app spec from the application, this app spec will have the transient inputTypes and outputTypes
+    // in FlowletDefinition, we need to generate the schema from these two fields.
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    // We need to use the adapter to generate a true app spec which has the inputs and outputs field generated for
+    // FlowletDefinition, otherwise gson will ignore the transient inputTypes and outputTypes fields and
+    // make inputs and outputs field become null, which loses the intent of this test,
+    // because we want to test if the subsciber is able to deserialize the Schema in FlowletDefinition
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    String jsonString = adapter.toJson(appSpec);
+    ApplicationSpecification trueSpec = adapter.fromJson(jsonString);
+
+    // need to put metadata on workflow since we currently only set or delete workflow metadata
+    mds.setProperties(MetadataScope.SYSTEM, workflowId.toMetadataEntity(),
+                      Collections.singletonMap("profile", ProfileId.NATIVE.toString()));
+    Assert.assertEquals(ProfileId.NATIVE.toString(), mds.getProperties(workflowId.toMetadataEntity()).get("profile"));
+
+    // get the subsciber service and start it
+    MetadataSubscriberService metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
+    metadataSubscriberService.startAndWait();
+
+    try {
+      // publish app deletion message
+      publisher.publishAppDeletion(appId, trueSpec);
+
+      // Verify the workflow profile metadata is removed because of the publish app deletion message
+      Tasks.waitFor(Collections.emptyMap(), () -> mds.getProperties(workflowId.toMetadataEntity()),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    } finally {
+      metadataSubscriberService.stopAndWait();
     }
   }
 
