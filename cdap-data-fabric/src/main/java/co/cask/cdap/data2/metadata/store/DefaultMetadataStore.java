@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.metadata.store;
 
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -526,13 +525,13 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private <T> T execute(TransactionExecutor.Function<MetadataDataset, T> func, MetadataScope scope) {
-    MetadataDataset metadataDataset = newMetadataDataset(dsFramework, scope);
+    MetadataDataset metadataDataset = newMetadataDataset(scope);
     TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataDataset);
     return txExecutor.executeUnchecked(func, metadataDataset);
   }
 
   private void execute(TransactionExecutor.Procedure<MetadataDataset> func, MetadataScope scope) {
-    MetadataDataset metadataDataset = newMetadataDataset(dsFramework, scope);
+    MetadataDataset metadataDataset = newMetadataDataset(scope);
     TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataDataset);
     txExecutor.executeUnchecked(func, metadataDataset);
   }
@@ -543,7 +542,7 @@ public class DefaultMetadataStore implements MetadataStore {
     }, scope);
   }
 
-  private MetadataDataset newMetadataDataset(DatasetFramework dsFramework, MetadataScope scope) {
+  private MetadataDataset newMetadataDataset(MetadataScope scope) {
     try {
       return DatasetsUtil.getOrCreateDataset(
         dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
@@ -579,19 +578,8 @@ public class DefaultMetadataStore implements MetadataStore {
     }
   }
 
-  private static DatasetId getMetadataDatasetInstance(MetadataScope scope) {
+  private DatasetId getMetadataDatasetInstance(MetadataScope scope) {
     return MetadataScope.USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
-  }
-
-  public static MetadataDataset getMetadataDataset(DatasetContext context, DatasetFramework dsFramework,
-                                                   MetadataScope scope) {
-    try {
-      return DatasetsUtil
-        .getOrCreateDataset(context, dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
-                            DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
-    } catch (DatasetManagementException | IOException e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   /**

@@ -21,7 +21,7 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
-import co.cask.cdap.config.PreferencesService;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.security.impersonation.ImpersonationInfo;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
@@ -37,13 +37,13 @@ import java.util.Map;
  */
 public class PropertiesResolver {
 
-  private final PreferencesService prefStore;
+  private final PreferencesStore prefStore;
   private final CConfiguration cConf;
   private final OwnerAdmin ownerAdmin;
   private final SchedulerQueueResolver queueResolver;
 
   @Inject
-  PropertiesResolver(PreferencesService prefStore, CConfiguration cConf,
+  PropertiesResolver(PreferencesStore prefStore, CConfiguration cConf,
                      OwnerAdmin ownerAdmin,
                      SchedulerQueueResolver schedulerQueueResolver) {
     this.prefStore = prefStore;
@@ -53,7 +53,8 @@ public class PropertiesResolver {
   }
 
   public Map<String, String> getUserProperties(Id.Program id) {
-    Map<String, String> userArgs = prefStore.getResolvedProperties(id.toEntityId());
+    Map<String, String> userArgs = prefStore.getResolvedProperties(id.getNamespaceId(), id.getApplicationId(),
+                                                                   id.getType().getCategoryName(), id.getId());
     userArgs.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(System.currentTimeMillis()));
     return userArgs;
   }

@@ -246,7 +246,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * @param appId the application id for which to delete the schedules
    * @return the IDs of the schedules that were deleted
    */
-  // TODO: fix the bug that this method will return fake schedule id https://issues.cask.co/browse/CDAP-13626
   public List<ScheduleId> deleteSchedules(ApplicationId appId) {
     List<ScheduleId> deleted = new ArrayList<>();
     // since all trigger row keys are prefixed by <scheduleRowKey>@,
@@ -268,7 +267,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * @param programId the program id for which to delete the schedules
    * @return the IDs of the schedules that were deleted
    */
-  // TODO: fix the bug that this method will return fake schedule id https://issues.cask.co/browse/CDAP-13626
   public List<ScheduleId> deleteSchedules(ProgramId programId) {
     List<ScheduleId> deleted = new ArrayList<>();
     // since all trigger row keys are prefixed by <scheduleRowKey>@,

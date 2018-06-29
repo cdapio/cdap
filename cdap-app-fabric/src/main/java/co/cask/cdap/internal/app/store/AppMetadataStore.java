@@ -181,27 +181,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   @Nullable
-  public ApplicationMeta getApplication(ApplicationId appId) {
-    ApplicationMeta appMeta = getFirst(new MDSKey.Builder().add(TYPE_APP_META,
-                                                                appId.getNamespace(),
-                                                                appId.getApplication(),
-                                                                appId.getVersion()).build(),
+  public ApplicationMeta getApplication(String namespaceId, String appId, String versionId) {
+    ApplicationMeta appMeta = getFirst(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build(),
                                        ApplicationMeta.class);
 
     if (appMeta != null) {
       return appMeta;
     }
 
-    if (!hasUpgraded() && appId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      appMeta = get(new MDSKey.Builder().add(TYPE_APP_META, appId.getNamespace(),
-                                             appId.getApplication()).build(), ApplicationMeta.class);
+    if (!hasUpgraded() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
+      appMeta = get(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
     }
     return appMeta;
-  }
-
-  @Nullable
-  public ApplicationMeta getApplication(String namespaceId, String appId, String versionId) {
-    return getApplication(new ApplicationId(namespaceId, appId, versionId));
   }
 
   public List<ApplicationMeta> getAllApplications(String namespaceId) {
