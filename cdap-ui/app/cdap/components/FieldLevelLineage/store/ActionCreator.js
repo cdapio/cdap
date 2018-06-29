@@ -83,7 +83,7 @@ export function getLineageSummary(fieldName) {
     namespace,
     entityId: datasetId,
     fieldName,
-    direction: 'backward',
+    direction: 'incoming',
     start,
     end
   };
@@ -91,9 +91,9 @@ export function getLineageSummary(fieldName) {
   MyMetadataApi.getFieldLineage(params)
     .subscribe((res) => {
       Store.dispatch({
-        type: Actions.setBackwardLineage,
+        type: Actions.setIncomingLineage,
         payload: {
-          backward: res.backward,
+          incoming: res.incoming,
           activeField: fieldName
         }
       });
@@ -133,15 +133,15 @@ export function getOperations() {
     fieldName,
     start,
     end,
-    direction: 'backward'
+    direction: 'incoming'
   };
 
   MyMetadataApi.getFieldOperations(params)
     .subscribe((res) => {
       Store.dispatch({
-        type: Actions.setBackwardOperations,
+        type: Actions.setIncomingOperations,
         payload: {
-          backwardOperations: res.backward
+          incomingOperations: res.incoming
         }
       });
     });

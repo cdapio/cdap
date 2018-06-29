@@ -19,19 +19,19 @@ import PropTypes from 'prop-types';
 import {Link} from 'react-router-dom';
 
 export default function SummaryRow({entity}) {
-  const linkPath = `/ns/${entity.namespace}/datasets/${entity.dataset}/fields`;
+  const linkPath = `/ns/${entity.dataset.namespace}/datasets/${entity.dataset.dataset}/fields`;
 
   return (
     <div className="summary-row">
       <div className="namespace">
-        {`'${entity.namespace}'`}
+        {`'${entity.dataset.namespace}'`}
       </div>
       <div className="dataset-name">
         <Link
           to={linkPath}
           className="field-link"
         >
-          {entity.dataset}
+          {entity.dataset.dataset}
         </Link>
       </div>
       <div className="fields-list">

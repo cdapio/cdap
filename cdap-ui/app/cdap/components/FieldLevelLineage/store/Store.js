@@ -27,10 +27,10 @@ export const TIME_OPTIONS = [
 
 const Actions = {
   setFields: 'FLL_SET_FIELDS',
-  setBackwardLineage: 'FLL_SET_BACKWARD_LINEAGE',
+  setIncomingLineage: 'FLL_SET_INCOMING_LINEAGE',
   closeSummary: 'FLL_CLOSE_SUMMARY',
   setSearch: 'FLL_SET_SEARCH',
-  setBackwardOperations: 'FLL_SET_BACKWARD_OPERATIONS',
+  setIncomingOperations: 'FLL_SET_INCOMING_OPERATIONS',
   closeOperations: 'FLL_CLOSE_OPERATIONS',
   operationsLoading: 'FLL_OPERATIONS_LOADING',
   nextOperation: 'FLL_NEXT_OPERATION',
@@ -42,14 +42,14 @@ const Actions = {
 const defaultInitialState = {
   datasetId: '',
   fields: [],
-  backward: [],
+  incoming: [],
   activeField: null,
   search: '',
   timeSelection: TIME_OPTIONS[0]
 };
 
 const operationsInitialState = {
-  backwardOperations: [],
+  incomingOperations: [],
   showOperations: false,
   activeIndex: 0,
   loading: false
@@ -63,10 +63,10 @@ const lineage = (state = defaultInitialState, action = defaultAction) => {
         datasetId: action.payload.datasetId,
         fields: action.payload.fields
       };
-    case Actions.setBackwardLineage:
+    case Actions.setIncomingLineage:
       return {
         ...state,
-        backward: action.payload.backward,
+        incoming: action.payload.incoming,
         activeField: action.payload.activeField
       };
     case Actions.closeSummary:
@@ -99,19 +99,19 @@ const operations = (state = operationsInitialState, action = defaultAction) => {
         loading: true,
         showOperations: true
       };
-    case Actions.setBackwardOperations:
+    case Actions.setIncomingOperations:
       return {
         ...state,
-        backwardOperations: action.payload.backwardOperations,
+        incomingOperations: action.payload.incomingOperations,
         activeIndex: 0,
         showOperations: true,
         loading: false
       };
-    case Actions.setBackwardLineage:
+    case Actions.setIncomingLineage:
     case Actions.closeOperations:
       return {
         ...state,
-        backwardOperations: [],
+        incomingOperations: [],
         showOperations: false
       };
     case Actions.nextOperation:
