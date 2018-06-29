@@ -28,6 +28,7 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -92,23 +93,23 @@ public class DefaultFieldLineageReader implements FieldLineageReader {
   }
 
   @Override
-  public Set<ProgramRunOperations> getIncomingOperations(EndPoint endPoint, String field, long start, long end) {
-    return computeFieldOperations(true, endPoint, field, start, end);
+  public Set<ProgramRunOperations> getIncomingOperations(EndPointField endPointField, long start, long end) {
+    return computeFieldOperations(true, endPointField, start, end);
   }
 
   @Override
-  public Set<ProgramRunOperations> getOutgoingOperations(EndPoint endPoint, String field, long start, long end) {
-    return computeFieldOperations(false, endPoint, field, start, end);
+  public Set<ProgramRunOperations> getOutgoingOperations(EndPointField endPointField, long start, long end) {
+    return computeFieldOperations(false, endPointField, start, end);
   }
 
-  private Set<ProgramRunOperations> computeFieldOperations(boolean incoming, EndPoint endPoint, String field,
+  private Set<ProgramRunOperations> computeFieldOperations(boolean incoming, EndPointField endPointField,
                                                            long start, long end) {
     Set<ProgramRunOperations> endPointOperations = Transactionals.execute(transactional, context -> {
       FieldLineageDataset fieldLineageDataset = FieldLineageDataset.getFieldLineageDataset(context, datasetFramework,
               fieldLineageDatasetId);
 
-      return incoming ? fieldLineageDataset.getIncomingOperations(endPoint, start, end)
-              : fieldLineageDataset.getOutgoingOperations(endPoint, start, end);
+      return incoming ? fieldLineageDataset.getIncomingOperations(endPointField.getEndPoint(), start, end)
+              : fieldLineageDataset.getOutgoingOperations(endPointField.getEndPoint(), start, end);
     });
 
     Set<ProgramRunOperations> endPointFieldOperations = new HashSet<>();
@@ -116,7 +117,7 @@ public class DefaultFieldLineageReader implements FieldLineageReader {
       try {
         FieldLineageInfo info = new FieldLineageInfo(programRunOperation.getOperations());
         Set<Operation> fieldOperations = incoming ?
-                info.getIncomingOperationsForField(new EndPointField(endPoint, field))
+                info.getIncomingOperationsForField(endPointField)
                 : Collections.EMPTY_SET;
         ProgramRunOperations result = new ProgramRunOperations(programRunOperation.getProgramRunIds(), fieldOperations);
         endPointFieldOperations.add(result);

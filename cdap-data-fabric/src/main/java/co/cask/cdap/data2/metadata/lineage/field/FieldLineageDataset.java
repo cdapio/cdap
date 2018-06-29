@@ -35,6 +35,7 @@ import co.cask.cdap.proto.codec.OperationTypeAdapter;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;

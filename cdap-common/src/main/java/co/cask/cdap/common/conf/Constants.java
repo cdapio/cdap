@@ -1430,4 +1430,18 @@ public final class Constants {
   public static final class Upgrade {
     public static final String UPGRADE_THREAD_POOL_SIZE = "upgrade.thread.pool.size";
   }
+
+  /**
+   * Constants for field lineage
+   */
+  public static final class FieldLineage {
+    /**
+     * Direction for lineage
+     */
+    public enum Direction {
+      INCOMING,
+      OUTGOING,
+      BOTH
+    }
+  }
 }

@@ -42,9 +42,9 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
+import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
-import co.cask.cdap.data2.metadata.lineage.field.ProgramRunOperations;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
@@ -85,6 +85,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.scheduler.ProgramScheduleService;
 import com.google.common.collect.ImmutableList;
@@ -225,8 +226,9 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       expectedOperations.add(anotherWrite);
       expectedSet.add(new ProgramRunOperations(Collections.singleton(spark1Run3), expectedOperations));
 
-      Tasks.waitFor(expectedSet, () -> fieldLineageReader.getIncomingOperations(EndPoint.of("ns", "endpoint2"),
-              "offset", 1L, Long.MAX_VALUE - 1), 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      EndPointField endPointField = new EndPointField(EndPoint.of("ns", "endpoint2"), "offset");
+      Tasks.waitFor(expectedSet, () -> fieldLineageReader.getIncomingOperations(endPointField, 1L, Long.MAX_VALUE - 1),
+              10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // Verifies usage has been written
       Set<EntityId> expectedUsage = new HashSet<>(Arrays.asList(dataset1, dataset3));
