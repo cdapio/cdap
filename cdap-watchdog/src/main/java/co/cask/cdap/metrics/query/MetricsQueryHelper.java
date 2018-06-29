@@ -109,7 +109,16 @@ public class MetricsQueryHelper {
 
       .put(Constants.Metrics.Tag.WORKFLOW, "workflow")
 
-      .put(Constants.Metrics.Tag.SPARK, "spark").build();
+      .put(Constants.Metrics.Tag.SPARK, "spark")
+
+      // put program related tag
+      .put(Constants.Metrics.Tag.PROGRAM, "program")
+      .put(Constants.Metrics.Tag.PROGRAM_TYPE, "programtype")
+
+      // put profiel related tag
+      .put(Constants.Metrics.Tag.PROFILE, "profile")
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, "profilescope")
+      .build();
 
     tagNameToHuman = mapping;
     humanToTagName = mapping.inverse();
