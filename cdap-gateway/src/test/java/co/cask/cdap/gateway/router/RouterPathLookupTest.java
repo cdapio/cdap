@@ -383,6 +383,7 @@ public class RouterPathLookupTest {
                   RouterPathLookup.METADATA_SERVICE);
     // search metadata
     assertRouting("/v3/namespaces/default/metadata/search", RouterPathLookup.METADATA_SERVICE);
+    assertRouting("/v3/metadata/search", RouterPathLookup.METADATA_SERVICE);
     // lineage
     assertRouting("/v3/namespaces/default/////datasets/ds1/lineage", RouterPathLookup.METADATA_SERVICE);
     assertRouting("/v3/namespaces/default/streams/st1/lineage", RouterPathLookup.METADATA_SERVICE);

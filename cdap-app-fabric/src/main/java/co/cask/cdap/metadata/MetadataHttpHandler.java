@@ -210,6 +210,33 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
+  @Path("/metadata/search")
+  public void searchMetadata(HttpRequest request, HttpResponder responder,
+                             @Nullable @QueryParam("query") String searchQuery,
+                             @Nullable @QueryParam("target") List<String> targets,
+                             @QueryParam("sort") @DefaultValue("") String sort,
+                             @QueryParam("offset") @DefaultValue("0") int offset,
+                             // 2147483647 is Integer.MAX_VALUE
+                             @QueryParam("limit") @DefaultValue("2147483647") int limit,
+                             @QueryParam("numCursors") @DefaultValue("0") int numCursors,
+                             @QueryParam("cursor") @DefaultValue("") String cursor,
+                             @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
+                             @QueryParam("showCustom") boolean showCustom,
+                             @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
+    SearchRequest searchRequest = getValidatedSearchRequest(null, searchQuery, targets, sort, offset,
+                                                            limit, numCursors, cursor, showHidden, entityScope);
+
+    MetadataSearchResponseV2 response = metadataAdmin.search(searchRequest);
+    if (showCustom) {
+      // if user has specified to show custom entity/resource then there is no need to filter them
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponseV2.class));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(MetadataCompat.makeCompatible(response),
+                                                            MetadataSearchResponse.class));
+    }
+  }
+
+  @GET
   @Path("/namespaces/{namespace-id}/metadata/search")
   public void searchMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
@@ -226,7 +253,6 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
     SearchRequest searchRequest = getValidatedSearchRequest(namespaceId, searchQuery, targets, sort, offset,
                                                             limit, numCursors, cursor, showHidden, entityScope);
-    LOG.trace("Received search request {}", searchRequest);
 
     MetadataSearchResponseV2 response = metadataAdmin.search(searchRequest);
     if (showCustom) {
@@ -238,7 +264,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private SearchRequest getValidatedSearchRequest(String namespace, @Nullable String searchQuery,
+  private SearchRequest getValidatedSearchRequest(@Nullable String namespace, @Nullable String searchQuery,
                                                   @Nullable List<String> targets, String sort, int offset, int limit,
                                                   int numCursors, String cursor, boolean showHidden, String entityScope)
     throws BadRequestException, UnsupportedEncodingException {
@@ -257,14 +283,16 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
     NamespaceId namespaceId;
     try {
-      namespaceId = new NamespaceId(namespace);
+      namespaceId = namespace == null ? null : new NamespaceId(namespace);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
 
     try {
-      return new SearchRequest(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors,
-                               cursor, showHidden, validateEntityScope(entityScope));
+      SearchRequest request = new SearchRequest(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors,
+                                                cursor, showHidden, validateEntityScope(entityScope));
+      LOG.trace("Received search request {}", request);
+      return request;
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage());
     }

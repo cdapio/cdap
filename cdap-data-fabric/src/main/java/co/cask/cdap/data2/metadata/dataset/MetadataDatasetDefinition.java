@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
@@ -29,6 +28,7 @@ import com.google.common.base.Joiner;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Define the Dataset for metadata.
@@ -51,16 +51,15 @@ public class MetadataDatasetDefinition
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    String[] indexColumns = MetadataDataset.INDEX_COLUMNS.stream()
+      .flatMap(indexCol -> Stream.of(indexCol.getCrossNamespaceColumn(), indexCol.getColumn()))
+      .toArray(String[]::new);
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(
         indexedTableDef.configure(
           METADATA_INDEX_TABLE_NAME,
-          addIndexColumns(
-            properties, MetadataDataset.DEFAULT_INDEX_COLUMN, MetadataDataset.ENTITY_NAME_INDEX_COLUMN,
-            MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, MetadataDataset.CREATION_TIME_INDEX_COLUMN,
-            MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN
-          )
+          addIndexColumns(properties, indexColumns)
         )
       )
       .build();
@@ -69,7 +68,7 @@ public class MetadataDatasetDefinition
   @Override
   public DatasetSpecification reconfigure(String instanceName,
                                           DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+                                          DatasetSpecification currentSpec) {
     return configure(instanceName, newProperties);
   }
 

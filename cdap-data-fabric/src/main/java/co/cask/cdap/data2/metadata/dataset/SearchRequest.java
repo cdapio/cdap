@@ -25,6 +25,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -48,7 +49,7 @@ public class SearchRequest {
    * Represents a request for a search for CDAP entities in the specified namespace with the specified search query and
    * an optional set of {@link EntityTypeSimpleName entity types} in the specified {@link MetadataScope}.
    *
-   * @param namespaceId the namespace id to filter the search by
+   * @param namespaceId the namespace id to filter the search by. Null if the search is across all namespaces
    * @param query the search query
    * @param types the types of CDAP entity to be searched. If empty all possible types will be searched
    * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
@@ -64,9 +65,9 @@ public class SearchRequest {
    *                    or not.
    * @param entityScope a set which specifies which scope of entities to display.
    */
-  public SearchRequest(NamespaceId namespaceId, String query, Set<EntityTypeSimpleName> types, SortInfo sortInfo,
-                       int offset, int limit, int numCursors, @Nullable String cursor, boolean showHidden,
-                       Set<EntityScope> entityScope) {
+  public SearchRequest(@Nullable NamespaceId namespaceId, String query, Set<EntityTypeSimpleName> types,
+                       SortInfo sortInfo, int offset, int limit, int numCursors, @Nullable String cursor,
+                       boolean showHidden, Set<EntityScope> entityScope) {
     if (query == null || query.isEmpty()) {
       throw new IllegalArgumentException("query must be specified");
     }
@@ -78,6 +79,9 @@ public class SearchRequest {
     }
     if (numCursors < 0) {
       throw new IllegalArgumentException("numCursors must not be negative");
+    }
+    if (entityScope.isEmpty()) {
+      throw new IllegalArgumentException("entity scope must be specified");
     }
     this.namespaceId = namespaceId;
     this.query = query;
@@ -92,10 +96,17 @@ public class SearchRequest {
   }
 
   /**
-   * @return the namespace to search in
+   * @return the namespace to search in, or empty if this is a cross namespace search.
    */
-  public NamespaceId getNamespaceId() {
-    return namespaceId;
+  public Optional<NamespaceId> getNamespaceId() {
+    return Optional.ofNullable(namespaceId);
+  }
+
+  /**
+   * @return true if the search request is within a namespace, false if it is across namespaces.
+   */
+  public boolean isNamespaced() {
+    return namespaceId != null;
   }
 
   /**
@@ -177,7 +188,7 @@ public class SearchRequest {
    * @return whether the search is done on the system metadata table or user metadata table.
    *   If a scope not defined the scan is performed on both and results are aggregated .
    */
-  public Set<EntityScope> getEntityScope() {
+  public Set<EntityScope> getEntityScopes() {
     return entityScope;
   }
 
