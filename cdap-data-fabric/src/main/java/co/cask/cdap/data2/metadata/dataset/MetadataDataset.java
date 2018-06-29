@@ -29,6 +29,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.metadata.indexer.DefaultValueIndexer;
@@ -802,16 +803,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity target id for which metadata needs snapshotting
    */
   private void writeHistory(MetadataEntity metadataEntity) {
-    writeHistory(metadataEntity, -1);
+    writeHistory(metadataEntity, System.currentTimeMillis());
   }
 
   private void writeHistory(MetadataEntity metadataEntity, long time) {
     Map<String, String> properties = getProperties(metadataEntity);
     Set<String> tags = getTags(metadataEntity);
     Metadata metadata = new Metadata(metadataEntity, properties, tags);
-    if (time < 0) {
-      time = System.currentTimeMillis();
-    }
     byte[] row = MetadataHistoryKey.getMDSKey(metadataEntity, time).getKey();
     indexedTable.put(row, Bytes.toBytes(HISTORY_COLUMN), Bytes.toBytes(GSON.toJson(metadata)));
   }
@@ -933,52 +931,48 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Starts scanning/deleting of V1 table value row keys in batches. If there are no more value row keys available,
+   * Starts scanning of V1 table value row keys in batches. If there are no more value row keys available,
    * it will scan history rows. If there are no value/history rows, it returns empty list.
    *
    * @param limit  Batch size for scan/delete.
-   * @param delete Determines if operation to perform is scan or delete.
-   * @return List of {@link KeyValue} where key is timestamp for history row other wise it is null,
-   * value is {@link MetadataEntry}
+   * @return metadata entries with list of {@link KeyValue} where key is timestamp for history row other wise
+   * it is null, value is {@link MetadataEntry} and list of rowkeys to be deleted.
    */
-  public List<KeyValue<Long, MetadataEntry>> scanOrDeleteFromV1Table(int limit, boolean delete) {
+  public MetadataEntries scanFromV1Table(int limit) {
+    MetadataEntries scannedEntries = new MetadataEntries(new LinkedList<>(), new LinkedList<>());
+
     // Try to scan value rows first
     byte[] rowPrefix = MdsKey.getValueRowPrefix();
     byte[] stopRowKey = Bytes.stopKeyForPrefix(rowPrefix);
 
-    List<KeyValue<Long, MetadataEntry>> entries = scanOrDelete(rowPrefix, stopRowKey, limit, delete,
-                                                               this::convertFromV1Value);
+    scan(rowPrefix, stopRowKey, limit, scannedEntries, this::convertFromV1Value);
 
     // Scan History rows if all the Value rows are scanned
-    if (entries.size() < limit) {
+    if (scannedEntries.getEntries().size() < limit) {
       rowPrefix = MdsHistoryKey.getHistoryRowPrefix();
       stopRowKey = Bytes.stopKeyForPrefix(rowPrefix);
-      entries.addAll(scanOrDelete(rowPrefix, stopRowKey, limit - entries.size(), delete, this::convertFromV1History));
+
+      limit = limit - scannedEntries.getEntries().size();
+      scan(rowPrefix, stopRowKey, limit, scannedEntries, this::convertFromV1History);
     }
 
-    return entries;
+    return scannedEntries;
   }
 
-  private List<KeyValue<Long, MetadataEntry>> scanOrDelete(byte[] rowPrefix, byte[] stopRowKey,
-                                                           int limit, boolean delete,
-                                                           Function<Row, KeyValue<Long, MetadataEntry>> function) {
-    List<KeyValue<Long, MetadataEntry>> entries = new LinkedList<>();
+  private void scan(byte[] rowPrefix, byte[] stopRowKey, int limit, MetadataEntries entries,
+                    Function<Row, KeyValue<Long, MetadataEntry>> function) {
     try (Scanner scan = indexedTable.scan(rowPrefix, stopRowKey)) {
       Row row;
       while ((row = scan.next()) != null && limit > 0) {
         KeyValue<Long, MetadataEntry> entry = function.apply(row);
 
         if (entry != null) {
-          entries.add(entry);
+          entries.getEntries().add(entry);
+          entries.getRows().add(row.getRow());
           limit--;
-        }
-
-        if (delete) {
-          indexedTable.delete(new Delete(row.getRow()));
         }
       }
     }
-    return entries;
   }
 
   /**
@@ -1009,11 +1003,13 @@ public class MetadataDataset extends AbstractDataset {
   @Nullable
   private KeyValue<Long, MetadataEntry> convertFromV1History(Row row) {
     byte[] rowKey = row.getRow();
-    long historyTime = MdsHistoryKey.getHistoryTime(rowKey);
+    // History rows does not store entity type in the key. So to get the entity, we will read the value, deserialize it.
+    // However, in v2 tables, we are going to add type in the history row key.
     MetadataV1 metadata = GSON.fromJson(row.getString(HISTORY_COLUMN), MetadataV1.class);
     if (metadata == null) {
       return null;
     }
+    long historyTime = MdsHistoryKey.extractTime(rowKey, EntityIdKeyHelper.getTargetType(metadata.getEntityId()));
     // For history we do not care about key and value for MetadataEntry as we are not going to extract that
     // information for upgrade
     return new KeyValue<>(historyTime, new MetadataEntry(metadata.getEntityId(), "", ""));
@@ -1024,15 +1020,26 @@ public class MetadataDataset extends AbstractDataset {
    *
    * @param entries list of entries to be written.
    */
-  public void writeUpgradedRow(List<KeyValue<Long, MetadataEntry>> entries) {
+  public void writeUpgradedRows(List<KeyValue<Long, MetadataEntry>> entries) {
     for (KeyValue<Long, MetadataEntry> kv : entries) {
       MetadataEntry entry = kv.getValue();
       if (kv.getKey() == null) {
         writeWithoutHistory(entry.getMetadataEntity(), entry,
                             getIndexersForKey(entry.getMetadataEntity(), entry.getKey()));
       } else {
-        writeHistory(entry.getMetadataEntity());
+        writeHistory(entry.getMetadataEntity(), kv.getKey());
       }
+    }
+  }
+
+  /**
+   * Deletes rows from underlying index table.
+   *
+   * @param rowsToDelete row keys to be deleted.
+   */
+  public void deleteRows(List<byte[]> rowsToDelete) {
+    for (byte[] row : rowsToDelete) {
+      indexedTable.delete(new Delete(row));
     }
   }
 }
