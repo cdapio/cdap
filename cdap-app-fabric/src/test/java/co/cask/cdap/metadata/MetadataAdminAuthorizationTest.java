@@ -25,6 +25,7 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -148,15 +149,13 @@ public class MetadataAdminAuthorizationTest {
 
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);
     EnumSet<EntityTypeSimpleName> types = EnumSet.allOf(EntityTypeSimpleName.class);
-    Assert.assertFalse(
-      metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*", types,
-                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false,
-                           EnumSet.allOf(EntityScope.class)).getResults().isEmpty());
+    SearchRequest searchRequest =
+      new SearchRequest(NamespaceId.DEFAULT, "*", types, SortInfo.DEFAULT, 0,
+                        Integer.MAX_VALUE, 0, null, false, EnumSet.allOf(EntityScope.class));
+
+    Assert.assertFalse(metadataAdmin.search(searchRequest).getResults().isEmpty());
     SecurityRequestContext.setUserId("bob");
-    Assert.assertTrue(
-      metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*", types,
-                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false,
-                           EnumSet.allOf(EntityScope.class)).getResults().isEmpty());
+    Assert.assertTrue(metadataAdmin.search(searchRequest).getResults().isEmpty());
   }
 
   @AfterClass

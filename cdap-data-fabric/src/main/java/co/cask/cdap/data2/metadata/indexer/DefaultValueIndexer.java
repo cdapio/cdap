@@ -26,12 +26,29 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Default {@link Indexer} for {@link MetadataEntry}
+ * Default {@link Indexer} for {@link MetadataEntry}.
  */
 public class DefaultValueIndexer implements Indexer {
   private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_:,\\s]+");
   private static final Pattern TAGS_SEPARATOR_PATTERN = Pattern.compile("[,\\s]+");
 
+  /**
+   * Generates a set of tokens based on the metadata values. Splits values on whitespace, '-', '_', ':', and ',' to
+   * generate multiple tokens. Also generates an additional token that has the metadata key prefixed to it.
+   *
+   * For example, when given property 'owner'='foo bar', six tokens will be generated:
+   *
+   * 'foo bar', 'foo', 'bar', 'owner:foo bar', 'owner:foo', and 'owner:bar'.
+   *
+   * If 'tags'='foo,bar baz' is given, six tokens will be generated:
+   *
+   * 'foo', 'bar', 'baz', 'tags:foo', 'tags:bar', 'tags:baz'
+   *
+   * TODO: (CDAP-13629) be consistent with properties and tags on the 'foo bar' case.
+   *
+   * @param entry the {@link MetadataEntry} for which indexes needs to be created
+   * @return split and prefixed index values
+   */
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
     Set<String> valueIndexes = new HashSet<>();

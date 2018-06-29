@@ -26,12 +26,14 @@ import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
+import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
@@ -46,10 +48,13 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -74,6 +79,7 @@ import javax.ws.rs.QueryParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class MetadataHttpHandler extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
@@ -213,8 +219,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/metadata/search")
   public void searchMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @QueryParam("query") String searchQuery,
-                             @QueryParam("target") List<String> targets,
+                             @Nullable @QueryParam("query") String searchQuery,
+                             @Nullable @QueryParam("target") List<String> targets,
                              @QueryParam("sort") @DefaultValue("") String sort,
                              @QueryParam("offset") @DefaultValue("0") int offset,
                              // 2147483647 is Integer.MAX_VALUE
@@ -224,29 +230,49 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
                              @QueryParam("showCustom") boolean showCustom,
                              @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
-    if (searchQuery == null || searchQuery.isEmpty()) {
-      throw new BadRequestException("query is not specified");
-    }
-    Set<EntityTypeSimpleName> types = Collections.emptySet();
-    if (targets != null) {
-      types = targets.stream().map(STRING_TO_TARGET_TYPE).collect(Collectors.toSet());
-    }
-    SortInfo sortInfo = SortInfo.of(URLDecoder.decode(sort, "UTF-8"));
-    if (SortInfo.DEFAULT.equals(sortInfo)) {
-      if (!(cursor.isEmpty()) || 0 != numCursors) {
-        throw new BadRequestException("Cursors are not supported when sort info is not specified.");
-      }
-    }
+    SearchRequest searchRequest = getValidatedSearchRequest(namespaceId, searchQuery, targets, sort, offset,
+                                                            limit, numCursors, cursor, showHidden, entityScope);
+    LOG.trace("Received sesarch request {}", searchRequest);
 
-    MetadataSearchResponseV2 response =
-      metadataAdmin.search(namespaceId, URLDecoder.decode(searchQuery, "UTF-8"), types,
-                           sortInfo, offset, limit, numCursors, cursor, showHidden, validateEntityScope(entityScope));
+    MetadataSearchResponseV2 response = metadataAdmin.search(searchRequest);
     if (showCustom) {
       // if user has specified to show custom entity/resource then there is no need to filter them
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponseV2.class));
     } else {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(MetadataCompat.makeCompatible(response),
                                                             MetadataSearchResponse.class));
+    }
+  }
+
+  private SearchRequest getValidatedSearchRequest(String namespace, @Nullable String searchQuery,
+                                                  @Nullable List<String> targets, String sort, int offset, int limit,
+                                                  int numCursors, String cursor, boolean showHidden, String entityScope)
+    throws BadRequestException, UnsupportedEncodingException {
+
+    Set<EntityTypeSimpleName> types = Collections.emptySet();
+    if (targets != null) {
+      types = targets.stream().map(STRING_TO_TARGET_TYPE).collect(Collectors.toSet());
+    }
+
+    SortInfo sortInfo = SortInfo.of(URLDecoder.decode(sort, StandardCharsets.UTF_8.name()));
+    if (SortInfo.DEFAULT.equals(sortInfo)) {
+      if (!(cursor.isEmpty()) || 0 != numCursors) {
+        throw new BadRequestException("Cursors are not supported when sort info is not specified.");
+      }
+    }
+
+    NamespaceId namespaceId;
+    try {
+      namespaceId = new NamespaceId(namespace);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
+
+    try {
+      return new SearchRequest(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors,
+                               cursor, showHidden, validateEntityScope(entityScope));
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage());
     }
   }
 

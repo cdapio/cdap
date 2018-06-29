@@ -29,6 +29,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
+import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
@@ -434,9 +435,10 @@ public class MetadataStoreTest {
   private MetadataSearchResponseV2 search(String ns, String searchQuery,
                                           int offset, int limit, int numCursors, boolean showHidden,
                                           SortInfo sortInfo) {
-    return store.search(
-      ns, searchQuery, EnumSet.allOf(EntityTypeSimpleName.class),
-      sortInfo, offset, limit, numCursors, "", showHidden, EnumSet.allOf(EntityScope.class));
+    SearchRequest request =
+      new SearchRequest(new NamespaceId(ns), searchQuery, EnumSet.allOf(EntityTypeSimpleName.class), sortInfo, offset,
+                        limit, numCursors, "", showHidden, EnumSet.allOf(EntityScope.class));
+    return store.search(request);
   }
 
   private void generateMetadataUpdates() {

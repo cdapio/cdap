@@ -22,6 +22,7 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
@@ -166,28 +167,10 @@ public interface MetadataStore {
    * Search the Metadata Dataset for the specified target types in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}.
    *
-   * @param namespaceId the namespace to search in
-   * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value]
-   * @param types the {@link EntityTypeSimpleName} to restrict the search to, if empty all types are searched
-   * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
-   *                 sorting (which implies that the sort order is by relevance to the search query)
-   * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
-   * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
-   * @param numCursors the number of cursors to return in the response. A cursor identifies the first index of the
-   *                   next page for pagination purposes. Defaults to {@code 0}
-   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
-   *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
-   *               the cursor. If {@code null}, the first row is used as the cursor
-   * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
-   *                    or not.
-   * @param entityScope a set which specifies which scope of entities to display.
+   * @param request the {@link SearchRequest}
    * @return the {@link MetadataSearchResponseV2} containing search results for the specified search query and filters
    */
-  MetadataSearchResponseV2 search(String namespaceId, String searchQuery,
-                                  Set<EntityTypeSimpleName> types,
-                                  SortInfo sortInfo, int offset, int limit,
-                                  int numCursors, String cursor, boolean showHidden,
-                                  Set<EntityScope> entityScope);
+  MetadataSearchResponseV2 search(SearchRequest request);
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in the specified

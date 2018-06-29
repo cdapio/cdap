@@ -19,6 +19,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
@@ -117,13 +118,10 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public MetadataSearchResponseV2 search(String namespaceId, String searchQuery,
-                                         Set<EntityTypeSimpleName> types,
-                                         SortInfo sort, int offset, int limit, int numCursors, String cursor,
-                                         boolean showHidden, Set<EntityScope> entityScope) {
-    return new MetadataSearchResponseV2(sort.toString(), offset, limit, numCursors, 0,
-                                        Collections.emptySet(),
-                                        Collections.emptyList(), showHidden, entityScope);
+  public MetadataSearchResponseV2 search(SearchRequest request) {
+    return new MetadataSearchResponseV2(request.getSortInfo().toString(), request.getOffset(), request.getLimit(),
+                                        request.getNumCursors(), 0, Collections.emptySet(), Collections.emptyList(),
+                                        request.shouldShowHidden(), request.getEntityScope());
   }
 
   @Override
