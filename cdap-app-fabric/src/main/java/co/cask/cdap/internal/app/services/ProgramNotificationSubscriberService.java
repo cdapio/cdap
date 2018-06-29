@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
@@ -30,6 +31,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.provision.ProvisionRequest;
@@ -41,11 +43,13 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.reporting.ProgramHeartbeatDataset;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -86,6 +90,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final Queue<Runnable> tasks;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -107,6 +112,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
     this.tasks = new LinkedList<>();
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Nullable
@@ -229,13 +235,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
     long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
+    String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+    Map<String, String> systemArguments = systemArgumentsString == null ?
+      Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
 
     RunRecordMeta recordedRunRecord;
     switch (programRunStatus) {
       case STARTING:
-        String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-        Map<String, String> systemArguments = systemArgumentsString == null ?
-          Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
         boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
         boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
         // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
@@ -284,6 +290,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         writeToHeartBeatDataset(recordedRunRecord, resumeTime, datasetContext, programHeartbeatDataset);
         break;
       case COMPLETED:
+        if (endTimeSecs == -1) {
+          LOG.warn("Ignore program completed notification for program {} without end time specified, {}",
+                   programRunId, notification);
+          return;
+        }
+        recordedRunRecord =
+          appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus, null, messageIdBytes);
+        break;
       case KILLED:
         if (endTimeSecs == -1) {
           LOG.warn("Ignore program killed notification for program {} without end time specified, {}",
@@ -311,16 +325,36 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
     }
     if (recordedRunRecord != null) {
+      // We need to publish the message so that the trigger subscriber can pick it up and start the trigger if
+      // necessary
       publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
       if (programRunStatus.isEndState()) {
         // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
         // instead, we just record the state as deprovisioned without notifying the provisioner
+        // and we will emit the program status metrics for it
         boolean isInWorkflow = recordedRunRecord.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_NAME);
         boolean skipProvisioning =
           Boolean.parseBoolean(recordedRunRecord.getSystemArgs().get(ProgramOptionConstants.SKIP_PROVISIONING));
+
         if (isInWorkflow || skipProvisioning) {
           appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
           appMetadataStore.recordProgramDeprovisioned(programRunId, null, messageIdBytes);
+
+          Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
+                                                                             systemArguments);
+          if (!profile.isPresent()) {
+            // Each program run should be associated with a profile, so this should never happen
+            LOG.warn("Will not emit metrics for program {} without profile assigned to it, {}",
+                     programRunId, notification);
+            return;
+          }
+
+          ProfileId profileId = profile.get();
+
+          // here we get the status from the run record because when we record program deprovisioned,
+          // the status might get changed to FAILED because of the previous cluster status was PROVISIONING
+          getMetricsContextFroProfile(programRunId, profileId).increment(getMetricName(recordedRunRecord.getStatus()),
+                                                                         1L);
         } else {
           // TODO: CDAP-13295 remove once runtime monitor emits this message
           provisionerNotifier.deprovisioning(programRunId);
@@ -396,7 +430,34 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
         return Optional.of(provisioningService.deprovision(programRunId, datasetContext));
       case DEPROVISIONED:
-        appMetadataStore.recordProgramDeprovisioned(programRunId, endTs, messageIdBytes);
+        RunRecordMeta meta = appMetadataStore.recordProgramDeprovisioned(programRunId, endTs, messageIdBytes);
+        if (meta == null || meta.getCluster() == null || meta.getCluster().getNumNodes() == null) {
+          // this should not happen since when the cluster info should be there after deprovision
+          return Optional.empty();
+        }
+        Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
+                                                                           meta.getSystemArgs());
+
+        if (!profile.isPresent()) {
+          // Each program run should be associated with a profile, so this should never happen
+          LOG.warn("Will not emit metrics for program {} without profile assigned to it, {}",
+                   programRunId, notification);
+          return Optional.empty();
+        }
+
+        ProfileId profileId = profile.get();
+        Integer node = meta.getCluster().getNumNodes();
+        // the node number will be null or 0 in local mode, set it to 1 so that we will just emit the difference
+        // between endts and starts
+        int nodeNum = node == null || node == 0 ? 1 : node;
+
+        // emit the metrics information, increment the count for end state program runs
+        MetricsContext metricsContext = getMetricsContextFroProfile(programRunId, profileId);
+        metricsContext.increment(getMetricName(meta.getStatus()), 1L);
+
+        // node minutes = (end ts of the cluster - start ts) * nodeNum / 60
+        metricsContext.gauge(Constants.Metrics.Program.PROGRAM_NODE_MINUTES,
+                             (endTs - meta.getStartTs()) * nodeNum / 60L);
         break;
       case ORPHANED:
         appMetadataStore.recordProgramOrphaned(programRunId, endTs, messageIdBytes);
@@ -460,6 +521,50 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     } catch (JsonSyntaxException e) {
       // This shouldn't happen normally, unless the BasicThrowable changed in an incompatible way
       return null;
+    }
+  }
+
+  /**
+   * Emit MetricsContext for publishing profile related status, the tags are constructed with the program run id and
+   * the profile id
+   */
+  private MetricsContext getMetricsContextFroProfile(ProgramRunId programRunId, ProfileId profileId) {
+    ImmutableMap<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.toString())
+      .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
+      .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun())
+      .build();
+
+    return metricsCollectionService.getContext(tags);
+  }
+
+  /**
+   * Returns the profile id from the notification properties
+   */
+  private Optional<ProfileId> getProfileIdFromNotificationProperties(NamespaceId namespaceId,
+                                                                     Map<String, String> properties) {
+
+    return Optional.empty();
+  }
+
+  /**
+   * Return the metric name based on the proram status, currently only program status at end status has a metric name
+   * for other status, it will return null
+   */
+  @Nullable
+  private String getMetricName(ProgramRunStatus status) {
+    switch (status) {
+      case COMPLETED:
+        return Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS;
+      case FAILED:
+        return Constants.Metrics.Program.PROGRAM_FAILED_RUNS;
+      case KILLED:
+        return Constants.Metrics.Program.PROGRAM_KILLED_RUNS;
+      default:
+        return null;
     }
   }
 

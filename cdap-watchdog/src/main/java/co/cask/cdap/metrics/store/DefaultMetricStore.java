@@ -88,6 +88,7 @@ public class DefaultMetricStore implements MetricStore {
   private static final String BY_SPARK = "spark";
   private static final String BY_STREAM = "stream";
   private static final String BY_DATASET = "dataset";
+  private static final String BY_PROFILE = "profile";
   private static final String BY_COMPONENT = "component";
   private static final Map<String, AggregationAlias> AGGREGATIONS_ALIAS_DIMENSIONS =
     ImmutableMap.of(BY_WORKFLOW,
@@ -103,6 +104,9 @@ public class DefaultMetricStore implements MetricStore {
 
   static {
     // NOTE: changing aggregations will require more work than just changing the below code. See CDAP-1466 for details.
+    // Note that adding or delete aggregations should not affect the metrics
+    // but modifying the existing aggregations will make the metrics incorrect since it will change the way we
+    // store and query metrics
     Map<String, Aggregation> aggs = Maps.newHashMap();
 
     // Namespaces:
@@ -198,6 +202,15 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
       // i.e. for datasets only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET)));
+
+    // Profiles:
+    aggs.put(BY_PROFILE, new DefaultAggregation(
+      // These tags are ordered because of the efficiency, since we only have limited number program types, so it
+      // comes before the app
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.PROFILE,
+                       Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.APP,
+                       Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.RUN_ID),
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.PROFILE)));
 
     // System components:
     aggs.put(BY_COMPONENT, new DefaultAggregation(

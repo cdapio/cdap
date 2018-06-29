@@ -722,6 +722,13 @@ public final class Constants {
       // For TMS
       public static final String TABLE = "tbl";
       public static final String TOPIC = "tpc";
+
+      // For profile
+      public static final String PROFILE = "pro";
+
+      // For program
+      public static final String PROGRAM = "prg";
+      public static final String PROGRAM_TYPE = "prt";
     }
 
     /**
@@ -774,6 +781,16 @@ public final class Constants {
       public static final long MAX_MINUTE_RESOLUTION_QUERY_INTERVAL = 600;
       // Number of seconds to subtract from current timestamp when query without "end" time.
       public static final long QUERY_SECOND_DELAY = 2;
+    }
+
+    /**
+     * Program metrics
+     */
+    public static final class Program {
+      public static final String PROGRAM_COMPLETED_RUNS = "program.completed.runs";
+      public static final String PROGRAM_FAILED_RUNS = "program.failed.runs";
+      public static final String PROGRAM_KILLED_RUNS = "program.killed.runs";
+      public static final String PROGRAM_NODE_MINUTES = "program.node.minutes";
     }
   }
 
