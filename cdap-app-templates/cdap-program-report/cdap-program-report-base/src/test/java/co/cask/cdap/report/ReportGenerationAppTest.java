@@ -16,6 +16,7 @@
 
 package co.cask.cdap.report;
 
+import breeze.linalg.Options;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
@@ -24,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.report.main.ProgramRunInfo;
@@ -73,7 +75,10 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -84,10 +89,13 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -118,17 +126,15 @@ public class ReportGenerationAppTest extends TestBase {
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
+  private static final DatasetId META_FILESET = NamespaceId.DEFAULT.dataset(ReportGenerationApp.RUN_META_FILESET);
 
-  @Test
-  public void testGenerateReport() throws Exception {
-    DatasetId metaFileset = NamespaceId.DEFAULT.dataset(ReportGenerationApp.RUN_META_FILESET);
-    addDatasetInstance(metaFileset, FileSet.class.getName());
-    // TODO: [CDAP-13216] temporarily create the run meta fileset and generate mock program run meta files here.
-    // Will remove once the TMS subscriber writing to the run meta fileset is implemented.
-    DataSetManager<FileSet> fileSet = getDataset(metaFileset);
-    Long currentTime = System.currentTimeMillis();
-    populateMetaFiles(fileSet.get().getBaseLocation(), currentTime);
+  private static ApplicationManager app;
+  private static long startSecs;
+  private static boolean metaFilesetInitialized = false;
 
+  @BeforeClass
+  public static void initialize() throws Exception {
+    TestBase.initialize();
     // Trace the dependencies for the spark avro
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
@@ -155,33 +161,86 @@ public class ReportGenerationAppTest extends TestBase {
     // from spark-avro so that spark-avro and its dependencies will be included.
     bundler.createBundle(avroSparkBundle, DefaultSource.class);
     File unJarDir = BundleJarUtil.unJar(avroSparkBundle, TEMP_FOLDER.newFolder());
+    // deploy the report generation app
+    app = deployApplication(ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());
+  }
 
-    ApplicationManager app = deployApplication(ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());
+  @Before
+  public void beforeTest() throws Exception {
+    super.beforeTest();
+    addDatasetInstance(META_FILESET, FileSet.class.getName());
+    if (!metaFilesetInitialized) {
+      Long currentTime = System.currentTimeMillis();
+      populateMetaFiles(currentTime);
+      long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTime);
+      metaFilesetInitialized = true;
+    }
+  }
+
+//  @After
+//  public void afterTest() throws Exception {
+//    super.afterTest();
+//    deleteDatasetInstance(META_FILESET);
+//
+//  }
+
+  @Test
+  public void testKilledReport() throws Exception {
+
     SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
-    URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
-    Assert.assertNotNull(url);
-    URL reportURL = url.toURI().resolve("reports/").toURL();
+    URL reportURL = getReportURL(sparkManager);
+    ReportGenerationRequest request =
+      new ReportGenerationRequest("killed_report", startSecs, startSecs + 30,
+                                  new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
+                                  Collections.emptyList(), Collections.emptyList());
+    // generate a report with the request
+    String reportId = generateReport(reportURL, request);
+    URL reportIdURL = reportURL.toURI().resolve(reportId + "/").toURL();
+    // wait for the report generation to be RUNNING
+    Tasks.waitFor(ReportStatus.RUNNING, () -> {
+      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+                                                                    REPORT_GEN_INFO_TYPE);
+      if (ReportStatus.FAILED.equals(reportGenerationInfo.getStatus())) {
+        Assert.fail("Report generation failed");
+      }
+      return reportGenerationInfo.getStatus();
+    }, 20, TimeUnit.SECONDS, 500, TimeUnit.MILLISECONDS);
+    // stop the report generation Spark program
+    int existingKilledRuns = sparkManager.getHistory(ProgramRunStatus.KILLED).size();
+    sparkManager.stop();
+    sparkManager.waitForRuns(ProgramRunStatus.KILLED, ++existingKilledRuns, 1, TimeUnit.MINUTES);
+    // start the report generation Spark program again and wait for the Spark HTTP handler to be available
+    sparkManager.start();
+    URL newReportURL = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
+    URL newReportIdURL = reportURL.toURI().resolve(reportId + "/").toURL();
+    // assert that the previously RUNNING report generation from the previous Spark program run is now FAILED
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(newReportIdURL.openConnection(),
+                                                                  REPORT_GEN_INFO_TYPE);
+    Assert.assertEquals(ReportStatus.FAILED, reportGenerationInfo.getStatus());
+    // stop the report generation Spark program
+    sparkManager.stop();
+    sparkManager.waitForRuns(ProgramRunStatus.KILLED, 1, ++existingKilledRuns, TimeUnit.MINUTES);
+  }
+
+  @Test
+  public void testGenerateReport() throws Exception {
+    SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
+    URL reportURL = getReportURL(sparkManager);
+    // create filters on namespace and duration, so that the report to be generated only include program runs
+    // from namespace "ns1" and "ns2", and with duration less than 500 seconds
     List<Filter> filters =
       ImmutableList.of(
         new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
         new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
-    long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTime);
+    // construct a report generation request with
     ReportGenerationRequest request =
       new ReportGenerationRequest("ns1_ns2_report", startSecs, startSecs + 30,
                                   new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
                                   ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
-    HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
-    urlConn.setDoOutput(true);
-    urlConn.setRequestMethod("POST");
-    urlConn.getOutputStream().write(GSON.toJson(request).getBytes(StandardCharsets.UTF_8));
-    if (urlConn.getErrorStream() != null) {
-      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
-    }
-    Assert.assertEquals(200, urlConn.getResponseCode());
-    Map<String, String> reportIdMap = getResponseObject(urlConn, STRING_STRING_MAP);
-    String reportId = reportIdMap.get("id");
-    Assert.assertNotNull(reportId);
+    // generate a report with the request
+    String reportId = generateReport(reportURL, request);
     URL reportIdURL = reportURL.toURI().resolve(reportId + "/").toURL();
+    // wait for the report generation to be completed
     Tasks.waitFor(ReportStatus.COMPLETED, () -> {
       ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
                                                                     REPORT_GEN_INFO_TYPE);
@@ -220,8 +279,8 @@ public class ReportGenerationAppTest extends TestBase {
                     "but actual results do not meet this requirement: " + reportContent.getDetails());
     }
     // save the report with a new name and description
-    URL reportSaveURL = reportURL.toURI().resolve(reportId + "/" + "save").toURL();
-    urlConn = (HttpURLConnection) reportSaveURL.openConnection();
+    URL reportSaveURL = reportIdURL.toURI().resolve("save").toURL();
+    HttpURLConnection urlConn = (HttpURLConnection) reportSaveURL.openConnection();
     urlConn.setDoOutput(true);
     urlConn.setRequestMethod("POST");
     urlConn.getOutputStream().write(GSON.toJson(new ReportSaveRequest("newName", "newDescription"))
@@ -255,6 +314,40 @@ public class ReportGenerationAppTest extends TestBase {
     urlConn = (HttpURLConnection) reportIdURL.openConnection();
     urlConn.setRequestMethod("DELETE");
     Assert.assertEquals(404, urlConn.getResponseCode());
+    // stop the spark program
+    int existingKilledRuns = sparkManager.getHistory(ProgramRunStatus.KILLED).size();
+    sparkManager.stop();
+    sparkManager.waitForRuns(ProgramRunStatus.KILLED, ++existingKilledRuns, 1, TimeUnit.MINUTES);
+  }
+
+  private static URL getReportURL(SparkManager sparkManager) throws URISyntaxException, MalformedURLException {
+    URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
+    Assert.assertNotNull(url);
+    return url.toURI().resolve("reports/").toURL();
+  }
+
+  /**
+   * Generates a report by sending POST request to the given report URL endpoint with the given
+   * report generation request.
+   *
+   * @param reportURL the URL of the report generation end point
+   * @param request report generation request
+   * @return a unique report id to uniquely identify the report being generated
+   */
+  private static String generateReport(URL reportURL, ReportGenerationRequest request)
+    throws URISyntaxException, IOException {
+    HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(request).getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(200, urlConn.getResponseCode());
+    Map<String, String> reportIdMap = getResponseObject(urlConn, STRING_STRING_MAP);
+    String reportId = reportIdMap.get("id");
+    Assert.assertNotNull(reportId);
+    return reportId;
   }
 
   private static <T> T getResponseObject(URLConnection urlConnection, Type typeOfT) throws IOException {
@@ -270,13 +363,13 @@ public class ReportGenerationAppTest extends TestBase {
 
   /**
    * Adds mock program run meta files to the given location.
-   * TODO: [CDAP-13216] this method should be marked as @VisibleForTesting. Temporarily calling this method
-   * when initializing report generation Spark program to add mock data
    *
    * @param metaBaseLocation the location to add files
    * @param currentTime the current time in millis
    */
-  private static void populateMetaFiles(Location metaBaseLocation, Long currentTime) throws Exception {
+  private void populateMetaFiles(Long currentTime) throws Exception {
+    DataSetManager<FileSet> fileSet = getDataset(META_FILESET);
+    Location metaBaseLocation = fileSet.get().getBaseLocation();
     DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunInfoSerializer.SCHEMA);
     DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
     String appName = "Pipeline";
@@ -322,8 +415,8 @@ public class ReportGenerationAppTest extends TestBase {
   }
 
   private static GenericData.Record createRecord(String namespace, String application, String version,
-                                                String type, String program, String run, String status,
-                                                Long timestamp, ProgramStartInfo startInfo, String messageId) {
+                                                 String type, String program, String run, String status,
+                                                 Long timestamp, ProgramStartInfo startInfo, String messageId) {
     ProgramRunInfo runInfo = new ProgramRunInfo(namespace, application, version, type, program, run);
     runInfo.setStatus(status);
     runInfo.setTime(timestamp);
