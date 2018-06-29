@@ -29,6 +29,7 @@ import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.lineage.field.LineageRecorder;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataReader;
+import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.workflow.WorkflowInfoProvider;
@@ -38,7 +39,7 @@ import co.cask.cdap.api.workflow.WorkflowInfoProvider;
  */
 public interface MapReduceContext extends SchedulableProgramContext, RuntimeContext, DatasetContext, ServiceDiscoverer,
   Transactional, PluginContext, ClientLocalizationContext, WorkflowInfoProvider, SecureStore, MessagingContext,
-  MetadataReader, LineageRecorder {
+  LineageRecorder, MetadataReader, MetadataWriter {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.

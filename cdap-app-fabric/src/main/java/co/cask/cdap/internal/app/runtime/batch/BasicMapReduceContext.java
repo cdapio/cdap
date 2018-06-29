@@ -38,6 +38,7 @@ import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
@@ -108,10 +109,11 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         @Nullable PluginInstantiator pluginInstantiator,
                         SecureStore secureStore,
                         SecureStoreManager secureStoreManager,
-                        MessagingService messagingService, MetadataReader metadataReader) {
+                        MessagingService messagingService, MetadataReader metadataReader,
+                        MetadataPublisher metadataPublisher) {
     super(program, programOptions, cConf, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
-          messagingService, pluginInstantiator, metadataReader);
+          messagingService, pluginInstantiator, metadataReader, metadataPublisher);
 
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);

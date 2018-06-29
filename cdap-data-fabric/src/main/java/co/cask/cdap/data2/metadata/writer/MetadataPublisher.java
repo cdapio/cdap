@@ -16,28 +16,19 @@
 
 package co.cask.cdap.data2.metadata.writer;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.proto.id.ProgramRunId;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nullable;
+  import co.cask.cdap.api.metadata.MetadataEntity;
+  import co.cask.cdap.proto.id.ProgramRunId;
 
 /**
- * Record metadata for entities.
+ * Publishes {@link MetadataOperation} for {@link MetadataEntity}
  */
-public interface MetadataWriter {
+public interface MetadataPublisher {
 
   /**
-   * Add metadata for an entity.
+   * Publishes the {@link MetadataOperation} from the given {@link ProgramRunId}
+   *
+   * @param run the {@link ProgramRunId}
+   * @param metadataOperation the {@link MetadataOperation}
    */
-  void add(ProgramRunId run, MetadataEntity entity,
-           @Nullable Map<String, String> propertiesToAdd,
-           @Nullable Set<String> tagsToAdd);
-
-  /**
-   * Delete metadata for an entity.
-   */
-  void remove(ProgramRunId run, MetadataEntity entity,
-              @Nullable Set<String> propertiesToDelete,
-              @Nullable Set<String> tagsToDelete);
+  void publish(ProgramRunId run, MetadataOperation metadataOperation);
 }

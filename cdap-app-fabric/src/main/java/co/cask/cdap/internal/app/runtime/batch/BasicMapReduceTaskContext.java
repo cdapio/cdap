@@ -45,6 +45,7 @@ import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
@@ -137,11 +138,11 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext,
                             MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader,
-                            MetadataReader metadataReader) {
+                            MetadataReader metadataReader, MetadataPublisher metadataPublisher) {
     super(program, programOptions, cConf, ImmutableSet.of(), dsFramework, txClient, discoveryServiceClient,
           true, metricsCollectionService, createMetricsTags(programOptions,
                                                             taskId, type, workflowProgramInfo), secureStore,
-          secureStoreManager, messagingService, pluginInstantiator, metadataReader);
+          secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;

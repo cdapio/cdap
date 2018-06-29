@@ -138,8 +138,9 @@ import javax.annotation.Nullable;
 @Category(SlowTests.class)
 public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTestRun.class);
-  private static final Type MAP_METADATASCOPE_METADATA_TYPE = new TypeToken<Map<MetadataScope, Metadata>>() { }
-  .getType();
+  private static final Gson GSON = new Gson();
+  private static final Type MAP_METADATASCOPE_METADATA_TYPE =
+    new TypeToken<Map<MetadataScope, Metadata>>() { }.getType();
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
@@ -1558,6 +1559,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static Map<String, String> txTimeoutArguments(int timeout) {
     return ImmutableMap.of(SystemArguments.TRANSACTION_TIMEOUT, String.valueOf(timeout));
   }
+
   private static Map<String, String> txTimeoutArguments(int timeout, int timeoutForScope, String scope, String name) {
     return ImmutableMap.of(SystemArguments.TRANSACTION_TIMEOUT, String.valueOf(timeout),
                            String.format("%s.%s.%s", scope, name, SystemArguments.TRANSACTION_TIMEOUT),
@@ -2147,7 +2149,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Verify the record count with dataset
     DataSetManager<KeyValueTable> recordsManager = getDataset(testSpace.dataset("records"));
     KeyValueTable records = recordsManager.get();
-    Assert.assertTrue(count == Bytes.toLong(records.read("PUBLIC")));
+    Assert.assertEquals(count, Bytes.toLong(records.read("PUBLIC")));
   }
 
   @Test
@@ -2199,24 +2201,104 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     Assert.assertNotNull(serviceURL);
+    // add some tags
+    callServicePut(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET +
+      "/tags", "tag1");
+    callServicePut(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET +
+      "/tags", "tag2");
 
-    String result = callServiceGet(serviceManager.getServiceURL(), "metadata/" +
-      AppWithMetadataPrograms.METADATA_SERVICE_DATASET);
-    Map<MetadataScope, Metadata> scopeMetadata  = new Gson().fromJson(result, MAP_METADATASCOPE_METADATA_TYPE);
+    // add some properties
+    Map<String, String> propertiesToAdd = ImmutableMap.of("k1", "v1", "k2", "v2");
+    callServicePut(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET +
+      "/properties", GSON.toJson(propertiesToAdd));
 
     // test service is able to read metadata
+    String result = callServiceGet(serviceManager.getServiceURL(), "metadata/" +
+      AppWithMetadataPrograms.METADATA_SERVICE_DATASET);
+
+    Map<MetadataScope, Metadata> scopeMetadata = GSON.fromJson(result, MAP_METADATASCOPE_METADATA_TYPE);
+
+    // verify system metadata
     Assert.assertTrue(scopeMetadata.containsKey(MetadataScope.SYSTEM));
     Assert.assertTrue(scopeMetadata.containsKey(MetadataScope.USER));
     Assert.assertFalse(scopeMetadata.get(MetadataScope.SYSTEM).getProperties().isEmpty());
     Assert.assertFalse(scopeMetadata.get(MetadataScope.SYSTEM).getTags().isEmpty());
-    // we haven't added any user metadata
-    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());
-    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getTags().isEmpty());
     Assert.assertTrue(scopeMetadata.get(MetadataScope.SYSTEM).getProperties().containsKey("entity-name"));
     Assert.assertEquals(AppWithMetadataPrograms.METADATA_SERVICE_DATASET,
                         scopeMetadata.get(MetadataScope.SYSTEM).getProperties().get("entity-name"));
     Assert.assertTrue(scopeMetadata.get(MetadataScope.SYSTEM).getTags()
                         .containsAll(Arrays.asList("explore", "batch")));
+
+    // verify user metadata
+    Assert.assertFalse(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());
+    Assert.assertFalse(scopeMetadata.get(MetadataScope.USER).getTags().isEmpty());
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getTags().containsAll(Arrays.asList("tag1", "tag2")));
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getProperties().containsKey("k1"));
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getProperties().containsKey("k2"));
+    Assert.assertEquals("v1", scopeMetadata.get(MetadataScope.USER).getProperties().get("k1"));
+    Assert.assertEquals("v2", scopeMetadata.get(MetadataScope.USER).getProperties().get("k2"));
+
+    // delete a tag
+    callServiceDelete(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET
+      + "/tags/" + "tag1");
+
+    // delete a property
+    callServiceDelete(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET
+      + "/properties/" + "k1");
+
+    // get metadata and verify
+    result = callServiceGet(serviceManager.getServiceURL(), "metadata/" +
+      AppWithMetadataPrograms.METADATA_SERVICE_DATASET);
+    scopeMetadata = GSON.fromJson(result, MAP_METADATASCOPE_METADATA_TYPE);
+    Assert.assertEquals(1, scopeMetadata.get(MetadataScope.USER).getTags().size());
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getTags().contains("tag2"));
+    Assert.assertEquals(1, scopeMetadata.get(MetadataScope.USER).getProperties().size());
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getProperties().containsKey("k2"));
+    Assert.assertEquals("v2", scopeMetadata.get(MetadataScope.USER).getProperties().get("k2"));
+
+    // delete all tags
+    callServiceDelete(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET
+      + "/tags");
+
+    // get metadata and verify
+    result = callServiceGet(serviceManager.getServiceURL(), "metadata/" +
+      AppWithMetadataPrograms.METADATA_SERVICE_DATASET);
+    scopeMetadata = GSON.fromJson(result, MAP_METADATASCOPE_METADATA_TYPE);
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getTags().isEmpty());
+    Assert.assertFalse(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());
+
+    // delete all properties
+    callServiceDelete(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET
+      + "/properties");
+
+    // get metadata and verify
+    result = callServiceGet(serviceManager.getServiceURL(), "metadata/" +
+      AppWithMetadataPrograms.METADATA_SERVICE_DATASET);
+    scopeMetadata = GSON.fromJson(result, MAP_METADATASCOPE_METADATA_TYPE);
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());
+
+    // add some tag and property again
+    callServicePut(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET +
+      "/tags", "tag1");
+    callServicePut(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET +
+      "/properties", GSON.toJson(propertiesToAdd));
+
+    // get metadata and verify
+    result = callServiceGet(serviceManager.getServiceURL(), "metadata/" +
+      AppWithMetadataPrograms.METADATA_SERVICE_DATASET);
+    scopeMetadata = GSON.fromJson(result, MAP_METADATASCOPE_METADATA_TYPE);
+    Assert.assertFalse(scopeMetadata.get(MetadataScope.USER).getTags().isEmpty());
+    Assert.assertFalse(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());
+
+    // delete all metadata
+    callServiceDelete(serviceManager.getServiceURL(), "metadata/" + AppWithMetadataPrograms.METADATA_SERVICE_DATASET);
+
+    // get metadata and verify
+    result = callServiceGet(serviceManager.getServiceURL(), "metadata/" +
+      AppWithMetadataPrograms.METADATA_SERVICE_DATASET);
+    scopeMetadata = GSON.fromJson(result, MAP_METADATASCOPE_METADATA_TYPE);
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getTags().isEmpty());
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());
   }
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {
@@ -2254,6 +2336,19 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
     try (InputStream in = connection.getInputStream()) {
       return new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).readLine();
+    }
+  }
+
+  private void callServiceDelete(URL serviceURL, String path) throws IOException {
+    HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
+    connection.setRequestMethod("DELETE");
+    int responseCode = connection.getResponseCode();
+
+    if (responseCode != 200) {
+      try (InputStream errStream = connection.getErrorStream()) {
+        String error = CharStreams.toString(new InputStreamReader(errStream, StandardCharsets.UTF_8));
+        throw new IOException("Error response " + responseCode + " from " + serviceURL + ": " + error);
+      }
     }
   }
 }

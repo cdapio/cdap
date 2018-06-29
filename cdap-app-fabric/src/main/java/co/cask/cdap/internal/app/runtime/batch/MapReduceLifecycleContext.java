@@ -333,17 +333,57 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
 
   @Override
   public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) throws MetadataException {
-  return delegate.getMetadata(metadataEntity);
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
   }
 
   @Override
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
-    return delegate.getMetadata(scope, metadataEntity);
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
   }
 
   @Override
   public void record(Collection<? extends Operation> operations) {
     throw new UnsupportedOperationException("Recording field lineage operations is not supported in " +
-            "                                 MapReduce task-level context");
+                                              "                                 MapReduce task-level context");
+  }
+
+  @Override
+  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, String... tags) {
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
+  }
+
+  @Override
+  public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
+  }
+
+  @Override
+  public void removeMetadata(MetadataEntity metadataEntity) {
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity) {
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
+  }
+
+  @Override
+  public void removeProperties(MetadataEntity metadataEntity, String... keys) {
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity) {
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
+  }
+
+  @Override
+  public void removeTags(MetadataEntity metadataEntity, String... tags) {
+    throw new UnsupportedOperationException("Metadata operations are not supported from tasks.");
   }
 }

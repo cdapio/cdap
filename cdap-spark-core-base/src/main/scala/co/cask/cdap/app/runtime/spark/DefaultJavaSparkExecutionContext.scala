@@ -46,7 +46,7 @@ import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.twill.api.RunId
 import java.io.IOException
-import java.util
+import java.{lang, util}
 
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 
@@ -261,6 +261,38 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
 
   override def getMetadata(scope: MetadataScope, metadataEntity: MetadataEntity): Metadata = {
     return sec.getMetadataReader.getMetadata(scope, metadataEntity);
+  }
+
+  override def addProperties(metadataEntity: MetadataEntity, properties: util.Map[String, String]) = {
+    sec.getMetadataWriter.addProperties(metadataEntity, properties);
+  }
+
+  override def addTags(metadataEntity: MetadataEntity, tags: String*) = {
+    sec.getMetadataWriter.addTags(metadataEntity, tags)
+  }
+
+  override def addTags(metadataEntity: MetadataEntity, tags: lang.Iterable[String]): Unit = {
+    sec.getMetadataWriter.addTags(metadataEntity, tags)
+  }
+
+  override def removeMetadata(metadataEntity: MetadataEntity): Unit = {
+    sec.getMetadataWriter.removeMetadata(metadataEntity)
+  }
+
+  override def removeProperties(metadataEntity: MetadataEntity): Unit = {
+    sec.getMetadataWriter.removeProperties(metadataEntity)
+  }
+
+  override def removeProperties(metadataEntity: MetadataEntity, keys: String*): Unit = {
+    sec.getMetadataWriter.removeProperties(metadataEntity, keys:_*)
+  }
+
+  override def removeTags(metadataEntity: MetadataEntity): Unit = {
+    sec.getMetadataWriter.removeTags(metadataEntity)
+  }
+
+  override def removeTags(metadataEntity: MetadataEntity, tags: String*): Unit = {
+    sec.getMetadataWriter.removeTags(metadataEntity, tags:_*)
   }
 }
 

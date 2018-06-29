@@ -24,6 +24,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataReader;
+import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.workflow.WorkflowInfoProvider;
@@ -32,7 +33,8 @@ import co.cask.cdap.api.workflow.WorkflowInfoProvider;
  * Represents runtime context of the {@link CustomAction} in the Workflow.
  */
 public interface CustomActionContext extends SchedulableProgramContext, RuntimeContext, DatasetContext, Transactional,
-  WorkflowInfoProvider, PluginContext, SecureStore, ServiceDiscoverer, MessagingContext, MetadataReader {
+  WorkflowInfoProvider, PluginContext, SecureStore, ServiceDiscoverer, MessagingContext, MetadataReader,
+  MetadataWriter {
 
   /**
    * Return the specification of the custom action.
