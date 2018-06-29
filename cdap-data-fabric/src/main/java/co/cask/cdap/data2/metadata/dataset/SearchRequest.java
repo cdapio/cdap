@@ -204,7 +204,8 @@ public class SearchRequest {
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespaceId, query, types, sortInfo, offset, limit, numCursors, cursor, showHidden, entityScope);
+    return Objects.hash(namespaceId, query, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
+                        entityScope);
   }
 
   @Override
