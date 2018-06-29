@@ -18,10 +18,12 @@ package co.cask.cdap.internal.app.runtime.plugin;
 
 
 import co.cask.cdap.api.macro.InvalidMacroException;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,7 +45,7 @@ public class MacroParserTest {
   @Test
   public void testContainsSimpleEscapedMacro() throws InvalidMacroException {
     assertContainsMacroParsing("$${{\\}}", true);
-    assertSubstitution("\\${val}", "${val}", ImmutableMap.<String, String>of(), ImmutableMap.<String, String>of());
+    assertSubstitution("\\${val}", "${val}", Collections.emptyMap(), Collections.emptyMap());
   }
 
   @Test
@@ -96,7 +98,7 @@ public class MacroParserTest {
 
   @Test(expected = InvalidMacroException.class)
   public void testUndefinedMacro() throws InvalidMacroException {
-    assertSubstitution("${undefined}", "", new HashMap<String, String>(), new HashMap<String, String>());
+    assertSubstitution("${undefined}", "", Collections.emptyMap(), Collections.emptyMap());
   }
 
   /**
@@ -112,7 +114,7 @@ public class MacroParserTest {
     Map<String, String> properties = ImmutableMap.<String, String>builder()
       .put("", "emptyMacro")
       .build();
-    assertSubstitution("${}", "emptyMacro", properties, new HashMap<String, String>());
+    assertSubstitution("${}", "emptyMacro", properties, Collections.emptyMap());
   }
 
   /**
@@ -128,7 +130,7 @@ public class MacroParserTest {
     Map<String, String> macroFunctionSubstitutions = ImmutableMap.<String, String>builder()
       .put("", "emptyMacro")
       .build();
-    assertSubstitution("${test()}", "emptyMacro", new HashMap<String, String>(), macroFunctionSubstitutions);
+    assertSubstitution("${test()}", "emptyMacro", Collections.emptyMap(), macroFunctionSubstitutions);
   }
 
   /**
@@ -152,7 +154,7 @@ public class MacroParserTest {
       .build();
     assertSubstitution("\\\\test\\${${macro}}\\${${{\\}}}-escaped\\${one}${fun${\\${escapedMacroLiteral\\}}}\\\\no-op",
                        "\\test${42}${brackets}-escaped${one}ahead\\no-op", properties,
-                       new HashMap<String, String>());
+                       Collections.emptyMap());
   }
 
   /**
@@ -168,7 +170,7 @@ public class MacroParserTest {
     Map<String, String> properties = ImmutableMap.<String, String>builder()
       .put("{}", "brackets")
       .build();
-    assertSubstitution("$${{\\}}", "$brackets", properties, new HashMap<String, String>());
+    assertSubstitution("$${{\\}}", "$brackets", properties, Collections.emptyMap());
   }
 
   @Test
@@ -181,7 +183,7 @@ public class MacroParserTest {
       .put("funTimes", "ahead")
       .build();
     assertSubstitution("\\${${macro}}\\${${{\\}}}\\${one}${fun${\\${escapedMacroLiteral\\}}}",
-                       "${42}${brackets}${one}ahead", properties, new HashMap<String, String>());
+                       "${42}${brackets}${one}ahead", properties, Collections.emptyMap());
   }
 
   /**
@@ -189,7 +191,7 @@ public class MacroParserTest {
    */
   @Test(expected = InvalidMacroException.class)
   public void testNonexistentMacro() throws InvalidMacroException {
-    assertSubstitution("${test(invalid)}", "", new HashMap<String, String>(), new HashMap<String, String>());
+    assertSubstitution("${test(invalid)}", "", Collections.emptyMap(), Collections.emptyMap());
   }
 
   /**
@@ -205,7 +207,7 @@ public class MacroParserTest {
     Map<String, String> macroFunctionSubstitutions = ImmutableMap.<String, String>builder()
       .put("key", "${test(key)}")
       .build();
-    assertSubstitution("${test(key)}", "", new HashMap<String, String>(), macroFunctionSubstitutions);
+    assertSubstitution("${test(key)}", "", Collections.emptyMap(), macroFunctionSubstitutions);
   }
 
   /**
@@ -217,7 +219,7 @@ public class MacroParserTest {
       .put("simpleEscape", "\\${test(\\${test(expansiveHostnameTree)})}")
       .build();
     assertSubstitution("${test(simpleEscape)}", "${test(${test(expansiveHostnameTree)})}",
-                       new HashMap<String, String>(), macroFunctionSubstitutions);
+                       Collections.emptyMap(), macroFunctionSubstitutions);
   }
 
   /**
@@ -238,7 +240,7 @@ public class MacroParserTest {
       .build();
     assertSubstitution("${test(advancedEscape)}",
                        "${test(simpleHostnameTree)${test(first)}${test(filename${test(fileTypeMacro))}",
-                       new HashMap<String, String>(), macroFunctionSubstiutions);
+                       Collections.emptyMap(), macroFunctionSubstiutions);
   }
 
 
@@ -267,7 +269,7 @@ public class MacroParserTest {
       .build();
     assertSubstitution("${test(expansiveEscape)}",
                        "{test(dontEvaluate):80${test-${test(null)}${${${nil${test(nothing)index.html",
-                       new HashMap<String, String>(), macroFunctionSubstiutions);
+                       Collections.emptyMap(), macroFunctionSubstiutions);
   }
 
   // Double escaping tests
@@ -278,7 +280,7 @@ public class MacroParserTest {
       .put("filePathMacro", "executable.exe")
       .build();
     assertSubstitution("\\\\file\\\\path\\\\name\\\\${filePathMacro}", "\\file\\path\\name\\executable.exe", properties,
-                       new HashMap<String, String>());
+                       Collections.emptyMap());
   }
 
   /**
@@ -289,7 +291,7 @@ public class MacroParserTest {
     Map<String, String> macroFunctionSubstitutions = ImmutableMap.<String, String>builder()
       .put("test\\", "password")
       .build();
-    assertSubstitution("${test(test\\\\)}", "password", new HashMap<String, String>(), macroFunctionSubstitutions);
+    assertSubstitution("${test(test\\\\)}", "password", Collections.emptyMap(), macroFunctionSubstitutions);
   }
 
   /**
@@ -300,7 +302,7 @@ public class MacroParserTest {
     Map<String, String> macroFunctionSubstitutions = ImmutableMap.<String, String>builder()
       .put("test\\)", "password")
       .build();
-    assertSubstitution("${test(test\\\\))}", "password", new HashMap<String, String>(), macroFunctionSubstitutions);
+    assertSubstitution("${test(test\\\\))}", "password", Collections.emptyMap(), macroFunctionSubstitutions);
   }
 
 
@@ -312,7 +314,7 @@ public class MacroParserTest {
     Map<String, String> macroFunctionSubstitutions = ImmutableMap.<String, String>builder()
       .put("test\\)", "password")
       .build();
-    assertSubstitution("${test(test\\\\\\))}", "password", new HashMap<String, String>(), macroFunctionSubstitutions);
+    assertSubstitution("${test(test\\\\\\))}", "password", Collections.emptyMap(), macroFunctionSubstitutions);
   }
 
   /**
@@ -323,7 +325,7 @@ public class MacroParserTest {
     Map<String, String> properties = ImmutableMap.<String, String>builder()
       .put("test\\}", "password")
       .build();
-    assertSubstitution("${test\\\\\\}}", "password", properties, new HashMap<String, String>());
+    assertSubstitution("${test\\\\\\}}", "password", properties, Collections.emptyMap());
   }
 
   /**
@@ -334,7 +336,7 @@ public class MacroParserTest {
     Map<String, String> properties = ImmutableMap.<String, String>builder()
       .put("test\\}", "password")
       .build();
-    assertSubstitution("${test\\\\\\}}", "password", properties, new HashMap<String, String>());
+    assertSubstitution("${test\\\\\\}}", "password", properties, Collections.emptyMap());
   }
 
 
@@ -358,7 +360,7 @@ public class MacroParserTest {
       .put("simplePath", "index.html")
       .put("simplePort", "80")
       .build();
-    assertSubstitution("${simpleHostnameTree}", "localhost/index.html:80", properties, new HashMap<String, String>());
+    assertSubstitution("${simpleHostnameTree}", "localhost/index.html:80", properties, new HashMap<>());
   }
 
   /**
@@ -386,7 +388,7 @@ public class MacroParserTest {
       .put("fifth", ".html")
       .put("sixth", "80")
       .build();
-    assertSubstitution("${advancedHostnameTree}", "localhost/index.html:80", properties, new HashMap<String, String>());
+    assertSubstitution("${advancedHostnameTree}", "localhost/index.html:80", properties, Collections.emptyMap());
   }
 
   /**
@@ -432,8 +434,7 @@ public class MacroParserTest {
       .put("firstPortDigit", "8")
       .put("secondPortDigit", "0")
       .build();
-    assertSubstitution("${expansiveHostnameTree}", "localhost/index.html:80", properties,
-                       new HashMap<String, String>());
+    assertSubstitution("${expansiveHostnameTree}", "localhost/index.html:80", properties, Collections.emptyMap());
   }
 
   /**
@@ -484,31 +485,55 @@ public class MacroParserTest {
                        "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80" +
                        "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80" +
                        "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80",
-                       properties, new HashMap<String, String>());
+                       properties, new HashMap<>());
   }
 
   @Test
   public void testNoEscape() {
-    MacroParser parser = new MacroParser(new TestMacroEvaluator(ImmutableMap.of("\\a\\b\\c\\", "123", "x", "xyz"),
-                                                                ImmutableMap.of("xyz", "321")),
-                                         false);
+    MacroEvaluator evaluator = new TestMacroEvaluator(ImmutableMap.of("\\a\\b\\c\\", "123", "x", "xyz"),
+                                                      ImmutableMap.of("xyz", "321"));
+    MacroParser parser = MacroParser.builder(evaluator).disableEscaping().build();
     Assert.assertEquals("123", parser.parse("${\\a\\b\\c\\}"));
     Assert.assertEquals("321", parser.parse("${test(${x})}"));
     Assert.assertEquals("\\321", parser.parse("\\${test(xyz)}"));
+  }
+
+  @Test
+  public void testDisableLookups() {
+    MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), Collections.emptyMap());
+    MacroParser parser = MacroParser.builder(evaluator).disableLookups().build();
+    Assert.assertEquals("${key}", parser.parse("${key}"));
+  }
+
+  @Test
+  public void testDisableFunctions() {
+    MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), Collections.emptyMap());
+    MacroParser parser = MacroParser.builder(evaluator).disableFunctions().build();
+    Assert.assertEquals("${test(key)}", parser.parse("${test(key)}"));
+  }
+
+  @Test
+  public void testFunctionWhitelist() {
+    MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), ImmutableMap.of("key", "val"));
+    MacroParser parser = MacroParser.builder(evaluator).whitelistFunctions("t").build();
+    // $t(key) should get evaluated, but $test(key) should get skipped.
+    Assert.assertEquals("${test(key)}val", parser.parse("${test(key)}${t(key)}"));
+    Assert.assertEquals("val${test(key)}", parser.parse("${t(key)}${test(key)}"));
+    Assert.assertEquals("${test(val)}", parser.parse("${test(${t(key)})}"));
   }
 
   // Testing util methods
 
   private static void assertContainsMacroParsing(String macro, boolean expected) {
     TrackingMacroEvaluator trackingMacroEvaluator = new TrackingMacroEvaluator();
-    new MacroParser(trackingMacroEvaluator).parse(macro);
+    MacroParser.builder(trackingMacroEvaluator).build().parse(macro);
     Assert.assertEquals(trackingMacroEvaluator.hasMacro(), expected);
   }
 
   private static void assertSubstitution(String macro, String expected, Map<String, String> propertySubstitutions,
                                          Map<String, String> macroFunctionSubstitutions) {
-    MacroParser macroParser = new MacroParser(new TestMacroEvaluator(propertySubstitutions,
-                                                                     macroFunctionSubstitutions));
+    MacroEvaluator macroEvaluator = new TestMacroEvaluator(propertySubstitutions, macroFunctionSubstitutions);
+    MacroParser macroParser = MacroParser.builder(macroEvaluator).build();
     Assert.assertEquals(expected, macroParser.parse(macro));
   }
 }
