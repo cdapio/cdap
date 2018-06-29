@@ -110,7 +110,7 @@ const ONE_WEEK_SECONDS = ONE_DAY_SECONDS * 7;
 const ONE_MONTH_SECONDS = ONE_DAY_SECONDS * 30;
 const ONE_YEAR_SECONDS = ONE_MONTH_SECONDS * 12;
 
-function humanReadableDuration(timeInSeconds) {
+function humanReadableDuration(timeInSeconds, shortForm = false) {
   if (typeof timeInSeconds !== 'number') {
     return timeInSeconds;
   }
@@ -125,20 +125,40 @@ function humanReadableDuration(timeInSeconds) {
   }
   if (timeInSeconds < ONE_DAY_SECONDS) {
     let hours = Math.floor(timeInSeconds / ONE_HOUR_SECONDS);
-    return `${hours} ${pluralize(hours, 'hour')} ${humanReadableDuration(timeInSeconds - (ONE_HOUR_SECONDS * hours))}`;
+    return (
+      shortForm ?
+        `${hours} ${pluralize(hours, 'hour')} ago`
+      :
+        `${hours} ${pluralize(hours, 'hour')} ${humanReadableDuration(timeInSeconds - (ONE_HOUR_SECONDS * hours))}`
+    );
   }
   if (timeInSeconds < ONE_WEEK_SECONDS) {
     let days = Math.floor(timeInSeconds / ONE_DAY_SECONDS);
-    return `${days} ${pluralize(days, 'day')} ${humanReadableDuration(timeInSeconds - (ONE_DAY_SECONDS * days))}`;
+    return (
+      shortForm ?
+        `${days} ${pluralize(days, 'day')}`
+      :
+        `${days} ${pluralize(days, 'day')} ${humanReadableDuration(timeInSeconds - (ONE_DAY_SECONDS * days))}`
+      );
   }
   // Hopefully we don't reach beyond this point.
   if (timeInSeconds < ONE_MONTH_SECONDS) {
     let weeks = Math.floor(timeInSeconds / ONE_WEEK_SECONDS);
-    return `${weeks} ${pluralize(weeks, 'week')} ${humanReadableDuration(timeInSeconds - (ONE_WEEK_SECONDS * weeks))}`;
+    return (
+      shortForm ?
+        `${weeks} ${pluralize(weeks, 'week')} ago`
+      :
+        `${weeks} ${pluralize(weeks, 'week')} ${humanReadableDuration(timeInSeconds - (ONE_WEEK_SECONDS * weeks))}`
+    );
   }
   if (timeInSeconds < ONE_YEAR_SECONDS) {
     let months = Math.floor(timeInSeconds / ONE_MONTH_SECONDS);
-    return `${months} ${pluralize(months, 'month')} ${humanReadableDuration(timeInSeconds - (ONE_MONTH_SECONDS * months))}`;
+    return (
+      shortForm ?
+        `${months} ${pluralize(months, 'month')} ago`
+      :
+        `${months} ${pluralize(months, 'month')} ${humanReadableDuration(timeInSeconds - (ONE_MONTH_SECONDS * months))}`
+    );
   }
 }
 

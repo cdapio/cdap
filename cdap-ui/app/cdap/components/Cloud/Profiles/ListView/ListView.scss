@@ -16,7 +16,6 @@
 
 @import "../../../../styles/mixins.scss";
 @import "../../../../styles/variables.scss";
-$row-height: 50px;
 $enabled-color: $green-02;
 $disabled-color: $red-02;
 
@@ -70,8 +69,12 @@ $disabled-color: $red-02;
     }
     .grid-body {
       .grid-row {
-        height: $row-height;
+        padding: 0;
         color: $grey-01;
+
+        &.native-profile {
+          cursor: not-allowed;
+        }
 
         &:last-child {
           border-bottom: 0;

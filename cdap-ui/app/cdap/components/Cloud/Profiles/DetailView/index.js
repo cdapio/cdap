@@ -99,6 +99,10 @@ export default class ProfileDetailView extends Component {
       pathname: '/administration/configuration',
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
     } : `/ns/${getCurrentNamespace()}/details`;
+    let {namespace} = this.props.match.params;
+    if (!namespace) {
+      namespace = getCurrentNamespace();
+    }
     return (
       <div className="profile-detail-view">
         <EntityTopPanel
@@ -120,6 +124,7 @@ export default class ProfileDetailView extends Component {
               provisioners={this.state.provisioners}
               isSystem={this.state.isSystem}
               toggleProfileStatusCallback={this.getProfile}
+              namespace={namespace}
             />
         }
       </div>
