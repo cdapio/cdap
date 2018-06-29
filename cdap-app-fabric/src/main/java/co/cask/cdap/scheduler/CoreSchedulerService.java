@@ -26,7 +26,6 @@ import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -44,9 +43,6 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.store.profile.ProfileDataset;
-import co.cask.cdap.internal.profile.AdminEventPublisher;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProfileId;
@@ -85,22 +81,18 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private final Service internalService;
   private final DatasetFramework datasetFramework;
   private final TimeSchedulerService timeSchedulerService;
-  private final AdminEventPublisher adminEventPublisher;
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                        TimeSchedulerService timeSchedulerService,
                        ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
-                       ConstraintCheckerService constraintCheckerService,
-                       MessagingService messagingService,
-                       CConfiguration cConf) {
+                       ConstraintCheckerService constraintCheckerService) {
     this.startedLatch = new CountDownLatch(1);
     this.datasetFramework = datasetFramework;
-    MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
     DynamicDatasetCache datasetCache =
       new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
                                   txClient, Schedulers.STORE_DATASET_ID.getParent(),
-                                  Collections.emptyMap(), null, null, messagingContext);
+                                  Collections.emptyMap(), null, null);
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
     this.timeSchedulerService = timeSchedulerService;
@@ -128,7 +120,6 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         LOG.info("Stopped core scheduler service.");
       }
     }, co.cask.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
-    this.adminEventPublisher = new AdminEventPublisher(cConf, messagingContext);
   }
 
   // Attempts to remove all jobs that are in PENDING_LAUNCH state.
@@ -243,9 +234,6 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             throw new RuntimeException(e);
           }
         }
-        for (ProgramSchedule schedule : schedules) {
-          adminEventPublisher.publishScheduleCreation(schedule.getScheduleId());
-        }
         return null;
       }, Exception.class);
     } catch (NotFoundException | ProfileConflictException | AlreadyExistsException e) {
@@ -253,6 +241,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     } catch (Exception e) {
       Throwables.propagate(e);
     }
+
   }
 
   @Override
@@ -364,10 +353,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     execute((StoreAndQueueTxRunnable<Void, NotFoundException>) (store, queue) -> {
       long deleteTime = System.currentTimeMillis();
       for (ScheduleId scheduleId : scheduleIds) {
-        ProgramSchedule schedule = store.getSchedule(scheduleId);
-        deleteScheduleInScheduler(schedule);
+        deleteScheduleInScheduler(store.getSchedule(scheduleId));
         queue.markJobsForDeletion(scheduleId, deleteTime);
-        adminEventPublisher.publishScheduleDeletion(scheduleId, schedule);
       }
       store.deleteSchedules(scheduleIds);
       return null;
@@ -379,14 +366,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     checkStarted();
     execute((StoreAndQueueTxRunnable<Void, RuntimeException>) (store, queue) -> {
       long deleteTime = System.currentTimeMillis();
-      List<ProgramSchedule> schedules = store.listSchedules(appId);
-      deleteSchedulesInScheduler(schedules);
+      deleteSchedulesInScheduler(store.listSchedules(appId));
       List<ScheduleId> deleted = store.deleteSchedules(appId);
       for (ScheduleId scheduleId : deleted) {
         queue.markJobsForDeletion(scheduleId, deleteTime);
-      }
-      for (ProgramSchedule programSchedule : schedules) {
-        adminEventPublisher.publishScheduleDeletion(programSchedule.getScheduleId(), programSchedule);
       }
       return null;
     }, RuntimeException.class);
@@ -397,14 +380,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     checkStarted();
     execute((StoreAndQueueTxRunnable<Void, RuntimeException>) (store, queue) -> {
       long deleteTime = System.currentTimeMillis();
-      List<ProgramSchedule> schedules = store.listSchedules(programId);
-      deleteSchedulesInScheduler(schedules);
+      deleteSchedulesInScheduler(store.listSchedules(programId));
       List<ScheduleId> deleted = store.deleteSchedules(programId);
       for (ScheduleId scheduleId : deleted) {
         queue.markJobsForDeletion(scheduleId, deleteTime);
-      }
-      for (ProgramSchedule programSchedule : schedules) {
-        adminEventPublisher.publishScheduleDeletion(programSchedule.getScheduleId(), programSchedule);
       }
       return null;
     }, RuntimeException.class);

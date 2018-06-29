@@ -34,7 +34,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.config.PreferencesService;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -103,7 +103,7 @@ public class DefaultPreviewManager implements PreviewManager {
   private final Configuration hConf;
   private final DiscoveryService discoveryService;
   private final DatasetFramework datasetFramework;
-  private final PreferencesService preferencesService;
+  private final PreferencesStore preferencesStore;
   private final SecureStore secureStore;
   private final TransactionManager transactionManager;
   private final ArtifactRepository artifactRepository;
@@ -118,7 +118,7 @@ public class DefaultPreviewManager implements PreviewManager {
   @Inject
   DefaultPreviewManager(final CConfiguration cConf, Configuration hConf, DiscoveryService discoveryService,
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-                        PreferencesService preferencesService, SecureStore secureStore,
+                        PreferencesStore preferencesStore, SecureStore secureStore,
                         TransactionManager transactionManager, ArtifactRepository artifactRepository,
                         ArtifactStore artifactStore, AuthorizerInstantiator authorizerInstantiator,
                         StreamAdmin streamAdmin, StreamCoordinatorClient streamCoordinatorClient,
@@ -127,7 +127,7 @@ public class DefaultPreviewManager implements PreviewManager {
     this.hConf = hConf;
     this.datasetFramework = datasetFramework;
     this.discoveryService = discoveryService;
-    this.preferencesService = preferencesService;
+    this.preferencesStore = preferencesStore;
     this.secureStore = secureStore;
     this.transactionManager = transactionManager;
     this.artifactRepository = artifactRepository;
@@ -220,7 +220,7 @@ public class DefaultPreviewManager implements PreviewManager {
       new LocationRuntimeModule().getStandaloneModules(),
       new ConfigStoreModule().getStandaloneModule(),
       new PreviewRunnerModule(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
-                              privilegesManager, streamCoordinatorClient, preferencesService),
+                              privilegesManager, streamCoordinatorClient, preferencesStore),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new PreviewDataModules().getDataFabricModule(transactionManager),
       new PreviewDataModules().getDataSetsModule(datasetFramework),

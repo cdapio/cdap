@@ -38,7 +38,7 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.config.PreferencesService;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -111,7 +111,7 @@ public class ProgramLifecycleService {
   private final ProfileService profileService;
   private final ProgramRuntimeService runtimeService;
   private final PropertiesResolver propertiesResolver;
-  private final PreferencesService preferencesService;
+  private final PreferencesStore preferencesStore;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final ProvisionerNotifier provisionerNotifier;
@@ -121,7 +121,7 @@ public class ProgramLifecycleService {
   @Inject
   ProgramLifecycleService(Store store, ProfileService profileService, ProgramRuntimeService runtimeService,
                           PropertiesResolver propertiesResolver,
-                          PreferencesService preferencesService, AuthorizationEnforcer authorizationEnforcer,
+                          PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext,
                           ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
                           ProgramStateWriter programStateWriter) {
@@ -129,7 +129,7 @@ public class ProgramLifecycleService {
     this.profileService = profileService;
     this.runtimeService = runtimeService;
     this.propertiesResolver = propertiesResolver;
-    this.preferencesService = preferencesService;
+    this.preferencesStore = preferencesStore;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.provisionerNotifier = provisionerNotifier;
@@ -548,7 +548,7 @@ public class ProgramLifecycleService {
 
   /**
    * Save runtime arguments for all future runs of this program. The runtime arguments are saved in the
-   * {@link PreferencesService}.
+   * {@link PreferencesStore}.
    *
    * @param programId the {@link ProgramId program} for which runtime arguments are to be saved
    * @param runtimeArgs the runtime arguments to save
@@ -563,11 +563,13 @@ public class ProgramLifecycleService {
       throw new NotFoundException(programId);
     }
 
-    preferencesService.setProperties(programId, runtimeArgs);
+    preferencesStore.setProperties(programId.getNamespace(), programId.getApplication(),
+                                   programId.getType().getCategoryName(),
+                                   programId.getProgram(), runtimeArgs);
   }
 
   /**
-   * Gets runtime arguments for the program from the {@link PreferencesService}
+   * Gets runtime arguments for the program from the {@link PreferencesStore}
    *
    * @param programId the {@link ProgramId program} for which runtime arguments needs to be retrieved
    * @return {@link Map} containing runtime arguments of the program
@@ -584,7 +586,8 @@ public class ProgramLifecycleService {
     if (!store.programExists(programId)) {
       throw new NotFoundException(programId);
     }
-    return preferencesService.getProperties(programId);
+    return preferencesStore.getProperties(programId.getNamespace(), programId.getApplication(),
+                                          programId.getType().getCategoryName(), programId.getProgram());
   }
 
   /**

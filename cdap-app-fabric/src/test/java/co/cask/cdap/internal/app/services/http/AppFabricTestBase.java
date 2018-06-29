@@ -24,7 +24,6 @@ import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.client.DatasetClient;
-import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
@@ -68,7 +67,6 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -206,7 +204,6 @@ public abstract class AppFabricTestBase {
   private static LocationFactory locationFactory;
   private static StreamClient streamClient;
   private static DatasetClient datasetClient;
-  private static MetadataClient metadataClient;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -257,8 +254,6 @@ public abstract class AppFabricTestBase {
     locationFactory = getInjector().getInstance(LocationFactory.class);
     streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
-    metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
-
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
     // Wait for the scheduler to be functional.
     if (programScheduler instanceof CoreSchedulerService) {
@@ -1118,10 +1113,6 @@ public abstract class AppFabricTestBase {
     return readResponse(response, ScheduleDetail.class);
   }
 
-  protected Map<String, String> getMetadataProperties(EntityId entityId) throws Exception {
-    return metadataClient.getProperties(entityId);
-  }
-
   protected void verifyNoRunWithStatus(final Id.Program program, final ProgramRunStatus status) throws Exception {
     Tasks.waitFor(0, new Callable<Integer>() {
       @Override
@@ -1221,46 +1212,6 @@ public abstract class AppFabricTestBase {
   protected HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
     return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
                  GSON.toJson(meta));
-  }
-
-  protected String getPreferenceURI() {
-    return "";
-  }
-
-  protected String getPreferenceURI(String namespace) {
-    return String.format("%s/namespaces/%s", getPreferenceURI(), namespace);
-  }
-
-  protected String getPreferenceURI(String namespace, String appId) {
-    return String.format("%s/apps/%s", getPreferenceURI(namespace), appId);
-  }
-
-  protected String getPreferenceURI(String namespace, String appId, String programType, String programId) {
-    return String.format("%s/%s/%s", getPreferenceURI(namespace, appId), programType, programId);
-  }
-
-  protected void setPreferences(String uri, Map<String, String> props, int expectedStatus) throws Exception {
-    HttpResponse response = doPut(String.format("/v3/%s/preferences", uri), GSON.toJson(props));
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
-  }
-
-  protected Map<String, String> getPreferences(String uri, boolean resolved, int expectedStatus) throws Exception {
-    String request = String.format("/v3/%s/preferences", uri);
-    if (resolved) {
-      request += "?resolved=true";
-    }
-    HttpResponse response = doGet(request);
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
-    if (expectedStatus == 200) {
-      String s = EntityUtils.toString(response.getEntity());
-      return GSON.fromJson(s, MAP_STRING_STRING_TYPE);
-    }
-    return null;
-  }
-
-  protected void deletePreferences(String uri, int expectedStatus) throws Exception {
-    HttpResponse response = doDelete(String.format("/v3/%s/preferences", uri));
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 
   protected File buildAppArtifact(Class<?> cls, String name) throws IOException {

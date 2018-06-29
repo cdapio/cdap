@@ -45,8 +45,8 @@ import java.util.Set;
 import javax.inject.Inject;
 
 /**
- * This class is to manage profile related functions. It will wrap the {@link ProfileDataset} operation
- * in transaction in each method
+ * This class is to manage profile related functions. For any store related operations,
+ * it will directly get any underlying table.
  */
 public class ProfileService {
   private static final Logger LOG = LoggerFactory.getLogger(ProfileService.class);

@@ -33,6 +33,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
@@ -43,7 +44,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
-import co.cask.cdap.config.PreferencesService;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -56,9 +57,6 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.internal.profile.AdminEventPublisher;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetDetail;
@@ -71,6 +69,7 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -116,6 +115,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
 
   /**
+   * Runtime program service for running and managing programs.
+   */
+  private final ProgramRuntimeService runtimeService;
+
+  /**
    * Store manages non-runtime lifecycle.
    */
   private final Store store;
@@ -123,7 +127,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final QueueAdmin queueAdmin;
   private final StreamConsumerFactory streamConsumerFactory;
   private final UsageRegistry usageRegistry;
-  private final PreferencesService preferencesService;
+  private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
   private final OwnerAdmin ownerAdmin;
   private final ArtifactRepository artifactRepository;
@@ -134,28 +138,27 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final Impersonator impersonator;
   private final RouteStore routeStore;
   private final boolean appUpdateSchedules;
-  private final AdminEventPublisher adminEventPublisher;
 
   @Inject
   ApplicationLifecycleService(CConfiguration cConfiguration,
-                              Store store,
+                              ProgramRuntimeService runtimeService, Store store,
                               Scheduler scheduler, QueueAdmin queueAdmin,
                               StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
-                              PreferencesService preferencesService, MetricStore metricStore, OwnerAdmin ownerAdmin,
+                              PreferencesStore preferencesStore, MetricStore metricStore, OwnerAdmin ownerAdmin,
                               ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataStore metadataStore,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                              Impersonator impersonator, RouteStore routeStore,
-                              MessagingService messagingService) {
+                              Impersonator impersonator, RouteStore routeStore) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
+    this.runtimeService = runtimeService;
     this.store = store;
     this.scheduler = scheduler;
     this.queueAdmin = queueAdmin;
     this.streamConsumerFactory = streamConsumerFactory;
     this.usageRegistry = usageRegistry;
-    this.preferencesService = preferencesService;
+    this.preferencesStore = preferencesStore;
     this.metricStore = metricStore;
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
@@ -165,8 +168,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.authenticationContext = authenticationContext;
     this.impersonator = impersonator;
     this.routeStore = routeStore;
-    this.adminEventPublisher = new AdminEventPublisher(cConfiguration,
-                                                       new MultiThreadMessagingContext(messagingService));
   }
 
   @Override
@@ -635,11 +636,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
 
-      preferencesService.deleteProperties(appId.program(ProgramTypes.fromSpecification(spec), spec.getName()));
+      preferencesStore.deleteProperties(appId.getNamespace(), appId.getApplication(),
+                                        ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
       LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getNamespace(), appId.getApplication(),
                 ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
     }
-    preferencesService.deleteProperties(appId);
+    preferencesStore.deleteProperties(appId.getNamespace(), appId.getApplication());
     LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespace(), appId.getApplication());
   }
 
@@ -687,9 +689,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       Throwables.propagateIfPossible(e.getCause(), Exception.class);
       throw Throwables.propagate(e.getCause());
     }
-
-    adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
-                                           applicationWithPrograms.getSpecification());
     return applicationWithPrograms;
   }
 
@@ -738,9 +737,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
     }
-
-    // make sure the program profile metadata is removed
-    adminEventPublisher.publishAppDeletion(appId, appSpec);
   }
 
   /**
@@ -748,8 +744,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param appId the id of the application to delete
    * @param spec the spec of the application to delete
+   * @throws Exception
    */
-  private void deleteAppVersion(final ApplicationId appId, ApplicationSpecification spec) {
+  private void deleteAppVersion(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
     //Delete the schedules
     scheduler.deleteSchedules(appId);
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
@@ -785,24 +782,24 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
   }
 
-  private Set<ProgramId> getProgramsWithType(ApplicationId appId, ProgramType type,
-                                             Map<String, ? extends ProgramSpecification> programSpecs) {
-    Set<ProgramId> result = new HashSet<>();
-
-    for (String programName : programSpecs.keySet()) {
-      result.add(appId.program(type, programName));
-    }
-    return result;
-  }
-
   private Set<ProgramId> getAllPrograms(ApplicationId appId, ApplicationSpecification appSpec) {
     Set<ProgramId> result = new HashSet<>();
-    result.addAll(getProgramsWithType(appId, ProgramType.FLOW, appSpec.getFlows()));
-    result.addAll(getProgramsWithType(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce()));
-    result.addAll(getProgramsWithType(appId, ProgramType.WORKFLOW, appSpec.getWorkflows()));
-    result.addAll(getProgramsWithType(appId, ProgramType.SERVICE, appSpec.getServices()));
-    result.addAll(getProgramsWithType(appId, ProgramType.SPARK, appSpec.getSpark()));
-    result.addAll(getProgramsWithType(appId, ProgramType.WORKER, appSpec.getWorkers()));
+    Map<ProgramType, Set<String>> programTypeToNames = new HashMap<>();
+    programTypeToNames.put(ProgramType.FLOW, appSpec.getFlows().keySet());
+    programTypeToNames.put(ProgramType.MAPREDUCE, appSpec.getMapReduce().keySet());
+    programTypeToNames.put(ProgramType.WORKFLOW, appSpec.getWorkflows().keySet());
+    programTypeToNames.put(ProgramType.SERVICE, appSpec.getServices().keySet());
+    programTypeToNames.put(ProgramType.SPARK, appSpec.getSpark().keySet());
+    programTypeToNames.put(ProgramType.WORKER, appSpec.getWorkers().keySet());
+
+    for (Map.Entry<ProgramType, Set<String>> entry : programTypeToNames.entrySet()) {
+      Set<String> programNames = entry.getValue();
+      for (String programName : programNames) {
+        result.add(Ids.namespace(appId.getNamespace())
+                     .app(appId.getApplication())
+                     .program(entry.getKey(), programName));
+      }
+    }
     return result;
   }
 

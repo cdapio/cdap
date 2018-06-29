@@ -21,7 +21,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.DashboardStore;
-import co.cask.cdap.config.PreferencesService;
+import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -46,7 +46,7 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
 
   private final Impersonator impersonator;
   private final Store store;
-  private final PreferencesService preferencesService;
+  private final PreferencesStore preferencesStore;
   private final DashboardStore dashboardStore;
   private final DatasetFramework dsFramework;
   private final QueueAdmin queueAdmin;
@@ -57,7 +57,7 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
   private final MessagingService messagingService;
 
 
-  AbstractNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
+  AbstractNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesStore preferencesStore,
                                    DashboardStore dashboardStore, DatasetFramework dsFramework, QueueAdmin queueAdmin,
                                    MetricStore metricStore,
                                    ApplicationLifecycleService applicationLifecycleService,
@@ -66,7 +66,7 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
                                    MessagingService messagingService) {
     this.impersonator = impersonator;
     this.store = store;
-    this.preferencesService = preferencesService;
+    this.preferencesStore = preferencesStore;
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
     this.queueAdmin = queueAdmin;
@@ -84,7 +84,7 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     final NamespaceId namespaceId = namespaceMeta.getNamespaceId();
 
     // Delete Preferences associated with this namespace
-    preferencesService.deleteProperties(namespaceId);
+    preferencesStore.deleteProperties(namespaceId.getNamespace());
     // Delete all dashboards associated with this namespace
     dashboardStore.delete(namespaceId.getNamespace());
     // Delete all applications
