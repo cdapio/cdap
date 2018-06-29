@@ -147,7 +147,7 @@ public class ProfileMetadataTest extends AppFabricTestBase {
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(false, () -> getMetadataProperties(scheduleId2).containsKey("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    
+
     disableProfile(myProfile, 200);
     disableProfile(myProfile2, 200);
     deleteProfile(myProfile, 200);
