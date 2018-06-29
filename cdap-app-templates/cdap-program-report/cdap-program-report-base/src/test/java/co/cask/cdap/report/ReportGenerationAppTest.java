@@ -165,7 +165,7 @@ public class ReportGenerationAppTest extends TestBase {
     Assert.assertNotNull(url);
     URL reportURL = url.toURI().resolve("reports/").toURL();
     // create a report generation request with a time range that contains no program run
-    long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTime) + TimeUnit.DAYS.toSeconds(2);
+    long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTime) - TimeUnit.DAYS.toSeconds(10);
     ReportGenerationRequest request =
       new ReportGenerationRequest("empty_report", startSecs, startSecs + 30,
                                   new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),

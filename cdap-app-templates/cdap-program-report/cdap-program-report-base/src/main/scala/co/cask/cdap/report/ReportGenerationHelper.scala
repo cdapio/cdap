@@ -17,6 +17,7 @@ package co.cask.cdap.report
 
 import java.io.{IOException, OutputStreamWriter, PrintWriter}
 import java.nio.charset.StandardCharsets
+import java.util.Collections
 import java.util.stream.Collectors
 
 import co.cask.cdap.report.proto.Sort.Order
@@ -24,7 +25,7 @@ import co.cask.cdap.report.proto.summary._
 import co.cask.cdap.report.proto.{Sort, _}
 import co.cask.cdap.report.util.Constants
 import com.databricks.spark._
-import com.google.gson.{GsonBuilder, _}
+import com.google.gson.Gson
 import org.apache.avro.mapred._
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{avg, max, min}
@@ -39,7 +40,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 object ReportGenerationHelper {
 
-  val GSON = new GsonBuilder().serializeNulls().create()
+  val GSON = new Gson()
   val LOG = LoggerFactory.getLogger(ReportGenerationHelper.getClass)
   val RECORD_COL = "record"
   val REQUIRED_FIELDS = Set(Constants.PROGRAM)
