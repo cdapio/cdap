@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.distributed.remote;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
@@ -23,15 +24,29 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
+import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
 import co.cask.cdap.internal.provision.SecureKeyInfo;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.Node;
+import co.cask.cdap.security.tools.KeyStores;
+import co.cask.common.http.HttpRequestConfig;
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -46,6 +61,7 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.security.SecureStoreRenewer;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.SingleRunnableApplication;
 import org.apache.twill.internal.io.BasicLocationCache;
@@ -57,6 +73,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,22 +95,31 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
-  private final MessagingService messagingService;
-  private final DatasetFramework dsFramework;
-  private final TransactionSystemClient txClient;
+  private final DatasetFramework datasetFramework;
+  private final Map<ProgramRunId, RemoteExecutionTwillController> controllers;
+  private final Transactional transactional;
+  private final MultiThreadMessagingContext messagingContext;
   private LocationCache locationCache;
   private Path cachePath;
+  private ScheduledExecutorService monitorScheduler;
 
   @Inject
   RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
                                     LocationFactory locationFactory, MessagingService messagingService,
-                                    DatasetFramework dsFramework, TransactionSystemClient txClient) {
+                                    DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
-    this.messagingService = messagingService;
-    this.dsFramework = dsFramework;
-    this.txClient = txClient;
+    this.messagingContext = new MultiThreadMessagingContext(messagingService);
+    this.datasetFramework = datasetFramework;
+    this.transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(new MultiThreadDatasetCache(
+        new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
+        NamespaceId.SYSTEM, Collections.emptyMap(), null, null, messagingContext)),
+      org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
+    );
+
+    this.controllers = new ConcurrentHashMap<>();
   }
 
   @Override
@@ -100,16 +133,40 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+
+    monitorScheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
+                                                        Threads.createDaemonThreadFactory("runtime-monitor-%d"));
+
+    // TODO CDAP-13417: Scan AppMetaStore for active run records that were launched with RemoteExecutionTwillRunner
+    // to initialize the controllers map.
   }
 
   @Override
   public void stop() {
+    // Stops all the runtime monitor. This won't terminate the remotely running program.
+    List<ListenableFuture<Service.State>> stopFutures = new ArrayList<>();
+    for (RemoteExecutionTwillController controller : controllers.values()) {
+      stopFutures.add(controller.getRuntimeMonitor().stop());
+    }
+
+    // Wait for all of them to stop
+    try {
+      Uninterruptibles.getUninterruptibly(Futures.successfulAsList(stopFutures));
+    } catch (Exception e) {
+      // This shouldn't happen
+      LOG.warn("Exception raised when waiting for runtime monitors to stop.", e);
+    }
+
     try {
       if (cachePath != null) {
         DirUtils.deleteDirectoryContents(cachePath.toFile());
       }
     } catch (IOException e) {
       LOG.warn("Exception raised during stop", e);
+    } finally {
+      if (monitorScheduler != null) {
+        monitorScheduler.shutdownNow();
+      }
     }
   }
 
@@ -151,10 +208,13 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     SecureKeyInfo keyInfo = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER_KEY_INFO),
                                           SecureKeyInfo.class);
 
-    return new RemoteExecutionTwillPreparer(cConf, config, masterNode.getProperties().get("ip.external"), keyInfo,
-                                            programRunId, application.configure(), RunIds.generate(),
-                                            null, locationCache, locationFactory, messagingService,
-                                            dsFramework, txClient);
+    RunId twillRunId = RunIds.generate();
+    String remoteHost = masterNode.getProperties().get("ip.external");
+
+    return new RemoteExecutionTwillPreparer(cConf, config, remoteHost, keyInfo,
+                                            application.configure(), twillRunId,
+                                            null, locationCache, locationFactory,
+                                            createControllerFactory(programRunId, keyInfo, twillRunId, remoteHost));
   }
 
   @Override
@@ -184,5 +244,44 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   public Cancellable setSecureStoreRenewer(SecureStoreRenewer renewer, long initialDelay,
                                            long delay, long retryDelay, TimeUnit unit) {
     return null;
+  }
+
+  /**
+   * Creates a new instance of {@link RemoteExecutionTwillControllerFactory} for a given run.
+   */
+  private RemoteExecutionTwillControllerFactory createControllerFactory(ProgramRunId programRunId,
+                                                                        SecureKeyInfo keyInfo,
+                                                                        RunId twillRunId,
+                                                                        String remoteHost) {
+    return () -> {
+      try {
+        KeyStore clientKeyStore = KeyStores.load(locationFactory.create(keyInfo.getKeyDirectory())
+                                                   .append(keyInfo.getClientKeyStoreFile()),
+                                                 () -> "");
+        KeyStore serverKeyStore = KeyStores.load(locationFactory.create(keyInfo.getKeyDirectory())
+                                                   .append(keyInfo.getServerKeyStoreFile()),
+                                                 () -> "");
+
+        // Creates a runtime monitor and starts it
+        RuntimeMonitorClient runtimeMonitorClient = new RuntimeMonitorClient(
+          remoteHost,
+          cConf.getInt(Constants.RuntimeMonitor.SERVER_PORT),
+          HttpRequestConfig.DEFAULT, clientKeyStore, KeyStores.createTrustStore(serverKeyStore)
+        );
+        RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConf, runtimeMonitorClient,
+                                                           datasetFramework, transactional,
+                                                           messagingContext, monitorScheduler);
+        RemoteExecutionTwillController controller = new RemoteExecutionTwillController(twillRunId, runtimeMonitor);
+        controllers.put(programRunId, controller);
+        runtimeMonitor.start();
+
+        // When the program completed, remove the controller from the map
+        controller.onTerminated(() -> controllers.remove(programRunId, controller), Threads.SAME_THREAD_EXECUTOR);
+
+        return controller;
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    };
   }
 }

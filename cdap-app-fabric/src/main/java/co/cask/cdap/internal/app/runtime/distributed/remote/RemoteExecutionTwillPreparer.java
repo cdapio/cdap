@@ -21,15 +21,9 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
-import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
 import co.cask.cdap.internal.provision.SecureKeyInfo;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import co.cask.cdap.security.tools.KeyStores;
-import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -44,7 +38,6 @@ import com.google.common.io.ByteStreams;
 import joptsimple.OptionSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.EventHandlerSpecification;
 import org.apache.twill.api.LocalFile;
@@ -118,7 +111,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link TwillPreparer} implementation that uses ssh to launch a single {@link TwillRunnable}.
  */
-public class RemoteExecutionTwillPreparer implements TwillPreparer {
+class RemoteExecutionTwillPreparer implements TwillPreparer {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionTwillPreparer.class);
   private static final String SETUP_SPARK_SH = "setupSpark.sh";
@@ -145,11 +138,8 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
   private final Map<String, String> runnableExtraOptions = new HashMap<>();
   private final String remoteHost;
   private final SecureKeyInfo secureKeyInfo;
-  private final ProgramRunId programRunId;
   private final LocationFactory locationFactory;
-  private final MessagingService messagingService;
-  private final DatasetFramework dsFramework;
-  private final TransactionSystemClient txClient;
+  private final RemoteExecutionTwillControllerFactory controllerFactory;
   private String extraOptions;
   private JvmOptions.DebugOptions debugOptions;
 
@@ -158,11 +148,10 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
                                String remoteHost, SecureKeyInfo secureKeyInfo,
-                               ProgramRunId programRunId, TwillSpecification twillSpec,
+                               TwillSpecification twillSpec,
                                RunId runId, @Nullable String extraOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
-                               MessagingService messagingService, DatasetFramework dsFramework,
-                               TransactionSystemClient txClient) {
+                               RemoteExecutionTwillControllerFactory controllerFactory) {
     // Check to prevent future mistake
     if (twillSpec.getRunnables().size() != 1) {
       throw new IllegalArgumentException("Only one TwillRunnable is supported");
@@ -173,17 +162,14 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
     this.hConf = hConf;
     this.remoteHost = remoteHost;
     this.secureKeyInfo = secureKeyInfo;
-    this.programRunId = programRunId;
     this.twillSpec = twillSpec;
     this.runId = runId;
     this.extraOptions = extraOptions == null ? "" : extraOptions;
     this.classAcceptor = new ClassAcceptor();
     this.locationCache = locationCache;
     this.locationFactory = locationFactory;
-    this.messagingService = messagingService;
     this.extraOptions = cConf.get(co.cask.cdap.common.conf.Constants.AppFabric.PROGRAM_JVM_OPTS);
-    this.dsFramework = dsFramework;
-    this.txClient = txClient;
+    this.controllerFactory = controllerFactory;
   }
 
   private void confirmRunnableName(String runnableName) {
@@ -456,16 +442,7 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
           LOG.info("Starting runnable {} with SSH on {}", runnableName, session.getAddress().getHostName());
           session.executeAndWait("sudo " + targetPath + "/launcher.sh");
 
-          RuntimeMonitorClient runtimeMonitorClient = new RuntimeMonitorClient(
-            session.getAddress().getHostName(),
-            cConf.getInt(co.cask.cdap.common.conf.Constants.RuntimeMonitor.SERVER_PORT),
-            HttpRequestConfig.DEFAULT, loadClientKeyStore(secureKeyInfo),
-            KeyStores.createTrustStore(loadServerKeyStore(secureKeyInfo))
-          );
-          RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConf, messagingService,
-                                                             runtimeMonitorClient, dsFramework, txClient);
-          runtimeMonitor.start();
-          return new RemoteExecutionTwillController(runId, runtimeMonitor);
+          return controllerFactory.create();
         }
       } finally {
         DirUtils.deleteDirectoryContents(stagingDir.toFile(), false);
@@ -960,7 +937,7 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
 
     // Creates a trust store from the client keystore
     Location clientKeyStoreLocation = keyDir.append(secureKeyInfo.getClientKeyStoreFile());
-    KeyStore trustStore = loadClientKeyStore(secureKeyInfo);
+    KeyStore trustStore = KeyStores.createTrustStore(KeyStores.load(clientKeyStoreLocation, () -> ""));
 
     // Copy the trust store for the runtime monitor server to use for verifying client connections
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -969,44 +946,5 @@ public class RemoteExecutionTwillPreparer implements TwillPreparer {
     //noinspection OctalInteger
     session.copy(new ByteArrayInputStream(serializedTrustStore), targetPath,
                  clientKeyStoreLocation.getName(), serializedTrustStore.length, 0600, null, null);
-  }
-
-  /**
-   * Loads the {@link KeyStore} for the runtime monitor server.
-   *
-   * @param keyInfo the {@link SecureKeyInfo} containing the information about the location of the serialized keystore
-   * @return a new instance of {@link KeyStore}
-   * @throws Exception if failed to load the {@link KeyStore}
-   */
-  private KeyStore loadServerKeyStore(SecureKeyInfo keyInfo) throws Exception {
-    Location keyDir = locationFactory.create(secureKeyInfo.getKeyDirectory());
-    return loadKeyStore(keyDir.append(keyInfo.getServerKeyStoreFile()));
-  }
-
-  /**
-   * Loads the {@link KeyStore} for the runtime monitor client.
-   *
-   * @param keyInfo the {@link SecureKeyInfo} containing the information about the location of the serialized keystore
-   * @return a new instance of {@link KeyStore}
-   * @throws Exception if failed to load the {@link KeyStore}
-   */
-  private KeyStore loadClientKeyStore(SecureKeyInfo keyInfo) throws Exception {
-    Location keyDir = locationFactory.create(secureKeyInfo.getKeyDirectory());
-    return loadKeyStore(keyDir.append(keyInfo.getServerKeyStoreFile()));
-  }
-
-  /**
-   * Creates a {@link KeyStore} by loading it from the given location,
-   * serialized in the {@link KeyStores#SSL_KEYSTORE_TYPE} format.
-   *
-   * @param location the {@link Location} of the serialized keystore
-   * @return a new instance of {@link KeyStore}
-   */
-  private KeyStore loadKeyStore(Location location) throws Exception {
-    KeyStore ks = KeyStore.getInstance(KeyStores.SSL_KEYSTORE_TYPE);
-    try (InputStream is = location.getInputStream()) {
-      ks.load(is, "".toCharArray());
-    }
-    return ks;
   }
 }

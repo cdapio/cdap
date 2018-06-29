@@ -29,13 +29,12 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.collect.AbstractIterator;
-import com.google.common.util.concurrent.AbstractScheduledService;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,9 +42,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.xml.ws.handler.MessageContext;
 
@@ -56,7 +52,7 @@ import javax.xml.ws.handler.MessageContext;
  *
  * @param <T> the type that each message will be decoded to.
  */
-public abstract class AbstractMessagingSubscriberService<T> extends AbstractScheduledService {
+public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMessagingSubscriberService.class);
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
@@ -65,14 +61,9 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractSche
   private final boolean transactionalFetch;
   private final int fetchSize;
   private final long emptyFetchDelayMillis;
-  private final RetryStrategy retryStrategy;
   private final MetricsContext metricsContext;
   private boolean messageIdInitialized;
   private String messageId;
-  private int failureCount;
-  private long nonFailureStartTime;
-  private ScheduledExecutorService executor;
-  private long delay;
 
   /**
    * Constructor.
@@ -87,11 +78,11 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractSche
   protected AbstractMessagingSubscriberService(TopicId topicId, boolean transactionalFetch, int fetchSize,
                                                long emptyFetchDelayMillis, RetryStrategy retryStrategy,
                                                MetricsContext metricsContext) {
+    super(retryStrategy);
     this.topicId = topicId;
     this.transactionalFetch = transactionalFetch;
     this.fetchSize = fetchSize;
     this.emptyFetchDelayMillis = emptyFetchDelayMillis;
-    this.retryStrategy = retryStrategy;
     this.metricsContext = metricsContext;
   }
 
@@ -160,22 +151,6 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractSche
                                           Iterator<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
-   * Performs startup task. This method will be called from the executor returned by the {@link #executor()} method.
-   * By default this method does nothing.
-   */
-  protected void doStartUp() {
-    // No-op
-  }
-
-  /**
-   * Performs shutdown task. This method will be called from the executor returned by the {@link #executor()} method.
-   * By default this method does nothing.
-   */
-  protected void doShutdown() {
-    // No-op
-  }
-
-  /**
    * Perform post processing after a batch of messages has been processed and before the next batch of
    * messages is fetched. This will take place outside of the transaction used when processing messages.
    */
@@ -184,115 +159,21 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractSche
   }
 
   @Override
-  protected ScheduledExecutorService executor() {
-    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory(getServiceName()));
-    return executor;
-  }
-
-  @Override
-  protected final void startUp() throws Exception {
-    doStartUp();
-  }
-
-  @Override
-  protected final void shutDown() throws Exception {
-    try {
-      doShutdown();
-    } finally {
-      if (executor != null) {
-        executor.shutdown();
-      }
-    }
-  }
-
-  @Override
-  protected final void runOneIteration() throws Exception {
-    delay = Math.max(0, fetchAndProcessMessages());
+  protected final long runTask() throws Exception {
+    long delayMillis = fetchAndProcessMessages();
     try {
       postProcess();
     } catch (Exception e) {
       LOG.warn("Failed to perform post processing after processing messages.", e);
     }
+    return delayMillis;
   }
 
   @Override
-  protected final Scheduler scheduler() {
-    return new CustomScheduler() {
-      @Override
-      protected Schedule getNextSchedule() throws Exception {
-        return new Schedule(delay, TimeUnit.MILLISECONDS);
-      }
-    };
-  }
-
-  /**
-   * Return the name of this consumer service.
-   */
-  protected String getServiceName() {
-    return getClass().getSimpleName();
-  }
-
-  /**
-   * The method has the main logic to perform one fetch from TMS and process the fetched messages.
-   *
-   * @return number of milliseconds to sleep before the next fetch and process should happen.
-   */
-  private long fetchAndProcessMessages() {
+  protected final boolean shouldRetry(Exception ex) {
+    // Log the exception
     try {
-      if (nonFailureStartTime == 0L) {
-        nonFailureStartTime = System.currentTimeMillis();
-      }
-
-      // Fetch the messageId if hasn't been fetched
-      if (!messageIdInitialized) {
-        messageId = Transactionals.execute(getTransactional(), this::loadMessageId);
-        messageIdInitialized = true;
-      }
-
-      // Collects batch of messages for processing.
-      // The fetch may be transactional, and it's ok to have the fetching and the processing happen in two
-      // non-overlapping transactions, as long as the processing transaction starts after the fetching one.
-      long startTime = System.currentTimeMillis();
-
-      final List<Message> messages = fetchMessages(messageId);
-      metricsContext.gauge("tms.fetch.time.ms", System.currentTimeMillis() - startTime);
-      metricsContext.increment("tms.fetch.messages", messages.size());
-
-      // Return if stopping or request to sleep for configured number of milliseconds if there are no notifications
-      if (messages.isEmpty() || state() != State.RUNNING) {
-        return emptyFetchDelayMillis;
-      }
-
-      startTime = System.currentTimeMillis();
-
-      // Process the notifications and record the message id of where the processing is up to.
-      MessageTrackingIterator iterator = Transactionals.execute(getTransactional(), context -> {
-        MessageTrackingIterator trackingIterator = new MessageTrackingIterator(messages.iterator());
-        processMessages(context, trackingIterator);
-        String lastMessageId = trackingIterator.getLastMessageId();
-
-        // Persist the message id of the last message being consumed from the iterator
-        if (lastMessageId != null) {
-          storeMessageId(context, lastMessageId);
-        }
-        return trackingIterator;
-      });
-      messageId = iterator.getLastMessageId() == null ? messageId : iterator.getLastMessageId();
-
-      long endTime = System.currentTimeMillis();
-      metricsContext.gauge("process.duration.ms", endTime - startTime);
-      metricsContext.increment("process.notifications", iterator.getConsumedCount());
-
-      // Calculate the delay
-      if (messageId != null) {
-        metricsContext.gauge("process.delay.ms", endTime - getMessagePublishTime(messageId));
-      }
-
-      // Transaction was successful, so reset the failure count and the non failure start time
-      failureCount = 0;
-      nonFailureStartTime = 0L;
-      return 0L;
-
+      throw ex;
     } catch (ServiceUnavailableException e) {
       SAMPLING_LOG.warn("Failed to contact service {}. Will retry in next run.", e.getServiceName(), e);
     } catch (TopicNotFoundException e) {
@@ -301,9 +182,62 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractSche
       SAMPLING_LOG.warn("Failed to get and process notifications. Will retry in next run", e);
     }
 
-    // If there is any failure during fetching or processing messages,
-    // delay the next fetch based on the strategy
-    return retryStrategy.nextRetry(++failureCount, nonFailureStartTime);
+    return true;
+  }
+
+  /**
+   * The method has the main logic to perform one fetch from TMS and process the fetched messages.
+   *
+   * @return number of milliseconds to sleep before the next fetch and process should happen.
+   */
+  private long fetchAndProcessMessages() throws TopicNotFoundException, IOException {
+    // Fetch the messageId if hasn't been fetched
+    if (!messageIdInitialized) {
+      messageId = Transactionals.execute(getTransactional(), this::loadMessageId);
+      messageIdInitialized = true;
+    }
+
+    // Collects batch of messages for processing.
+    // The fetch may be transactional, and it's ok to have the fetching and the processing happen in two
+    // non-overlapping transactions, as long as the processing transaction starts after the fetching one.
+    long startTime = System.currentTimeMillis();
+
+    final List<Message> messages = fetchMessages(messageId);
+    metricsContext.gauge("tms.fetch.time.ms", System.currentTimeMillis() - startTime);
+    metricsContext.increment("tms.fetch.messages", messages.size());
+
+    // Return if stopping or request to sleep for configured number of milliseconds if there are no notifications
+    if (messages.isEmpty() || state() != State.RUNNING) {
+      return emptyFetchDelayMillis;
+    }
+
+    startTime = System.currentTimeMillis();
+
+    // Process the notifications and record the message id of where the processing is up to.
+    MessageTrackingIterator iterator = Transactionals.execute(getTransactional(), context -> {
+      MessageTrackingIterator trackingIterator = new MessageTrackingIterator(messages.iterator());
+      processMessages(context, trackingIterator);
+      String lastMessageId = trackingIterator.getLastMessageId();
+
+      // Persist the message id of the last message being consumed from the iterator
+      if (lastMessageId != null) {
+        storeMessageId(context, lastMessageId);
+      }
+      return trackingIterator;
+    });
+    messageId = iterator.getLastMessageId() == null ? messageId : iterator.getLastMessageId();
+
+    long endTime = System.currentTimeMillis();
+    metricsContext.gauge("process.duration.ms", endTime - startTime);
+    metricsContext.increment("process.notifications", iterator.getConsumedCount());
+
+    // Calculate the delay
+    if (messageId != null) {
+      metricsContext.gauge("process.delay.ms", endTime - getMessagePublishTime(messageId));
+    }
+
+    // Poll again immediately
+    return 0L;
   }
 
   /**

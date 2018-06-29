@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.distributed.remote;
 
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -47,7 +48,7 @@ import javax.annotation.Nullable;
  * Implementation of {@link TwillController} that uses {@link RuntimeMonitor} to monitor and control a running
  * program.
  */
-public class RemoteExecutionTwillController implements TwillController {
+class RemoteExecutionTwillController implements TwillController {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionTwillController.class);
 
@@ -55,7 +56,7 @@ public class RemoteExecutionTwillController implements TwillController {
   private final RuntimeMonitor runtimeMonitor;
   private final CompletableFuture<RemoteExecutionTwillController> completion;
 
-  public RemoteExecutionTwillController(RunId runId, RuntimeMonitor runtimeMonitor) {
+  RemoteExecutionTwillController(RunId runId, RuntimeMonitor runtimeMonitor) {
     this.runId = runId;
     this.runtimeMonitor = runtimeMonitor;
 
@@ -73,6 +74,13 @@ public class RemoteExecutionTwillController implements TwillController {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     this.completion = completion;
+  }
+
+  /**
+   * Returns the {@link RuntimeMonitor} used by this controller.
+   */
+  RuntimeMonitor getRuntimeMonitor() {
+    return runtimeMonitor;
   }
 
   @Override
@@ -160,14 +168,24 @@ public class RemoteExecutionTwillController implements TwillController {
 
   @Override
   public Future<? extends ServiceController> terminate() {
-    runtimeMonitor.stop();
+    if (!completion.isDone()) {
+      try {
+        runtimeMonitor.kill();
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
     return completion;
   }
 
   @Override
   public void kill() {
-    // TODO (CDAP-13288): Runtime monitor should have a kill call
-    runtimeMonitor.stop();
+    // TODO (CDAP-13403): ssh to kill the remote process, followed by publishing a KILLED state would force kill the run
+    try {
+      terminate().get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

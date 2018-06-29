@@ -107,6 +107,45 @@ public final class RuntimeMonitorClient {
     }
   }
 
+
+  /**
+   * Requests the runtime monitor server to shutdown.
+   *
+   * @throws IOException if failed to issue the command to the server
+   * @throws IllegalArgumentException if server responded with 400 Bad Request
+   * @throws ServiceUnavailableException if the runtime monitor server is not available
+   */
+  void requestShutdown() throws IOException {
+    HttpsURLConnection urlConn = connect("runtime/shutdown");
+    try {
+      urlConn.setRequestMethod("POST");
+      throwIfNotOK(urlConn.getResponseCode(), urlConn);
+    } catch (ConnectException e) {
+      throw new ServiceUnavailableException("runtime.monitor", e);
+    } finally {
+      releaseConnection(urlConn);
+    }
+  }
+
+  /**
+   * Requests killing of the running program.
+   *
+   * @throws IOException if failed to issue the command to the server
+   * @throws IllegalArgumentException if server responded with 400 Bad Request
+   * @throws ServiceUnavailableException if the runtime monitor server is not available
+   */
+  void kill() throws IOException {
+    HttpsURLConnection urlConn = connect("runtime/kill");
+    try {
+      urlConn.setRequestMethod("POST");
+      throwIfNotOK(urlConn.getResponseCode(), urlConn);
+    } catch (ConnectException e) {
+      throw new ServiceUnavailableException("runtime.monitor", e);
+    } finally {
+      releaseConnection(urlConn);
+    }
+  }
+
   /**
    * Encode request to avro binary format.
    * @param topicsToRequest topic requests to be
@@ -184,25 +223,6 @@ public final class RuntimeMonitorClient {
     }
 
     return decodedMessages;
-  }
-
-  /**
-   * Requests the runtime monitor server to shutdown.
-   *
-   * @throws IOException if failed to issue the command to the server
-   * @throws IllegalArgumentException if server responded with 400 Bad Request
-   * @throws ServiceUnavailableException if the runtime monitor server is not available
-   */
-  void requestShutdown() throws IOException {
-    HttpsURLConnection urlConn = connect("runtime/shutdown");
-    try {
-      urlConn.setRequestMethod("POST");
-      throwIfNotOK(urlConn.getResponseCode(), urlConn);
-    } catch (ConnectException e) {
-      throw new ServiceUnavailableException("runtime.monitor", e);
-    } finally {
-      releaseConnection(urlConn);
-    }
   }
 
   /**
