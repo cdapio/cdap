@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.provision.MockProvisioner;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.profile.Profile;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -46,6 +48,44 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
       .add(new ProvisionerPropertyValue("2nd property", "2nd value", true))
       .add(new ProvisionerPropertyValue("3rd property", "3rd value", false))
       .build();
+
+  @Test
+  public void testSystemProfiles() throws Exception {
+    Assert.assertEquals(Collections.singletonList(Profile.NATIVE), listSystemProfiles(200));
+
+    Profile p1 = new Profile("p1", "desc", EntityScope.SYSTEM,
+                             new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
+    putSystemProfile(p1.getName(), p1, 200);
+    Optional<Profile> p1Optional = getSystemProfile(p1.getName(), 200);
+    Assert.assertTrue(p1Optional.isPresent());
+    Assert.assertEquals(p1, p1Optional.get());
+
+    // check list contains both native and p1
+    Set<Profile> expected = new HashSet<>();
+    expected.add(Profile.NATIVE);
+    expected.add(p1);
+    Set<Profile> actual = new HashSet<>(listSystemProfiles(200));
+    Assert.assertEquals(expected, actual);
+    // check that they're both visible to namespaces
+    Assert.assertEquals(expected, new HashSet<>(listProfiles(NamespaceId.DEFAULT, true, 200)));
+
+    // check we can add a profile with the same name in a namespace
+    Profile p2 = new Profile(p1.getName(), p1.getDescription(), EntityScope.USER,
+                             p1.getProvisioner());
+    ProfileId p2Id = NamespaceId.DEFAULT.profile(p2.getName());
+    putProfile(p2Id, p2, 200);
+    // check that all are visible to the namespace
+    expected.add(p2);
+    Assert.assertEquals(expected, new HashSet<>(listProfiles(NamespaceId.DEFAULT, true, 200)));
+    // check that namespaced profile is not visible in system list
+    expected.remove(p2);
+    Assert.assertEquals(expected, new HashSet<>(listSystemProfiles(200)));
+
+    disableProfile(p2Id, 200);
+    deleteProfile(p2Id, 200);
+    disableSystemProfile(p1.getName(), 200);
+    deleteSystemProfile(p1.getName(), 200);
+  }
 
   @Test
   public void testListAndGetProfiles() throws Exception {
@@ -150,7 +190,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testNullProvsionerProperty() throws Exception {
+  public void testNullProvisionerProperty() throws Exception {
     // provide a profile with null provsioner property, it should still succeed
     List<ProvisionerPropertyValue> listWithNull = new ArrayList<>();
     listWithNull.add(null);
