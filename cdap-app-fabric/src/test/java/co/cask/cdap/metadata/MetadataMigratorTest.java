@@ -39,6 +39,7 @@ import co.cask.cdap.data2.metadata.dataset.MdsKey;
 import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
+import co.cask.cdap.data2.metadata.dataset.MetadataEntries;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.MetadataV1;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
@@ -145,8 +146,9 @@ public class MetadataMigratorTest {
     DatasetId v2SystemDatasetId = NamespaceId.SYSTEM.dataset("v2.system.metadata");
     DatasetId v2BusinessDatasetId = NamespaceId.SYSTEM.dataset("v2.business.metadata");
 
-    generateMetadata(v1SystemDatasetId);
-    generateMetadata(v1BusinessDatasetId);
+    // We will keep track of last timestamp so that we can verify if the history rows are written with existing ts.
+    long sTs = generateMetadata(v1SystemDatasetId);
+    long bTs = generateMetadata(v1BusinessDatasetId);
 
     MetadataMigrator migrator = new MetadataMigrator(cConf, datasetFramework, transactionSystemClient);
     migrator.start();
@@ -159,7 +161,7 @@ public class MetadataMigratorTest {
       MetadataDataset v2Business = getMetadataDataset(context, v2BusinessDatasetId);
 
       assertProperties(v2System, v2Business);
-      assertHistory(v2System, v2Business);
+      assertHistory(v2System, v2Business, sTs, bTs);
       assertIndex(v2System);
       assertIndex(v2Business);
     });
@@ -169,7 +171,7 @@ public class MetadataMigratorTest {
    * Tests batch scanning and deletes on V1 MetadataDataset.
    */
   @Test
-  public void testScanOrDelete() throws Exception {
+  public void testScanAndDelete() throws Exception {
     DatasetId v1SystemDatasetId = NamespaceId.SYSTEM.dataset("system.metadata");
     DatasetId v1BusinessDatasetId = NamespaceId.SYSTEM.dataset("business.metadata");
 
@@ -180,11 +182,10 @@ public class MetadataMigratorTest {
       MetadataDataset v1System = getMetadataDataset(context, v1SystemDatasetId);
       int total = 0;
       int scanCount;
-      int deleteCount;
       do {
-        scanCount = v1System.scanOrDeleteFromV1Table(2, false).size();
-        deleteCount = v1System.scanOrDeleteFromV1Table(2, true).size();
-        Assert.assertEquals(scanCount, deleteCount);
+        MetadataEntries entries = v1System.scanFromV1Table(2);
+        scanCount = entries.getEntries().size();
+        v1System.deleteRows(entries.getRows());
         total = total + scanCount;
       } while (scanCount != 0);
 
@@ -208,20 +209,20 @@ public class MetadataMigratorTest {
     Assert.assertEquals("avalue6", v2Business.getProperties(artifact1.toMetadataEntity()).get("akey6"));
   }
 
-  private void assertHistory(MetadataDataset v2System, MetadataDataset v2Business) {
-    verifyhistory(v2System, app1.toMetadataEntity());
-    verifyhistory(v2System, flow1.toMetadataEntity());
-    verifyhistory(v2System, dataset1.toMetadataEntity());
-    verifyhistory(v2System, stream1.toMetadataEntity());
-    verifyhistory(v2System, view1.toMetadataEntity());
-    verifyhistory(v2System, artifact1.toMetadataEntity());
+  private void assertHistory(MetadataDataset v2System, MetadataDataset v2Business, long sTs, long bTs) {
+    verifyhistory(v2System, app1.toMetadataEntity(), sTs);
+    verifyhistory(v2System, flow1.toMetadataEntity(), sTs);
+    verifyhistory(v2System, dataset1.toMetadataEntity(), sTs);
+    verifyhistory(v2System, stream1.toMetadataEntity(), sTs);
+    verifyhistory(v2System, view1.toMetadataEntity(), sTs);
+    verifyhistory(v2System, artifact1.toMetadataEntity(), sTs);
 
-    verifyhistory(v2Business, app1.toMetadataEntity());
-    verifyhistory(v2Business, flow1.toMetadataEntity());
-    verifyhistory(v2Business, dataset1.toMetadataEntity());
-    verifyhistory(v2Business, stream1.toMetadataEntity());
-    verifyhistory(v2Business, view1.toMetadataEntity());
-    verifyhistory(v2Business, artifact1.toMetadataEntity());
+    verifyhistory(v2Business, app1.toMetadataEntity(), bTs);
+    verifyhistory(v2Business, flow1.toMetadataEntity(), bTs);
+    verifyhistory(v2Business, dataset1.toMetadataEntity(), bTs);
+    verifyhistory(v2Business, stream1.toMetadataEntity(), bTs);
+    verifyhistory(v2Business, view1.toMetadataEntity(), bTs);
+    verifyhistory(v2Business, artifact1.toMetadataEntity(), bTs);
   }
 
   private void assertIndex(MetadataDataset v2System) throws Exception {
@@ -235,13 +236,13 @@ public class MetadataMigratorTest {
     }
   }
 
-  private void verifyhistory(MetadataDataset v2System, MetadataEntity entity) {
-    for (Metadata metadata : v2System.getSnapshotBeforeTime(ImmutableSet.of(entity), System.currentTimeMillis())) {
+  private void verifyhistory(MetadataDataset v2, MetadataEntity entity, long timestamp) {
+    for (Metadata metadata : v2.getSnapshotBeforeTime(ImmutableSet.of(entity), timestamp)) {
       Assert.assertEquals(1, metadata.getProperties().size());
     }
   }
 
-  private void generateMetadata(DatasetId datasetId) throws Exception {
+  private long generateMetadata(DatasetId datasetId) throws Exception {
     // Set some properties
     write(datasetId, app1, "akey1", "avalue1");
     write(datasetId, flow1, "akey2", "avalue2");
@@ -249,12 +250,13 @@ public class MetadataMigratorTest {
     write(datasetId, stream1, "akey4", "avalue4");
     write(datasetId, view1, "akey5", "avalue5");
     write(datasetId, artifact1, "akey6", "avalue6");
-    write(datasetId, app1, "akey1", "avalue11");
+    return write(datasetId, app1, "akey1", "avalue11");
   }
 
-  private void write(DatasetId datasetId, NamespacedEntityId targetId, String key, String value) throws Exception {
+  private long write(DatasetId datasetId, NamespacedEntityId targetId, String key, String value) throws Exception {
     Put valuePut = createValuePut(targetId, key, value);
-    Put historyPut = createHistoryPut(targetId);
+    long time = System.currentTimeMillis();
+    Put historyPut = createHistoryPut(targetId, time);
 
     Transactionals.execute(transactional, context -> {
       // Create metadata dataset to access underlying indexed table
@@ -263,6 +265,8 @@ public class MetadataMigratorTest {
       getIndexedTable(context, datasetId).put(valuePut);
       getIndexedTable(context, datasetId).put(historyPut);
     }, Exception.class);
+
+    return time;
   }
 
   private Put createValuePut(NamespacedEntityId targetId, String key, String value) {
@@ -275,9 +279,9 @@ public class MetadataMigratorTest {
     return put;
   }
 
-  private Put createHistoryPut(NamespacedEntityId targetId) {
+  private Put createHistoryPut(NamespacedEntityId targetId, long time) {
     MetadataV1 metadataV1 = getMetadataV1(targetId);
-    byte[] row = MdsHistoryKey.getMdsKey(targetId, System.currentTimeMillis()).getKey();
+    byte[] row = MdsHistoryKey.getMdsKey(targetId, time).getKey();
     Put put = new Put(row);
     put.add(Bytes.toBytes("h"), Bytes.toBytes(GSON.toJson(metadataV1)));
     return put;
