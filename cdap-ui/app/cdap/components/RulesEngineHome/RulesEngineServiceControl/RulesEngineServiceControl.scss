@@ -77,6 +77,12 @@ $icon_color: #cccccc;
         }
       }
     }
+    .action-container {
+      padding-top: 25px;
+      padding-bottom: 25px;
+
+      .loading-bar { height: 16px; }
+    }
     .mail-to-link {
       color: $cdap-orange;
     }

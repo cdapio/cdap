@@ -16,9 +16,7 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
-import {MyArtifactApi} from 'api/artifact';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import enableSystemApp from 'services/ServiceEnablerUtilities';
 import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
@@ -36,20 +34,14 @@ export default class ExperimentsServiceControl extends Component {
 
   state = {
     loading: false,
-    error: null,
-    artifactNotAvailable: false,
-    showEnableButton: false
+    error: null
   };
-
-  componentDidMount() {
-    this.checkIfMMDSIsAvailable();
-  }
 
   enableMMDS = () => {
     this.setState({
       loading: true
     });
-    enableDataPreparationService({
+    enableSystemApp({
       shouldStopService: false,
       artifactName: MMDSArtifact,
       api: myExperimentsApi,
@@ -65,59 +57,24 @@ export default class ExperimentsServiceControl extends Component {
     );
   };
 
-  checkIfMMDSIsAvailable = () => {
-    let namespace = getCurrentNamespace();
-
-    MyArtifactApi
-      .list({ namespace })
-      .subscribe(
-        (artifacts) => {
-          let isArtifactPresent = artifacts.find(artifact => artifact.name === MMDSArtifact);
-          if (!isArtifactPresent) {
-            this.setState({
-              artifactNotAvailable: true
-            });
-          } else {
-            this.setState({
-              showEnableButton: true
-            });
+  renderEnableBtn = () => {
+    return (
+      <div className="action-container">
+        <button
+          className="btn btn-primary"
+          onClick={this.enableMMDS}
+          disabled={this.state.loading}
+        >
+          {
+            this.state.loading ?
+              <LoadingSVG />
+            :
+              null
           }
-        }
-      );
-  };
-
-  renderAvailableOrEnableBtn = () => {
-    if (!this.state.artifactNotAvailable && !this.state.showEnableButton) {
-      return (<span> {T.translate(`${PREFIX}.checkMessage`)}</span>);
-    }
-    if (this.state.artifactNotAvailable) {
-      return (
-        <div className="action-container">
-          <span className="mail-to-link">
-            {T.translate(`${PREFIX}.contactMessage`)}
-          </span>
-        </div>
-      );
-    }
-    if (this.state.showEnableButton) {
-      return (
-        <div className="action-container">
-          <button
-            className="btn btn-primary"
-            onClick={this.enableMMDS}
-            disabled={this.state.loading}
-          >
-            {
-              this.state.loading ?
-                <LoadingSVG />
-              :
-                null
-            }
-            <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`)}</span>
-          </button>
-        </div>
-      );
-    }
+          <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`)}</span>
+        </button>
+      </div>
+    );
   };
 
   renderError = () => {
@@ -146,6 +103,8 @@ export default class ExperimentsServiceControl extends Component {
         </div>
         <div className="text-container">
           <h2> {T.translate(`${PREFIX}.title`)} </h2>
+          {this.renderEnableBtn()}
+          {this.renderError()}
           <p>
             {T.translate(`${PREFIX}.description`)}
           </p>
@@ -173,10 +132,6 @@ export default class ExperimentsServiceControl extends Component {
               </li>
             </ul>
           </div>
-          {
-            this.renderAvailableOrEnableBtn()
-          }
-          {this.renderError()}
         </div>
       </div>
     );
