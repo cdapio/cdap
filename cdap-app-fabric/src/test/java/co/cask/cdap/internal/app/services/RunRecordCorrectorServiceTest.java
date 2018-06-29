@@ -76,7 +76,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
   private static DatasetFramework datasetFramework;
 
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setup() {
     store = getInjector().getInstance(DefaultStore.class);
     cConf = getInjector().getInstance(CConfiguration.class);
     programStateWriter = getInjector().getInstance(ProgramStateWriter.class);

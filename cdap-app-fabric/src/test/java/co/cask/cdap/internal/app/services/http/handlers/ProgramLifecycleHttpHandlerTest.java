@@ -53,6 +53,7 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.internal.provision.MockProvisioner;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Instances;
@@ -98,6 +99,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -514,6 +516,33 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped + 1);
 
       historyStatusWithRetry(sleepWorkflow1.toEntityId(), ProgramRunStatus.COMPLETED, 2);
+    } finally {
+      Assert.assertEquals(200, doDelete(getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway
+        .API_VERSION_3_TOKEN, TEST_NAMESPACE1)).getStatusLine().getStatusCode());
+    }
+  }
+
+  @Test
+  public void testStopWhilePending() throws Exception {
+    try {
+      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+      Id.Program workflowId =
+        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+
+      int numKilledRuns = getProgramRuns(workflowId, ProgramRunStatus.KILLED).size();
+
+      // this tells the provisioner to wait for 60s before trying to create the cluster for the run
+      Map<String, String> args = new HashMap<>();
+      args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.WAIT_CREATE_MS, Integer.toString(120000));
+      startProgram(workflowId, args);
+
+      // should be safe to wait for starting since the provisioner is configure to sleep while creating a cluster
+      waitState(workflowId, co.cask.cdap.proto.ProgramStatus.STARTING.name());
+
+      stopProgram(workflowId);
+      waitState(workflowId, STOPPED);
+
+      verifyProgramRuns(workflowId, ProgramRunStatus.KILLED, numKilledRuns);
     } finally {
       Assert.assertEquals(200, doDelete(getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway
         .API_VERSION_3_TOKEN, TEST_NAMESPACE1)).getStatusLine().getStatusCode());

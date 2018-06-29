@@ -48,7 +48,8 @@ public class ProvisioningOp {
     POLLING_DELETE,
     DELETED,
     FAILED,
-    ORPHANED
+    ORPHANED,
+    CANCELLED
   }
 
   /**

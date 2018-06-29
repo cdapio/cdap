@@ -52,8 +52,13 @@ import java.util.function.Predicate;
 public abstract class RunRecordCorrectorService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RunRecordCorrectorService.class);
-  private static final Set<ProgramRunStatus> NOT_STOPPED_STATUSES = EnumSet.of(ProgramRunStatus.PENDING,
-                                                                               ProgramRunStatus.STARTING,
+  // program runs can possibly be in these states but not be present in the ProgramRuntimeService.
+  // for example, if CDAP is shut down during a program run, then the program is killed on YARN,
+  // when CDAP starts back up, the program run will be one of these, but will never transition out without correction.
+  // PENDING is not in this list because provision tasks run in the CDAP master and are resumed on start up.
+  // So if CDAP is shut down in the middle of a provision task, it will get resumed by the ProvisioningService.
+  // RESUMING in not in this set because it is not actually a state, despite being an enum value.
+  private static final Set<ProgramRunStatus> NOT_STOPPED_STATUSES = EnumSet.of(ProgramRunStatus.STARTING,
                                                                                ProgramRunStatus.RUNNING,
                                                                                ProgramRunStatus.SUSPENDED);
   private final Store store;
@@ -187,8 +192,8 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
    *
    * @param excludedIds a set of {@link ProgramRunId} that are always rejected by the filter.
    */
-  private Predicate<RunRecordMeta> createFilter(final Set<ProgramRunId> excludedIds) {
-    final long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+  private Predicate<RunRecordMeta> createFilter(Set<ProgramRunId> excludedIds) {
+    long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     return record -> {
       ProgramRunId programRunId = record.getProgramRunId();
 

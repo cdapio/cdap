@@ -50,7 +50,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +63,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -87,7 +84,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final Queue<Runnable> tasks;
-  private ExecutorService taskExecutor;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -111,32 +107,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.tasks = new LinkedList<>();
   }
 
-  @Override
-  protected void doStartUp() {
-    taskExecutor = Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("program-execution-%d"));
-  }
-
-  @Override
-  protected void doShutdown() {
-    taskExecutor.shutdownNow();
-    try {
-      // Wait for it to shutdown for short while. It's ok if the task executor is not completely shutdown as
-      // tasks should have their own states maintained in persisted store. Also, threads created are daemon threads
-      // hence won't block the process exit.
-      taskExecutor.awaitTermination(5, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      // Ignore interrupt.
-    }
-  }
-
   @Nullable
   @Override
-  protected String loadMessageId(DatasetContext datasetContext) throws Exception {
+  protected String loadMessageId(DatasetContext datasetContext) {
     return getAppMetadataStore(datasetContext).retrieveSubscriberState(getTopicId().getTopic(), "");
   }
 
   @Override
-  protected void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception {
+  protected void storeMessageId(DatasetContext datasetContext, String messageId) {
     getAppMetadataStore(datasetContext).persistSubscriberState(getTopicId().getTopic(), "", messageId);
   }
 
@@ -162,7 +140,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   protected void postProcess() {
     Runnable task = tasks.poll();
     while (task != null) {
-      taskExecutor.execute(task);
+      task.run();
       task = tasks.poll();
     }
   }
@@ -411,8 +389,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private void publishRecordedStatus(Notification notification,
                                      ProgramRunId programRunId, ProgramRunStatus status) throws Exception {
-    Map<String, String> notificationProperties = new HashMap<>();
-    notificationProperties.putAll(notification.getProperties());
+    Map<String, String> notificationProperties = new HashMap<>(notification.getProperties());
     notificationProperties.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId));
     notificationProperties.put(ProgramOptionConstants.PROGRAM_STATUS, status.name());
     Notification programStatusNotification =
