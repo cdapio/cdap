@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.lineage.field;
 
+import java.util.Objects;
+
 /**
  * Abstract base class to represent an Operation. Each operation has a
  * name and description. The name of operation must be unique within all
@@ -57,5 +59,22 @@ public abstract class Operation {
    */
   public String getDescription() {
     return description;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Operation operation = (Operation) o;
+    return Objects.equals(name, operation.name) &&
+            type == operation.type &&
+            Objects.equals(description, operation.description);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, type, description);
   }
 }
