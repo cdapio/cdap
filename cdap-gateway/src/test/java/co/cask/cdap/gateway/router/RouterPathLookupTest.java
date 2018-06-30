@@ -495,6 +495,18 @@ public class RouterPathLookupTest {
   }
 
   @Test
+  public void testProfilePaths() {
+    assertRouting("v3/profiles", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/profiles/p", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/profiles/p/enable", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/profiles/p/disable", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/namespaces/default/profiles", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/namespaces/default/profiles/p", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/namespaces/default/profiles/p/enable", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/namespaces/default/profiles/p/disable", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  @Test
   public void testBeginsWith() {
     // anything begins empty sequence
     Assert.assertTrue(RouterPathLookup.beginsWith(new String[] { }));
