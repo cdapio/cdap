@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,26 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.workflow.WorkflowToken;
 
+import java.util.Set;
+
 /**
- * An interface for classes that can provide {@link WorkflowToken} instance.
+ * An interface for classes that can provide data required for the execution of the workflow.
+ * This interface is implemented by controllers of the programs which can possibly run inside the Workflow,
+ * such as MapReduce and Spark. If these programs were executed as a part of Workflow, then Workflow driver
+ * can call these methods to get the data which need to be passed along the further stages in the Workflow.
  */
-public interface WorkflowTokenProvider {
+public interface WorkflowDataProvider {
 
   /**
    * Returns a {@link WorkflowToken}.
    */
   WorkflowToken getWorkflowToken();
+
+  /**
+   * Returns set of field lineage {@link Operation}s.
+   */
+  Set<Operation> getFieldLineageOperations();
 }

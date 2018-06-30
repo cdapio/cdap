@@ -26,6 +26,7 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -57,6 +58,8 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -91,6 +94,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
@@ -139,6 +143,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
   private final MetadataReader metadataReader;
+  private final FieldLineageWriter fieldLineageWriter;
 
   private volatile Thread runningThread;
   private boolean suspended;
@@ -151,7 +156,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  TransactionSystemClient txClient, WorkflowStateWriter workflowStateWriter, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
                  SecureStoreManager secureStoreManager, MessagingService messagingService,
-                 ProgramStateWriter programStateWriter, MetadataReader metadataReader) {
+                 ProgramStateWriter programStateWriter, MetadataReader metadataReader,
+                 FieldLineageWriter fieldLineageWriter) {
     this.program = program;
     this.programOptions = options;
     this.workflowSpec = workflowSpec;
@@ -184,6 +190,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
     this.metadataReader = metadataReader;
+    this.fieldLineageWriter = fieldLineageWriter;
   }
 
   @Override
@@ -291,6 +298,20 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     } catch (Throwable t) {
       LOG.error("Failed to store the final workflow token of Workflow {}", workflowRunId, t);
     }
+
+    if (ProgramStatus.COMPLETED != workflowContext.getState().getStatus()) {
+      return;
+    }
+
+    try {
+      Set<Operation> fieldLineageOperations = workflowContext.getFieldLineageOperations();
+      if (!fieldLineageOperations.isEmpty()) {
+        FieldLineageInfo info = new FieldLineageInfo(fieldLineageOperations);
+        fieldLineageWriter.write(workflowRunId, info);
+      }
+    } catch (Throwable t) {
+      LOG.error("Failed to emit the field lineage operations for Workflow {}", workflowRunId, t);
+    }
   }
 
   private void executeAction(WorkflowActionNode node, WorkflowToken token) throws Exception {
@@ -391,7 +412,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     WorkflowProgramInfo info = new WorkflowProgramInfo(workflowSpec.getName(), node.getNodeId(),
                                                        workflowRunId.getRun(), node.getNodeId(),
-                                                       (BasicWorkflowToken) token);
+                                                       (BasicWorkflowToken) token,
+                                                       workflowContext.fieldLineageConsolidationEnabled());
     ProgramOptions actionOptions =
       new SimpleProgramOptions(programOptions.getProgramId(),
                                programOptions.getArguments(),

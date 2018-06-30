@@ -25,6 +25,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
@@ -54,6 +55,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -409,5 +411,10 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
     return sparkRuntimeContext.getMetadata(scope, metadataEntity);
+  }
+
+  @Override
+  public void record(Collection<? extends Operation> operations) {
+    sparkRuntimeContext.record(operations);
   }
 }

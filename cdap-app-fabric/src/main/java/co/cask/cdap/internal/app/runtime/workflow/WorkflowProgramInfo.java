@@ -41,6 +41,7 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
   private final String workflowRunId;
   private final String programNameInWorkflow;
   private final BasicWorkflowToken workflowToken;
+  private boolean consolidateFieldOperations;
 
   /**
    * Optionally creates a {@link WorkflowProgramInfo} from the given arguments. If the arguments don't contain
@@ -53,23 +54,25 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
     String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
     String programNameInWorkflow = arguments.getOption(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW);
     String workflowToken = arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN);
-
+    boolean consolidateFieldOperations
+            = Boolean.parseBoolean(arguments.getOption(ProgramOptionConstants.ENABLE_FIELD_LINEAGE_CONSOLIDATION));
 
     if (workflowName == null || workflowNodeId == null || workflowRunId == null || workflowToken == null) {
       return null;
     }
 
-    return new WorkflowProgramInfo(workflowName, workflowNodeId, workflowRunId,
-                                   programNameInWorkflow, GSON.fromJson(workflowToken, BasicWorkflowToken.class));
+    return new WorkflowProgramInfo(workflowName, workflowNodeId, workflowRunId, programNameInWorkflow,
+                                   GSON.fromJson(workflowToken, BasicWorkflowToken.class), consolidateFieldOperations);
   }
 
   WorkflowProgramInfo(String workflowName, String workflowNodeId, String workflowRunId, String programNameInWorkflow,
-                      BasicWorkflowToken workflowToken) {
+                      BasicWorkflowToken workflowToken, boolean consolidateFieldOperations) {
     this.workflowName = workflowName;
     this.workflowNodeId = workflowNodeId;
     this.workflowRunId = workflowRunId;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
+    this.consolidateFieldOperations = consolidateFieldOperations;
   }
 
   /**
@@ -118,5 +121,14 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
     tags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, getRunId().getId());
     tags.put(Constants.Metrics.Tag.NODE, getNodeId());
     return tags;
+  }
+
+  /**
+   * Return {@code true} if the Workflow is going to consolidate the field operations
+   * rather than emitting them from nodes running inside the Workflow, otherwise {@code false}
+   * is returned.
+   */
+  public boolean fieldLineageConsolidationEnabled() {
+    return consolidateFieldOperations;
   }
 }

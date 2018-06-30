@@ -26,6 +26,7 @@ import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.lineage.field.LineageRecorder;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.Metrics;
@@ -42,7 +43,7 @@ import java.net.URI;
 @Beta
 public interface SparkClientContext extends SchedulableProgramContext, RuntimeContext, DatasetContext,
   ClientLocalizationContext, Transactional, ServiceDiscoverer, PluginContext, WorkflowInfoProvider,
-  SecureStore, MessagingContext, MetadataReader {
+  SecureStore, MessagingContext, MetadataReader, LineageRecorder {
 
   /**
    * @return The specification used to configure this {@link Spark} job instance.

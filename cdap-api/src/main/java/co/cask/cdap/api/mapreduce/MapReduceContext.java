@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.lineage.field.LineageRecorder;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -37,7 +38,7 @@ import co.cask.cdap.api.workflow.WorkflowInfoProvider;
  */
 public interface MapReduceContext extends SchedulableProgramContext, RuntimeContext, DatasetContext, ServiceDiscoverer,
   Transactional, PluginContext, ClientLocalizationContext, WorkflowInfoProvider, SecureStore, MessagingContext,
-  MetadataReader {
+  MetadataReader, LineageRecorder {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.

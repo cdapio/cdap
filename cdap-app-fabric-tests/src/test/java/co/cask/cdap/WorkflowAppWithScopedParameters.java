@@ -19,6 +19,11 @@ package co.cask.cdap;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.lineage.field.EndPoint;
+import co.cask.cdap.api.lineage.field.InputField;
+import co.cask.cdap.api.lineage.field.Operation;
+import co.cask.cdap.api.lineage.field.ReadOperation;
+import co.cask.cdap.api.lineage.field.WriteOperation;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.spark.AbstractSpark;
@@ -35,8 +40,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -50,6 +57,8 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
   public static final String ANOTHER_SPARK = "AnotherSpark";
   public static final String ONE_WORKFLOW = "OneWorkflow";
   public static final String ONE_ACTION = "OneAction";
+  public static final String SUCCESS_TOKEN_KEY = "Success";
+  public static final String SUCCESS_TOKEN_VALUE = "true";
 
   @Override
   public void configure() {
@@ -72,6 +81,7 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     @Override
     public void initialize() throws Exception {
       MapReduceContext context = getContext();
+      context.record(getFieldLineageOperations());
       Map<String, String> args = context.getRuntimeArguments();
 
       Preconditions.checkArgument(context.getLogicalStartTime() == 1234567890000L);
@@ -82,6 +92,15 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
       String inputPath = args.get("input.path");
       String outputPath = args.get("output.path");
       WordCount.configureJob(context.getHadoopJob(), inputPath, outputPath);
+    }
+
+    public static Set<Operation> getFieldLineageOperations() {
+      ReadOperation read = new ReadOperation("OneMRRead", "some description", EndPoint.of("ns", "source"),
+                                             "field1", "field2", "field3");
+      WriteOperation write = new WriteOperation("OneMRWrite", "some description", EndPoint.of("ns", "destination"),
+                                                Arrays.asList(InputField.of("OneMRRead", "field1"),
+                                                              InputField.of("OneMRRead", "field2")));
+      return new HashSet<>(Arrays.asList(read, write));
     }
   }
 
@@ -110,10 +129,20 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
     @Override
     public void initialize() throws Exception {
       SparkClientContext context = getContext();
-      Map<String, String> args = context.getRuntimeArguments();
+      context.record(getFieldLineageOperations());
 
+      Map<String, String> args = context.getRuntimeArguments();
       Preconditions.checkArgument(args.get("input.path").contains("SparkInput"));
       Preconditions.checkArgument(args.get("output.path").contains("ProgramOutput"));
+    }
+
+    public static Set<Operation> getFieldLineageOperations() {
+      ReadOperation read = new ReadOperation("OneSparkRead", "some description", EndPoint.of("ns", "source"),
+                                             "field1", "field2", "field3");
+      WriteOperation write = new WriteOperation("OneSparkWrite", "some description", EndPoint.of("ns", "destination"),
+                                                Arrays.asList(InputField.of("OneSparkRead", "field1"),
+                                                              InputField.of("OneSparkRead", "field2")));
+      return new HashSet<>(Arrays.asList(read, write));
     }
 
     @Override
@@ -179,25 +208,32 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
       Preconditions.checkArgument(ONE_MR.equals(nodeState.getNodeId()));
       Preconditions.checkArgument(nodeState.getRunId() != null);
       Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(OneMR.getFieldLineageOperations().equals(nodeState.getFieldLineageOperations()));
 
       nodeState = nodeStates.get(ONE_SPARK);
       Preconditions.checkArgument(ONE_SPARK.equals(nodeState.getNodeId()));
       Preconditions.checkArgument(nodeState.getRunId() != null);
       Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(OneSpark.getFieldLineageOperations().equals(nodeState.getFieldLineageOperations()));
 
       nodeState = nodeStates.get(ANOTHER_MR);
       Preconditions.checkArgument(ANOTHER_MR.equals(nodeState.getNodeId()));
       Preconditions.checkArgument(nodeState.getRunId() != null);
       Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(0 == nodeState.getFieldLineageOperations().size());
 
       nodeState = nodeStates.get(ANOTHER_SPARK);
       Preconditions.checkArgument(ANOTHER_SPARK.equals(nodeState.getNodeId()));
       Preconditions.checkArgument(nodeState.getRunId() != null);
       Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(0 == nodeState.getFieldLineageOperations().size());
 
       nodeState = nodeStates.get(ONE_ACTION);
       Preconditions.checkArgument(ONE_ACTION.equals(nodeState.getNodeId()));
       Preconditions.checkArgument(NodeStatus.COMPLETED == nodeState.getNodeStatus());
+      Preconditions.checkArgument(0 == nodeState.getFieldLineageOperations().size());
+
+      getContext().getToken().put(SUCCESS_TOKEN_KEY, SUCCESS_TOKEN_VALUE);
     }
   }
 
