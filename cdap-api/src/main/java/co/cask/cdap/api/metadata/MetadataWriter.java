@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * The context for emitting metadata from programs
  */
-public interface MetadataWriterContext {
+public interface MetadataWriter {
 
   /**
    * Adds the specified {@link Map} to the metadata of the specified {@link MetadataEntity metadataEntity}.
