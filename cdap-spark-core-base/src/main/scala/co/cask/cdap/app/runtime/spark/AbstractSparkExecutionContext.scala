@@ -18,9 +18,9 @@ package co.cask.cdap.app.runtime.spark
 
 import java.io.{Closeable, File, IOException}
 import java.net.{URI, URL}
-import java.util
-import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
+import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.{lang, util}
 
 import co.cask.cdap.api._
 import co.cask.cdap.api.app.ApplicationSpecification
@@ -29,14 +29,14 @@ import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.messaging.MessagingContext
-import co.cask.cdap.api.metadata.{MetadataReader, MetadataWriter}
+import co.cask.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 import co.cask.cdap.api.security.store.SecureStore
-import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
+import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
@@ -57,10 +57,10 @@ import co.cask.cdap.proto.security.Action
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.MRJobConfig
-import org.apache.spark.{SparkContext, TaskContext}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler._
+import org.apache.spark.{SparkContext, TaskContext}
 import org.apache.tephra.TransactionAware
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
@@ -205,10 +205,6 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
 
   // TODO: CDAP-7807. Returns one that is serializable
   override def getMessagingContext: MessagingContext = runtimeContext
-
-  override def getMetadataReader: MetadataReader = runtimeContext
-
-  override def getMetadataWriter: MetadataWriter = runtimeContext
 
   override def getPluginContext: PluginContext = new SparkPluginContext(runtimeContext)
 
@@ -377,6 +373,46 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
           throw new IllegalArgumentException("Dataset is neither a OutputFormatProvider nor a BatchWritable")
       }
     })
+  }
+
+  override def getMetadata(metadataEntity: MetadataEntity): util.Map[MetadataScope, Metadata] = {
+    return runtimeContext.getMetadata(metadataEntity)
+  }
+
+  override def getMetadata(scope: MetadataScope, metadataEntity: MetadataEntity): Metadata = {
+    return runtimeContext.getMetadata(scope, metadataEntity)
+  }
+
+  override def addProperties(metadataEntity: MetadataEntity, properties: util.Map[String, String]): Unit = {
+    runtimeContext.addProperties(metadataEntity, properties)
+  }
+
+  override def addTags(metadataEntity: MetadataEntity, tags: String*): Unit = {
+    runtimeContext.addTags(metadataEntity, tags:_*)
+  }
+
+  override def addTags(metadataEntity: MetadataEntity, tags: lang.Iterable[String]): Unit = {
+    runtimeContext.addTags(metadataEntity, tags)
+  }
+
+  override def removeMetadata(metadataEntity: MetadataEntity): Unit = {
+    runtimeContext.removeMetadata(metadataEntity)
+  }
+
+  override def removeProperties(metadataEntity: MetadataEntity): Unit = {
+    runtimeContext.removeProperties(metadataEntity)
+  }
+
+  override def removeProperties(metadataEntity: MetadataEntity, keys: String*): Unit = {
+    runtimeContext.removeProperties(metadataEntity, keys:_*)
+  }
+
+  override def removeTags(metadataEntity: MetadataEntity): Unit = {
+    runtimeContext.removeTags(metadataEntity)
+  }
+
+  override def removeTags(metadataEntity: MetadataEntity, tags: String*): Unit = {
+    runtimeContext.removeTags(metadataEntity, tags:_*)
   }
 
   override def getDataTracer(tracerName: String): DataTracer = new SparkDataTracer(runtimeContext, tracerName)

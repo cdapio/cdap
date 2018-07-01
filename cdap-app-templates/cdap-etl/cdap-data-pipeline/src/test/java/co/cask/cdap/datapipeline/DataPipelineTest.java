@@ -26,6 +26,9 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -33,6 +36,9 @@ import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
@@ -78,6 +84,7 @@ import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
@@ -118,6 +125,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -135,7 +143,7 @@ public class DataPipelineTest extends HydratorTestBase {
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT_RANGE = new ArtifactSummary("app", "[0.1.0,1.1.0)");
   private static int startCount = 0;
-  
+
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
                                                                        Constants.Security.Store.PROVIDER, "file",
@@ -2760,6 +2768,100 @@ public class DataPipelineTest extends HydratorTestBase {
 
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset("inputTable"));
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset("outputTable"));
+  }
+
+  @Test
+  public void testMetadata() throws Exception {
+    ImmutableSet<String> inputTagsToAdd = ImmutableSet.of("tOne", "tTwo");
+    ImmutableMap<String, String> inputPropToAdd = ImmutableMap.of("kOne", "vOne", "kTwo", "vTwo");
+    MetadataOperation op =
+      new MetadataOperation(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
+                            MetadataOperation.Type.PUT, new Metadata(inputPropToAdd,
+                                                                     inputTagsToAdd));
+    Set<MetadataOperation> operations = new HashSet<>(Collections.singletonList(op));
+
+    // run pipeline with the metadata operations which need to be performed
+    runPipelineForMetadata(operations);
+    MetadataAdmin metadataAdmin = getMetadataAdmin();
+    waitForMetadataProcessing(metadataAdmin, 2);
+
+    // verify metadata written by the pipeline
+    Set<MetadataRecordV2> actual =
+      metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
+
+    Assert.assertNotNull(actual);
+    Assert.assertTrue(!actual.isEmpty());
+    for (MetadataRecordV2 actualRecord : actual) {
+      if (actualRecord.getScope() == MetadataScope.USER) {
+        // verify the user properties
+        Assert.assertTrue(!actualRecord.getProperties().isEmpty());
+        Assert.assertTrue(!actualRecord.getTags().isEmpty());
+        Assert.assertEquals(inputPropToAdd, actualRecord.getProperties());
+        Assert.assertEquals(inputTagsToAdd, actualRecord.getTags());
+      }
+    }
+
+    // delete some properties and tag
+    op = new MetadataOperation(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
+                                       MetadataOperation.Type.DELETE, new Metadata(ImmutableMap.of("kOne", ""),
+                                                                                ImmutableSet.of("tOne")));
+    operations = new HashSet<>(Collections.singleton(op));
+
+    runPipelineForMetadata(operations);
+
+    waitForMetadataProcessing(metadataAdmin, 1);
+
+    actual = metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
+
+    Assert.assertNotNull(actual);
+    Assert.assertTrue(!actual.isEmpty());
+    for (MetadataRecordV2 actualRecord : actual) {
+      if (actualRecord.getScope() == MetadataScope.USER) {
+        // verify the user properties
+        Assert.assertEquals(1, actualRecord.getProperties().size());
+        Assert.assertEquals(1, actualRecord.getTags().size());
+        Assert.assertTrue(actualRecord.getProperties().containsKey("kTwo"));
+        Assert.assertEquals("vTwo", actualRecord.getProperties().get("kTwo"));
+        Assert.assertEquals("tTwo", actualRecord.getTags().iterator().next());
+      }
+    }
+  }
+
+  private void waitForMetadataProcessing(MetadataAdmin metadataAdmin, int expectedTagSize)
+    throws TimeoutException, InterruptedException, java.util.concurrent.ExecutionException {
+    Tasks.waitFor(true, () -> {
+      Set<MetadataRecordV2> metadataRecordV2s =
+        metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
+      for (MetadataRecordV2 actualRecord : metadataRecordV2s) {
+        if (actualRecord.getScope() == MetadataScope.USER) {
+          return actualRecord.getTags().size() == expectedTagSize;
+        }
+      }
+      return false;
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+  }
+
+  private void runPipelineForMetadata(Set<MetadataOperation> operations) throws Exception {
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    /*
+     * source --> sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("singleInput", schema, operations)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("singleOutput")))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("MetadataTestApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
   }
 
   @Test

@@ -16,20 +16,20 @@
 
 package co.cask.cdap.app.runtime.spark
 
+import java.io.{Externalizable, ObjectInput, ObjectOutput}
+import java.{lang, util}
+
 import co.cask.cdap.api.TxRunnable
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
+import co.cask.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
 import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 import co.cask.cdap.api.spark.SparkExecutionContext
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
-import java.io.Externalizable
-import java.io.ObjectInput
-import java.io.ObjectOutput
 
 import scala.reflect.ClassTag
 
@@ -110,10 +110,6 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
 
   override def getMessagingContext = delegate.getMessagingContext
 
-  override def getMetadataReader = delegate.getMetadataReader
-
-  override def getMetadataWriter = delegate.getMetadataWriter
-
   override def getPluginContext = delegate.getPluginContext
 
   override def getMetrics = delegate.getMetrics
@@ -130,6 +126,46 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
 
   override def writeExternal(out: ObjectOutput) = {
     // no-op
+  }
+
+  override def getMetadata(metadataEntity: MetadataEntity): util.Map[MetadataScope, Metadata] = {
+    return delegate.getMetadata(metadataEntity);
+  }
+
+  override def getMetadata(scope: MetadataScope, metadataEntity: MetadataEntity): Metadata = {
+    return delegate.getMetadata(scope, metadataEntity);
+  }
+
+  override def addProperties(metadataEntity: MetadataEntity, properties: util.Map[String, String]) = {
+    delegate.addProperties(metadataEntity, properties);
+  }
+
+  override def addTags(metadataEntity: MetadataEntity, tags: String*) = {
+    delegate.addTags(metadataEntity, tags:_*)
+  }
+
+  override def addTags(metadataEntity: MetadataEntity, tags: lang.Iterable[String]): Unit = {
+    delegate.addTags(metadataEntity, tags)
+  }
+
+  override def removeMetadata(metadataEntity: MetadataEntity): Unit = {
+    delegate.removeMetadata(metadataEntity)
+  }
+
+  override def removeProperties(metadataEntity: MetadataEntity): Unit = {
+    delegate.removeProperties(metadataEntity)
+  }
+
+  override def removeProperties(metadataEntity: MetadataEntity, keys: String*): Unit = {
+    delegate.removeProperties(metadataEntity, keys:_*)
+  }
+
+  override def removeTags(metadataEntity: MetadataEntity): Unit = {
+    delegate.removeTags(metadataEntity)
+  }
+
+  override def removeTags(metadataEntity: MetadataEntity, tags: String*): Unit = {
+    delegate.removeTags(metadataEntity, tags:_*)
   }
 
   override def getDataTracer(loggerName: String): DataTracer = delegate.getDataTracer(loggerName)

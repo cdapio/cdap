@@ -25,9 +25,14 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataException;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
@@ -37,10 +42,16 @@ import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.test.DataSetManager;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -50,6 +61,11 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name("Mock")
 public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MockSource.class);
+
+  private static final Gson GSON = new Gson();
+  private static final Type SET_METADATA_OPERATION_TYPE = new TypeToken<Set<MetadataOperation>>() { }.getType();
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");
@@ -67,6 +83,9 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
 
     @Nullable
     private String schema;
+
+    @Nullable
+    private String metadataOperations;
   }
 
   @Override
@@ -104,6 +123,10 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
     context.setInput(Input.ofDataset(config.tableName));
+    if (config.metadataOperations != null) {
+      // if there are metadata operations to be performed then apply them
+      processsMetadata(context);
+    }
   }
 
   /**
@@ -116,6 +139,22 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   public static ETLPlugin getPlugin(String tableName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
+    return new ETLPlugin("Mock", BatchSource.PLUGIN_TYPE, properties, null);
+  }
+
+  /**
+   * Get the plugin config to be used in a pipeline config. The source must only output records with the given schema.
+   *
+   * @param tableName the table backing the mock source
+   * @param schema the schema of records output by this source
+   * @param operations {@link MetadataOperation} to be performed
+   * @return the plugin config to be used in a pipeline config
+   */
+  public static ETLPlugin getPlugin(String tableName, Schema schema, Set<MetadataOperation> operations) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("tableName", tableName);
+    properties.put("schema", schema.toString());
+    properties.put("metadataOperations", GSON.toJson(operations));
     return new ETLPlugin("Mock", BatchSource.PLUGIN_TYPE, properties, null);
   }
 
@@ -175,6 +214,51 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
     properties.put("schema", new PluginPropertyField("schema", "", "string", false, false));
+    properties.put("metadataOperations", new PluginPropertyField("metadataOperations", "", "string", false, false));
     return new PluginClass(BatchSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(), "config", properties);
+  }
+
+  /**
+   * Processes metadata operations
+   */
+  private void processsMetadata(BatchSourceContext context) throws MetadataException {
+    MetadataEntity metadataEntity = MetadataEntity.ofDataset(context.getNamespace(), config.tableName);
+    Map<MetadataScope, Metadata> currentMetadata = context.getMetadata(metadataEntity);
+    Set<MetadataOperation> operations = GSON.fromJson(config.metadataOperations, SET_METADATA_OPERATION_TYPE);
+    // must be to fetch metadata and there should be system metadata
+    if (currentMetadata.get(MetadataScope.SYSTEM).getProperties().isEmpty() ||
+      currentMetadata.get(MetadataScope.SYSTEM).getProperties().isEmpty()) {
+      throw new IllegalArgumentException(String.format("System properties or tags for '%s' is empty. " +
+                                                 "Expected to have system metadata.", metadataEntity));
+    }
+    LOG.trace("Metadata operations {} will be applied. Current Metadata Record is {}", operations, currentMetadata);
+    // noinspection ConstantConditions
+    for (MetadataOperation curOperation : operations) {
+      switch (curOperation.getType()) {
+        case PUT:
+          // noinspection ConstantConditions
+          context.addTags(curOperation.getEntity(), curOperation.getMetadata().getTags());
+          context.addProperties(curOperation.getEntity(), curOperation.getMetadata().getProperties());
+          break;
+        case DELETE:
+          // noinspection ConstantConditions
+          context.removeTags(curOperation.getEntity(),
+                             curOperation.getMetadata().getTags().toArray(new String[0]));
+          context.removeProperties(curOperation.getEntity(),
+                                   curOperation.getMetadata().getProperties().keySet().toArray(new String[0]));
+          break;
+        case DELETE_ALL:
+          context.removeMetadata(curOperation.getEntity());
+          break;
+        case DELETE_ALL_TAGS:
+          context.removeTags(curOperation.getEntity());
+          break;
+        case DELETE_ALL_PROPERTIES:
+          context.removeProperties(curOperation.getEntity());
+          break;
+        default:
+          throw new IllegalArgumentException(String.format("Invalid metadata operation '%s'", curOperation.getType()));
+      }
+    }
   }
 }

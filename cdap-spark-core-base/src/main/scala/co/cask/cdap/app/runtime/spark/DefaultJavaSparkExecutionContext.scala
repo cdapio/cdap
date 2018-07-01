@@ -16,39 +16,31 @@
 
 package co.cask.cdap.app.runtime.spark
 
-import co.cask.cdap.api.Admin
-import co.cask.cdap.api.ServiceDiscoverer
-import co.cask.cdap.api.TxRunnable
+import java.io.IOException
+import java.{lang, util}
+
+import co.cask.cdap.api.{Admin, ServiceDiscoverer, TxRunnable}
 import co.cask.cdap.api.app.ApplicationSpecification
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.messaging.MessagingContext
-import co.cask.cdap.api.metadata.{Metadata, MetadataEntity, MetadataReader, MetadataScope}
+import co.cask.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
-import co.cask.cdap.api.security.store.SecureStore
-import co.cask.cdap.api.security.store.SecureStoreData
-import co.cask.cdap.api.spark.JavaSparkExecutionContext
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.SparkSpecification
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo
+import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
+import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.api.stream.GenericStreamEventData
-import co.cask.cdap.api.stream.StreamEventDecoder
-import co.cask.cdap.api.workflow.WorkflowInfo
-import co.cask.cdap.api.workflow.WorkflowToken
+import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
+import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.data.stream.AbstractStreamInputFormat
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
-import org.apache.spark.api.java.JavaPairRDD
-import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.api.java.{JavaPairRDD, JavaRDD}
 import org.apache.spark.rdd.RDD
 import org.apache.twill.api.RunId
-import java.io.IOException
-import java.{lang, util}
-
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 
 import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
@@ -256,43 +248,43 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   }
 
   override def getMetadata(metadataEntity: MetadataEntity): util.Map[MetadataScope, Metadata] = {
-    return sec.getMetadataReader.getMetadata(metadataEntity);
+    return sec.getMetadata(metadataEntity);
   }
 
   override def getMetadata(scope: MetadataScope, metadataEntity: MetadataEntity): Metadata = {
-    return sec.getMetadataReader.getMetadata(scope, metadataEntity);
+    return sec.getMetadata(scope, metadataEntity);
   }
 
   override def addProperties(metadataEntity: MetadataEntity, properties: util.Map[String, String]) = {
-    sec.getMetadataWriter.addProperties(metadataEntity, properties);
+    sec.addProperties(metadataEntity, properties);
   }
 
   override def addTags(metadataEntity: MetadataEntity, tags: String*) = {
-    sec.getMetadataWriter.addTags(metadataEntity, tags)
+    sec.addTags(metadataEntity, tags)
   }
 
   override def addTags(metadataEntity: MetadataEntity, tags: lang.Iterable[String]): Unit = {
-    sec.getMetadataWriter.addTags(metadataEntity, tags)
+    sec.addTags(metadataEntity, tags)
   }
 
   override def removeMetadata(metadataEntity: MetadataEntity): Unit = {
-    sec.getMetadataWriter.removeMetadata(metadataEntity)
+    sec.removeMetadata(metadataEntity)
   }
 
   override def removeProperties(metadataEntity: MetadataEntity): Unit = {
-    sec.getMetadataWriter.removeProperties(metadataEntity)
+    sec.removeProperties(metadataEntity)
   }
 
   override def removeProperties(metadataEntity: MetadataEntity, keys: String*): Unit = {
-    sec.getMetadataWriter.removeProperties(metadataEntity, keys:_*)
+    sec.removeProperties(metadataEntity, keys:_*)
   }
 
   override def removeTags(metadataEntity: MetadataEntity): Unit = {
-    sec.getMetadataWriter.removeTags(metadataEntity)
+    sec.removeTags(metadataEntity)
   }
 
   override def removeTags(metadataEntity: MetadataEntity, tags: String*): Unit = {
-    sec.getMetadataWriter.removeTags(metadataEntity, tags:_*)
+    sec.removeTags(metadataEntity, tags:_*)
   }
 }
 

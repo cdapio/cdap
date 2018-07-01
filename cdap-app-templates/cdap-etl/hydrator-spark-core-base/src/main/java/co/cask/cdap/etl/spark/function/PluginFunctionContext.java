@@ -18,14 +18,14 @@ package co.cask.cdap.etl.spark.function;
 
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.metadata.MetadataReader;
+import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.batch.connector.ConnectorSink;
-import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.batch.connector.SingleConnectorSink;
 import co.cask.cdap.etl.batch.connector.SingleConnectorSource;
 import co.cask.cdap.etl.common.BasicArguments;
@@ -40,7 +40,6 @@ import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -60,6 +59,8 @@ public class PluginFunctionContext implements Serializable {
   private final DataTracer dataTracer;
   private final StageSpec stageSpec;
   private final StageStatisticsCollector collector;
+  private final MetadataReader metadataReader;
+  private final MetadataWriter metadataWriter;
   private transient PipelinePluginContext pipelinePluginContext;
 
   public PluginFunctionContext(StageSpec stageSpec, JavaSparkExecutionContext sec, StageStatisticsCollector collector) {
@@ -81,6 +82,8 @@ public class PluginFunctionContext implements Serializable {
     this.dataTracer = sec.getDataTracer(stageSpec.getName());
     this.pipelinePluginContext = getPluginContext();
     this.collector = collector;
+    this.metadataReader = sec;
+    this.metadataWriter = sec;
   }
 
   public <T> T createPlugin() throws Exception {
@@ -116,7 +119,7 @@ public class PluginFunctionContext implements Serializable {
   public SparkBatchRuntimeContext createBatchRuntimeContext() {
     PipelineRuntime pipelineRuntime = new PipelineRuntime(namespace, pipelineName, logicalStartTime,
                                                           arguments, metrics, pluginContext,
-                                                          serviceDiscoverer);
+                                                          serviceDiscoverer, metadataReader, metadataWriter);
     return new SparkBatchRuntimeContext(pipelineRuntime, stageSpec);
   }
 
