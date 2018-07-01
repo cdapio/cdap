@@ -33,6 +33,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
@@ -68,7 +69,9 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final CConfiguration cConf;
   private final ProgramStateWriter programStateWriter;
   private final MetadataReader metadataReader;
+  private final MetadataPublisher metadataPublisher;
   private final FieldLineageWriter fieldLineageWriter;
+
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
@@ -77,7 +80,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                WorkflowStateWriter workflowStateWriter, CConfiguration cConf, SecureStore secureStore,
                                SecureStoreManager secureStoreManager, MessagingService messagingService,
                                ProgramStateWriter programStateWriter, MetadataReader metadataReader,
-                               FieldLineageWriter fieldLineageWriter) {
+                               MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.metricsCollectionService = metricsCollectionService;
@@ -91,6 +94,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.cConf = cConf;
     this.programStateWriter = programStateWriter;
     this.metadataReader = metadataReader;
+    this.metadataPublisher = metadataPublisher;
     this.fieldLineageWriter = fieldLineageWriter;
   }
 
@@ -127,7 +131,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                  metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                  txClient, workflowStateWriter, cConf, pluginInstantiator,
                                                  secureStore, secureStoreManager, messagingService,
-                                                 programStateWriter, metadataReader, fieldLineageWriter);
+                                                 programStateWriter, metadataReader, metadataPublisher,
+                                                 fieldLineageWriter);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.
