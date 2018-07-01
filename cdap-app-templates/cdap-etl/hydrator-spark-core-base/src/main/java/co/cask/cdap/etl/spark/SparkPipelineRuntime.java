@@ -28,7 +28,7 @@ public class SparkPipelineRuntime extends PipelineRuntime {
 
   public SparkPipelineRuntime(SparkClientContext context) {
     super(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-          new BasicArguments(context), context.getMetrics(), context, context);
+          new BasicArguments(context), context.getMetrics(), context, context, context, context);
   }
 
   public SparkPipelineRuntime(JavaSparkExecutionContext sec) {

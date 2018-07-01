@@ -226,7 +226,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
     SearchRequest searchRequest = getValidatedSearchRequest(namespaceId, searchQuery, targets, sort, offset,
                                                             limit, numCursors, cursor, showHidden, entityScope);
-    LOG.trace("Received sesarch request {}", searchRequest);
+    LOG.trace("Received search request {}", searchRequest);
 
     MetadataSearchResponseV2 response = metadataAdmin.search(searchRequest);
     if (showCustom) {

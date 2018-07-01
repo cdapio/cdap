@@ -18,7 +18,9 @@ package co.cask.cdap.examples.wikipedia
 
 import java.util
 
+import co.cask.cdap.api.metadata.MetadataEntity
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
+import com.google.common.collect.ImmutableMap
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.clustering.{LDA, LDAModel}
 import org.apache.spark.mllib.linalg.Vector
@@ -40,6 +42,11 @@ class ScalaSparkLDA extends SparkMain {
     val arguments = sec.getRuntimeArguments
     var dataNamespace = sec.getRuntimeArguments.get(WikipediaPipelineApp.NAMESPACE_ARG)
     dataNamespace = if (dataNamespace != null) dataNamespace else sec.getNamespace
+
+    // add the algorithm as the metadata of the output dataset to represent the algorithm used to generate the data
+    // if the property already exists from last run then the algorithm value will be over written
+    sec.addProperties(MetadataEntity.ofDataset(dataNamespace, WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET),
+      ImmutableMap.of(SparkWikipediaClustering.CLUSTERING_ALGORITHM, SparkWikipediaClustering.CLUSTERING_ALGORITHM_LDA))
 
     // Pre-process data for LDA
     val (corpus, vocabArray, _) = ClusteringUtils.preProcess(
