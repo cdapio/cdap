@@ -25,10 +25,20 @@ import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -45,7 +55,8 @@ import co.cask.cdap.data2.metadata.dataset.MetadataV1;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
@@ -58,13 +69,24 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.impersonation.UGIProvider;
+import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
@@ -112,7 +134,7 @@ public class MetadataMigratorTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.Metadata.MIGRATOR_BATCH_SIZE, "5");
 
-    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
+    Injector injector = getInjector();
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -154,7 +176,7 @@ public class MetadataMigratorTest {
     MetadataMigrator migrator = new MetadataMigrator(cConf, datasetFramework, transactionSystemClient);
     migrator.start();
 
-    // Wait for migrator to finish before reading v2 tablesf
+    // Wait for migrator to finish before reading v2 tables
     Tasks.waitFor(true, () -> migrator.state().equals(Service.State.TERMINATED), 5, TimeUnit.MINUTES);
 
     Transactionals.execute(transactional, context -> {
@@ -166,6 +188,10 @@ public class MetadataMigratorTest {
       assertIndex(v2System);
       assertIndex(v2Business);
     });
+
+    if (datasetFramework.hasInstance(v1SystemDatasetId) || datasetFramework.hasInstance(v1BusinessDatasetId)) {
+      throw new Exception("V1 metadata table was not deleted by Metadata Migrator.");
+    }
   }
 
   /**
@@ -317,5 +343,30 @@ public class MetadataMigratorTest {
     return DatasetsUtil.getOrCreateDataset(context, datasetFramework, datasetId, MetadataDataset.class.getName(),
                                            DatasetProperties.builder()
                                              .add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
+  }
+
+  private Injector getInjector() {
+    return Guice.createInjector(new ConfigModule(CConfiguration.create(), new Configuration()),
+                                new DataSetServiceModules().getInMemoryModules(),
+                                new DataSetsModules().getInMemoryModules(),
+                                new DataFabricModules().getInMemoryModules(),
+                                new ExploreClientModule(),
+                                new DiscoveryRuntimeModule().getInMemoryModules(),
+                                new LocationRuntimeModule().getInMemoryModules(),
+                                new NamespaceClientRuntimeModule().getInMemoryModules(),
+                                new NamespaceStoreModule().getStandaloneModules(),
+                                new AuthorizationTestModule(),
+                                new AuthorizationEnforcementModule().getInMemoryModules(),
+                                new AuthenticationContextModules().getMasterModule(),
+                                new AbstractModule() {
+                                  @Override
+                                  protected void configure() {
+                                    bind(MetricsCollectionService.class)
+                                      .to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+                                    bind(Store.class).to(DefaultStore.class);
+                                    bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                                    bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
+                                  }
+                                });
   }
 }
