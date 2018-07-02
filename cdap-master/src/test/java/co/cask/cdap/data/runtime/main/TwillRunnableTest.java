@@ -40,8 +40,7 @@ public class TwillRunnableTest {
   @Test
   public void testDatasetOpExecutorTwillRunnableInjector() throws Exception {
     Injector injector = DatasetOpExecutorServerTwillRunnable.createInjector(CConfiguration.create(),
-                                                                            HBaseConfiguration.create(), "",
-                                                                            new MockTwillContext());
+                                                                            HBaseConfiguration.create(), "");
     Store store = injector.getInstance(Store.class);
     Assert.assertNotNull(store);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);

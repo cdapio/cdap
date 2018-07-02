@@ -472,6 +472,8 @@ public final class Constants {
       public static final String MAX_INSTANCES = "dataset.executor.max.instances";
 
       public static final String SERVICE_DESCRIPTION = "Service to perform dataset operations.";
+
+      public static final String IS_UPGRADE_NEEDED = "dataset.upgrade.needed";
     }
 
     /**
@@ -487,13 +489,6 @@ public final class Constants {
       public static final String DISTMODE_METRICS_TABLE = "dataset.extensions.distributed.mode.metrics.table";
       public static final String DISTMODE_QUEUE_TABLE = "dataset.extensions.distributed.mode.queue.table";
     }
-  }
-
-  /**
-   * Dataset Ops executor constants.
-   */
-  public static final class DatasetOpsExecutor {
-    public static final String INSTANCE_ID = "ops.executor.instance.id";
   }
 
   /**

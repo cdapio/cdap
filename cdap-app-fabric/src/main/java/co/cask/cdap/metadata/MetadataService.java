@@ -49,7 +49,6 @@ public class MetadataService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryService discoveryService;
   private final Set<HttpHandler> handlers;
-  private final Integer instanceId;
   private final MetadataMigrator metadataMigrator;
 
   private NettyHttpService httpService;
@@ -59,13 +58,11 @@ public class MetadataService extends AbstractIdleService {
   MetadataService(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                   DiscoveryService discoveryService,
                   @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers,
-                  DatasetFramework dsFramework, TransactionSystemClient txClient,
-                  @Named(Constants.DatasetOpsExecutor.INSTANCE_ID) Integer instanceId) {
+                  DatasetFramework dsFramework, TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
-    this.instanceId = instanceId;
     this.metadataMigrator = new MetadataMigrator(cConf, dsFramework, txClient);
   }
 
@@ -85,8 +82,8 @@ public class MetadataService extends AbstractIdleService {
 
     httpService.start();
 
-    // Start migration only on the first instance of Dataset Ops Executor.
-    if (instanceId == 0) {
+    // Only first instance will run the migration thread.
+    if (Boolean.valueOf(cConf.get(Constants.Dataset.Executor.IS_UPGRADE_NEEDED, "false"))) {
       metadataMigrator.start();
     }
 
