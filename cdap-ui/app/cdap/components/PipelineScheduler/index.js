@@ -29,7 +29,8 @@ import ViewContainer from 'components/PipelineScheduler/ViewContainer';
 import {
   setSchedule,
   setMaxConcurrentRuns,
-  setOptionalProperty
+  setOptionalProperty,
+  setRunError
 } from 'components/PipelineDetails/store/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import {getCurrentNamespace} from 'services/NamespaceStore';
@@ -242,7 +243,7 @@ export default class PipelineScheduler extends Component {
           }
         },
         err => {
-          console.log('Failed to update schedule', err);
+          setRunError(err.response || err);
           this.setState({
             [savingState]: false
           });

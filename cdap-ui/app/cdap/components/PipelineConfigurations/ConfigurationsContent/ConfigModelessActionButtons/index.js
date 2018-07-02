@@ -22,6 +22,7 @@ import {
   schedulePipeline,
   updatePreferences
 } from 'components/PipelineConfigurations/Store/ActionCreator';
+import {setRunError} from 'components/PipelineDetails/store/ActionCreator';
 import ConfigModelessSaveBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveBtn';
 import {Observable} from 'rxjs/Observable';
 
@@ -70,9 +71,11 @@ export default class ConfigModelessActionButtons extends Component {
     )
       .subscribe(() => {
         actionFn();
+        this.setState({
+          [loadingState]: false
+        });
       }, (err) => {
-        console.log(err);
-      }, () => {
+        setRunError(err.response || err);
         this.setState({
           [loadingState]: false
         });

@@ -84,6 +84,11 @@ $enabled-color: $green-02;
             text-decoration: underline;
           }
         }
+        > div {
+          height: 100%;
+          display: flex;
+          align-items: center;
+        }
       }
     }
     &.disabled {
