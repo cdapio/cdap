@@ -47,6 +47,7 @@ import CollapsibleWrapper from 'components/CollapsibleWrapper';
 import LoadingSVG from 'components/LoadingSVG';
 import Alert from 'components/Alert';
 import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
+import PredictionDatasetExploreModal from 'components/Experiments/DetailedView/PredictionDatasetExploreModal';
 
 require('./DetailedViewModelsTable.scss');
 const MODELSTATES = [
@@ -252,6 +253,9 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
               alwaysShowViewLink={true}
             />
           </div>
+        </div>
+        <div>
+          <PredictionDatasetExploreModal predictionDataset={model.predictionsDataset} />
         </div>
       </div>
       <div>

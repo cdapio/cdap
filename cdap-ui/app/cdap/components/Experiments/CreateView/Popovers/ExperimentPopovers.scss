@@ -65,10 +65,14 @@ $popover_container_border_color: $grey-05;
       max-height: 250px;
     }
   }
-  .experiment-metadata-popover {
+  .experiment-metadata-wrapper {
     color: $popover_container_border_color;
-    .btn-link {
-      cursor: pointer;
+    margin: 5px 0;
+    display: flex;
+    > div {
+      &:first-child {
+        margin-right: 5px;
+      }
     }
   }
   button {

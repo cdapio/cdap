@@ -29,6 +29,19 @@ import classnames from 'classnames';
 require('./ExploreAction.scss');
 
 export default class ExploreAction extends Component {
+  static propTypes = {
+    entity: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      version: PropTypes.string,
+      uniqueId: PropTypes.string,
+      scope: PropTypes.oneOf(['SYSTEM', 'USER']),
+      type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
+    }),
+    opened: PropTypes.bool,
+    renderActionButton: PropTypes.func,
+    argsToAction: PropTypes.object,
+    customTooltip: PropTypes.string
+  };
   constructor(props) {
     super(props);
     this.state = {
@@ -110,6 +123,13 @@ export default class ExploreAction extends Component {
         });
     }
   }
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.opened !== this.state.showModal) {
+      this.setState({
+        showModal: nextProps.opened
+      });
+    }
+  }
   componentWillUnmount() {
     this.subscription();
     if (this.explroeQueriesSubscription$) {
@@ -121,12 +141,17 @@ export default class ExploreAction extends Component {
     let showRunningQueriesNotification = this.state.showRunningQueriesDoneLabel && this.state.runningQueries && objectQuery(this.props.argsToAction, 'showQueriesCount');
     return (
       <span className={classnames("btn btn-secondary btn-sm", {'fast-action-with-popover': showRunningQueriesNotification})}>
-        <FastActionButton
-          icon="icon-eye"
-          action={this.toggleModal}
-          disabled={this.state.disabled}
-          id={tooltipID}
-        />
+        {
+        this.props.renderActionButton ?
+          this.props.renderActionButton(tooltipID)
+        :
+          <FastActionButton
+            icon="icon-eye"
+            action={this.toggleModal}
+            disabled={this.state.disabled}
+            id={tooltipID}
+          />
+        }
         {
           showRunningQueriesNotification ?
             <span className="fast-action-popover-container">{this.state.runningQueries}</span>
@@ -141,7 +166,12 @@ export default class ExploreAction extends Component {
           toggle={this.toggleTooltip}
           delay={0}
         >
-          {T.translate('features.FastAction.exploreLabel')}
+          {
+            this.props.customTooltip ?
+              this.props.customTooltip
+            :
+              T.translate('features.FastAction.exploreLabel')
+          }
         </Tooltip>
         {
           this.state.showModal ?
@@ -157,14 +187,4 @@ export default class ExploreAction extends Component {
     );
   }
 }
-ExploreAction.propTypes = {
-  entity: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    version: PropTypes.string,
-    uniqueId: PropTypes.string,
-    scope: PropTypes.oneOf(['SYSTEM', 'USER']),
-    type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
-  }),
-  opened: PropTypes.bool,
-  argsToAction: PropTypes.object
-};
+

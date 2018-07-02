@@ -354,7 +354,8 @@ function trainModel() {
   let {modelId, name: modelName} = model_create;
   let postBody = {
     algorithm: model_create.algorithm.name,
-    hyperparameters: model_create.algorithm.hyperparameters
+    hyperparameters: model_create.algorithm.hyperparameters,
+    predictionsDataset: `${experimentId}_${modelName}_dataset`
   };
   return myExperimentsApi
     .trainModel({

@@ -29,6 +29,18 @@
     > * {
       margin: 0 5px;
     }
+    .model-description-wrapper {
+      display: flex;
+
+      .model-description {
+        margin-left: 10px;
+        max-width: 200px;
+        white-space: nowrap;
+        display: inline-block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
   }
   .btn.btn-link {
     padding: 0;
