@@ -42,6 +42,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntries;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.MetadataV1;
+import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
@@ -153,7 +154,7 @@ public class MetadataMigratorTest {
     MetadataMigrator migrator = new MetadataMigrator(cConf, datasetFramework, transactionSystemClient);
     migrator.start();
 
-    // Wait for migrator to finish before reading v2 tables
+    // Wait for migrator to finish before reading v2 tablesf
     Tasks.waitFor(true, () -> migrator.state().equals(Service.State.TERMINATED), 5, TimeUnit.MINUTES);
 
     Transactionals.execute(transactional, context -> {
@@ -226,10 +227,12 @@ public class MetadataMigratorTest {
   }
 
   private void assertIndex(MetadataDataset v2System) throws Exception {
-    List<MetadataEntry> entries = v2System.search(app1.getNamespace(), "avalue1",
-                                                  ImmutableSet.of(EntityTypeSimpleName.ALL),
-                                                  SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
-                                                  false, EnumSet.of(EntityScope.USER)).getResults();
+    SearchRequest sr = new SearchRequest(new NamespaceId("ns1"), "avalue1",
+                                              ImmutableSet.of(EntityTypeSimpleName.ALL), SortInfo.DEFAULT, 0,
+                                              Integer.MAX_VALUE, 1, null, false, EnumSet.of(EntityScope.USER));
+
+
+    List<MetadataEntry> entries = v2System.search(sr).getResults();
 
     for (MetadataEntry entry : entries) {
       Assert.assertEquals("avalue1", entry.getValue());

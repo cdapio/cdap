@@ -16,15 +16,10 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 
 /**
  * Key class to get v1 metadata history key information
@@ -51,33 +46,37 @@ public final class MdsHistoryKey {
     // Skip rowType
     keySplitter.skipBytes();
 
-    // Skip targetId
-    if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ProgramId.class))) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ApplicationId.class))) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(DatasetId.class))) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(StreamId.class))) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(StreamViewId.class))) {
-      // skip namespace, stream, view
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ArtifactId.class))) {
-      // skip namespace, name, version
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else {
-      throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
+    switch (type) {
+      case MetadataEntity.PROGRAM:
+        keySplitter.skipString();
+        keySplitter.skipString();
+        keySplitter.skipString();
+        keySplitter.skipString();
+        break;
+      case MetadataEntity.APPLICATION:
+        keySplitter.skipString();
+        keySplitter.skipString();
+        break;
+      case MetadataEntity.DATASET:
+        keySplitter.skipString();
+        keySplitter.skipString();
+        break;
+      case MetadataEntity.STREAM:
+        keySplitter.skipString();
+        keySplitter.skipString();
+        break;
+      case MetadataEntity.VIEW:
+        keySplitter.skipString();
+        keySplitter.skipString();
+        keySplitter.skipString();
+        break;
+      case MetadataEntity.ARTIFACT:
+        keySplitter.skipString();
+        keySplitter.skipString();
+        keySplitter.skipString();
+        break;
+      default:
+        throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
 
     return Long.MAX_VALUE - keySplitter.getLong();
