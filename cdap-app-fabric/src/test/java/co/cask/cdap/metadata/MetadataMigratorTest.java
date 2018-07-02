@@ -127,7 +127,6 @@ public class MetadataMigratorTest {
         NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
-
   }
 
   @After
@@ -165,6 +164,10 @@ public class MetadataMigratorTest {
       assertIndex(v2System);
       assertIndex(v2Business);
     });
+
+    if (datasetFramework.hasInstance(v1SystemDatasetId) || datasetFramework.hasInstance(v1BusinessDatasetId)) {
+      throw new Exception("V1 metadata table was not deleted by Metadata Migrator.");
+    }
   }
 
   /**

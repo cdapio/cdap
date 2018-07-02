@@ -19,7 +19,6 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metadata.MetadataScope;
@@ -112,9 +111,6 @@ class MetadataMigrator extends AbstractExecutionThreadService {
               MetadataEntries entries = v1.scanFromV1Table(batchSize);
 
               if (entries.getEntries().isEmpty()) {
-                // All the value and history rows have been migrated so stop this thread and drop V1 MetadataDataset
-                dropV1MetadataDataset(datasetIdEntry.getKey());
-                LOG.debug("Migration for dataset {} is complete. This dataset is dropped.", datasetIdEntry.getKey());
                 hasV1Instance.set(false);
                 return;
               }
@@ -123,9 +119,17 @@ class MetadataMigrator extends AbstractExecutionThreadService {
               // We do not need to keep checkpoints. Instead, we will just delete scanned rows from metadata dataset
               v1.deleteRows(entries.getRows());
             });
+
+            // All the value and history rows have been migrated so stop this thread and drop V1 MetadataDataset
+            if (!hasV1Instance.get()) {
+              dsFramework.deleteInstance(datasetIdEntry.getKey());
+              LOG.debug("Migration for dataset {} is complete. This dataset is dropped.", datasetIdEntry.getKey());
+            }
           } catch (Exception e) {
             OUTAGE_LOG.error("Exception while migrating metadata from {} to {}, will be retried. ",
                              datasetIdEntry.getKey(), datasetIdEntry.getValue(), e);
+            // If exception occurred while deleting v1 instance, then we want it to be retried.
+            hasV1Instance.set(true);
             Thread.sleep(1000);
           }
         }
@@ -154,13 +158,6 @@ class MetadataMigrator extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping Metadata Migrator Service.");
-  }
-
-  private void dropV1MetadataDataset(DatasetId datasetId) throws DatasetManagementException, IOException {
-    DatasetAdmin admin = dsFramework.getAdmin(datasetId, null);
-    if (admin != null) {
-      admin.drop();
-    }
   }
 
   private MetadataDataset getMetadataDataset(DatasetContext context, DatasetId datasetId)
