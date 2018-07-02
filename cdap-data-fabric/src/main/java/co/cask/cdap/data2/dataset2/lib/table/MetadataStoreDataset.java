@@ -46,7 +46,7 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
- * Handy dataset to be used for managing metadata
+ * Handy dataset to be used for managing metadata.
  */
 public class MetadataStoreDataset extends AbstractDataset {
   /**
@@ -85,6 +85,12 @@ public class MetadataStoreDataset extends AbstractDataset {
     return gson.fromJson(Bytes.toString(serialized), typeOfT);
   }
 
+  /**
+   * Check whether the value is there in the row and default COLUMN
+   *
+   * @param id the mds key for the row
+   * @return a boolean which indicates the value exists or not
+   */
   public boolean exists(MDSKey id) {
     Row row = table.get(id.getKey());
     if (row.isEmpty()) {
@@ -95,6 +101,13 @@ public class MetadataStoreDataset extends AbstractDataset {
     return value != null;
   }
 
+  /**
+   * Get the value at the row and default COLUMN, of type T
+   *
+   * @param id the mds key for the row
+   * @param typeOfT the type of the result
+   * @return the deserialized value of the result, null if not exist
+   */
   @Nullable
   public <T> T get(MDSKey id, Type typeOfT) {
     Row row = table.get(id.getKey());
@@ -110,7 +123,13 @@ public class MetadataStoreDataset extends AbstractDataset {
     return deserialize(id, value, typeOfT);
   }
 
-  // returns first that matches
+  /**
+   * Get the first element in the row and default COLUMN, of type T
+   *
+   * @param id the mds key for the row
+   * @param typeOfT the type of the result
+   * @return the deserialized value of the result, null if not exist
+   */
   @Nullable
   public <T> T getFirst(MDSKey id, Type typeOfT) {
     try {
@@ -132,7 +151,13 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
   }
 
-  // Get all non-null values with the given ids
+  /**
+   * Get all non-null values with the given ids for default COLUMN
+   *
+   * @param ids set of the mds keys
+   * @param typeOfT the type of the result
+   * @return a list of the deserialized value of the result
+   */
   public <T> List<T> get(Set<MDSKey> ids, Type typeOfT) {
     List<T> resultList = new ArrayList<>();
     List<Get> getList = new ArrayList<>();
@@ -156,38 +181,93 @@ public class MetadataStoreDataset extends AbstractDataset {
     return resultList;
   }
 
-  // lists all that has same first id parts
+  /**
+   * Lists all that has same first id parts for default COLUMN
+   *
+   * @param id prefix row key
+   * @param typeOfT the type of the result
+   * @return a list of the deserialized value of the result
+   */
   public <T> List<T> list(MDSKey id, Type typeOfT) {
     return list(id, typeOfT, Integer.MAX_VALUE);
   }
 
-  // lists all that has same first id parts, with a limit
+  /**
+   * Lists all that has same first id parts for default COLUMN, with a limit
+   *
+   * @param id prefix row key
+   * @param typeOfT the type of the result
+   * @param limit limit number of result
+   * @return a list of the deserialized value of the result
+   */
   public <T> List<T> list(MDSKey id, Type typeOfT, int limit) {
     return list(id, null, typeOfT, limit, x -> true);
   }
 
-  // lists all that has first id parts in range of startId and stopId
+  /**
+   * Lists all that has first id parts in range of startId and stopId for default COLUMN
+   *
+   * @param startId start row key
+   * @param stopId stop row key
+   * @param typeOfT the type of the result
+   * @param limit limit number of result
+   * @param filter filter for the result
+   * @return a list of the deserialized value of the result
+   */
   public <T> List<T> list(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
                           Predicate<T> filter) {
     return Lists.newArrayList(listKV(startId, stopId, typeOfT, limit, filter).values());
   }
 
-  // returns mapping of all that has same first id parts
+  /**
+   * Returns mapping of all that has same first id parts for default COLUMN
+   *
+   * @param id prefix row key
+   * @param typeOfT the type of the result
+   * @return map of row key to result
+   */
   public <T> Map<MDSKey, T> listKV(MDSKey id, Type typeOfT) {
     return listKV(id, typeOfT, Integer.MAX_VALUE);
   }
 
-  // returns mapping of  all that has same first id parts, with a limit
+  /**
+   * Returns mapping of all that has same first id parts for default COLUMN, with a limit
+   *
+   * @param id prefix row key
+   * @param typeOfT the type of the result
+   * @param limit limit of the result
+   * @return map of row key to result
+   */
   public <T> Map<MDSKey, T> listKV(MDSKey id, Type typeOfT, int limit) {
     return listKV(id, null, typeOfT, limit, x -> true);
   }
 
-  // returns mapping of all that has first id parts in range of startId and stopId
+  /**
+   * returns mapping of all that has first id parts in range of startId and stopId for default COLUMN
+   *
+   * @param startId start row key
+   * @param stopId stop row key
+   * @param typeOfT the type of the result
+   * @param limit limit number of result
+   * @param filter filter for the result
+   * @return map of row key to result
+   */
   public <T> Map<MDSKey, T> listKV(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
                                    Predicate<T> filter) {
     return listKV(startId, stopId, typeOfT, limit, null, filter);
   }
 
+  /**
+   * returns mapping of all that has first id parts in range of startId and stopId for default COLUMN
+   *
+   * @param startId start row key
+   * @param stopId stop row key
+   * @param typeOfT the type of the result
+   * @param limit limit number of result
+   * @param keyFilter filter of the key
+   * @param valueFilter filter for the result
+   * @return map of row key to result
+   */
   public <T> Map<MDSKey, T> listKV(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
                                    Predicate<MDSKey> keyFilter, Predicate<T> valueFilter) {
     byte[] startKey = startId.getKey();
@@ -195,6 +275,146 @@ public class MetadataStoreDataset extends AbstractDataset {
 
     Scan scan = new Scan(startKey, stopKey);
     return listKV(scan, typeOfT, limit, keyFilter, valueFilter);
+  }
+
+  /**
+   * Returns mapping of all that match the given keySet provided they pass the combinedFilter predicate
+   * for default COLUMN
+   *
+   * @param keySet row key set
+   * @param typeOfT the type of the result
+   * @param limit limit number of result
+   * @param combinedFilter filter for key
+   * @return map of row key to result
+   */
+  public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit,
+                                   @Nullable Predicate<KeyValue<T>> combinedFilter) {
+    // Sort fuzzy keys
+    List<MDSKey> sortedKeys = Lists.newArrayList(keySet);
+    Collections.sort(sortedKeys);
+
+    // Scan using fuzzy filter
+    byte[] startKey = sortedKeys.get(0).getKey();
+    byte[] stopKey = Bytes.stopKeyForPrefix(sortedKeys.get(sortedKeys.size() - 1).getKey());
+
+    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>();
+    for (MDSKey key : sortedKeys) {
+      fuzzyKeys.add(getFuzzyKeyFor(key));
+    }
+
+    Scan scan = new Scan(startKey, stopKey, new FuzzyRowFilter(fuzzyKeys));
+    return listCombinedFilterKV(scan, typeOfT, limit, combinedFilter);
+  }
+
+  /**
+   * Returns mapping of all that match the given keySet for default COLUMN
+   *
+   * @param keySet row key set
+   * @param typeOfT the type of the result
+   * @param limit limit of the result
+   * @return map of row key to result
+   */
+  public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit) {
+    return listKV(keySet, typeOfT, limit, x -> true);
+  }
+
+  /**
+   * Run a scan on MDS for default COLUMN
+   *
+   * @param startId  scan start key
+   * @param stopId   scan stop key
+   * @param typeOfT  type of value
+   * @param function function to process each element returned from scan.
+   *                 If function.apply returns false then the scan is stopped.
+   *                 Also, function.apply should not return null.
+   * @param <T>      type of value
+   */
+  public <T> void scan(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, Function<KeyValue<T>, Boolean> function) {
+    byte[] startKey = startId.getKey();
+    byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
+
+    try (Scanner scan = table.scan(startKey, stopKey)) {
+      Row next;
+      while ((next = scan.next()) != null) {
+        byte[] columnValue = next.get(COLUMN);
+        if (columnValue == null) {
+          continue;
+        }
+        MDSKey key = new MDSKey(next.getRow());
+        T value = deserialize(key, columnValue, typeOfT);
+
+        //noinspection ConstantConditions
+        if (!function.apply(new KeyValue<>(key, value))) {
+          break;
+        }
+      }
+    }
+  }
+
+  /**
+   * Delete all values in the given prefix row key
+   *
+   * @param id prefix row key
+   */
+  public void deleteAll(MDSKey id) {
+    deleteAll(id, x -> true);
+  }
+
+  /**
+   * Delete all values in the given prefix row key which satisfies the predicate
+   *
+   * @param id prefix row key
+   */
+  public void deleteAll(MDSKey id, @Nullable Predicate<MDSKey> filter) {
+    byte[] prefix = id.getKey();
+    byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
+
+    try {
+      try (Scanner scan = table.scan(prefix, stopKey)) {
+        Row next;
+        while ((next = scan.next()) != null) {
+          String columnValue = next.getString(COLUMN);
+          if (columnValue == null) {
+            continue;
+          }
+
+          MDSKey key = new MDSKey(next.getRow());
+          if (filter != null && !filter.test(key)) {
+            continue;
+          }
+          table.delete(new Delete(next.getRow()).add(COLUMN));
+        }
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Delete all values in the given row key
+   *
+   * @param id row key to delete
+   */
+  public void delete(MDSKey id) {
+    try {
+      table.delete(id.getKey(), COLUMN);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Put the value with the given row key and default COLUMN
+   *
+   * @param id row key
+   * @param value the value to put
+   */
+  public <T> void write(MDSKey id, T value) {
+    try {
+      table.put(new Put(id.getKey()).add(COLUMN, serialize(value)));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private <T> Map<MDSKey, T> listCombinedFilterKV(Scan runScan, Type typeOfT, int limit,
@@ -274,64 +494,6 @@ public class MetadataStoreDataset extends AbstractDataset {
     return new ImmutablePair<>(Bytes.concat(keyBytes, new byte[1]), infoBytes);
   }
 
-  // returns mapping of all that match the given keySet provided they pass the combinedFilter predicate
-  public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit,
-                                   @Nullable Predicate<KeyValue<T>> combinedFilter) {
-    // Sort fuzzy keys
-    List<MDSKey> sortedKeys = Lists.newArrayList(keySet);
-    Collections.sort(sortedKeys);
-
-    // Scan using fuzzy filter
-    byte[] startKey = sortedKeys.get(0).getKey();
-    byte[] stopKey = Bytes.stopKeyForPrefix(sortedKeys.get(sortedKeys.size() - 1).getKey());
-
-    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>();
-    for (MDSKey key : sortedKeys) {
-      fuzzyKeys.add(getFuzzyKeyFor(key));
-    }
-
-    Scan scan = new Scan(startKey, stopKey, new FuzzyRowFilter(fuzzyKeys));
-    return listCombinedFilterKV(scan, typeOfT, limit, combinedFilter);
-  }
-
-  // returns mapping of all that match the given keySet
-  public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit) {
-    return listKV(keySet, typeOfT, limit, x -> true);
-  }
-
-  /**
-   * Run a scan on MDS.
-   *
-   * @param startId  scan start key
-   * @param stopId   scan stop key
-   * @param typeOfT  type of value
-   * @param function function to process each element returned from scan.
-   *                 If function.apply returns false then the scan is stopped.
-   *                 Also, function.apply should not return null.
-   * @param <T>      type of value
-   */
-  public <T> void scan(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, Function<KeyValue<T>, Boolean> function) {
-    byte[] startKey = startId.getKey();
-    byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
-
-    try (Scanner scan = table.scan(startKey, stopKey)) {
-      Row next;
-      while ((next = scan.next()) != null) {
-        byte[] columnValue = next.get(COLUMN);
-        if (columnValue == null) {
-          continue;
-        }
-        MDSKey key = new MDSKey(next.getRow());
-        T value = deserialize(key, columnValue, typeOfT);
-
-        //noinspection ConstantConditions
-        if (!function.apply(new KeyValue<>(key, value))) {
-          break;
-        }
-      }
-    }
-  }
-
   /**
    * Output value of a scan.
    *
@@ -352,51 +514,6 @@ public class MetadataStoreDataset extends AbstractDataset {
 
     public T getValue() {
       return value;
-    }
-  }
-
-  public void deleteAll(MDSKey id) {
-    deleteAll(id, x -> true);
-  }
-
-  public void deleteAll(MDSKey id, @Nullable Predicate<MDSKey> filter) {
-    byte[] prefix = id.getKey();
-    byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
-
-    try {
-      try (Scanner scan = table.scan(prefix, stopKey)) {
-        Row next;
-        while ((next = scan.next()) != null) {
-          String columnValue = next.getString(COLUMN);
-          if (columnValue == null) {
-            continue;
-          }
-
-          MDSKey key = new MDSKey(next.getRow());
-          if (filter != null && !filter.test(key)) {
-            continue;
-          }
-          table.delete(new Delete(next.getRow()).add(COLUMN));
-        }
-      }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  public void delete(MDSKey id) {
-    try {
-      table.delete(id.getKey(), COLUMN);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  public <T> void write(MDSKey id, T value) {
-    try {
-      table.put(new Put(id.getKey()).add(COLUMN, serialize(value)));
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
     }
   }
 

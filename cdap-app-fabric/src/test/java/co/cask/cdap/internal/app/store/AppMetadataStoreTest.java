@@ -588,9 +588,13 @@ public class AppMetadataStoreTest {
     activeStates.add(ProgramRunStatus.STARTING);
     activeStates.add(ProgramRunStatus.RUNNING);
     activeStates.add(ProgramRunStatus.SUSPENDED);
-    // check active runs per namespace
-    for (NamespaceId namespace : namespaces) {
-      txnl.execute(() -> {
+
+    // test the instance level method and namespace level method
+    txnl.execute(() -> {
+      Map<ProgramId, Set<ProgramRunStatus>> allExpected = new HashMap<>();
+      Map<ProgramId, Set<ProgramRunStatus>> allActual = new HashMap<>();
+      // check active runs per namespace
+      for (NamespaceId namespace : namespaces) {
         Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(namespace);
 
         // we expect 4 runs per program, with 4 programs in each namespace
@@ -605,6 +609,7 @@ public class AppMetadataStoreTest {
         actual.put(namespace.app(app1).mr(program2), new HashSet<>());
         actual.put(namespace.app(app2).mr(program1), new HashSet<>());
         actual.put(namespace.app(app2).mr(program2), new HashSet<>());
+        allActual.putAll(actual);
         for (Map.Entry<ProgramRunId, RunRecordMeta> activeRun : activeRuns.entrySet()) {
           ProgramId programId = activeRun.getKey().getParent();
           Assert.assertTrue("Unexpected program returned: " + programId,
@@ -613,8 +618,18 @@ public class AppMetadataStoreTest {
         }
 
         Assert.assertEquals(expected, actual);
-      });
-    }
+        allExpected.putAll(expected);
+      }
+
+      // test the instance level method
+      for (Map.Entry<ProgramRunId, RunRecordMeta> activeRun : store.getActiveRuns(x -> true).entrySet()) {
+        ProgramId programId = activeRun.getKey().getParent();
+        Assert.assertTrue("Unexpected program returned: " + programId,
+                          allActual.containsKey(activeRun.getKey().getParent()));
+        allActual.get(programId).add(activeRun.getValue().getStatus());
+      }
+      Assert.assertEquals(allExpected, allActual);
+    });
 
     // check active runs per app
     for (ApplicationId app : apps) {

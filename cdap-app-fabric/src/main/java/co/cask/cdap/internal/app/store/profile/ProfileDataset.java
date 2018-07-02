@@ -29,29 +29,48 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
  * Dataset for profile information. This dataset does not wrap its operations in a transaction. It is up to the caller
  * to decide what operations belong in a transaction.
+ * This dataset uses an underlying MetadataStoreDataset and uses its default COLUMN to store all the results.
+ * There are two kinds of row key prefixes to store profile and entity assignments.
+ * The row key prefix for the profile is "profile", the row key prefix for the entity assignment is "proAssign".
+ *
+ * The table will look like:
+ * row key                                                              column -> value
+ * "profile"[namespace][profile-id]                                     c -> Profile{@link Profile}
+ * "proAssign"[namespace][profile-id][entity-id]                         c -> EntityId{@link EntityId}
  */
 public class ProfileDataset {
   private static final DatasetId DATASET_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
+  // this prefix is used to construct a row key to store the profile information about profile
   private static final String PROFILE_PREFIX = "profile";
+  // this prefix is used to construct a row key to store the entities that are associated to a particular profile
+  private static final String INDEX_PREFIX = "proAssign";
   private static final DatasetProperties TABLE_PROPERTIES =
     TableProperties.builder().setConflictDetection(ConflictDetection.COLUMN).build();
-  private static final Gson GSON = new Gson();
+
+  private static final Gson GSON =
+    new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
 
   private final MetadataStoreDataset table;
 
@@ -77,7 +96,7 @@ public class ProfileDataset {
    * @throws NotFoundException if the profile is not found
    */
   public Profile getProfile(ProfileId profileId) throws NotFoundException {
-    Profile profile = table.get(getRowKey(profileId), Profile.class);
+    Profile profile = table.get(getProfileRowKey(profileId), Profile.class);
     if (profile == null) {
       throw new NotFoundException(profileId);
     }
@@ -92,9 +111,9 @@ public class ProfileDataset {
    * @return the list of profiles which is in this namespace
    */
   public List<Profile> getProfiles(NamespaceId namespaceId, boolean includeSystem) {
-      List<Profile> profiles = new ArrayList<>(table.list(getRowKey(namespaceId), Profile.class));
+      List<Profile> profiles = new ArrayList<>(table.list(getProfileRowKeyPrefix(namespaceId), Profile.class));
       if (includeSystem && !namespaceId.equals(NamespaceId.SYSTEM)) {
-        profiles.addAll(table.list(getRowKey(NamespaceId.SYSTEM), Profile.class));
+        profiles.addAll(table.list(getProfileRowKeyPrefix(NamespaceId.SYSTEM), Profile.class));
       }
       return Collections.unmodifiableList(profiles);
   }
@@ -106,7 +125,7 @@ public class ProfileDataset {
    * @param profile the information of the profile
    */
   public void saveProfile(ProfileId profileId, Profile profile) {
-    MDSKey rowKey = getRowKey(profileId);
+    MDSKey rowKey = getProfileRowKey(profileId);
     Profile oldProfile = table.get(rowKey, Profile.class);
     table.write(
       rowKey, new Profile(profile.getName(), profile.getDescription(), profile.getScope(),
@@ -121,7 +140,7 @@ public class ProfileDataset {
    * @param profile the information of the profile
    */
   public void createIfNotExists(ProfileId profileId, Profile profile) {
-    MDSKey rowKey = getRowKey(profileId);
+    MDSKey rowKey = getProfileRowKey(profileId);
     Profile oldProfile = table.get(rowKey, Profile.class);
     if (oldProfile != null) {
       return;
@@ -138,19 +157,18 @@ public class ProfileDataset {
    * @throws ProfileConflictException if the profile is enabled
    */
   public void deleteProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException {
-    MDSKey rowKey = getRowKey(profileId);
+    MDSKey rowKey = getProfileRowKey(profileId);
     Profile value = table.get(rowKey, Profile.class);
     if (value == null) {
       throw new NotFoundException(profileId);
     }
-    // TODO: https://issues.cask.co/browse/CDAP-13514, check for associations of the profile before deleting
     if (value.getStatus() == ProfileStatus.ENABLED) {
       throw new ProfileConflictException(
         String.format("Profile %s in namespace %s is currently enabled. A profile can " +
                         "only be deleted if it is disabled", profileId.getProfile(), profileId.getNamespace()),
         profileId);
     }
-    table.delete(getRowKey(profileId));
+    table.delete(getProfileRowKey(profileId));
   }
 
   /**
@@ -158,8 +176,9 @@ public class ProfileDataset {
    *
    * @param namespaceId the id of the namespace
    */
+  @VisibleForTesting
   public void deleteAllProfiles(NamespaceId namespaceId) {
-    table.deleteAll(getRowKey(namespaceId));
+    table.deleteAll(getProfileRowKeyPrefix(namespaceId));
   }
 
   /**
@@ -186,7 +205,7 @@ public class ProfileDataset {
 
   private void changeProfileStatus(ProfileId profileId,
                                    ProfileStatus expectedStatus) throws NotFoundException, ProfileConflictException {
-    MDSKey rowKey = getRowKey(profileId);
+    MDSKey rowKey = getProfileRowKey(profileId);
     Profile oldProfile = table.get(rowKey, Profile.class);
     if (oldProfile == null) {
       throw new NotFoundException(profileId);
@@ -199,18 +218,81 @@ public class ProfileDataset {
                                     expectedStatus, oldProfile.getProvisioner()));
   }
 
-  private MDSKey getRowKey(NamespaceId namespaceId) {
-    return getRowKey(namespaceId, null);
+  /**
+   * Get assignments with the profile.
+   *
+   * @param profileId the profile id
+   * @return the set of entities that the profile is assigned to
+   * @throws NotFoundException if the profile is not found
+   */
+  public Set<EntityId> getProfileAssignments(ProfileId profileId) throws NotFoundException {
+    Profile profile = table.get(getProfileRowKey(profileId), Profile.class);
+    if (profile == null) {
+      throw new NotFoundException(profileId);
+    }
+
+    return Collections.unmodifiableSet(new HashSet<>(table.list(getEntityIndexRowKeyPrefix(profileId),
+                                                                EntityId.class)));
   }
 
-  private MDSKey getRowKey(ProfileId profileId) {
-    return getRowKey(profileId.getNamespaceId(), profileId.getProfile());
+  /**
+   * Add an assignment to the profile. Assignment can only be added if the profile is ENABLED
+   *
+   * @param profileId the profile id
+   * @param entityId the entity to add to the assgiment
+   */
+  public void addProfileAssignment(ProfileId profileId,
+                                   EntityId entityId) throws ProfileConflictException, NotFoundException {
+    Profile profile = table.get(getProfileRowKey(profileId), Profile.class);
+    if (profile == null) {
+      throw new NotFoundException(profileId);
+    }
+    if (profile.getStatus() == ProfileStatus.DISABLED) {
+      throw new ProfileConflictException(
+        String.format("Profile %s is DISABLED. No entity can be assigned to it.", profileId.getProfile()), profileId);
+    }
+    table.write(getEntityIndexRowKey(profileId, entityId), entityId);
   }
 
-  private MDSKey getRowKey(NamespaceId namespaceId, @Nullable String profileName) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(PROFILE_PREFIX).add(namespaceId.getEntityName());
+  /**
+   * Remove an assignment from the profile.
+   *
+   * @param profileId the profile id
+   * @param entityId the entity to remove from the assignment
+   * @throws NotFoundException if the profile is not found
+   */
+  public void removeProfileAssignment(ProfileId profileId, EntityId entityId) throws NotFoundException {
+    Profile profile = table.get(getProfileRowKey(profileId), Profile.class);
+    if (profile == null) {
+      throw new NotFoundException(profileId);
+    }
+    table.delete(getEntityIndexRowKey(profileId, entityId));
+  }
+
+  private MDSKey getProfileRowKeyPrefix(NamespaceId namespaceId) {
+    return getRowKey(PROFILE_PREFIX, namespaceId, null, null);
+  }
+
+  private MDSKey getProfileRowKey(ProfileId profileId) {
+    return getRowKey(PROFILE_PREFIX, profileId.getNamespaceId(), profileId.getProfile(), null);
+  }
+
+  private MDSKey getEntityIndexRowKeyPrefix(ProfileId profileId) {
+    return getRowKey(INDEX_PREFIX, profileId.getNamespaceId(), profileId.getProfile(), null);
+  }
+
+  private MDSKey getEntityIndexRowKey(ProfileId profileId, EntityId entityId) {
+    return getRowKey(INDEX_PREFIX, profileId.getNamespaceId(), profileId.getProfile(), entityId);
+  }
+
+  private MDSKey getRowKey(String prefix, NamespaceId namespaceId,
+                           @Nullable String profileName, @Nullable EntityId entityId) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(prefix).add(namespaceId.getEntityName());
     if (profileName != null) {
       builder.add(profileName);
+    }
+    if (entityId != null) {
+      entityId.toIdParts().forEach(builder::add);
     }
     return builder.build();
   }
