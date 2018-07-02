@@ -39,6 +39,7 @@ public class LogAppenderLogProcessor implements RemoteExecutionLogProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(LogAppenderLogProcessor.class);
   private static final ThreadLocal<LoggingEventSerializer> LOGGING_EVENT_SERIALIZER =
           ThreadLocal.withInitial(LoggingEventSerializer::new);
+
   private final LogAppender logAppender;
 
   @Inject
@@ -48,6 +49,7 @@ public class LogAppenderLogProcessor implements RemoteExecutionLogProcessor {
 
   @Override
   public void process(Iterator<byte[]> loggingEventBytes) {
+    LOG.info("log appender isStarted: ... {}", logAppender.isStarted());
     loggingEventBytes.forEachRemaining(bytes -> {
       try {
         ILoggingEvent iLoggingEvent =

@@ -618,6 +618,10 @@ public class MasterServiceMain extends DaemonMain {
       // will be created
       injector = createLeaderInjector(cConf, hConf, zkClient, electionInfoService);
 
+      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      // TODO: close this one whenever leader shuts down. Also close the base one?
+      logAppenderInitializer.initialize();
+
       if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
         exploreClient = injector.getInstance(ExploreClient.class);
       }
