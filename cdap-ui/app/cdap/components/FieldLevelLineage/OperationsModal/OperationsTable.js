@@ -40,19 +40,17 @@ export default class OperationsTable extends Component {
   }
 
   joinEndpoints(endpoints) {
-    if (!endpoints) { return null; }
+    if (!endpoints || !endpoints.endPoint) { return null; }
 
-    return endpoints
-      .map((dataset) => dataset.name)
-      .join(', ');
+    return endpoints.endPoint.name;
   }
 
   renderInput(operation) {
-    return this.joinEndpoints(operation.inputs.endPoints);
+    return this.joinEndpoints(operation.inputs);
   }
 
   renderOutput(operation) {
-    return this.joinEndpoints(operation.outputs.endPoints);
+    return this.joinEndpoints(operation.outputs);
   }
 
   renderInputFields(operation) {
