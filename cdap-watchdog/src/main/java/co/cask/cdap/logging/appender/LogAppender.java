@@ -59,10 +59,10 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       if (loggingContext == null) {
         return;
       }
+      addExtraTags(eventObject);
     }
 
     LogMessage logMessage = new LogMessage(eventObject, loggingContext);
-    addExtraTags(logMessage);
     appendEvent(logMessage);
   }
 
