@@ -164,6 +164,10 @@ class ProfileCreateView extends Component {
 
   renderGroup = (group) => {
     let {properties} = CreateProfileStore.getState();
+    const extraConfig = {
+      namespace: this.state.isSystem ? 'system' : getCurrentNamespace()
+    };
+
     return (
       <div className="group-container" key={group.label}>
         <strong className="group-title"> {group.label} </strong>
@@ -211,6 +215,7 @@ class ProfileCreateView extends Component {
                         value={objectQuery(properties, property.name, 'value')}
                         onChange={updateProperty.bind(null, property.name)}
                         widgetProps={property['widget-attributes']}
+                        extraConfig={extraConfig}
                       />
                     }
                     <PropertyLock propertyName={property.name} />

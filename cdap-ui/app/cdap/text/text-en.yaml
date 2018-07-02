@@ -119,6 +119,11 @@ features:
       gcp: Google Cloud Platform (GCP)
     security: "Security: "
     version: Version {version}
+  AbstractWidget:
+    SecureKeyTextarea:
+      customEntryHelper: Specify a different secure key
+      customEntryPlaceholder: Type the name of secure key
+      title: Select from the list or specify a different secure key
   AccessTokenModal:
     accessToken: "Access Token: "
     close: Close
@@ -259,6 +264,7 @@ features:
         hideDetails: Hide Details
         noProperties: No properties available for this profile
         profileDetails: Profile Details
+        secureKeyPopover: Service account is stored using a secure key
         viewDetails: View Details
       ListView:
         assosciations: Assosciations

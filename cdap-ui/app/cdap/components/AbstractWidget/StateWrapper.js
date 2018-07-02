@@ -24,7 +24,8 @@ export default class StateWrapper extends Component {
     comp: PropTypes.any,
     value: PropTypes.oneOfType([PropTypes.array, PropTypes.string, PropTypes.number]),
     onChange: PropTypes.func,
-    widgetProps: PropTypes.object
+    widgetProps: PropTypes.object,
+    extraConfig: PropTypes.object
   };
 
   state = {
@@ -43,7 +44,7 @@ export default class StateWrapper extends Component {
   };
 
   render() {
-    let {comp: Comp, widgetProps} = this.props;
+    let {comp: Comp, widgetProps, extraConfig} = this.props;
     return (
       /*
         TL;DR - Get new value for input widget during each render.
@@ -63,6 +64,7 @@ export default class StateWrapper extends Component {
         widgetProps={widgetProps}
         value={typeof this.state.value === 'function' ? this.state.value() : this.state.value}
         onChange={this.onChange}
+        extraConfig={extraConfig}
       />
     );
   }

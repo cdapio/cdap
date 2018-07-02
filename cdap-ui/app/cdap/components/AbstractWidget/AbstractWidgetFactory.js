@@ -20,6 +20,7 @@ import MemoryTextbox from 'components/AbstractWidget/MemoryTextbox';
 import MemorySelectWidget from 'components/AbstractWidget/MemorySelectWidget';
 import DefaultInput from 'components/AbstractWidget/DefaultInput';
 import TextArea from 'components/AbstractWidget/TextArea';
+import SecureKeyTextarea from 'components/AbstractWidget/SecureKeyTextarea';
 
 const WIDGET_FACTORY = {
   text: DefaultInput,
@@ -27,7 +28,8 @@ const WIDGET_FACTORY = {
   number: NumberTextbox,
   select: SelectWidget,
   'memory-dropdown': MemorySelectWidget,
-  'memory-textbox': MemoryTextbox
+  'memory-textbox': MemoryTextbox,
+  'securekey-textarea': SecureKeyTextarea
 };
 export default new Proxy(WIDGET_FACTORY, {
   get: function (obj, prop) {
