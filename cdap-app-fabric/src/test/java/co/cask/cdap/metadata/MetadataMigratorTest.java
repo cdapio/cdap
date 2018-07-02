@@ -150,7 +150,6 @@ public class MetadataMigratorTest {
         NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
-
   }
 
   @After
