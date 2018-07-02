@@ -25,10 +25,10 @@ function getInputDatasets(operations) {
   let inputDatasets = [];
 
   operations.forEach((operation) => {
-    if (operation.inputs.endPoints) {
-      operation.inputs.endPoints.forEach((inputDataset) => {
-        inputDatasets.push(inputDataset.name);
-      });
+    let datasetName = objectQuery(operation, 'inputs', 'endPoint', 'name');
+
+    if (datasetName) {
+      inputDatasets.push(datasetName);
     }
   });
 
