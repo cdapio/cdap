@@ -28,6 +28,9 @@
       display: flex;
       justify-content: center;
       height: 18px;
+      &.disabled {
+        cursor: not-allowed;
+      }
 
       > div {
         display: flex;

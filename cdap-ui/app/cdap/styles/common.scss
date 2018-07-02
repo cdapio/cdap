@@ -127,7 +127,7 @@ body {
       .grid-body {
         display: grid;
         .grid-row {
-          padding: 7px 5px;
+          padding: 7px 0;
           align-content: center;
           align-items: center;
           border-bottom: 1px solid $grey-04;
@@ -140,6 +140,12 @@ body {
           &.highlighted {
             border: 2px solid $green-03;
             background-color: rgba($green-03, 0.1);
+          }
+          > div {
+            padding: 10px;
+            &.grid-item-sm {
+              padding: 0;
+            }
           }
         }
         a {

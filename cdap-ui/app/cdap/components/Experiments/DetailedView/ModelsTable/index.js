@@ -349,12 +349,12 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel, statu
       ))}
       {renderMetrics(newHeaders, model, experimentId)}
       {
-        wrapContentWithTitleAttr(
+        <div className="grid-item-sm">
           <DeleteModelBtn
             experimentId={experimentId}
             model={model}
           />
-        )
+        </div>
       }
     </Component>
   );

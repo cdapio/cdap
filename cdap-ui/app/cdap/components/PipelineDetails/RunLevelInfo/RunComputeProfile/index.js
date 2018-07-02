@@ -17,11 +17,12 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, preventPropagation} from 'services/helpers';
 import {PROFILE_NAME_PREFERENCE_PROPERTY, extractProfileName, DEFAULT_PROFILE_NAME} from 'components/PipelineDetails/ProfilesListView';
 import IconSVG from 'components/IconSVG';
 import ProfilePreview from 'components/Cloud/Profiles/Preview';
 import Popover from 'components/Popover';
+import classnames from 'classnames';
 
 require('./RunComputeProfile.scss');
 
@@ -33,7 +34,9 @@ class RunLevelComputeProfile extends Component {
   render() {
     const ProfileLabel = () => {
       return (
-        <div className="profile-preview-label">
+        <div className={classnames("profile-preview-label", {
+          'disabled': this.props.profileName === DEFAULT_PROFILE_NAME
+        })}>
           {
           !this.props.profileName ?
             <button
@@ -45,7 +48,14 @@ class RunLevelComputeProfile extends Component {
               <span>--</span>
             </button>
           :
-            <div>
+            <div
+              onClick={(e) => {
+                if (this.props.profileName === DEFAULT_PROFILE_NAME) {
+                  preventPropagation(e);
+                  return false;
+                }
+              }}
+            >
               <IconSVG name="icon-cloud" />
               <span>{extractProfileName(this.props.profileName)}</span>
             </div>

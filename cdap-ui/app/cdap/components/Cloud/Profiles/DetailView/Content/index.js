@@ -17,6 +17,7 @@
 import React from 'react';
 import ProfileDetailViewBasicInfo from 'components/Cloud/Profiles/DetailView/Content/BasicInfo';
 import ProfileDetailViewDetailsInfo from 'components/Cloud/Profiles/DetailView/Content/DetailsInfo';
+import ProfileAssociations from 'components/Cloud/Profiles/DetailView/Content/ProfileAssociations';
 
 require('./Content.scss');
 
@@ -26,6 +27,8 @@ export default function ProfileDetailViewContent({...props}) {
       <ProfileDetailViewBasicInfo {...props} />
       <hr />
       <ProfileDetailViewDetailsInfo {...props} />
+      <br />
+      <ProfileAssociations {...props} />
     </div>
   );
 }

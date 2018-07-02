@@ -33,6 +33,8 @@ import uuidV4 from 'uuid/v4';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
+import {DEFAULT_PROFILE_NAME, extractProfileName} from 'components/PipelineDetails/ProfilesListView';
+import {preventPropagation} from 'services/helpers';
 require('./ListView.scss');
 
 const PREFIX = 'features.Cloud.Profiles';
@@ -278,6 +280,65 @@ class ProfilesListView extends Component {
     );
   }
 
+  renderProfilerow = (profile) => {
+    let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
+    let provisionerName = profile.provisioner.name;
+    profile.provisioner.label = this.state.provisionersMap[provisionerName] || provisionerName;
+    let profileStatus = PROFILE_STATUSES[profile.status];
+    let Tag = Link;
+    let isNativeProfile = profile.name === extractProfileName(DEFAULT_PROFILE_NAME);
+    const actionsElem = () => {
+      if (isNativeProfile) {
+        return (
+          <IconSVG
+            name="icon-cog-empty"
+            onClick={(e) => {
+              preventPropagation(e);
+              return false;
+            }}
+          />);
+      }
+      return (<IconSVG name="icon-cog-empty" />);
+    };
+    if (isNativeProfile) {
+      Tag = 'div';
+    }
+    return (
+      <Tag
+        to={`/ns/${namespace}/profiles/details/${profile.name}`}
+        className={classnames("grid-row grid-link", {
+          'native-profile': isNativeProfile
+        })}
+        key={uuidV4()}
+      >
+        <div></div>
+        <div title={profile.name}>
+          {profile.name}
+        </div>
+        <div>{profile.provisioner.label}</div>
+        <div>{profile.scope}</div>
+        <div />
+        <div />
+        <div />
+        <div />
+        <div />
+        <div />
+        <div className={`${profileStatus}-label`}>
+          {T.translate(`${PREFIX}.common.${profileStatus}`)}
+        </div>
+        <div className="grid-item-sm">
+          <ActionsPopover
+            target={actionsElem}
+            namespace={this.props.namespace}
+            profile={profile}
+            disabled={isNativeProfile}
+            onDeleteClick={this.toggleDeleteConfirmationModal.bind(this, profile)}
+          />
+        </div>
+      </Tag>
+    );
+  };
+
   renderProfilesTableBody() {
     let profiles = [...this.state.profiles];
 
@@ -285,49 +346,10 @@ class ProfilesListView extends Component {
       profiles = profiles.slice(0, NUM_PROFILES_TO_SHOW);
     }
 
-    const actionsElem = () => <IconSVG name="icon-cog-empty" />;
-
     return (
       <div className="grid-body">
         {
-          profiles.map((profile) => {
-            let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
-            let provisionerName = profile.provisioner.name;
-            profile.provisioner.label = this.state.provisionersMap[provisionerName] || provisionerName;
-            let profileStatus = PROFILE_STATUSES[profile.status];
-
-            return (
-              <Link
-                to={`/ns/${namespace}/profiles/details/${profile.name}`}
-                className="grid-row grid-link"
-                key={uuidV4()}
-              >
-                <div></div>
-                <div title={profile.name}>
-                  {profile.name}
-                </div>
-                <div>{profile.provisioner.label}</div>
-                <div>{profile.scope}</div>
-                <div />
-                <div />
-                <div />
-                <div />
-                <div />
-                <div />
-                <div className={`${profileStatus}-label`}>
-                  {T.translate(`${PREFIX}.common.${profileStatus}`)}
-                </div>
-                <div>
-                  <ActionsPopover
-                    target={actionsElem}
-                    namespace={this.props.namespace}
-                    profile={profile}
-                    onDeleteClick={this.toggleDeleteConfirmationModal.bind(this, profile)}
-                  />
-                </div>
-              </Link>
-            );
-          })
+          profiles.map(this.renderProfilerow)
         }
       </div>
     );
