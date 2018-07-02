@@ -353,7 +353,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
           // here we get the status from the run record because when we record program deprovisioned,
           // the status might get changed to FAILED because of the previous cluster status was PROVISIONING
-          getMetricsContextFroProfile(programRunId, profileId).increment(getMetricName(recordedRunRecord.getStatus()),
+          getMetricsContextForProfile(programRunId, profileId).increment(getMetricName(recordedRunRecord.getStatus()),
                                                                          1L);
         } else {
           // TODO: CDAP-13295 remove once runtime monitor emits this message
@@ -452,7 +452,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         int nodeNum = node == null || node == 0 ? 1 : node;
 
         // emit the metrics information, increment the count for end state program runs
-        MetricsContext metricsContext = getMetricsContextFroProfile(programRunId, profileId);
+        MetricsContext metricsContext = getMetricsContextForProfile(programRunId, profileId);
         metricsContext.increment(getMetricName(meta.getStatus()), 1L);
 
         // node minutes = (end ts of the cluster - start ts) * nodeNum / 60
@@ -528,7 +528,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Emit MetricsContext for publishing profile related status, the tags are constructed with the program run id and
    * the profile id
    */
-  private MetricsContext getMetricsContextFroProfile(ProgramRunId programRunId, ProfileId profileId) {
+  private MetricsContext getMetricsContextForProfile(ProgramRunId programRunId, ProfileId profileId) {
     ImmutableMap<String, String> tags = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
       .put(Constants.Metrics.Tag.PROFILE, profileId.toString())
@@ -539,15 +539,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       .build();
 
     return metricsCollectionService.getContext(tags);
-  }
-
-  /**
-   * Returns the profile id from the notification properties
-   */
-  private Optional<ProfileId> getProfileIdFromNotificationProperties(NamespaceId namespaceId,
-                                                                     Map<String, String> properties) {
-
-    return Optional.empty();
   }
 
   /**
