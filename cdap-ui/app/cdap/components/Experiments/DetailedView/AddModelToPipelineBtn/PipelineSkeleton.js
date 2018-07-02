@@ -15,10 +15,9 @@
 */
 
 export default function getPipelineConfig({
-  mmdsPluginsArtifact,
+  file,
   experimentId,
-  modelId,
-  predictionField
+  modelId
 }) {
   return {
     "artifact": {},
@@ -33,6 +32,34 @@ export default function getPipelineConfig({
       "stageLoggingEnabled": true,
       "stages": [
         {
+          "name": "File",
+          "plugin": {
+            "name": "File",
+            "type": "batchsource",
+            "label": "File",
+            "artifact": corePluginArtifact,
+            "properties": {
+              "path": srcPath,
+              "schema": "{\"name\":\"fileRecord\",\"type\":\"record\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+            }
+          }
+        },
+        {
+          "name": "Wrangler",
+          "plugin": {
+            "name": "Wrangler",
+            "type": "transform",
+            "label": "Wrangler",
+            "artifact": wranglerArtifact,
+            "properties": {
+              "field": "*",
+              "precondition": "false",
+              "threshold": "1",
+              "directives": directives
+            }
+          }
+        },
+        {
           "name": "MLPredictor",
           "plugin": {
               "name": "MLPredictor",
@@ -41,8 +68,7 @@ export default function getPipelineConfig({
               "artifact": mmdsPluginsArtifact,
               "properties": {
                 "experimentId": experimentId,
-                "modelId": modelId,
-                "predictionField": predictionField
+                "modelId": modelId
               }
           }
         }

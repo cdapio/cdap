@@ -258,6 +258,10 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
         <div>
           <PredictionDatasetExploreModal predictionDataset={model.predictionsDataset} />
           <AddModelToPipelineBtn modelName={model.name} />
+          <AddModelToPipelineBtn
+            modelName={model.name}
+            modelId={model.id}
+          />
         </div>
       </div>
       <div>

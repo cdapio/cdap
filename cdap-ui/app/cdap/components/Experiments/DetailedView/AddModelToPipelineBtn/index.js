@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import {MyArtifactApi} from 'api/artifact';
 import {getCurrentNamespace} from 'services/NamespaceStore';
-import {isNilOrEmpty} from 'services/helpers';
+import {isNilOrEmpty, objectQuery} from 'services/helpers';
 import getPipelineConfig from 'components/Experiments/DetailedView/AddModelToPipelineBtn/PipelineSkeleton';
 import {GLOBALS} from 'services/global-constants';
 import Popover from 'components/Popover';
@@ -34,12 +34,15 @@ class AddModelToPipelineBtn extends Component {
   static propTypes = {
     experimentId: PropTypes.string,
     modelId: PropTypes.string,
-    predictionField: PropTypes.string
+    modelName: PropTypes.string
   };
 
   state = {
     disabled: true,
-    error: null
+    error: null,
+    mmdsPluginsArtifact: null,
+    datapipelineArtifact: null,
+    wranglerArtifact: null
   };
 
   cloneId = uuidV4();
@@ -62,9 +65,23 @@ class AddModelToPipelineBtn extends Component {
       })
       .subscribe(
         (res) => {
-          let mmdsPluginsArtifact = res.find(artifact => artifact.name === MMDS_PLUGINS_ARTIFACT_NAME);
-          let datapipelineArtifact = res.find(artifact => artifact.name === GLOBALS.etlDataPipeline);
-          if (isNilOrEmpty(mmdsPluginsArtifact) || isNilOrEmpty(datapipelineArtifact)) {
+          let mmdsPluginsArtifact, datapipelineArtifact, wranglerArtifact;
+          res.forEach(artifact => {
+            if (artifact.name === MMDS_PLUGINS_ARTIFACT_NAME) {
+              mmdsPluginsArtifact = artifact;
+            }
+            if (artifact.name === GLOBALS.etlDataPipeline) {
+              datapipelineArtifact = artifact;
+            }
+            if (artifact.name === GLOBALS.wrangler.artifactName) {
+              wranglerArtifact = artifact;
+            }
+          });
+          if (
+            isNilOrEmpty(mmdsPluginsArtifact) ||
+            isNilOrEmpty(datapipelineArtifact) ||
+            isNilOrEmpty(wranglerArtifact)
+          ) {
             this.setState({
               error: ERROR_MSG
             });
@@ -72,6 +89,7 @@ class AddModelToPipelineBtn extends Component {
             this.setState({
               mmdsPluginsArtifact,
               datapipelineArtifact,
+              wranglerArtifact,
               disabled: false
             });
           }
@@ -84,18 +102,17 @@ class AddModelToPipelineBtn extends Component {
       );
   }
   generatePipelineConfig = () => {
-    let {experimentId, modelId, predictionField} = this.props;
+    let {experimentId, modelId, modelName} = this.props;
     let {mmdsPluginsArtifact, datapipelineArtifact} = this.state;
     let pipelineConfig = getPipelineConfig({
       mmdsPluginsArtifact,
       experimentId,
-      modelId,
-      predictionField
+      modelId
     });
     pipelineConfig = {
       ...pipelineConfig,
-      name: `Scoring_Pipeline_${experimentId}_${modelId}`,
-      description: `Scoring pipeline for ${modelId} under experiment ${experimentId}.`,
+      name: `Scoring_Pipeline_${experimentId}_${modelName}`,
+      description: `Scoring pipeline for ${modelName} under experiment ${experimentId}.`,
       artifact: datapipelineArtifact
     };
     window.localStorage.setItem(this.cloneId, JSON.stringify(pipelineConfig));
@@ -128,10 +145,13 @@ class AddModelToPipelineBtn extends Component {
 }
 
 const mapStateToProps = (state, ownProps) => {
+  let modelObj = state.models.find(model => model.id === ownProps.modelId);
   return {
-    predictionField: state.outcome,
     experimentId: state.name,
-    modelId: ownProps.modelName
+    modelId: ownProps.modelId,
+    directives: objectQuery(modelObj, 'directives'),
+    modelName: objectQuery(modelObj, 'name'),
+    srcPath: state.srcpath
   };
 };
 
