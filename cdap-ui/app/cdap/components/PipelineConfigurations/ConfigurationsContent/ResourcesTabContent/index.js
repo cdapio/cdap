@@ -48,7 +48,7 @@ StepContentHeading.propTypes = {
 
 const ConnectedStepContentHeading = connect(mapStateToStepContentHeadingProps)(StepContentHeading);
 
-export default function ResourcesTabContent({isBatch}) {
+function ResourcesTabContent({isBatch}) {
   return (
     <div
       id="resources-tab-content"
@@ -65,3 +65,12 @@ export default function ResourcesTabContent({isBatch}) {
 ResourcesTabContent.propTypes = {
   isBatch: PropTypes.bool
 };
+
+const mapStateToProps = (state) => {
+  return {
+    isBatch: state.pipelineVisualConfiguration.isBatch
+  };
+};
+const ConnectedResourceTabContent = connect(mapStateToProps)(ResourcesTabContent);
+
+export default ConnectedResourceTabContent;

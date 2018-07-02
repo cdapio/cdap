@@ -1571,21 +1571,17 @@ features:
       executorMapReduceTooltip: Resources for the executor process which initializes the pipeline
       contentHeading: Specify the resources for the following processes of the {engineDisplayLabel} program
       title: Resources
-    RuntimeArgs:
-      contentHeading1: Specify runtime arguments or update the ones derived from preferences
-      contentHeading2: Runtime arguments used for this run
-      contentHeading3: No Runtime arguments were used for this run
-      contentSubtitle: By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, you can skip that argument by marking it as Provided.
-      ProvidedPopover:
-        clearAll: Clear All
-        provided: Provided
-        selectAll: Select All
-      title: Runtime Arguments
     title: Configure
     titleHistorical: Run Configurations
 
   PipelineDetails:
     duration: Duration
+    PipelineRuntimeArgsDropdownBtn:
+      RuntimeArgsTabContent:
+        ProvidedPopover:
+          clearAll: Clear All
+          provided: Provided
+          selectAll: Select All
     RunLevel:
       configs: Run Configs
       currentIndex: '({currentRunIndex} of {numRuns})'

@@ -42,7 +42,7 @@ export default function PipelineResources({virtualCores, onVirtualCoresChange, m
           {T.translate(`${PREFIX}.memory`)}
         </span>
         <input
-          className="memoryMB-input"
+          className="memoryMB-input form-control"
           type="number"
           min={0}
           value={memoryMB}

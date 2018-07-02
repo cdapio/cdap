@@ -14,17 +14,16 @@
  * the License.
 */
 
-@import "../../../styles/variables.scss";
+@import "../../styles/variables.less";
 
-$border-color: $grey-05;
-$regular-font: 14px;
-$side-panel-width: 170px;
-$active-bg-color: $grey-07;
-$text-color: $grey-01;
+@border-color: @grey-05;
+@regular-font: 14px;
+@side-panel-width: 170px;
+@active-bg-color: @grey-07;
+@text-color: @grey-01;
 
 .configurations-side-panel {
-  border-right: 1px solid $border-color;
-  border-top: 1px solid $border-color;
+  border-right: 1px solid @border-color;
 
   .configurations-tabs {
     .configuration-tab {
@@ -32,24 +31,24 @@ $text-color: $grey-01;
       display: flex;
       align-items: center;
       padding-left: 23px;
-      font-size: $regular-font;
+      font-size: @regular-font;
       cursor: pointer;
-      width: $side-panel-width;
-      border-bottom: 1px solid $border-color;
+      width: @side-panel-width;
+      border-bottom: 1px solid @border-color;
 
       &:hover {
-        color: $cdap-orange;
+        color: @cdap-orange;
       }
 
       &.active {
-        background-color: $active-bg-color;
-        color: $cdap-orange;
+        background-color: @active-bg-color;
+        color: @cdap-orange;
         font-weight: bold;
       }
 
       &.disabled {
         pointer-events: none;
-        color: lighten($text-color, 60%);
+        color: lighten(@text-color, 60%);
       }
 
       &.toggle-advanced-options {
@@ -62,6 +61,23 @@ $text-color: $grey-01;
           height: 14px;
           width: 14px;
           margin: 0 1px 0 9px;
+        }
+      }
+    }
+  }
+}
+
+my-batch-pipeline-config,
+my-realtime-pipeline-config {
+  .configuration-step-content {
+    &#runtime-arguments-key-value-pairs-wrapper {
+      height: ~"calc(100% - 75px)";
+      .runtime-arguments-labels {
+        grid-template-columns: 1fr 1fr 0.8fr;
+        &.key-value-pair-labels > .provided-label {
+          display: flex;
+          justify-content: center;
+          width: 100%;
         }
       }
     }

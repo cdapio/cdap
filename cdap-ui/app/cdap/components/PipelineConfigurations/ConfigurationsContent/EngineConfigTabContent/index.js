@@ -21,12 +21,13 @@ import EngineRadioInput from 'components/PipelineConfigurations/ConfigurationsCo
 import Backpressure from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/Backpressure';
 import NumExecutors from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/NumExecutors';
 import CustomConfig from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/CustomConfig';
+import {connect} from 'react-redux';
 import T from 'i18n-react';
 require('./EngineConfigTabContent.scss');
 
 const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 
-export default class EngineConfigTabContent extends Component {
+class EngineConfigTabContent extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
     isDetailView: PropTypes.bool
@@ -95,3 +96,14 @@ export default class EngineConfigTabContent extends Component {
     );
   }
 }
+
+const mapStateToProps = (state) => {
+  return {
+    isBatch: state.pipelineVisualConfiguration.isBatch,
+    isDetailView: state.pipelineVisualConfiguration.isDetailView
+  };
+};
+
+const ConnectedEngineConfigTabContent = connect(mapStateToProps)(EngineConfigTabContent);
+
+export default ConnectedEngineConfigTabContent;

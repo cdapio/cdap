@@ -18,7 +18,6 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import ProfilesListViewInPipeline, {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {updatePipelineEditStatus} from 'components/PipelineConfigurations/Store/ActionCreator';
 import {connect} from 'react-redux';
 import {objectQuery, convertKeyValuePairsToMap, convertMapToKeyValuePairs} from 'services/helpers';
 
@@ -68,7 +67,6 @@ class ComputeTabContent extends Component {
       type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
       payload: { runtimeArgs: { pairs: newRunTimePairs } }
     });
-    updatePipelineEditStatus();
   };
   render() {
     return (

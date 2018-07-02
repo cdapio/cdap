@@ -20,7 +20,7 @@ import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import PipelineConfigurations from 'components/PipelineConfigurations';
 import T from 'i18n-react';
-import {fetchAndUpdateRuntimeArgs} from 'components/PipelineDetails/store/ActionCreator';
+import {fetchAndUpdateRuntimeArgs} from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 

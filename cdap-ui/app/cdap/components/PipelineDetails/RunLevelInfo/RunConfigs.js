@@ -19,11 +19,18 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import PipelineConfigurations from 'components/PipelineConfigurations';
-import {objectQuery} from 'services/helpers';
+import {reset} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {objectQuery, reverseArrayWithoutMutating, isNilOrEmpty} from 'services/helpers';
 import classnames from 'classnames';
 import Popover from 'components/Popover';
+import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
 import T from 'i18n-react';
+import {Provider} from 'react-redux';
+import findIndex from 'lodash/findIndex';
+import CopyableID from 'components/CopyableID';
+import PipelineRunTimeArgsCounter from 'components/PipelineDetails/PipelineRuntimeArgsCounter';
+import {getFilteredRuntimeArgs} from 'components/PipelineConfigurations/Store/ActionCreator';
+
 
 const PREFIX = 'features.PipelineDetails.RunLevel';
 
@@ -36,51 +43,110 @@ export default class RunConfigs extends Component {
   };
 
   state = {
-    showModeless: false
+    showModeless: false,
+    runtimeArgs: null
   };
+
+  runtimeArgsMap = {};
 
   getRuntimeArgsAndToggleModeless = () => {
-    if (!this.state.showModeless) {
-      PipelineConfigurationsStore.dispatch({
-        type: PipelineConfigurationsActions.SET_MODELESS_OPEN_STATUS,
-        payload: { open: false }
-      });
+    PipelineConfigurationsStore.dispatch({
+      type: PipelineConfigurationsActions.SET_MODELESS_OPEN_STATUS,
+      payload: { open: false }
+    });
 
-      let runtimeArgs = objectQuery(this.props.currentRun, 'properties', 'runtimeArgs') || '';
-      try {
-        runtimeArgs = JSON.parse(runtimeArgs);
-        delete runtimeArgs[''];
-      } catch (e) {
-        console.log('ERROR: Cannot parse runtime arguments');
-        runtimeArgs = {};
-      }
-
-      runtimeArgs = convertMapToKeyValuePairsObj(runtimeArgs);
-
-      PipelineConfigurationsStore.dispatch({
-        type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
-        payload: { runtimeArgs }
-      });
-
-      // Have to set timeout here to make sure any other config modeless will be closed
-      // before opening this one
-      setTimeout(() => this.toggleModeless());
-    } else {
-      this.toggleModeless();
+    let runtimeArgs = objectQuery(this.props.currentRun, 'properties', 'runtimeArgs') || '';
+    try {
+      runtimeArgs = JSON.parse(runtimeArgs);
+      delete runtimeArgs[''];
+    } catch (e) {
+      console.log('ERROR: Cannot parse runtime arguments');
+      runtimeArgs = {};
     }
-  };
 
-  toggleModeless = () => {
+    this.runtimeArgsMap = JSON.stringify(runtimeArgs, null, 2);
+    runtimeArgs = getFilteredRuntimeArgs(convertMapToKeyValuePairsObj(runtimeArgs));
+
     this.setState({
-      showModeless: !this.state.showModeless
+      runtimeArgs
+    });
+
+    PipelineConfigurationsStore.dispatch({
+      type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
+      payload: {
+        pipelineVisualConfiguration: {
+          isHistoricalRun: true
+        }
+      }
     });
   };
 
-  renderRunConfigsButton() {
+  toggleModeless = (showModeless) => {
+    if (showModeless === this.state.showModeless) {
+      return;
+    }
+    this.setState({
+      showModeless: showModeless || !this.state.showModeless
+    }, () => {
+      if (!this.state.showModeless) {
+        reset();
+      } else {
+        this.getRuntimeArgsAndToggleModeless();
+      }
+    });
+  };
+
+  isRuntimeArgsEmpty = () => {
+    if (this.state.runtimeArgs.pairs.length === 1) {
+      if (isNilOrEmpty(this.state.runtimeArgs.pairs.key) && isNilOrEmpty(this.state.runtimeArgs.pairs.value)) {
+        return true;
+      }
+      return false;
+    }
+    return false;
+  };
+
+  renderRuntimeArgs = () => {
+    if (!this.state.runtimeArgs) {
+      return null;
+    }
+    if (this.isRuntimeArgsEmpty()) {
+      return (
+        <h4> No runtime arguments available </h4>
+      );
+    }
     return (
+      <div className="historical-runtimeargs-keyvalues">
+        <div>
+          <div>Name</div>
+          <div>Value</div>
+        </div>
+        {
+          this.state.runtimeArgs.pairs.map(arg => {
+            return (
+              <div>
+                <input
+                  className="form-control"
+                  value={arg.key}
+                  disabled
+                />
+                <input
+                  className="form-control"
+                  value={arg.value}
+                  disabled
+                />
+              </div>
+            );
+          })
+        }
+      </div>
+    );
+  }
+
+  renderRunConfigsButton = () => {
+    const target = (
       <div
         className="run-configs-btn"
-        onClick={this.getRuntimeArgsAndToggleModeless}
       >
         <IconSVG name="icon-sliders" />
         <div className="button-label">
@@ -88,7 +154,53 @@ export default class RunConfigs extends Component {
         </div>
       </div>
     );
-  }
+
+    let {runs, currentRun} = this.props;
+    let reversedRuns = reverseArrayWithoutMutating(runs);
+    let currentRunIndex = findIndex(reversedRuns, {runid: objectQuery(currentRun, 'runid')});
+    const title = (
+      <div className="runconfig-modeless-title">
+        <div>{`Runtime Arguments for Run #${currentRunIndex + 1}`} </div>
+        <CopyableID
+          label="Copy Runtime Arguments"
+          id={this.runtimeArgsMap}
+          tooltipText={false}
+        />
+      </div>
+    );
+    return (
+      <Popover
+        target={() => target}
+        placement="bottom"
+        enableInteractionInPopover={true}
+        showPopover={this.state.showModeless}
+        onTogglePopover={this.toggleModeless}
+        injectOnToggle={true}
+      >
+        <Provider store={PipelineConfigurationsStore}>
+          <PipelineModeless
+            title={title}
+            onClose={this.toggleModeless}
+          >
+            <div className="historical-runtime-args-wrapper">
+              {this.renderRuntimeArgs()}
+              <div className="runconfig-tab-footer">
+                {
+                  !this.state.runtimeArgs ?
+                    null
+                  :
+                    <PipelineRunTimeArgsCounter
+                      runtimeArgs={this.state.runtimeArgs}
+                    />
+                }
+              </div>
+            </div>
+          </PipelineModeless>
+        </Provider>
+      </Popover>
+    );
+  };
+
 
   render() {
     const ConfigsBtnComp = () => (
@@ -105,7 +217,7 @@ export default class RunConfigs extends Component {
         <Popover
           target={ConfigsBtnComp}
           showOn='Hover'
-          placement='bottom'
+          placement='bottom-end'
           className="run-info-container run-configs-container disabled"
         >
           {T.translate(`${PREFIX}.pipelineNeverRun`)}
@@ -114,21 +226,10 @@ export default class RunConfigs extends Component {
     }
 
     return (
-      <div className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}>
+      <div
+        className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}
+      >
         {this.renderRunConfigsButton()}
-        {
-          this.state.showModeless ?
-            <PipelineConfigurations
-              onClose={this.toggleModeless}
-              isDetailView={true}
-              isHistoricalRun={true}
-              isBatch={this.props.isBatch}
-              pipelineName={this.props.pipelineName}
-              action="copy"
-            />
-          :
-            null
-        }
       </div>
     );
   }

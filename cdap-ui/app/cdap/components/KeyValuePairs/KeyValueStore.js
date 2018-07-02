@@ -16,7 +16,9 @@
 
 import {combineReducers, createStore} from 'redux';
 import KeyValueStoreActions from './KeyValueStoreActions';
+import {composeEnhancers} from 'services/helpers';
 import uuidV4 from 'uuid/v4';
+import cloneDeep from 'lodash/cloneDeep';
 
 const defaultAction = {
   type: '',
@@ -26,7 +28,9 @@ const defaultAction = {
 const initialState = {
   pairs: []
 };
-
+const INITIAL_STORE_STATE = cloneDeep({
+  keyValues: initialState
+});
 export const getDefaultKeyValuePair = () => ({
   key : '',
   value : '',
@@ -70,7 +74,7 @@ const keyValues = (state = initialState, action = defaultAction) => {
       }
       return stateCopy;
     case KeyValueStoreActions.onReset:
-      return [];
+      return initialState;
     case KeyValueStoreActions.onUpdate:
       stateCopy = Object.assign({}, state);
       stateCopy.pairs = action.payload.pairs;
@@ -82,8 +86,8 @@ const keyValues = (state = initialState, action = defaultAction) => {
 
 const KeyValueStore = createStore(
   combineReducers({keyValues}),
-  {keyValues: initialState},
-  window.devToolsExtension ? window.devToolsExtension() : f => f
+  INITIAL_STORE_STATE,
+  composeEnhancers('KeyValueStore')()
 );
 
 export default KeyValueStore;

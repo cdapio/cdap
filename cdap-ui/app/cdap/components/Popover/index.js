@@ -70,7 +70,11 @@ export default class Popover extends PureComponent {
   id = `popover-${uuidV4()}`;
 
   hidePopoverEventHandler = (popoverId) => {
-    if (this.id !== popoverId) {
+    if (
+      this.id !== popoverId &&
+      !isDescendant(document.getElementById(this.id), document.getElementById(popoverId)) &&
+      this.state.showPopover
+    ) {
       this.setState({
         showPopover: false
       }, this.updateParentOnToggle);
@@ -118,8 +122,10 @@ export default class Popover extends PureComponent {
           let parent = document.getElementById(this.id);
           let child = e.target;
           if (this.props.enableInteractionInPopover && isDescendant(parent, child)) {
-            preventPropagation(e);
-            return false;
+            // Just return instead of stopping propagation.
+            // This will allow to nest popovers and close the inner popover
+            // while clicking on the outer one.
+            return;
           }
           this.cleanUpDocumentClickEventHandler();
           this.setState({

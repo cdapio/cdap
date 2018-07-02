@@ -14,6 +14,17 @@
 * the License.
 */
 
+/*
+  FIXME: This component definitely needs a refactor. Its right now very confusing
+  how somethings are done. We should never expect an app to have props AND a store
+  and modify both to update the component. The contract should be simple and straightforward
+
+  Right now we reset the store and update store at random places completely outside
+  the scope of the component. Eg: updateKeyValueStore from PipelineConfigurationsStore ActionCreator.
+
+  This will warrant its own PR as it affects quite a number of places.
+*/
+
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
@@ -83,7 +94,7 @@ export default class KeyValuePairs extends Component {
     super(props);
     var { keyValues, onKeyValueChange } = props;
     this.state = {
-        pairs: [...keyValues.pairs]
+      pairs: [...keyValues.pairs]
     };
     KeyValueStore.dispatch({
       type: KeyValueStoreActions.onUpdate,
@@ -98,6 +109,12 @@ export default class KeyValuePairs extends Component {
   }
 
   shouldComponentUpdate(nextProps) {
+    if (this.state.pairs.length !== nextProps.keyValues.pairs.length) {
+      KeyValueStore.dispatch({
+        type: KeyValueStoreActions.onUpdate,
+        payload: {pairs: nextProps.keyValues.pairs}
+      });
+    }
     return this.state.pairs.length !== nextProps.keyValues.pairs.length;
   }
 

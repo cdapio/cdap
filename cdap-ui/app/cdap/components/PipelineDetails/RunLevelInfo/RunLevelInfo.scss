@@ -145,27 +145,51 @@ $border-color: $grey-05;
       font-size: 18px;
     }
 
-    .pipeline-configurations-content {
-      right: 0;
-      left: -80px;
-      height: 400px;
-      top: 55px;
-      cursor: default;
-
-      .pipeline-configurations-header {
-        background-color: $grey-07;
-      }
-
-      .configuration-content {
-        text-align: left;
-
-        #runtime-arguments-tab-content {
-          .runtime-arguments-values {
-            /* For this height we can fit 3 key-value pairs.
-            144px = (32px row height + 16px margin bottom) * 3 */
-            max-height: 144px;
+    .popper {
+      width: auto;
+      margin-left: 50px;
+      .pipeline-modeless-content {
+        .historical-runtime-args-wrapper {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          width: 100%;
+          h4 {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .historical-runtimeargs-keyvalues {
+            text-align: left;
+            padding: 10px 0;
+            > div {
+              display: grid;
+              padding: 5px 0;
+              grid-gap: 10px;
+              grid-template-columns: repeat(2, 1fr);
+              &:first-child {
+                color: gray;
+                font-weight: 500;
+              }
+              .form-control {
+                font-size: 14px;
+              }
+            }
           }
         }
+      }
+      .runconfig-modeless-title {
+        display: flex;
+        .copyable-id {
+          font-size: 12px;
+        }
+      }
+      .runconfig-tab-footer {
+        margin: 0 30px;
+        border-top: 1px solid $grey-05;
+        text-align: right;
+        padding: 15px 0;
       }
     }
   }

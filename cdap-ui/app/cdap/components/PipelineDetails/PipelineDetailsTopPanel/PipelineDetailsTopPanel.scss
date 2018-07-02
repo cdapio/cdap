@@ -80,6 +80,8 @@ $btn-border-color: transparent;
 
   .pipeline-details-buttons {
     height: $top-panel-height;
+    display: flex;
+    align-items: center;
 
     .pipeline-action-container {
       display: inline-block;
@@ -110,7 +112,6 @@ $btn-border-color: transparent;
 
       .pipeline-action-btn {
         height: 100%;
-        padding: 0 10px;
         display: flex;
         align-items: center;
         border-radius: 0;
@@ -172,15 +173,28 @@ $btn-border-color: transparent;
       }
     }
 
-    .pipeline-run-container {
-      margin-right: 10px;
-    }
-
     .pipeline-run-container,
     .pipeline-stop-container {
       height: 42px;
       border: 1px solid $grey-06;
       border-radius: 5px;
+      display: inline-flex;
+    }
+
+    .pipeline-run-container {
+      margin-right: 10px;
+
+      > .btn.btn-secondary {
+        border: 0;
+        border-radius: 5px;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        .btn-container {
+          height: 100%;
+          display: flex;
+          align-items: center;
+        }
+      }
     }
 
     .pipeline-details-container {
