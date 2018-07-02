@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
+import enableSystemApp from 'services/ServiceEnablerUtilities';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import {objectQuery} from 'services/helpers';
@@ -49,7 +49,7 @@ export default class DataPrepServiceControl extends Component {
 
   enableService() {
     this.setState({loading: true});
-    enableDataPreparationService({
+    enableSystemApp({
       shouldStopService: false,
       artifactName,
       api: MyDataPrepApi,

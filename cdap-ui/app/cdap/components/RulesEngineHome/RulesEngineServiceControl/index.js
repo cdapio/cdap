@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,18 +15,16 @@
 */
 
 import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
 import MyRuleEngineApi from 'api/rulesengine';
-import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
+import enableSystemApp from 'services/ServiceEnablerUtilities';
 import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
-import {MyArtifactApi} from 'api/artifact';
-import NamespaceStore from 'services/NamespaceStore';
 
 require('./RulesEngineServiceControl.scss');
 const PREFIX = 'features.RulesEngine.RulesEngineServiceControl';
+const RulesEngineArtifact = 'dre-service';
 
 export default class RulesEngineServiceControl extends Component {
 
@@ -36,22 +34,16 @@ export default class RulesEngineServiceControl extends Component {
 
   state = {
     loading: false,
-    error: null,
-    rulesEngineNotAvailable: false,
-    showEnableButton: false
+    error: null
   };
-
-  componentDidMount() {
-    this.checkIfRulesEngineIsAvailable();
-  }
 
   enableRulesEngine = () => {
     this.setState({
       loading: true
     });
-    enableDataPreparationService({
+    enableSystemApp({
       shouldStopService: false,
-      artifactName: 'yare-service',
+      artifactName: RulesEngineArtifact,
       api: MyRuleEngineApi,
       i18nPrefix: ''
     })
@@ -65,26 +57,6 @@ export default class RulesEngineServiceControl extends Component {
         }
       );
   }
-
-  checkIfRulesEngineIsAvailable = () => {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
-    MyArtifactApi
-      .list({ namespace })
-      .subscribe(
-        (artifacts) => {
-          let isYareServicePresent = artifacts.find(artifact => artifact.name === 'yare-service');
-          if (!isYareServicePresent) {
-            this.setState({
-              rulesEngineNotAvailable: true
-            });
-          } else {
-            this.setState({
-              showEnableButton: true
-            });
-          }
-        }
-      );
-  };
 
   renderError = () => {
     if (!this.state.error) {
@@ -103,19 +75,9 @@ export default class RulesEngineServiceControl extends Component {
     );
   }
 
-  renderAvailableOrEnableBtn = () => {
-    if (!this.state.rulesEngineNotAvailable && !this.state.showEnableButton) {
-      return (<span> {T.translate(`${PREFIX}.checkMessage`)}</span>);
-    }
-    if (this.state.rulesEngineNotAvailable) {
-      return (
-        <span className="mail-to-link">
-          {T.translate(`${PREFIX}.contactMessage`)}
-        </span>
-      );
-    }
-    if (this.state.showEnableButton) {
-      return (
+  renderEnableBtn = () => {
+    return (
+      <div className="action-container">
         <button
           className="btn btn-primary"
           onClick={this.enableRulesEngine}
@@ -123,14 +85,14 @@ export default class RulesEngineServiceControl extends Component {
         >
           {
             this.state.loading ?
-              <LoadingSVG height="16px"/>
+              <LoadingSVG />
             :
               null
           }
           <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`)}</span>
         </button>
-      );
-    }
+      </div>
+    );
   };
 
   render() {
@@ -142,6 +104,8 @@ export default class RulesEngineServiceControl extends Component {
         </div>
         <div className="text-container">
           <h2> {T.translate(`${PREFIX}.title`)} </h2>
+          {this.renderEnableBtn()}
+          {this.renderError()}
           <p>
             {T.translate(`${PREFIX}.description`)}
           </p>
@@ -171,10 +135,6 @@ export default class RulesEngineServiceControl extends Component {
               </li>
             </ul>
           </div>
-          {
-            this.renderAvailableOrEnableBtn()
-          }
-          {this.renderError()}
         </div>
       </div>
     );

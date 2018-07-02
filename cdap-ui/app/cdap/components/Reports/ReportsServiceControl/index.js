@@ -16,8 +16,7 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
-import {MyArtifactApi} from 'api/artifact';
+import enableSystemApp from 'services/ServiceEnablerUtilities';
 import {MyReportsApi} from 'api/reports';
 import IconSVG from 'components/IconSVG';
 import BtnWithLoading from 'components/BtnWithLoading';
@@ -34,38 +33,7 @@ export default class ReportsServiceControl extends Component {
 
   state = {
     loading: false,
-    error: null,
-    artifactNotAvailable: false,
-    showEnableButton: false
-  };
-
-  componentDidMount() {
-    this.checkIfReportsIsAvailable();
-  }
-
-  checkIfReportsIsAvailable = () => {
-    // The artifact will be in the system namespace, so we are just checking the default namespace
-    // since default namespace will always be there.
-    let params = {
-      namespace: 'default',
-      scope: 'SYSTEM'
-    };
-
-    MyArtifactApi.list(params)
-      .subscribe(
-        (artifacts) => {
-          let isArtifactPresent = artifacts.find(artifact => artifact.name === ReportsArtifact);
-          if (!isArtifactPresent) {
-            this.setState({
-              artifactNotAvailable: true
-            });
-          } else {
-            this.setState({
-              showEnableButton: true
-            });
-          }
-        }
-      );
+    error: null
   };
 
   enableReports = () => {
@@ -73,7 +41,7 @@ export default class ReportsServiceControl extends Component {
       loading: true
     });
 
-    enableDataPreparationService({
+    enableSystemApp({
       shouldStopService: false,
       artifactName: ReportsArtifact,
       api: MyReportsApi,
@@ -89,33 +57,17 @@ export default class ReportsServiceControl extends Component {
     );
   };
 
-  renderAvailableOrEnableBtn = () => {
-    if (!this.state.artifactNotAvailable && !this.state.showEnableButton) {
-      return (
-        <span>{T.translate(`${PREFIX}.checking`)}</span>
-      );
-    }
-    if (this.state.artifactNotAvailable) {
-      return (
-        <div className="action-container">
-          <span className="mail-to-link">
-            {T.translate(`${PREFIX}.contact`)}
-          </span>
-        </div>
-      );
-    }
-    if (this.state.showEnableButton) {
-      return (
-        <div className="action-container">
-          <BtnWithLoading
-            className="btn-primary"
-            label={T.translate(`${PREFIX}.enable`)}
-            loading={this.state.loading}
-            onClick={this.enableReports}
-          />
-        </div>
-      );
-    }
+  renderEnableBtn = () => {
+    return (
+      <div className="action-container">
+        <BtnWithLoading
+          className="btn-primary"
+          label={T.translate(`${PREFIX}.enable`)}
+          loading={this.state.loading}
+          onClick={this.enableReports}
+        />
+      </div>
+    );
   };
 
   renderError = () => {
@@ -142,7 +94,7 @@ export default class ReportsServiceControl extends Component {
       <div className="reports-service-control text-xs-center">
         <Helmet title={T.translate('features.Reports.pageTitle')} />
         <br />
-        {this.renderAvailableOrEnableBtn()}
+        {this.renderEnableBtn()}
         {this.renderError()}
       </div>
     );
