@@ -170,7 +170,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       while (reportIdDirIter.hasNext() && reportStatuses.size() < limit) {
         Location reportIdDir = reportIdDirIter.next();
         String reportId = reportIdDir.getName();
-        ReportMetaInfo metaInfo = getReportMetaInfo(reportFilesetLocation, reportIdDir, getReportRequest(reportIdDir));
+        ReportGenerationRequest reportGenerationRequest = getReportRequest(reportIdDir);
+        // skip the report with missing report generation request
+        if (reportGenerationRequest == null) {
+          continue;
+        }
+        ReportMetaInfo metaInfo = getReportMetaInfo(reportFilesetLocation, reportIdDir, reportGenerationRequest);
         // skip adding reports that are expired, or the index of the current directory among existing directories
         // is smaller than the given offset
         if (ReportStatus.EXPIRED.equals(metaInfo.getStatus()) || existingReportDirIdx++ < offset) {
@@ -274,12 +279,19 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     /**
-     * Gets the report request from _START file, which was written at the beginning of report generation
+     * Gets the report request from _START file, which was written at the beginning of report generation.
+     * Returns {@code null} if the _START file doesn't exist, or deserializing the report request fails.
      */
-    private static ReportGenerationRequest getReportRequest(Location reportIdDir) throws Exception {
+    @Nullable
+    private static ReportGenerationRequest getReportRequest(Location reportIdDir) {
       // read the report request from _START file, which was written at the beginning of report generation
-      String reportRequestString = readStringFromFile(reportIdDir, START_FILE);
-      return GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+      try {
+        String reportRequestString = readStringFromFile(reportIdDir, START_FILE);
+        return GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
+      } catch (Exception e) {
+        LOG.error("Failed to get report generation request in {}", reportIdDir, e);
+        return null;
+      }
     }
 
     /**
@@ -294,7 +306,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * @throws Exception if fails to get the status of the report or fails to access the file with report save request
      */
     private ReportMetaInfo getReportMetaInfo(Location reportFilesetLocation, Location reportIdDir,
-                                             ReportGenerationRequest generationRequest) throws Exception {
+                                             @Nullable ReportGenerationRequest generationRequest) throws Exception {
       // Get the creation time from the report ID, which is time based UUID
       String reportId = reportIdDir.getName();
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
@@ -307,7 +319,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         if (ReportStatus.COMPLETED.equals(status)) {
           expiryTimeSecs = TimeUnit.MILLISECONDS.toSeconds(getExpiryTimeMillis(reportIdDir));
         }
-        return new ReportMetaInfo(generationRequest.getName(), null, creationTime, expiryTimeSecs, status);
+        return new ReportMetaInfo(generationRequest == null ? null : generationRequest.getName(), null,
+                                  creationTime, expiryTimeSecs, status);
       }
       // read the report save request from the file
       String reportSaveRequestString =
@@ -629,6 +642,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       responder.sendJson(200, ImmutableMap.of("id", reportId));
     }
 
+    /**
+     * Gets the location of the file with file name consisting report ID and the run ID of
+     * the current ReportGenerationSpark program run.
+     */
     private Location getRunIdFileLocation(Location reportFilesetLocation, String reportId) throws IOException {
       return reportFilesetLocation.append(String.format("%s_%s_%s",
                                                         RUN_ID_FILE_PREFIX, reportId, getContext().getRunId().getId()));
@@ -752,22 +769,30 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
 
     /**
      * Returns the status of the report generation by checking the presence of the _TO_BE_DELETED file,
-     * _FAILURE file, or the _SUCCESS file. If none of these files exists, the report generation is still running.
-     *
-     * TODO: [CDAP-13215] failure file may not be written if the Spark program is killed. Status of killed
-     * report generation job might be returned as RUNNING
+     * _FAILURE file, the _SUCCESS file, and the file with filename consisting of the report ID and
+     * the run ID of the current ReportGenerationSpark program run. If there is the _SUCCESS file
+     * but the report has expired, the report is completed but expired, return {@link ReportStatus.EXPIRED}.
+     * If there is a _FAILURE file, return {@link ReportStatus.FAILED}. Or if there doesn't exist a file
+     * with filename consisting of the report ID and the run ID of the current ReportGenerationSpark program run,
+     * which means the report generation was killed in a previous run of ReportGenerationSpark,
+     * also return {@link ReportStatus.FAILED}. Otherwise, if there is the _SUCCESS file and the report hasn't expired,
+     * return {@link ReportStatus.COMPLETED}. If none of the above case is true, then the report generation is still
+     * running, return {@link ReportStatus.RUNNING}.
      *
      * @param reportFilesetLocation the location of the base directory of all report directories
      * @param reportIdDir the base directory with report ID as directory name
      * @return status of the report generation
      */
     private ReportStatus getReportStatus(Location reportFilesetLocation, Location reportIdDir) throws Exception {
-      // if the report is completed but has expired, return EXPIRED as its status too
+      // if the report is completed but has expired, return EXPIRED as its status
       if (reportIdDir.append(LocationName.SUCCESS_FILE).exists() &&
         getExpiryTimeMillis(reportIdDir) < System.currentTimeMillis()) {
         return ReportStatus.EXPIRED;
       }
-      // if there is a _FAILURE file or the report generation was killed in a previous run, the report is failed
+      // if there is a _FAILURE file, the report has status FAILED. Or if there doesn't exist a file
+      // with filename consisting of the report ID and the run ID of the current ReportGenerationSpark program run,
+      // which means the report generation was killed in a previous run of ReportGenerationSpark,
+      // the report also has status FAILED
       if (reportIdDir.append(FAILURE_FILE).exists() ||
         !getRunIdFileLocation(reportFilesetLocation, reportIdDir.getName()).exists()) {
         return ReportStatus.FAILED;
