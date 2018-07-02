@@ -324,6 +324,7 @@ public class MasterServiceMain extends DaemonMain {
     }
     stopQuietly(electionInfoService);
     stopQuietly(zkClient);
+    Closeables.closeQuietly(logAppenderInitializer);
   }
 
   @Override
@@ -599,6 +600,8 @@ public class MasterServiceMain extends DaemonMain {
     private TwillRunnerService twillRunner;
     private TwillRunnerService remoteExecutionTwillRunner;
     private ExploreClient exploreClient;
+    private LogAppenderInitializer logAppenderInitializer;
+
 
     private MasterLeaderElectionHandler(CConfiguration cConf, Configuration hConf, ZKClientService zkClient,
                                         LeaderElectionInfoService electionInfoService) {
@@ -617,6 +620,9 @@ public class MasterServiceMain extends DaemonMain {
       // We need to create a new injector each time becoming leader so that new instances of singleton Services
       // will be created
       injector = createLeaderInjector(cConf, hConf, zkClient, electionInfoService);
+
+      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer.initialize();
 
       if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
         exploreClient = injector.getInstance(ExploreClient.class);
@@ -711,6 +717,7 @@ public class MasterServiceMain extends DaemonMain {
       services.clear();
       Closeables.closeQuietly(authorizerInstantiator);
       Closeables.closeQuietly(exploreClient);
+      Closeables.closeQuietly(logAppenderInitializer);
     }
 
     /**
