@@ -23,7 +23,6 @@ import {convertMapToKeyValuePairs, convertKeyValuePairsToMap} from 'services/hel
 import {MyPreferenceApi} from 'api/preference';
 import ViewAllLabel from 'components/ViewAllLabel';
 import T from 'i18n-react';
-import isEqual from 'lodash/isEqual';
 import SortableStickyGrid from 'components/SortableStickyGrid';
 import {PREFERENCES_LEVEL} from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
 
@@ -45,26 +44,41 @@ const NUM_PREFS_TO_SHOW = 5;
 export default class SystemPrefsAccordion extends Component {
   state = {
     prefsModalOpen: false,
-    prefsForDisplay: convertMapToKeyValuePairs(this.props.prefs, false),
+    prefsForDisplay: [],
+    loading: true,
     viewAll: false
   };
 
   static propTypes = {
-    prefs: PropTypes.object,
-    loading: PropTypes.bool,
     expanded: PropTypes.bool,
     onExpand: PropTypes.func
   };
 
+  componentDidMount() {
+    this.getPrefs();
+  }
+
   componentWillReceiveProps(nextProps) {
-    if (!isEqual(this.props.prefs, nextProps.prefs)) {
-      this.setState({
-        prefsForDisplay: convertMapToKeyValuePairs(nextProps.prefs, false)
-      });
+    if (nextProps.expanded) {
+      this.getPrefs();
     }
   }
 
-  fetchPrefs = () => {
+  getPrefs() {
+    MyPreferenceApi
+      .getSystemPreferences()
+      .subscribe(
+        (res) => {
+          this.setState({
+            prefsForDisplay: convertMapToKeyValuePairs(res, false),
+            loading: false
+          });
+        },
+        (err) => console.log(err)
+      );
+  }
+
+  fetchNewPrefs = () => {
     MyPreferenceApi
       .getSystemPreferences()
       .subscribe(
@@ -131,7 +145,7 @@ export default class SystemPrefsAccordion extends Component {
         <span className="admin-config-container-label">
           <IconSVG name={this.props.expanded ? "icon-caret-down" : "icon-caret-right"} />
           {
-            this.props.loading ?
+            this.state.loading ?
               (
                 <h5>
                   {T.translate(`${PREFIX}.label`)}
@@ -203,7 +217,7 @@ export default class SystemPrefsAccordion extends Component {
             <SetPreferenceModal
               isOpen={this.state.prefsModalOpen}
               toggleModal={this.togglePrefsModal}
-              onSuccess={this.fetchPrefs}
+              onSuccess={this.fetchNewPrefs}
               setAtLevel={PREFERENCES_LEVEL.SYSTEM}
             />
           :

@@ -39,6 +39,7 @@ import {
 import CreateProfileBtn from 'components/Cloud/Profiles/CreateView/CreateProfileBtn';
 import uuidV4 from 'uuid/v4';
 import CreateProfileStore from 'components/Cloud/Profiles/CreateView/CreateProfileStore';
+import {highlightNewProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
 
 require('./CreateView.scss');
 
@@ -114,6 +115,10 @@ class ProfileCreateView extends Component {
               redirectToNamespace: true
             });
           }
+
+          let profilePrefix = this.state.isSystem ? 'SYSTEM' : 'USER';
+          name = `${profilePrefix}:${name}`;
+          highlightNewProfile(name);
         },
         err => {
           this.setState({

@@ -24,19 +24,19 @@ import {MyPipelineApi} from 'api/pipeline';
 import {MyProgramApi} from 'api/program';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {MyPreferenceApi} from 'api/preference';
-import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
 import {objectQuery} from 'services/helpers';
 import uuidV4 from 'uuid/v4';
 import uniqBy from 'lodash/uniqBy';
 import cloneDeep from 'lodash/cloneDeep';
+import {CLOUD} from 'services/global-constants';
 
 
-// Filter certain preferences from being shown in the run time arguments 
+// Filter certain preferences from being shown in the run time arguments
 // They are being represented in other places (like selected compute profile).
 const getFilteredRuntimeArgs = (runtimeArgs) => {
   const RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY = [
-    PROFILE_NAME_PREFERENCE_PROPERTY,
-    PROFILE_PROPERTIES_PREFERENCE,
+    CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY,
+    CLOUD.PROFILE_PROPERTIES_PREFERENCE,
     'logical.start.time'
   ];
   let {resolvedMacros} = PipelineConfigurationsStore.getState();
@@ -74,7 +74,7 @@ const updateRunTimeArgs = (rtArgs) => {
   let {runtimeArgs} = PipelineConfigurationsStore.getState();
   let modifiedRuntimeArgs = {};
   let excludedPairs = [...runtimeArgs.pairs];
-  const preferencesToFilter = [PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE];
+  const preferencesToFilter = [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY, CLOUD.PROFILE_PROPERTIES_PREFERENCE];
   const shouldExcludeProperty = (property) => preferencesToFilter.filter(prefProp => property.indexOf(prefProp) !== -1).length;
   excludedPairs = excludedPairs.filter(pair => shouldExcludeProperty(pair.key));
   modifiedRuntimeArgs.pairs = rtArgs.pairs.concat(excludedPairs);
@@ -258,8 +258,8 @@ const scheduleOrSuspendPipeline = (scheduleApi) => {
 const getCustomizationMap = (properties) => {
   let profileCustomizations = {};
   Object.keys(properties).forEach(prop => {
-    if (prop.indexOf(PROFILE_PROPERTIES_PREFERENCE) !== -1) {
-      let propName = prop.replace(`${PROFILE_PROPERTIES_PREFERENCE}.`, '');
+    if (prop.indexOf(CLOUD.PROFILE_PROPERTIES_PREFERENCE) !== -1) {
+      let propName = prop.replace(`${CLOUD.PROFILE_PROPERTIES_PREFERENCE}.`, '');
       profileCustomizations[propName] = properties[prop];
     }
   });
@@ -303,7 +303,7 @@ const fetchAndUpdateRuntimeArgs = () => {
     // profile for a pipeline until the user choose something else. This is populated from
     // resolved app level preference which will provide preferences from namespace.
     const isProfileProperty = (property) => (
-      [PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE]
+      [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY, CLOUD.PROFILE_PROPERTIES_PREFERENCE]
         .filter(profilePrefix => property.indexOf(profilePrefix) !== -1)
         .length
     );

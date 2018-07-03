@@ -18,6 +18,7 @@ import PropTypes from 'prop-types';
 import React, {PureComponent} from 'react';
 import Popover from 'components/Popover';
 import  ProfileCustomizeContent from 'components/PipelineDetails/ProfilesListView/ProfileCustomizePopover/ProfileCustomizeContent';
+import {getProfileNameWithScope} from 'components/Cloud/Profiles/Store/ActionCreator';
 require('./ProfileCustomizePopover.scss');
 
 export default class ProfileCustomizePopover extends PureComponent {
@@ -51,7 +52,7 @@ export default class ProfileCustomizePopover extends PureComponent {
 
   render() {
     let {name, provisioner, scope} = this.props.profile;
-    let profileName = scope === 'SYSTEM' ? `system:${name}` : `user:${name}`;
+    let profileName = getProfileNameWithScope(name, scope);
     let customizeLink = () => (<div className="btn-link">Customize</div>);
     return (
       <Popover

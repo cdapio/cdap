@@ -25,9 +25,9 @@ import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
-import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {getProvisionerLabel, extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
 import ProfileStatusToggle from 'components/Cloud/Profiles/DetailView/Content/BasicInfo/ProfileStatusToggle';
-import {extractProfileName, DEFAULT_PROFILE_NAME} from 'components/PipelineDetails/ProfilesListView';
+import {CLOUD} from 'services/global-constants';
 
 require('./BasicInfo.scss');
 
@@ -151,8 +151,8 @@ export default class ProfileDetailViewBasicInfo extends Component {
     );
   }
 
-  renderDivider(profileIsDefault) {
-    if (profileIsDefault) {
+  renderDivider(isNativeProfile) {
+    if (isNativeProfile) {
       return null;
     }
     return <span className="divider"></span>;
@@ -165,7 +165,7 @@ export default class ProfileDetailViewBasicInfo extends Component {
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
     } : `/ns/${getCurrentNamespace()}/details`;
     let namespace = this.props.isSystem ? 'system' : getCurrentNamespace();
-    const profileIsDefault = profile.name === extractProfileName(DEFAULT_PROFILE_NAME);
+    const isNativeProfile = profile.name === extractProfileName(CLOUD.DEFAULT_PROFILE_NAME);
 
     const actionsElem = () => {
       return (
@@ -188,7 +188,7 @@ export default class ProfileDetailViewBasicInfo extends Component {
               namespace={namespace}
               toggleProfileStatusCallback={this.props.toggleProfileStatusCallback}
             />
-            {this.renderDivider(profileIsDefault)}
+            {this.renderDivider(isNativeProfile)}
             <ActionsPopover
               target={actionsElem}
               namespace={namespace}

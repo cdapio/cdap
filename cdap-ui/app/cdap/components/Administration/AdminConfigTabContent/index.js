@@ -21,7 +21,6 @@ import NamespacesAccordion from 'components/Administration/AdminConfigTabContent
 import SystemProfilesAccordion from 'components/Administration/AdminConfigTabContent/SystemProfilesAccordion';
 import SystemPrefsAccordion from 'components/Administration/AdminConfigTabContent/SystemPrefsAccordion';
 import {MyNamespaceApi} from 'api/namespace';
-import {MyPreferenceApi} from 'api/preference';
 import {Link} from 'react-router-dom';
 import T from 'i18n-react';
 
@@ -36,9 +35,7 @@ export const ADMIN_CONFIG_ACCORDIONS = {
 export default class AdminConfigTabContent extends Component {
   state = {
     namespaces: 0,
-    systemPrefs: 0,
     namespacesCountLoading: true,
-    systemPrefsCountLoading: true,
     expandedAccordion: this.props.accordionToExpand || ADMIN_CONFIG_ACCORDIONS.namespaces
   };
 
@@ -64,7 +61,6 @@ export default class AdminConfigTabContent extends Component {
 
   componentDidMount() {
     this.getNamespaces();
-    this.getSystemPrefs();
   }
 
   getNamespaces() {
@@ -75,20 +71,6 @@ export default class AdminConfigTabContent extends Component {
           this.setState({
             namespaces: res,
             namespacesCountLoading: false
-          });
-        },
-        (err) => console.log(err)
-      );
-  }
-
-  getSystemPrefs() {
-    MyPreferenceApi
-      .getSystemPreferences()
-      .subscribe(
-        (res) => {
-          this.setState({
-            systemPrefs: res,
-            systemPrefsCountLoading: false
           });
         },
         (err) => console.log(err)
@@ -118,8 +100,6 @@ export default class AdminConfigTabContent extends Component {
           onExpand={this.expandAccordion.bind(this, ADMIN_CONFIG_ACCORDIONS.systemProfiles)}
         />
         <SystemPrefsAccordion
-          prefs={this.state.systemPrefs}
-          loading={this.state.systemPrefsCountLoading}
           expanded={this.state.expandedAccordion === ADMIN_CONFIG_ACCORDIONS.systemPrefs}
           onExpand={this.expandAccordion.bind(this, ADMIN_CONFIG_ACCORDIONS.systemPrefs)}
         />

@@ -239,6 +239,7 @@ const HYDRATOR_DEFAULT_VALUES = {
   backpressure: true,
   numExecutors: 1
 };
+
 const PROGRAM_STATUSES = {
   DEPLOYED: 'DEPLOYED',
   SUBMITTING: 'SUBMITTING',
@@ -263,11 +264,18 @@ const PROGRAM_STATUSES = {
 const SECURE_KEY_PREFIX = '${secure(';
 const SECURE_KEY_SUFFIX = ')}';
 
+const CLOUD = {
+  DEFAULT_PROFILE_NAME: 'SYSTEM:native',
+  PROFILE_NAME_PREFERENCE_PROPERTY: 'system.profile.name',
+  PROFILE_PROPERTIES_PREFERENCE: 'system.profile.properties'
+};
+
 export {
   NUMBER_TYPES,
   GLOBALS,
   HYDRATOR_DEFAULT_VALUES,
   PROGRAM_STATUSES,
   SECURE_KEY_PREFIX,
-  SECURE_KEY_SUFFIX
+  SECURE_KEY_SUFFIX,
+  CLOUD
 };

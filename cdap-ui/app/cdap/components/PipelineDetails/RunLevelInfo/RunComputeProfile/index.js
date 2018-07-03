@@ -18,11 +18,12 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import {objectQuery, preventPropagation} from 'services/helpers';
-import {PROFILE_NAME_PREFERENCE_PROPERTY, extractProfileName, DEFAULT_PROFILE_NAME} from 'components/PipelineDetails/ProfilesListView';
 import IconSVG from 'components/IconSVG';
 import ProfilePreview from 'components/Cloud/Profiles/Preview';
 import Popover from 'components/Popover';
 import classnames from 'classnames';
+import {extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {CLOUD} from 'services/global-constants';
 
 require('./RunComputeProfile.scss');
 
@@ -35,7 +36,7 @@ class RunLevelComputeProfile extends Component {
     const ProfileLabel = () => {
       return (
         <div className={classnames("profile-preview-label", {
-          'disabled': this.props.profileName === DEFAULT_PROFILE_NAME
+          'disabled': this.props.profileName === CLOUD.DEFAULT_PROFILE_NAME
         })}>
           {
           !this.props.profileName ?
@@ -50,7 +51,7 @@ class RunLevelComputeProfile extends Component {
           :
             <div
               onClick={(e) => {
-                if (this.props.profileName === DEFAULT_PROFILE_NAME) {
+                if (this.props.profileName === CLOUD.DEFAULT_PROFILE_NAME) {
                   preventPropagation(e);
                   return false;
                 }
@@ -82,7 +83,7 @@ class RunLevelComputeProfile extends Component {
             >
               <ProfilePreview
                 profileName={extractProfileName(this.props.profileName)}
-                profileScope={this.props.profileName.indexOf('system:') !== -1 ? 'system' : 'user'}
+                profileScope={this.props.profileName.indexOf('SYSTEM:') !== -1 ? 'system' : 'user'}
               />
             </Popover>
         }
@@ -98,11 +99,11 @@ const getProfileName = (runProperties) => {
   } catch (e) {
     return null;
   }
-  return runtimeArgs[PROFILE_NAME_PREFERENCE_PROPERTY] || null;
+  return runtimeArgs[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] || null;
 };
 const mapStateToProps = (state) => {
   return {
-    profileName: getProfileName(objectQuery(state, 'currentRun', 'properties', 'runtimeArgs')) || DEFAULT_PROFILE_NAME
+    profileName: getProfileName(objectQuery(state, 'currentRun', 'properties', 'runtimeArgs')) || CLOUD.DEFAULT_PROFILE_NAME
   };
 };
 

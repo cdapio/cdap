@@ -21,7 +21,7 @@ import Accordion, {AccordionContent, AccordionTitle, AccordionPane} from 'compon
 import {MyCloudApi} from 'api/cloud';
 import AbstractWidget from 'components/AbstractWidget';
 import uuidV4 from 'uuid/v4';
-import {extractProfileName} from 'components/PipelineDetails/ProfilesListView';
+import {extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import cloneDeep from 'lodash/cloneDeep';
 

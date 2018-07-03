@@ -31,8 +31,8 @@ import classnames from 'classnames';
 import {objectQuery} from 'services/helpers';
 import {Provider} from 'react-redux';
 import isNil from 'lodash/isNil';
-import {PROFILE_NAME_PREFERENCE_PROPERTY, PROFILE_PROPERTIES_PREFERENCE} from 'components/PipelineDetails/ProfilesListView';
 import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {CLOUD} from 'services/global-constants';
 
 require('./ScheduleRuntimeArgs.scss');
 require('./Tabs/ScheduleRuntimeTabStyling.scss');
@@ -111,7 +111,7 @@ export default class ScheduleRuntimeArgs extends Component {
 
       let profileCustomizations = getCustomizationMap(scheduleInfo.properties);
 
-      setSelectedProfile(scheduleInfo.properties[PROFILE_NAME_PREFERENCE_PROPERTY], profileCustomizations);
+      setSelectedProfile(scheduleInfo.properties[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY], profileCustomizations);
       bulkSetArgMapping(argsArray);
     }
   }
@@ -129,10 +129,10 @@ export default class ScheduleRuntimeArgs extends Component {
     if (selectedProfile.name) {
       let {name, profileCustomizations = {}} = selectedProfile;
       let customProperties = Object.keys(profileCustomizations);
-      config[PROFILE_NAME_PREFERENCE_PROPERTY] = name;
+      config[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] = name;
       if (customProperties.length) {
         customProperties.forEach(prop => {
-          config[`${PROFILE_PROPERTIES_PREFERENCE}.${prop}`] = profileCustomizations[prop];
+          config[`${CLOUD.PROFILE_PROPERTIES_PREFERENCE}.${prop}`] = profileCustomizations[prop];
         });
       }
     }

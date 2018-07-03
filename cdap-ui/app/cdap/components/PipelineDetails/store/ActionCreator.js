@@ -248,7 +248,6 @@ const setUserRuntimeArguments = (argsMap) => {
   });
 };
 
-
 const setMacrosAndUserRuntimeArguments = (macrosMap, argsMap) => {
   PipelineDetailStore.dispatch({
     type: ACTIONS.SET_MACROS_AND_USER_RUNTIME_ARGUMENTS,
