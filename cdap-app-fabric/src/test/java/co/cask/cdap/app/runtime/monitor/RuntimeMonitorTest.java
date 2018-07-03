@@ -39,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
@@ -191,7 +192,8 @@ public class RuntimeMonitorTest {
                                                                   clientKeyStore, serverKeyStore);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                                       datasetFramework, transactional, messagingContext, scheduler);
+                                                       datasetFramework, transactional, messagingContext, scheduler,
+                                                       monitorMessage -> { });
 
     runtimeMonitor.startAndWait();
     // use different configuration for verification
@@ -204,7 +206,8 @@ public class RuntimeMonitorTest {
     verifyPublishedMessages(cConf, 2, lastProcessed);
 
     runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                        datasetFramework, transactional, messagingContext, scheduler);
+                                        datasetFramework, transactional, messagingContext, scheduler,
+                                        monitorMessage -> { });
     runtimeMonitor.startAndWait();
     // use different configuration for verification
     lastProcessed = verifyPublishedMessages(monitorCConf, 2, lastProcessed);
@@ -255,7 +258,8 @@ public class RuntimeMonitorTest {
                                                                   clientKeyStore, serverKeyStore);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                                       datasetFramework, transactional, messagingContext, scheduler);
+                                                       datasetFramework, transactional, messagingContext, scheduler,
+                                                       monitorMessage -> { });
     runtimeMonitor.startAndWait();
 
     // Wait and verify messages as being republished by the runtime monitor to the "local" metrics topics
@@ -307,7 +311,8 @@ public class RuntimeMonitorTest {
                                                                   clientKeyStore, serverKeyStore);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                                       datasetFramework, transactional, messagingContext, scheduler);
+                                                       datasetFramework, transactional, messagingContext, scheduler,
+                                                       monitorMessage -> { });
 
     runtimeMonitor.startAndWait();
     verifyPublishedMessages(monitorCConf, 2, null);
