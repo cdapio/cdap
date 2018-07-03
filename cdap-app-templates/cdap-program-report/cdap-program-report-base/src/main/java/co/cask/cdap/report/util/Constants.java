@@ -20,6 +20,16 @@ package co.cask.cdap.report.util;
  * Constants used by the report generation app and file schema.
  */
 public final class Constants {
+  /**
+   * Constants releated to security key encryption
+   */
+  public static final class Security {
+    public static final String ENCRYPTION_ALGORITHM = "AES";
+    public static final String KEY_FILE_NAME = "security_key";
+    public static final String KEY_FILE_PERMISSION = "700";
+    public static final int ENCRYPTION_KEY_BITSIZE = 128;
+  }
+
   public static final String NAMESPACE = "namespace";
   public static final String ARTIFACT_SCOPE = "artifactScope";
   public static final String ARTIFACT_NAME = "artifactName";

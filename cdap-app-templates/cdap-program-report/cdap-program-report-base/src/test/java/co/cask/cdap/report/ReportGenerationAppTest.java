@@ -38,6 +38,7 @@ import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
 import co.cask.cdap.report.proto.ReportSaveRequest;
 import co.cask.cdap.report.proto.ReportStatus;
+import co.cask.cdap.report.proto.ShareId;
 import co.cask.cdap.report.proto.Sort;
 import co.cask.cdap.report.proto.ValueFilter;
 import co.cask.cdap.report.proto.summary.ArtifactAggregate;
@@ -91,7 +92,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests {@link ReportGenerationApp}.
@@ -181,44 +184,27 @@ public class ReportGenerationAppTest extends TestBase {
     Map<String, String> reportIdMap = getResponseObject(urlConn, STRING_STRING_MAP);
     String reportId = reportIdMap.get("id");
     Assert.assertNotNull(reportId);
-    URL reportIdURL = reportURL.toURI().resolve(reportId + "/").toURL();
-    Tasks.waitFor(ReportStatus.COMPLETED, () -> {
-      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
-                                                                    REPORT_GEN_INFO_TYPE);
-      if (ReportStatus.FAILED.equals(reportGenerationInfo.getStatus())) {
-        Assert.fail("Report generation failed");
-      }
-      return reportGenerationInfo.getStatus();
-    }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
-    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
-                                                                  REPORT_GEN_INFO_TYPE);
-    // assert the summary content is expected
-    ReportSummary summary = reportGenerationInfo.getSummary();
-    Assert.assertNotNull(summary);
-    Assert.assertEquals(ImmutableSet.of(new NamespaceAggregate("ns1", 1), new NamespaceAggregate("ns2" , 1)),
-                        new HashSet<>(summary.getNamespaces()));
-    Assert.assertEquals(ImmutableSet.of(new ArtifactAggregate("Artifact", "1.0.0", "USER", 2)),
-                        new HashSet<>(summary.getArtifacts()));
-    DurationStats durationStats = summary.getDurations();
-    Assert.assertEquals(300L, durationStats.getMin());
-    Assert.assertEquals(300L, durationStats.getMax());
-    // averages with difference smaller than 0.01 are considered equal
-    Assert.assertTrue(Math.abs(300.0 - durationStats.getAverage()) < 0.01);
-    Assert.assertEquals(new StartStats(startSecs, startSecs), summary.getStarts());
-    Assert.assertEquals(ImmutableSet.of(new UserAggregate("alice", 2)), new HashSet<>(summary.getOwners()));
-    Assert.assertEquals(ImmutableSet.of(new StartMethodAggregate(ProgramRunStartMethod.TRIGGERED, 2)),
-                        new HashSet<>(summary.getStartMethods()));
+    URL reportIdURL = reportURL.toURI().resolve("info?report-id=" + reportId).toURL();
+    validateReportSummary(reportIdURL, startSecs);
+
+    // share the report to get the share id
+    URL shareReportURL = reportURL.toURI().resolve(reportId + "/share").toURL();
+    HttpURLConnection shareURLConnection = (HttpURLConnection) shareReportURL.openConnection();
+    shareURLConnection.setRequestMethod("POST");
+    ShareId shareId = getResponseObject(shareURLConnection, ShareId.class);
+
+    // test if we are able to get summary and read the summary using share id
+    URL shareIdSummaryURL = reportURL.toURI().resolve("info?share-id=" + shareId.getShareId()).toURL();
+    validateReportSummary(shareIdSummaryURL, startSecs);
+
     // assert the number of report details is correct
-    URL reportRunsURL = reportIdURL.toURI().resolve("details").toURL();
-    ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
-    Assert.assertEquals(2, reportContent.getTotal());
-    // Assert that all the records in the report contain startMethod TRIGGERED
-    boolean startMethodIsCorrect =
-      reportContent.getDetails().stream().allMatch(content -> content.contains("\"startMethod\":\"TRIGGERED\""));
-    if (!startMethodIsCorrect) {
-      Assert.fail("All report records are expected to contain startMethod TRIGGERED, " +
-                    "but actual results do not meet this requirement: " + reportContent.getDetails());
-    }
+    URL reportRunsURL = reportURL.toURI().resolve("download?report-id=" + reportId).toURL();
+    validateReportContent(reportRunsURL);
+
+    // test if we are able to download and read the report using share id
+    URL shareIdRunsURL = reportURL.toURI().resolve("download?share-id=" + shareId.getShareId()).toURL();
+    validateReportContent(shareIdRunsURL);
+
     // save the report with a new name and description
     URL reportSaveURL = reportURL.toURI().resolve(reportId + "/" + "save").toURL();
     urlConn = (HttpURLConnection) reportSaveURL.openConnection();
@@ -231,7 +217,7 @@ public class ReportGenerationAppTest extends TestBase {
     }
     Assert.assertEquals(200, urlConn.getResponseCode());
     // verify that the name and description of the report have been updated, and the expiry time is null
-    reportGenerationInfo = getResponseObject(reportIdURL.openConnection(), REPORT_GEN_INFO_TYPE);
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(), REPORT_GEN_INFO_TYPE);
     Assert.assertEquals("newName", reportGenerationInfo.getName());
     Assert.assertEquals("newDescription", reportGenerationInfo.getDescription());
     Assert.assertNull(reportGenerationInfo.getExpiry());
@@ -246,15 +232,60 @@ public class ReportGenerationAppTest extends TestBase {
     }
     Assert.assertEquals(403, urlConn.getResponseCode());
     // delete the report
-    urlConn = (HttpURLConnection) reportIdURL.openConnection();
+    URL reportDeleteURL = reportURL.toURI().resolve(reportId).toURL();
+    urlConn = (HttpURLConnection) reportDeleteURL.openConnection();
     urlConn.setRequestMethod("DELETE");
     Assert.assertEquals(200, urlConn.getResponseCode());
     // getting status of a deleted report will get 404
     Assert.assertEquals(404, ((HttpURLConnection) reportIdURL.openConnection()).getResponseCode());
     // deleting a deleted report again will get 404
-    urlConn = (HttpURLConnection) reportIdURL.openConnection();
+    urlConn = (HttpURLConnection) reportDeleteURL.openConnection();
     urlConn.setRequestMethod("DELETE");
     Assert.assertEquals(404, urlConn.getResponseCode());
+  }
+
+
+  private void validateReportSummary(URL reportIdURL, long startSecs)
+          throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    Tasks.waitFor(ReportStatus.COMPLETED, () -> {
+      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+              REPORT_GEN_INFO_TYPE);
+      if (ReportStatus.FAILED.equals(reportGenerationInfo.getStatus())) {
+        Assert.fail("Report generation failed");
+      }
+      return reportGenerationInfo.getStatus();
+    }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
+
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+            REPORT_GEN_INFO_TYPE);
+    // assert the summary content is expected
+    ReportSummary summary = reportGenerationInfo.getSummary();
+    Assert.assertNotNull(summary);
+    Assert.assertEquals(ImmutableSet.of(new NamespaceAggregate("ns1", 1), new NamespaceAggregate("ns2" , 1)),
+            new HashSet<>(summary.getNamespaces()));
+    Assert.assertEquals(ImmutableSet.of(new ArtifactAggregate("Artifact", "1.0.0", "USER", 2)),
+            new HashSet<>(summary.getArtifacts()));
+    DurationStats durationStats = summary.getDurations();
+    Assert.assertEquals(300L, durationStats.getMin());
+    Assert.assertEquals(300L, durationStats.getMax());
+    // averages with difference smaller than 0.01 are considered equal
+    Assert.assertTrue(Math.abs(300.0 - durationStats.getAverage()) < 0.01);
+    Assert.assertEquals(new StartStats(startSecs, startSecs), summary.getStarts());
+    Assert.assertEquals(ImmutableSet.of(new UserAggregate("alice", 2)), new HashSet<>(summary.getOwners()));
+    Assert.assertEquals(ImmutableSet.of(new StartMethodAggregate(ProgramRunStartMethod.TRIGGERED, 2)),
+            new HashSet<>(summary.getStartMethods()));
+  }
+
+  private void validateReportContent(URL reportRunsURL) throws IOException {
+    ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
+    Assert.assertEquals(2, reportContent.getTotal());
+    // Assert that all the records in the report contain startMethod TRIGGERED
+    boolean startMethodIsCorrect =
+            reportContent.getDetails().stream().allMatch(content -> content.contains("\"startMethod\":\"TRIGGERED\""));
+    if (!startMethodIsCorrect) {
+      Assert.fail("All report records are expected to contain startMethod TRIGGERED, " +
+              "but actual results do not meet this requirement: " + reportContent.getDetails());
+    }
   }
 
   private static <T> T getResponseObject(URLConnection urlConnection, Type typeOfT) throws IOException {
