@@ -16,10 +16,16 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+
+import static co.cask.cdap.api.metadata.MetadataEntity.APPLICATION;
+import static co.cask.cdap.api.metadata.MetadataEntity.ARTIFACT;
+import static co.cask.cdap.api.metadata.MetadataEntity.DATASET;
+import static co.cask.cdap.api.metadata.MetadataEntity.PROGRAM;
+import static co.cask.cdap.api.metadata.MetadataEntity.STREAM;
+import static co.cask.cdap.api.metadata.MetadataEntity.VIEW;
 
 /**
  * Key class to get v1 metadata history key information
@@ -47,30 +53,30 @@ public final class MdsHistoryKey {
     keySplitter.skipBytes();
 
     switch (type) {
-      case MetadataEntity.PROGRAM:
+      case PROGRAM:
         keySplitter.skipString();
         keySplitter.skipString();
         keySplitter.skipString();
         keySplitter.skipString();
         break;
-      case MetadataEntity.APPLICATION:
+      case APPLICATION:
         keySplitter.skipString();
         keySplitter.skipString();
         break;
-      case MetadataEntity.DATASET:
+      case DATASET:
         keySplitter.skipString();
         keySplitter.skipString();
         break;
-      case MetadataEntity.STREAM:
+      case STREAM:
         keySplitter.skipString();
         keySplitter.skipString();
         break;
-      case MetadataEntity.VIEW:
+      case VIEW:
         keySplitter.skipString();
         keySplitter.skipString();
         keySplitter.skipString();
         break;
-      case MetadataEntity.ARTIFACT:
+      case ARTIFACT:
         keySplitter.skipString();
         keySplitter.skipString();
         keySplitter.skipString();
