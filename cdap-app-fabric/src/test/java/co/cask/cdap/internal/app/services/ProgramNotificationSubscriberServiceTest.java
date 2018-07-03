@@ -19,10 +19,16 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
@@ -37,26 +43,35 @@ import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.profile.ProfileService;
+import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.reporting.ProgramHeartbeatDataset;
 import com.google.common.collect.ImmutableSet;
+import co.cask.cdap.proto.profile.Profile;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionExecutor;
+import org.apache.twill.api.RunId;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +81,9 @@ import java.util.concurrent.TimeoutException;
  * Tests program run state persistence.
  */
 public class ProgramNotificationSubscriberServiceTest {
+  private static final String SYSTEM_METRIC_PREFIX = "system.";
+
+  private static Injector injector;
   private static Table appMetaTable;
   private static AppMetadataStore metadataStoreDataset;
   private static ProgramHeartbeatDataset programHeartbeatDataset;
@@ -75,7 +93,7 @@ public class ProgramNotificationSubscriberServiceTest {
 
   @BeforeClass
   public static void setupClass() throws Exception {
-    Injector injector = AppFabricTestHelper.getInjector();
+    injector = AppFabricTestHelper.getInjector();
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     // we only want to process and check program status messages processed by heart beat store, so set high value
     cConf.set(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS, String.valueOf(TimeUnit.HOURS.toSeconds(1)));
@@ -136,6 +154,83 @@ public class ProgramNotificationSubscriberServiceTest {
                     return meta.getStatus();
                   }),
                   10, TimeUnit.SECONDS);
+    programStateWriter.completed(runId);
+  }
+
+  @Test
+  public void testMetricsEmit() throws Exception {
+    ProfileService profileService = injector.getInstance(ProfileService.class);
+    // create my profile
+    ProfileId myProfile = NamespaceId.DEFAULT.profile("MyProfile");
+    profileService.saveProfile(myProfile, Profile.NATIVE);
+
+    ProgramId programId = NamespaceId.DEFAULT.app("myApp").workflow("myProgram");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    RunId runId = RunIds.generate(System.currentTimeMillis());
+    ProgramRunId programRunId = programId.run(runId.getId());
+    Map<String, String> systemArgs = Collections.singletonMap(SystemArguments.PROFILE_NAME, myProfile.getScopedName());
+
+    long startTime = System.currentTimeMillis();
+    // record the program status in app meta store
+    txnl.execute(() -> {
+      int sourceId = 0;
+      metadataStoreDataset.recordProgramProvisioning(programRunId, Collections.emptyMap(), systemArgs,
+                                                     AppFabricTestHelper.createSourceId(++sourceId), artifactId);
+      // using 3 nodes
+      metadataStoreDataset.recordProgramProvisioned(programRunId, 3, AppFabricTestHelper.createSourceId(++sourceId));
+      metadataStoreDataset.recordProgramStart(programRunId, null, systemArgs,
+                                              AppFabricTestHelper.createSourceId(++sourceId));
+      metadataStoreDataset.recordProgramRunning(programRunId, startTime + 60000, null,
+                                                AppFabricTestHelper.createSourceId(++sourceId));
+      metadataStoreDataset.recordProgramStop(programRunId, startTime + 120000,
+                                             ProgramController.State.COMPLETED.getRunStatus(),
+                                             null, AppFabricTestHelper.createSourceId(++sourceId));
+      metadataStoreDataset.recordProgramDeprovisioning(programRunId, AppFabricTestHelper.createSourceId(++sourceId));
+    });
+
+    ProvisionerNotifier notifier = injector.getInstance(ProvisionerNotifier.class);
+    // running for 3 mins
+    notifier.deprovisioned(programRunId, startTime + 180000);
+
+    // when deprovisioned the metric will get emitted, wait for the last emitted metric, the node minutes should be 9
+    // because the stop - start time is 3 mins, and there are 3 nodes
+    MetricStore metricStore = injector.getInstance(MetricStore.class);
+    Tasks.waitFor(9L, () -> getMetric(metricStore, programRunId, myProfile,
+                                  SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
+                  10, TimeUnit.SECONDS);
+
+    // verify the metrics
+    Assert.assertEquals(1L, getMetric(metricStore, programRunId, myProfile,
+                                      SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS));
+    Assert.assertEquals(0L, getMetric(metricStore, programRunId, myProfile,
+                                      SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_KILLED_RUNS));
+    Assert.assertEquals(0L, getMetric(metricStore, programRunId, myProfile,
+                                      SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_FAILED_RUNS));
+    Assert.assertEquals(9L, getMetric(metricStore, programRunId, myProfile,
+                                      SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_NODE_MINUTES));
+    metricStore.deleteAll();
+  }
+
+  private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId, String metricName) {
+    ImmutableMap<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.getScopedName())
+      .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
+      .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun())
+      .build();
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                                                tags, new ArrayList<>());
+    Collection<MetricTimeSeries> result = metricStore.query(query);
+    if (result.isEmpty()) {
+      return 0;
+    }
+    List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+    if (timeValues.isEmpty()) {
+      return 0;
+    }
+    return timeValues.get(0).getValue();
   }
 
   @Test

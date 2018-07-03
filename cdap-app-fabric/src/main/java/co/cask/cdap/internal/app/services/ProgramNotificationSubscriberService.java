@@ -431,7 +431,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return Optional.of(provisioningService.deprovision(programRunId, datasetContext));
       case DEPROVISIONED:
         RunRecordMeta meta = appMetadataStore.recordProgramDeprovisioned(programRunId, endTs, messageIdBytes);
-        if (meta == null || meta.getCluster() == null || meta.getCluster().getNumNodes() == null) {
+        if (meta == null || meta.getCluster() == null) {
           // this should not happen since when the cluster info should be there after deprovision
           return Optional.empty();
         }
@@ -446,18 +446,20 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         }
 
         ProfileId profileId = profile.get();
-        Integer node = meta.getCluster().getNumNodes();
-        // the node number will be null or 0 in local mode, set it to 1 so that we will just emit the difference
-        // between endts and starts
-        int nodeNum = node == null || node == 0 ? 1 : node;
 
         // emit the metrics information, increment the count for end state program runs
         MetricsContext metricsContext = getMetricsContextForProfile(programRunId, profileId);
         metricsContext.increment(getMetricName(meta.getStatus()), 1L);
 
+        // the node number will be null or 0 in local mode, we will not emit node hours for these cases.
+        Integer numNodes = meta.getCluster().getNumNodes();
+        if (numNodes == null || numNodes == 0) {
+          return Optional.empty();
+        }
+
         // node minutes = (end ts of the cluster - start ts) * nodeNum / 60
         metricsContext.gauge(Constants.Metrics.Program.PROGRAM_NODE_MINUTES,
-                             (endTs - meta.getStartTs()) * nodeNum / 60L);
+                             (endTs - meta.getStartTs()) * numNodes / 60L);
         break;
       case ORPHANED:
         appMetadataStore.recordProgramOrphaned(programRunId, endTs, messageIdBytes);
@@ -531,7 +533,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private MetricsContext getMetricsContextForProfile(ProgramRunId programRunId, ProfileId profileId) {
     ImmutableMap<String, String> tags = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
-      .put(Constants.Metrics.Tag.PROFILE, profileId.toString())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.getScopedName())
       .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
       .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
       .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
