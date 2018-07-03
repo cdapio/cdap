@@ -18,38 +18,46 @@ package co.cask.cdap.report.proto.summary;
 
 import com.google.common.base.Objects;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents the statistics of durations of all program runs.
  */
 public class DurationStats {
-  private final long min;
-  private final long max;
-  private final double average;
+  @Nullable
+  private final Long min;
+  @Nullable
+  private final Long max;
+  @Nullable
+  private final Double average;
 
-  public DurationStats(long min, long max, double average) {
+  public DurationStats(Long min, Long max, Double average) {
     this.min = min;
     this.max = max;
     this.average = average;
   }
 
   /**
-   * @return the shortest duration of all program runs
+   * @return the shortest duration of all program runs, or {@code null} if there is no program run
    */
-  public long getMin() {
+  @Nullable
+  public Long getMin() {
     return min;
   }
 
   /**
-   * @return the longest duration of all program runs
+   * @return the longest duration of all program runs, or {@code null} if there is no program run
    */
-  public long getMax() {
+  @Nullable
+  public Long getMax() {
     return max;
   }
 
   /**
-   * @return the average duration of all program runs
+   * @return the average duration of all program runs, or {@code null} if there is no program run
    */
-  public double getAverage() {
+  @Nullable
+  public Double getAverage() {
     return average;
   }
 

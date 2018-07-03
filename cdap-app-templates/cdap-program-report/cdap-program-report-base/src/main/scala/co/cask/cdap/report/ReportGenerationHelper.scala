@@ -17,6 +17,7 @@ package co.cask.cdap.report
 
 import java.io.{IOException, OutputStreamWriter, PrintWriter}
 import java.nio.charset.StandardCharsets
+import java.util.Collections
 import java.util.stream.Collectors
 
 import co.cask.cdap.report.proto.Sort.Order
@@ -24,7 +25,7 @@ import co.cask.cdap.report.proto.summary._
 import co.cask.cdap.report.proto.{Sort, _}
 import co.cask.cdap.report.util.Constants
 import com.databricks.spark._
-import com.google.gson._
+import com.google.gson.Gson
 import org.apache.avro.mapred._
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{avg, max, min}
@@ -95,6 +96,15 @@ object ReportGenerationHelper {
   @throws(classOf[IOException])
   def generateReport(sql: SQLContext, request: ReportGenerationRequest, inputURIs: java.util.List[String],
                      reportIdDir: Location): Unit = {
+    // if there is no input avro file, save 0 as the number of records in the report and mark the report generation
+    // as completed
+    if (Option(inputURIs).isEmpty || inputURIs.isEmpty) {
+      // Save an enmpty report summary in the _SUMMARY file in the given directory
+      writeToFile(GSON.toJson(ReportSummary.getEmptyReportSummary(request.getStart, request.getEnd)),
+        Constants.LocationName.SUMMARY, reportIdDir)
+      writeCountAndSuccessFiles(0, reportIdDir)
+      return
+    }
     val df = SparkCompat.readAvroFiles(sql, inputURIs)
     // Get the fields to be included in the final report and additional fields required for filtering and sorting
     val (reportFields: Set[String], additionalFields: Set[String]) = getReportAndAdditionalFields(request)
@@ -133,7 +143,17 @@ object ReportGenerationHelper {
     // TODO: [CDAP-13290] output reports as avro instead of json text files
     // TODO: [CDAP-13291] improve how the number of partitions is configured
     resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(reportDir)
-    val count = resultDf.count
+    writeCountAndSuccessFiles(resultDf.count, reportIdDir)
+  }
+
+  /**
+    * Saves the number of report records in a file called [[Constants.LocationName.COUNT_FILE]] and mark the
+    * report generation as completed by creating a file [[Constants.LocationName.SUCCESS_FILE]].
+    *
+    * @param count the total number of records in the report
+    * @param reportIdDir the directory where the files will be created
+    */
+  private def writeCountAndSuccessFiles(count: Long, reportIdDir: Location): Unit = {
     // Create a _COUNT file and write the total number of report records in it
     writeToFile(count.toString, Constants.LocationName.COUNT_FILE, reportIdDir)
     // Create a _SUCCESS file and write the current time in millis in it
@@ -141,7 +161,7 @@ object ReportGenerationHelper {
   }
 
   /**
-    * Create a file with given filename in the given directory and write the given content in the file
+    * Creates a file with given filename in the given directory and write the given content in the file
     *
     * @param content the content to write
     * @param fileName the name of the file
@@ -155,7 +175,8 @@ object ReportGenerationHelper {
         // use String.format to avoid log4j overloading issue in scala with 3 String arguments
         LOG.error(String.format("Failed to create file %s for in %s", fileName, baseLocation.toURI.toString))
       }
-      writer = Some(new PrintWriter(outputFile.getOutputStream))
+      writer = Some(new PrintWriter(
+        new OutputStreamWriter(outputFile.getOutputStream, StandardCharsets.UTF_8), true))
       writer.get.write(content)
     } catch {
       case e: IOException => {
@@ -209,16 +230,8 @@ object ReportGenerationHelper {
     // create the summary
     val summary = new ReportSummary(namespaces, request.getStart, request.getEnd, artifacts,
       durations, starts, owners, startMethods)
-    // Save the report summary request in the _SUMMARY file in the given directory
-    var writer: PrintWriter = null
-    try {
-      writer = new PrintWriter(
-        new OutputStreamWriter(reportIdDir.append(Constants.LocationName.SUMMARY).getOutputStream,
-          StandardCharsets.UTF_8), true)
-      writer.write(GSON.toJson(summary))
-    } finally {
-      if (writer != null) writer.close()
-    }
+    // Save the report summary in the _SUMMARY file in the given directory
+    writeToFile(GSON.toJson(summary), Constants.LocationName.SUMMARY, reportIdDir)
   }
 
   /**
