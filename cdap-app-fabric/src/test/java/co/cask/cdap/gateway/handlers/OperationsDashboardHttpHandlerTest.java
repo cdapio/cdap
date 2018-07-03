@@ -53,11 +53,11 @@ import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
 import co.cask.cdap.reporting.ProgramHeartbeatDataset;
 import co.cask.cdap.scheduler.Scheduler;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -99,6 +99,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   private static Store store;
   private static long sourceId;
   private static Scheduler scheduler;
+  private static Impersonator impersonator;
   private static final byte[] SOURCE_ID = Bytes.toBytes("sourceId");
 
   private static ProgramHeartbeatDataset programHeartbeatDataset;
@@ -110,9 +111,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     TransactionExecutorFactory txExecutorFactory =
       injector.getInstance(TransactionExecutorFactory.class);
     scheduler = getInjector().getInstance(Scheduler.class);
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
-    }
+    impersonator = injector.getInstance(Impersonator.class);
     store = getInjector().getInstance(DefaultStore.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
@@ -203,7 +202,6 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
       ImmutableSet.of(OperationsDashboardHttpHandler.runRecordToDashboardRecord(meta),
                       OperationsDashboardHttpHandler.runRecordToDashboardRecord(meta2));
     Assert.assertEquals(expected.size(), dashboardDetail.size());
-    Assert.assertTrue(dashboardDetail.containsAll(expected));
 
     // for the same time range query only in namespace ns1 to ensure filtering works fine
     opsDashboardQueryPath =
@@ -222,46 +220,57 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
 
   }
 
+  List<Long> getExpectedRuntimes(long startTimeInMin, long endTimeInMin, long triggerTimeInMin, long testStartTime) {
+    List<Long> triggerringTimeInSeconds = new ArrayList<>();
+    for (long currentTimeInMin = startTimeInMin; currentTimeInMin <= endTimeInMin; currentTimeInMin += 1) {
+      if (currentTimeInMin % triggerTimeInMin == 0) {
+        // triggering minute
+        long timestampInSeconds = TimeUnit.MINUTES.toSeconds(currentTimeInMin);
+        if (timestampInSeconds >= testStartTime) {
+          // for the first triggering minute its possible it is before the test schedule start time,
+          // we need to filter them, example current startTimeInMin is 4:00:00 while actualScheduleStartTime is 4:00:05
+          // we need to skip the run time at 4:00:00
+          triggerringTimeInSeconds.add(timestampInSeconds);
+        }
+      }
+    }
+    return triggerringTimeInSeconds;
+  }
+
   @Test
   public void testScheduledRuns() throws Exception {
     // add app specs for APP1_ID and APP2_ID
     addAppSpecs();
-    // add a schedule to be triggered every 5 minutes for SCHEDULED_PROG1_ID
-    int sched1Mins = 5;
-    ProgramSchedule sched1 = initializeSchedules(5, SCHEDULED_PROG1_ID);
-    // add a schedule to be triggered every 10 minutes for SCHEDULED_PROG2_ID
-    int sched2Mins = 10;
-    ProgramSchedule sched2 = initializeSchedules(10, SCHEDULED_PROG2_ID);
-    // the duration of the query time range
-    int durationSecs = 3600;
+    // add a schedule to be triggered every 30 minutes for SCHEDULED_PROG1_ID
+    int sched1Mins = 30;
+    ProgramSchedule sched1 = initializeSchedules(sched1Mins, SCHEDULED_PROG1_ID);
+    long durationSecs = TimeUnit.HOURS.toSeconds(1);
     long currentTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // get ops dashboard results between current time and current time + 3600 from TEST_NAMESPACE1 and TEST_NAMESPACE2
+    long endTime = currentTime + durationSecs;
+
     String opsDashboardQueryPath =
       String.format("%s/dashboard?start=%d&duration=%d&namespace=%s&namespace=%s",
                     BASE_PATH, currentTime, durationSecs, TEST_NAMESPACE1, TEST_NAMESPACE2);
     List<DashboardProgramRunRecord> dashboardRecords = getDashboardRecords(opsDashboardQueryPath);
-    // calculate the expected number of scheduled runs according to the query duration and the schedules
-    long expectedScheduledProgram1 = durationSecs / TimeUnit.MINUTES.toSeconds(sched1Mins);
-    long expectedScheduledProgram2 = durationSecs / TimeUnit.MINUTES.toSeconds(sched2Mins);
-    // assert the number of scheduled runs are expected for both programs
-    Assert.assertEquals(expectedScheduledProgram1,
-                        dashboardRecords.stream()
-                          .filter(record -> SCHEDULED_PROG1_ID.getProgram().equals(record.getProgram())).count());
-    Assert.assertEquals(expectedScheduledProgram2,
-                        dashboardRecords.stream()
-                          .filter(record -> SCHEDULED_PROG2_ID.getProgram().equals(record.getProgram())).count());
-    // TODO: compare the actual DashboardProgramRunRecord objects after
-    // https://github.com/caskdata/cdap/pull/10254 is merged
+    List<Long> runTimesSchedule1 =
+      getExpectedRuntimes(TimeUnit.SECONDS.toMinutes(currentTime),
+                          TimeUnit.SECONDS.toMinutes(endTime), sched1Mins, currentTime);
 
-    // assert the artifact id is correct
-    Assert.assertTrue(dashboardRecords.stream()
-                        .filter(record -> SCHEDULED_PROG1_ID.getProgram().equals(record.getProgram()))
-                        .allMatch(schedule -> ArtifactSummary.from(ARTIFACT_ID1.toApiArtifactId()).equals(
-                          schedule.getArtifact())));
-    Assert.assertTrue(dashboardRecords.stream()
-                        .filter(record -> SCHEDULED_PROG2_ID.getProgram().equals(record.getProgram()))
-                        .allMatch(schedule -> ArtifactSummary.from(ARTIFACT_ID2.toApiArtifactId()).equals(
-                          schedule.getArtifact())));
+    List<DashboardProgramRunRecord> expectedRunRecords = new ArrayList<>();
+    String userId = impersonator.getUGI(sched1.getProgramId()).getUserName();
+    for (long runTime : runTimesSchedule1) {
+      expectedRunRecords.add(
+        new DashboardProgramRunRecord(sched1.getProgramId().getNamespace(),
+                                      ArtifactSummary.from(ARTIFACT_ID1.toApiArtifactId()),
+                                      new DashboardProgramRunRecord.ApplicationNameVersion(
+                                        sched1.getProgramId().getApplication(), sched1.getProgramId().getVersion()),
+                                      sched1.getProgramId().getType().name(), sched1.getProgramId().getProgram(),
+                                      null, userId, "SCHEDULED", runTime, null, null, null, null, null));
+    }
+    // assert the number of scheduled runs are expected for both programs
+    Assert.assertEquals(expectedRunRecords, dashboardRecords);
+
     // get ops dashboard results between current time - 7200 and current time - 3600
     // from TEST_NAMESPACE1 and TEST_NAMESPACE2
     String beforeCurrentTimeQueryPath =
@@ -271,7 +280,6 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, getDashboardRecords(beforeCurrentTimeQueryPath).size());
     // disable the schedules
     scheduler.disableSchedule(sched1.getScheduleId());
-    scheduler.disableSchedule(sched2.getScheduleId());
     // assert that there's no scheduled runs once the schedules are disabled
     Assert.assertEquals(0, getDashboardRecords(opsDashboardQueryPath).size());
   }
@@ -289,20 +297,22 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                           Collections.EMPTY_MAP, Collections.EMPTY_MAP,
                                           Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP,
                                           ImmutableMap.of(SCHEDULED_PROG1_ID.getProgram(), scheduledWorfklow1),
-                                          Collections.EMPTY_MAP,
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+
     store.addApplication(APP1_ID, dummyAppSpec1);
     WorkflowSpecification scheduledWorfklow2 =
       new WorkflowSpecification("DummyClass", SCHEDULED_PROG2_ID.getProgram(), "scheduled workflow",
                                 Collections.EMPTY_MAP, Collections.EMPTY_LIST, Collections.EMPTY_MAP);
     ApplicationSpecification dummyAppSpec2 =
       new DefaultApplicationSpecification(APP2_ID.getApplication(), "dummy app", null,
-                                          ARTIFACT_ID2.toApiArtifactId(), Collections.EMPTY_MAP,
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+
+                                          ARTIFACT_ID2.toApiArtifactId(), Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                          Collections.EMPTY_MAP,
                                           Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP,
                                           ImmutableMap.of(SCHEDULED_PROG2_ID.getProgram(), scheduledWorfklow2),
-                                          Collections.EMPTY_MAP,
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP);
     store.addApplication(APP2_ID, dummyAppSpec2);
   }
 

@@ -164,15 +164,13 @@ public interface Scheduler {
   List<ProgramSchedule> listSchedules(ProgramId programId) throws NotFoundException;
 
   /**
-   * Retrieve all schedules for a given namespace with additional properties user and artifact ID added
-   * in schedule properties.
+   * Retrieve all schedules for a given namespace
    *
    * @param namespaceId the namespace for which to list the schedules
    * @param filter the filter to be applied on the result schedules
    * @return a list of schedule records for the namespace; never null
    */
-  List<ProgramSchedule> listSchedulesWithUserAndArtifactId(NamespaceId namespaceId,
-                                                           Predicate<ProgramSchedule> filter);
+  List<ProgramSchedule> listSchedules(NamespaceId namespaceId, Predicate<ProgramSchedule> filter);
 
   /**
    * Retrieve all schedule records for a given application.

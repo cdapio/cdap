@@ -107,8 +107,8 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public List<ProgramSchedule> listSchedulesWithUserAndArtifactId(NamespaceId namespaceId,
-                                                                  Predicate<ProgramSchedule> filter) {
+  public List<ProgramSchedule> listSchedules(NamespaceId namespaceId,
+                                             Predicate<ProgramSchedule> filter) {
     return Collections.EMPTY_LIST;
   }
 

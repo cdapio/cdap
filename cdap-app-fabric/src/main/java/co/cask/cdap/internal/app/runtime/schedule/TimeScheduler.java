@@ -321,7 +321,7 @@ public final class TimeScheduler {
     try {
       for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
         // skip the trigger that is not enabled, since it cannot launch program as scheduled
-        if (scheduler.getTriggerState(trigger.getKey()) == Trigger.TriggerState.PAUSED) {
+        if (Trigger.TriggerState.PAUSED.equals(scheduler.getTriggerState(trigger.getKey()))) {
           continue;
         }
         Date nextFireTime = trigger.getFireTimeAfter(startTime);

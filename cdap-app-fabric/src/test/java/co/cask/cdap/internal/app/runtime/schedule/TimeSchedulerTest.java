@@ -61,12 +61,14 @@ public class TimeSchedulerTest extends AppFabricTestBase {
     timeScheduler.addProgramSchedule(sched);
     // schedule is by default SUSPENDED after being added, resume it to enable the schedule
     timeScheduler.resumeProgramSchedule(sched);
-    long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + TimeUnit.HOURS.toSeconds(1);
+    long currentTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    long startTimeInSeconds = currentTimeInSeconds + TimeUnit.HOURS.toSeconds(1);
+    long endTimeInSeconds = currentTimeInSeconds + TimeUnit.HOURS.toSeconds(3);
     List<ScheduledRuntime> nextRuntimes =
       timeScheduler.getAllScheduledRunTimes(PROG1_ID, SchedulableProgramType.WORKFLOW,
-                                            startTime, startTime + TimeUnit.HOURS.toSeconds(2));
-    // 1pm to 3pm scan range with inclusive start time will have 13 schedules between 1pm and 2 pm
-    // and from 2:05 pm to 2:55pm will have 11 schedules and in total 24 schedules.
+                                            startTimeInSeconds, endTimeInSeconds);
+    // for a scan range of 1pm to 3pm. since start time is inclusive, from 1pm tp 2pm we will have 13 schedules
+    // and from 2:05 pm to 2:55pm will have 11 schedules as end time is exclusive. in total we expect 24 schedules.
     Assert.assertEquals(24, nextRuntimes.size());
   }
 }

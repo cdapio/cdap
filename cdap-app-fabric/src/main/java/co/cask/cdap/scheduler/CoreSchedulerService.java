@@ -463,8 +463,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public List<ProgramSchedule> listSchedulesWithUserAndArtifactId(NamespaceId namespaceId,
-                                                                  Predicate<ProgramSchedule> filter) {
+  public List<ProgramSchedule> listSchedules(NamespaceId namespaceId,
+                                             Predicate<ProgramSchedule> filter) {
     checkStarted();
     return execute(store -> store.listSchedules(namespaceId, filter).stream()
                      .map(this::getProgramScheduleWithUserAndArtifactId).collect(Collectors.toList()),
@@ -491,6 +491,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   /**
    * Gets a copy of the given {@link ProgramSchedule} and add user and artifact ID in the schedule properties
+   * TODO CDAP-13662 - move logic to find artifactId and userId to dashboard service and remove this method
    */
   private ProgramSchedule getProgramScheduleWithUserAndArtifactId(ProgramSchedule schedule) {
     Map<String, String> additionalProperties = new HashMap<>();

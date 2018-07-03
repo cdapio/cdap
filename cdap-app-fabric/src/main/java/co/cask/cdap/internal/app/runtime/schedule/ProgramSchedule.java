@@ -25,7 +25,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Objects;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

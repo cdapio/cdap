@@ -401,7 +401,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    */
   public List<ProgramSchedule> listSchedules(NamespaceId namespaceId, Predicate<ProgramSchedule> filter) {
     byte[] prefix = keyPrefixForNamespaceScan(namespaceId);
-    return listSchedulesWithPrefix(prefix, schedule -> true);
+    return listSchedulesWithPrefix(prefix, filter);
   }
 
   /**
@@ -503,7 +503,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
         byte[] serialized = row.get(SCHEDULE_COLUMN_BYTES);
         if (serialized != null) {
           ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
-          if (filter.test(schedule)) {
+          if (schedule != null && filter.test(schedule)) {
             result.add(schedule);
           }
         }

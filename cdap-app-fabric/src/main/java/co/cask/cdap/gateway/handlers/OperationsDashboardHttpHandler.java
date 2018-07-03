@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -75,7 +74,6 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   private static final String SCHEDULED = "SCHEDULED";
   private static final String TRIGGERED = "TRIGGERED";
   private final ProgramHeartbeatService programHeartbeatService;
-  private final Store store;
   private final Scheduler scheduler;
   private final TimeSchedulerService timeSchedulerService;
 
@@ -84,7 +82,6 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   public OperationsDashboardHttpHandler(ProgramHeartbeatService programHeartbeatService,
                                         Store store, Scheduler scheduler, TimeSchedulerService timeSchedulerService) {
     this.programHeartbeatService = programHeartbeatService;
-    this.store = store;
     this.scheduler = scheduler;
     this.timeSchedulerService = timeSchedulerService;
   }
@@ -94,7 +91,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   public void readDashboardDetail(FullHttpRequest request, HttpResponder responder,
                                   @QueryParam("start") long startTimeSecs,
                                   @QueryParam("duration") int durationTimeSecs,
-                                  @QueryParam("namespace") Set<String> namespaces) throws BadRequestException {
+                                  @QueryParam("namespace") Set<String> namespaces) throws Exception {
     if (startTimeSecs < 0) {
       throw new BadRequestException("'start' time cannot be smaller than 0.");
     }
@@ -134,31 +131,30 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
    * @return a list of dashboard program run records with scheduled time as start time
    */
   private List<DashboardProgramRunRecord> getAllScheduledRuns(Set<NamespaceId> namespaceIds,
-                                                              long startTimeSecs, long endTimeSecs) {
+                                                              long startTimeSecs, long endTimeSecs) throws Exception {
     List<DashboardProgramRunRecord> result = new ArrayList<>();
     // get enabled time schedules from all given namespaces
-    getTimeSchedules(namespaceIds)
-      // for each schedule, add all the scheduled runs within given the time range to the result
-      .forEach(schedule -> {
-        try {
-          result.addAll(getScheduledDashboardRecords(schedule, startTimeSecs, endTimeSecs));
-        } catch (Exception e) {
-          LOG.error("Failed to get scheduled program runs for schedule {}", schedule, e);
-        }
-      });
+    for (ProgramSchedule programSchedule : getTimeSchedules(namespaceIds)) {
+      try {
+        result.addAll(getScheduledDashboardRecords(programSchedule, startTimeSecs, endTimeSecs));
+      } catch (Exception e) {
+        LOG.error("Failed to get scheduled program runs for schedule {}", programSchedule, e);
+        throw e;
+      }
+    }
     return result;
   }
 
   /**
    * Gets all the enabled time schedules in the given namespaces
    */
-  private Stream<ProgramSchedule> getTimeSchedules(Set<NamespaceId> namespaceIds) {
+  private List<ProgramSchedule> getTimeSchedules(Set<NamespaceId> namespaceIds) {
     return namespaceIds.stream()
       // get schedules from each namespace
-      .flatMap(ns -> scheduler.listSchedulesWithUserAndArtifactId(ns, schedule ->
+      .flatMap(ns -> scheduler.listSchedules(ns, schedule ->
         // create a filter to get only time schedules
         Trigger.Type.TIME.equals(schedule.getTrigger().getType()))
-        .stream());
+        .stream()).collect(Collectors.toList());
   }
 
   /**
