@@ -3694,7 +3694,15 @@
     <name>program.heartbeat.interval.seconds</name>
     <value>1800</value>
     <description>
-      Interval of heartbeat sent from program while its running, default 30 minutes.
+      Interval of heartbeat sent from program while its running, default 30 minutes
+    </description>
+  </property>
+
+  <property>
+    <name>program.heartbeat.table.ttl.seconds</name>
+    <value>2592000</value>
+    <description>
+      TTL duration for program heartbeat table, by default 30 days
     </description>
   </property>
 

@@ -45,6 +45,8 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.reporting.ProgramHeartbeatDataset;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.After;
@@ -52,10 +54,13 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests program run state persistence.
@@ -63,14 +68,17 @@ import java.util.concurrent.TimeUnit;
 public class ProgramNotificationSubscriberServiceTest {
   private static Table appMetaTable;
   private static AppMetadataStore metadataStoreDataset;
+  private static ProgramHeartbeatDataset programHeartbeatDataset;
   private static TransactionExecutor txnl;
+  private static TransactionExecutor heartBeatTxnl;
   private static ProgramStateWriter programStateWriter;
 
   @BeforeClass
   public static void setupClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-
+    // we only want to process and check program status messages processed by heart beat store, so set high value
+    cConf.set(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS, String.valueOf(TimeUnit.HOURS.toSeconds(1)));
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
@@ -78,8 +86,14 @@ public class ProgramNotificationSubscriberServiceTest {
     appMetaTable = DatasetsUtil.getOrCreateDataset(datasetFramework, storeTable, Table.class.getName(),
                                                    DatasetProperties.EMPTY, Collections.emptyMap());
     metadataStoreDataset = new AppMetadataStore(appMetaTable, cConf);
-    txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
 
+    DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
+    Table heartbeatTable = DatasetsUtil.getOrCreateDataset(datasetFramework, heartbeatDataset, Table.class.getName(),
+                                                     DatasetProperties.EMPTY, Collections.emptyMap());
+
+    txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
+    programHeartbeatDataset = new ProgramHeartbeatDataset(heartbeatTable);
+    heartBeatTxnl = txExecutorFactory.createExecutor(Collections.singleton(programHeartbeatDataset));
     programStateWriter = injector.getInstance(ProgramStateWriter.class);
   }
 
@@ -122,5 +136,89 @@ public class ProgramNotificationSubscriberServiceTest {
                     return meta.getStatus();
                   }),
                   10, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testHeartBeatStoreForProgramStatusMessages() throws Exception {
+    ProgramId programId = NamespaceId.DEFAULT.app("someapp", "1.0-SNAPSHOT").program(ProgramType.SERVICE, "s");
+    Map<String, String> systemArguments = new HashMap<>();
+    systemArguments.put(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString());
+    ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
+                                                             new BasicArguments());
+    ProgramRunId runId = programId.run(RunIds.generate());
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+
+    ApplicationSpecification appSpec = new DefaultApplicationSpecification(
+      "name", "1.0.0", "desc", null, artifactId,
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.start(runId, programOptions, null, programDescriptor);
+    });
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.STARTING);
+    long startTime = System.currentTimeMillis();
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.running(runId, null);
+    });
+
+    // perform scan on heart beat store - ensure latest message notification is running
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.RUNNING);
+    heartbeatDatasetStatusCheck(startTime, ProgramRunStatus.RUNNING);
+
+    long suspendTime = System.currentTimeMillis();
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.suspend(runId);
+    });
+    // perform scan on heart beat store - ensure latest message notification is suspended
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.SUSPENDED);
+    heartbeatDatasetStatusCheck(suspendTime, ProgramRunStatus.SUSPENDED);
+
+    long resumeTime = System.currentTimeMillis();
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.resume(runId);
+    });
+    // app metadata records as RUNNING
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.RUNNING);
+    // heart beat messages wont have been sent due to high interval. resuming program will be recorded as running
+    // in run record by app meta
+    heartbeatDatasetStatusCheck(resumeTime, ProgramRunStatus.RUNNING);
+    // killed status check after error
+    long stopTime = System.currentTimeMillis();
+    heartBeatTxnl.execute(() -> {
+      programStateWriter.error(runId, new Throwable("Testing"));
+    });
+    checkProgramStatus(artifactId, runId, ProgramRunStatus.FAILED);
+    heartbeatDatasetStatusCheck(stopTime, ProgramRunStatus.FAILED);
+  }
+
+  private void checkProgramStatus(ArtifactId artifactId, ProgramRunId runId, ProgramRunStatus expectedStatus)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    Tasks.waitFor(expectedStatus, () -> txnl.execute(() -> {
+                    RunRecordMeta meta = metadataStoreDataset.getRun(runId);
+                    if (meta == null) {
+                      return null;
+                    }
+                    Assert.assertEquals(artifactId, meta.getArtifactId());
+                    return meta.getStatus();
+                  }),
+                  10, TimeUnit.SECONDS);
+  }
+
+  private void heartbeatDatasetStatusCheck(long startTime, ProgramRunStatus expectedStatus)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    Tasks.waitFor(expectedStatus, () -> heartBeatTxnl.execute(() -> {
+      Collection<RunRecordMeta> runRecordMetas =
+        // programHeartbeatDataset uses seconds for timeunit for recording runrecords
+        programHeartbeatDataset.scan(
+          TimeUnit.MILLISECONDS.toSeconds(startTime), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+          ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
+      if (runRecordMetas.size() == 0) {
+        return null;
+      }
+      Assert.assertEquals(1, runRecordMetas.size());
+      return runRecordMetas.iterator().next().getStatus();
+    }), 10, TimeUnit.SECONDS);
   }
 }

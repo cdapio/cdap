@@ -22,6 +22,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ProgramRunId;
 
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -40,6 +41,10 @@ public class DashboardProgramRunRecord {
   @Nullable
   private final Long running;
   @Nullable
+  private final Long suspend;
+  @Nullable
+  private final Long resume;
+  @Nullable
   private final Long end;
   private final ProgramRunStatus status;
 
@@ -48,13 +53,15 @@ public class DashboardProgramRunRecord {
     this(runId.getNamespace(), ArtifactSummary.from(artifactId),
          new ApplicationNameVersion(runId.getApplication(), runId.getVersion()),
          runId.getType().name(), runId.getProgram(), runId.getRun(), user, startMethod,
-         runRecord.getStartTs(), runRecord.getRunTs(), runRecord.getStopTs(), runRecord.getStatus());
+         runRecord.getStartTs(), runRecord.getRunTs(), runRecord.getSuspendTs(), runRecord.getResumeTs(),
+         runRecord.getStopTs(), runRecord.getStatus());
   }
 
   public DashboardProgramRunRecord(String namespace, ArtifactSummary artifact, ApplicationNameVersion application,
                                    String type, String program, String run,
                                    String user, String startMethod, long start,
-                                   @Nullable Long running, @Nullable Long end, ProgramRunStatus status) {
+                                   @Nullable Long running, @Nullable Long suspend, @Nullable Long resume,
+                                   @Nullable Long end, ProgramRunStatus status) {
     this.namespace = namespace;
     this.artifact = artifact;
     this.application = application;
@@ -65,6 +72,8 @@ public class DashboardProgramRunRecord {
     this.startMethod = startMethod;
     this.start = start;
     this.running = running;
+    this.suspend = suspend;
+    this.resume = resume;
     this.end = end;
     this.status = status;
   }
@@ -115,6 +124,24 @@ public class DashboardProgramRunRecord {
   }
 
   /**
+   * @return the time in seconds when the program was last suspended, or {@code null} if the program run was not
+   * suspended
+   */
+  @Nullable
+  public Long getSuspend() {
+    return suspend;
+  }
+
+  /**
+   * @return the time in seconds when the program was last resumed from suspended state,
+   * or {@code null} if the program run was never suspended or never resumed from suspended state.
+   */
+  @Nullable
+  public Long getResume() {
+    return resume;
+  }
+
+  /**
    * @return the time in seconds when the program run stopped, or {@code null} if the program run has not stopped yet.
    */
   @Nullable
@@ -151,5 +178,55 @@ public class DashboardProgramRunRecord {
     public String getVersion() {
       return version;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      ApplicationNameVersion that = (ApplicationNameVersion) o;
+      return Objects.equals(this.getName(), that.getName()) &&
+        Objects.equals(this.getVersion(), that.getVersion());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(name, version);
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(namespace, artifact, application, type, program, run, user,
+                        startMethod, start, running, suspend, resume, end, status);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    DashboardProgramRunRecord that = (DashboardProgramRunRecord) o;
+    return Objects.equals(this.getNamespace(), that.getNamespace()) &&
+      Objects.equals(this.getArtifact(), that.getArtifact()) &&
+      Objects.equals(this.getApplication(), that.getApplication()) &&
+      Objects.equals(this.getType(), that.getType()) &&
+      Objects.equals(this.getProgram(), that.getProgram()) &&
+      Objects.equals(this.getRun(), that.getRun()) &&
+      Objects.equals(this.getUser(), that.getUser()) &&
+      Objects.equals(this.getStartMethod(), that.getStartMethod()) &&
+      Objects.equals(this.getStart(), that.getStart()) &&
+      Objects.equals(this.getRunning(), that.getRunning()) &&
+      Objects.equals(this.getSuspend(), that.getSuspend()) &&
+      Objects.equals(this.getResume(), that.getResume()) &&
+      Objects.equals(this.getEnd(), that.getEnd()) &&
+      Objects.equals(this.getStatus(), that.getStatus());
   }
 }
