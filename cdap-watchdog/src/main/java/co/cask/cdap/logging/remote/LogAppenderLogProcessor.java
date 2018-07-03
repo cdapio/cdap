@@ -21,8 +21,14 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Iterator;
 import javax.inject.Inject;
 
 /**
@@ -30,6 +36,9 @@ import javax.inject.Inject;
  */
 public class LogAppenderLogProcessor implements RemoteExecutionLogProcessor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(LogAppenderLogProcessor.class);
+  private static final ThreadLocal<LoggingEventSerializer> LOGGING_EVENT_SERIALIZER =
+          ThreadLocal.withInitial(LoggingEventSerializer::new);
   private final LogAppender logAppender;
 
   @Inject
@@ -38,8 +47,17 @@ public class LogAppenderLogProcessor implements RemoteExecutionLogProcessor {
   }
 
   @Override
-  public void process(ILoggingEvent loggingEvent) {
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(loggingEvent.getMDCPropertyMap());
-    logAppender.append(new LogMessage(loggingEvent, Preconditions.checkNotNull(loggingContext)));
+  public void process(Iterator<byte[]> loggingEventBytes) {
+    loggingEventBytes.forEachRemaining(bytes -> {
+      try {
+        ILoggingEvent iLoggingEvent =
+                LOGGING_EVENT_SERIALIZER.get().fromBytes(ByteBuffer.wrap(bytes));
+        LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(iLoggingEvent.getMDCPropertyMap());
+        logAppender.append(new LogMessage(iLoggingEvent, Preconditions.checkNotNull(loggingContext)));
+      } catch (IOException e) {
+        LOG.warn("Ignore logging event due to decode failure: {}", e.getMessage());
+        LOG.debug("Ignore logging event stack trace", e);
+      }
+    });
   }
 }

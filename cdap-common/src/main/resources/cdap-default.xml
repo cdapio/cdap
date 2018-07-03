@@ -1345,7 +1345,7 @@
       service ZooKeeper quorum and namespace are shared by multiple CDAP
       instances, each CDAP instance needs to distinguish its Kafka topics
       from those of other CDAP instances with unique values for
-      ${log.kafka.topic}, ${log.tms.topic}, and ${metrics.topic.prefix}.
+      ${log.kafka.topic} and ${metrics.topic.prefix}.
     </description>
   </property>
 

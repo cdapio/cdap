@@ -68,8 +68,6 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.perMessage(
     () -> LogSamplers.limitRate(60000)));
 
-  private static final ThreadLocal<LoggingEventSerializer> LOGGING_EVENT_SERIALIZER =
-          ThreadLocal.withInitial(LoggingEventSerializer::new);
   private static final Gson GSON = new Gson();
 
   private final RuntimeMonitorClient monitorClient;
@@ -287,16 +285,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
                        AppMetadataStore store) throws Exception {
     // publish messages to tms
     if (topic.startsWith(cConf.get(Constants.Logging.TMS_TOPIC_PREFIX))) {
-      messages.forEach(monitorMessage -> {
-        try {
-          ILoggingEvent iLoggingEvent =
-                  LOGGING_EVENT_SERIALIZER.get().fromBytes(ByteBuffer.wrap(monitorMessage.getMessage()));
-          logProcessor.process(iLoggingEvent);
-        } catch (IOException e) {
-          LOG.warn("Ignore logging event due to decode failure: {}", e.getMessage());
-          LOG.debug("Ignore logging event stack trace", e);
-        }
-      });
+      logProcessor.process(messages.stream().map(MonitorMessage::getMessage).iterator());
     } else {
       MessagePublisher messagePublisher = messagingContext.getMessagePublisher();
       messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,

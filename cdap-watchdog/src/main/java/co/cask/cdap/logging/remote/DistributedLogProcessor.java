@@ -16,16 +16,16 @@
 
 package co.cask.cdap.logging.remote;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import java.util.Iterator;
 
 /**
  * The {@link RemoteExecutionLogProcessor} used in Distributed mode.
  */
 public class DistributedLogProcessor implements RemoteExecutionLogProcessor {
 
-    @Override
-    public void process(ILoggingEvent loggingEvent) {
-        // TODO (CDAP-13380): implement distributed log processor
-        // no-op
-    }
+  @Override
+  public void process(Iterator<byte[]> loggingEventBytes) {
+    // TODO (CDAP-13380): implement distributed log processor
+    // no-op
+  }
 }

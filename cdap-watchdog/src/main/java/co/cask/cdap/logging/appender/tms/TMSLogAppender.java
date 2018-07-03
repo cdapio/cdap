@@ -16,14 +16,13 @@
 
 package co.cask.cdap.logging.appender.tms;
 
-import ch.qos.logback.core.spi.ContextAware;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.logging.appender.AbstractLogPublisher;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.appender.kafka.LogPartitionType;
@@ -32,20 +31,15 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Log appender that publishes log messages to TMS.
@@ -54,15 +48,13 @@ public final class TMSLogAppender extends LogAppender {
 
   private static final String APPENDER_NAME = "TMSLogAppender";
 
-  private final BlockingQueue<LogMessage> messageQueue;
   private final TMSLogPublisher tmsLogPublisher;
 
   @Inject
   TMSLogAppender(CConfiguration cConf, MessagingService messagingService) {
     setName(APPENDER_NAME);
     int queueSize = cConf.getInt(Constants.Logging.TMS_APPENDER_QUEUE_SIZE);
-    this.messageQueue = new ArrayBlockingQueue<>(queueSize);
-    this.tmsLogPublisher = new TMSLogPublisher(cConf, messageQueue, this, messagingService, queueSize);
+    this.tmsLogPublisher = new TMSLogPublisher(cConf, messagingService, queueSize);
   }
 
   @Override
@@ -85,7 +77,7 @@ public final class TMSLogAppender extends LogAppender {
     logMessage.getCallerData();
 
     try {
-      messageQueue.put(logMessage);
+      tmsLogPublisher.addMessage(logMessage);
     } catch (InterruptedException e) {
       addInfo("Interrupted when adding log message to queue: " + logMessage.getFormattedMessage());
     }
@@ -101,167 +93,52 @@ public final class TMSLogAppender extends LogAppender {
   /**
    * Publisher service to publish logs to TMS asynchronously.
    */
-  private static final class TMSLogPublisher extends AbstractExecutionThreadService {
+  private final class TMSLogPublisher extends AbstractLogPublisher<Map.Entry<Integer, byte[]>> {
 
-    private final BlockingQueue<LogMessage> messageQueue;
     private final String topicPrefix;
     private final int numPartitions;
-    private final int queueSize;
     private final LoggingEventSerializer loggingEventSerializer;
-    private final ContextAware contextAware;
     private final MessagingContext messagingContext;
     private final LogPartitionType logPartitionType;
-    private final RetryStrategy retryStrategy;
-    private volatile Thread blockingThread;
 
-    private TMSLogPublisher(CConfiguration cConf, BlockingQueue<LogMessage> messageQueue, ContextAware contextAware,
-                            MessagingService messagingService, int queueSize) {
-      this.messageQueue = messageQueue;
+    private TMSLogPublisher(CConfiguration cConf, MessagingService messagingService, int queueSize) {
+      super(queueSize, RetryStrategies.fromConfiguration(cConf, "system.log.process."));
       this.topicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
       this.numPartitions = cConf.getInt(Constants.Logging.NUM_PARTITIONS);
-      this.queueSize = queueSize;
       this.loggingEventSerializer = new LoggingEventSerializer();
-      this.contextAware = contextAware;
-      this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.log.process.");
       this.logPartitionType =
               LogPartitionType.valueOf(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY).toUpperCase());
       this.messagingContext = new MultiThreadMessagingContext(messagingService);
     }
 
     @Override
-    protected void run() {
-      Map<Integer, List<byte[]>> buffer = new HashMap<>(queueSize);
-
-      int failures = 0;
-      long failureStartTime = System.currentTimeMillis();
-      while (isRunning()) {
-        try {
-          // Only block for messages if it is not a failure retry
-          publishMessages(buffer, failures == 0);
-          // Any exception from the publishMessages call meaning messages are not yet published to TMS,
-          // hence not clearing the buffer
-          buffer.clear();
-          failures = 0;
-        } catch (InterruptedException e) {
-          break;
-        } catch (Exception e) {
-          if (failures == 0) {
-            failureStartTime = System.currentTimeMillis();
-          }
-
-          long sleepMillis = retryStrategy.nextRetry(++failures, failureStartTime);
-          if (sleepMillis < 0) {
-            buffer.clear();
-            failures = 0;
-
-            // Log using the status manager
-            contextAware.addError("Failed to publish log message to TMS on topicPrefix " + topicPrefix, e);
-          } else {
-            blockingThread = Thread.currentThread();
-            try {
-              if (isRunning()) {
-                TimeUnit.MILLISECONDS.sleep(sleepMillis);
-              }
-            } catch (InterruptedException ie) {
-              break;
-            } finally {
-              blockingThread = null;
-            }
-          }
-        }
-      }
-
-      // Publish all remaining messages.
-      while (!messageQueue.isEmpty() || !buffer.isEmpty()) {
-        try {
-          publishMessages(buffer, false);
-        } catch (Exception e) {
-          contextAware.addError("Failed to publish log message to TMS on topicPrefix " + topicPrefix, e);
-        }
-        // Ignore those that cannot be publish since we are already in shutdown sequence
-        buffer.clear();
-      }
-    }
-
-    @Override
-    protected void triggerShutdown() {
-      // Interrupt the run thread first
-      // If the run loop is sleeping / blocking, it will wake and break the loop
-      Thread runThread = this.blockingThread;
-      if (runThread != null) {
-        runThread.interrupt();
-      }
-    }
-
-    @Override
-    protected Executor executor() {
-      return new Executor() {
-        @Override
-        public void execute(Runnable command) {
-          Thread thread = new Thread(command, "tms-log-publisher");
-          thread.setDaemon(true);
-          thread.start();
-        }
-      };
-    }
-
-    /**
-     * Publishes {@link LogMessage}s from the message queue by serializing them to a buffer of serialized messages,
-     * and then to TMS.
-     *
-     * @param buffer a buffer for storing {@code byte[]} for publishing to TMS
-     * @throws InterruptedException if the thread is interrupted
-     */
-    private void publishMessages(Map<Integer, List<byte[]>> buffer, boolean blockForMessage)
-            throws IOException, InterruptedException, TopicNotFoundException {
-      int bufferSize = 0;
-      for (Map.Entry<Integer, List<byte[]>> partitionBuffer : buffer.entrySet()) {
-        bufferSize += partitionBuffer.getValue().size();
-      }
-
-      if (blockForMessage) {
-        blockingThread = Thread.currentThread();
-        try {
-          if (isRunning()) {
-            serializeMessageToBuffer(messageQueue.take(), buffer);
-            bufferSize++;
-          }
-        } catch (InterruptedException e) {
-          // just ignore and keep going. This happen when this publisher is getting shutdown, but we still want
-          // to publish all pending messages.
-        } finally {
-          blockingThread = null;
-        }
-      }
-
-      while (bufferSize < queueSize) {
-        // Poll for more messages
-        LogMessage message = messageQueue.poll();
-        if (message == null) {
-          break;
-        }
-        serializeMessageToBuffer(message, buffer);
-        bufferSize++;
-      }
-
-      MessagePublisher directMessagePublisher = messagingContext.getDirectMessagePublisher();
-      // Publish all messages
-      for (Map.Entry<Integer, List<byte[]>> partitionBuffer : buffer.entrySet()) {
-        Integer partition = Preconditions.checkNotNull(partitionBuffer.getKey());
-        List<byte[]> payload = partitionBuffer.getValue();
-        directMessagePublisher.publish(NamespaceId.SYSTEM.getNamespace(),
-                                       topicPrefix + partition, payload.iterator());
-      }
-    }
-
-    private void serializeMessageToBuffer(LogMessage logMessage, Map<Integer, List<byte[]>> buffer) {
+    protected Map.Entry<Integer, byte[]> createMessage(LogMessage logMessage) {
       String partitionKey = logPartitionType.getPartitionKey(logMessage.getLoggingContext());
       int partition = partition(partitionKey, numPartitions);
+      return new AbstractMap.SimpleEntry<>(partition, loggingEventSerializer.toBytes(logMessage));
+    }
 
-      if (!buffer.containsKey(partition)) {
-        buffer.put(partition, new ArrayList<>());
+    @Override
+    protected void publish(List<Map.Entry<Integer, byte[]>> logMessages) throws TopicNotFoundException, IOException {
+      MessagePublisher directMessagePublisher = messagingContext.getDirectMessagePublisher();
+
+      // Group the log messages by partition and then publish all messages to their respective partitions
+      Map<Integer, List<byte[]>> partitionedMessages = new HashMap<>();
+      for (Map.Entry<Integer, byte[]> logMessage : logMessages) {
+        List<byte[]> messages = partitionedMessages.computeIfAbsent(logMessage.getKey(), k -> new ArrayList<>());
+        messages.add(logMessage.getValue());
       }
-      buffer.get(partition).add(loggingEventSerializer.toBytes(logMessage));
+
+      for (Map.Entry<Integer, List<byte[]>> partition : partitionedMessages.entrySet()) {
+        directMessagePublisher.publish(NamespaceId.SYSTEM.getNamespace(),
+                topicPrefix + partition.getKey(), partition.getValue().iterator());
+      }
+    }
+
+    @Override
+    protected void logError(String errorMessage, Exception exception) {
+      // Log using the status manager
+      addError(errorMessage, exception);
     }
   }
 }

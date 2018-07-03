@@ -62,6 +62,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
@@ -349,6 +350,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
+      new LoggingModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new KafkaClientModule(),
