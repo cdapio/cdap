@@ -116,6 +116,14 @@
             display: flex;
             justify-content: center;
           }
+          .model-action-btns {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            .add-model-to-pipeline {
+              margin-right: 5px;
+            }
+          }
         }
         &.active {
           border-bottom: 0;

@@ -255,13 +255,12 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
             />
           </div>
         </div>
-        <div>
-          <PredictionDatasetExploreModal predictionDataset={model.predictionsDataset} />
-          <AddModelToPipelineBtn modelName={model.name} />
+        <div className="model-action-btns">
           <AddModelToPipelineBtn
             modelName={model.name}
             modelId={model.id}
           />
+          <PredictionDatasetExploreModal predictionDataset={model.predictionsDataset} />
         </div>
       </div>
       <div>

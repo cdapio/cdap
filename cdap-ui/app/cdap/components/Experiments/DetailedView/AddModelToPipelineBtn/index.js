@@ -179,7 +179,7 @@ class AddModelToPipelineBtn extends Component {
     return (
       <fielset className="add-model-to-pipeline" disabled={this.state.disabled}>
         <a
-          className="btn btn-primary"
+          className="btn btn-primary btn-sm"
           onClick={this.generatePipelineConfig}
           href={this.state.disabled ? null : this.batchPipelineUrl}
         >

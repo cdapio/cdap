@@ -28,6 +28,9 @@
       &:first-child {
         margin-right: 10px;
       }
+      &:only-child {
+        margin: 0;
+      }
     }
   }
   .popper {
