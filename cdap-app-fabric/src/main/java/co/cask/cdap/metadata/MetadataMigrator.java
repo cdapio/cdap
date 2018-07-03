@@ -25,8 +25,6 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -57,9 +55,7 @@ import java.util.concurrent.TimeUnit;
 class MetadataMigrator extends AbstractRetryableScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataMigrator.class);
   // For outage, only log once per 60 seconds per message.
-  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.perMessage(
-    () -> LogSamplers.limitRate(60000)));
-  private static final Queue<KeyValue<DatasetId, DatasetId>> DATASETS = new LinkedList<>();
+  private final Queue<KeyValue<DatasetId, DatasetId>> datasetIds = new LinkedList<>();
 
   private final DatasetFramework dsFramework;
   private final Transactional transactional;
@@ -76,11 +72,11 @@ class MetadataMigrator extends AbstractRetryableScheduledService {
                                                                    Collections.emptyMap(), null, null)),
       org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
-    DATASETS.add(new KeyValue<>(NamespaceId.SYSTEM.dataset("system.metadata"),
-                                NamespaceId.SYSTEM.dataset("v2.system.metadata")));
+    datasetIds.add(new KeyValue<>(NamespaceId.SYSTEM.dataset("system.metadata"),
+                                  NamespaceId.SYSTEM.dataset("v2.system.metadata")));
 
-    DATASETS.add(new KeyValue<>(NamespaceId.SYSTEM.dataset("business.metadata"),
-                                NamespaceId.SYSTEM.dataset("v2.business.metadata")));
+    datasetIds.add(new KeyValue<>(NamespaceId.SYSTEM.dataset("business.metadata"),
+                                  NamespaceId.SYSTEM.dataset("v2.business.metadata")));
   }
 
   @Override
@@ -90,13 +86,13 @@ class MetadataMigrator extends AbstractRetryableScheduledService {
 
   @Override
   public long runTask() throws Exception {
-    if (DATASETS.isEmpty()) {
+    if (datasetIds.isEmpty()) {
       stop();
     }
 
-    KeyValue<DatasetId, DatasetId> datasetIdEntry = DATASETS.peek();
+    KeyValue<DatasetId, DatasetId> datasetIdEntry = datasetIds.peek();
     if (!dsFramework.hasInstance(datasetIdEntry.getKey())) {
-      DATASETS.poll();
+      datasetIds.poll();
       return 0;
     }
 
