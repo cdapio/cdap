@@ -23,6 +23,7 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import static co.cask.cdap.api.metadata.MetadataEntity.APPLICATION;
 import static co.cask.cdap.api.metadata.MetadataEntity.ARTIFACT;
 import static co.cask.cdap.api.metadata.MetadataEntity.DATASET;
+import static co.cask.cdap.api.metadata.MetadataEntity.DATASET_INSTANCE;
 import static co.cask.cdap.api.metadata.MetadataEntity.PROGRAM;
 import static co.cask.cdap.api.metadata.MetadataEntity.STREAM;
 import static co.cask.cdap.api.metadata.MetadataEntity.VIEW;
@@ -60,22 +61,13 @@ public final class MdsHistoryKey {
         keySplitter.skipString();
         break;
       case APPLICATION:
-        keySplitter.skipString();
-        keySplitter.skipString();
-        break;
       case DATASET:
-        keySplitter.skipString();
-        keySplitter.skipString();
-        break;
+      case DATASET_INSTANCE:
       case STREAM:
         keySplitter.skipString();
         keySplitter.skipString();
         break;
       case VIEW:
-        keySplitter.skipString();
-        keySplitter.skipString();
-        keySplitter.skipString();
-        break;
       case ARTIFACT:
         keySplitter.skipString();
         keySplitter.skipString();

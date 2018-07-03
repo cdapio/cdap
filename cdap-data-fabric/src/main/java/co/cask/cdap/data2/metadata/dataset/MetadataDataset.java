@@ -1081,7 +1081,7 @@ public class MetadataDataset extends AbstractDataset {
     if (metadata == null) {
       return null;
     }
-    long historyTime = MdsHistoryKey.extractTime(rowKey, EntityIdKeyHelper.getTargetType(metadata.getEntityId()));
+    long historyTime = MdsHistoryKey.extractTime(rowKey, EntityIdKeyHelper.getV1TargetType(metadata.getEntityId()));
     // For history we do not care about key and value for MetadataEntry as we are not going to extract that
     // information for upgrade
     return new KeyValue<>(historyTime, new MetadataEntry(metadata.getEntityId(), "", ""));

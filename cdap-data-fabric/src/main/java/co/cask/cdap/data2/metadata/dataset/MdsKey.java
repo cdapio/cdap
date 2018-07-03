@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -57,7 +58,8 @@ public final class MdsKey {
     } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ApplicationId.class))) {
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(DatasetId.class))) {
+    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(DatasetId.class))
+      || type.equals(MetadataEntity.DATASET_INSTANCE)) {
       keySplitter.skipString();
       keySplitter.skipString();
     } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(StreamId.class))) {
@@ -149,7 +151,7 @@ public final class MdsKey {
   }
 
   private static MDSKey.Builder getMDSKeyPrefix(NamespacedEntityId targetId, byte[] rowPrefix) {
-    String targetType = EntityIdKeyHelper.getTargetType(targetId);
+    String targetType = EntityIdKeyHelper.getV1TargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(rowPrefix);
     builder.add(targetType);
