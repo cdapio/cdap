@@ -688,5 +688,7 @@ export {
   setModelCreateError,
   setAlgorithmsListForCreateView,
   overrideCreationStep,
-  updateModel
+  updateModel,
+  createWorkspace,
+  applyDirectives
 };

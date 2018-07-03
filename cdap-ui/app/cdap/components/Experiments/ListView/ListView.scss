@@ -87,15 +87,17 @@
       > div {
         padding: 0;
       }
-      small {
-        color: $cdap-lightgray;
-      }
-      .experiment-metadata {
+      .experiment-list-name,
+      .experiment-list-description {
         max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         display: inline-block;
+        line-height: 1.4;
+      }
+      .experiment-list-description {
+        color: $cdap-lightgray;
       }
     }
     a.grid-row {
@@ -121,11 +123,6 @@
     td {
       width: 20%;
       vertical-align: middle;
-    }
-    td {
-      small {
-        color: $cdap-lightgray;
-      }
     }
   }
 }
