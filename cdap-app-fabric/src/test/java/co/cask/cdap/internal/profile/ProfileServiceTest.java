@@ -79,7 +79,7 @@ public class ProfileServiceTest {
     provisionerProperties.add(new ProvisionerPropertyValue("final", "finalval", false));
 
     ProvisionerInfo provisionerInfo = new ProvisionerInfo("provisioner", provisionerProperties);
-    Profile profile = new Profile("name", "desc", provisionerInfo);
+    Profile profile = new Profile("name", "label", "desc", provisionerInfo);
     ProfileId profileId = NamespaceId.DEFAULT.profile("p");
     profileService.saveProfile(profileId, profile);
 
@@ -97,7 +97,7 @@ public class ProfileServiceTest {
       expectedProperties.add(new ProvisionerPropertyValue("final", "finalval", false));
       expectedProperties.add(new ProvisionerPropertyValue("newarg", "val", true));
       provisionerInfo = new ProvisionerInfo(provisionerInfo.getName(), expectedProperties);
-      Profile expected = new Profile(profile.getName(), profile.getDescription(), provisionerInfo);
+      Profile expected = new Profile(profile.getName(), "label", profile.getDescription(), provisionerInfo);
       Profile actual = profileService.getProfile(profileId, args);
       Assert.assertEquals(expected, actual);
     } finally {
@@ -125,7 +125,7 @@ public class ProfileServiceTest {
     }
 
     ProfileId profileId = NamespaceId.DEFAULT.profile("MyProfile");
-    Profile expected = new Profile("MyProfile", "my profile for testing",
+    Profile expected = new Profile("MyProfile", "label", "my profile for testing",
       new ProvisionerInfo("defaultProvisioner", PROPERTY_SUMMARIES));
     // add a profile
     profileService.saveProfile(profileId, expected);
@@ -134,14 +134,14 @@ public class ProfileServiceTest {
     Assert.assertEquals(expected, profileService.getProfile(profileId));
 
     // add a profile which already exists, should succeed and the profile property should be updated
-    expected = new Profile("MyProfile", "my 2nd profile for updating",
+    expected = new Profile("MyProfile", "label", "my 2nd profile for updating",
       new ProvisionerInfo("anotherProvisioner", Collections.emptyList()));
     profileService.saveProfile(profileId, expected);
     Assert.assertEquals(expected, profileService.getProfile(profileId));
 
     // add another profile to default namespace
     ProfileId profileId2 = NamespaceId.DEFAULT.profile("MyProfile2");
-    Profile profile2 = new Profile("MyProfile2", "my 2nd profile for testing",
+    Profile profile2 = new Profile("MyProfile2", "label", "my 2nd profile for testing",
       new ProvisionerInfo("anotherProvisioner", PROPERTY_SUMMARIES));
     profileService.saveProfile(profileId2, profile2);
 
