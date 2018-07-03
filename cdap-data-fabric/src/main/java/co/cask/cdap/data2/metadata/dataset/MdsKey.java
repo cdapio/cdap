@@ -16,18 +16,19 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 
 import javax.annotation.Nullable;
+
+import static co.cask.cdap.api.metadata.MetadataEntity.APPLICATION;
+import static co.cask.cdap.api.metadata.MetadataEntity.ARTIFACT;
+import static co.cask.cdap.api.metadata.MetadataEntity.DATASET;
+import static co.cask.cdap.api.metadata.MetadataEntity.DATASET_INSTANCE;
+import static co.cask.cdap.api.metadata.MetadataEntity.PROGRAM;
+import static co.cask.cdap.api.metadata.MetadataEntity.STREAM;
+import static co.cask.cdap.api.metadata.MetadataEntity.VIEW;
 
 /**
  * Key class to get v1 metadata key information
@@ -49,35 +50,30 @@ public final class MdsKey {
     // Skip targetType
     keySplitter.skipString();
 
-    // Skip targetId
-    if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ProgramId.class))) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ApplicationId.class))) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(DatasetId.class))
-      || type.equals(MetadataEntity.DATASET_INSTANCE)) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(StreamId.class))) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(StreamViewId.class))) {
-      // skip namespace, stream, view
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(EntityIdKeyHelper.TYPE_MAP.get(ArtifactId.class))) {
-      // skip namespace, name, version
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else {
-      throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
+    switch (type) {
+      case PROGRAM:
+        keySplitter.skipString();
+        keySplitter.skipString();
+        keySplitter.skipString();
+        keySplitter.skipString();
+        break;
+      case APPLICATION:
+      case DATASET:
+      case DATASET_INSTANCE:
+      case STREAM:
+        keySplitter.skipString();
+        keySplitter.skipString();
+        break;
+      case VIEW:
+      case ARTIFACT:
+        keySplitter.skipString();
+        keySplitter.skipString();
+        keySplitter.skipString();
+        break;
+      default:
+        throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
+
     return keySplitter.getString();
   }
 
