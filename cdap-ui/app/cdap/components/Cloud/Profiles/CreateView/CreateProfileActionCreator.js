@@ -16,10 +16,10 @@
 
 import CreateProfileStore, {ACTIONS} from 'components/Cloud/Profiles/CreateView/CreateProfileStore';
 
-function updateProfileName(name) {
+function updateProfileLabel(label) {
   CreateProfileStore.dispatch({
-    type: ACTIONS.updateProfileName,
-    payload: {name}
+    type: ACTIONS.updateProfileLabel,
+    payload: {label}
   });
 }
 
@@ -70,7 +70,7 @@ function resetCreateProfileStore() {
   });
 }
 export {
-  updateProfileName,
+  updateProfileLabel,
   updateProfileDescription,
   initializeProperties,
   updateProperty,

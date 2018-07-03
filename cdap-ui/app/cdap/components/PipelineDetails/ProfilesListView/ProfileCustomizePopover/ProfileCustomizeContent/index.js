@@ -30,6 +30,7 @@ require('./ProfileCustomizeContent.scss');
 export default class ProfileCustomizeContent extends PureComponent {
   static propTypes = {
     profileName: PropTypes.string,
+    profileLabel: PropTypes.string,
     customizations: PropTypes.object,
     provisioner: PropTypes.object,
     onSave: PropTypes.func,
@@ -106,15 +107,14 @@ export default class ProfileCustomizeContent extends PureComponent {
         editablePropertiesMap[property.name] = property.value;
       }
     });
+    let profileName = this.props.profileLabel || extractProfileName(this.props.profileName);
 
     return (
       <div className="profile-customize-content">
         <div>
           <div className="profile-customize-metadata">
-            <div>
-              <div>
-                <strong>{extractProfileName(this.props.profileName)}</strong>
-              </div>
+            <div className="profile-customize-name">
+              <strong title={profileName}>{profileName}</strong>
               <small>Customize the values for the runs started by this schedule</small>
             </div>
             <IconSVG
