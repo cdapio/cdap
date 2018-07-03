@@ -20,6 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -73,7 +74,9 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -118,17 +121,16 @@ public class ReportGenerationAppTest extends TestBase {
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
+  private static final DatasetId META_FILESET = NamespaceId.DEFAULT.dataset(ReportGenerationApp.RUN_META_FILESET);
+  private static final DatasetId REPORT_FILESET = NamespaceId.DEFAULT.dataset(ReportGenerationApp.REPORT_FILESET);
 
-  @Test
-  public void testGenerateReport() throws Exception {
-    DatasetId metaFileset = NamespaceId.DEFAULT.dataset(ReportGenerationApp.RUN_META_FILESET);
-    addDatasetInstance(metaFileset, FileSet.class.getName());
-    // TODO: [CDAP-13216] temporarily create the run meta fileset and generate mock program run meta files here.
-    // Will remove once the TMS subscriber writing to the run meta fileset is implemented.
-    DataSetManager<FileSet> fileSet = getDataset(metaFileset);
-    Long currentTime = System.currentTimeMillis();
-    populateMetaFiles(fileSet.get().getBaseLocation(), currentTime);
+  private static ApplicationManager app;
+  private static SparkManager sparkManager;
 
+  @BeforeClass
+  public static void initialize() throws Exception {
+    TestBase.initialize();
+    addDatasetInstance(FileSet.class.getName(), META_FILESET, DatasetProperties.EMPTY);
     // Trace the dependencies for the spark avro
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
@@ -155,9 +157,44 @@ public class ReportGenerationAppTest extends TestBase {
     // from spark-avro so that spark-avro and its dependencies will be included.
     bundler.createBundle(avroSparkBundle, DefaultSource.class);
     File unJarDir = BundleJarUtil.unJar(avroSparkBundle, TEMP_FOLDER.newFolder());
+    // deploy the report generation app
+    app = deployApplication(ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());
+    sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
+  }
 
-    ApplicationManager app = deployApplication(ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());
-    SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
+  @AfterClass
+  public static void finish() throws Exception {
+    sparkManager.stop();
+    sparkManager.waitForStopped(1, TimeUnit.MINUTES);
+    TestBase.finish();
+  }
+
+  @Test
+  public void testKilledReport() throws Exception {
+    DataSetManager<FileSet> reportFileset = getDataset(REPORT_FILESET);
+    Location reportFilesetLocation = reportFileset.get().getBaseLocation();
+    String killedReportId = ReportIds.generate().toString();
+    if (!reportFilesetLocation.append(killedReportId).mkdirs()) {
+      Assert.fail("Failed to create new directory for testing killed report");
+    }
+    URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
+    LOG.info("url {}", url);
+    URL reportURL = url.toURI().resolve("reports/").toURL();
+    LOG.info("reportURL {}", reportURL);
+    URL reportIdURL = url.toURI().resolve("reports/" + killedReportId).toURL();
+    LOG.info("reportIdURL {}", reportIdURL);
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+                                                                  REPORT_GEN_INFO_TYPE);
+    // assert that the status of this report is FAILED since there's no file with filename
+    // consisting of this report's ID and the run ID of the current ReportGenerationSpark run
+    Assert.assertEquals(ReportStatus.FAILED, reportGenerationInfo.getStatus());
+  }
+
+  @Test
+  public void testGenerateReport() throws Exception {
+    DataSetManager<FileSet> fileSet = getDataset(META_FILESET);
+    Long currentTime = System.currentTimeMillis();
+    populateMetaFiles(fileSet.get().getBaseLocation(), currentTime);
     URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
     Assert.assertNotNull(url);
     URL reportURL = url.toURI().resolve("reports/").toURL();
@@ -182,6 +219,7 @@ public class ReportGenerationAppTest extends TestBase {
     String reportId = reportIdMap.get("id");
     Assert.assertNotNull(reportId);
     URL reportIdURL = reportURL.toURI().resolve(reportId + "/").toURL();
+    // wait for the report generation to be completed
     Tasks.waitFor(ReportStatus.COMPLETED, () -> {
       ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
                                                                     REPORT_GEN_INFO_TYPE);
@@ -270,8 +308,6 @@ public class ReportGenerationAppTest extends TestBase {
 
   /**
    * Adds mock program run meta files to the given location.
-   * TODO: [CDAP-13216] this method should be marked as @VisibleForTesting. Temporarily calling this method
-   * when initializing report generation Spark program to add mock data
    *
    * @param metaBaseLocation the location to add files
    * @param currentTime the current time in millis
@@ -322,8 +358,8 @@ public class ReportGenerationAppTest extends TestBase {
   }
 
   private static GenericData.Record createRecord(String namespace, String application, String version,
-                                                String type, String program, String run, String status,
-                                                Long timestamp, ProgramStartInfo startInfo, String messageId) {
+                                                 String type, String program, String run, String status,
+                                                 Long timestamp, ProgramStartInfo startInfo, String messageId) {
     ProgramRunInfo runInfo = new ProgramRunInfo(namespace, application, version, type, program, run);
     runInfo.setStatus(status);
     runInfo.setTime(timestamp);
