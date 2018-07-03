@@ -68,11 +68,12 @@ class AddModelToPipelineBtn extends Component {
   }
 
   setWorkspaceId = () => {
-    let workspaceId;
-    let {directives, srcPath} = this.props;
+    let {srcPath} = this.props;
     createWorkspace(srcPath)
-      .subscribe(
-        (res) => {
+    .subscribe(
+      (res) => {
+          let workspaceId;
+          let {directives} = this.props;
           workspaceId = res.values[0].id;
           this.setState({
             workspaceId
@@ -103,18 +104,20 @@ class AddModelToPipelineBtn extends Component {
         ([artifacts, splitDetails]) => {
           let mmdsPluginsArtifact, datapipelineArtifact, wranglerArtifact, corepluginsArtifact;
           artifacts.forEach(artifact => {
-            if (artifact.name === MMDS_PLUGINS_ARTIFACT_NAME) {
-              mmdsPluginsArtifact = artifact;
-            }
-            if (artifact.name === GLOBALS.etlDataPipeline) {
-              datapipelineArtifact = artifact;
-            }
-            if (artifact.name === GLOBALS.wrangler.pluginArtifactName) {
-              wranglerArtifact = artifact;
-            }
-            // FIXME: We need to move this to use some constant.
-            if (artifact.name === 'core-plugins') {
-              corepluginsArtifact = artifact;
+            switch (artifact.name) {
+              case MMDS_PLUGINS_ARTIFACT_NAME:
+                mmdsPluginsArtifact = artifact;
+                break;
+              case GLOBALS.etlDataPipeline:
+                datapipelineArtifact = artifact;
+                break;
+              case GLOBALS.wrangler.pluginArtifactName:
+                wranglerArtifact = artifact;
+                break;
+              case 'core-plugins':
+                // FIXME: We need to move this to use some constant.
+                corepluginsArtifact = artifact;
+                break;
             }
           });
           let schema = splitDetails.schema;
