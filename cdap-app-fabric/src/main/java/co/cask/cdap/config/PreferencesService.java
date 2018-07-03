@@ -32,7 +32,6 @@ import co.cask.cdap.internal.profile.AdminEventPublisher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
@@ -127,8 +126,16 @@ public class PreferencesService {
       Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProperties);
       preferencesDataset.setPreferences(entityId, propertyMap);
 
-      // After everything is set, publish the update message if profile is present
-      profile.ifPresent(profileId -> adminEventPublisher.publishProfileAssignment(entityId, profileId));
+      // After everything is set, publish the update message and add the association if profile is present
+      if (profile.isPresent()) {
+        profileDataset.addProfileAssignment(profile.get(), entityId);
+        adminEventPublisher.publishProfileAssignment(entityId, profile.get());
+      }
+
+      // if old properties has the profile, remove the association
+      if (oldProfile.isPresent()) {
+        profileDataset.removeProfileAssignment(oldProfile.get(), entityId);
+      }
 
       // if new profiles do not have profile information but old profiles have, it is same as deletion of the profile
       if (!profile.isPresent() && oldProfile.isPresent()) {
@@ -141,8 +148,14 @@ public class PreferencesService {
     Transactionals.execute(transactional, context -> {
       PreferencesDataset dataset = PreferencesDataset.get(context, datasetFramework);
       Map<String, String> oldProp = dataset.getPreferences(entityId);
+      NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
+        NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+      Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProp);
       dataset.deleteProperties(entityId);
-      if (oldProp.containsKey(SystemArguments.PROFILE_NAME)) {
+
+      // if there is profile properties, publish the message to update metadata and remove the assignment
+      if (oldProfile.isPresent()) {
+        ProfileDataset.get(context, datasetFramework).removeProfileAssignment(oldProfile.get(), entityId);
         adminEventPublisher.publishProfileUnAssignment(entityId);
       }
     });

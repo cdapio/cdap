@@ -21,16 +21,24 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.store.AppMetadataStore;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.profile.ProfileDataset;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
+import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
@@ -42,6 +50,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.inject.Inject;
 
 /**
@@ -52,9 +61,11 @@ public class ProfileService {
   private static final Logger LOG = LoggerFactory.getLogger(ProfileService.class);
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
+  private final CConfiguration cConf;
 
   @Inject
-  public ProfileService(DatasetFramework datasetFramework, TransactionSystemClient txClient) {
+  public ProfileService(CConfiguration cConfiguration,
+                        DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
@@ -62,6 +73,7 @@ public class ProfileService {
         Collections.emptyMap(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
+    this.cConf = cConfiguration;
   }
 
   /**
@@ -155,7 +167,11 @@ public class ProfileService {
   }
 
   /**
-   * Deletes the profile from the profile store
+   * Deletes the profile from the profile store. Profile deletion must satisfy the following:
+   * 1. Profile must exist and must be DISABLED
+   * 2. Profile must not be assigned to any entities. Profiles can be assigned to an entity by setting a preference
+   *    or a schedule property.
+   * 3. There must be no active program runs using this profile
    *
    * @param profileId the id of the profile to delete
    * @throws NotFoundException if the profile is not found
@@ -163,15 +179,63 @@ public class ProfileService {
    */
   public void deleteProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException {
     Transactionals.execute(transactional, context -> {
-      getProfileDataset(context).deleteProfile(profileId);
+      ProfileDataset profileDataset = getProfileDataset(context);
+      Profile profile = profileDataset.getProfile(profileId);
+      if (profile == null) {
+        throw new NotFoundException(profileId);
+      }
+
+      // The profile status must be DISABLED
+      if (profile.getStatus() == ProfileStatus.ENABLED) {
+        throw new ProfileConflictException(
+          String.format("Profile %s in namespace %s is currently enabled. A profile can " +
+                          "only be deleted if it is disabled", profileId.getProfile(), profileId.getNamespace()),
+          profileId);
+      }
+
+      // There must be no assigments to this profile
+      Set<EntityId> assignments = profileDataset.getProfileAssignments(profileId);
+      if (!assignments.isEmpty()) {
+        throw new ProfileConflictException(
+          String.format("This profile %s is still assigned to %d entities, like %s. " +
+                          "Please delete all assignments before deleting the profile.",
+                        profileId.toString(), assignments.size(), assignments.iterator().next()),
+          profileId);
+      }
+
+      // There must be no running programs using the profile
+      AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
+      Map<ProgramRunId, RunRecordMeta> activeRuns;
+      Predicate<RunRecordMeta> runRecordMetaPredicate = runRecordMeta -> {
+        // the profile comes in system arguments with the scoped name
+        String scopedName = runRecordMeta.getSystemArgs().get(SystemArguments.PROFILE_NAME);
+        return scopedName != null && scopedName.equals(profileId.getScopedName());
+      };
+      if (profileId.getNamespaceId().equals(NamespaceId.SYSTEM)) {
+        activeRuns = appMetadataStore.getActiveRuns(runRecordMetaPredicate);
+      } else {
+        activeRuns = appMetadataStore.getActiveRuns(Collections.singleton(profileId.getNamespaceId()),
+                                                    runRecordMetaPredicate);
+      }
+      if (!activeRuns.isEmpty()) {
+        throw new ProfileConflictException(
+          String.format("The profile %s is in use by %d active runs, like %s. Please stop all active runs " +
+                          "before deleting the profile.",
+                        profileId.toString(), activeRuns.size(), activeRuns.keySet().iterator().next()),
+          profileId);
+      }
+
+      // delete the profile
+      profileDataset.deleteProfile(profileId);
     }, NotFoundException.class, ProfileConflictException.class);
   }
 
   /**
-   * Delete all profiles in a given namespace.
+   * Delete all profiles in a given namespace. This method can only be used at unit tests
    *
    * @param namespaceId the id of the namespace
    */
+  @VisibleForTesting
   public void deleteAllProfiles(NamespaceId namespaceId) {
     Transactionals.execute(transactional, context -> {
       getProfileDataset(context).deleteAllProfiles(namespaceId);
@@ -202,6 +266,47 @@ public class ProfileService {
     Transactionals.execute(transactional, context -> {
       getProfileDataset(context).disableProfile(profileId);
     }, NotFoundException.class, ProfileConflictException.class);
+  }
+
+  /**
+   * Get assignments with the profile.
+   *
+   * @param profileId the profile id
+   * @return the entities that the profile is assigned to
+   * @throws NotFoundException if the profile is not found
+   */
+  public Set<EntityId> getProfileAssignments(ProfileId profileId) throws NotFoundException {
+    return Transactionals.execute(transactional, context -> {
+      return getProfileDataset(context).getProfileAssignments(profileId);
+    }, NotFoundException.class);
+  }
+
+  /**
+   * Add an assignment to the profile.
+   *
+   * @param profileId the profile id
+   * @param entityId the entity to add to the assignments
+   * @throws NotFoundException if the profile is not found
+   * @throws ProfileConflictException if the profile is disabled
+   */
+  public void addProfileAssignment(ProfileId profileId,
+                                   EntityId entityId) throws NotFoundException, ProfileConflictException {
+    Transactionals.execute(transactional, context -> {
+      getProfileDataset(context).addProfileAssignment(profileId, entityId);
+    }, NotFoundException.class, ProfileConflictException.class);
+  }
+
+  /**
+   * Remove an assignment from the profile.
+   *
+   * @param profileId the profile id
+   * @param entityId the entity to remove from the assignments
+   * @throws NotFoundException if the profile is not found
+   */
+  public void removeProfileAssignment(ProfileId profileId, EntityId entityId) throws NotFoundException {
+    Transactionals.execute(transactional, context -> {
+      getProfileDataset(context).removeProfileAssignment(profileId, entityId);
+    }, NotFoundException.class);
   }
 
   private ProfileDataset getProfileDataset(DatasetContext context) {

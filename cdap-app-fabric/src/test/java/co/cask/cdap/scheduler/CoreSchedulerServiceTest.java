@@ -458,6 +458,32 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     } catch (ProfileConflictException e) {
       // expected
     }
+
+    // clean up
+    deleteProfile(profileId, 200);
+  }
+
+  @Test
+  public void testAddDeleteScheduleWithProfileProperty() throws Exception {
+    // put my profile and by default it is enabled
+    ProfileId profileId = NS_ID.profile("MyProfile");
+    putProfile(profileId, Profile.NATIVE, 200);
+
+    // add a schedule, it should succeed since the profile is enabled.
+    ProgramSchedule tsched1 =
+      new ProgramSchedule("tsched1", "one time schedule", PROG1_ID,
+                          ImmutableMap.of("prop1", "nn", SystemArguments.PROFILE_NAME, profileId.getScopedName()),
+                          new TimeTrigger("* * ? * 1"), ImmutableList.<Constraint>of());
+    scheduler.addSchedule(tsched1);
+
+    // now disable the profile and delete, deletion should fail because the profile is now associated with the schedule
+    disableProfile(profileId, 200);
+    deleteProfile(profileId, 409);
+
+    // delete it
+    scheduler.deleteSchedule(TSCHED1_ID);
+    // now deletion should succeed since it should remove assignment from the profile
+    deleteProfile(profileId, 200);
   }
 
   private WorkflowTokenDetail getWorkflowToken(ProgramId workflowId, String runId,

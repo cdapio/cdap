@@ -16,16 +16,29 @@
 
 package co.cask.cdap.internal.profile;
 
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Injector;
+import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -33,8 +46,10 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Unit test for profile store
@@ -47,11 +62,13 @@ public class ProfileServiceTest {
       .add(new ProvisionerPropertyValue("3rd property", "3rd value", false))
       .build();
 
+  private static Injector injector;
   private static ProfileService profileService;
 
   @BeforeClass
   public static void setup() {
-    profileService = AppFabricTestHelper.getInjector().getInstance(ProfileService.class);
+    injector = AppFabricTestHelper.getInjector();
+    profileService = injector.getInstance(ProfileService.class);
   }
 
   @Test
@@ -196,5 +213,105 @@ public class ProfileServiceTest {
     } catch (NotFoundException e) {
       // expected
     }
+  }
+
+  @Test
+  public void testAddDeleteAssignments() throws Exception {
+    ProfileId myProfile = NamespaceId.DEFAULT.profile("MyProfile");
+    profileService.saveProfile(myProfile, Profile.NATIVE);
+
+    // add a profile assignment and verify
+    Set<EntityId> expected = new HashSet<>();
+    expected.add(NamespaceId.DEFAULT);
+    profileService.addProfileAssignment(myProfile, NamespaceId.DEFAULT);
+    Assert.assertEquals(expected, profileService.getProfileAssignments(myProfile));
+
+    // add more and verify
+    InstanceId instanceId = new InstanceId("");
+    ApplicationId myApp = NamespaceId.DEFAULT.app("myApp");
+    ProgramId myProgram = myApp.workflow("myProgram");
+    expected.add(instanceId);
+    expected.add(myApp);
+    expected.add(myProgram);
+    profileService.addProfileAssignment(myProfile, instanceId);
+    profileService.addProfileAssignment(myProfile, myApp);
+    profileService.addProfileAssignment(myProfile, myProgram);
+    Assert.assertEquals(expected, profileService.getProfileAssignments(myProfile));
+
+    // add same entity id should not affect
+    profileService.addProfileAssignment(myProfile, myApp);
+    Assert.assertEquals(expected, profileService.getProfileAssignments(myProfile));
+
+    // delete one and verify
+    expected.remove(myApp);
+    profileService.removeProfileAssignment(myProfile, myApp);
+    Assert.assertEquals(expected, profileService.getProfileAssignments(myProfile));
+
+    // delete all
+    for (EntityId entityId : expected) {
+      profileService.removeProfileAssignment(myProfile, entityId);
+    }
+    expected.clear();
+    Assert.assertEquals(expected, profileService.getProfileAssignments(myProfile));
+
+    // delete again should not affect
+    profileService.removeProfileAssignment(myProfile, myApp);
+    Assert.assertEquals(expected, profileService.getProfileAssignments(myProfile));
+
+    profileService.disableProfile(myProfile);
+    profileService.deleteProfile(myProfile);
+  }
+
+  @Test
+  public void testProfileDeletion() throws Exception {
+    ProfileId myProfile = NamespaceId.DEFAULT.profile("MyProfile");
+    profileService.saveProfile(myProfile, Profile.NATIVE);
+
+    // Should not be able to delete because the profile is by default enabled
+    try {
+      profileService.deleteProfile(myProfile);
+      Assert.fail();
+    } catch (ProfileConflictException e) {
+      // expected
+    }
+
+    // add assignment and disable it, deletion should also fail
+    profileService.addProfileAssignment(myProfile, NamespaceId.DEFAULT);
+    profileService.disableProfile(myProfile);
+
+    try {
+      profileService.deleteProfile(myProfile);
+      Assert.fail();
+    } catch (ProfileConflictException e) {
+      // expected
+    }
+    profileService.removeProfileAssignment(myProfile, NamespaceId.DEFAULT);
+
+    // add an active record to DefaultStore, deletion should still fail
+    Store store = injector.getInstance(DefaultStore.class);
+    ProgramId programId = NamespaceId.DEFAULT.app("myApp").workflow("myProgram");
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    RunId runId = RunIds.generate(System.currentTimeMillis());
+    ProgramRunId programRunId = programId.run(runId.getId());
+    Map<String, String> systemArgs = Collections.singletonMap(SystemArguments.PROFILE_NAME, myProfile.getScopedName());
+    int sourceId = 0;
+    store.setProvisioning(programRunId, Collections.emptyMap(), systemArgs,
+                          AppFabricTestHelper.createSourceId(++sourceId), artifactId);
+    store.setProvisioned(programRunId, 0, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(programRunId, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+
+    try {
+      profileService.deleteProfile(myProfile);
+      Assert.fail();
+    } catch (ProfileConflictException e) {
+      // expected
+    }
+
+    // set the run to stopped then deletion should work
+    store.setStop(programRunId, System.currentTimeMillis() + 1000,
+                  ProgramController.State.ERROR.getRunStatus(), AppFabricTestHelper.createSourceId(++sourceId));
+
+    // now profile deletion should succeed
+    profileService.deleteProfile(myProfile);
   }
 }

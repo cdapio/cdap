@@ -495,7 +495,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param namespaceId the {@link NamespaceId} under which all application should be deleted
    * @throws Exception
    */
-  public void removeAll(final NamespaceId namespaceId) throws Exception {
+  public void removeAll(NamespaceId namespaceId) throws Exception {
     Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(namespaceId);
     List<ApplicationSpecification> allSpecs = new ArrayList<>(store.getAllApplications(namespaceId));
     Map<ApplicationId, ApplicationSpecification> apps = new HashMap<>();
@@ -530,7 +530,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appId the {@link ApplicationId} of the application to be removed
    * @throws Exception
    */
-  public void removeApplication(final ApplicationId appId) throws Exception {
+  public void removeApplication(ApplicationId appId) throws Exception {
     // enforce ADMIN privileges on the app
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
     ensureNoRunningPrograms(appId);
@@ -563,7 +563,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appId the id of the application to find running programs for
    * @throws CannotBeDeletedException : the application cannot be deleted because of running programs
    */
-  private void ensureNoRunningPrograms(final ApplicationId appId) throws CannotBeDeletedException {
+  private void ensureNoRunningPrograms(ApplicationId appId) throws CannotBeDeletedException {
     //Check if all are stopped.
     Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(appId);
 
@@ -702,7 +702,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param spec the spec of the application to delete
    * @throws Exception
    */
-  private void deleteApp(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
+  private void deleteApp(ApplicationId appId, ApplicationSpecification spec) throws Exception {
     //Delete the schedules
     scheduler.deleteSchedules(appId);
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
@@ -749,7 +749,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appId the id of the application to delete
    * @param spec the spec of the application to delete
    */
-  private void deleteAppVersion(final ApplicationId appId, ApplicationSpecification spec) {
+  private void deleteAppVersion(ApplicationId appId, ApplicationSpecification spec) {
     //Delete the schedules
     scheduler.deleteSchedules(appId);
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
@@ -809,7 +809,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Filter the {@link ApplicationDetail} by only returning the visible entities
    */
-  private ApplicationDetail filterApplicationDetail(final ApplicationId appId,
+  private ApplicationDetail filterApplicationDetail(ApplicationId appId,
                                                     ApplicationDetail applicationDetail) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     List<ProgramRecord> filteredPrograms =

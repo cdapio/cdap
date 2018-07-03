@@ -24,6 +24,8 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -35,8 +37,10 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for {@link ConfigStore}, {@link ConsoleSettingsStore}, {@link DashboardStore} and {@link PreferencesService}.
@@ -329,5 +333,55 @@ public class UserConfigStoreTest extends AppFabricTestBase {
     } catch (RuntimeException e) {
       Assert.assertTrue(e.getCause() instanceof BadRequestException);
     }
+  }
+
+  @Test
+  public void testProfileAssignment() throws Exception {
+    PreferencesService preferencesService = getInjector().getInstance(PreferencesService.class);
+    ProfileService profileService = getInjector().getInstance(ProfileService.class);
+    ProfileId myProfile = NamespaceId.DEFAULT.profile("myProfile");
+    profileService.saveProfile(myProfile, Profile.NATIVE);
+
+    // add properties with profile information
+    Map<String, String> prop = new HashMap<>();
+    prop.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    ApplicationId myApp = NamespaceId.DEFAULT.app("myApp");
+    ProgramId myProgram = myApp.workflow("myProgram");
+    preferencesService.setProperties(prop);
+    preferencesService.setProperties(NamespaceId.DEFAULT, prop);
+    preferencesService.setProperties(myApp, prop);
+    preferencesService.setProperties(myProgram, prop);
+
+    // the assignment should be there for these entities
+    Set<EntityId> expected = new HashSet<>();
+    expected.add(new InstanceId(""));
+    expected.add(NamespaceId.DEFAULT);
+    expected.add(myApp);
+    expected.add(myProgram);
+    Assert.assertEquals(expected, profileService.getProfileAssignments(ProfileId.NATIVE));
+
+    // setting an empty property is actually deleting the assignment
+    prop.clear();
+    preferencesService.setProperties(myApp, prop);
+    expected.remove(myApp);
+    Assert.assertEquals(expected, profileService.getProfileAssignments(ProfileId.NATIVE));
+
+    // set my program to use a different profile, should update both profiles
+    prop.put(SystemArguments.PROFILE_NAME, myProfile.getScopedName());
+    preferencesService.setProperties(myProgram, prop);
+    expected.remove(myProgram);
+    Assert.assertEquals(expected, profileService.getProfileAssignments(ProfileId.NATIVE));
+    Assert.assertEquals(Collections.singleton(myProgram), profileService.getProfileAssignments(myProfile));
+
+    // delete all preferences
+    preferencesService.deleteProperties();
+    preferencesService.deleteProperties(NamespaceId.DEFAULT);
+    preferencesService.deleteProperties(myApp);
+    preferencesService.deleteProperties(myProgram);
+    Assert.assertEquals(Collections.emptySet(), profileService.getProfileAssignments(ProfileId.NATIVE));
+    Assert.assertEquals(Collections.emptySet(), profileService.getProfileAssignments(myProfile));
+
+    profileService.disableProfile(myProfile);
+    profileService.deleteProfile(myProfile);
   }
 }

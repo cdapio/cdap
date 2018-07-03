@@ -896,6 +896,14 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return getRuns(programRunIds, Integer.MAX_VALUE);
   }
 
+  /**
+   * Get active runs in the given set of namespaces that satisfies a filter, active runs means program run with status
+   * STARTING, PENDING, RUNNING or SUSPENDED.
+   *
+   * @param namespaces set of namespaces
+   * @param filter filter to filter run record
+   * @return map of run id to run record meta
+   */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces, Predicate<RunRecordMeta> filter) {
     return namespaces.stream().flatMap(namespaceId -> {
       MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTING, namespaceId).build();
@@ -910,6 +918,31 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
+  /**
+   * Get active runs in all namespaces with a filter, active runs means program run with status STARTING, PENDING,
+   * RUNNING or SUSPENDED.
+   *
+   * @param filter filter to filter run record
+   * @return map of run id to run record meta
+   */
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Predicate<RunRecordMeta> filter) {
+    MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTING, null).build();
+    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
+                                                                            Integer.MAX_VALUE, filter));
+    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTED, null).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, filter)));
+    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, null).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, filter)));
+    return activeRuns;
+  }
+
+  /**
+   * Get active runs in the given namespace, active runs means program run with status STARTING, PENDING,
+   * RUNNING or SUSPENDED.
+   *
+   * @param namespaceId given namespace
+   * @return map of run id to run record meta
+   */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId) {
     // TODO CDAP-12361 should consolidate these methods and get rid of duplicate / unnecessary methods.
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
@@ -924,6 +957,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return activeRuns;
   }
 
+  /**
+   * Get active runs in the given application, active runs means program run with status STARTING, PENDING,
+   * RUNNING or SUSPENDED.
+   *
+   * @param applicationId given app
+   * @return map of run id to run record meta
+   */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId) {
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
     MDSKey key = getApplicationKeyBuilder(TYPE_RUN_RECORD_STARTING, applicationId).build();
@@ -937,6 +977,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return activeRuns;
   }
 
+  /**
+   * Get active runs in the given program, active runs means program run with status STARTING, PENDING,
+   * RUNNING or SUSPENDED.
+   *
+   * @param programId given program
+   * @return map of run id to run record meta
+   */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) {
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
     MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId).build();

@@ -244,7 +244,15 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           }
         }
         for (ProgramSchedule schedule : schedules) {
-          adminEventPublisher.publishScheduleCreation(schedule.getScheduleId());
+          ScheduleId scheduleId = schedule.getScheduleId();
+          adminEventPublisher.publishScheduleCreation(scheduleId);
+
+          // if the added properties contains profile assignment, add the assignment
+          Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(),
+                                                                               schedule.getProperties());
+          if (profileId.isPresent()) {
+            profileDataset.addProfileAssignment(profileId.get(), scheduleId);
+          }
         }
         return null;
       }, Exception.class);
@@ -361,13 +369,25 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Override
   public void deleteSchedules(Iterable<? extends ScheduleId> scheduleIds) throws NotFoundException {
     checkStarted();
-    execute((StoreAndQueueTxRunnable<Void, NotFoundException>) (store, queue) -> {
+    execute((StoreQueueAndProfileTxRunnable<Void, NotFoundException>) (store, queue, profileDataset) -> {
       long deleteTime = System.currentTimeMillis();
       for (ScheduleId scheduleId : scheduleIds) {
         ProgramSchedule schedule = store.getSchedule(scheduleId);
         deleteScheduleInScheduler(schedule);
         queue.markJobsForDeletion(scheduleId, deleteTime);
         adminEventPublisher.publishScheduleDeletion(scheduleId, schedule);
+        // if the deleted schedule has properties with profile assignment, remove the assignment
+        Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(),
+                                                                             schedule.getProperties());
+        if (profileId.isPresent()) {
+          try {
+            profileDataset.removeProfileAssignment(profileId.get(), scheduleId);
+          } catch (NotFoundException e) {
+            // this should not happen since the profile cannot be deleted if there is a schedule who is using it
+            LOG.warn("Unable to find the profile {} when deleting schedule {}, " +
+                       "skipping assignment deletion.", profileId.get(), scheduleId);
+          }
+        }
       }
       store.deleteSchedules(scheduleIds);
       return null;
@@ -377,7 +397,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Override
   public void deleteSchedules(ApplicationId appId) {
     checkStarted();
-    execute((StoreAndQueueTxRunnable<Void, RuntimeException>) (store, queue) -> {
+    execute((StoreQueueAndProfileTxRunnable<Void, RuntimeException>) (store, queue, profileDataset) -> {
       long deleteTime = System.currentTimeMillis();
       List<ProgramSchedule> schedules = store.listSchedules(appId);
       deleteSchedulesInScheduler(schedules);
@@ -386,7 +406,20 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         queue.markJobsForDeletion(scheduleId, deleteTime);
       }
       for (ProgramSchedule programSchedule : schedules) {
-        adminEventPublisher.publishScheduleDeletion(programSchedule.getScheduleId(), programSchedule);
+        ScheduleId scheduleId = programSchedule.getScheduleId();
+        adminEventPublisher.publishScheduleDeletion(scheduleId, programSchedule);
+        // if the deleted schedule has properties with profile assignment, remove the assignment
+        Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(),
+                                                                             programSchedule.getProperties());
+        if (profileId.isPresent()) {
+          try {
+            profileDataset.removeProfileAssignment(profileId.get(), scheduleId);
+          } catch (NotFoundException e) {
+            // this should not happen since the profile cannot be deleted if there is a schedule who is using it
+            LOG.warn("Unable to find the profile {} when deleting schedule {}, " +
+                       "skipping assignment deletion.", profileId.get(), scheduleId);
+          }
+        }
       }
       return null;
     }, RuntimeException.class);
@@ -395,7 +428,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Override
   public void deleteSchedules(ProgramId programId) {
     checkStarted();
-    execute((StoreAndQueueTxRunnable<Void, RuntimeException>) (store, queue) -> {
+    execute((StoreQueueAndProfileTxRunnable<Void, RuntimeException>) (store, queue, profileDataset) -> {
       long deleteTime = System.currentTimeMillis();
       List<ProgramSchedule> schedules = store.listSchedules(programId);
       deleteSchedulesInScheduler(schedules);
@@ -404,7 +437,20 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         queue.markJobsForDeletion(scheduleId, deleteTime);
       }
       for (ProgramSchedule programSchedule : schedules) {
-        adminEventPublisher.publishScheduleDeletion(programSchedule.getScheduleId(), programSchedule);
+        ScheduleId scheduleId = programSchedule.getScheduleId();
+        adminEventPublisher.publishScheduleDeletion(scheduleId, programSchedule);
+        // if the deleted schedule has properties with profile assignment, remove the assignment
+        Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(),
+                                                                             programSchedule.getProperties());
+        if (profileId.isPresent()) {
+          try {
+            profileDataset.removeProfileAssignment(profileId.get(), scheduleId);
+          } catch (NotFoundException e) {
+            // this should not happen since the profile cannot be deleted if there is a schedule who is using it
+            LOG.warn("Unable to find the profile {} when deleting schedule {}, " +
+                       "skipping assignment deletion.", profileId.get(), scheduleId);
+          }
+        }
       }
       return null;
     }, RuntimeException.class);
@@ -474,6 +520,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     V run(ProgramScheduleStoreDataset store, ProfileDataset profileDataset) throws T;
   }
 
+  private interface StoreQueueAndProfileTxRunnable<V, T extends Throwable> {
+    V run(ProgramScheduleStoreDataset store, JobQueueDataset jobQueue, ProfileDataset profileDataset) throws T;
+  }
+
   private <V, T extends Exception> V execute(StoreTxRunnable<V, T> runnable,
                                              Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
@@ -497,6 +547,16 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
       ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
       return runnable.run(store, profileDataset);
+    }, tClass);
+  }
+
+  private <V, T extends Exception> V execute(StoreQueueAndProfileTxRunnable<V, T> runnable,
+                                             Class<? extends T> tClass) throws T {
+    return Transactionals.execute(transactional, context -> {
+      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
+      ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
+      JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework);
+      return runnable.run(store, queue, profileDataset);
     }, tClass);
   }
 }
