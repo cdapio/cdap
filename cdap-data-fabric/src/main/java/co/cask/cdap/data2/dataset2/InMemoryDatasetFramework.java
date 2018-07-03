@@ -88,7 +88,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetFramework.class);
 
   private final DatasetDefinitionRegistryFactory registryFactory;
-  private final Set<NamespaceId> namespaces;
   private final SetMultimap<NamespaceId, String> nonDefaultTypes;
 
   // NamespaceId is contained in DatasetId. But we need to be able to get all instances in a namespace
@@ -116,7 +115,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
                                   @Constants.Dataset.Manager.DefaultDatasetModules Map<String, DatasetModule> modules) {
     this.registryFactory = registryFactory;
-    this.namespaces = Sets.newHashSet();
     this.nonDefaultTypes = HashMultimap.create();
     this.instances = HashBasedTable.create();
     this.types = Maps.newHashMap();
@@ -131,8 +129,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       }
     });
 
-    // add default dataset modules to system namespace
-    namespaces.add(NamespaceId.SYSTEM);
     DatasetDefinitionRegistry systemRegistry = registryFactory.create();
     for (Map.Entry<String, DatasetModule> entry : modules.entrySet()) {
       LOG.debug("Adding Default module {} to system namespace", entry.getKey());
@@ -229,8 +225,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetType, DatasetId datasetInstanceId,
-                          DatasetProperties props) throws DatasetManagementException, IOException {
+  public void addInstance(String datasetType, DatasetId datasetInstanceId, DatasetProperties props,
+                          @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException {
+    if (ownerPrincipal != null) {
+      throw new UnsupportedOperationException("Creating dataset with owner is not supported");
+    }
+
     writeLock.lock();
     try {
       if (instances.contains(datasetInstanceId.getParent(), datasetInstanceId)) {
@@ -255,12 +255,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     } finally {
       writeLock.unlock();
     }
-  }
-
-  @Override
-  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
-                          @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException {
-    throw new UnsupportedOperationException("Creating dataset with owner is not supported");
   }
 
   @Override
@@ -300,14 +294,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId)
-    throws DatasetManagementException {
-    return getInstances(namespaceId, new HashMap<String, String>());
+  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId) {
+    return getInstances(namespaceId, new HashMap<>());
   }
 
   @Override
-  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
-    throws DatasetManagementException {
+  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties) {
     readLock.lock();
     try {
       // don't expect this to be called a lot.
@@ -345,11 +337,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     } finally {
       readLock.unlock();
     }
-  }
-
-  @Override
-  public boolean hasSystemType(String typeName) {
-    return hasType(NamespaceId.SYSTEM.datasetType(typeName));
   }
 
   @VisibleForTesting
@@ -452,14 +439,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     } finally {
       readLock.unlock();
     }
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId,
-                                          Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader) throws IOException {
-    return getDataset(datasetInstanceId, arguments, classLoader,
-                      new ConstantClassLoaderProvider(classLoader), null, AccessType.UNKNOWN);
   }
 
   @Nullable

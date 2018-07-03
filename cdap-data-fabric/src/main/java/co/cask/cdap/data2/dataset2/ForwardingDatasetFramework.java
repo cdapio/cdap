@@ -73,12 +73,6 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException {
-    delegate.addInstance(datasetTypeName, datasetInstanceId, props);
-  }
-
-  @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
                           @Nullable KerberosPrincipalId ownerPrincipal)
     throws DatasetManagementException, IOException {
@@ -112,11 +106,6 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   @Override
   public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
     return delegate.hasInstance(datasetInstanceId);
-  }
-
-  @Override
-  public boolean hasSystemType(String typeName) throws DatasetManagementException {
-    return delegate.hasSystemType(typeName);
   }
 
   @Override
@@ -158,14 +147,6 @@ public class ForwardingDatasetFramework implements DatasetFramework {
                                              DatasetClassLoaderProvider classLoaderProvider)
     throws DatasetManagementException, IOException {
     return delegate.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
-  }
-
-  @Nullable
-  @Override
-  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
-    return delegate.getDataset(datasetInstanceId, arguments, classLoader);
   }
 
   @Nullable

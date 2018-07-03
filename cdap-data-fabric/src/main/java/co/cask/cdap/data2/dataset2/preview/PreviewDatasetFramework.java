@@ -21,18 +21,13 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetRuntimeContext;
+import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -40,45 +35,40 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
  * Dataset framework that delegates either to local or shared (actual) dataset framework.
  */
-public class PreviewDatasetFramework implements DatasetFramework {
-  private static final Logger LOG = LoggerFactory.getLogger(PreviewDatasetFramework.class);
+public class PreviewDatasetFramework extends ForwardingDatasetFramework {
+
   private static final DatasetAdmin NOOP_DATASET_ADMIN = new DatasetAdmin() {
     @Override
-    public boolean exists() throws IOException {
+    public boolean exists() {
       return true;
     }
 
     @Override
-    public void create() throws IOException {
+    public void create() {
     }
 
     @Override
-    public void drop() throws IOException {
+    public void drop() {
     }
 
     @Override
-    public void truncate() throws IOException {
+    public void truncate() {
     }
 
     @Override
-    public void upgrade() throws IOException {
+    public void upgrade() {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
     }
   };
   private static final AuthorizationEnforcer NOOP_ENFORCER = new NoOpAuthorizer();
@@ -95,7 +85,6 @@ public class PreviewDatasetFramework implements DatasetFramework {
       }
     };
 
-  private final DatasetFramework localDatasetFramework;
   private final DatasetFramework actualDatasetFramework;
   private final AuthenticationContext authenticationContext;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -109,128 +98,65 @@ public class PreviewDatasetFramework implements DatasetFramework {
   public PreviewDatasetFramework(DatasetFramework local, DatasetFramework actual,
                                  AuthenticationContext authenticationContext,
                                  AuthorizationEnforcer authorizationEnforcer) {
-    this.localDatasetFramework = local;
+    super(local);
     this.actualDatasetFramework = actual;
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
   }
 
   @Override
-  public void addModule(DatasetModuleId moduleId, DatasetModule module) throws DatasetManagementException {
-    localDatasetFramework.addModule(moduleId, module);
-  }
-
-  @Override
-  public void addModule(DatasetModuleId moduleId, DatasetModule module, Location jarLocation)
-    throws DatasetManagementException {
-    // called while deploying the new application from DatasetModuleDeployer stage.
-    // any new module should be deployed in the preview space.
-    localDatasetFramework.addModule(moduleId, module, jarLocation);
-  }
-
-  @Override
-  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException {
-    localDatasetFramework.deleteModule(moduleId);
-  }
-
-  @Override
-  public void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException {
-    localDatasetFramework.deleteAllModules(namespaceId);
-  }
-
-  @Override
-  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
-                          DatasetProperties props) throws DatasetManagementException, IOException {
-    localDatasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
-  }
-
-  @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
                           DatasetProperties props,
                           @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException {
-    if (ownerPrincipal == null) {
-      addInstance(datasetTypeName, datasetInstanceId, props);
-      return;
+    if (ownerPrincipal != null) {
+      throw new UnsupportedOperationException("Creating dataset instance with owner is not supported in preview, " +
+                                                "please try to start the preview without the ownership");
     }
-    throw new UnsupportedOperationException("Creating dataset instance with owner is not supported in preview, " +
-                                              "please try to start the preview without the ownership");
+    super.addInstance(datasetTypeName, datasetInstanceId, props, null);
   }
 
   @Override
   public void updateInstance(DatasetId datasetInstanceId,
                              DatasetProperties props) throws DatasetManagementException, IOException {
     // allow updates to the datasets in preview space only
-    if (localDatasetFramework.hasInstance(datasetInstanceId)) {
-      localDatasetFramework.updateInstance(datasetInstanceId, props);
+    if (delegate.hasInstance(datasetInstanceId)) {
+      delegate.updateInstance(datasetInstanceId, props);
     }
   }
 
-  @Override
-  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId)
-    throws DatasetManagementException {
-    return localDatasetFramework.getInstances(namespaceId);
-  }
-
-  @Override
-  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
-    throws DatasetManagementException {
-    return localDatasetFramework.getInstances(namespaceId, properties);
-  }
 
   @Nullable
   @Override
   public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
     if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
       DatasetSpecification datasetSpec = actualDatasetFramework.getDatasetSpec(datasetInstanceId);
-      return datasetSpec != null ? datasetSpec : localDatasetFramework.getDatasetSpec(datasetInstanceId);
+      return datasetSpec != null ? datasetSpec : delegate.getDatasetSpec(datasetInstanceId);
     }
-    return localDatasetFramework.getDatasetSpec(datasetInstanceId);
+    return delegate.getDatasetSpec(datasetInstanceId);
   }
 
   @Override
   public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
     if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
-      return actualDatasetFramework.hasInstance(datasetInstanceId) ||
-        localDatasetFramework.hasInstance(datasetInstanceId);
+      return actualDatasetFramework.hasInstance(datasetInstanceId) || delegate.hasInstance(datasetInstanceId);
     }
-    return localDatasetFramework.hasInstance(datasetInstanceId);
-  }
-
-  @Override
-  public boolean hasSystemType(String typeName) throws DatasetManagementException {
-    return hasType(NamespaceId.SYSTEM.datasetType(typeName));
-  }
-
-  @Override
-  public boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException {
-    return localDatasetFramework.hasType(datasetTypeId);
-  }
-
-  @Nullable
-  @Override
-  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId) throws DatasetManagementException {
-    return localDatasetFramework.getTypeInfo(datasetTypeId);
+    return delegate.hasInstance(datasetInstanceId);
   }
 
   @Override
   public void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
     // If dataset exists in the preview space then only truncate it otherwise its a no-op
-    if (localDatasetFramework.hasInstance(datasetInstanceId)) {
-      localDatasetFramework.truncateInstance(datasetInstanceId);
+    if (delegate.hasInstance(datasetInstanceId)) {
+      delegate.truncateInstance(datasetInstanceId);
     }
   }
 
   @Override
   public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
     // If dataset exists in the preview space then only delete it otherwise its a no-op
-    if (localDatasetFramework.hasInstance(datasetInstanceId)) {
-      localDatasetFramework.deleteInstance(datasetInstanceId);
+    if (delegate.hasInstance(datasetInstanceId)) {
+      delegate.deleteInstance(datasetInstanceId);
     }
-  }
-
-  @Override
-  public void deleteAllInstances(NamespaceId namespaceId) throws DatasetManagementException, IOException {
-    localDatasetFramework.deleteAllInstances(namespaceId);
   }
 
   @Nullable
@@ -242,7 +168,7 @@ public class PreviewDatasetFramework implements DatasetFramework {
     if (actualDatasetFramework.hasInstance(datasetInstanceId)) {
       return (T) NOOP_DATASET_ADMIN;
     }
-    return localDatasetFramework.getAdmin(datasetInstanceId, classLoader);
+    return delegate.getAdmin(datasetInstanceId, classLoader);
   }
 
   @Nullable
@@ -255,17 +181,7 @@ public class PreviewDatasetFramework implements DatasetFramework {
     if (actualDatasetFramework.hasInstance(datasetInstanceId)) {
       return (T) NOOP_DATASET_ADMIN;
     }
-    return localDatasetFramework.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
-  }
-
-  @Nullable
-  @Override
-  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
-
-    return getDataset(datasetInstanceId, arguments, classLoader, new ConstantClassLoaderProvider(classLoader), null,
-                      AccessType.UNKNOWN);
+    return delegate.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
   }
 
   @Nullable
@@ -289,17 +205,14 @@ public class PreviewDatasetFramework implements DatasetFramework {
         enforcer = NOOP_ENFORCER;
       }
 
-      return DefaultDatasetRuntimeContext.execute(enforcer, NOOP_DATASET_ACCESS_RECORDER, principal, datasetInstanceId,
-                                                  null, new Callable<T>() {
-          @Override
-          public T call() throws Exception {
-            if (isUserDataset && actualDatasetFramework.hasInstance(datasetInstanceId)) {
-              return actualDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider,
-                                                       owners, accessType);
-            }
-            return localDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider,
-                                                    owners, accessType);
+      return DefaultDatasetRuntimeContext.execute(
+        enforcer, NOOP_DATASET_ACCESS_RECORDER, principal, datasetInstanceId, null, () -> {
+          if (isUserDataset && actualDatasetFramework.hasInstance(datasetInstanceId)) {
+            return actualDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider,
+                                                     owners, accessType);
           }
+          return delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider,
+                                     owners, accessType);
         });
     } catch (IOException | DatasetManagementException e) {
       throw e;

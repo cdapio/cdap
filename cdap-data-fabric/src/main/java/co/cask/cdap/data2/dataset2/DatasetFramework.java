@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -134,8 +135,10 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException;
+  default void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
+                           DatasetProperties props) throws DatasetManagementException, IOException {
+    addInstance(datasetTypeName, datasetInstanceId, props, null);
+  }
 
   /**
    * Adds information about dataset instance to the system.
@@ -221,7 +224,9 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  boolean hasSystemType(String typeName) throws DatasetManagementException;
+  default boolean hasSystemType(String typeName) throws DatasetManagementException {
+    return hasType(NamespaceId.SYSTEM.datasetType(typeName));
+  }
 
   /**
    * Checks if the specified type exists in the specified namespace
@@ -324,9 +329,13 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
-  <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
-                                   @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException;
+  default <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
+                                           @Nullable ClassLoader classLoader)
+    throws DatasetManagementException, IOException {
+
+    return getDataset(datasetInstanceId, arguments, classLoader,
+                      new ConstantClassLoaderProvider(classLoader), null, AccessType.UNKNOWN);
+  }
 
   /**
    * Gets dataset to be used to perform data operations. This one is used when the classloader(s) for a dataset may

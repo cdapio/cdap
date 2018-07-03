@@ -25,6 +25,7 @@ import co.cask.cdap.data2.metadata.writer.MetadataMessage.Type;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
@@ -40,7 +41,6 @@ import javax.inject.Inject;
 public class MessagingMetadataPublisher implements MetadataPublisher {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetadataPublisher.class);
-
   private static final Gson GSON = new Gson();
 
   private final TopicId topic;
@@ -63,6 +63,19 @@ public class MessagingMetadataPublisher implements MetadataPublisher {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {
       throw new RuntimeException("Failed to publish metadata operation: " + operation, e);
+    }
+  }
+
+  @Override
+  public void publish(EntityId entityId, DatasetInstanceOperation datasetInstanceOperation) {
+    MetadataMessage message = new MetadataMessage(Type.DATASET_OPERATION, entityId,
+                                                  GSON.toJsonTree(datasetInstanceOperation));
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    LOG.trace("Publishing message {} to topic {}", message, topic);
+    try {
+      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to publish metadata operation: " + datasetInstanceOperation, e);
     }
   }
 }
