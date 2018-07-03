@@ -149,7 +149,7 @@ const GLOBALS = {
   },
 
   wrangler: {
-    artifactName: 'wrangler-service'
+    pluginArtifactName: 'wrangler-transform'
   },
 
   'en': {

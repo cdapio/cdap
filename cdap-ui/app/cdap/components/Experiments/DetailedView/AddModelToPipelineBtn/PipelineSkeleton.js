@@ -16,15 +16,24 @@
 
 export default function getPipelineConfig({
   file,
-  experimentId,
-  modelId
+  wrangler,
+  mmds
 }) {
   return {
     "artifact": {},
     "description": "",
     "name": "",
     "config": {
-      "connections": [],
+      "connections": [
+        {
+          from: "File",
+          to: "Wrangler"
+        },
+        {
+          from: "Wrangler",
+          to: "MLPredictor"
+        }
+      ],
       "comments": [],
       "postActions": [],
       "properties": {},
@@ -37,9 +46,10 @@ export default function getPipelineConfig({
             "name": "File",
             "type": "batchsource",
             "label": "File",
-            "artifact": corePluginArtifact,
+            "artifact": file.corepluginsArtifact,
             "properties": {
-              "path": srcPath,
+              "referenceName": "file_source",
+              "path": file.srcPath,
               "schema": "{\"name\":\"fileRecord\",\"type\":\"record\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
             }
           }
@@ -50,12 +60,14 @@ export default function getPipelineConfig({
             "name": "Wrangler",
             "type": "transform",
             "label": "Wrangler",
-            "artifact": wranglerArtifact,
+            "artifact": wrangler.wranglerArtifact,
             "properties": {
-              "field": "*",
+              "field": "body",
               "precondition": "false",
               "threshold": "1",
-              "directives": directives
+              "directives": wrangler.directives.join('\n'),
+              "schema": JSON.stringify(wrangler.schema),
+              "workspaceId": wrangler.workspaceId
             }
           }
         },
@@ -65,10 +77,10 @@ export default function getPipelineConfig({
               "name": "MLPredictor",
               "type": "sparkcompute",
               "label": "MLPredictor",
-              "artifact": mmdsPluginsArtifact,
+              "artifact": mmds.mmdsPluginsArtifact,
               "properties": {
-                "experimentId": experimentId,
-                "modelId": modelId
+                "experimentId": mmds.experimentId,
+                "modelId": mmds.modelId
               }
           }
         }

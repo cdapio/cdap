@@ -25,6 +25,8 @@ import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
 import { connect } from 'react-redux';
 import uuidV4 from 'uuid/v4';
+import {myExperimentsApi} from 'api/experiments';
+import {createWorkspace, applyDirectives} from 'components/Experiments/store/CreateExperimentActionCreator';
 require('./AddModelToPipelineBtn.scss');
 
 const MMDS_PLUGINS_ARTIFACT_NAME = 'mmds-plugins';
@@ -34,7 +36,10 @@ class AddModelToPipelineBtn extends Component {
   static propTypes = {
     experimentId: PropTypes.string,
     modelId: PropTypes.string,
-    modelName: PropTypes.string
+    modelName: PropTypes.string,
+    srcPath: PropTypes.string,
+    directives: PropTypes.arrayOf(PropTypes.string),
+    splitId: PropTypes.string
   };
 
   state = {
@@ -42,7 +47,9 @@ class AddModelToPipelineBtn extends Component {
     error: null,
     mmdsPluginsArtifact: null,
     datapipelineArtifact: null,
-    wranglerArtifact: null
+    wranglerArtifact: null,
+    corepluginsArtifact: null,
+    schema: null
   };
 
   cloneId = uuidV4();
@@ -56,31 +63,67 @@ class AddModelToPipelineBtn extends Component {
   });
 
   componentDidMount() {
+    this.setWorkspaceId();
     this.fetchArtifactForPipelines();
   }
+
+  setWorkspaceId = () => {
+    let workspaceId;
+    let {directives, srcPath} = this.props;
+    createWorkspace(srcPath)
+      .subscribe(
+        (res) => {
+          workspaceId = res.values[0].id;
+          this.setState({
+            workspaceId
+          });
+          applyDirectives(workspaceId, directives).subscribe();
+        }, () => {
+          this.setState({
+            disabled: true
+          });
+        });
+  };
+
   fetchArtifactForPipelines() {
+    let {experimentId, splitId} = this.props;
     MyArtifactApi
       .list({
         namespace: getCurrentNamespace()
       })
+      .combineLatest([
+        myExperimentsApi
+          .getSplitDetails({
+            namespace: getCurrentNamespace(),
+            experimentId,
+            splitId
+          })
+      ])
       .subscribe(
-        (res) => {
-          let mmdsPluginsArtifact, datapipelineArtifact, wranglerArtifact;
-          res.forEach(artifact => {
+        ([artifacts, splitDetails]) => {
+          let mmdsPluginsArtifact, datapipelineArtifact, wranglerArtifact, corepluginsArtifact;
+          artifacts.forEach(artifact => {
             if (artifact.name === MMDS_PLUGINS_ARTIFACT_NAME) {
               mmdsPluginsArtifact = artifact;
             }
             if (artifact.name === GLOBALS.etlDataPipeline) {
               datapipelineArtifact = artifact;
             }
-            if (artifact.name === GLOBALS.wrangler.artifactName) {
+            if (artifact.name === GLOBALS.wrangler.pluginArtifactName) {
               wranglerArtifact = artifact;
             }
+            // FIXME: We need to move this to use some constant.
+            if (artifact.name === 'core-plugins') {
+              corepluginsArtifact = artifact;
+            }
           });
+          let schema = splitDetails.schema;
           if (
             isNilOrEmpty(mmdsPluginsArtifact) ||
             isNilOrEmpty(datapipelineArtifact) ||
-            isNilOrEmpty(wranglerArtifact)
+            isNilOrEmpty(wranglerArtifact) ||
+            isNilOrEmpty(corepluginsArtifact) ||
+            isNilOrEmpty(schema)
           ) {
             this.setState({
               error: ERROR_MSG
@@ -90,6 +133,8 @@ class AddModelToPipelineBtn extends Component {
               mmdsPluginsArtifact,
               datapipelineArtifact,
               wranglerArtifact,
+              corepluginsArtifact,
+              schema,
               disabled: false
             });
           }
@@ -102,12 +147,24 @@ class AddModelToPipelineBtn extends Component {
       );
   }
   generatePipelineConfig = () => {
-    let {experimentId, modelId, modelName} = this.props;
-    let {mmdsPluginsArtifact, datapipelineArtifact} = this.state;
+    let {experimentId, modelId, modelName, srcPath, directives} = this.props;
+    let {mmdsPluginsArtifact, wranglerArtifact, datapipelineArtifact, corepluginsArtifact, workspaceId, schema} = this.state;
     let pipelineConfig = getPipelineConfig({
-      mmdsPluginsArtifact,
-      experimentId,
-      modelId
+      mmds: {
+        mmdsPluginsArtifact,
+        experimentId,
+        modelId
+      },
+      wrangler: {
+        wranglerArtifact,
+        directives,
+        schema,
+        workspaceId
+      },
+      file: {
+        corepluginsArtifact,
+        srcPath
+      }
     });
     pipelineConfig = {
       ...pipelineConfig,
@@ -149,9 +206,10 @@ const mapStateToProps = (state, ownProps) => {
   return {
     experimentId: state.name,
     modelId: ownProps.modelId,
-    directives: objectQuery(modelObj, 'directives'),
     modelName: objectQuery(modelObj, 'name'),
-    srcPath: state.srcpath
+    directives: objectQuery(modelObj, 'directives'),
+    srcPath: state.srcpath,
+    splitId: objectQuery(modelObj, 'split')
   };
 };
 
