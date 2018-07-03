@@ -39,7 +39,6 @@ import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -451,16 +450,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // emit the metrics information, increment the count for end state program runs
         MetricsContext metricsContext = getMetricsContextForProfile(programRunId, profileId);
         metricsContext.increment(getMetricName(meta.getStatus()), 1L);
-
-        // the node number will be null or 0 in local mode, we will not emit node hours for these cases.
-        Integer numNodes = meta.getCluster().getNumNodes();
-        if (numNodes == null || numNodes == 0) {
-          return Optional.empty();
-        }
-
-        // node minutes = (end ts of the cluster - start ts) * nodeNum / 60
-        metricsContext.gauge(Constants.Metrics.Program.PROGRAM_NODE_MINUTES,
-                             (endTs - meta.getStartTs()) * numNodes / 60L);
         break;
       case ORPHANED:
         appMetadataStore.recordProgramOrphaned(programRunId, endTs, messageIdBytes);
