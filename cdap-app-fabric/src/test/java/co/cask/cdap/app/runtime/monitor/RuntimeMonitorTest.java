@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -39,11 +40,12 @@ import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
-import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
+import co.cask.cdap.internal.profile.ProfileMetricScheduledService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.common.http.HttpRequestConfig;
@@ -92,6 +94,7 @@ public class RuntimeMonitorTest {
   private DatasetService datasetService;
   private DatasetFramework datasetFramework;
   private Transactional transactional;
+  private MetricsCollectionService metricsCollectionService;
 
   private KeyStore serverKeyStore;
   private KeyStore clientKeyStore;
@@ -158,6 +161,7 @@ public class RuntimeMonitorTest {
 
     runtimeServer = injector.getInstance(RuntimeMonitorServer.class);
     runtimeServer.startAndWait();
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
   }
 
   @After
@@ -177,6 +181,7 @@ public class RuntimeMonitorTest {
 
     RunId runId = RunIds.generate();
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("myworkflow").run(runId);
+    ProfileId profileId = NamespaceId.DEFAULT.profile("myProfile");
     publishProgramStatus(programRunId, ProgramStatus.INITIALIZING);
     publishProgramStatus(programRunId, ProgramStatus.RUNNING);
     verifyPublishedMessages(cConf, 2, null);
@@ -190,10 +195,12 @@ public class RuntimeMonitorTest {
                                                                   runtimeServer.getBindAddress().getPort(),
                                                                   HttpRequestConfig.DEFAULT,
                                                                   clientKeyStore, serverKeyStore);
+    ProfileMetricScheduledService profileMetricScheduledService =
+      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 12, 5);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
-                                                       monitorMessage -> { });
+                                                       monitorMessage -> { }, profileMetricScheduledService);
 
     runtimeMonitor.startAndWait();
     // use different configuration for verification
@@ -207,7 +214,7 @@ public class RuntimeMonitorTest {
 
     runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                         datasetFramework, transactional, messagingContext, scheduler,
-                                        monitorMessage -> { });
+                                        monitorMessage -> { }, profileMetricScheduledService);
     runtimeMonitor.startAndWait();
     // use different configuration for verification
     lastProcessed = verifyPublishedMessages(monitorCConf, 2, lastProcessed);
@@ -230,6 +237,7 @@ public class RuntimeMonitorTest {
 
     RunId runId = RunIds.generate();
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("testTopicExpansion").run(runId);
+    ProfileId profileId = NamespaceId.DEFAULT.profile("myProfile");
 
     // change topic name because cdap config is different than runtime config
     CConfiguration monitorCConf = CConfiguration.copy(cConf);
@@ -252,6 +260,9 @@ public class RuntimeMonitorTest {
       messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), metricsPrefix + i, "test" + i);
     }
 
+    ProfileMetricScheduledService profileMetricScheduledService =
+      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 12, 5);
+
     RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(runtimeServer.getBindAddress().getHostName(),
                                                                   runtimeServer.getBindAddress().getPort(),
                                                                   HttpRequestConfig.DEFAULT,
@@ -259,7 +270,7 @@ public class RuntimeMonitorTest {
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
-                                                       monitorMessage -> { });
+                                                       monitorMessage -> { }, profileMetricScheduledService);
     runtimeMonitor.startAndWait();
 
     // Wait and verify messages as being republished by the runtime monitor to the "local" metrics topics
@@ -297,6 +308,7 @@ public class RuntimeMonitorTest {
 
     RunId runId = RunIds.generate();
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("testkill").run(runId);
+    ProfileId profileId = NamespaceId.DEFAULT.profile("myProfile");
     publishProgramStatus(programRunId, ProgramStatus.INITIALIZING);
     publishProgramStatus(programRunId, ProgramStatus.RUNNING);
 
@@ -310,9 +322,12 @@ public class RuntimeMonitorTest {
                                                                   HttpRequestConfig.DEFAULT,
                                                                   clientKeyStore, serverKeyStore);
 
+    ProfileMetricScheduledService profileMetricScheduledService =
+      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 12, 5);
+
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
-                                                       monitorMessage -> { });
+                                                       monitorMessage -> { }, profileMetricScheduledService);
 
     runtimeMonitor.startAndWait();
     verifyPublishedMessages(monitorCConf, 2, null);

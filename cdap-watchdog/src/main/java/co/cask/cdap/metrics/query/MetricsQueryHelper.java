@@ -117,6 +117,7 @@ public class MetricsQueryHelper {
 
       // put profiel related tag
       .put(Constants.Metrics.Tag.PROFILE, "profile")
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, "profilescope")
       .build();
 
     tagNameToHuman = mapping;

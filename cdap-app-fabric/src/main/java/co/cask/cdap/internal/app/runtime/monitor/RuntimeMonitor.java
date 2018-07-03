@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.monitor;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
@@ -33,8 +32,8 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
+import co.cask.cdap.internal.profile.ProfileMetricScheduledService;
 import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -45,8 +44,6 @@ import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Deque;
@@ -86,6 +83,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private final MessagingContext messagingContext;
   private final ScheduledExecutorService scheduledExecutorService;
   private final RemoteExecutionLogProcessor logProcessor;
+  private final ProfileMetricScheduledService metricScheduledService;
 
   private Map<String, MonitorConsumeRequest> topicsToRequest;
   private long programFinishTime;
@@ -93,7 +91,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   public RuntimeMonitor(ProgramRunId programRunId, CConfiguration cConf, RuntimeMonitorClient monitorClient,
                         DatasetFramework datasetFramework, Transactional transactional,
                         MessagingContext messagingContext, ScheduledExecutorService scheduledExecutorService,
-                        RemoteExecutionLogProcessor logProcessor) {
+                        RemoteExecutionLogProcessor logProcessor,
+                        ProfileMetricScheduledService profileMetricScheduledService) {
     super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
 
     this.programRunId = programRunId;
@@ -111,11 +110,17 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.programFinishTime = -1L;
     this.lastProgramStateMessages = new LinkedList<>();
     this.requestKeyToLocalTopic = createTopicConfigs(cConf);
+    this.metricScheduledService = profileMetricScheduledService;
   }
 
   @Override
   protected ScheduledExecutorService executor() {
     return scheduledExecutorService;
+  }
+
+  @Override
+  protected void doStartUp() {
+    metricScheduledService.startAndWait();
   }
 
   @Override
@@ -135,6 +140,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
         }
       }), getRetryStrategy());
     }
+    metricScheduledService.stopAndWait();
   }
 
   /**

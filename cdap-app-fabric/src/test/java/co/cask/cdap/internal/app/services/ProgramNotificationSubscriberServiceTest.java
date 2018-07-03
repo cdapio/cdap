@@ -195,8 +195,8 @@ public class ProgramNotificationSubscriberServiceTest {
     // when deprovisioned the metric will get emitted, wait for the last emitted metric, the node minutes should be 9
     // because the stop - start time is 3 mins, and there are 3 nodes
     MetricStore metricStore = injector.getInstance(MetricStore.class);
-    Tasks.waitFor(9L, () -> getMetric(metricStore, programRunId, myProfile,
-                                  SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
+    Tasks.waitFor(1L, () -> getMetric(metricStore, programRunId, myProfile,
+                                  SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS),
                   10, TimeUnit.SECONDS);
 
     // verify the metrics
@@ -206,19 +206,17 @@ public class ProgramNotificationSubscriberServiceTest {
                                       SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_KILLED_RUNS));
     Assert.assertEquals(0L, getMetric(metricStore, programRunId, myProfile,
                                       SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_FAILED_RUNS));
-    Assert.assertEquals(9L, getMetric(metricStore, programRunId, myProfile,
-                                      SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_NODE_MINUTES));
     metricStore.deleteAll();
   }
 
   private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId, String metricName) {
     ImmutableMap<String, String> tags = ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
       .put(Constants.Metrics.Tag.PROFILE, profileId.getScopedName())
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
       .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
       .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
       .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
-      .put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun())
       .build();
     MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
                                                 tags, new ArrayList<>());

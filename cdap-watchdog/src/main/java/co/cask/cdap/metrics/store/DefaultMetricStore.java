@@ -205,12 +205,14 @@ public class DefaultMetricStore implements MetricStore {
 
     // Profiles:
     aggs.put(BY_PROFILE, new DefaultAggregation(
+      // The required dimension for profile is the scope and profile name
       // These tags are ordered because of the efficiency, since we only have limited number program types, so it
       // comes before the app
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.PROFILE,
-                       Constants.Metrics.Tag.PROGRAM_TYPE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.RUN_ID),
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.PROFILE)));
+      ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE,
+                       Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.PROGRAM_TYPE,
+                       Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM,
+                       Constants.Metrics.Tag.RUN_ID),
+      ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE)));
 
     // System components:
     aggs.put(BY_COMPONENT, new DefaultAggregation(

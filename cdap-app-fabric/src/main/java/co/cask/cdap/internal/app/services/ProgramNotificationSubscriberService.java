@@ -39,6 +39,7 @@ import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -527,13 +528,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   }
 
   /**
-   * Emit MetricsContext for publishing profile related status, the tags are constructed with the program run id and
+   * Get the metrics context for the program, the tags are constructed with the program run id and
    * the profile id
    */
   private MetricsContext getMetricsContextForProfile(ProgramRunId programRunId, ProfileId profileId) {
     ImmutableMap<String, String> tags = ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
       .put(Constants.Metrics.Tag.PROFILE, profileId.getScopedName())
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
       .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
       .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
       .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())

@@ -725,6 +725,7 @@ public final class Constants {
 
       // For profile
       public static final String PROFILE = "pro";
+      public static final String PROFILE_SCOPE = "psc";
 
       // For program
       public static final String PROGRAM = "prg";
