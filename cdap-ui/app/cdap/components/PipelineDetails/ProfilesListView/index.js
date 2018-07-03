@@ -102,19 +102,6 @@ export default class ProfilesListViewInPipeline extends Component {
           let selectedProfile = this.state.selectedProfile || preferences[PROFILE_NAME_PREFERENCE_PROPERTY] || DEFAULT_PROFILE_NAME;
           let selectedProfileName = extractProfileName(selectedProfile);
 
-          // If currently selected profile has been disabled, then select 'default'
-          // profile, but only if the profiles list view is not disabled
-          if (!this.props.disabled) {
-            let selectedProfileIsDisabled = allProfiles.some(profile => {
-              return profile.name === selectedProfileName
-                && PROFILE_STATUSES[profile.status] === 'disabled';
-            });
-            if (selectedProfileIsDisabled) {
-              selectedProfile = DEFAULT_PROFILE_NAME;
-              selectedProfileName = extractProfileName(selectedProfile);
-            }
-          }
-
           // This is to surface the selected profile to the top
           // instead of hiding somewhere in the bottom.
           let sortedProfiles = [];
@@ -154,7 +141,7 @@ export default class ProfilesListViewInPipeline extends Component {
       selectedProfile: profileName
     });
     if (this.props.onProfileSelect) {
-      this.props.onProfileSelect(profileName, customizations, true, e);
+      this.props.onProfileSelect(profileName, customizations, e);
     }
   };
 

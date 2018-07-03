@@ -110,7 +110,6 @@ export default class ProfileStatusToggle extends Component {
         toggleModal={this.toggleDisableModal}
         confirmationText={confirmationText}
         confirmButtonText={T.translate(`${PREFIX}.DetailView.disableYes`)}
-        cancelButtonText={T.translate(`${PREFIX}.DetailView.disableNo`)}
         confirmFn={this.toggleProfileStatus}
         cancelFn={this.toggleDisableModal}
         isOpen={this.state.disableModalOpen}
