@@ -101,12 +101,6 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/**/metadata/subparts")
-  public void getSubparts(HttpRequest request, HttpResponder responder) throws BadRequestException {
-    //TODO(Rohit): Get the sub keys here and return that. This is the new API which we will support for browsing
-  }
-
-  @GET
   @Path("/**/metadata")
   public void getMetadata(HttpRequest request, HttpResponder responder,
                           @QueryParam("scope") String scope, @QueryParam("type") String type,
