@@ -224,16 +224,17 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     RunId twillRunId = RunIds.generate();
     String remoteHost = masterNode.getProperties().get("ip.external");
 
-    Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
+    Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
                                                                          programOptions.getArguments().asMap());
-    if (!profileId.isPresent()) {
-      throw new IllegalStateException(String.format("Missing profile information for this program run %s ",
-                                                    programRunId));
-    }
+    ProfileId profileId =
+      profile.orElseThrow(() -> new IllegalStateException(String.format("Missing profile information for this " +
+                                                                          "program run %s ",
+                                                                        programRunId)));
     ProfileMetricScheduledService metricScheduledService = new ProfileMetricScheduledService(metricsCollectionService,
                                                                                              programRunId,
-                                                                                             profileId.get(),
-                                                                                             cluster.getNodes().size());
+                                                                                             profileId,
+                                                                                             cluster.getNodes().size(),
+                                                                                             monitorScheduler);
 
     return new RemoteExecutionTwillPreparer(cConf, config, remoteHost, keyInfo,
                                             application.configure(), twillRunId,

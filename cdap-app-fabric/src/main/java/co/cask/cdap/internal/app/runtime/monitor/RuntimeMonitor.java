@@ -92,7 +92,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
                         DatasetFramework datasetFramework, Transactional transactional,
                         MessagingContext messagingContext, ScheduledExecutorService scheduledExecutorService,
                         RemoteExecutionLogProcessor logProcessor,
-                        ProfileMetricScheduledService profileMetricScheduledService) {
+                        ProfileMetricScheduledService metricScheduledService) {
     super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
 
     this.programRunId = programRunId;
@@ -110,7 +110,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.programFinishTime = -1L;
     this.lastProgramStateMessages = new LinkedList<>();
     this.requestKeyToLocalTopic = createTopicConfigs(cConf);
-    this.metricScheduledService = profileMetricScheduledService;
+    this.metricScheduledService = metricScheduledService;
   }
 
   @Override
@@ -125,6 +125,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   @Override
   protected void doShutdown() {
+    metricScheduledService.stopAndWait();
     if (!lastProgramStateMessages.isEmpty()) {
       String topicConfig = Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC;
       String topic = requestKeyToLocalTopic.get(topicConfig);
@@ -140,7 +141,6 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
         }
       }), getRetryStrategy());
     }
-    metricScheduledService.stopAndWait();
   }
 
   /**

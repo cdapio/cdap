@@ -196,7 +196,7 @@ public class RuntimeMonitorTest {
                                                                   HttpRequestConfig.DEFAULT,
                                                                   clientKeyStore, serverKeyStore);
     ProfileMetricScheduledService profileMetricScheduledService =
-      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 12, 5);
+      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
@@ -261,7 +261,7 @@ public class RuntimeMonitorTest {
     }
 
     ProfileMetricScheduledService profileMetricScheduledService =
-      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 12, 5);
+      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
     RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(runtimeServer.getBindAddress().getHostName(),
                                                                   runtimeServer.getBindAddress().getPort(),
@@ -323,7 +323,7 @@ public class RuntimeMonitorTest {
                                                                   clientKeyStore, serverKeyStore);
 
     ProfileMetricScheduledService profileMetricScheduledService =
-      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 12, 5);
+      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,

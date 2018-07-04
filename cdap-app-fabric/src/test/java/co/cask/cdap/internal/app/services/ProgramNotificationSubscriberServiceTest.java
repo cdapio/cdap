@@ -28,7 +28,6 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
@@ -47,7 +46,6 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.profile.ProfileService;
-import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
@@ -182,18 +180,9 @@ public class ProgramNotificationSubscriberServiceTest {
                                               AppFabricTestHelper.createSourceId(++sourceId));
       metadataStoreDataset.recordProgramRunning(programRunId, startTime + 60000, null,
                                                 AppFabricTestHelper.createSourceId(++sourceId));
-      metadataStoreDataset.recordProgramStop(programRunId, startTime + 120000,
-                                             ProgramController.State.COMPLETED.getRunStatus(),
-                                             null, AppFabricTestHelper.createSourceId(++sourceId));
-      metadataStoreDataset.recordProgramDeprovisioning(programRunId, AppFabricTestHelper.createSourceId(++sourceId));
     });
 
-    ProvisionerNotifier notifier = injector.getInstance(ProvisionerNotifier.class);
-    // running for 3 mins
-    notifier.deprovisioned(programRunId, startTime + 180000);
-
-    // when deprovisioned the metric will get emitted, wait for the last emitted metric, the node minutes should be 9
-    // because the stop - start time is 3 mins, and there are 3 nodes
+    programStateWriter.completed(programRunId);
     MetricStore metricStore = injector.getInstance(MetricStore.class);
     Tasks.waitFor(1L, () -> getMetric(metricStore, programRunId, myProfile,
                                   SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS),
@@ -207,28 +196,6 @@ public class ProgramNotificationSubscriberServiceTest {
     Assert.assertEquals(0L, getMetric(metricStore, programRunId, myProfile,
                                       SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_FAILED_RUNS));
     metricStore.deleteAll();
-  }
-
-  private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId, String metricName) {
-    ImmutableMap<String, String> tags = ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
-      .put(Constants.Metrics.Tag.PROFILE, profileId.getScopedName())
-      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
-      .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
-      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
-      .build();
-    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
-                                                tags, new ArrayList<>());
-    Collection<MetricTimeSeries> result = metricStore.query(query);
-    if (result.isEmpty()) {
-      return 0;
-    }
-    List<TimeValue> timeValues = result.iterator().next().getTimeValues();
-    if (timeValues.isEmpty()) {
-      return 0;
-    }
-    return timeValues.get(0).getValue();
   }
 
   @Test
@@ -313,5 +280,27 @@ public class ProgramNotificationSubscriberServiceTest {
       Assert.assertEquals(1, runRecordMetas.size());
       return runRecordMetas.iterator().next().getStatus();
     }), 10, TimeUnit.SECONDS);
+  }
+
+  private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId, String metricName) {
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.getScopedName())
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
+      .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .build();
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                                                tags, new ArrayList<>());
+    Collection<MetricTimeSeries> result = metricStore.query(query);
+    if (result.isEmpty()) {
+      return 0;
+    }
+    List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+    if (timeValues.isEmpty()) {
+      return 0;
+    }
+    return timeValues.get(0).getValue();
   }
 }

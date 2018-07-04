@@ -37,6 +37,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ProfileMetricScheduledServiceTest {
@@ -54,20 +55,26 @@ public class ProfileMetricScheduledServiceTest {
     MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
     MetricStore metricStore = injector.getInstance(MetricStore.class);
 
-    // There are 60 nodes, we emit the metrics each 2 seconds, so each time the node minute should go up by 2 min
+    // There are 5 nodes, we emit the metrics each 2 mins, so each time the node minute should go up by 10 min
     ProfileMetricScheduledService scheduledService = new ProfileMetricScheduledService(collectionService, runId,
-                                                                                       profileId, 60, 2);
-    scheduledService.startAndWait();
-    // sleep for 6 seconds and expect 3 increment about the metrics
-    TimeUnit.SECONDS.sleep(6);
-    Tasks.waitFor(6L, () -> getMetric(metricStore, runId, profileId,
+                                                                                       profileId, 5, 2, null);
+    // emit and verify the results
+    scheduledService.emitMetric();
+    Tasks.waitFor(10L, () -> getMetric(metricStore, runId, profileId,
                                       "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
-                  1, TimeUnit.SECONDS);
-    scheduledService.stopAndWait();
+                  10, TimeUnit.SECONDS);
+    scheduledService.emitMetric();
+    Tasks.waitFor(20L, () -> getMetric(metricStore, runId, profileId,
+                                      "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
+                  10, TimeUnit.SECONDS);
+    scheduledService.emitMetric();
+    Tasks.waitFor(30L, () -> getMetric(metricStore, runId, profileId,
+                                      "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
+                  10, TimeUnit.SECONDS);
   }
 
   private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId, String metricName) {
-    ImmutableMap<String, String> tags = ImmutableMap.<String, String>builder()
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
       .put(Constants.Metrics.Tag.PROFILE, profileId.getScopedName())
       .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
