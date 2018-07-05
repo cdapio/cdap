@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.codec;
 
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -35,55 +36,64 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
 
 /**
- * Codec for {@link co.cask.cdap.proto.id.NamespacedEntityId}.
+<<<<<<< HEAD
+ *
+ * Codec for converting data written in NamespacedId format to {@link NamespacedEntityId}.
+ *
  */
-public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<NamespacedEntityId> {
+public class NamespacedIdCodec extends AbstractSpecificationCodec<NamespacedEntityId> {
+
+  @Override
+  public JsonElement serialize(NamespacedEntityId src, Type typeOfSrc, JsonSerializationContext context) {
+    JsonObject jsonObj = new JsonObject();
+    jsonObj.add("type", new JsonPrimitive(src.getEntityType().toString()));
+    jsonObj.add("id", context.serialize(src));
+
+    return jsonObj;
+  }
 
   @Override
   public NamespacedEntityId deserialize(JsonElement json, Type typeOfT,
                                         JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
-
-    String entity = jsonObj.get("entity").getAsString();
-
-
-    switch (entity.toLowerCase()) {
-      case "namespace":
-        return deserializeNamespace(jsonObj);
+    JsonObject id = jsonObj.getAsJsonObject("id");
+    String type = jsonObj.get("type").getAsString();
+    switch (type) {
       case "application":
-        return deserializeApplicationId(jsonObj);
+        return deserializeApplicationId(id);
       case "program":
-        return deserializeProgramId(jsonObj);
+        return deserializeProgramId(id);
       case "flow":
-        return deserializeFlowId(jsonObj);
+        return deserializeFlowId(id);
       case "flowlet":
-        return deserializeFlowletId(jsonObj);
+        return deserializeFlowletId(id);
       case "service":
-        return deserializeServiceId(jsonObj);
+        return deserializeServiceId(id);
       case "schedule":
-        return deserializeSchedule(jsonObj);
+        return deserializeSchedule(id);
       case "worker":
-        return deserializeWorkerId(jsonObj);
+        return deserializeWorkerId(id);
       case "workflow":
-        return deserializeWorkflowId(jsonObj);
-      case "dataset":
-        return deserializeDatasetId(jsonObj);
+        return deserializeWorkflowId(id);
+      case "datasetinstance":
+        return deserializeDatasetInstanceId(id);
       case "stream":
-        return deserializeStreamId(jsonObj);
-      case "stream_view":
-        return deserializeViewId(jsonObj);
+        return deserializeStreamId(id);
+      case "view":
+        return deserializeViewId(id);
       case "artifact":
-        return deserializeArtifactId(jsonObj);
+        return deserializeArtifactId(id);
       default:
         throw new UnsupportedOperationException(
-          String.format("Unsupported object of entity %s found. Deserialization of only %s, %s, %s, %s, %s, %s, %s, " +
+          String.format("Unsupported object of type %s found. Deserialization of only %s, %s, %s, %s, %s, %s, %s, " +
                           "%s, %s, %s, %s, %s is supported.",
-                        entity,
+                        type,
                         ApplicationId.class.getSimpleName(),
                         ProgramId.class.getSimpleName(),
                         FlowId.class.getSimpleName(),
@@ -103,31 +113,38 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
 
   private ApplicationId deserializeApplicationId(JsonObject id) {
     NamespaceId namespace = deserializeNamespace(id);
-    String applicationId = id.get("application").getAsString();
-    String version = id.get("version").getAsString();
-    return new ApplicationId(namespace.getNamespace(), applicationId, version);
+    String applicationId = id.get("applicationId").getAsString();
+    return new ApplicationId(namespace.getNamespace(), applicationId);
+  }
+
+  private ArtifactId deserializeArtifactId(JsonObject id) {
+    NamespaceId namespace = deserializeNamespace(id);
+    String artifactName = id.get("name").getAsString();
+    ArtifactVersion artifactVersion = new ArtifactVersion(id.get("version").getAsJsonObject()
+                                                            .get("version").getAsString());
+    return new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion.getVersion());
   }
 
   private NamespaceId deserializeNamespace(JsonObject id) {
-    String namespace = id.get("namespace").getAsString();
+    String namespace = id.getAsJsonObject("namespace").get("id").getAsString();
     return new NamespaceId(namespace);
   }
 
   private ProgramId deserializeProgramId(JsonObject id) {
-    ApplicationId app = deserializeApplicationId(id);
+    ApplicationId app = deserializeApplicationId(id.getAsJsonObject("application"));
     ProgramType programType = ProgramType.valueOf(id.get("type").getAsString().toUpperCase());
-    String programId = id.get("program").getAsString();
+    String programId = id.get("id").getAsString();
     return new ProgramId(app.getNamespace(), app.getApplication(), programType, programId);
   }
 
   private FlowId deserializeFlowId(JsonObject id) {
-    ApplicationId applicationId = deserializeApplicationId(id);
-    return new FlowId(applicationId, id.get("flow").getAsString());
+    ProgramId flow = deserializeProgramId(id);
+    return new FlowId(flow.getParent(), id.get("flow").getAsString());
   }
 
   private FlowletId deserializeFlowletId(JsonObject id) {
-    FlowId flow = deserializeFlowId(id);
-    String flowletId = id.get("flowlet").getAsString();
+    FlowId flow = deserializeFlowId(id.getAsJsonObject("flow"));
+    String flowletId = id.get("id").getAsString();
     return new FlowletId(flow.getParent(), flow.getProgram(), flowletId);
   }
 
@@ -137,8 +154,8 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
   }
 
   private ScheduleId deserializeSchedule(JsonObject id) {
-    ApplicationId app = deserializeApplicationId(id);
-    String scheduleId = id.get("schedule").getAsString();
+    ApplicationId app = deserializeApplicationId(id.getAsJsonObject("application"));
+    String scheduleId = id.get("id").getAsString();
     return new ScheduleId(app.getNamespace(), app.getApplication(), app.getVersion(), scheduleId);
   }
 
@@ -152,32 +169,21 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
     return new WorkflowId(program.getParent(), program.getProgram());
   }
 
-  private ArtifactId deserializeArtifactId(JsonObject id) {
+  private DatasetId deserializeDatasetInstanceId(JsonObject id) {
     NamespaceId namespace = deserializeNamespace(id);
-    String artifactName = id.get("artifact").getAsString();
-    return new ArtifactId(namespace.getNamespace(), artifactName, id.get("version").getAsString());
-  }
-
-  private DatasetId deserializeDatasetId(JsonObject id) {
-    NamespaceId namespace = deserializeNamespace(id);
-    String instanceId = id.get("dataset").getAsString();
+    String instanceId = id.get("instanceId").getAsString();
     return new DatasetId(namespace.getNamespace(), instanceId);
   }
 
   private StreamId deserializeStreamId(JsonObject id) {
     NamespaceId namespace = deserializeNamespace(id);
-    String streamName = id.get("stream").getAsString();
+    String streamName = id.get("streamName").getAsString();
     return new StreamId(namespace.getNamespace(), streamName);
   }
 
   private StreamViewId deserializeViewId(JsonObject id) {
-    StreamId streamId = deserializeStreamId(id);
-    String view = id.get("view").getAsString();
+    StreamId streamId = deserializeStreamId(id.getAsJsonObject("stream"));
+    String view = id.get("id").getAsString();
     return new StreamViewId(streamId.getNamespace(), streamId.getStream(), view);
-  }
-
-  @Override
-  public JsonElement serialize(NamespacedEntityId src, Type typeOfSrc, JsonSerializationContext context) {
-    return context.serialize(src);
   }
 }

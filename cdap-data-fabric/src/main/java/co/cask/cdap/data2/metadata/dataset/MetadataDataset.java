@@ -42,6 +42,7 @@ import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -175,6 +176,9 @@ public class MetadataDataset extends AbstractDataset {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataDataset.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+    .create();
+  private static final Gson V1_GSON = new GsonBuilder()
+    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedIdCodec())
     .create();
 
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
@@ -1018,12 +1022,10 @@ public class MetadataDataset extends AbstractDataset {
     byte[] stopRowKey = Bytes.stopKeyForPrefix(rowPrefix);
 
     scan(rowPrefix, stopRowKey, limit, scannedEntries, this::convertFromV1Value);
-
     // Scan History rows if all the Value rows are scanned
     if (scannedEntries.getEntries().size() < limit) {
       rowPrefix = MdsHistoryKey.getHistoryRowPrefix();
       stopRowKey = Bytes.stopKeyForPrefix(rowPrefix);
-
       limit = limit - scannedEntries.getEntries().size();
       scan(rowPrefix, stopRowKey, limit, scannedEntries, this::convertFromV1History);
     }
@@ -1037,7 +1039,6 @@ public class MetadataDataset extends AbstractDataset {
       Row row;
       while ((row = scan.next()) != null && limit > 0) {
         KeyValue<Long, MetadataEntry> entry = function.apply(row);
-
         if (entry != null) {
           entries.getEntries().add(entry);
           entries.getRows().add(row.getRow());
@@ -1077,7 +1078,7 @@ public class MetadataDataset extends AbstractDataset {
     byte[] rowKey = row.getRow();
     // History rows does not store entity type in the key. So to get the entity, we will read the value, deserialize it.
     // However, in v2 tables, we are going to add type in the history row key.
-    MetadataV1 metadata = GSON.fromJson(row.getString(HISTORY_COLUMN), MetadataV1.class);
+    MetadataV1 metadata = V1_GSON.fromJson(row.getString(HISTORY_COLUMN), MetadataV1.class);
     if (metadata == null) {
       return null;
     }

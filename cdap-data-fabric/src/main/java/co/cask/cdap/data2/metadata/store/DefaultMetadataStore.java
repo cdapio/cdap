@@ -98,7 +98,7 @@ public class DefaultMetadataStore implements MetadataStore {
   private final TransactionExecutorFactory txExecutorFactory;
   private final DatasetFramework dsFramework;
   private AuditPublisher auditPublisher;
-  boolean hasV1SystemDs;
+  private boolean hasV1SystemDs;
   boolean hasV1BusinessDs;
 
   @Inject
