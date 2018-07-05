@@ -89,12 +89,6 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   }
 
   @Override
-  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
-    throws IOException, DatasetManagementException {
-    addInstance(datasetTypeName, datasetInstanceId, props, null);
-  }
-
-  @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
                           @Nullable KerberosPrincipalId ownerPrincipal)
     throws IOException, DatasetManagementException {
@@ -136,14 +130,6 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
                                              DatasetClassLoaderProvider classLoaderProvider)
     throws DatasetManagementException, IOException {
     return super.getAdmin(getMappedDatasetInstance(datasetInstanceId), classLoader, classLoaderProvider);
-  }
-
-  @Nullable
-  @Override
-  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
-    return super.getDataset(getMappedDatasetInstance(datasetInstanceId), arguments, classLoader);
   }
 
   @Nullable

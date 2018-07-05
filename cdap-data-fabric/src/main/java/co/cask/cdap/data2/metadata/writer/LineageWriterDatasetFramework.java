@@ -21,7 +21,6 @@ import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data.ProgramContext;
 import co.cask.cdap.data.ProgramContextAware;
@@ -38,8 +37,6 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Principal;
@@ -106,46 +103,6 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Override
   public void setContext(ProgramContext programContext) {
     this.programContext = programContext;
-  }
-
-  @Override
-  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException {
-    super.addInstance(datasetTypeName, datasetInstanceId, props);
-  }
-
-  @Override
-  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
-                          @Nullable KerberosPrincipalId ownerPrincipal)
-    throws DatasetManagementException, IOException {
-    super.addInstance(datasetTypeName, datasetInstanceId, props, ownerPrincipal);
-  }
-
-  @Override
-  public void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException {
-    super.updateInstance(datasetInstanceId, props);
-  }
-
-  @Override
-  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
-    delegate.deleteInstance(datasetInstanceId);
-  }
-
-  @Override
-  public void deleteAllInstances(NamespaceId namespaceId) throws DatasetManagementException, IOException {
-    delegate.deleteAllInstances(namespaceId);
-  }
-
-  @Override
-  @Nullable
-  public <T extends Dataset> T getDataset(final DatasetId datasetInstanceId,
-                                          final Map<String, String> arguments,
-                                          @Nullable final ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
-
-    return getDataset(datasetInstanceId, arguments, classLoader,
-                      new ConstantClassLoaderProvider(classLoader), null, AccessType.UNKNOWN);
   }
 
   @Nullable

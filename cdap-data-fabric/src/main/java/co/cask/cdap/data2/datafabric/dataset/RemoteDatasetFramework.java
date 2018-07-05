@@ -140,12 +140,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetType, DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException {
-    addInstance(datasetType, datasetInstanceId, props, null);
-  }
-
-  @Override
   public void addInstance(String datasetType, DatasetId datasetInstanceId, DatasetProperties props,
                           @Nullable KerberosPrincipalId ownerPrincipal)
     throws DatasetManagementException {
@@ -184,11 +178,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
     return clientCache.getUnchecked(datasetInstanceId.getParent())
       .getInstance(datasetInstanceId.getEntityName()) != null;
-  }
-
-  @Override
-  public boolean hasSystemType(String typeName) throws DatasetManagementException {
-    return hasType(NamespaceId.SYSTEM.datasetType(typeName));
   }
 
   @Override
@@ -236,15 +225,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
     DatasetType type = getType(instanceInfo.getType(), parentClassLoader, classLoaderProvider);
     return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), instanceInfo.getSpec());
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(
-    DatasetId datasetInstanceId, Map<String, String> arguments,
-    @Nullable ClassLoader classLoader) throws DatasetManagementException, IOException {
-
-    return getDataset(datasetInstanceId, arguments, classLoader,
-                      new ConstantClassLoaderProvider(classLoader), null, AccessType.UNKNOWN);
   }
 
   @Nullable

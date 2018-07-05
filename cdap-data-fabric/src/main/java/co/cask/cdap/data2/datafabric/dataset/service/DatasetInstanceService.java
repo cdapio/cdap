@@ -25,6 +25,8 @@ import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
@@ -33,6 +35,8 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.metadata.writer.DatasetInstanceOperation;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -53,7 +57,6 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -79,6 +82,7 @@ import javax.annotation.Nullable;
 public class DatasetInstanceService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
+  private final CConfiguration cConf;
   private final DatasetTypeService authorizationDatasetTypeService;
   private final DatasetTypeService noAuthDatasetTypeService;
   private final DatasetInstanceManager instanceManager;
@@ -89,12 +93,15 @@ public class DatasetInstanceService {
   private final LoadingCache<DatasetId, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private boolean publishCUD;
 
   private AuditPublisher auditPublisher;
+  private MetadataPublisher metadataPublisher;
 
   @VisibleForTesting
   @Inject
-  public DatasetInstanceService(DatasetTypeService authorizationDatasetTypeService,
+  public DatasetInstanceService(CConfiguration cConf,
+                                DatasetTypeService authorizationDatasetTypeService,
                                 @Named(DataSetServiceModules.NOAUTH_DATASET_TYPE_SERVICE)
                                   DatasetTypeService noAuthDatasetTypeService,
                                 DatasetInstanceManager instanceManager,
@@ -102,6 +109,7 @@ public class DatasetInstanceService {
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext) {
+    this.cConf = cConf;
     this.opExecutorClient = opExecutorClient;
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
     this.noAuthDatasetTypeService = noAuthDatasetTypeService;
@@ -127,6 +135,12 @@ public class DatasetInstanceService {
     this.auditPublisher = auditPublisher;
   }
 
+  @Inject(optional = true)
+  public void setMetadataPublisher(MetadataPublisher metadataPublisher) {
+    this.metadataPublisher = metadataPublisher;
+    this.publishCUD = cConf.getBoolean(Constants.Dataset.Manager.PUBLISH_CUD, false);
+  }
+
   /**
    * Lists all dataset instances in a namespace. If perimeter security and authorization are enabled, only returns the
    * dataset instances that the current user has access to.
@@ -141,12 +155,7 @@ public class DatasetInstanceService {
     List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.getAll(namespace));
 
     return AuthorizationUtil.isVisible(datasets, authorizationEnforcer, authenticationContext.getPrincipal(),
-                                       new Function<DatasetSpecification, EntityId>() {
-                                         @Override
-                                         public EntityId apply(DatasetSpecification input) {
-                                           return namespace.dataset(input.getName());
-                                         }
-                                       }, null);
+                                       input -> namespace.dataset(input.getName()), null);
   }
 
   /**
@@ -165,12 +174,7 @@ public class DatasetInstanceService {
     List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.get(namespace, properties));
 
     return AuthorizationUtil.isVisible(datasets, authorizationEnforcer, authenticationContext.getPrincipal(),
-                                       new Function<DatasetSpecification, EntityId>() {
-                                         @Override
-                                         public EntityId apply(DatasetSpecification input) {
-                                           return namespace.dataset(input.getName());
-                                         }
-                                       }, null);
+                                       input -> namespace.dataset(input.getName()), null);
   }
 
   /**
@@ -314,14 +318,20 @@ public class DatasetInstanceService {
       ownerAdmin.add(datasetId, owner);
     }
     try {
-      DatasetSpecification spec = opExecutorClient.create(datasetId, typeMeta,
-                                                          DatasetProperties.builder()
-                                                            .addAll(props.getProperties())
-                                                            .setDescription(props.getDescription())
-                                                            .build());
+      DatasetProperties datasetProperties = DatasetProperties.builder()
+        .addAll(props.getProperties())
+        .setDescription(props.getDescription())
+        .build();
+      DatasetSpecification spec = opExecutorClient.create(datasetId, typeMeta, datasetProperties);
+
       instanceManager.add(namespace, spec);
       metaCache.invalidate(datasetId);
+
       publishAudit(datasetId, AuditType.CREATE);
+      if (publishCUD && !isLocalDataset(datasetProperties.getProperties()) && !isLocalDataset(spec.getProperties())) {
+        metadataPublisher.publish(datasetId, DatasetInstanceOperation.create(requestingUser,
+                                                                             props.getTypeName(), datasetProperties));
+      }
 
       // Enable explore
       enableExplore(datasetId, spec, props);
@@ -346,8 +356,9 @@ public class DatasetInstanceService {
    */
   void update(DatasetId instance, Map<String, String> properties) throws Exception {
     ensureNamespaceExists(instance.getParent());
+    Principal requestingUser = authenticationContext.getPrincipal();
     if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
-      authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
+      authorizationEnforcer.enforce(instance, requestingUser, Action.ADMIN);
     }
     DatasetSpecification existing = instanceManager.get(instance);
     if (existing == null) {
@@ -372,6 +383,9 @@ public class DatasetInstanceService {
 
     updateExplore(instance, datasetProperties, existing, spec);
     publishAudit(instance, AuditType.UPDATE);
+    if (publishCUD && !isLocalDataset(datasetProperties.getProperties()) && !isLocalDataset(spec.getProperties())) {
+      metadataPublisher.publish(instance, DatasetInstanceOperation.update(requestingUser, datasetProperties));
+    }
   }
 
   /**
@@ -385,8 +399,9 @@ public class DatasetInstanceService {
    *  have {@link Action#ADMIN} privileges on the #instance
    */
   void drop(DatasetId instance) throws Exception {
+    Principal requestingUser = authenticationContext.getPrincipal();
     if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
-      authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
+      authorizationEnforcer.enforce(instance, requestingUser, Action.ADMIN);
     }
     ensureNamespaceExists(instance.getParent());
     DatasetSpecification spec = instanceManager.get(instance);
@@ -395,6 +410,12 @@ public class DatasetInstanceService {
     }
 
     dropDataset(instance, spec);
+
+    // Publish in here instead of the dropDataset(instance, spec) method as that private method
+    // is used in the dropAll case. For metadata publishing, the dropAll is a different operation.
+    if (publishCUD && !isLocalDataset(spec.getOriginalProperties()) && !isLocalDataset(spec.getProperties())) {
+      metadataPublisher.publish(instance, DatasetInstanceOperation.delete(requestingUser));
+    }
   }
 
   /**
@@ -406,13 +427,13 @@ public class DatasetInstanceService {
    */
   void dropAll(NamespaceId namespaceId) throws Exception {
     ensureNamespaceExists(namespaceId);
-    Principal principal = authenticationContext.getPrincipal();
+    Principal requestingUser = authenticationContext.getPrincipal();
 
     Map<DatasetId, DatasetSpecification> datasets = new HashMap<>();
     for (DatasetSpecification spec : instanceManager.getAll(namespaceId)) {
       DatasetId datasetId = namespaceId.dataset(spec.getName());
       if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
-        authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
+        authorizationEnforcer.enforce(datasetId, requestingUser, Action.ADMIN);
       }
       datasets.put(datasetId, spec);
     }
@@ -420,6 +441,10 @@ public class DatasetInstanceService {
     // auth check passed, we can start deleting the datasets
     for (DatasetId datasetId : datasets.keySet()) {
       dropDataset(datasetId, datasets.get(datasetId));
+    }
+
+    if (publishCUD) {
+      metadataPublisher.publish(namespaceId, DatasetInstanceOperation.delete(requestingUser));
     }
   }
 
@@ -589,6 +614,15 @@ public class DatasetInstanceService {
   private void publishAudit(DatasetId datasetInstance, AuditType auditType) {
     // TODO: Add properties to Audit Payload (CDAP-5220)
     AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
+  }
+
+  /**
+   * Returns {@code true} if the given properties Map has the key
+   * {@link Constants.AppFabric#WORKFLOW_LOCAL_DATASET_PROPERTY} set to {@code "true"}.
+   */
+  private boolean isLocalDataset(@Nullable Map<String, String> properties) {
+    return properties != null
+      && Boolean.parseBoolean(properties.get(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
   }
 }
 

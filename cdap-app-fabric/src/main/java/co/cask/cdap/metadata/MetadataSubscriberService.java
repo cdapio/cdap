@@ -203,6 +203,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             return new WorkflowProcessor(datasetContext);
           case METADATA_OPERATION:
             return new MetadataOperationProcessor();
+          case DATASET_OPERATION:
+            return new DatasetOperationMessageProcessor(datasetFramework);
           case PROFILE_ASSIGNMENT:
           case PROFILE_UNASSIGNMENT:
           case ENTITY_CREATION:

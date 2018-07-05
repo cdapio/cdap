@@ -16,19 +16,32 @@
 
 package co.cask.cdap.data2.metadata.writer;
 
-  import co.cask.cdap.api.metadata.MetadataEntity;
-  import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
 
 /**
- * Publishes {@link MetadataOperation} for {@link MetadataEntity}
+ * This interface exposes functionality for publishing entity metadata.
  */
 public interface MetadataPublisher {
 
   /**
    * Publishes the {@link MetadataOperation} from the given {@link ProgramRunId}
    *
-   * @param run the {@link ProgramRunId}
+   * @param programRunId the {@link ProgramRunId}
    * @param metadataOperation the {@link MetadataOperation}
    */
-  void publish(ProgramRunId run, MetadataOperation metadataOperation);
+  void publish(ProgramRunId programRunId, MetadataOperation metadataOperation);
+
+  /**
+   * Publishes the {@link DatasetInstanceOperation}.
+   *
+   * @param entityId the {@link EntityId} that the operation happened. It must be of either an instance of
+   *                 {@link DatasetId} or {@link NamespaceId}. If it is {@link NamespaceId}, only
+   *                 {@link DatasetInstanceOperation.Type#DELETE} is supported, which is for deleting all
+   *                 datasets in the given namespace.
+   * @param datasetInstanceOperation the {@link DatasetInstanceOperation} to publish
+   */
+  void publish(EntityId entityId, DatasetInstanceOperation datasetInstanceOperation);
 }

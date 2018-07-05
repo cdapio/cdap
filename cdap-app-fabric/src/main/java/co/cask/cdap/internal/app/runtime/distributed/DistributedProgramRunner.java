@@ -393,6 +393,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
       // Disable explore
       result.set(Constants.Explore.EXPLORE_ENABLED, Boolean.FALSE.toString());
 
+      // Publish CUD (Create, Update, Delete) operations on dataset instance
+      result.set(Constants.Dataset.Manager.PUBLISH_CUD, Boolean.TRUE.toString());
+
       // Bind the runtime monitor server to all interfaces
       result.set(Constants.RuntimeMonitor.SERVER_HOST, "::");
 
