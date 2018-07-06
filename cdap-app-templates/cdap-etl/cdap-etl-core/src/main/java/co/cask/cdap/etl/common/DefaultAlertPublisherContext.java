@@ -23,9 +23,11 @@ import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.etl.api.AlertPublisherContext;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -81,5 +83,10 @@ public class DefaultAlertPublisherContext extends AbstractStageContext implement
   @Override
   public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
     messagingAdmin.deleteTopic(topic);
+  }
+
+  @Override
+  public void record(List<Operation> operations) {
+    throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }

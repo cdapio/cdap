@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,7 @@ import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.Alert;
@@ -45,6 +46,7 @@ import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.condition.Condition;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.batch.ActionSpec;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
@@ -62,6 +64,7 @@ import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
+import co.cask.cdap.etl.common.OperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.TrackedIterator;
@@ -114,8 +117,10 @@ public class SmartWorkflow extends AbstractWorkflow {
   private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
                                                                                 Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(Operation.class, new OperationTypeAdapter()).create();
   private static final Type STAGE_PROPERTIES_MAP = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
+  private static final Type STAGE_OPERATIONS_MAP = new TypeToken<Map<String, List<Operation>>>() { }.getType();
 
   private final ApplicationConfigurer applicationConfigurer;
   private final Set<String> supportedPluginTypes;
@@ -391,6 +396,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     super.initialize(context);
+    context.enableFieldLineageConsolidation();
     TriggeringScheduleInfo scheduleInfo = context.getTriggeringScheduleInfo();
     if (scheduleInfo != null) {
       String propertiesMappingString = scheduleInfo.getProperties().get(TRIGGERING_PROPERTIES_MAPPING);
@@ -508,6 +514,42 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
     // Add resolved plugin properties to workflow token as a JSON String
     workflowContext.getToken().put(RESOLVED_PLUGIN_PROPERTIES_MAP, GSON.toJson(resolvedProperties));
+
+    // record only if the Workflow is successful
+    if (status != ProgramStatus.COMPLETED) {
+      return;
+    }
+
+    // Collect field operations from each phase
+    WorkflowToken token = workflowContext.getToken();
+    List<NodeValue> allNodeValues = token.getAll(Constants.FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN);
+    Map<String, List<Operation>> allStageOperations = new HashMap<>();
+    for (StageSpec stageSpec : spec.getStages()) {
+      allStageOperations.put(stageSpec.getName(), new ArrayList<>());
+    }
+    for (NodeValue nodeValue : allNodeValues) {
+      Map<String, List<Operation>> stageOperations
+              = GSON.fromJson(nodeValue.getValue().toString(), STAGE_OPERATIONS_MAP);
+      for (Map.Entry<String, List<Operation>> entry : stageOperations.entrySet()) {
+        allStageOperations.get(entry.getKey()).addAll(entry.getValue());
+      }
+    }
+
+    // Set of stages for which no implicit merge operation is required even if
+    // stage has multiple inputs, for example join stages
+    Set<String> noMergeRequiredStages = new HashSet<>();
+    for (StageSpec stageSpec : stageSpecs.values()) {
+      if (BatchJoiner.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
+        noMergeRequiredStages.add(stageSpec.getName());
+      }
+    }
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(spec.getConnections(),
+                                                                          allStageOperations, noMergeRequiredStages);
+    Set<co.cask.cdap.api.lineage.field.Operation> processedOperations = processor.process();
+    if (!processedOperations.isEmpty()) {
+      workflowContext.record(processedOperations);
+    }
   }
 
   private void addPrograms(String node, WorkflowProgramAdder programAdder) {

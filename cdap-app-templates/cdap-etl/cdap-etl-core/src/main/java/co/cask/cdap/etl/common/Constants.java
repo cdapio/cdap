@@ -25,6 +25,7 @@ public final class Constants {
   public static final String ID_SEPARATOR = ":";
   public static final String PIPELINEID = "pipeline";
   public static final String PIPELINE_SPEC_KEY = "pipeline.spec";
+  public static final String PIPELINE_PLAN = "pipeline.plan";
   public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
   public static final String EVENT_TYPE_TAG = "MDC:eventType";
   public static final String PIPELINE_LIFECYCLE_TAG_VALUE = "lifecycle";
@@ -38,6 +39,7 @@ public final class Constants {
     Schema.Field.of(ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING))
   );
   public static final String MDC_STAGE_KEY = "pipeline.stage";
+  public static final String FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN = "field.operations";
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");

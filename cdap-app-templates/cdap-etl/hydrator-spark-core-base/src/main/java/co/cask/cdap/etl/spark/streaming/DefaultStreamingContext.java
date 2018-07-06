@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.BasicArguments;
@@ -33,6 +34,8 @@ import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Default implementation of StreamingContext for Spark.
@@ -93,5 +96,10 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   @Override
   public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
     sec.execute(timeout, runnable);
+  }
+
+  @Override
+  public void record(List<Operation> operations) {
+    throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }
