@@ -16,9 +16,6 @@
 @import '../../../styles/variables.scss';
 
 .product-dropdown {
-  display: inline-block;
-  background: transparent;
-
   @media (max-width: 580px) {
     &.dropdown {
       &.open {
@@ -30,9 +27,6 @@
         }
       }
     }
-  }
-  &:hover {
-    background: transparent;
   }
 
   .btn.btn-secondary {
@@ -47,20 +41,14 @@
   }
   &.dropdown {
     .dropdown-toggle {
-      background: transparent;
       box-shadow: none;
-      border: 0;
       vertical-align: top;
       height: 50px;
       padding: 0;
-      position: relative;
       width: 120px;
       color: inherit;
       margin-right: 15px;
       display: inline-flex;
-      line-height: 1;
-      align-items: center;
-      text-align: left;
 
       &:hover,
       &:focus {
@@ -100,20 +88,15 @@
     }
     .dropdown-menu {
       border-radius: 0;
-      background: $gcp-blue;
       color: inherit;
       min-width: 180px;
       max-width: 210px;
 
       .dropdown-item,
       .dropdown-header {
+        color: black;
         line-height: 1;
-        min-width: inherit;
-        max-width: inherit;
-        padding: 0;
-        margin-left: 0;
-        float: left;
-
+        padding: 2px;
         &:hover,
         &:focus {
           background: rgba(0, 0, 0, 0.1);

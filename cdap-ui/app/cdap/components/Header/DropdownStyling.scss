@@ -16,7 +16,6 @@
 
 @import '../../styles/variables.scss';
 
-$dropdown_bg_color: #333333;
 $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
 
 @mixin dropdownstyling($min_width: 160px, $max_width: 210px) {
@@ -82,7 +81,6 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       box-shadow: none;
     }
     .dropdown-menu {
-      background: $dropdown_bg_color;
       border-radius: 0;
       min-width: $min_width;
       max-width: $max_width;
