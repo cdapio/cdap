@@ -21,9 +21,11 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,5 +53,10 @@ public class WorkflowBackedActionContext extends AbstractBatchContext implements
   @Override
   public boolean isSuccessful() {
     return workflowContext.getState().getStatus() == ProgramStatus.COMPLETED;
+  }
+
+  @Override
+  public void record(List<Operation> operations) {
+    throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }

@@ -23,6 +23,7 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.condition.ConditionContext;
 import co.cask.cdap.etl.api.condition.StageStatistics;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelineRuntime;
@@ -141,5 +142,10 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
   @Override
   public Map<String, StageStatistics> getStageStatistics() {
     return stageStatistics;
+  }
+
+  @Override
+  public void record(List<Operation> operations) {
+    throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }

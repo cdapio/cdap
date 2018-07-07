@@ -24,6 +24,7 @@ import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.lineage.field.LineageRecorder;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -32,7 +33,7 @@ import javax.annotation.Nullable;
  * Context for a pipeline stage, providing access to information about the stage, metrics, and plugins.
  */
 @Beta
-public interface StageContext extends ServiceDiscoverer, MetadataReader, MetadataWriter {
+public interface StageContext extends ServiceDiscoverer, MetadataReader, MetadataWriter, LineageRecorder {
 
   /**
    * Gets the unique stage name.

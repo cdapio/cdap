@@ -26,11 +26,13 @@ import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.mock.common.MockArguments;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.net.URL;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -210,6 +212,11 @@ public class MockActionContext implements ActionContext {
   @Override
   public void removeTags(MetadataEntity metadataEntity, String... tags) {
 
+  }
+
+  @Override
+  public void record(List<Operation> operations) {
+    // no-op
   }
 }
 
