@@ -21,7 +21,6 @@ import {MyMarketApi} from 'api/market';
 import classnames from 'classnames';
 import MarketActionsContainer from 'components/MarketActionsContainer';
 import AbstractWizard from 'components/AbstractWizard';
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import MarketStore from 'components/Market/store/market-store';
 import ExperimentalBanner from 'components/ExperimentalBanner';
 import T from 'i18n-react';
@@ -83,12 +82,15 @@ export default class MarketPlaceEntity extends Component {
       expandedMode: !this.state.expandedMode,
       actionsComplete: false
     });
+    let payload = {
+      entityId: this.props.entityId
+    };
+    if (typeof displayCTA === 'boolean') {
+      payload.displayCTA = displayCTA;
+    }
     MarketStore.dispatch({
       type: 'SET_ACTIVE_ENTITY',
-      payload: {
-        entityId: this.props.entityId,
-        displayCTA: displayCTA
-      }
+      payload
     });
   }
   switchCloseBtn() {
@@ -168,13 +170,6 @@ export default class MarketPlaceEntity extends Component {
                 onClick={() => this.setState({performSingleAction: true})}
               >
                 {T.translate('features.Market.action-types.' + this.state.entityDetail.actions[0].type + '.name')}
-                <AbstractWizard
-                  isOpen={this.state.performSingleAction}
-                  onClose={() => this.setState({performSingleAction: false})}
-                  wizardType={this.state.entityDetail.actions[0].type}
-                  input={{action: this.state.entityDetail.actions[0], package: this.props.entity}}
-                  displayCTA={MarketStore.getState().displayCTA}
-                />
               </button>
               <button
                 className="btn btn-secondary"
@@ -182,6 +177,13 @@ export default class MarketPlaceEntity extends Component {
               >
                 {T.translate('features.MarketPlaceEntity.closeLabel')}
               </button>
+              <AbstractWizard
+                isOpen={this.state.performSingleAction}
+                onClose={() => this.setState({performSingleAction: false})}
+                wizardType={this.state.entityDetail.actions[0].type}
+                input={{action: this.state.entityDetail.actions[0], package: this.props.entity}}
+                displayCTA={MarketStore.getState().displayCTA}
+              />
             </div>
           );
         } else {
@@ -291,14 +293,7 @@ export default class MarketPlaceEntity extends Component {
         className={classnames("market-place-package-card", {[positionClassName + ' expanded']: this.state.expandedMode})}
         ref={(ref)=> this.packageCardRef = ref}
       >
-        <ReactCSSTransitionGroup
-          transitionName="package-transition"
-          transitionAppearTimeout={300}
-          transitionEnterTimeout={500}
-          transitionLeaveTimeout={300}
-        >
-          {getRightCard()}
-        </ReactCSSTransitionGroup>
+        {getRightCard()}
       </div>
     );
   }
