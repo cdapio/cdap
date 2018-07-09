@@ -54,7 +54,7 @@ const dropTarget = {
       return;
     }
 
-    let {componentRef} = component.decoratedComponentInstance;
+    let {componentRef} = component.handler.ref.current;
     if (!componentRef) {
       return;
     }
@@ -130,7 +130,6 @@ class RulebookRule extends Component {
         <Col xs={1}>
           <button
             className="btn btn-link remove-button"
-            href
             onClick={() => onRemove(rule.id)}
           >
             {T.translate(`${PREFIX}.remove`)}
