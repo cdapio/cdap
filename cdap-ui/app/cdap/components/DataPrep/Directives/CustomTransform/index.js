@@ -33,7 +33,7 @@ const PREFIX = 'features.DataPrep.Directives.CustomTransform';
 
 export default class CustomTransform extends Component {
   static propTypes = {
-    column: PropTypes.string,
+    column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
     onComplete: PropTypes.func,
     isOpen: PropTypes.bool,
     close: PropTypes.func

@@ -152,6 +152,6 @@ export default class Explode extends Component {
 
 Explode.propTypes = {
   isOpen: PropTypes.bool,
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func
 };
