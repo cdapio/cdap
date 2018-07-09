@@ -27,7 +27,7 @@ $dropdown_divider_bg_color: $grey-06;
   }
 
   &.dropdown,
-  &.dropdown.open {
+  &.dropdown.show {
     display: inline-block;
     &:focus {
       outline: none;
@@ -114,7 +114,7 @@ $dropdown_divider_bg_color: $grey-06;
         background-color: $dropdown_divider_bg_color;
       }
     }
-    &.open {
+    &.show {
       .dropdown-menu {
         display: flex;
         flex-direction: column;

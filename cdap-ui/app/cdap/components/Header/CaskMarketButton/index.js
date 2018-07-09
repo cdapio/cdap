@@ -74,16 +74,18 @@ export default class CaskMarketButton extends Component {
 
   render() {
     return (
-      <span
-        className={classnames("cask-market-button", this.props.className, {'active': this.state.showMarketPlace})}
-        onClick={this.onClickHandler.bind(this)}
-      >
-        {this.props.children}
+      <div>
+        <span
+          className={classnames("cask-market-button", this.props.className, {'active': this.state.showMarketPlace})}
+          onClick={this.onClickHandler.bind(this)}
+        >
+          {this.props.children}
+        </span>
         <PlusButtonModal
           isOpen={this.state.showMarketPlace}
           onCloseHandler={this.onClickHandler.bind(this)}
         />
-    </span>
+      </div>
     );
   }
 }

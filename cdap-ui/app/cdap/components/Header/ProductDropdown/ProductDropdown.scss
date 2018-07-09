@@ -20,7 +20,7 @@ $dropdown_divider_bg_color: $grey-06;
 .product-dropdown {
   @media (max-width: 580px) {
     &.dropdown {
-      &.open {
+      &.show {
         .dropdown-menu {
           &.dropdown-menu-right {
             left: 0;
@@ -36,7 +36,7 @@ $dropdown_divider_bg_color: $grey-06;
     border-radius: 0;
   }
   &.dropdown,
-  &.dropdown.open {
+  &.dropdown.show {
     &:focus {
       outline: none;
     }
@@ -166,7 +166,7 @@ $dropdown_divider_bg_color: $grey-06;
         }
       }
     }
-    &.open {
+    &.show {
       .dropdown-menu {
         display: flex;
         flex-direction: column;
