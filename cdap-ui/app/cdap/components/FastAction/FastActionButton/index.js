@@ -18,17 +18,14 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import IconSVG from 'components/IconSVG';
+import {preventPropagation} from 'services/helpers';
 
 export default function FastActionButton({icon, action, disabled, id, iconClasses}) {
-  let preventPropagation = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    event.nativeEvent.stopImmediatePropagation();
-  };
 
   let onButtonClick = (event) => {
     preventPropagation(event);
     action(event);
+    return false;
   };
 
   return (
