@@ -23,7 +23,7 @@ $cdap_mode_color: #cccccc;
 
   @media (max-width: 580px) {
     &.dropdown {
-      &.open {
+      &.show {
         .dropdown-menu {
           &.dropdown-menu-right {
             left: 0;
@@ -45,7 +45,7 @@ $cdap_mode_color: #cccccc;
     }
   }
   &.dropdown,
-  &.dropdown.open {
+  &.dropdown.show {
     &:focus {
       outline: none;
     }
@@ -184,7 +184,7 @@ $cdap_mode_color: #cccccc;
         background-color: rgba(75, 75, 75, 1);
       }
     }
-    &.open {
+    &.show {
       .dropdown-menu {
         display: flex;
         flex-direction: column;

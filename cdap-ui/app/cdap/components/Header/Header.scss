@@ -16,6 +16,7 @@
 
 @import '../../styles/variables.scss';
 @import './DropdownStyling.scss';
+@import "../../styles/bootstrap_4_patch.scss";
 
 .global-navbar {
   height: 50px;
@@ -184,7 +185,7 @@
         }
       }
     }
-    .dropdown.open {
+    .dropdown.show {
       .dropdown-toggle {
         background-color: transparent;
         color: inherit;

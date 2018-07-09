@@ -29,7 +29,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
   }
 
   &.dropdown,
-  &.dropdown.open {
+  &.dropdown.show {
     display: inline-block;
     &:focus {
       outline: none;
@@ -113,7 +113,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
         background-color: $dropdown_divider_bg_color;
       }
     }
-    &.open {
+    &.show {
       .dropdown-menu {
         display: flex;
         flex-direction: column;
