@@ -42,6 +42,7 @@ export default function DatasetStreamCards({dataEntities}) {
       {
         data.map(dataEntity => (
           <Link
+            key={dataEntity.id}
             to={{
               pathname: `/ns/${currentNamespace}/${convertEntityTypeToApi(dataEntity.type)}/${dataEntity.id}`,
               state: {
