@@ -233,8 +233,8 @@ gulp.task('js:lib', function() {
       './bower_components/ngInfiniteScroll/build/ng-infinite-scroll.min.js',
       './bower_components/angular-inview/angular-inview.js',
       './bower_components/esprima/esprima.js',
-      './node_modules/react/dist/react-with-addons.min.js',
-      './node_modules/react-dom/dist/react-dom.min.js',
+      './node_modules/react/umd/react.production.min.js',
+      './node_modules/react-dom/umd/react-dom.production.min.js',
       './node_modules/ngreact/ngReact.min.js',
 
       './node_modules/cdap-avsc/dist/cdap-avsc-lib.js',
