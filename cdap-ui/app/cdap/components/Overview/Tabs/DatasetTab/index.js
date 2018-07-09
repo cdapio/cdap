@@ -175,8 +175,9 @@ export default class DatasetTab extends Component {
 }
 
 DatasetTab.propTypes = {
-  entity: PropTypes.arrayOf(PropTypes.shape({
+  entity: PropTypes.shape({
     id: PropTypes.string,
+    name: PropTypes.string,
     datasets: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.string,
       type: PropTypes.string
@@ -185,5 +186,5 @@ DatasetTab.propTypes = {
       id: PropTypes.string,
       type: PropTypes.string
     }))
-  }))
+  })
 };
