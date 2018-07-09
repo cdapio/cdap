@@ -121,7 +121,7 @@ export default class ConfigurableTab extends Component {
           })}>
             <div
               className={`tab-pane active ${activeTab.paneClassName ? activeTab.paneClassName : ''}`}
-              tabId={activeTab.id}
+              tabid={activeTab.id}
             >
               {activeTab.content}
             </div>
