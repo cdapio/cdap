@@ -67,6 +67,7 @@ import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
 import co.cask.cdap.etl.mock.condition.MockCondition;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
+import co.cask.cdap.etl.mock.transform.DataMasker;
 import co.cask.cdap.etl.mock.transform.DropNullTransform;
 import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
 import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
@@ -1597,7 +1598,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertTrue(getMetric(appId, "sleep." + co.cask.cdap.etl.common.Constants.Metrics.TOTAL_TIME) > 0L);
 
     try (CloseableIterator<Message> messages =
-      getMessagingContext().getMessageFetcher().fetch(appId.getNamespace(), "sleepTopic", 10, null)) {
+           getMessagingContext().getMessageFetcher().fetch(appId.getNamespace(), "sleepTopic", 10, null)) {
       Assert.assertTrue(messages.hasNext());
       Assert.assertEquals("2", messages.next().getPayloadAsString());
       Assert.assertFalse(messages.hasNext());
@@ -2101,8 +2102,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("t2", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("t3", IdentityTransform.getPlugin()))
       .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
-                                                                  "t1.customer_name=t2.cust_name=t3.c_name",
-                                                                "t1,t2,t3", "")))
+                                                                "t1.customer_name=t2.cust_name=t3.c_name",
+                                                              "t1,t2,t3", "")))
       .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
       .addStage(new ETLStage(sinkName2, MockSink.getPlugin(outputName2)))
       .addConnection("source1", "t1")
@@ -2232,7 +2233,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("t2", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("t3", IdentityTransform.getPlugin()))
       .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
-                                                                  "t1.customer_name=t2.cust_name=t3.c_name", "t1", "")))
+                                                                "t1.customer_name=t2.cust_name=t3.c_name", "t1", "")))
       .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")
@@ -2390,7 +2391,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("innerjoin", MockJoiner.getPlugin("t1.customer_id=t2.cust_id",
                                                                "t1,t2", "")))
       .addStage(new ETLStage(outerJoinName, MockJoiner.getPlugin("t4.item_id=t3.i_id",
-                                                               "", "")))
+                                                                 "", "")))
       .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")
@@ -2550,7 +2551,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ETLBatchConfig.Builder builder = ETLBatchConfig.builder("* * * * *");
     ETLBatchConfig etlConfig = builder
       .setEngine(engine)
-        // TODO: test multiple inputs CDAP-5654
+      // TODO: test multiple inputs CDAP-5654
       .addStage(new ETLStage("source", MockExternalSource.getPlugin(expectedExternalDatasetInput,
                                                                     inputDir.getAbsolutePath())))
       .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(
@@ -2783,7 +2784,8 @@ public class DataPipelineTest extends HydratorTestBase {
     // run pipeline with the metadata operations which need to be performed
     runPipelineForMetadata(operations);
     MetadataAdmin metadataAdmin = getMetadataAdmin();
-    waitForMetadataProcessing(metadataAdmin, 2);
+    waitForMetadataProcessing(metadataAdmin,
+                              MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"), 2);
 
     // verify metadata written by the pipeline
     Set<MetadataRecordV2> actual =
@@ -2803,13 +2805,14 @@ public class DataPipelineTest extends HydratorTestBase {
 
     // delete some properties and tag
     op = new MetadataOperation(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
-                                       MetadataOperation.Type.DELETE, new Metadata(ImmutableMap.of("kOne", ""),
-                                                                                ImmutableSet.of("tOne")));
+                               MetadataOperation.Type.DELETE, new Metadata(ImmutableMap.of("kOne", ""),
+                                                                           ImmutableSet.of("tOne")));
     operations = new HashSet<>(Collections.singleton(op));
 
     runPipelineForMetadata(operations);
 
-    waitForMetadataProcessing(metadataAdmin, 1);
+    waitForMetadataProcessing(metadataAdmin,
+                              MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"), 1);
 
     actual = metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
 
@@ -2827,11 +2830,74 @@ public class DataPipelineTest extends HydratorTestBase {
     }
   }
 
-  private void waitForMetadataProcessing(MetadataAdmin metadataAdmin, int expectedTagSize)
+  @Test
+  public void testScramble() throws Exception {
+    Schema schema = Schema.recordOf(
+      "person",
+      Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("age", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("gender", Schema.of(Schema.Type.STRING))
+    );
+    /*
+     * source --> sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("singleInput", schema)))
+      .addStage(new ETLStage("transform", DataMasker.getPlugin("singleInput", "sensitive", "xx")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("singleOutput")))
+      .addConnection("source", "transform")
+      .addConnection("transform", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("DataMaskApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+
+
+    StructuredRecord recordSamuel =
+      StructuredRecord.builder(schema).set("person", "samuel").set("age", "12").set("gender", "m").build();
+    StructuredRecord recordBob =
+      StructuredRecord.builder(schema).set("person", "bob").set("age", "36").set("gender", "m").build();
+    StructuredRecord recordJane =
+      StructuredRecord.builder(schema).set("person", "jane").set("age", "25").set("gender", "f").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset("singleInput"));
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    MetadataAdmin metadataAdmin = getMetadataAdmin();
+    metadataAdmin.addTags(
+      MetadataEntity.builder(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"))
+        .appendAsType("field", "gender").build(), ImmutableSet.of("sensitive")
+    );
+    waitForMetadataProcessing(metadataAdmin,
+                              MetadataEntity.builder(
+                                MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"))
+                                .appendAsType("field", "gender").build(), 1);
+
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    Map<String, String> runtimeArguments = ImmutableMap.of("inputDs", "singleInput");
+    workflowManager.setRuntimeArgs(runtimeArguments);
+    workflowManager.start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(schema).set("person", "samuel").set("age", "12").set("gender", "xx").build());
+    expected.add(StructuredRecord.builder(schema).set("person", "bob").set("age", "36").set("gender", "xx").build());
+    expected.add(StructuredRecord.builder(schema).set("person", "jane").set("age", "25").set("gender", "xx").build());
+    DataSetManager<Table> outputTable = getDataset("singleOutput");
+    Set<StructuredRecord> actual = new HashSet<>(MockSink.readOutput(outputTable));
+    Assert.assertEquals(expected, actual);
+  }
+
+  private void waitForMetadataProcessing(MetadataAdmin metadataAdmin, MetadataEntity entity, int expectedTagSize)
     throws TimeoutException, InterruptedException, java.util.concurrent.ExecutionException {
     Tasks.waitFor(true, () -> {
       Set<MetadataRecordV2> metadataRecordV2s =
-        metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
+        metadataAdmin.getMetadata(entity);
       for (MetadataRecordV2 actualRecord : metadataRecordV2s) {
         if (actualRecord.getScope() == MetadataScope.USER) {
           return actualRecord.getTags().size() == expectedTagSize;
