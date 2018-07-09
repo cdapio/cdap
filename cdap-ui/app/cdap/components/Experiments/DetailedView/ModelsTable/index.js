@@ -138,17 +138,23 @@ const addDetailedModelObject = (list) => {
   return list;
 };
 
-const wrapContentWithTitleAttr = (content) => (
-  <div title={isNumber(content) || isString(content) ? content : ''}>
+const wrapContentWithTitleAttr = (content, key) => (
+  <div
+    title={isNumber(content) || isString(content) ? content : ''}
+    key={key}
+  >
     {content}
   </div>
 );
 const wrapMetricWithTitleAttr = (content, property) => {
   const ROUNDABLE_METRIC = regressionMetrics.map(metric => metric.property);
   if (ROUNDABLE_METRIC.indexOf(property) !== -1) {
-    return wrapContentWithTitleAttr(humanReadableNumber(roundDecimalToNDigits(content, 4), HUMANREADABLE_DECIMAL));
+    return wrapContentWithTitleAttr(
+      humanReadableNumber(roundDecimalToNDigits(content, 4), HUMANREADABLE_DECIMAL),
+      property
+    );
   }
-  return wrapContentWithTitleAttr(content);
+  return wrapContentWithTitleAttr(content, property);
 };
 const renderMetrics = (newHeaders, model) => {
   let commonHeadersLen = tableHeaders.length;
@@ -167,7 +173,7 @@ const renderFeaturesTable = (features) => {
           </div>
         </div>
         <div className="grid-body">
-          {features.map(feature => (<div className="grid-row"> {feature}</div>))}
+          {features.map(feature => (<div key={feature} className="grid-row"> {feature}</div>))}
         </div>
       </div>
     </div>
@@ -190,7 +196,7 @@ const renderDirectivesTables = (directives) => {
           </div>
         </div>
         <div className="grid-body">
-          {directives.map(directive => (<div className="grid-row"> {directive}</div>))}
+          {directives.map((directive, i) => (<div key={i} className="grid-row"> {directive}</div>))}
         </div>
       </div>
     </div>
@@ -412,6 +418,7 @@ function renderGrid(models, outcomeType, experimentId, newlyTrainingModel, model
                   <strong
                     onClick={handleModelsSorting.bind(null, header.property)}
                     className='sortable-header'
+                    key={header.property}
                   >
                     <span>{header.label}</span>
                     { renderSortIcon(modelsSortMethod) }
@@ -419,7 +426,7 @@ function renderGrid(models, outcomeType, experimentId, newlyTrainingModel, model
                 );
               }
               return (
-                <strong>
+                <strong key={header.property}>
                   <span>{header.label}</span>
                 </strong>
               );
