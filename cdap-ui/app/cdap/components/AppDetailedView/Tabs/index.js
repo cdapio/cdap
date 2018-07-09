@@ -45,7 +45,7 @@ export default class AppDetailedViewTab extends Component {
       <div className="overview-tab">
         <Nav tabs>
           <NavItem>
-            <NavLink>
+            <NavLink tag="div">
               <RouterNavLink
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/programs`}
                 activeClassName="active"
@@ -59,7 +59,7 @@ export default class AppDetailedViewTab extends Component {
             </NavLink>
           </NavItem>
           <NavItem>
-            <NavLink>
+            <NavLink tag="div">
               <RouterNavLink
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/datasets`}
                 activeClassName="active"
@@ -69,7 +69,7 @@ export default class AppDetailedViewTab extends Component {
             </NavLink>
           </NavItem>
           <NavItem>
-            <NavLink>
+            <NavLink tag="div">
               <RouterNavLink
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/history`}
                 activeClassName="active"
@@ -79,7 +79,7 @@ export default class AppDetailedViewTab extends Component {
             </NavLink>
           </NavItem>
           <NavItem>
-            <NavLink>
+            <NavLink tag="div">
               <RouterNavLink
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/properties`}
                 activeClassName="active"

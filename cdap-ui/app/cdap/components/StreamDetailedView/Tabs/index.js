@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
+import { Nav, NavItem, TabContent} from 'reactstrap';
 import isNil from 'lodash/isNil';
 import {Route, NavLink as RouterNavLink} from 'react-router-dom';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
@@ -51,7 +51,7 @@ export default class StreamDetailedViewTabs extends Component {
       <div className="overview-tab">
         <Nav tabs>
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/usage`}
                 activeClassName="active"
@@ -62,62 +62,62 @@ export default class StreamDetailedViewTabs extends Component {
               >
                 Usage
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/schema`}
                 activeClassName="active"
               >
                 Schema
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/programs`}
                 activeClassName="active"
               >
                 Programs ({this.state.entity.programs.length})
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/lineage`}
                 activeClassName="active"
               >
                 Lineage
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/audit`}
                 activeClassName="active"
               >
                 Audit Log
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/properties`}
                 activeClassName="active"
               >
                 Properties
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
         </Nav>
         <TabContent>
