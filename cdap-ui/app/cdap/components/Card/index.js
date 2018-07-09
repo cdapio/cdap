@@ -34,13 +34,15 @@
 */
 
 import PropTypes from 'prop-types';
-
+import {isDescendant} from 'services/helpers';
 import React, { Component } from 'react';
 require('./Card.scss');
 
 var classNames = require('classnames');
 
 export default class Card extends Component {
+  container = null;
+
   getHeader () {
     let closeButton;
     if (this.props.closeable) {
@@ -96,7 +98,13 @@ export default class Card extends Component {
     return this.props.footer ? footerElem : null;
   }
 
-  onClickHandler() {
+  onClickHandler(e) {
+    if (
+      !this.container ||
+      (this.container && !isDescendant(this.container, e.target))
+    ) {
+      return;
+    }
     if (this.props.onClick) {
       this.props.onClick();
     }
@@ -113,6 +121,7 @@ export default class Card extends Component {
         className={cardClass}
         onClick={this.onClickHandler.bind(this)}
         style={this.props.cardStyle}
+        ref={ref => this.container = ref}
       >
         {this.getHeader()}
         {this.getBody()}
