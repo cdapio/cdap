@@ -32,7 +32,7 @@
   }
 
   &:hover {
-    box-shadow: 1px 2px 10px 0 $gcp-blue;
+    box-shadow: 1px 2px 10px 0 $brand-primary-color;
   }
 
   /*
@@ -81,7 +81,7 @@
     display: inline-block;
     position: relative;
     color: white;
-    background-color: $gcp-blue;
+    background-color: $brand-primary-color;
     text-shadow: 0px 1px 2px #bbbbbb;
     box-shadow: 0px 2px 4px #888888;
     font-size: 12px;
@@ -96,7 +96,7 @@
       top: 100%;
       border-width: 5px 5px;
       border-style: solid;
-      border-color: $gcp-blue-lighter $gcp-blue-lighter transparent transparent;
+      border-color: $brand-primary-color-lighter $brand-primary-color-lighter transparent transparent;
     }
   }
   .package-icon-container {

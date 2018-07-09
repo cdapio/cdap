@@ -25,12 +25,12 @@
   align-items: center;
 
   a {
-    color: $gcp-blue;
+    color: $brand-primary-color;
     padding: 0 5px;
     border-right: 1px solid darkgray;
 
     &:hover {
-      color: $gcp-blue;
+      color: $brand-primary-color;
     }
     &:before {
       content: '< ';

@@ -217,7 +217,7 @@ $success_alert_bg_color: $brand-success;
     pre {
       .btn-link {
         cursor: pointer;
-        color: $gcp-blue;
+        color: $brand-primary-color;
       }
     }
 
@@ -301,7 +301,7 @@ $success_alert_bg_color: $brand-success;
     }
     .btn-link {
       cursor: pointer;
-      color: $gcp-blue;
+      color: $brand-primary-color;
     }
     .fa.fa-exclamation-triangle {
       margin-right: 5px;

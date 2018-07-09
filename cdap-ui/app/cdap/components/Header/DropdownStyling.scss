@@ -98,7 +98,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
           text-decoration: none;
           background: transparent;
           &.active {
-            color: $gcp-blue;
+            color: $brand-primary-color;
           }
         }
         &:hover,

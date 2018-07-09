@@ -23,12 +23,12 @@
     .nav-item {
       .active.nav-link {
         border: 0;
-        border-bottom: 2px solid $gcp-blue;
+        border-bottom: 2px solid $brand-primary-color;
         font-weight: bold;
 
         &:hover {
           border: 0;
-          border-bottom: 2px solid $gcp-blue;
+          border-bottom: 2px solid $brand-primary-color;
         }
       }
       .nav-link {

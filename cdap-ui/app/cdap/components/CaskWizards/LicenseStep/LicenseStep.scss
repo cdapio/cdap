@@ -44,8 +44,8 @@ body {
               overflow-y: auto;
             }
             .agree-btn {
-              background: $gcp-blue;
-              border-color: $gcp-blue;
+              background: $brand-primary-color;
+              border-color: $brand-primary-color;
               display: inline-block;
               padding-right: 30px;
               padding-left: 30px;
@@ -53,7 +53,7 @@ body {
             .back-to-cdap-link {
               display: inline-block;
               margin-left: 10px;
-              color: $gcp-blue;
+              color: $brand-primary-color;
               cursor: pointer;
             }
           }
