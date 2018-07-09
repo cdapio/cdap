@@ -14,7 +14,8 @@
  * the License.
  */
 
-import React, { Component, PropTypes } from 'react';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import PluginArtifactUploadWizard from 'components/CaskWizards/PluginArtifactUpload';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
