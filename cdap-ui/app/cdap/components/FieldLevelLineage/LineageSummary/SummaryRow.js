@@ -41,9 +41,9 @@ export default function SummaryRow({entity}) {
       </div>
       <div className="fields-list">
         {
-          entity.fields.map((field) => {
+          entity.fields.map((field, i) => {
             return (
-              <div className="field-row truncate">
+              <div className="field-row truncate" key={i}>
                 <Link
                   to={`${linkPath}&field=${field}`}
                   className="field-link"
