@@ -23,7 +23,7 @@ import classnames from 'classnames';
 import MyRulesEngineApi from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
 import {getRulesForActiveRuleBook, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
-import update from 'react/lib/update';
+import update from 'immutability-helper';
 import RulebookRule from 'components/RulesEngineHome/RuleBookDetails/RulebookRule';
 import T from 'i18n-react';
 
