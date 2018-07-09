@@ -25,7 +25,14 @@ export default function BreadCrumb({previousPaths, currentStateIcon, currentStat
   return (
     <div className="bread-crumb">
       {
-        previousPaths.map(previousPath => <Link to={previousPath.pathname}>{previousPath.label}</Link>)
+        previousPaths.map(previousPath => (
+          <Link
+            to={previousPath.pathname}
+            key={previousPath.pathname}
+          >
+            {previousPath.label}
+          </Link>
+        ))
       }
       <IconSVG name={currentStateIcon} />
       <span>{currentStateLabel}</span>
