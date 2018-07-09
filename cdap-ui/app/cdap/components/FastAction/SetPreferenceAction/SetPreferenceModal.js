@@ -545,7 +545,7 @@ SetPreferenceModal.propTypes = {
     type: PropTypes.oneOf(['application', 'program']).isRequired,
     programType: PropTypes.string
   }),
-  isOpen: PropTypes.func.isRequired,
+  isOpen: PropTypes.bool.isRequired,
   toggleModal: PropTypes.func.isRequired,
   setAtLevel: PropTypes.string,
   onSuccess: PropTypes.func
