@@ -31,8 +31,8 @@ export default class DeleteEntityBtn extends Component {
   getDefaulState = () => ({
     showModal: false,
     isLoading: true,
-    errorMessage: false,
-    extendedMessage: false,
+    errorMessage: '',
+    extendedMessage: '',
   });
   state = this.getDefaulState();
 
@@ -62,13 +62,15 @@ export default class DeleteEntityBtn extends Component {
   };
   render() {
     return (
-      <span
-        className={this.props.className}
-        onClick={this.toggleModal}
-      >
-        {
-          this.props.btnLabel ? this.props.btnLabel : <IconSVG name="icon-trash" />
-        }
+      <span>
+        <span
+          className={this.props.className}
+          onClick={this.toggleModal}
+        >
+          {
+            this.props.btnLabel ? this.props.btnLabel : <IconSVG name="icon-trash" />
+          }
+        </span>
         {
           this.state.showModal ?
             <ConfirmationModal
