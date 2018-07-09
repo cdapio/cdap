@@ -120,12 +120,21 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   @Override
   protected void doStartUp() {
-    metricScheduledService.startAndWait();
+    try {
+      metricScheduledService.startAndWait();
+    } catch (Exception e) {
+      LOG.error("Failed to start metrics service for program run {}, metrics information will not be updated.",
+                programRunId);
+    }
   }
 
   @Override
   protected void doShutdown() {
-    metricScheduledService.stopAndWait();
+    try {
+      metricScheduledService.stopAndWait();
+    } catch (Exception e) {
+      LOG.error("Failed to stop metrics service for program run {}", programRunId);
+    }
     if (!lastProgramStateMessages.isEmpty()) {
       String topicConfig = Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC;
       String topic = requestKeyToLocalTopic.get(topicConfig);

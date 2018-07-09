@@ -225,11 +225,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     String remoteHost = masterNode.getProperties().get("ip.external");
 
     Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
-                                                                         programOptions.getArguments().asMap());
-    ProfileId profileId =
-      profile.orElseThrow(() -> new IllegalStateException(String.format("Missing profile information for this " +
-                                                                          "program run %s ",
-                                                                        programRunId)));
+                                                                       programOptions.getArguments().asMap());
+    ProfileId profileId = profile.orElseThrow(() ->
+      new IllegalStateException("Missing profile information for this program run %s " + programRunId));
     ProfileMetricScheduledService metricScheduledService = new ProfileMetricScheduledService(metricsCollectionService,
                                                                                              programRunId,
                                                                                              profileId,

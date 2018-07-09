@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  * Profile metrics schedule service which will emit metrics about profile, by default it will emit per 60 seconds
  */
 public class ProfileMetricScheduledService extends AbstractScheduledService {
-  private static final int DEFAULT_INTERVAL_MIN = 1;
+  private static final long DEFAULT_INTERVAL_MIN = 1L;
 
   private final MetricsContext metricsContext;
   private final long intervalMins;

@@ -446,7 +446,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                     String metricName) {
     Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
                                                                        recordedRunRecord.getSystemArgs());
-    return profile.map(profileId -> () -> emitMetricsContextForProfile(programRunId, profileId, metricName));
+    return profile.map(profileId -> () -> emitProfileMetrics(programRunId, profileId, metricName));
   }
 
   private ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> properties) {
@@ -510,8 +510,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Emit the metrics context for the program, the tags are constructed with the program run id and
    * the profile id
    */
-  private void emitMetricsContextForProfile(ProgramRunId programRunId, ProfileId profileId,
-                                                      String metricName) {
+  private void emitProfileMetrics(ProgramRunId programRunId, ProfileId profileId, String metricName) {
     Map<String, String> tags = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
       .put(Constants.Metrics.Tag.PROFILE, profileId.getScopedName())
