@@ -33,7 +33,7 @@ import {
   Col,
   Modal,
   ModalBody,
-  Tag
+  Badge
 } from 'reactstrap';
 
 require('./SpotlightModal.scss');
@@ -149,6 +149,7 @@ export default class SpotlightModal extends Component {
           let entityUrl = `/ns/${currentNamespace}/${entityTypeLabel}/${entity.id}`;
           return (
             <NavLinkWrapper
+              key={entity.id}
               to={this.props.isNativeLink ? `/cdap${entityUrl}` : entityUrl}
               isNativeLink={this.props.isNativeLink}
             >
@@ -179,7 +180,7 @@ export default class SpotlightModal extends Component {
                     {
                       entity.metadata.metadata.SYSTEM.tags.map((tag) => {
                         return (
-                          <Tag key={uuidV4()}>{tag}</Tag>
+                          <Badge key={uuidV4()}>{tag}</Badge>
                         );
                       })
                     }
@@ -188,7 +189,7 @@ export default class SpotlightModal extends Component {
                         (
                           entity.metadata.metadata.USER.tags.map((tag) => {
                             return (
-                              <Tag key={uuidV4()}>{tag}</Tag>
+                              <Badge key={uuidV4()}>{tag}</Badge>
                             );
                           })
                         )

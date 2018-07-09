@@ -222,6 +222,7 @@ export default class Tags extends Component {
                 value={tag}
                 scope='SYSTEM'
                 isNativeLink={this.props.isNativeLink}
+                key={tag}
               />
             );
           })
