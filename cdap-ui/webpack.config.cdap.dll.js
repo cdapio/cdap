@@ -16,25 +16,53 @@
 
 var webpack = require('webpack');
 var path = require('path');
-var mode = process.env.NODE_ENV;
-var plugins = [
-  new webpack.DefinePlugin({
-    'process.env':{
-      'NODE_ENV': JSON.stringify("production"),
-      '__DEVTOOLS__': false
-    },
-  }),
-  new webpack.DllPlugin({
-    path: path.join(__dirname, 'dll', 'cdap-[name]-manifest.json'),
+var mode = process.env.NODE_ENV || 'production';
+const processEnv = {
+  'NODE_ENV': JSON.stringify(mode),
+  '__DEVTOOLS__': false
+};
+
+const getWebpackOutputObj = (mode) => {
+  var output = {
+    path: path.join(__dirname, 'dll'),
+    filename: 'dll.cdap.[name].js',
+    library: 'cdap_[name]'
+  };
+  if (mode === 'development') {
+    output.filename = 'dll.cdap.[name].development.js';
+  }
+  return output;
+};
+
+const getWebpackDLLPlugin = (mode) => {
+  var manifestFileName = 'cdap-[name]-manifest.json';
+  if (mode === 'development') {
+    manifestFileName = 'cdap-[name]-development-manifest.json';
+  }
+  return new webpack.DllPlugin({
+    path: path.join(__dirname, 'dll', manifestFileName),
     name: 'cdap_[name]',
     context: path.resolve(__dirname, 'dll')
+  });
+};
+
+var plugins = [
+  new webpack.DefinePlugin({
+    'process.env':processEnv,
   }),
-  new webpack.optimize.UglifyJsPlugin({
-    compress: {
-      warnings: false
-    }
-  })
+  getWebpackDLLPlugin(mode)
 ];
+
+if (mode === 'production') {
+  plugins.push(
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false
+      }
+    })
+  );
+}
+
 var webpackConfig = {
   entry: {
     vendor: [
@@ -64,11 +92,7 @@ var webpackConfig = {
       'react-popper'
     ]
   },
-  output: {
-    path: path.join(__dirname, 'dll'),
-    filename: 'dll.cdap.[name].js',
-    library: 'cdap_[name]'
-  },
+  output: getWebpackOutputObj(mode),
   plugins,
   stats: {
     chunks: false
@@ -78,20 +102,7 @@ var webpackConfig = {
   }
 };
 
-if (mode === 'production') {
-  plugins.push(
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
-      }
-    })
-  );
-  webpackConfig = Object.assign({}, webpackConfig, {
-    plugins
-  });
-}
-
-if (mode !== 'production') {
+if (mode === 'development') {
   webpackConfig = Object.assign({}, webpackConfig, {
     devtool: 'source-map'
   });

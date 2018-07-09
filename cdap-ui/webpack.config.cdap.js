@@ -24,17 +24,40 @@ var StyleLintPlugin = require('stylelint-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var uuidV4 = require('uuid/v4');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+let pathsToClean = [
+  'cdap_dist'
+];
 
+// the clean options to use
+let cleanOptions = {
+  verbose:  true,
+  dry:      false
+};
+
+var mode = process.env.NODE_ENV || 'production';
+const getWebpackDllPlugins = (mode) => {
+  var sharedDllManifestFileName = 'shared-vendor-manifest.json';
+  var cdapDllManifestFileName = 'cdap-vendor-manifest.json';
+  if (mode === 'development') {
+    sharedDllManifestFileName = 'shared-vendor-development-manifest.json';
+    cdapDllManifestFileName = 'cdap-vendor-development-manifest.json';
+  }
+  return [
+    new webpack.DllReferencePlugin({
+      context: path.resolve(__dirname, 'dll'),
+      manifest: require(path.join(__dirname, 'dll', sharedDllManifestFileName))
+    }),
+    new webpack.DllReferencePlugin({
+      context: path.resolve(__dirname, 'dll'),
+      manifest: require(path.join(__dirname, 'dll', cdapDllManifestFileName))
+    })
+  ];
+};
 var plugins = [
+  new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
-  new webpack.DllReferencePlugin({
-    context: path.resolve(__dirname, 'dll'),
-    manifest: require(path.join(__dirname, 'dll', 'shared-vendor-manifest.json'))
-  }),
-  new webpack.DllReferencePlugin({
-    context: path.resolve(__dirname, 'dll'),
-    manifest: require(path.join(__dirname, 'dll', 'cdap-vendor-manifest.json'))
-  }),
+  ...getWebpackDllPlugins(),
   new LodashModuleReplacementPlugin({
     shorthands: true,
     collections: true,
@@ -66,7 +89,7 @@ var plugins = [
     hashId: uuidV4()
   })
 ];
-var mode = process.env.NODE_ENV;
+
 
 var rules = [
   {
@@ -147,6 +170,39 @@ var rules = [
   }
 ];
 
+if (mode === 'production') {
+  plugins.push(
+    new webpack.DefinePlugin({
+      'process.env':{
+        'NODE_ENV': JSON.stringify("production"),
+        '__DEVTOOLS__': false
+      },
+    }),
+    new UglifyJsPlugin({
+      uglifyOptions: {
+        ie8: false,
+        compress: {
+          warnings: false
+        },
+        output: {
+          comments: false,
+          beautify: false,
+        }
+      }
+    })
+  );
+}
+
+if (mode === 'development') {
+  plugins.push(
+    new LiveReloadPlugin({
+      port: 35728,
+      appendScriptTag: true
+    })
+  );
+}
+
+
 var webpackConfig = {
   cache: true,
   context: __dirname + '/app/cdap',
@@ -178,43 +234,11 @@ var webpackConfig = {
     }
   }
 };
-if (mode === 'production' || mode === 'build') {
-  plugins.push(
-    new webpack.DefinePlugin({
-      'process.env':{
-        'NODE_ENV': JSON.stringify("production"),
-        '__DEVTOOLS__': false
-      },
-    }),
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        ie8: false,
-        compress: {
-          warnings: false
-        },
-        output: {
-          comments: false,
-          beautify: false,
-        }
-      }
-    })
-  );
+
+if (mode === 'development') {
   webpackConfig = Object.assign({}, webpackConfig, {
-    plugins
+    devtool: 'source-map'
   });
 }
-
-if (mode !== 'production') {
-  webpackConfig = Object.assign({}, webpackConfig, {
-    devtool: 'source-map',
-    plugins:  plugins.concat([
-      new LiveReloadPlugin({
-        port: 35728,
-        appendScriptTag: true
-      })
-    ])
-  });
-}
-
 
 module.exports = webpackConfig;
