@@ -1,0 +1,131 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "~bootstrap/scss/mixins";
+@import "./variables.scss";
+
+// This is here just for specificity. We add bootstrap patch styles before bootstrap styles
+// Hence this specificity is needed when we want to deliberately override bootstrap
+// styles (say .input-group).
+.cdap-body-container {
+  .dropdown {
+    .dropdown-menu {
+      &[aria-hidden="false"] {
+        display: block;
+      }
+    }
+  }
+
+  .modal {
+    &.fade {
+      &.show {
+        opacity: 1;
+        .modal-dialog {
+          transform: translate(0, 0);
+          &.center {
+            transform: translate(0%, 50%);
+          }
+        }
+      }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      clear: both;
+      width: 100%;
+      h5 {
+        width: 100%;
+      }
+      button.close {
+        float: right;
+        padding: 1rem;
+        margin: -1rem -1rem -1rem auto;
+      }
+    }
+  }
+  .modal-backdrop.fade.show {
+    opacity: 0.5;
+  }
+
+  // col-xs-NUM is now col-NUM :sigh:
+
+  @for $i from 1 through 12 {
+    .col-#{$i} {
+      @include make-col($size: $i);
+      @include make-gutters();
+    }
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.5em 0.5em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+  }
+  .badge-secondary {
+    color: white;
+    background-color: $grey-02;
+  }
+
+  .input-group {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    width: 100%;
+    .input-group-append,
+    .input-group-prepend {
+      display: flex;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      margin-bottom: 0;
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.5;
+      color: #495057;
+      text-align: center;
+      white-space: nowrap;
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+    }
+
+    .input-group-prepend {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      border-right: 0;
+    }
+    .input-group-append {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      border-left: 0;
+    }
+    .form-control {
+      position: relative;
+      flex: 1 1 auto;
+      width: 1%;
+      margin-bottom: 0;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+  }
+}
