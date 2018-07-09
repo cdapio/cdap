@@ -19,8 +19,19 @@ var StyleLintPlugin = require('stylelint-webpack-plugin');
 var path = require('path');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+let pathsToClean = [
+  'login_dist'
+];
+
+// the clean options to use
+let cleanOptions = {
+  verbose:  true,
+  dry:      false
+};
 
 var plugins = [
+  new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
   new webpack.DllReferencePlugin({
     context: path.resolve(__dirname, 'dll'),

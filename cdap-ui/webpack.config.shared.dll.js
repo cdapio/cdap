@@ -16,31 +16,57 @@
 
 var webpack = require('webpack');
 var path = require('path');
-var mode = process.env.NODE_ENV;
-var plugins = [
-  new webpack.DefinePlugin({
-    'process.env':{
-      'NODE_ENV': JSON.stringify("production"),
-      '__DEVTOOLS__': false
-    },
-  }),
-  new webpack.DllPlugin({
-    path: path.join(__dirname, 'dll', 'shared-[name]-manifest.json'),
+var mode = process.env.NODE_ENV || 'production';
+const processEnv = {
+  'NODE_ENV': JSON.stringify(mode),
+  '__DEVTOOLS__': false
+};
+
+const getWebpackOutputObj = (mode) => {
+  var output = {
+    path: path.join(__dirname, 'dll'),
+    filename: 'dll.shared.[name].js',
+    library: 'shared_[name]'
+  };
+  if (mode === 'development') {
+    output.filename = 'dll.shared.[name].development.js';
+  }
+  return output;
+};
+
+const getWebpackDLLPlugin = (mode) => {
+  var manifestFileName = 'shared-[name]-manifest.json';
+  if (mode === 'development') {
+    manifestFileName = 'shared-[name]-development-manifest.json';
+  }
+  return new webpack.DllPlugin({
+    path: path.join(__dirname, 'dll', manifestFileName),
     name: 'shared_[name]',
     context: path.resolve(__dirname, 'dll')
+  });
+};
+var plugins = [
+  new webpack.DefinePlugin({
+    'process.env': processEnv,
   }),
-  new webpack.optimize.UglifyJsPlugin({
-    compress: {
-      warnings: false
-    }
-  })
+  getWebpackDLLPlugin(mode)
 ];
+
+if (mode === 'production') {
+  plugins.push(
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false
+      }
+    })
+  );
+}
+
 var webpackConfig = {
   entry: {
     vendor: [
       'react',
       'react-dom',
-      'react-addons-css-transition-group',
       'redux',
       'lodash',
       'classnames',
@@ -57,11 +83,7 @@ var webpackConfig = {
       'cdap-avsc'
     ]
   },
-  output: {
-    path: path.join(__dirname, 'dll'),
-    filename: 'dll.shared.[name].js',
-    library: 'shared_[name]'
-  },
+  output: getWebpackOutputObj(mode),
   stats: {
     chunks: false
   },

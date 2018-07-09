@@ -14,13 +14,24 @@
  * the License.
  */
 var webpack = require('webpack');
-var mode = process.env.NODE_ENV;
+var mode = process.env.NODE_ENV || 'production';
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+let pathsToClean = [
+  'common_dist'
+];
+
+// the clean options to use
+let cleanOptions = {
+  verbose:  true,
+  dry:      false
+};
 
 const COMMON_LIB_NAME = 'common-lib-new';
 
 var plugins = [
+  new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
   new webpack.optimize.CommonsChunkPlugin({
     name: COMMON_LIB_NAME,
@@ -30,8 +41,7 @@ var plugins = [
   // by default minify it.
   new webpack.DefinePlugin({
     'process.env':{
-      'NODE_ENV': JSON.stringify("production"),
-      '__DEVTOOLS__': false
+      'NODE_ENV': JSON.stringify(mode)
     },
   })
 ];
@@ -103,6 +113,22 @@ var rules = [
     ]
   }
 ];
+if (mode === 'production') {
+  plugins.push(
+    new UglifyJsPlugin({
+      uglifyOptions: {
+        ie8: false,
+        compress: {
+          warnings: false
+        },
+        output: {
+          comments: false,
+          beautify: false,
+        }
+      }
+    })
+  );
+}
 var webpackConfig = {
   context: __dirname + '/app/common',
   entry: {
@@ -148,12 +174,6 @@ var webpackConfig = {
       commonjs2: 'react-addons-css-transition-group',
       amd: 'react-addons-css-transition-group',
       root: ['React','addons','CSSTransitionGroup']
-    },
-    'react-addons-transition-group': {
-      commonjs: 'react-addons-transition-group',
-      commonjs2: 'react-addons-transition-group',
-      amd: 'react-addons-transition-group',
-      root: ['React','addons','TransitionGroup']
     }
   },
   resolve: {
@@ -171,23 +191,5 @@ if (mode !== 'production') {
     devtool: 'source-map'
   });
 }
-if (mode === 'production') {
-  plugins.push(
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        ie8: false,
-        compress: {
-          warnings: false
-        },
-        output: {
-          comments: false,
-          beautify: false,
-        }
-      }
-    })
-  );
-  webpackConfig = Object.assign({}, webpackConfig, {
-    plugins
-  });
-}
+
 module.exports = webpackConfig;
