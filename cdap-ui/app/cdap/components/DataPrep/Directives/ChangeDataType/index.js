@@ -152,8 +152,8 @@ ChangeDataTypeDirective.defaultProps = {
 };
 
 ChangeDataTypeDirective.propTypes = {
-  column: PropTypes.string,
-  options: PropTypes.arrayOf(PropTypes.object),
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
+  options: PropTypes.arrayOf(PropTypes.string),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
   isDisabled: PropTypes.bool,

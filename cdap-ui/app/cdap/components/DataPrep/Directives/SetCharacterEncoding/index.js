@@ -71,6 +71,6 @@ export default function Decode({onComplete, column, isOpen}) {
 
 Decode.propTypes = {
   onComplete: PropTypes.func,
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   isOpen: PropTypes.bool
 };

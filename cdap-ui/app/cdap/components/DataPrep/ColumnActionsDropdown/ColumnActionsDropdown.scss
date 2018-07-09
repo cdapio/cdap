@@ -28,6 +28,7 @@ $column-type-label-color: #b6babc;
 .column-actions-dropdown-container {
   > .fa.fa-caret-down {
     padding: 3px 5px;
+    position: relative;
 
     &.expanded {
       background-color: $dropdown-expanded-caret-bg-color;
@@ -40,7 +41,7 @@ $column-type-label-color: #b6babc;
   background-color: $action-item-bg-color;
   font-weight: 500;
 
-  .popover-content {
+  .popover-body {
     padding: 0;
     box-shadow: 1px 1px 5px $border-shadow-color;
 
@@ -160,26 +161,10 @@ $column-type-label-color: #b6babc;
     padding: 0;
     border-radius: 0;
     z-index: 999; // z-index of service down modal is 1000
+    margin-left: 0;
+    margin-top: 5px;
 
-    &.column_actions_dropdown-element-attached-top {
-      margin-top: 8px;
-    }
-
-    &.column_actions_dropdown-element-attached-right {
-      margin-left: 18px;
-    }
-
-    &.column_actions_dropdown-element-attached-left {
-      margin-left: -18px;
-    }
-
-    &.column_actions_dropdown-out-of-bounds-right,
-    &.column_actions_dropdown-out-of-bounds-top {
-      display: none;
-    }
-
-    &:before,
-    &:after {
+    &[data-x-out-of-boundaries] {
       display: none;
     }
   }

@@ -377,7 +377,7 @@ export default class DefineVariableDirective extends Component {
 }
 
 DefineVariableDirective.propTypes = {
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
   close: PropTypes.func
