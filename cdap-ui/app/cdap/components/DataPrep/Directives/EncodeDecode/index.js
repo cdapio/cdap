@@ -149,7 +149,7 @@ EncodeDecode.defaultProps = {
 };
 
 EncodeDecode.propTypes = {
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   isOpen: PropTypes.bool,
   isDisabled: PropTypes.bool,
   disabledTooltip: PropTypes.string,

@@ -69,7 +69,9 @@ const DSV = (state = initialState, action = defaultAction) => {
 const createDSVStore = (initialState = initialState) => {
   return createStore(
     combineReducers({DSV}),
-    initialState
+    {
+      DSV: initialState
+    }
   );
 };
 

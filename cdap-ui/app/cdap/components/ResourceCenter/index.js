@@ -16,7 +16,6 @@
 
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
-import ReactDOM from 'react-dom';
 import ResourceCenterEntity from 'components/ResourceCenterEntity';
 import ResourceCenterPipelineEntity from 'components/ResourceCenterEntity/ResourceCenterPipelineEntity';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
@@ -114,9 +113,7 @@ export default class ResourceCenter extends Component {
       extendedError: null
     });
   }
-  closeWizard(wizardContainer) {
-    ReactDOM.unmountComponentAtNode(wizardContainer);
-  }
+
   getWizardToBeDisplayed() {
     if (!this.state.activeWizard) {
       return null;

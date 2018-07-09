@@ -40,7 +40,7 @@ const VALID_TYPES = ['string', 'date'];
 export default class Format extends Component {
   static propTypes = {
     isOpen: PropTypes.bool,
-    column: PropTypes.string
+    column: PropTypes.oneOfType([PropTypes.array, PropTypes.string])
   };
 
   columnType = DataPrepStore.getState().dataprep.types[this.props.column];

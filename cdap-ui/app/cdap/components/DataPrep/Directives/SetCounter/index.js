@@ -238,7 +238,7 @@ export default class SetCounterDirective extends Component {
 }
 
 SetCounterDirective.propTypes = {
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
   close: PropTypes.func

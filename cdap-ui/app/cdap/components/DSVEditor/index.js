@@ -68,14 +68,17 @@ let DSVRowWrapper = connect(
 export default class DSVEditor extends Component {
   constructor(props) {
     super(props);
-    let { values, onChange } = props;
+    let { values } = props;
 
     this.state = {
       rows: values
     };
 
-    this.DSVStore = createDSVStore({values});
+    this.DSVStore = createDSVStore({rows: values});
+  }
 
+  componentDidMount() {
+    let { values, onChange } = this.props;
     this.sub = this.DSVStore.subscribe(() => {
       let rows = this.DSVStore.getState().DSV.rows;
       if (typeof onChange === 'function') {

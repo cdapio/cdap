@@ -51,7 +51,7 @@ export default class SwapColumnsDirective extends Component {
     return (
       <div
         className="swap-column-directive clearfix action-item"
-        onClick={!this.props.isDisabled && this.applyDirective}
+        onClick={!this.props.isDisabled ? this.applyDirective : undefined}
       >
         <span>
           {T.translate('features.DataPrep.Directives.Swap.title')}

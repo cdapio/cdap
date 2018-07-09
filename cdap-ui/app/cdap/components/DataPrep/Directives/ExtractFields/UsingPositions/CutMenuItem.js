@@ -53,6 +53,6 @@ export default class CutMenuItem extends Component {
   }
 }
 CutMenuItem.propTypes = {
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func
 };

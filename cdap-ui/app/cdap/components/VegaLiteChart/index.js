@@ -24,9 +24,9 @@ import LoadingSVG from 'components/LoadingSVG';
 import debounce from 'lodash/debounce';
 require('./VegaLiteChart.scss');
 export default class VegaLiteChart extends Component {
-  propTypes = {
+  static propTypes = {
     spec: PropTypes.object.isRequired,
-    data: PropTypes.object,
+    data: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
     className: PropTypes.string,
     widthOffset: PropTypes.number,
     heightOffset: PropTypes.number,

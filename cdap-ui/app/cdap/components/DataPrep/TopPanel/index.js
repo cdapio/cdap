@@ -296,6 +296,7 @@ export default class DataPrepTopPanel extends Component {
         title={menuItem.label}
         onClick={menuItem.disabled && menuItem.disabled() ? () => {} : menuItem.onClick}
         disabled={menuItem.disabled ? menuItem.disabled() : false}
+        key={index}
       >
         {getMenuItem(menuItem)}
       </li>

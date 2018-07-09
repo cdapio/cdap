@@ -75,11 +75,7 @@ export default class DirectivesTab extends Component {
     let newDirectives = directives.slice(0, index);
 
     execute(newDirectives, true)
-      .subscribe(() => {
-        this.setState({
-          deleteHover: null
-        });
-      }, (err) => {
+      .subscribe(() => {}, (err) => {
         // Should not ever come to this.. this is only if backend
         // fails somehow
         console.log('Error deleting directives', err);

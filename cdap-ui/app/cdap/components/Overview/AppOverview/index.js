@@ -46,6 +46,13 @@ export default class AppOverview extends Component {
   componentWillMount() {
     this.fetchAppDetail();
   }
+
+  componentWillUnmount() {
+    if (this.metadataApiSubscription) {
+      this.metadataApiSubscription.unsubscribe();
+    }
+  }
+
   componentWillReceiveProps(nextProps) {
     let {entity} = nextProps;
     if (!isNil(entity)) {
@@ -68,16 +75,21 @@ export default class AppOverview extends Component {
     };
 
     if (entityId) {
-      MyMetadataApi
+      this.metadataApiSubscription = MyMetadataApi
         .getProperties(metadataParams)
         .combineLatest(
           MyAppApi.get({
             namespace,
             appId: this.props.entity.id
           })
-        )
+        );
+      this.metadataApiSubscription
         .subscribe(
           res => {
+          // FIXME: Inspite of unsubscribing during unmount this still gets called :|
+          if (this.metadataApiSubscription.closed) {
+            return;
+          }
           let entityDetail = res[1];
           let properties = res[0];
           let programs = entityDetail.programs.map(prog => {

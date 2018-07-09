@@ -607,7 +607,7 @@ export default class Calculate extends Component {
 }
 Calculate.propTypes = {
   isOpen: PropTypes.bool,
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   close: PropTypes.func,
   onComplete: PropTypes.func
 };

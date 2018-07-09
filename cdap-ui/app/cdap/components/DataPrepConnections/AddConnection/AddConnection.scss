@@ -31,74 +31,42 @@ $connection-options-hover-bg-color: #efefef;
       vertical-align: top;
     }
   }
-}
+  .popper {
+    border-radius: 0;
+    border-color: $popover-border-color;
+    padding: 22px 22px 17px;
+    z-index: 1061;
+    max-width: 276px;
+    min-width: 220px;
+    margin-top: -10px;
+    text-align: left;
 
-.popover.add-connection-popover {
-  position: relative;
-  &:before,
-  &:after {
-    position: absolute;
-    display: block;
-    width: 0;
-    height: 0;
-    border-color: transparent;
-    border-style: solid;
-    content: "";
-    border-width: 11px;
-  }
-  &.bs-tether-element-attached-bottom {
-    &:before {
-      border-top-color: #999999;
-    }
-    &:before,
-    &:after {
-      margin-top: -10px;
-      bottom: -11px;
-      margin-left: -11px;
-      left: 50%;
-      border-bottom-width: 0;
-      border-top-color: white;
-    }
-  }
-}
-
-.popover.add-connection-popover.bs-tether-element-attached-bottom {
-  border-radius: 0;
-  border-color: $popover-border-color;
-  padding: 22px 22px 17px;
-  z-index: 1061;
-  display: block;
-  max-width: 276px;
-  min-width: 200px;
-  margin-top: -10px;
-
-  .popover-title {
-    background-color: $popover-bg-color;
-    border-bottom: 0;
-    font-weight: 600;
-    padding: 0;
-    font-size: 12px;
-    margin-bottom: 15px;
-  }
-
-  .connection-type-option {
-    font-size: 14px;
-    padding: 5px 22px;
-    margin-left: -22px;
-    margin-right: -22px;
-    cursor: pointer;
-
-    .fa {
-      vertical-align: top;
-      margin-right: 10px;
-      font-size: 18px;
+    .popover-header {
+      background-color: $popover-bg-color;
+      border-bottom: 0;
+      font-weight: 600;
+      padding: 0;
+      font-size: 12px;
+      margin-bottom: 15px;
     }
 
-    &:hover { background-color: $connection-options-hover-bg-color; }
+    .connection-type-option {
+      font-size: 14px;
+      padding: 5px 22px;
+      margin-left: -22px;
+      margin-right: -22px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: $connection-options-hover-bg-color;
+      }
+
+      .fa {
+        vertical-align: top;
+        margin-right: 10px;
+        font-size: 18px;
+      }
+    }
   }
 
-  .popover-content { padding: 0; }
-
-  // for the triangle attachment
-  &:before { border-top-color: $popover-border-color; }
 }

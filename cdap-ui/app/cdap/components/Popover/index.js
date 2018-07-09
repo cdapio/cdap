@@ -28,8 +28,8 @@ require('./Popover.scss');
 export default class Popover extends PureComponent {
 
   static propTypes = {
-    children: PropTypes.element,
-    target: PropTypes.element,
+    children: PropTypes.node,
+    target: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
     targetDimension: PropTypes.object.isRequired,
     className: PropTypes.string,
     showOn: PropTypes.oneOf(['Click', 'Hover']),

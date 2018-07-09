@@ -131,7 +131,7 @@ const renderGrid = (experiments, sortMethod, sortColumn) => {
                 );
               }
               return (
-                <strong >
+                <strong key={i}>
                   {header.label}
                 </strong>
               );
@@ -146,6 +146,7 @@ const renderGrid = (experiments, sortMethod, sortColumn) => {
               <Link
                 to={`/ns/${getCurrentNamespace()}/experiments/${experiment.name}`}
                 className="grid-row grid-link"
+                key={experiment.name}
               >
                 <div>
                   <h5>

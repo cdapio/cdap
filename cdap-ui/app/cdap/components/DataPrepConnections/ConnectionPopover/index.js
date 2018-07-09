@@ -198,17 +198,12 @@ export default class ConnectionPopover extends Component {
   }
 
   render() {
-    let tetherConfig = {
-      classes: {
-        element: 'connection-action-popover'
-      }
-    };
 
     return (
       <span className="expanded-menu-popover-icon text-xs-center float-xs-right">
         <UncontrolledPopover
           icon="fa-ellipsis-v"
-          tetherOption={tetherConfig}
+          popoverClassName="connection-action-popover"
         >
           <div
             className="connection-action-item"

@@ -149,7 +149,7 @@ ProgramsTab.defaultProps = {
   }
 };
 ProgramsTab.propTypes = {
-  entity: PropTypes.arrayOf(PropTypes.shape({
+  entity: PropTypes.shape({
     id: PropTypes.string,
     programs: PropTypes.arrayOf(PropTypes.shape({
       app: PropTypes.string,
@@ -157,5 +157,5 @@ ProgramsTab.propTypes = {
       type: PropTypes.string
     })),
     type: PropTypes.string
-  }))
+  })
 };

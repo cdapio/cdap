@@ -61,7 +61,6 @@ const conditionsOptions = [
   ...addPrefix('ISBN'),
   ...addPrefix('ISBN10'),
   ...addPrefix('ISBN13'),
-  ...addPrefix('ISBN13'),
   'divider',
   ...addPrefix('CREDITCARD'),
   ...addPrefix('AMEXCARD'),
@@ -435,7 +434,7 @@ export default class MarkAsError extends Component {
 }
 
 MarkAsError.propTypes = {
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
   close: PropTypes.func

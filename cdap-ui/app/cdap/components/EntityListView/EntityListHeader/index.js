@@ -254,7 +254,7 @@ export default class EntityListHeader extends Component {
       <div className="entity-list-header-container">
         <div className="entity-list-header">
           <div className="search-box input-group">
-            <span className="input-feedback input-group-addon">
+            <span className="input-feedback input-group-prepend">
               <IconSVG name="icon-search" />
             </span>
             <input

@@ -157,7 +157,7 @@ export default class FillNullOrEmptyDirective extends Component {
 }
 
 FillNullOrEmptyDirective.propTypes = {
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
   close: PropTypes.func

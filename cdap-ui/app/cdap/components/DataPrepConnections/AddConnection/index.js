@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
-import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
+import Popover from 'components/Popover';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
 import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
 import S3Connection from 'components/DataPrepConnections/S3Connection';
@@ -28,7 +28,6 @@ import T from 'i18n-react';
 
 require('./AddConnection.scss');
 
-const ADD_CONNECTION_ID = 'add-connection-button';
 const PREFIX = 'features.DataPrepConnections.AddConnections';
 
 export default class AddConnection extends Component {
@@ -36,11 +35,9 @@ export default class AddConnection extends Component {
     super(props);
 
     this.state = {
-      expanded: false,
-      activeModal: null
+      activeModal: null,
+      showPopover: false
     };
-
-    this.toggleConnectionOptions = this.toggleConnectionOptions.bind(this);
 
     this.CONNECTIONS_TYPE = [
       {
@@ -71,14 +68,10 @@ export default class AddConnection extends Component {
     ];
   }
 
-  toggleConnectionOptions() {
-    this.setState({expanded: !this.state.expanded});
-  }
-
   connectionClickHandler(component) {
     this.setState({
       activeModal: component,
-      expanded: false
+      showPopover: false
     });
   }
 
@@ -97,24 +90,29 @@ export default class AddConnection extends Component {
   }
 
   renderPopover() {
-    const tetherConfig = {
-      classes: {
-        element: 'add-connection-popover'
-      }
-    };
+    const target = () => (
+      <button className="btn btn-secondary">
+        <span className="fa fa-fw">
+          <IconSVG name="icon-plus" />
+        </span>
 
+        <span>
+          {T.translate(`${PREFIX}.label`)}
+        </span>
+      </button>
+    );
     return (
       <Popover
         placement="top"
-        isOpen={this.state.expanded}
-        target={ADD_CONNECTION_ID}
-        toggle={this.toggleConnectionOptions}
-        tether={tetherConfig}
+        target={target}
+        className="add-connection-popover"
+        enableInteractionInPopover={true}
+        showPopover={this.state.showPopover}
       >
-        <PopoverTitle>
+        <div className="popover-header">
           {T.translate(`${PREFIX}.Popover.title`)}
-        </PopoverTitle>
-        <PopoverContent>
+        </div>
+        <div className="popover-body">
           {
             this.CONNECTIONS_TYPE.map((connection) => {
               return (
@@ -134,7 +132,7 @@ export default class AddConnection extends Component {
               );
             })
           }
-        </PopoverContent>
+        </div>
       </Popover>
     );
   }
@@ -142,20 +140,6 @@ export default class AddConnection extends Component {
   render() {
     return (
       <div className="add-connection-container text-xs-center">
-        <button
-          className="btn btn-secondary"
-          onClick={this.toggleConnectionOptions}
-          id={ADD_CONNECTION_ID}
-        >
-          <span className="fa fa-fw">
-            <IconSVG name="icon-plus" />
-          </span>
-
-          <span>
-            {T.translate(`${PREFIX}.label`)}
-          </span>
-        </button>
-
         {this.renderPopover()}
         {this.renderModal()}
       </div>

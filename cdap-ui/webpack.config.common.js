@@ -14,26 +14,44 @@
  * the License.
  */
 var webpack = require('webpack');
-var mode = process.env.NODE_ENV;
+var mode = process.env.NODE_ENV || 'production';
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+var ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
+let pathsToClean = [
+  'common_dist'
+];
+
+// the clean options to use
+let cleanOptions = {
+  verbose: true,
+  dry: false
+};
 
 const COMMON_LIB_NAME = 'common-lib-new';
 
 var plugins = [
-  new CaseSensitivePathsPlugin(),
-  new webpack.optimize.CommonsChunkPlugin({
-    name: COMMON_LIB_NAME,
-    fileName: COMMON_LIB_NAME + '.js',
-    minChunks: Infinity
+  new LodashModuleReplacementPlugin({
+    shorthands: true,
+    collections: true,
+    caching: true
   }),
+  new CleanWebpackPlugin(pathsToClean, cleanOptions),
+  new CaseSensitivePathsPlugin(),
   // by default minify it.
   new webpack.DefinePlugin({
     'process.env':{
-      'NODE_ENV': JSON.stringify("production"),
-      '__DEVTOOLS__': false
+      'NODE_ENV': JSON.stringify(mode)
     },
-  })
+  }),
+  new ForkTsCheckerWebpackPlugin({
+    tsconfig: __dirname + '/tsconfig.json',
+    tslint: __dirname + '/tslint.json',
+    // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
+    memoryLimit: 4096
+  }),
 ];
 var rules = [
   {
@@ -54,23 +72,6 @@ var rules = [
       'style-loader',
       'css-loader',
       'sass-loader'
-    ]
-  },
-  {
-    test: /\.json$/,
-    use: 'json-loader'
-  },
-  {
-    enforce: 'pre',
-    test: /\.js$/,
-    use: 'eslint-loader',
-    exclude: [
-      /node_modules/,
-      /bower_components/,
-      /dist/,
-      /old_dist/,
-      /cdap_dist/,
-      /login_dist/
     ]
   },
   {
@@ -103,12 +104,36 @@ var rules = [
     ]
   }
 ];
+if (mode === 'production') {
+  plugins.push(
+    new UglifyJsPlugin({
+      uglifyOptions: {
+        ie8: false,
+        compress: {
+          warnings: false
+        },
+        output: {
+          comments: false,
+          beautify: false,
+        }
+      }
+    })
+  );
+}
 var webpackConfig = {
+  mode,
   context: __dirname + '/app/common',
+  optimization: {
+    splitChunks: {
+      name: COMMON_LIB_NAME,
+      fileName: COMMON_LIB_NAME + '.js',
+      minChunks: Infinity
+    }
+  },
   entry: {
     'common-new': ['./cask-shared-components.js'],
     [COMMON_LIB_NAME]: [
-      'babel-polyfill',
+      '@babel/polyfill',
       'classnames',
       'reactstrap',
       'i18n-react',
@@ -122,13 +147,20 @@ var webpackConfig = {
   module: {
     rules
   },
+  stats: {
+    chunks: false,
+    chunkModules: false
+  },
   output: {
-    filename: './[name].js',
-    chunkFilename: '[name]-[chunkhash].js',
+    filename: '[name].js',
+    chunkFilename: '[name].[chunkhash].js',
     path: __dirname + '/common_dist',
     library: 'CaskCommon',
     libraryTarget: 'umd',
     publicPath: '/common_assets/'
+  },
+  optimization: {
+    splitChunks: false
   },
   externals: {
     'react': {
@@ -148,12 +180,6 @@ var webpackConfig = {
       commonjs2: 'react-addons-css-transition-group',
       amd: 'react-addons-css-transition-group',
       root: ['React','addons','CSSTransitionGroup']
-    },
-    'react-addons-transition-group': {
-      commonjs: 'react-addons-transition-group',
-      commonjs2: 'react-addons-transition-group',
-      amd: 'react-addons-transition-group',
-      root: ['React','addons','TransitionGroup']
     }
   },
   resolve: {
@@ -166,28 +192,5 @@ var webpackConfig = {
   },
   plugins
 };
-if (mode !== 'production') {
-  webpackConfig = Object.assign({}, webpackConfig, {
-    devtool: 'source-map'
-  });
-}
-if (mode === 'production') {
-  plugins.push(
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        ie8: false,
-        compress: {
-          warnings: false
-        },
-        output: {
-          comments: false,
-          beautify: false,
-        }
-      }
-    })
-  );
-  webpackConfig = Object.assign({}, webpackConfig, {
-    plugins
-  });
-}
+
 module.exports = webpackConfig;

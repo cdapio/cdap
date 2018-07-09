@@ -17,7 +17,7 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import {Modal, ModalBody, ModalHeader} from 'reactstrap';
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import { CSSTransition } from 'react-transition-group';
 import classnames from 'classnames';
 
 require('./WizardModal.scss');
@@ -47,14 +47,15 @@ export default function WizardModal({children, title, isOpen, toggle, className}
         </div>
       </ModalHeader>
       <ModalBody>
-        <ReactCSSTransitionGroup
+        <CSSTransition
           component="div"
           transitionName="wizard-modal-content"
           transitionEnterTimeout={500}
           transitionLeaveTimeout={300}
+          timeout={300}
         >
           {children}
-        </ReactCSSTransitionGroup>
+        </CSSTransition>
       </ModalBody>
     </Modal>
   );
