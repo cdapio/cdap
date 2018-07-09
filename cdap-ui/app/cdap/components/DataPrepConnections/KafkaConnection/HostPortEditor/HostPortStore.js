@@ -79,7 +79,9 @@ const HostPortStore = createStore(
   combineReducers({
     hostport
   }),
-  initialState,
+  {
+    hostport: initialState
+  },
   window.devToolsExtension ? window.devToolsExtension() : f => f
 );
 
