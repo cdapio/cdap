@@ -18,23 +18,24 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
+import {InputGroup, InputGroupAddon, Input} from 'reactstrap';
 import {search} from 'components/FieldLevelLineage/store/ActionCreator';
 
 function FieldSearchView({searchValue}) {
   return (
     <div className="search-container">
-      <div className="input-group">
-        <input
+      <InputGroup>
+        <Input
           type="text"
           className="form-control"
           placeholder="Search by field name"
           onChange={search}
           value={searchValue}
         />
-        <span className="input-group-addon">
+        <InputGroupAddon addonType="append">
           <IconSVG name="icon-search" />
-        </span>
-      </div>
+        </InputGroupAddon>
+      </InputGroup>
     </div>
   );
 }

@@ -51,8 +51,8 @@ function LineageSummaryView({activeField, datasetId, incomingLineage, close}) {
       </div>
 
       {
-        incomingLineage.map((entity) => {
-          return <SummaryRow entity={entity} />;
+        incomingLineage.map((entity, i) => {
+          return <SummaryRow key={i} entity={entity} />;
         })
       }
 

@@ -59,7 +59,7 @@ export default class OperationsTable extends Component {
 
     return fields.map((field, i) => {
       return (
-        <span>
+        <span key={i}>
           <span
             className={classnames('input-field', { 'selected': this.state.activeId === field.origin })}
             onClick={this.handleInputClick.bind(this, field.origin)}
@@ -102,7 +102,7 @@ export default class OperationsTable extends Component {
           this.props.operations.map((operation, i) => {
             return (
               <div
-                key={operation.id}
+                key={operation.name}
                 className={classnames('grid-row', {'active': operation.name === this.state.activeId})}
               >
                 <div>{ i + 1 }</div>

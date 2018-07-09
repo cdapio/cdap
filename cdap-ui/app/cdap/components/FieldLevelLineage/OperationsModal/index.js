@@ -41,7 +41,7 @@ function OperationsModalView({showOperations, loading, closeModal, fieldName}) {
       size="lg"
       backdrop="static"
       zIndex="1061"
-      className="field-level-lineage-modal"
+      className="field-level-lineage-modal center"
     >
       <ModalHeader>
         <span>

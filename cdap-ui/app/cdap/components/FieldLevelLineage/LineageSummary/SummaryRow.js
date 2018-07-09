@@ -36,9 +36,9 @@ export default function SummaryRow({entity}) {
       </div>
       <div className="fields-list">
         {
-          entity.fields.map((field) => {
+          entity.fields.map((field, i) => {
             return (
-              <div className="field-row">
+              <div className="field-row" key={i}>
                 <Link
                   to={`${linkPath}?field=${field}`}
                   className="field-link"
