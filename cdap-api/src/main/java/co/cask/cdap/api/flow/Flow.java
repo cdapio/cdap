@@ -26,7 +26,7 @@ import co.cask.cdap.api.Processor;
  *   Implement this interface to create a flow. The {@link #configure} method will be
  *   invoked during deployment time.
  * </p>
- * @deprecated As of release 5.0.0, implement {@link @ProgramType.SPARK} for realtime processing.
+ * @deprecated As of release 5.0.0, replaced by {@link @ProgramType.SPARK} for realtime processing.
  */
 @Deprecated
 public interface Flow extends Processor {
