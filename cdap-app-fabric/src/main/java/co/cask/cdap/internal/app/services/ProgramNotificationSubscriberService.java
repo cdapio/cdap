@@ -302,8 +302,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus, null, messageIdBytes);
 
         if (recordedRunRecord != null) {
-         return getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                                       Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS);
+          return getEmitMetricsRunnable(programRunId, recordedRunRecord,
+                                        Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS);
         }
         break;
       case KILLED:

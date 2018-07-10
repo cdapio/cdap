@@ -123,7 +123,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     try {
       metricScheduledService.startAndWait();
     } catch (Exception e) {
-      LOG.error("Failed to start metrics service for program run {}, metrics information will not be updated.",
+      LOG.error("Failed to start metrics service for program run {}, node minute metrics will not be updated.",
                 programRunId);
     }
   }

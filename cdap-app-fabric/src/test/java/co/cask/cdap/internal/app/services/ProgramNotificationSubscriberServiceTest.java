@@ -185,7 +185,7 @@ public class ProgramNotificationSubscriberServiceTest {
     programStateWriter.completed(programRunId);
     MetricStore metricStore = injector.getInstance(MetricStore.class);
     Tasks.waitFor(1L, () -> getMetric(metricStore, programRunId, myProfile,
-                                  SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS),
+                                      SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS),
                   10, TimeUnit.SECONDS);
 
     // verify the metrics
