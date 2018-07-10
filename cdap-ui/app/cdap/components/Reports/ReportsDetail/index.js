@@ -57,7 +57,7 @@ class ReportsDetailView extends Component {
 
   fetchStatus = () => {
     let params = {
-      reportId: this.props.match.params.reportId
+      'report-id': this.props.match.params.reportId
     };
 
     MyReportsApi.getReport(params)
