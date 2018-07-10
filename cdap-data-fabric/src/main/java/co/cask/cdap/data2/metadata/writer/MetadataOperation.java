@@ -19,6 +19,7 @@ package co.cask.cdap.data2.metadata.writer;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 import static co.cask.cdap.data2.metadata.writer.MetadataOperation.Type.DELETE;
@@ -99,5 +100,33 @@ public class MetadataOperation {
   @Nullable
   public Metadata getMetadata() {
     return metadata;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    MetadataOperation that = (MetadataOperation) o;
+    return Objects.equals(entity, that.entity) &&
+      type == that.type &&
+      Objects.equals(metadata, that.metadata);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(entity, type, metadata);
+  }
+
+  @Override
+  public String toString() {
+    return "MetadataOperation{" +
+      "entity=" + entity +
+      ", type=" + type +
+      ", metadata=" + metadata +
+      '}';
   }
 }

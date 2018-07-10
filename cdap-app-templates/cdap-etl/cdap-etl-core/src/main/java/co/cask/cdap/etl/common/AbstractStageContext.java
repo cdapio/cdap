@@ -19,7 +19,9 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -192,51 +194,87 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Override
   public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
-    return null;
+    return CALLER.callUnchecked(() -> getMetadataReader().getMetadata(metadataEntity));
   }
 
   @Override
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
-    return null;
+    return CALLER.callUnchecked(() -> getMetadataReader().getMetadata(scope, metadataEntity));
   }
 
   @Override
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
-
+    CALLER.callUnchecked((Callable<Void>) () -> {
+      getMetadataWriter().addProperties(metadataEntity, properties);
+      return null;
+    });
   }
 
   @Override
   public void addTags(MetadataEntity metadataEntity, String... tags) {
-
+    CALLER.callUnchecked((Callable<Void>) () -> {
+      getMetadataWriter().addTags(metadataEntity, tags);
+      return null;
+    });
   }
 
   @Override
   public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
-
+    CALLER.callUnchecked((Callable<Void>) () -> {
+      getMetadataWriter().addTags(metadataEntity, tags);
+      return null;
+    });
   }
 
   @Override
   public void removeMetadata(MetadataEntity metadataEntity) {
-
+    CALLER.callUnchecked((Callable<Void>) () -> {
+      getMetadataWriter().removeMetadata(metadataEntity);
+      return null;
+    });
   }
 
   @Override
   public void removeProperties(MetadataEntity metadataEntity) {
-
+    CALLER.callUnchecked((Callable<Void>) () -> {
+      getMetadataWriter().removeProperties(metadataEntity);
+      return null;
+    });
   }
 
   @Override
   public void removeProperties(MetadataEntity metadataEntity, String... keys) {
-
+    CALLER.callUnchecked((Callable<Void>) () -> {
+      getMetadataWriter().removeProperties(metadataEntity, keys);
+      return null;
+    });
   }
 
   @Override
   public void removeTags(MetadataEntity metadataEntity) {
-
+    CALLER.callUnchecked((Callable<Void>) () -> {
+      getMetadataWriter().removeTags(metadataEntity);
+      return null;
+    });
   }
 
   @Override
   public void removeTags(MetadataEntity metadataEntity, String... tags) {
+    CALLER.callUnchecked((Callable<Void>) () -> {
+      getMetadataWriter().removeTags(metadataEntity, tags);
+      return null;
+    });
+  }
 
+  private MetadataReader getMetadataReader() {
+    return pipelineRuntime.getMetadataReader().orElseThrow(this::createMetadataUnsupportedException);
+  }
+
+  private MetadataWriter getMetadataWriter() {
+    return pipelineRuntime.getMetadataWriter().orElseThrow(this::createMetadataUnsupportedException);
+  }
+
+  private UnsupportedOperationException createMetadataUnsupportedException() {
+    return new UnsupportedOperationException("Metadata operation is not supported.");
   }
 }

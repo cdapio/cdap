@@ -18,15 +18,17 @@ package co.cask.cdap.examples.wikipedia;
 
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
-
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -45,6 +47,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -88,6 +91,25 @@ public class WikipediaPipelineAppTest extends TestBase {
     appManager = deployApplication(APP_ID, appRequest);
     workflowManager = appManager.getWorkflowManager(WikipediaPipelineWorkflow.NAME);
     testWorkflow(workflowManager, appConfig, 3, 1);
+
+    // verify the clusteringAlgorithm metadata written to the dataset
+    Tasks.waitFor(true, () -> {
+      Set<MetadataRecordV2> metadataRecordV2s =
+        getMetadataAdmin().getMetadata(MetadataEntity.ofDataset(APP_ID.getNamespace(),
+                                                                WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET));
+      for (MetadataRecordV2 actualRecord : metadataRecordV2s) {
+        if (actualRecord.getScope() == MetadataScope.USER) {
+          if (actualRecord.getProperties().containsKey(SparkWikipediaClustering.CLUSTERING_ALGORITHM)) {
+            Assert.assertTrue(actualRecord.getProperties().get(SparkWikipediaClustering.CLUSTERING_ALGORITHM)
+                                .equalsIgnoreCase(SparkWikipediaClustering.CLUSTERING_ALGORITHM_LDA) ||
+                                actualRecord.getProperties().get(SparkWikipediaClustering.CLUSTERING_ALGORITHM)
+                                  .equalsIgnoreCase(SparkWikipediaClustering.CLUSTERING_ALGORITHM_KMEANS));
+            return true;
+          }
+        }
+      }
+      return false;
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   private void createTestData() throws Exception {

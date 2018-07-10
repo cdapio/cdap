@@ -36,6 +36,7 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.preview.PreviewManager;
+import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -85,8 +86,8 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.BasicMessagingAdmin;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
+import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
-import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metadata.MetadataSubscriberService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -214,6 +215,7 @@ public class TestBase {
   private static PreviewManager previewManager;
   private static ProvisioningService provisioningService;
   private static MetadataSubscriberService metadataSubscriberService;
+  private static MetadataAdmin metadataAdmin;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -305,6 +307,7 @@ public class TestBase {
     );
 
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
+    metadataAdmin = injector.getInstance(MetadataAdmin.class);
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
@@ -954,6 +957,13 @@ public class TestBase {
 
   protected static MessagingAdmin getMessagingAdmin(NamespaceId namespace) {
     return new BasicMessagingAdmin(messagingService, namespace);
+  }
+
+  /**
+   * @return {@link MetadataAdmin} to interact with metadata
+   */
+  protected static MetadataAdmin getMetadataAdmin() {
+    return metadataAdmin;
   }
 
   /**
