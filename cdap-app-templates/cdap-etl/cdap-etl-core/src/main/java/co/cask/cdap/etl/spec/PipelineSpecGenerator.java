@@ -365,6 +365,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * All inputs into a stage have the same schema.
    * ErrorTransforms only have BatchSource, Transform, or BatchAggregator as input stages.
    * AlertPublishers have at least one input and no outputs and don't have SparkSink or BatchSink as input.
+   * Action stages can only be at the start or end of the pipeline.
+   * Condition stages have at most 2 outputs. Each stage on a condition's output branch has at most a single input.
    *
    * Returns the stages in the order they should be configured to ensure that all input stages are configured
    * before their output.

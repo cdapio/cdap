@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -869,7 +870,7 @@ public class ConnectorDagTest {
   }
 
   @Test
-  public void testSubdagMerge() throws Exception {
+  public void testSubdagMerge() {
     /*
         n1 -----|
                 |-- n4(r) -- n6
@@ -921,7 +922,7 @@ public class ConnectorDagTest {
   }
 
   @Test
-  public void testSimpleCondition() throws Exception {
+  public void testSimpleCondition() {
 
     /*
       file - csv - condition - sink1
@@ -936,7 +937,7 @@ public class ConnectorDagTest {
       new Connection("condition", "sink2")
     );
 
-    Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
+    Set<String> conditions = Collections.singleton("condition");
     Set<String> reduceNodes = new HashSet<>();
     Set<String> isolationNodes = new HashSet<>();
     Set<String> multiPortNodes = new HashSet<>();
@@ -956,7 +957,7 @@ public class ConnectorDagTest {
   }
 
   @Test
-  public void testSimpleConditionWithReducers() throws Exception {
+  public void testSimpleConditionWithReducers() {
     /*
              |--- n2
         n1 --|
@@ -974,8 +975,8 @@ public class ConnectorDagTest {
       new Connection("condition", "n6")
     );
 
-    Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
-    Set<String> reduceNodes = new HashSet<>(Arrays.asList("n3"));
+    Set<String> conditions = Collections.singleton("condition");
+    Set<String> reduceNodes = Collections.singleton("n3");
     Set<String> isolationNodes = new HashSet<>();
     Set<String> multiPortNodes = new HashSet<>();
     Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_ACTIONS,
@@ -997,7 +998,7 @@ public class ConnectorDagTest {
   }
 
   @Test
-  public void testSimpleConditionWithMultipleSources() throws Exception {
+  public void testSimpleConditionWithMultipleSources() {
     /*
              |--- n2
         n1 --|
@@ -1016,8 +1017,8 @@ public class ConnectorDagTest {
       new Connection("n11", "n3")
     );
 
-    Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
-    Set<String> reduceNodes = new HashSet<>(Arrays.asList("n3"));
+    Set<String> conditions = Collections.singleton("condition");
+    Set<String> reduceNodes = Collections.singleton("n3");
     Set<String> isolationNodes = new HashSet<>();
     Set<String> multiPortNodes = new HashSet<>();
     Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_ACTIONS,
@@ -1040,7 +1041,7 @@ public class ConnectorDagTest {
   }
 
   @Test
-  public void testConditionDag() throws Exception {
+  public void testConditionDag() {
 
     /*
           file - csv - c1 - t1---agg1--agg2---sink1
@@ -1102,7 +1103,7 @@ public class ConnectorDagTest {
   }
 
   @Test
-  public void testMultipleNonNestedConditions() throws Exception {
+  public void testMultipleNonNestedConditions() {
     /*
        n1-c1-n2-n3-c2-n4
      */

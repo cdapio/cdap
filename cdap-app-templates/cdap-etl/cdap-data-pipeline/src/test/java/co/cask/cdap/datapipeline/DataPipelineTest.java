@@ -118,6 +118,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1083,6 +1084,68 @@ public class DataPipelineTest extends HydratorTestBase {
       Assert.assertEquals("val3", MockAction.readOutput(actionTableDS, "row3", "key3"));
       Assert.assertEquals("val4", MockAction.readOutput(actionTableDS, "row4", "key4"));
     }
+  }
+
+  @Test
+  public void testConditionsOnBranches() throws Exception {
+    /*
+     *                            |-- true --> sink1
+     *          |--> condition1 --|
+     * source --|                 |-- false --> sink2
+     *          |
+     *          |                              |-- true --> sink3
+     *          |-- transform --> condition2 --|
+     *                                         |-- false --> sink4
+     */
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    String sourceName = "branchConditionsSource";
+    String sink1Name = "branchConditionsSink1";
+    String sink2Name = "branchConditionsSink2";
+    String sink3Name = "branchConditionsSink3";
+    String sink4Name = "branchConditionsSink4";
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName, schema)))
+      .addStage(new ETLStage("condition1", MockCondition.getPlugin("condition1")))
+      .addStage(new ETLStage("transform", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("condition2", MockCondition.getPlugin("condition2")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
+      .addStage(new ETLStage("sink3", MockSink.getPlugin(sink3Name)))
+      .addStage(new ETLStage("sink4", MockSink.getPlugin(sink4Name)))
+      .addConnection("source", "condition1")
+      .addConnection("source", "transform")
+      .addConnection("condition1", "sink1", true)
+      .addConnection("condition1", "sink2", false)
+      .addConnection("transform", "condition2")
+      .addConnection("condition2", "sink3", true)
+      .addConnection("condition2", "sink4", false)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("branchConditions");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    List<StructuredRecord> records = Collections.singletonList(
+      StructuredRecord.builder(schema).set("name", "samuel").build());
+
+    DataSetManager<Table> inputManager = getDataset(sourceName);
+    MockSource.writeInput(inputManager, records);
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start(ImmutableMap.of("condition1.branch.to.execute", "true",
+                                          "condition2.branch.to.execute", "false"));
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> sink1Manager = getDataset(sink1Name);
+    DataSetManager<Table> sink2Manager = getDataset(sink2Name);
+    DataSetManager<Table> sink3Manager = getDataset(sink3Name);
+    DataSetManager<Table> sink4Manager = getDataset(sink4Name);
+    Assert.assertEquals(records, MockSink.readOutput(sink1Manager));
+    Assert.assertTrue(MockSink.readOutput(sink2Manager).isEmpty());
+    Assert.assertTrue(MockSink.readOutput(sink3Manager).isEmpty());
+    Assert.assertEquals(records, MockSink.readOutput(sink4Manager));
   }
 
   @Test
