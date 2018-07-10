@@ -20,10 +20,12 @@ let dataSrc = DataSourceConfigurer.getInstance();
 
 var basepath = '/namespaces/:namespace';
 var profilesPath = `${basepath}/profiles`;
+var systemProfilesPath = `/profiles`;
 var provisionersPath = '/provisioners';
 
 export const MyCloudApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', profilesPath),
+  getSystemProfiles: apiCreator(dataSrc, 'GET', 'REQUEST', `${systemProfilesPath}`),
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${profilesPath}/:profile`),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', `${profilesPath}/:profile`),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${profilesPath}/:profile`),

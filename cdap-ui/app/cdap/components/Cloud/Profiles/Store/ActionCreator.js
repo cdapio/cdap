@@ -30,7 +30,7 @@ export const getProfiles = (namespace) => {
     }
   });
 
-  let profileObservable = MyCloudApi.list({ namespace: 'system' });
+  let profileObservable = MyCloudApi.getSystemProfiles();
   if (namespace !== 'system') {
     profileObservable = profileObservable.combineLatest(MyCloudApi.list({ namespace }));
   } else {
