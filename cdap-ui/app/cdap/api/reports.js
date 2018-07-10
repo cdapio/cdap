@@ -22,13 +22,14 @@ let appPath = '/namespaces/system/apps/ReportGenerationApp';
 let programPath = `${appPath}/spark/ReportGenerationSpark`;
 
 let methodsPath = `${programPath}/methods`;
-let basepath = `${methodsPath}/reports/:reportId`;
+let reportsPath = `${methodsPath}/reports`;
+let basepath = `${reportsPath}/:reportId`;
 
 export const MyReportsApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', `${methodsPath}/reports`),
-  getDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/details`),
-  getReport: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  generateReport: apiCreator(dataSrc, 'POST', 'REQUEST', `${methodsPath}/reports`),
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', reportsPath),
+  getDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${reportsPath}/download`),
+  getReport: apiCreator(dataSrc, 'GET', 'REQUEST', `${reportsPath}/info`),
+  generateReport: apiCreator(dataSrc, 'POST', 'REQUEST', reportsPath),
   deleteReport: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath),
   saveReport: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/save`),
 
@@ -38,6 +39,6 @@ export const MyReportsApi = {
   stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${programPath}/stop`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`, { interval: 2000 }),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', appPath),
-  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${methodsPath}/reports`),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', reportsPath),
   deleteApp: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath)
 };

@@ -46,14 +46,17 @@ export default class SaveModal extends Component {
       reportId: this.props.reportId
     };
 
+    let detailParams = {
+      'report-id': this.props.reportId
+    };
+
     let body = {
-      name: this.state.name,
-      description: 'test'
+      name: this.state.name
     };
 
     MyReportsApi.saveReport(params, body)
       .subscribe(() => {
-        MyReportsApi.getReport(params)
+        MyReportsApi.getReport(detailParams)
           .subscribe((res) => {
             ReportsStore.dispatch({
               type: ReportsActions.setInfoStatus,
