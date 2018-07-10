@@ -29,6 +29,16 @@
     }
   }
 
+  .list-view {
+    .no-runs {
+      margin-top: 30px;
+
+      .icon-exclamation-triangle {
+        margin-right: 5px;
+      }
+    }
+  }
+
   .grid-wrapper {
     $global-header: 50px;
     $header: 70px;
