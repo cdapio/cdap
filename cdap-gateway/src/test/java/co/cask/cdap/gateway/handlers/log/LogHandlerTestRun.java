@@ -346,6 +346,24 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "workflows",
             MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "prev", HttpResponseStatus.NOT_FOUND.code());
   }
+
+  @Test
+  public void testFilterJson() throws Exception {
+    String appId = "testTemplate1";
+    String entityType = "workflows";
+    String entityId = "testWorkflow1";
+    String namespace = NamespaceId.DEFAULT.getEntityName();
+
+    ProgramId programId = new NamespaceId(namespace).app(appId).program(ProgramType.valueOfCategoryName(entityType),
+                                                                        entityId);
+    RunRecord runRecord = mockLogReader.getRunRecord(programId);
+
+    String logsUrl = String.format("apps/%s/%s/%s/runs/%s/logs?format=json&filter=MDC:asdf=nothing",
+                                   appId, entityType, entityId, runRecord.getPid());
+
+    HttpResponse response = doGet(getVersionedAPIPath(logsUrl, namespace));
+    verifyLogs(response, entityId, "json", true, true, true, 0, 0);
+  }
   
   private void testNext(String appId, String entityType, String entityId, boolean escape, String namespace)
     throws Exception {

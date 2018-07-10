@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 public abstract class AbstractChunkedLogProducer extends BodyProducer {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractChunkedLogProducer.class);
 
-  protected static final int BUFFER_BYTES = 8192;
+  static final int BUFFER_BYTES = 8192;
 
   private final CloseableIterator<LogEvent> logEventIter;
 
@@ -65,6 +65,7 @@ public abstract class AbstractChunkedLogProducer extends BodyProducer {
     if (!hasStarted) {
       hasStarted = true;
       startBuffer = Unpooled.copiedBuffer(onWriteStart());
+      return startBuffer;
     }
 
     if (logEventIter.hasNext()) {
