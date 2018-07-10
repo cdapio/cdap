@@ -16,7 +16,7 @@
 
 @import '../../styles/variables.scss';
 
-$dropdown_divider_bg_color: rgba(75, 75, 75, 1);
+$dropdown_divider_bg_color: $grey-06;
 
 @mixin dropdownstyling($min_width: 160px, $max_width: 210px) {
   display: inline-block;
@@ -106,6 +106,12 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
           background: rgba(0, 0, 0, 0.1);
           outline: none;
         }
+      }
+      .dropdown-divider {
+        height: 1px;
+        margin: 0;
+        overflow: hidden;
+        background-color: $dropdown_divider_bg_color;
       }
     }
     &.open {

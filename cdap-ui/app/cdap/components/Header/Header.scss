@@ -45,6 +45,7 @@ $header-bg-color: $grey-02;
       order: 3;
       background: transparent;
       border: transparent;
+      color: inherit;
       &:hover {
         background: transparent;
         border: transparent;
@@ -73,12 +74,13 @@ $header-bg-color: $grey-02;
       display: none;
       &.minimized {
         display: block;
-        background-color: $grey-06;
+        background-color: inherit;
         width: 100%;
         position: absolute;
         top: 50px;
         left: 0;
         text-align: right;
+        border-top: 1px solid white;
         #header-namespace-dropdown {
           text-align: left;
         }
@@ -163,12 +165,6 @@ $header-bg-color: $grey-02;
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
         color: inherit;
         background-color: white;
-
-        .dropdown-divider {
-          height: 1px;
-          margin: 0;
-          overflow: hidden;
-        }
       }
     }
     .dropdown.open {
