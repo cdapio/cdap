@@ -28,7 +28,7 @@ export default class Footer extends PureComponent {
           <div className="row text-muted">
             <div>
               <p className="text-xs-center">
-                <span>{LICENSE_TEXT}</span>
+                <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer">{LICENSE_TEXT}</a>
               </p>
             </div>
           </div>
