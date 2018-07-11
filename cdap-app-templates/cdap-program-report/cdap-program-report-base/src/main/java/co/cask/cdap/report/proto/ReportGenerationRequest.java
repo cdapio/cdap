@@ -147,7 +147,7 @@ public class ReportGenerationRequest {
 
     /**
      * @return the error of this field that are not allowed in a valid report generation request, or {@code null} if
-     *         no such error exists.
+     * no such error exists.
      */
     @Nullable
     public String getError() {
@@ -156,6 +156,24 @@ public class ReportGenerationRequest {
       }
       return String.format("Invalid field name '%s' in fields. Field name must be one of: [%s]",
                            fieldName, String.join(", ", ReportField.FIELD_NAME_MAP.keySet()));
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(fieldName);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Field that = (Field) o;
+      return Objects.equals(this.fieldName, that.fieldName);
     }
   }
 

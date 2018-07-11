@@ -92,11 +92,15 @@ public class ValueFilter<T> extends Filter<T> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(whitelist, blacklist);
+    return Objects.hash(super.hashCode(), whitelist, blacklist);
   }
 
   @Override
   public boolean equals(Object o) {
+    if (!super.equals(o)) {
+      return false;
+    }
+
     if (this == o) {
       return true;
     }

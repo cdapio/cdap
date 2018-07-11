@@ -144,11 +144,14 @@ public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
 
   @Override
   public int hashCode() {
-    return Objects.hash(range);
+    return Objects.hash(super.hashCode(), range);
   }
 
   @Override
   public boolean equals(Object o) {
+    if (!super.equals(o)) {
+      return false;
+    }
     if (this == o) {
       return true;
     }
