@@ -86,10 +86,8 @@ $dropdown_divider_bg_color: $grey-06;
       max-width: $max_width;
 
       .dropdown-item {
-        line-height: 1;
-        float: left;
         width: 160px;
-        padding: 2px;
+        padding: 0;
         margin: 0;
         color: black;
 
@@ -97,6 +95,8 @@ $dropdown_divider_bg_color: $grey-06;
           padding: 10px 16px;
           text-decoration: none;
           background: transparent;
+          line-height: 1;
+
           &.active {
             color: $brand-primary-color;
           }

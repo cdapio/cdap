@@ -95,8 +95,12 @@ $header-bg-color: $grey-02;
       .cask-market-button {
         display: block;
 
-        [class*="icon-"] {
-          margin-right: 5px;
+        .hub-text-wrapper {
+          padding: 5px;
+          &:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+          }
         }
       }
 
@@ -111,10 +115,18 @@ $header-bg-color: $grey-02;
             .current-namespace {
               background: transparent;
               &:hover {
-                background: transparent;
+                background: rgba(255, 255, 255, 0.3);
+              }
+            }
+            &.open {
+              .current-namespace {
+                background: rgba(255, 255, 255, 0.3);
               }
             }
           }
+        }
+        &.cdap-menu {
+          padding: 0;
         }
       }
     }
@@ -167,13 +179,17 @@ $header-bg-color: $grey-02;
         background-color: white;
       }
     }
+  }
+  .navbar-right-section {
     .dropdown.open {
       .dropdown-toggle {
-        background-color: transparent;
         color: inherit;
         &.active {
-          &:hover {
+          &:hover,
+          &:focus,
+          &:active {
             color: inherit;
+            background: rgba(255, 255, 255, 0.3);
           }
         }
       }

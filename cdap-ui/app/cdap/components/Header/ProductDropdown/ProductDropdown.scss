@@ -32,8 +32,8 @@ $dropdown_divider_bg_color: $grey-06;
   }
 
   .btn.btn-secondary {
-    background: transparent;
     border: 0;
+    border-radius: 0;
   }
   &.dropdown,
   &.dropdown.open {
@@ -47,14 +47,16 @@ $dropdown_divider_bg_color: $grey-06;
       vertical-align: top;
       height: 50px;
       padding: 0;
-      width: 120px;
+      margin: 0;
+      width: 100%;
       color: inherit;
       margin-right: 15px;
       display: inline-flex;
+      background: transparent;
 
       &:hover,
       &:focus {
-        background: transparent;
+        background: rgba(255, 255, 255, 0.3);
         outline: none;
         color: inherit;
         .cdap-secure-mode-icon,
@@ -98,7 +100,7 @@ $dropdown_divider_bg_color: $grey-06;
       .dropdown-header {
         color: black;
         line-height: 1;
-        padding: 2px;
+        padding: 0;
         &:hover,
         &:focus {
           background: rgba(0, 0, 0, 0.1);
@@ -108,6 +110,7 @@ $dropdown_divider_bg_color: $grey-06;
           text-decoration: none;
           padding: 10px 16px;
           background: transparent;
+          line-height: 1;
 
           &.active {
             color: $brand-primary-color;
@@ -162,6 +165,9 @@ $dropdown_divider_bg_color: $grey-06;
       .dropdown-menu {
         display: flex;
         flex-direction: column;
+      }
+      .dropdown-toggle {
+        background: rgba(255, 255, 255, 0.3);
       }
     }
   }

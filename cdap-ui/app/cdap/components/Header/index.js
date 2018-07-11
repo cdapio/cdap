@@ -244,7 +244,7 @@ export default class Header extends Component {
             <ul>
               <li className="with-pointer">
                 <CaskMarketButton>
-                  <span>{T.translate('commons.market')}</span>
+                  <span className="hub-text-wrapper">{T.translate('commons.market')}</span>
                 </CaskMarketButton>
               </li>
               <li

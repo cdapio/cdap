@@ -30,6 +30,7 @@ import IconSVG from 'components/IconSVG';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import T from 'i18n-react';
 import {getMode} from 'components/Header/ProductDropdown/helper';
+import classnames from 'classnames';
 
 require('./ProductDropdown.scss');
 
@@ -161,7 +162,12 @@ export default class ProductDropdown extends Component {
             <DropdownItem tag="li">
               {
                 !this.props.nativeLink ?
-                  <Link to={administrationURL}>
+                  <Link
+                    to={administrationURL}
+                    className={classnames({
+                      'active': administrationURL === location.pathname.replace(/\/cdap/, '')
+                    })}
+                  >
                     {T.translate('features.Administration.Title')}
                   </Link>
                 :
