@@ -53,7 +53,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
   public void testSystemProfiles() throws Exception {
     Assert.assertEquals(Collections.singletonList(Profile.NATIVE), listSystemProfiles(200));
 
-    Profile p1 = new Profile("p1", "desc", EntityScope.SYSTEM,
+    Profile p1 = new Profile("p1", "label", "desc", EntityScope.SYSTEM,
                              new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
     putSystemProfile(p1.getName(), p1, 200);
     Optional<Profile> p1Optional = getSystemProfile(p1.getName(), 200);
@@ -70,7 +70,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(expected, new HashSet<>(listProfiles(NamespaceId.DEFAULT, true, 200)));
 
     // check we can add a profile with the same name in a namespace
-    Profile p2 = new Profile(p1.getName(), p1.getDescription(), EntityScope.USER,
+    Profile p2 = new Profile(p1.getName(), p1.getLabel(), p1.getDescription(), EntityScope.USER,
                              p1.getProvisioner());
     ProfileId p2Id = NamespaceId.DEFAULT.profile(p2.getName());
     putProfile(p2Id, p2, 200);
@@ -108,13 +108,13 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testPutAndDeleteProfiles() throws Exception {
-    Profile invalidProfile = new Profile("MyProfile", "my profile for testing",
+    Profile invalidProfile = new Profile("MyProfile", "label", "my profile for testing",
                                          new ProvisionerInfo("nonExisting", PROPERTY_SUMMARIES));
     // adding a profile with non-existing provisioner should get a 400
     putProfile(NamespaceId.DEFAULT.profile(invalidProfile.getName()), invalidProfile, 400);
 
     // put a profile with the mock provisioner
-    Profile expected = new Profile("MyProfile", "my profile for testing",
+    Profile expected = new Profile("MyProfile", "label", "my profile for testing",
                                    new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
     ProfileId expectedProfileId = NamespaceId.DEFAULT.profile(expected.getName());
     putProfile(expectedProfileId, expected, 200);
@@ -153,7 +153,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testEnableDisableProfile() throws Exception {
-    Profile expected = new Profile("MyProfile", "my profile for testing",
+    Profile expected = new Profile("MyProfile", "label", "my profile for testing",
       new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
     ProfileId profileId = NamespaceId.DEFAULT.profile(expected.getName());
 
@@ -194,7 +194,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     // provide a profile with null provsioner property, it should still succeed
     List<ProvisionerPropertyValue> listWithNull = new ArrayList<>();
     listWithNull.add(null);
-    Profile profile = new Profile("ProfileWithNull", "should succeed",
+    Profile profile = new Profile("ProfileWithNull", "label", "should succeed",
       new ProvisionerInfo(MockProvisioner.NAME, listWithNull));
     putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, 200);
 
@@ -209,7 +209,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     // provide a profile with mixed properties with null, it should still succeed
     List<ProvisionerPropertyValue> listMixed = new ArrayList<>(PROPERTY_SUMMARIES);
     listMixed.addAll(listWithNull);
-    profile = new Profile("ProfileMixed", "should succeed",
+    profile = new Profile("ProfileMixed", "label", "should succeed",
       new ProvisionerInfo(MockProvisioner.NAME, listMixed));
     putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, 200);
 

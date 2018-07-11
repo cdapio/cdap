@@ -128,7 +128,7 @@ public class ProfileDataset {
     MDSKey rowKey = getProfileRowKey(profileId);
     Profile oldProfile = table.get(rowKey, Profile.class);
     table.write(
-      rowKey, new Profile(profile.getName(), profile.getDescription(), profile.getScope(),
+      rowKey, new Profile(profile.getName(), profile.getLabel(), profile.getDescription(), profile.getScope(),
                           oldProfile == null ? ProfileStatus.ENABLED : oldProfile.getStatus(),
                           profile.getProvisioner()));
   }
@@ -145,7 +145,7 @@ public class ProfileDataset {
     if (oldProfile != null) {
       return;
     }
-    table.write(rowKey, new Profile(profile.getName(), profile.getDescription(), profile.getScope(),
+    table.write(rowKey, new Profile(profile.getName(), profile.getLabel(), profile.getDescription(), profile.getScope(),
                                     ProfileStatus.ENABLED, profile.getProvisioner()));
   }
 
@@ -214,8 +214,8 @@ public class ProfileDataset {
       throw new ProfileConflictException(
         String.format("Profile %s already %s", profileId.getProfile(), expectedStatus.toString()), profileId);
     }
-    table.write(rowKey, new Profile(oldProfile.getName(), oldProfile.getDescription(), oldProfile.getScope(),
-                                    expectedStatus, oldProfile.getProvisioner()));
+    table.write(rowKey, new Profile(oldProfile.getName(), oldProfile.getLabel(), oldProfile.getDescription(),
+                                    oldProfile.getScope(), expectedStatus, oldProfile.getProvisioner()));
   }
 
   /**

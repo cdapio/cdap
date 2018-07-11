@@ -125,7 +125,7 @@ public class ProfileService {
       properties.add(new ProvisionerPropertyValue(propertyName, overrides.get(propertyName), true));
     }
     ProvisionerInfo provisionerInfo = new ProvisionerInfo(storedProfile.getProvisioner().getName(), properties);
-    return new Profile(storedProfile.getName(), storedProfile.getDescription(),
+    return new Profile(storedProfile.getName(), storedProfile.getLabel(), storedProfile.getDescription(),
                        storedProfile.getScope(), storedProfile.getStatus(), provisionerInfo);
   }
 

@@ -222,8 +222,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Unable to parse request body. Please make sure it is valid JSON", e);
     }
     Profile profile =
-      new Profile(profileId.getProfile(), profileCreateRequest.getDescription(), profileId.getScope(),
-                  profileCreateRequest.getProvisioner());
+      new Profile(profileId.getProfile(), profileCreateRequest.getLabel(), profileCreateRequest.getDescription(),
+                  profileId.getScope(), profileCreateRequest.getProvisioner());
     profileService.saveProfile(profileId, profile);
   }
 

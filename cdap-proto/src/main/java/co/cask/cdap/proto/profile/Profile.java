@@ -22,33 +22,36 @@ import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 
 import java.util.Collections;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Information of a profile. It encapsulates any information required to setup and teardown the program execution
  * environment. A profile is identified by name and must be assigned a provisioner and its related configuration.
  */
 public class Profile {
-  public static final Profile NATIVE = new Profile("native", "Runs programs locally on the cluster",
+  public static final Profile NATIVE = new Profile("native", "native", "Runs programs locally on the cluster",
                                                    EntityScope.SYSTEM,
                                                    new ProvisionerInfo("yarn", Collections.emptyList()));
   private final String name;
+  private final String label;
   private final String description;
   private final EntityScope scope;
   private final ProfileStatus status;
   private final ProvisionerInfo provisioner;
 
-  public Profile(String name, String description, ProvisionerInfo provisioner) {
-    this(name, description, EntityScope.USER, provisioner);
+  public Profile(String name, String label, String description, ProvisionerInfo provisioner) {
+    this(name, label, description, EntityScope.USER, provisioner);
   }
 
-  public Profile(String name, String description, EntityScope scope,
+  public Profile(String name, String label, String description, EntityScope scope,
                  ProvisionerInfo provisioner) {
-    this(name, description, scope, ProfileStatus.ENABLED, provisioner);
+    this(name, label, description, scope, ProfileStatus.ENABLED, provisioner);
   }
 
-  public Profile(String name, String description, EntityScope scope, ProfileStatus status,
+  public Profile(String name, String label, String description, EntityScope scope, ProfileStatus status,
                  ProvisionerInfo provisioner) {
     this.name = name;
+    this.label = label;
     this.description = description;
     this.scope = scope;
     this.status = status;
@@ -57,6 +60,11 @@ public class Profile {
 
   public String getName() {
     return name;
+  }
+
+  @Nullable
+  public String getLabel() {
+    return label;
   }
 
   public String getScopedName() {
@@ -75,6 +83,7 @@ public class Profile {
     return status;
   }
 
+  @Nullable
   public String getDescription() {
     return description;
   }
@@ -90,6 +99,7 @@ public class Profile {
     }
     Profile profile = (Profile) o;
     return Objects.equals(name, profile.name) &&
+      Objects.equals(label, profile.label) &&
       Objects.equals(description, profile.description) &&
       Objects.equals(scope, profile.scope) &&
       Objects.equals(status, profile.status) &&
@@ -98,13 +108,14 @@ public class Profile {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, scope, provisioner);
+    return Objects.hash(name, label, description, scope, provisioner);
   }
 
   @Override
   public String toString() {
     return "Profile{" +
       "name='" + name + '\'' +
+      ", label='" + label + '\'' +
       ", description='" + description + '\'' +
       ", scope=" + scope +
       ", status=" + status +
