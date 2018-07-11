@@ -53,6 +53,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -72,6 +73,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -95,7 +97,7 @@ import javax.annotation.Nullable;
  *
  * v:[metadata-entity-type]
  *
- * where entity-type comes from {@link MetadataEntity#getType()}. Next is a series of pairs that comes from the
+ * where metadata-entity-type comes from {@link MetadataEntity#getType()}. Next is a series of pairs that comes from the
  * entity hierarchy. At the very end there is the key from {@link MetadataEntry#getKey()}.
  * For example, suppose we have set two properties and two tags on an entity.
  * The properties are 'owner'='sam' and 'final'='false.
@@ -116,6 +118,8 @@ import javax.annotation.Nullable;
  * v:namespace:namespace:ns2:final                                                  v -> false
  * v:namespace:namespace:ns2:tags                                                   v -> small,beta
  *
+ * Note that in these examples, for readability, ':' is used to separate parts of the MDSKey.
+ * In reality, there is no separator. An integer specifying the length of the part is placed in front of each part.
  * This is the write done on every {@link MetadataEntry}.
  * In addition to each entry write, a set of index writes will be done for each entry.
  * Indexes are written to the 'i', 'n', 'in', 'c', and 'ic' columns.
@@ -130,31 +134,41 @@ import javax.annotation.Nullable;
  * looks for special keys that {@link AbstractSystemMetadataWriter} are known to write.
  *
  * Each index will generate one or more index values from the single {@link MetadataEntry} value.
- * For example, the suppose an indexer is given a metadata property 'owner'='foo bar', and generates
+ * For example, suppose an indexer is given a metadata property 'owner'='foo bar', and generates
  * index values 'foo bar', 'owner:foo bar', 'foo', 'owner:foo', 'bar', and 'owner:bar'.
  * That means a single {@link MetadataEntry} for 'owner'='foo bar' will generate six different index values.
  *
  * The rowkey for each index value is similar to the rowkey for the {@link MetadataEntry} except 'i' is used as the
  * prefix instead of 'v', and it includes the index value at the end.
- * The index value will also be prefixed by the namespace of the {@link MetadataEntity} before being written.
+ * Each index value will be written twice.
+ * The first write is with the {@link MetadataEntity} namespace as a prefix, used for namespace specific search.
+ * The second write is without any prefix, used for cross namespace search. They will be written to different columns.
  * With our previous example, the following data will be written:
  *
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo bar       i -> ns1:foo bar
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo bar       i -> ns1:owner:foo bar
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo           i -> ns1:foo
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo           i -> ns1:owner:foo
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:bar           i -> ns1:bar
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:bar           i -> ns1:owner:bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo bar       i  -> ns1:foo bar
+ *                                                                                        xi -> foo bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo bar       i  -> ns1:owner:foo bar
+ *                                                                                        xi -> owner:foo bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo           i  -> ns1:foo
+ *                                                                                        xi -> foo
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo           i  -> ns1:owner:foo
+ *                                                                                        xi -> owner:foo
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:bar           i  -> ns1:bar
+ *                                                                                        xi -> bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:bar           i  -> ns1:owner:bar
+ *                                                                                        xi -> owner:bar
  *
  * Since tags are just a special property where the property key is 'tags',
- * if 'foo bar' is set as a tag on a mapreduce program, the table will look like:
+ * if 'foo' and 'bar' are set as a tags on a mapreduce program, the table will look like:
  *
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo bar        i -> ns1:foo bar
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo bar        i -> ns1:tags:foo bar
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo            i -> ns1:foo
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo            i -> ns1:tags:foo
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:bar            i -> ns1:bar
- * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:bar            i -> ns1:tags:bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo            i  -> ns1:foo
+ *                                                                                        xi -> foo
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo            i  -> ns1:tags:foo
+ *                                                                                        xi -> tags:foo
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:bar            i  -> ns1:bar
+ *                                                                                        xi -> bar
+ * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:bar            i  -> ns1:tags:bar
+ *                                                                                        xi -> tags:bar
  *
  * In addition to the entry and it's indexes, there is also history write done per {@link MetadataEntity}.
  * The row key for history is similar to the index row key except it is prefixed by 'h' instead of 'v' and it
@@ -206,11 +220,19 @@ public class MetadataDataset extends AbstractDataset {
     )
   );
 
-  static final String DEFAULT_INDEX_COLUMN = "i";           // default column for metadata indexes
-  static final String ENTITY_NAME_INDEX_COLUMN = "n";       // column for entity name indexes
-  static final String INVERTED_ENTITY_NAME_INDEX_COLUMN = "in";    // column for entity name indexes in reverse order
-  static final String CREATION_TIME_INDEX_COLUMN = "c";     // column for creation-time indexes
-  static final String INVERTED_CREATION_TIME_INDEX_COLUMN = "ic"; // column for inverted creation-time based index
+  // default column for metadata indexes
+  static final IndexColumn DEFAULT_INDEX_COLUMN = new IndexColumn("i", "xi");
+  // column for entity name indexes
+  static final IndexColumn ENTITY_NAME_INDEX_COLUMN = new IndexColumn("n", "xn");
+  // column for entity name indexes in reverse order
+  static final IndexColumn INVERTED_ENTITY_NAME_INDEX_COLUMN = new IndexColumn("in", "xin");
+  // column for creation-time indexes
+  static final IndexColumn CREATION_TIME_INDEX_COLUMN = new IndexColumn("c", "xc");
+  // column for inverted creation-time based index
+  static final IndexColumn INVERTED_CREATION_TIME_INDEX_COLUMN = new IndexColumn("ic", "xic");
+  static final Collection<IndexColumn> INDEX_COLUMNS =
+    ImmutableList.of(DEFAULT_INDEX_COLUMN, ENTITY_NAME_INDEX_COLUMN, INVERTED_ENTITY_NAME_INDEX_COLUMN,
+                     CREATION_TIME_INDEX_COLUMN, INVERTED_CREATION_TIME_INDEX_COLUMN);
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";
@@ -610,6 +632,16 @@ public class MetadataDataset extends AbstractDataset {
   /**
    * Searches entities that match the specified search query in the specified namespace and {@link NamespaceId#SYSTEM}
    * for the specified {@link EntityTypeSimpleName}.
+   * When using default sorting, limits, cursors, and offset are ignored and all results are returned.
+   * When using custom sorting, at most offset + limit * (numCursors + 1) results are returned.
+   * When using default sorting, results are returned in whatever order is determined by the underlying storage.
+   * When using custom sorting, results are returned sorted according to the field and order specified.
+   * When using default sorting, any query is allowed.
+   * When using custom sorting, the query must be '*'.
+   * In all cases, duplicate entries will be returned if multiple index values point to the same entry.
+   * This is often the case when using a '*' query.
+   *
+   * TODO: (CDAP-13637) clean this up and clearly define a consistent contract
    *
    * @param request the search request
    * @return a {@link SearchResults} object containing a list of {@link MetadataEntry} containing each matching
@@ -621,31 +653,30 @@ public class MetadataDataset extends AbstractDataset {
       return searchByDefaultIndex(request);
     }
 
-    if (!"*".equals(request.getQuery())) {
-      throw new BadRequestException("Cannot search with non-default sort with any query other than '*'");
-    }
     return searchByCustomIndex(request);
   }
 
   private SearchResults searchByDefaultIndex(SearchRequest request) {
     List<MetadataEntry> results = new LinkedList<>();
-    for (String searchTerm : getSearchTerms(request.getNamespaceId().getNamespace(), request.getQuery(),
-                                            request.getEntityScope())) {
+    String column = request.isNamespaced() ?
+      DEFAULT_INDEX_COLUMN.getColumn() : DEFAULT_INDEX_COLUMN.getCrossNamespaceColumn();
+
+    for (SearchTerm searchTerm : getSearchTerms(request)) {
       Scanner scanner;
-      if (searchTerm.endsWith("*")) {
+      if (searchTerm.isPrefix()) {
         // if prefixed search get start and stop key
-        byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
+        byte[] startKey = Bytes.toBytes(searchTerm.getTerm());
         @SuppressWarnings("ConstantConditions")
         byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-        scanner = indexedTable.scanByIndex(Bytes.toBytes(DEFAULT_INDEX_COLUMN), startKey, stopKey);
+        scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey);
       } else {
-        byte[] value = Bytes.toBytes(searchTerm);
-        scanner = indexedTable.readByIndex(Bytes.toBytes(DEFAULT_INDEX_COLUMN), value);
+        byte[] value = Bytes.toBytes(searchTerm.getTerm());
+        scanner = indexedTable.readByIndex(Bytes.toBytes(column), value);
       }
       try {
         Row next;
         while ((next = scanner.next()) != null) {
-          Optional<MetadataEntry> metadataEntry = parseRow(next, DEFAULT_INDEX_COLUMN, request.getTypes(),
+          Optional<MetadataEntry> metadataEntry = parseRow(next, column, request.getTypes(),
                                                            request.shouldShowHidden());
           metadataEntry.ifPresent(results::add);
         }
@@ -658,48 +689,63 @@ public class MetadataDataset extends AbstractDataset {
     return new SearchResults(results, Collections.emptyList());
   }
 
-  private SearchResults searchByCustomIndex(SearchRequest request) {
+  private SearchResults searchByCustomIndex(SearchRequest request) throws BadRequestException {
     SortInfo sortInfo = request.getSortInfo();
-    String cursor = request.getCursor();
     int offset = request.getOffset();
     int limit = request.getLimit();
     int numCursors = request.getNumCursors();
 
     List<MetadataEntry> results = new LinkedList<>();
-    String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
+    IndexColumn indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
+    String column = request.isNamespaced() ? indexColumn.getColumn() : indexColumn.getCrossNamespaceColumn();
     // we want to return the first chunk of 'limit' elements after offset
     // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'.
     // Note that there's a potential for overflow so we account by limiting it to Integer.MAX_VALUE
     int fetchSize = (int) Math.min(offset + ((numCursors + 1) * (long) limit), Integer.MAX_VALUE);
     List<String> cursors = new ArrayList<>(numCursors);
-    for (String searchTerm : getSearchTerms(request.getNamespaceId().getNamespace(), "*", request.getEntityScope())) {
-      byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
-      @SuppressWarnings("ConstantConditions")
-      byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-      // if a cursor is provided, then start at the cursor
+
+    if (!"*".equals(request.getQuery())) {
+      throw new BadRequestException("Cannot search with non-default sort with any query other than '*'");
+    }
+
+    String cursor = request.getCursor();
+    for (SearchTerm searchTerm : getSearchTerms(request)) {
+      // start key will be the start key for the namespace, or the start key for the cursor if its defined
+      // 'ns1:' for namespace 'ns1' without a cursor, 'ns1:abc' for namespace 'ns1' with cursor 'abc'
+      byte[] namespaceStartKey = Bytes.toBytes(searchTerm.getTerm());
+      byte[] startKey = namespaceStartKey;
       if (!Strings.isNullOrEmpty(cursor)) {
-        String namespaceInStartKey = searchTerm.substring(0, searchTerm.indexOf(KEYVALUE_SEPARATOR));
-        startKey = Bytes.toBytes(namespaceInStartKey + KEYVALUE_SEPARATOR + cursor);
+        String prefix = searchTerm.getNamespaceId() == null ?
+          "" : searchTerm.getNamespaceId().getNamespace() + KEYVALUE_SEPARATOR;
+        startKey = Bytes.toBytes(prefix + cursor);
       }
+      @SuppressWarnings("ConstantConditions")
+      // stop key should always be the stop key for the namespace, regardless of what the cursor is
+      byte[] stopKey = Bytes.stopKeyForPrefix(namespaceStartKey);
+
+
       // A cursor is the first element of the a chunk of ordered results. Since its always the first element,
       // we want to add a key as a cursor, if upon dividing the current number of results by the chunk size,
       // the remainder is 1. However, this is not true, when the chunk size is 1, since in that case, the
       // remainder on division can never be 1, it is always 0.
       int mod = (limit == 1) ? 0 : 1;
-      try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey)) {
+      try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey)) {
         Row next;
         while ((next = scanner.next()) != null && results.size() < fetchSize) {
           Optional<MetadataEntry> metadataEntry =
-            parseRow(next, indexColumn, request.getTypes(), request.shouldShowHidden());
+            parseRow(next, column, request.getTypes(), request.shouldShowHidden());
           if (!metadataEntry.isPresent()) {
             continue;
           }
           results.add(metadataEntry.get());
 
           if (results.size() > limit + offset && (results.size() - offset) % limit == mod) {
+            String cursorVal = Bytes.toString(next.get(column));
             // add the cursor, with the namespace removed.
-            String cursorWithNamespace = Bytes.toString(next.get(indexColumn));
-            cursors.add(cursorWithNamespace.substring(cursorWithNamespace.indexOf(KEYVALUE_SEPARATOR) + 1));
+            if (request.isNamespaced()) {
+              cursorVal = cursorVal.substring(cursorVal.indexOf(KEYVALUE_SEPARATOR) + 1);
+            }
+            cursors.add(cursorVal);
           }
         }
       }
@@ -744,38 +790,30 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Prepares search terms from the specified search query by
-   * <ol>
-   *   <li>Splitting on {@link #SPACE_SEPARATOR_PATTERN} and trimming</li>
-   *   <li>Handling {@link #KEYVALUE_SEPARATOR}, so searches of the pattern key:value* can be supported</li>
-   *   <li>Prepending the result with the specified namespaceId and {@link NamespaceId#SYSTEM} so the search can
-   *   be restricted to entities in the specified namespace and {@link NamespaceId#SYSTEM}.</li>
-   * </ol>t
+   * Generate the search terms to use for the query.
+   * The search query is split on whitespace into one or more raw terms. Each raw term is cleaned and formatted
+   * into a SearchTerm.
+   * See {@link SearchTerm#from(NamespaceId, String)} for how cleaning and formatting is done.
    *
-   * @param namespaceId the namespaceId to search in
-   * @param searchQuery the user specified search query. If {@code *}, returns a singleton list containing
-   *                    {@code *} which matches everything.
-   * @param entityScope a set which specifies which scope of entities to display.
+   * @param searchRequest the request to get search terms for
    * @return formatted search query which is namespaced
    */
-  private Iterable<String> getSearchTerms(String namespaceId, String searchQuery, Set<EntityScope> entityScope) {
-    List<String> searchTerms = new LinkedList<>();
+  private Iterable<SearchTerm> getSearchTerms(SearchRequest searchRequest) {
+    Optional<NamespaceId> namespace = searchRequest.getNamespaceId();
+    Set<EntityScope> entityScopes = searchRequest.getEntityScopes();
+    String searchQuery = searchRequest.getQuery();
+    List<SearchTerm> searchTerms = new LinkedList<>();
     for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
-      String formattedSearchTerm = term.toLowerCase();
-      // if this is a key:value search remove  spaces around the separator too
-      if (formattedSearchTerm.contains(KEYVALUE_SEPARATOR)) {
-        // split the search query in two parts on first occurrence of KEYVALUE_SEPARATOR and the trim the key and value
-        String[] split = formattedSearchTerm.split(KEYVALUE_SEPARATOR, 2);
-        formattedSearchTerm = split[0].trim() + KEYVALUE_SEPARATOR + split[1].trim();
-      }
-      if (entityScope.size() == 2 || !entityScope.contains(EntityScope.SYSTEM)) {
-        searchTerms.add(namespaceId + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      if (entityScopes.contains(EntityScope.USER)) {
+        SearchTerm cleanedTerm = namespace.map(namespaceId -> SearchTerm.from(namespaceId, term))
+          .orElseGet(() -> SearchTerm.from(term));
+        searchTerms.add(cleanedTerm);
       }
       // for non-system namespaces, also add the system namespace, so entities from system namespace are surfaced
       // in the search results as well
-      if (!NamespaceId.SYSTEM.getEntityName().equals(namespaceId) &&
-        (entityScope.size() == 2 || !entityScope.contains(EntityScope.USER))) {
-        searchTerms.add(NamespaceId.SYSTEM.getEntityName() + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      if (namespace.isPresent() && !NamespaceId.SYSTEM.equals(namespace.get()) &&
+        entityScopes.contains(EntityScope.SYSTEM)) {
+        searchTerms.add(SearchTerm.from(NamespaceId.SYSTEM, term));
       }
     }
     return searchTerms;
@@ -806,18 +844,25 @@ public class MetadataDataset extends AbstractDataset {
     // Delete existing indexes for metadataEntity-key
     deleteIndexes(metadataEntity, metadataKey);
 
+    String namespacePrefix = metadataEntity.getValue(MetadataEntity.NAMESPACE) + KEYVALUE_SEPARATOR;
     for (Indexer indexer : indexers) {
       Set<String> indexes = indexer.getIndexes(metadataEntry);
-      String indexColumn = getIndexColumn(metadataKey, indexer.getSortOrder());
+      IndexColumn indexColumn = getIndexColumn(metadataKey, indexer.getSortOrder());
       for (String index : indexes) {
-        // store just the index value
-        indexedTable.put(getIndexPut(metadataEntity, metadataKey, index, indexColumn));
+        // store one value for within namespace search and one for cross namespace search
+
+        String lowercaseIndex = index.toLowerCase();
+        MDSKey mdsIndexKey = MetadataKey.createIndexRowKey(metadataEntity, metadataKey, lowercaseIndex);
+        Put put = new Put(mdsIndexKey.getKey());
+        put.add(Bytes.toBytes(indexColumn.getCrossNamespaceColumn()), Bytes.toBytes(lowercaseIndex));
+        put.add(Bytes.toBytes(indexColumn.getColumn()), Bytes.toBytes(namespacePrefix + lowercaseIndex));
+        indexedTable.put(put);
       }
     }
   }
 
-  private String getIndexColumn(String key, SortInfo.SortOrder sortOrder) {
-    String indexColumn = DEFAULT_INDEX_COLUMN;
+  private IndexColumn getIndexColumn(String key, SortInfo.SortOrder sortOrder) {
+    IndexColumn indexColumn = DEFAULT_INDEX_COLUMN;
     switch (sortOrder) {
       case ASC:
         switch (key) {
@@ -841,25 +886,6 @@ public class MetadataDataset extends AbstractDataset {
         break;
     }
     return indexColumn;
-  }
-
-  /**
-   * Creates a {@link Put} for the a metadata index
-   *
-   * @param metadataEntity the {@link MetadataEntity} from which the metadata index has to be created
-   * @param metadataKey the key of the metadata entry
-   * @param index the index for this metadata
-   * @param indexColumn the column to store the index in. This column should exist in the
-   * {@link IndexedTable#INDEX_COLUMNS_CONF_KEY} property in the dataset's definition
-   * @return {@link Put} which is a index row with the value to be indexed in the #indexColumn
-   */
-  private Put getIndexPut(MetadataEntity metadataEntity, String metadataKey, String index, String indexColumn) {
-    MDSKey mdsIndexKey = MetadataKey.createIndexRowKey(metadataEntity, metadataKey, index.toLowerCase());
-    String namespacedIndex = metadataEntity.getValue(MetadataEntity.NAMESPACE) + KEYVALUE_SEPARATOR +
-      index.toLowerCase();
-    Put put = new Put(mdsIndexKey.getKey());
-    put.add(Bytes.toBytes(indexColumn), Bytes.toBytes(namespacedIndex));
-    return put;
   }
 
   /**
@@ -974,19 +1000,133 @@ public class MetadataDataset extends AbstractDataset {
    * @return {@code true} if the row was deleted, {@code false} otherwise
    */
   private boolean deleteIndexRow(Row row) {
-    if (row.get(DEFAULT_INDEX_COLUMN) == null &&
-      row.get(ENTITY_NAME_INDEX_COLUMN) == null &&
-      row.get(INVERTED_ENTITY_NAME_INDEX_COLUMN) == null &&
-      row.get(CREATION_TIME_INDEX_COLUMN) == null &&
-      row.get(INVERTED_CREATION_TIME_INDEX_COLUMN) == null) {
-      return false;
+    for (IndexColumn indexColumn : INDEX_COLUMNS) {
+      if (row.get(indexColumn.namespaceColumn) != null || row.get(indexColumn.crossNamespaceColumn) != null) {
+        indexedTable.delete(row.getRow());
+        return true;
+      }
     }
-    indexedTable.delete(new Delete(row.getRow()));
-    return true;
+    return false;
   }
 
   @VisibleForTesting
   Scanner searchByIndex(String indexColumn, String value) {
     return indexedTable.readByIndex(Bytes.toBytes(indexColumn), Bytes.toBytes(value));
+  }
+
+  /**
+   * Columns for an Index.
+   */
+  static class IndexColumn {
+    private final String namespaceColumn;
+    private final String crossNamespaceColumn;
+
+    private IndexColumn(String namespaceColumn, String crossNamespaceColumn) {
+      this.namespaceColumn = namespaceColumn;
+      this.crossNamespaceColumn = crossNamespaceColumn;
+    }
+
+    String getColumn() {
+      return namespaceColumn;
+    }
+
+    String getCrossNamespaceColumn() {
+      return crossNamespaceColumn;
+    }
+  }
+
+  /**
+   * Information about a search term.
+   */
+  static class SearchTerm {
+    private final NamespaceId namespaceId;
+    private final String term;
+    private final boolean isPrefix;
+
+    private SearchTerm(@Nullable NamespaceId namespaceId, String term, boolean isPrefix) {
+      this.namespaceId = namespaceId;
+      this.term = term;
+      this.isPrefix = isPrefix;
+    }
+
+    @Nullable
+    NamespaceId getNamespaceId() {
+      return namespaceId;
+    }
+
+    String getTerm() {
+      return term;
+    }
+
+    boolean isPrefix() {
+      return isPrefix;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SearchTerm that = (SearchTerm) o;
+      return isPrefix == that.isPrefix && Objects.equals(term, that.term);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(term, isPrefix);
+    }
+
+    /**
+     * Create a SearchTerm. The raw term will be cleaned and formatted to meet the search need.
+     * Leading and ending whitespace will be trimmed and characters will be changed to lowercase.
+     * If the term is a [key]:[value] search, any whitespace around the ':' separator will be removed.
+     * For example, 'foo : bar' will be changed to 'foo:bar'.
+     * If it is a prefix search, the part before the ending '*' will be used taken as the term.
+     *
+     * For example, given raw term ' State : BETA* ', the result will be a prefix search where term = 'state:beta'.
+     *
+     * @param rawTerm the raw search term
+     */
+    static SearchTerm from(String rawTerm) {
+      return from(null, rawTerm);
+    }
+
+    /**
+     * Create a SearchTerm. The raw term will be cleaned and formatted to meet the search need.
+     * Leading and ending whitespace will be trimmed and characters will be changed to lowercase.
+     * If the term is a [key]:[value] search, any whitespace around the ':' separator will be removed.
+     * For example, 'foo : bar' will be changed to 'foo:bar'.
+     * If it is a prefix search, the part before the ending '*' will be used taken as the term.
+     * If it is a namespace search, the namespace will be prefixed to the term.
+     *
+     * For example, given namespace 'ns1' and raw term ' State : BETA* ', the result will be a
+     * prefix search where term = 'ns1:state:beta'.
+     *
+     * @param namespaceId the namespace id if it is a within-namespace search, or null if it is cross namespace
+     * @param rawTerm the raw search term
+     */
+    static SearchTerm from(@Nullable NamespaceId namespaceId, String rawTerm) {
+      String formattedTerm = rawTerm.trim().toLowerCase();
+
+      if (formattedTerm.contains(MetadataDataset.KEYVALUE_SEPARATOR)) {
+        // split the search query in two parts on first occurrence of KEYVALUE_SEPARATOR and the trim the key and value
+        String[] split = formattedTerm.split(MetadataDataset.KEYVALUE_SEPARATOR, 2);
+        formattedTerm = split[0].trim() + MetadataDataset.KEYVALUE_SEPARATOR + split[1].trim();
+      }
+
+      boolean isPrefix = formattedTerm.endsWith("*");
+      if (isPrefix) {
+        formattedTerm = formattedTerm.substring(0, formattedTerm.lastIndexOf('*'));
+      }
+
+      if (namespaceId != null) {
+        formattedTerm = namespaceId.getNamespace() + MetadataDataset.KEYVALUE_SEPARATOR + formattedTerm;
+      }
+
+      return new SearchTerm(namespaceId, formattedTerm, isPrefix);
+    }
   }
 }

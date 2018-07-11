@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
@@ -39,13 +40,12 @@ import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -72,7 +72,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Implementation of {@link MetadataStore} used in distributed mode.
+ * Implementation of {@link MetadataStore}.
  */
 public class DefaultMetadataStore implements MetadataStore {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataStore.class);
@@ -104,6 +104,27 @@ public class DefaultMetadataStore implements MetadataStore {
     this.dsFramework = dsFramework;
   }
 
+  /**
+   * Don't use this for anything other than unit tests. Deletes and re-creates the underlying datasets.
+   *
+   * @throws Exception if there was an error deleting and re-creating the underlying datasets
+   */
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  @VisibleForTesting
+  void deleteAndRecreate() throws Exception {
+    try {
+      dsFramework.deleteInstance(BUSINESS_METADATA_INSTANCE_ID);
+    } catch (InstanceNotFoundException e) {
+      // it's ok if it doesn't exist, we wanted to delete it anyway
+    }
+    try {
+      dsFramework.deleteInstance(SYSTEM_METADATA_INSTANCE_ID);
+    } catch (InstanceNotFoundException e) {
+      // it's ok if it doesn't exist, we wanted to delete it anyway
+    }
+    getMetadataDatasetInstance(MetadataScope.SYSTEM);
+    getMetadataDatasetInstance(MetadataScope.USER);
+  }
 
   @SuppressWarnings("unused")
   @Inject(optional = true)
@@ -405,7 +426,7 @@ public class DefaultMetadataStore implements MetadataStore {
     return new MetadataSearchResponseV2(
       sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, request.getNumCursors(), total,
       addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, request.shouldShowHidden(),
-      request.getEntityScope());
+      request.getEntityScopes());
   }
 
   private Set<MetadataEntity> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {

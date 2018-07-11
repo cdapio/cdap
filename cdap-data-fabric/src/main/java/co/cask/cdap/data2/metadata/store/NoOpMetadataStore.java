@@ -20,9 +20,6 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
-import co.cask.cdap.data2.metadata.dataset.SortInfo;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import com.google.common.collect.ImmutableSet;
 
@@ -121,7 +118,7 @@ public class NoOpMetadataStore implements MetadataStore {
   public MetadataSearchResponseV2 search(SearchRequest request) {
     return new MetadataSearchResponseV2(request.getSortInfo().toString(), request.getOffset(), request.getLimit(),
                                         request.getNumCursors(), 0, Collections.emptySet(), Collections.emptyList(),
-                                        request.shouldShowHidden(), request.getEntityScope());
+                                        request.shouldShowHidden(), request.getEntityScopes());
   }
 
   @Override
