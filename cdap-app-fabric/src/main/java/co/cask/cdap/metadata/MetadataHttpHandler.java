@@ -39,6 +39,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -65,6 +66,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -323,7 +325,37 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       }
       curIndex += 2;
     }
+    builder = makeBackwardCompatible(builder);
     return builder.build();
+  }
+
+  /**
+   * If the MetadataEntity Builder key-value represent an application or artifact which is versioned in CDAP i.e. their
+   * metadata entity representation ends with 'version' rather than 'application' or 'artifact' and the type is also
+   * set to 'version' then for backward compatibility of rest end points return an updated builder which has the
+   * correct type. This is only needed in 5.0 for backward compatibility of the rest endpoint.
+   * From 5.0 and later the rest end point must be called with a query parameter which specify the type of the
+   * metadata entity if the type is not the last key. (CDAP-13678)
+   */
+  @VisibleForTesting
+  static MetadataEntity.Builder makeBackwardCompatible(MetadataEntity.Builder builder) {
+    MetadataEntity entity = builder.build();
+    List<MetadataEntity.KeyValue> entityKeyValues = StreamSupport.stream(entity.spliterator(), false)
+      .collect(Collectors.toList());
+    if (entityKeyValues.size() == 3 && entity.getType().equals(MetadataEntity.VERSION) &&
+      (entityKeyValues.get(1).getKey().equals(MetadataEntity.ARTIFACT) ||
+        entityKeyValues.get(1).getKey().equals(MetadataEntity.APPLICATION))) {
+      // this is artifact or application so update the builder
+      MetadataEntity.Builder actualEntityBuilder = MetadataEntity.builder();
+      // namespace
+      actualEntityBuilder.append(entityKeyValues.get(0).getKey(), entityKeyValues.get(0).getValue());
+      // application or artifact (so append as type)
+      actualEntityBuilder.appendAsType(entityKeyValues.get(1).getKey(), entityKeyValues.get(1).getValue());
+      // version detail
+      actualEntityBuilder.append(entityKeyValues.get(2).getKey(), entityKeyValues.get(2).getValue());
+      return actualEntityBuilder;
+    }
+    return builder;
   }
 
   private MetadataEntity.Builder appendHelper(MetadataEntity.Builder builder, @Nullable String entityType,
