@@ -18,21 +18,21 @@ var webpack = require('webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var path = require('path');
 var LiveReloadPlugin = require('webpack-livereload-plugin');
-var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var uuidV4 = require('uuid/v4');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+var ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 let pathsToClean = [
   'cdap_dist'
 ];
 
 // the clean options to use
 let cleanOptions = {
-  verbose:  true,
-  dry:      false
+  verbose: true,
+  dry: false
 };
 
 var mode = process.env.NODE_ENV || 'production';
@@ -58,11 +58,6 @@ var plugins = [
   new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
   ...getWebpackDllPlugins(),
-  new LodashModuleReplacementPlugin({
-    shorthands: true,
-    collections: true,
-    caching: true
-  }),
   new CopyWebpackPlugin([
     {
       from: './styles/fonts',
@@ -87,9 +82,14 @@ var plugins = [
     filename: 'cdap.html',
     hash: true,
     hashId: uuidV4()
-  })
+  }),
+  new ForkTsCheckerWebpackPlugin({
+    tsconfig: __dirname + '/tsconfig.json',
+    tslint: __dirname + '/tslint.json',
+    // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
+    memoryLimit: 4096
+  }),
 ];
-
 
 var rules = [
   {
@@ -119,23 +119,15 @@ var rules = [
     ]
   },
   {
-    enforce: 'pre',
-    test: /\.js$/,
-    use: 'eslint-loader',
-    exclude: [
-      /node_modules/,
-      /bower_components/,
-      /dist/,
-      /old_dist/,
-      /cdap_dist/,
-      /common_dist/,
-      /lib/,
-      /wrangler_dist/
-    ]
-  },
-  {
-    test: /\.js$/,
-    use: 'babel-loader',
+    test: /\.(t|j)s$/,
+     use: [
+        {
+          loader: "ts-loader",
+          options: {
+            transpileOnly: true
+          },
+        }
+      ],
     exclude: [
       /node_modules/,
       /lib/
@@ -207,8 +199,7 @@ var webpackConfig = {
   cache: true,
   context: __dirname + '/app/cdap',
   entry: {
-    // including babel-polyfill is temporary as of now. Once babel handles adding https://github.com/babel/babel/issues/4169.
-    'cdap': ['babel-polyfill', './cdap.js']
+    'cdap': ['./cdap.js']
   },
   module: {
     rules
@@ -225,6 +216,7 @@ var webpackConfig = {
   },
   plugins: plugins,
   resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
     alias: {
       components: __dirname + '/app/cdap/components',
       services: __dirname + '/app/cdap/services',

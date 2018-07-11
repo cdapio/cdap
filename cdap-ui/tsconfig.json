@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "outDir": "./cdap_dist",
+    "allowJs": true,
+    "checkJs": false,
+    "module": "commonjs",
+    "target": "es5",
+    "jsx": "react",
+    "moduleResolution": "node",
+    "lib": [
+      "es2015",
+      "dom"
+    ]
+  },
+  "include": [
+    "app/cdap/**/*.js",
+    "app/cdap/**/*.ts",
+    "app/cdap/**/*.jsx",
+    "app/cdap/**/*.tsx",
+  ],
+  "exclude": [
+    "node_modules",
+    "cdap-ui-upgrade",
+    "common_dist",
+    "cdap_dist",
+    "login_dist",
+    "dll",
+    "old_dist",
+    "build",
+    "dist",
+    "app/ui-utils"
+  ]
+}
