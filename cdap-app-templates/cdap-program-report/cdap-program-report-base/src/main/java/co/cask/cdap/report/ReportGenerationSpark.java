@@ -26,7 +26,7 @@ import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
 import co.cask.cdap.report.main.SparkPersistRunRecordMain;
 import co.cask.cdap.report.proto.Filter;
-import co.cask.cdap.report.proto.FilterDeserializer;
+import co.cask.cdap.report.proto.FilterCodec;
 import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
@@ -98,7 +98,7 @@ import static co.cask.cdap.report.util.Constants.LocationName;
  */
 public class ReportGenerationSpark extends AbstractExtendedSpark {
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Filter.class, new FilterDeserializer())
+    .registerTypeAdapter(Filter.class, new FilterCodec())
     .disableHtmlEscaping()
     .create();
   private static final ExecutorService REPORT_EXECUTOR =

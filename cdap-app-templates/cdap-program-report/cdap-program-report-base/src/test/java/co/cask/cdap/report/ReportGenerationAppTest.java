@@ -30,7 +30,7 @@ import co.cask.cdap.report.main.ProgramRunInfo;
 import co.cask.cdap.report.main.ProgramRunInfoSerializer;
 import co.cask.cdap.report.main.ProgramStartInfo;
 import co.cask.cdap.report.proto.Filter;
-import co.cask.cdap.report.proto.FilterDeserializer;
+import co.cask.cdap.report.proto.FilterCodec;
 import co.cask.cdap.report.proto.ProgramRunStartMethod;
 import co.cask.cdap.report.proto.RangeFilter;
 import co.cask.cdap.report.proto.ReportContent;
@@ -112,11 +112,8 @@ public class ReportGenerationAppTest extends TestBase {
   private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationAppTest.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
-    .create();
-  // have a separate Gson for deserializing Filter to avoid error when serializing Filter to JSON
-  private static final Gson DES_GSON = new GsonBuilder()
-    .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
-    .registerTypeAdapter(Filter.class, new FilterDeserializer())
+    .registerTypeAdapter(Filter.class, new FilterCodec())
+    .disableHtmlEscaping()
     .create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
@@ -244,6 +241,23 @@ public class ReportGenerationAppTest extends TestBase {
     Assert.assertEquals(404, urlConn.getResponseCode());
   }
 
+  @Test
+  public void testFilterSerialization() throws Exception {
+    List<Filter> filters =
+      ImmutableList.of(
+        new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
+        new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
+    long startSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    ReportGenerationRequest request =
+      new ReportGenerationRequest("ns1_ns2_report", startSecs, startSecs + 30,
+                                  new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
+                                  ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
+    String serialized = GSON.toJson(request);
+    Assert.assertNotNull(serialized);
+    ReportGenerationRequest deserialized = GSON.fromJson(serialized, ReportGenerationRequest.class);
+    Assert.assertEquals(request, deserialized);
+  }
+
 
   private void validateReportSummary(URL reportIdURL, long startSecs)
           throws InterruptedException, ExecutionException, TimeoutException, IOException {
@@ -296,7 +310,7 @@ public class ReportGenerationAppTest extends TestBase {
       ((HttpURLConnection) urlConnection).disconnect();
     }
     LOG.info(response);
-    return DES_GSON.fromJson(response, typeOfT);
+    return GSON.fromJson(response, typeOfT);
   }
 
   /**

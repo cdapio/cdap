@@ -20,6 +20,7 @@ import co.cask.cdap.report.util.ReportField;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -158,4 +159,26 @@ public class ReportGenerationRequest {
     }
   }
 
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, start, end, fields, sort, filters);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ReportGenerationRequest that = (ReportGenerationRequest) o;
+    return Objects.equals(this.name, that.name) &&
+      Objects.equals(this.start, that.start) &&
+      Objects.equals(this.end, that.end) &&
+      Objects.equals(this.fields, that.fields) &&
+      Objects.equals(this.sort, that.sort) &&
+      Objects.equals(this.filters, that.filters);
+  }
 }
