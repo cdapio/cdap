@@ -481,6 +481,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           long timeSpent = endTime - startTime;
           return Math.max(0L, metricsProcessIntervalMillis - timeSpent);
         }
+      } catch (ServiceUnavailableException e) {
+        LOG.trace("Could not fetch metrics. Will be retried in next iteration.", e);
       } catch (Exception e) {
         LOG.warn("Failed to process metrics. Will be retried in next iteration.", e);
       }
