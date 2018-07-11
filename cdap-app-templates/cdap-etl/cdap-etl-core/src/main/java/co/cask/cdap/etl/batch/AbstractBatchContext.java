@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.etl.api.batch.BatchContext;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.PipelineRuntime;
@@ -30,6 +31,9 @@ import co.cask.cdap.etl.common.plugin.Caller;
 import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import co.cask.cdap.etl.spec.StageSpec;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -40,12 +44,14 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   private static final Caller CALLER = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   private final DatasetContext datasetContext;
   protected final Admin admin;
+  private final List<Operation> operations;
 
   protected AbstractBatchContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
                                  DatasetContext datasetContext, Admin admin) {
     super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(datasetContext));
     this.datasetContext = datasetContext;
     this.admin = admin;
+    this.operations = new ArrayList<>();
   }
 
   @Override
@@ -122,5 +128,14 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
         return null;
       }
     });
+  }
+
+  @Override
+  public void record(List<Operation> operations) {
+    this.operations.addAll(operations);
+  }
+
+  public List<Operation> getOperations() {
+    return Collections.unmodifiableList(operations);
   }
 }

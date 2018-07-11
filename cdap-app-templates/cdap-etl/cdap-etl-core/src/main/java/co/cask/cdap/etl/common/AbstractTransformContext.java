@@ -22,8 +22,10 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.spec.StageSpec;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -93,5 +95,10 @@ public abstract class AbstractTransformContext extends AbstractStageContext impl
   @Override
   public void removeTags(MetadataEntity metadataEntity, String... tags) {
 
+  }
+
+  @Override
+  public void record(List<Operation> operations) {
+    throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }

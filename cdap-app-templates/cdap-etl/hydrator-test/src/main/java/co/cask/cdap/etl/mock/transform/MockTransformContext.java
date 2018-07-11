@@ -26,6 +26,7 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.mock.common.MockArguments;
 import co.cask.cdap.etl.mock.common.MockLookupProvider;
 import co.cask.cdap.etl.mock.common.MockStageMetrics;
@@ -33,6 +34,7 @@ import co.cask.cdap.etl.mock.common.MockStageMetrics;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -209,5 +211,10 @@ public class MockTransformContext implements TransformContext {
   public URL getServiceURL(String serviceId) {
     //no-op
     return null;
+  }
+
+  @Override
+  public void record(List<Operation> operations) {
+    // no-op
   }
 }

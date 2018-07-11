@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.api.lineage.field;
 
+import co.cask.cdap.api.lineage.field.EndPoint;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

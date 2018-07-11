@@ -19,11 +19,13 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.etl.api.action.ActionContext;
+import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.tephra.TransactionFailureException;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -69,4 +71,8 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
     context.getAdmin().deleteSecureData(namespace, name);
   }
 
+  @Override
+  public void record(List<Operation> operations) {
+    throw new UnsupportedOperationException("Lineage recording is not supported.");
+  }
 }
