@@ -17,45 +17,20 @@
 @import '../../styles/variables.scss';
 @import './DropdownStyling.scss';
 
+$header-bg-color: $navbar-bg;
+
 .global-navbar {
   height: 50px;
-  background: $navbar-bg;
+  background: $header-bg-color;
   position: fixed;
   width: 100%;
   top: 0;
   z-index: 1000;
   display: flex;
+  color: white;
 
-  a,
-  button,
-  i,
-  li,
-  li a,
-  .with-shadow,
-  .dropdown-item {
-    color: white;
-    &:hover,
-    &:active {
-      color: $cdap-light-orange;
-
-    }
-    .active {
-      color: $cdap-orange;
-      &:focus,
-      &:hover {
-        outline: none;
-        color: $cdap-orange;
-      }
-    }
-  }
-  .with-shadow {
-    box-shadow: -18px 0px 24px -9px rgba(0, 0, 0, 0.4);
-    height: 50px;
-    line-height: 50px;
-    padding-left: 10px;
-    margin-left: 0;
-    margin-right: 0;
-    min-width: 120px;
+  .with-pointer {
+    padding-left: 15px;
     cursor: pointer;
   }
 
@@ -69,6 +44,7 @@
       order: 3;
       background: transparent;
       border: transparent;
+      color: inherit;
       &:hover {
         background: transparent;
         border: transparent;
@@ -102,6 +78,11 @@
         position: absolute;
         top: 50px;
         left: 0;
+        text-align: right;
+        border-top: 1px solid white;
+        #header-namespace-dropdown {
+          text-align: left;
+        }
       }
     }
     line-height: 50px;
@@ -113,8 +94,14 @@
       .cask-market-button {
         display: block;
 
-        [class*="icon-"] {
-          margin-right: 5px;
+        .hub-text-wrapper {
+          padding: 5px 10px;
+          border: 1px solid $grey-04;
+          border-radius: 4px;
+          &:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+          }
         }
       }
 
@@ -129,10 +116,18 @@
             .current-namespace {
               background: transparent;
               &:hover {
-                background: transparent;
+                background: rgba(255, 255, 255, 0.3);
+              }
+            }
+            &.open {
+              .current-namespace {
+                background: rgba(255, 255, 255, 0.3);
               }
             }
           }
+        }
+        &.cdap-menu {
+          padding: 0;
         }
       }
     }
@@ -142,9 +137,6 @@
     padding: 0;
     li {
       display: inline-block;
-      margin: 0 15px;
-      vertical-align: top;
-      line-height: 50px;
       &:focus {
         outline: none;
       }
@@ -162,13 +154,20 @@
     min-width: 300px;
     align-items: baseline;
     flex: 1;
-    align-items: flex-start;
+    align-items: center;
 
     &.control-center {
-      > li.with-shadow {
-        min-width: auto;
-        padding-right: 15px;
-        padding-left: 15px;
+      > li {
+        padding: 5px 10px;
+        border-radius: 4px;
+        margin: 0 5px;
+
+        &:hover,
+        &:active,
+        &.active {
+          color: white;
+          background: rgba(255, 255, 255, 0.3);
+        }
       }
     }
   }
@@ -176,21 +175,22 @@
   .navbar-right-section {
     .dropdown {
       .dropdown-menu {
-        padding-bottom: 10px;
-        .dropdown-divider {
-          height: 1px;
-          margin: 0.5rem 0;
-          overflow: hidden;
-        }
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+        color: inherit;
+        background-color: white;
       }
     }
+  }
+  .navbar-right-section {
     .dropdown.open {
       .dropdown-toggle {
-        background-color: transparent;
         color: inherit;
         &.active {
-          &:hover {
-            color: $cdap-light-orange;
+          &:hover,
+          &:focus,
+          &:active {
+            color: inherit;
+            background: rgba(255, 255, 255, 0.3);
           }
         }
       }

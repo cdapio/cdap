@@ -46,16 +46,6 @@ export default class PlusButtonModal extends Component {
     this.props.onCloseHandler();
   }
 
-  getIconForView(view, opposite) {
-    const resourceCenterClass = 'icon-resourcecenter';
-    const marketIconClass = 'icon-CaskMarket';
-
-    if (opposite) {
-      return view === 'resourcecenter' ? marketIconClass : resourceCenterClass;
-    } else {
-      return view === 'resourcecenter' ? resourceCenterClass : marketIconClass;
-    }
-  }
   onError = (error, extendedError) => {
     this.setState({
       error,
@@ -93,12 +83,6 @@ export default class PlusButtonModal extends Component {
       >
         <ModalHeader>
           <span className="float-xs-left">
-            <span className="header-icon-container">
-              <IconSVG
-                name={this.getIconForView(this.state.viewMode)}
-                className="modal-header-icon"
-              />
-            </span>
             <span className="plus-modal-header-text">
             { this.state.viewMode === 'resourcecenter' ? resourceCenter : market }
             </span>

@@ -197,3 +197,6 @@ $green-05: #0b8043;
   yellow02ligher: $yellow-02-lighter;
 
 }
+
+$brand-primary-color: #3b78e7;
+$brand-primary-color-lighter: transparentize($brand-primary-color, $amount: 0.5);
