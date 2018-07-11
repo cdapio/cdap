@@ -18,15 +18,12 @@ package co.cask.cdap.etl.planner;
 
 import co.cask.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multiset;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -39,34 +36,13 @@ import java.util.UUID;
  */
 public class ControlDag extends Dag {
   private static final Set<String> EMPTY = ImmutableSet.of();
-  private final Multiset<String> nodeVisits;
 
   public ControlDag(Collection<Connection> connections) {
     super(connections);
-    this.nodeVisits = HashMultiset.create();
   }
 
   public ControlDag(Dag dag) {
     super(dag);
-    this.nodeVisits = HashMultiset.create();
-  }
-
-  /**
-   * Record that this node was visited.
-   *
-   * @param node node that was visited
-   * @return the number of times this node was visited, including the visit from this call
-   */
-  public int visit(String node) {
-    nodeVisits.add(node);
-    return nodeVisits.count(node);
-  }
-
-  /**
-   * Resets the number of times each node was visited back to 0.
-   */
-  public void resetVisitCounts() {
-    nodeVisits.clear();
   }
 
   /**
@@ -82,7 +58,7 @@ public class ControlDag extends Dag {
    *      |           v
    *      |--> n4 --> n6
    *
-   *  There are many ways to turn this a fork-join while still respecting all happens-before relationships,
+   *  There are many ways to turn this into a fork-join while still respecting all happens-before relationships,
    *  but for simplicity we'll use an algorithm that doesn't have any nested forks and will turn the above into:
    *
    *       |--> n2 --|
@@ -301,34 +277,5 @@ public class ControlDag extends Dag {
       name += UUID.randomUUID().toString();
     }
     return name;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-
-    ControlDag that = (ControlDag) o;
-
-    return Objects.equals(nodeVisits, that.nodeVisits);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode(), nodeVisits);
-  }
-
-  @Override
-  public String toString() {
-    return "ControlDag{" +
-      "nodeVisits=" + nodeVisits +
-      "} " + super.toString();
   }
 }
