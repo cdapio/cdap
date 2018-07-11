@@ -118,6 +118,13 @@ public abstract class AbstractTimeSchedulerService extends AbstractIdleService i
     return timeScheduler.nextScheduledRuntime(program, programType);
   }
 
+  @Override
+  public List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program, SchedulableProgramType programType,
+                                                        long startTimeSecs, long endTimeSecs)
+    throws SchedulerException {
+    return timeScheduler.getAllScheduledRunTimes(program, programType, startTimeSecs, endTimeSecs);
+  }
+
   public static String scheduleIdFor(ProgramId program, SchedulableProgramType programType, String scheduleName) {
     return String.format("%s:%s", programIdFor(program, programType), scheduleName);
   }
