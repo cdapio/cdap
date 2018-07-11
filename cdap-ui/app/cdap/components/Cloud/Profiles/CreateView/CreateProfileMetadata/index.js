@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
 import {Input} from 'reactstrap';
-import {updateProfileName, updateProfileDescription} from 'components/Cloud/Profiles/CreateView/CreateProfileActionCreator';
+import {updateProfileLabel, updateProfileDescription} from 'components/Cloud/Profiles/CreateView/CreateProfileActionCreator';
 
 require('./CreateProfileMetadata.scss');
 
@@ -27,9 +27,8 @@ function ProfileName({profileName}) {
     <Input
       aria-labelledby="profile-name"
       value={profileName}
-      onChange={(e) => updateProfileName(e.target.value)}
-      placeholder="Name the compute profile"
-      autoFocus
+      placeholder="Name for compute profile"
+      disabled
     />
   );
 }
@@ -43,8 +42,28 @@ const mapNameStateToProps = (state) => {
   };
 };
 
-const ConnectedProfileName = connect(mapNameStateToProps)(ProfileName);
+function ProfileLabel({profileLabel}) {
+  return (
+    <Input
+      aria-labelledby="profile-label"
+      value={profileLabel}
+      placeholder="Label the compute profile"
+      onChange={(e) => updateProfileLabel(e.target.value)}
+    />
+  );
+}
+ProfileLabel.propTypes = {
+  profileLabel: PropTypes.string
+};
 
+const mapLabelStateToProps = (state) => {
+  return {
+    profileLabel: state.label
+  };
+};
+
+const ConnectedProfileName = connect(mapNameStateToProps)(ProfileName);
+const ConnectedProfileLabel = connect(mapLabelStateToProps)(ProfileLabel);
 function ProfileDescription({profileDescription}) {
   return (
     <Input
@@ -69,4 +88,4 @@ const mapDescriptionStateToProps = (state) => {
 
 const ConnectedProfileDescription = connect(mapDescriptionStateToProps)(ProfileDescription);
 
-export {ConnectedProfileName, ConnectedProfileDescription};
+export {ConnectedProfileName, ConnectedProfileDescription, ConnectedProfileLabel};

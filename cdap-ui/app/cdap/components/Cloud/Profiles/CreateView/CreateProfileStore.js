@@ -18,7 +18,7 @@ import {createStore} from 'redux';
 import {defaultAction, composeEnhancers} from 'services/helpers';
 
 const ACTIONS = {
-  updateProfileName: 'UPDATE_PROFILE_NAME',
+  updateProfileLabel: 'UPDATE_PROFILE_LABEL',
   updateProfileDescription: 'UPDATE_PROFILE_DESCRIPTION',
   initializeProperties: 'INITIALIZE_PROPERTIES',
   updateProperty: 'UPDATE_PROPERTIES',
@@ -26,17 +26,21 @@ const ACTIONS = {
   reset: 'RESET'
 };
 const STORE_DEFAULT = {
+  label: '',
   name: '',
   description: '',
   properties: {}
 };
 const createProfileStore = (state = STORE_DEFAULT, action = defaultAction) => {
   switch (action.type) {
-    case ACTIONS.updateProfileName:
+    case ACTIONS.updateProfileLabel: {
+      let {label = ''} = action.payload;
       return {
         ...state,
-        name: action.payload.name
+        name: label.replace(/\ +/g, '_').toLowerCase(),
+        label
       };
+    }
     case ACTIONS.updateProfileDescription:
       return {
         ...state,

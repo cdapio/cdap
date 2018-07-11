@@ -30,7 +30,7 @@ import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabC
 import EntityTopPanel from 'components/EntityTopPanel';
 import PropertyLock from 'components/Cloud/Profiles/CreateView/PropertyLock';
 import { UncontrolledTooltip } from 'components/UncontrolledComponents';
-import {ConnectedProfileName, ConnectedProfileDescription} from 'components/Cloud/Profiles/CreateView/CreateProfileMetadata';
+import {ConnectedProfileName, ConnectedProfileDescription, ConnectedProfileLabel} from 'components/Cloud/Profiles/CreateView/CreateProfileMetadata';
 import {
   initializeProperties,
   updateProperty,
@@ -85,9 +85,10 @@ class ProfileCreateView extends Component {
     this.setState({
       creatingProfile: true
     });
-    let {name, description, properties} = CreateProfileStore.getState();
+    let {label, name, description, properties} = CreateProfileStore.getState();
     let jsonBody = {
       description,
+      label,
       provisioner: {
         name: this.state.selectedProvisioner,
         properties: Object.entries(properties).map(([property, propObj]) => {
@@ -143,6 +144,25 @@ class ProfileCreateView extends Component {
         </Col>
         <Col xs="5">
           <ConnectedProfileName />
+        </Col>
+      </FormGroup>
+    );
+  };
+
+  renderProfileLabel = () => {
+    return (
+      <FormGroup row>
+        <Col xs="3">
+          <strong
+            className="label"
+            id="profile-label"
+          >
+            Profile Label
+          </strong>
+          <span className="required-marker text-danger">*</span>
+        </Col>
+        <Col xs="5">
+          <ConnectedProfileLabel />
         </Col>
       </FormGroup>
     );
@@ -283,6 +303,7 @@ class ProfileCreateView extends Component {
                 }}
               >
                 <div className="group-container">
+                  {this.renderProfileLabel()}
                   {this.renderProfileName()}
                   {this.renderDescription()}
                 </div>

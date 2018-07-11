@@ -230,7 +230,7 @@ export default class ProfilesListViewInPipeline extends Component {
         </div>
         <div onClick={onProfileSelectHandler}>
           {renderDefaultProfileStar(profileName)}
-          {profile.name}
+          {profile.label || profile.name}
         </div>
         <div onClick={onProfileSelectHandler}>
           {provisionerLabel}

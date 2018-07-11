@@ -28,6 +28,7 @@ require('./Preview.scss');
 export default class ProfilePreview extends Component {
   static propTypes = {
     profileScope: PropTypes.string,
+    profileLabel: PropTypes.string,
     profileName: PropTypes.string,
     profileCustomProperties: PropTypes.object
   };
@@ -100,7 +101,7 @@ export default class ProfilePreview extends Component {
 
     return (
       <div className="profile-preview text-xs-left">
-        <strong>{this.props.profileName}</strong>
+        <strong>{this.props.profileLabel || this.props.profileName}</strong>
         <div className="profile-descripion">
           <p className="multi-line-text">
             {this.state.profileDetails.description}
