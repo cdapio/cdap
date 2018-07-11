@@ -492,7 +492,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
      */
     private void tryPersist() {
       // Ensure there's only one thread can persist metricsFromAllTopics and messageId's.
-      // This is because the underlying metrics table is not thread safe.
       // If persistingFlag is false, set it to true and start persisting. Otherwise, log and return.
       if (!persistingFlag.compareAndSet(false, true)) {
         LOG.trace("There is another thread performing persisting. No need to persist in this thread.");

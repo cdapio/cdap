@@ -51,7 +51,6 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.internal.provision.SecureKeyInfo;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.appender.tms.TMSLogAppender;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
@@ -228,7 +227,13 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LogAppender.class).to(TMSLogAppender.class);
+        // TODO (CDAP-13380): Use a LogAppender defined by the runtime provider
+        bind(LogAppender.class).toInstance(new LogAppender() {
+          @Override
+          protected void appendEvent(LogMessage logMessage) {
+            // no-op
+          }
+        });
 
         // Bind to unsupported/no-op class implementations for features that are not supported in isolated cluster mode
         bind(StreamAdmin.class).to(UnsupportedStreamAdmin.class);

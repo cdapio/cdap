@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,7 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.ReadRange;
+import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -287,7 +288,7 @@ public class LoggingTester {
 
     @Override
     public void init() {
-      events = Collections.synchronizedList(new ArrayList<>());
+      events = Collections.synchronizedList(new ArrayList<LogEvent>());
     }
 
     @Override
@@ -327,7 +328,7 @@ public class LoggingTester {
 
   private LoggingContext replaceTag(LoggingContext loggingContext, Entry... entries) {
     Map<String, String> tagMap =
-      Maps.newHashMap(Maps.transformValues(loggingContext.getSystemTagsMap(), LoggingContext.SystemTag::getValue));
+      Maps.newHashMap(Maps.transformValues(loggingContext.getSystemTagsMap(), TAG_TO_STRING_FUNCTION));
     for (Entry entry : entries) {
       tagMap.put(entry.getKey(), entry.getValue());
     }
@@ -356,4 +357,12 @@ public class LoggingTester {
       return value;
     }
   }
+
+  private static final Function<LoggingContext.SystemTag, String> TAG_TO_STRING_FUNCTION =
+    new Function<LoggingContext.SystemTag, String>() {
+      @Override
+      public String apply(LoggingContext.SystemTag input) {
+        return input.getValue();
+      }
+    };
 }
