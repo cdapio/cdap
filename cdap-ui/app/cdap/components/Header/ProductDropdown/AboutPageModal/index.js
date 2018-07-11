@@ -44,7 +44,7 @@ export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
         <div className="about-title">
           <div className="cdap-logo-with-version">
             <div>
-              <img src='/cdap_assets/img/CDAP_about_logo.png' />
+              <img src='/cdap_assets/img/company_logo.png' />
             </div>
             <span className="cdap-version">
               {T.translate('features.AboutPage.version', {version: cdapVersion})}
