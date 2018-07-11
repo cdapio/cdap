@@ -32,5 +32,3 @@ Data Pipeline Tutorials
 - :ref: `Use CDAP data pipelines for analyzing and Masking IoT Device Data <tutorials-fitbit>`
 
 - :ref: `Building a Stock Selection Pipeline. <tutorials-stocks>`
-
-- :ref: `Building a Fraud Classification Machine Learning Model <tutorials-logistic>`

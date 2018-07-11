@@ -15,7 +15,6 @@ CDAP Tutorials
     NYT XML Data Feed <nytimes-xml>
     Stock Selection <stocks>
     IoT Device Data <fitbit>
-    Credit Fraud Detection <logistic>
 
 Tutorials provide a quick onboarding point to understand how to use the CDAP UI and how it can help solve common use cases. 
 
@@ -39,8 +38,4 @@ Tutorials provide a quick onboarding point to understand how to use the CDAP UI 
 
 - |fitbit|_ This tutorial demonstrates how to use CDAP's Data Preparation and Data Pipelines to clean, prepare, mask, and store IoT device data sent in JSON format.
 
-.. |logistic| replace:: **Building a Fraud Classification Machine Learning Model:**
-.. _logistic: logistic.html
-
-- |logistic|_ In this tutorial, you will learn how to use CDAP to build and operationalize an enterprise-ready Machine Learning for prediciting credit fraud using only CDAP’s point-and-click interfaces.
 
