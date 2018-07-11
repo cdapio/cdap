@@ -106,6 +106,7 @@ public class ProvisionerNotifier {
     deprovisioned(programRunId, System.currentTimeMillis());
   }
 
+  // this time stamp is in unit MILLISECOND
   public void deprovisioned(ProgramRunId programRunId, long endTimestamp) {
     publish(ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
@@ -117,6 +118,7 @@ public class ProvisionerNotifier {
     orphaned(programRunId, System.currentTimeMillis());
   }
 
+  // this time stamp is in unit MILLISECOND
   public void orphaned(ProgramRunId programRunId, long endTimestamp) {
     publish(ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),

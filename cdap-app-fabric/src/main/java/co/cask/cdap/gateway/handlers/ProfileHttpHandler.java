@@ -22,7 +22,6 @@ import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisioningService;
-import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.profile.Profile;
@@ -223,8 +222,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Unable to parse request body. Please make sure it is valid JSON", e);
     }
     Profile profile =
-      new Profile(profileId.getProfile(), profileCreateRequest.getDescription(),
-                  profileId.getNamespaceId().equals(NamespaceId.SYSTEM) ? EntityScope.SYSTEM : EntityScope.USER,
+      new Profile(profileId.getProfile(), profileCreateRequest.getDescription(), profileId.getScope(),
                   profileCreateRequest.getProvisioner());
     profileService.saveProfile(profileId, profile);
   }
