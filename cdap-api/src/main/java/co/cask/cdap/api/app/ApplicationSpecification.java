@@ -73,6 +73,7 @@ public interface ApplicationSpecification {
    * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}
    *         for {@link Stream}s configured for the Application.
    */
+  @Deprecated
   Map<String, StreamSpecification> getStreams();
 
   /**
@@ -91,6 +92,7 @@ public interface ApplicationSpecification {
    * @return An immutable {@link Map} from {@link Flow} name to {@link FlowSpecification}
    *         for {@link Flow}s configured for the Application.
    */
+  @Deprecated
   Map<String, FlowSpecification> getFlows();
 
   /**

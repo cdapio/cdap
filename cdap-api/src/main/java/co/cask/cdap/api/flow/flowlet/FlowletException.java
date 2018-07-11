@@ -19,6 +19,7 @@ package co.cask.cdap.api.flow.flowlet;
 /**
  * Exception thrown when there is an error during {@link Flowlet} initialization.
  */
+@Deprecated
 public class FlowletException extends Exception {
 
   public FlowletException(String message) {

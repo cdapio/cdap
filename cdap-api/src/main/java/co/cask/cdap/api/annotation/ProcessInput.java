@@ -46,9 +46,11 @@ import java.lang.annotation.Target;
  * </p>
  *
  * @see co.cask.cdap.api.flow.flowlet.Flowlet
+ * @deprecated As of release 5.0.0, replaced by {@link @ProgramType.SPARK} for realtime processing.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@Deprecated
 public @interface ProcessInput {
 
   int DEFAULT_MAX_RETRIES = 20;

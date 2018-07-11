@@ -25,7 +25,10 @@ import javax.annotation.Nullable;
  *  binary data) and headers (map of strings for metadata).Within the system,
  *  Streams are identified by a Unique ID string and must be explicitly created
  *  before being used.
+ *
+ * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
  */
+@Deprecated
 public final class Stream {
   private final String name;
   private final String description;

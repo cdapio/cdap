@@ -26,7 +26,9 @@ import javax.annotation.Nullable;
 
 /**
  * This abstract class provides a default implementation of {@link Flowlet} methods for easy extension.
+ * @deprecated As of release 5.0.0, replaced by {@link @ProgramType.SPARK} for realtime processing.
  */
+@Deprecated
 public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable<FlowletConfigurer>
   implements Flowlet, Callback {
 

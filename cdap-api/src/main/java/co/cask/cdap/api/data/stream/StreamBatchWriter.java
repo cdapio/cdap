@@ -21,7 +21,10 @@ import java.nio.channels.WritableByteChannel;
 /**
  * Used to write to Stream in Batch mode. Once closed, a new {@link StreamBatchWriter} needs to be created to do
  * another set of batch writes.
+ *
+ * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
  */
+@Deprecated
 public interface StreamBatchWriter extends WritableByteChannel {
 
 }

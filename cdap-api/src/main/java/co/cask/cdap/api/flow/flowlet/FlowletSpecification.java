@@ -24,6 +24,7 @@ import java.util.Set;
 /**
  * This class provides specification of a Flowlet.
  */
+@Deprecated
 public interface FlowletSpecification extends PropertyProvider {
 
   /**

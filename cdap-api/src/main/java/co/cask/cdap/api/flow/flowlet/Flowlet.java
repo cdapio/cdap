@@ -22,6 +22,7 @@ import co.cask.cdap.api.ProgramLifecycle;
  * Defines the Flowlet interface. A Flowlet should provide the
  * functionality for initializing and configuring itself.
  */
+@Deprecated
 public interface Flowlet extends ProgramLifecycle<FlowletContext> {
   /**
    * Provides an interface to configure a Flowlet.

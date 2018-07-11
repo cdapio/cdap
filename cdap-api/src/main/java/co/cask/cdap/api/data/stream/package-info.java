@@ -39,5 +39,6 @@
  *   </pre>
  * </blockquote>
  *
+ * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
  */
   package co.cask.cdap.api.data.stream;

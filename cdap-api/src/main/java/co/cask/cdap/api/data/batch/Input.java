@@ -141,6 +141,7 @@ public abstract class Input {
    *
    * @param streamName Name of the stream.
    */
+  @Deprecated
   public static Input ofStream(String streamName) {
     return ofStream(streamName, 0, Long.MAX_VALUE);
   }
@@ -152,6 +153,7 @@ public abstract class Input {
    * @param startTime Start timestamp in milliseconds.
    * @param endTime End timestamp in milliseconds.
    */
+  @Deprecated
   public static Input ofStream(String streamName, long startTime, long endTime) {
     return new StreamInput(streamName, startTime, endTime, null, null);
   }
@@ -164,6 +166,7 @@ public abstract class Input {
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    * @param decoderType The {@link StreamEventDecoder} class for decoding {@link StreamEvent}
    */
+  @Deprecated
   public static Input ofStream(String streamName, long startTime,
                                long endTime, Class<? extends StreamEventDecoder> decoderType) {
     return new StreamInput(streamName, startTime, endTime, decoderType.toString(), null);
@@ -177,6 +180,7 @@ public abstract class Input {
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    * @param bodyFormatSpec The {@link FormatSpecification} class for decoding {@link StreamEvent}
    */
+  @Deprecated
   public static Input ofStream(String streamName, long startTime,
                                long endTime, FormatSpecification bodyFormatSpec) {
     return new StreamInput(streamName, startTime, endTime, null, bodyFormatSpec);
@@ -231,6 +235,7 @@ public abstract class Input {
   /**
    * An implementation of {@link Input}, which defines a {@link co.cask.cdap.api.data.stream.Stream} as an input.
    */
+  @Deprecated
   public static class StreamInput extends Input {
     private final long startTime;
     private final long endTime;

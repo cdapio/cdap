@@ -24,6 +24,7 @@ import java.util.Map;
 /**
  * Configurer for configuring {@link Flowlet}.
  */
+@Deprecated
 public interface FlowletConfigurer extends DatasetConfigurer {
 
   /**
