@@ -24,6 +24,9 @@ import ProfileDetailViewContent from 'components/Cloud/Profiles/DetailView/Conte
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Cloud.Profiles.DetailView';
 
 require('./DetailView.scss');
 
@@ -108,7 +111,7 @@ export default class ProfileDetailView extends Component {
         <EntityTopPanel
           breadCrumbAnchorLink={breadCrumbAnchorLink}
           breadCrumbAnchorLabel={breadCrumbLabel}
-          title="Compute Profile Overview"
+          title={T.translate(`${PREFIX}.computeProfileOverview`)}
           closeBtnAnchorLink={closeBtnlinkObj}
         />
         {

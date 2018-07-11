@@ -20,6 +20,9 @@ import {MySearchApi} from 'api/search';
 import {isNilOrEmpty, humanReadableDuration} from 'services/helpers';
 import {GLOBALS} from 'services/global-constants';
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Cloud.Profiles.DetailView';
 
 require('./ProfileAssociations.scss');
 const HEADERS = [
@@ -128,7 +131,11 @@ export default class ProfileAssociations extends Component {
           <div />
           <div />
           <div />
-          <div className="sub-title">{this.props.profile.name} Usage</div>
+          <div className="sub-title">
+            {T.translate(`${PREFIX}.profileUsage`, {
+              profile: this.props.profile.name
+            })}
+          </div>
           <div />
           <div />
           <div />

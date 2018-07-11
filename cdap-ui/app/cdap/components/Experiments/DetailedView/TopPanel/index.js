@@ -19,7 +19,9 @@ import React from 'react';
 import {connect} from 'react-redux';
 import TopPanel from 'components/Experiments/TopPanel';
 import ExperimentMetricsDropdown from 'components/Experiments/DetailedView/ExperimentMetricsDropdown';
+import T from 'i18n-react';
 
+const PREFIX = 'features.Experiments.DetailedView';
 
 require('./DetailedViewTopPanel.scss');
 
@@ -38,17 +40,21 @@ const Metadata = ({name, description, srcpath, total, outcome}) => {
       </div>
       <div>
         <strong>
-          <div> # Models </div>
+          <div>{T.translate(`${PREFIX}.numModels`)}</div>
           <h1>{total}</h1>
         </strong>
       </div>
       <div>
         <div>
-          <strong className="experiment-meta-label">Test Data</strong>
+          <strong className="experiment-meta-label">
+            {T.translate(`${PREFIX}.data`)}
+          </strong>
           <div>{srcpath}</div>
         </div>
         <div>
-          <strong className="experiment-meta-label">Outcome</strong>
+          <strong className="experiment-meta-label">
+            {T.translate(`${PREFIX}.outcome`)}
+          </strong>
           <div>{outcome}</div>
         </div>
       </div>

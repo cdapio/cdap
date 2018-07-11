@@ -29,11 +29,11 @@ class TrackerResultsController {
     this.searchResults = [];
     this.sortByOptions = [
       {
-        name: 'Oldest First',
+        name: 'Oldest first',
         sort: 'createDate'
       },
       {
-        name: 'Newest First',
+        name: 'Newest first',
         sort: '-createDate'
       },
       {
@@ -45,11 +45,11 @@ class TrackerResultsController {
         sort: '-name'
       },
       {
-        name: 'Highest Score',
+        name: 'Highest score',
         sort: '-meter'
       },
       {
-        name: 'Lowest Score',
+        name: 'Lowest score',
         sort: 'meter'
       }
     ];
@@ -94,25 +94,25 @@ class TrackerResultsController {
         count: 0
       },
       {
-        name: 'User Tags',
+        name: 'User tags',
         isActive: true,
         isHover: false,
         count: 0
       },
       {
-        name: 'System Tags',
+        name: 'System tags',
         isActive: true,
         isHover: false,
         count: 0
       },
       {
-        name: 'User Properties',
+        name: 'User properties',
         isActive: true,
         isHover: false,
         count: 0
       },
       {
-        name: 'System Properties',
+        name: 'System properties',
         isActive: true,
         isHover: false,
         count: 0

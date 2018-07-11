@@ -35,13 +35,13 @@
               ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'}"
               ng-click="RealtimePipelineConfigCtrl.activeTab = 'runtimeArgs'"
               ng-if="RealtimePipelineConfigCtrl.isDeployed || RealtimePipelineConfigCtrl.showPreviewConfig">
-          Runtime Arguments
+          Runtime arguments
         </div>
         <div class="configuration-tab"
               ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'previewConfig'}"
               ng-click="RealtimePipelineConfigCtrl.activeTab = 'previewConfig'"
               ng-if="!RealtimePipelineConfigCtrl.isDeployed && RealtimePipelineConfigCtrl.showPreviewConfig">
-          Preview Config
+          Preview config
         </div>
         <div class="configuration-tab toggle-advanced-options"
               ng-click="RealtimePipelineConfigCtrl.showAdvanced = !RealtimePipelineConfigCtrl.showAdvanced"
@@ -56,12 +56,12 @@
           <div class="configuration-tab"
                 ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'pipelineConfig'}"
                 ng-click="RealtimePipelineConfigCtrl.activeTab = 'pipelineConfig'">
-            Pipeline Config
+            Pipeline config
           </div>
           <div class="configuration-tab"
                 ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'engineConfig'}"
                 ng-click="RealtimePipelineConfigCtrl.activeTab = 'engineConfig'">
-            Engine Config
+            Engine config
           </div>
           <div class="configuration-tab"
                 ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'resources', 'disabled': RealtimePipelineConfigCtrl.showPreviewConfig}"
@@ -109,7 +109,7 @@
           Set configurations for this pipeline
         </div>
         <div class="label-with-toggle batch-interval form-group row">
-          <span class="toggle-label col-xs-4">Batch Interval</span>
+          <span class="toggle-label col-xs-4">Batch interval</span>
           <div class="col-xs-7">
             <select class="form-control small-dropdown"
                     ng-model="RealtimePipelineConfigCtrl.batchIntervalTime"
@@ -150,7 +150,7 @@
           </div>
         </div>
         <div class="label-with-toggle stage-logging row">
-          <span class="toggle-label col-xs-4">Stage Level Logging</span>
+          <span class="toggle-label col-xs-4">Stage level logging</span>
           <div class="col-xs-7 toggle-container">
             <my-toggle-switch-widget
               is-on="RealtimePipelineConfigCtrl.stageLogging"
@@ -256,7 +256,7 @@
             </div>
           </div>
           <div class="label-with-toggle numExecutors form-group row">
-            <span class="toggle-label col-xs-4">Number of Executors</span>
+            <span class="toggle-label col-xs-4">Number of executors</span>
             <div class="col-xs-7">
               <select class="form-control small-dropdown"
                   ng-model="RealtimePipelineConfigCtrl.numExecutors"
@@ -295,7 +295,7 @@
           <span ng-if="(RealtimePipelineConfigCtrl.isDeployed) || (!RealtimePipelineConfigCtrl.isDeployed && RealtimePipelineConfigCtrl.showCustomConfig)">
             <hr />
             <span ng-if="RealtimePipelineConfigCtrl.isDeployed">
-              <label>Custom Config</label>
+              <label>Custom config</label>
               <i class="fa fa-info-circle"
                  uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying Apache Spark Streaming program."
                  tooltip-placement="right">

@@ -40,6 +40,9 @@ import CreateProfileBtn from 'components/Cloud/Profiles/CreateView/CreateProfile
 import uuidV4 from 'uuid/v4';
 import CreateProfileStore from 'components/Cloud/Profiles/CreateView/CreateProfileStore';
 import {highlightNewProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Cloud.Profiles.CreateView';
 
 require('./CreateView.scss');
 
@@ -138,7 +141,7 @@ class ProfileCreateView extends Component {
             className="label"
             id="profile-name"
           >
-            Profile Name
+            {T.translate(`${PREFIX}.profileName`)}
           </strong>
           <span className="required-marker text-danger">*</span>
         </Col>
@@ -157,7 +160,7 @@ class ProfileCreateView extends Component {
             className="label"
             id="profile-label"
           >
-            Profile Label
+            {T.translate(`${PREFIX}.profileLabel`)}
           </strong>
           <span className="required-marker text-danger">*</span>
         </Col>
@@ -176,7 +179,7 @@ class ProfileCreateView extends Component {
             className="label"
             id="profile-description"
           >
-            Description
+            {T.translate('commons.descriptionLabel')}
           </strong>
           <span className="required-marker text-danger">*</span>
         </Col>
@@ -333,10 +336,12 @@ class ProfileCreateView extends Component {
             />
             {
               typeof linkObj === 'function' ?
-                <button className="btn btn-link" onClick={linkObj}> Close </button>
+                <button className="btn btn-link" onClick={linkObj}>
+                  {T.translate('commons.close')}
+                </button>
               :
                 <Link to={linkObj}>
-                  Close
+                  {T.translate('commons.close')}
                 </Link>
             }
           </div>

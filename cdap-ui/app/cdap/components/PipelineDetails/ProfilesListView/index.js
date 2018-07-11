@@ -34,6 +34,8 @@ import {extractProfileName, getProfileNameWithScope} from 'components/Cloud/Prof
 import {CLOUD} from 'services/global-constants';
 import T from 'i18n-react';
 
+const PREFIX = 'features.PipelineDetails.ProfilesListView';
+
 require('./ProfilesListViewInPipeline.scss');
 
 export default class ProfilesListViewInPipeline extends Component {
@@ -159,10 +161,10 @@ export default class ProfilesListViewInPipeline extends Component {
       <div className="grid-header">
         <div className="grid-row">
           <div></div>
-          <strong>Profile Name</strong>
-          <strong>Provisioner</strong>
-          <strong>Scope</strong>
-          <strong>Status</strong>
+          <strong>{T.translate('features.Cloud.Profiles.ListView.profileName')}</strong>
+          <strong>{T.translate('features.Cloud.Profiles.common.provisioner')}</strong>
+          <strong>{T.translate('commons.scope')}</strong>
+          <strong>{T.translate('commons.status')}</strong>
           <strong />
           <strong />
         </div>
@@ -274,12 +276,12 @@ export default class ProfilesListViewInPipeline extends Component {
     if (!this.state.profiles.length) {
       return (
         <div>
-          <strong> No Profiles created </strong>
+          <strong>{T.translate(`${PREFIX}.noProfiles`)}</strong>
           <div>
             <a href={`/cdap/ns/${getCurrentNamespace()}/profiles/create`}>
-              Click here
+              {T.translate(`${PREFIX}.click`)}
             </a>
-            <span> to create one </span>
+            <span>{T.translate(`${PREFIX}.toCreate`)}</span>
           </div>
         </div>
       );
@@ -291,7 +293,11 @@ export default class ProfilesListViewInPipeline extends Component {
           this.props.disabled || !this.props.showProfilesCount ?
             null
           :
-            <div className="profiles-count text-right">{this.state.profiles.length} Compute Profiles</div>
+            <div className="profiles-count text-right">
+              {T.translate(`${PREFIX}.countProfiles`, {
+                context: this.state.profiles.length
+              })}
+            </div>
         }
         <div className={classnames('grid grid-container', {
           disabled: this.props.disabled

@@ -31,24 +31,27 @@ import { Link } from 'react-router-dom';
 import {handlePageChange, handleExperimentsSort, setExperimentsListError} from 'components/Experiments/store/ExperimentsListActionCreator';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.ListView';
 
 require('./ListView.scss');
 
 const tableHeaders = [
   {
-    label: 'Experiment',
+    label: T.translate(`${PREFIX}.experiment`),
     property: 'name'
   },
   {
-    label: '#Models',
+    label: T.translate(`${PREFIX}.numModels`),
     property: 'numOfModels'
   },
   {
-    label: 'Algorithm Types',
+    label: T.translate(`${PREFIX}.algoTypes`),
     property: 'algorithmTypes'
   },
   {
-    label: 'Test Data',
+    label: T.translate(`${PREFIX}.data`),
     property: 'testData'
   }
 ];
@@ -56,7 +59,7 @@ const tableHeaders = [
 const colorScale = d3Lib.scaleOrdinal(d3Lib.schemeCategory20);
 const PLUSBUTTONCONTEXTMENUITEMS = [
   {
-    label: 'Create a new Experiment',
+    label: T.translate(`${PREFIX}.createNew`),
     to: `/ns/${getCurrentNamespace()}/experiments/create`
   }
 ];
@@ -261,8 +264,7 @@ function ExperimentsListViewContent({
           handlePageChange={handlePageChange}
           currentPage={currentPage}
           totalPages={totalPages}
-          title={totalCount > 1 ? "Experiments" : "Experiment"}
-          numberOfEntities={totalCount}
+          title={T.translate(`${PREFIX}.experiments`, {context: totalCount})}
         />
       </div>
       <div className="grid-wrapper">

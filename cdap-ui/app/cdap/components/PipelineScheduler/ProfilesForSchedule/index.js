@@ -27,9 +27,11 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {preventPropagation} from 'services/helpers';
 import {extractProfileName, isSystemProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
+import T from 'i18n-react';
 require('./ProfilesForSchedule.scss');
 
 export const PROFILES_DROPDOWN_DOM_CLASS = 'profiles-list-dropdown';
+const PREFIX = 'features.PipelineScheduler';
 
 class ProfilesForSchedule extends Component {
   static propTypes = {
@@ -168,7 +170,7 @@ class ProfilesForSchedule extends Component {
     return (
       <div className="form-group row">
         <label className="col-xs-3 control-label">
-          Compute Profiles
+          {T.translate(`${PREFIX}.computeProfiles`)}
         </label>
         <div className="col-xs-6 schedule-values-container">
           {this.renderProfilesDropdown()}

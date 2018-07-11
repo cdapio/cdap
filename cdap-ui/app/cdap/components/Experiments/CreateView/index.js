@@ -50,6 +50,9 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import MyDataPrepApi from 'api/dataprep';
 import Alert from 'components/Alert';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.CreateView';
 
 require('./CreateView.scss');
 
@@ -191,10 +194,10 @@ export default class ExperimentCreateView extends Component {
       </div>
     );
     const {experimentId, addModel} = queryString.parse(this.props.location.search);
-    let popoverElementLabel = 'Create experiment';
+    let popoverElementLabel = T.translate(`${PREFIX}.createExperiment`);
 
     if (addModel) {
-      popoverElementLabel = 'Add model';
+      popoverElementLabel = T.translate(`${PREFIX}.addModel`);
     }
     const popoverElement = (
       <div className="btn btn-primary">

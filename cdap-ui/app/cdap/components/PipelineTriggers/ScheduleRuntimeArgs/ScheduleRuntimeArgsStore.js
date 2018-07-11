@@ -38,7 +38,7 @@ const I18NPREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs';
 const DEFAULTRUNTIMEARGSMESSAGE = T.translate(`${I18NPREFIX}.DefaultMessages.choose_runtime_arg`);
 const DEFAULTSTAGEMESSAGE = T.translate(`${I18NPREFIX}.DefaultMessages.choose_plugin`);
 const DEFAULTPROPERTYMESSAGE = T.translate(`${I18NPREFIX}.DefaultMessages.choose_plugin_property`);
-const DEFAULTTRIGGEREDMACROMESSAGE = T.translate(`${I18NPREFIX}.DefaultMessages.choose_runtime_arg_map`);
+const DEFAULTTRIGGEREDMACROMESSAGE = T.translate(`${I18NPREFIX}.DefaultMessages.choose_runtime_arg`);
 const DEFAULTFIELDDELIMITER = ':';
 
 const DEFAULTMACROS = [];
