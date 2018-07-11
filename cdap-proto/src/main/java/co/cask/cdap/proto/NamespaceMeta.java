@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,10 +28,17 @@ import java.util.Objects;
 public final class NamespaceMeta {
 
   public static final NamespaceMeta DEFAULT =
-    new NamespaceMeta.Builder().setName(NamespaceId.DEFAULT).setDescription("Default Namespace").build();
+    new NamespaceMeta.Builder()
+      .setName(NamespaceId.DEFAULT)
+      .setDescription("The default namespace, which is always available, and can be used in " +
+                        "environments where multitenancy is not required.")
+      .build();
 
   public static final NamespaceMeta SYSTEM =
-    new NamespaceMeta.Builder().setName(NamespaceId.SYSTEM).setDescription("System Namespace").build();
+    new NamespaceMeta.Builder()
+      .setName(NamespaceId.SYSTEM)
+      .setDescription("The system namespace, which is used for internal purposes.")
+      .build();
 
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceMeta.class);
 
