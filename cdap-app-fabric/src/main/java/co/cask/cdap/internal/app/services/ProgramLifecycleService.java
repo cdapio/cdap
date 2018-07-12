@@ -298,8 +298,8 @@ public class ProgramLifecycleService {
   public synchronized RunId runInternal(ProgramId programId, Map<String, String> userArgs,
                                         Map<String, String> sysArgs,
                                         boolean debug) throws NotFoundException, IOException, ProfileConflictException {
-    LOG.info("{} tries to run {} Program {}", authenticationContext.getPrincipal().getName(), programId.getType(),
-             programId.getProgram());
+    LOG.info("Attempt to run {} program {} as user {}", programId.getType(), programId.getProgram(),
+             authenticationContext.getPrincipal().getName());
     ProfileId profileId =
       SystemArguments.getProfileIdFromArgs(programId.getNamespaceId(), userArgs).orElse(ProfileId.NATIVE);
     Map<String, String> profileProperties = SystemArguments.getProfileProperties(userArgs);
