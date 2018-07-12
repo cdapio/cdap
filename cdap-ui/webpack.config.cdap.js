@@ -85,7 +85,7 @@ var plugins = [
   }),
   new ForkTsCheckerWebpackPlugin({
     tsconfig: __dirname + '/tsconfig.json',
-    tslint: __dirname + '/tslint.json',
+    tslint: true,
     // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
     memoryLimit: 4096
   }),
@@ -122,7 +122,7 @@ var rules = [
     test: /\.(t|j)s$/,
      use: [
         {
-          loader: "ts-loader",
+          loader: 'ts-loader',
           options: {
             transpileOnly: true
           },

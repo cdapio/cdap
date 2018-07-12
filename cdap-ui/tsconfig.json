@@ -6,7 +6,9 @@
     "module": "commonjs",
     "target": "es5",
     "jsx": "react",
+    "skipLibCheck": true,
     "moduleResolution": "node",
+    "importHelpers": true,
     "lib": [
       "es2015",
       "dom"
@@ -19,15 +21,6 @@
     "app/cdap/**/*.tsx",
   ],
   "exclude": [
-    "node_modules",
-    "cdap-ui-upgrade",
-    "common_dist",
-    "cdap_dist",
-    "login_dist",
-    "dll",
-    "old_dist",
-    "build",
-    "dist",
-    "app/ui-utils"
+    "node_modules"
   ]
 }
