@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,12 +22,14 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -47,7 +49,7 @@ public class MetadataService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryService discoveryService;
   private final Set<HttpHandler> handlers;
-  private final MetadataUpgrader metadataUpgrader;
+  private final MetadataMigrator metadataMigrator;
 
   private NettyHttpService httpService;
   private Cancellable cancelDiscovery;
@@ -56,18 +58,17 @@ public class MetadataService extends AbstractIdleService {
   MetadataService(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                   DiscoveryService discoveryService,
                   @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers,
-                  MetadataUpgrader metadataUpgrader) {
+                  DatasetFramework dsFramework, TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
-    this.metadataUpgrader = metadataUpgrader;
+    this.metadataMigrator = new MetadataMigrator(cConf, dsFramework, txClient);
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting Metadata Service");
-    metadataUpgrader.createOrUpgradeIfNecessary();
     httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
       .setHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
@@ -81,6 +82,11 @@ public class MetadataService extends AbstractIdleService {
 
     httpService.start();
 
+    // Only first instance will run the migration thread.
+    if (Boolean.valueOf(cConf.get(Constants.Dataset.Executor.IS_UPGRADE_NEEDED, "false"))) {
+      metadataMigrator.start();
+    }
+
     InetSocketAddress socketAddress = httpService.getBindAddress();
     LOG.info("Metadata service running at {}", socketAddress);
     cancelDiscovery = discoveryService.register(
@@ -93,6 +99,9 @@ public class MetadataService extends AbstractIdleService {
     LOG.debug("Shutting down Metadata Service");
     cancelDiscovery.cancel();
     httpService.stop();
+    if (metadataMigrator.isRunning()) {
+      metadataMigrator.stop();
+    }
     LOG.info("Metadata HTTP service stopped");
   }
 }
