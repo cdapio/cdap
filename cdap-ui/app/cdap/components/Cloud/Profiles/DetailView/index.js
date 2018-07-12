@@ -27,12 +27,21 @@ import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
+import {MyMetricApi} from 'api/metric';
 
 require('./DetailView.scss');
 
 export default class ProfileDetailView extends Component {
   state = {
     profile: {},
+    oneDayMetrics: {
+      runs: '--',
+      nodehr: '--'
+    },
+    overallMetrics: {
+      runs: '--',
+      nodehr: '--'
+    },
     provisioners: [],
     loading: true,
     error: null,
@@ -57,6 +66,59 @@ export default class ProfileDetailView extends Component {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
+  getMetricsQueryBody = (profile, startTime, endTime) => {
+    let {namespace} = this.props.match.params;
+    return {
+      qid: {
+        tags: {
+          namespace,
+          profilescope: profile.scope,
+          profile: `${profile.scope}:${profile.name}`
+        },
+        metrics: [
+          'system.program.completed.runs',
+          'system.program.node.minutes'
+        ],
+        timeRange: {
+          start: startTime,
+          end: endTime,
+          resolution: "auto",
+          aggregate: true
+        }
+      }
+    };
+  };
+
+  fetchAggregateMetrics = (metricName, startTime, endTime) => {
+    let oneDayMetricsRequestBody = this.getMetricsQueryBody(this.state.profile, startTime, endTime);
+    MyMetricApi
+      .query(null, oneDayMetricsRequestBody)
+      .subscribe(
+        (metrics) => {
+          let runs = '--', nodehr = '--';
+          metrics.qid.series.forEach(metric => {
+            if (metric.metricName === 'system.program.completed.runs' && Array.isArray(metric.data)) {
+              runs = metric.data[0].value;
+            }
+            if (metric.metricName === 'system.program.node.minutes' && Array.isArray(metric.data)) {
+              nodehr = metric.data[0].value;
+            }
+          });
+          this.setState({
+            [metricName]: {
+              runs,
+              nodehr
+            }
+          });
+        }
+      );
+  }
+
+  fetchMetrics = () => {
+    this.fetchAggregateMetrics('oneDayMetrics', 'now-24h', 'now');
+    this.fetchAggregateMetrics('overallMetrics', 0, 0);
+  };
+
   getProfile = () => {
     let {namespace, profileId} = this.props.match.params;
     MyCloudApi
@@ -69,7 +131,7 @@ export default class ProfileDetailView extends Component {
           this.setState({
             profile,
             loading: false
-          });
+          }, this.fetchMetrics);
         },
         (error) => {
           this.setState({
@@ -128,6 +190,8 @@ export default class ProfileDetailView extends Component {
               isSystem={this.state.isSystem}
               toggleProfileStatusCallback={this.getProfile}
               namespace={namespace}
+              oneDayMetrics={this.state.oneDayMetrics}
+              overallMetrics={this.state.overallMetrics}
             />
         }
       </div>

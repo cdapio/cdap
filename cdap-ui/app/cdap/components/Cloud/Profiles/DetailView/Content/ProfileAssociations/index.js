@@ -17,44 +17,47 @@
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import {MySearchApi} from 'api/search';
-import {isNilOrEmpty, humanReadableDuration} from 'services/helpers';
+import {isNilOrEmpty, humanReadableDuration, objectQuery} from 'services/helpers';
 import {GLOBALS} from 'services/global-constants';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import {MyMetricApi} from 'api/metric';
+import {Observable} from 'rxjs/Observable';
+require('./ProfileAssociations.scss');
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
+const HEADERPREFIX = `${PREFIX}.Associations.Header`;
 
-require('./ProfileAssociations.scss');
 const HEADERS = [
   {
-    label: 'Name',
+    label: T.translate(`${HEADERPREFIX}.name`),
     property: 'name'
   },
   {
-    label: 'Namespace',
+    label: T.translate(`${HEADERPREFIX}.namespace`),
     property: 'namespace'
   },
   {
-    label: 'Created',
+    label: T.translate(`${HEADERPREFIX}.created`),
     property: 'created'
   },
   {
-    label: 'Last 24 hrs runs'
+    label: T.translate(`${HEADERPREFIX}.last24hrsruns`)
   },
   {
-    label: 'Total runs'
+    label: T.translate(`${HEADERPREFIX}.totalruns`)
   },
   {
-    label: 'Last run node/hr'
+    label: T.translate(`${HEADERPREFIX}.lastrunnodehr`)
   },
   {
-    label: 'Total node/hr'
+    label: T.translate(`${HEADERPREFIX}.totalnodehr`)
   },
   {
-    label: 'Schedules'
+    label: T.translate(`${HEADERPREFIX}.schedules`)
   },
   {
-    label: 'Triggers'
+    label: T.translate(`${HEADERPREFIX}.triggers`)
   }
 ];
 
@@ -68,6 +71,83 @@ export default class ProfileAssociations extends Component {
     associationsMap: {}
   };
 
+  getMetricsQueryBody = (startTime, endTime, metadata) => {
+    let {namespace, profile} = this.props;
+    return {
+      qid: {
+        tags: {
+          namespace,
+          profilescope: profile.scope,
+          profile: `${profile.scope}:${profile.name}`,
+          programtype: metadata.type,
+          program: metadata.program
+        },
+        metrics: [
+          'system.program.completed.runs',
+          'system.program.node.minutes'
+        ],
+        timeRange: {
+          start: startTime,
+          end: endTime,
+          resolution: "auto",
+          aggregate: true
+        }
+      }
+    };
+  };
+
+  fetchAggregateMetrics = (startTime, endTime, metadata) => {
+    let oneDayMetricsRequestBody = this.getMetricsQueryBody(startTime, endTime, metadata);
+    return MyMetricApi
+      .query(null, oneDayMetricsRequestBody)
+      .flatMap(
+        (metrics) => {
+          let runs, nodehr;
+          metrics.qid.series.forEach(metric => {
+            if (metric.metricName === 'system.program.completed.runs' && Array.isArray(metric.data)) {
+              runs = metric.data[0].value;
+            }
+            if (metric.metricName === 'system.program.node.minutes' && Array.isArray(metric.data)) {
+              nodehr = metric.data[0].value;
+            }
+          });
+          return Observable.create(observer => {
+            observer.next({
+              runs,
+              nodehr
+            });
+          });
+        }
+      );
+  };
+
+  fetchMetricsForApp = (appid, metadata) => {
+    this
+      .fetchAggregateMetrics('now-24h', 'now', metadata)
+      .subscribe(({runs, nodehr}) => {
+        let {associationsMap} = this.state;
+        associationsMap[appid].metadata.onedayMetrics = {
+          nodehr,
+          runs
+        };
+        this.setState({
+          associationsMap
+        });
+      });
+    this
+      .fetchAggregateMetrics(0, 0, metadata)
+      .subscribe(({runs, nodehr}) => {
+        let {associationsMap} = this.state;
+        associationsMap[appid].metadata.overallMetrics = {
+          nodehr,
+          runs
+        };
+        this.setState({
+          associationsMap
+        });
+      });
+  }
+
   componentDidMount() {
     let {namespace, profile} = this.props;
     MySearchApi
@@ -77,9 +157,16 @@ export default class ProfileAssociations extends Component {
       })
       .subscribe(
         res => {
+          let associationsMap = this.convertMetadataToAssociations(res.results);
           this.setState({
-            associationsMap: this.convertMetadataToAssociations(res.results)
+            associationsMap
           });
+          // FIXME: We should probably look into batching this to one single call.
+          Object.keys(associationsMap)
+            .forEach(appid => {
+              let {metadata} = associationsMap[appid];
+              this.fetchMetricsForApp(appid, metadata);
+            });
         },
         err => {
           console.log(err);
@@ -95,6 +182,10 @@ export default class ProfileAssociations extends Component {
         existingEntry = {
           name: m.entityId.application,
           namespace: m.entityId.namespace,
+          metadata: {
+            type: m.entityId.type,
+            program: m.entityId.program
+          },
           schedules: [],
           triggers: []
         };
@@ -162,15 +253,17 @@ export default class ProfileAssociations extends Component {
         {
           Object.keys(associationsMap).map(app => {
             let appObj = associationsMap[app];
+            let onedayMetrics = objectQuery(appObj, 'metadata', 'onedayMetrics') || {};
+            let overallMetrics = objectQuery(appObj, 'metadata', 'overallMetrics') || {};
             return (
               <div className="grid-row">
                 <div>{appObj.name}</div>
                 <div>{appObj.namespace}</div>
                 <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true)}</div>
-                <div>--</div>
-                <div>--</div>
-                <div>--</div>
-                <div>--</div>
+                <div>{onedayMetrics.runs || '--'} </div>
+                <div>{overallMetrics.runs || '--'}</div>
+                <div>{onedayMetrics.nodehr || '--'}</div>
+                <div>{overallMetrics.nodehr || '--'}</div>
                 <div>{appObj.schedules.length}</div>
                 <div>{appObj.triggers.length}</div>
               </div>
