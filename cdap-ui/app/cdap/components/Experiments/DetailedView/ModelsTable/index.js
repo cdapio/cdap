@@ -239,66 +239,68 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
   modelTrainingLogsUrl = constructModelTrainingLogs(model, experimentId);
   return (
     <div {...props}>
-      <div />
-      <div>
+      <div className="content-wrapper">
+        <div />
         <div>
-          <strong>Model Description</strong>
-          <div>{model.description || '--'}</div>
-        </div>
-        <div>
-          <strong> Directives ({directivesCount}) </strong>
           <div>
-            <CollapsibleWrapper
-              content={directivesCount ? `${directives[0]}...` : '--'}
-              popoverContent={renderDirectivesTables.bind(null, directives)}
-              alwaysShowViewLink={true}
-            />
+            <strong>Model Description</strong>
+            <div>{model.description || '--'}</div>
+          </div>
+          <div>
+            <strong> Directives ({directivesCount}) </strong>
+            <div>
+              <CollapsibleWrapper
+                content={directivesCount ? `${directives[0]}...` : '--'}
+                popoverContent={renderDirectivesTables.bind(null, directives)}
+                alwaysShowViewLink={true}
+              />
+            </div>
           </div>
         </div>
-        <div className="model-action-btns">
+        <div>
+          <div>
+            <strong>Features ({featuresCount}) </strong>
+            <div>
+              <CollapsibleWrapper
+                content={featuresCount ? model.features.join(',') : '--'}
+                popoverContent={renderFeaturesTable.bind(null, model.features)}
+              />
+            </div>
+          </div>
+        </div>
+        <div>
+          <div>
+            <strong> Created on</strong>
+            <div>{humanReadableDate(model.createtime, true)}</div>
+          </div>
+        </div>
+        <div>
+          <div>
+            <strong> Model ID </strong>
+            <CopyableID
+              id={model.id}
+              label="Copy To Clipboard"
+              placement="left"
+            />
+          </div>
+          {
+            splitId ?
+              <div>
+                <strong>Model Training Logs </strong>
+                <a href={modelTrainingLogsUrl} target="_blank"> Logs </a>
+              </div>
+            :
+              null
+          }
+        </div>
+      </div>
+      <div className="model-action-btns">
           <AddModelToPipelineBtn
             modelName={model.name}
             modelId={model.id}
           />
           <PredictionDatasetExploreModal predictionDataset={model.predictionsDataset} />
         </div>
-      </div>
-      <div>
-        <div>
-          <strong>Features ({featuresCount}) </strong>
-          <div>
-            <CollapsibleWrapper
-              content={featuresCount ? model.features.join(',') : '--'}
-              popoverContent={renderFeaturesTable.bind(null, model.features)}
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <div>
-          <strong> Created on</strong>
-          <div>{humanReadableDate(model.createtime, true)}</div>
-        </div>
-      </div>
-      <div>
-        <div>
-          <strong> Model ID </strong>
-          <CopyableID
-            id={model.id}
-            label="Copy To Clipboard"
-            placement="left"
-          />
-        </div>
-        {
-          splitId ?
-            <div>
-              <strong>Model Training Logs </strong>
-              <a href={modelTrainingLogsUrl} target="_blank"> Logs </a>
-            </div>
-          :
-            null
-        }
-      </div>
     </div>
   );
 };
