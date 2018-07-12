@@ -1324,7 +1324,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(STOPPED, getProgramStatus(programId));
 
     // start workflow should give a 409 since we have a runtime argument associated with a disabled profile
-    ImmutableMap<String, String> args = ImmutableMap.of(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     startProgram(programId, Collections.singletonMap(SystemArguments.PROFILE_NAME, profileId.getScopedName()), 409);
     Assert.assertEquals(STOPPED, getProgramStatus(programId));
 
