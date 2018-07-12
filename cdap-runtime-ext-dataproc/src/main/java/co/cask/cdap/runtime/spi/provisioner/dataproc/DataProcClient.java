@@ -181,6 +181,19 @@ public class DataProcClient implements AutoCloseable {
   }
 
   /**
+   * Get the status of the specified cluster.
+   *
+   * @param name the cluster name
+   * @return the cluster status
+   * @throws RetryableProvisionException if there was a non 4xx error code returned
+   */
+  public co.cask.cdap.runtime.spi.provisioner.ClusterStatus getClusterStatus(String name)
+    throws RetryableProvisionException {
+    return getDataprocCluster(name).map(cluster -> convertStatus(cluster.getStatus()))
+      .orElse(co.cask.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS);
+  }
+
+  /**
    * Get information about the specified cluster. The cluster will not be present if it could not be found.
    *
    * @param name the cluster name
@@ -189,23 +202,12 @@ public class DataProcClient implements AutoCloseable {
    */
   public Optional<co.cask.cdap.runtime.spi.provisioner.Cluster> getCluster(String name)
     throws RetryableProvisionException, IOException {
-    Cluster cluster;
-    try {
-      cluster = client.getCluster(GetClusterRequest.newBuilder()
-                                    .setClusterName(name)
-                                    .setProjectId(conf.getProjectId())
-                                    .setRegion(conf.getRegion())
-                                    .build());
-    } catch (NotFoundException e) {
+    Optional<Cluster> clusterOptional = getDataprocCluster(name);
+    if (!clusterOptional.isPresent()) {
       return Optional.empty();
-    } catch (ApiException e) {
-      if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
-        // if there was an API exception that was not a 4xx, we can just try again
-        throw new RetryableProvisionException(e);
-      }
-      // otherwise, it's not a retryable failure
-      throw e;
     }
+
+    Cluster cluster = clusterOptional.get();
 
     List<Node> nodes = new ArrayList<>();
     for (String masterName : cluster.getConfig().getMasterConfig().getInstanceNamesList()) {
@@ -216,6 +218,25 @@ public class DataProcClient implements AutoCloseable {
     }
     return Optional.of(new co.cask.cdap.runtime.spi.provisioner.Cluster(
       cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
+  }
+
+  private Optional<Cluster> getDataprocCluster(String name) throws RetryableProvisionException {
+    try {
+      return Optional.of(client.getCluster(GetClusterRequest.newBuilder()
+                                             .setClusterName(name)
+                                             .setProjectId(conf.getProjectId())
+                                             .setRegion(conf.getRegion())
+                                             .build()));
+    } catch (NotFoundException e) {
+      return Optional.empty();
+    } catch (ApiException e) {
+      if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
+        // if there was an API exception that was not a 4xx, we can just try again
+        throw new RetryableProvisionException(e);
+      }
+      // otherwise, it's not a retryable failure
+      throw e;
+    }
   }
 
   // finds ingress firewalls for the configured network that open ports 22 and 443,
