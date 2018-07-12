@@ -77,8 +77,13 @@ public class DataProcProvisioner implements Provisioner {
           imageVersion = "1.2";
           break;
       }
+
+      // dataproc only allows label values to be lowercase letters, numbers, or dashes
+      String cdapVersion = context.getCDAPVersion().toLowerCase();
+      cdapVersion = cdapVersion.replaceAll("\\.", "_");
+      Map<String, String> labels = Collections.singletonMap("cdap-version", cdapVersion);
       if (!existing.isPresent()) {
-        client.createCluster(clusterName, imageVersion);
+        client.createCluster(clusterName, imageVersion, labels);
         return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
       } else {
         return existing.get();

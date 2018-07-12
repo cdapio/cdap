@@ -28,6 +28,7 @@ import org.apache.commons.cli.Options;
 import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -100,7 +101,7 @@ public class DataProcTool {
     String name = commandLine.getOptionValue('n');
     try (DataProcClient client = DataProcClient.fromConf(conf)) {
       if ("provision".equals(command)) {
-        client.createCluster(name, imageVersion);
+        client.createCluster(name, imageVersion, Collections.emptyMap());
       } else if ("details".equals(command)) {
         Optional<Cluster> cluster = client.getCluster(name);
         if (cluster.isPresent()) {

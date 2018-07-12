@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.provision;
 
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.SparkCompat;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
@@ -35,6 +36,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final Map<String, String> properties;
   private final SSHContext sshContext;
   private final SparkCompat sparkCompat;
+  private final String cdapVersion;
 
   public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
                                    SparkCompat sparkCompat, @Nullable SSHContext sshContext) {
@@ -43,6 +45,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.properties = Collections.unmodifiableMap(properties);
     this.sshContext = sshContext;
     this.sparkCompat = sparkCompat;
+    this.cdapVersion = ProjectInfo.getVersion().toString();
   }
 
   @Override
@@ -66,5 +69,10 @@ public class DefaultProvisionerContext implements ProvisionerContext {
       throw new UnsupportedOperationException("SSH is not supported");
     }
     return sshContext;
+  }
+
+  @Override
+  public String getCDAPVersion() {
+    return cdapVersion;
   }
 }
