@@ -1175,7 +1175,7 @@ features:
         b1: Intuitive Web UI for building, training, testing and evaluating Machine Learning models.
         b2: Seamless, integrated experience from data preparation and cleansing to model building and deployment.
         b3: Horizontal scalability over your Big Data environment.
-        b4: Out of the box support for common machine learning libraries like SparkML, DLF4J and H2O, along with support for deploying custom algorithms and libraries.
+        b4: Out of the box support for common machine learning libraries like SparkML.
         b5: Support for tuning custom hyperparameters for algorithms.
         b6: Integrated metrics and visualization providing rich summaries and graphs for model evaluation.
         title: "Some key benefits of MMDS are:"
