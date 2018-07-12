@@ -16,7 +16,7 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {getFields} from 'components/FieldLevelLineage/store/ActionCreator';
+import {init} from 'components/FieldLevelLineage/store/ActionCreator';
 import {Provider} from 'react-redux';
 import Store, {Actions} from 'components/FieldLevelLineage/store/Store';
 import Fields from 'components/FieldLevelLineage/Fields';
@@ -30,7 +30,7 @@ export default class FieldLevelLineage extends Component {
   };
 
   componentWillMount() {
-    getFields(this.props.entityId);
+    init(this.props.entityId);
   }
 
   componentWillUnmount() {
