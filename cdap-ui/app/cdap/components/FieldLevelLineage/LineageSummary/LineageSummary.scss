@@ -21,6 +21,7 @@ $secondary-color: $grey-04;
 $section-border-color: $grey-03;
 $field-row-border-color: $grey-05;
 $field-row-hover-bg: $grey-08;
+$view-operation-color: $blue-03;
 
 .field-level-lineage-container {
   .lineage-summary-container {
@@ -100,7 +101,14 @@ $field-row-hover-bg: $grey-08;
       padding-top: 15px;
       padding-bottom: 15px;
 
-      span { cursor: pointer; }
+      span {
+        cursor: pointer;
+        color: $view-operation-color;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
     }
   }
 }
