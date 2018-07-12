@@ -24,6 +24,7 @@ import ProfileDetailViewContent from 'components/Cloud/Profiles/DetailView/Conte
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
+import {MyMetricApi} from 'api/metric';
 
 require('./DetailView.scss');
 
@@ -54,6 +55,29 @@ export default class ProfileDetailView extends Component {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
+  getMetricsQueryBody = (profile) => {
+    let {namespace} = this.props.match.params;
+    return {
+      "qid": {
+        "tags": {
+          namespace,
+          "profilescope": profile.scope,
+          "profile": `${profile.scope}:${profile.name}`
+        },
+        "metrics": [
+          "system.program.completed.runs",
+          "system.program.node.minutes",
+          "system.metrics.emitted.count"
+        ],
+        "timeRange": {
+          "start": "now-24h",
+          "end": "now",
+          "resolution": "auto"
+        }
+      }
+    };
+  };
+
   getProfile = () => {
     let {namespace, profileId} = this.props.match.params;
     MyCloudApi
@@ -61,20 +85,26 @@ export default class ProfileDetailView extends Component {
         namespace,
         profile: profileId
       })
-      .subscribe(
+      .flatMap(
         (profile) => {
           this.setState({
             profile,
             loading: false
           });
-        },
-        (error) => {
-          this.setState({
-            error: error.response || error,
-            loading: false
-          });
-        }
-      );
+          let metricsBody = this.getMetricsQueryBody(profile);
+          return MyMetricApi.query(null, metricsBody);
+        })
+        .subscribe(
+          (metrics) => {
+            console.log('Hurray!!: ', metrics);
+          },
+          (error) => {
+            this.setState({
+              error: error.response || error,
+              loading: false
+            });
+          }
+        );
   };
 
   getProvisioners() {
