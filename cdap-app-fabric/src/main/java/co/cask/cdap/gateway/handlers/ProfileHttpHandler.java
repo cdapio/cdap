@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.conf.Constants;
@@ -89,7 +90,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void writeSystemProfile(FullHttpRequest request, HttpResponder responder,
                                  @PathParam("profile-name") String profileName)
-    throws BadRequestException, IOException {
+    throws BadRequestException, IOException, MethodNotAllowedException {
     ProfileId profileId = NamespaceId.SYSTEM.profile(profileName);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -108,7 +109,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}/disable")
   public void disableSystemProfile(HttpRequest request, HttpResponder responder,
                                    @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException {
+    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
     profileService.disableProfile(NamespaceId.SYSTEM.profile(profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -117,7 +118,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void deleteSystemProfile(HttpRequest request, HttpResponder responder,
                                   @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException {
+    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
     // TODO: add the check if there is any program or schedule associated with the profile
     profileService.deleteProfile(NamespaceId.SYSTEM.profile(profileName));
     responder.sendStatus(HttpResponseStatus.OK);
@@ -155,7 +156,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void writeProfile(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
-                           @PathParam("profile-name") String profileName) throws BadRequestException, IOException {
+                           @PathParam("profile-name") String profileName)
+    throws BadRequestException, IOException, MethodNotAllowedException {
     ProfileId profileId = new ProfileId(namespaceId, profileName);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -171,7 +173,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void deleteProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException {
+    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
     // TODO: add the check if there is any program or schedule associated with the profile
     profileService.deleteProfile(new ProfileId(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
@@ -195,7 +197,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void disableProfile(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException {
+    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
     profileService.disableProfile(new ProfileId(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -213,7 +215,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private void writeProfile(ProfileId profileId, FullHttpRequest request) throws BadRequestException, IOException {
+  private void writeProfile(ProfileId profileId, FullHttpRequest request)
+    throws BadRequestException, IOException, MethodNotAllowedException {
     ProfileCreateRequest profileCreateRequest;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       profileCreateRequest = GSON.fromJson(reader, ProfileCreateRequest.class);

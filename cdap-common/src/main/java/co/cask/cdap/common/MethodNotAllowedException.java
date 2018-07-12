@@ -25,21 +25,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class MethodNotAllowedException extends Exception implements HttpErrorStatusProvider {
 
-  private final HttpMethod method;
-  private final String apiPath;
-
-  public MethodNotAllowedException(HttpMethod method, String apiPath) {
-    super(String.format("Method %s is not allowed on path %s.", method, apiPath));
-    this.method = method;
-    this.apiPath = apiPath;
-  }
-
-  public HttpMethod getMethod() {
-    return method;
-  }
-
-  public String getApiPath() {
-    return apiPath;
+  public MethodNotAllowedException(String message) {
+    super(message);
   }
 
   @Override

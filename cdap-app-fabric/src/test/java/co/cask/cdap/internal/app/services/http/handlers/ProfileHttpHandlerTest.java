@@ -220,4 +220,14 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     disableProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
     deleteProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
   }
+
+  @Test
+  public void testNativeProfileImmutable() throws Exception {
+    // verify native profile exists
+    Assert.assertEquals(Profile.NATIVE, getProfile(ProfileId.NATIVE, 200).get());
+    // disable, update, or delete should throw a 405
+    disableProfile(ProfileId.NATIVE, 405);
+    putSystemProfile(ProfileId.NATIVE.getProfile(), Profile.NATIVE, 405);
+    deleteSystemProfile(ProfileId.NATIVE.getProfile(), 405);
+  }
 }
