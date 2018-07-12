@@ -154,4 +154,11 @@ body {
       }
     }
   }
+
+  /* Truncate text with ellipsis helper */
+  .truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
