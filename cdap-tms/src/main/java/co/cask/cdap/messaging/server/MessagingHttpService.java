@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -58,6 +59,7 @@ public class MessagingHttpService extends AbstractIdleService {
   @Inject
   public MessagingHttpService(CConfiguration cConf, DiscoveryService discoveryService,
                               MetricsCollectionService metricsCollectionService,
+                              MessagingService messagingService,
                               @Named(Constants.MessagingSystem.HANDLER_BINDING_NAME) Set<HttpHandler> handlers) {
     this.cConf = cConf;
     this.discoveryService = discoveryService;

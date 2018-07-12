@@ -29,6 +29,7 @@ import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.kafka.KafkaLogProcessorPipeline;
 import co.cask.cdap.logging.pipeline.kafka.KafkaPipelineConfig;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
@@ -114,13 +115,23 @@ public class DistributedLogFramework extends ResourceBalancerService {
       @Override
       protected void startUp() throws Exception {
         // Starts all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::start));
+        validateAllFutures(Iterables.transform(pipelines, new Function<Service, ListenableFuture<State>>() {
+          @Override
+          public ListenableFuture<State> apply(Service service) {
+            return service.start();
+          }
+        }));
       }
 
       @Override
       protected void shutDown() throws Exception {
         // Stops all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::stop));
+        validateAllFutures(Iterables.transform(pipelines, new Function<Service, ListenableFuture<State>>() {
+          @Override
+          public ListenableFuture<State> apply(Service service) {
+            return service.stop();
+          }
+        }));
       }
     };
   }

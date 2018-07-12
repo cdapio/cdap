@@ -106,7 +106,7 @@ public class KafkaLogReader implements LogReader {
       fetchLogEvents(kafkaConsumer, kafkaCallback, startOffset, latestOffset, maxEvents, readRange);
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw Throwables.propagate(e);
+      throw  Throwables.propagate(e);
     } finally {
       try {
         kafkaConsumer.close();

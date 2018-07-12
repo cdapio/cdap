@@ -139,7 +139,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       namespaceHome = namespacedLocationFactory.get(namespaceMeta);
       if (namespaceHome.exists()) {
         throw new FileAlreadyExistsException(null, null,
-                                             String.format("Directory '%s' for '%s' already exists.",
+                                             String.format("HDFS directory '%s' for '%s' already exists.",
                                                            namespaceHome, namespaceId));
       }
       createdHome = createNamespaceDir(namespaceHome, "home", namespaceId);

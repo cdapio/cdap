@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,6 +47,14 @@ public interface LoggingContext {
    * @return partition name.
    */
   String getLogPartition();
+
+  /**
+   * Returns the path fragment that will be part of the log file name. The grouping of log messages into partitions
+   * should be consistent with the value returned as path fragment.
+   * @return the path fragment that will be part of the log file name.
+   * @param logBaseDir base dir for logs
+   */
+  String getLogPathFragment(String logBaseDir);
 
   /**
    * Defines the interface for the system tag associated with LoggingContext.
