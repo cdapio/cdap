@@ -171,6 +171,7 @@ export default class ExperimentCreateView extends Component {
         {this.renderTopPanel(this.title)}
         <DataPrepConnections
           sidePanelExpanded={false}
+          allowSidePanelToggle={false}
           enableRouting={false}
           singleWorkspaceMode={true}
           onWorkspaceCreate={(workspaceId) => {

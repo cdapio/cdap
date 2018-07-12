@@ -261,6 +261,9 @@ export default class DataPrepConnections extends Component {
   }
 
   toggleSidePanel() {
+    if (!this.props.allowSidePanelToggle) {
+      return;
+    }
     this.setState({sidePanelExpanded: !this.state.sidePanelExpanded});
   }
 
@@ -786,7 +789,8 @@ export default class DataPrepConnections extends Component {
 }
 
 DataPrepConnections.defaultProps = {
-  enableRouting: true
+  enableRouting: true,
+  allowSidePanelToggle: true
 };
 
 DataPrepConnections.propTypes = {
@@ -796,6 +800,7 @@ DataPrepConnections.propTypes = {
   onWorkspaceCreate: PropTypes.func,
   singleWorkspaceMode: PropTypes.bool,
   sidePanelExpanded: PropTypes.bool,
+  allowSidePanelToggle: PropTypes.bool,
   scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   browserTitle: PropTypes.string
 };

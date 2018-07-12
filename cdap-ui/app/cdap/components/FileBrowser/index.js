@@ -56,10 +56,12 @@ export default class FileBrowser extends Component {
   static defaultProps = {
     enableRouting: true,
     scope: false,
-    browserTitle: T.translate(`${PREFIX}.TopPanel.selectData`)
+    browserTitle: T.translate(`${PREFIX}.TopPanel.selectData`),
+    allowSidePanelToggle: true
   };
 
   static propTypes = {
+    allowSidePanelToggle: PropTypes.bool,
     location: PropTypes.object,
     match: PropTypes.object,
     initialDirectoryPath: PropTypes.string,
@@ -513,7 +515,9 @@ export default class FileBrowser extends Component {
           <div className="title">
             <h5>
               <span
-                className="fa fa-fw"
+                className={classnames("fa fa-fw", {
+                  'disabled': !this.props.allowSidePanelToggle
+                })}
                 onClick={this.props.toggle}
               >
                 <IconSVG name="icon-bars" />
