@@ -20,7 +20,7 @@ import {connect} from 'react-redux';
 import SummaryRow from 'components/FieldLevelLineage/LineageSummary/SummaryRow';
 import IconSVG from 'components/IconSVG';
 import {Actions} from 'components/FieldLevelLineage/store/Store';
-import {getOperations} from 'components/FieldLevelLineage/store/ActionCreator';
+import {getOperations, replaceHistory} from 'components/FieldLevelLineage/store/ActionCreator';
 import OperationsModal from 'components/FieldLevelLineage/OperationsModal';
 import T from 'i18n-react';
 
@@ -99,6 +99,8 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: Actions.closeSummary
       });
+
+      replaceHistory();
     }
   };
 };
