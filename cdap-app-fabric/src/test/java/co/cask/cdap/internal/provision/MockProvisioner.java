@@ -83,13 +83,13 @@ public class MockProvisioner implements Provisioner {
   }
 
   @Override
-  public void initializeCluster(ProvisionerContext context, Cluster cluster) throws Exception {
+  public void initializeCluster(ProvisionerContext context, Cluster cluster) {
     failIfConfigured(context, FAIL_INIT);
-    failRetryablyEveryN(context);
   }
 
   @Override
-  public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
+  public ClusterStatus getClusterStatus(ProvisionerContext context,
+                                        Cluster cluster) throws RetryableProvisionException {
     failIfConfigured(context, FAIL_GET);
     failRetryablyEveryN(context);
     ClusterStatus status = cluster.getStatus();
@@ -110,7 +110,12 @@ public class MockProvisioner implements Provisioner {
           break;
       }
     }
-    return new Cluster(cluster, newStatus);
+    return newStatus;
+  }
+
+  @Override
+  public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
+    return new Cluster(cluster, getClusterStatus(context, cluster));
   }
 
   @Override

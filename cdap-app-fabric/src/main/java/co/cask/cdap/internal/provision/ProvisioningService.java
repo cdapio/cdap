@@ -220,8 +220,9 @@ public class ProvisioningService extends AbstractIdleService {
       }
 
       // the actual task still needs to be run for cleanup to happen, but avoid logging a confusing
-      // message about resuming a task that is in cancelled state.
-      if (provisioningOp.getStatus() != ProvisioningOp.Status.CANCELLED) {
+      // message about resuming a task that is in cancelled state or resuming a task that is completed
+      if (provisioningOp.getStatus() != ProvisioningOp.Status.CANCELLED &&
+        provisioningOp.getStatus() != ProvisioningOp.Status.CREATED) {
         LOG.info("Resuming provisioning task for run {} of type {} in state {}.",
                  provisioningTaskInfo.getProgramRunId(), provisioningTaskInfo.getProvisioningOp().getType(),
                  provisioningTaskInfo.getProvisioningOp().getStatus());

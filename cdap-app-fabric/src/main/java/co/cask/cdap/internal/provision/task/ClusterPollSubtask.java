@@ -41,11 +41,12 @@ public class ClusterPollSubtask extends ProvisioningSubtask {
 
   @Override
   protected Cluster execute(Cluster cluster) throws Exception {
-    while (cluster.getStatus() == status) {
-      cluster = provisioner.getClusterDetail(provisionerContext, cluster);
+    ClusterStatus currentStatus = status;
+    while (currentStatus == status) {
+      currentStatus = provisioner.getClusterStatus(provisionerContext, cluster);
       // TODO: CDAP-13346 use provisioner specified polling strategy instead of hardcoded sleep
       TimeUnit.SECONDS.sleep(2);
     }
-    return cluster;
+    return new Cluster(cluster, currentStatus);
   }
 }

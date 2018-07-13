@@ -44,6 +44,7 @@ public interface Provisioner {
    * but it must be at least in the processes of being created. Must be implemented in an idempotent way,
    * otherwise there may be resource leaks. This means the implementation must first check if the cluster exists
    * before trying to create it, otherwise multiple clusters may be created for a single program run.
+   * The cluster returned will be passed to subsequent calls.
    *
    * @param context provisioner context
    * @return information about the cluster
@@ -53,8 +54,22 @@ public interface Provisioner {
   Cluster createCluster(ProvisionerContext context) throws Exception;
 
   /**
+   * Get the status of the cluster. If it does not exist, {@link ClusterStatus#NOT_EXISTS} should be returned.
+   * This is used to poll for status after {@link #createCluster(ProvisionerContext)} or
+   * {@link #deleteCluster(ProvisionerContext, Cluster)} is called.
+   *
+   * @param context provisioner context
+   * @param cluster the cluster to get the status of
+   * @return the status of the cluster
+   * @throws RetryableProvisionException if the operation failed, but may succeed on a retry
+   * @throws Exception if the operation failed in a non-retryable fashion
+   */
+  ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception;
+
+  /**
    * Get details about the cluster. If the cluster does not exist, a cluster with status
-   * {@link ClusterStatus#NOT_EXISTS} should be returned.
+   * {@link ClusterStatus#NOT_EXISTS} should be returned. This is called after a cluster has been created, but before
+   * it has been initialized.
    *
    * @param context provisioner context
    * @param cluster the cluster to get

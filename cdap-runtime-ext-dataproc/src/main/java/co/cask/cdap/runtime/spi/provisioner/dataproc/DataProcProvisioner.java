@@ -16,7 +16,6 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
-import co.cask.cdap.runtime.spi.SparkCompat;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
@@ -66,7 +65,6 @@ public class DataProcProvisioner implements Provisioner {
       // if it already exists, it means this is a retry. We can skip actually making the request
       Optional<Cluster> existing = client.getCluster(clusterName);
 
-      SparkCompat sparkCompat = context.getSparkCompat();
       String imageVersion;
       switch (context.getSparkCompat()) {
         case SPARK1_2_10:
@@ -88,6 +86,16 @@ public class DataProcProvisioner implements Provisioner {
       } else {
         return existing.get();
       }
+    }
+  }
+
+  @Override
+  public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
+    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    String clusterName = getClusterName(context.getProgramRun());
+
+    try (DataProcClient client = DataProcClient.fromConf(conf)) {
+      return client.getClusterStatus(clusterName);
     }
   }
 

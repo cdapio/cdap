@@ -91,10 +91,10 @@ public abstract class ProvisioningTask {
       }
 
       try {
-        LOG.debug("Executing {} subtask {}.", taskInfo.getProvisioningOp().getType(), state);
+        LOG.info("Executing {} subtask {}.", taskInfo.getProvisioningOp().getType(), state);
         taskInfoOptional = Retries.callWithInterruptibleRetries(() -> subtask.execute(taskInfo), retryStrategy,
                                                                 t -> t instanceof RetryableProvisionException);
-        LOG.debug("Completed {} subtask {}.", taskInfo.getProvisioningOp().getType(), state);
+        LOG.info("Completed {} subtask {}.", taskInfo.getProvisioningOp().getType(), state);
       } catch (InterruptedException e) {
         throw e;
       } catch (Exception e) {
