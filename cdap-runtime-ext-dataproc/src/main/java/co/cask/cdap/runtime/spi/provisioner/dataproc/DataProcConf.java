@@ -17,6 +17,7 @@
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -154,7 +155,8 @@ public class DataProcConf {
   }
 
   public static DataProcConf fromProvisionerContext(ProvisionerContext context) {
-    return create(context.getProperties(), context.getSSHContext().getSSHPublicKey());
+    return create(context.getProperties(),
+                  context.getSSHContext().getSSHKeyPair().map(SSHKeyPair::getPublicKey).orElse(null));
   }
 
   /**

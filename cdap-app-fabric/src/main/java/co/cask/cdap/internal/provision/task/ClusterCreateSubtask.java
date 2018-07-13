@@ -17,11 +17,14 @@
 
 package co.cask.cdap.internal.provision.task;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -37,6 +40,15 @@ public class ClusterCreateSubtask extends ProvisioningSubtask {
 
   @Override
   public Cluster execute(Cluster cluster) throws Exception {
-    return provisioner.createCluster(provisionerContext);
+    Cluster nextCluster = provisioner.createCluster(provisionerContext);
+
+    // Add the ssh user property to the resulting Cluster if SSHKeyPair is present in the context
+    return provisionerContext.getSSHContext().getSSHKeyPair()
+      .map(sshKeyPair -> {
+        Map<String, String> properties = new HashMap<>(nextCluster.getProperties());
+        properties.put(Constants.RuntimeMonitor.SSH_USER, sshKeyPair.getPublicKey().getUser());
+        return new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(), properties);
+      })
+      .orElse(nextCluster);
   }
 }

@@ -23,6 +23,7 @@ import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -58,6 +59,10 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
+    // Generates and set the ssh key
+    SSHKeyPair sshKeyPair = context.getSSHContext().generate("cdap");
+    context.getSSHContext().setSSHKeyPair(sshKeyPair);
+
     DataProcConf conf = DataProcConf.fromProvisionerContext(context);
     String clusterName = getClusterName(context.getProgramRun());
 

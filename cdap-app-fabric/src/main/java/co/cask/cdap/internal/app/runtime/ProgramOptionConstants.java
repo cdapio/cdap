@@ -43,7 +43,7 @@ public final class ProgramOptionConstants {
 
   public static final String CLUSTER = "cluster";
 
-  public static final String CLUSTER_KEY_INFO = "clusterKeyInfo";
+  public static final String SECURE_KEYS_DIR = "secureKeysDir";
 
   public static final String CLUSTER_END_TIME = "clusterEndTime";
 
