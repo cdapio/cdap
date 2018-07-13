@@ -27,6 +27,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.avro.file.DataFileReader;
+import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.filesystem.Location;
@@ -184,12 +185,12 @@ public final class MessageUtil {
     while (index >= 0) {
       Location latestLocation = locationsTimeSorted.get(index);
       try {
-        DataFileReader<GenericRecord> dataFileReader =
-          new DataFileReader<>(new File(latestLocation.toURI()),
+        DataFileStream<GenericRecord> dataFileStream =
+          new DataFileStream<>(latestLocation.getInputStream(),
                                new GenericDatumReader<>(ProgramRunInfoSerializer.SCHEMA));
         //TODO - efficiently skip using sync points CDAP-13400
-        while (dataFileReader.hasNext()) {
-          GenericRecord record = dataFileReader.next();
+        while (dataFileStream.hasNext()) {
+          GenericRecord record = dataFileStream.next();
           messageId = record.get(Constants.MESSAGE_ID).toString();
         }
         if (messageId != null) {
