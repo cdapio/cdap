@@ -60,12 +60,12 @@ export default class AddConnection extends Component {
       },
       {
         type: 'GCS',
-        icon: 'icon-google',
+        icon: 'icon-storage',
         component: GCSConnection
       },
       {
         type: 'Big Query',
-        icon: 'icon-google',
+        icon: 'icon-bigquery',
         component: BigQueryConnection
       }
     ];
