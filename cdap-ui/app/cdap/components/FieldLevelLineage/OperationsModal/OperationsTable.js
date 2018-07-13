@@ -27,18 +27,24 @@ export default class OperationsTable extends Component {
   };
 
   state = {
-    activeId: null
+    activeOrigin: null,
+    activeField: {}
   };
 
   componentWillReceiveProps() {
     this.setState({
-      activeId: null
+      activeOrigin: null,
+      activeField: {}
     });
   }
 
-  handleInputClick(id) {
+  handleInputClick(field, operation) {
     this.setState({
-      activeId: id
+      activeOrigin: field.origin,
+      activeField: {
+        operation: operation.name,
+        name: field.name
+      }
     });
   }
 
@@ -61,11 +67,16 @@ export default class OperationsTable extends Component {
     if (!fields) { return '--'; }
 
     return fields.map((field, i) => {
+      const activeField = this.state.activeField;
+      const isSelected = activeField.operation === operation.name &&
+                          activeField.name === field.name &&
+                          this.state.activeOrigin === field.origin;
+
       return (
         <span>
           <span
-            className={classnames('input-field', { 'selected': this.state.activeId === field.origin })}
-            onClick={this.handleInputClick.bind(this, field.origin)}
+            className={classnames('input-field', { 'selected': isSelected })}
+            onClick={this.handleInputClick.bind(this, field, operation)}
           >
             {field.name}
           </span>
@@ -118,7 +129,7 @@ export default class OperationsTable extends Component {
             return (
               <div
                 key={operation.id}
-                className={classnames('grid-row', {'active': operation.name === this.state.activeId})}
+                className={classnames('grid-row', {'active': operation.name === this.state.activeOrigin})}
               >
                 <div>{ i + 1 }</div>
                 <div>{ this.renderInput(operation) }</div>
