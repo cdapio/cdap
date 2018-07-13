@@ -420,6 +420,15 @@ public abstract class AbstractMetadataClient {
   }
 
   /**
+   * @param metadataEntity the {@link MetadataEntity} for which to retrieve the metadata properties
+   * @return The metadata properties for the entity.
+   */
+  public Map<String, String> getProperties(MetadataEntity metadataEntity)
+    throws UnauthenticatedException, BadRequestException, IOException, UnauthorizedException {
+    return getProperties(metadataEntity, null);
+  }
+
+  /**
    * Return the properties for the {@link MetadataEntity} in the given scope
    * @param metadataEntity whose properties is needed
    * @param scope the scope of properties
