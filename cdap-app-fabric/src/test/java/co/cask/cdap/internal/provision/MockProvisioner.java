@@ -20,6 +20,8 @@ import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategies;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
@@ -124,6 +126,12 @@ public class MockProvisioner implements Provisioner {
     failIfConfigured(context, FAIL_DELETE);
     failRetryablyEveryN(context);
     waitIfConfigured(context, WAIT_DELETE_MS);
+  }
+
+  @Override
+  public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
+    // retry immediately in unit tests
+    return PollingStrategies.fixedInterval(0, TimeUnit.MILLISECONDS);
   }
 
   // throws a RetryableProvisionException every other time this is called

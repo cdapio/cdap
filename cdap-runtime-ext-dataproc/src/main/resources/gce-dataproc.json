@@ -220,6 +220,47 @@
           }
         }
       ]
+    },
+    {
+      "label": "Polling Settings",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Create Poll Delay",
+          "name": "pollCreateDelay",
+          "description": "The number of seconds to wait after creating a cluster to begin polling to see if it has been created",
+          "widget-attributes": {
+            "default": "60"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Create Poll Jitter",
+          "name": "pollCreateJitter",
+          "description": "Maximum amount of jitter in seconds to add to the delay for polling for cluster creation",
+          "widget-attributes": {
+            "default": "20"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Delete Poll Delay",
+          "name": "pollDeleteDelay",
+          "description": "The number of seconds to wait after deleting a cluster to begin polling to see if it has been deleted",
+          "widget-attributes": {
+            "default": "30"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Poll Interval",
+          "name": "pollInterval",
+          "description": "The number of seconds to wait in between polls for cluster status during create and delete operations",
+          "widget-attributes": {
+            "default": "2"
+          }
+        }
+      ]
     }
   ]
 }

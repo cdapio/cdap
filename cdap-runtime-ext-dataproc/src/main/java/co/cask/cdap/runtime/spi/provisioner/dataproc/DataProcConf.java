@@ -57,11 +57,17 @@ public class DataProcConf {
   private final int workerMemoryMB;
   private final int workerDiskGB;
 
+  private final long pollCreateDelay;
+  private final long pollCreateJitter;
+  private final long pollDeleteDelay;
+  private final long pollInterval;
+
   private final SSHPublicKey publicKey;
 
   private DataProcConf(String accountKey, String region, String zone, String projectId, String network,
                        int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
                        int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
+                       long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        @Nullable SSHPublicKey publicKey) {
     this.accountKey = accountKey;
     this.region = region;
@@ -76,6 +82,10 @@ public class DataProcConf {
     this.workerCPUs = workerCPUs;
     this.workerMemoryMB = workerMemoryMB;
     this.workerDiskGB = workerDiskGB;
+    this.pollCreateDelay = pollCreateDelay;
+    this.pollCreateJitter = pollCreateJitter;
+    this.pollDeleteDelay = pollDeleteDelay;
+    this.pollInterval = pollInterval;
     this.publicKey = publicKey;
   }
 
@@ -117,6 +127,22 @@ public class DataProcConf {
 
   public String getWorkerMachineType() {
     return getMachineType(workerCPUs, workerMemoryMB);
+  }
+
+  public long getPollCreateDelay() {
+    return pollCreateDelay;
+  }
+
+  public long getPollCreateJitter() {
+    return pollCreateJitter;
+  }
+
+  public long getPollDeleteDelay() {
+    return pollDeleteDelay;
+  }
+
+  public long getPollInterval() {
+    return pollInterval;
   }
 
   @Nullable
@@ -195,11 +221,15 @@ public class DataProcConf {
     int masterDiskGB = getInt(properties, "masterDiskGB", 500);
     int workerDiskGB = getInt(properties, "workerDiskGB", 500);
 
-
+    long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
+    long pollCreateJitter = getLong(properties, "pollCreateJitter", 20);
+    long pollDeleteDelay = getLong(properties, "pollDeleteDelay", 30);
+    long pollInterval = getLong(properties, "pollInterval", 2);
 
     return new DataProcConf(accountKey, region, zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
-                            workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB, publicKey);
+                            workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
+                            pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval, publicKey);
   }
 
   private static String getString(Map<String, String> properties, String key) {
@@ -230,6 +260,24 @@ public class DataProcConf {
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException(
         String.format("Invalid config '%s' = '%s'. Must be a valid, positive integer.", key, valStr));
+    }
+  }
+
+  private static long getLong(Map<String, String> properties, String key, long defaultVal) {
+    String valStr = properties.get(key);
+    if (valStr == null) {
+      return defaultVal;
+    }
+    try {
+      long val = Long.parseLong(valStr);
+      if (val < 0) {
+        throw new IllegalArgumentException(
+          String.format("Invalid config '%s' = '%s'. Must be a positive long.", key, valStr));
+      }
+      return val;
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException(
+        String.format("Invalid config '%s' = '%s'. Must be a valid, positive long.", key, valStr));
     }
   }
 }
