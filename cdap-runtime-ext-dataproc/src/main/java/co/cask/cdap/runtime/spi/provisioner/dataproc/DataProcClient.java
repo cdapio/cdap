@@ -87,13 +87,14 @@ public class DataProcClient implements AutoCloseable {
    *
    * @param name the name of the cluster to create
    * @param imageVersion the image version for the cluster
+   * @param labels labels to set on the cluster
    * @return the response for issuing the create
    * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
    * @throws AlreadyExistsException if the cluster already exists
    * @throws IOException if there was an I/O error talking to Google Compute APIs
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public OperationSnapshot createCluster(String name, String imageVersion)
+  public OperationSnapshot createCluster(String name, String imageVersion, Map<String, String> labels)
     throws RetryableProvisionException, InterruptedException, IOException {
 
     try {
@@ -114,6 +115,7 @@ public class DataProcClient implements AutoCloseable {
 
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
         .setClusterName(name)
+        .putAllLabels(labels)
         .setConfig(ClusterConfig.newBuilder()
                      .setMasterConfig(InstanceGroupConfig.newBuilder()
                                         .setNumInstances(conf.getMasterNumNodes())
