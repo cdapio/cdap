@@ -22,6 +22,9 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {setPopoverOffset} from 'components/DataPrep/helper';
+import T from 'i18n-react';
+
+const PREFIX = 'features.DataPrep.Directives.FillNullOrEmpty';
 
 export default class FillNullOrEmptyDirective extends Component {
   constructor(props) {
@@ -96,7 +99,7 @@ export default class FillNullOrEmptyDirective extends Component {
         className="second-level-popover"
         onClick={this.preventPropagation}
       >
-        <h5>Fill Null or Empty Cells</h5>
+        <h5>{T.translate(`${PREFIX}.title`)}</h5>
 
         <div className="input">
           <input
@@ -118,14 +121,14 @@ export default class FillNullOrEmptyDirective extends Component {
             onClick={this.applyDirective}
             disabled={this.state.input.length === 0}
           >
-            Apply
+            {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
           <button
             className="btn btn-link float-xs-right"
             onClick={this.props.close}
           >
-            Cancel
+            {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
 
@@ -141,7 +144,7 @@ export default class FillNullOrEmptyDirective extends Component {
           'active': this.props.isOpen
         })}
       >
-        <span>Fill Null or Empty Cells</span>
+        <span>{T.translate(`${PREFIX}.title`)}</span>
 
         <span className="float-xs-right">
           <span className="fa fa-caret-right" />

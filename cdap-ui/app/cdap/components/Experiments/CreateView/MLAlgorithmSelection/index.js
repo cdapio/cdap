@@ -32,6 +32,9 @@ import HyperParamWidget from 'components/Experiments/CreateView/MLAlgorithmSelec
 import startCase from 'lodash/startCase';
 import classnames from 'classnames';
 import Alert from 'components/Alert';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.CreateView';
 
 require('./MLAlgorithmSelection.scss');
 
@@ -51,7 +54,11 @@ const MLAlgorithmsList = ({algorithmsList, setModelAlgorithm, selectedAlgorithm,
   };
   return (
     <div className="ml-algorithm-list-view">
-      <div className="ml-algorithm-category-title">Algorithm Type: {startCase(algorithmsList[0].type || '')}</div>
+      <div className="ml-algorithm-category-title">
+        {T.translate(`${PREFIX}.algorithmType`, {
+          type: startCase(algorithmsList[0].type || '')
+        })}
+      </div>
       {
         algorithmsList.map((algo, i) => {
           return (
@@ -176,7 +183,11 @@ const MLAlgorithmDetails = ({algorithm, algorithmsList}) => {
   }
   return (
     <div className="ml-algorithm-hyper-parameters-wrapper">
-      <strong> Configure hyperparameters for {getAlgorithmLabel(algorithm.name)} </strong>
+      <strong>
+        {T.translate(`${PREFIX}.configureHyperparamsFor`, {
+          algorithm: getAlgorithmLabel(algorithm.name)
+        })}
+      </strong>
       <div className="ml-algorithm-hyper-parameters">
         {
           algorithmsList
@@ -216,7 +227,7 @@ const AddModelBtn = ({algorithm, trainModel}) => {
       disabled={!algorithm.name.length}
       onClick={trainModel}
     >
-      Train Model
+      {T.translate(`${PREFIX}.trainModel`)}
     </button>
   );
 };
@@ -247,7 +258,7 @@ export default function MLAlgorithmSelection() {
   return (
     <Provider store={createExperimentStore}>
       <div className="ml-algorithm-selection">
-        <h3>Select a Machine Learning Algorithm</h3>
+        <h3>{T.translate(`${PREFIX}.selectMLAlgorithm`)}</h3>
         <div className="ml-algorithm-list-details">
           <ConnectedMLAlgorithmsList />
           <ConnectedMLAlgorithmDetails />

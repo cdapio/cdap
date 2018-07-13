@@ -96,7 +96,7 @@
      ng-if="IntegrationsController.navigatorState.status === 'RUNNING'">
   <div class="col-xs-12">
     <div class="navigator-metrics">
-      <h4 class="events-sent-title">Events Sent</h4>
+      <h4 class="events-sent-title">Events sent</h4>
       <c3-area-spline
         chart-metric="IntegrationsController.chartData"
         chart-settings="IntegrationsController.chartSettings"
@@ -104,8 +104,8 @@
         chart-padding="{ bottom: -6 }"
       ></c3-area-spline>
 
-      <h5 class="time-label">Time(last hour)</h5>
-      <h5 class="total-events">Total Events Sent: {{ IntegrationsController.eventsSentAggregate }}</h5>
+      <h5 class="time-label">Time (last hour)</h5>
+      <h5 class="total-events">Total events sent: {{ IntegrationsController.eventsSentAggregate }}</h5>
     </div>
   </div>
 </div>

@@ -28,6 +28,8 @@ require('./ExploreModal.scss');
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 
+const PREFIX = 'features.FastAction.Explore';
+
 export default class ExploreModal extends Component {
   constructor(props) {
     super(props);
@@ -371,7 +373,7 @@ export default class ExploreModal extends Component {
             )
           :
             <div className="text-xs-center">
-              No Results
+              {T.translate(`${PREFIX}.noResults`)}
             </div>
         );
       };
@@ -396,7 +398,7 @@ export default class ExploreModal extends Component {
         backdrop='static'
       >
         <ModalHeader>
-          { T.translate('features.FastAction.exploreLabel') }
+          {T.translate(`${PREFIX}.label`)}
           <div
            onClick={this.onModalToggle.bind(this)}
            className="float-xs-right"
@@ -438,10 +440,16 @@ export default class ExploreModal extends Component {
               <table className="table table-bordered queries-table">
                 <thead>
                   <tr>
-                    <th className="query-timestamp">Start time</th>
-                    <th>SQL Query</th>
-                    <th className="query-status">Status</th>
-                    <th className="query-actions">Actions</th>
+                    <th className="query-timestamp">
+                      {T.translate(`${PREFIX}.startTime`)}
+                    </th>
+                    <th>{T.translate(`${PREFIX}.SQLQuery`)}</th>
+                    <th className="query-status">
+                      {T.translate(`${PREFIX}.status`)}
+                    </th>
+                    <th className="query-actions">
+                      {T.translate(`${PREFIX}.actions`)}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -451,7 +459,9 @@ export default class ExploreModal extends Component {
                       <td
                         colSpan="4"
                         className="text-xs-center"
-                      > No Results</td>
+                      >
+                        {T.translate(`${PREFIX}.noResults`)}
+                      </td>
                     </tr>
                   :
                     this.state

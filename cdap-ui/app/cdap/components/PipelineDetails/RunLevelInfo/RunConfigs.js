@@ -112,7 +112,7 @@ export default class RunConfigs extends Component {
     }
     if (this.isRuntimeArgsEmpty()) {
       return (
-        <h4> No runtime arguments available </h4>
+        <h4>{T.translate(`${PREFIX}.noRuntimeArgs`)}</h4>
       );
     }
     return (
@@ -160,9 +160,13 @@ export default class RunConfigs extends Component {
     let currentRunIndex = findIndex(reversedRuns, {runid: objectQuery(currentRun, 'runid')});
     const title = (
       <div className="runconfig-modeless-title">
-        <div>{`Runtime Arguments for Run #${currentRunIndex + 1}`} </div>
+        <div>
+          {T.translate(`${PREFIX}.configsModelessTitle`, {
+            currentRunIndex: currentRunIndex + 1
+          })}
+        </div>
         <CopyableID
-          label="Copy Runtime Arguments"
+          label={T.translate(`${PREFIX}.copyRuntimeArgsBtnLabel`)}
           id={this.runtimeArgsMap}
           tooltipText={false}
         />

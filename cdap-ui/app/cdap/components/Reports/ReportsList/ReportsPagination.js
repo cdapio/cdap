@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {handleReportsPageChange} from 'components/Reports/store/ActionCreator';
 import PaginationWithTitle from 'components/PaginationWithTitle';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Reports';
 
 function ReportsPaginationView({totalCount, offset, limit}) {
   let totalPages = Math.ceil(totalCount / limit);
@@ -35,8 +38,7 @@ function ReportsPaginationView({totalCount, offset, limit}) {
       handlePageChange={handleReportsPageChange}
       currentPage={currentPage}
       totalPages={totalPages}
-      title={totalCount > 1 ? "Reports" : "Report"}
-      numberOfEntities={totalCount}
+      title={T.translate(`${PREFIX}.reports`, {context: totalCount})}
     />
   );
 }

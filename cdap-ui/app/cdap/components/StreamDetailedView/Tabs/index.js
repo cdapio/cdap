@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,9 @@ import UsageTab from 'components/StreamDetailedView/Tabs/UsageTab';
 import AuditTab from 'components/StreamDetailedView/Tabs/AuditTab';
 import LineageTab from 'components/StreamDetailedView/Tabs/LineageTab';
 import PropertiesTab from 'components/StreamDetailedView/Tabs/PropertiesTab';
+import T from 'i18n-react';
+
+const PREFIX = 'features.DatasetDetailedView.Tabs';
 
 export default class StreamDetailedViewTabs extends Component {
   constructor(props) {
@@ -60,7 +63,7 @@ export default class StreamDetailedViewTabs extends Component {
                    return location.pathname.match(basepath);
                 }}
               >
-                Usage
+              {T.translate(`${PREFIX}.usage`)}
               </RouterNavLink>
             </NavLink>
           </NavItem>
@@ -71,7 +74,7 @@ export default class StreamDetailedViewTabs extends Component {
                 to={`${baseLinkPath}/schema`}
                 activeClassName="active"
               >
-                Schema
+                {T.translate(`${PREFIX}.schema`)}
               </RouterNavLink>
             </NavLink>
           </NavItem>
@@ -82,7 +85,9 @@ export default class StreamDetailedViewTabs extends Component {
                 to={`${baseLinkPath}/programs`}
                 activeClassName="active"
               >
-                Programs ({this.state.entity.programs.length})
+                {T.translate(`${PREFIX}.programsWithCount`, {
+                  count: this.state.entity.programs.length
+                })}
               </RouterNavLink>
             </NavLink>
           </NavItem>
@@ -93,7 +98,7 @@ export default class StreamDetailedViewTabs extends Component {
                 to={`${baseLinkPath}/lineage`}
                 activeClassName="active"
               >
-                Lineage
+                {T.translate(`${PREFIX}.lineage`)}
               </RouterNavLink>
             </NavLink>
           </NavItem>
@@ -104,7 +109,7 @@ export default class StreamDetailedViewTabs extends Component {
                 to={`${baseLinkPath}/audit`}
                 activeClassName="active"
               >
-                Audit Log
+                {T.translate(`${PREFIX}.auditLog`)}
               </RouterNavLink>
             </NavLink>
           </NavItem>
@@ -115,7 +120,7 @@ export default class StreamDetailedViewTabs extends Component {
                 to={`${baseLinkPath}/properties`}
                 activeClassName="active"
               >
-                Properties
+                {T.translate(`${PREFIX}.properties`)}
               </RouterNavLink>
             </NavLink>
           </NavItem>

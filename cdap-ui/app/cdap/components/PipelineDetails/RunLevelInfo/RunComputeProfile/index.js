@@ -26,6 +26,9 @@ import {extractProfileName, getProfiles} from 'components/Cloud/Profiles/Store/A
 import ProfilesStore from 'components/Cloud/Profiles/Store';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {CLOUD} from 'services/global-constants';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.RunLevel.RunComputeProfile';
 
 require('./RunComputeProfile.scss');
 
@@ -80,7 +83,7 @@ class RunLevelComputeProfile extends Component {
           !this.props.profileName ?
             <button
               className="btn btn-link"
-              title="Profile Information Unavailable"
+              title={T.translate(`${PREFIX}.noInfo`)}
               disabled
             >
               <IconSVG name="icon-cloud" />
@@ -105,7 +108,7 @@ class RunLevelComputeProfile extends Component {
     return (
       <div className="run-info-container run-level-compute-profile pull-right">
         <div>
-          <strong> Run Compute Profile </strong>
+          <strong>{T.translate(`${PREFIX}.label`)}</strong>
         </div>
         {
           !this.props.profileName ?

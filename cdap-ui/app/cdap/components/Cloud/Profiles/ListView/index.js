@@ -276,7 +276,9 @@ class ProfilesListView extends Component {
           <div />
           <div />
           <div />
-          <div className="sub-title">Pipeline Usage</div>
+          <div className="sub-title">
+            {T.translate(`${PREFIX}.ListView.pipelineUsage`)}
+          </div>
           <div />
           <div />
           <div />

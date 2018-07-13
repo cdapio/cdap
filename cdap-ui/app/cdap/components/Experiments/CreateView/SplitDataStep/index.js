@@ -24,6 +24,9 @@ import SplitInfo from 'components/Experiments/CreateView/SplitDataStep/SplitInfo
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 import isEmpty from 'lodash/isEmpty';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.CreateView';
 
 require('./SplitDataStep.scss');
 const getSplitLogsUrl = (experimentId, splitInfo) => {
@@ -42,9 +45,11 @@ const getSplitLogsUrl = (experimentId, splitInfo) => {
 const getSplitFailedElem = (experimentId, splitInfo) => {
   return (
     <span className="split-error-container">
-      {`Failed to split data for the experiment '${experimentId}' - Please check `}
-      <a href={getSplitLogsUrl(experimentId, splitInfo)} target="_blank"> Logs </a>{" "}
-      for more information
+      {T.translate(`${PREFIX}.failedToSplit`), {experimentId}}
+      <a href={getSplitLogsUrl(experimentId, splitInfo)} target="_blank">
+        {T.translate(`${PREFIX}.logs`)}
+      </a>
+      {T.translate(`${PREFIX}.moreInfo`)}
     </span>
   );
 };
@@ -90,7 +95,7 @@ class SplitDataStep extends Component {
             className="btn btn-primary"
             onClick={createSplitAndUpdateStatus}
           >
-            Split data and verify sample
+            {T.translate(`${PREFIX}.splitAndVerify`)}
           </button>
         </div>
       );
@@ -102,7 +107,7 @@ class SplitDataStep extends Component {
       >
         <div className="btn-inner-container">
           <IconSVG name="icon-spinner" className="fa-spin" />
-          <span>Splitting data</span>
+          <span>{T.translate(`${PREFIX}.splitting`)}</span>
         </div>
       </button>
     );
@@ -123,9 +128,9 @@ class SplitDataStep extends Component {
           onClick={setSplitFinalized}
           disabled={splitStatus !== 'Complete'}
         >
-          Done
+          {T.translate('commons.doneLabel')}
         </button>
-        <span> Next, Select a machine learning algorithm </span>
+        <span>{T.translate(`${PREFIX}.nextSelect`)}</span>
       </div>
     );
   }
@@ -165,7 +170,7 @@ class SplitDataStep extends Component {
   render() {
     return (
       <div className="split-data-step">
-        <h3>Split Data </h3>
+        <h3>{T.translate(`${PREFIX}.splitData`)}</h3>
         <br />
         {this.renderSplitBtn()}
         {this.renderSplitInfo()}
