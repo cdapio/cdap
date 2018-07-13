@@ -200,7 +200,7 @@ public class RuntimeMonitorTest {
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
-                                                       profileMetricScheduledService);
+                                                       monitorMessage -> { }, profileMetricScheduledService);
 
     runtimeMonitor.startAndWait();
     // use different configuration for verification
@@ -214,7 +214,7 @@ public class RuntimeMonitorTest {
 
     runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                         datasetFramework, transactional, messagingContext, scheduler,
-                                        profileMetricScheduledService);
+                                        monitorMessage -> { }, profileMetricScheduledService);
     runtimeMonitor.startAndWait();
     // use different configuration for verification
     lastProcessed = verifyPublishedMessages(monitorCConf, 2, lastProcessed);
@@ -270,7 +270,7 @@ public class RuntimeMonitorTest {
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
-                                                       profileMetricScheduledService);
+                                                       monitorMessage -> { }, profileMetricScheduledService);
     runtimeMonitor.startAndWait();
 
     // Wait and verify messages as being republished by the runtime monitor to the "local" metrics topics
@@ -327,7 +327,7 @@ public class RuntimeMonitorTest {
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
-                                                       profileMetricScheduledService);
+                                                       monitorMessage -> { }, profileMetricScheduledService);
 
     runtimeMonitor.startAndWait();
     verifyPublishedMessages(monitorCConf, 2, null);

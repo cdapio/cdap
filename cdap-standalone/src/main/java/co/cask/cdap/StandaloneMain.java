@@ -320,6 +320,8 @@ public class StandaloneMain {
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();
+
+      metricsCollectionService.stopAndWait();
       metricsQueryService.stopAndWait();
       txService.stopAndWait();
 
