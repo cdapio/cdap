@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -141,7 +140,7 @@ public final class EntityIdKeyHelper {
       String name = keySplitter.getString();
       String version = keySplitter.getString();
       return new ArtifactId(namespaceId, name, version);
-    } else if (type.equals(TYPE_MAP.get(DatasetId.class)) || type.equals(MetadataEntity.DATASET_INSTANCE)) {
+    } else if (type.equals(TYPE_MAP.get(DatasetId.class))) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return new DatasetId(namespaceId, instanceId);
@@ -164,20 +163,8 @@ public final class EntityIdKeyHelper {
     throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }
 
-  private static String getTargetType(NamespacedEntityId namespacedEntityId) {
+  public static String getTargetType(NamespacedEntityId namespacedEntityId) {
     return TYPE_MAP.get(namespacedEntityId.getClass());
-  }
-
-  /**
-   * To get entity type in v1 format. We need this method because in 5.0 we are renaming Dataset
-   * serialization from DatasetInstance to Dataset.
-   *
-   * @param namespacedEntityId entity for which type is needed
-   * @return v1 type of the entity
-   */
-  public static String getV1TargetType(NamespacedEntityId namespacedEntityId) {
-    String type = TYPE_MAP.get(namespacedEntityId.getClass());
-    return type.equals(MetadataEntity.DATASET) ? MetadataEntity.DATASET_INSTANCE : type;
   }
 
   private EntityIdKeyHelper() {
