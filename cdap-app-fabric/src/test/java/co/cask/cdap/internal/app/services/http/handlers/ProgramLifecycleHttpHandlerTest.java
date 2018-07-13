@@ -70,6 +70,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -1305,9 +1306,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testStartProgramWithDisabledRuntimeArgs() throws Exception {
-    // We will use default profile now for testing since we treat it as on premise and all other profiles as isolated
-    // See ProgramLifeCycleService runInternal() method for more information
-    disableProfile(ProfileId.NATIVE, 200);
+    // put my profile and disable it, using this profile to start program should fail
+    ProfileId profileId = new NamespaceId(TEST_NAMESPACE1).profile("MyProfile");
+    Profile profile = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                  Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    putProfile(profileId, profile, 200);
+    disableProfile(profileId, 200);
 
     // deploy, check the status
     deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
@@ -1321,14 +1325,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start workflow should give a 409 since we have a runtime argument associated with a disabled profile
     ImmutableMap<String, String> args = ImmutableMap.of(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
-    startProgram(programId, args, 409);
+    startProgram(programId, Collections.singletonMap(SystemArguments.PROFILE_NAME, profileId.getScopedName()), 409);
     Assert.assertEquals(STOPPED, getProgramStatus(programId));
 
-    // enable the profile and flow should be able to start
-    enableProfile(ProfileId.NATIVE, 200);
-
-    // start a flow and check the status
-    startProgram(programId, args, 200);
+    // use native profile to start workflow should work since it is always enabled
+    startProgram(programId, Collections.singletonMap(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName()),
+                 200);
 
     // wait for the workflow to stop and check the status
     waitState(programId, STOPPED);

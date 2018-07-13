@@ -19,6 +19,7 @@ package co.cask.cdap.internal.profile;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -147,11 +148,22 @@ public class ProfileService {
    *
    * @param profileId the id of the profile to save
    * @param profile the information of the profile
+   * @throws MethodNotAllowedException if trying to update the Native profile
    */
-  public void saveProfile(ProfileId profileId, Profile profile) {
+  public void saveProfile(ProfileId profileId, Profile profile) throws MethodNotAllowedException {
     Transactionals.execute(transactional, context -> {
-      getProfileDataset(context).saveProfile(profileId, profile);
-    });
+      ProfileDataset dataset = getProfileDataset(context);
+      if (profileId.equals(ProfileId.NATIVE)) {
+        try {
+          dataset.getProfile(profileId);
+          throw new MethodNotAllowedException(String.format("Profile Native %s already exists. It cannot be updated",
+                                                            profileId.getScopedName()));
+        } catch (NotFoundException e) {
+          // if native profile is not found, we can add it to the dataset
+        }
+      }
+      dataset.saveProfile(profileId, profile);
+    }, MethodNotAllowedException.class);
   }
 
   /**
@@ -167,7 +179,8 @@ public class ProfileService {
   }
 
   /**
-   * Deletes the profile from the profile store. Profile deletion must satisfy the following:
+   * Deletes the profile from the profile store. Native profile cannot be deleted.
+   * Other profile deletion must satisfy the following:
    * 1. Profile must exist and must be DISABLED
    * 2. Profile must not be assigned to any entities. Profiles can be assigned to an entity by setting a preference
    *    or a schedule property.
@@ -176,69 +189,49 @@ public class ProfileService {
    * @param profileId the id of the profile to delete
    * @throws NotFoundException if the profile is not found
    * @throws ProfileConflictException if the profile is enabled
+   * @throws MethodNotAllowedException if trying to delete the Native profile
    */
-  public void deleteProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException {
+  public void deleteProfile(ProfileId profileId)
+    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
+    if (profileId.equals(ProfileId.NATIVE)) {
+      throw new MethodNotAllowedException(String.format("Profile Native %s cannot be deleted.",
+                                                        profileId.getScopedName()));
+    }
     Transactionals.execute(transactional, context -> {
       ProfileDataset profileDataset = getProfileDataset(context);
       Profile profile = profileDataset.getProfile(profileId);
-      if (profile == null) {
-        throw new NotFoundException(profileId);
-      }
-
-      // The profile status must be DISABLED
-      if (profile.getStatus() == ProfileStatus.ENABLED) {
-        throw new ProfileConflictException(
-          String.format("Profile %s in namespace %s is currently enabled. A profile can " +
-                          "only be deleted if it is disabled", profileId.getProfile(), profileId.getNamespace()),
-          profileId);
-      }
-
-      // There must be no assigments to this profile
-      Set<EntityId> assignments = profileDataset.getProfileAssignments(profileId);
-      if (!assignments.isEmpty()) {
-        throw new ProfileConflictException(
-          String.format("This profile %s is still assigned to %d entities, like %s. " +
-                          "Please delete all assignments before deleting the profile.",
-                        profileId.toString(), assignments.size(), assignments.iterator().next()),
-          profileId);
-      }
-
-      // There must be no running programs using the profile
       AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
-      Map<ProgramRunId, RunRecordMeta> activeRuns;
-      Predicate<RunRecordMeta> runRecordMetaPredicate = runRecordMeta -> {
-        // the profile comes in system arguments with the scoped name
-        String scopedName = runRecordMeta.getSystemArgs().get(SystemArguments.PROFILE_NAME);
-        return scopedName != null && scopedName.equals(profileId.getScopedName());
-      };
-      if (profileId.getNamespaceId().equals(NamespaceId.SYSTEM)) {
-        activeRuns = appMetadataStore.getActiveRuns(runRecordMetaPredicate);
-      } else {
-        activeRuns = appMetadataStore.getActiveRuns(Collections.singleton(profileId.getNamespaceId()),
-                                                    runRecordMetaPredicate);
-      }
-      if (!activeRuns.isEmpty()) {
-        throw new ProfileConflictException(
-          String.format("The profile %s is in use by %d active runs, like %s. Please stop all active runs " +
-                          "before deleting the profile.",
-                        profileId.toString(), activeRuns.size(), activeRuns.keySet().iterator().next()),
-          profileId);
-      }
-
-      // delete the profile
-      profileDataset.deleteProfile(profileId);
+      deleteProfile(profileDataset, appMetadataStore, profileId, profile);
     }, NotFoundException.class, ProfileConflictException.class);
   }
 
   /**
-   * Delete all profiles in a given namespace. This method can only be used at unit tests
+   * Delete all profiles in a given namespace. Deleting all profiles in SYSTEM namespace is not allowed.
    *
    * @param namespaceId the id of the namespace
    */
-  @VisibleForTesting
-  public void deleteAllProfiles(NamespaceId namespaceId) {
+  public void deleteAllProfiles(NamespaceId namespaceId)
+    throws MethodNotAllowedException, NotFoundException, ProfileConflictException {
+    if (namespaceId.equals(NamespaceId.SYSTEM)) {
+      throw new MethodNotAllowedException("Deleting all system profiles is not allowed.");
+    }
     Transactionals.execute(transactional, context -> {
-      getProfileDataset(context).deleteAllProfiles(namespaceId);
+      ProfileDataset profileDataset = getProfileDataset(context);
+      AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
+      List<Profile> profiles = profileDataset.getProfiles(namespaceId, false);
+      for (Profile profile : profiles) {
+        deleteProfile(profileDataset, appMetadataStore, namespaceId.profile(profile.getName()), profile);
+      }
+    }, ProfileConflictException.class, NotFoundException.class);
+  }
+
+  /**
+   * Delete all profiles. This method can only be used at unit tests
+   */
+  @VisibleForTesting
+  void clear() {
+    Transactionals.execute(transactional, context -> {
+      getProfileDataset(context).deleteAllProfiles();
     });
   }
 
@@ -261,8 +254,14 @@ public class ProfileService {
    * @param profileId the id of the profile to disable
    * @throws NotFoundException if the profile is not found
    * @throws ProfileConflictException if the profile is already disabled
+   * @throws MethodNotAllowedException if trying to disable the native profile
    */
-  public void disableProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException {
+  public void disableProfile(ProfileId profileId)
+    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
+    if (profileId.equals(ProfileId.NATIVE)) {
+      throw new MethodNotAllowedException(String.format("Cannot change status for Profile Native %s, " +
+                                                          "it should always be ENABLED", profileId.getScopedName()));
+    }
     Transactionals.execute(transactional, context -> {
       getProfileDataset(context).disableProfile(profileId);
     }, NotFoundException.class, ProfileConflictException.class);
@@ -311,5 +310,50 @@ public class ProfileService {
 
   private ProfileDataset getProfileDataset(DatasetContext context) {
     return ProfileDataset.get(context, datasetFramework);
+  }
+
+  private void deleteProfile(ProfileDataset profileDataset, AppMetadataStore appMetadataStore, ProfileId profileId,
+                             Profile profile) throws ProfileConflictException, NotFoundException {
+    // The profile status must be DISABLED
+    if (profile.getStatus() == ProfileStatus.ENABLED) {
+      throw new ProfileConflictException(
+        String.format("Profile %s in namespace %s is currently enabled. A profile can " +
+                        "only be deleted if it is disabled", profileId.getProfile(), profileId.getNamespace()),
+        profileId);
+    }
+
+    // There must be no assigments to this profile
+    Set<EntityId> assignments = profileDataset.getProfileAssignments(profileId);
+    if (!assignments.isEmpty()) {
+      throw new ProfileConflictException(
+        String.format("This profile %s is still assigned to %d entities, like %s. " +
+                        "Please delete all assignments before deleting the profile.",
+                      profileId.toString(), assignments.size(), assignments.iterator().next()),
+        profileId);
+    }
+
+    // There must be no running programs using the profile
+    Map<ProgramRunId, RunRecordMeta> activeRuns;
+    Predicate<RunRecordMeta> runRecordMetaPredicate = runRecordMeta -> {
+      // the profile comes in system arguments with the scoped name
+      String scopedName = runRecordMeta.getSystemArgs().get(SystemArguments.PROFILE_NAME);
+      return scopedName != null && scopedName.equals(profileId.getScopedName());
+    };
+    if (profileId.getNamespaceId().equals(NamespaceId.SYSTEM)) {
+      activeRuns = appMetadataStore.getActiveRuns(runRecordMetaPredicate);
+    } else {
+      activeRuns = appMetadataStore.getActiveRuns(Collections.singleton(profileId.getNamespaceId()),
+                                                  runRecordMetaPredicate);
+    }
+    if (!activeRuns.isEmpty()) {
+      throw new ProfileConflictException(
+        String.format("The profile %s is in use by %d active runs, like %s. Please stop all active runs " +
+                        "before deleting the profile.",
+                      profileId.toString(), activeRuns.size(), activeRuns.keySet().iterator().next()),
+        profileId);
+    }
+
+    // delete the profile
+    profileDataset.deleteProfile(profileId);
   }
 }

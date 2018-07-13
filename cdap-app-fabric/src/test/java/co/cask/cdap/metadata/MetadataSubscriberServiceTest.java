@@ -86,6 +86,7 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.profile.Profile;
+import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import co.cask.cdap.scheduler.ProgramScheduleService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -425,11 +426,15 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     // add a new profile in default namespace
     ProfileService profileService = injector.getInstance(ProfileService.class);
     ProfileId myProfile = new ProfileId(NamespaceId.DEFAULT.getNamespace(), "MyProfile");
-    profileService.saveProfile(myProfile, Profile.NATIVE);
+    Profile profile1 = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                   Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    profileService.saveProfile(myProfile, profile1);
 
     // add a second profile in default namespace
     ProfileId myProfile2 = new ProfileId(NamespaceId.DEFAULT.getNamespace(), "MyProfile2");
-    profileService.saveProfile(myProfile2, Profile.NATIVE);
+    Profile profile2 = new Profile("MyProfile2", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                   Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    profileService.saveProfile(myProfile2, profile2);
 
     try {
       // Verify the workflow profile metadata is updated to default profile
@@ -518,7 +523,9 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     // add a new profile in default namespace
     ProfileService profileService = injector.getInstance(ProfileService.class);
     ProfileId myProfile = new ProfileId(NamespaceId.DEFAULT.getNamespace(), "MyProfile");
-    profileService.saveProfile(myProfile, Profile.NATIVE);
+    Profile profile1 = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                   Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    profileService.saveProfile(myProfile, profile1);
 
     // set default namespace to use the profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds
