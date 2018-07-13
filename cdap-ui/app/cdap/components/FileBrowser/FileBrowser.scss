@@ -116,4 +116,11 @@ $empty-message-link-color: $brand-primary-color;
       }
     }
   }
+  .top-panel {
+    .title {
+      span.fa.fa-fw.disabled {
+        cursor: not-allowed;
+      }
+    }
+  }
 }
