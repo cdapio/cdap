@@ -45,7 +45,7 @@ const getSplitLogsUrl = (experimentId, splitInfo) => {
 const getSplitFailedElem = (experimentId, splitInfo) => {
   return (
     <span className="split-error-container">
-      {T.translate(`${PREFIX}.failedToSplit`), {experimentId}}
+      {T.translate(`${PREFIX}.failedToSplit`, {experimentId})}
       <a href={getSplitLogsUrl(experimentId, splitInfo)} target="_blank">
         {T.translate(`${PREFIX}.logs`)}
       </a>
@@ -146,7 +146,7 @@ class SplitDataStep extends Component {
       2. When the split request or split status request returns error code
     */
 
-    if (this.state.splitFailed) {
+    if (this.state.splitFailed && !this.props.error) {
       return (
         <Alert
           element={getSplitFailedElem(this.props.experimentId, this.props.splitInfo)}
@@ -162,7 +162,10 @@ class SplitDataStep extends Component {
         message={this.props.error}
         type='error'
         showAlert={true}
-        onClose={setModelCreateError}
+        onClose={() => {
+          this.closeSplitFailedAlert();
+          setModelCreateError();
+        }}
       />
     );
   }
