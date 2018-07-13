@@ -1186,6 +1186,27 @@ features:
       title: Welcome to Model Management and Distribution Service
 
   FieldLevelLineage:
+    fieldsCount:
+      1: "{context} field"
+      _: "{context} fields"
+    OperationsModal:
+      lastExecution: "Last executed by '{app}' on {time}"
+      summaryText: "Operations between {sources} and '{target}'"
+      Table:
+        description: Description
+        input: Input
+        inputFields: Input fields
+        operation: Operation
+        outputFields: Output fields
+        output: Output
+      title: "Operations for field '{fieldName}'"
+    searchPlaceholder: Search by field name
+    Summary:
+      datasetCount:
+        1: "{context} dataset"
+        _: "{context} datasets"
+      title: "Sources for:"
+      viewOperations: View operations
     TimeRangeOptions:
       CUSTOM: Custom
       last14d: Last 14 days

@@ -22,6 +22,9 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import LoadingSVG from 'components/LoadingSVG';
 import ModalContent from 'components/FieldLevelLineage/OperationsModal/ModalContent';
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
+
+const PREFIX = 'features.FieldLevelLineage.OperationsModal';
 
 require('./OperationsModal.scss');
 
@@ -45,7 +48,7 @@ function OperationsModalView({showOperations, loading, closeModal, fieldName}) {
     >
       <ModalHeader>
         <span>
-          Operations for field {`'${fieldName}'`}
+          {T.translate(`${PREFIX}.title`, { fieldName })}
         </span>
 
         <div

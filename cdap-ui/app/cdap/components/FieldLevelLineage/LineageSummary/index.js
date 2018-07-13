@@ -22,25 +22,34 @@ import IconSVG from 'components/IconSVG';
 import {Actions} from 'components/FieldLevelLineage/store/Store';
 import {getOperations} from 'components/FieldLevelLineage/store/ActionCreator';
 import OperationsModal from 'components/FieldLevelLineage/OperationsModal';
+import T from 'i18n-react';
+
+const PREFIX = 'features.FieldLevelLineage.Summary';
+
 
 require('./LineageSummary.scss');
 
 function LineageSummaryView({activeField, datasetId, incomingLineage, close}) {
   if (!activeField) { return null; }
 
+  const datasetFieldTitle = `${datasetId}:${activeField}`;
+
   return (
     <div className="lineage-summary-container">
       <div className="field-lineage-info">
         <div className="title">
-          Sources for:
+          {T.translate(`${PREFIX}.title`)}
         </div>
 
-        <div className="dataset-field">
-          {`${datasetId}:${activeField}`}
+        <div
+          className="dataset-field truncate"
+          title={datasetFieldTitle}
+        >
+          {datasetFieldTitle}
         </div>
 
         <div className="lineage-count">
-          {incomingLineage.length} Datasets
+          {T.translate(`${PREFIX}.datasetCount`, { context: incomingLineage.length })}
         </div>
 
         <IconSVG
@@ -60,7 +69,7 @@ function LineageSummaryView({activeField, datasetId, incomingLineage, close}) {
         <span
           onClick={getOperations}
         >
-          View Operations
+          {T.translate(`${PREFIX}.viewOperations`)}
         </span>
 
         <OperationsModal />

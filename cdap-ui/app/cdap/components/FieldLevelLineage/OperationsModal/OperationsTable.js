@@ -17,6 +17,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
+import T from 'i18n-react';
+
+const PREFIX = 'features.FieldLevelLineage.OperationsModal.Table';
 
 export default class OperationsTable extends Component {
   static propTypes = {
@@ -80,16 +83,28 @@ export default class OperationsTable extends Component {
   }
 
   renderHeader() {
+    const headers = [
+      'input',
+      'inputFields',
+      'operation',
+      'description',
+      'outputFields',
+      'output'
+    ];
+
     return (
       <div className="grid-header">
         <div className="grid-row">
           <div></div>
-          <div>Input</div>
-          <div>Input fields</div>
-          <div>Operations</div>
-          <div>Description</div>
-          <div>Output fields</div>
-          <div>Output</div>
+          {
+            headers.map((head) => {
+              return (
+                <div key={head}>
+                  {T.translate(`${PREFIX}.${head}`)}
+                </div>
+              );
+            })
+          }
         </div>
       </div>
     );
@@ -108,8 +123,8 @@ export default class OperationsTable extends Component {
                 <div>{ i + 1 }</div>
                 <div>{ this.renderInput(operation) }</div>
                 <div>{ this.renderInputFields(operation) }</div>
-                <div>{ operation.name }</div>
-                <div>{ operation.description }</div>
+                <div title={operation.name}>{ operation.name }</div>
+                <div title={operation.description}>{ operation.description }</div>
                 <div>{ this.renderOutputFields(operation) }</div>
                 <div>{ this.renderOutput(operation) }</div>
               </div>
