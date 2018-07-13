@@ -93,7 +93,7 @@ export default class PipelineNodeMetricsGraph extends Component {
     totalRecordsIn: null,
     totalRecordsOut: null,
     totalRecordsError: null,
-    totalRecordsOutPorts: null,
+    totalRecordsOutPorts: {},
     processTimeMetrics: {},
     resolution: 'hours',
     aggregate: false,
