@@ -47,7 +47,7 @@ Data Pipelines are represented by a series of stages arranged in a Directed Acyl
 
 **Transforms** allow you to manipulate data once you have ingested it. For example, you may clone a record. You can format JSON. You can even write custom transforms using the Javascript plugin. 
 
-**Analytics** plugins are used to run analytics or Machine Learning tasks on data. For instance, you might want to run a logistic regression or Naive Bayes on a batch source of data. CDAP provides built-in plugins for a wide variety of such use cases. 
+**Analytics** plugins are used to run analytics or Machine Learning tasks on data. For instance, joining data from difference sources. CDAP provides built-in plugins for a wide variety of such use cases.
 
 **Action** plugins define a custom action that is scheduled to take place during a workflow, but doesn't directly manipulate data in the workflow. For example, using the Database custom action, you can run an arbitrary database command at the end of your pipeline. Alternatively, you can trigger an action to move files within an HDFS cluster.
 
