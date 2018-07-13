@@ -76,7 +76,7 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
   @Override
   protected long runTask() throws Exception {
     // Only block for messages if it is not a failure retry
-    publishMessages(buffer, failed);
+    publishMessages(buffer, !failed);
     // We only clear the buffer once the messages are successfully published
     buffer.clear();
     failed = false;
