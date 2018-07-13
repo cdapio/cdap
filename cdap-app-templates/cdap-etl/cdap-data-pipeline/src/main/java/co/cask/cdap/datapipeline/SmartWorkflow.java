@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -46,7 +47,7 @@ import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.condition.Condition;
-import co.cask.cdap.etl.api.lineage.field.Operation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
 import co.cask.cdap.etl.batch.ActionSpec;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
@@ -64,7 +65,7 @@ import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
-import co.cask.cdap.etl.common.OperationTypeAdapter;
+import co.cask.cdap.etl.common.PipelineOperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.TrackedIterator;
@@ -118,9 +119,9 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                                                 Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter()).create();
+    .registerTypeAdapter(PipelineOperation.class, new PipelineOperationTypeAdapter()).create();
   private static final Type STAGE_PROPERTIES_MAP = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
-  private static final Type STAGE_OPERATIONS_MAP = new TypeToken<Map<String, List<Operation>>>() { }.getType();
+  private static final Type STAGE_OPERATIONS_MAP = new TypeToken<Map<String, List<PipelineOperation>>>() { }.getType();
 
   private final ApplicationConfigurer applicationConfigurer;
   private final Set<String> supportedPluginTypes;
@@ -551,14 +552,14 @@ public class SmartWorkflow extends AbstractWorkflow {
     // Collect field operations from each phase
     WorkflowToken token = workflowContext.getToken();
     List<NodeValue> allNodeValues = token.getAll(Constants.FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN);
-    Map<String, List<Operation>> allStageOperations = new HashMap<>();
+    Map<String, List<PipelineOperation>> allStageOperations = new HashMap<>();
     for (StageSpec stageSpec : spec.getStages()) {
       allStageOperations.put(stageSpec.getName(), new ArrayList<>());
     }
     for (NodeValue nodeValue : allNodeValues) {
-      Map<String, List<Operation>> stageOperations
+      Map<String, List<PipelineOperation>> stageOperations
               = GSON.fromJson(nodeValue.getValue().toString(), STAGE_OPERATIONS_MAP);
-      for (Map.Entry<String, List<Operation>> entry : stageOperations.entrySet()) {
+      for (Map.Entry<String, List<PipelineOperation>> entry : stageOperations.entrySet()) {
         allStageOperations.get(entry.getKey()).addAll(entry.getValue());
       }
     }
@@ -572,9 +573,9 @@ public class SmartWorkflow extends AbstractWorkflow {
       }
     }
 
-    LineageOperationsProcessor processor = new LineageOperationsProcessor(spec.getConnections(),
-                                                                          allStageOperations, noMergeRequiredStages);
-    Set<co.cask.cdap.api.lineage.field.Operation> processedOperations = processor.process();
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(spec.getConnections(), allStageOperations,
+                                                                          noMergeRequiredStages);
+    Set<Operation> processedOperations = processor.process();
     if (!processedOperations.isEmpty()) {
       workflowContext.record(processedOperations);
     }

@@ -23,7 +23,7 @@ import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.etl.api.AlertPublisherContext;
-import co.cask.cdap.etl.api.lineage.field.Operation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.io.IOException;
@@ -86,7 +86,7 @@ public class DefaultAlertPublisherContext extends AbstractStageContext implement
   }
 
   @Override
-  public void record(List<Operation> operations) {
+  public void record(List<PipelineOperation> pipelineOperations) {
     throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }

@@ -26,7 +26,7 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
-import co.cask.cdap.etl.api.lineage.field.Operation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
 import co.cask.cdap.etl.mock.common.MockArguments;
 import co.cask.cdap.etl.mock.common.MockLookupProvider;
 import co.cask.cdap.etl.mock.common.MockStageMetrics;
@@ -214,7 +214,7 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
-  public void record(List<Operation> operations) {
+  public void record(List<PipelineOperation> pipelineOperations) {
     // no-op
   }
 }

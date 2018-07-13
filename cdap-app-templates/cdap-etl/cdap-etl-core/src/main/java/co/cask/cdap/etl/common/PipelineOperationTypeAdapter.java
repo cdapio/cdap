@@ -16,11 +16,11 @@
 
 package co.cask.cdap.etl.common;
 
-import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.api.lineage.field.OperationType;
-import co.cask.cdap.etl.api.lineage.field.ReadOperation;
-import co.cask.cdap.etl.api.lineage.field.TransformOperation;
-import co.cask.cdap.etl.api.lineage.field.WriteOperation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
+import co.cask.cdap.etl.api.lineage.field.PipelineReadOperation;
+import co.cask.cdap.etl.api.lineage.field.PipelineTransformOperation;
+import co.cask.cdap.etl.api.lineage.field.PipelineWriteOperation;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -32,16 +32,17 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 
 /**
- * Type adapter for {@link Operation}.
+ * Type adapter for {@link PipelineOperation}.
  */
-public class OperationTypeAdapter implements JsonSerializer<Operation>, JsonDeserializer<Operation> {
+public class PipelineOperationTypeAdapter implements JsonSerializer<PipelineOperation>,
+  JsonDeserializer<PipelineOperation> {
   @Override
-  public JsonElement serialize(Operation src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(PipelineOperation src, Type typeOfSrc, JsonSerializationContext context) {
     return context.serialize(src);
   }
 
   @Override
-  public Operation deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+  public PipelineOperation deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
           throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
@@ -49,11 +50,11 @@ public class OperationTypeAdapter implements JsonSerializer<Operation>, JsonDese
 
     switch (type) {
       case READ:
-        return context.deserialize(json, ReadOperation.class);
+        return context.deserialize(json, PipelineReadOperation.class);
       case TRANSFORM:
-        return context.deserialize(json, TransformOperation.class);
+        return context.deserialize(json, PipelineTransformOperation.class);
       case WRITE:
-        return context.deserialize(json, WriteOperation.class);
+        return context.deserialize(json, PipelineWriteOperation.class);
     }
     return null;
   }
