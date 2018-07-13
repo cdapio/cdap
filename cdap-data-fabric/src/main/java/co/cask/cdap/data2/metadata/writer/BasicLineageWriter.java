@@ -75,7 +75,7 @@ public class BasicLineageWriter implements LineageWriter, FieldLineageWriter {
     }
 
     long accessTime = System.currentTimeMillis();
-    LOG.debug("Writing access for run {}, dataset {}, accessType {}, component {}, accessTime = {}",
+    LOG.trace("Writing access for run {}, dataset {}, accessType {}, component {}, accessTime = {}",
               run, datasetId, accessType, component, accessTime);
 
     Transactionals.execute(transactional, context -> {
@@ -89,7 +89,7 @@ public class BasicLineageWriter implements LineageWriter, FieldLineageWriter {
   public void addAccess(ProgramRunId run, StreamId streamId, AccessType accessType,
                         @Nullable NamespacedEntityId component) {
     long accessTime = System.currentTimeMillis();
-    LOG.debug("Writing access for run {}, stream {}, accessType {}, component {}, accessTime = {}",
+    LOG.trace("Writing access for run {}, stream {}, accessType {}, component {}, accessTime = {}",
               run, streamId, accessType, component, accessTime);
 
     Transactionals.execute(transactional, context -> {
