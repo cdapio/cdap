@@ -28,7 +28,7 @@ public interface LineageRecorder {
    * for the lineage. This collection of all operations provided across multiple calls must have
    * unique names.
    *
-   * @param operations the operations to be recorded
+   * @param pipelineOperations the operations to be recorded
    */
-  void record(List<Operation> operations);
+  void record(List<PipelineOperation> pipelineOperations);
 }

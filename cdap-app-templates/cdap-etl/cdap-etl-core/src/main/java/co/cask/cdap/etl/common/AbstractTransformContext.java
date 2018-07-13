@@ -19,7 +19,7 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.TransformContext;
-import co.cask.cdap.etl.api.lineage.field.Operation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public abstract class AbstractTransformContext extends AbstractStageContext impl
   }
 
   @Override
-  public void record(List<Operation> operations) {
+  public void record(List<PipelineOperation> pipelineOperations) {
     throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }
