@@ -80,12 +80,7 @@ final class SimpleKafkaProducer {
   private <K, V> Producer<K, V> createProducer(final ProducerConfig config) {
     ExecutorService executor = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("create-producer"));
     try {
-      return Futures.getUnchecked(executor.submit(new Callable<Producer<K, V>>() {
-        @Override
-        public Producer<K, V> call() throws Exception {
-          return new Producer<>(config);
-        }
-      }));
+      return Futures.getUnchecked(executor.submit(() -> new Producer<>(config)));
     } finally {
       executor.shutdownNow();
     }

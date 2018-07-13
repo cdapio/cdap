@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package co.cask.cdap.logging.remote;
+
+import java.util.Iterator;
 
 /**
- * Namespace logging context.
+ * The {@link RemoteExecutionLogProcessor} used in Distributed mode.
  */
-public abstract class NamespaceLoggingContext extends AbstractLoggingContext {
-  public static final String TAG_NAMESPACE_ID = ".namespaceId";
-
-  /**
-   * Constructs NamespaceLoggingContext.
-   * @param namespaceId namespace id
-   */
-  public NamespaceLoggingContext(final String namespaceId) {
-    setSystemTag(TAG_NAMESPACE_ID, namespaceId);
-  }
+public class DistributedLogProcessor implements RemoteExecutionLogProcessor {
 
   @Override
-  public String getLogPartition() {
-    return String.format("%s", getSystemTag(TAG_NAMESPACE_ID));
+  public void process(Iterator<byte[]> loggingEventBytes) {
+    // TODO (CDAP-13380): implement distributed log processor
+    // no-op
   }
 }
