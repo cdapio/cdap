@@ -466,7 +466,8 @@ const getExperimentForEdit = (experimentId) => {
       });
     }, (err) => {
       // The error message returned from backend for this request is at err.response.message instead of just err.response
-      setExperimentCreateError(`Failed to retrieve the experiment '${experimentId}' - ${err.response.message || err.response || err}`);
+      const error = err.response.message || err.response || err;
+      setExperimentCreateError(`Failed to retrieve the experiment '${experimentId}' - ${error}`);
     });
 };
 
@@ -557,7 +558,9 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
         }
       },
       (err) => {
-        setExperimentCreateError(`Failed to retrieve the experiment '${experimentId}' and the model '${model.name}' - ${err.response || err}`);
+        // The error message returned from backend for this request is at err.response.message instead of just err.response
+        const error = err.response.message || err.response || err;
+        setExperimentCreateError(`Failed to retrieve the experiment '${experimentId}' and the model '${model.name}' - ${error}`);
       }
     );
 };
