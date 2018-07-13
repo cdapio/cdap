@@ -81,8 +81,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/profiles/{profile-name}")
   public void getSystemProfile(HttpRequest request, HttpResponder responder,
-                               @PathParam("profile-name") String profileName) throws NotFoundException {
-    ProfileId profileId = NamespaceId.SYSTEM.profile(profileName);
+                               @PathParam("profile-name") String profileName)
+    throws NotFoundException, BadRequestException {
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
   }
 
@@ -91,7 +92,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void writeSystemProfile(FullHttpRequest request, HttpResponder responder,
                                  @PathParam("profile-name") String profileName)
     throws BadRequestException, IOException, MethodNotAllowedException {
-    ProfileId profileId = NamespaceId.SYSTEM.profile(profileName);
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -100,8 +101,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}/enable")
   public void enableSystemProfile(HttpRequest request, HttpResponder responder,
                                   @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException {
-    profileService.enableProfile(NamespaceId.SYSTEM.profile(profileName));
+    throws NotFoundException, ProfileConflictException, BadRequestException {
+    profileService.enableProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -109,8 +110,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}/disable")
   public void disableSystemProfile(HttpRequest request, HttpResponder responder,
                                    @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
-    profileService.disableProfile(NamespaceId.SYSTEM.profile(profileName));
+    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
+    profileService.disableProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -118,9 +119,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void deleteSystemProfile(HttpRequest request, HttpResponder responder,
                                   @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
-    // TODO: add the check if there is any program or schedule associated with the profile
-    profileService.deleteProfile(NamespaceId.SYSTEM.profile(profileName));
+    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
+    profileService.deleteProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -131,8 +131,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles")
   public void getProfiles(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
-                          @QueryParam("includeSystem") @DefaultValue("false") String includeSystem) {
-    NamespaceId namespace = new NamespaceId(namespaceId);
+                          @QueryParam("includeSystem") @DefaultValue("false") String includeSystem)
+    throws BadRequestException, MethodNotAllowedException {
+    NamespaceId namespace = getValidatedNamespace(namespaceId);
     boolean include = Boolean.valueOf(includeSystem);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespace, include)));
   }
@@ -144,8 +145,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void getProfile(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("profile-name") String profileName) throws NotFoundException {
-    ProfileId profileId = new ProfileId(namespaceId, profileName);
+                         @PathParam("profile-name") String profileName)
+    throws NotFoundException, BadRequestException, MethodNotAllowedException {
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
   }
 
@@ -158,7 +160,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
                            @PathParam("namespace-id") String namespaceId,
                            @PathParam("profile-name") String profileName)
     throws BadRequestException, IOException, MethodNotAllowedException {
-    ProfileId profileId = new ProfileId(namespaceId, profileName);
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -173,9 +175,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void deleteProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
+    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
     // TODO: add the check if there is any program or schedule associated with the profile
-    profileService.deleteProfile(new ProfileId(namespaceId, profileName));
+    profileService.deleteProfile(getValidatedProfile(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -183,9 +185,10 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}/status")
   public void getProfileStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("profile-name") String profileName) throws NotFoundException {
+                               @PathParam("profile-name") String profileName)
+    throws NotFoundException, BadRequestException, MethodNotAllowedException {
     responder.sendJson(HttpResponseStatus.OK,
-      GSON.toJson(profileService.getProfile(new ProfileId(namespaceId, profileName)).getStatus()));
+      GSON.toJson(profileService.getProfile(getValidatedProfile(namespaceId, profileName)).getStatus()));
   }
 
   /**
@@ -197,8 +200,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void disableProfile(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
-    profileService.disableProfile(new ProfileId(namespaceId, profileName));
+    throws NotFoundException, ProfileConflictException, MethodNotAllowedException, BadRequestException {
+          profileService.disableProfile(getValidatedProfile(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -210,9 +213,36 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void enableProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException {
-    profileService.enableProfile(new ProfileId(namespaceId, profileName));
+    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
+    profileService.enableProfile(getValidatedProfile(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private NamespaceId getValidatedNamespace(String namespaceStr) throws BadRequestException, MethodNotAllowedException {
+    try {
+      NamespaceId namespaceId = new NamespaceId(namespaceStr);
+      if (namespaceId.equals(NamespaceId.SYSTEM)) {
+        throw new MethodNotAllowedException(
+          "Cannot perform profile methods on the system namespace. "
+            + "Please use the top level profile endpoints to manage system profiles.");
+      }
+      return namespaceId;
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
+  }
+
+  private ProfileId getValidatedProfile(String namespaceStr, String profileName)
+    throws BadRequestException, MethodNotAllowedException {
+    return getValidatedProfile(getValidatedNamespace(namespaceStr), profileName);
+  }
+
+  private ProfileId getValidatedProfile(NamespaceId namespaceId, String profileName) throws BadRequestException {
+    try {
+      return namespaceId.profile(profileName);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
   }
 
   private void writeProfile(ProfileId profileId, FullHttpRequest request)

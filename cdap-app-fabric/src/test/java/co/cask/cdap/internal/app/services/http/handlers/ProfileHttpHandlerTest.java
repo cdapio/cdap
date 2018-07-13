@@ -88,6 +88,17 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testSystemNamespaceProfilesNotAllowed() throws Exception {
+    listProfiles(NamespaceId.SYSTEM, false, 405);
+    getProfile(NamespaceId.SYSTEM.profile("abc"), 405);
+    disableProfile(NamespaceId.SYSTEM.profile("abc"), 405);
+    enableProfile(NamespaceId.SYSTEM.profile("abc"), 405);
+
+    Profile profile = new Profile("abc", "label", "desc", new ProvisionerInfo("xyz", Collections.emptyList()));
+    putProfile(NamespaceId.SYSTEM.profile("abc"), profile, 405);
+  }
+
+  @Test
   public void testListAndGetProfiles() throws Exception {
     // no profile should be there in default namespace
     List<Profile> profiles = listProfiles(NamespaceId.DEFAULT, false, 200);
@@ -99,8 +110,12 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(Collections.singletonList(Profile.NATIVE), profiles);
 
     // test get single profile endpoint
-    Profile defaultProfile = getProfile(ProfileId.NATIVE, 200).get();
-    Assert.assertEquals(Profile.NATIVE, defaultProfile);
+    ProfileId profileId = NamespaceId.DEFAULT.profile("p1");
+    Profile expected = new Profile("p1", "label", "my profile for testing",
+                                   new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
+    putProfile(profileId, expected, 200);
+    Profile actual = getProfile(profileId, 200).get();
+    Assert.assertEquals(expected, actual);
 
     // get a nonexisting profile should get a not found code
     getProfile(NamespaceId.DEFAULT.profile("nonExisting"), 404);
@@ -224,9 +239,9 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testNativeProfileImmutable() throws Exception {
     // verify native profile exists
-    Assert.assertEquals(Profile.NATIVE, getProfile(ProfileId.NATIVE, 200).get());
+    Assert.assertEquals(Profile.NATIVE, getSystemProfile(ProfileId.NATIVE.getProfile(), 200).get());
     // disable, update, or delete should throw a 405
-    disableProfile(ProfileId.NATIVE, 405);
+    disableSystemProfile(ProfileId.NATIVE.getProfile(), 405);
     putSystemProfile(ProfileId.NATIVE.getProfile(), Profile.NATIVE, 405);
     deleteSystemProfile(ProfileId.NATIVE.getProfile(), 405);
   }
