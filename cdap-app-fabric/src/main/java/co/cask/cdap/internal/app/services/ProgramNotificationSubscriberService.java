@@ -301,7 +301,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         }
         recordedRunRecord =
           appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus, null, messageIdBytes);
-
+        writeToHeartBeatDataset(recordedRunRecord, endTimeSecs, datasetContext, programHeartbeatDataset);
         if (recordedRunRecord != null) {
           runnable = getEmitMetricsRunnable(programRunId, recordedRunRecord,
                                             Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS);
