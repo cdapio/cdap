@@ -20,8 +20,7 @@ import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
@@ -497,9 +496,8 @@ public class SmartWorkflow extends AbstractWorkflow {
     for (Map.Entry<String, AlertPublisher> alertPublisherEntry : alertPublishers.entrySet()) {
       String name = alertPublisherEntry.getKey();
       AlertPublisher alertPublisher = alertPublisherEntry.getValue();
-      PartitionedFileSet alertConnector = workflowContext.getDataset(name);
-      try (CloseableIterator<Alert> alerts =
-             new AlertReader(alertConnector.getPartitions(PartitionFilter.ALWAYS_MATCH))) {
+      FileSet alertConnector = workflowContext.getDataset(name);
+      try (CloseableIterator<Alert> alerts = new AlertReader(alertConnector)) {
         if (!alerts.hasNext()) {
           continue;
         }

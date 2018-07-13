@@ -308,24 +308,41 @@ public final class Locations {
   }
 
   /**
+   * Return whether the location is the root location, meaning it has no parents.
+   *
+   * @param location the location to check
+   * @return true if the location is the root location, false if not
+   */
+  public static boolean isRoot(Location location) {
+    String path = location.toURI().getPath();
+    return path == null || path.isEmpty() || "/".equals(path);
+  }
+
+  /**
    * Creates a {@link Location} instance which represents the parent of the given location.
+   * Note: CDAP-13765 this method can return an invalid location if the parent is the root directory depending
+   * on the implementation of the input Location. Consider calling {@link #isRoot(Location)} before
+   * calling this.
    *
    * @param location location to extra parent from.
    * @return an instance representing the parent location or {@code null} if there is no parent.
    */
   @Nullable
   public static Location getParent(Location location) {
-    URI source = location.toURI();
-
     // If it is root, return null
-    if ("/".equals(source.getPath())) {
+    if (isRoot(location)) {
       return null;
     }
 
+    URI source = location.toURI();
     URI resolvedParent = URI.create(source.toString() + "/..").normalize();
+
+    // TODO: (CDAP-13765) move this logic to a better place
     // NOTE: if there is a trailing slash at the end, rename(), getName() and other operations on file
     // does not work in MapR. so we remove the trailing slash (if any) at the end.
-    if (resolvedParent.toString().endsWith("/")) {
+    // However, don't remove the trailing slash if this is a root directory, as a URI without a path is an invalid
+    // location
+    if (resolvedParent.toString().endsWith("/") && !"/".equals(resolvedParent.getPath())) {
       String parent = resolvedParent.toString();
       resolvedParent = URI.create(parent.substring(0, parent.length() - 1));
     }

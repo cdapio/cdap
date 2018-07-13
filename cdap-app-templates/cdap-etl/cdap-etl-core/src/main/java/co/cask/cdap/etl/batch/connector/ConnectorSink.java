@@ -17,10 +17,10 @@
 package co.cask.cdap.etl.batch.connector;
 
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.common.Constants;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 
@@ -53,10 +53,9 @@ public abstract class ConnectorSink<T> extends BatchSink<T, NullWritable, Text> 
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) throws Exception {
+  public void prepareRun(BatchSinkContext context) {
     Map<String, String> arguments = new HashMap<>();
-    PartitionKey outputPartition = PartitionKey.builder().addStringField("phase", phaseName).build();
-    PartitionedFileSetArguments.setOutputPartitionKey(arguments, outputPartition);
+    FileSetArguments.setOutputPath(arguments, Constants.Connector.DATA_DIR + "/" + phaseName);
     context.addOutput(Output.ofDataset(datasetName, arguments));
   }
 }
