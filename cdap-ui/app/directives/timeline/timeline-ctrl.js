@@ -180,7 +180,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       if(res.start === res.end){
         res.end++;
       }
-      this.apiSettings.metric.startTime = res.start;
+      this.apiSettings.metric.startTime = res.starting;
       this.apiSettings.metric.endTime = res.end;
       $scope.renderSearchCircles([]);
       this.pollForMetadata();
