@@ -108,7 +108,8 @@ public interface Provisioner {
   void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception;
 
   /**
-   * Get the {@link PollingStrategy} to use when polling for cluster creation or deletion.
+   * Get the {@link PollingStrategy} to use when polling for cluster creation or deletion. The cluster status is
+   * guaranteed to be {@link ClusterStatus#CREATING} or {@link ClusterStatus#DELETING}.
    *
    * @param context provisioner context
    * @param cluster the cluster to poll status for

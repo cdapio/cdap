@@ -153,13 +153,12 @@ public class DataProcProvisioner implements Provisioner {
     PollingStrategy strategy = PollingStrategies.fixedInterval(conf.getPollInterval(), TimeUnit.SECONDS);
     switch (cluster.getStatus()) {
       case CREATING:
-        strategy = PollingStrategies.initialDelay(strategy, conf.getPollCreateDelay(),
-                                                  conf.getPollCreateJitter(), TimeUnit.SECONDS);
-        break;
+        return PollingStrategies.initialDelay(strategy, conf.getPollCreateDelay(),
+                                              conf.getPollCreateJitter(), TimeUnit.SECONDS);
       case DELETING:
-        strategy = PollingStrategies.initialDelay(strategy, conf.getPollDeleteDelay(), TimeUnit.SECONDS);
-        break;
+        return PollingStrategies.initialDelay(strategy, conf.getPollDeleteDelay(), TimeUnit.SECONDS);
     }
+    LOG.warn("Received a request to get the polling strategy for unexpected cluster status {}", cluster.getStatus());
     return strategy;
   }
 
