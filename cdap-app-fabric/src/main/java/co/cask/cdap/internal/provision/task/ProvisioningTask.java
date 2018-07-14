@@ -68,7 +68,7 @@ public abstract class ProvisioningTask {
    * @throws Exception if there was a non-retryable exception while executing a subtask
    */
   public void execute() throws Exception {
-    LOG.info("Starting {} task.", initialTaskInfo.getProvisioningOp().getType());
+    LOG.debug("Starting {} task for program run {}.", initialTaskInfo.getProvisioningOp().getType(), programRunId);
     RetryStrategy retryStrategy =
       RetryStrategies.statefulTimeLimit(retryTimeLimitSecs, TimeUnit.SECONDS, System.currentTimeMillis(),
                                         RetryStrategies.exponentialDelay(100, 20000, TimeUnit.MILLISECONDS));
@@ -91,14 +91,17 @@ public abstract class ProvisioningTask {
       }
 
       try {
-        LOG.info("Executing {} subtask {}.", taskInfo.getProvisioningOp().getType(), state);
+        LOG.debug("Executing {} subtask {} for program run {}.",
+                  taskInfo.getProvisioningOp().getType(), state, programRunId);
         taskInfoOptional = Retries.callWithInterruptibleRetries(() -> subtask.execute(taskInfo), retryStrategy,
                                                                 t -> t instanceof RetryableProvisionException);
-        LOG.info("Completed {} subtask {}.", taskInfo.getProvisioningOp().getType(), state);
+        LOG.debug("Completed {} subtask {} for program run {}.",
+                  taskInfo.getProvisioningOp().getType(), state, programRunId);
       } catch (InterruptedException e) {
         throw e;
       } catch (Exception e) {
-        LOG.error("{} task failed in {} state.", taskInfo.getProvisioningOp().getType(), state, e);
+        LOG.error("{} task failed in {} state for program run {}.",
+                  taskInfo.getProvisioningOp().getType(), state, programRunId, e);
         handleSubtaskFailure(taskInfo, e);
         ProvisioningOp failureOp = new ProvisioningOp(taskInfo.getProvisioningOp().getType(),
                                                       ProvisioningOp.Status.FAILED);
@@ -107,7 +110,7 @@ public abstract class ProvisioningTask {
         return;
       }
     }
-    LOG.info("Completed {} task.", initialTaskInfo.getProvisioningOp().getType());
+    LOG.debug("Completed {} task for program run {}.", initialTaskInfo.getProvisioningOp().getType(), programRunId);
   }
 
   /**
