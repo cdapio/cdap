@@ -224,7 +224,7 @@ public class DefaultMetadataStoreTest {
 
   @After
   public void cleanupTest() throws Exception {
-    store.deleteAndRecreate();
+    store.deleteDatasets();
   }
 
   @Test

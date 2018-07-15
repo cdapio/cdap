@@ -21,7 +21,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.provision.SecureKeyInfo;
+import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import co.cask.cdap.security.tools.KeyStores;
 import com.google.common.base.Joiner;
@@ -137,7 +137,9 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
   private final Map<String, Map<String, String>> runnableConfigs = new HashMap<>();
   private final Map<String, String> runnableExtraOptions = new HashMap<>();
   private final String remoteHost;
-  private final SecureKeyInfo secureKeyInfo;
+  private final SSHKeyPair sshKeyPair;
+  private final KeyStore serverKeyStore;
+  private final KeyStore clientKeyStore;
   private final LocationFactory locationFactory;
   private final RemoteExecutionTwillControllerFactory controllerFactory;
   private String extraOptions;
@@ -147,7 +149,8 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
   private String classLoaderClassName;
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
-                               String remoteHost, SecureKeyInfo secureKeyInfo,
+                               String remoteHost, SSHKeyPair sshKeyPair,
+                               KeyStore serverKeyStore, KeyStore clientKeyStore,
                                TwillSpecification twillSpec,
                                RunId runId, @Nullable String extraOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
@@ -161,7 +164,9 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
     this.cConf = cConf;
     this.hConf = hConf;
     this.remoteHost = remoteHost;
-    this.secureKeyInfo = secureKeyInfo;
+    this.sshKeyPair = sshKeyPair;
+    this.serverKeyStore = serverKeyStore;
+    this.clientKeyStore = clientKeyStore;
     this.twillSpec = twillSpec;
     this.runId = runId;
     this.extraOptions = extraOptions == null ? "" : extraOptions;
@@ -904,19 +909,9 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
    * Creates a {@link SSHSession} for SSHing into the remote host.
    */
   private SSHSession createSSHSession() throws IOException {
-    Location privateKeyLocation = locationFactory
-      .create(secureKeyInfo.getKeyDirectory())
-      .append(secureKeyInfo.getPrivateKeyFile());
-
     SSHConfig sshConfig = SSHConfig.builder(remoteHost)
-      .setUser(secureKeyInfo.getUsername())
-      .setPrivateKeySupplier(() -> {
-        try {
-          return ByteStreams.toByteArray(privateKeyLocation::getInputStream);
-        } catch (IOException e) {
-          throw new RuntimeException("Failed to read private key from " + privateKeyLocation, e);
-        }
-      })
+      .setUser(sshKeyPair.getPublicKey().getUser())
+      .setPrivateKeySupplier(sshKeyPair.getPrivateKeySupplier())
       .build();
 
     return new DefaultSSHSession(sshConfig);
@@ -926,25 +921,24 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
    * Localize key store files to the remote host.
    */
   private void localizeKeyStores(SSHSession session, String targetPath) throws Exception {
-    Location keyDir = locationFactory.create(secureKeyInfo.getKeyDirectory());
+    // Copy the server keystore for the runtime monitor server
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    serverKeyStore.store(bos, "".toCharArray());
 
-    // Copy the keystore for the runtime monitor server
-    Location serverKeyStoreLocation = keyDir.append(secureKeyInfo.getServerKeyStoreFile());
-    try (InputStream is = serverKeyStoreLocation.getInputStream()) {
-      //noinspection OctalInteger
-      session.copy(is, targetPath, serverKeyStoreLocation.getName(), serverKeyStoreLocation.length(), 0600, null, null);
-    }
+    //noinspection OctalInteger
+    session.copy(new ByteArrayInputStream(bos.toByteArray()), targetPath,
+                 co.cask.cdap.common.conf.Constants.RuntimeMonitor.SERVER_KEYSTORE,
+                 bos.size(), 0600, null, null);
 
     // Creates a trust store from the client keystore
-    Location clientKeyStoreLocation = keyDir.append(secureKeyInfo.getClientKeyStoreFile());
-    KeyStore trustStore = KeyStores.createTrustStore(KeyStores.load(clientKeyStoreLocation, () -> ""));
+    KeyStore trustStore = KeyStores.createTrustStore(clientKeyStore);
 
     // Copy the trust store for the runtime monitor server to use for verifying client connections
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    bos.reset();
     trustStore.store(bos, "".toCharArray());
-    byte[] serializedTrustStore = bos.toByteArray();
     //noinspection OctalInteger
-    session.copy(new ByteArrayInputStream(serializedTrustStore), targetPath,
-                 clientKeyStoreLocation.getName(), serializedTrustStore.length, 0600, null, null);
+    session.copy(new ByteArrayInputStream(bos.toByteArray()), targetPath,
+                 co.cask.cdap.common.conf.Constants.RuntimeMonitor.CLIENT_KEYSTORE,
+                 bos.size(), 0600, null, null);
   }
 }

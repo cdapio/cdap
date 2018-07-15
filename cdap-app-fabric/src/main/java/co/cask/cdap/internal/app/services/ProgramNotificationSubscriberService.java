@@ -404,10 +404,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // Update the ProgramOptions system arguments to include the cluster information
         Map<String, String> systemArgs = new HashMap<>(programOptions.getArguments().asMap());
         systemArgs.put(ProgramOptionConstants.CLUSTER, properties.get(ProgramOptionConstants.CLUSTER));
-        if (properties.containsKey(ProgramOptionConstants.CLUSTER_KEY_INFO)) {
-          systemArgs.put(ProgramOptionConstants.CLUSTER_KEY_INFO,
-                         properties.get(ProgramOptionConstants.CLUSTER_KEY_INFO));
-        }
+        systemArgs.put(ProgramOptionConstants.SECURE_KEYS_DIR, properties.get(ProgramOptionConstants.SECURE_KEYS_DIR));
+
         ProgramOptions newProgramOptions = new SimpleProgramOptions(programOptions.getProgramId(),
                                                                     new BasicArguments(systemArgs),
                                                                     programOptions.getUserArguments());

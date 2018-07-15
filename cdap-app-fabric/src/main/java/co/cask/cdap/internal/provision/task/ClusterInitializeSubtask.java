@@ -23,6 +23,8 @@ import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -43,6 +45,10 @@ public class ClusterInitializeSubtask extends ProvisioningSubtask {
     // the original createCluster() call, except with the status updated.
     Cluster fullClusterDetails = provisioner.getClusterDetail(provisionerContext, cluster);
     provisioner.initializeCluster(provisionerContext, fullClusterDetails);
-    return new Cluster(fullClusterDetails, ClusterStatus.RUNNING);
+
+    Map<String, String> properties = new HashMap<>(cluster.getProperties());
+    properties.putAll(fullClusterDetails.getProperties());
+
+    return new Cluster(fullClusterDetails.getName(), ClusterStatus.RUNNING, fullClusterDetails.getNodes(), properties);
   }
 }

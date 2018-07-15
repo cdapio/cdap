@@ -48,7 +48,7 @@ public interface ProvisionerContext {
   SSHContext getSSHContext();
 
   /**
-   * @return {@link SparkCompat} used by CDAP
+   * Returns a {@link SparkCompat} object that represents the Spark version being used in CDAP.
    */
   SparkCompat getSparkCompat();
 

@@ -862,6 +862,13 @@ public final class Constants {
     public static final String SERVER_HOST = "app.program.runtime.monitor.server.host";
     public static final String SERVER_PORT = "app.program.runtime.monitor.server.port";
     public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
+
+    // Constants for secure connections
+    public static final String SSH_USER = "ssh.user";
+    public static final String PUBLIC_KEY = "id_rsa.pub";
+    public static final String PRIVATE_KEY = "id_rsa";
+    public static final String SERVER_KEYSTORE = "server.jks";
+    public static final String CLIENT_KEYSTORE = "client.jks";
   }
 
   /**

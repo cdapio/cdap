@@ -231,14 +231,14 @@ public class StandaloneMain {
     // TODO: CDAP-7688, remove next line after the issue is resolved
     injector.getInstance(MessagingHttpService.class).startAndWait();
 
-    metadataSubscriberService.startAndWait();
-    remoteExecutionTwillRunnerService.start();
-
     txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
     serviceStore.startAndWait();
     streamService.startAndWait();
+
+    remoteExecutionTwillRunnerService.start();
+    metadataSubscriberService.startAndWait();
 
     // Validate the logging pipeline configuration.
     // Do it explicitly as Standalone doesn't have a separate master check phase as the distributed does.
@@ -306,13 +306,15 @@ public class StandaloneMain {
 
       operationalStatsService.stopAndWait();
 
-      // now the stream writer and the explore service (they need tx)
+      // Stop all services that requires tx service
+      metadataSubscriberService.stopAndWait();
       streamService.stopAndWait();
       if (exploreExecutorService != null) {
         exploreExecutorService.stopAndWait();
       }
       exploreClient.close();
       metadataService.stopAndWait();
+      remoteExecutionTwillRunnerService.stop();
       serviceStore.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
@@ -325,9 +327,6 @@ public class StandaloneMain {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
       }
-
-      remoteExecutionTwillRunnerService.stop();
-      metadataSubscriberService.stopAndWait();
 
       // TODO: CDAP-7688, remove next line after the issue is resolved
       injector.getInstance(MessagingHttpService.class).startAndWait();

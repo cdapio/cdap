@@ -48,7 +48,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
-import co.cask.cdap.internal.provision.SecureKeyInfo;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -268,15 +267,9 @@ public class DistributedProgramContainerModule extends AbstractModule {
    * Optionally adds {@link RuntimeMonitorServer} binding.
    */
   private void bindRuntimeMonitorServer(Binder binder) {
-    if (!systemArgs.hasOption(ProgramOptionConstants.CLUSTER_KEY_INFO)) {
-      return;
-    }
-
-    SecureKeyInfo keyInfo = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER_KEY_INFO),
-                                          SecureKeyInfo.class);
     try {
-      Path keyStorePath = Paths.get(keyInfo.getServerKeyStoreFile());
-      Path trustStorePath = Paths.get(keyInfo.getClientKeyStoreFile());
+      Path keyStorePath = Paths.get(Constants.RuntimeMonitor.SERVER_KEYSTORE);
+      Path trustStorePath = Paths.get(Constants.RuntimeMonitor.CLIENT_KEYSTORE);
 
       // If there is no key store or trust store, don't add the binding.
       // The reason is that this module is used in all containers, but only the driver container would have the
