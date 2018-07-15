@@ -25,6 +25,7 @@ var uuidV4 = require('uuid/v4');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 let pathsToClean = [
   'cdap_dist'
 ];
@@ -34,7 +35,6 @@ let cleanOptions = {
   verbose: true,
   dry: false
 };
-
 
 var mode = process.env.NODE_ENV || 'production';
 const getWebpackDllPlugins = (mode) => {
@@ -56,6 +56,11 @@ const getWebpackDllPlugins = (mode) => {
   ];
 };
 var plugins = [
+  new LodashModuleReplacementPlugin({
+    shorthands: true,
+    collections: true,
+    caching: true
+  }),
   new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
   ...getWebpackDllPlugins(),
@@ -105,10 +110,6 @@ var rules = [
   {
     test: /\.ya?ml$/,
     use: 'yml-loader'
-  },
-  {
-    test: /\.json$/,
-    use: 'json-loader'
   },
   {
     test: /\.css$/,
@@ -209,17 +210,17 @@ if (mode === 'development') {
 
 
 var webpackConfig = {
-  cache: true,
+  mode,
   context: __dirname + '/app/cdap',
   entry: {
-    'cdap': ['./cdap.js']
+    'cdap': ['@babel/polyfill', './cdap.js']
   },
   module: {
     rules
   },
   output: {
-    filename: '[name].js',
-    chunkFilename: '[name]-[chunkhash].js',
+    filename: '[name].[chunkhash].js',
+    chunkFilename: '[name].[chunkhash].js',
     path: __dirname + '/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/'
   },
@@ -228,6 +229,10 @@ var webpackConfig = {
     chunkModules: false
   },
   plugins: plugins,
+  // TODO: Need to investigate this more.
+  optimization: {
+    splitChunks: false
+  },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
     alias: {
@@ -239,11 +244,5 @@ var webpackConfig = {
     }
   }
 };
-
-if (mode === 'development') {
-  webpackConfig = Object.assign({}, webpackConfig, {
-    devtool: 'source-map'
-  });
-}
 
 module.exports = webpackConfig;

@@ -21,6 +21,8 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
+var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 let pathsToClean = [
   'login_dist'
 ];
@@ -32,6 +34,11 @@ let cleanOptions = {
 };
 
 var plugins = [
+  new LodashModuleReplacementPlugin({
+    shorthands: true,
+    collections: true,
+    caching: true
+  }),
   new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
   new webpack.DllReferencePlugin({
@@ -110,6 +117,7 @@ var rules = [
   }
 ];
 var webpackConfig = {
+  mode,
   context: __dirname + '/app/login',
   entry: {
     'login': ['@babel/polyfill', './login.js']
@@ -118,10 +126,14 @@ var webpackConfig = {
     rules
   },
   stats: {
-    chunks: false
+    chunks: false,
+    chunkModules: false
+  },
+  optimization: {
+    splitChunks: false
   },
   output: {
-    filename: './[name].js',
+    filename: '[name].js',
     path: __dirname + '/login_dist/login_assets',
     publicPath: '/login_assets/'
   },
@@ -136,20 +148,21 @@ if (mode === 'production') {
         '__DEVTOOLS__': false
       },
     }),
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
+    new UglifyJsPlugin({
+      uglifyOptions: {
+        ie8: false,
+        compress: {
           warnings: false
+        },
+        output: {
+          comments: false,
+          beautify: false,
+        }
       }
     })
   );
   webpackConfig = Object.assign({}, webpackConfig, {
     plugins
-  });
-}
-
-if (mode !== 'production') {
-  webpackConfig = Object.assign({}, webpackConfig, {
-    devtool: 'source-map'
   });
 }
 
