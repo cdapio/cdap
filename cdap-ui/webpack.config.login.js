@@ -20,14 +20,15 @@ var path = require('path');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+var ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 let pathsToClean = [
   'login_dist'
 ];
 
 // the clean options to use
 let cleanOptions = {
-  verbose:  true,
-  dry:      false
+  verbose: true,
+  dry: false
 };
 
 var plugins = [
@@ -56,7 +57,13 @@ var plugins = [
   new StyleLintPlugin({
     syntax: 'scss',
     files: ['**/*.scss']
-  })
+  }),
+  new ForkTsCheckerWebpackPlugin({
+    tsconfig: __dirname + '/tsconfig.json',
+    tslint: __dirname + '/tslint.json',
+    // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
+    memoryLimit: 4096
+  }),
 ];
 var mode = process.env.NODE_ENV;
 var rules = [
@@ -78,19 +85,6 @@ var rules = [
       'style-loader',
       'css-loader',
       'sass-loader'
-    ]
-  },
-  {
-    enforce: 'pre',
-    test: /\.js$/,
-    use: 'eslint-loader',
-    exclude: [
-      /node_modules/,
-      /bower_components/,
-      /dist/,
-      /cdap_dist/,
-      /common_dist/,
-      /wrangler_dist/
     ]
   },
   {
@@ -118,7 +112,7 @@ var rules = [
 var webpackConfig = {
   context: __dirname + '/app/login',
   entry: {
-    'login': ['babel-polyfill', './login.js']
+    'login': ['@babel/polyfill', './login.js']
   },
   module: {
     rules

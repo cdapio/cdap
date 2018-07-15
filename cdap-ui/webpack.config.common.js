@@ -18,6 +18,7 @@ var mode = process.env.NODE_ENV || 'production';
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+var ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 let pathsToClean = [
   'common_dist'
 ];
@@ -43,7 +44,13 @@ var plugins = [
     'process.env':{
       'NODE_ENV': JSON.stringify(mode)
     },
-  })
+  }),
+  new ForkTsCheckerWebpackPlugin({
+    tsconfig: __dirname + '/tsconfig.json',
+    tslint: __dirname + '/tslint.json',
+    // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
+    memoryLimit: 4096
+  }),
 ];
 var rules = [
   {
@@ -69,19 +76,6 @@ var rules = [
   {
     test: /\.json$/,
     use: 'json-loader'
-  },
-  {
-    enforce: 'pre',
-    test: /\.js$/,
-    use: 'eslint-loader',
-    exclude: [
-      /node_modules/,
-      /bower_components/,
-      /dist/,
-      /old_dist/,
-      /cdap_dist/,
-      /login_dist/
-    ]
   },
   {
     test: /\.js$/,
@@ -134,7 +128,7 @@ var webpackConfig = {
   entry: {
     'common-new': ['./cask-shared-components.js'],
     [COMMON_LIB_NAME]: [
-      'babel-polyfill',
+      '@babel/polyfill',
       'classnames',
       'reactstrap',
       'i18n-react',

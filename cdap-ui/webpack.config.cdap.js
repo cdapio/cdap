@@ -35,6 +35,7 @@ let cleanOptions = {
   dry: false
 };
 
+
 var mode = process.env.NODE_ENV || 'production';
 const getWebpackDllPlugins = (mode) => {
   var sharedDllManifestFileName = 'shared-vendor-manifest.json';
@@ -85,7 +86,7 @@ var plugins = [
   }),
   new ForkTsCheckerWebpackPlugin({
     tsconfig: __dirname + '/tsconfig.json',
-    tslint: true,
+    tslint: __dirname + '/tslint.json',
     // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
     memoryLimit: 4096
   }),
@@ -119,15 +120,27 @@ var rules = [
     ]
   },
   {
-    test: /\.(t|j)s$/,
-     use: [
-        {
-          loader: 'ts-loader',
-          options: {
-            transpileOnly: true
-          },
+    test: /\.js$/,
+    use: ['babel-loader'],
+    exclude: [
+      /node_modules/,
+      /lib/
+    ],
+    include: [
+      path.join(__dirname, 'app')
+    ]
+  },
+  {
+    test: /\.tsx$/,
+    use: [
+      {
+        loader: 'ts-loader',
+        options: {
+          transpileOnly: true
         }
-      ],
+      },
+      'babel-loader'
+    ],
     exclude: [
       /node_modules/,
       /lib/

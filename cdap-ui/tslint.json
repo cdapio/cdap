@@ -3,7 +3,10 @@
   "extends": [
     "tslint:recommended"
   ],
-  "rules": {},
+  "rules": {
+    "quotemark": false,
+    "ordered-imports": false
+  },
   "jsRules": {
     "arrow-parens": false,
     "object-literal-key-quotes": false,
