@@ -148,7 +148,7 @@
             <artifactId>maven-resources-plugin</artifactId>
             <version>2.6</version>
             <executions>
-              <!-- Copy CDAP and CLI scripts -->
+              <!-- Copy CDAP scripts -->
               <execution>
                 <id>copy-cli-scripts</id>
                 <phase>process-resources</phase>
@@ -162,15 +162,6 @@
                     <delimiter>@@</delimiter>
                   </delimiters>
                   <resources>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
-                      <targetPath>bin</targetPath>
-                      <includes>
-                        <include>cdap-cli.bat</include>
-                        <include>cdap-cli.sh</include>
-                      </includes>
-                      <filtering>true</filtering>
-                    </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-common/bin</directory>
                       <targetPath>bin</targetPath>
