@@ -849,8 +849,11 @@ public class MetadataDataset extends AbstractDataset {
       Set<String> indexes = indexer.getIndexes(metadataEntry);
       IndexColumn indexColumn = getIndexColumn(metadataKey, indexer.getSortOrder());
       for (String index : indexes) {
+        if (index.isEmpty()) {
+          continue;
+        }
+        
         // store one value for within namespace search and one for cross namespace search
-
         String lowercaseIndex = index.toLowerCase();
         MDSKey mdsIndexKey = MetadataKey.createIndexRowKey(metadataEntity, metadataKey, lowercaseIndex);
         Put put = new Put(mdsIndexKey.getKey());
