@@ -130,7 +130,8 @@ public class ProfileDataset {
     table.write(
       rowKey, new Profile(profile.getName(), profile.getLabel(), profile.getDescription(), profile.getScope(),
                           oldProfile == null ? ProfileStatus.ENABLED : oldProfile.getStatus(),
-                          profile.getProvisioner()));
+                          profile.getProvisioner(),
+                          oldProfile == null ? profile.getCreatedTsSeconds() : oldProfile.getCreatedTsSeconds()));
   }
 
   /**
@@ -213,7 +214,8 @@ public class ProfileDataset {
         String.format("Profile %s already %s", profileId.getProfile(), expectedStatus.toString()), profileId);
     }
     table.write(rowKey, new Profile(oldProfile.getName(), oldProfile.getLabel(), oldProfile.getDescription(),
-                                    oldProfile.getScope(), expectedStatus, oldProfile.getProvisioner()));
+                                    oldProfile.getScope(), expectedStatus, oldProfile.getProvisioner(),
+                                    oldProfile.getCreatedTsSeconds()));
   }
 
   /**
