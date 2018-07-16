@@ -20,7 +20,7 @@ import IconSVG from 'components/IconSVG';
 import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
 import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {reset} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {objectQuery, reverseArrayWithoutMutating, isNilOrEmpty} from 'services/helpers';
+import {objectQuery, reverseArrayWithoutMutating, isNilOrEmpty, preventPropagation} from 'services/helpers';
 import classnames from 'classnames';
 import Popover from 'components/Popover';
 import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
@@ -44,10 +44,20 @@ export default class RunConfigs extends Component {
 
   state = {
     showModeless: false,
-    runtimeArgs: null
+    runtimeArgs: {
+      pairs: []
+    }
   };
 
   runtimeArgsMap = {};
+
+  componentWillReceiveProps() {
+    this.getRuntimeArgsAndToggleModeless();
+  }
+
+  componentDidMount() {
+    this.getRuntimeArgsAndToggleModeless();
+  }
 
   getRuntimeArgsAndToggleModeless = () => {
     PipelineConfigurationsStore.dispatch({
@@ -97,8 +107,14 @@ export default class RunConfigs extends Component {
   };
 
   isRuntimeArgsEmpty = () => {
+    if (!this.state.runtimeArgs.pairs.length) {
+      return true;
+    }
     if (this.state.runtimeArgs.pairs.length === 1) {
-      if (isNilOrEmpty(this.state.runtimeArgs.pairs.key) && isNilOrEmpty(this.state.runtimeArgs.pairs.value)) {
+      if (
+        isNilOrEmpty(this.state.runtimeArgs.pairs[0].key) &&
+        isNilOrEmpty(this.state.runtimeArgs.pairs[0].value)
+      ) {
         return true;
       }
       return false;
@@ -107,14 +123,6 @@ export default class RunConfigs extends Component {
   };
 
   renderRuntimeArgs = () => {
-    if (!this.state.runtimeArgs) {
-      return null;
-    }
-    if (this.isRuntimeArgsEmpty()) {
-      return (
-        <h4>{T.translate(`${PREFIX}.noRuntimeArgs`)}</h4>
-      );
-    }
     return (
       <div className="historical-runtimeargs-keyvalues">
         <div>
@@ -184,13 +192,13 @@ export default class RunConfigs extends Component {
         <Provider store={PipelineConfigurationsStore}>
           <PipelineModeless
             title={title}
-            onClose={this.toggleModeless}
+            onClose={this.toggleModeless.bind(this, false)}
           >
             <div className="historical-runtime-args-wrapper">
               {this.renderRuntimeArgs()}
               <div className="runconfig-tab-footer">
                 {
-                  !this.state.runtimeArgs ?
+                  this.isRuntimeArgsEmpty() ?
                     null
                   :
                     <PipelineRunTimeArgsCounter
@@ -208,7 +216,10 @@ export default class RunConfigs extends Component {
 
   render() {
     const ConfigsBtnComp = () => (
-      <div className="run-configs-btn">
+      <div
+        className="run-configs-btn"
+        onClick={preventPropagation}
+      >
         <IconSVG name="icon-sliders" />
         <div className="button-label">
           {T.translate(`${PREFIX}.configs`)}
@@ -216,7 +227,7 @@ export default class RunConfigs extends Component {
       </div>
     );
 
-    if (!this.props.runs.length) {
+    if (!this.props.runs.length || this.isRuntimeArgsEmpty()) {
       return (
         <Popover
           target={ConfigsBtnComp}
@@ -224,7 +235,12 @@ export default class RunConfigs extends Component {
           placement='bottom-end'
           className="run-info-container run-configs-container disabled"
         >
-          {T.translate(`${PREFIX}.pipelineNeverRun`)}
+          {
+            !this.props.runs.length ?
+              T.translate(`${PREFIX}.pipelineNeverRun`)
+            :
+              T.translate(`${PREFIX}.noRuntimeArgsForRun`)
+          }
         </Popover>
       );
     }
