@@ -36,6 +36,7 @@ const ACTIONS = {
 
   OVERRIDE_CREATION_STEP: 'OVERRIDE_CREATION_STEP',
   MODEL_UPDATE: 'MODEL_UPDATE',
+  SET_REDIRECT_TO_DETAIL_VIEW: 'SET_REDIRECT_TO_DETAIL_VIEW',
 
   SET_SPLIT_INFO: 'SET_SPLIT_INFO',
   SET_SCHEMA: 'SET_SCHEMA',
@@ -97,7 +98,8 @@ const DEFAULT_MODEL_CREATE_VALUE = {
 
 const DEFAULT_ACTIVE_STEP = {
   override: false,
-  step_name: CREATION_STEPS.DATAPREP_CONNECTIONS
+  step_name: CREATION_STEPS.DATAPREP_CONNECTIONS,
+  redirectToDetailView: false
 };
 
 const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = defaultAction) => {
@@ -380,6 +382,11 @@ const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
       };
       return getActiveStep(newState);
     }
+    case ACTIONS.SET_REDIRECT_TO_DETAIL_VIEW:
+      return {
+        ...state,
+        redirectToDetailView: action.payload.redirectToDetailView
+      };
 
     default:
       return getActiveStep(state);

@@ -287,7 +287,18 @@ function createSplitAndUpdateStatus() {
     })
     .subscribe(
       setSplitDetails.bind(null, experiments_create.name),
-      (err) => setModelCreateError(`Failed to create split for the model '${modelName}' - ${err.response || err}`),
+      (err) => {
+        setModelCreateError(`Failed to create split for the model '${modelName}' - ${err.response || err}`);
+        createExperimentStore.dispatch({
+          type: CREATEEXPERIMENTACTIONS.SET_SPLIT_INFO,
+          payload: {
+            splitInfo: {
+              id: null,
+              status: 'Failed'
+            }
+          }
+        });
+      },
       () => console.log('Split Task complete ', arguments)
     );
 }
@@ -427,9 +438,10 @@ function applyDirectives(workspaceId, directives) {
 const getExperimentForEdit = (experimentId) => {
   setExperimentLoading();
   let experiment;
+  const namespace = getCurrentNamespace();
   myExperimentsApi
     .getExperiment({
-      namespace: getCurrentNamespace(),
+      namespace,
       experimentId
     })
     .mergeMap(exp => {
@@ -447,7 +459,7 @@ const getExperimentForEdit = (experimentId) => {
       setDirectives(directives);
       let requestBody = directiveRequestBodyCreator(directives);
       return MyDataPrepApi.getSchema({
-        namespace: getCurrentNamespace(),
+        namespace,
         workspaceId: experiment.workspaceId
       }, requestBody);
     })
@@ -467,7 +479,19 @@ const getExperimentForEdit = (experimentId) => {
     }, (err) => {
       // The error message returned from backend for this request is at err.response.message instead of just err.response
       const error = err.response.message || err.response || err;
-      setExperimentCreateError(`Failed to retrieve the experiment '${experimentId}' - ${error}`);
+      setExperimentLoading(false);
+      experimentDetailStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_ERROR,
+        payload: {
+          error: `Failed to retrieve the experiment '${experimentId}' - ${error}`
+        }
+      });
+      createExperimentStore.dispatch({
+        type: CREATEEXPERIMENTACTIONS.SET_REDIRECT_TO_DETAIL_VIEW,
+        payload: {
+          redirectToDetailView: true
+        }
+      });
     });
 };
 
@@ -541,17 +565,7 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
     })
     .subscribe(
       splitInfo => {
-        let payload = {
-          experimentDetails: experiment,
-          modelDetails: model
-        };
-        if (splitInfo) {
-          payload.splitInfo = splitInfo;
-        }
-        createExperimentStore.dispatch({
-          type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT,
-          payload
-        });
+        setExperimentModelForEdit(experiment, model, splitInfo);
         if (typeof splitInfo === 'object' && splitInfo.status !== 'Complete') {
           pollForSplitStatus(experiment.name, modelId)
             .subscribe(setSplitDetails.bind(null, experiment.name));
@@ -560,10 +574,26 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
       (err) => {
         // The error message returned from backend for this request is at err.response.message instead of just err.response
         const error = err.response.message || err.response || err;
-        setExperimentCreateError(`Failed to retrieve the experiment '${experimentId}' and the model '${model.name}' - ${error}`);
+        setExperimentCreateError(`Failed to retrieve the model '${model.name}' of the experiment '${experimentId}' - ${error}`);
+        setExperimentLoading(false);
+        setExperimentModelForEdit(experiment, model);
       }
     );
 };
+
+function setExperimentModelForEdit(experiment, model, splitInfo) {
+  let payload = {
+    experimentDetails: experiment,
+    modelDetails: model
+  };
+  if (splitInfo) {
+    payload.splitInfo = splitInfo;
+  }
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT,
+    payload
+  });
+}
 
 function setAlgorithmList() {
   let {experiments_create} = createExperimentStore.getState();
