@@ -32,7 +32,7 @@ import org.junit.runners.Suite;
   ApplicationClientTestRun.class,
   ArtifactClientTestRun.class,
   DatasetClientTestRun.class,
-  LineageTestRun.class,
+  LineageHttpHandlerTestRun.class,
   MetaClientTestRun.class,
   MetadataHttpHandlerTestRun.class,
   MetricsClientTestRun.class,
