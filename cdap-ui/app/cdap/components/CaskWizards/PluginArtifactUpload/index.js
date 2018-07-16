@@ -42,7 +42,7 @@ export default class PluginArtifactUploadWizard extends Component {
   onSubmit() {
     this.buildSuccessInfo();
     return ArtifactUploadActionCreator
-      .uploadArtifact()
+      .uploadArtifact(this.props.includeParents)
       .mergeMap(() => {
         this.props.onSubmit();
         return ArtifactUploadActionCreator.uploadConfigurationJson();
@@ -92,7 +92,8 @@ PluginArtifactUploadWizard.defaultProps = {
       arguments: {}
     },
     package: {}
-  }
+  },
+  includeParents: true
 };
 PluginArtifactUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
@@ -100,5 +101,6 @@ PluginArtifactUploadWizard.propTypes = {
   onClose: PropTypes.func,
   buildInfo: PropTypes.func,
   wizardConfig: PropTypes.object,
-  onSubmit: PropTypes.func
+  onSubmit: PropTypes.func,
+  includeParents: PropTypes.bool
 };
