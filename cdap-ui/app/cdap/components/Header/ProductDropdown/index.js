@@ -96,7 +96,6 @@ export default class ProductDropdown extends Component {
     let cdapVersion = VersionStore.getState().version;
     let docsUrl = `http://docs.cask.co/cdap/${cdapVersion}/en/index.html`;
     let administrationURL = '/administration/configuration';
-    let oldUIUrl = `/oldcdap/ns/${this.state.currentNamespace}`;
     let mode = getMode();
     let userSection;
     if (this.state.username && window.CDAP_CONFIG.securityEnabled) {
@@ -175,11 +174,6 @@ export default class ProductDropdown extends Component {
                     {T.translate('features.Administration.Title')}
                   </a>
               }
-            </DropdownItem>
-            <DropdownItem tag="li">
-              <a href={oldUIUrl}>
-                {T.translate('features.Navbar.ProductDropdown.olduilink')}
-              </a>
             </DropdownItem>
             <DropdownItem divider />
             <DropdownItem tag="li">
