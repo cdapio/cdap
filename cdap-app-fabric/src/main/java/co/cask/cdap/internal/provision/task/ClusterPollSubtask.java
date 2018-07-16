@@ -20,6 +20,7 @@ package co.cask.cdap.internal.provision.task;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 
@@ -41,11 +42,13 @@ public class ClusterPollSubtask extends ProvisioningSubtask {
 
   @Override
   protected Cluster execute(Cluster cluster) throws Exception {
+    PollingStrategy pollingStrategy = provisioner.getPollingStrategy(provisionerContext, cluster);
+    long startTime = System.currentTimeMillis();
+    int numPolls = 0;
     ClusterStatus currentStatus = status;
     while (currentStatus == status) {
+      TimeUnit.MILLISECONDS.sleep(pollingStrategy.nextPoll(numPolls++, startTime));
       currentStatus = provisioner.getClusterStatus(provisionerContext, cluster);
-      // TODO: CDAP-13346 use provisioner specified polling strategy instead of hardcoded sleep
-      TimeUnit.SECONDS.sleep(2);
     }
     return new Cluster(cluster, currentStatus);
   }

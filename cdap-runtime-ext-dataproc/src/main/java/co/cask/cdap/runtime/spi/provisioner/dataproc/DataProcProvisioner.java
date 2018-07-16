@@ -19,6 +19,8 @@ package co.cask.cdap.runtime.spi.provisioner.dataproc;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategies;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
@@ -33,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Provisions a cluster using GCE DataProc.
@@ -147,6 +150,21 @@ public class DataProcProvisioner implements Provisioner {
                                                        masterNode.getId(), cluster));
     }
     return ip;
+  }
+
+  @Override
+  public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
+    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    PollingStrategy strategy = PollingStrategies.fixedInterval(conf.getPollInterval(), TimeUnit.SECONDS);
+    switch (cluster.getStatus()) {
+      case CREATING:
+        return PollingStrategies.initialDelay(strategy, conf.getPollCreateDelay(),
+                                              conf.getPollCreateJitter(), TimeUnit.SECONDS);
+      case DELETING:
+        return PollingStrategies.initialDelay(strategy, conf.getPollDeleteDelay(), TimeUnit.SECONDS);
+    }
+    LOG.warn("Received a request to get the polling strategy for unexpected cluster status {}", cluster.getStatus());
+    return strategy;
   }
 
   // Name must start with a lowercase letter followed by up to 51 lowercase letters,
