@@ -97,7 +97,7 @@ $key-value-pair-visible-number: 6;
     // This is incorrect. We shouldn't be modifying the style outside of the component
     // in all the places. It becomes unmanageable to reuse/recycle the component.
     .key-value-pair-preference {
-      margin-bottom: 16px;
+      margin-bottom: 15px;
       justify-content: initial;
       display: grid;
       grid-template-columns: 1fr 1fr auto 100px;

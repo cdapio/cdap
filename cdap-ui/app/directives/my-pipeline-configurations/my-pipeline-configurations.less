@@ -69,17 +69,57 @@
 
 my-batch-pipeline-config,
 my-realtime-pipeline-config {
-  .configuration-step-content {
-    &#runtime-arguments-key-value-pairs-wrapper {
-      height: ~"calc(100% - 75px)";
-      .runtime-arguments-labels {
-        grid-template-columns: 1fr 1fr 0.8fr;
-        &.key-value-pair-labels > .provided-label {
-          display: flex;
-          justify-content: center;
-          width: 100%;
+  my-number-widget {
+    margin: 0 5px;
+    width: 80px;
+  }
+  .pipeline-configurations-content .configuration-content {
+    .configuration-content-container {
+      border-bottom: 0;
+    }
+    #engine-config-tab-content {
+      &.configuration-step-content {
+        &#runtime-arguments-key-value-pairs-wrapper {
+          height: ~"calc(100% - 75px)";
+          .runtime-arguments-labels {
+            grid-template-columns: 1fr 1fr 0.8fr;
+            &.key-value-pair-labels > .provided-label {
+              display: flex;
+              justify-content: center;
+              width: 100%;
+            }
+          }
+        }
+        .custom-config-labels {
+          &.key-value-pair-labels {
+            display: grid;
+            grid-template-columns: 1fr 1fr 62px 100px;
+            grid-gap: 10px;
+            margin-right: -25px;
+          }
+        }
+        .custom-config-values {
+          /*
+            146px = (32+15) * 3 + 5
+            32 = height of key-value-row
+            15 = margin-bottom of each key-value-row
+            15 = get a glimpse of next row if any.
+          */
+          max-height: 156px;
+          .key-value-pair-preference {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto 100px;
+            grid-gap: 10px;
+            input {
+              width: 100%;
+            }
+          }
         }
       }
+    }
+    .configuration-step-navigation {
+      border-top: 1px solid @grey-05;
+      padding-top: 10px;
     }
   }
 }

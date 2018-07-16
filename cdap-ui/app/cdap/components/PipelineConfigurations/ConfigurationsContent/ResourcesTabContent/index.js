@@ -22,6 +22,7 @@ import DriverResources from 'components/PipelineConfigurations/ConfigurationsCon
 import ExecutorResources from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent/ExecutorResources';
 import ClientResources from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent/ClientResources';
 import T from 'i18n-react';
+import classnames from 'classnames';
 require('./ResourcesTabContent.scss');
 
 const PREFIX = 'features.PipelineConfigurations.Resources';
@@ -52,7 +53,12 @@ function ResourcesTabContent({isBatch}) {
   return (
     <div
       id="resources-tab-content"
-      className="configuration-step-content"
+      className={classnames(
+        "configuration-step-content", {
+          "batch-content": isBatch,
+          "realtime-content": !isBatch
+        }
+      )}
     >
       <ConnectedStepContentHeading isBatch={isBatch} />
       { !isBatch ? <ClientResources /> : null }
