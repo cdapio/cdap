@@ -106,6 +106,16 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
             showPopover={this.state.showRunOptions}
             onTogglePopover={this.toggleRunConfigOption}
             injectOnToggle={true}
+            modifiers={{
+              flip: {
+                enabled: true,
+                behavior: ['bottom']
+              },
+              preventOverflow: {
+                enabled: true,
+                boundariesElement: 'scrollParent'
+              }
+            }}
           >
             <PipelineModeless
               title="Runtime Arguments"

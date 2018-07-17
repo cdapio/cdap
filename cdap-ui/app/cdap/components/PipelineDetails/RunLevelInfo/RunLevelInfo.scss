@@ -171,6 +171,12 @@ $border-color: $grey-05;
     .popper {
       width: auto;
       margin-left: 50px;
+      &[data-placement^="right"] {
+        margin-left: 10px;
+        z-index: 100;
+        margin-top: 50px;
+        margin-bottom: 100px;
+      }
       .pipeline-modeless-content {
         .historical-runtime-args-wrapper {
           display: flex;

@@ -180,6 +180,15 @@ export default class RunConfigs extends Component {
         showPopover={this.state.showModeless}
         onTogglePopover={this.toggleModeless}
         injectOnToggle={true}
+        modifiers={{
+          flip: {
+            enabled: true,
+            behavior: ['bottom', 'right']
+          },
+          shift: {
+            enabled: true
+          }
+        }}
       >
         <Provider store={PipelineConfigurationsStore}>
           <PipelineModeless
@@ -223,6 +232,14 @@ export default class RunConfigs extends Component {
           showOn='Hover'
           placement='bottom-end'
           className="run-info-container run-configs-container disabled"
+          modifiers={{
+            computeStyle: {
+              enabled: false
+            },
+            preventOverflow: {
+              enabled: false
+            }
+          }}
         >
           {T.translate(`${PREFIX}.pipelineNeverRun`)}
         </Popover>
