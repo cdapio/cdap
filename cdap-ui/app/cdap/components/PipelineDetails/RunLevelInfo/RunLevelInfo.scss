@@ -192,8 +192,9 @@ $border-color: $grey-05;
           .historical-runtimeargs-keyvalues {
             text-align: left;
             padding: 10px 0;
-            height: calc(100% - 65px);
+            height: calc(100% - 45px);
             overflow-y: auto;
+            margin-bottom: 10px;
 
             > div {
               display: grid;
