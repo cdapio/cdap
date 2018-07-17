@@ -973,7 +973,6 @@ angular.module(PKG.name + '.commons')
     });
 
     vm.onNodeClick = function(event, node) {
-      event.stopPropagation();
       closeMetricsPopover(node);
 
       window.CaskCommon.PipelineMetricsActionCreator.setMetricsTabActive(false);

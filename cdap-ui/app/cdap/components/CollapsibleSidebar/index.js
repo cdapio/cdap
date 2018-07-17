@@ -56,6 +56,9 @@ export default class CollapsibleSidebar extends Component {
   }
 
   closeSidebar() {
+    if (!this.state.expanded) {
+      return;
+    }
     if (this.props.onToggle) {
       this.props.onToggle(false);
     }
@@ -76,7 +79,6 @@ export default class CollapsibleSidebar extends Component {
       >
         <div
           className={classnames('collapsible-content', { 'show-content': this.state.expanded })}
-          onClick={preventPropagation}
         >
           <div
             className={
@@ -89,7 +91,7 @@ export default class CollapsibleSidebar extends Component {
             </span>
           </div>
 
-          <div className="collapsible-body">
+          <div className="collapsible-body" onClick={preventPropagation}>
             {this.props.children}
           </div>
         </div>
