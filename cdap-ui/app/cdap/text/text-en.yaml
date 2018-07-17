@@ -1575,8 +1575,6 @@ features:
         customAppsWithCount: Custom apps ({count})
         pipelinesWithCount: Pipelines ({count})
     RunsList:
-      all: All
-      date: Date
       duration: Duration
       name: Name
       namespace: Namespace
@@ -1585,10 +1583,10 @@ features:
       start: Started
       startMethod: Start method
       status: Status
-      timeRange: Time range
+      timeRange: "{date} from {hour}:00 to {hour}:59 {ampm}"
+      title: Selected runs ({count})
       type: Type
       user: User
-      viewAll: View All
 
   Overview:
     DatasetTab:
