@@ -21,6 +21,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.hdfs.client.HdfsDataOutputStream;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,7 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.EnumSet;
 
 /**
  * Represents output stream for the run meta avro file.
@@ -92,8 +94,8 @@ class RunMetaFileOutputStream implements Closeable, Flushable {
 
   public void sync() throws IOException {
     flush();
-    if (outputStream instanceof org.apache.hadoop.fs.Syncable) {
-      ((org.apache.hadoop.fs.Syncable) outputStream).hsync();
+    if (outputStream instanceof HdfsDataOutputStream) {
+      ((HdfsDataOutputStream) outputStream).hsync(EnumSet.of(HdfsDataOutputStream.SyncFlag.UPDATE_LENGTH));
     } else {
       outputStream.flush();
     }

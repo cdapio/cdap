@@ -57,7 +57,7 @@ public class SparkPersistRunRecordMain implements JavaSparkMain {
     createSecurityKeyFile(reportFileSetLocation);
     tmsSubscriber = new TMSSubscriber(sec.getMessagingContext().getMessageFetcher(),
                                       getDatasetBaseLocationWithRetry(sec, ReportGenerationApp.RUN_META_FILESET),
-                                      sec.getRuntimeArguments());
+                                      sec.getRuntimeArguments(), sec.getMetrics());
     tmsSubscriber.start();
     try {
       tmsSubscriber.join();

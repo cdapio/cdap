@@ -833,7 +833,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
           && TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(fileName.substring(0, fileName.indexOf("-")))) <
           reportRequest.getEnd();
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
-      LOG.debug("Filtered meta files {}", metaFiles);
+      LOG.debug("Filtered meta files {}", metaFilePaths);
       // Generate the report with the request and program run meta files
       ReportGenerationHelper.generateReport(sqlContext, reportRequest, metaFilePaths, reportIdDir);
     }

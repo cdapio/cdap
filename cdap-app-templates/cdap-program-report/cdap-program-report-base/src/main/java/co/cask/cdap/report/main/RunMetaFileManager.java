@@ -16,6 +16,8 @@
 
 package co.cask.cdap.report.main;
 
+import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.report.util.Constants;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -41,24 +43,29 @@ public class RunMetaFileManager {
   private static final Long DEFAULT_MAX_FILE_OPEN_DURATION = TimeUnit.HOURS.toMillis(6);
   private static final String SYNC_INTERVAL = "file.sync.interval.bytes";
   private static final String MAX_FILE_SIZE_BYTES = "file.max.size.bytes";
-  private static final String MAX_FILE_OPEN_DURATION = "file.max.open.duration";
+  private static final String MAX_FILE_OPEN_DURATION_MILLIS = "file.max.open.duration.millis";
+  private static final long SYNC_INTERVAL_TIME_MILLIS = TimeUnit.SECONDS.toMillis(10);
 
   private final int syncIntervalBytes;
   private final int maxFileSizeBytes;
-  private final long maxFileOpenDuration;
+  private final long maxFileOpenDurationMillis;
+  private final Metrics metrics;
 
   private Map<String, RunMetaFileOutputStream> namespaceToLogFileStreamMap;
   private Location baseLocation;
+  private long lastSyncTime;
 
-  RunMetaFileManager(Location baseLocation, Map<String, String> runtimeArguments) {
+  RunMetaFileManager(Location baseLocation, Map<String, String> runtimeArguments, Metrics metrics) {
     this.namespaceToLogFileStreamMap = new HashMap<>();
     this.baseLocation = baseLocation;
     this.syncIntervalBytes = runtimeArguments.containsKey(SYNC_INTERVAL) ?
       Integer.parseInt(runtimeArguments.get(SYNC_INTERVAL)) : DEFAULT_SYNC_INTERVAL_BYTES;
     this.maxFileSizeBytes = runtimeArguments.containsKey(MAX_FILE_SIZE_BYTES) ?
       Integer.parseInt(runtimeArguments.get(MAX_FILE_SIZE_BYTES)) : DEFAULT_MAX_FILE_SIZE_BYTES;
-    this.maxFileOpenDuration = runtimeArguments.containsKey(MAX_FILE_OPEN_DURATION) ?
-      Integer.parseInt(runtimeArguments.get(MAX_FILE_OPEN_DURATION)) : DEFAULT_MAX_FILE_OPEN_DURATION;
+    this.maxFileOpenDurationMillis = runtimeArguments.containsKey(MAX_FILE_OPEN_DURATION_MILLIS) ?
+      Integer.parseInt(runtimeArguments.get(MAX_FILE_OPEN_DURATION_MILLIS)) : DEFAULT_MAX_FILE_OPEN_DURATION;
+    this.lastSyncTime = System.currentTimeMillis();
+    this.metrics = metrics;
   }
 
   /**
@@ -76,16 +83,25 @@ public class RunMetaFileManager {
                                programRunInfo.getNamespace(), programRunInfo.getTimestamp());
     RunMetaFileOutputStream outputStream = namespaceToLogFileStreamMap.get(programRunInfo.getNamespace());
     appendAndFlushWithRetry(outputStream, programRunInfo);
+    syncOutputStreamsIfRequired();
   }
 
   /**
-   * sync the open output streams, hdfs sync is called
+   * sync the open output streams if the time from last sync is larger than the SYNC_INTERVAL_TIME_MILLIS,
+   * hdfs sync is called and last sync time is updated
    * @throws InterruptedException
    */
-  public void syncOutputStreams() throws InterruptedException {
-    Collection<RunMetaFileOutputStream> outputStreams = namespaceToLogFileStreamMap.values();
-    for (RunMetaFileOutputStream outputStream : outputStreams) {
-      retryWithCallable(() -> outputStream.sync(), "sync");
+  public void syncOutputStreamsIfRequired() throws InterruptedException {
+    long timeDifferenceMillis = System.currentTimeMillis() - lastSyncTime;
+    if (timeDifferenceMillis > SYNC_INTERVAL_TIME_MILLIS) {
+      Collection<RunMetaFileOutputStream> outputStreams = namespaceToLogFileStreamMap.values();
+      for (RunMetaFileOutputStream outputStream : outputStreams) {
+        retryWithCallable(() -> outputStream.sync(), "sync");
+      }
+      lastSyncTime = System.currentTimeMillis();
+      LOG.debug("Last sync time {}", lastSyncTime);
+      // emit a gauge metric when the last sync was performed
+      metrics.gauge(Constants.Metrics.SYNC_INTERVAL_TIME_MILLIS_METRIC, lastSyncTime);
     }
   }
 
@@ -126,8 +142,9 @@ public class RunMetaFileManager {
 
   private void rotateOutputStreamIfNeeded(RunMetaFileOutputStream runMetaFileOutputStream,
                                           String namespace, Long timestamp) throws InterruptedException {
-    if (runMetaFileOutputStream.getSize() > maxFileSizeBytes ||
-      System.currentTimeMillis() - runMetaFileOutputStream.getCreateTime() > maxFileOpenDuration) {
+    boolean isExpired =
+      (System.currentTimeMillis() - runMetaFileOutputStream.getCreateTime()) > maxFileOpenDurationMillis;
+    if (runMetaFileOutputStream.getSize() > maxFileSizeBytes || isExpired) {
       Closeables.closeQuietly(runMetaFileOutputStream);
       createLogFileOutputStreamWithRetry(namespace, timestamp);
     }
