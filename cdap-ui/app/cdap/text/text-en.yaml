@@ -1265,6 +1265,7 @@ features:
     fieldsCount:
       1: "{context} field"
       _: "{context} fields"
+    noFields: "Field level lineage is not available for the dataset '{datasetId}' in the selected time interval"
     OperationsModal:
       lastExecution: "Last executed by '{app}' on {time}"
       summaryText: "Operations between {sources} and '{target}'"

@@ -27,6 +27,14 @@ require('./Fields.scss');
 const PREFIX = 'features.FieldLevelLineage';
 
 function FieldsView({datasetId, fields}) {
+  if (fields.length === 0) {
+    return (
+      <div className="fields-list-container text-xs-center no-fields">
+        {T.translate(`${PREFIX}.noFields`, { datasetId })}
+      </div>
+    );
+  }
+
   return (
     <div className="fields-list-container">
       <LineageSummary />
