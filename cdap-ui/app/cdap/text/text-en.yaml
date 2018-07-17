@@ -2087,7 +2087,17 @@ features:
       noReports: No reports are available
       selectAReport: Select a report to view
     ReportsServiceControl:
+      Benefits:
+        title: "Some of the key features of Reports are:"
+        b1: Intuitive web UI for generating, viewing and managing reports.
+        b2: Support for filtering by process type (pipelines or custom apps) and status.
+        b3: Historical reporting over extended time periods using Apache Spark for optimal performance.
+        b4: Permanent retention for important, saved reports.
+        b5: Automatic deletion of unsaved reports.
+        b6: Use-case based customization of report contents (columns).
+      description: "Reports help users generate historical analysis of programs and pipelines running in their data infrastructure. The primary goal of these reports is to help decision makers and administrators make informed business decisions about resource utilization, capacity planning, and onboarding new processes."
       enable: Enable Reports
+      title: Welcome to Reports
       unableToStart: Unable to start Reports service
 
   Resource-Center:
