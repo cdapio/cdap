@@ -21,7 +21,7 @@ import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUp
 import isNil from 'lodash/isNil';
 
 // FIXME: Extract it out???
-const uploadArtifact = () => {
+const uploadArtifact = (includeParents = true) => {
   const state = ArtifactUploadStore.getState();
 
   let getArtifactNameAndVersion = (nameWithVersion) => {
@@ -53,7 +53,6 @@ const uploadArtifact = () => {
     'Content-Type': 'application/octet-stream',
     'X-Archive-Name': name,
     'Artifact-Version': version,
-    'Artifact-Extends': state.configure.parentArtifact.join('/'),
     'Artifact-Plugins': JSON.stringify([{
       name: state.configure.name,
       type: state.configure.type,
@@ -61,6 +60,11 @@ const uploadArtifact = () => {
       description: state.configure.description
     }])
   };
+
+  if (includeParents) {
+    headers['Artifact-Extends'] = state.configure.parentArtifact.join('/');
+  }
+
   if (window.CDAP_CONFIG.securityEnabled) {
     let token = cookie.load('CDAP_Auth_Token');
     if (!isNil(token)) {
