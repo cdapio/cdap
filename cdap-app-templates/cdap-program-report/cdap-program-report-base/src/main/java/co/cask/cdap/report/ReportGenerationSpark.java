@@ -686,38 +686,41 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
                                                  idMessage, status));
           return;
       }
-      List<String> reportRecords = new ArrayList<>();
-      long recordCount = 0;
-      Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
-      // TODO: [CDAP-13290] reports should be in avro format instead of json text;
-      // TODO: [CDAP-13291] need to support reading multiple report files
-      Optional<Location> reportFile = reportDir.list().stream().filter(l -> l.getName().endsWith(".avro")).findFirst();
-      // TODO: [CDAP-13292] use cache to store content of the reports
-      // Read the report file and add lines starting from the position of offset to the result until the result reaches
-      // the limit
-      if (reportFile.isPresent()) {
-        Location reportFileLocation = reportFile.get();
-        DataFileStream<GenericRecord> dataFileStream =
-          new DataFileStream<>(reportFileLocation.getInputStream(), new GenericDatumReader<>());
-        while (dataFileStream.hasNext()) {
-          GenericRecord record = dataFileStream.next();
-          if (recordCount++ < offset) {
-            continue;
-          }
-          reportRecords.add(record.toString());
-          if (reportRecords.size() >= limit) {
-            break;
-          }
-        }
-      }
       // Get the total number of records from the COUNT file
       String total =
         new String(ByteStreams.toByteArray(reportIdDir.append(LocationName.COUNT_FILE).getInputStream()),
                    StandardCharsets.UTF_8);
-      // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
-      // without stringifying them
-      responder.sendString(200, new ReportContent(offset, limit, Long.parseLong(total), reportRecords).toJson(),
-                           StandardCharsets.UTF_8);
+      Long totalRecords = Long.parseLong(total);
+      List<String> reportRecords = new ArrayList<>();
+      if (totalRecords > 0) {
+        long recordCount = 0;
+        Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
+        // TODO: [CDAP-13290] reports should be in avro format instead of json text;
+        // TODO: [CDAP-13291] need to support reading multiple report files
+        Optional<Location> reportFile = reportDir.list().stream().filter(l -> l.getName().endsWith(".avro")).findFirst();
+        // TODO: [CDAP-13292] use cache to store content of the reports
+        // Read the report file and add lines starting from the position of offset to the result until the result reaches
+        // the limit
+        if (reportFile.isPresent()) {
+          Location reportFileLocation = reportFile.get();
+          DataFileStream<GenericRecord> dataFileStream =
+            new DataFileStream<>(reportFileLocation.getInputStream(), new GenericDatumReader<>());
+          while (dataFileStream.hasNext()) {
+            GenericRecord record = dataFileStream.next();
+            if (recordCount++ < offset) {
+              continue;
+            }
+            reportRecords.add(record.toString());
+            if (reportRecords.size() >= limit) {
+              break;
+            }
+          }
+        }
+        // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
+        // without stringifying them
+        responder.sendString(200, new ReportContent(offset, limit, totalRecords, reportRecords).toJson(),
+                             StandardCharsets.UTF_8);
+      }
     }
 
     @POST

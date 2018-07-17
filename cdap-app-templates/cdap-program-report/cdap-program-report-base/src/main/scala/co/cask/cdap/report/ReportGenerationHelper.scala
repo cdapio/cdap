@@ -51,6 +51,7 @@ object ReportGenerationHelper {
   // the default name of the column created by calling aggregate function count
   val COUNT_COL = "count"
 
+
   /**
     * Generates a report file according to the given request from the given program run meta files.
     * The given program run meta files are first read into a single [[org.apache.spark.sql.DataFrame]].
@@ -95,6 +96,10 @@ object ReportGenerationHelper {
   @throws(classOf[IOException])
   def generateReport(sql: SQLContext, request: ReportGenerationRequest, inputURIs: java.util.List[String],
                      reportIdDir: Location): Unit = {
+    if  (inputURIs.isEmpty) {
+      writeEmptyFileSummaryCountAndSuccessFiles(request, reportIdDir);
+      return
+    }
     val df = SparkCompat.readAvroFiles(sql, inputURIs)
     // Get the fields to be included in the final report and additional fields required for filtering and sorting
     val (reportFields: Set[String], additionalFields: Set[String]) = getReportAndAdditionalFields(request)
@@ -140,6 +145,47 @@ object ReportGenerationHelper {
     writeToFile(count.toString, Constants.LocationName.COUNT_FILE, reportIdDir)
     // Create a _SUCCESS file and write the current time in millis in it
     writeToFile(System.currentTimeMillis().toString, Constants.LocationName.SUCCESS_FILE, reportIdDir)
+  }
+
+  /**
+    * From the filters in ReportGenerationRequest figure out namespaces if they are provided, get the start
+    * and end time range of query and use default for all other fields of report summary and write to summary file
+    * write count file with count 0 and write success file.
+    * @param request ReportGenerationRequest
+    * @param reportIdDir report directory where the summary, count and success files will be written to
+    */
+  private def writeEmptyFileSummaryCountAndSuccessFiles(request: ReportGenerationRequest,
+                                                        reportIdDir: Location) = {
+    val namespacesAggregates = getNamespaceAggregates(request)
+
+    val summary = new ReportSummary(namespacesAggregates, request.getStart, request.getEnd,
+      new ArrayBuffer[ArtifactAggregate](), new DurationStats(0l, 0l, 0.0),
+      new StartStats(0l, 0l), new ArrayBuffer[UserAggregate](), new ArrayBuffer[StartMethodAggregate]())
+    writeSummaryToFile(summary, reportIdDir)
+    val count = 0
+    // Create a _COUNT file and write the total number of report records in it
+    writeToFile(count.toString, Constants.LocationName.COUNT_FILE, reportIdDir)
+    // Create a _SUCCESS file and write the current time in millis in it
+    writeToFile(System.currentTimeMillis().toString, Constants.LocationName.SUCCESS_FILE, reportIdDir)
+  }
+
+  private def getNamespaceAggregates(request: ReportGenerationRequest) : ArrayBuffer[NamespaceAggregate] = {
+    val namespacesAggregates = ArrayBuffer[NamespaceAggregate]()
+    val filters = request.getFilters
+    for (filter <- filters) {
+      if (filter.getFieldName.equals(Constants.NAMESPACE)) {
+        filter match {
+          case valueFilter: ValueFilter[_] => {
+            val namespaces = valueFilter.getWhitelist
+            for (namespace <- namespaces) {
+              namespacesAggregates.add(new NamespaceAggregate(namespace.asInstanceOf[String], 0));
+            }
+          }
+        }
+        return namespacesAggregates
+      }
+    }
+    return namespacesAggregates
   }
 
   /**
@@ -211,6 +257,10 @@ object ReportGenerationHelper {
     // create the summary
     val summary = new ReportSummary(namespaces, request.getStart, request.getEnd, artifacts,
       durations, starts, owners, startMethods)
+    writeSummaryToFile(summary, reportIdDir)
+  }
+
+  private def writeSummaryToFile(summary : ReportSummary, reportIdDir: Location): Unit = {
     // Save the report summary request in the _SUMMARY file in the given directory
     var writer: PrintWriter = null
     try {
