@@ -524,7 +524,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testStopWhilePending() throws Exception {
+  public void testStopProgramWhilePending() throws Exception {
     try {
       deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
       Id.Program workflowId =
@@ -545,8 +545,40 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
       verifyProgramRuns(workflowId, ProgramRunStatus.KILLED, numKilledRuns);
     } finally {
-      Assert.assertEquals(200, doDelete(getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway
-        .API_VERSION_3_TOKEN, TEST_NAMESPACE1)).getStatusLine().getStatusCode());
+      HttpResponse deleteResponse = doDelete(
+        getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+      Assert.assertEquals(200, deleteResponse.getStatusLine().getStatusCode());
+    }
+  }
+
+  @Test
+  public void testStopProgramRunWhilePending() throws Exception {
+    try {
+      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+      Id.Program workflowId =
+        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+
+      int numKilledRuns = getProgramRuns(workflowId, ProgramRunStatus.KILLED).size();
+
+      // this tells the provisioner to wait for 60s before trying to create the cluster for the run
+      Map<String, String> args = new HashMap<>();
+      args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.WAIT_CREATE_MS, Integer.toString(120000));
+      startProgram(workflowId, args);
+
+      // should be safe to wait for starting since the provisioner is configure to sleep while creating a cluster
+      waitState(workflowId, co.cask.cdap.proto.ProgramStatus.STARTING.name());
+      List<RunRecord> runRecords = getProgramRuns(workflowId, ProgramRunStatus.PENDING);
+      Assert.assertEquals(1, runRecords.size());
+      String runId = runRecords.iterator().next().getPid();
+
+      stopProgram(workflowId, runId, 200);
+      waitState(workflowId, STOPPED);
+
+      verifyProgramRuns(workflowId, ProgramRunStatus.KILLED, numKilledRuns);
+    } finally {
+      HttpResponse deleteResponse = doDelete(
+        getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+      Assert.assertEquals(200, deleteResponse.getStatusLine().getStatusCode());
     }
   }
 

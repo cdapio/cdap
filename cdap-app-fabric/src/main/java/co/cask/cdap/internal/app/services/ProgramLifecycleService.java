@@ -916,15 +916,16 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Returns the active run records (STARTING / RUNNING / SUSPENDED) based on the given program id and an optional
-   * run id.
+   * Returns the active run records (PENDING / STARTING / RUNNING / SUSPENDED) based on the given program id and an
+   * optional run id.
    */
   private Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId, @Nullable String runId) {
     if (runId == null) {
       return store.getActiveRuns(programId);
     }
     RunRecordMeta runRecord = store.getRun(programId.run(runId));
-    EnumSet<ProgramRunStatus> activeStates = EnumSet.of(ProgramRunStatus.STARTING,
+    EnumSet<ProgramRunStatus> activeStates = EnumSet.of(ProgramRunStatus.PENDING,
+                                                        ProgramRunStatus.STARTING,
                                                         ProgramRunStatus.RUNNING,
                                                         ProgramRunStatus.SUSPENDED);
     return runRecord == null || !activeStates.contains(runRecord.getStatus())
