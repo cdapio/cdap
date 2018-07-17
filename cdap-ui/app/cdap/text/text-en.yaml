@@ -1536,7 +1536,6 @@ features:
         cloudSandbox: Cloud Sandbox
         distributed: Distributed
         localSandbox: Local Sandbox
-      olduilink: Switch to Classic View
     rulesmgmt: Rules
   OpsDashboard:
     header: Dashboard
