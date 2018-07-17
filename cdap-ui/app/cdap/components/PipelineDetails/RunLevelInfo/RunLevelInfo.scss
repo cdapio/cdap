@@ -41,7 +41,9 @@ $border-color: $grey-05;
 
     /* Have to do this instead of height: 100% because of issue in Firefox */
     height: 54px;
-
+    &:after {
+      @include border-element();
+    }
   }
   .run-container {
     display: flex;
@@ -77,6 +79,9 @@ $border-color: $grey-05;
     }
 
     .run-number-switches {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       button {
         border: 0;
         outline: 0;
@@ -85,12 +90,16 @@ $border-color: $grey-05;
 
         .icon-svg {
           color: $grey-03;
+          font-size: 26px;
         }
 
         &:disabled {
           opacity: 0.5;
         }
       }
+    }
+    &:after {
+      display: none;
     }
   }
 
