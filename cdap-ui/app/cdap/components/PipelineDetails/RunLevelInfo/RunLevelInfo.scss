@@ -20,15 +20,15 @@
 $border-color: $grey-05;
 
 .pipeline-details-run-level-info {
-  /* 100px = 20px margin-left + 80px margin-right */
-  width: calc(100% - 100px);
+  width: 100%;
   height: 55px;
   border-bottom: 1px solid $border-color;
-  z-index: 998;
+  z-index: 1;
   color: $grey-02;
   position: absolute;
-  margin-left: 20px;
   background-color: $grey-08;
+  padding-left: 10px;
+  display: flex;
 
   .run-info-container {
     display: inline-block;
@@ -36,14 +36,31 @@ $border-color: $grey-05;
     padding-right: 15px;
     padding-top: 10px;
     text-align: center;
-    background: $grey-08;
     position: relative;
+    height: 100%;
 
     /* Have to do this instead of height: 100% because of issue in Firefox */
-    height: 53px;
+    height: 54px;
 
-    &:after {
-      @include border-element();
+  }
+  .run-container {
+    display: flex;
+    justify-content: space-between;
+    flex: 1;
+    position: relative;
+    background-color: $grey-06;
+    padding-right: 100px;
+    &:before {
+      content: '';
+      border: 10px solid $grey-06;
+      width: 0;
+      border-top-color: transparent;
+      border-left-color: transparent;
+      border-bottom-color: transparent;
+      height: 10px;
+      position: absolute;
+      top: 15px;
+      left: -20px;
     }
   }
 
@@ -94,15 +111,11 @@ $border-color: $grey-05;
 
   .run-configs-container,
   .run-logs-container {
-    border-left: 1px solid $grey-08;
-    border-right: 1px solid $grey-08;
     padding: 0;
 
     &.active,
     &:hover {
-      background-color: $grey-07;
-      border-left: 1px solid $grey-05;
-      border-right: 1px solid $grey-05;
+      background-color: $grey-05;
 
       &:after {
         display: none;
