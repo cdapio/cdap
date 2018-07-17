@@ -58,7 +58,18 @@ $count-font-color: $grey-04;
     }
 
     .fields-list {
-      height: 300px;
+      // FIXME: This max-height calculation is quite brittle. It will break if any of the height change.
+
+      $topnav: 50px;
+      $subnav: 50px;
+      $metadata-section: 180px;
+      $timepicker: 45px;
+      $fields-header: 60px;
+      $fields-search: 32px;
+      $footer: 54px;
+      $bottom-padding: 25px;
+
+      max-height: calc(100vh - #{$topnav} - #{$subnav} - #{$metadata-section} - #{$timepicker} - #{$fields-header} - #{$fields-search} - #{$footer} - #{$bottom-padding});
       overflow: auto;
     }
   }
