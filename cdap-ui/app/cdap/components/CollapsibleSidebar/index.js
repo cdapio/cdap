@@ -91,7 +91,10 @@ export default class CollapsibleSidebar extends Component {
             </span>
           </div>
 
-          <div className="collapsible-body" onClick={preventPropagation}>
+          <div
+            className="collapsible-body"
+            onClick={preventPropagation}
+          >
             {this.props.children}
           </div>
         </div>
