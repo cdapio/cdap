@@ -20,6 +20,8 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.report.util.Constants;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,17 +44,20 @@ public class TMSSubscriber extends Thread {
   private final RunMetaFileManager runMetaFileManager;
   private final Location baseLocation;
   private final int fetchSize;
+  private final Metrics metrics;
 
   private volatile boolean isStopped;
 
-  TMSSubscriber(MessageFetcher messageFetcher, Location baseLocation, Map<String, String> runtimeArguments) {
+  TMSSubscriber(MessageFetcher messageFetcher, Location baseLocation, Map<String, String> runtimeArguments,
+                Metrics metrics) {
     super("TMS-RunrecordEvent-Subscriber-thread");
     this.messageFetcher = messageFetcher;
     isStopped = false;
     this.baseLocation = baseLocation;
-    this.runMetaFileManager = new RunMetaFileManager(baseLocation, runtimeArguments);
+    this.runMetaFileManager = new RunMetaFileManager(baseLocation, runtimeArguments, metrics);
     this.fetchSize = runtimeArguments.containsKey(FETCH_SIZE) ?
       Integer.parseInt(runtimeArguments.get(FETCH_SIZE)) : DEFAULT_FETCH_SIZE;
+    this.metrics = metrics;
   }
 
   public void requestStop() {
@@ -68,11 +73,15 @@ public class TMSSubscriber extends Thread {
     try {
       afterMessageId = MessageUtil.findMessageId(baseLocation);
     } catch (InterruptedException e) {
+      LOG.info("Interrupted from processing program status, returning");
       return;
     }
     while (!isStopped) {
       try {
         TimeUnit.MILLISECONDS.sleep(10);
+        // call sync output streams periodically,
+        // its synced only if the last sync time exceeds the allowed sync timeout
+        runMetaFileManager.syncOutputStreamsIfRequired();
       } catch (InterruptedException e) {
         break;
       }
@@ -83,8 +92,8 @@ public class TMSSubscriber extends Thread {
           ProgramRunInfo programRunInfo = MessageUtil.constructAndGetProgramRunInfo(message);
           runMetaFileManager.append(programRunInfo);
           afterMessageId = message.getId();
+          emitUserProgramMetrics(programRunInfo);
         }
-        runMetaFileManager.syncOutputStreams();
       } catch (TopicNotFoundException tpe) {
         LOG.error("Unable to find topic {} in tms, returning, cant write to the Fileset, Please fix", TOPIC, tpe);
         break;
@@ -95,5 +104,12 @@ public class TMSSubscriber extends Thread {
       }
     }
     LOG.info("Done reading from tms meta");
+  }
+
+  private void emitUserProgramMetrics(ProgramRunInfo programRunInfo) {
+    // skip metrics from system namespace applications
+    if (!programRunInfo.getNamespace().equals(Constants.Metrics.SYSTEM_NAMESPACE)) {
+      metrics.count(Constants.Metrics.RECORDS_PROCESSED_METRIC, 1);
+    }
   }
 }

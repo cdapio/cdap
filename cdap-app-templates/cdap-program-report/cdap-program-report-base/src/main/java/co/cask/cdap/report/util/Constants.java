@@ -30,6 +30,15 @@ public final class Constants {
     public static final int ENCRYPTION_KEY_BITSIZE = 128;
   }
 
+  /**
+   * Constants related to emitting metrics
+   */
+  public static final class Metrics {
+    public static final String SYSTEM_NAMESPACE = "system";
+    public static final String RECORDS_PROCESSED_METRIC = "program.status.processed";
+    public static final String SYNC_INTERVAL_TIME_MILLIS_METRIC = "run.metadata.last.sync.time.millis";
+  }
+
   public static final String NAMESPACE = "namespace";
   public static final String ARTIFACT_SCOPE = "artifactScope";
   public static final String ARTIFACT_NAME = "artifactName";
