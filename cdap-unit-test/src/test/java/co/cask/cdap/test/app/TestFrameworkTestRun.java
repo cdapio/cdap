@@ -1571,7 +1571,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Test to make sure the worker program's status goes to stopped after the run method finishes
     ApplicationManager manager = deployApplication(NoOpWorkerApp.class);
     WorkerManager workerManager = manager.getWorkerManager("NoOpWorker");
+    int numRuns = workerManager.getHistory().size();
     workerManager.start();
+    Tasks.waitFor(numRuns + 1, () -> workerManager.getHistory().size(), 30, TimeUnit.SECONDS);
     workerManager.waitForStopped(30, TimeUnit.SECONDS);
   }
 
