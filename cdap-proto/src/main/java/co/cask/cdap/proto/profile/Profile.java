@@ -22,6 +22,7 @@ import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -38,6 +39,8 @@ public class Profile {
   private final EntityScope scope;
   private final ProfileStatus status;
   private final ProvisionerInfo provisioner;
+  // this timestamp has time unit seconds
+  private final long created;
 
   public Profile(String name, String label, String description, ProvisionerInfo provisioner) {
     this(name, label, description, EntityScope.USER, provisioner);
@@ -50,12 +53,19 @@ public class Profile {
 
   public Profile(String name, String label, String description, EntityScope scope, ProfileStatus status,
                  ProvisionerInfo provisioner) {
+    this(name, label, description, scope, status, provisioner,
+         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+  }
+
+  public Profile(String name, String label, String description, EntityScope scope, ProfileStatus status,
+                 ProvisionerInfo provisioner, long created) {
     this.name = name;
     this.label = label;
     this.description = description;
     this.scope = scope;
     this.status = status;
     this.provisioner = provisioner;
+    this.created = created;
   }
 
   public String getName() {
@@ -86,6 +96,10 @@ public class Profile {
   @Nullable
   public String getDescription() {
     return description;
+  }
+
+  public long getCreatedTsSeconds() {
+    return created;
   }
 
   @Override
@@ -120,6 +134,7 @@ public class Profile {
       ", scope=" + scope +
       ", status=" + status +
       ", provisioner=" + provisioner +
+      ", creationTimeSeconds=" + created +
       '}';
   }
 }

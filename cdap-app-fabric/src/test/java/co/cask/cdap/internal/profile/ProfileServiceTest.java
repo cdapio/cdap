@@ -52,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test for profile store
@@ -399,5 +400,16 @@ public class ProfileServiceTest {
     } catch (MethodNotAllowedException e) {
       // expected
     }
+  }
+
+  @Test
+  public void testProfileCreationTime() throws Exception {
+    ProfileId myProfile = NamespaceId.DEFAULT.profile("MyProfile");
+    long creationTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    Profile profile = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                  Profile.NATIVE.getScope(), ProfileStatus.ENABLED, Profile.NATIVE.getProvisioner(),
+                                  creationTime);
+    profileService.saveProfile(myProfile, profile);
+    Assert.assertEquals(creationTime, profileService.getProfile(myProfile).getCreatedTsSeconds());
   }
 }
