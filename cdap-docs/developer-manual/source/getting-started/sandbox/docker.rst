@@ -109,7 +109,7 @@ started correctly.
    <debugging-sandbox>`, name it ``cdap-sandbox-debugging``, and set the proxying of ports.
 
 #. CDAP will start automatically once the container starts. CDAP’s software
-   directory is under ``/opt/cdap/sdk``.
+   directory is under ``/opt/cdap/sandbox``.
 
 #. Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
    at :cdap-ui:`http://localhost:11011/ <>`.
@@ -184,8 +184,8 @@ Options Starting CDAP Containers
   <https://docs.docker.com/engine/tutorials/dockervolumes/#/mount-a-host-directory-as-a-data-volume>`__.
   However, if you mount a host directory, you must make sure that it exists and that
   permissions are set correctly. You pass such a directory using ``-v
-  /my/own/datadir:/opt/cdap/sdk/my/own/datadir``, which mounts the ``/my/own/datadir`` from the
-  host system as ``/opt/cdap/sdk/my/own/datadir`` in the container.
+  /my/own/datadir:/opt/cdap/sandbox/my/own/datadir``, which mounts the ``/my/own/datadir`` from the
+  host system as ``/opt/cdap/sandbox/my/own/datadir`` in the container.
 
 Controlling the CDAP Instance
 -----------------------------
