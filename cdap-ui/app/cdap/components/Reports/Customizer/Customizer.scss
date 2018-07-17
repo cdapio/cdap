@@ -46,7 +46,7 @@ $bg-color: $grey-08;
     }
 
     .option {
-      cursor: pointer;
+      span { cursor: pointer; }
       .icon-svg { margin-right: 5px; }
     }
 
