@@ -28,6 +28,7 @@ import isEqual from 'lodash/isEqual';
 import {getProvisionerLabel, extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
 import ProfileStatusToggle from 'components/Cloud/Profiles/DetailView/Content/BasicInfo/ProfileStatusToggle';
 import {CLOUD} from 'services/global-constants';
+import CopyableId from 'components/CopyableID';
 
 require('./BasicInfo.scss');
 
@@ -179,9 +180,22 @@ export default class ProfileDetailViewBasicInfo extends Component {
     return (
       <div className="detail-view-basic-info">
         <div className="profile-detail-top-panel">
-          <h2 className="profile-name">
-            {profile.name}
-          </h2>
+          <div className="profile-name-wrapper">
+            <h2 className="profile-name" title={profile.label || profile.name}>
+              {profile.label || profile.name}
+            </h2>
+            {
+              profile.label ?
+                <CopyableId
+                  id={profile.name}
+                  placement="right"
+                  label="Profile ID"
+                  tooltipText="Click to copy to clipboard"
+                />
+              :
+                null
+            }
+          </div>
           <div className="profile-actions-wrapper">
             <ProfileStatusToggle
               profile={profile}

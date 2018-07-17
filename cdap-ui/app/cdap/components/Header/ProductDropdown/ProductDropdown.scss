@@ -15,12 +15,9 @@
  */
 @import '../../../styles/variables.scss';
 
-$cdap_mode_color: #cccccc;
+$dropdown_divider_bg_color: $grey-06;
 
 .product-dropdown {
-  display: inline-block;
-  background: transparent;
-
   @media (max-width: 580px) {
     &.dropdown {
       &.open {
@@ -33,16 +30,10 @@ $cdap_mode_color: #cccccc;
       }
     }
   }
-  &:hover {
-    background: transparent;
-  }
 
   .btn.btn-secondary {
-    background: transparent;
     border: 0;
-    &:focus {
-      color: $cdap-light-orange;
-    }
+    border-radius: 0;
   }
   &.dropdown,
   &.dropdown.open {
@@ -52,28 +43,27 @@ $cdap_mode_color: #cccccc;
   }
   &.dropdown {
     .dropdown-toggle {
-      background: transparent;
-      border: 0;
+      box-shadow: none;
       vertical-align: top;
       height: 50px;
       padding: 0;
-      position: relative;
-      width: 120px;
+      margin: 0;
+      width: 100%;
       color: inherit;
-      margin-right: 5px;
+      margin-right: 15px;
       display: inline-flex;
-      flex-direction: column;
-      line-height: 1;
-      justify-content: center;
-      padding-top: 4px;
-      text-align: left;
+      background: transparent;
 
-      &:hover,
       &:focus {
-        background: transparent;
         outline: none;
-        .cdap-secure-mode-icon {
-          color: $cdap_mode_color;
+      }
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+        outline: none;
+        color: inherit;
+        .cdap-secure-mode-icon,
+        .cdap-mode {
+          color: inherit;
         }
       }
       &:after {
@@ -81,13 +71,6 @@ $cdap_mode_color: #cccccc;
       }
       .cdap-logo-container {
         position: relative;
-        width: inherit;
-      }
-      .caret-down-container {
-        display: inline-block;
-        position: absolute;
-        right: 3px;
-        top: 7px;
       }
       .cdap-logo {
         display: inline-block;
@@ -97,52 +80,51 @@ $cdap_mode_color: #cccccc;
         }
       }
       .cdap-mode {
-        font-size: 10px;
-        font-weight: 500;
-        color: $cdap_mode_color;
-        line-height: 1;
-        display: inline-block;
-        margin-right: 5px;
+        color: inherit;
+        margin: 0 5px;
         vertical-align: bottom;
       }
       .secure-mode-icon {
-        display: inline-block;
-        line-height: 1;
-        font-size: 10px;
-        color: $cdap_mode_color;
-        padding-top: 5px;
+        display: inline-flex;
+        align-items: center;
+        .icon-svg {
+          font-size: 11px;
+        }
       }
     }
     .dropdown-menu {
       border-radius: 0;
-      background: #333333;
-      color: white;
-      min-width: 160px;
+      color: inherit;
+      min-width: 180px;
       max-width: 210px;
 
       .dropdown-item,
       .dropdown-header {
-        color: inherit;
+        color: black;
         line-height: 1;
-        min-width: inherit;
-        max-width: inherit;
         padding: 0;
-        margin-left: 0;
-        float: left;
-
         &:hover,
         &:focus {
-          background: transparent;
+          background: rgba(0, 0, 0, 0.1);
+          outline: none;
         }
         a {
           text-decoration: none;
           padding: 10px 16px;
           background: transparent;
+          line-height: 1;
 
-          &:hover {
-            color: $cdap-light-orange;
+          &.active {
+            color: $brand-primary-color;
           }
         }
+      }
+
+      .dropdown-divider {
+        height: 1px;
+        margin: 0;
+        overflow: hidden;
+        background-color: $dropdown_divider_bg_color;
       }
 
       .user-profile {
@@ -175,19 +157,19 @@ $cdap_mode_color: #cccccc;
             padding: 5px 5px;
             background: rgba(255, 205, 128, 1);
             margin-right: 8px;
-            color: $navbar-bg;
+            color: $brand-primary-color;
             display: inline-flex;
           }
         }
-      }
-      .dropdown-divider {
-        background-color: rgba(75, 75, 75, 1);
       }
     }
     &.open {
       .dropdown-menu {
         display: flex;
         flex-direction: column;
+      }
+      .dropdown-toggle {
+        background: rgba(255, 255, 255, 0.3);
       }
     }
   }

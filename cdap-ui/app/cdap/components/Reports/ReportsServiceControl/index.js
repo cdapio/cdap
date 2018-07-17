@@ -23,6 +23,8 @@ import BtnWithLoading from 'components/BtnWithLoading';
 import T from 'i18n-react';
 import Helmet from 'react-helmet';
 
+require('./ReportsServiceControl.scss');
+
 const PREFIX = 'features.Reports.ReportsServiceControl';
 const ReportsArtifact = 'cdap-program-report';
 
@@ -75,7 +77,7 @@ export default class ReportsServiceControl extends Component {
       return null;
     }
     return (
-      <div className="experiments-service-control-error">
+      <div className="reports-service-control-error">
         <h5 className="text-danger">
           <IconSVG name="icon-exclamation-triangle" />
           <span>{T.translate(`${PREFIX}.unableToStart`)}</span>
@@ -88,14 +90,45 @@ export default class ReportsServiceControl extends Component {
   }
 
   render() {
-    // TODO: this page will still need to go through redesign!
-
     return (
-      <div className="reports-service-control text-xs-center">
+      <div className="reports-service-control">
         <Helmet title={T.translate('features.Reports.pageTitle')} />
-        <br />
-        {this.renderEnableBtn()}
-        {this.renderError()}
+        <div className="image-containers">
+          <img className="img-thumbnail" src="/cdap_assets/img/Reports_preview1.png" />
+          <img className="img-thumbnail" src="/cdap_assets/img/Reports_preview2.png" />
+        </div>
+        <div className="text-container">
+          <h2> {T.translate(`${PREFIX}.title`)} </h2>
+          {this.renderEnableBtn()}
+          {this.renderError()}
+          <p>
+            {T.translate(`${PREFIX}.description`)}
+          </p>
+          <div className="reports-benefit">
+            {T.translate(`${PREFIX}.Benefits.title`)}
+
+            <ul>
+              <li>
+                <span>{T.translate(`${PREFIX}.Benefits.b1`)}</span>
+              </li>
+              <li>
+                <span>{T.translate(`${PREFIX}.Benefits.b2`)}</span>
+              </li>
+              <li>
+                <span>{T.translate(`${PREFIX}.Benefits.b3`)}</span>
+              </li>
+              <li>
+                <span>{T.translate(`${PREFIX}.Benefits.b4`)}</span>
+              </li>
+              <li>
+                <span>{T.translate(`${PREFIX}.Benefits.b5`)}</span>
+              </li>
+              <li>
+                <span>{T.translate(`${PREFIX}.Benefits.b6`)}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     );
   }

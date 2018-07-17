@@ -27,7 +27,9 @@ const PREFIX = 'features.FieldLevelLineage.TimeRangeOptions';
 
 class TimePickerView extends Component {
   static propTypes = {
-    selections: PropTypes.string
+    selections: PropTypes.string,
+    start: PropTypes.number,
+    end: PropTypes.number
   };
 
   state = {
@@ -52,6 +54,8 @@ class TimePickerView extends Component {
         <ExpandableTimeRange
           onDone={this.onDone}
           inSeconds={true}
+          start={this.props.start}
+          end={this.props.end}
         />
       </div>
     );
@@ -92,7 +96,9 @@ class TimePickerView extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    selections: state.lineage.timeSelection
+    selections: state.lineage.timeSelection,
+    start: state.customTime.start,
+    end: state.customTime.end
   };
 };
 

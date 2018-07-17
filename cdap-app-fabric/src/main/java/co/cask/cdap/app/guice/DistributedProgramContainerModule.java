@@ -48,10 +48,8 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
-import co.cask.cdap.internal.provision.SecureKeyInfo;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.appender.tms.TMSLogAppender;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
@@ -228,7 +226,13 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LogAppender.class).to(TMSLogAppender.class);
+        // TODO (CDAP-13380): Use a LogAppender defined by the runtime provider
+        bind(LogAppender.class).toInstance(new LogAppender() {
+          @Override
+          protected void appendEvent(LogMessage logMessage) {
+            // no-op
+          }
+        });
 
         // Bind to unsupported/no-op class implementations for features that are not supported in isolated cluster mode
         bind(StreamAdmin.class).to(UnsupportedStreamAdmin.class);
@@ -263,15 +267,9 @@ public class DistributedProgramContainerModule extends AbstractModule {
    * Optionally adds {@link RuntimeMonitorServer} binding.
    */
   private void bindRuntimeMonitorServer(Binder binder) {
-    if (!systemArgs.hasOption(ProgramOptionConstants.CLUSTER_KEY_INFO)) {
-      return;
-    }
-
-    SecureKeyInfo keyInfo = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER_KEY_INFO),
-                                          SecureKeyInfo.class);
     try {
-      Path keyStorePath = Paths.get(keyInfo.getServerKeyStoreFile());
-      Path trustStorePath = Paths.get(keyInfo.getClientKeyStoreFile());
+      Path keyStorePath = Paths.get(Constants.RuntimeMonitor.SERVER_KEYSTORE);
+      Path trustStorePath = Paths.get(Constants.RuntimeMonitor.CLIENT_KEYSTORE);
 
       // If there is no key store or trust store, don't add the binding.
       // The reason is that this module is used in all containers, but only the driver container would have the

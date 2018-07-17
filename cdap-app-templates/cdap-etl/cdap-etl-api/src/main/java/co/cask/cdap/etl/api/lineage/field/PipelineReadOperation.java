@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Represents a read operation from a data source into a collection of output fields.
  */
-public class ReadOperation extends Operation {
+public class PipelineReadOperation extends PipelineOperation {
   private final EndPoint source;
   private final List<String> outputFields;
 
@@ -38,7 +38,7 @@ public class ReadOperation extends Operation {
    * @param source the source for the operation
    * @param outputFields the array of output fields to be generated
    */
-  public ReadOperation(String name, String description, EndPoint source, String... outputFields) {
+  public PipelineReadOperation(String name, String description, EndPoint source, String... outputFields) {
     this(name, description, source, Arrays.asList(outputFields));
   }
 
@@ -50,7 +50,7 @@ public class ReadOperation extends Operation {
    * @param source the source for the operation
    * @param outputFields the list of output fields to be generated
    */
-  public ReadOperation(String name, String description, EndPoint source, List<String> outputFields) {
+  public PipelineReadOperation(String name, String description, EndPoint source, List<String> outputFields) {
     super(name, OperationType.READ, description);
     this.source = source;
     this.outputFields = Collections.unmodifiableList(new ArrayList<>(outputFields));

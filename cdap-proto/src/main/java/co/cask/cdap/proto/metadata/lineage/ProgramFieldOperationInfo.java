@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Beta;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * In field lineage details, represents a set of programs that performed the same operations.
@@ -41,5 +42,23 @@ public class ProgramFieldOperationInfo {
 
   public List<FieldOperationInfo> getOperations() {
     return operations;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProgramFieldOperationInfo info = (ProgramFieldOperationInfo) o;
+    return Objects.equals(programs, info.programs) &&
+            Objects.equals(operations, info.operations);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(programs, operations);
   }
 }

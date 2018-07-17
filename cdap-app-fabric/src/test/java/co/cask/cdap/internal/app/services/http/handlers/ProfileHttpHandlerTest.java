@@ -53,7 +53,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
   public void testSystemProfiles() throws Exception {
     Assert.assertEquals(Collections.singletonList(Profile.NATIVE), listSystemProfiles(200));
 
-    Profile p1 = new Profile("p1", "desc", EntityScope.SYSTEM,
+    Profile p1 = new Profile("p1", "label", "desc", EntityScope.SYSTEM,
                              new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
     putSystemProfile(p1.getName(), p1, 200);
     Optional<Profile> p1Optional = getSystemProfile(p1.getName(), 200);
@@ -70,7 +70,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(expected, new HashSet<>(listProfiles(NamespaceId.DEFAULT, true, 200)));
 
     // check we can add a profile with the same name in a namespace
-    Profile p2 = new Profile(p1.getName(), p1.getDescription(), EntityScope.USER,
+    Profile p2 = new Profile(p1.getName(), p1.getLabel(), p1.getDescription(), EntityScope.USER,
                              p1.getProvisioner());
     ProfileId p2Id = NamespaceId.DEFAULT.profile(p2.getName());
     putProfile(p2Id, p2, 200);
@@ -88,6 +88,17 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testSystemNamespaceProfilesNotAllowed() throws Exception {
+    listProfiles(NamespaceId.SYSTEM, false, 405);
+    getProfile(NamespaceId.SYSTEM.profile("abc"), 405);
+    disableProfile(NamespaceId.SYSTEM.profile("abc"), 405);
+    enableProfile(NamespaceId.SYSTEM.profile("abc"), 405);
+
+    Profile profile = new Profile("abc", "label", "desc", new ProvisionerInfo("xyz", Collections.emptyList()));
+    putProfile(NamespaceId.SYSTEM.profile("abc"), profile, 405);
+  }
+
+  @Test
   public void testListAndGetProfiles() throws Exception {
     // no profile should be there in default namespace
     List<Profile> profiles = listProfiles(NamespaceId.DEFAULT, false, 200);
@@ -99,8 +110,12 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(Collections.singletonList(Profile.NATIVE), profiles);
 
     // test get single profile endpoint
-    Profile defaultProfile = getProfile(ProfileId.NATIVE, 200).get();
-    Assert.assertEquals(Profile.NATIVE, defaultProfile);
+    ProfileId profileId = NamespaceId.DEFAULT.profile("p1");
+    Profile expected = new Profile("p1", "label", "my profile for testing",
+                                   new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
+    putProfile(profileId, expected, 200);
+    Profile actual = getProfile(profileId, 200).get();
+    Assert.assertEquals(expected, actual);
 
     // get a nonexisting profile should get a not found code
     getProfile(NamespaceId.DEFAULT.profile("nonExisting"), 404);
@@ -108,13 +123,13 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testPutAndDeleteProfiles() throws Exception {
-    Profile invalidProfile = new Profile("MyProfile", "my profile for testing",
+    Profile invalidProfile = new Profile("MyProfile", "label", "my profile for testing",
                                          new ProvisionerInfo("nonExisting", PROPERTY_SUMMARIES));
     // adding a profile with non-existing provisioner should get a 400
     putProfile(NamespaceId.DEFAULT.profile(invalidProfile.getName()), invalidProfile, 400);
 
     // put a profile with the mock provisioner
-    Profile expected = new Profile("MyProfile", "my profile for testing",
+    Profile expected = new Profile("MyProfile", "label", "my profile for testing",
                                    new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
     ProfileId expectedProfileId = NamespaceId.DEFAULT.profile(expected.getName());
     putProfile(expectedProfileId, expected, 200);
@@ -153,7 +168,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testEnableDisableProfile() throws Exception {
-    Profile expected = new Profile("MyProfile", "my profile for testing",
+    Profile expected = new Profile("MyProfile", "label", "my profile for testing",
       new ProvisionerInfo(MockProvisioner.NAME, PROPERTY_SUMMARIES));
     ProfileId profileId = NamespaceId.DEFAULT.profile(expected.getName());
 
@@ -194,7 +209,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     // provide a profile with null provsioner property, it should still succeed
     List<ProvisionerPropertyValue> listWithNull = new ArrayList<>();
     listWithNull.add(null);
-    Profile profile = new Profile("ProfileWithNull", "should succeed",
+    Profile profile = new Profile("ProfileWithNull", "label", "should succeed",
       new ProvisionerInfo(MockProvisioner.NAME, listWithNull));
     putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, 200);
 
@@ -209,7 +224,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     // provide a profile with mixed properties with null, it should still succeed
     List<ProvisionerPropertyValue> listMixed = new ArrayList<>(PROPERTY_SUMMARIES);
     listMixed.addAll(listWithNull);
-    profile = new Profile("ProfileMixed", "should succeed",
+    profile = new Profile("ProfileMixed", "label", "should succeed",
       new ProvisionerInfo(MockProvisioner.NAME, listMixed));
     putProfile(NamespaceId.DEFAULT.profile(profile.getName()), profile, 200);
 
@@ -219,5 +234,15 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(PROPERTY_SUMMARIES, actual.getProvisioner().getProperties());
     disableProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
     deleteProfile(NamespaceId.DEFAULT.profile(profile.getName()), 200);
+  }
+
+  @Test
+  public void testNativeProfileImmutable() throws Exception {
+    // verify native profile exists
+    Assert.assertEquals(Profile.NATIVE, getSystemProfile(ProfileId.NATIVE.getProfile(), 200).get());
+    // disable, update, or delete should throw a 405
+    disableSystemProfile(ProfileId.NATIVE.getProfile(), 405);
+    putSystemProfile(ProfileId.NATIVE.getProfile(), Profile.NATIVE, 405);
+    deleteSystemProfile(ProfileId.NATIVE.getProfile(), 405);
   }
 }

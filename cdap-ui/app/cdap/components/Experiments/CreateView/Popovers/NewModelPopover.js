@@ -24,12 +24,17 @@ import {
   createModel
 } from 'components/Experiments/store/CreateExperimentActionCreator';
 import {POPOVER_TYPES} from 'components/Experiments/store/createExperimentStore';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.CreateView';
 
 const ModelName = ({modelName, onModelNameChange}) => {
   return (
     <FormGroup row>
       <Col xs="12">
-        <Label className="control-label">Model Name </Label>
+        <Label className="control-label">
+          {T.translate(`${PREFIX}.modelName`)}
+        </Label>
       </Col>
       <Col xs="12">
         <Input value={modelName} onChange={onModelNameChange} />
@@ -46,7 +51,9 @@ const ModelDescription = ({modelDescription, onModelDescriptionChange}) => {
   return (
     <FormGroup row>
       <Col xs="12">
-        <Label className="control-label">Model Description </Label>
+        <Label className="control-label">
+          {T.translate(`${PREFIX}.modelDescription`)}
+        </Label>
       </Col>
       <Col xs="12">
         <Input

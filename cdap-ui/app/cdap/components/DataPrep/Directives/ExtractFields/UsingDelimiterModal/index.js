@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,13 +24,14 @@ import isEmpty from 'lodash/isEmpty';
 require('./UsingDelimiter.scss');
 
 const PREFIX = 'features.DataPrep.Directives.ExtractFields.UsingDelimiters';
-const DEFAULT_DELIMITER = 'Comma';
+const DEFAULT_DELIMITER = T.translate(`${PREFIX}.comma`);
 const DELIMITER_MAP = {
-  'Comma': ',',
-  'Tab': '\\t',
-  'Pipe': '\\|',
-  'Whitespace': '\\s+',
-  'Custom Separator': 'CUSTOM'
+
+  [T.translate(`${PREFIX}.comma`)]: ',',
+  [T.translate(`${PREFIX}.tab`)]: '\\t',
+  [T.translate(`${PREFIX}.pipe`)]: '\\|',
+  [T.translate(`${PREFIX}.whitespace`)]: '\\s+',
+  [T.translate(`${PREFIX}.custom`)]: 'CUSTOM'
 };
 
 export default class UsingDelimiterModal extends Component {
@@ -71,7 +72,9 @@ export default class UsingDelimiterModal extends Component {
     this.applyDirective();
   }
   renderCustomDelimiter() {
-    if (this.state.delimiterSelection !== 'Custom Separator') { return null; }
+    if (this.state.delimiterSelection !== T.translate(`${PREFIX}.custom`)) {
+      return null;
+    }
 
     return (
       <div className="custom-delimiter-input">

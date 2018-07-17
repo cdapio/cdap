@@ -224,7 +224,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
           type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
           payload: {
             status: statusRes.status,
-            startTime: statusRes.start,
+            startTime: statusRes.starting,
             endTime: statusRes.end
           }
         });
@@ -432,7 +432,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
           type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
           payload: {
             status: statusRes.status,
-            startTime: statusRes.start,
+            startTime: statusRes.starting,
             endTime: statusRes.end
           }
         });

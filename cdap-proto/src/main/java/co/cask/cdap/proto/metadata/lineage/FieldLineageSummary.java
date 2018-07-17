@@ -18,9 +18,9 @@ package co.cask.cdap.proto.metadata.lineage;
 
 import co.cask.cdap.api.annotation.Beta;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -35,22 +35,22 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class FieldLineageSummary {
-  private final List<DatasetField> incoming;
-  private final List<DatasetField> outgoing;
+  private final Set<DatasetField> incoming;
+  private final Set<DatasetField> outgoing;
 
-  public FieldLineageSummary(@Nullable List<DatasetField> incoming,
-                             @Nullable List<DatasetField> outgoing) {
-    this.incoming = incoming == null ? null : Collections.unmodifiableList(new ArrayList<>(incoming));
-    this.outgoing = outgoing == null ? null : Collections.unmodifiableList(new ArrayList<>(outgoing));
+  public FieldLineageSummary(@Nullable Set<DatasetField> incoming,
+                             @Nullable Set<DatasetField> outgoing) {
+    this.incoming = incoming == null ? null : Collections.unmodifiableSet(new HashSet<>(incoming));
+    this.outgoing = outgoing == null ? null : Collections.unmodifiableSet(new HashSet<>(outgoing));
   }
 
   @Nullable
-  public List<DatasetField> getIncoming() {
+  public Set<DatasetField> getIncoming() {
     return incoming;
   }
 
   @Nullable
-  public List<DatasetField> getOutgoing() {
+  public Set<DatasetField> getOutgoing() {
     return outgoing;
   }
 }

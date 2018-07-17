@@ -56,7 +56,7 @@ final class RemoteExecutionProgramRunnerModule extends PrivateModule {
     expose(programRunnerFactoryKey);
 
     // The following are bindings are for ProgramRunners. They are private to this module and only
-    // available to the remote execution ProgramRunnerFactory exposed.
+    // available to the remote exeuction ProgramRunnerFactory exposed.
 
     // This set of program runners are for isolated mode
     bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);

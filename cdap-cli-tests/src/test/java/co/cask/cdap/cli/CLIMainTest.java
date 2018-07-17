@@ -685,8 +685,7 @@ public class CLIMainTest extends CLITestBase {
     final String doesNotExist = "doesNotExist";
     createHiveDB(hiveDatabase);
     // initially only default namespace should be present
-    NamespaceMeta defaultNs = new NamespaceMeta.Builder()
-      .setName("default").setDescription("Default Namespace").build();
+    NamespaceMeta defaultNs = NamespaceMeta.DEFAULT;
     List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 

@@ -14,6 +14,8 @@
  * the License.
 */
 
+@import '../../styles/variables.scss';
+
 .btn-with-loading {
   > div {
     display: flex;
@@ -23,6 +25,9 @@
     // Standard bootstrap btn height is 31px
     // padding top and bottom are 0.5rem each. Hence the calculation.
     height: calc(31px - 1rem);
+    rect {
+      fill: $blue-06;
+    }
   }
 
 }

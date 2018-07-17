@@ -51,7 +51,9 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
    * Adds a {@link Flow} to the Application.
    *
    * @param flow The {@link Flow} to include in the Application
+   * @deprecated As of release 5.0.0, replaced by {@link @ProgramType.SPARK} for realtime processing.
    */
+  @Deprecated
   void addFlow(Flow flow);
 
   /**

@@ -16,8 +16,13 @@
 
 package co.cask.cdap.examples.sparkpagerank;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -35,6 +40,7 @@ import org.junit.Test;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class SparkPageRankAppTest extends TestBase {
@@ -95,5 +101,22 @@ public class SparkPageRankAppTest extends TestBase {
                   SparkPageRankApp.SparkPageRankServiceHandler.TOTAL_PAGES_PATH + "/" + RANK);
     response = HttpRequests.execute(HttpRequest.get(url).build());
     Assert.assertEquals(TOTAL_PAGES, response.getResponseBodyAsString());
+
+    // verify that the tag written by the program is accessible
+    Tasks.waitFor(true, () -> {
+      Set<MetadataRecordV2> metadataRecordV2s =
+        getMetadataAdmin().getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "ranks"));
+      for (MetadataRecordV2 actualRecord : metadataRecordV2s) {
+        if (actualRecord.getScope() == MetadataScope.USER) {
+          if (actualRecord.getTags().size() == 1) {
+            String tag = actualRecord.getTags().iterator().next();
+            Assert.assertEquals(SparkPageRankProgram.ITERATIONS_COUNT + SparkPageRankProgram.ITERATIONS_COUNT_VALUE,
+                                tag);
+            return true;
+          }
+        }
+      }
+      return false;
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 }

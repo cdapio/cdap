@@ -186,7 +186,7 @@ export function listReports(id) {
 export function fetchRuns(reportId = ReportsStore.getState().details.reportId) {
   let {runsOffset: offset, runsLimit: limit} = ReportsStore.getState().details;
   let params = {
-    reportId,
+    'report-id': reportId,
     offset,
     limit
   };

@@ -15,22 +15,63 @@
 */
 
 import React, {Component} from 'react';
-import {connect} from 'react-redux';
+import {connect, Provider} from 'react-redux';
 import PropTypes from 'prop-types';
-import {objectQuery, preventPropagation} from 'services/helpers';
+import {objectQuery, preventPropagation, isNilOrEmpty} from 'services/helpers';
 import IconSVG from 'components/IconSVG';
 import ProfilePreview from 'components/Cloud/Profiles/Preview';
 import Popover from 'components/Popover';
 import classnames from 'classnames';
-import {extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {extractProfileName, getProfiles} from 'components/Cloud/Profiles/Store/ActionCreator';
+import ProfilesStore from 'components/Cloud/Profiles/Store';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import {CLOUD} from 'services/global-constants';
+import T from 'i18n-react';
+
+const PREFIX = 'features.PipelineDetails.RunLevel.RunComputeProfile';
 
 require('./RunComputeProfile.scss');
 
 class RunLevelComputeProfile extends Component {
   static propTypes = {
-    profileName: PropTypes.string
+    profileName: PropTypes.string,
+    profiles: PropTypes.array,
+    isProfileFetchInTrasit: PropTypes.bool
   };
+
+  state = {
+    profilesNameToLabelMap: {}
+  };
+
+  componentDidMount() {
+    this.fetchProfilesForLabel();
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.fetchProfilesForLabel(nextProps);
+  }
+
+  fetchProfilesForLabel = (props = this.props) => {
+    let {profiles, isProfileFetchInTrasit, profileName} = props;
+    if (!isNilOrEmpty(profileName) && !isProfileFetchInTrasit && !profiles.length) {
+      return getProfiles(getCurrentNamespace());
+    }
+    this.updateProfilesMap(props);
+  }
+
+  updateProfilesMap = ({profiles}) => {
+    let profilesNameToLabelMap = {};
+    profiles.forEach(profile => profilesNameToLabelMap[profile.name] = profile.label || profile.name);
+    this.setState({
+      profilesNameToLabelMap
+    });
+  };
+
+  getProfileLabel = () => {
+    let profileName = extractProfileName(this.props.profileName);
+    let profileLabel = this.state.profilesNameToLabelMap[profileName];
+    return isNilOrEmpty(profileLabel) ? profileName : profileLabel;
+  }
 
   render() {
     const ProfileLabel = () => {
@@ -42,7 +83,7 @@ class RunLevelComputeProfile extends Component {
           !this.props.profileName ?
             <button
               className="btn btn-link"
-              title="Profile Information Unavailable"
+              title={T.translate(`${PREFIX}.noInfo`)}
               disabled
             >
               <IconSVG name="icon-cloud" />
@@ -58,7 +99,7 @@ class RunLevelComputeProfile extends Component {
               }}
             >
               <IconSVG name="icon-cloud" />
-              <span>{extractProfileName(this.props.profileName)}</span>
+              <span>{this.getProfileLabel()}</span>
             </div>
           }
         </div>
@@ -67,7 +108,7 @@ class RunLevelComputeProfile extends Component {
     return (
       <div className="run-info-container run-level-compute-profile pull-right">
         <div>
-          <strong> Run Compute Profile </strong>
+          <strong>{T.translate(`${PREFIX}.label`)}</strong>
         </div>
         {
           !this.props.profileName ?
@@ -77,11 +118,12 @@ class RunLevelComputeProfile extends Component {
               target={() => <ProfileLabel />}
               className="profile-preview-popover"
               placement="bottom-end"
-              bubbleEvent={false}
+              bubbleEvent={true}
               enableInteractionInPopover={true}
               injectOnToggle={true}
             >
               <ProfilePreview
+                profileLabel={this.getProfileLabel()}
                 profileName={extractProfileName(this.props.profileName)}
                 profileScope={this.props.profileName.indexOf('SYSTEM:') !== -1 ? 'system' : 'user'}
               />
@@ -90,6 +132,22 @@ class RunLevelComputeProfile extends Component {
       </div>
     );
   }
+}
+const mapProfileStateToProps = (state) => {
+  return {
+    profiles: state.profiles,
+    isProfileFetchInTrasit: state.loading
+  };
+};
+
+const ProfileConnectedRunLevelComputeProfile = connect(mapProfileStateToProps)(RunLevelComputeProfile);
+
+function ProfileWrappedRunLevelComputeProfile({...restProps}) {
+  return (
+    <Provider store={ProfilesStore}>
+      <ProfileConnectedRunLevelComputeProfile {...restProps} />
+    </Provider>
+  );
 }
 
 const getProfileName = (runProperties) => {
@@ -103,10 +161,10 @@ const getProfileName = (runProperties) => {
 };
 const mapStateToProps = (state) => {
   return {
-    profileName: getProfileName(objectQuery(state, 'currentRun', 'properties', 'runtimeArgs')) || CLOUD.DEFAULT_PROFILE_NAME
+    profileName: getProfileName(objectQuery(state, 'currentRun', 'properties', 'runtimeArgs'))
   };
 };
 
-const ConnectedRunLevelComputeProfile = connect(mapStateToProps)(RunLevelComputeProfile);
+const ConnectedRunLevelComputeProfile = connect(mapStateToProps)(ProfileWrappedRunLevelComputeProfile);
 
 export default ConnectedRunLevelComputeProfile;

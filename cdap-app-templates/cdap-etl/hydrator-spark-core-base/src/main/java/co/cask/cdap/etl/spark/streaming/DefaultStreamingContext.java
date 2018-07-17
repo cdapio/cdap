@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.api.lineage.field.Operation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.BasicArguments;
@@ -51,7 +51,7 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   public DefaultStreamingContext(StageSpec stageSpec, JavaSparkExecutionContext sec, JavaStreamingContext jsc) {
     super(new PipelineRuntime(sec.getNamespace(), sec.getApplicationSpecification().getName(),
                               sec.getLogicalStartTime(), new BasicArguments(sec), sec.getMetrics(),
-                              sec.getPluginContext(), sec.getServiceDiscoverer()), stageSpec);
+                              sec.getPluginContext(), sec.getServiceDiscoverer(), sec, sec), stageSpec);
     this.sec = sec;
     this.jsc = jsc;
     this.admin = sec.getAdmin();
@@ -99,7 +99,7 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   }
 
   @Override
-  public void record(List<Operation> operations) {
+  public void record(List<PipelineOperation> operations) {
     throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }

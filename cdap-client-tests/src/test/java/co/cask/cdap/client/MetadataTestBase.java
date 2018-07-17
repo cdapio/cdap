@@ -205,7 +205,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                          cursor, showHiddden);
   }
 
-  protected MetadataSearchResponseV2 searchMetadata(NamespaceId namespaceId, String query,
+  protected MetadataSearchResponseV2 searchMetadata(@Nullable NamespaceId namespaceId, String query,
                                                     Set<EntityTypeSimpleName> targets,
                                                     @Nullable String sort, int offset, int limit, int numCursors,
                                                     @Nullable String cursor, boolean showHiddden,

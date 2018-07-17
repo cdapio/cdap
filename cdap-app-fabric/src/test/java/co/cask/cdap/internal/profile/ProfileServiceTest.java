@@ -19,6 +19,7 @@ package co.cask.cdap.internal.profile;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.app.RunIds;
@@ -39,6 +40,7 @@ import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Injector;
 import org.apache.twill.api.RunId;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -50,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test for profile store
@@ -71,6 +74,11 @@ public class ProfileServiceTest {
     profileService = injector.getInstance(ProfileService.class);
   }
 
+  @After
+  public void afterTest() throws Exception {
+    profileService.clear();
+  }
+
   @Test
   public void testProfileOverrides() throws Exception {
     List<ProvisionerPropertyValue> provisionerProperties = new ArrayList<>();
@@ -79,7 +87,7 @@ public class ProfileServiceTest {
     provisionerProperties.add(new ProvisionerPropertyValue("final", "finalval", false));
 
     ProvisionerInfo provisionerInfo = new ProvisionerInfo("provisioner", provisionerProperties);
-    Profile profile = new Profile("name", "desc", provisionerInfo);
+    Profile profile = new Profile("name", "label", "desc", provisionerInfo);
     ProfileId profileId = NamespaceId.DEFAULT.profile("p");
     profileService.saveProfile(profileId, profile);
 
@@ -97,7 +105,7 @@ public class ProfileServiceTest {
       expectedProperties.add(new ProvisionerPropertyValue("final", "finalval", false));
       expectedProperties.add(new ProvisionerPropertyValue("newarg", "val", true));
       provisionerInfo = new ProvisionerInfo(provisionerInfo.getName(), expectedProperties);
-      Profile expected = new Profile(profile.getName(), profile.getDescription(), provisionerInfo);
+      Profile expected = new Profile(profile.getName(), "label", profile.getDescription(), provisionerInfo);
       Profile actual = profileService.getProfile(profileId, args);
       Assert.assertEquals(expected, actual);
     } finally {
@@ -125,7 +133,7 @@ public class ProfileServiceTest {
     }
 
     ProfileId profileId = NamespaceId.DEFAULT.profile("MyProfile");
-    Profile expected = new Profile("MyProfile", "my profile for testing",
+    Profile expected = new Profile("MyProfile", "label", "my profile for testing",
       new ProvisionerInfo("defaultProvisioner", PROPERTY_SUMMARIES));
     // add a profile
     profileService.saveProfile(profileId, expected);
@@ -134,14 +142,14 @@ public class ProfileServiceTest {
     Assert.assertEquals(expected, profileService.getProfile(profileId));
 
     // add a profile which already exists, should succeed and the profile property should be updated
-    expected = new Profile("MyProfile", "my 2nd profile for updating",
+    expected = new Profile("MyProfile", "label", "my 2nd profile for updating",
       new ProvisionerInfo("anotherProvisioner", Collections.emptyList()));
     profileService.saveProfile(profileId, expected);
     Assert.assertEquals(expected, profileService.getProfile(profileId));
 
     // add another profile to default namespace
     ProfileId profileId2 = NamespaceId.DEFAULT.profile("MyProfile2");
-    Profile profile2 = new Profile("MyProfile2", "my 2nd profile for testing",
+    Profile profile2 = new Profile("MyProfile2", "label", "my 2nd profile for testing",
       new ProvisionerInfo("anotherProvisioner", PROPERTY_SUMMARIES));
     profileService.saveProfile(profileId2, profile2);
 
@@ -195,6 +203,7 @@ public class ProfileServiceTest {
 
     // add one and delete all profiles
     profileService.saveProfile(profileId2, profile2);
+    profileService.disableProfile(profileId);
     profileService.disableProfile(profileId2);
     profileService.deleteAllProfiles(NamespaceId.DEFAULT);
     Assert.assertEquals(Collections.EMPTY_LIST, profileService.getProfiles(NamespaceId.DEFAULT, false));
@@ -218,7 +227,9 @@ public class ProfileServiceTest {
   @Test
   public void testAddDeleteAssignments() throws Exception {
     ProfileId myProfile = NamespaceId.DEFAULT.profile("MyProfile");
-    profileService.saveProfile(myProfile, Profile.NATIVE);
+    Profile profile1 = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                   Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    profileService.saveProfile(myProfile, profile1);
 
     // add a profile assignment and verify
     Set<EntityId> expected = new HashSet<>();
@@ -265,7 +276,15 @@ public class ProfileServiceTest {
   @Test
   public void testProfileDeletion() throws Exception {
     ProfileId myProfile = NamespaceId.DEFAULT.profile("MyProfile");
-    profileService.saveProfile(myProfile, Profile.NATIVE);
+    ProfileId myProfile2 = NamespaceId.DEFAULT.profile("MyProfile2");
+    Profile profile1 = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                   Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    Profile profile2 = new Profile("MyProfile2", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                   Profile.NATIVE.getScope(), ProfileStatus.DISABLED, Profile.NATIVE.getProvisioner());
+    profileService.saveProfile(myProfile, profile1);
+    // add profile2 and disable it, profile2 can get deleted at any time
+    profileService.saveProfile(myProfile2, profile2);
+    profileService.disableProfile(myProfile2);
 
     // Should not be able to delete because the profile is by default enabled
     try {
@@ -273,6 +292,14 @@ public class ProfileServiceTest {
       Assert.fail();
     } catch (ProfileConflictException e) {
       // expected
+    }
+
+    try {
+      profileService.deleteAllProfiles(NamespaceId.DEFAULT);
+      Assert.fail();
+    } catch (ProfileConflictException e) {
+      // expected and check profile 2 is not getting deleted
+      Assert.assertEquals(profile2, profileService.getProfile(myProfile2));
     }
 
     // add assignment and disable it, deletion should also fail
@@ -285,6 +312,15 @@ public class ProfileServiceTest {
     } catch (ProfileConflictException e) {
       // expected
     }
+
+    try {
+      profileService.deleteAllProfiles(NamespaceId.DEFAULT);
+      Assert.fail();
+    } catch (ProfileConflictException e) {
+      // expected and check profile 2 is not getting deleted
+      Assert.assertEquals(profile2, profileService.getProfile(myProfile2));
+    }
+
     profileService.removeProfileAssignment(myProfile, NamespaceId.DEFAULT);
 
     // add an active record to DefaultStore, deletion should still fail
@@ -307,11 +343,73 @@ public class ProfileServiceTest {
       // expected
     }
 
+    try {
+      profileService.deleteAllProfiles(NamespaceId.DEFAULT);
+      Assert.fail();
+    } catch (ProfileConflictException e) {
+      // expected and check profile 2 is not getting deleted
+      Assert.assertEquals(profile2, profileService.getProfile(myProfile2));
+    }
+
     // set the run to stopped then deletion should work
     store.setStop(programRunId, System.currentTimeMillis() + 1000,
                   ProgramController.State.ERROR.getRunStatus(), AppFabricTestHelper.createSourceId(++sourceId));
 
     // now profile deletion should succeed
     profileService.deleteProfile(myProfile);
+    Assert.assertEquals(Collections.singletonList(profile2), profileService.getProfiles(NamespaceId.DEFAULT, false));
+    profileService.saveProfile(myProfile, profile1);
+    profileService.disableProfile(myProfile);
+    profileService.deleteAllProfiles(NamespaceId.DEFAULT);
+    Assert.assertEquals(Collections.emptyList(), profileService.getProfiles(NamespaceId.DEFAULT, false));
+  }
+
+  @Test
+  public void testNativeProfileImmutable() throws Exception {
+    // put native profile
+    profileService.saveProfile(ProfileId.NATIVE, Profile.NATIVE);
+
+    // save it again should fail since native profile cannot be updated
+    try {
+      profileService.saveProfile(ProfileId.NATIVE, Profile.NATIVE);
+      Assert.fail();
+    } catch (MethodNotAllowedException e) {
+      // expected
+    }
+
+    // native profile cannot be disabled
+    try {
+      profileService.disableProfile(ProfileId.NATIVE);
+      Assert.fail();
+    } catch (MethodNotAllowedException e) {
+      // expected
+    }
+
+    // native profile cannot be deleted
+    try {
+      profileService.deleteProfile(ProfileId.NATIVE);
+      Assert.fail();
+    } catch (MethodNotAllowedException e) {
+      // expected
+    }
+
+    // do not allow delete all profiles in system namespace
+    try {
+      profileService.deleteAllProfiles(NamespaceId.SYSTEM);
+      Assert.fail();
+    } catch (MethodNotAllowedException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testProfileCreationTime() throws Exception {
+    ProfileId myProfile = NamespaceId.DEFAULT.profile("MyProfile");
+    long creationTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    Profile profile = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                  Profile.NATIVE.getScope(), ProfileStatus.ENABLED, Profile.NATIVE.getProvisioner(),
+                                  creationTime);
+    profileService.saveProfile(myProfile, profile);
+    Assert.assertEquals(creationTime, profileService.getProfile(myProfile).getCreatedTsSeconds());
   }
 }

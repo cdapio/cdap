@@ -24,8 +24,6 @@ import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.batch.connector.ConnectorSink;
-import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.batch.connector.SingleConnectorSink;
 import co.cask.cdap.etl.batch.connector.SingleConnectorSource;
 import co.cask.cdap.etl.common.BasicArguments;
@@ -40,7 +38,6 @@ import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 
 /**

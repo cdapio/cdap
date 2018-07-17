@@ -23,6 +23,7 @@ import co.cask.cdap.api.lineage.field.WriteOperation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -68,5 +69,23 @@ public class FieldOperationOutput {
   @Nullable
   public List<String> getFields() {
     return fields;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    FieldOperationOutput output = (FieldOperationOutput) o;
+    return Objects.equals(endPoint, output.endPoint) &&
+            Objects.equals(fields, output.fields);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(endPoint, fields);
   }
 }

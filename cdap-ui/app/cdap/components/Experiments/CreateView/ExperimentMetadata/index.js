@@ -21,6 +21,9 @@ import createExperimentStore, {CREATION_STEPS} from 'components/Experiments/stor
 import {overrideCreationStep} from 'components/Experiments/store/CreateExperimentActionCreator';
 import classnames from 'classnames';
 import isNil from 'lodash/isNil';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.CreateView';
 
 require('./ExperimentMetadata.scss');
 
@@ -29,15 +32,15 @@ const ExperimentMetadataWrapper = ({modelName, modelDescription, directives, alg
   return (
     <div className="experiment-metadata">
       <div>
-        <strong>Model Name: </strong>
+        <strong>{T.translate(`${PREFIX}.modelNameWithColon`)}</strong>
         <span>{modelName}</span>
         <div className="model-description-wrapper">
-          <strong>Model Description: </strong>
+          <strong>{T.translate(`${PREFIX}.modelDescriptionWithColon`)}</strong>
           <p className="model-description">{modelDescription}</p>
         </div>
       </div>
       <div>
-        <strong>No of Directives: </strong>
+        <strong>{T.translate(`${PREFIX}.numDirectives`)}</strong>
         <span>{directives.length}</span>
         {
           directives.length ? (
@@ -45,21 +48,21 @@ const ExperimentMetadataWrapper = ({modelName, modelDescription, directives, alg
               className="btn btn-link"
               onClick={overrideCreationStep.bind(null, CREATION_STEPS.DATAPREP)}
             >
-              Edit
+              {T.translate('commons.edit')}
             </div>
           ) : null
         }
       </div>
       <div>
-        <strong>Split Method: </strong>
-        <span>Random</span>
+        <strong>{T.translate(`${PREFIX}.splitMethod`)}</strong>
+        <span>{T.translate(`${PREFIX}.random`)}</span>
         {
           active_step === CREATION_STEPS.ALGORITHM_SELECTION ?
             <div
               className="btn btn-link"
               onClick={overrideCreationStep.bind(null, CREATION_STEPS.DATASPLIT)}
             >
-              Edit
+              {T.translate('commons.edit')}
             </div>
           :
             null
@@ -69,7 +72,7 @@ const ExperimentMetadataWrapper = ({modelName, modelDescription, directives, alg
         "grayed": isAlgorithmEmpty()
       })}
         >
-        <strong>ML Algorithm: </strong>
+        <strong>{T.translate(`${PREFIX}.MLAlgorithm`)}</strong>
         <span>
           { isAlgorithmEmpty() ? '--' : algorithm }
         </span>

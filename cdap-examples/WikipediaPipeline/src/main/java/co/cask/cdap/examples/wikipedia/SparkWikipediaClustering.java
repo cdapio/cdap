@@ -18,13 +18,15 @@ package co.cask.cdap.examples.wikipedia;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.AbstractSpark;
-import org.apache.spark.SparkConf;
 
 /**
  * Spark program that executes in a workflow and analyzes wikipedia data
  */
 public class SparkWikipediaClustering extends AbstractSpark {
   public static final String NAME = SparkWikipediaClustering.class.getSimpleName();
+  static final String CLUSTERING_ALGORITHM = "clusteringAlgorithm";
+  static final String CLUSTERING_ALGORITHM_LDA = "lda";
+  static final String CLUSTERING_ALGORITHM_KMEANS = "kmeans";
 
   private final WikipediaPipelineApp.WikipediaAppConfig appConfig;
 
@@ -34,10 +36,10 @@ public class SparkWikipediaClustering extends AbstractSpark {
 
   @Override
   protected void configure() {
-    if ("lda".equals(appConfig.clusteringAlgorithm)) {
+    if (CLUSTERING_ALGORITHM_LDA.equalsIgnoreCase(appConfig.clusteringAlgorithm)) {
       setDescription("A Spark program that analyzes wikipedia data using Latent Dirichlet Allocation (LDA).");
       setMainClass(ScalaSparkLDA.class);
-    } else if ("kmeans".equals(appConfig.clusteringAlgorithm)) {
+    } else if (CLUSTERING_ALGORITHM_KMEANS.equalsIgnoreCase(appConfig.clusteringAlgorithm)) {
       setDescription("A Spark program that analyzes wikipedia data using K-Means.");
       setMainClass(ScalaSparkKMeans.class);
     } else {

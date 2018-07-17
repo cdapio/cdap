@@ -37,7 +37,7 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.etl.api.lineage.field.Operation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
@@ -49,7 +49,7 @@ import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
-import co.cask.cdap.etl.common.OperationTypeAdapter;
+import co.cask.cdap.etl.common.PipelineOperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
@@ -108,7 +108,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+    .registerTypeAdapter(PipelineOperation.class, new PipelineOperationTypeAdapter())
     .create();
 
   private Finisher finisher;
@@ -223,7 +223,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     final Map<String, SinkOutput> sinkOutputs = new HashMap<>();
     final Map<String, String> inputAliasToStage = new HashMap<>();
     // Collect field operations emitted by various stages in this MapReduce program
-    final Map<String, List<Operation>> stageOperations = new HashMap<>();
+    final Map<String, List<PipelineOperation>> stageOperations = new HashMap<>();
     // call prepareRun on each stage in order so that any arguments set by a stage will be visible to subsequent stages
     for (final String stageName : phase.getDag().getTopologicalOrder()) {
       final StageSpec stageSpec = phase.getStage(stageName);
@@ -247,7 +247,7 @@ public class ETLMapReduce extends AbstractMapReduce {
               for (String inputAlias : sourceContext.getInputNames()) {
                 inputAliasToStage.put(inputAlias, stageName);
               }
-              stageOperations.put(stageName, sourceContext.getOperations());
+              stageOperations.put(stageName, sourceContext.getPipelineOperations());
             }
           });
 
@@ -263,7 +263,7 @@ public class ETLMapReduce extends AbstractMapReduce {
             @Override
             public void act(MapReduceBatchContext sinkContext) {
               sinkOutputs.put(stageName, new SinkOutput(sinkContext.getOutputNames()));
-              stageOperations.put(stageName, sinkContext.getOperations());
+              stageOperations.put(stageName, sinkContext.getPipelineOperations());
             }
           });
 
@@ -277,7 +277,7 @@ public class ETLMapReduce extends AbstractMapReduce {
                 new SubmitterPlugin.PrepareAction<MapReduceBatchContext>() {
                   @Override
                   public void act(MapReduceBatchContext context) {
-                    stageOperations.put(stageName, context.getOperations());
+                    stageOperations.put(stageName, context.getPipelineOperations());
                   }
             });
 
@@ -307,7 +307,7 @@ public class ETLMapReduce extends AbstractMapReduce {
               hConf.set(MAP_VAL_CLASS, outputValClass.getName());
               job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
               job.setMapOutputValueClass(getOutputValClass(stageName, outputValClass));
-              stageOperations.put(stageName, aggregatorContext.getOperations());
+              stageOperations.put(stageName, aggregatorContext.getPipelineOperations());
             }
           });
 
@@ -339,7 +339,7 @@ public class ETLMapReduce extends AbstractMapReduce {
               getOutputValClass(stageName, inputRecordClass);
               // for joiner plugin map output is tagged with stageName
               job.setMapOutputValueClass(TaggedWritable.class);
-              stageOperations.put(stageName, joinerContext.getOperations());
+              stageOperations.put(stageName, joinerContext.getPipelineOperations());
             }
           });
       }

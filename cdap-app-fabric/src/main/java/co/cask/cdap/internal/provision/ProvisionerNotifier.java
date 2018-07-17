@@ -42,9 +42,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
@@ -78,8 +77,8 @@ public class ProvisionerNotifier {
   }
 
   public void provisioned(ProgramRunId programRunId, ProgramOptions programOptions, ProgramDescriptor programDescriptor,
-                          String userId, Cluster cluster, @Nullable SecureKeyInfo clusterKeyInfo) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
+                          String userId, Cluster cluster, URI secureKeysDir) {
+    Map<String, String> properties = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
       .put(ProgramOptionConstants.USER_ID, userId)
@@ -87,13 +86,11 @@ public class ProvisionerNotifier {
       .put(ProgramOptionConstants.CLUSTER, GSON.toJson(cluster))
       .put(ProgramOptionConstants.DEBUG_ENABLED, String.valueOf(programOptions.isDebug()))
       .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
-      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()));
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
+      .put(ProgramOptionConstants.SECURE_KEYS_DIR, GSON.toJson(secureKeysDir))
+      .build();
 
-    if (clusterKeyInfo != null) {
-      builder.put(ProgramOptionConstants.CLUSTER_KEY_INFO, GSON.toJson(clusterKeyInfo));
-    }
-
-    publish(builder.build());
+    publish(properties);
   }
 
   public void deprovisioning(ProgramRunId programRunId) {
@@ -106,6 +103,7 @@ public class ProvisionerNotifier {
     deprovisioned(programRunId, System.currentTimeMillis());
   }
 
+  // this time stamp is in unit MILLISECOND
   public void deprovisioned(ProgramRunId programRunId, long endTimestamp) {
     publish(ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
@@ -117,6 +115,7 @@ public class ProvisionerNotifier {
     orphaned(programRunId, System.currentTimeMillis());
   }
 
+  // this time stamp is in unit MILLISECOND
   public void orphaned(ProgramRunId programRunId, long endTimestamp) {
     publish(ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),

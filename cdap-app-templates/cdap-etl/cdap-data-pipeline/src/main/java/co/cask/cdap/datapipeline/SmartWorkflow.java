@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -46,7 +47,7 @@ import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.condition.Condition;
-import co.cask.cdap.etl.api.lineage.field.Operation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
 import co.cask.cdap.etl.batch.ActionSpec;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
@@ -64,7 +65,7 @@ import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
-import co.cask.cdap.etl.common.OperationTypeAdapter;
+import co.cask.cdap.etl.common.PipelineOperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.TrackedIterator;
@@ -97,6 +98,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -108,7 +110,6 @@ import java.util.Set;
  */
 public class SmartWorkflow extends AbstractWorkflow {
   public static final String NAME = "DataPipelineWorkflow";
-  public static final String DESCRIPTION = "Data Pipeline Workflow";
   public static final String TRIGGERING_PROPERTIES_MAPPING = "triggering.properties.mapping";
 
   private static final String RESOLVED_PLUGIN_PROPERTIES_MAP = "resolved.plugin.properties.map";
@@ -118,9 +119,9 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                                                 Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter()).create();
+    .registerTypeAdapter(PipelineOperation.class, new PipelineOperationTypeAdapter()).create();
   private static final Type STAGE_PROPERTIES_MAP = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
-  private static final Type STAGE_OPERATIONS_MAP = new TypeToken<Map<String, List<Operation>>>() { }.getType();
+  private static final Type STAGE_OPERATIONS_MAP = new TypeToken<Map<String, List<PipelineOperation>>>() { }.getType();
 
   private final ApplicationConfigurer applicationConfigurer;
   private final Set<String> supportedPluginTypes;
@@ -157,7 +158,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   @Override
   protected void configure() {
     setName(NAME);
-    setDescription(DESCRIPTION);
+    setDescription("Data Pipeline Workflow");
 
     // set the pipeline spec as a property in case somebody like the UI wants to read it
     Map<String, String> properties = new HashMap<>();
@@ -208,6 +209,18 @@ public class SmartWorkflow extends AbstractWorkflow {
       return;
     }
 
+    /*
+       ControlDag is used to flatten the dag that represents connections between phases.
+       Connections between phases represent a happens-before relationship, not the flow of data.
+       As such, phases can be shifted around as long as every happens-before relationship is maintained.
+       The exception is condition phases. Connection from a condition to another phase must be maintained as is.
+
+       Flattening a ControlDag will transform a dag into a special fork-join dag by moving phases around.
+       We therefore cannot blindly flatten the phase connections.
+       However, we validated earlier that condition outputs have a special property, where every stage following a
+       condition can only have a single input. This means we will never need to flatten anything after the first
+       set of conditions. We will only have to flatten what comes before the first set of conditions.
+     */
     dag = new ControlDag(plan.getPhaseConnections());
     boolean dummyNodeAdded = false;
     Map<String, ConditionBranches> conditionBranches = plan.getConditionPhaseBranches();
@@ -215,7 +228,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       // after flattening, there is guaranteed to be just one source
       dag.flatten();
     } else if (!conditionBranches.keySet().containsAll(dag.getSources())) {
-      // Continue only if the conditon node is not the source of the dag, otherwise dag is already in the
+      // Continue only if the condition node is not the source of the dag, otherwise dag is already in the
       // required form
       Set<String> conditions = conditionBranches.keySet();
       // flatten only the part of the dag starting from sources and ending in conditions/sinks.
@@ -228,7 +241,25 @@ public class SmartWorkflow extends AbstractWorkflow {
       Set<String> sinks = new HashSet<>();
 
       // If its a single phase without condition then no need to flatten
-      if (dagNodesWithoutCondition.size() > 1) {
+      if (dagNodesWithoutCondition.size() < 2) {
+        sinks.addAll(dagNodesWithoutCondition);
+      } else {
+        /*
+           Create a subdag from dagNodesWithoutCondition.
+           There are a couple situations where this is not immediately possible. For example:
+
+             source1 --|
+                       |--> condition -- ...
+             source2 --|
+
+           Here, dagNodesWithoutCondition = [source1, source2], which is an invalid dag. Similarly:
+
+             source --> condition -- ...
+
+           Here, dagNodesWithoutCondition = [source], which is also invalid. In order to ensure that we have a
+           valid dag, we just insert a dummy node as the first node in the subdag, adding a connection from the
+           dummy node to all the sources.
+         */
         Dag subDag;
         try {
           subDag = dag.createSubDag(dagNodesWithoutCondition);
@@ -270,8 +301,6 @@ public class SmartWorkflow extends AbstractWorkflow {
           }
         }
         sinks.addAll(cdag.getSinks());
-      } else {
-        sinks.addAll(dagNodesWithoutCondition);
       }
 
       // Add back the existing condition nodes and corresponding conditions
@@ -307,11 +336,12 @@ public class SmartWorkflow extends AbstractWorkflow {
     if (dummyNodeAdded) {
       WorkflowProgramAdder fork = programAdder.fork();
       String dummyNode = dag.getSources().iterator().next();
-      for (String output : dag.getNodeOutputs(dummyNode)) {
-        // need to make sure we don't call also() if this is the final branch
-        if (!addBranchPrograms(output, fork)) {
-          fork = fork.also();
-        }
+      // need to make sure we don't call also() if this is the final branch
+      Iterator<String> outputIter = dag.getNodeOutputs(dummyNode).iterator();
+      addBranchPrograms(outputIter.next(), fork, false);
+      while (outputIter.hasNext()) {
+        fork = fork.also();
+        addBranchPrograms(outputIter.next(), fork, !outputIter.hasNext());
       }
     } else {
       String start = dag.getSources().iterator().next();
@@ -390,7 +420,6 @@ public class SmartWorkflow extends AbstractWorkflow {
       String targetKey = mapping.getTarget() == null ? sourceKey : mapping.getTarget();
       token.put(targetKey, value);
     }
-    return;
   }
 
   @Override
@@ -523,14 +552,14 @@ public class SmartWorkflow extends AbstractWorkflow {
     // Collect field operations from each phase
     WorkflowToken token = workflowContext.getToken();
     List<NodeValue> allNodeValues = token.getAll(Constants.FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN);
-    Map<String, List<Operation>> allStageOperations = new HashMap<>();
+    Map<String, List<PipelineOperation>> allStageOperations = new HashMap<>();
     for (StageSpec stageSpec : spec.getStages()) {
       allStageOperations.put(stageSpec.getName(), new ArrayList<>());
     }
     for (NodeValue nodeValue : allNodeValues) {
-      Map<String, List<Operation>> stageOperations
+      Map<String, List<PipelineOperation>> stageOperations
               = GSON.fromJson(nodeValue.getValue().toString(), STAGE_OPERATIONS_MAP);
-      for (Map.Entry<String, List<Operation>> entry : stageOperations.entrySet()) {
+      for (Map.Entry<String, List<PipelineOperation>> entry : stageOperations.entrySet()) {
         allStageOperations.get(entry.getKey()).addAll(entry.getValue());
       }
     }
@@ -544,9 +573,9 @@ public class SmartWorkflow extends AbstractWorkflow {
       }
     }
 
-    LineageOperationsProcessor processor = new LineageOperationsProcessor(spec.getConnections(),
-                                                                          allStageOperations, noMergeRequiredStages);
-    Set<co.cask.cdap.api.lineage.field.Operation> processedOperations = processor.process();
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(spec.getConnections(), allStageOperations,
+                                                                          noMergeRequiredStages);
+    Set<Operation> processedOperations = processor.process();
     if (!processedOperations.isEmpty()) {
       workflowContext.record(processedOperations);
     }
@@ -554,49 +583,62 @@ public class SmartWorkflow extends AbstractWorkflow {
 
   private void addPrograms(String node, WorkflowProgramAdder programAdder) {
     programAdder = addProgram(node, programAdder);
-    Set<String> outputs = dag.getNodeOutputs(node);
-    if (outputs.isEmpty()) {
+    Iterator<String> outputIter = dag.getNodeOutputs(node).iterator();
+    if (!outputIter.hasNext()) {
       return;
     }
+    String output = outputIter.next();
 
     ConditionBranches branches = plan.getConditionPhaseBranches().get(node);
     if (branches != null) {
       // This is condition
-      addCondition(programAdder, branches);
+      addConditionBranches(programAdder, branches);
     } else {
       // if this is a fork
-      if (outputs.size() > 1) {
+      if (outputIter.hasNext()) {
         WorkflowProgramAdder fork = programAdder.fork();
-        for (String output : outputs) {
-          // need to make sure we don't call also() if this is the final branch
-          if (!addBranchPrograms(output, fork)) {
-            fork = fork.also();
-          }
+        addBranchPrograms(output, fork, false);
+
+        while (outputIter.hasNext()) {
+          fork = fork.also();
+          addBranchPrograms(outputIter.next(), fork, !outputIter.hasNext());
         }
       } else {
-        addPrograms(outputs.iterator().next(), programAdder);
+        addPrograms(output, programAdder);
       }
     }
   }
 
-  // returns whether this is the final branch of the fork
-  private boolean addBranchPrograms(String node, WorkflowProgramAdder programAdder) {
+  private void addBranchPrograms(String node, WorkflowProgramAdder programAdder, boolean shouldJoin) {
     // if this is a join node
-    Set<String> inputs = dag.getNodeInputs(node);
     if (dag.getNodeInputs(node).size() > 1) {
       // if we've reached the join from the final branch of the fork
-      if (dag.visit(node) == inputs.size()) {
+      if (shouldJoin) {
         // join the fork and continue on
         addPrograms(node, programAdder.join());
-        return true;
-      } else {
-        return false;
       }
+      return;
     }
 
-    // a flattened control dag guarantees that if this is not a join node, there is exactly one output
-    addProgram(node, programAdder);
-    return addBranchPrograms(dag.getNodeOutputs(node).iterator().next(), programAdder);
+    programAdder = addProgram(node, programAdder);
+    ConditionBranches branches = plan.getConditionPhaseBranches().get(node);
+    if (branches != null) {
+      programAdder = addConditionBranches(programAdder, branches);
+      if (shouldJoin) {
+        programAdder.join();
+      }
+    } else {
+      // if we're already on a branch, we should never have another branch for non-condition programs
+      Set<String> nodeOutputs = dag.getNodeOutputs(node);
+      if (nodeOutputs.size() > 1) {
+        throw new IllegalStateException("Found an unexpected non-condition branch while on another branch. " +
+                                          "This means there is a pipeline planning bug. " +
+                                          "Please contact the CDAP team to open a bug report.");
+      }
+      if (!nodeOutputs.isEmpty()) {
+        addBranchPrograms(dag.getNodeOutputs(node).iterator().next(), programAdder, shouldJoin);
+      }
+    }
   }
 
   private BatchPhaseSpec getPhaseSpec(String programName, PipelinePhase phase) {
@@ -651,7 +693,6 @@ public class SmartWorkflow extends AbstractWorkflow {
       programAdder.addAction(new PipelineAction(batchPhaseSpec));
     } else if (pluginTypes.contains(Condition.PLUGIN_TYPE)) {
       // conditions will be all by themselves in a phase
-      // addCondition(programAdder, phaseName, batchPhaseSpec);
       programAdder = programAdder.condition(new PipelineCondition(batchPhaseSpec));
     } else if (pluginTypes.contains(Constants.SPARK_PROGRAM_PLUGIN_TYPE)) {
       // spark programs will be all by themselves in a phase
@@ -670,7 +711,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     return programAdder;
   }
 
-  private void addCondition(WorkflowProgramAdder conditionAdder, ConditionBranches branches) {
+  private WorkflowProgramAdder addConditionBranches(WorkflowProgramAdder conditionAdder, ConditionBranches branches) {
     // Add all phases on the true branch here
     String trueOutput = branches.getTrueOutput();
     if (trueOutput != null) {
@@ -681,6 +722,6 @@ public class SmartWorkflow extends AbstractWorkflow {
       conditionAdder.otherwise();
       addPrograms(falseOutput, conditionAdder);
     }
-    conditionAdder.end();
+    return conditionAdder.end();
   }
 }

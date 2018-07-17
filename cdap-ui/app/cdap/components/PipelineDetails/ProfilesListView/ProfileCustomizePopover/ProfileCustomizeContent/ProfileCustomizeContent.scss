@@ -24,6 +24,16 @@
   .profile-customize-metadata {
     margin-bottom: 10px;
     display: flex;
+    .profile-customize-name {
+      width: calc(100% - 20px);
+      strong {
+        text-overflow: ellipsis;
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+    }
   }
   .profile-group-content {
     padding: 0 5px;

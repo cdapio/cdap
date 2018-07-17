@@ -49,7 +49,8 @@ $enabled-color: $green-02;
     max-height: calc(100% - 50px); // 100% - 17px (title) - 30px (profile count)
 
     .grid-row {
-      grid-template-columns: 30px 110px 1.5fr 1fr 70px 1fr 50px;
+      grid-template-columns: 30px 1.5fr 1.5fr 1fr 70px 1fr 50px;
+      align-items: start;
 
       &.enabled {
         .profile-status {
@@ -86,14 +87,8 @@ $enabled-color: $green-02;
             text-decoration: underline;
           }
         }
-        > div {
-          height: 100%;
-          display: flex;
-          align-items: center;
-        }
-
         .icon-star {
-          color: $orange-01;
+          color: $brand-primary-color;
           margin-right: 5px;
         }
       }

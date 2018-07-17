@@ -17,10 +17,14 @@
 package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.lineage.field.InputField;
-import co.cask.cdap.etl.api.lineage.field.Operation;
-import co.cask.cdap.etl.api.lineage.field.ReadOperation;
-import co.cask.cdap.etl.api.lineage.field.TransformOperation;
-import co.cask.cdap.etl.api.lineage.field.WriteOperation;
+import co.cask.cdap.api.lineage.field.Operation;
+import co.cask.cdap.api.lineage.field.ReadOperation;
+import co.cask.cdap.api.lineage.field.TransformOperation;
+import co.cask.cdap.api.lineage.field.WriteOperation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
+import co.cask.cdap.etl.api.lineage.field.PipelineReadOperation;
+import co.cask.cdap.etl.api.lineage.field.PipelineTransformOperation;
+import co.cask.cdap.etl.api.lineage.field.PipelineWriteOperation;
 import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
@@ -48,14 +52,15 @@ public class LineageOperationsProcessor {
   private final List<String> topologicalOrder;
   private final Dag stageDag;
   // Map of stage to list of operations recorded by that stage
-  private final Map<String, List<Operation>> stageOperations;
+  private final Map<String, List<PipelineOperation>> stageOperations;
   // Map of stage name to another map which contains the output field names to the corresponding origin
   private final Map<String, Map<String, String>> stageOutputsWithOrigins;
   // Set of stages which requires no implicit merge operation for example stages of type join
   private final Set<String> noMergeRequiredStages;
-  private Map<String, co.cask.cdap.api.lineage.field.Operation> processedOperations;
+  private Map<String, Operation> processedOperations;
 
-  public LineageOperationsProcessor(Set<Connection> stageConnections, Map<String, List<Operation>> stageOperations,
+  public LineageOperationsProcessor(Set<Connection> stageConnections,
+                                    Map<String, List<PipelineOperation>> stageOperations,
                                     Set<String> noMergeRequiredStages) {
     this.stageDag = new Dag(stageConnections);
     this.topologicalOrder = stageDag.getTopologicalOrder();
@@ -70,48 +75,44 @@ public class LineageOperationsProcessor {
   /**
    * @return the operations which will be submitted to the platform
    */
-  public Set<co.cask.cdap.api.lineage.field.Operation> process() {
+  public Set<Operation> process() {
     if (processedOperations == null) {
       processedOperations = computeProcessedOperations();
     }
     return new HashSet<>(processedOperations.values());
   }
 
-  private Map<String, co.cask.cdap.api.lineage.field.Operation> computeProcessedOperations() {
-    Map<String, co.cask.cdap.api.lineage.field.Operation> processedOperations = new HashMap<>();
+  private Map<String, Operation> computeProcessedOperations() {
+    Map<String, Operation> processedOperations = new HashMap<>();
     for (String stageName : topologicalOrder) {
       Set<String> stageInputs = stageDag.getNodeInputs(stageName);
       if (stageInputs.size() > 1 && !noMergeRequiredStages.contains(stageName)) {
         addMergeOperation(stageInputs, processedOperations);
       }
-      List<Operation> operations = stageOperations.get(stageName);
-      for (Operation operation : operations) {
-        co.cask.cdap.api.lineage.field.Operation newOperation = null;
-        String newOperationName =  prefixedOperationName(stageName, operation.getName());
+      List<PipelineOperation> pipelineOperations = stageOperations.get(stageName);
+      for (PipelineOperation pipelineOperation : pipelineOperations) {
+        Operation newOperation = null;
+        String newOperationName =  prefixedOperationName(stageName, pipelineOperation.getName());
         Set<String> currentOperationOutputs = new LinkedHashSet<>();
-        switch (operation.getType()) {
+        switch (pipelineOperation.getType()) {
           case READ:
-            ReadOperation read = (ReadOperation) operation;
-            newOperation  = new co.cask.cdap.api.lineage.field.ReadOperation(newOperationName, read.getDescription(),
-                    read.getSource(), read.getOutputFields());
+            PipelineReadOperation read = (PipelineReadOperation) pipelineOperation;
+            newOperation = new ReadOperation(newOperationName, read.getDescription(),
+                                              read.getSource(), read.getOutputFields());
             currentOperationOutputs.addAll(read.getOutputFields());
             break;
           case TRANSFORM:
-            TransformOperation transform = (TransformOperation) operation;
+            PipelineTransformOperation transform = (PipelineTransformOperation) pipelineOperation;
             List<InputField> inputFields = createInputFields(transform.getInputFields(), stageName,
                                                              processedOperations);
-            newOperation
-                    = new co.cask.cdap.api.lineage.field.TransformOperation(newOperationName,
-                    transform.getDescription(), inputFields,
-                    transform.getOutputFields());
+            newOperation = new TransformOperation(newOperationName, transform.getDescription(), inputFields,
+                                                  transform.getOutputFields());
             currentOperationOutputs.addAll(transform.getOutputFields());
             break;
           case WRITE:
-            WriteOperation write = (WriteOperation) operation;
+            PipelineWriteOperation write = (PipelineWriteOperation) pipelineOperation;
             inputFields = createInputFields(write.getInputFields(), stageName, processedOperations);
-            newOperation
-                    = new co.cask.cdap.api.lineage.field.WriteOperation(newOperationName, write.getDescription(),
-                    write.getSink(), inputFields);
+            newOperation = new WriteOperation(newOperationName, write.getDescription(), write.getSink(), inputFields);
             break;
         }
         for (String currentOperationOutput : currentOperationOutputs) {
@@ -127,7 +128,7 @@ public class LineageOperationsProcessor {
   }
 
   private void addMergeOperation(Set<String> stageInputs,
-                                 Map<String, co.cask.cdap.api.lineage.field.Operation> processedOperations) {
+                                 Map<String, Operation> processedOperations) {
     Set<String> sortedInputs = new TreeSet<>(stageInputs);
     String mergeOperationName = prefixedOperationName(Joiner.on(SEPARATOR).join(sortedInputs), "merge");
     String mergeDescription = "Merging stages: " + Joiner.on(",").join(sortedInputs);
@@ -151,9 +152,8 @@ public class LineageOperationsProcessor {
     for (InputField inputField : inputFields) {
       outputs.add(inputField.getName());
     }
-    co.cask.cdap.api.lineage.field.TransformOperation merge
-            = new co.cask.cdap.api.lineage.field.TransformOperation(mergeOperationName, mergeDescription,
-            inputFields, new ArrayList<>(outputs));
+    TransformOperation merge = new TransformOperation(mergeOperationName, mergeDescription, inputFields,
+                                                      new ArrayList<>(outputs));
     processedOperations.put(merge.getName(), merge);
   }
 
@@ -170,7 +170,7 @@ public class LineageOperationsProcessor {
    * @return List of InputFields
    */
   private List<InputField> createInputFields(List<String> fields, String currentStage,
-                                            Map<String, co.cask.cdap.api.lineage.field.Operation> processedOperations) {
+                                             Map<String, Operation> processedOperations) {
     // We need to return InputFields in the same order as fields.
     // Keep them in map so we can iterate later on received fields to return InputFields.
     Map<String, InputField> inputFields = new HashMap<>();
@@ -193,8 +193,8 @@ public class LineageOperationsProcessor {
     Set<String> stageInputs = stageDag.getNodeInputs(parents.get(0));
     if (stageInputs.size() > 1 && !noMergeRequiredStages.contains(currentStage)) {
       String mergeOperationName = mergeOperationName(stageInputs);
-      co.cask.cdap.api.lineage.field.Operation operation = processedOperations.get(mergeOperationName);
-      List<String> outputs = ((co.cask.cdap.api.lineage.field.TransformOperation) operation).getOutputs();
+      Operation operation = processedOperations.get(mergeOperationName);
+      List<String> outputs = ((TransformOperation) operation).getOutputs();
       for (String field : fields) {
         // Only add the InputFields corresponding to the remaining fields
         if (outputs.contains(field) && inputFields.get(field) == null) {

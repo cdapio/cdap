@@ -20,9 +20,6 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.framework.local.LocalLogAppender;
-import co.cask.cdap.logging.remote.DistributedLogProcessor;
-import co.cask.cdap.logging.remote.LogAppenderLogProcessor;
-import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -38,7 +35,6 @@ public class LoggingModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(LogAppender.class).to(LocalLogAppender.class).in(Scopes.SINGLETON);
-        bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -49,7 +45,6 @@ public class LoggingModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(LogAppender.class).to(LocalLogAppender.class).in(Scopes.SINGLETON);
-        bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -60,7 +55,6 @@ public class LoggingModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(LogAppender.class).to(KafkaLogAppender.class);
-        bind(RemoteExecutionLogProcessor.class).to(DistributedLogProcessor.class);
       }
     };
   }

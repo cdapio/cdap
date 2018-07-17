@@ -24,10 +24,12 @@ require('./FieldRow.scss');
 
 function FieldRowView({fieldName, activeField}) {
   const isActive = fieldName === activeField;
+
   return (
     <div
-      className={classnames('field-row', { 'active': isActive})}
+      className={classnames('field-row truncate', { 'active': isActive})}
       onClick={getLineageSummary.bind(null, fieldName)}
+      title={fieldName}
     >
       {fieldName}
     </div>

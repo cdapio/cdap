@@ -35,13 +35,13 @@
               ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'}"
               ng-click="BatchPipelineConfigCtrl.activeTab = 'runtimeArgs'"
               ng-if="BatchPipelineConfigCtrl.isDeployed || BatchPipelineConfigCtrl.showPreviewConfig">
-          Runtime Arguments
+          Runtime arguments
         </div>
         <div class="configuration-tab"
               ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'previewConfig'}"
               ng-click="BatchPipelineConfigCtrl.activeTab = 'previewConfig'"
               ng-if="!BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.showPreviewConfig">
-          Preview Config
+          Preview config
         </div>
         <div class="configuration-tab toggle-advanced-options"
               ng-click="BatchPipelineConfigCtrl.showAdvanced = !BatchPipelineConfigCtrl.showAdvanced"
@@ -56,12 +56,12 @@
           <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'pipelineConfig'}"
                 ng-click="BatchPipelineConfigCtrl.activeTab = 'pipelineConfig'">
-            Pipeline Config
+            Pipeline config
           </div>
           <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'engineConfig'}"
                 ng-click="BatchPipelineConfigCtrl.activeTab = 'engineConfig'">
-            Engine Config
+            Engine config
           </div>
           <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'resources', 'disabled': BatchPipelineConfigCtrl.showPreviewConfig}"
@@ -71,7 +71,7 @@
           <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'alerts', 'disabled': BatchPipelineConfigCtrl.showPreviewConfig}"
                 ng-click="BatchPipelineConfigCtrl.activeTab = 'alerts'">
-            Alerts
+            Pipeline alert
           </div>
         </div>
       </div>
@@ -126,7 +126,7 @@
           </div>
         </div>
         <div class="label-with-toggle stageLogging row">
-          <span class="toggle-label col-xs-4">Stage Level Logging</span>
+          <span class="toggle-label col-xs-4">Stage level logging</span>
           <div class="col-xs-7 toggle-container">
             <my-toggle-switch-widget
               is-on="BatchPipelineConfigCtrl.stageLogging"
@@ -262,7 +262,7 @@
           <span ng-if="(BatchPipelineConfigCtrl.isDeployed) || (!BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.showCustomConfig)">
             <hr />
             <span ng-if="BatchPipelineConfigCtrl.isDeployed">
-              <label>Custom Config</label>
+              <label>Custom config</label>
               <i class="fa fa-info-circle"
                  uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying {{ BatchPipelineConfigCtrl.engineForDisplay }} program."
                  tooltip-placement="right">

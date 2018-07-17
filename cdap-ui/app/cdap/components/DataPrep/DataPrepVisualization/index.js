@@ -28,9 +28,10 @@ import differenceWith from 'lodash/differenceWith';
 
 require('./DataPrepVisualization.scss');
 
+// FIXME: After rebase against latest develop this hardcoding should be taken away;
 const PLOT_VEGA_LITE_CONFIG = {
   "mark": {
-    "color": "#ff6600"
+    "color": "#3b78e7"
   }
 };
 

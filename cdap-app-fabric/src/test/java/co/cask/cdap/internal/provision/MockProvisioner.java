@@ -20,6 +20,8 @@ import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategies;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
@@ -83,13 +85,13 @@ public class MockProvisioner implements Provisioner {
   }
 
   @Override
-  public void initializeCluster(ProvisionerContext context, Cluster cluster) throws Exception {
+  public void initializeCluster(ProvisionerContext context, Cluster cluster) {
     failIfConfigured(context, FAIL_INIT);
-    failRetryablyEveryN(context);
   }
 
   @Override
-  public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
+  public ClusterStatus getClusterStatus(ProvisionerContext context,
+                                        Cluster cluster) throws RetryableProvisionException {
     failIfConfigured(context, FAIL_GET);
     failRetryablyEveryN(context);
     ClusterStatus status = cluster.getStatus();
@@ -110,7 +112,12 @@ public class MockProvisioner implements Provisioner {
           break;
       }
     }
-    return new Cluster(cluster, newStatus);
+    return newStatus;
+  }
+
+  @Override
+  public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
+    return new Cluster(cluster, getClusterStatus(context, cluster));
   }
 
   @Override
@@ -119,6 +126,12 @@ public class MockProvisioner implements Provisioner {
     failIfConfigured(context, FAIL_DELETE);
     failRetryablyEveryN(context);
     waitIfConfigured(context, WAIT_DELETE_MS);
+  }
+
+  @Override
+  public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
+    // retry immediately in unit tests
+    return PollingStrategies.fixedInterval(0, TimeUnit.MILLISECONDS);
   }
 
   // throws a RetryableProvisionException every other time this is called

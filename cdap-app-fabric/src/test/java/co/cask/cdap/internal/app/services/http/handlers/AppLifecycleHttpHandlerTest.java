@@ -40,6 +40,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.profile.Profile;
+import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
@@ -542,7 +543,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployAppWithDisabledProfileInSchedule() throws Exception {
     // put my profile and disable it
     ProfileId profileId = new NamespaceId(TEST_NAMESPACE1).profile("MyProfile");
-    putProfile(profileId, Profile.NATIVE, 200);
+    Profile profile = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                   Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    putProfile(profileId, profile, 200);
     disableProfile(profileId, 200);
 
     // deploy an app with schedule with some disabled profile in the schedule property
@@ -563,6 +566,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // enable
     enableProfile(profileId, 200);
     Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    // disable again so that we can delete it at namespace deletion
+    disableProfile(profileId, 200);
 
     // clean up
     deleteApp(defaultAppId, 200);

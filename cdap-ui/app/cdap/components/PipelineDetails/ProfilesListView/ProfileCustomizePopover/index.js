@@ -51,7 +51,7 @@ export default class ProfileCustomizePopover extends PureComponent {
   }
 
   render() {
-    let {name, provisioner, scope} = this.props.profile;
+    let {name, provisioner, scope, label: profileLabel} = this.props.profile;
     let profileName = getProfileNameWithScope(name, scope);
     let customizeLink = () => (<div className="btn-link">Customize</div>);
     return (
@@ -67,6 +67,7 @@ export default class ProfileCustomizePopover extends PureComponent {
       >
         <ProfileCustomizeContent
           profileName={profileName}
+          profileLabel={profileLabel}
           customizations={this.props.customizations}
           provisioner={provisioner}
           onSave={this.onProfileSelect.bind(this, profileName)}

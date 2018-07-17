@@ -115,8 +115,7 @@ public class MockCondition extends Condition {
   /**
    * Read the value for the specified rowKey and columnKey.
    */
-  public static String readOutput(DataSetManager<Table> tableManager, String rowKey, String columnKey)
-    throws Exception {
+  public static String readOutput(DataSetManager<Table> tableManager, String rowKey, String columnKey) {
     Table table = tableManager.get();
     return Bytes.toString(table.get(Bytes.toBytes(rowKey), Bytes.toBytes(columnKey)));
   }

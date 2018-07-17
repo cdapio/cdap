@@ -64,7 +64,6 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
@@ -232,7 +231,6 @@ public class UpgradeTool {
       new SecureStoreModules().getDistributedModules(),
       new DataFabricModules(UpgradeTool.class.getName()).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
       // the DataFabricDistributedModule needs MetricsCollectionService binding
       new MetricsStoreModule(),
       new AbstractModule() {
@@ -486,9 +484,10 @@ public class UpgradeTool {
     if (includeNewDatasets) {
       // Add all new system dataset introduced in the current release in this block. If no new dataset was introduced
       // then leave this block empty but do not remove block so that it can be used in next release if needed
-      // owner meta
-      DefaultOwnerStore.setupDatasets(datasetFramework);
     }
+
+    // owner metadata
+    DefaultOwnerStore.setupDatasets(datasetFramework);
     // metadata and lineage
     DefaultMetadataStore.setupDatasets(datasetFramework);
     LineageDataset.setupDatasets(datasetFramework);

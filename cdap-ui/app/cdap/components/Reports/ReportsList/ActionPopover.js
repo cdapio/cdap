@@ -48,7 +48,7 @@ export default class ActionPopover extends Component {
 
   cloneCriteria = () => {
     let params = {
-      reportId: this.props.report.id
+      'report-id': this.props.report.id
     };
 
     MyReportsApi.getReport(params)

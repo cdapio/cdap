@@ -27,7 +27,6 @@ import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.PipelineRuntime;

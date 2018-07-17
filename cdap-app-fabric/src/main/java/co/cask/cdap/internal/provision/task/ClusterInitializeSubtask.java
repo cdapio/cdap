@@ -23,6 +23,8 @@ import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -38,7 +40,15 @@ public class ClusterInitializeSubtask extends ProvisioningSubtask {
 
   @Override
   public Cluster execute(Cluster cluster) throws Exception {
-    provisioner.initializeCluster(provisionerContext, cluster);
-    return new Cluster(cluster, ClusterStatus.RUNNING);
+    // get the full details, since many times, information like ip addresses is not available until we're done
+    // polling for status and are ready to initialize. Up until now, the cluster object is what we got from
+    // the original createCluster() call, except with the status updated.
+    Cluster fullClusterDetails = provisioner.getClusterDetail(provisionerContext, cluster);
+    provisioner.initializeCluster(provisionerContext, fullClusterDetails);
+
+    Map<String, String> properties = new HashMap<>(cluster.getProperties());
+    properties.putAll(fullClusterDetails.getProperties());
+
+    return new Cluster(fullClusterDetails.getName(), ClusterStatus.RUNNING, fullClusterDetails.getNodes(), properties);
   }
 }

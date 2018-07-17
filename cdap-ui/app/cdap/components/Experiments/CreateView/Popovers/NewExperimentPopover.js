@@ -27,16 +27,21 @@ import {
 import {POPOVER_TYPES} from 'components/Experiments/store/createExperimentStore';
 
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.CreateView';
 
 const ExperimentName = ({name, onNameChange}) => {
   return (
     <FormGroup row>
       <Col xs="12">
-        <Label className="control-label">Experiment Name</Label>
+        <Label className="control-label">
+          {T.translate(`${PREFIX}.experimentName`)}
+        </Label>
         <Input
           value={name}
           onChange={onNameChange}
-          placeholder="Add a name for this Experiment"
+          placeholder={T.translate(`${PREFIX}.experimentNamePlaceholder`)}
         />
       </Col>
     </FormGroup>
@@ -51,11 +56,13 @@ const ExperimentDescription = ({description, onDescriptionChange}) => {
   return (
     <FormGroup row>
       <Col xs="12">
-        <Label className="control-label">Description</Label>
+        <Label className="control-label">
+          {T.translate('commons.descriptionLabel')}
+        </Label>
         <Input
           type="textarea"
           value={description}
-          placeholder="Add a description for this Experiment"
+          placeholder={T.translate(`${PREFIX}.descriptionPlaceholder`)}
           onChange={onDescriptionChange}
         />
       </Col>
@@ -71,13 +78,17 @@ const ExperimentOutcome = ({outcome, columns, onOutcomeChange}) => {
   return (
     <FormGroup row>
       <Col xs="12">
-        <Label className="control-label">Set Outcome for this Experiment </Label>
+        <Label className="control-label">
+          {T.translate(`${PREFIX}.setOutcome`)}
+        </Label>
         <Input
           type="select"
           value={outcome}
           onChange={onOutcomeChange}
         >
-          <option key="default">Select an Outcome </option>
+          <option key="default">
+            {T.translate(`${PREFIX}.selectOutcome`)}
+          </option>
           {
             columns.map((column, i) => (
               <option key={i}>{column}</option>
@@ -102,7 +113,7 @@ const CreateExperimentBtn = ({state, createExperiment}) => {
     if (state.loading) {
       return <IconSVG name="icon-spinner" className="fa-spin" />;
     }
-    return 'Create Experiment';
+    return T.translate(`${PREFIX}.createExperiment`);
   };
   return (
     <button
@@ -127,7 +138,7 @@ const NewExperimentPopoverWrapper = ({popover, isEdit}) => {
     <div className="new-experiment-popover">
       <div className="popover-container">
         <strong className="popover-heading">
-          Create a new Experiment
+          {T.translate(`${PREFIX}.createNewExperiment`)}
         </strong>
         <ExperimentOutcomeWrapper />
         <hr />

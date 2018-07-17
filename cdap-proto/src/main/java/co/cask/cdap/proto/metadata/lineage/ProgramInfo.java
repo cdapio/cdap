@@ -18,6 +18,8 @@ package co.cask.cdap.proto.metadata.lineage;
 
 import co.cask.cdap.proto.id.ProgramId;
 
+import java.util.Objects;
+
 /**
  * Represents the program information including when it was last executed.
  */
@@ -36,5 +38,23 @@ public class ProgramInfo {
 
   public long getLastExecutedTimeInSeconds() {
     return lastExecutedTimeInSeconds;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProgramInfo that = (ProgramInfo) o;
+    return lastExecutedTimeInSeconds == that.lastExecutedTimeInSeconds &&
+            Objects.equals(program, that.program);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(program, lastExecutedTimeInSeconds);
   }
 }

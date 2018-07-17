@@ -170,7 +170,7 @@ export default class ExploreAction extends Component {
             this.props.customTooltip ?
               this.props.customTooltip
             :
-              T.translate('features.FastAction.exploreLabel')
+              T.translate('features.FastAction.Explore.label')
           }
         </Tooltip>
         {

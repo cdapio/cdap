@@ -193,9 +193,8 @@ public class ProvisionTask extends ProvisioningTask {
     return new ClusterInitializeSubtask(provisioner, provisionerContext, cluster -> {
       provisionerNotifier.provisioned(programRunId, initialTaskInfo.getProgramOptions(),
                                       initialTaskInfo.getProgramDescriptor(), initialTaskInfo.getUser(),
-                                      cluster, initialTaskInfo.getSecureKeyInfo());
+                                      cluster, initialTaskInfo.getSecureKeysDir());
       return Optional.of(ProvisioningOp.Status.CREATED);
     });
   }
-
 }

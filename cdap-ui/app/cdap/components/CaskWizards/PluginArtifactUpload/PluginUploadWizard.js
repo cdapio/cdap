@@ -70,6 +70,7 @@ export default class PluginUploadWizard extends Component {
         wizardConfig={PluginArtifactUploadWizardConfig}
         onSubmit={this.onSubmit}
         buildInfo={this.buildInfo}
+        includeParents={false}
       />
     );
   }

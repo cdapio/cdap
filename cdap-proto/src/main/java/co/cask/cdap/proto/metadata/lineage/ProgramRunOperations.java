@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.lineage.field;
+package co.cask.cdap.proto.metadata.lineage;
 
 import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.proto.id.ProgramRunId;

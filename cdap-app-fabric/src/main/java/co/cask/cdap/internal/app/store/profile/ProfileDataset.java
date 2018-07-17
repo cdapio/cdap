@@ -58,7 +58,7 @@ import javax.annotation.Nullable;
  * The table will look like:
  * row key                                                              column -> value
  * "profile"[namespace][profile-id]                                     c -> Profile{@link Profile}
- * "proAssign"[namespace][profile-id][entity-id]                         c -> EntityId{@link EntityId}
+ * "proAssign"[namespace][profile-id][entity-id]                        c -> EntityId{@link EntityId}
  */
 public class ProfileDataset {
   private static final DatasetId DATASET_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
@@ -111,11 +111,11 @@ public class ProfileDataset {
    * @return the list of profiles which is in this namespace
    */
   public List<Profile> getProfiles(NamespaceId namespaceId, boolean includeSystem) {
-      List<Profile> profiles = new ArrayList<>(table.list(getProfileRowKeyPrefix(namespaceId), Profile.class));
-      if (includeSystem && !namespaceId.equals(NamespaceId.SYSTEM)) {
-        profiles.addAll(table.list(getProfileRowKeyPrefix(NamespaceId.SYSTEM), Profile.class));
-      }
-      return Collections.unmodifiableList(profiles);
+    List<Profile> profiles = new ArrayList<>(table.list(getProfileRowKeyPrefix(namespaceId), Profile.class));
+    if (includeSystem && !namespaceId.equals(NamespaceId.SYSTEM)) {
+      profiles.addAll(table.list(getProfileRowKeyPrefix(NamespaceId.SYSTEM), Profile.class));
+    }
+    return Collections.unmodifiableList(profiles);
   }
 
   /**
@@ -128,9 +128,10 @@ public class ProfileDataset {
     MDSKey rowKey = getProfileRowKey(profileId);
     Profile oldProfile = table.get(rowKey, Profile.class);
     table.write(
-      rowKey, new Profile(profile.getName(), profile.getDescription(), profile.getScope(),
+      rowKey, new Profile(profile.getName(), profile.getLabel(), profile.getDescription(), profile.getScope(),
                           oldProfile == null ? ProfileStatus.ENABLED : oldProfile.getStatus(),
-                          profile.getProvisioner()));
+                          profile.getProvisioner(),
+                          oldProfile == null ? profile.getCreatedTsSeconds() : oldProfile.getCreatedTsSeconds()));
   }
 
   /**
@@ -145,7 +146,7 @@ public class ProfileDataset {
     if (oldProfile != null) {
       return;
     }
-    table.write(rowKey, new Profile(profile.getName(), profile.getDescription(), profile.getScope(),
+    table.write(rowKey, new Profile(profile.getName(), profile.getLabel(), profile.getDescription(), profile.getScope(),
                                     ProfileStatus.ENABLED, profile.getProvisioner()));
   }
 
@@ -173,12 +174,10 @@ public class ProfileDataset {
 
   /**
    * Delete all profiles in a given namespace.
-   *
-   * @param namespaceId the id of the namespace
    */
   @VisibleForTesting
-  public void deleteAllProfiles(NamespaceId namespaceId) {
-    table.deleteAll(getProfileRowKeyPrefix(namespaceId));
+  public void deleteAllProfiles() {
+    table.deleteAll(getAllProfileRowKeyPrefix());
   }
 
   /**
@@ -214,8 +213,9 @@ public class ProfileDataset {
       throw new ProfileConflictException(
         String.format("Profile %s already %s", profileId.getProfile(), expectedStatus.toString()), profileId);
     }
-    table.write(rowKey, new Profile(oldProfile.getName(), oldProfile.getDescription(), oldProfile.getScope(),
-                                    expectedStatus, oldProfile.getProvisioner()));
+    table.write(rowKey, new Profile(oldProfile.getName(), oldProfile.getLabel(), oldProfile.getDescription(),
+                                    oldProfile.getScope(), expectedStatus, oldProfile.getProvisioner(),
+                                    oldProfile.getCreatedTsSeconds()));
   }
 
   /**
@@ -269,6 +269,10 @@ public class ProfileDataset {
     table.delete(getEntityIndexRowKey(profileId, entityId));
   }
 
+  private MDSKey getAllProfileRowKeyPrefix() {
+    return getRowKey(PROFILE_PREFIX, null, null, null);
+  }
+
   private MDSKey getProfileRowKeyPrefix(NamespaceId namespaceId) {
     return getRowKey(PROFILE_PREFIX, namespaceId, null, null);
   }
@@ -285,9 +289,12 @@ public class ProfileDataset {
     return getRowKey(INDEX_PREFIX, profileId.getNamespaceId(), profileId.getProfile(), entityId);
   }
 
-  private MDSKey getRowKey(String prefix, NamespaceId namespaceId,
+  private MDSKey getRowKey(String prefix, @Nullable NamespaceId namespaceId,
                            @Nullable String profileName, @Nullable EntityId entityId) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(prefix).add(namespaceId.getEntityName());
+    MDSKey.Builder builder = new MDSKey.Builder().add(prefix);
+    if (namespaceId != null) {
+      builder.add(namespaceId.getEntityName());
+    }
     if (profileName != null) {
       builder.add(profileName);
     }

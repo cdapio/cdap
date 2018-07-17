@@ -27,6 +27,7 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.async.KeyedExecutor;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -48,18 +49,17 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.runtime.spi.SparkCompat;
+import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
+import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import co.cask.cdap.security.tools.KeyStores;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.KeyPair;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
@@ -69,11 +69,9 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -96,9 +94,6 @@ public class ProvisioningService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProvisioningService.class);
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(20));
-  // Max out the HTTPS certificate validity.
-  // We use max int of seconds to compute number of days to avoid overflow.
-  private static final int CERT_VALIDITY_DAYS = (int) TimeUnit.SECONDS.toDays(Integer.MAX_VALUE);
 
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
@@ -220,8 +215,9 @@ public class ProvisioningService extends AbstractIdleService {
       }
 
       // the actual task still needs to be run for cleanup to happen, but avoid logging a confusing
-      // message about resuming a task that is in cancelled state.
-      if (provisioningOp.getStatus() != ProvisioningOp.Status.CANCELLED) {
+      // message about resuming a task that is in cancelled state or resuming a task that is completed
+      if (provisioningOp.getStatus() != ProvisioningOp.Status.CANCELLED &&
+        provisioningOp.getStatus() != ProvisioningOp.Status.CREATED) {
         LOG.info("Resuming provisioning task for run {} of type {} in state {}.",
                  provisioningTaskInfo.getProgramRunId(), provisioningTaskInfo.getProvisioningOp().getType(),
                  provisioningTaskInfo.getProvisioningOp().getStatus());
@@ -283,26 +279,13 @@ public class ProvisioningService extends AbstractIdleService {
       return () -> { };
     }
 
-    // Generate the SSH key pair if the provisioner is not YARN
-    SecureKeyInfo secureKeyInfo = null;
-    if (!YarnProvisioner.SPEC.equals(provisioner.getSpec())) {
-      try {
-        secureKeyInfo = generateSecureKeys(programRunId);
-      } catch (Exception e) {
-        runWithProgramLogging(
-          programRunId, args,
-          () -> LOG.error("Failed to generate keys for the program run with provisioner {}", name, e));
-        provisionerNotifier.deprovisioned(programRunId);
-        return () -> { };
-      }
-    }
-
     Map<String, String> properties = SystemArguments.getProfileProperties(args);
     ProvisioningOp provisioningOp = new ProvisioningOp(ProvisioningOp.Type.PROVISION,
                                                        ProvisioningOp.Status.REQUESTING_CREATE);
     ProvisioningTaskInfo provisioningTaskInfo =
       new ProvisioningTaskInfo(programRunId, provisionRequest.getProgramDescriptor(), programOptions,
-                               properties, name, provisionRequest.getUser(), provisioningOp, secureKeyInfo, null);
+                               properties, name, provisionRequest.getUser(), provisioningOp,
+                               createKeysDirectory(programRunId).toURI(), null);
     ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
     provisionerDataset.putTaskInfo(provisioningTaskInfo);
 
@@ -421,12 +404,18 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisionerContext context;
     try {
       context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(),
-                              createSSHContext(taskInfo.getSecureKeyInfo()));
+                              new DefaultSSHContext(locationFactory.create(taskInfo.getSecureKeysDir()),
+                                                    createSSHKeyPair(taskInfo)));
+    } catch (IOException e) {
+      runWithProgramLogging(taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
+                            () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
+      provisionerNotifier.deprovisioning(taskInfo.getProgramRunId());
+      return () -> { };
     } catch (InvalidMacroException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
                             () -> LOG.error("Could not evaluate macros while provisoning. "
                                               + "The run will be marked as failed.", e));
-      provisionerNotifier.deprovisioned(taskInfo.getProgramRunId());
+      provisionerNotifier.deprovisioning(taskInfo.getProgramRunId());
       return () -> { };
     }
 
@@ -454,9 +443,17 @@ public class ProvisioningService extends AbstractIdleService {
                                          Consumer<ProgramRunId> taskCleanup) {
     Map<String, String> properties = taskInfo.getProvisionerProperties();
     ProvisionerContext context;
+
+    SSHKeyPair sshKeyPair = null;
+    try {
+      sshKeyPair = createSSHKeyPair(taskInfo);
+    } catch (IOException e) {
+      LOG.warn("Failed to load ssh key. No SSH key will be available for the deprovision task", e);
+    }
+
     try {
       context = createContext(taskInfo.getProgramRunId(), taskInfo.getUser(), properties,
-                              createSSHContext(taskInfo.getSecureKeyInfo()));
+                              new DefaultSSHContext(null, sshKeyPair));
     } catch (InvalidMacroException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "
@@ -519,67 +516,60 @@ public class ProvisioningService extends AbstractIdleService {
       });
   }
 
-  /**
-   * Generates {@link SecureKeyInfo} for later communication with the cluster.
-   */
-  private SecureKeyInfo generateSecureKeys(ProgramRunId programRunId) throws Exception {
-    // Generate SSH key pair
-    JSch jsch = new JSch();
-    KeyPair keyPair = KeyPair.genKeyPair(jsch, KeyPair.RSA, 2048);
 
+  /**
+   * Creates a {@link SSHKeyPair} based on the given {@link ProvisioningTaskInfo}.
+   *
+   * @param taskInfo the task info containing information about the ssh keys
+   * @return a {@link SSHKeyPair} or {@code null} if ssh key information are not present in the task info
+   */
+  @Nullable
+  private SSHKeyPair createSSHKeyPair(ProvisioningTaskInfo taskInfo) throws IOException {
+    // Check if there is ssh user property in the Cluster
+    String sshUser = Optional.ofNullable(taskInfo.getCluster())
+      .map(Cluster::getProperties)
+      .map(p -> p.get(Constants.RuntimeMonitor.SSH_USER))
+      .orElse(null);
+
+    if (sshUser == null) {
+      return null;
+    }
+
+    Location keysDir = locationFactory.create(taskInfo.getSecureKeysDir());
+
+    Location publicKeyLocation = keysDir.append(Constants.RuntimeMonitor.PUBLIC_KEY);
+    Location privateKeyLocation = keysDir.append(Constants.RuntimeMonitor.PRIVATE_KEY);
+
+    if (!publicKeyLocation.exists() || !privateKeyLocation.exists()) {
+      return null;
+    }
+
+    return new LocationBasedSSHKeyPair(keysDir, sshUser);
+  }
+
+  /**
+   * Creates a {@link Location} representing a directory for storing secure keys for the given program run.
+   *
+   * @param programRunId the program run for generating the keys directory
+   * @return a {@link Location}
+   */
+  private Location createKeysDirectory(ProgramRunId programRunId) {
     Location keysDir = locationFactory.create(String.format("provisioner/keys/%s.%s.%s.%s.%s",
                                                             programRunId.getNamespace(),
                                                             programRunId.getApplication(),
                                                             programRunId.getType().name().toLowerCase(),
                                                             programRunId.getProgram(),
                                                             programRunId.getRun()));
-    keysDir.mkdirs();
-
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    keyPair.writePublicKey(bos, "cdap@cask.co");
-    byte[] publicKey = bos.toByteArray();
-
-    bos.reset();
-    keyPair.writePrivateKey(bos, null);
-    byte[] privateKey = bos.toByteArray();
-
-    Location publicKeyFile = keysDir.append("id_rsa.pub");
-    try (OutputStream os = publicKeyFile.getOutputStream()) {
-      os.write(publicKey);
+    try {
+      keysDir.mkdirs();
+      return keysDir;
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to create directory " + keysDir, e);
     }
-
-    Location privateKeyFile = keysDir.append("id_rsa");
-    try (OutputStream os = privateKeyFile.getOutputStream("600")) {
-      os.write(privateKey);
-    }
-
-    // Generate KeyStores, one for server, one for client
-    Location serverKeyStoreFile = generateKeyStore(keysDir.append("server.jks"));
-    Location clientKeyStoreFile = generateKeyStore(keysDir.append("client.jks"));
-
-    return new SecureKeyInfo(keysDir.toURI(), publicKeyFile.getName(), privateKeyFile.getName(),
-                             serverKeyStoreFile.getName(), clientKeyStoreFile.getName(), "cdap");
-  }
-
-  /**
-   * Generates a {@link KeyStore} that contains a private key and a self-signed public certificate pair and save
-   * it to the given {@link Location}.
-   */
-  private Location generateKeyStore(Location outputLocation) throws Exception {
-    KeyStore serverKeyStore = KeyStores.generatedCertKeyStore(CERT_VALIDITY_DAYS, "");
-    try (OutputStream os = outputLocation.getOutputStream("600")) {
-      serverKeyStore.store(os, "".toCharArray());
-    }
-    return outputLocation;
-  }
-
-  @Nullable
-  private SSHContext createSSHContext(@Nullable SecureKeyInfo keyInfo) {
-    return keyInfo == null ? null : new DefaultSSHContext(locationFactory, keyInfo);
   }
 
   private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
-                                           @Nullable SSHContext sshContext) {
+                                           SSHContext sshContext) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
     return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext);
   }

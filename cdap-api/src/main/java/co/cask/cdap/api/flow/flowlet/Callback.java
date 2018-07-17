@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 /**
  * Interface for flowlet to implement in order to receive callback on process result.
  */
+@Deprecated
 public interface Callback {
 
   /**

@@ -25,6 +25,7 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
+import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -44,10 +45,11 @@ public class DistributedNamespaceResourceDeleter extends AbstractNamespaceResour
                                       ApplicationLifecycleService applicationLifecycleService,
                                       ArtifactRepository artifactRepository,
                                       StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                                      MessagingService messagingService, StreamAdmin streamAdmin) {
+                                      MessagingService messagingService, StreamAdmin streamAdmin,
+                                      ProfileService profileService) {
     super(impersonator, store, preferencesService, dashboardStore, dsFramework, queueAdmin, metricStore,
-          applicationLifecycleService, artifactRepository, storageProviderNamespaceAdmin, messagingService
-    );
+          applicationLifecycleService, artifactRepository, storageProviderNamespaceAdmin, messagingService,
+          profileService);
     this.streamAdmin = streamAdmin;
   }
 

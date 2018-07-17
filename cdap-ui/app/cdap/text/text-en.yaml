@@ -11,9 +11,11 @@ commons:
   close: Close
   delete: Delete
   descriptionLabel: Description
+  doneLabel: Done
   DSVEditor:
     placeholder: value
   dataset: Dataset
+  edit: Edit
   entity:
     application:
       plural: Applications
@@ -83,18 +85,19 @@ commons:
     reset: Reset
     valueLabel: Value
     valuePlaceholder: value
-  market: Cask Market
+  market: Hub
   milliSecondsShortLabel: ms
   nameLabel: Name
   noLabel: No
   notAvailable: 'N/A'
   please: Please
   pipelines: Pipelines
-  resource-center: Add Entity
+  resource-center: Add entity
   schemaLabel: Schema
   scope: Scope
   secondsShortLabel: secs
   secShortLabel: sec
+  status: Status
   stream: Stream
   then: Then
   tracker: Cask Tracker
@@ -125,7 +128,7 @@ features:
       customEntryPlaceholder: Type the name of secure key
       title: Select from the list or specify a different secure key
   AccessTokenModal:
-    accessToken: "Access Token: "
+    accessToken: "Access token: "
     close: Close
     login:
       textContent: Please enter your username and password to generate a new access token
@@ -133,13 +136,13 @@ features:
       passwordPlaceholder: Password
       submit: Generate access token
       error: Login failed. Please check your username and password and try again.
-    modalHeader: Access Token
+    modalHeader: Access token
   Administration:
     Accordions:
       Namespace:
         create: Create New Namespace
-        customApps: Custom Apps
-        description: Create, View and Manage Namespaces
+        customApps: Custom apps
+        description: Create, view, and manage namespaces
         label: "Namespaces "
         labelWithCount: "Namespaces ({count})"
       SystemPrefs:
@@ -147,7 +150,7 @@ features:
         description: Manage system preferences available as runtime arguments to programs across all namespaces
         label: "System Preferences "
         labelWithCount: "System Preferences ({count})"
-        noPrefs: No System Preferences set
+        noPrefs: No system preferences set
       SystemProfiles:
         create: Create New Profile
         description: Manage compute profiles available to launch programs in all namespaces
@@ -157,25 +160,14 @@ features:
     Configure:
       title: Configure
       buttons:
-        add-ns: Add Namespace
-        delete-datasets: Delete All Datasets
-        delete-ns: Delete Namespace
-        instance-preference: Instance Preference
         MakeRESTCalls:
           label: Make HTTP Calls
-        manage-ns: Manage Namespaces
-        manage-roles: Manage Roles
         ReloadSystemArtifacts:
           confirmationButton: "Reload"
-          confirmationHeader: Reload System Artifacts
+          confirmationHeader: Reload system artifacts
           confirmationText: "Are you sure you want to reload all system artifacts?"
           errorMessage: Failed to load system artifacts
           label: Reload System Artifacts
-        reset-instance: Reset Instance
-        set-system-preferences: Set System Preferences
-        tag-management: Tag Management
-        view-config: View Configurations
-        view-invalid: View Invalid Transactions
     PageTitle: CDAP | Management
     Services:
       title: Services
@@ -198,7 +190,7 @@ features:
       streams: Streams
       transaction: Transaction
       viewlogs: View Logs
-    systemMetrics: System Metrics
+    systemMetrics: System metrics
     Tabs:
       config: Configuration
       management: Management
@@ -253,7 +245,11 @@ features:
         provisioner: Provisioner
         totalNodeHr: Total node/hr
         totalRuns: Total runs
+      CreateView:
+        profileName: Profile name
+        profileLabel: Profile label
       DetailView:
+        computeProfileOverview: Compute profile overview
         creation: Creation date and time
         disableConfirmation: Are you sure you want to disable the profile *_{profile}_*? Any programs or pipelines using this profile will fail to start.
         disableError: There was a problem disabling the profile
@@ -262,7 +258,8 @@ features:
         enableError: "There was a problem enabling the profile: {message}"
         hideDetails: Hide Details
         noProperties: No properties available for this profile
-        profileDetails: Profile Details
+        profileDetails: Profile details
+        profileUsage: "{profile} usage"
         secureKeyPopover: Service account is stored using a secure key
         viewDetails: View Details
       ListView:
@@ -272,7 +269,8 @@ features:
         importError: Unable to import profile
         noProfiles: "No compute profiles have been defined in this namespace. Start by "
         noProfilesSystem: "No compute profiles have been defined in the system. Start by "
-        profileName: Profile Name
+        pipelineUsage: Pipeline usage
+        profileName: Profile name
         profileUsage: Profile usage
         schedules: Schedules
         triggers: Triggers
@@ -293,7 +291,7 @@ features:
         clear: Clear
         entities: " new entities; or"
         filter: " your filters; or"
-        Market: " Cask Market"
+        Market: " Hub"
         search: " your search; or"
       default: No entities found in namespace "{namespace}"
       filter: No entities found for your selection
@@ -308,8 +306,6 @@ features:
     Header:
       filterBy: Filter by
       search-placeholder: Search
-      sortdropdown-tooltip: Clear Search to enable Sort
-      search-disabled-placeholder: Sort by Relevance to Search
       sort: Sort
       sortLabel: "Sort by "
       sortOptions:
@@ -323,14 +319,14 @@ features:
           displayName: Z - A
         none: ''
     Info:
-      entities: Entities
+      entities: entities
       subtitle:
-        displayAll: Displaying All Entities
+        displayAll: Displaying all entities
         displaySome: Displaying
         filteredBy: filtered by
-        search: Search Results for
+        search: Search results for
         sortedBy: sorted by
-      title: Entities in Namespace "{namespace}"
+      title: Entities in namespace "{namespace}"
     JustAddedSection:
       subtitle: Just added
     NamespaceNotFound:
@@ -344,7 +340,7 @@ features:
       suggestionMessage2: Page 1
     Title: CDAP | Control Center
   DataPrepServiceControl:
-    btnLabel: Enable Data Preparation Service
+    btnLabel: Enable Data Preparation
     btnLoadingLabel: "Enabling..."
     description: CDAP Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
     list:
@@ -364,7 +360,7 @@ features:
           title: No match found for {searchText}
         ColumnDetail:
           Header:
-            inferredType: Inferred Type
+            inferredType: Inferred type
             percentageChange: "% Chance"
         Header:
           completion: Completion
@@ -376,15 +372,15 @@ features:
       directivesTabLabel: Directives ({directivesCount})
       DirectivesTab:
         label: Directives
-      noDirectives: No Directives
-      noColumns: No Columns
+      noColumns: No columns
+      noDirectives: No directives
     DataPrepTable:
       DataType:
         unknown: unknown
       copyToNewColumn:
         inputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
-        inputLabel: Name New Column
-        inputPlaceholder: Destination Column
+        inputLabel: Name new column
+        inputPlaceholder: Destination column
         inputSuffix: _copy
         label: Copy to a new column
       dataErrorMessageTitle: Unable to load data.
@@ -397,12 +393,12 @@ features:
     DataPrepBrowser:
       BigQueryBrowser:
         datasetCount:
-          0: No Datasets
-          1: "{context} Dataset"
-          _: "{context} Datasets"
+          0: No datasets
+          1: "{context} dataset"
+          _: "{context} datasets"
         datasets: Datasets
         name: Name
-        title: Select Table
+        title: Select table
       DatabaseBrowser:
         EmptyMessage:
           clearLabel: Clear
@@ -414,10 +410,10 @@ features:
         table:
           namecollabel: NAME
         tableCount:
-          0: No Tables
-          1: '{context} Table'
-          _: "{context} Tables"
-        title: Select Table
+          0: No tables
+          1: '{context} table'
+          _: "{context} tables"
+        title: Select table
       GCSBrowser:
         BrowserData:
           Content:
@@ -425,7 +421,7 @@ features:
             EmptymessageContainer:
               suggestion1: your search
           Headers:
-            LastModified: Last Modified
+            LastModified: Last modified
             Name: Name
             Size: Size
             Type: Type
@@ -433,8 +429,8 @@ features:
           placeholder: Search this directory
         TopPanel:
           ListingInfo:
-            label: "{dirsCount} Directories and {filesCount} Files"
-          selectData: Select Data
+            label: "{dirsCount} directories and {filesCount} files"
+          selectData: Select data
       KafkaBrowser:
         EmptyMessage:
           clearLabel: Clear
@@ -446,17 +442,17 @@ features:
         table:
           topics: Topics
         topicCount:
-          0: No Topics
-          1: '{count} Topic'
-          _: "{count} Topics"
-        title: Select Topic
+          0: No topics
+          1: '{count} topic'
+          _: "{count} topics"
+        title: Select topic
       S3Browser:
         BucketData:
           Content:
             EmptymessageContainer:
               suggestion1: your search
           Headers:
-            LastModified: Last Modified
+            LastModified: Last modified
             Name: Name
             Owner: Owner
             Size: Size
@@ -464,28 +460,28 @@ features:
           placeholder: Search this directory
         TopPanel:
           ListingInfo:
-            label: "{dirsCount} Directories and {filesCount} Files"
-          selectData: Select Data
+            label: "{dirsCount} directories and {filesCount} files"
+          selectData: Select data
     Directives:
       apply: Apply
       cancel: Cancel
       Calculate:
         columnTypeLabel:
           numeric: Numeric
-        destinationColumnInputLabel: Name Destination Column
+        destinationColumnInputLabel: Name destination column
         disabledTooltip: "Calculate directives can only be applied on columns of data type 'string', 'integer', 'short', 'long', 'float', 'double'"
         newColumnInputCountSuffix: _count
         Options:
           POWEROF:
             description: "Raise the column value to the power of:"
         OptionsLabels:
-          ABSVALUE: Absolute Value
+          ABSVALUE: Absolute value
           ADD: Add
           ARCCOS: Arccos
           ARCSIN: Arcsin
           ARCTAN: Arctan
           CEIL: Ceil
-          CHARCOUNT: Character Count
+          CHARCOUNT: Character count
           COS: Cos
           CUBE: Cube
           CUBEROOT: Cube root
@@ -514,9 +510,9 @@ features:
           long: Long
           short: Short
           string: String
-        title: Change Data Type
+        title: Change data type
       ColumnActions:
-        label: Column Actions
+        label: Column actions
         actions:
           bulkset: Set column names
           cleanse: Cleanse column names
@@ -528,31 +524,31 @@ features:
           textareaplaceholder: "Enter column names seperated by comma. Special characters (eg., @ - #) are not allowed"
         ReplaceColumns:
           applyButton: Replace
-          ignoreCase: Ignore Case
-          modalTitle: Replace Column Names
+          ignoreCase: Ignore case
+          modalTitle: Replace column names
           PatternInputPlaceholder:
             PREFIX: "e.g. body_, work_"
           patternLabel: Pattern
           PatternTypeLabel:
-            CUSTOM: Replace Pattern
-            PATTERN: Remove Pattern
-            PREFIX: Remove Prefix
+            CUSTOM: Replace pattern
+            PATTERN: Remove pattern
+            PREFIX: Remove prefix
           replaceLabel: Replace
           replaceWithPlaceholder: Leave empty to remove pattern, else add a replacement pattern
           withLabel: With
       Copy:
-        title: Copy Column
+        title: Copy column
       CustomTransform:
         description: 'Type the custom expression to transform "{column}"'
         placeholder: "E.g. math:sin({column}), empty(arg), {column}+<column>, etc."
-        title: Custom Transform
+        title: Custom transform
       CutDirective:
         cancelBtnLabel: Exit 'Extract' mode
         extractDescription: Extract characters *_{range}_* from this column to a new column
         inputLabel: Name of destination column
-        popoverTitle: Extract Using Position
+        popoverTitle: Extract using position
       CutMenuItem:
-        menuLabel: Using Positions
+        menuLabel: Using positions
       Decode:
         base32: Base32
         base64: Base64
@@ -580,12 +576,12 @@ features:
         selectColumnLabel: Select column in selected row
         summaryLabel: "Summary:"
         summaryText: "you defined the variable \"{variableName}\" for the cell in column {selectedColumn} in the row which {condition} _{value}_ in column \"{columnName}\""
-        title: Define Variable
+        title: Define variable
         variableNamePlaceholder: Enter variable_name
       Drop:
         title:
-          plural: Delete Selected Columns
-          singular: Delete Column
+          plural: Delete selected columns
+          singular: Delete column
       Encode:
         base32: Base32
         base64: Base64
@@ -594,52 +590,59 @@ features:
         url: URL
       Explode:
         title: Explode
-        filtersSubmenuTitle: Delimited Text
-        flatteningSubmenuTitle: Array (By Flattening)
+        filtersSubmenuTitle: Delimited text
+        flatteningSubmenuTitle: Array (by flattening)
       ExtractFields:
-        delimitersSubmenuTitle: Using Delimiters
+        delimitersSubmenuTitle: Using delimiters
         extractBtnLabel: Extract
-        patternSubmenuTitle: Using Patterns
-        positionsSubmenuTitle: Using Positions
-        title: Extract Fields
+        patternSubmenuTitle: Using patterns
+        positionsSubmenuTitle: Using positions
+        title: Extract fields
         UsingPatterns:
-          creditCardPattern: Credit Cards
+          creditCardPattern: Credit cards
           creditCardPatternExample: '#### #### #### ####'
           customPattern: Custom
           customPatternContent:
             description: Write your own regex pattern
           datePattern: Date
-          datetimePattern: Date Time
+          datetimePattern: Date time
           disabledTooltip: Extracting fields using patterns can only be applied on columns of data type 'string'
           emailPattern: Email
           exampleLabel: 'E.g.'
-          htmlHyperlinkPattern: URLs from HTML Anchors
-          hidePatternLabel: Hide Pattern
-          isbncodePattern: ISBN Codes
-          ipv4Pattern: IPv4 Address
-          macaddressPattern: Mac Addresses
-          modalTitle: Extract Fields Using Patterns
-          ndigitnumberPattern: N Digits Number
+          htmlHyperlinkPattern: URLs from HTML anchors
+          hidePatternLabel: Hide pattern
+          isbncodePattern: ISBN codes
+          ipv4Pattern: IPv4 address
+          macaddressPattern: Mac addresses
+          modalTitle: Extract fields using patterns
+          ndigitnumberPattern: N digits number
           ndigitnumberPatternContent:
             description1: Extract numbers with
             description2: digits
           patternDescription: Select a pattern to extract from the column "{column}"
-          phoneNumberPattern: U.S. Phone Numbers
+          phoneNumberPattern: U.S. phone numbers
           phoneNumberPatternExample: 'e.g. (###) - ###-####'
-          selectPatternMessage: Select a Pattern
+          selectPatternMessage: Select a pattern
           showPatternLabel: Show Pattern
           ssnPattern: SSN
           ssnPatternExample: '###-##-####'
-          startEndPattern: Start/End Pattern
+          startEndPattern: Start/End pattern
           startEndPatternContent:
             description1: Extract text that start with
             description2: and end with
           timePattern: Time
-          upscodePattern: UPS Codes
+          upscodePattern: UPS codes
           urlPattern: URL
-          zipCodePattern: US Zip Codes
+          zipCodePattern: US zip codes
         UsingDelimiters:
-          modalTitle: Extract Fields Using Delimiter
+          comma: Comma
+          custom: Custom separator
+          modalTitle: Extract fields using delimiter
+          pipe: Pipe
+          tab: Tab
+          whitespace: Whitespace
+      FillNullOrEmpty:
+        title: Fill null or empty cells
       Filter:
         Conditions:
           CUSTOMCONDITION: Custom condition
@@ -653,7 +656,7 @@ features:
         customconditiontooltip: "A custom condition can be defined using JEXL expressions. For more details regarding JEXL, please refer to  "
         customconditiontooltiplink: JEXL Expressions
         if: If
-        ignoreCase: Ignore Case
+        ignoreCase: Ignore case
         KEEP: Keep rows
         Placeholders:
           CUSTOMCONDITION: "E.g. < 30 || gender == \"Male\""
@@ -666,13 +669,13 @@ features:
         title: Filter
       FindAndReplace:
         buttonLabel: Replace All
-        exactMatchLabel: Exact Match
+        exactMatchLabel: Exact match
         find: Find
         findPlaceholder: Old value
-        ignoreCaseLabel: Ignore Case
+        ignoreCaseLabel: Ignore case
         replacePlaceholder: New value
         replaceWith: Replace with
-        title: Find and Replace
+        title: Find and replace
       Format:
         disabledTooltip: "Format directives can only be executed on columns of data type 'string' or 'date'"
         Formats:
@@ -682,87 +685,87 @@ features:
             addOptions:
               BEGINNING: at the beginning
               END: at the end
-            inputPlaceholder: Enter String
+            inputPlaceholder: Enter string
             label: Concatenate
           DATE_TIME:
-            label: Date and Time
+            label: Date and time
           LOWERCASE:
             label: lowercase
           TITLECASE:
             label: TitleCase
           TRIM_LEADING_WHITESPACE:
-            label: Trim Leading Whitespace
+            label: Trim leading whitespace
           TRIM_TRAILING_WHITESPACE:
-            label: Trim Trailing Whitespace
+            label: Trim trailing whitespace
           TRIM_WHITESPACE:
-            label: Trim Whitespace
+            label: Trim whitespace
           UPPERCASE:
             label: UPPERCASE
         title: Format
       Keep:
        title:
-          plural: Keep Selected Columns
-          singular: Keep Column
+          plural: Keep selected columns
+          singular: Keep column
       MarkAsError:
         Conditions:
           CUSTOMCONDITION: Custom condition
           EMPTY: value is empty
-          ISAMEXCARD: Is American Express Card
-          ISBOOLEAN: Is Boolean
-          ISCOUNTRYTLD: Is Country TLD
-          ISCREDITCARD: Is Credit Card
-          ISDATE: Is Date
-          ISDATEFORMAT: Is Date Format
-          ISDINERCARD: Is Diner Card
-          ISDOMAINNAME: Is Domain Name
-          ISDOMAINTLD: Is Domain TLD
-          ISDOUBLE: Is Double
-          ISEMAIL: Is Email
-          ISGENERICTLD: Is Generic TLD
-          ISINTEGER: Is Integer
+          ISAMEXCARD: Is American Express card
+          ISBOOLEAN: Is boolean
+          ISCOUNTRYTLD: Is country TLD
+          ISCREDITCARD: Is credit card
+          ISDATE: Is date
+          ISDATEFORMAT: Is date dormat
+          ISDINERCARD: Is Diner card
+          ISDOMAINNAME: Is domain name
+          ISDOMAINTLD: Is domain TLD
+          ISDOUBLE: Is double
+          ISEMAIL: Is email
+          ISGENERICTLD: Is generic TLD
+          ISINTEGER: Is integer
           ISIP: Is IP
           ISIPV4: Is IPV4
           ISIPV6: Is IPV6
-          ISISBN: Is ISBN
           ISISBN10: Is ISBN10
           ISISBN13: Is ISBN13
-          ISMASTERCARD: Is Master Card
-          ISNOTAMEXCARD: Is Not American Express Card
-          ISNOTBOOLEAN: Is Not Boolean
-          ISNOTCOUNTRYTLD: Is Not Country TLD
-          ISNOTCREDITCARD: Is Not Credit Card
-          ISNOTDATE: Is Not Date
-          ISNOTDATEFORMAT: Is Not Date Format
-          ISNOTDINERCARD: Is Not Diner Card
-          ISNOTDOMAINNAME: Is Not Domain Name
-          ISNOTDOMAINTLD: Is Not Domain TLD
-          ISNOTDOUBLE: Is Not Double
-          ISNOTEMAIL: Is Not Email
-          ISNOTGENERICTLD: Is Not Generic TLD
-          ISNOTINTEGER: Is Not Integer
-          ISNOTIP: Is Not IP
-          ISNOTIPV4: Is Not IPV4
-          ISNOTIPV6: Is Not IPV6
-          ISNOTISBN: Is Not ISBN
-          ISNOTISBN10: Is Not ISBN10
-          ISNOTISBN13: Is Not ISBN13
-          ISNOTMASTERCARD: Is Not Master Card
-          ISNOTNUMBER: Is Not Number
-          ISNOTTIME: Is Not Time
-          ISNOTURL: Is Not URL
-          ISNOTVISACARD: Is Not Visa Card
-          ISNOTVPAYCARD: Is Not VPay Card
-          ISNUMBER: Is Number
-          ISTIME: Is Time
+          ISISBN: Is ISBN
+          ISMASTERCARD: Is Master card
+          ISNOTAMEXCARD: Is not American Express card
+          ISNOTBOOLEAN: Is not boolean
+          ISNOTCOUNTRYTLD: Is not country TLD
+          ISNOTCREDITCARD: Is not credit card
+          ISNOTDATE: Is not date
+          ISNOTDATEFORMAT: Is not date Format
+          ISNOTDINERCARD: Is not Diner card
+          ISNOTDOMAINNAME: Is not domain Name
+          ISNOTDOMAINTLD: Is not domain TLD
+          ISNOTDOUBLE: Is not double
+          ISNOTEMAIL: Is not email
+          ISNOTGENERICTLD: Is not generic TLD
+          ISNOTINTEGER: Is not integer
+          ISNOTIP: Is not IP
+          ISNOTIPV4: Is not IPV4
+          ISNOTIPV6: Is not IPV6
+          ISNOTISBN10: Is not ISBN10
+          ISNOTISBN13: Is not ISBN13
+          ISNOTISBN: Is not ISBN
+          ISNOTMASTERCARD: Is not Master card
+          ISNOTNUMBER: Is not number
+          ISNOTTIME: Is not time
+          ISNOTURL: Is not URL
+          ISNOTVISACARD: Is not Visa card
+          ISNOTVPAYCARD: Is not VPay card
+          ISNUMBER: Is number
+          ISTIME: Is time
           ISURL: Is URL
-          ISVISACARD: Is Visa Card
-          ISVPAYCARD: Is VPay Card
+          ISVISACARD: Is Visa card
+          ISVPAYCARD: Is VPay card
           TEXTCONTAINS: value contains
           TEXTENDSWITH: value ends with
           TEXTEXACTLY: value is
           TEXTREGEX: value matches regex
           TEXTSTARTSWITH: value starts with
-        ignoreCase: Ignore Case
+        ignoreCase: Ignore case
         if: If
         Placeholders:
           CUSTOMCONDITION: "E.g. {column} < 30 || gender == \"Male\""
@@ -773,14 +776,14 @@ features:
           TEXTSTARTSWITH: Enter prefix
           ISDATEFORMAT: "Eg: MM/DD/YYYY"
           ISNOTDATEFORMAT: "Eg: MM/DD/YYYY"
-        title: Send to Error
+        title: Send to error
         tooltip: When used in a pipeline, these errors can be collected by an error collector
       MaskData:
-        menuLabel: Mask Data
+        menuLabel: Mask data
         option1: Show last 4 characters only
         option2: Show last 2 characters only
-        option3: Custom Selection
-        option4: By Shuffling
+        option3: Custom selection
+        option4: By shuffling
       MaskSelection:
         cancelBtnLabel: Exit 'Mask Data' mode
         description: Mask the selected characters across all rows in this column
@@ -800,9 +803,9 @@ features:
           UNDERSCORE: Underscore
         duplicate: A column with the same name already exists. Pick a new name, or click “Join” to overwrite.
         newColumn: Name new column
-        newColumnPlaceholder: Destination Column
+        newColumnPlaceholder: Destination column
         setOrder: Set order
-        title: Join Two Columns
+        title: Join two columns
       Parse:
         modalTitle: Parse as {parser}
         Parsers:
@@ -817,7 +820,7 @@ features:
               COMMA: Comma
               CONTROL_A: ^A
               CONTROL_D: ^D
-              CUSTOM: Custom Delimiter
+              CUSTOM: Custom delimiter
               PIPE: Pipe
               SPACE: Space
               TAB: Tab
@@ -826,12 +829,12 @@ features:
             modal:
               description: Choose how you would like to specify the sheet in your Excel file
               firstRowHeader: Set first row as header
-              sheetNumberLabel: Sheet Number
-              sheetNameLabel: Sheet Name
-              sheetNameInputPlaceholder: Sheet Name
+              sheetNameInputPlaceholder: Sheet name
+              sheetNameLabel: Sheet name
+              sheetNumberLabel: Sheet number
           FIXEDLENGTH:
             fieldLabel: Column widths
-            label: Fixed Length
+            label: Fixed length
             optionalFieldLabel: Padding
             optionalPlaceholder: Optional padding parameter
             placeholder: "e.g. 3, 5, 2, 5, 15"
@@ -854,17 +857,17 @@ features:
               REFERER: Referer
           NATURALDATE:
             fieldLabel: Timezone
-            label: Natural Date
+            label: Natural date
             placeholder: "e.g. UTC"
           SIMPLEDATE:
             customPlaceholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
-            label: Simple Date
+            label: Simple date
             ModalHeader:
               parse: Parse as {parser}
-              format: Format Date and Time
+              format: Format date and time
             modalTitle: Please select the date format
             Options:
-              CUSTOM: Custom Format
+              CUSTOM: Custom format
               OPTION1: "MM/dd/yyyy"
               OPTION2: "dd/MM/yyyy"
               OPTION3: "MM-dd-yyyy"
@@ -889,7 +892,7 @@ features:
       SetCharEncoding:
         disabledTooltip: Character encoding can only be set on columns of data type 'bytes'
         iso88591: ISO-8859-1
-        title: Set Character Encoding
+        title: Set character encoding
         usascii: US-ASCII
         utf16: UTF-16
         utf16be: UTF-16BE
@@ -901,22 +904,22 @@ features:
           IFCONDITION: If condition is true
         ifConditionPlaceholder: Enter JEXL condition
         incrementCounterLabel: increment the count by
-        title: Set Counter
+        title: Set counter
         variableNameLabel: Name this counter
         variableNamePlaceholder: Enter counter name
       Swap:
-        title: Swap Two Column Names
+        title: Swap two column names
     pageTitle: CDAP | Data Preparation
     PipelineError:
-      bigquery: Unable to find Big Query plugin. Please install Google Cloud Plugins from Cask Market.
+      bigquery: Unable to find Big Query plugin. Please install Google Cloud Plugins from Hub.
       database: Unable to find Database Plugins. Please make sure Database Plugins are available.
       defaultMessage: Error adding to pipeline.
       fileBatch: Unable to find Core Plugins. Please make sure Core Plugins are available.
       fileRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available.
-      gcs: Unable find GCS plugin. Please install Google Cloud Plugins from Cask Market.
-      kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Cask Market.
-      s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Cask Market.
-      missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Cask Market
+      gcs: Unable find GCS plugin. Please install Google Cloud Plugins from Hub.
+      kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Hub.
+      s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Hub.
+      missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Hub
     sidePanelTooltip:
       collapse: Collapse the side panel
       expand: Expand the side panel
@@ -924,8 +927,8 @@ features:
       addToPipelineBtnLabel: Create a Pipeline
       addToPipelineModal:
         title: Choose the type of pipeline to create
-        batchPipelineBtn: Batch Pipeline
-        realtimePipelineBtn: Realtime Pipeline
+        batchPipelineBtn: Batch pipeline
+        realtimePipelineBtn: Realtime pipeline
         errorTitle: Unable to create pipeline
       applyBtnLabel: Apply
       bigquery: Big Query
@@ -938,15 +941,15 @@ features:
           Step2: 'Submitting copy task...'
           Step2Error: 'Unable to submit copy task.'
         createBtnLabel: Ingest Data
-        description: You are creating a new Dataset, select a type and enter information about this new entity
+        description: You are creating a new dataset, select a type and enter information about this new entity
         Form:
-          datasetNameLabel: Dataset Name
+          datasetNameLabel: Dataset name
           datasetTooltip: Name of the dataset to copy to
           fileSetBtnlabel: Fileset
           formatLabel: Format
           formatTooltip: Format of data
           requiredLabel: Required
-          rowKeyLabel: Row Key
+          rowKeyLabel: Row key
           rowKeyTooltip: The name of the record field that should be used as the row key when writing to the table.
           typeLabel: Type
           tableBtnlabel: Table
@@ -954,9 +957,9 @@ features:
           avro: Avro
           orc: ORC
           parquet: Parquet
-        modalTitle: Ingest Data
-        monitorBtnLabel: Explore Data
-        ingestFailMessage: Unable to Ingest Data
+        modalTitle: Ingest data
+        monitorBtnLabel: Explore data
+        ingestFailMessage: Unable to ingest data
         uploadDisabledMessage: Ingesting data from a locally uploaded file is not supported.
       database: Database
       databaseTitle: "Table: {name}"
@@ -970,7 +973,6 @@ features:
       more: More
       PlusButton:
         addDirective: Add directive
-        addOtherEntities: Add other Entities
         successMessage: You successfully added a custom directive to CDAP. Apply that directive by typing it into the power mode input area.
       realtimeDisabledTooltip: "Importing data from {type} in realtime is currently not supported."
       s3: S3
@@ -986,27 +988,19 @@ features:
         modalHeader: Upgrade Data Preparation
       upload: Local File Upload
       viewSchemaBtnLabel: View Schema
-      WorkspaceModal:
-        create: Create
-        createModalTitle: Create Workspace
-        createTitle: Create New Workspace
-        createAndUploadBtnLabel: Create & Upload
-        uploadTitle: Upload Data
-        uploadSubTitle: Select the file to be uploaded to the workspace
-        uploadBtnLabel: Upload
     Upgrade:
-      minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
+      minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Hub."
     WorkspaceTabs:
       DeleteModal:
         cancelButton: No, keep tab open
         confirmButton: Yes, close tab
-        header: Close Tab
+        header: Close tab
         helperMessage: Any directives you have applied in this tab will be lost.
         mainMessage: Are you sure you want to close {workspace}?
   DataPrepConnections:
     AddConnections:
       BigQuery:
-        bucket: Temporary GCS Bucket
+        bucket: Temporary GCS bucket
         Buttons:
           ADD: Add Connection
           DUPLICATE: Duplicate Connection
@@ -1017,13 +1011,13 @@ features:
           DUPLICATE: Failed to duplicate connection
           EDIT: Failed to edit connection
         ModalHeader:
-          ADD: "Add Connection: Big Query"
-          DUPLICATE: "Duplicate Connection: {connection}"
-          EDIT: "Edit Connection: {connection}"
+          ADD: "Add connection: Big Query"
+          DUPLICATE: "Duplicate connection: {connection}"
+          EDIT: "Edit connection: {connection}"
         name: Name
         projectId: Project ID
         required: Required
-        serviceAccountKeyfile: Service Account Keyfile Location
+        serviceAccountKeyfile: Service account key file location
         testConnection: Test Connection
       Database:
         DatabaseDetail:
@@ -1034,12 +1028,12 @@ features:
             ADD: Add Connection
             DUPLICATE: Duplicate Connection
             EDIT: Save Changes
-          connectionString: Connection String
-          connType: JDBC Connections
+          connectionString: Connection string
+          connType: JDBC connections
           customLabel: "Other..."
           database: Database
           defaultTestErrorMessage: Error connecting to database
-          driverInstalled: Driver Installed
+          driverInstalled: Driver installed
           ErrorMessages:
             ADD: Failed to add connection
             DUPLICATE: Failed to duplicate connection
@@ -1052,15 +1046,15 @@ features:
           testConnection: Test Connection
           username: Username
         DatabaseOptions:
-          install: "Install Driver: "
-          installedLabel: Driver Installed
-          market: Cask Market
+          install: "Install driver: "
+          installedLabel: Driver installed
+          market: Hub
           optionsTitle: Select the type of database you want to connect to
           upload: Upload
         ModalHeader:
-          ADD: "Add Connection: Database"
-          DUPLICATE: "Duplicate Connection: {connection}"
-          EDIT: "Edit Connection: {connection}"
+          ADD: "Add connection: Database"
+          DUPLICATE: "Duplicate connection: {connection}"
+          EDIT: "Edit connection: {connection}"
       GCS:
         Buttons:
           ADD: Add Connection
@@ -1072,21 +1066,21 @@ features:
           DUPLICATE: Failed to duplicate connection
           EDIT: Failed to edit connection
         ModalHeader:
-          ADD: "Add Connection: GCS"
-          DUPLICATE: "Duplicate Connection: {connection}"
-          EDIT: "Edit Connection: {connection}"
+          ADD: "Add connection: GCS"
+          DUPLICATE: "Duplicate connection: {connection}"
+          EDIT: "Edit connection: {connection}"
         name: Name
         projectId: Project ID
         required: Required
-        serviceAccountKeyfile: Service Account Keyfile Location
+        serviceAccountKeyfile: Service account key file location
         testConnection: Test Connection
       Kafka:
-        brokersList: Broker Host
+        brokersList: Broker host
         Buttons:
           ADD: Add Connection
           DUPLICATE: Duplicate Connection
           EDIT: Save Changes
-        connectionType: Connection Type
+        connectionType: Connection type
         defaultTestErrorMessage: Cannot connect to Kafka
         ErrorMessages:
           ADD: Failed to add connection
@@ -1094,14 +1088,14 @@ features:
           EDIT: Failed to edit connection
         kafka: Kafka
         ModalHeader:
-          ADD: "Add Connection: Kafka"
-          DUPLICATE: "Duplicate Connection: {connection}"
-          EDIT: "Edit Connection: {connection}"
+          ADD: "Add connection: Kafka"
+          DUPLICATE: "Duplicate connection: {connection}"
+          EDIT: "Edit connection: {connection}"
         name: Name
         port: Port
         required: Required
         testConnection: Test Connection
-        zkQuorum: Zookeeper Host
+        zkQuorum: Zookeeper host
         zookeeper: Zookeeper
 
       label: Add Connection
@@ -1109,7 +1103,7 @@ features:
         title: Select a source to connect
       S3:
         accessKeyId: Access ID
-        accessSecretKey: Access Key
+        accessSecretKey: Access key
         Buttons:
           ADD: Add Connection
           DUPLICATE: Duplicate Connection
@@ -1120,9 +1114,9 @@ features:
           DUPLICATE: Failed to duplicate connection
           EDIT: Failed to edit connection
         ModalHeader:
-          ADD: "Add Connection: S3"
-          DUPLICATE: "Duplicate Connection: {connection}"
-          EDIT: "Edit Connection: {connection}"
+          ADD: "Add connection: S3"
+          DUPLICATE: "Duplicate connection: {connection}"
+          EDIT: "Edit connection: {connection}"
         name: Name
         region: Region
         required: Required
@@ -1133,7 +1127,7 @@ features:
       Confirmations:
         DatabaseDelete:
           deleteButton: Delete Connection
-          header: "Delete Connection: {connection}"
+          header: "Delete connection: {connection}"
           helper1: You will no longer able to access data from this source.
           helper2: "You can reconnect to this source at any time by clicking \"Add Connection\""
           mainMessage: "Are you sure you want to delete connection to {connection}?"
@@ -1150,17 +1144,24 @@ features:
     UploadComponent:
       fileSizeError: "The file you are trying to upload is larger than 10MB. Please select a smaller file and try again."
       helperText: "Max file size: 10MB"
-      recordDelimiter: Record Delimiter
+      recordDelimiter: Record delimiter
       title: Upload data from your computer
       uploadButton: Upload
 
   DatasetDetailedView:
+    Tabs:
+      auditLog: Audit log
+      lineage: Lineage
+      programsWithCount: Programs ({count})
+      properties: Properties
+      schema: Schema
+      usage: Usage
     Title: CDAP | Dataset | {datasetId}
   Dashboard:
     Title: Dashboard
   Description:
     label: Description
-    nodescription: No Description available
+    nodescription: No description available
   DetailView:
     PropertiesTab:
       title: Properties for {entityType} "{entityId}"
@@ -1170,22 +1171,118 @@ features:
     suggestionTitle: "You can try to:"
 
   Experiments:
+    CreateView:
+      addModel: Add Model
+      algorithmType: "Algorithm type: {type}"
+      configureHyperparamsFor: Configure hyperparameters for {algorithm}
+      createExperiment: Create Experiment
+      createNewExperiment: Create a new experiment
+      descriptionPlaceholder: Add a description for this experiment
+      experimentName: Experiment name
+      experimentNamePlaceholder: Add a name for this experiment
+      failedToSplit: "Failed to split data for the experiment '{experimentId}' - Please check "
+      logs: "logs "
+      MLAlgorithm: "ML algorithm: "
+      modelDescription: Model description
+      modelDescriptionWithColon: "Model description: "
+      modelName: Model name
+      modelNameWithColon: "Model name:"
+      moreInfo: for more info
+      nextSelect: Next, select a machine learning algorithm
+      numDirectives: "No of directives: "
+      random: Random
+      selectMLAlgorithm: Select a machine learning algorithm
+      selectOutcome: Select an outcome
+      setOutcome: Set outcome for this experiment
+      splitAndVerify: Split data and verify sample
+      splitData: Split data
+      SplitInfo:
+        categorical: Categorical data
+        columnName: Column name
+        count: Count
+        dataType: "Data type: "
+        max: Max
+        mean: Mean
+        min: Min
+        missing: Missing
+        numerical: Numerical data
+        searchColumn: Search column name
+        stddev: Std dev
+        unique: Unique
+        zero: Zero
+      splitMethod: "Split method: "
+      splitting: Splitting data
+      trainModel: Train Model
+      verifySample: Verify sample by feature or outcome
+    DetailedView:
+      algorithm: Algorithm
+      algoTypes: Algorithm types
+      copyToClipboard: Copy to Clipboard
+      data: Data
+      evariance: Evariance
+      f1: F1
+      mae: Mean avg error
+      modelDescription: Model description
+      modelName: Model name
+      models:
+        1: "{context} model"
+        _: "{context} models"
+      modelStatus: Model status
+      modelTrainingLogs: Model training logs
+      numModels: No of models
+      outcome: Outcome
+      precision: Precision
+      r2: R2
+      recall: Recall
+      rmse: RMSE
+      status: Status
+    ListView:
+      algoTypes: Algorithm types
+      createNew: Create a new experiment
+      data: Data
+      experiment: Experiment
+      experiments:
+        1: "{context} experiment"
+        _: "{context} experiments"
+      numModels: No of models
+
     ServiceControl:
       Benefits:
-        b1: Intuitive Web UI for building, training, testing and evaluating Machine Learning models.
+        b1: Intuitive Web UI for building, training, testing and evaluating machine learning models.
         b2: Seamless, integrated experience from data preparation and cleansing to model building and deployment.
         b3: Horizontal scalability over your Big Data environment.
-        b4: Out of the box support for common machine learning libraries like SparkML, DLF4J and H2O, along with support for deploying custom algorithms and libraries.
+        b4: Out of the box support for common machine learning libraries like SparkML.
         b5: Support for tuning custom hyperparameters for algorithms.
         b6: Integrated metrics and visualization providing rich summaries and graphs for model evaluation.
         title: "Some key benefits of MMDS are:"
-      description: "Data Scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models using CDAP."
+      description: "Data scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models using CDAP."
       enableBtnLabel: Enable MMDS
-      errorTitle: Enabling MMDS Failed
+      errorTitle: Enabling MMDS failed
       errorMessage: Please check logs for more information
       title: Welcome to Model Management and Distribution Service
 
   FieldLevelLineage:
+    fieldsCount:
+      1: "{context} field"
+      _: "{context} fields"
+    OperationsModal:
+      lastExecution: "Last executed by '{app}' on {time}"
+      summaryText: "Operations between {sources} and '{target}'"
+      Table:
+        description: Description
+        input: Input
+        inputFields: Input fields
+        operation: Operation
+        outputFields: Output fields
+        output: Output
+      title: "Operations for field '{fieldName}'"
+    searchPlaceholder: Search by field name
+    Summary:
+      datasetCount:
+        1: "{context} dataset"
+        _: "{context} datasets"
+      title: "Sources for:"
+      viewOperations: View operations
     TimeRangeOptions:
       CUSTOM: Custom
       last14d: Last 14 days
@@ -1204,16 +1301,16 @@ features:
       title: 'No match found for "{searchText}"'
     Table:
       group: Group
-      last-modified: Last Modified
+      last-modified: Last modified
       name: Name
       owner: Owner
       permission: Permission
       size: Size
       type: Type
     TopPanel:
-      directoryMetrics: "{count} Files and Directories"
+      directoryMetrics: "{count} files and directories"
       searchPlaceholder: Search this directory
-      selectData: "Select File/Directory to Preview"
+      selectData: "Select file/directory to preview"
 
   FileDataUpload:
     click: "Click "
@@ -1228,7 +1325,13 @@ features:
     clearEventsButtonLabel: Clear
     deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
     doneLabel: Done
-    exploreLabel: Explore
+    Explore:
+      actions: Actions
+      label: Explore
+      noResults: No results
+      SQLQuery: SQL query
+      startTime: Start time
+      status: Status
     deleteLabel: Delete
     downloadDisabledMessage: Results have already been downloaded once. Please run the query to download them again.
     previewDisabledMessage: Results have already been downloaded once. Please run the query to preview them again.
@@ -1297,17 +1400,16 @@ features:
     viewTracker: View in Tracker
 
   LoadingIndicator:
-    # backendDown: 'CDAP Services are not available',
     backendDown: 'Unable to connect to CDAP'
     backendDownSubtitle: 'Attempting to connect...'
-    contactadmin: Contact System Administrator
+    contactadmin: Contact system administrator
     defaultMessage: 'Loading...'
     nodeserverDown: 'User interface service is down'
     restartCDAP: Restart CDAP
     restartUI: Restart the UI; or
     servicesDown: A few system services are down
     serviceDown: The system service {serviceName} is down
-    systemDashboard: View System Services Dashboard
+    systemDashboard: View system services dashboard
     tryMessage: 'You can try to: '
 
   Market:
@@ -1336,7 +1438,7 @@ features:
         name: Deploy
       one_step_deploy_plugin:
         name: Deploy
-    connectErrorMessage: Cannot connect to Market
+    connectErrorMessage: Cannot connect to Hub
     search-placeholder: Search
     tabs:
       all: All
@@ -1348,7 +1450,7 @@ features:
       datasets: Datasets
       directives: Directives
       edwOffload: EDW Offload
-      emptyTab: No Entities found
+      emptyTab: No entities found
       examples: Applications
       pipelines: Pipelines
       plugins: Plugins
@@ -1367,25 +1469,25 @@ features:
     computeProfiles:
       create: Create New
       description: Select a row to view details about the compute profile
-      label: Compute Profiles
-      labelWithCount: Compute Profiles ({count})
+      label: Compute profiles
+      labelWithCount: Compute profiles ({count})
       import: Import
     edit: Edit
     entityCounts:
-      customApps: Custom Apps
+      customApps: Custom apps
     mapping:
-      hbaseNamespaceName: 'HBase Namespace Name: '
-      hdfsRootDirectory: 'HDFS Root Directory: '
-      hiveDatabaseName: 'Hive Database Name: '
+      hbaseNamespaceName: 'HBase namespace name: '
+      hdfsRootDirectory: 'HDFS root directory: '
+      hiveDatabaseName: 'Hive database name: '
       label: Mapping
-      schedulerQueueName: 'Scheduler Queue Name: '
+      schedulerQueueName: 'Scheduler queue name: '
     namespace: Namespace
     namespaceName: Namespace '{namespace}'
     pipelines: Pipelines
     preferences:
       label: Preferences
       labelWithCount: Preferences ({count})
-      noPreferences: No Preferences set for this namespace
+      noPreferences: No preferences set for this namespace
     scope: Scope
     security:
       keytabURI: 'Keytab URI: '
@@ -1434,13 +1536,13 @@ features:
         cloudSandbox: Cloud Sandbox
         distributed: Distributed
         localSandbox: Local Sandbox
-      olduilink: Switch to Classic View
     rulesmgmt: Rules
   OpsDashboard:
     header: Dashboard
     pageTitle: CDAP | Dashboard
     RunsGraph:
       chart: Chart
+      disabledArrowTooltip: The runs timelime is only available for the past 7 days
       header: Runs timeline
       last24Hours: Last 24 hours
       Legends:
@@ -1479,7 +1581,7 @@ features:
       name: Name
       namespace: Namespace
       noData: No data
-      noRuns: No runs
+      noRuns: No runs in the selected time bucket
       start: Started
       startMethod: Start method
       status: Status
@@ -1490,7 +1592,7 @@ features:
 
   Overview:
     DatasetTab:
-      title: "Datasets and Streams used by \"{appId}\""
+      title: "Datasets and streams used by \"{appId}\""
     deployedLabel:
       data: Created
       app: Deployed
@@ -1498,17 +1600,17 @@ features:
     errorMessageAuthorization: You are not authorized to view {entityType} "{entityId}"
     errorMessageSubtitle: Select another entity
     Metadata:
-      ttl: "Time To Live (TTL): "
+      ttl: "Time to live (TTL): "
       type: "Type: "
     overviewCloseLabel: Close
     overviewCloseLabel1: this panel
     ProgramTab:
       altTitle: "Programs using {entityType} \"{entityId}\""
-      emptyMessage: No Programs found.
+      emptyMessage: No programs found.
       title: "Programs in application \"{appId}\""
       runningProgramLabel: "Number of running programs: {programCount}"
     SchemaTab:
-      emptyMessage: No Schema found.
+      emptyMessage: No schema found.
       title: Schema of each record in the {entityType} "{entityId}"
       tooltip: Schema defines the structure of each record in the dataset. A schema is a collection of fields, where each field has a name and a data type.
   Page404:
@@ -1524,8 +1626,8 @@ features:
 
   PipelineConfigurations:
     ActionButtons:
-      copyRuntimeArgs: Copy Runtime Arguments
-      runtimeArgsCopied: Runtime Arguments Copied
+      copyRuntimeArgs: Copy runtime arguments
+      runtimeArgsCopied: Runtime arguments copied
       runtimeArgsCount:
         1: "{context} runtime argument"
         _: "{context} runtime arguments"
@@ -1536,9 +1638,9 @@ features:
     advancedOptions: Advanced options
     Alerts:
       contentHeading: Set alerts for your batch pipeline
-      title: Alerts
+      title: Pipeline alert
     ComputeConfig:
-      title: Compute Config
+      title: Compute config
     EngineConfig:
       backpressure: Backpressure
       backpressureTooltip: Allows the Apache Spark Streaming engine to control the receiving rate based on the current batch scheduling delays and processing times so that the system receives only as fast as the system can process.
@@ -1551,19 +1653,19 @@ features:
       numExecutors: Number of Executors
       numExecutorsTooltip: The number of executors to allocate for this pipeline on Apache Yarn.
       showCustomConfig: Show custom config
-      title: Engine Config
+      title: Engine config
     PipelineConfig:
-      batchInterval: Batch Interval
+      batchInterval: Batch interval
       checkpointing: Checkpointing
       checkpointingTooltip: Allows Apache Spark Streaming to checkpoint data (RDDs) to persistent storage so that the pipeline can recover from failures.
       contentHeading: Set configurations for this pipeline
       instrumentation: Instrumentation
       instrumentationTooltip: Emits timing metrics such as total time, mean, standard deviation for pipeline stages. It is recommended to always have this setting on, unless the environment is short on resources.
-      stageLogging: Stage Level Logging
+      stageLogging: Stage level logging
       stageLoggingTooltip: Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources.
-      title: Pipeline Config
+      title: Pipeline config
     PreviewConfig:
-      title: Preview Config
+      title: Preview config
     Resources:
       client: Client
       clientTooltip: Resources for the client process which launches the Apache Spark Streaming pipeline
@@ -1576,7 +1678,7 @@ features:
       contentHeading: Specify the resources for the following processes of the {engineDisplayLabel} program
       title: Resources
     title: Configure
-    titleHistorical: Run Configurations
+    titleHistorical: Run configurations
 
   PipelineDetails:
     duration: Duration
@@ -1586,18 +1688,32 @@ features:
           clearAll: Clear All
           provided: Provided
           selectAll: Select All
+    ProfilesListView:
+      click: Click here
+      countProfiles:
+        1: '{context} compute profile'
+        _: '{context} compute profiles'
+      noProfiles: No profiles created
+      toCreate: to create one
+
     RunLevel:
       configs: Run Configs
+      configsModelessTitle: "Runtime arguments for run #{currentRunIndex}"
+      copyRuntimeArgsBtnLabel: Copy Runtime Arguments
       currentIndex: '({currentRunIndex} of {numRuns})'
       currentRunIndex: 'Run {currentRunIndex} of {numRuns}'
       errors: Errors
       logs: Run Logs
       noRuns: No Runs
+      noRuntimeArgs: No runtime arguments available
       pipelineNeverRun: 'This pipeline has never been run.'
+      RunComputeProfile:
+        label: Run compute profile
+        noInfo: Profile information unavailable
       runsCurrentlyRunning: Runs currently running - select one to view
       status: Status
       warnings: Warnings
-    startTime: Start Time
+    startTime: Start time
     TopPanel:
       actions: Actions
       configure: Configure
@@ -1606,7 +1722,7 @@ features:
         confirmPrompt: 'Are you sure you want to delete the pipeline '
         pipeline: 'Pipeline '
         proceedPrompt: ' is deleted. Are you sure you want to proceed?'
-        title: Delete Pipeline
+        title: Delete pipeline
         trigger: ' is configured to trigger '
         triggerDelete: '. Triggers will be deleted if pipeline '
         triggerPluralCheck:
@@ -1616,7 +1732,7 @@ features:
       details: Details
       duplicate: Duplicate
       export: Export
-      exportModalTitle: Export Pipeline Configuration
+      exportModalTitle: Export pipeline configuration
       run: Run
       schedule: Schedule
       starting: Starting
@@ -1645,7 +1761,8 @@ features:
       min: Min
       month: Month
     basic: Basic
-    header: Configure Schedule for Pipeline
+    computeProfiles: Compute profiles
+    header: Configure schedule for pipeline
     intervalOptions:
       daily: Daily
       every10min: Every 10 min
@@ -1665,7 +1782,7 @@ features:
     saveSchedule: Save Schedule
     saveAndStartSchedule: Save and Start Schedule
     startingAt:
-      label: Starting At
+      label: Starting at
       pastTheHour: past the hour
     startSchedule: Start Schedule
     summary:
@@ -1689,16 +1806,16 @@ features:
     filterContainer:
       view: View
     graphs:
-      emptyMessage: No Runs {filter}
+      emptyMessage: No runs {filter}
       vizSwitcher:
         chart: Chart
         table: Table
     logsMetricsGraph:
       hint:
         errors: Errors
-        runNumber: Run Number
-        startTime: Start Time
-        title: Log Errors & Warnings
+        runNumber: Run number
+        startTime: Start time
+        title: Log errors & warnings
         viewLogs: View Logs
         warnings: Warnings
       legend1: Warnings
@@ -1709,78 +1826,78 @@ features:
         header:
           errors: Errors
           runCount: Run#
-          startTime: Start Time
+          startTime: Start time
           warnings: Warnings
-      title: Log Errors and Warnings
-      xAxisTitle: "Pipeline Run #"
-      yAxisTitle: Number of Errors and Warnings
+      title: Log errors and warnings
+      xAxisTitle: "Pipeline run #"
+      yAxisTitle: Number of errors and warnings
     nodesMetricsGraph:
       hint:
         errors: Errors
-        runNumber: Run Number
-        startTime: Start Time
+        runNumber: Run number
+        startTime: Start time
       recordsin:
         hint:
-          title: "Number of Records In: {count}"
+          title: "Number of records in: {count}"
         table:
           headers:
-            inputrecords: Input Records
+            inputrecords: Input records
             runCount: "Run #"
-            startTime: Start Time
-        title: Number of Records In
+            startTime: Start time
+        title: Number of records in
       recordsout:
         hint:
-          title: "Number of Records Out: {count}"
+          title: "Number of records out: {count}"
         table:
           headers:
-            inputrecords: Output Records
+            inputrecords: Output records
             runCount: "Run #"
-            startTime: Start Time
-        title: Number of Records Out
+            startTime: Start time
+        title: Number of records out
       xAxisTitle: "Pipeline run #"
-      yAxisTitle: "Number of Records"
+      yAxisTitle: "Number of records"
     pipelineNodesMetricsGraph:
-      checkedPortLegendsCount: "{selected} of {total} Metrics Displayed"
+      checkedPortLegendsCount: "{selected} of {total} metrics displayed"
       hours: Hours
       minutes: Minutes
-      nodata: No Data
-      numberOfRecords: Number of Records
+      nodata: No data
+      numberOfRecords: Number of records
       NodeMetricsGraph:
-        accumulatedRecords: Accumulated Records
-        numOfRecordsError: 'Number of Error Records'
-        numOfRecordsIn: 'Number of Records In'
-        numOfRecordsOut: 'Number of Records Out'
-        recordsError: 'Error Records'
-        recordsIn: 'Records In'
-        recordsOut: 'Records Out'
+        accumulatedRecords: Accumulated records
+        numOfRecordsError: 'Number of error records'
+        numOfRecordsIn: 'Number of records in'
+        numOfRecordsOut: 'Number of records out'
+        recordsError: 'Error records'
+        recordsIn: 'Records in'
+        recordsOut: 'Records out'
         ts: Timestamp
       portRecordsCountPopover:
         hide: Hide All
-        title: Total Records Out
+        title: Total records out
         view: View All
       processTimeTable:
-        avgProcessTime: Average Processing Time
-        minProcessTime: Min Process Time (one record)
-        maxProcessTime: Max Process Time (one record)
-        recordInPerSec: Records In per second
-        recordOutPerSec: Records Out per second
-        stddevProcessTime: Standard Deviation
-      recordsInTitle: Records In
-      recordsOutTitle: Records Out
+        avgProcessTime: Average processing time
+        maxProcessTime: Max process time (one record)
+        minProcessTime: Min process time (one record)
+        recordInPerSec: Records in per second
+        recordOutPerSec: Records out per second
+        stddevProcessTime: Standard deviation
       recordsErrorTitle: Errors
+      recordsInTitle: Records in
+      recordsOutTitle: Records out
       runOfTitle: Run {runNumber} of {totalRun}
-      seconds: Seconds
-      totalRecordsIn: "Total Records In: {totalRecordsIn}"
-      totalRecordsOut: "Total Records Out: {totalRecordsOut}"
+      seconds: seconds
+      totalRecordsError: "Total errors: {totalRecordsError}"
+      totalRecordsIn: "Total records in: {totalRecordsIn}"
+      totalRecordsOut: "Total records out: {totalRecordsOut}"
       totalRecordsOutPorts: "{port}: {recordCount}"
-      totalRecordsError: "Total Errors: {totalRecordsError}"
     runsHistoryGraph:
       hint:
         duration: Duration
-        runNumber: Run Number
+        runNumber: Run number
+        startTime: Start time
         status: Status
-        startTime: Start Time
-        title: Run History
+        title: Run history
       legend1: Failed
       legend2: Successful
       table:
@@ -1788,10 +1905,10 @@ features:
           duration: Duration
           runCount: Run#
           status: Status
-          startTime: Start Time
-      title: Run History
-      xAxisTitle: "Pipeline Run #"
-      yAxisTitle: Run Duration ({resolution})
+          startTime: Start time
+      title: Run history
+      xAxisTitle: "Pipeline run #"
+      yAxisTitle: Run duration ({resolution})
     runsFilter:
       last10Runs: Last 10 runs
       last50Runs: Last 50 runs
@@ -1801,69 +1918,67 @@ features:
       last30Days: Last 30 days
       sinceInception: Since Inception
     statsContainer:
-      avgRunTime: Average Duration
-      totalRuns: Total Runs
+      avgRunTime: Average duration
+      totalRuns: Total runs
     title: 'Summary'
 
   PipelineTriggers:
-    collapsedTabLabel: "Show Inbound Triggers ({count})"
+    collapsedTabLabel: "Show inbound triggers ({count})"
     description: Description
     EnabledTriggers:
       buttonLabel: Disable Trigger
       pipelineCount:
         0: "No pipelines set as trigger"
         1: "1 pipeline is set as trigger"
-        _: "{context.count} pipelines is set as trigger"
-      tabLabel: "View Enabled Triggers ({count})"
+      tabLabel: "View enabled triggers ({count})"
       title: "View pipelines enabled to trigger pipeline \"{pipelineName}\""
     Events:
       COMPLETED: Succeeds
       FAILED: Fails
       KILLED: Stops
-    expandedTabLabel: "Hide Inbound Triggers ({count})"
+    expandedTabLabel: "Hide inbound triggers ({count})"
     helperText: "\"{pipelineName}\" is triggered when this pipeline"
     namespace: Namespace
     pipelineName: Pipeline Name
     ScheduleRuntimeArgs:
       configure_enable_btn: Configure and Enable Trigger
       DefaultMessages:
-        choose_runtime_arg: Pick Runtime Argument
-        choose_plugin: Pick Plugin
-        choose_plugin_property: Pick Plugin Property
-        choose_runtime_arg_map: Pick Runtime Argument
+        choose_runtime_arg: Pick runtime argument
+        choose_plugin: Pick plugin
+        choose_plugin_property: Pick plugin property
       PayloadConfigModal:
-        title: Payload Configuration
         configPayloadBtn: Trigger Config
         configPayloadBtnDisabled: View Payload
+        title: Payload configuration
       Tabs:
         ComputeConfig:
           title: Select a compute profile to use when the pipeline is triggered by "{triggeringPipelineId}"
-          tabTitle: Compute Config
+          tabTitle: Compute config
         PayloadConfig:
-          title: Payload Config
+          title: Payload config
         RuntimeArgs:
-          disabledNoRuntimeArgsMessage: No Runtime Arguments configured for "{triggeredPipelineid}"
-          noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
+          disabledNoRuntimeArgsMessage: No runtime arguments configured for "{triggeredPipelineid}"
+          noRuntimeArgsMessage: No runtime arguments found for "{triggeredPipelineid}"
           TableHeaders:
-            runtimeargs: Runtime Arguments to map
-            t_runtimeargs: Trigger Runtime Arguments
-          tab_message: Select how Runtime Arguments for trigger "{triggeringPipelineid}" map to Runtime Arguments for "{triggeredPipelineid}"
-          tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
-          title: Runtime Arguments
+            runtimeargs: Runtime arguments to map
+            t_runtimeargs: Trigger runtime rrguments
+          tab_message: Select how runtime arguments for trigger "{triggeringPipelineid}" map to runtime arguments for "{triggeredPipelineid}"
+          tab_message2: (if not mapped, runtime arguments are derived from pipeline's or namespace's preferences)
+          title: Runtime arguments
         StageProps:
-          disabledNoStageConfigMessage: No Plugin Config configured for "{triggeredPipelineid}"
-          noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
+          disabledNoStageConfigMessage: No plugin config configured for "{triggeredPipelineid}"
+          noRuntimeArgsMessage: No runtime arguments found for "{triggeredPipelineid}"
           TableHeaders:
-            pluginName: Plugin Name
-            pluginProperty: Plugin Property
-            runtimeArg: Runtime Arguments to map
-          tab_message: Set which of the plugin properties in trigger "{triggeringPipelineid}" map to "{triggeredPipelineid}" Runtime Arguments.
-          tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
-          title: Plugin Config
+            pluginName: Plugin name
+            pluginProperty: Plugin property
+            runtimeArg: Runtime arguments to map
+          tab_message: Set which of the plugin properties in trigger "{triggeringPipelineid}" map to "{triggeredPipelineid}" runtime arguments.
+          tab_message2: (if not mapped, runtime arguments are derived from pipeline's or namespace's preferences)
+          title: Plugin config
     SetTriggers:
       buttonLabel: Enable Trigger
       pipelineCount: "{count} pipelines available"
-      tabLabel: Set Pipeline Triggers
+      tabLabel: Set pipeline triggers
       title: "Set which pipeline triggers \"{pipelineName}\""
       viewNamespace: View pipelines in namespace
     viewPipeline: View Pipeline
@@ -1872,15 +1987,15 @@ features:
     AddProperty:
       button: Add Property
       keyPlaceholder: Enter name
-      modalHeader: Add Property for {entityId}
+      modalHeader: Add property for {entityId}
       propertyExistError: Property {key} already exists
       shortError: Failed to add property
       valuePlaceholder: Enter value
     DeleteConfirmation:
       confirmationText: "Are you sure you want to delete \"{key}\" property?"
       confirmButton: Delete
+      headerTitle: Delete confirmation
       shortError: Failed to delete property
-      headerTitle: Delete Confirmation
     EditProperty:
       button: Save
       modalHeader: "Edit property: {key}"
@@ -1896,17 +2011,17 @@ features:
     Customizer:
       clear: Clear Selection
       generate: Generate Report
-      header: Customize runs view
+      header: Select runs
       hide: Hide generate a report
       Options:
-        customApps: Custom apps runs
+        customApps: Custom apps
         duration: Duration
         end: End time
         namespace: Namespace
         numLogErrors: "# of log errors"
         numLogWarnings: "# of log warnings"
         numRecordsOut: "# of records out"
-        pipelines: Pipelines runs
+        pipelines: Pipelines
         runtimeArgs: Runtime args
         start: Start time
         startMethod: Start method
@@ -1930,9 +2045,12 @@ features:
     header: Reports
     pageTitle: CDAP | Reports
     reportName: Report name
+    reports:
+      1: "{context} report"
+      _: "{context} reports"
     ReportsDetail:
       appTypeLabel: "App type:"
-      batch: Batch Pipeline
+      batch: Batch pipeline
       bySchedule: By schedule
       byTrigger: By trigger
       customApp: custom app
@@ -1946,10 +2064,13 @@ features:
       namespaceLabel: "Namespace:"
       numRuns: " ({num} runs)"
       ownersLabel: "Owners:"
-      realtime: Realtime Pipeline
+      realtime: Realtime pipeline
       reportSummary: Report summary
       runDuration: "Min: {min}; Max: {max}; Average: {average}"
       runDurationLabel: "Run duration:"
+      runs:
+        1: "{context} run"
+        _: "{context} runs"
       save: Save
       saved: Saved
       saveReport: Save Report
@@ -1966,26 +2087,36 @@ features:
       noReports: No reports are available
       selectAReport: Select a report to view
     ReportsServiceControl:
+      Benefits:
+        title: "Some of the key features of Reports are:"
+        b1: Intuitive web UI for generating, viewing and managing reports.
+        b2: Support for filtering by process type (pipelines or custom apps) and status.
+        b3: Historical reporting over extended time periods using Apache Spark for optimal performance.
+        b4: Permanent retention for important, saved reports.
+        b5: Automatic deletion of unsaved reports.
+        b6: Use-case based customization of report contents (columns).
+      description: "Reports help users generate historical analysis of programs and pipelines running in their data infrastructure. The primary goal of these reports is to help decision makers and administrators make informed business decisions about resource utilization, capacity planning, and onboarding new processes."
       enable: Enable Reports
+      title: Welcome to Reports
       unableToStart: Unable to start Reports service
 
   Resource-Center:
     Application:
       actionbtn0: Upload
       actionbtn-1: Create
-      description: An Application is a collection of datasets and programs that read and write data to datasets.
+      description: An application is a collection of datasets and programs that read and write data to datasets.
       label: Application
-      modalheadertitle: Upload Application
+      modalheadertitle: Upload application
     Artifact:
       actionbtn0: Upload
       description: A driver is a JAR file that contains third-party code to communicate with systems such as MySQL, Oracle, and PostgreSQL using JDBC.
       label: Driver
-      modalheadertitle: Add Driver
+      modalheadertitle: Add driver
     Directive:
       actionbtn0: Upload
       description: A directive is a data manipulation instruction that can be used to perform data cleansing, transformation and filtering.
       label: Directive
-      modalheadertitle: Upload Directive Artifact
+      modalheadertitle: Upload directive artifact
     HydratorPipeline:
       actionbtn0: Create
       actionbtn1: Import
@@ -1995,30 +2126,30 @@ features:
       nonJSONError: "File should be in JSON format. Please upload a file with '.json' extension."
     Library:
       actionbtn0: Upload
-      description: A library is a JAR file that can contains reusable third-party code (e.g. External Spark Programs).
+      description: A library is a JAR file that can contains reusable third-party code (e.g. external Spark programs).
       label: Library
-      modalheadertitle: Add Library
+      modalheadertitle: Add library
     Microservice:
       actionbtn0: Create
-      description: A Reactive Microservice is a decomposition of system into discrete, isolated subsystems communicating over a well defined protocol.
+      description: A reactive microservice is a decomposition of system into discrete, isolated subsystems communicating over a well defined protocol.
       label: Microservice
-      modalheadertitle: Create Microservice
+      modalheadertitle: Create microservice
     Plugins:
       actionbtn0: Upload
       description: A plugin is an easy way to extend the functionality of an application.
       label: Plugin
-      modalheadertitle: Upload Plugin Artifact
+      modalheadertitle: Upload plugin artifact
     Stream:
       actionbtn0: Create
       description: A stream is used to ingest data into HDFS in real-time or batch.
       label: Stream
   RulesEngine:
     AddRulesEngineToPipelineModal:
-      batchPipelineBtn: Batch Pipeline
+      batchPipelineBtn: Batch pipeline
       error: Unable to find Rules Engine Plugin. Please install Rules Engine plugin before adding to pipeline
       message: Choose the type of pipeline to create
-      modalTitle: Add to Pipeline
-      realtimePipelineBtn: Realtime Pipeline
+      modalTitle: Add to pipeline
+      realtimePipelineBtn: Realtime pipeline
     CreateRule:
       form:
         actionplaceholder: 'Eg. find-and-replace Name "s/ //g"'
@@ -2035,7 +2166,7 @@ features:
       createBtnNext: "Next: Add Rules"
       created: Created
       descriptionplaceholder: Add description
-      nameplaceholder: Start by Naming this Rulebook
+      nameplaceholder: Start by naming this Rulebook
       now: Now
       owner: Owner
       version: Version {version}
@@ -2046,7 +2177,7 @@ features:
         rulesTitle: Rules
     ImportRulebook:
       description: Upload your Rulebook file
-      footertitle: Failed to Upload Rulebook
+      footertitle: Failed to upload Rulebook
       shorttitle: Import Rulebook
       title: Upload Rulebook
     Rule:
@@ -2065,7 +2196,7 @@ features:
       owner: Owner # ?Again should we reuse?
       version: Version {version}
     RulebookMenu:
-      createPipeline: Create a Pipeline
+      createPipeline: Create a pipeline
       delete: Delete
       download: Download
     RulebooksPopover:
@@ -2082,7 +2213,7 @@ features:
       description: Business Rules Engine provides an easy way to create and manage a knowledge base that is executable in your big data environment.
                   The intuitive UI allows business analysts to set up business rules and use them within a data pipeline.
       enableBtnLabel: Enable Rules Engine
-      errorTitle: Enabling Rules Engine Failed
+      errorTitle: Enabling Rules Engine failed
       errorMessage: Please check logs for more information
       title: Welcome to Rules Engine Management
     RulesList:
@@ -2096,7 +2227,7 @@ features:
       searchLabel: Select a Rulebook
       searchplaceholder: Search Rulebook by name
     RulesTab:
-      createRuleBtn: Create a New Rule
+      createRuleBtn: Create a new Rule
       date: Date
       norules: No Rules found
       searchPlaceholder: Search Rules by name, action or description
@@ -2104,24 +2235,10 @@ features:
       allFieldsRequired: "* All fields are required"
   SchemaEditor:
     Labels:
-      fieldName: Field Name
-      symbolName: Symbol Name
+      fieldName: Field name
+      symbolName: Symbol name
   ServiceEnableUtility:
     serviceNotFound: Cannot find {artifactName} artifact
-  SplashScreen:
-    buttons:
-      getStarted: Read the Docs
-      introduction: Intro to CDAP
-      register: Register for Updates
-    dontShow: Don't show this again
-    getUpdates: Get Updates
-    intro-message: Unified Integration Platform for Big Data
-    title: Welcome to
-    titleTwo: Cask Data Application Platform
-    registration-zero: I
-    registration-one: would like to receive product updates and
-    registration-two: newsletters from Cask at this email address
-
   SpotlightSearch:
     SpotlightModal:
       headerTagResults: Entities with the tag "{tag}"
@@ -2140,26 +2257,26 @@ features:
     notags: No tags found. Click to add a new business tag.
 
   TriggeredPipelines:
-    collapsedTabLabel: "Show Outbound Triggers ({count})"
+    collapsedTabLabel: "Show outbound triggers ({count})"
     description: Description
     Events:
       COMPLETED: Succeeds
       KILLED: Stopped
       FAILED: Fails
-    expandedTabLabel: "Hide Outbound Triggers ({count})"
+    expandedTabLabel: "Hide outbound triggers ({count})"
     helperText: "This pipeline is triggered when \"{pipelineName}\""
     namespace: Namespace
     pipelineCount:
       "0": "No pipelines triggered"
       "1": "1 pipeline triggered"
       _: "{context.count} pipelines triggered"
-    pipelineName: Pipeline Name
+    pipelineName: Pipeline name
     title: "Pipelines to be triggered by \"{pipelineName}\""
     viewPipeline: View Pipeline
 
   ViewAllLabel:
-    viewAll: View All
-    viewLess: View Less
+    viewAll: View all
+    viewLess: View less
 
   ViewSwitch:
     actionsLabel: Actions
@@ -2170,7 +2287,7 @@ features:
       sizeLabel: Size
     nameLabel: Name
     ProgramTable:
-      lastStartedLabel: Last Started
+      lastStartedLabel: Last started
       statusLabel: Status
     typeLabel: Type
   WarningContainer:
@@ -2179,7 +2296,7 @@ features:
     Add-Namespace:
       callToAction:
         primary: Switch to '{namespaceId}'
-      headerlabel: Add Namespace
+      headerlabel: Add namespace
       Status:
         creation-error-desc: "Failed to create the namespace '%s'."
         creation-success-desc: Successfully created the namespace '{namespaceId}'.
@@ -2188,20 +2305,20 @@ features:
         description-placeholder: "Namespace description"
         name-label: "Name"
         name-placeholder: "Namespace name"
-        scheduler-queue-label: "Scheduler Queue"
+        scheduler-queue-label: "Scheduler queue"
         sld-desc:  "Specify the name and the description of the namespace."
-        ssd-label: "General Information"
+        ssd-label: "General information"
       Step2:
-        hbase-nm-name-label: "HBase Namespace Name"
+        hbase-nm-name-label: "HBase namespace name"
         hbase-nm-name-placeholder: "Namespace in HBase for datasets in this namespace"
-        hdfs-root-directory-label: "HDFS Root Directory"
+        hdfs-root-directory-label: "HDFS root directory"
         hdfs-root-directory-placeholder: "Base directory on HDFS for this namespace"
-        hive-db-name-label: "Hive Database Name"
+        hive-db-name-label: "Hive database name"
         hive-db-name-placeholder: "Hive database for this namespace"
-        scheduler-queue-name: "Scheduler Queue Name"
+        scheduler-queue-name: "Scheduler queue name"
         scheduler-queue-placeholder: "Yarn queue name to be used to submit programs in this namespace"
         sld-label: "Specify mapping of namespace resources to the existing underlying storage resources."
-        ssd-label: "Namespace Mapping"
+        ssd-label: "Namespace mapping"
       Step3:
         keytab-uri-label: "Keytab URI"
         keytab-uri-placeholder: "Location of keytab file associated with the principal"
@@ -2218,122 +2335,117 @@ features:
         value-placeholder: "Preference value"
     ApplicationUpload:
       callToAction: View Application Details
-      headerlabel: Upload Application
+      headerlabel: Upload application
       Step1:
-        description: Upload your application JAR
+        description: Upload your application JAR file.
         filePathLabel: Choose file
-        shorttitle: Upload Application
-        title: Upload JAR
-        uploadHelperText: Upload the JAR for the application that you wish to deploy
+        shorttitle: Upload application
+        title: Upload JAR file
+        uploadHelperText: Upload the JAR file for the application that you wish to deploy
       success: You have successfully deployed the application "{appName}".
     ArtifactUpload:
       callToAction: Create a Pipeline
-      headerlabel: Add Third Party Driver
-      footertitle: Add Driver
+      headerlabel: Add third party driver
+      footertitle: Add driver
       Step1:
-        description: Upload your Driver
-        shorttitle: Upload Driver
-        title: Upload JAR
-        uploadHelperText: Upload the third party driver that was downloaded in the previous step
+        description: Upload your driver.
         filePathLabel: Choose file
+        shorttitle: Upload driver
+        title: Upload JAR file
+        uploadHelperText: Upload the third party driver that was downloaded in the previous step
       Step2:
-        classnameLabel: Class Name
-        classnamePlaceholder: Driver Class Name. E.g. com.example.MyClass
-        description: Configure the settings for your driver
+        classnameLabel: Class name
+        classnamePlaceholder: Driver class name. E.g. com.example.MyClass
+        description: Configure the settings for your driver.
         descriptionLabel: Description
-        decriptionPlaceholder: Driver Description
+        descriptionPlaceholder: Driver description
         nameLabel: Name
-        namePlaceholder: Driver Name
-        parentArtifactLabel: Parent Artifact
-        shorttitle: Driver Configuration
-        title: Configure Driver
+        namePlaceholder: Driver name
+        parentArtifactLabel: Parent artifact
+        shorttitle: Driver configuration
+        title: Configure driver
       success: You have successfully uploaded the driver "{artifactName}".
-      subtitle: You can now create a pipeline to extract data from Database using the driver.
+      subtitle: You can now create a pipeline to extract data from database using the driver.
     DirectiveUpload:
-      callToAction: Go to Preparation
-      footertitle: Upload Directive Artifact
+      callToAction: Go to preparation
+      footertitle: Upload directive artifact
       Step1:
-        description: Upload your Directive JAR.
+        description: Upload your directive JAR file.
         errorMessage: Invalid directive. Directive must be a JAR file.
-        filePathLabel: Choose File
-        shorttitle: Upload Directive JAR
-        title: Upload Directive JAR
+        filePathLabel: Choose file
+        shorttitle: Upload directive JAR file
+        title: Upload directive JAR file
       Step2:
-        description: Upload the directive configuration JSON.
+        description: Upload the directive configuration JSON file.
         errorMessage: Invalid directive JSON. Plugin configuration should be in JSON format.
         errorMessageParentArtifacts: Invalid directive JSON. Please specify parent artifacts.
-        shorttitle: Upload Directive Configuration JSON
-        title: Upload Directive Configuration JSON
+        shorttitle: Upload directive configuration JSON file
+        title: Upload directive configuration JSON file
       subtitle: Start preparing data with the directive.
       success: You have successfully uploaded the directive "{pluginName}".
     Done: Done
     FailedMessage: Failed to {step}
-    GoToHomePage: Go to Homepage
-    HydratorPipeline:
-      batchLinkLabel: Batch Pipeline
-      message: Choose the pipeline type you would like to create.
-      realtimeLinkLabel: Realtime Pipeline
-      title: Create a Data Pipeline
+    GoToHomePage: Go to homepage
     Informational:
-      headerlabel: Download Information
+      headerlabel: Download information
       Step1:
         description: Please follow the steps specified below to download and configure
-        shorttitle: Download Information
+        shorttitle: Download information
         title: Information
     LibraryUpload:
       callToAction: Create a Pipeline
-      headerlabel: Add Library
-      footertitle: Add Library
+      headerlabel: Add library
+      footertitle: Add library
       Step1:
-        description: Upload your Library
-        shorttitle: Upload Library
-        title: Upload JAR
+        description: Upload your library.
+        shorttitle: Upload library
+        title: Upload JAR file
         filePathLabel: Choose file
       Step2:
-        classnameLabel: Class Name
+        classnameLabel: Class name
         classnamePlaceholder: com.example.MyClass
-        description: Configure the settings for your library
+        description: Configure the settings for your library.
         descriptionLabel: Description
-        decriptionPlaceholder: Library Description
+        descriptionPlaceholder: Library description
         nameLabel: Name
-        namePlaceholder: Library Name
-        parentArtifactLabel: Parent Artifact
-        shorttitle: Library Configuration
-        title: Configure Library
+        namePlaceholder: Library name
+        parentArtifactLabel: Parent artifact
+        shorttitle: Library configuration
+        title: Configure library
         typeLabel: Type
-        typePlaceholder: Library Type. E.g. sparkprogram
+        typePlaceholder: Library type. E.g. sparkprogram
       success: You have successfully uploaded the library "{artifactName}".
       subtitle: You can now create a pipeline using the library.
     licenseStep:
       agreeAndActionBtnLabel: Agree
-      backToCaskBtnLabel: Back to Cask Market
+      backToCaskBtnLabel: Back to Hub
       termsandconditions: Terms and Conditions
     MarketHydratorPluginUpload:
-      headerlabel: Add Hydrator Plugin
+      headerlabel: Add Hydrator plugin
     MicroserviceUpload:
       callToAction: Start Microservice
-      headerlabel: Add Microservice
-      footertitle: Add Microservice
+      headerlabel: Add microservice
+      footertitle: Add microservice
       MicroserviceQueue:
         labels:
           accessId: Access-id
           accessKey: Access-key
-          connection: Connection String
+          connection: Connection string
           endpoint: Endpoint
-          keySerdes: Key Serdes
-          mapRTopic: Topic Name
+          keySerdes: Key serdes
+          mapRTopic: Topic name
           namespace: Namespace
-          queueName: Queue Name
+          queueName: Queue name
           region: Region
-          sslKeystoreFilePath: SSL Keystore File Path
-          sslKeystoreKeyPassword: SSL Keystore Key Password
-          sslKeystorePassword: SSL Keystore Password
-          sslKeystoreType: SSL Keystore Type
-          sslTruststoreFilePath: SSL Truststore File Path
-          sslTruststorePassword: SSL Truststore Password
-          sslTruststoreType: SSL Truststore Type
-          topic: Topic Name
-          valueSerdes: Value Serdes
+          sslKeystoreFilePath: SSL keystore file path
+          sslKeystoreKeyPassword: SSL keystore key password
+          sslKeystorePassword: SSL keystore password
+          sslKeystoreType: SSL keystore type
+          sslTruststoreFilePath: SSL truststore file path
+          sslTruststorePassword: SSL truststore password
+          sslTruststoreType: SSL truststore type
+          topic: Topic name
+          valueSerdes: Value serdes
         types:
           mapr-stream: Mapr Stream
           sqs: Amazon SQS
@@ -2344,13 +2456,13 @@ features:
         description: Provide name, description and version for a microservice you would like to create.
         descriptionPlaceholder: Description of the microservice
         helperText: Microservice Core is not available. Please contact support@cask.co to enable.
-        instanceNameLabel: Instance Name
+        instanceNameLabel: Instance name
         instanceNamePlaceholder: Name of the microservice instance
-        microserviceOptionLabel: Microservice Name
+        microserviceOptionLabel: Microservice name
         microserviceOptionPlaceholder: Name of the microservice
         newMicroservicePlaceholder: Name of the new microservice
         shorttitle: General
-        summary: "Creates an instance of Microservice '{microserviceName}' with name '{instanceName}' and version {version}."
+        summary: "Creates an instance of microservice '{microserviceName}' with name '{instanceName}' and version {version}."
         title: General
         versionLabel: Version
         versionPlaceholder: Version of the microservice
@@ -2358,15 +2470,15 @@ features:
         description: An Artifact containing implementation of the microservice interface.
         errorMessage: Invalid plugin. Plugin must be a JAR file.
         filePathLabel: Choose file
-        shorttitle: Artifact JAR
-        title: Artifact JAR
+        shorttitle: Artifact JAR file
+        title: Artifact JAR file
       Step3:
         description: A configuration for this microservice artifact.
         errorMessage: Invalid microservice JSON. Microservice configuration should be in JSON format.
         errorMessageParentArtifacts: Invalid microservice JSON. Please specify parent artifacts.
         filePathLabel: Choose file
-        shorttitle: Artifact JSON
-        title: Artifact JSON
+        shorttitle: Artifact JSON file
+        title: Artifact JSON file
       Step4:
         description: Specify resources for the runtime of this microservice.
         instancesLabel: Instances
@@ -2392,19 +2504,19 @@ features:
         thresholdLabel: Threshold
         thresholdPlaceholder: TBD
         title: Resources
-        vcoresLabel: Virtual Cores
+        vcoresLabel: Virtual cores
         vcoresPlaceholder: The number of virtual cores for the microservice
       Step5:
         description: Provide inbound queue properties.
-        fetchLabel: Fetch Size
-        propertiesLabel: Inbound Queues
-        shorttitle: Inbound Queues
-        title: Inbound Queues
+        fetchLabel: Fetch size
+        propertiesLabel: Inbound queues
+        shorttitle: Inbound queues
+        title: Inbound queues
       Step6:
         description: Provide outbound queue properties.
-        propertiesLabel: Outbound Queues
-        shorttitle: Outbound Queues
-        title: Outbound Queues
+        propertiesLabel: Outbound queues
+        shorttitle: Outbound queues
+        title: Outbound queues
       Step7:
         description: Provide microservice specific properties.
         keyPlaceholder: name
@@ -2420,79 +2532,79 @@ features:
     OneStepDeploy:
       headerlabel: Deploy
       Step1:
-        description: Deploy {entityType} using JAR file
+        description: Deploy {entityType} using JAR file.
         shorttitle: Deploy {entityType}
-        title: Deploy JAR
+        title: Deploy JAR file
     PluginArtifact:
-      callToAction: Create a Pipeline
-      footertitle: Upload Plugin Artifact
+      callToAction: Create a pipeline
+      footertitle: Upload plugin artifact
       Step1:
-        description: Upload your plugin JAR.
+        description: Upload your plugin JAR file.
         errorMessage: Invalid plugin. Plugin must be a JAR file.
         filePathLabel: Choose File
-        shorttitle: Upload Plugin JAR
-        title: Upload Plugin JAR
+        shorttitle: Upload plugin JAR file
+        title: Upload plugin JAR file
       Step2:
-        description: Upload the plugin configuration JSON.
+        description: Upload the plugin configuration JSON file.
         errorMessage: Invalid plugin JSON. Plugin configuration should be in JSON format.
         errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts.
-        shorttitle: Upload Plugin Configuration JSON
-        title: Upload Plugin Configuration JSON
+        shorttitle: Upload plugin configuration JSON file
+        title: Upload plugin configuration JSON file
       subtitle: Start creating a pipeline with the plugin.
       success: You have successfully uploaded the plugin "{pluginName}".
     PublishPipeline:
       callToAction:
         customize: Customize Pipeline
         view: View Pipeline
-      headerlabel: Deploy Pipeline
-      pipelinenameplaceholder: Pipeline Name
+      headerlabel: Deploy pipeline
+      pipelinenameplaceholder: Pipeline name
       Step1:
         description: Specify the name of the pipeline.
-        shorttitle: Configure Pipeline
-        title: Configure a Pipeline
+        shorttitle: Configure pipeline
+        title: Configure a pipeline
       success: You have successfully created the pipeline "{pipelineName}".
     Skip: Skipped
     StreamCreate:
       callToAction: View Stream Details
-      headerlabel: Create Stream
+      headerlabel: Create stream
       secondaryCallToAction:
-        uploadData: Upload Data to Stream
-        queryStream: Query Stream
+        queryStream: Query stream
+        uploadData: Upload data to stream
       Step1:
         description: Provide information about the stream you want to create.
-        shorttitle: General Information
+        shorttitle: General information
         title: General
         ttl-placeholder: Specify the time-to-live for events in seconds
         ttllabel: TTL
       Step2:
         description: Setting format and schema allows you to perform schema-on-read.
-        shorttitle: Setup Format and Schema
-        title: Set Format and Schema
+        shorttitle: Setup format and schema
+        title: Set format and schema
       Step3:
         description: Setting up a trigger configures CDAP to notify systems observing to start processing.
         mblabel: Megabytes (MB)
-        shorttitle: Trigger Setup
+        shorttitle: Trigger setup
         thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing the data in this stream.
-        title: Setup a Trigger
+        title: Setup a trigger
       Step4:
         description: Upload data to the stream you created.
-        shorttitle: Upload Data
-        title: Upload Data
+        shorttitle: Upload data
+        title: Upload data
       success: You have successfully created the stream "{streamName}".
     UploadData:
       callToAction: View Stream Details
-      headerlabel: Upload Data
+      headerlabel: Upload data
       Step1:
         description: Shows the data that would be uploaded to a destination for your reference.
-        shorttitle: View Data
-        title: View Data
+        shorttitle: View data
+        title: View data
       Step2:
-        dataentitynameplaceholder: Dataset/Stream Name
+        dataentitynameplaceholder: Dataset/Stream name
         description: Select the destination where the data needs to be uploaded.
-        destinationname: Destination Name
-        destinationtype: Destination Type
-        shorttitle: Select Destination
-        title: Select a Destination
+        destinationname: Destination name
+        destinationtype: Destination type
+        shorttitle: Select destination
+        title: Select a destination
         tooltiptext: The stream will be created if it does not exist
       subtitle: to the stream "{streamId}".
       success: You have successfully uploaded the datapack "{datapackName}"

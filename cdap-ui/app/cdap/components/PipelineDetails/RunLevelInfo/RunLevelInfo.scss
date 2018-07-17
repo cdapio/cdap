@@ -28,6 +28,7 @@ $border-color: $grey-05;
   color: $grey-02;
   position: absolute;
   margin-left: 20px;
+  background-color: $grey-08;
 
   .run-info-container {
     display: inline-block;
@@ -163,6 +164,9 @@ $border-color: $grey-05;
           .historical-runtimeargs-keyvalues {
             text-align: left;
             padding: 10px 0;
+            height: calc(100% - 65px);
+            overflow-y: auto;
+
             > div {
               display: grid;
               padding: 5px 0;

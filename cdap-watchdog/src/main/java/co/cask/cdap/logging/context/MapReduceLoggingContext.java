@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,5 +40,10 @@ public class MapReduceLoggingContext extends ApplicationLoggingContext {
   @Override
   public String getLogPartition() {
     return String.format("%s:%s", super.getLogPartition(), getSystemTag(TAG_MAP_REDUCE_JOB_ID));
+  }
+
+  @Override
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/mapred-%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_MAP_REDUCE_JOB_ID));
   }
 }

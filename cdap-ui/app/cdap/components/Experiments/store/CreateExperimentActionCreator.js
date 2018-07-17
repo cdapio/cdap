@@ -352,10 +352,12 @@ function trainModel() {
   let {experiments_create, model_create} = createExperimentStore.getState();
   let {name: experimentId} = experiments_create;
   let {modelId, name: modelName} = model_create;
+  let formattedExperimentName = experimentId.replace(/[^\w]/g, '');
+  let formattedModelName = modelName.replace(/[^\w]/g, '');
   let postBody = {
     algorithm: model_create.algorithm.name,
     hyperparameters: model_create.algorithm.hyperparameters,
-    predictionsDataset: `${experimentId}_${modelName}_dataset`
+    predictionsDataset: `${formattedExperimentName}_${formattedModelName}_dataset`
   };
   return myExperimentsApi
     .trainModel({

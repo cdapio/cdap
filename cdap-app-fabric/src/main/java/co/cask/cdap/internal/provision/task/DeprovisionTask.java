@@ -23,11 +23,11 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
-import co.cask.cdap.internal.provision.SecureKeyInfo;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import org.apache.tephra.TransactionFailureException;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +57,7 @@ public class DeprovisionTask extends ProvisioningTask {
   private final Provisioner provisioner;
   private final ProvisionerContext provisionerContext;
   private final ProvisionerNotifier provisionerNotifier;
-  private final LocationFactory locationFactory;
-  private final SecureKeyInfo secureKeyInfo;
+  private final Location keysDir;
 
   public DeprovisionTask(ProvisioningTaskInfo initialTaskInfo, Transactional transactional,
                          DatasetFramework datasetFramework, int retryTimeLimitSecs, Provisioner provisioner,
@@ -68,8 +67,7 @@ public class DeprovisionTask extends ProvisioningTask {
     this.provisioner = provisioner;
     this.provisionerContext = provisionerContext;
     this.provisionerNotifier = provisionerNotifier;
-    this.locationFactory = locationFactory;
-    this.secureKeyInfo = initialTaskInfo.getSecureKeyInfo();
+    this.keysDir = locationFactory.create(initialTaskInfo.getSecureKeysDir());
   }
 
   @Override
@@ -90,9 +88,7 @@ public class DeprovisionTask extends ProvisioningTask {
             provisionerNotifier.deprovisioned(programRunId);
           } finally {
             // Delete the keys. We only delete when the cluster is gone.
-            if (secureKeyInfo != null) {
-              Locations.deleteQuietly(locationFactory.create(secureKeyInfo.getKeyDirectory()), true);
-            }
+            Locations.deleteQuietly(keysDir, true);
           }
           return Optional.of(ProvisioningOp.Status.DELETED);
         case RUNNING:

@@ -100,7 +100,9 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
 
   /**
    * @see ApplicationConfigurer#addFlow(Flow)
+   * @deprecated As of release 5.0.0, replaced by {@link @ProgramType.SPARK} for realtime processing.
    */
+  @Deprecated
   protected void addFlow(Flow flow) {
     configurer.addFlow(flow);
   }

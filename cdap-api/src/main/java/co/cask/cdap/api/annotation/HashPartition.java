@@ -96,9 +96,11 @@ import java.lang.annotation.Target;
  * @see Batch
  * @see RoundRobin
  * @see ProcessInput
+ * @deprecated As of release 5.0.0, replaced by {@link @ProgramType.SPARK} for realtime processing.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@Deprecated
 public @interface HashPartition {
   /**
    * Declare the name of the partitioning key to the process methods

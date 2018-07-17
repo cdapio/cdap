@@ -133,18 +133,6 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
     }
   }
 
-  /**
-   * Called when the RetryStrategy used by this class returns a negative number, indicating to abort the operation.
-   * This method allows a subclass to terminate the service (by throwing exception), or to continue retrying by
-   * avoiding throwing of the exception, which resets the retry count.
-   *
-   * @param e the exception which exhausted retries
-   * @return the number of milliseconds to delay until the next iteration of the {@link #runTask} method.
-   */
-  protected long handleRetriesExhausted(Exception e) throws Exception {
-    throw e;
-  }
-
   @Override
   protected final void runOneIteration() throws Exception {
     try {
@@ -165,9 +153,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
         e.addSuppressed(new RetriesExhaustedException(String.format("Retries exhausted after %d failures and %d ms.",
                                                                     failureCount,
                                                                     System.currentTimeMillis() - nonFailureStartTime)));
-        delayMillis = Math.max(0L, handleRetriesExhausted(e));
-        nonFailureStartTime = 0L;
-        failureCount = 0;
+        throw e;
       }
       this.delayMillis = delayMillis;
     }

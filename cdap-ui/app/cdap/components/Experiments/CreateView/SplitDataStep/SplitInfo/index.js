@@ -20,6 +20,9 @@ import {connect} from 'react-redux';
 import SplitInfoTable from 'components/Experiments/CreateView/SplitDataStep/SplitInfoTable';
 import SplitInfoGraph from 'components/Experiments/CreateView/SplitDataStep/SplitInfoGraph';
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.CreateView';
 
 require('./SplitInfo.scss');
 
@@ -50,7 +53,7 @@ class SplitInfo extends Component {
   render() {
     return (
       <div className="split-info">
-        <h5> Verify Sample by Feature or Outcome </h5>
+        <h5>{T.translate(`${PREFIX}.verifySample`)}</h5>
         <div className="active-column-container">
           <span>Displaying column: </span>
           <strong>

@@ -40,7 +40,7 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.api.lineage.field.Operation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
@@ -49,7 +49,7 @@ import co.cask.cdap.etl.batch.connector.SingleConnectorFactory;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
-import co.cask.cdap.etl.common.OperationTypeAdapter;
+import co.cask.cdap.etl.common.PipelineOperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
@@ -89,7 +89,7 @@ public class ETLSpark extends AbstractSpark {
     .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
     .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
     .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+    .registerTypeAdapter(PipelineOperation.class, new PipelineOperationTypeAdapter())
     .create();
 
   private final BatchPhaseSpec phaseSpec;
@@ -151,7 +151,7 @@ public class ETLSpark extends AbstractSpark {
 
     PipelinePhase phase = phaseSpec.getPhase();
     // Collect field operations emitted by various stages in this MapReduce program
-    final Map<String, List<Operation>> stageOperations = new HashMap<>();
+    final Map<String, List<PipelineOperation>> stageOperations = new HashMap<>();
     // go through in topological order so that arguments set by one stage are seen by stages after it
     for (final String stageName : phase.getDag().getTopologicalOrder()) {
       final StageSpec stageSpec = phase.getStage(stageName);
@@ -176,7 +176,7 @@ public class ETLSpark extends AbstractSpark {
                 new SubmitterPlugin.PrepareAction<SparkBatchSourceContext>() {
           @Override
           public void act(SparkBatchSourceContext context) {
-            stageOperations.put(stageName, context.getOperations());
+            stageOperations.put(stageName, context.getPipelineOperations());
           }
         });
 
@@ -194,7 +194,7 @@ public class ETLSpark extends AbstractSpark {
                 new SubmitterPlugin.PrepareAction<SparkBatchSourceContext>() {
           @Override
           public void act(SparkBatchSourceContext context) {
-            stageOperations.put(stageName, context.getOperations());
+            stageOperations.put(stageName, context.getPipelineOperations());
           }
         });
 
@@ -211,7 +211,7 @@ public class ETLSpark extends AbstractSpark {
                 new SubmitterPlugin.PrepareAction<SparkBatchSinkContext>() {
           @Override
           public void act(SparkBatchSinkContext context) {
-            stageOperations.put(stageName, context.getOperations());
+            stageOperations.put(stageName, context.getPipelineOperations());
           }
         });
 
@@ -236,7 +236,7 @@ public class ETLSpark extends AbstractSpark {
                 new SubmitterPlugin.PrepareAction<DefaultAggregatorContext>() {
           @Override
           public void act(DefaultAggregatorContext context) {
-            stageOperations.put(stageName, context.getOperations());
+            stageOperations.put(stageName, context.getPipelineOperations());
           }
         });
 
@@ -251,7 +251,7 @@ public class ETLSpark extends AbstractSpark {
             @Override
             public void act(DefaultJoinerContext sparkJoinerContext) {
               stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());
-              stageOperations.put(stageName, sparkJoinerContext.getOperations());
+              stageOperations.put(stageName, sparkJoinerContext.getPipelineOperations());
             }
           });
 

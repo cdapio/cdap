@@ -18,14 +18,12 @@ package co.cask.cdap.api.spark
 
 import java.io.IOException
 
-import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional, TxRunnable}
 import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.messaging.MessagingContext
-import co.cask.cdap.api.metadata.MetadataReader
-import co.cask.cdap.api.metadata.MetadataWriter
+import co.cask.cdap.api.metadata.{MetadataReader, MetadataWriter}
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo
@@ -33,17 +31,17 @@ import co.cask.cdap.api.security.store.SecureStore
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
+import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional, TxRunnable}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.tephra.TransactionFailureException
 
 import scala.reflect.ClassTag
-
 /**
   * Spark program execution context. User Spark program can interact with CDAP through this context.
   */
 @Beta
-trait SparkExecutionContextBase extends RuntimeContext with Transactional {
+trait SparkExecutionContextBase extends RuntimeContext with Transactional with MetadataReader with MetadataWriter {
 
   /**
     * @return The specification used to configure this Spark job instance.
@@ -98,22 +96,6 @@ trait SparkExecutionContextBase extends RuntimeContext with Transactional {
     * @return A [[co.cask.cdap.api.messaging.MessagingContext]]
     */
   def getMessagingContext: MessagingContext
-
-  /**
-    * Returns a [[co.cask.cdap.api.metadata.MetadataReader]] which can be used to read metadata.
-    * Currently the returned instance can only be used in the Spark driver process.
-    *
-    * @return A [[co.cask.cdap.api.metadata.MetadataReader]]
-    */
-  def getMetadataReader: MetadataReader
-
-  /**
-    * Returns a [[co.cask.cdap.api.metadata.MetadataWriter]] which can be used to emit metadata.
-    * Currently the returned instance can only be used in the Spark driver process.
-    *
-    * @return A [[co.cask.cdap.api.metadata.MetadataWriter]]
-    */
-  def getMetadataWriter: MetadataWriter
 
   /**
     * Returns the [[co.cask.cdap.api.workflow.WorkflowToken]] if the Spark program

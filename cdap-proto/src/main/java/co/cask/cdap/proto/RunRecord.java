@@ -26,7 +26,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * This class records information for a particular run.
+ * This class records information for a particular run. The timestamp in the run record has time unit SECONDS
  */
 public class RunRecord {
   @SerializedName("runid")

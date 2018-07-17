@@ -57,6 +57,7 @@ import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -66,6 +67,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +77,7 @@ import java.util.Set;
 /**
  * Tests for {@link MetadataStore}
  */
-public class MetadataStoreTest {
+public class DefaultMetadataStoreTest {
   private static final Map<String, String> EMPTY_PROPERTIES = Collections.emptyMap();
   private static final Set<String> EMPTY_TAGS = Collections.emptySet();
   private static final Map<MetadataScope, Metadata> EMPTY_USER_METADATA =
@@ -183,7 +186,7 @@ public class MetadataStoreTest {
 
   private static CConfiguration cConf;
   private static TransactionManager txManager;
-  private static MetadataStore store;
+  private static DefaultMetadataStore store;
   private static InMemoryAuditPublisher auditPublisher;
 
   @BeforeClass
@@ -210,13 +213,18 @@ public class MetadataStoreTest {
     cConf = injector.getInstance(CConfiguration.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    store = injector.getInstance(MetadataStore.class);
+    store = injector.getInstance(DefaultMetadataStore.class);
     auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
   }
 
   @Before
   public void clearAudit() {
     auditPublisher.popMessages();
+  }
+
+  @After
+  public void cleanupTest() throws Exception {
+    store.deleteDatasets();
   }
 
   @Test
@@ -325,6 +333,151 @@ public class MetadataStoreTest {
     Assert.assertEquals(3, response.getTotal());
     actual = Lists.newArrayList(response.getResults());
     Assert.assertTrue(actual.containsAll(expected));
+  }
+
+  @Test
+  public void testCrossNamespaceSearch() {
+    NamespaceId ns1 = new NamespaceId("ns1");
+    NamespaceId ns2 = new NamespaceId("ns2");
+
+    MetadataEntity ns1app1 = ns1.app("a1").toMetadataEntity();
+    MetadataEntity ns1app2 = ns1.app("a2").toMetadataEntity();
+    MetadataEntity ns1app3 = ns1.app("a3").toMetadataEntity();
+    MetadataEntity ns2app1 = ns2.app("a1").toMetadataEntity();
+    MetadataEntity ns2app2 = ns2.app("a2").toMetadataEntity();
+
+    store.setProperty(MetadataScope.USER, ns1app1, "k1", "v1");
+    store.addTags(MetadataScope.USER, ns1app1, Collections.singleton("v1"));
+    Metadata meta = new Metadata(Collections.singletonMap("k1", "v1"), Collections.singleton("v1"));
+    MetadataSearchResultRecordV2 ns1app1Record =
+      new MetadataSearchResultRecordV2(ns1app1, Collections.singletonMap(MetadataScope.USER, meta));
+
+    store.setProperty(MetadataScope.USER, ns1app2, "k1", "v1");
+    store.setProperty(MetadataScope.USER, ns1app2, "k2", "v2");
+    meta = new Metadata(ImmutableMap.of("k1", "v1", "k2", "v2"), Collections.emptySet());
+    MetadataSearchResultRecordV2 ns1app2Record =
+      new MetadataSearchResultRecordV2(ns1app2, Collections.singletonMap(MetadataScope.USER, meta));
+
+    store.setProperty(MetadataScope.USER, ns1app3, "k1", "v1");
+    store.setProperty(MetadataScope.USER, ns1app3, "k3", "v3");
+    meta = new Metadata(ImmutableMap.of("k1", "v1", "k3", "v3"), Collections.emptySet());
+    MetadataSearchResultRecordV2 ns1app3Record =
+      new MetadataSearchResultRecordV2(ns1app3, Collections.singletonMap(MetadataScope.USER, meta));
+
+    store.setProperty(MetadataScope.USER, ns2app1, "k1", "v1");
+    store.setProperty(MetadataScope.USER, ns2app1, "k2", "v2");
+    meta = new Metadata(ImmutableMap.of("k1", "v1", "k2", "v2"), Collections.emptySet());
+    MetadataSearchResultRecordV2 ns2app1Record =
+      new MetadataSearchResultRecordV2(ns2app1, Collections.singletonMap(MetadataScope.USER, meta));
+
+    store.setProperty(MetadataScope.USER, ns2app2, "k1", "v1");
+    store.addTags(MetadataScope.USER, ns2app2, ImmutableSet.of("v2", "v3"));
+    meta = new Metadata(ImmutableMap.of("k1", "v1"), ImmutableSet.of("v2", "v3"));
+    MetadataSearchResultRecordV2 ns2app2Record =
+      new MetadataSearchResultRecordV2(ns2app2, Collections.singletonMap(MetadataScope.USER, meta));
+
+    // everything should match 'v1'
+    SearchRequest request = new SearchRequest(null, "v1", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                              0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
+    MetadataSearchResponseV2 results = store.search(request);
+    Set<MetadataSearchResultRecordV2> expected = new HashSet<>();
+    expected.add(ns1app1Record);
+    expected.add(ns1app2Record);
+    expected.add(ns1app3Record);
+    expected.add(ns2app1Record);
+    expected.add(ns2app2Record);
+    Assert.assertEquals(expected, results.getResults());
+
+    // ns1app2, ns2app1, and ns2app2 should match 'v2'
+    request = new SearchRequest(null, "v2", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
+    results = store.search(request);
+    expected.clear();
+    expected.add(ns1app2Record);
+    expected.add(ns2app1Record);
+    expected.add(ns2app2Record);
+    Assert.assertEquals(expected, results.getResults());
+
+    // ns1app3 and ns2app2 should match 'v3'
+    request = new SearchRequest(null, "v3", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
+    results = store.search(request);
+    expected.clear();
+    expected.add(ns1app3Record);
+    expected.add(ns2app2Record);
+    Assert.assertEquals(expected, results.getResults());
+  }
+
+  @Test
+  public void testCrossNamespacePagination() {
+    NamespaceId ns1 = new NamespaceId("ns1");
+    NamespaceId ns2 = new NamespaceId("ns2");
+
+    MetadataEntity ns1app1 = ns1.app("a1").toMetadataEntity();
+    MetadataEntity ns1app2 = ns1.app("a2").toMetadataEntity();
+    MetadataEntity ns1app3 = ns1.app("a3").toMetadataEntity();
+    MetadataEntity ns2app1 = ns2.app("a1").toMetadataEntity();
+    MetadataEntity ns2app2 = ns2.app("a2").toMetadataEntity();
+
+    Metadata meta = new Metadata(Collections.emptyMap(), Collections.singleton("v1"));
+
+    store.addTags(MetadataScope.USER, ns1app1, Collections.singleton("v1"));
+    store.addTags(MetadataScope.USER, ns1app2, Collections.singleton("v1"));
+    store.addTags(MetadataScope.USER, ns1app3, Collections.singleton("v1"));
+    store.addTags(MetadataScope.USER, ns2app1, Collections.singleton("v1"));
+    store.addTags(MetadataScope.USER, ns2app2, Collections.singleton("v1"));
+
+    // first get everything
+    SearchRequest request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                              0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
+    MetadataSearchResponseV2 results = store.search(request);
+    Assert.assertEquals(5, results.getResults().size());
+
+    Iterator<MetadataSearchResultRecordV2> resultIter = results.getResults().iterator();
+
+    MetadataSearchResultRecordV2 result1 = resultIter.next();
+    MetadataSearchResultRecordV2 result2 = resultIter.next();
+    MetadataSearchResultRecordV2 result3 = resultIter.next();
+    MetadataSearchResultRecordV2 result4 = resultIter.next();
+    MetadataSearchResultRecordV2 result5 = resultIter.next();
+
+    // get 4 results (guaranteed to have at least one from each namespace), offset 1
+    request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                1, 4, 0, null, false, EnumSet.allOf(EntityScope.class));
+    results = store.search(request);
+
+    List<MetadataSearchResultRecordV2> expected = new ArrayList<>();
+    expected.add(result2);
+    expected.add(result3);
+    expected.add(result4);
+    expected.add(result5);
+    List<MetadataSearchResultRecordV2> actual = new ArrayList<>(results.getResults());
+    Assert.assertEquals(expected, actual);
+
+    // get the first four
+    request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                0, 4, 0, null, false, EnumSet.allOf(EntityScope.class));
+    results = store.search(request);
+    expected.clear();
+    expected.add(result1);
+    expected.add(result2);
+    expected.add(result3);
+    expected.add(result4);
+    actual.clear();
+    actual.addAll(results.getResults());
+    Assert.assertEquals(expected, actual);
+
+    // get middle 3
+    request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                1, 3, 0, null, false, EnumSet.allOf(EntityScope.class));
+    results = store.search(request);
+    expected.clear();
+    expected.add(result2);
+    expected.add(result3);
+    expected.add(result4);
+    actual.clear();
+    actual.addAll(results.getResults());
+    Assert.assertEquals(expected, actual);
   }
 
   // Tests pagination for search results queries that do not have indexes stored in sorted order

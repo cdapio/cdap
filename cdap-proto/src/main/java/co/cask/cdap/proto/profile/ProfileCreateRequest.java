@@ -25,10 +25,12 @@ import javax.annotation.Nullable;
  * Information about a profile.
  */
 public class ProfileCreateRequest {
+  private final String label;
   private final String description;
   private final ProvisionerInfo provisioner;
 
-  public ProfileCreateRequest(String description, ProvisionerInfo provisioner) {
+  public ProfileCreateRequest(String label, String description, ProvisionerInfo provisioner) {
+    this.label = label;
     this.description = description;
     this.provisioner = provisioner;
   }
@@ -39,6 +41,10 @@ public class ProfileCreateRequest {
     // This is to make sure there is no null value in provisioner properties,
     // since Gson will deserialize non-existing property to null value.
     return provisioner == null ? null : new ProvisionerInfo(provisioner.getName(), provisioner.getProperties());
+  }
+
+  public String getLabel() {
+    return label;
   }
 
   public String getDescription() {
@@ -53,14 +59,14 @@ public class ProfileCreateRequest {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     ProfileCreateRequest that = (ProfileCreateRequest) o;
-    return Objects.equals(description, that.description) &&
+    return Objects.equals(label, that.label) &&
+      Objects.equals(description, that.description) &&
       Objects.equals(provisioner, that.provisioner);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(description, provisioner);
+    return Objects.hash(label, description, provisioner);
   }
 }
