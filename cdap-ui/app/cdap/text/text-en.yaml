@@ -1704,7 +1704,7 @@ features:
       errors: Errors
       logs: Run Logs
       noRuns: No Runs
-      noRuntimeArgs: No runtime arguments available
+      noRuntimeArgsForRun: No runtime arguments available for this run.
       pipelineNeverRun: 'This pipeline has never been run.'
       RunComputeProfile:
         label: Run compute profile
