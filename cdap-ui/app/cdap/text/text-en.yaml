@@ -1696,18 +1696,18 @@ features:
       toCreate: to create one
 
     RunLevel:
-      configs: Run Configs
+      configs: Runtime Args
       configsModelessTitle: "Runtime arguments for run #{currentRunIndex}"
       copyRuntimeArgsBtnLabel: Copy Runtime Arguments
       currentIndex: '({currentRunIndex} of {numRuns})'
       currentRunIndex: 'Run {currentRunIndex} of {numRuns}'
       errors: Errors
-      logs: Run Logs
+      logs: Logs
       noRuns: No Runs
       noRuntimeArgsForRun: No runtime arguments available for this run.
       pipelineNeverRun: 'This pipeline has never been run.'
       RunComputeProfile:
-        label: Run compute profile
+        label: Compute profile
         noInfo: Profile information unavailable
       runsCurrentlyRunning: Runs currently running - select one to view
       status: Status
