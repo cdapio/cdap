@@ -43,7 +43,7 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
 
     if (buckets[startTime]) {
       // add start method
-      if (runInfo.startMethod === 'manual') {
+      if (runInfo.startMethod === 'MANUAL') {
         buckets[startTime].manual++;
       } else {
         buckets[startTime].schedule++;

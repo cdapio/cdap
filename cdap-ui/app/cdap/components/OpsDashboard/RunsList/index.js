@@ -16,7 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import {connect} from 'react-redux';
 import {humanReadableDuration, humanReadableDate} from 'services/helpers';
 import SortableStickyGrid from 'components/SortableStickyGrid';
@@ -24,6 +23,7 @@ import capitalize from 'lodash/capitalize';
 import StatusMapper from 'services/StatusMapper';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import TopPanel from 'components/OpsDashboard/RunsList/TopPanel';
 
 const PREFIX = 'features.OpsDashboard.RunsList';
 
@@ -142,52 +142,11 @@ function RunsListView({bucketInfo}) {
     );
   }
 
-  let date = parseInt(bucketInfo.time, 10);
-
-  let timeRangeStart = moment(date).format('h a');
-  let timeRangeStop = moment(date).add(1, 'h').format('h a');
-
   return (
     <div className="runs-list-container">
-      <div className="top-panel-data">
-        <div className="date">
-          <div className="title">
-            {T.translate(`${PREFIX}.date`)}
-          </div>
-          <div>{moment(date).format('ddd, MMM D, YYYY')}</div>
-        </div>
-
-        <div className="time-range">
-          <div className="title">
-            {T.translate(`${PREFIX}.timeRange`)}
-          </div>
-          <div>{timeRangeStart} - {timeRangeStop}</div>
-        </div>
-
-        <div className="type">
-          <div className="title">
-            {T.translate(`${PREFIX}.type`)}
-          </div>
-          <div>{T.translate(`${PREFIX}.all`)}</div>
-        </div>
-
-        <div className="start-method">
-          <div className="title">
-            {T.translate(`${PREFIX}.startMethod`)}
-          </div>
-          <div>{T.translate(`${PREFIX}.viewAll`)}</div>
-        </div>
-
-        <div className="status">
-          <div className="title">
-            {T.translate(`${PREFIX}.status`)}
-          </div>
-          <div>{T.translate(`${PREFIX}.all`)}</div>
-        </div>
-      </div>
+      <TopPanel />
 
       {renderGrid(bucketInfo.runsList)}
-
     </div>
   );
 }
