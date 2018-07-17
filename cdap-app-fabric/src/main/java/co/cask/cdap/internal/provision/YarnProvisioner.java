@@ -18,14 +18,16 @@ package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategies;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
-import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Default provisioner that doesn't provision a cluster
@@ -48,19 +50,30 @@ public class YarnProvisioner implements Provisioner {
   }
 
   @Override
-  public Cluster createCluster(ProvisionerContext context) throws RetryableProvisionException {
+  public Cluster createCluster(ProvisionerContext context) {
     return new Cluster(context.getProgramRun().getRun(), ClusterStatus.RUNNING,
                        Collections.emptyList(), Collections.emptyMap());
   }
 
   @Override
-  public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
+  public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) {
     ClusterStatus status = cluster.getStatus();
-    return new Cluster(cluster, status == ClusterStatus.DELETING ? ClusterStatus.NOT_EXISTS : status);
+    return status == ClusterStatus.DELETING ? ClusterStatus.NOT_EXISTS : status;
   }
 
   @Override
-  public void deleteCluster(ProvisionerContext context, Cluster cluster) throws RetryableProvisionException {
+  public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) {
+    return new Cluster(cluster, getClusterStatus(context, cluster));
+  }
+
+  @Override
+  public void deleteCluster(ProvisionerContext context, Cluster cluster) {
     // no-op
+  }
+
+  @Override
+  public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
+    // shouldn't matter, as we won't ever poll
+    return PollingStrategies.fixedInterval(2, TimeUnit.SECONDS);
   }
 }

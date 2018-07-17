@@ -163,7 +163,7 @@ public abstract class AbstractMetadataClient {
   /**
    * Searches entities in the specified namespace whose metadata matches the specified query.
    *
-   * @param namespace the namespace to search in
+   * @param namespace the namespace to search in or null if it is a cross namespace search
    * @param query the query string with which to search
    * @param targets {@link EntityTypeSimpleName}s to search. If empty, all possible types will be searched
    * @param sort specifies sort field and sort order. If {@code null}, the sort order is by relevance
@@ -179,7 +179,7 @@ public abstract class AbstractMetadataClient {
    * @param showCustom boolean which specifies whether to display custom entities or not.
    * @return A set of {@link MetadataSearchResponseV2} for the given query.
    */
-  public MetadataSearchResponseV2 searchMetadata(NamespaceId namespace, String query,
+  public MetadataSearchResponseV2 searchMetadata(@Nullable NamespaceId namespace, String query,
                                                  Set<EntityTypeSimpleName> targets, @Nullable String sort,
                                                  int offset, int limit, int numCursors,
                                                  @Nullable String cursor, boolean showHidden, boolean showCustom)
@@ -190,11 +190,16 @@ public abstract class AbstractMetadataClient {
     return GSON.fromJson(response.getResponseBodyAsString(), MetadataSearchResponseV2.class);
   }
 
-  private HttpResponse searchMetadataHelper(NamespaceId namespace, String query, Set<EntityTypeSimpleName> targets,
+  private HttpResponse searchMetadataHelper(@Nullable NamespaceId namespace, String query,
+                                            Set<EntityTypeSimpleName> targets,
                                             @Nullable String sort, int offset, int limit, int numCursors,
                                             @Nullable String cursor, boolean showHidden, boolean showCustom)
     throws IOException, UnauthenticatedException, BadRequestException {
-    StringBuilder path = new StringBuilder(String.format("metadata/search?query=%s", query));
+    StringBuilder path = new StringBuilder();
+    if (namespace != null) {
+      path.append("namespaces/").append(namespace.getNamespace()).append("/");
+    }
+    path.append("metadata/search?query=").append(query);
     for (EntityTypeSimpleName t : targets) {
       path.append("&target=").append(t);
     }
@@ -213,7 +218,7 @@ public abstract class AbstractMetadataClient {
     if (showCustom) {
       path.append("&showCustom=" + true);
     }
-    URL searchURL = resolve(namespace, path.toString());
+    URL searchURL = resolve(path.toString());
     HttpResponse response = execute(HttpRequest.get(searchURL).build(), HttpResponseStatus.BAD_REQUEST.code());
     if (HttpResponseStatus.BAD_REQUEST.code() == response.getResponseCode()) {
       throw new BadRequestException(response.getResponseBodyAsString());

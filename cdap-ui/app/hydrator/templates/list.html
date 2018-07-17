@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2018 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
 -->
 
 <div class="side-panel top clearfix">
-  <h1 class="pull-left">My Pipelines</h1>
+  <h1 class="pull-left">Pipelines</h1>
   <ul ng-if="ListController.pipelineList.length > 0" class="list-unstyled list-inline pull-left">
     <li>
       <span>{{ ListController.pipelineList.length }}</span>
@@ -45,14 +45,14 @@
       <table class="table" cask-sortable>
         <thead>
           <tr ng-class="{'sort-enabled': ListController.pipelineList.length>0}">
-            <th data-predicate="name">Pipeline Name</th>
+            <th data-predicate="name">Pipeline name</th>
             <th data-predicate="artifact.name">Type</th>
             <th data-predicate="displayStatus">Status</th>
-            <th data-predicate="_stats.numRuns">Total Runs</th>
+            <th data-predicate="_stats.numRuns">Total runs</th>
             <th data-predicate="_stats.lastStartTime"
-                  data-predicate-default>Last Start Time</th>
+                  data-predicate-default>Last start time</th>
             <th data-predicate="duration">Duration</th>
-            <th data-predicate="_stats.nextRun">Next Run</th>
+            <th data-predicate="_stats.nextRun">Next run</th>
             <th skip-sort></th>
           </tr>
         </thead>

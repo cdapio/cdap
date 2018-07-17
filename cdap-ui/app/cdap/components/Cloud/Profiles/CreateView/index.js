@@ -30,7 +30,7 @@ import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabC
 import EntityTopPanel from 'components/EntityTopPanel';
 import PropertyLock from 'components/Cloud/Profiles/CreateView/PropertyLock';
 import { UncontrolledTooltip } from 'components/UncontrolledComponents';
-import {ConnectedProfileName, ConnectedProfileDescription} from 'components/Cloud/Profiles/CreateView/CreateProfileMetadata';
+import {ConnectedProfileName, ConnectedProfileDescription, ConnectedProfileLabel} from 'components/Cloud/Profiles/CreateView/CreateProfileMetadata';
 import {
   initializeProperties,
   updateProperty,
@@ -40,6 +40,9 @@ import CreateProfileBtn from 'components/Cloud/Profiles/CreateView/CreateProfile
 import uuidV4 from 'uuid/v4';
 import CreateProfileStore from 'components/Cloud/Profiles/CreateView/CreateProfileStore';
 import {highlightNewProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Cloud.Profiles.CreateView';
 
 require('./CreateView.scss');
 
@@ -85,9 +88,10 @@ class ProfileCreateView extends Component {
     this.setState({
       creatingProfile: true
     });
-    let {name, description, properties} = CreateProfileStore.getState();
+    let {label, name, description, properties} = CreateProfileStore.getState();
     let jsonBody = {
       description,
+      label,
       provisioner: {
         name: this.state.selectedProvisioner,
         properties: Object.entries(properties).map(([property, propObj]) => {
@@ -137,12 +141,31 @@ class ProfileCreateView extends Component {
             className="label"
             id="profile-name"
           >
-            Profile Name
+            {T.translate(`${PREFIX}.profileName`)}
           </strong>
           <span className="required-marker text-danger">*</span>
         </Col>
         <Col xs="5">
           <ConnectedProfileName />
+        </Col>
+      </FormGroup>
+    );
+  };
+
+  renderProfileLabel = () => {
+    return (
+      <FormGroup row>
+        <Col xs="3">
+          <strong
+            className="label"
+            id="profile-label"
+          >
+            {T.translate(`${PREFIX}.profileLabel`)}
+          </strong>
+          <span className="required-marker text-danger">*</span>
+        </Col>
+        <Col xs="5">
+          <ConnectedProfileLabel />
         </Col>
       </FormGroup>
     );
@@ -156,7 +179,7 @@ class ProfileCreateView extends Component {
             className="label"
             id="profile-description"
           >
-            Description
+            {T.translate('commons.descriptionLabel')}
           </strong>
           <span className="required-marker text-danger">*</span>
         </Col>
@@ -283,6 +306,7 @@ class ProfileCreateView extends Component {
                 }}
               >
                 <div className="group-container">
+                  {this.renderProfileLabel()}
                   {this.renderProfileName()}
                   {this.renderDescription()}
                 </div>
@@ -312,10 +336,12 @@ class ProfileCreateView extends Component {
             />
             {
               typeof linkObj === 'function' ?
-                <button className="btn btn-link" onClick={linkObj}> Close </button>
+                <button className="btn btn-link" onClick={linkObj}>
+                  {T.translate('commons.close')}
+                </button>
               :
                 <Link to={linkObj}>
-                  Close
+                  {T.translate('commons.close')}
                 </Link>
             }
           </div>

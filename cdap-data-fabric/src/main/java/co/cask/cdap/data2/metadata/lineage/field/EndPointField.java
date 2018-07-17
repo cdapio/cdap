@@ -27,7 +27,7 @@ public class EndPointField {
   private final EndPoint endPoint;
   private final String field;
 
-  EndPointField(EndPoint endPoint, String field) {
+  public EndPointField(EndPoint endPoint, String field) {
     this.endPoint = endPoint;
     this.field = field;
   }

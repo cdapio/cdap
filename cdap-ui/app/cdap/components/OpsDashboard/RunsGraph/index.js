@@ -26,7 +26,8 @@ import {next, prev} from 'components/OpsDashboard/store/ActionCreator';
 import RunsTable from 'components/OpsDashboard/RunsGraph/RunsTable';
 import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 import classnames from 'classnames';
-import {getData, setLast24Hours} from 'components/OpsDashboard/store/ActionCreator';
+import {getData, setLast24Hours, setIs7DaysAgo} from 'components/OpsDashboard/store/ActionCreator';
+import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import T from 'i18n-react';
 
 const PREFIX = 'features.OpsDashboard.RunsGraph';
@@ -44,6 +45,7 @@ class RunsGraphView extends Component {
     viewByOption: PropTypes.string,
     changeDisplay: PropTypes.func,
     isLast24Hours: PropTypes.bool,
+    is7DaysAgo: PropTypes.bool,
     namespacesPick: PropTypes.array
   };
 
@@ -81,6 +83,7 @@ class RunsGraphView extends Component {
 
   last24Hour = () => {
     setLast24Hours(true);
+    setIs7DaysAgo(false);
     getData();
 
   };
@@ -92,6 +95,23 @@ class RunsGraphView extends Component {
     renderGraph('#runs-graph', width, GRAPH_HEIGHT, props.data, props.viewByOption);
   }
 
+  renderDisabledArrowToolitp(showTooltip, arrowId) {
+    if (!showTooltip) {
+      return null;
+    }
+
+    return (
+      <UncontrolledTooltip
+        placement="right"
+        delay={0}
+        target={arrowId}
+        className="disabled-arrow-tooltip"
+      >
+        {T.translate(`${PREFIX}.disabledArrowTooltip`)}
+      </UncontrolledTooltip>
+    );
+  }
+
   render() {
     const chart = (
       <div id={RUNS_GRAPH_CONTAINER}>
@@ -100,6 +120,7 @@ class RunsGraphView extends Component {
     );
 
     const table = <RunsTable />;
+    const arrowLeftId = "runs-graph-arrow-left";
 
     return (
       <div className="runs-graph-container">
@@ -121,7 +142,7 @@ class RunsGraphView extends Component {
             <div className="time-picker">
               <div
                 className={classnames({
-                  'active': this.props.isLast24Hours
+                  "active": this.props.isLast24Hours
                 })}
                 onClick={!this.props.isLast24Hours && this.last24Hour}
               >
@@ -131,8 +152,8 @@ class RunsGraphView extends Component {
 
             <div className="display-type">
               <span
-                className={classnames('option', {
-                  'active': this.props.displayType === 'chart'
+                className={classnames("option", {
+                  "active": this.props.displayType === 'chart'
                 })}
                 onClick={this.props.changeDisplay.bind(this, 'chart')}
               >
@@ -140,8 +161,8 @@ class RunsGraphView extends Component {
               </span>
               <span className="separator">|</span>
               <span
-                className={classnames('option', {
-                  'active': this.props.displayType === 'table'
+                className={classnames("option", {
+                  "active": this.props.displayType === 'table'
                 })}
                 onClick={this.props.changeDisplay.bind(this, 'table')}
               >
@@ -155,8 +176,11 @@ class RunsGraphView extends Component {
           {this.props.displayType === 'chart' ? chart : table}
 
           <div
-            className="navigation arrow-left"
-            onClick={prev}
+            className={classnames("navigation arrow-left", {
+              "disabled": this.props.is7DaysAgo
+            })}
+            onClick={!this.props.is7DaysAgo && prev}
+            id={arrowLeftId}
           >
             <IconSVG name="icon-chevron-left" />
           </div>
@@ -166,6 +190,7 @@ class RunsGraphView extends Component {
           >
             <IconSVG name="icon-chevron-right" />
           </div>
+          {this.renderDisabledArrowToolitp(this.props.is7DaysAgo, arrowLeftId)}
         </div>
 
         {this.props.displayType === 'chart' ? <Legends /> : null}
@@ -181,6 +206,7 @@ const mapStateToProps = (state) => {
     displayType: state.dashboard.displayType,
     viewByOption: state.dashboard.viewByOption,
     isLast24Hours: state.dashboard.isLast24Hours,
+    is7DaysAgo: state.dashboard.is7DaysAgo,
     namespacesPick: state.namespaces.namespacesPick
   };
 };

@@ -33,8 +33,12 @@ public class SparkCompatReader {
   }
 
   /**
-   * Get the SparkCompat from the CConf or from the environment. Returns UNKNOWN if it is not defined in either place.
-   * Throws an exception if the value is defined but invalid.
+   * Read {@link SparkCompat} from the system properties, environment, or the {@link CConfiguration}.
+   * Returns {@link SparkCompat#SPARK1_2_10} if it is not defined in any place.
+   *
+   * @param cConf the {@link CConfiguration} for CDAP
+   * @return the configured {@link SparkCompat}
+   * @throws IllegalArgumentException if SparkCompat was set to an invalid value
    */
   public static SparkCompat get(CConfiguration cConf) {
     // use the value in the system property (expected in distributed)
@@ -42,6 +46,10 @@ public class SparkCompatReader {
     String compatStr = System.getProperty(Constants.AppFabric.SPARK_COMPAT);
     compatStr = compatStr == null ? System.getenv(Constants.SPARK_COMPAT_ENV) : compatStr;
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
+
+    if (compatStr == null) {
+      return SparkCompat.SPARK1_2_10;
+    }
 
     for (SparkCompat sparkCompat : SparkCompat.values()) {
       if (sparkCompat.getCompat().equals(compatStr)) {

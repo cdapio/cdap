@@ -727,6 +727,14 @@ public final class Constants {
       // For TMS
       public static final String TABLE = "tbl";
       public static final String TOPIC = "tpc";
+
+      // For profile
+      public static final String PROFILE = "pro";
+      public static final String PROFILE_SCOPE = "psc";
+
+      // For program
+      public static final String PROGRAM = "prg";
+      public static final String PROGRAM_TYPE = "prt";
     }
 
     /**
@@ -779,6 +787,16 @@ public final class Constants {
       public static final long MAX_MINUTE_RESOLUTION_QUERY_INTERVAL = 600;
       // Number of seconds to subtract from current timestamp when query without "end" time.
       public static final long QUERY_SECOND_DELAY = 2;
+    }
+
+    /**
+     * Program metrics
+     */
+    public static final class Program {
+      public static final String PROGRAM_COMPLETED_RUNS = "program.completed.runs";
+      public static final String PROGRAM_FAILED_RUNS = "program.failed.runs";
+      public static final String PROGRAM_KILLED_RUNS = "program.killed.runs";
+      public static final String PROGRAM_NODE_MINUTES = "program.node.minutes";
     }
   }
 
@@ -844,6 +862,13 @@ public final class Constants {
     public static final String SERVER_HOST = "app.program.runtime.monitor.server.host";
     public static final String SERVER_PORT = "app.program.runtime.monitor.server.port";
     public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
+
+    // Constants for secure connections
+    public static final String SSH_USER = "ssh.user";
+    public static final String PUBLIC_KEY = "id_rsa.pub";
+    public static final String PRIVATE_KEY = "id_rsa";
+    public static final String SERVER_KEYSTORE = "server.jks";
+    public static final String CLIENT_KEYSTORE = "client.jks";
   }
 
   /**
@@ -854,8 +879,6 @@ public final class Constants {
 
     // Configuration keys
     public static final String KAFKA_TOPIC = "log.kafka.topic";
-    public static final String TMS_TOPIC_PREFIX = "log.tms.topic.prefix";
-    public static final String TMS_APPENDER_QUEUE_SIZE = "log.tms.queue.size";
     public static final String NUM_PARTITIONS = "log.publish.num.partitions";
     public static final String LOG_PUBLISH_PARTITION_KEY = "log.publish.partition.key";
 
@@ -1429,5 +1452,19 @@ public final class Constants {
    */
   public static final class Upgrade {
     public static final String UPGRADE_THREAD_POOL_SIZE = "upgrade.thread.pool.size";
+  }
+
+  /**
+   * Constants for field lineage
+   */
+  public static final class FieldLineage {
+    /**
+     * Direction for lineage
+     */
+    public enum Direction {
+      INCOMING,
+      OUTGOING,
+      BOTH
+    }
   }
 }

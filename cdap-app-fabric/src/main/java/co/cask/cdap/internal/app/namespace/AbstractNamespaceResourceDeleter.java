@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
+import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -55,6 +56,7 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
   private final ArtifactRepository artifactRepository;
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final MessagingService messagingService;
+  private final ProfileService profileService;
 
 
   AbstractNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
@@ -63,7 +65,7 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
                                    ApplicationLifecycleService applicationLifecycleService,
                                    ArtifactRepository artifactRepository,
                                    StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                                   MessagingService messagingService) {
+                                   MessagingService messagingService, ProfileService profileService) {
     this.impersonator = impersonator;
     this.store = store;
     this.preferencesService = preferencesService;
@@ -75,6 +77,7 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     this.artifactRepository = artifactRepository;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.messagingService = messagingService;
+    this.profileService = profileService;
   }
 
   protected abstract void deleteStreams(NamespaceId namespaceId) throws Exception;
@@ -104,6 +107,9 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     deleteMetrics(namespaceId);
     // delete all artifacts in the namespace
     artifactRepository.clear(namespaceId);
+
+    // delete all profiles in the namespace
+    profileService.deleteAllProfiles(namespaceId);
 
     // delete all messaging topics in the namespace
     for (TopicId topicId : messagingService.listTopics(namespaceId)) {

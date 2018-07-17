@@ -19,6 +19,7 @@ package co.cask.cdap.api.flow.flowlet;
 /**
  * This class carries information about the reason of failure.
  */
+@Deprecated
 public final class FailureReason {
 
   /**

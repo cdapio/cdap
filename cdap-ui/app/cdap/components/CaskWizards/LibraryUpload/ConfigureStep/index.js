@@ -34,7 +34,7 @@ const mapStateToArtifactDescriptionProps = (state) => {
     value: state.configure.description,
     type: 'textarea',
     rows: '7',
-    placeholder: T.translate('features.Wizard.LibraryUpload.Step2.decriptionPlaceholder')
+    placeholder: T.translate('features.Wizard.LibraryUpload.Step2.descriptionPlaceholder')
   };
 };
 const mapStateToArtifactClassnameProps = (state) => {

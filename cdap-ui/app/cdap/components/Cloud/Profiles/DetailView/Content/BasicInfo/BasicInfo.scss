@@ -29,8 +29,18 @@ $grey-font-color: $grey-03;
         align-items: center;
         justify-content: space-between;
 
+        .profile-name-wrapper {
+          // 170px for right side enable switch + actions dropdown
+          width: calc(100% - 170px);
+        }
         .profile-name {
           display: inline-block;
+          // 100px for Profile ID label
+          max-width: calc(100% - 100px);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          vertical-align: middle;
         }
 
         .profile-actions-wrapper {

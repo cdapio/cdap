@@ -220,14 +220,8 @@ public class EntityIdTest {
     Assert.assertEquals("app.meta.second", dataset.getDataset());
     try {
       DatasetId.fromString("dataset:i have a space in my name");
-      Assert.fail("Dataset Id with space in its name was created successfully while it should have failed.");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-
-    try {
       DatasetId.fromString("dataset:.should.have.a.namespace.name");
-      Assert.fail("Dataset Id without namespace in its name was created successfully while it should have failed.");
+      Assert.fail("Dataset Id with space in its name was created successfully while it should have failed.");
     } catch (IllegalArgumentException e) {
       // expected
     }
@@ -252,24 +246,12 @@ public class EntityIdTest {
   }
 
   @Test
-  public void testMissingApplicationName() {
+  public void testInvalidId() {
     try {
       ApplicationId.fromString("application:ns1");
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
-      Assert.assertEquals("Missing field: application", e.getCause().getMessage());
-    }
-  }
-
-  @Test
-  public void testAppNameWithDot() {
-    try {
-      new ApplicationId("ns", "app.name");
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-      // expected
-      Assert.assertTrue(e.getMessage().contains("Invalid application ID"));
     }
   }
 

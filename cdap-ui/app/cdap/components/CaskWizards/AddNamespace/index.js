@@ -29,6 +29,8 @@ import isEmpty from 'lodash/isEmpty';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 
+const PREFIX = 'features.Wizard.Add-Namespace';
+
 export default class AddNamespaceWizard extends Component {
   state = {
     showWizard: this.props.isOpen,
@@ -105,8 +107,8 @@ export default class AddNamespaceWizard extends Component {
     // responseText has the format "Namespace '{namespace}' created successfully."
     let newNamespaceId = responseText.split("'")[1];
     let currentNamespaceId = NamespaceStore.getState().selectedNamespace;
-    let message = T.translate('features.Wizard.Add-Namespace.Status.creation-success-desc', {namespaceId: newNamespaceId});
-    let buttonLabel = T.translate('features.Wizard.Add-Namespace.callToAction', {namespaceId: newNamespaceId});
+    let message = T.translate(`${PREFIX}.Status.creation-success-desc`, {namespaceId: newNamespaceId});
+    let buttonLabel = T.translate(`${PREFIX}.callToAction`, {namespaceId: newNamespaceId});
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
     this.setState({
       successInfo: {
@@ -128,7 +130,12 @@ export default class AddNamespaceWizard extends Component {
         {
           this.state.showWizard ?
             <WizardModal
-              title={this.props.context ? this.props.context + " | Add Namespace" : "Add Namespace"}
+              title={
+                this.props.context ?
+                  `${this.props.context} | ${T.translate(`${PREFIX}.headerlabel`)}`
+                :
+                   T.translate(`${PREFIX}.headerlabel`)
+              }
               isOpen={this.state.showWizard}
               toggle={this.props.onClose}
               className="add-namespace-wizard"

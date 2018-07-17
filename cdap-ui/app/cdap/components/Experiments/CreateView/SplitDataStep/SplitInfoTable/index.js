@@ -23,6 +23,9 @@ import SortableTable from 'components/SortableTable';
 import {objectQuery, roundDecimalToNDigits} from 'services/helpers';
 import findLast from 'lodash/findLast';
 import classnames from 'classnames';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.CreateView.SplitInfo';
 
 require('./SplitInfoTable.scss');
 
@@ -67,54 +70,54 @@ export default class SplitInfoTable extends Component {
   CATEGORICAL_FIELD_HEADERS = [
     {
       property: 'name',
-      label: 'Column Name'
+      label: T.translate(`${PREFIX}.columnName`)
     },
     {
       property: 'numTotal',
-      label: 'Count'
+      label: T.translate(`${PREFIX}.count`)
     },
     {
       property: 'numEmpty',
-      label: 'Missing'
+      label: T.translate(`${PREFIX}.missing`)
     },
     {
       property: 'unique',
-      label: 'Unique'
+      label: T.translate(`${PREFIX}.unique`)
     }
   ];
 
   NUMERICAL_FIELD_HEADERS = [
     {
       property: 'name',
-      label: 'Column Name'
+      label: T.translate(`${PREFIX}.columnName`)
     },
     {
       property: 'numTotal',
-      label: 'Count'
+      label: T.translate(`${PREFIX}.count`)
     },
     {
       property: 'numEmpty',
-      label: 'Missing'
+      label: T.translate(`${PREFIX}.missing`)
     },
     {
       property: 'numZero',
-      label: 'Zero'
+      label: T.translate(`${PREFIX}.zero`)
     },
     {
       property: 'mean',
-      label: 'Mean'
+      label: T.translate(`${PREFIX}.mean`)
     },
     {
       property: 'stddev',
-      label: 'Std Dev'
+      label: T.translate(`${PREFIX}.stddev`)
     },
     {
       property: 'min',
-      label: 'Min'
+      label: T.translate(`${PREFIX}.min`)
     },
     {
       property: 'max',
-      label: 'Max'
+      label: T.translate(`${PREFIX}.max`)
     }
   ];
 
@@ -284,7 +287,7 @@ export default class SplitInfoTable extends Component {
       <div className="split-info-table-container">
         <div className="split-table-search">
         <div className="filter-container">
-          <span> Data Type: </span>
+          <span>{T.translate(`${PREFIX}.dataType`)}</span>
           <span>
             <Input
               type="checkbox"
@@ -342,16 +345,20 @@ export default class SplitInfoTable extends Component {
         </div>
         <Input
           className="table-field-search"
-          placeholder="Search Column name"
+          placeholder={T.translate(`${PREFIX}.searchColumn`)}
           onChange={this.onSearch}
         />
         </div>
         <div className="split-info-numerical-table">
-          <div className="split-table-header">Numerical Data</div>
+          <div className="split-table-header">
+            {T.translate(`${PREFIX}.numerical`)}
+          </div>
           {this.renderNumericalTable(numericalFields)}
         </div>
         <div className="split-info-categorical-table">
-          <div className="split-table-header">Categorical Data</div>
+          <div className="split-table-header">
+            {T.translate(`${PREFIX}.categorical`)}
+          </div>
           {this.renderCategoricalTable(categoricalFields)}
         </div>
       </div>

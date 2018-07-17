@@ -34,7 +34,9 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import org.apache.tephra.TransactionManager;
 import org.apache.twill.kafka.client.FetchedMessage;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -46,10 +48,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Test for logging to Kafka via {@link KafkaLogAppender}.
+ * Kafka Test for logging.
  */
 @Category(SlowTests.class)
 public class TestKafkaLogging extends KafkaTestBase {
@@ -57,8 +60,13 @@ public class TestKafkaLogging extends KafkaTestBase {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
+  private static TransactionManager txManager;
+
   @BeforeClass
   public static void init() throws Exception {
+    txManager = KAFKA_TESTER.getInjector().getInstance(TransactionManager.class);
+    txManager.startAndWait();
+
     KafkaLogAppender appender = KAFKA_TESTER.getInjector().getInstance(KafkaLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestKafkaLogging");
 
@@ -67,6 +75,11 @@ public class TestKafkaLogging extends KafkaTestBase {
     loggingTester.generateLogs(logger, new FlowletLoggingContext("TKL_NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
                                                                  "RUN1", "INSTANCE1"));
     appender.stop();
+  }
+
+  @AfterClass
+  public static void finish() {
+    txManager.stopAndWait();
   }
 
   @Test
@@ -130,8 +143,10 @@ public class TestKafkaLogging extends KafkaTestBase {
     // check if all the logs from same app went to same partition
     for (Map.Entry<Integer, Collection<String>> entry : actual.asMap().entrySet()) {
       if (entry.getValue().contains("TKL_NS_2:APP_2")) {
-        // if we have already found another partition with application context, assert false
-        Assert.assertFalse("Only one partition should have application logging context", isPresent);
+        if (isPresent) {
+          // if we have already found another partition with application context, assert false
+          Assert.assertFalse("Only one partition should have application logging context", isPresent);
+        }
         isPresent = true;
       }
     }
@@ -145,6 +160,10 @@ public class TestKafkaLogging extends KafkaTestBase {
     ILoggingEvent iLoggingEvent = serializer.fromBytes(message.getPayload());
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(iLoggingEvent.getMDCPropertyMap());
     String key = loggingContext.getLogPartition();
+
+    // Temporary map for pretty format
+    Map<String, String> tempMap = new HashMap<>();
+    tempMap.put("Timestamp", Long.toString(iLoggingEvent.getTimeStamp()));
     return Maps.immutableEntry(message.getTopicPartition().getPartition(), key);
   }
 }

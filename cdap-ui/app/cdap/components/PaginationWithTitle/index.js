@@ -24,7 +24,6 @@ export default class PaginationWithTitle extends Component {
     currentPage: PropTypes.number,
     totalPages: PropTypes.number,
     title: PropTypes.string,
-    numberOfEntities: PropTypes.number,
     handlePageChange: PropTypes.func
   };
 
@@ -57,7 +56,7 @@ export default class PaginationWithTitle extends Component {
       <span className="pagination-with-title">
         <ul className="total-entities">
           <span>
-            {this.props.numberOfEntities} {this.props.title || 'Pages'}
+            {this.props.title}
           </span>
         </ul>
         {this.renderPaginationComponent()}

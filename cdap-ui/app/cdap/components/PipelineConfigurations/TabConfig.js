@@ -20,40 +20,42 @@ import EngineConfigTabContent from 'components/PipelineConfigurations/Configurat
 import ResourcesTabContent from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent';
 import AlertsTabContent from 'components/PipelineConfigurations/ConfigurationsContent/AlertsTabContent';
 import ComputeTabContent from 'components/PipelineConfigurations/ConfigurationsContent/ComputeTabContent';
+import T from 'i18n-react';
 
+const PREFIX = 'features.PipelineConfigurations';
 const TabConfig = {
   tabs: [
     {
       id: 1,
-      name: 'Compute Config',
+      name: T.translate(`${PREFIX}.ComputeConfig.title`),
       content: (<ComputeTabContent />),
       contentClassName: 'pipeline-configurations-body',
       paneClassName: 'configuration-content'
     },
     {
       id: 2,
-      name: 'Pipeline Config',
+      name: T.translate(`${PREFIX}.PipelineConfig.title`),
       content: (<PipelineConfigTabContent />),
       contentClassName: 'pipeline-configurations-body',
       paneClassName: 'configuration-content'
     },
     {
       id: 3,
-      name: 'Engine Config',
+      name: T.translate(`${PREFIX}.EngineConfig.title`),
       content: (<EngineConfigTabContent />),
       contentClassName: 'pipeline-configurations-body',
       paneClassName: 'configuration-content'
     },
     {
       id: 4,
-      name: 'Resources',
+      name: T.translate(`${PREFIX}.Resources.title`),
       content: (<ResourcesTabContent />),
       contentClassName: 'pipeline-configurations-body',
       paneClassName: 'configuration-content'
     },
     {
       id: 5,
-      name: 'Pipeline Alert',
+      name: T.translate(`${PREFIX}.Alerts.title`),
       content: (<AlertsTabContent />),
       contentClassName: 'pipeline-configurations-body',
       paneClassName: 'configuration-content'

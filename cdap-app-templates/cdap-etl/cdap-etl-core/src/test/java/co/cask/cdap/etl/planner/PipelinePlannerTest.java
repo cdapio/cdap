@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.Constants.Connector;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.spec.PipelineSpec;
@@ -32,6 +33,7 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -286,7 +288,7 @@ public class PipelinePlannerTest {
   }
 
   @Test
-  public void testSimpleCondition() throws Exception {
+  public void testSimpleCondition() {
     /*
       n1 - n2 - condition - n3
                       |
@@ -385,7 +387,7 @@ public class PipelinePlannerTest {
   }
 
   @Test
-  public void testMultipleConditions() throws Exception {
+  public void testMultipleConditions() {
    /*
       n1 - n2 - condition1 - n3 - n4 - condition2 - n5 - condition3 - n6
                     |                       |                   |
@@ -633,7 +635,7 @@ public class PipelinePlannerTest {
   }
 
   @Test
-  public void testConditionsToConditions() throws Exception {
+  public void testConditionsToConditions() {
    /*
       n1 - c1----c2---n2
            |
@@ -745,6 +747,123 @@ public class PipelinePlannerTest {
     phaseConnections.add(new Connection(phase2Name, phase4Name, false));
     phaseConnections.add(new Connection(phase3Name, phase5Name, true));
     phaseConnections.add(new Connection(phase4Name, phase6Name, true));
+
+    PipelinePlan expected = new PipelinePlan(phases, phaseConnections);
+    PipelinePlan actual = planner.plan(pipelineSpec);
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testConditionsOnBranches() {
+    /*
+                        |-- true --> n2
+              |--> c1 --|
+         n1 --|         |-- false --> n3
+              |
+              |                |-- true --> n5
+              |--> n4 --> c2 --|
+                               |-- false --> n6
+     */
+    Set<StageSpec> stageSpecs = ImmutableSet.of(
+      StageSpec.builder("c1", CONDITION).build(),
+      StageSpec.builder("c2", CONDITION).build(),
+      StageSpec.builder("n1", NODE).build(),
+      StageSpec.builder("n2", NODE).build(),
+      StageSpec.builder("n3", NODE).build(),
+      StageSpec.builder("n4", NODE).build(),
+      StageSpec.builder("n5", NODE).build(),
+      StageSpec.builder("n6", NODE).build());
+
+    Set<Connection> connections = ImmutableSet.of(
+      new Connection("n1", "c1"),
+      new Connection("n1", "n4"),
+      new Connection("c1", "n2", true),
+      new Connection("c1", "n3", false),
+      new Connection("n4", "c2"),
+      new Connection("c2", "n5", true),
+      new Connection("c2", "n6", false));
+
+    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), Constants.Connector.PLUGIN_TYPE, CONDITION.getType());
+    Set<String> reduceTypes = ImmutableSet.of();
+    PipelinePlanner planner = new PipelinePlanner(pluginTypes, reduceTypes, Collections.<String>emptySet(),
+                                                  Collections.<String>emptySet(), Collections.<String>emptySet());
+    PipelineSpec pipelineSpec = PipelineSpec.builder().addStages(stageSpecs).addConnections(connections).build();
+
+    Map<String, PipelinePhase> phases = new HashMap<>();
+    Set<Connection> phaseConnections = new HashSet<>();
+
+    for (String condition : ImmutableList.of("c1", "c2")) {
+      phases.put(condition,
+                 PipelinePhase.builder(pluginTypes)
+                   .addStage(StageSpec.builder(condition, CONDITION).build())
+                   .build());
+    }
+
+    PipelinePhase phase = PipelinePhase.builder(pluginTypes)
+      .addStage(StageSpec.builder("n1", NODE).build())
+      .addStage(StageSpec.builder("n4", NODE).build())
+      .addStage(StageSpec.builder("c1.connector",
+                                  connectorSpec("c1.connector", Constants.Connector.SINK_TYPE)).build())
+      .addStage(StageSpec.builder("c2.connector",
+                                  connectorSpec("c2.connector", Constants.Connector.SINK_TYPE)).build())
+      .addConnection("n1", "n4")
+      .addConnection("n1", "c1.connector")
+      .addConnection("n4", "c2.connector")
+      .build();
+    Dag nonConnectorDag = new Dag(ImmutableSet.of(
+      new Connection("n1", "n4"), new Connection("n1", "c1"), new Connection("n4", "c2")));
+    String phaseName = PipelinePlanner.getPhaseName(nonConnectorDag);
+    phases.put(phaseName, phase);
+
+    // [n1, n4, c1, c2] -> [c1]
+    phaseConnections.add(new Connection(phaseName, "c1"));
+
+    // [n1, n4, c1, c2] -> [c2]
+    phaseConnections.add(new Connection(phaseName, "c2"));
+
+    // [c1] -- true --> [c1 -> n2]
+    phase = PipelinePhase.builder(pluginTypes)
+      .addStage(StageSpec.builder("c1.connector", connectorSpec("c1.connector", Connector.SOURCE_TYPE)).build())
+      .addStage(StageSpec.builder("n2", NODE).build())
+      .addConnection("c1.connector", "n2")
+      .build();
+    nonConnectorDag = new Dag(ImmutableSet.of(new Connection("c1", "n2")));
+    phaseName = PipelinePlanner.getPhaseName(nonConnectorDag);
+    phases.put(phaseName, phase);
+    phaseConnections.add(new Connection("c1", phaseName, true));
+
+    // [c1] -- false --> [c1 -> n3]
+    phase = PipelinePhase.builder(pluginTypes)
+      .addStage(StageSpec.builder("c1.connector", connectorSpec("c1.connector", Connector.SOURCE_TYPE)).build())
+      .addStage(StageSpec.builder("n3", NODE).build())
+      .addConnection("c1.connector", "n3")
+      .build();
+    nonConnectorDag = new Dag(ImmutableSet.of(new Connection("c1", "n3")));
+    phaseName = PipelinePlanner.getPhaseName(nonConnectorDag);
+    phases.put(phaseName, phase);
+    phaseConnections.add(new Connection("c1", phaseName, false));
+
+    // [c2] -- true --> [c2 -> n5]
+    phase = PipelinePhase.builder(pluginTypes)
+      .addStage(StageSpec.builder("c2.connector", connectorSpec("c2.connector", Connector.SOURCE_TYPE)).build())
+      .addStage(StageSpec.builder("n5", NODE).build())
+      .addConnection("c2.connector", "n5")
+      .build();
+    nonConnectorDag = new Dag(ImmutableSet.of(new Connection("c2", "n5")));
+    phaseName = PipelinePlanner.getPhaseName(nonConnectorDag);
+    phases.put(phaseName, phase);
+    phaseConnections.add(new Connection("c2", phaseName, true));
+
+    // [c2] -- false --> [c2 -> n6]
+    phase = PipelinePhase.builder(pluginTypes)
+      .addStage(StageSpec.builder("c2.connector", connectorSpec("c2.connector", Connector.SOURCE_TYPE)).build())
+      .addStage(StageSpec.builder("n6", NODE).build())
+      .addConnection("c2.connector", "n6")
+      .build();
+    nonConnectorDag = new Dag(ImmutableSet.of(new Connection("c2", "n6")));
+    phaseName = PipelinePlanner.getPhaseName(nonConnectorDag);
+    phases.put(phaseName, phase);
+    phaseConnections.add(new Connection("c2", phaseName, false));
 
     PipelinePlan expected = new PipelinePlan(phases, phaseConnections);
     PipelinePlan actual = planner.plan(pipelineSpec);

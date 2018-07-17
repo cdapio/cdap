@@ -24,6 +24,7 @@ import co.cask.cdap.api.lineage.field.ReadOperation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -36,7 +37,7 @@ public class FieldOperationInput {
   private final EndPoint endPoint;
   private final List<InputField> fields;
 
-  private FieldOperationInput(EndPoint endPoint, @Nullable List<InputField> fields) {
+  private FieldOperationInput(@Nullable EndPoint endPoint, @Nullable List<InputField> fields) {
     this.endPoint = endPoint;
     this.fields = fields == null ? null : Collections.unmodifiableList(new ArrayList<>(fields));
   }
@@ -69,5 +70,23 @@ public class FieldOperationInput {
   @Nullable
   public List<InputField> getFields() {
     return fields;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    FieldOperationInput input = (FieldOperationInput) o;
+    return Objects.equals(endPoint, input.endPoint) &&
+            Objects.equals(fields, input.fields);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(endPoint, fields);
   }
 }

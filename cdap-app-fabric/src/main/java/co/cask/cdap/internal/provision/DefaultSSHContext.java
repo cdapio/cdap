@@ -16,62 +16,99 @@
 
 package co.cask.cdap.internal.provision;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
+import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
-import com.google.common.io.ByteStreams;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyException;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link SSHContext}.
  */
 public class DefaultSSHContext implements SSHContext {
 
-  private final LocationFactory locationFactory;
-  private final SecureKeyInfo keyInfo;
+  @Nullable
+  private final Location keysDir;
+  @Nullable
+  private SSHKeyPair sshKeyPair;
 
-  DefaultSSHContext(LocationFactory locationFactory, SecureKeyInfo keyInfo) {
-    this.locationFactory = locationFactory;
-    this.keyInfo = keyInfo;
+  DefaultSSHContext(@Nullable Location keysDir, @Nullable SSHKeyPair keyPair) {
+    this.keysDir = keysDir;
+    this.sshKeyPair = keyPair;
   }
 
   @Override
-  public SSHPublicKey getSSHPublicKey() {
+  public SSHKeyPair generate(String user, int bits) throws KeyException {
+    JSch jsch = new JSch();
     try {
-      Location location = locationFactory.create(keyInfo.getKeyDirectory()).append(keyInfo.getPublicKeyFile());
-      try (InputStream is = location.getInputStream()) {
-        return new SSHPublicKey(keyInfo.getUsername(),
-                                new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
-      }
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to read public key from "
-                                   + keyInfo.getKeyDirectory() + "/" + keyInfo.getPublicKeyFile(), e);
+      KeyPair keyPair = KeyPair.genKeyPair(jsch, KeyPair.RSA, bits);
+
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      keyPair.writePublicKey(bos, user);
+      SSHPublicKey publicKey = new SSHPublicKey(user, new String(bos.toByteArray(), StandardCharsets.UTF_8));
+
+      bos.reset();
+      keyPair.writePrivateKey(bos);
+      byte[] privateKey = bos.toByteArray();
+
+      return new SSHKeyPair(publicKey, () -> privateKey);
+    } catch (JSchException e) {
+      throw new KeyException("Failed to generate ssh key pair", e);
     }
   }
 
   @Override
-  public SSHSession createSSHSession(String host, int port, Map<String, String> configs) throws IOException {
-    Location location = locationFactory.create(keyInfo.getKeyDirectory()).append(keyInfo.getPrivateKeyFile());
+  public void setSSHKeyPair(SSHKeyPair keyPair) {
+    if (keysDir == null) {
+      throw new IllegalStateException("Setting of key pair is not allowed. " +
+                                        "It can only be called during the Provisioner.createCluster cycle");
+    }
+    this.sshKeyPair = keyPair;
 
+    // Save the ssh key pair
+    try {
+      Location publicKeyFile = keysDir.append(Constants.RuntimeMonitor.PUBLIC_KEY);
+      try (OutputStream os = publicKeyFile.getOutputStream()) {
+        os.write(keyPair.getPublicKey().getKey().getBytes(StandardCharsets.UTF_8));
+      }
+
+      Location privateKeyFile = keysDir.append(Constants.RuntimeMonitor.PRIVATE_KEY);
+      try (OutputStream os = privateKeyFile.getOutputStream("600")) {
+        os.write(keyPair.getPrivateKeySupplier().get());
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to save the ssh key pair", e);
+    }
+  }
+
+  @Override
+  public Optional<SSHKeyPair> getSSHKeyPair() {
+    return Optional.ofNullable(sshKeyPair);
+  }
+
+  @Override
+  public SSHSession createSSHSession(String user, Supplier<byte[]> privateKeySupplier,
+                                     String host, int port, Map<String, String> configs) throws IOException {
     SSHConfig config = SSHConfig.builder(host)
       .setPort(port)
-      .addConfigs(configs)
-      .setUser(keyInfo.getUsername())
-      .setPrivateKeySupplier(() -> {
-        try {
-          return ByteStreams.toByteArray(location::getInputStream);
-        } catch (IOException e) {
-          throw new RuntimeException("Failed to read private key from " + location, e);
-        }
-      })
+      .setUser(user)
+      .setPrivateKeySupplier(privateKeySupplier)
       .build();
 
     return new DefaultSSHSession(config);

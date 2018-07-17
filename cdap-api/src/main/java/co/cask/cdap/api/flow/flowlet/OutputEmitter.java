@@ -26,6 +26,7 @@ import java.util.Map;
  *
  * @param <T> Type of data that could be emitted by this OutputEmitter.
  */
+@Deprecated
 public interface OutputEmitter<T> {
   /**
    * Emits an event of type T.

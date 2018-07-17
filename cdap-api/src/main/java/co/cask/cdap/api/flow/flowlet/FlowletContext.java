@@ -28,6 +28,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 /**
  * This interface represents the Flowlet context.
  */
+@Deprecated
 public interface FlowletContext extends RuntimeContext, DatasetContext, ServiceDiscoverer,
   SecureStore, Transactional, MessagingContext, MetadataReader, MetadataWriter {
   /**

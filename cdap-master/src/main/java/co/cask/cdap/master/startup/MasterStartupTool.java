@@ -29,6 +29,7 @@ import co.cask.cdap.common.startup.CheckRunner;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.data.runtime.main.ClientVersions;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.internal.app.spark.SparkCompatReader;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -75,6 +76,7 @@ public class MasterStartupTool {
     }
     LOG.info("CDAP version: {}", ClientVersions.getCdapVersion());
     LOG.info("CDAP HBase compat version: {}", ClientVersions.getCdapHBaseCompatVersion());
+    LOG.info("CDAP Spark compat version: {}", SparkCompatReader.get(cConf));
     LOG.info("Tephra HBase compat version: {}", ClientVersions.getTephraHBaseCompatVersion());
 
     if (!cConf.getBoolean(Constants.Startup.CHECKS_ENABLED)) {

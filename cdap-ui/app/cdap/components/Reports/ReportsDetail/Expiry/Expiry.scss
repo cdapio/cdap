@@ -16,16 +16,11 @@
 
 @import '../../../../styles/variables.scss';
 
-$expires-color: $orange-02;
 $saved-color: $green-02;
 
 .reports-container {
   .expiry-saved {
     color: $saved-color;
-  }
-
-  .expiry {
-    color: $expires-color;
   }
 
   .duration-display { margin-left: 5px; }

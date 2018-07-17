@@ -68,7 +68,9 @@ const lineage = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         datasetId: action.payload.datasetId,
-        fields: action.payload.fields
+        fields: action.payload.fields,
+        incoming: [],
+        activeField: null
       };
     case Actions.setIncomingLineage:
       return {

@@ -16,13 +16,10 @@
 
 package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.TransformContext;
-import co.cask.cdap.etl.api.lineage.field.Operation;
+import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.List;
@@ -48,57 +45,7 @@ public abstract class AbstractTransformContext extends AbstractStageContext impl
   }
 
   @Override
-  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
-    return null;
-  }
-
-  @Override
-  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
-    return null;
-  }
-
-  @Override
-  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
-
-  }
-
-  @Override
-  public void addTags(MetadataEntity metadataEntity, String... tags) {
-
-  }
-
-  @Override
-  public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
-
-  }
-
-  @Override
-  public void removeMetadata(MetadataEntity metadataEntity) {
-
-  }
-
-  @Override
-  public void removeProperties(MetadataEntity metadataEntity) {
-
-  }
-
-  @Override
-  public void removeProperties(MetadataEntity metadataEntity, String... keys) {
-
-  }
-
-  @Override
-  public void removeTags(MetadataEntity metadataEntity) {
-
-  }
-
-  @Override
-  public void removeTags(MetadataEntity metadataEntity, String... tags) {
-
-  }
-
-  @Override
-  public void record(List<Operation> operations) {
+  public void record(List<PipelineOperation> pipelineOperations) {
     throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }

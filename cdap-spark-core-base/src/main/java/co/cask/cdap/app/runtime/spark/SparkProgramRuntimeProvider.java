@@ -321,7 +321,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
       // The SI-6240 is fixed in Scala 2.11 anyway and older Scala version should have the classes and methods
       // that we try to invoke above.
-      LOG.debug("Not able to create scala runtime mirror for SparkRunnerClassLoader. " +
+      LOG.trace("Not able to create scala runtime mirror for SparkRunnerClassLoader. " +
                   "This can happen if there is incompatible Scala API changes with Scala version newer than 2.10. " +
                   "However, the SI-6240 bug is fixed since 2.11, hence the workaround for the the bug is not needed ");
     } catch (Exception e) {

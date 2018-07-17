@@ -16,21 +16,26 @@
 
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
@@ -38,22 +43,23 @@ import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +78,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Implementation of {@link MetadataStore} used in distributed mode.
+ * Implementation of {@link MetadataStore}.
  */
 public class DefaultMetadataStore implements MetadataStore {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataStore.class);
@@ -94,16 +100,44 @@ public class DefaultMetadataStore implements MetadataStore {
       return o2.getValue() - o1.getValue();
     };
 
-  private final TransactionExecutorFactory txExecutorFactory;
+
+  private final Transactional transactional;
   private final DatasetFramework dsFramework;
+  private final DynamicDatasetCache datasetCache;
   private AuditPublisher auditPublisher;
 
   @Inject
-  DefaultMetadataStore(TransactionExecutorFactory txExecutorFactory, DatasetFramework dsFramework) {
-    this.txExecutorFactory = txExecutorFactory;
+  DefaultMetadataStore(TransactionSystemClient txClient, DatasetFramework dsFramework) {
+    this.datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(dsFramework),
+                                                    new TransactionSystemClientAdapter(txClient),
+                                                    NamespaceId.SYSTEM, Collections.emptyMap(), null, null);
+    this.transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(datasetCache),
+      RetryStrategies.retryOnConflict(20, 100)
+    );
     this.dsFramework = dsFramework;
   }
 
+  /**
+   * Don't use this for anything other than unit tests. Deletes and re-creates the underlying datasets.
+   *
+   * @throws Exception if there was an error deleting and re-creating the underlying datasets
+   */
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  @VisibleForTesting
+  void deleteDatasets() throws Exception {
+    datasetCache.invalidate();
+    try {
+      dsFramework.deleteInstance(BUSINESS_METADATA_INSTANCE_ID);
+    } catch (InstanceNotFoundException e) {
+      // it's ok if it doesn't exist, we wanted to delete it anyway
+    }
+    try {
+      dsFramework.deleteInstance(SYSTEM_METADATA_INSTANCE_ID);
+    } catch (InstanceNotFoundException e) {
+      // it's ok if it doesn't exist, we wanted to delete it anyway
+    }
+  }
 
   @SuppressWarnings("unused")
   @Inject(optional = true)
@@ -405,7 +439,7 @@ public class DefaultMetadataStore implements MetadataStore {
     return new MetadataSearchResponseV2(
       sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, request.getNumCursors(), total,
       addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, request.shouldShowHidden(),
-      request.getEntityScope());
+      request.getEntityScopes());
   }
 
   private Set<MetadataEntity> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {
@@ -526,32 +560,23 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private <T> T execute(TransactionExecutor.Function<MetadataDataset, T> func, MetadataScope scope) {
-    MetadataDataset metadataDataset = newMetadataDataset(dsFramework, scope);
-    TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataDataset);
-    return txExecutor.executeUnchecked(func, metadataDataset);
+    return Transactionals.execute(transactional, context -> {
+      MetadataDataset metadataDataset = getMetadataDataset(context, dsFramework, scope);
+      return func.apply(metadataDataset);
+    });
   }
 
   private void execute(TransactionExecutor.Procedure<MetadataDataset> func, MetadataScope scope) {
-    MetadataDataset metadataDataset = newMetadataDataset(dsFramework, scope);
-    TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, metadataDataset);
-    txExecutor.executeUnchecked(func, metadataDataset);
+    Transactionals.execute(transactional, context -> {
+      MetadataDataset metadataDataset = getMetadataDataset(context, dsFramework, scope);
+      func.apply(metadataDataset);
+    });
   }
 
   private byte[] rebuildIndex(final byte[] startRowKey, MetadataScope scope) {
     return execute(mds -> {
       return mds.rebuildIndexes(startRowKey, BATCH_SIZE);
     }, scope);
-  }
-
-  private MetadataDataset newMetadataDataset(DatasetFramework dsFramework, MetadataScope scope) {
-    try {
-      return DatasetsUtil.getOrCreateDataset(
-        dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
-        DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build(),
-        DatasetDefinition.NO_ARGUMENTS);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   private void removeNullOrEmptyTags(final DatasetId metadataDatasetInstance, final MetadataScope scope) {

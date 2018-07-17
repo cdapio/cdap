@@ -30,6 +30,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.twill.api.RunId;

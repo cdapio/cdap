@@ -25,9 +25,11 @@ import java.lang.annotation.Target;
  * Annotation to declare the name for a {@link co.cask.cdap.api.flow.flowlet.OutputEmitter}.
  *
  * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
+ * @deprecated As of release 5.0.0, replaced by {@link @ProgramType.SPARK} for realtime processing.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+@Deprecated
 public @interface Output {
 
   /**

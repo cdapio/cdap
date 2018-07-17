@@ -51,9 +51,11 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -928,8 +930,9 @@ public class  MetadataDatasetTest {
       Assert.assertEquals(ImmutableList.of(expectedDatasetEntry), searchResults);
     });
     // delete indexes
-    // 6 indexes should have been deleted - flowValue, flowKey:flowValue, datasetValue, datasetKey:datasetValue and
-    // then the types with their name i.e. flow:flow1, dataset:dataset1
+    // 6 indexes should have been deleted
+    //   ns1:flowValue, ns1:flowKey:flowValue, ns1:datasetValue, ns1:datasetKey:datasetValue
+    //   and then the types with their name i.e. ns1:flow:flow1, ns1:dataset:dataset1
     for (int i = 0; i < 6; i++) {
       txnl.execute(() -> Assert.assertEquals(1, dataset.deleteAllIndexes(1)));
     }
@@ -955,36 +958,163 @@ public class  MetadataDatasetTest {
     final String namespaceId = flow1.getValue(MetadataEntity.NAMESPACE);
     txnl.execute(() -> {
       // entry with no special indexes
-      assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN, namespaceId, value);
-      assertNoIndexes(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN, namespaceId, value);
-      assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, value);
-      assertNoIndexes(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN, namespaceId, value);
-      assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId, value);
+      assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN.getColumn(), namespaceId, value);
+      assertNoIndexes(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN.getColumn(), namespaceId, value);
+      assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN.getColumn(), namespaceId, value);
+      assertNoIndexes(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN.getColumn(), namespaceId, value);
+      assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN.getColumn(), namespaceId, value);
       // entry with a schema
-      assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN, namespaceId, body);
-      assertNoIndexes(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN, namespaceId, body);
-      assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, body);
-      assertNoIndexes(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN, namespaceId, body);
-      assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId, body);
+      assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN.getColumn(), namespaceId, body);
+      assertNoIndexes(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN.getColumn(), namespaceId, body);
+      assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN.getColumn(), namespaceId, body);
+      assertNoIndexes(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN.getColumn(), namespaceId, body);
+      assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN.getColumn(), namespaceId, body);
       // entry with entity name
-      assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN, namespaceId, name);
-      assertSingleIndex(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN, namespaceId, name);
-      assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, name);
+      assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN.getColumn(), namespaceId, name);
+      assertSingleIndex(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN.getColumn(), namespaceId, name);
+      assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN.getColumn(), namespaceId, name);
       Indexer indexer = new InvertedValueIndexer();
       String index = Iterables.getOnlyElement(indexer.getIndexes(new MetadataEntry(dataset1, "key", name)));
-      assertSingleIndex(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, index.toLowerCase());
-      assertNoIndexes(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN, namespaceId, name);
-      assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId, name);
+      assertSingleIndex(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN.getColumn(),
+                        namespaceId, index.toLowerCase());
+      assertNoIndexes(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN.getColumn(), namespaceId, name);
+      assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN.getColumn(), namespaceId, name);
       // entry with creation time
       String time = String.valueOf(creationTime);
-      assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN, namespaceId, time);
-      assertNoIndexes(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN, namespaceId, time);
-      assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN, namespaceId, time);
-      assertSingleIndex(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN, namespaceId, time);
-      assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId, time);
-      assertSingleIndex(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN, namespaceId,
+      assertSingleIndex(dataset, MetadataDataset.DEFAULT_INDEX_COLUMN.getColumn(), namespaceId, time);
+      assertNoIndexes(dataset, MetadataDataset.ENTITY_NAME_INDEX_COLUMN.getColumn(), namespaceId, time);
+      assertNoIndexes(dataset, MetadataDataset.INVERTED_ENTITY_NAME_INDEX_COLUMN.getColumn(), namespaceId, time);
+      assertSingleIndex(dataset, MetadataDataset.CREATION_TIME_INDEX_COLUMN.getColumn(), namespaceId, time);
+      assertNoIndexes(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN.getColumn(), namespaceId, time);
+      assertSingleIndex(dataset, MetadataDataset.INVERTED_CREATION_TIME_INDEX_COLUMN.getColumn(), namespaceId,
                         String.valueOf(Long.MAX_VALUE - creationTime));
     });
+  }
+
+  @Test
+  public void testCrossNamespaceDefaultSearch() throws Exception {
+    MetadataDataset dataset =
+      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("crossNamespaceDefault"), MetadataScope.SYSTEM);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
+
+    MetadataEntity ns1App = new NamespaceId("ns1").app("a").toMetadataEntity();
+    MetadataEntity ns2App = new NamespaceId("ns2").app("a").toMetadataEntity();
+    txnl.execute(() -> {
+      dataset.setProperty(ns1App, "k1", "v1");
+      dataset.setProperty(ns1App, "k2", "v2");
+      dataset.setProperty(ns2App, "k1", "v1");
+    });
+
+    SearchRequest request1 = new SearchRequest(null, "v1", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                              0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
+    SearchResults results = txnl.execute(() -> dataset.search(request1));
+    Set<MetadataEntry> actual = new HashSet<>(results.getResults());
+    Set<MetadataEntry> expected = new HashSet<>();
+    expected.add(new MetadataEntry(ns1App, "k1", "v1"));
+    expected.add(new MetadataEntry(ns2App, "k1", "v1"));
+    Assert.assertEquals(expected, actual);
+
+    SearchRequest request2 = new SearchRequest(null, "v2", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                               0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
+    results = txnl.execute(() -> dataset.search(request2));
+    Assert.assertEquals(Collections.singletonList(new MetadataEntry(ns1App, "k2", "v2")), results.getResults());
+
+    SearchRequest star = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+                                           0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
+    results = txnl.execute(() -> dataset.search(star));
+    expected.add(new MetadataEntry(ns1App, "k2", "v2"));
+    Assert.assertEquals(expected, new HashSet<>(results.getResults()));
+  }
+
+  @Test
+  public void testCrossNamespaceSearchPagination() throws Exception {
+    MetadataDataset dataset =
+      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("crossNamespaceDefaultPag"), MetadataScope.SYSTEM);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
+
+    ApplicationId ns1app1 = new NamespaceId("ns1").app("a1");
+    ApplicationId ns1app2 = new NamespaceId("ns1").app("a2");
+    ApplicationId ns1app3 = new NamespaceId("ns1").app("a3");
+    ApplicationId ns2app1 = new NamespaceId("ns2").app("a1");
+    ApplicationId ns2app2 = new NamespaceId("ns2").app("a2");
+    String key = AbstractSystemMetadataWriter.ENTITY_NAME_KEY;
+    txnl.execute(() -> {
+      dataset.setProperty(ns1app1.toMetadataEntity(), key, ns1app1.getApplication());
+      dataset.setProperty(ns1app2.toMetadataEntity(), key, ns1app2.getApplication());
+      dataset.setProperty(ns1app3.toMetadataEntity(), key, ns1app3.getApplication());
+      dataset.setProperty(ns2app1.toMetadataEntity(), key, ns2app1.getApplication());
+      dataset.setProperty(ns2app2.toMetadataEntity(), key, ns2app2.getApplication());
+    });
+
+    MetadataEntry ns1app1Entry = new MetadataEntry(ns1app1.toMetadataEntity(), key, ns1app1.getApplication());
+    MetadataEntry ns1app2Entry = new MetadataEntry(ns1app2.toMetadataEntity(), key, ns1app2.getApplication());
+    MetadataEntry ns1app3Entry = new MetadataEntry(ns1app3.toMetadataEntity(), key, ns1app3.getApplication());
+    MetadataEntry ns2app1Entry = new MetadataEntry(ns2app1.toMetadataEntity(), key, ns2app1.getApplication());
+    MetadataEntry ns2app2Entry = new MetadataEntry(ns2app2.toMetadataEntity(), key, ns2app2.getApplication());
+    SortInfo nameAsc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
+    // first, get the full ordered list in one page
+    SearchRequest request1 = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
+                                               0, 10, 1, null, false, EnumSet.allOf(EntityScope.class));
+    List<MetadataEntry> actual = txnl.execute(() -> dataset.search(request1).getResults());
+    List<MetadataEntry> expected = new ArrayList<>();
+    // sorted by name asc
+    expected.add(ns1app1Entry);
+    expected.add(ns2app1Entry);
+    expected.add(ns1app2Entry);
+    expected.add(ns2app2Entry);
+    expected.add(ns1app3Entry);
+    Assert.assertEquals(expected, actual);
+
+    // now search with 3 pages, 2 results per page
+    SearchRequest request2 = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
+                                               0, 2, 3, null, false, EnumSet.allOf(EntityScope.class));
+    SearchResults results = txnl.execute(() -> dataset.search(request2));
+    // dataset returns all pages, so results should be in same order
+    Assert.assertEquals(expected, results.getResults());
+
+    // check the cursors
+    List<String> expectedCursors = new ArrayList<>();
+    expectedCursors.add(ns1app2Entry.getValue());
+    expectedCursors.add(ns1app3Entry.getValue());
+    Assert.assertEquals(expectedCursors, results.getCursors());
+
+    // now search for for 2nd and 3rd pages using the cursor
+    SearchRequest request3 = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
+                                               0, 2, 3, results.getCursors().get(0), false,
+                                               EnumSet.allOf(EntityScope.class));
+    results = txnl.execute(() -> dataset.search(request3));
+    expected.clear();
+    expected.add(ns1app2Entry);
+    expected.add(ns2app2Entry);
+    expected.add(ns1app3Entry);
+    Assert.assertEquals(expected, results.getResults());
+    Assert.assertEquals(Collections.singletonList(ns1app3Entry.getValue()), results.getCursors());
+  }
+
+  @Test
+  public void testCrossNamespaceCustomSearch() throws Exception {
+    MetadataDataset dataset =
+      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("crossNamespaceCustom"), MetadataScope.SYSTEM);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
+
+    String appName = "app";
+    MetadataEntity ns1App = new NamespaceId("ns1").app(appName).toMetadataEntity();
+    MetadataEntity ns2App = new NamespaceId("ns2").app(appName).toMetadataEntity();
+    txnl.execute(() -> {
+      dataset.setProperty(ns2App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
+      dataset.setProperty(ns1App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
+    });
+
+    SortInfo nameAsc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
+
+    SearchRequest request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
+                                              0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
+    SearchResults results = txnl.execute(() -> dataset.search(request));
+    List<MetadataEntry> actual = results.getResults();
+    List<MetadataEntry> expected = new ArrayList<>();
+    expected.add(new MetadataEntry(ns1App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName));
+    expected.add(new MetadataEntry(ns2App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName));
+    Assert.assertEquals(expected, actual);
   }
 
   @Test

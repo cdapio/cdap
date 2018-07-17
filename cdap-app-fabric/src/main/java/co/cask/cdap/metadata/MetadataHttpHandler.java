@@ -39,6 +39,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -65,6 +66,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -210,6 +212,33 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
+  @Path("/metadata/search")
+  public void searchMetadata(HttpRequest request, HttpResponder responder,
+                             @Nullable @QueryParam("query") String searchQuery,
+                             @Nullable @QueryParam("target") List<String> targets,
+                             @QueryParam("sort") @DefaultValue("") String sort,
+                             @QueryParam("offset") @DefaultValue("0") int offset,
+                             // 2147483647 is Integer.MAX_VALUE
+                             @QueryParam("limit") @DefaultValue("2147483647") int limit,
+                             @QueryParam("numCursors") @DefaultValue("0") int numCursors,
+                             @QueryParam("cursor") @DefaultValue("") String cursor,
+                             @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
+                             @QueryParam("showCustom") boolean showCustom,
+                             @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
+    SearchRequest searchRequest = getValidatedSearchRequest(null, searchQuery, targets, sort, offset,
+                                                            limit, numCursors, cursor, showHidden, entityScope);
+
+    MetadataSearchResponseV2 response = metadataAdmin.search(searchRequest);
+    if (showCustom) {
+      // if user has specified to show custom entity/resource then there is no need to filter them
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponseV2.class));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(MetadataCompat.makeCompatible(response),
+                                                            MetadataSearchResponse.class));
+    }
+  }
+
+  @GET
   @Path("/namespaces/{namespace-id}/metadata/search")
   public void searchMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
@@ -226,7 +255,6 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
     SearchRequest searchRequest = getValidatedSearchRequest(namespaceId, searchQuery, targets, sort, offset,
                                                             limit, numCursors, cursor, showHidden, entityScope);
-    LOG.trace("Received sesarch request {}", searchRequest);
 
     MetadataSearchResponseV2 response = metadataAdmin.search(searchRequest);
     if (showCustom) {
@@ -238,7 +266,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private SearchRequest getValidatedSearchRequest(String namespace, @Nullable String searchQuery,
+  private SearchRequest getValidatedSearchRequest(@Nullable String namespace, @Nullable String searchQuery,
                                                   @Nullable List<String> targets, String sort, int offset, int limit,
                                                   int numCursors, String cursor, boolean showHidden, String entityScope)
     throws BadRequestException, UnsupportedEncodingException {
@@ -257,14 +285,16 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
     NamespaceId namespaceId;
     try {
-      namespaceId = new NamespaceId(namespace);
+      namespaceId = namespace == null ? null : new NamespaceId(namespace);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
 
     try {
-      return new SearchRequest(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors,
-                               cursor, showHidden, validateEntityScope(entityScope));
+      SearchRequest request = new SearchRequest(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors,
+                                                cursor, showHidden, validateEntityScope(entityScope));
+      LOG.trace("Received search request {}", request);
+      return request;
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage());
     }
@@ -295,7 +325,37 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       }
       curIndex += 2;
     }
+    builder = makeBackwardCompatible(builder);
     return builder.build();
+  }
+
+  /**
+   * If the MetadataEntity Builder key-value represent an application or artifact which is versioned in CDAP i.e. their
+   * metadata entity representation ends with 'version' rather than 'application' or 'artifact' and the type is also
+   * set to 'version' then for backward compatibility of rest end points return an updated builder which has the
+   * correct type. This is only needed in 5.0 for backward compatibility of the rest endpoint.
+   * From 5.0 and later the rest end point must be called with a query parameter which specify the type of the
+   * metadata entity if the type is not the last key. (CDAP-13678)
+   */
+  @VisibleForTesting
+  static MetadataEntity.Builder makeBackwardCompatible(MetadataEntity.Builder builder) {
+    MetadataEntity entity = builder.build();
+    List<MetadataEntity.KeyValue> entityKeyValues = StreamSupport.stream(entity.spliterator(), false)
+      .collect(Collectors.toList());
+    if (entityKeyValues.size() == 3 && entity.getType().equals(MetadataEntity.VERSION) &&
+      (entityKeyValues.get(1).getKey().equals(MetadataEntity.ARTIFACT) ||
+        entityKeyValues.get(1).getKey().equals(MetadataEntity.APPLICATION))) {
+      // this is artifact or application so update the builder
+      MetadataEntity.Builder actualEntityBuilder = MetadataEntity.builder();
+      // namespace
+      actualEntityBuilder.append(entityKeyValues.get(0).getKey(), entityKeyValues.get(0).getValue());
+      // application or artifact (so append as type)
+      actualEntityBuilder.appendAsType(entityKeyValues.get(1).getKey(), entityKeyValues.get(1).getValue());
+      // version detail
+      actualEntityBuilder.append(entityKeyValues.get(2).getKey(), entityKeyValues.get(2).getValue());
+      return actualEntityBuilder;
+    }
+    return builder;
   }
 
   private MetadataEntity.Builder appendHelper(MetadataEntity.Builder builder, @Nullable String entityType,

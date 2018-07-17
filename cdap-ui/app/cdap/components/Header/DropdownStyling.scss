@@ -16,9 +16,7 @@
 
 @import '../../styles/variables.scss';
 
-$menu_font_color: white;
-$dropdown_bg_color: #333333;
-$dropdown_divider_bg_color: rgba(75, 75, 75, 1);
+$dropdown_divider_bg_color: $grey-06;
 
 @mixin dropdownstyling($min_width: 160px, $max_width: 210px) {
   display: inline-block;
@@ -34,7 +32,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
     &:focus {
       outline: none;
       background: transparent;
-      color: $menu_font_color;
+      color: inherit;
     }
     .btn {
       background: transparent;
@@ -42,7 +40,7 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       &:focus {
         outline: none;
         background: transparent;
-        color: $menu_font_color;
+        color: inherit;
       }
     }
   }
@@ -51,19 +49,16 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       &:focus {
         outline: none;
       }
-      &:active {
-        color: $menu_font_color;
-        background: transparent;
-      }
+      &:active,
       &:hover {
-        color: $cdap-light-orange;
+        color: inherit;
         background: transparent;
       }
       &.active {
         &:hover,
         &:focus,
         &:active {
-          color: $cdap-orange;
+          color: inherit;
         }
       }
       &:after {
@@ -81,35 +76,41 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       border: 0;
       background: transparent;
       padding: 0;
-      line-height: 50px;
       display: block;
-      margin-right: 5px;
+      color: inherit;
+      box-shadow: none;
     }
     .dropdown-menu {
-      background: $dropdown_bg_color;
       border-radius: 0;
       min-width: $min_width;
       max-width: $max_width;
 
       .dropdown-item {
-        line-height: 1;
-        float: left;
         width: 160px;
         padding: 0;
-        margin-left: 0;
+        margin: 0;
+        color: black;
 
         a {
           padding: 10px 16px;
           text-decoration: none;
           background: transparent;
+          line-height: 1;
+
+          &.active {
+            color: $brand-primary-color;
+          }
         }
         &:hover,
         &:focus {
-          background: transparent;
+          background: rgba(0, 0, 0, 0.1);
           outline: none;
         }
       }
       .dropdown-divider {
+        height: 1px;
+        margin: 0;
+        overflow: hidden;
         background-color: $dropdown_divider_bg_color;
       }
     }
@@ -117,6 +118,8 @@ $dropdown_divider_bg_color: rgba(75, 75, 75, 1);
       .dropdown-menu {
         display: flex;
         flex-direction: column;
+        top: 33px;
+        left: -10px;
       }
     }
   }

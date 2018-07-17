@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@Deprecated
 public @interface Tick {
 
   // Due to a bug in checkstyle, it would emit false positives here of the form

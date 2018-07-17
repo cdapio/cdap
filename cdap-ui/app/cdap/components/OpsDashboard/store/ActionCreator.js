@@ -83,6 +83,7 @@ export function next() {
   start = Math.round(parseInt(start, 10) / 1000);
 
   setLast24Hours(false);
+  setIs7DaysAgo(false);
   getData(start, state.duration);
 }
 
@@ -98,6 +99,13 @@ export function prev() {
   }
 
   start = Math.round(parseInt(start, 10) / 1000);
+
+  const sevenDaysAgo = get7DaysFromCurrentTime();
+
+  if (start < sevenDaysAgo) {
+    start = sevenDaysAgo;
+    setIs7DaysAgo(true);
+  }
 
   setLast24Hours(false);
   getData(start, state.duration);
@@ -116,4 +124,18 @@ export function setLast24Hours(value) {
       isLast24Hours: value
     }
   });
+}
+
+export function setIs7DaysAgo(value) {
+  DashboardStore.dispatch({
+    type: DashboardActions.setIs7DaysAgo,
+    payload: {
+      is7DaysAgo: value
+    }
+  });
+}
+
+function get7DaysFromCurrentTime() {
+  const sevenDaysAgo = moment().subtract(7, 'day').format('x');
+  return Math.floor(parseInt(sevenDaysAgo, 10) / 1000);
 }

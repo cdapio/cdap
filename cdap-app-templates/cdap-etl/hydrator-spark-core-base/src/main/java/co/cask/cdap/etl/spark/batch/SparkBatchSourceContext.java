@@ -25,7 +25,6 @@ import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.etl.api.lineage.field.Operation;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.common.PipelineRuntime;

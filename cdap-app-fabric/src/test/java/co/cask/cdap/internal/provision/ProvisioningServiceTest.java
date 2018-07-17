@@ -25,6 +25,8 @@ import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -58,8 +60,11 @@ import org.apache.tephra.TransactionSystemClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -73,6 +78,10 @@ import java.util.concurrent.TimeoutException;
  * Test for Provisioning Service.
  */
 public class ProvisioningServiceTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static ProvisioningService provisioningService;
   private static DatasetFramework datasetFramework;
   private static Transactional transactional;
@@ -81,8 +90,10 @@ public class ProvisioningServiceTest {
   private static MessagingService messagingService;
 
   @BeforeClass
-  public static void setupClass() {
+  public static void setupClass() throws IOException {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -196,7 +207,8 @@ public class ProvisioningServiceTest {
     ProvisioningTaskInfo taskInfo = new ProvisioningTaskInfo(taskFields.programRunId, taskFields.programDescriptor,
                                                              taskFields.programOptions, Collections.emptyMap(),
                                                              MockProvisioner.NAME, "Bob",
-                                                             op, null, cluster);
+                                                             op, Locations.toLocation(TEMP_FOLDER.newFolder()).toURI(),
+                                                             cluster);
 
     transactional.execute(dsContext -> {
       ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
@@ -299,7 +311,7 @@ public class ProvisioningServiceTest {
     Map<String, String> systemArgs = new HashMap<>();
     Map<String, String> userArgs = new HashMap<>();
 
-    Profile profile = new Profile(ProfileId.NATIVE.getProfile(), "desc", provisionerInfo);
+    Profile profile = new Profile(ProfileId.NATIVE.getProfile(), "label", "desc", provisionerInfo);
     SystemArguments.addProfileArgs(systemArgs, profile);
     ProgramOptions programOptions = new SimpleProgramOptions(programRunId.getParent(),
                                                              new BasicArguments(systemArgs),

@@ -22,6 +22,8 @@
 package co.cask.cdap.examples.sparkpagerank;
 
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
@@ -45,6 +47,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -53,7 +56,8 @@ import java.util.regex.Pattern;
 public class SparkPageRankProgram implements JavaSparkMain {
   private static final Logger LOG = LoggerFactory.getLogger(SparkPageRankProgram.class);
 
-  private static final int ITERATIONS_COUNT = 10;
+  static final String ITERATIONS_COUNT = "iteration_count_";
+  static final int ITERATIONS_COUNT_VALUE = 10;
   private static final Pattern SPACES = Pattern.compile("\\s+");
   private static final String POPULAR_PAGES = "total.popular.pages";
   private static final String UNPOPULAR_PAGES = "total.unpopular.pages";
@@ -164,15 +168,35 @@ public class SparkPageRankProgram implements JavaSparkMain {
     // The value of the entry is the URL rank.
     sec.saveAsDataset(ranksRaw, "ranks");
 
+    // ideally this should be stored as a key-value property but currently UI does not support displaying properties so
+    // add it as tag
+    Set<String> userTags = sec.getMetadata(MetadataEntity.ofDataset(sec.getNamespace(),
+                                                                    "ranks")).get(MetadataScope.USER).getTags();
+    for (String userTag : userTags) {
+      if (userTag.startsWith(ITERATIONS_COUNT)) {
+        // split on space and check the value to be integer to be just a little bit more sure this is the tag which
+        // we should be modifying
+        try {
+          Integer.parseInt(userTag.substring(userTag.indexOf(ITERATIONS_COUNT) + ITERATIONS_COUNT.length()));
+          // this was the tag which we added before so delete it
+          sec.removeTags(MetadataEntity.ofDataset(sec.getNamespace(), "ranks"), userTag);
+        } catch (NumberFormatException e) {
+          // ignored: not the tag we are are looking for
+        }
+      }
+    }
+    // write the new tag
+    sec.addTags(MetadataEntity.ofDataset(sec.getNamespace(), "ranks"), ITERATIONS_COUNT + iterationCount);
+
     LOG.info("PageRanks successfuly computed and written to \"ranks\" dataset");
   }
 
   private int getIterationCount(JavaSparkExecutionContext sec) {
     String args = sec.getRuntimeArguments().get("args");
     if (args == null) {
-      return ITERATIONS_COUNT;
+      return ITERATIONS_COUNT_VALUE;
     }
     String[] parts = args.split("\\s");
-    return (parts.length > 0) ? Integer.parseInt(parts[0]) : ITERATIONS_COUNT;
+    return (parts.length > 0) ? Integer.parseInt(parts[0]) : ITERATIONS_COUNT_VALUE;
   }
 }

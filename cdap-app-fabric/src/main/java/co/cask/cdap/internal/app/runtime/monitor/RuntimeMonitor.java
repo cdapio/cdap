@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.monitor;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
@@ -33,8 +32,7 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
-import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import co.cask.cdap.internal.profile.ProfileMetricScheduledService;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -45,8 +43,6 @@ import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Deque;
@@ -85,7 +81,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private final Transactional transactional;
   private final MessagingContext messagingContext;
   private final ScheduledExecutorService scheduledExecutorService;
-  private final RemoteExecutionLogProcessor logProcessor;
+  private final ProfileMetricScheduledService metricScheduledService;
 
   private Map<String, MonitorConsumeRequest> topicsToRequest;
   private long programFinishTime;
@@ -93,7 +89,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   public RuntimeMonitor(ProgramRunId programRunId, CConfiguration cConf, RuntimeMonitorClient monitorClient,
                         DatasetFramework datasetFramework, Transactional transactional,
                         MessagingContext messagingContext, ScheduledExecutorService scheduledExecutorService,
-                        RemoteExecutionLogProcessor logProcessor) {
+                        ProfileMetricScheduledService metricScheduledService) {
     super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
 
     this.programRunId = programRunId;
@@ -107,10 +103,10 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.messagingContext = messagingContext;
     this.transactional = transactional;
     this.scheduledExecutorService = scheduledExecutorService;
-    this.logProcessor = logProcessor;
     this.programFinishTime = -1L;
     this.lastProgramStateMessages = new LinkedList<>();
     this.requestKeyToLocalTopic = createTopicConfigs(cConf);
+    this.metricScheduledService = metricScheduledService;
   }
 
   @Override
@@ -119,7 +115,22 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   }
 
   @Override
+  protected void doStartUp() {
+    try {
+      metricScheduledService.startAndWait();
+    } catch (Exception e) {
+      LOG.warn("Failed to start metrics service for program run {}, node minute metrics will not be updated.",
+               programRunId);
+    }
+  }
+
+  @Override
   protected void doShutdown() {
+    try {
+      metricScheduledService.stopAndWait();
+    } catch (Exception e) {
+      LOG.warn("Failed to stop metrics service for program run {}", programRunId);
+    }
     if (!lastProgramStateMessages.isEmpty()) {
       String topicConfig = Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC;
       String topic = requestKeyToLocalTopic.get(topicConfig);
@@ -284,13 +295,9 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private long publish(String topicConfig, String topic, Deque<MonitorMessage> messages,
                        AppMetadataStore store) throws Exception {
     // publish messages to tms
-    if (topic.startsWith(cConf.get(Constants.Logging.TMS_TOPIC_PREFIX))) {
-      logProcessor.process(messages.stream().map(MonitorMessage::getMessage).iterator());
-    } else {
-      MessagePublisher messagePublisher = messagingContext.getMessagePublisher();
-      messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
-              messages.stream().map(MonitorMessage::getMessage).iterator());
-    }
+    MessagePublisher messagePublisher = messagingContext.getMessagePublisher();
+    messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
+                             messages.stream().map(MonitorMessage::getMessage).iterator());
 
     // persist the last published message as offset in meta store
     MonitorMessage lastMessage = messages.getLast();

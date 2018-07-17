@@ -16,14 +16,16 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
-import co.cask.cdap.runtime.spi.SparkCompat;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategies;
+import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
 import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -33,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Provisions a cluster using GCE DataProc.
@@ -59,6 +62,10 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
+    // Generates and set the ssh key
+    SSHKeyPair sshKeyPair = context.getSSHContext().generate("cdap");
+    context.getSSHContext().setSSHKeyPair(sshKeyPair);
+
     DataProcConf conf = DataProcConf.fromProvisionerContext(context);
     String clusterName = getClusterName(context.getProgramRun());
 
@@ -66,7 +73,6 @@ public class DataProcProvisioner implements Provisioner {
       // if it already exists, it means this is a retry. We can skip actually making the request
       Optional<Cluster> existing = client.getCluster(clusterName);
 
-      SparkCompat sparkCompat = context.getSparkCompat();
       String imageVersion;
       switch (context.getSparkCompat()) {
         case SPARK1_2_10:
@@ -77,12 +83,27 @@ public class DataProcProvisioner implements Provisioner {
           imageVersion = "1.2";
           break;
       }
+
+      // dataproc only allows label values to be lowercase letters, numbers, or dashes
+      String cdapVersion = context.getCDAPVersion().toLowerCase();
+      cdapVersion = cdapVersion.replaceAll("\\.", "_");
+      Map<String, String> labels = Collections.singletonMap("cdap-version", cdapVersion);
       if (!existing.isPresent()) {
-        client.createCluster(clusterName, imageVersion);
+        client.createCluster(clusterName, imageVersion, labels);
         return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
       } else {
         return existing.get();
       }
+    }
+  }
+
+  @Override
+  public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
+    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    String clusterName = getClusterName(context.getProgramRun());
+
+    try (DataProcClient client = DataProcClient.fromConf(conf)) {
+      return client.getClusterStatus(clusterName);
     }
   }
 
@@ -129,6 +150,21 @@ public class DataProcProvisioner implements Provisioner {
                                                        masterNode.getId(), cluster));
     }
     return ip;
+  }
+
+  @Override
+  public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
+    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    PollingStrategy strategy = PollingStrategies.fixedInterval(conf.getPollInterval(), TimeUnit.SECONDS);
+    switch (cluster.getStatus()) {
+      case CREATING:
+        return PollingStrategies.initialDelay(strategy, conf.getPollCreateDelay(),
+                                              conf.getPollCreateJitter(), TimeUnit.SECONDS);
+      case DELETING:
+        return PollingStrategies.initialDelay(strategy, conf.getPollDeleteDelay(), TimeUnit.SECONDS);
+    }
+    LOG.warn("Received a request to get the polling strategy for unexpected cluster status {}", cluster.getStatus());
+    return strategy;
   }
 
   // Name must start with a lowercase letter followed by up to 51 lowercase letters,

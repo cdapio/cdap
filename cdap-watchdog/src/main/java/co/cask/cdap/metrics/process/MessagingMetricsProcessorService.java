@@ -481,6 +481,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           long timeSpent = endTime - startTime;
           return Math.max(0L, metricsProcessIntervalMillis - timeSpent);
         }
+      } catch (ServiceUnavailableException e) {
+        LOG.trace("Could not fetch metrics. Will be retried in next iteration.", e);
       } catch (Exception e) {
         LOG.warn("Failed to process metrics. Will be retried in next iteration.", e);
       }
@@ -492,7 +494,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
      */
     private void tryPersist() {
       // Ensure there's only one thread can persist metricsFromAllTopics and messageId's.
-      // This is because the underlying metrics table is not thread safe.
       // If persistingFlag is false, set it to true and start persisting. Otherwise, log and return.
       if (!persistingFlag.compareAndSet(false, true)) {
         LOG.trace("There is another thread performing persisting. No need to persist in this thread.");

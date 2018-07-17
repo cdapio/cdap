@@ -36,6 +36,7 @@
   <!-- TODO Remove suppressing of Tephra logs once CDAP-8806 is fixed. -->
   <logger name="org.apache.tephra.TransactionManager" level="WARN"/>
   <logger name="org.apache.tephra.distributed.AbstractClientProvider" level="WARN"/>
+  <logger name="org.apache.tephra.persist.LocalFileTransactionStateStorage" level="WARN"/>
   <logger name="org.mortbay.log" level="WARN"/>
   <logger name="SecurityLogger.org.apache.hadoop.security.authorize.ServiceAuthorizationManager" level="WARN"/>
   <logger name="SecurityLogger.org.apache.hadoop.ipc.Server" level="WARN"/>

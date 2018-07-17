@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,38 +17,29 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.api.lineage.field.InputField;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
-import co.cask.cdap.proto.metadata.lineage.DatasetField;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageDetails;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageSummary;
-import co.cask.cdap.proto.metadata.lineage.FieldOperationInfo;
-import co.cask.cdap.proto.metadata.lineage.FieldOperationInput;
-import co.cask.cdap.proto.metadata.lineage.FieldOperationOutput;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
-import co.cask.cdap.proto.metadata.lineage.ProgramFieldOperationInfo;
-import co.cask.cdap.proto.metadata.lineage.ProgramInfo;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -71,10 +62,12 @@ public class LineageHandler extends AbstractHttpHandler {
     .create();
 
   private final LineageAdmin lineageAdmin;
+  private final FieldLineageAdmin fieldLineageAdmin;
 
   @Inject
-  LineageHandler(LineageAdmin lineageAdmin) {
+  LineageHandler(LineageAdmin lineageAdmin, FieldLineageAdmin fieldLineageAdmin) {
     this.lineageAdmin = lineageAdmin;
+    this.fieldLineageAdmin = fieldLineageAdmin;
   }
 
   @GET
@@ -108,12 +101,10 @@ public class LineageHandler extends AbstractHttpHandler {
                             @PathParam("dataset-id") String datasetId,
                             @QueryParam("start") String startStr,
                             @QueryParam("end") String endStr,
-                            @QueryParam("prefix") String prefix) {
-    // TODO: (CDAP-13269) Just a mock implementation for now
-    List<String> result = new ArrayList<>();
-    for (int i = 0; i < 100; i++) {
-      result.add("field_" + String.valueOf(i));
-    }
+                            @QueryParam("prefix") String prefix) throws BadRequestException {
+    TimeRange range = parseRange(startStr, endStr);
+    Set<String> result = fieldLineageAdmin.getFields(EndPoint.of(namespaceId, datasetId), range.getStart(),
+                                                     range.getEnd(), prefix);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
@@ -123,17 +114,14 @@ public class LineageHandler extends AbstractHttpHandler {
                                          @PathParam("namespace-id") String namespaceId,
                                          @PathParam("dataset-id") String datasetId,
                                          @PathParam("field-name") String field,
-                                         @QueryParam("direction") @DefaultValue("both") String direction,
+                                         @QueryParam("direction") String directionStr,
                                          @QueryParam("start") String startStr,
-                                         @QueryParam("end") String endStr) {
-    // TODO: (CDAP-13269) Just a mock implementation for now
-    List<DatasetField> incoming = new ArrayList<>();
-    DatasetField record = new DatasetField(new DatasetId("secure_ns", "pii_data"),
-                                           ImmutableSet.of("id", "ssn", "address"));
-    incoming.add(record);
-    record = new DatasetField(new DatasetId("default", "user_data"), ImmutableSet.of("id"));
-    incoming.add(record);
-    FieldLineageSummary summary = new FieldLineageSummary(incoming, null);
+                                         @QueryParam("end") String endStr) throws BadRequestException {
+    TimeRange range = parseRange(startStr, endStr);
+    Constants.FieldLineage.Direction direction = parseDirection(directionStr);
+    EndPointField endPointField = new EndPointField(EndPoint.of(namespaceId, datasetId), field);
+    FieldLineageSummary summary = fieldLineageAdmin.getSummary(direction, endPointField, range.getStart(),
+                                                               range.getEnd());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(summary));
   }
 
@@ -143,47 +131,14 @@ public class LineageHandler extends AbstractHttpHandler {
                                          @PathParam("namespace-id") String namespaceId,
                                          @PathParam("dataset-id") String datasetId,
                                          @PathParam("field-name") String field,
-                                         @QueryParam("direction") @DefaultValue("both") String direction,
+                                         @QueryParam("direction") @DefaultValue("both") String directionStr,
                                          @QueryParam("start") String startStr,
-                                         @QueryParam("end") String endStr) {
-    // TODO: (CDAP-13269) Just a mock implementation for now
-    List<ProgramInfo> programInfos = new ArrayList<>();
-    ProgramInfo programInfo = new ProgramInfo(new ProgramId("ns1", "sample_import",
-            ProgramType.WORKFLOW, "DataPipelineWorkflow"), 1528323457);
-    programInfos.add(programInfo);
-    programInfo = new ProgramInfo(new ProgramId("default", "another_sample_import",
-            ProgramType.WORKFLOW, "DataPipelineWorkflow"), 1528313457);
-    programInfos.add(programInfo);
-
-    List<FieldOperationInfo> fieldOperationInfos = new ArrayList<>();
-    EndPoint sourceEndPoint = EndPoint.of("default", "file");
-    EndPoint destinationEndPoint = EndPoint.of("default", "another_file");
-
-    FieldOperationInfo operationInfo = new FieldOperationInfo("read", "reading a file",
-            FieldOperationInput.of(sourceEndPoint), FieldOperationOutput.of(Collections.singletonList("body")));
-    fieldOperationInfos.add(operationInfo);
-
-    operationInfo = new FieldOperationInfo("parse", "parsing a comma separated field",
-            FieldOperationInput.of(Collections.singletonList(InputField.of("read", "body"))),
-            FieldOperationOutput.of(Collections.singletonList("address")));
-    fieldOperationInfos.add(operationInfo);
-
-    operationInfo = new FieldOperationInfo("normalize", "normalizing field",
-            FieldOperationInput.of(Collections.singletonList(InputField.of("parse", "address"))),
-            FieldOperationOutput.of(Collections.singletonList("address")));
-    fieldOperationInfos.add(operationInfo);
-
-    operationInfo = new FieldOperationInfo("write", "write to a file",
-            FieldOperationInput.of(Collections.singletonList(InputField.of("normalize", "address"))),
-            FieldOperationOutput.of(destinationEndPoint));
-    fieldOperationInfos.add(operationInfo);
-
-    List<ProgramFieldOperationInfo> programFieldOperationInfos = new ArrayList<>();
-    for (int i = 0; i < 50; i++) {
-      programFieldOperationInfos.add(new ProgramFieldOperationInfo(programInfos, fieldOperationInfos));
-    }
-
-    FieldLineageDetails details = new FieldLineageDetails(programFieldOperationInfos, null);
+                                         @QueryParam("end") String endStr) throws BadRequestException {
+    TimeRange range = parseRange(startStr, endStr);
+    Constants.FieldLineage.Direction direction = parseDirection(directionStr);
+    EndPointField endPointField = new EndPointField(EndPoint.of(namespaceId, datasetId), field);
+    FieldLineageDetails details = fieldLineageAdmin.getOperationDetails(direction, endPointField, range.getStart(),
+                                                                        range.getEnd());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));
   }
 
@@ -283,6 +238,17 @@ public class LineageHandler extends AbstractHttpHandler {
 
     public long getEnd() {
       return end;
+    }
+  }
+
+  private Constants.FieldLineage.Direction parseDirection(String directionStr) throws BadRequestException {
+    try {
+      return Constants.FieldLineage.Direction.valueOf(directionStr);
+    } catch (IllegalArgumentException e) {
+      String directionValues = Joiner.on(", ").join(Constants.FieldLineage.Direction.values());
+      throw new BadRequestException(String.format("Direction must be specified to get the field lineage " +
+                                                    "summary and should be one of the following: [%s].",
+                                                  directionValues.toLowerCase()));
     }
   }
 }

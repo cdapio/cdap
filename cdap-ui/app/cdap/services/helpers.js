@@ -371,6 +371,37 @@ const roundDecimalToNDigits = (num, digits = 2) => {
   return round(newNum, digits);
 };
 
+/*
+ *  This function is used to turn query parameters in the URL into a key-value object
+ *  eg:
+ *    URL: localhost:11011/some/path?key1=value1&key2=value2
+ *
+ *    returns:
+ *    {
+ *      key1: value1,
+ *      key2: value2
+ *    }
+ */
+const parseQueryString = () => {
+  const queryStr = location.search.slice(1);
+
+  if (queryStr.length === 0) { return null; }
+
+  let queryObj = {};
+
+  queryStr
+    .split('&')
+    .forEach((pair) => {
+      const index = pair.indexOf('=');
+      const key = pair.slice(0, index);
+      const value = pair.slice(index + 1);
+
+      queryObj[key] = value;
+    });
+
+  return queryObj;
+};
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -404,5 +435,6 @@ export {
   convertMapToKeyValuePairs,
   convertKeyValuePairsToMap,
   isNilOrEmpty,
-  roundDecimalToNDigits
+  roundDecimalToNDigits,
+  parseQueryString
 };

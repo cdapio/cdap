@@ -73,6 +73,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   public static final String NAMESPACE = "namespace";
   public static final String APPLICATION = "application";
   public static final String ARTIFACT = "artifact";
+  // version is used by artifact and application and their children which includes programs, flowlet, runs and schedules
   public static final String VERSION = "version";
   public static final String DATASET = "dataset";
   public static final String STREAM = "stream";
@@ -203,12 +204,14 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
           }
         }
         throw new IllegalArgumentException(String.format("Failed to build MetadataEntity of type '%s' from '%s'. " +
-                                                           "Type '%s is a CDAP entity type and must follow one of " +
+                                                           "Type '%s' is a CDAP entity type and must follow one of " +
                                                            "the following key hierarchies '%s'." +
                                                            "If you want to represent a CDAP Entity please follow the " +
                                                            "correct hierarchy. If you are trying to represent a " +
-                                                           "custom resource please use a different type name.",
-                                                         type, parts, type, Arrays.toString(validSequences)));
+                                                           "custom resource please use a different type name. " +
+                                                           "Note: if a type name is not specified the last key is " +
+                                                           "considered as the type.",
+                                                         type, parts, type, Arrays.deepToString(validSequences)));
       }
     }
   }

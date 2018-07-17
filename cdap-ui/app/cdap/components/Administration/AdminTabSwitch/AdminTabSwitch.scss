@@ -29,14 +29,19 @@ $font-color: $grey-01;
     .tab-title {
       h5 {
         display: inline;
-        font-weight: bold;
+        font-weight: initial;
 
         a {
           color: $font-color;
         }
 
+        &:hover {
+          font-weight: bold;
+        }
+
         &.active {
           pointer-events: none;
+          font-weight: bold;
 
           a {
             text-decoration: underline;

@@ -20,6 +20,9 @@ import {connect} from 'react-redux';
 import {humanReadableDate, objectQuery} from 'services/helpers';
 import Navigation from 'components/FieldLevelLineage/OperationsModal/Navigation';
 import OperationsTable from 'components/FieldLevelLineage/OperationsModal/OperationsTable';
+import T from 'i18n-react';
+
+const PREFIX = 'features.FieldLevelLineage.OperationsModal';
 
 function getInputDatasets(operations) {
   let inputDatasets = [];
@@ -49,11 +52,11 @@ function ModalContentView({operations, activeIndex, datasetId}) {
       <Navigation />
 
       <div className="summary-text">
-        Operations between {getInputDatasets(activeOperations)} and {`'${datasetId}'`}
+        {T.translate(`${PREFIX}.summaryText`, { sources: getInputDatasets(activeOperations), target: datasetId })}
       </div>
 
       <div className="last-execution">
-        Last executed by {`'${application}'`} on {humanReadableDate(lastExecutedTime)}
+        {T.translate(`${PREFIX}.lastExecution`, { app: application, time: humanReadableDate(lastExecutedTime) })}
       </div>
 
       <OperationsTable operations={activeOperations} />

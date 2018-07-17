@@ -49,6 +49,9 @@ import Alert from 'components/Alert';
 import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
 import PredictionDatasetExploreModal from 'components/Experiments/DetailedView/PredictionDatasetExploreModal';
 import AddModelToPipelineBtn from 'components/Experiments/DetailedView/AddModelToPipelineBtn';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.DetailedView';
 
 require('./DetailedViewModelsTable.scss');
 const MODELSTATES = [
@@ -59,49 +62,49 @@ const MODELSTATES = [
 ];
 let tableHeaders = [
   {
-    label: 'Model Name',
+    label: T.translate(`${PREFIX}.modelName`),
     property: 'name'
   },
   {
-    label: 'Status',
+    label: T.translate(`${PREFIX}.status`),
     property: 'status'
   },
   {
-    label: 'Algorithm',
+    label: T.translate(`${PREFIX}.algorithm`),
     property: 'algorithm'
   }
 ];
 
 const regressionMetrics = [
   {
-    label: 'RMSE',
+    label: T.translate(`${PREFIX}.rmse`),
     property: 'rmse'
   },
   {
-    label: 'R2',
+    label: T.translate(`${PREFIX}.r2`),
     property: 'r2'
   },
   {
-    label: 'Evariance',
+    label: T.translate(`${PREFIX}.evariance`),
     property: 'evariance'
   },
   {
-    label: 'Mean Avg Error',
+    label: T.translate(`${PREFIX}.mae`),
     property: 'mae'
   },
 ];
 
 const categoricalMetrics = [
   {
-    label: 'Precision',
+    label: T.translate(`${PREFIX}.precision`),
     property: 'precision'
   },
   {
-    label: 'Recall',
+    label: T.translate(`${PREFIX}.recall`),
     property: 'recall'
   },
   {
-    label: 'F1',
+    label: T.translate(`${PREFIX}.f1`),
     property: 'f1'
   },
 ];
@@ -180,7 +183,7 @@ const renderDirectivesTables = (directives) => {
           <div className="grid-row">
             <strong> Directives ({directives.length})</strong>
             <CopyableID
-              label="Copy to Clipboard"
+              label={T.translate(`${PREFIX}.copyToClipboard`)}
               id={copyableDirectives}
               tooltipText={false}
             />
@@ -239,65 +242,67 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
   modelTrainingLogsUrl = constructModelTrainingLogs(model, experimentId);
   return (
     <div {...props}>
-      <div />
-      <div>
+      <div className="content-wrapper">
+        <div />
         <div>
-          <strong>Model Description</strong>
-          <div>{model.description || '--'}</div>
-        </div>
-        <div>
-          <strong> Directives ({directivesCount}) </strong>
           <div>
-            <CollapsibleWrapper
-              content={directivesCount ? `${directives[0]}...` : '--'}
-              popoverContent={renderDirectivesTables.bind(null, directives)}
-              alwaysShowViewLink={true}
-            />
+            <strong>{T.translate(`${PREFIX}.modelDescription`)}</strong>
+            <div>{model.description || '--'}</div>
           </div>
-        </div>
-        <div className="model-action-btns">
-          <AddModelToPipelineBtn
-            modelName={model.name}
-            modelId={model.id}
-          />
-          <PredictionDatasetExploreModal predictionDataset={model.predictionsDataset} />
-        </div>
-      </div>
-      <div>
-        <div>
-          <strong>Features ({featuresCount}) </strong>
           <div>
-            <CollapsibleWrapper
-              content={featuresCount ? model.features.join(',') : '--'}
-              popoverContent={renderFeaturesTable.bind(null, model.features)}
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <div>
-          <strong> Created on</strong>
-          <div>{humanReadableDate(model.createtime, true)}</div>
-        </div>
-      </div>
-      <div>
-        <div>
-          <strong> Model ID </strong>
-          <CopyableID
-            id={model.id}
-            label="Copy To Clipboard"
-            placement="left"
-          />
-        </div>
-        {
-          splitId ?
+            <strong> Directives ({directivesCount}) </strong>
             <div>
-              <strong>Model Training Logs </strong>
-              <a href={modelTrainingLogsUrl} target="_blank"> Logs </a>
+              <CollapsibleWrapper
+                content={directivesCount ? `${directives[0]}...` : '--'}
+                popoverContent={renderDirectivesTables.bind(null, directives)}
+                alwaysShowViewLink={true}
+              />
             </div>
-          :
-            null
-        }
+          </div>
+        </div>
+        <div>
+          <div>
+            <strong>Features ({featuresCount}) </strong>
+            <div>
+              <CollapsibleWrapper
+                content={featuresCount ? model.features.join(',') : '--'}
+                popoverContent={renderFeaturesTable.bind(null, model.features)}
+              />
+            </div>
+          </div>
+        </div>
+        <div>
+          <div>
+            <strong> Created on</strong>
+            <div>{humanReadableDate(model.createtime, true)}</div>
+          </div>
+        </div>
+        <div>
+          <div>
+            <strong> Model ID </strong>
+            <CopyableID
+              id={model.id}
+              label={T.translate(`${PREFIX}.copyToClipboard`)}
+              placement="left"
+            />
+          </div>
+          {
+            splitId ?
+              <div>
+                <strong>{T.translate(`${PREFIX}.modelTrainingLogs`)}</strong>
+                <a href={modelTrainingLogsUrl} target="_blank"> Logs </a>
+              </div>
+            :
+              null
+          }
+        </div>
+      </div>
+      <div className="model-action-btns">
+        <AddModelToPipelineBtn
+          modelName={model.name}
+          modelId={model.id}
+        />
+        <PredictionDatasetExploreModal predictionDataset={model.predictionsDataset} />
       </div>
     </div>
   );
@@ -461,8 +466,7 @@ function ModelsTableContent({
           handlePageChange={handleModelsPageChange}
           currentPage={modelsCurrentPage}
           totalPages={modelsTotalPages}
-          title={modelsTotalCount > 1 ? "Models" : "Model"}
-          numberOfEntities={modelsTotalCount}
+          title={T.translate(`${PREFIX}.models`, {context: modelsTotalCount})}
         />
       </div>
       <div className="grid-wrapper">

@@ -99,6 +99,15 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
     return scope == EntityScope.SYSTEM ? NamespaceId.SYSTEM.profile(profileName) : namespaceId.profile(profileName);
   }
 
+  /**
+   * Return which entity scope this profile is in
+   *
+   * @return entity scope the profile is in
+   */
+  public EntityScope getScope() {
+    return getNamespaceId().equals(NamespaceId.SYSTEM) ? EntityScope.SYSTEM : EntityScope.USER;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) {

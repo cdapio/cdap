@@ -21,6 +21,7 @@ import co.cask.cdap.proto.id.DatasetId;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -45,5 +46,23 @@ public class DatasetField {
 
   public Set<String> getFields() {
     return fields;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    DatasetField that = (DatasetField) o;
+    return Objects.equals(dataset, that.dataset) &&
+            Objects.equals(fields, that.fields);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(dataset, fields);
   }
 }

@@ -21,5 +21,6 @@
  * <p>
  *   Every flow must implement the {@link co.cask.cdap.api.flow.Flow} interface.
  * </p>
+ * @deprecated As of release 5.0.0, replaced by {@link @ProgramType.SPARK} for realtime processing.
  */
 package co.cask.cdap.api.flow;

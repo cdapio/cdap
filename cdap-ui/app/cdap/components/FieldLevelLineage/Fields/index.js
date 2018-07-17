@@ -20,8 +20,11 @@ import {connect} from 'react-redux';
 import FieldRow from 'components/FieldLevelLineage/FieldRow';
 import LineageSummary from 'components/FieldLevelLineage/LineageSummary';
 import FieldSearch from 'components/FieldLevelLineage/Fields/Search';
+import T from 'i18n-react';
 
 require('./Fields.scss');
+
+const PREFIX = 'features.FieldLevelLineage';
 
 function FieldsView({datasetId, fields}) {
   return (
@@ -29,11 +32,14 @@ function FieldsView({datasetId, fields}) {
       <LineageSummary />
       <div className="fields-box">
         <div className="header">
-          <div className="dataset-name">
+          <div
+            className="dataset-name truncate"
+            title={datasetId}
+          >
             {datasetId}
           </div>
           <div className="fields-count">
-            {fields.length} fields
+            {T.translate(`${PREFIX}.fieldsCount`, { context: fields.length })}
           </div>
         </div>
 

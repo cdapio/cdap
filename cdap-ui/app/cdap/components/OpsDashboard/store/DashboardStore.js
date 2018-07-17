@@ -28,6 +28,7 @@ const DashboardActions = {
   changeDisplayType: 'DASHBOARD_CHANGE_DISPLAY_TYPE',
   changeViewByOption: 'DASHBOARD_CHANGE_VIEW_BY_OPTION',
   setLast24Hours: 'DASHBOARD_SET_LAST_24_HOURS',
+  setIs7DaysAgo: 'DASHBOARD_SET_IS_7_DAYS_AGO',
   reset: 'DASHBOARD_RESET'
 };
 
@@ -49,7 +50,8 @@ const defaultInitialState = {
   customApp: true,
   displayType: 'chart',
   viewByOption: ViewByOptions.runStatus,
-  isLast24Hours: true
+  isLast24Hours: true,
+  is7DaysAgo: false
 };
 
 const namespacesInitialState = {
@@ -106,6 +108,11 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         isLast24Hours: action.payload.isLast24Hours
+      };
+    case DashboardActions.setIs7DaysAgo:
+      return {
+        ...state,
+        is7DaysAgo: action.payload.is7DaysAgo
       };
     case DashboardActions.reset:
       return defaultInitialState;

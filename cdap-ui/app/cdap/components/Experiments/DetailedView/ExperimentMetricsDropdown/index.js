@@ -23,6 +23,9 @@ import AlgorithmDistribution from 'components/Experiments/DetailedView/Experimen
 import ModelStatusesDistribution from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/ModelStatusesDistribution';
 import MetricChartWithLegend from 'components/Experiments/DetailedView/MetricChartWithLegend';
 import colorVariables from 'styles/variables.scss';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Experiments.DetailedView';
 
 require('./ExperimentMetricsDropdown.scss');
 
@@ -36,17 +39,17 @@ class ExperimentMetricsDropdown extends Component {
   static commonKeys = [
     {
       id: 'algorithms',
-      value: 'Algorithm Types'
+      value: T.translate(`${PREFIX}.algoTypes`)
     },
     {
       id: 'statuses',
-      value: 'Model Status'
+      value: T.translate(`${PREFIX}.modelStatus`)
     }
   ];
   static regressionKeys = [
     {
       id: 'rmse',
-      value: 'RMSE',
+      value: T.translate(`${PREFIX}.rmse`),
       colorRange: [
         colorVariables.bluegrey01,
         colorVariables.bluegrey02,
@@ -57,7 +60,7 @@ class ExperimentMetricsDropdown extends Component {
     },
     {
       id: 'mae',
-      value: 'Mean Avg Error',
+      value: T.translate(`${PREFIX}.mae`),
       colorRange: [
         colorVariables.green01,
         colorVariables.green02,
@@ -68,7 +71,7 @@ class ExperimentMetricsDropdown extends Component {
     },
     {
       id: 'r2',
-      value: 'R2',
+      value: T.translate(`${PREFIX}.r2`),
       colorRange: [
         colorVariables.blue01,
         colorVariables.blue02,
@@ -79,7 +82,7 @@ class ExperimentMetricsDropdown extends Component {
     },
     {
       id: 'evariance',
-      value: 'Accuracy',
+      value: T.translate(`${PREFIX}.evariance`),
       colorRange: [
         colorVariables.orange01,
         colorVariables.orange02,
@@ -92,7 +95,7 @@ class ExperimentMetricsDropdown extends Component {
   static categoricalKeys = [
     {
       id: 'precision',
-      value: 'Precision',
+      value: T.translate(`${PREFIX}.precision`),
        colorRange: [
         colorVariables.blue01,
         colorVariables.blue02,
@@ -103,7 +106,7 @@ class ExperimentMetricsDropdown extends Component {
     },
     {
       id: 'recall',
-      value: 'Recall',
+      value: T.translate(`${PREFIX}.recall`),
       colorRange: [
         colorVariables.orange01,
         colorVariables.orange02,
@@ -114,7 +117,7 @@ class ExperimentMetricsDropdown extends Component {
     },
     {
       id: 'f1',
-      value: 'F1',
+      value: T.translate(`${PREFIX}.f1`),
       colorRange: [
         colorVariables.green01,
         colorVariables.green02,

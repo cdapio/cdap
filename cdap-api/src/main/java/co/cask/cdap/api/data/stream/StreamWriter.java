@@ -27,7 +27,10 @@ import java.util.Map;
 /**
  * Enabling Programs to write to Streams through their Context. This interface is marked as Beta since the API
  * might evolve in future releases until it matures.
+ *
+ * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
  */
+@Deprecated
 @Beta
 public interface StreamWriter {
 

@@ -16,39 +16,10 @@
 
 package co.cask.cdap.logging.appender.kafka;
 
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.NamespaceLoggingContext;
-import co.cask.cdap.proto.id.NamespaceId;
-
 /**
  * Type of Log Partition
  */
 public enum LogPartitionType {
   PROGRAM,
-  APPLICATION;
-
-  /**
-   * Computes a partition key based on the given {@link LoggingContext}.
-   */
-  public String getPartitionKey(LoggingContext loggingContext) {
-    String namespaceId = loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue();
-
-    if (NamespaceId.SYSTEM.getNamespace().equals(namespaceId)) {
-      return loggingContext.getLogPartition();
-    }
-
-    switch (this) {
-      case PROGRAM:
-        return loggingContext.getLogPartition();
-      case APPLICATION:
-        return namespaceId + ":" +
-                loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
-      default:
-        // this should never happen
-        throw new IllegalArgumentException(
-                String.format("Invalid log partition type %s. Allowed partition types are program/application",
-                              getClass()));
-    }
-  }
+  APPLICATION
 }

@@ -20,11 +20,15 @@ import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import co.cask.cdap.api.metadata.MetadataReader;
+import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.etl.api.StageContext;
+
+import java.util.Optional;
 
 /**
  * Holds common information, services, and contexts required at runtime by plugins. This exists mainly so that we
@@ -39,15 +43,17 @@ public class PipelineRuntime {
   private final Metrics metrics;
   private final PluginContext pluginContext;
   private final ServiceDiscoverer serviceDiscoverer;
+  private final MetadataReader metadataReader;
+  private final MetadataWriter metadataWriter;
 
   public PipelineRuntime(SparkClientContext context) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), context.getMetrics(), context, context);
+         new BasicArguments(context), context.getMetrics(), context, context, context, context);
   }
 
   public PipelineRuntime(CustomActionContext context, Metrics metrics) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), metrics, context, context);
+         new BasicArguments(context), metrics, context, context, context, context);
   }
 
   public PipelineRuntime(MapReduceTaskContext context, Metrics metrics, BasicArguments arguments) {
@@ -57,16 +63,18 @@ public class PipelineRuntime {
 
   public PipelineRuntime(MapReduceContext context, Metrics metrics) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), metrics, context, context);
+         new BasicArguments(context), metrics, context, context, context, context);
   }
 
   public PipelineRuntime(WorkflowContext context, Metrics metrics) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context.getToken(), context.getRuntimeArguments()), metrics, context, context);
+         new BasicArguments(context.getToken(), context.getRuntimeArguments()), metrics, context, context, context,
+         context);
   }
 
   public PipelineRuntime(String namespace, String pipelineName, long logicalStartTime, BasicArguments arguments,
-                         Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer) {
+                         Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
+                         MetadataReader metadataReader, MetadataWriter metadataWriter) {
     this.namespace = namespace;
     this.pipelineName = pipelineName;
     this.logicalStartTime = logicalStartTime;
@@ -74,6 +82,13 @@ public class PipelineRuntime {
     this.metrics = metrics;
     this.pluginContext = pluginContext;
     this.serviceDiscoverer = serviceDiscoverer;
+    this.metadataReader = metadataReader;
+    this.metadataWriter = metadataWriter;
+  }
+
+  public PipelineRuntime(String namespace, String pipelineName, long logicalStartTime, BasicArguments arguments,
+                         Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer) {
+    this(namespace, pipelineName, logicalStartTime, arguments, metrics, pluginContext, serviceDiscoverer, null, null);
   }
 
   public String getNamespace() {
@@ -102,5 +117,25 @@ public class PipelineRuntime {
 
   public ServiceDiscoverer getServiceDiscoverer() {
     return serviceDiscoverer;
+  }
+
+  /**
+   * @return an {@link Optional} of {@link MetadataReader} which is present is metadataReader is not null
+   */
+  public Optional<MetadataReader> getMetadataReader() {
+    if (metadataReader != null) {
+      return Optional.of(metadataReader);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * @return an {@link Optional} of {@link MetadataWriter} which is present is metadataWriter is not null
+   */
+  public Optional<MetadataWriter> getMetadataWriter() {
+    if (metadataWriter != null) {
+      return Optional.of(metadataWriter);
+    }
+    return Optional.empty();
   }
 }

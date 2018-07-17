@@ -32,13 +32,16 @@ public interface DatasetConfigurer {
    *
    * @param stream {@link Stream}
    */
+  @Deprecated
   void addStream(Stream stream);
 
   /**
    * Adds a {@link Stream} given the name of the stream.
    *
    * @param streamName name of the stream
+   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
    */
+  @Deprecated
   void addStream(String streamName);
 
   /**

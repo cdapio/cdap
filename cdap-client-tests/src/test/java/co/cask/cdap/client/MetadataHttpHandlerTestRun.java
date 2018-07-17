@@ -39,6 +39,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
@@ -57,10 +58,12 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
+import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
 import co.cask.common.http.HttpRequest;
@@ -733,15 +736,15 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       removeCreationTime(getProperties(app, MetadataScope.SYSTEM)));
     Assert.assertEquals(ImmutableSet.of(AllProgramsApp.class.getSimpleName()),
                         getTags(app, MetadataScope.SYSTEM));
-    // verify program system metadata
+    // verify program system metadata, we now have profile as system metadata for workflow
     assertProgramSystemMetadata(app.flow(AllProgramsApp.NoOpFlow.NAME), "Realtime",
-                                AllProgramsApp.NoOpFlow.DESCRIPTION);
-    assertProgramSystemMetadata(app.worker(AllProgramsApp.NoOpWorker.NAME), "Realtime", null);
-    assertProgramSystemMetadata(app.service(AllProgramsApp.NoOpService.NAME), "Realtime", null);
-    assertProgramSystemMetadata(app.mr(AllProgramsApp.NoOpMR.NAME), "Batch", null);
-    assertProgramSystemMetadata(app.spark(AllProgramsApp.NoOpSpark.NAME), "Batch", null);
+                                AllProgramsApp.NoOpFlow.DESCRIPTION, null);
+    assertProgramSystemMetadata(app.worker(AllProgramsApp.NoOpWorker.NAME), "Realtime", null, null);
+    assertProgramSystemMetadata(app.service(AllProgramsApp.NoOpService.NAME), "Realtime", null, null);
+    assertProgramSystemMetadata(app.mr(AllProgramsApp.NoOpMR.NAME), "Batch", null, null);
+    assertProgramSystemMetadata(app.spark(AllProgramsApp.NoOpSpark.NAME), "Batch", null, null);
     assertProgramSystemMetadata(app.workflow(AllProgramsApp.NoOpWorkflow.NAME), "Batch",
-                                AllProgramsApp.NoOpWorkflow.DESCRIPTION);
+                                AllProgramsApp.NoOpWorkflow.DESCRIPTION, ProfileId.NATIVE);
 
     // update dataset properties to add the workflow.local.dataset property to it.
     try {
@@ -1050,6 +1053,45 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       Metadata systemMetadata = result.getMetadata().get(MetadataScope.SYSTEM);
       // custom entity should not have any system metadata for it
       Assert.assertNull(systemMetadata);
+    }
+  }
+
+  @Test
+  public void testCrossNamespaceSearchMetadata() throws Exception {
+    NamespaceId namespace1 = new NamespaceId("ns1");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace1).build());
+    NamespaceId namespace2 = new NamespaceId("ns2");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace2).build());
+
+    try {
+      appClient.deploy(namespace1, createAppJarFile(AllProgramsApp.class));
+      appClient.deploy(namespace2, createAppJarFile(AllProgramsApp.class));
+
+      // Add metadata to app
+      Map<String, String> props = ImmutableMap.of("key1", "value1");
+      Metadata meta = new Metadata(props, Collections.emptySet());
+      ApplicationId app1Id = namespace1.app(AllProgramsApp.NAME);
+      addProperties(app1Id, props);
+
+      ApplicationId app2Id = namespace2.app(AllProgramsApp.NAME);
+      addProperties(app2Id, props);
+
+      MetadataSearchResponseV2 results = searchMetadata(null, "value*", EnumSet.allOf(EntityTypeSimpleName.class),
+                                                        null, 0, 10, 0, null, false, true);
+
+      Map<MetadataEntity, Metadata> expected = new HashMap<>();
+      expected.put(app1Id.toMetadataEntity(), meta);
+      expected.put(app2Id.toMetadataEntity(), meta);
+
+      Map<MetadataEntity, Metadata> actual = new HashMap<>();
+      Assert.assertEquals(2, results.getResults().size());
+      for (MetadataSearchResultRecordV2 record : results.getResults()) {
+        actual.put(record.getMetadataEntity(), record.getMetadata().get(MetadataScope.USER));
+      }
+      Assert.assertEquals(expected, actual);
+    } finally {
+      namespaceClient.delete(namespace1);
+      namespaceClient.delete(namespace2);
     }
   }
 
@@ -1437,12 +1479,19 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   private void assertProgramSystemMetadata(ProgramId programId, String mode,
-                                           @Nullable String description) throws Exception {
+                                           @Nullable String description,
+                                           @Nullable ProfileId profileId) throws Exception {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, programId.getEntityName())
       .put(AbstractSystemMetadataWriter.VERSION_KEY, ApplicationId.DEFAULT_VERSION);
     if (description != null) {
       properties.put(AbstractSystemMetadataWriter.DESCRIPTION_KEY, description);
+    }
+    if (profileId != null) {
+      properties.put("profile", profileId.toString());
+      // need to wait for the profile id to come up since we are updating it asyncly
+      Tasks.waitFor(profileId.toString(), () -> getProperties(programId, MetadataScope.SYSTEM).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     }
     Assert.assertEquals(properties.build(), removeCreationTime(getProperties(programId, MetadataScope.SYSTEM)));
     Set<String> expected = ImmutableSet.of(programId.getType().getPrettyName(), mode);

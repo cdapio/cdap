@@ -20,6 +20,7 @@ package co.cask.cdap.api.flow.flowlet;
  * Represents the context of the input data that is passed
  * to {@link Flowlet} for processing.
  */
+@Deprecated
 public interface InputContext {
   /**
    * @return Name of the output the event was read from.

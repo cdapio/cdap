@@ -18,6 +18,8 @@ import React, { PureComponent } from 'react';
 
 require('./Footer.scss');
 
+const LICENSE_TEXT = 'Licensed under the Apache License, Version 2.0';
+
 export default class Footer extends PureComponent {
   render() {
     return (
@@ -26,7 +28,7 @@ export default class Footer extends PureComponent {
           <div className="row text-muted">
             <div>
               <p className="text-xs-center">
-                <span>Licensed under the Apache License, Version 2.0</span>
+                <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer">{LICENSE_TEXT}</a>
               </p>
             </div>
           </div>

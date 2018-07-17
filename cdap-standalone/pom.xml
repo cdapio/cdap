@@ -742,39 +742,6 @@
                   </resources>
                 </configuration>
               </execution>
-              <!-- Copy CLI scripts -->
-              <execution>
-                <id>copy-cli-scripts</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}</outputDirectory>
-                  <useDefaultDelimiters>false</useDefaultDelimiters>
-                  <delimiters>
-                    <delimiter>@@</delimiter>
-                  </delimiters>
-                  <resources>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-cli/target</directory>
-                      <targetPath>bin</targetPath>
-                      <includes>
-                        <include>cli-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
-                      <targetPath>bin</targetPath>
-                      <includes>
-                        <include>cdap-cli.bat</include>
-                        <include>cdap-cli.sh</include>
-                      </includes>
-                      <filtering>true</filtering>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
               <!-- Copy example deploy pom -->
               <execution>
                 <id>copy-examples-pom</id>
@@ -843,7 +810,6 @@
                 <phase>prepare-package</phase>
                 <configuration>
                   <target>
-                    <chmod file="${stage.opt.dir}/bin/cdap-cli.bat" perm="755"/>
                     <chmod file="${stage.opt.dir}/bin/cdap.bat" perm="755"/>
                     <chmod file="${stage.opt.dir}/bin/cdap" perm="755"/>
                     <chmod file="${stage.opt.dir}/bin/functions.sh" perm="644"/>

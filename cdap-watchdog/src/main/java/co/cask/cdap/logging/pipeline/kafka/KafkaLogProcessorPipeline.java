@@ -19,6 +19,7 @@ package co.cask.cdap.logging.pipeline.kafka;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.LogSampler;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.logging.meta.Checkpoint;
@@ -26,6 +27,7 @@ import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.TimeEventQueue;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
@@ -53,6 +55,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,8 +70,12 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaLogProcessorPipeline.class);
   // For outage, only log once per 60 seconds per message.
-  private static final Logger OUTAGE_LOG =
-          Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
+  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.perMessage(new Supplier<LogSampler>() {
+    @Override
+    public LogSampler get() {
+      return LogSamplers.limitRate(60000);
+    }
+  }));
 
   private static final int KAFKA_SO_TIMEOUT = 3000;
   private static final double MIN_FREE_FACTOR = 0.5d;
@@ -230,7 +237,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
    */
   private void initializeOffsets() throws InterruptedException {
     // Setup initial offsets
-    Set<Integer> partitions = new HashSet<>(config.getPartitions());
+    Set<Integer> partitions = new HashSet<>();
+    partitions.addAll(config.getPartitions());
 
     while (!partitions.isEmpty() && !stopped) {
       Iterator<Integer> iterator = partitions.iterator();
@@ -330,7 +338,12 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     for (final int partition : config.getPartitions()) {
       final long offset = offsets.get(partition);
 
-      fetchFutures.put(partition, fetchExecutor.submit(() -> fetchMessages(partition, offset)));
+      fetchFutures.put(partition, fetchExecutor.submit(new Callable<Iterable<MessageAndOffset>>() {
+        @Override
+        public Iterable<MessageAndOffset> call() throws Exception {
+          return fetchMessages(partition, offset);
+        }
+      }));
     }
 
     return fetchFutures;

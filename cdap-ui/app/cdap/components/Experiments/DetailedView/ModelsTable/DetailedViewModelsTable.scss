@@ -58,7 +58,8 @@
     .grid-header,
     .grid-body {
       .grid-row {
-        grid-template-columns: 20px 1fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
+        grid-template-columns: 20px 2fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
+        white-space: nowrap;
         &:hover {
           [class*="icon-"] {
             color: $blue-03;
@@ -69,16 +70,20 @@
     .grid-body {
       .grid-row {
         &.opened {
-          grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
+          grid-template-columns: 1fr;
           background: $grey-08;
           border-bottom: 3px solid $grey-04;
           border-top: 0;
           align-items: start;
           cursor: auto;
-          > div {
+          .content-wrapper {
+            display: grid;
+            grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
             white-space: nowrap;
             text-overflow: ellipsis;
             height: 100%;
+          }
+          > div {
             strong {
               display: block;
             }
@@ -87,6 +92,9 @@
             }
             > div {
               padding: 5px 0;
+              > div:nth-child(2) {
+                padding-top: 10px;
+              }
             }
           }
           .collapsable-wrapper {
@@ -119,9 +127,13 @@
           .model-action-btns {
             display: flex;
             align-items: center;
-            margin-top: 10px;
+            flex-wrap: wrap;
+            margin-left: 20px;
+            margin-top: 0;
+            padding: 0;
+            padding-left: 10px;
             .add-model-to-pipeline {
-              margin-right: 5px;
+              margin: 5px 5px 5px 0;
             }
           }
         }

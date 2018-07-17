@@ -19,6 +19,9 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import {search} from 'components/FieldLevelLineage/store/ActionCreator';
+import T from 'i18n-react';
+
+const PREFIX = 'features.FieldLevelLineage';
 
 function FieldSearchView({searchValue}) {
   return (
@@ -27,7 +30,7 @@ function FieldSearchView({searchValue}) {
         <input
           type="text"
           className="form-control"
-          placeholder="Search by field name"
+          placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
           onChange={search}
           value={searchValue}
         />

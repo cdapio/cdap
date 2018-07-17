@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metadata.lineage.field;
 
 import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.api.lineage.field.WriteOperation;
+import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 
 import java.util.Set;
 
@@ -65,24 +66,22 @@ public interface FieldLineageReader {
    * of the specified EndPoint over a given time range. Along with the operations, program
    * runs are also returned which performed these operations.
    *
-   * @param endPoint the EndPoint for which incoming operations are to be returned
-   * @param field name of the field for which incoming operations are to be returned
+   * @param endPointField the EndPointField for which incoming operations to be returned
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
    * @return the operations and program run information
    */
-  Set<ProgramRunOperations> getIncomingOperations(EndPoint endPoint, String field, long start, long end);
+  Set<ProgramRunOperations> getIncomingOperations(EndPointField endPointField, long start, long end);
 
   /**
    * Get the set of operations which were performed on the field of the specified EndPoint
    * to compute the fields of the downstream EndPoints. Along with the operations, program
    * runs are also returned which performed these operations.
    *
-   * @param endPoint the EndPoint for which outgoing operations are to be returned
-   * @param field name of the field for which outgoing operations are to be returned
+   * @param endPointField the EndPointField for which outgoing operations to be returned
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
    * @return the operations and program run information
    */
-  Set<ProgramRunOperations> getOutgoingOperations(EndPoint endPoint, String field, long start, long end);
+  Set<ProgramRunOperations> getOutgoingOperations(EndPointField endPointField, long start, long end);
 }

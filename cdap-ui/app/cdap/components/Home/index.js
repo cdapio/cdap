@@ -24,8 +24,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import OpsDashboard from 'components/OpsDashboard';
-import Reports from 'components/Reports';
+
 require('./Home.scss');
 
 const DataPrepBrowser = Loadable({
@@ -64,19 +63,24 @@ const NamespaceDetails = Loadable({
   loader: () => import(/* webpackChunkName: "NamespaceDetails" */ 'components/NamespaceDetails'),
   loading: LoadingSVGCentered
 });
-
 const ProfileCreateView = Loadable({
   loader: () => import(/* webpackChunkName: "ProfileCreateView" */ 'components/Cloud/Profiles/CreateView'),
   loading: LoadingSVGCentered
 });
-
 const ProfileCreateProvisionerSelection = Loadable({
   loader: () => import(/* webpackChunkName: "ProfileCreateProvisionerSelection" */ 'components/Cloud/Profiles/CreateView/ProvisionerSelection'),
   loading: LoadingSVGCentered
 });
-
 const ProfileDetailView = Loadable({
   loader: () => import(/* webpackChunkName: "ProfileDetailView" */ 'components/Cloud/Profiles/DetailView'),
+  loading: LoadingSVGCentered
+});
+const Reports = Loadable({
+  loader: () => import(/* webpackChunkName: "Reports" */ 'components/Reports'),
+  loading: LoadingSVGCentered
+});
+const OpsDashboard = Loadable({
+  loader: () => import(/* webpackChunkName: "OpsDashboard" */ 'components/OpsDashboard'),
   loading: LoadingSVGCentered
 });
 

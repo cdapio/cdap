@@ -199,7 +199,7 @@ export default class CreateDatasetBtn extends Component {
       }
       macroMap = Object.assign(macroMap, databaseConfig);
     }
-    return Object.assign({}, macroMap, {
+    macroMap = Object.assign({}, macroMap, {
       datasetName: this.state.datasetName,
       filename: objectQuery(workspaceInfo, 'properties', 'path') || '',
       directives: directives.join('\n'),
@@ -224,6 +224,13 @@ export default class CreateDatasetBtn extends Component {
       bqTable: objectQuery(bigqueryStage, 'plugin', 'properties', 'table') || '',
       bqSchema: objectQuery(bigqueryStage, 'plugin', 'properties', 'schema') || ''
     });
+    var newMacorMap = {};
+    // This is to prevent from passing all the empty properties as payload while starting the pipeline.
+    Object
+      .keys(macroMap)
+      .filter(key => !isEmpty(macroMap[key]))
+      .forEach(key => newMacorMap[key] = macroMap[key]);
+    return newMacorMap;
   }
 
   addMacrosToPipelineConfig(pipelineConfig) {

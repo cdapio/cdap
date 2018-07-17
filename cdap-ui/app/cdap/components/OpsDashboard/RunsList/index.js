@@ -111,9 +111,10 @@ function renderGrid(data) {
   if (data.length === 0) {
     return (
       <div className="list-view">
-        <h3 className="text-xs-center">
-          {T.translate(`${PREFIX}.noRuns`)}
-        </h3>
+        <h5 className="text-xs-center no-runs">
+          <IconSVG name="icon-exclamation-triangle" />
+          <span>{T.translate(`${PREFIX}.noRuns`)}</span>
+        </h5>
       </div>
     );
   }

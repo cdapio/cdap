@@ -21,6 +21,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 
+import java.net.URI;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -35,13 +36,13 @@ public class ProvisioningTaskInfo {
   private final Map<String, String> provisionerProperties;
   private final String user;
   private final String provisionerName;
-  private final SecureKeyInfo secureKeyInfo;
+  private final URI secureKeysDir;
   private final Cluster cluster;
 
   public ProvisioningTaskInfo(ProgramRunId programRunId, ProgramDescriptor programDescriptor,
                               ProgramOptions programOptions, Map<String, String> provisionerProperties,
                               String provisionerName, String user, ProvisioningOp op,
-                              @Nullable SecureKeyInfo secureKeyInfo, @Nullable Cluster cluster) {
+                              URI secureKeysDir, @Nullable Cluster cluster) {
     this.programRunId = programRunId;
     this.provisionerProperties = provisionerProperties;
     this.programDescriptor = programDescriptor;
@@ -49,14 +50,14 @@ public class ProvisioningTaskInfo {
     this.user = user;
     this.provisionerName = provisionerName;
     this.op = op;
-    this.secureKeyInfo = secureKeyInfo;
+    this.secureKeysDir = secureKeysDir;
     this.cluster = cluster;
   }
 
   public ProvisioningTaskInfo(ProvisioningTaskInfo existing, ProvisioningOp op, @Nullable Cluster cluster) {
     this(existing.getProgramRunId(), existing.getProgramDescriptor(), existing.getProgramOptions(),
          existing.getProvisionerProperties(), existing.getProvisionerName(), existing.getUser(), op,
-         existing.getSecureKeyInfo(), cluster);
+         existing.getSecureKeysDir(), cluster);
   }
 
   public ProvisioningTaskKey getTaskKey() {
@@ -91,9 +92,8 @@ public class ProvisioningTaskInfo {
     return op;
   }
 
-  @Nullable
-  public SecureKeyInfo getSecureKeyInfo() {
-    return secureKeyInfo;
+  public URI getSecureKeysDir() {
+    return secureKeysDir;
   }
 
   @Nullable
