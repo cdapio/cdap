@@ -154,6 +154,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
                                  @Nullable String body) throws IOException, ConflictException {
     String path = String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespace(),
                                 datasetInstanceId.getEntityName(), opName);
+    LOG.trace("executing POST on {} with body {}", path, body);
     HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path);
     if (body != null) {
       builder.withBody(body);
@@ -163,6 +164,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
       builder.addHeader(Constants.Security.Headers.USER_ID, userId);
     }
     HttpResponse httpResponse = remoteClient.execute(builder.build());
+    LOG.trace("executed POST on {} with body {}", path, body);
     verifyResponse(httpResponse);
     return httpResponse;
   }

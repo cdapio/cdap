@@ -1948,7 +1948,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     DataSetManager<Table> dataSetManager = getDataset(testSpace.dataset("conf"));
     Table confTable = dataSetManager.get();
 
-    Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
+    Assert.assertEquals("generator", confTable.get(new Get("key0", "column")).getString("column"));
 
     dataSetManager.flush();
   }
