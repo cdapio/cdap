@@ -249,6 +249,17 @@ features:
         profileName: Profile name
         profileLabel: Profile label
       DetailView:
+        Associations:
+          Header:
+            created: Created
+            lastrunnodehr: Last run node/hr
+            last24hrsruns: Last 24 hrs runs
+            name: Name
+            namespace: Namespace
+            schedules: Schedules
+            totalnodehr: Total node/hr
+            totalruns: Total runs
+            triggers: Triggers
         computeProfileOverview: Compute profile overview
         creation: Creation date and time
         disableConfirmation: Are you sure you want to disable the profile *_{profile}_*? Any programs or pipelines using this profile will fail to start.

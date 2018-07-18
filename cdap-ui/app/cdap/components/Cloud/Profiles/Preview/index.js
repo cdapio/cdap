@@ -19,9 +19,9 @@ import PropTypes from 'prop-types';
 import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
-import IconSVG from 'components/IconSVG';
 import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
+import {MyMetricApi} from 'api/metric';
 import T from 'i18n-react';
 require('./Preview.scss');
 
@@ -36,6 +36,10 @@ export default class ProfilePreview extends Component {
     profileDetails: null,
     loading: true,
     error: null,
+    metrics: {
+      runs: '--',
+      nodehr: '--'
+    },
     provisioners: []
   };
 
@@ -58,7 +62,7 @@ export default class ProfilePreview extends Component {
         this.setState({
           profileDetails,
           loading: false
-        });
+        }, this.getProfileMetrics);
       },
       error => {
         this.setState({
@@ -69,6 +73,53 @@ export default class ProfilePreview extends Component {
     );
   }
 
+  getMetricsQueryBody = (startTime, endTime) => {
+    let namespace = getCurrentNamespace();
+    let {profileName, profileScope} = this.props;
+    profileScope = profileScope.toUpperCase();
+    return {
+      "qid": {
+        "tags": {
+          namespace,
+          "profilescope": profileScope,
+          "profile": `${profileScope}:${profileName}`
+        },
+        "metrics": [
+          "system.program.completed.runs",
+          "system.program.node.minutes"
+        ],
+        "timeRange": {
+          "start": startTime,
+          "end": endTime,
+          "resolution": "auto",
+          "aggregate": true
+        }
+      }
+    };
+  };
+
+  getProfileMetrics = () => {
+    let metricsBody24 = this.getMetricsQueryBody('now-24h', 'now');
+    MyMetricApi
+      .query(null, metricsBody24)
+      .subscribe(metrics => {
+        let runs = '--', nodehr = '--';
+        metrics.qid.series.forEach(metric => {
+          if (metric.metricName === 'system.program.completed.runs' && Array.isArray(metric.data)) {
+            runs = metric.data[0].value;
+          }
+          if (metric.metricName === 'system.program.node.minutes' && Array.isArray(metric.data)) {
+            nodehr = metric.data[0].value;
+          }
+        });
+        this.setState({
+          metrics: {
+            runs,
+            nodehr
+          }
+        });
+      });
+  };
   getProvisioners() {
     MyCloudApi
       .getProvisioners()
@@ -109,19 +160,24 @@ export default class ProfilePreview extends Component {
         </div>
         <div className="grid grid-container">
           <div className="grid-header">
+            <div className="grid-row sub-header">
+              <div />
+              <div />
+              <div className="sub-title">Last 24 hours</div>
+              <div />
+            </div>
             <div className="grid-row">
               <div>Provisioner</div>
               <div>Scope</div>
-              <div>Last 24hr # runs</div>
-              <div>Last 24hr node hr</div>
-              <div>Creation Date</div>
-              <div>Current Status</div>
+              <div>Runs</div>
+              <div>Node hours</div>
+              <div>Created</div>
+              <div>Status</div>
             </div>
           </div>
           <div className="grid-body">
             <div className="grid-row">
               <div>
-                <IconSVG name="icon-cloud" />
                 <span className="provisioner-name truncate-text">
                   {profileProvisionerLabel}
                 </span>
@@ -129,8 +185,8 @@ export default class ProfilePreview extends Component {
               <div className="truncate-text">
                 {this.state.profileDetails.scope}
               </div>
-              <div />
-              <div />
+              <div>{this.state.metrics.runs}</div>
+              <div>{this.state.metrics.nodehr}</div>
               <div />
               <div className={`profile-status ${profileStatus}`}>
                 {T.translate(`features.Cloud.Profiles.common.${profileStatus}`)}

@@ -41,14 +41,30 @@ export default class ProfileDetailViewBasicInfo extends Component {
     extendedDeleteErrMsg: '',
     deleteLoading: false,
     redirectToListView: false,
-    provisionerLabel: getProvisionerLabel(this.props.profile, this.props.provisioners)
+    provisionerLabel: getProvisionerLabel(this.props.profile, this.props.provisioners),
+    oneDayMetrics: {
+      runs: this.props.oneDayMetrics.runs,
+      nodehr: this.props.oneDayMetrics.nodehr
+    },
+    overallMetrics: {
+      runs: this.props.overallMetrics.runs,
+      nodehr: this.props.overallMetrics.nodehr
+    }
   };
 
   static propTypes = {
     profile: PropTypes.object,
     provisioners: PropTypes.array,
     isSystem: PropTypes.bool,
-    toggleProfileStatusCallback: PropTypes.func
+    toggleProfileStatusCallback: PropTypes.func,
+    oneDayMetrics: PropTypes.shape({
+      runs: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      nodehr: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    }),
+    overallMetrics: PropTypes.shape({
+      runs: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      nodehr: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    })
   };
 
   componentWillReceiveProps(nextProps) {
@@ -57,6 +73,11 @@ export default class ProfileDetailViewBasicInfo extends Component {
         provisionerLabel: getProvisionerLabel(nextProps.profile, nextProps.provisioners)
       });
     }
+    let {oneDayMetrics, overallMetrics} = nextProps;
+    this.setState({
+      oneDayMetrics,
+      overallMetrics
+    });
   }
 
   toggleDeleteModal = () => {
@@ -140,11 +161,11 @@ export default class ProfileDetailViewBasicInfo extends Component {
                 <span>{this.state.provisionerLabel}</span>
               </div>
               <div>{profile.scope}</div>
-              <div />
-              <div />
-              <div />
-              <div />
-              <div />
+              <div>{this.state.oneDayMetrics.runs}</div>
+              <div>{this.state.overallMetrics.runs}</div>
+              <div>{this.state.oneDayMetrics.nodehr}</div>
+              <div>{this.state.overallMetrics.nodehr}</div>
+              <div>--</div>
             </div>
           </div>
         </div>
