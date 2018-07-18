@@ -126,14 +126,14 @@ class ProfilesListView extends Component {
     loading: PropTypes.bool
   };
 
+  componentWillMount() {
+    resetProfiles();
+  }
+
   componentDidMount() {
     getProfiles(this.props.namespace);
     getDefaultProfile(this.props.namespace);
     this.getProvisioners();
-  }
-
-  componentWillUnmount() {
-    resetProfiles();
   }
 
   componentWillReceiveProps(nextProps) {
