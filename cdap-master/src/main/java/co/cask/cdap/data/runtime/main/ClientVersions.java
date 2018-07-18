@@ -18,9 +18,8 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.hbase.HBaseVersion;
-import org.apache.hadoop.util.VersionInfo;
+import co.cask.cdap.gateway.handlers.util.VersionHelper;
 import org.apache.kafka.clients.KafkaClient;
-import org.apache.zookeeper.version.Info;
 
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -47,7 +46,7 @@ public class ClientVersions {
 
 
   public static String getHadoopVersion() {
-    return VersionInfo.getVersion();
+    return VersionHelper.getHadoopVersion().getVersion();
   }
 
   public static String getHBaseVersion() {
@@ -55,7 +54,7 @@ public class ClientVersions {
   }
 
   public static String getZooKeeperVersion() {
-    return String.format("%d.%d.%d.%d", Info.MAJOR, Info.MINOR, Info.MICRO, Info.REVISION);
+    return VersionHelper.getZooKeeperVersion().getVersion();
   }
 
   public static String getKafkaVersion() {
