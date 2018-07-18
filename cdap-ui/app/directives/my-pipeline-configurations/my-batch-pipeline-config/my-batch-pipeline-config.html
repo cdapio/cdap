@@ -77,7 +77,7 @@
       </div>
     </div>
 
-    <div class="configuration-content configuration-content-batch">
+    <div class="configuration-content">
       <div class="configuration-step-content configuration-content-container"
             id="runtime-arguments-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
@@ -88,7 +88,7 @@
         </my-pipeline-runtime-args>
       </div>
 
-      <div class="configuration-step-content configuration-content-container"
+      <div class="configuration-step-content configuration-content-container batch-content"
             id="preview-config-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'previewConfig'">
         <div class="step-content-heading">
@@ -139,7 +139,7 @@
           </div>
         </div>
       </div>
-      <div class="configuration-step-content"
+      <div class="configuration-step-content batch-content"
             id="resources-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'resources'">
         <div class="step-content-heading">
@@ -212,7 +212,7 @@
         </my-post-run-actions>
       </div>
 
-      <div class="configuration-step-content configuration-content-container"
+      <div class="configuration-step-content configuration-content-container batch-content"
             id="engine-config-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'">
         <fieldset ng-disabled="BatchPipelineConfigCtrl.isDeployed">

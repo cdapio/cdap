@@ -72,7 +72,7 @@
       </div>
     </div>
 
-    <div class="configuration-content configuration-content-realtime">
+    <div class="configuration-content">
       <div class="configuration-step-content configuration-content-container"
             id="runtime-arguments-tab-content"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
@@ -83,7 +83,7 @@
         </my-pipeline-runtime-args>
       </div>
 
-      <div class="configuration-step-content configuration-content-container"
+      <div class="configuration-step-content configuration-content-container realtime-content"
             id="preview-config-tab-content"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'previewConfig'">
         <div class="step-content-heading">
@@ -163,7 +163,7 @@
           </div>
         </div>
       </div>
-      <div class="configuration-step-content"
+      <div class="configuration-step-content realtime-content"
             id="resources-tab-content"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'resources'">
         <div class="step-content-heading">
@@ -234,7 +234,7 @@
         </div>
       </div>
 
-      <div class="configuration-step-content configuration-content-container"
+      <div class="configuration-step-content configuration-content-container realtime-content"
             id="engine-config-tab-content"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'engineConfig'">
         <fieldset ng-disabled="RealtimePipelineConfigCtrl.isDeployed">

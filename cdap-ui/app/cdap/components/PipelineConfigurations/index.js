@@ -126,6 +126,10 @@ export default class PipelineConfigurations extends Component {
   }
 
   render() {
+    let tabConfig = TabConfig;
+    if (!this.props.isBatch) {
+      tabConfig.tabs = tabConfig.tabs.slice(0, -1);
+    }
     return (
       <Provider store={PipelineConfigurationsStore}>
         <div
@@ -134,7 +138,7 @@ export default class PipelineConfigurations extends Component {
         >
           {this.renderHeader()}
           <div className="pipeline-config-tabs-wrapper">
-            <ConfigurableTab tabConfig={TabConfig} />
+            <ConfigurableTab tabConfig={tabConfig} />
             <ConfigModelessActionButtons onClose={this.props.onClose} />
           </div>
         </div>

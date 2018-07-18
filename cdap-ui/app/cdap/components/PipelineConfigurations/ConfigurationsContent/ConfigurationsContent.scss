@@ -76,9 +76,7 @@ $secondary-btn-color: $brand-primary;
         .key-label,
         .value-label,
         .provided-label {
-          display: inline-block;
           color: $input-label-color;
-          width: 40%;
           font-weight: 500;
         }
 
@@ -91,7 +89,7 @@ $secondary-btn-color: $brand-primary;
         margin-top: 10px;
 
         .key-value-pair-preference {
-          margin-bottom: 16px;
+          margin-bottom: 15px;
           justify-content: initial;
 
           input[type="text"] {
