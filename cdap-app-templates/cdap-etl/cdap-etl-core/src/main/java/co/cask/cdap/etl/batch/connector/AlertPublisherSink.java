@@ -17,20 +17,21 @@
 package co.cask.cdap.etl.batch.connector;
 
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.common.Constants;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.util.HashMap;
@@ -63,21 +64,18 @@ public class AlertPublisherSink extends BatchSink<Alert, NullWritable, Text> {
   // not the standard configurePipeline method. Need a workflowConfigurer to create a local dataset
   // we may want to expose local datasets in cdap-etl-api, but that is a separate track.
   public void configure(WorkflowConfigurer workflowConfigurer) {
-    Partitioning partitioning = Partitioning.builder()
-      .addField("phase", Partitioning.FieldType.STRING)
-      .build();
-    workflowConfigurer.createLocalDataset(datasetName, PartitionedFileSet.class,
-                                          PartitionedFileSetProperties.builder()
-                                            .setPartitioning(partitioning)
+    workflowConfigurer.createLocalDataset(datasetName, FileSet.class,
+                                          FileSetProperties.builder()
+                                            .setInputFormat(CombineTextInputFormat.class)
+                                            .setInputProperty(FileInputFormat.INPUT_DIR_RECURSIVE, "true")
                                             .setOutputFormat(TextOutputFormat.class)
                                             .build());
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) throws Exception {
+  public void prepareRun(BatchSinkContext context) {
     Map<String, String> arguments = new HashMap<>();
-    PartitionKey outputPartition = PartitionKey.builder().addStringField("phase", phaseName).build();
-    PartitionedFileSetArguments.setOutputPartitionKey(arguments, outputPartition);
+    FileSetArguments.setOutputPath(arguments, Constants.Connector.DATA_DIR + "/" + phaseName);
     context.addOutput(Output.ofDataset(datasetName, arguments));
   }
 

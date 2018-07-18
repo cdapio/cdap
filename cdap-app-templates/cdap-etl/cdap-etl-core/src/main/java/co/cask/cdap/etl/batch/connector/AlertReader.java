@@ -17,8 +17,9 @@
 package co.cask.cdap.etl.batch.connector;
 
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.etl.api.Alert;
+import co.cask.cdap.etl.common.Constants;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
@@ -27,24 +28,33 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
+import javax.annotation.Nullable;
 
 /**
- * Reads alerts written by an AlertPublisherSink.
+ * Read alerts written by an AlertPublisherSink. Alerts will be written to files within a set of directories within a
+ * base directory.
+ *
+ * /path/to/base/phase-1
+ * /path/to/base/phase-2
+ * /path/to/base/phase-3
+ *
+ * This reader will go through each directory in sequence and read all alerts in all files in each directory.
  */
 public class AlertReader extends AbstractCloseableIterator<Alert> {
   private static final Gson GSON = new Gson();
-  private final Iterator<PartitionDetail> partitionIter;
-  private Iterator<Location> currentLocations;
+  private final Iterator<Location> directories;
+  private Iterator<Location> files;
   private BufferedReader currentReader;
 
-  public AlertReader(Collection<PartitionDetail> partitions) throws IOException {
-    List<PartitionDetail> copy = new ArrayList<>(partitions);
-    partitionIter = copy.iterator();
-    currentReader = getNextReader();
+  public AlertReader(FileSet fileSet) throws IOException {
+    this.directories = fileSet.getBaseLocation().append(Constants.Connector.DATA_DIR).list().iterator();
+    if (directories.hasNext()) {
+      this.files = directories.next().list().iterator();
+      this.currentReader = getNextReader();
+    } else {
+      this.currentReader = null;
+    }
   }
 
   @Override
@@ -79,22 +89,24 @@ public class AlertReader extends AbstractCloseableIterator<Alert> {
     }
   }
 
+  @Nullable
   private BufferedReader getNextReader() throws IOException {
-    while (currentLocations == null || !currentLocations.hasNext()) {
-      if (!partitionIter.hasNext()) {
-        return null;
-      }
-      currentLocations = partitionIter.next().getLocation().list().iterator();
-      while (currentLocations.hasNext()) {
-        Location file = currentLocations.next();
+    while (files != null) {
+      // look at the next files in the directory
+      while (files.hasNext()) {
+        Location file = files.next();
         String fileName = file.getName();
         // TextOutputFormat will write files like _SUCCESS and .part-m-00000.crc
         if (!"_SUCCESS".equals(fileName) && !fileName.startsWith(".")) {
           return new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
         }
       }
+
+      // if we're done looking at the files in a directory and there are no more directories, we're done reading
+      files = directories.hasNext() ? directories.next().list().iterator() : null;
     }
 
     return null;
   }
+
 }
