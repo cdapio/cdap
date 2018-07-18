@@ -156,7 +156,7 @@ export default class RunConfigs extends Component {
       <div
         className="run-configs-btn"
       >
-        <IconSVG name="icon-sliders" />
+        <IconSVG name="icon-macro" />
         <div className="button-label">
           {T.translate(`${PREFIX}.configs`)}
         </div>
@@ -188,6 +188,15 @@ export default class RunConfigs extends Component {
         showPopover={this.state.showModeless}
         onTogglePopover={this.toggleModeless}
         injectOnToggle={true}
+        modifiers={{
+          flip: {
+            enabled: true,
+            behavior: ['bottom', 'right']
+          },
+          shift: {
+            enabled: true
+          }
+        }}
       >
         <Provider store={PipelineConfigurationsStore}>
           <PipelineModeless
@@ -220,7 +229,7 @@ export default class RunConfigs extends Component {
         className="run-configs-btn"
         onClick={preventPropagation}
       >
-        <IconSVG name="icon-sliders" />
+        <IconSVG name="icon-macro" />
         <div className="button-label">
           {T.translate(`${PREFIX}.configs`)}
         </div>

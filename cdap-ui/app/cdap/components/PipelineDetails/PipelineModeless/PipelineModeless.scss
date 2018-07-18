@@ -17,7 +17,6 @@
 @import '../../../styles/variables.scss';
 
 $modeless-width: 730px;
-$modeless-height: 496px;
 $sidepanel-width: 170px;
 $modeless-header-height: 60px;
 $header-close-icon-size: 16px;
@@ -28,21 +27,25 @@ $container-padding: 0 30px;
 // a static header and a footer and only the content scrolls.
 .pipeline-modeless-container {
   width: $modeless-width;
-  height: $modeless-height;
   position: static;
   z-index: 999;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
   color: $grey-01;
   background-color: white;
+  max-height: 496px;
+  display: flex;
+  flex-direction: column;
 
   .pipeline-modeless-header {
     background-color: $grey-08;
     height: $modeless-header-height;
+    min-height: $modeless-header-height;
     padding: $container-padding;
     border-radius: 4px 4px 0 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-radius: 0;
 
     .pipeline-modeless-title {
       color: $grey-01;
@@ -69,7 +72,6 @@ $container-padding: 0 30px;
 
   .pipeline-modeless-content {
     display: flex;
-    height: calc(100% - #{$modeless-header-height});
     padding: $container-padding 30px;
   }
   .cask-configurable-tab {
