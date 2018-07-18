@@ -12,9 +12,10 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
-package co.cask.cdap.runtime.spi.provisioner.dataproc;
+package co.cask.cdap.runtime.spi;
 
 /**
  * Properties for instances created by the provisioner.
@@ -23,6 +24,7 @@ public class Constants {
 
   /**
    * Constants related to cluster nodes.
+   * TODO: (CDAP-13790) make these explicit parts of the SPI, perhaps in the Node class.
    */
   public static class Node {
     public static final String EXTERNAL_IP = "ip.external";

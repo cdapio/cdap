@@ -215,7 +215,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
 
     Node masterNode = cluster.getNodes().stream()
-      .filter(node -> "master".equals(node.getProperties().get("type")))
+      .filter(node -> co.cask.cdap.runtime.spi.Constants.Node.MASTER_TYPE.equals(
+        node.getProperties().get(co.cask.cdap.runtime.spi.Constants.Node.TYPE)))
       .findFirst().orElseThrow(
       () -> new IllegalArgumentException("Missing master node information for the cluster " + cluster.getName()));
 

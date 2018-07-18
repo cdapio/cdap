@@ -1,0 +1,39 @@
+{
+  "configuration-groups": [
+    {
+      "label": "SSH Information",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Host",
+          "name": "host",
+          "required": true,
+          "description": "The edge node to connect to when launching jobs.",
+          "widget-attributes": {
+            "placeholder": "Specify the host to connect to"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "User",
+          "name": "user",
+          "required": true,
+          "description": "The user to SSH to the cluster as.",
+          "widget-attributes": {
+            "placeholder": "Specify your User ID"
+          }
+        },
+        {
+          "widget-type": "securekey-textarea",
+          "label": "SSH Private Key",
+          "name": "sshKey",
+          "required": true,
+          "description": "The SSH private key for the user that will connect to the cluster.",
+          "widget-attributes": {
+            "placeholder": "Specify the private key"
+          }
+        }
+      ]
+    }
+  ]
+}
