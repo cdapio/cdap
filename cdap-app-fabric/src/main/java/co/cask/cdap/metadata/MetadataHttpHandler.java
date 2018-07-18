@@ -154,7 +154,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void addTags(FullHttpRequest request, HttpResponder responder,
                       @QueryParam("type") String type) throws BadRequestException {
-     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     metadataAdmin.addTags(metadataEntity, readTags(request));
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata tags for %s added successfully.", metadataEntity));
