@@ -135,7 +135,7 @@ public class ProvisioningServiceTest {
                                                        spec.getDescription(), new ArrayList<>());
     Assert.assertEquals(expected, specs.iterator().next());
 
-    Assert.assertEquals(expected, provisioningService.getProvisionerDetail("yarn"));
+    Assert.assertEquals(expected, provisioningService.getProvisionerDetail(MockProvisioner.NAME));
     Assert.assertNull(provisioningService.getProvisionerDetail("abc"));
   }
 
