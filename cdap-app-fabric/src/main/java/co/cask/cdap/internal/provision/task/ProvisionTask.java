@@ -102,14 +102,8 @@ public class ProvisionTask extends ProvisioningTask {
 
   @Override
   protected void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, TransactionFailureException e) {
-    if (taskInfo.getProvisioningOp().getStatus() == ProvisioningOp.Status.REQUESTING_CREATE) {
-      // if we failed to write that we're requesting a cluster create, it means no cluster was created yet,
-      // so we can transition directly to deprovisioned
-      provisionerNotifier.deprovisioned(programRunId);
-    } else {
-      // otherwise, we need to try deprovisioning the cluster
-      provisionerNotifier.deprovisioning(programRunId);
-    }
+    // try deprovisioning the cluster
+    provisionerNotifier.deprovisioning(programRunId);
   }
 
   private ProvisioningSubtask createClusterCreateSubtask() {
@@ -168,8 +162,9 @@ public class ProvisionTask extends ProvisioningTask {
         case NOT_EXISTS:
           // delete succeeded, try to re-create cluster unless we've timed out
           if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartTime) > retryTimeLimitSecs) {
-            // over the time out. Give up and transition to deprovisioned
-            provisionerNotifier.deprovisioned(programRunId);
+            // over the time out. Give up and transition to deprovisioning to clean up task state
+            // and ensure the cluster is gone
+            provisionerNotifier.deprovisioning(programRunId);
             return Optional.of(ProvisioningOp.Status.FAILED);
           } else {
             return Optional.of(ProvisioningOp.Status.REQUESTING_CREATE);
