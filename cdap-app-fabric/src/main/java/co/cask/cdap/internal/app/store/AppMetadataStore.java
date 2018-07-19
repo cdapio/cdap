@@ -879,6 +879,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
                 nextProgramState, nextClusterState);
       return false;
     }
+    // sometimes we expect duplicate messages. For example, multiple KILLED messages are sent, one by the CDAP master
+    // and one by the program. In these cases, we don't need to write, but we don't want to log a warning
+    if (existing.getStatus() == nextProgramState && existing.getCluster().getStatus() == nextClusterState) {
+      return false;
+    }
     if (!existing.getStatus().canTransitionTo(nextProgramState)) {
       LOG.warn("Ignoring unexpected transition of program run {} from run state {} to {}.",
                existing.getProgramRunId(), existing.getStatus(), nextProgramState);

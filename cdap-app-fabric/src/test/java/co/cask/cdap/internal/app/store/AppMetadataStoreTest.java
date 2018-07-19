@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -669,6 +670,44 @@ public class AppMetadataStoreTest {
         Assert.assertEquals(activeStates, actual);
       });
     }
+  }
+
+  @Test
+  public void testDuplicateWritesIgnored() throws Exception {
+    DatasetId storeTable = NamespaceId.DEFAULT.dataset("duplicateWrites");
+    datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
+
+    Table table = datasetFramework.getDataset(storeTable, Collections.emptyMap(), null);
+    Assert.assertNotNull(table);
+    AppMetadataStore store = new AppMetadataStore(table, cConf);
+    TransactionExecutor txnl = txExecutorFactory.createExecutor(Collections.singleton(store));
+
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    ProgramId program = application.program(ProgramType.values()[ProgramType.values().length - 1],
+                                            "program");
+    ProgramRunId runId = program.run(RunIds.generate());
+
+    byte[] sourceId = new byte[] { 0 };
+    txnl.execute(() -> {
+      assertSecondCallIsNull(() -> store.recordProgramProvisioning(runId, null, Collections.emptyMap(),
+                                                                   sourceId, ARTIFACT_ID));
+      assertSecondCallIsNull(() -> store.recordProgramProvisioned(runId, 0, sourceId));
+      assertSecondCallIsNull(() -> store.recordProgramStart(runId, null, Collections.emptyMap(), sourceId));
+      assertSecondCallIsNull(() -> store.recordProgramRunning(runId, System.currentTimeMillis(), null, sourceId));
+      assertSecondCallIsNull(() -> store.recordProgramSuspend(runId, sourceId, System.currentTimeMillis()));
+      assertSecondCallIsNull(() -> store.recordProgramRunning(runId, System.currentTimeMillis(), null, sourceId));
+      assertSecondCallIsNull(() -> store.recordProgramStop(runId, System.currentTimeMillis(), ProgramRunStatus.KILLED,
+                                                           null, sourceId));
+      assertSecondCallIsNull(() -> store.recordProgramDeprovisioning(runId, sourceId));
+      assertSecondCallIsNull(() -> store.recordProgramDeprovisioned(runId, System.currentTimeMillis(), sourceId));
+    });
+  }
+
+  private <T> void assertSecondCallIsNull(Callable<T> callable) throws Exception {
+    T result = callable.call();
+    Assert.assertNotNull(result);
+    result = callable.call();
+    Assert.assertNull(result);
   }
 
   private static class CountingTicker extends Ticker {

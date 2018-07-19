@@ -428,8 +428,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           }
         });
       case DEPROVISIONING:
-        appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
-        return Optional.of(provisioningService.deprovision(programRunId, datasetContext));
+        RunRecordMeta recordedMeta = appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
+        // If we skipped recording the run status, that means this was a duplicate message,
+        // or an invalid state transition. In both cases, we should not try to deprovision the cluster.
+        if (recordedMeta != null) {
+          return Optional.of(provisioningService.deprovision(programRunId, datasetContext));
+        }
+        break;
       case DEPROVISIONED:
         appMetadataStore.recordProgramDeprovisioned(programRunId, endTs, messageIdBytes);
         break;
