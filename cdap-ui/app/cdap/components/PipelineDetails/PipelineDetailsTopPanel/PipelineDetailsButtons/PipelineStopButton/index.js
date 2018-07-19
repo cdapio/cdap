@@ -40,15 +40,19 @@ export default class PipelineStopButton extends Component {
 
   state = {
     disabled: true,
-    runningRuns: []
+    activeRuns: []
   };
 
+  activeStatuses = ['PENDING', 'STARTING', 'RUNNING'];
+
   componentWillReceiveProps(nextProps) {
-    let runningRuns = nextProps.runs.filter(run => run.status === 'RUNNING');
-    if (!isEqual(this.state.runningRuns, runningRuns)) {
+    let activeRuns = nextProps.runs.filter(run => {
+      return this.activeStatuses.indexOf(run.status) !== -1;
+    });
+    if (!isEqual(this.state.activeRuns, activeRuns)) {
       this.setState({
-        runningRuns,
-        disabled: runningRuns.length === 0
+        activeRuns,
+        disabled: activeRuns.length === 0
       });
     }
   }
@@ -91,18 +95,18 @@ export default class PipelineStopButton extends Component {
         message={this.props.stopError}
         type='error'
         showAlert={true}
-        onClose={() => this.setState({
-          stopError: null
-        })}
+        onClose={() => {
+          setStopError(null);
+        }}
       />
     );
   }
 
   renderPipelineStopButton() {
-    if (this.state.runningRuns.length > 1) {
+    if (this.state.activeRuns.length > 1) {
       return (
         <PipelineStopPopover
-          runs={this.state.runningRuns}
+          runs={this.state.activeRuns}
           currentRunId={this.props.currentRun.runid}
           stopRun={this.stopRun}
         />
