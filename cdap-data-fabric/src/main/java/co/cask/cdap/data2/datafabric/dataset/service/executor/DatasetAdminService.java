@@ -134,6 +134,7 @@ public class DatasetAdminService {
 
       // Writing system metadata should be done without impersonation since user may not have access to system tables.
       writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null, ugi);
+      LOG.info("Created dataset instance {}, type meta: {}", datasetInstanceId, typeMeta);
       return spec;
     } catch (Exception e) {
       if (e instanceof IncompatibleUpdateException) {

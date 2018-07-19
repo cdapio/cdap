@@ -291,6 +291,7 @@ class DatasetServiceClient {
   }
 
   private HttpResponse doPut(String resource, String body) throws DatasetManagementException {
+    LOG.debug("Performing PUT on {} with body {}", resource, body);
     HttpRequest request = addUserIdHeader(remoteClient.requestBuilder(HttpMethod.PUT, resource)
       .withBody(body))
       .build();
