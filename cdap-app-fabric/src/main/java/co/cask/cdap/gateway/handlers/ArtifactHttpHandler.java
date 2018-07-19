@@ -170,9 +170,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/artifactproperties")
   public void getArtifactProperties(FullHttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId) throws Exception {
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @QueryParam("order") @DefaultValue("DESC") String order) throws Exception {
 
     NamespaceId namespace = validateAndGetNamespace(namespaceId);
+    ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
 
     List<ArtifactPropertiesRequest> propertyRequests;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
@@ -185,23 +187,22 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     for (ArtifactPropertiesRequest propertiesRequest : propertyRequests) {
       NamespaceId requestNamespace =
         propertiesRequest.getScope() == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : namespace;
-      ArtifactId artifactId = validateAndGetArtifactId(requestNamespace, propertiesRequest.getName(),
-                                                       propertiesRequest.getVersion());
-      ArtifactDetail artifactDetail;
-      try {
-        artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
-      } catch (ArtifactNotFoundException e) {
-        continue;
-      }
-      Map<String, String> properties = artifactDetail.getMeta().getProperties();
-      Map<String, String> filteredProperties = new HashMap<>(propertiesRequest.getProperties().size());
-      for (String propertyKey : propertiesRequest.getProperties()) {
-        if (properties.containsKey(propertyKey)) {
-          filteredProperties.put(propertyKey, properties.get(propertyKey));
+      ArtifactRange range = new ArtifactRange(requestNamespace.getNamespace(), propertiesRequest.getName(),
+                                              ArtifactVersionRange.parse(propertiesRequest.getVersion()));
+
+      List<ArtifactDetail> artifactDetails = artifactRepository.getArtifactDetails(range, 1, sortOrder);
+      for (ArtifactDetail artifactDetail : artifactDetails) {
+        Map<String, String> properties = artifactDetail.getMeta().getProperties();
+        Map<String, String> filteredProperties = new HashMap<>(propertiesRequest.getProperties().size());
+        for (String propertyKey : propertiesRequest.getProperties()) {
+          if (properties.containsKey(propertyKey)) {
+            filteredProperties.put(propertyKey, properties.get(propertyKey));
+          }
         }
+        String artifactVersion = artifactDetail.getDescriptor().getArtifactId().getVersion().getVersion();
+        result.add(new ArtifactSummaryProperties(propertiesRequest.getName(), artifactVersion,
+                                                 propertiesRequest.getScope(), filteredProperties));
       }
-      result.add(new ArtifactSummaryProperties(propertiesRequest.getName(), propertiesRequest.getVersion(),
-                                               propertiesRequest.getScope(), filteredProperties));
     }
 
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result, BATCH_ARTIFACT_PROPERTIES_RESPONSE));
@@ -245,7 +246,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     ArtifactRange range = versionRange == null ? null :
       new ArtifactRange(namespaceId, artifactName, ArtifactVersionRange.parse(versionRange));
-    int limitNumber = Integer.valueOf(limit);
+    int limitNumber = Integer.parseInt(limit);
     limitNumber = limitNumber <= 0 ? Integer.MAX_VALUE : limitNumber;
     ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
 
@@ -586,7 +587,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     final NamespaceId pluginArtifactNamespace = validateAndGetScopedNamespace(namespace, pluginScope);
     ArtifactId parentArtifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
     final ArtifactVersionRange pluginRange = pluginVersion == null ? null : ArtifactVersionRange.parse(pluginVersion);
-    int limitNumber = Integer.valueOf(limit);
+    int limitNumber = Integer.parseInt(limit);
     limitNumber = limitNumber <= 0 ? Integer.MAX_VALUE : limitNumber;
     ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
     Predicate<ArtifactId> predicate = new Predicate<ArtifactId>() {
