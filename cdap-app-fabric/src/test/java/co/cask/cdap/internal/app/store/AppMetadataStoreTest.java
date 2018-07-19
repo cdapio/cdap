@@ -24,12 +24,14 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Ticker;
@@ -73,6 +75,8 @@ public class AppMetadataStoreTest {
   private static final List<ProgramRunStatus> STOP_STATUSES =
     ImmutableList.of(ProgramRunStatus.COMPLETED, ProgramRunStatus.FAILED, ProgramRunStatus.KILLED);
   private static final ArtifactId ARTIFACT_ID = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+  private static final Map<String, String> SINGLETON_PROFILE_MAP =
+    Collections.singletonMap(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
 
   private final AtomicInteger sourceId = new AtomicInteger();
   private final AtomicLong runIdTime = new AtomicLong();
@@ -87,7 +91,7 @@ public class AppMetadataStoreTest {
   }
 
   private void recordProvisionAndStart(ProgramRunId programRunId, AppMetadataStore metadataStoreDataset) {
-    metadataStoreDataset.recordProgramProvisioning(programRunId, null, new HashMap<>(),
+    metadataStoreDataset.recordProgramProvisioning(programRunId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                                                    AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                                    ARTIFACT_ID);
     metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
@@ -178,7 +182,7 @@ public class AppMetadataStoreTest {
     ProgramRunId programRunId = program.run(runId1);
 
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramProvisioning(programRunId, Collections.emptyMap(), Collections.emptyMap(),
+      metadataStoreDataset.recordProgramProvisioning(programRunId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                                                      AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                                      ARTIFACT_ID);
       metadataStoreDataset.recordProgramStop(programRunId, 0, ProgramRunStatus.COMPLETED, null,
@@ -201,7 +205,7 @@ public class AppMetadataStoreTest {
 
     // test state transition from provisioning -> deprovisioning. This can happen if there is a provisioning failure
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramProvisioning(programRunId1, Collections.emptyMap(), Collections.emptyMap(),
+      metadataStoreDataset.recordProgramProvisioning(programRunId1, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                                                      AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                                      ARTIFACT_ID);
       metadataStoreDataset.recordProgramDeprovisioning(programRunId1,
@@ -216,7 +220,7 @@ public class AppMetadataStoreTest {
     ProgramRunId programRunId2 = program.run(runId2);
     // test state transition from provisioning -> deprovisioned. This can happen if there is a provisioning failure
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramProvisioning(programRunId2, Collections.emptyMap(), Collections.emptyMap(),
+      metadataStoreDataset.recordProgramProvisioning(programRunId2, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                                                      AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
                                                      ARTIFACT_ID);
       metadataStoreDataset.recordProgramDeprovisioned(programRunId2, System.currentTimeMillis(),
@@ -348,7 +352,7 @@ public class AppMetadataStoreTest {
     final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId = program.run(runId);
     txnl.execute(() -> {
-      metadataStoreDataset.recordProgramProvisioning(programRunId, null, new HashMap<>(),
+      metadataStoreDataset.recordProgramProvisioning(programRunId, null, SINGLETON_PROFILE_MAP,
                                                      AppFabricTestHelper.createSourceId(startSourceId), ARTIFACT_ID);
       metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
                                                     AppFabricTestHelper.createSourceId(startSourceId + 1));
@@ -531,12 +535,12 @@ public class AppMetadataStoreTest {
       txnl.execute(() -> {
         // one run in pending state
         ProgramRunId runId = programId.run(RunIds.generate());
-        store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                                         AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
 
         // one run in starting state
         runId = programId.run(RunIds.generate());
-        store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                                         AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
         store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
         store.recordProgramStart(runId, UUID.randomUUID().toString(), Collections.emptyMap(),
@@ -544,7 +548,7 @@ public class AppMetadataStoreTest {
 
         // one run in running state
         runId = programId.run(RunIds.generate());
-        store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                                         AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
         store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
         String twillRunId = UUID.randomUUID().toString();
@@ -555,7 +559,7 @@ public class AppMetadataStoreTest {
 
         // one in suspended state
         runId = programId.run(RunIds.generate());
-        store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                                         AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
         store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
         twillRunId = UUID.randomUUID().toString();
@@ -572,7 +576,7 @@ public class AppMetadataStoreTest {
             continue;
           }
           runId = programId.run(RunIds.generate());
-          store.recordProgramProvisioning(runId, Collections.emptyMap(), Collections.emptyMap(),
+          store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
                                           AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
           store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
           twillRunId = UUID.randomUUID().toString();
@@ -689,7 +693,7 @@ public class AppMetadataStoreTest {
 
     byte[] sourceId = new byte[] { 0 };
     txnl.execute(() -> {
-      assertSecondCallIsNull(() -> store.recordProgramProvisioning(runId, null, Collections.emptyMap(),
+      assertSecondCallIsNull(() -> store.recordProgramProvisioning(runId, null, SINGLETON_PROFILE_MAP,
                                                                    sourceId, ARTIFACT_ID));
       assertSecondCallIsNull(() -> store.recordProgramProvisioned(runId, 0, sourceId));
       assertSecondCallIsNull(() -> store.recordProgramStart(runId, null, Collections.emptyMap(), sourceId));
@@ -708,6 +712,34 @@ public class AppMetadataStoreTest {
     Assert.assertNotNull(result);
     result = callable.call();
     Assert.assertNull(result);
+  }
+
+  @Test
+  public void testProfileInRunRecord() throws Exception {
+    AppMetadataStore store = getMetadataStore("testProfileInRunRecord");
+    TransactionExecutor txnl = getTxExecutor(store);
+    ProgramRunId runId = NamespaceId.DEFAULT.app("myApp").workflow("myProgram").run(RunIds.generate());
+    ProfileId profileId = NamespaceId.DEFAULT.profile("MyProfile");
+
+    txnl.execute(() -> {
+      long startSourceId = 1L;
+      store.recordProgramProvisioning(runId, null,
+                                      Collections.singletonMap(SystemArguments.PROFILE_NAME, profileId.getScopedName()),
+                                      AppFabricTestHelper.createSourceId(startSourceId), ARTIFACT_ID);
+      // the profile id should be there after the provisioning stage
+      Assert.assertEquals(profileId, store.getRun(runId).getProfileId());
+
+      store.recordProgramProvisioned(runId, 0, AppFabricTestHelper.createSourceId(startSourceId + 1));
+      store.recordProgramStart(runId, null, ImmutableMap.of(),
+                               AppFabricTestHelper.createSourceId(startSourceId + 2));
+      store.recordProgramRunning(runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS),
+                                 null, AppFabricTestHelper.createSourceId(startSourceId + 3));
+      store.recordProgramStop(runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS),
+                              ProgramRunStatus.KILLED,
+                              null, AppFabricTestHelper.createSourceId(startSourceId + 4));
+
+      Assert.assertEquals(profileId, store.getRun(runId).getProfileId());
+    });
   }
 
   private static class CountingTicker extends Ticker {

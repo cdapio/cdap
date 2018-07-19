@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.ProgramRunCluster;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
@@ -63,9 +64,9 @@ public final class RunRecordMeta extends RunRecord {
                         @Nullable Long suspendTs, @Nullable Long resumeTs,
                         ProgramRunStatus status, @Nullable Map<String, String> properties,
                         @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
-                        ProgramRunCluster cluster, byte[] sourceId,
+                        ProgramRunCluster cluster, ProfileId profileId, byte[] sourceId,
                         @Nullable ArtifactId artifactId, @Nullable String principal) {
-    super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster);
+    super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster, profileId);
     this.programRunId = programRunId;
     this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
@@ -239,7 +240,8 @@ public final class RunRecordMeta extends RunRecord {
       // artifactId could be null for program starts that were recorded pre 5.0 but weren't processed
       // we don't want to throw exception while processing them
       return new RunRecordMeta(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs,
-                               status, properties, systemArgs, twillRunId, cluster, sourceId, artifactId, principal);
+                               status, properties, systemArgs, twillRunId, cluster, profileId,
+                               sourceId, artifactId, principal);
     }
   }
 }
