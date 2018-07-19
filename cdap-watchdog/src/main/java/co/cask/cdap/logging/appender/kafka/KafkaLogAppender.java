@@ -91,14 +91,12 @@ public final class KafkaLogAppender extends LogAppender {
     }
 
     @Override
-    protected void doStartUp() throws Exception {
+    protected void startUp() {
       producer = new SimpleKafkaProducer(cConf);
-      super.doStartUp();
     }
 
     @Override
-    protected void doShutdown() throws Exception {
-      super.doShutdown();
+    protected void shutDown() {
       producer.stop();
     }
 

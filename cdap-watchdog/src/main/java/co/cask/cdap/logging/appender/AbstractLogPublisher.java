@@ -16,8 +16,8 @@
 
 package co.cask.cdap.logging.appender;
 
-import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.RetryStrategy;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import kafka.producer.KeyedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,17 +33,17 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <MESSAGE> the type of message used in the in-memory buffer, before publishing
  */
-public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableScheduledService {
+public abstract class AbstractLogPublisher<MESSAGE> extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractLogPublisher.class);
 
+  private final RetryStrategy retryStrategy;
   private final int queueSize;
   private final BlockingQueue<LogMessage> messageQueue;
   private final List<MESSAGE> buffer;
-  private volatile boolean failed;
-  private volatile Thread publishThread;
+  private volatile Thread blockingThread;
 
   public AbstractLogPublisher(int queueSize, RetryStrategy retryStrategy) {
-    super(retryStrategy);
+    this.retryStrategy = retryStrategy;
     this.queueSize = queueSize;
     this.messageQueue = new ArrayBlockingQueue<>(queueSize);
     this.buffer = new ArrayList<>(queueSize);
@@ -75,37 +75,44 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
   }
 
   @Override
-  protected long runTask() throws Exception {
-    // Only block for messages if it is not a failure retry
-    publishMessages(buffer, !failed);
-    // We only clear the buffer once the messages are successfully published
-    buffer.clear();
-    failed = false;
-    return 0;
-  }
+  protected void run() throws Exception {
+    int failures = 0;
+    long failureStartTime = System.currentTimeMillis();
+    while (isRunning()) {
+      try {
+        // Only block for messages if it is not a failure retry
+        publishMessages(buffer, failures == 0);
+        // Any exception from the publishMessages call meaning messages are not yet published to Kafka,
+        // hence not clearing the buffer
+        buffer.clear();
+        failures = 0;
+      } catch (InterruptedException e) {
+        break;
+      } catch (Exception e) {
+        if (failures == 0) {
+          failureStartTime = System.currentTimeMillis();
+        }
 
-  @Override
-  protected long handleRetriesExhausted(Exception e) {
-    logError("Failed to publish log message by " + getServiceName(), e);
-    return 0;
-  }
+        long sleepMillis = retryStrategy.nextRetry(++failures, failureStartTime);
+        if (sleepMillis < 0) {
+          buffer.clear();
+          failures = 0;
 
-  @Override
-  protected boolean shouldRetry(Exception ex) {
-    failed = true;
-    return super.shouldRetry(ex);
-  }
-
-  @Override
-  protected void doShutdown() throws Exception {
-    // Interrupt the run thread first
-    // If the run loop is sleeping / blocking, it will wake and break the loop
-    Thread runThread = this.publishThread;
-    if (runThread != null) {
-      runThread.interrupt();
+          logError("Failed to publish log message by " + getServiceName(), e);
+        } else {
+          blockingThread = Thread.currentThread();
+          try {
+            if (isRunning()) {
+              TimeUnit.MILLISECONDS.sleep(sleepMillis);
+            }
+          } catch (InterruptedException ie) {
+            break;
+          } finally {
+            blockingThread = null;
+          }
+        }
+      }
     }
-    // Clear the interrupt flag.
-    Thread.interrupted();
 
     // Publish all remaining messages.
     while (!messageQueue.isEmpty() || !buffer.isEmpty()) {
@@ -117,6 +124,18 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
       // Ignore those that cannot be publish since we are already in shutdown sequence
       buffer.clear();
     }
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    // Interrupt the run thread first
+    // If the run loop is sleeping / blocking, it will wake and break the loop
+    Thread runThread = this.blockingThread;
+    if (runThread != null) {
+      runThread.interrupt();
+    }
+    // Clear the interrupt flag.
+    Thread.interrupted();
   }
 
   /**
@@ -140,7 +159,7 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
     int maxBufferSize = queueSize;
 
     if (blockForMessage) {
-      publishThread = Thread.currentThread();
+      blockingThread = Thread.currentThread();
       try {
         if (isRunning()) {
           LogMessage logMessage = messageQueue.poll(10, TimeUnit.SECONDS);
@@ -153,7 +172,7 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
         // just ignore and keep going. This happen when this publisher is getting shutdown, but we still want
         // to publish all pending messages.
       } finally {
-        publishThread = null;
+        blockingThread = null;
       }
     }
 
