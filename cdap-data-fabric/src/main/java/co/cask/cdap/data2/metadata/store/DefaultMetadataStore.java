@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
@@ -255,8 +256,9 @@ public class DefaultMetadataStore implements MetadataStore {
     // an existing entity
     if ((scope.equals(MetadataScope.SYSTEM) ? hasV1SystemDs : hasV1BusinessDs)
       && hasEntityInV1(scope, metadataEntity)) {
-      throw new RuntimeException("Metadata migration is in progress. Please retry the same operation " +
-                                   "once metadata is migrated.");
+      throw new ServiceUnavailableException("metadata-service",
+                                            "Metadata migration is in progress. Please retry the same operation " +
+                                              "once metadata is migrated.");
     }
   }
 

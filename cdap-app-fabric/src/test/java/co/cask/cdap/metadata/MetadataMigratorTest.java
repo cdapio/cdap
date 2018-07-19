@@ -288,7 +288,6 @@ public class MetadataMigratorTest {
   }
 
   private Put createHistoryPut(NamespacedEntityId targetId, long time) {
-    MetadataV1 metadataV1 = getMetadataV1(targetId);
     byte[] row = MdsHistoryKey.getMdsKey(targetId, time).getKey();
     String jsonValue = getJsonValue(targetId.getEntityType());
 

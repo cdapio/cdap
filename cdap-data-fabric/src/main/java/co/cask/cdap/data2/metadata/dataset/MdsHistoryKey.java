@@ -20,8 +20,6 @@ import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
-import java.nio.ByteBuffer;
-
 import static co.cask.cdap.api.metadata.MetadataEntity.APPLICATION;
 import static co.cask.cdap.api.metadata.MetadataEntity.ARTIFACT;
 import static co.cask.cdap.api.metadata.MetadataEntity.DATASET;
@@ -92,10 +90,6 @@ public final class MdsHistoryKey {
 
   private static long invertTime(long time) {
     return Long.MAX_VALUE - time;
-  }
-
-  static long getHistoryTime(byte[] rowKey) {
-    return ByteBuffer.wrap(rowKey).getLong(rowKey.length - 8);
   }
 
   private MdsHistoryKey() {
