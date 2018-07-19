@@ -151,7 +151,6 @@ $border-color: $grey-05;
   }
 
   .run-configs-container {
-    cursor: pointer;
     position: relative;
 
     &:after {
@@ -161,6 +160,7 @@ $border-color: $grey-05;
     .run-configs-btn {
       border: 1px solid transparent;
       padding: 10px 15px 0 15px;
+      cursor: pointer;
     }
 
     .icon-sliders {
