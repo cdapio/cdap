@@ -69,10 +69,15 @@ function renderBody(data) {
     <div className="grid-body">
       {
         data.map((run, i) => {
-          let duration = run.end ? run.end - run.start : '--';
+          let duration = run.end ? run.end - run.running : '--';
           duration = humanReadableDuration(duration);
 
-          let displayStatus = StatusMapper.lookupDisplayStatus(run.status) || '';
+          const displayStatus = StatusMapper.lookupDisplayStatus(run.status) || '';
+
+          let startTime = run.running || run.start;
+          startTime = humanReadableDate(startTime, false);
+
+          const user = run.user || '--';
 
           const statusIcon = (
             <IconSVG
@@ -86,13 +91,27 @@ function renderBody(data) {
               className="grid-row"
               key={`${run.application.name}${run.program}${run.start}${i}`}
             >
-              <div>{run.namespace}</div>
-              <div>{run.application.name}</div>
-              <div>{T.translate(`commons.entity.${run.type.toLowerCase()}.singular`)}</div>
-              <div>{humanReadableDate(run.start, false)}</div>
-              <div>{duration}</div>
-              <div>{run.user || '--'}</div>
-              <div>{capitalize(run.startMethod)}</div>
+              <div title={run.namespace}>
+                {run.namespace}
+              </div>
+              <div title={run.application.name}>
+                {run.application.name}
+              </div>
+              <div>
+                {T.translate(`commons.entity.${run.type.toLowerCase()}.singular`)}
+              </div>
+              <div>
+                {startTime}
+              </div>
+              <div>
+                {duration}
+              </div>
+              <div title={user}>
+                {user}
+              </div>
+              <div>
+                {capitalize(run.startMethod)}
+              </div>
               <div>
                 { displayStatus ? statusIcon : '--' }
                 <span>
