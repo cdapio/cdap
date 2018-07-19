@@ -103,11 +103,16 @@ class ProfileCreateView extends Component {
         })
       }
     };
-    MyCloudApi
-      .create({
-        namespace: this.state.isSystem ? 'system' : getCurrentNamespace(),
-        profile: name
-      }, jsonBody)
+    let apiObservable$ = MyCloudApi.create;
+    let apiQueryParams = {
+      namespace: getCurrentNamespace(),
+      profile: name
+    };
+    if (this.state.isSystem) {
+      apiObservable$ = MyCloudApi.createSystemProfile;
+      delete apiQueryParams.namespace;
+    }
+    apiObservable$(apiQueryParams, jsonBody)
       .subscribe(
         () => {
           if (this.state.isSystem) {

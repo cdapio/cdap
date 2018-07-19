@@ -21,6 +21,130 @@ import fileDownload from 'js-file-download';
 import {objectQuery} from 'services/helpers';
 import {Observable} from 'rxjs/Observable';
 import {CLOUD} from 'services/global-constants';
+import {MyMetricApi} from 'api/metric';
+import {MySearchApi} from 'api/search';
+import {GLOBALS} from 'services/global-constants';
+
+export const getProfileMetricsBody = (queryId, namespace, profileScope, startTime, endTime, extraTags) => {
+  let metricBody = {
+    [queryId]: {
+      tags: {
+        namespace,
+        profilescope: profileScope
+      },
+      metrics: [
+        'system.program.completed.runs',
+        'system.program.node.minutes'
+      ],
+      timeRange: {
+        start: startTime,
+        end: endTime,
+        resolution: "auto"
+      },
+      groupBy: ['profile']
+    }
+  };
+  if (extraTags) {
+    metricBody = {
+      ...metricBody,
+      [queryId]: {
+        ...metricBody[queryId],
+        tags: {
+          ...metricBody[queryId].tags,
+          ...extraTags
+        }
+      }
+    };
+  }
+  if (!startTime && !endTime) {
+    metricBody = {
+      ...metricBody,
+      [queryId]: {
+        ...metricBody[queryId],
+        timeRange: {
+          ...metricBody[queryId].timeRange,
+          resolution: "1h",
+          aggregate: true
+        }
+      }
+    };
+  }
+  return metricBody;
+};
+
+const convertMetadataToAssociations = (metadata) => {
+  let schedulesCount = 0, triggersCount = 0;
+  metadata.forEach(m => {
+    if (m.entityId.schedule) {
+      // fixed name for time based schedule.
+      if (m.entityId.schedule === GLOBALS.defaultScheduleId) {
+        schedulesCount += 1;
+      } else {
+        triggersCount += 1;
+      }
+    }
+  });
+  return {schedulesCount, triggersCount};
+};
+
+const updateScheduleAndTriggersToStore = (profileName, metadata) => {
+  let {schedulesCount, triggersCount} = convertMetadataToAssociations(metadata);
+  ProfilesStore.dispatch({
+    type: PROFILES_ACTIONS.SET_SCHEDULES_TRIGGERS_COUNT,
+    payload: {
+      profile: profileName,
+      schedulesCount,
+      triggersCount
+    }
+  });
+};
+export const ONEDAYMETRICKEY = 'oneDayMetrics';
+export const OVERALLMETRICKEY = 'overAllMetrics';
+export const fetchAggregateProfileMetrics = (namespace, profile, extraTags) => {
+  let oneDayMetricsRequestBody = getProfileMetricsBody(ONEDAYMETRICKEY, namespace, profile.scope, 'now-24h', 'now', extraTags);
+  let overAllMetricsRequestBody = getProfileMetricsBody(OVERALLMETRICKEY, namespace, profile.scope, 0, 0, extraTags);
+  return MyMetricApi
+    .query(null, { ...oneDayMetricsRequestBody, ...overAllMetricsRequestBody })
+    .flatMap(
+      (metrics) => {
+        let metricsMap = {
+          [ONEDAYMETRICKEY]: {
+            runs: '--',
+            minutes: '--'
+          },
+          [OVERALLMETRICKEY]: {
+            runs: '--',
+            minutes: '--'
+          }
+        };
+        Object.keys(metrics).forEach(query => {
+          metrics[query].series.forEach(metric => {
+            let metricName = metric.metricName.split('.').pop();
+            let metricValue;
+            if (!metric.data.length) {
+              metricValue = 0;
+            } else {
+              if (metric.data.length === 1) {
+                metricValue = metric.data[0].value;
+              } else {
+                metricValue = metric.data.reduce((prev, curr) => prev + curr.value);
+              }
+            }
+            if (!metricsMap.hasOwnProperty(query)) {
+              metricsMap[query] = {};
+            }
+            metricsMap[query]= {
+              ...metricsMap[query],
+              [metricName]: metricValue
+            };
+          });
+        });
+        return Observable.create(observer => {
+          observer.next(metricsMap);
+        });
+      }
+    );
+};
 
 export const getProfiles = (namespace) => {
   ProfilesStore.dispatch({
@@ -40,10 +164,89 @@ export const getProfiles = (namespace) => {
   profileObservable
     .subscribe(
       ([systemProfiles = [], namespaceProfiles = []]) => {
-        let profiles = namespaceProfiles.concat(systemProfiles);
+        let profiles = namespaceProfiles
+          .concat(systemProfiles)
+          .map(profile => ({...profile, oneDayMetrics: {}, overAllMetrics: {}, schedulesCount: '--', triggersCount: '--'}));
         ProfilesStore.dispatch({
           type: PROFILES_ACTIONS.SET_PROFILES,
           payload: { profiles }
+        });
+        /*
+          One metric call with 4 different queries
+            Context: namespace, profile scope
+            Groupby: profile
+            TimeRange:
+              - USER scope
+                - 24hrs
+                - full entirety
+              - SYSTEM scope
+                - 24hrs
+                - full entirety
+
+            One metadata call for entityScope=USER for schedules and triggers count
+        */
+
+        let oneDayUSERMetricsBody = getProfileMetricsBody('oneDayUSERMetrics', namespace, 'USER', 'now-24h', 'now');
+        let overAllUSERMetricsBody = getProfileMetricsBody('overAllUSERMetrics', namespace, 'USER', 0, 0);
+        let oneDaySYSTEMMetricsBody = getProfileMetricsBody('oneDaySYSTEMMetrics', namespace, 'SYSTEM', 'now-24h', 'now');
+        let overAllSYSTEMMetricsBody = getProfileMetricsBody('overAllSYSTEMMetrics', namespace, 'SYSTEM', 0, 0);
+        MyMetricApi
+          .query(null, {...oneDayUSERMetricsBody, ...overAllUSERMetricsBody, ...oneDaySYSTEMMetricsBody, ...overAllSYSTEMMetricsBody})
+          .subscribe(metrics => {
+            let profilesToMetricsMap = {};
+            Object.keys(metrics).forEach(query => {
+              // oneDayMetrics, overMetrics are the keys for metrics for each profile.
+              let metricsKey = query.replace(/USER|SYSTEM/, '');
+              metrics[query].series.forEach(metric => {
+                let profileName = extractProfileName(metric.grouping.profile);
+                let metricName = metric.metricName.split('.').pop();
+                let metricValue;
+                if (!metric.data.length) {
+                  metricValue = 0;
+                } else {
+                  if (metric.data.length === 1) {
+                    metricValue = metric.data[0].value;
+                  } else {
+                    metricValue = metric.data.reduce((prev, curr) => prev + curr.value);
+                  }
+                }
+                if (!profilesToMetricsMap.hasOwnProperty(profileName)) {
+                    profilesToMetricsMap[profileName] = {[metricsKey]: {}};
+                }
+                /*
+                  {
+                    profile1: {
+                      oneDayMetrics: {
+                        runs: 1,
+                        minutes: 2
+                      },
+                      overAllMetrics: {
+                        runs: 2,
+                        minutes: 4
+                      }
+                    }
+                  }
+                */
+                profilesToMetricsMap[profileName] = {
+                  ...profilesToMetricsMap[profileName],
+                  [metricsKey]: { ...profilesToMetricsMap[profileName][metricsKey], [metricName]: metricValue }
+                };
+              });
+            });
+            ProfilesStore.dispatch({
+              type: PROFILES_ACTIONS.SET_PROFILE_METRICS,
+              payload: {
+                profilesToMetricsMap
+              }
+            });
+          });
+        profiles.forEach(profile => {
+          MySearchApi
+            .search({
+              namespace,
+              query: `profile:${namespace}.${profile.name}`
+            })
+            .subscribe(res => updateScheduleAndTriggersToStore(profile.name, res.results));
         });
       },
       setError
@@ -51,11 +254,11 @@ export const getProfiles = (namespace) => {
 };
 
 export const exportProfile = (namespace, profile) => {
-  MyCloudApi
-    .get({
-      namespace,
-      profile: profile.name
-    })
+  let apiObservable$ = MyCloudApi.get({ namespace, profile: profile.name });
+  if (namespace === 'system') {
+    apiObservable$ = MyCloudApi.getSystemProfile({ profile: profile.name });
+  }
+  apiObservable$
     .subscribe(
       (res) => {
         let json = JSON.stringify(res, null, 2);
@@ -103,12 +306,16 @@ export const importProfile = (namespace, e) => {
       });
       return;
     }
-
-    MyCloudApi
-      .create({
-        namespace,
+    let apiObservable$ = MyCloudApi.create({
+      namespace,
+      profile: jsonSpec.name
+    }, jsonSpec);
+    if (namespace === 'system') {
+      apiObservable$ = MyCloudApi.createSystemProfile({
         profile: jsonSpec.name
-      }, jsonSpec)
+      }, jsonSpec);
+    }
+    apiObservable$
       .subscribe(
         () => {
           getProfiles(namespace);

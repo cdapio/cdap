@@ -240,10 +240,10 @@ features:
         disabled: Disabled
         enabled: Enabled
         export: Export
-        last24HrNodeHr: Last 24 hrs node/hr
+        last24HrNodeHr: Last 24 hrs node hours
         last24HrRuns: Last 24 hrs runs
         provisioner: Provisioner
-        totalNodeHr: Total node/hr
+        totalNodeHr: Total node hours
         totalRuns: Total runs
       CreateView:
         profileName: Profile name
@@ -252,16 +252,16 @@ features:
         Associations:
           Header:
             created: Created
-            lastrunnodehr: Last run node/hr
+            lastrunnodehr: Last run node hours
             last24hrsruns: Last 24 hrs runs
             name: Name
             namespace: Namespace
             schedules: Schedules
-            totalnodehr: Total node/hr
+            totalnodehr: Total node hours
             totalruns: Total runs
             triggers: Triggers
         computeProfileOverview: Compute profile overview
-        creation: Creation date and time
+        creation: Created
         disableConfirmation: Are you sure you want to disable the profile *_{profile}_*? Any programs or pipelines using this profile will fail to start.
         disableError: There was a problem disabling the profile
         disableTitle: Disable profile

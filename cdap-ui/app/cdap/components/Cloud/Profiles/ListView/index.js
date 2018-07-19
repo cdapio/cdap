@@ -377,11 +377,11 @@ class ProfilesListView extends Component {
         <div>{profile.provisioner.label}</div>
         <div>{profile.scope}</div>
         <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
+        <div>{profile.oneDayMetrics.runs}</div>
+        <div>{profile.oneDayMetrics.minutes}</div>
+        <div>{profile.overAllMetrics.minutes}</div>
+        <div>{profile.schedulesCount}</div>
+        <div>{profile.triggersCount}</div>
         <div className={`${profileStatus}-label`}>
           {T.translate(`${PREFIX}.common.${profileStatus}`)}
         </div>
