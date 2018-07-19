@@ -245,17 +245,18 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     int sched1Mins = 30;
     ProgramSchedule sched1 = initializeSchedules(sched1Mins, SCHEDULED_PROG1_ID);
     long durationSecs = TimeUnit.HOURS.toSeconds(1);
-    long currentTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    // start 1 hr from current time
+    long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + TimeUnit.HOURS.toSeconds(1);
     // get ops dashboard results between current time and current time + 3600 from TEST_NAMESPACE1 and TEST_NAMESPACE2
-    long endTime = currentTime + durationSecs;
+    long endTime = startTime + durationSecs;
 
     String opsDashboardQueryPath =
       String.format("%s/dashboard?start=%d&duration=%d&namespace=%s&namespace=%s",
-                    BASE_PATH, currentTime, durationSecs, TEST_NAMESPACE1, TEST_NAMESPACE2);
+                    BASE_PATH, startTime, durationSecs, TEST_NAMESPACE1, TEST_NAMESPACE2);
     List<DashboardProgramRunRecord> dashboardRecords = getDashboardRecords(opsDashboardQueryPath);
     List<Long> runTimesSchedule1 =
-      getExpectedRuntimes(TimeUnit.SECONDS.toMinutes(currentTime),
-                          TimeUnit.SECONDS.toMinutes(endTime), sched1Mins, currentTime);
+      getExpectedRuntimes(TimeUnit.SECONDS.toMinutes(startTime),
+                          TimeUnit.SECONDS.toMinutes(endTime), sched1Mins, startTime);
 
     List<DashboardProgramRunRecord> expectedRunRecords = new ArrayList<>();
     String userId = impersonator.getUGI(sched1.getProgramId()).getUserName();
@@ -275,9 +276,19 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     // from TEST_NAMESPACE1 and TEST_NAMESPACE2
     String beforeCurrentTimeQueryPath =
       String.format("%s/dashboard?start=%d&duration=%d&namespace=%s&namespace=%s",
-                    BASE_PATH, currentTime - 2 * durationSecs, durationSecs, TEST_NAMESPACE1, TEST_NAMESPACE2);
+                    BASE_PATH, startTime - 2 * durationSecs, durationSecs, TEST_NAMESPACE1, TEST_NAMESPACE2);
     // assert that there's no scheduled runs returned when the end of query time range is before current time
     Assert.assertEquals(0, getDashboardRecords(beforeCurrentTimeQueryPath).size());
+
+    // test with overlap between previous time and time with schedules
+    long startTime2 = startTime - durationSecs;
+    long duration =  durationSecs * 2;
+    opsDashboardQueryPath =
+      String.format("%s/dashboard?start=%d&duration=%d&namespace=%s&namespace=%s",
+                    BASE_PATH, startTime2, duration, TEST_NAMESPACE1, TEST_NAMESPACE2);
+    // assert that there's no scheduled runs returned when the end of query time range is before current time
+    Assert.assertEquals(expectedRunRecords, dashboardRecords);
+
     // disable the schedules
     scheduler.disableSchedule(sched1.getScheduleId());
     // assert that there's no scheduled runs once the schedules are disabled
