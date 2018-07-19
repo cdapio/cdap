@@ -15,8 +15,8 @@
  */
 
 import moment from 'moment';
-import uniqBy from 'lodash/uniqBy';
 import {DAY_IN_SEC} from 'components/OpsDashboard/store/ActionCreator';
+import uniqWith from 'lodash/uniqWith';
 
 export function parseDashboardData(rawData, startTime, duration, pipeline, customApp) {
   let {
@@ -100,7 +100,9 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
   });
 
   timeArray.forEach((time) => {
-    buckets[time].runsList = uniqBy(buckets[time].runsList, 'run');
+    buckets[time].runsList = uniqWith(buckets[time].runsList, (a, b) => {
+      return (a.run && b.run) && (a.run === b.run);
+    });
   });
 
   let data = Object.keys(buckets).map((time) => {
