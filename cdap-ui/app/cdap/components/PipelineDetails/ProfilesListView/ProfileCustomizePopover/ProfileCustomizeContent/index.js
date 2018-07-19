@@ -24,6 +24,7 @@ import uuidV4 from 'uuid/v4';
 import {extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import cloneDeep from 'lodash/cloneDeep';
+import classnames from 'classnames';
 
 require('./ProfileCustomizeContent.scss');
 
@@ -115,7 +116,12 @@ export default class ProfileCustomizeContent extends PureComponent {
           <div className="profile-customize-metadata">
             <div className="profile-customize-name">
               <strong title={profileName}>{profileName}</strong>
-              <small>Customize the values for the runs started by this schedule</small>
+              {
+                editablePropertiesFromProfile.length ?
+                  <small>Customize the values for the runs started by this schedule</small>
+                :
+                  null
+              }
             </div>
             <IconSVG
               name="icon-close"
@@ -163,7 +169,7 @@ export default class ProfileCustomizeContent extends PureComponent {
                       }
                       {
                         !editableProperties.length ?
-                          <strong> No properties available to customize</strong>
+                          <strong> Properties cannot be customized</strong>
                         :
                           null
                       }
@@ -178,11 +184,21 @@ export default class ProfileCustomizeContent extends PureComponent {
           this.props.disabled ?
             null
           :
-            <div
-              className="btn btn-primary"
-              onClick={this.onSave}
-            >
-              Done
+            <div>
+              {
+                !editablePropertiesFromProfile.length ?
+                  <small className="text-danger">Properties of this profile cannot be customized.</small>
+                :
+                  null
+              }
+              <div
+                className={classnames("btn btn-primary", {
+                  'disabled': editablePropertiesFromProfile.length === 0
+                })}
+                onClick={editablePropertiesFromProfile.length === 0 ? undefined : this.onSave}
+              >
+                Done
+              </div>
             </div>
         }
       </div>
