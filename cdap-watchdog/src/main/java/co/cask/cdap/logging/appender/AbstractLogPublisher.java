@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A class that continuously serializes logs from a queue and publishes them.
@@ -142,8 +143,11 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
       publishThread = Thread.currentThread();
       try {
         if (isRunning()) {
-          buffer.add(createMessage(messageQueue.take()));
-          maxBufferSize--;
+          LogMessage logMessage = messageQueue.poll(10, TimeUnit.SECONDS);
+          if (logMessage != null) {
+            buffer.add(createMessage(logMessage));
+            maxBufferSize--;
+          }
         }
       } catch (InterruptedException e) {
         // just ignore and keep going. This happen when this publisher is getting shutdown, but we still want
