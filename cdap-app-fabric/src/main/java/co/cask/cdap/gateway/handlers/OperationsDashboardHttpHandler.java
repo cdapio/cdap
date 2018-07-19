@@ -114,7 +114,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     // if the end time is in the future, also add scheduled program runs to the result
     long currentTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // if start time in query is earlier than current time, use currentTime as start when querying future schedules
-    long scheduleStartTimeSeconds = startTimeSecs > currentTimeInSeconds  ? startTimeSecs : currentTimeInSeconds;
+    long scheduleStartTimeSeconds = startTimeSecs > currentTimeInSeconds ? startTimeSecs : currentTimeInSeconds;
     if (endTimeSecs > currentTimeInSeconds) {
       // end time is exclusive
       result.addAll(getAllScheduledRuns(namespaceIds, scheduleStartTimeSeconds, endTimeSecs + 1));
