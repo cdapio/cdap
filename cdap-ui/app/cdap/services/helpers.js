@@ -90,12 +90,14 @@ function humanReadableNumber(num, type) {
   }
 
 }
-function humanReadableDate(date, isMilliseconds) {
+// FIXME: humanReadableDate(date, options = {isMilliseconds: false, shortForm: false}) would have been\
+// more readable api. We should think about changing the function signature.
+function humanReadableDate(date, isMilliseconds, shortForm = false) {
   if (!date) {
     return '--';
   }
 
-  const format = 'MM-DD-YYYY hh:mm:ss A';
+  const format = shortForm ? 'MM-DD-YYYY': 'MM-DD-YYYY hh:mm:ss A';
   if (isMilliseconds) {
     return moment(date).format(format);
   }

@@ -22,6 +22,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
 import {MyMetricApi} from 'api/metric';
+import {humanReadableDate} from 'services/helpers';
 import T from 'i18n-react';
 require('./Preview.scss');
 
@@ -38,7 +39,7 @@ export default class ProfilePreview extends Component {
     error: null,
     metrics: {
       runs: '--',
-      nodehr: '--'
+      minutes: '--'
     },
     provisioners: []
   };
@@ -103,19 +104,19 @@ export default class ProfilePreview extends Component {
     MyMetricApi
       .query(null, metricsBody24)
       .subscribe(metrics => {
-        let runs = '--', nodehr = '--';
+        let runs = '--', minutes = '--';
         metrics.qid.series.forEach(metric => {
           if (metric.metricName === 'system.program.completed.runs' && Array.isArray(metric.data)) {
             runs = metric.data[0].value;
           }
           if (metric.metricName === 'system.program.node.minutes' && Array.isArray(metric.data)) {
-            nodehr = metric.data[0].value;
+            minutes = metric.data[0].value;
           }
         });
         this.setState({
           metrics: {
             runs,
-            nodehr
+            minutes
           }
         });
       });
@@ -186,8 +187,8 @@ export default class ProfilePreview extends Component {
                 {this.state.profileDetails.scope}
               </div>
               <div>{this.state.metrics.runs}</div>
-              <div>{this.state.metrics.nodehr}</div>
-              <div />
+              <div>{this.state.metrics.minutes}</div>
+              <div>{humanReadableDate(this.state.profileDetails.created, false, true)}</div>
               <div className={`profile-status ${profileStatus}`}>
                 {T.translate(`features.Cloud.Profiles.common.${profileStatus}`)}
               </div>

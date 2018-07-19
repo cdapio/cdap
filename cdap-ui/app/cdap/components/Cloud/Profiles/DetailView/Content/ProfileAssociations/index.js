@@ -21,12 +21,13 @@ import {isNilOrEmpty, humanReadableDuration, objectQuery} from 'services/helpers
 import {GLOBALS} from 'services/global-constants';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
-import {MyMetricApi} from 'api/metric';
+import {ONEDAYMETRICKEY, OVERALLMETRICKEY, fetchAggregateProfileMetrics} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {Observable} from 'rxjs/Observable';
 require('./ProfileAssociations.scss');
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
 const HEADERPREFIX = `${PREFIX}.Associations.Header`;
+
 
 const HEADERS = [
   {
@@ -71,81 +72,39 @@ export default class ProfileAssociations extends Component {
     associationsMap: {}
   };
 
-  getMetricsQueryBody = (startTime, endTime, metadata) => {
+  fetchMetricsForApp = (appid, metadata) => {
     let {namespace, profile} = this.props;
-    return {
-      qid: {
-        tags: {
-          namespace,
-          profilescope: profile.scope,
-          profile: `${profile.scope}:${profile.name}`,
-          programtype: metadata.type,
-          program: metadata.program
-        },
-        metrics: [
-          'system.program.completed.runs',
-          'system.program.node.minutes'
-        ],
-        timeRange: {
-          start: startTime,
-          end: endTime,
-          resolution: "auto",
-          aggregate: true
-        }
-      }
+    let extraTags = {
+      program: metadata.program,
+      programtype: metadata.type,
+      profile: `${profile.scope}:${profile.name}`
     };
-  };
-
-  fetchAggregateMetrics = (startTime, endTime, metadata) => {
-    let oneDayMetricsRequestBody = this.getMetricsQueryBody(startTime, endTime, metadata);
-    return MyMetricApi
-      .query(null, oneDayMetricsRequestBody)
-      .flatMap(
-        (metrics) => {
-          let runs, nodehr;
-          metrics.qid.series.forEach(metric => {
-            if (metric.metricName === 'system.program.completed.runs' && Array.isArray(metric.data)) {
-              runs = metric.data[0].value;
-            }
-            if (metric.metricName === 'system.program.node.minutes' && Array.isArray(metric.data)) {
-              nodehr = metric.data[0].value;
-            }
+    fetchAggregateProfileMetrics(namespace, profile, extraTags)
+      .subscribe(
+        metricsMap => {
+          let {associationsMap} = this.state;
+          Object.keys(metricsMap).forEach(metricKey => {
+            associationsMap[appid].metadata[metricKey] = metricsMap[metricKey];
           });
+          this.setState({
+            associationsMap
+          });
+        },
+        () => {
           return Observable.create(observer => {
             observer.next({
-              runs,
-              nodehr
+              [ONEDAYMETRICKEY]: {
+                runs: '--',
+                minutes: '--'
+              },
+              [OVERALLMETRICKEY]: {
+                runs: '--',
+                minutes: '--'
+              }
             });
           });
         }
       );
-  };
-
-  fetchMetricsForApp = (appid, metadata) => {
-    this
-      .fetchAggregateMetrics('now-24h', 'now', metadata)
-      .subscribe(({runs, nodehr}) => {
-        let {associationsMap} = this.state;
-        associationsMap[appid].metadata.onedayMetrics = {
-          nodehr,
-          runs
-        };
-        this.setState({
-          associationsMap
-        });
-      });
-    this
-      .fetchAggregateMetrics(0, 0, metadata)
-      .subscribe(({runs, nodehr}) => {
-        let {associationsMap} = this.state;
-        associationsMap[appid].metadata.overallMetrics = {
-          nodehr,
-          runs
-        };
-        this.setState({
-          associationsMap
-        });
-      });
   }
 
   componentDidMount() {
@@ -253,17 +212,17 @@ export default class ProfileAssociations extends Component {
         {
           Object.keys(associationsMap).map(app => {
             let appObj = associationsMap[app];
-            let onedayMetrics = objectQuery(appObj, 'metadata', 'onedayMetrics') || {};
-            let overallMetrics = objectQuery(appObj, 'metadata', 'overallMetrics') || {};
+            let onedayMetrics = objectQuery(appObj, 'metadata', ONEDAYMETRICKEY) || {};
+            let overallMetrics = objectQuery(appObj, 'metadata', OVERALLMETRICKEY) || {};
             return (
               <div className="grid-row">
                 <div>{appObj.name}</div>
                 <div>{appObj.namespace}</div>
                 <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true)}</div>
-                <div>{onedayMetrics.runs || '--'} </div>
-                <div>{overallMetrics.runs || '--'}</div>
-                <div>{onedayMetrics.nodehr || '--'}</div>
-                <div>{overallMetrics.nodehr || '--'}</div>
+                <div>{onedayMetrics.runs} </div>
+                <div>{overallMetrics.runs}</div>
+                <div>{onedayMetrics.minutes}</div>
+                <div>{overallMetrics.minutes}</div>
                 <div>{appObj.schedules.length}</div>
                 <div>{appObj.triggers.length}</div>
               </div>
