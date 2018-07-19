@@ -129,18 +129,21 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     private static final String START_FILE = "_START";
     private static final String FAILURE_FILE = "_FAILURE";
     private static final String SAVED_FILE = "_SAVED";
-    // report files will expire after 48 hours after they are generated
-    private static final long VALID_DURATION_MILLIS = TimeUnit.DAYS.toMillis(2);
 
     private int readLimit;
     private SQLContext sqlContext;
+    private long reportsExpiryTimeMillis;
 
     @Override
     public void initialize(SparkHttpServiceContext context) throws Exception {
       super.initialize(context);
       sqlContext = new SQLContext(getContext().getSparkContext());
-      String readLimitString = context.getRuntimeArguments().get(READ_LIMIT);
-      readLimit = readLimitString == null ? 10000 : Integer.valueOf(readLimitString);
+      Map<String, String> runtimeArguments = context.getRuntimeArguments();
+      readLimit = Integer.parseInt(runtimeArguments.getOrDefault(READ_LIMIT, "10000"));
+      String expiryTimeInSecondsString =
+        runtimeArguments.getOrDefault(Constants.Report.REPORT_EXPIRY_TIME_SECONDS,
+                                      Constants.Report.DEFAULT_REPORT_EXPIRY_TIME_SECONDS);
+      reportsExpiryTimeMillis = TimeUnit.SECONDS.toMillis(Long.parseLong(expiryTimeInSecondsString));
     }
 
     /**
@@ -230,7 +233,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         }
         reportStatuses.add(new ReportStatusInfo(reportId, metaInfo));
       }
-      return new ReportList(offset, limit, reportIdDirs.size(), reportStatuses);
+      return new ReportList(offset, limit, reportStatuses.size(), reportStatuses);
     }
 
     @POST
@@ -340,7 +343,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * @return the report generation information of the given report id
      * @throws Exception
      */
-    private static ReportGenerationInfo getReportGenerationInfo(String reportId, Location reportIdDir)
+    private ReportGenerationInfo getReportGenerationInfo(String reportId, Location reportIdDir)
       throws Exception {
       ReportGenerationRequest reportRequest = getReportRequest(reportIdDir);
       ReportMetaInfo metaInfo = getReportMetaInfo(reportId, reportIdDir, reportRequest);
@@ -395,8 +398,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * @return the meta information of the report
      * @throws Exception if fails to get the status of the report or fails to access the file with report save request
      */
-    private static ReportMetaInfo getReportMetaInfo(String reportId, Location reportIdDir,
-                                                    ReportGenerationRequest generationRequest) throws Exception {
+    private ReportMetaInfo getReportMetaInfo(String reportId, Location reportIdDir,
+                                             ReportGenerationRequest generationRequest) throws Exception {
       // Get the creation time from the report ID, which is time based UUID
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
       ReportStatus status = getReportStatus(reportIdDir);
@@ -859,18 +862,18 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     /**
-     * Gets the expiry time in milliseconds of a report by adding the VALID_DURATION_MILLIS
+     * Gets the expiry time in milliseconds of a report by adding the reportsExpiryTimeMillis
      * to the report generation completed time read from the _SUCCESS file.
      *
      * @param reportIdDir the base directory with report ID as directory name
      * @return the expiry time in milliseconds or {@code null} if the expiry time cannot be determined
      * @throws Exception _SUCCESS doesn't exist or reading the report generation completed time from it failed
      */
-    private static Long getExpiryTimeMillis(Location reportIdDir) throws Exception {
+    private long getExpiryTimeMillis(Location reportIdDir) throws Exception {
       // Get the report generation completed time from the _SUCCESS file
       String completedTime = readStringFromFile(reportIdDir, LocationName.SUCCESS_FILE);
-      // the report file will be expired after VALID_DURATION_MILLIS since report generation completed time
-      return Long.parseLong(completedTime) + VALID_DURATION_MILLIS;
+      // the report file will be expired after reportsExpiryTimeMillis since report generation completed time
+      return Long.parseLong(completedTime) + reportsExpiryTimeMillis;
     }
 
     /**
@@ -883,7 +886,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * @param reportIdDir the base directory with report ID as directory name
      * @return status of the report generation
      */
-    private static ReportStatus getReportStatus(Location reportIdDir) throws Exception {
+    private ReportStatus getReportStatus(Location reportIdDir) throws Exception {
       // if the report is completed but has expired, return EXPIRED as its status too
       if (reportIdDir.append(LocationName.SUCCESS_FILE).exists() &&
         getExpiryTimeMillis(reportIdDir) < System.currentTimeMillis()) {

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.report.util;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Constants used by the report generation app and file schema.
  */
@@ -105,5 +107,13 @@ public final class Constants {
       public static final String SUSPENDED = "SUSPENDED";
       public static final String RESUMING = "RESUMING";
     }
+  }
+  /**
+   * Constants related to report generation and expiration
+   */
+  public static final class Report {
+    // report files will expire after 48 hours after they are generated
+    public static final String DEFAULT_REPORT_EXPIRY_TIME_SECONDS = String.valueOf(TimeUnit.DAYS.toSeconds(2));
+    public static final String REPORT_EXPIRY_TIME_SECONDS = "report.expiry.duration.seconds";
   }
 }
