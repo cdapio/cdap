@@ -1464,6 +1464,7 @@ features:
       edwOffload: EDW Offload
       emptyTab: No entities found
       examples: Applications
+      gcp: GCP
       pipelines: Pipelines
       plugins: Plugins
       useCases: Solutions
