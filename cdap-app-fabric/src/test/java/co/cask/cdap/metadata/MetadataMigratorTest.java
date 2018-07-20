@@ -51,7 +51,6 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntries;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.data2.metadata.dataset.MetadataV1;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -77,6 +76,9 @@ import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -95,7 +97,6 @@ import org.junit.rules.TemporaryFolder;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -234,8 +235,8 @@ public class MetadataMigratorTest {
 
   private void assertIndex(MetadataDataset v2System) throws Exception {
     SearchRequest sr = new SearchRequest(new NamespaceId("ns1"), "avalue1",
-                                              ImmutableSet.of(EntityTypeSimpleName.ALL), SortInfo.DEFAULT, 0,
-                                              Integer.MAX_VALUE, 1, null, false, EnumSet.of(EntityScope.USER));
+                                         ImmutableSet.of(EntityTypeSimpleName.ALL), SortInfo.DEFAULT, 0,
+                                         Integer.MAX_VALUE, 1, null, false, EnumSet.of(EntityScope.USER));
 
 
     List<MetadataEntry> entries = v2System.search(sr).getResults();
@@ -300,93 +301,115 @@ public class MetadataMigratorTest {
     String value = "";
     switch (entityType) {
       case APPLICATION:
-        value = "{\n" +
-          "  \"namespacedEntityId\": {\n" +
-          "    \"type\": \"application\",\n" +
-          "    \"id\": {\n" +
-          "      \"namespace\": {\n" +
-          "        \"id\": \"ns1\"\n" +
-          "      },\n" +
-          "      \"applicationId\": \"app1\"\n" +
-          "    }\n" +
-          "  },\n" +
-          "  \"properties\": {\n" +
-          "    \"akey1\" : \"avalue1\"\n" +
-          "  },\n" +
-          "  \"tags\": [\n" +
-          "    \"cdap-data-pipeline\"\n" +
-          "  ]\n" +
-          "}";
+        JsonObject namespaceId = new JsonObject();
+        namespaceId.addProperty("id", "ns1");
+
+        JsonObject applicationId = new JsonObject();
+        applicationId.add("namespace", namespaceId);
+        applicationId.addProperty("applicationId", "app1");
+
+        JsonObject entityId = new JsonObject();
+        entityId.addProperty("type", "application");
+        entityId.add("id", applicationId);
+
+        JsonObject properties = new JsonObject();
+        properties.addProperty("akey1", "avalue1");
+
+        JsonArray tags = new JsonArray();
+        tags.add(new JsonPrimitive("cdap-data-pipeline"));
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add("namespacedEntityId", entityId);
+        jsonObject.add("properties", properties);
+        jsonObject.add("tags", tags);
+
+        value = jsonObject.toString();
         break;
       case DATASET:
-        value = "{\n" +
-          "  \"namespacedEntityId\": {\n" +
-          "    \"type\": \"datasetinstance\",\n" +
-          "    \"id\": {\n" +
-          "      \"namespace\": {\n" +
-          "        \"id\": \"ns1\"\n" +
-          "      },\n" +
-          "      \"instanceId\": \"ds1\"\n" +
-          "    }\n" +
-          "  },\n" +
-          "  \"properties\": {\n" +
-          "    \"akey3\" : \"avalue3\"\n" +
-          "  },\n" +
-          "  \"tags\": [\n" +
-          "    \"explore\",\n" +
-          "    \"batch\"\n" +
-          "  ]\n" +
-          "}";
+        namespaceId = new JsonObject();
+        namespaceId.addProperty("id", "ns1");
+
+        JsonObject dsId = new JsonObject();
+        dsId.add("namespace", namespaceId);
+        dsId.addProperty("instanceId", "ds1");
+
+        entityId = new JsonObject();
+        entityId.addProperty("type", "datasetinstance");
+        entityId.add("id", dsId);
+
+        properties = new JsonObject();
+        properties.addProperty("akey3", "avalue3");
+
+        tags = new JsonArray();
+        tags.add(new JsonPrimitive("explore"));
+        tags.add(new JsonPrimitive("batch"));
+
+        jsonObject = new JsonObject();
+        jsonObject.add("namespacedEntityId", entityId);
+        jsonObject.add("properties", properties);
+        jsonObject.add("tags", tags);
+
+        value = jsonObject.toString();
         break;
       case ARTIFACT:
-        value = "{\n" +
-          "  \"namespacedEntityId\": {\n" +
-          "    \"type\": \"artifact\",\n" +
-          "    \"id\": {\n" +
-          "      \"namespace\": {\n" +
-          "        \"id\": \"ns1\"\n" +
-          "      },\n" +
-          "      \"name\": \"a1\",\n" +
-          "      \"version\": {\n" +
-          "        \"version\": \"1.0.0\",\n" +
-          "        \"major\": 3,\n" +
-          "        \"minor\": 0,\n" +
-          "        \"fix\": 4\n" +
-          "      }\n" +
-          "    }\n" +
-          "  },\n" +
-          "  \"properties\": {\n" +
-          "    \"akey1\" : \"avalue1\"\n" +
-          "  },\n" +
-          "  \"tags\": []\n" +
-          "}";
+        namespaceId = new JsonObject();
+        namespaceId.addProperty("id", "ns1");
+
+        JsonObject artifactId = new JsonObject();
+        artifactId.add("namespace", namespaceId);
+        artifactId.addProperty("name", "a1");
+
+        JsonObject version = new JsonObject();
+        version.addProperty("version", "1.0.0");
+        version.addProperty("major", "3");
+        version.addProperty("minor", "0");
+        version.addProperty("fix", "4");
+
+        artifactId.add("version", version);
+
+        entityId = new JsonObject();
+        entityId.addProperty("type", "artifact");
+        entityId.add("id", artifactId);
+
+        properties = new JsonObject();
+        properties.addProperty("akey1", "avalue1");
+
+        tags = new JsonArray();
+
+        jsonObject = new JsonObject();
+        jsonObject.add("namespacedEntityId", entityId);
+        jsonObject.add("properties", properties);
+        jsonObject.add("tags", tags);
+
+        value = jsonObject.toString();
         break;
       case STREAM:
-        value = "{\n" +
-          "  \"namespacedEntityId\": {\n" +
-          "    \"type\": \"stream\",\n" +
-          "    \"id\": {\n" +
-          "      \"namespace\": {\n" +
-          "        \"id\": \"ns1\"\n" +
-          "      },\n" +
-          "      \"streamName\": \"s1\"\n" +
-          "    }\n" +
-          "  },\n" +
-          "  \"properties\": {\n" +
-          "    \"akey4\" : \"avalue4\"\n" +
-          "  },\n" +
-          "  \"tags\": []\n" +
-          "}";
+        namespaceId = new JsonObject();
+        namespaceId.addProperty("id", "ns1");
+
+        JsonObject streamId = new JsonObject();
+        streamId.add("namespace", namespaceId);
+        streamId.addProperty("streamName", "s1");
+
+        entityId = new JsonObject();
+        entityId.addProperty("type", "stream");
+        entityId.add("id", streamId);
+
+        properties = new JsonObject();
+        properties.addProperty("akey4", "avalue4");
+
+        tags = new JsonArray();
+
+        jsonObject = new JsonObject();
+        jsonObject.add("namespacedEntityId", entityId);
+        jsonObject.add("properties", properties);
+        jsonObject.add("tags", tags);
+
+        value = jsonObject.toString();
         break;
     }
 
     return value;
-  }
-
-  private MetadataV1 getMetadataV1(NamespacedEntityId targetId) {
-    Map<String, String> properties = ImmutableMap.of("pk1", "pv1", "pk2", "pv2");
-    Set<String> tags = ImmutableSet.of("tag1, tag2");
-    return new MetadataV1(targetId, properties, tags);
   }
 
   /**

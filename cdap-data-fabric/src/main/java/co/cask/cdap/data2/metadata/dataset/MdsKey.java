@@ -31,16 +31,6 @@ import static co.cask.cdap.api.metadata.MetadataEntity.V1_DATASET_INSTANCE;
 import static co.cask.cdap.api.metadata.MetadataEntity.V1_VIEW;
 import static co.cask.cdap.api.metadata.MetadataEntity.VIEW;
 
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
-
-import javax.annotation.Nullable;
-
 /**
  * Key class to get v1 metadata key information
  */
