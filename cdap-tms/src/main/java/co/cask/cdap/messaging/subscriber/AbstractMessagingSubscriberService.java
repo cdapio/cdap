@@ -32,6 +32,7 @@ import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.common.utils.TimeBoundIterator;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.collect.AbstractIterator;
@@ -62,6 +63,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
   private final int fetchSize;
   private final long emptyFetchDelayMillis;
   private final MetricsContext metricsContext;
+  private final int txTimeoutSeconds;
   private boolean messageIdInitialized;
   private String messageId;
 
@@ -71,17 +73,19 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
    * @param topicId the topic to consume from
    * @param transactionalFetch {@code true} to indicate fetching from TMS needs to be performed inside transaction
    * @param fetchSize number of messages to fetch in each batch
+   * @param txTimeoutSeconds transaction timeout in seconds to use when processing messages
    * @param emptyFetchDelayMillis number of milliseconds to sleep after a fetch returns empty result
    * @param retryStrategy the {@link RetryStrategy} to determine retry on failure
    * @param metricsContext the {@link MetricsContext} for emitting metrics about the message consumption.
    */
   protected AbstractMessagingSubscriberService(TopicId topicId, boolean transactionalFetch, int fetchSize,
-                                               long emptyFetchDelayMillis, RetryStrategy retryStrategy,
-                                               MetricsContext metricsContext) {
+                                               int txTimeoutSeconds, long emptyFetchDelayMillis,
+                                               RetryStrategy retryStrategy, MetricsContext metricsContext) {
     super(retryStrategy);
     this.topicId = topicId;
     this.transactionalFetch = transactionalFetch;
     this.fetchSize = fetchSize;
+    this.txTimeoutSeconds = txTimeoutSeconds;
     this.emptyFetchDelayMillis = emptyFetchDelayMillis;
     this.metricsContext = metricsContext;
   }
@@ -135,6 +139,16 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
    * @throws Exception if the decode failed and the given message will be skipped for processing
    */
   protected abstract T decodeMessage(Message message) throws Exception;
+
+  /**
+   * Whether the message should run in its own transaction because it is expected to be an expensive operation.
+   *
+   * @param message the message to process
+   * @return whether the message should be processed in its own transaction
+   */
+  protected boolean shouldRunInSeparateTx(T message) {
+    return false;
+  }
 
   /**
    * Processes the give list of messages. This method will be called from the same transaction as the
@@ -214,8 +228,11 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
     startTime = System.currentTimeMillis();
 
     // Process the notifications and record the message id of where the processing is up to.
+    // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
+    long timeBoundMillis = 900L * txTimeoutSeconds;
     MessageTrackingIterator iterator = Transactionals.execute(getTransactional(), context -> {
-      MessageTrackingIterator trackingIterator = new MessageTrackingIterator(messages.iterator());
+      TimeBoundIterator<Message> timeBoundMessages = new TimeBoundIterator<>(messages.iterator(), timeBoundMillis);
+      MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
       processMessages(context, trackingIterator);
       String lastMessageId = trackingIterator.getLastMessageId();
 
@@ -287,28 +304,49 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
     private final Iterator<Message> messages;
     private String lastMessageId;
     private int consumedCount;
+    private boolean shouldEnd;
 
     MessageTrackingIterator(Iterator<Message> messages) {
       this.messages = messages;
+      this.consumedCount = 0;
+      this.shouldEnd = false;
     }
 
     @Override
     protected ImmutablePair<String, T> computeNext() {
+      if (shouldEnd) {
+        return endOfData();
+      }
       // Decode the next message into Notification.
       while (messages.hasNext()) {
-        consumedCount++;
         Message message = messages.next();
-        lastMessageId = message.getId();
 
         try {
           T decoded = decodeMessage(message);
-          LOG.trace("Processing message from topic {} with message id {}: {}", topicId, lastMessageId, decoded);
-          return new ImmutablePair<>(lastMessageId, decoded);
+          if (shouldRunInSeparateTx(decoded)) {
+            // if we should process this message in a separate tx and we've already processed other messages,
+            // pretend we've gone through all messages already. The next time we try to process a batch of messages,
+            // this expensive one will be the first message.
+            if (consumedCount > 0) {
+              LOG.debug("Ending message batch early to process {} in a separate tx", decoded);
+              return endOfData();
+            }
+            // if we should process this message in a separate tx and we haven't processed any messages yet,
+            // remember that we should pretend this iterator only had one element in it
+            shouldEnd = true;
+          }
+          LOG.trace("Processing message from topic {} with message id {}: {}", topicId, message.getId(), decoded);
+          consumedCount++;
+          lastMessageId = message.getId();
+          return new ImmutablePair<>(message.getId(), decoded);
         } catch (Exception e) {
           // This shouldn't happen.
           LOG.warn("Failed to decode message with id {} and payload '{}'. Skipped.",
                    message.getId(), message.getPayloadAsString(), e);
         }
+
+        consumedCount++;
+        lastMessageId = message.getId();
       }
       return endOfData();
     }
