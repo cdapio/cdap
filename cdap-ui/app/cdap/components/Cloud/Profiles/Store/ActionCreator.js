@@ -127,7 +127,7 @@ export const fetchAggregateProfileMetrics = (namespace, profile, extraTags) => {
               if (metric.data.length === 1) {
                 metricValue = metric.data[0].value;
               } else {
-                metricValue = metric.data.reduce((prev, curr) => prev + curr.value);
+                metricValue = metric.data.reduce((prev, curr) => prev + curr.value, 0);
               }
             }
             if (!metricsMap.hasOwnProperty(query)) {
@@ -207,7 +207,7 @@ export const getProfiles = (namespace) => {
                   if (metric.data.length === 1) {
                     metricValue = metric.data[0].value;
                   } else {
-                    metricValue = metric.data.reduce((prev, curr) => prev + curr.value);
+                    metricValue = metric.data.reduce((prev, curr) => prev + curr.value, 0);
                   }
                 }
                 if (!profilesToMetricsMap.hasOwnProperty(profileName)) {
