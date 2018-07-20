@@ -14,9 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner.dataproc;
+package co.cask.cdap.runtime.spi.provisioner.emr;
 
 import co.cask.cdap.runtime.spi.Constants;
+import co.cask.cdap.runtime.spi.SparkCompat;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
@@ -28,6 +29,7 @@ import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
+import com.amazonaws.services.elasticmapreduce.model.ClusterSummary;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,15 +41,15 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Provisions a cluster using GCE DataProc.
+ * Provisions a cluster using Amazon EMR.
  */
-public class DataProcProvisioner implements Provisioner {
+public class ElasticMapReduceProvisioner implements Provisioner {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataProcProvisioner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ElasticMapReduceProvisioner.class);
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
-    "gcp-dataproc", "Google Cloud Dataproc",
-    "Google Cloud Dataproc is a fast, easy-to-use, fully-managed cloud service for running Apache Spark and Apache " +
-      "Hadoop clusters in a simpler, more cost-efficient way.",
+    "aws-emr", "Amazon EMR",
+    "Amazon EMR provides a managed Hadoop framework that makes it easy, fast, and cost-effective to " +
+            "process vast amounts of data across dynamically scalable Amazon EC2 instances.",
     new HashMap<>());
   private static final String CLUSTER_PREFIX = "cdap-";
 
@@ -58,63 +60,46 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public void validateProperties(Map<String, String> properties) {
-    DataProcConf.fromProperties(properties);
+    EMRConf.fromProperties(properties);
   }
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
+    if (!SparkCompat.SPARK2_2_11.equals(context.getSparkCompat())) {
+      throw new UnsupportedOperationException("EMR currently only supports " + SparkCompat.SPARK2_2_11);
+    }
     // Generates and set the ssh key
-    SSHKeyPair sshKeyPair = context.getSSHContext().generate("cdap");
+    SSHKeyPair sshKeyPair = context.getSSHContext().generate("ec2-user"); // or 'hadoop'
     context.getSSHContext().setSSHKeyPair(sshKeyPair);
 
-    DataProcConf conf = DataProcConf.fromProvisionerContext(context);
+    EMRConf conf = EMRConf.fromProvisionerContext(context);
     String clusterName = getClusterName(context.getProgramRun());
 
-    try (DataProcClient client = DataProcClient.fromConf(conf)) {
+    try (EMRClient client = EMRClient.fromConf(conf)) {
       // if it already exists, it means this is a retry. We can skip actually making the request
-      Optional<Cluster> existing = client.getCluster(clusterName);
+      Optional<ClusterSummary> existing = client.getUnterminatedClusterByName(clusterName);
       if (existing.isPresent()) {
-        return existing.get();
+        return client.getCluster(existing.get().getId()).get();
       }
-
-      String imageVersion;
-      switch (context.getSparkCompat()) {
-        case SPARK1_2_10:
-          imageVersion = "1.0";
-          break;
-        case SPARK2_2_11:
-        default:
-          imageVersion = "1.2";
-          break;
-      }
-
-      // dataproc only allows label values to be lowercase letters, numbers, or dashes
-      String cdapVersion = context.getCDAPVersion().toLowerCase();
-      cdapVersion = cdapVersion.replaceAll("\\.", "_");
-      Map<String, String> labels = Collections.singletonMap("cdap-version", cdapVersion);
-      client.createCluster(clusterName, imageVersion, labels);
-      return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
+      String clusterId = client.createCluster(clusterName);
+      return new Cluster(clusterId, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
     }
   }
 
   @Override
   public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
-    String clusterName = getClusterName(context.getProgramRun());
-
-    try (DataProcClient client = DataProcClient.fromConf(conf)) {
-      return client.getClusterStatus(clusterName);
+    EMRConf conf = EMRConf.fromProvisionerContext(context);
+    try (EMRClient client = EMRClient.fromConf(conf)) {
+      return client.getClusterStatus(cluster.getName());
     }
   }
 
   @Override
   public Cluster getClusterDetail(ProvisionerContext context,
                                   Cluster cluster) throws Exception {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
-    String clusterName = getClusterName(context.getProgramRun());
-
-    try (DataProcClient client = DataProcClient.fromConf(conf)) {
-      Optional<Cluster> existing = client.getCluster(clusterName);
+    EMRConf conf = EMRConf.fromProvisionerContext(context);
+    try (EMRClient client = EMRClient.fromConf(conf)) {
+      Optional<Cluster> existing = client.getCluster(cluster.getName());
       return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
     }
   }
@@ -131,12 +116,15 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
-    String clusterName = getClusterName(context.getProgramRun());
-
-    try (DataProcClient client = DataProcClient.fromConf(conf)) {
-      client.deleteCluster(clusterName);
+    EMRConf conf = EMRConf.fromProvisionerContext(context);
+    try (EMRClient client = EMRClient.fromConf(conf)) {
+      client.deleteCluster(cluster.getName());
     }
+  }
+
+  @Override
+  public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
+    return PollingStrategies.fixedInterval(20, TimeUnit.SECONDS);
   }
 
   private String getMasterExternalIp(Cluster cluster) {
@@ -150,21 +138,6 @@ public class DataProcProvisioner implements Provisioner {
                                                        masterNode.getId(), cluster));
     }
     return ip;
-  }
-
-  @Override
-  public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
-    PollingStrategy strategy = PollingStrategies.fixedInterval(conf.getPollInterval(), TimeUnit.SECONDS);
-    switch (cluster.getStatus()) {
-      case CREATING:
-        return PollingStrategies.initialDelay(strategy, conf.getPollCreateDelay(),
-                                              conf.getPollCreateJitter(), TimeUnit.SECONDS);
-      case DELETING:
-        return PollingStrategies.initialDelay(strategy, conf.getPollDeleteDelay(), TimeUnit.SECONDS);
-    }
-    LOG.warn("Received a request to get the polling strategy for unexpected cluster status {}", cluster.getStatus());
-    return strategy;
   }
 
   // Name must start with a lowercase letter followed by up to 51 lowercase letters,

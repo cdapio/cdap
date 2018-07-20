@@ -260,9 +260,17 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <!-- Add dependencies on cdap-operational-stats and runtime provider extensions to make sure
+             they are built before standalone -->
         <dependency>
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-operational-stats-core</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-runtime-ext-emr</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -525,6 +533,34 @@
               </execution>
 
               <!-- Copy runtime provider extensions -->
+              <execution>
+                <id>copy-runtime-ext-emr</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.runtime.providers.ext.dir}/emr</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-runtime-ext-emr/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-runtime-ext-emr/src/main/resources
+                      </directory>
+                      <includes>
+                        <include>aws-emr.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
               <execution>
                 <id>copy-runtime-ext-dataproc</id>
                 <phase>process-resources</phase>

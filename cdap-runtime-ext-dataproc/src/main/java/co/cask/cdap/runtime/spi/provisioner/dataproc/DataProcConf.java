@@ -39,7 +39,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Configuratino for DataProc.
+ * Configuration for DataProc.
  */
 public class DataProcConf {
   private final String accountKey;

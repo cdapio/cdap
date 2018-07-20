@@ -1,0 +1,197 @@
+{
+  "configuration-groups": [
+    {
+      "label": "AWS Account Information",
+      "properties": [
+        {
+          "widget-type": "securekey-textarea",
+          "label": "Access Key",
+          "name": "accessKey",
+          "required": true,
+          "description": "An AWS Access Key ID identifies an AWS access key, which can be used to make secure REST or HTTP query protocol requests to AWS service APIs.",
+          "widget-attributes": {
+            "placeholder": "AWS Access Key"
+          }
+        },
+        {
+          "widget-type": "securekey-textarea",
+          "label": "Secret Key",
+          "name": "secretKey",
+          "required": true,
+          "description": "An AWS Secret Key can be used to make secure REST or HTTP query protocol requests to AWS service APIs.",
+          "widget-attributes": {
+            "placeholder": "AWS Secret Key"
+          }
+        }
+      ]
+    },
+    {
+      "label": "General Settings",
+      "properties": [
+        {
+          "widget-type": "select",
+          "label": "Region",
+          "name": "region",
+          "description": "When you launch an Amazon EMR cluster, you must specify a region. You might choose a region to reduce latency, minimize costs, or address regulatory requirements. For more information, refer to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-region.html.",
+          "widget-attributes": {
+            "values_sourced_from": "https://docs.aws.amazon.com/general/latest/gr/rande.html#emr_region",
+            "values": [
+              "us-east-2",
+              "us-east-1",
+              "us-west-1",
+              "us-west-2",
+              "ap-northeast-1",
+              "ap-northeast-2",
+              "ap-northeast-3",
+              "ap-south-1",
+              "ap-southeast-1",
+              "ap-southeast-2",
+              "ca-central-1",
+              "cn-north-1",
+              "cn-northwest-1",
+              "eu-central-1",
+              "eu-west-1",
+              "eu-west-2",
+              "eu-west-3",
+              "sa-east-1",
+              "us-gov-west-1"
+            ],
+            "size": "medium",
+            "default": "us-west-2"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "EC2 Subnet",
+          "name": "ec2SubnetId",
+          "description": "A subnet defines a subset of a VPC (virtual private cloud) dedicated to your AWS account. For more information, refer to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-vpc-launching-job-flows.html and https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html#vpc-subnet-basics.",
+          "widget-attributes": {
+            "placeholder": "Specify your EC2 Subnet"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Additional EMR managed security group for the master instance",
+          "name": "additionalMasterSecurityGroup",
+          "description": "An additional EMR managed security group that will be applied to the master instance. For more information, refer to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-man-sec-groups.html.",
+          "widget-attributes": {
+            "placeholder": "Specify your EMR managed security group"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Logs URI",
+          "name": "logsURI",
+          "description": "Copy the cluster's log files automatically to S3. For more information, refer to https://docs.aws.amazon.com/console/elasticmapreduce/logging.",
+          "widget-attributes": {
+            "placeholder": "Specify your S3 folder"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Nodes",
+      "properties": [
+        {
+          "widget-type": "number",
+          "label": "Number of instances",
+          "name": "instanceCount",
+          "description": "Total number of instances in the cluster. One of them will be a master instance.",
+          "widget-attributes": {
+            "default": 3,
+            "min": 2,
+            "size": "small"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Master instance type",
+          "name": "masterInstanceType",
+          "description": "",
+          "widget-attributes": {
+            "values": [
+              "m3.xlarge",
+
+              "m3.2xlarge",
+              "m4.large",
+              "m4.xlarge",
+              "m4.2xlarge",
+              "m4.4xlarge",
+              "m4.10xlarge",
+              "m4.16xlarge",
+
+              "m5.xlarge",
+              "m5.2xlarge",
+              "m5.4xlarge",
+              "m5.12xlarge",
+              "m5.24xlarge",
+
+              "c3.xlarge",
+              "c3.2xlarge",
+              "c3.4xlarge",
+              "c3.8xlarge",
+
+              "c4.large",
+              "c4.xlarge",
+              "c4.2xlarge",
+              "c4.4xlarge",
+              "c4.8xlarge",
+
+              "c5.xlarge",
+              "c5.2xlarge",
+              "c5.4xlarge",
+              "c5.9xlarge",
+              "c5.18xlarge"
+            ],
+            "size": "medium",
+            "default": "m4.large"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Worker instance type",
+          "name": "workerInstanceType",
+          "description": "",
+          "widget-attributes": {
+            "values": [
+              "m3.xlarge",
+
+              "m3.2xlarge",
+              "m4.large",
+              "m4.xlarge",
+              "m4.2xlarge",
+              "m4.4xlarge",
+              "m4.10xlarge",
+              "m4.16xlarge",
+
+              "m5.xlarge",
+              "m5.2xlarge",
+              "m5.4xlarge",
+              "m5.12xlarge",
+              "m5.24xlarge",
+
+              "c3.xlarge",
+              "c3.2xlarge",
+              "c3.4xlarge",
+              "c3.8xlarge",
+
+              "c4.large",
+              "c4.xlarge",
+              "c4.2xlarge",
+              "c4.4xlarge",
+              "c4.8xlarge",
+
+              "c5.xlarge",
+              "c5.2xlarge",
+              "c5.4xlarge",
+              "c5.9xlarge",
+              "c5.18xlarge"
+            ],
+            "size": "medium",
+            "default": "m4.large"
+          }
+        }
+      ]
+    }
+  ]
+}

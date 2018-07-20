@@ -47,6 +47,7 @@ import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.common.http.HttpRequestConfig;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -233,7 +234,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     SSHKeyPair sshKeyPair = createSSHKeyPair(keysDir, cluster);
 
     // Creates and return the twill preparer
-    String remoteHost = masterNode.getProperties().get("ip.external");
+    String remoteHost = Preconditions.checkNotNull(masterNode.getProperties().get("ip.external"));
 
     Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
                                                                        programOptions.getArguments().asMap());
