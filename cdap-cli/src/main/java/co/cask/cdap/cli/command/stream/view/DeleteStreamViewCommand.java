@@ -56,6 +56,7 @@ public class DeleteStreamViewCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes a stream-%s", ElementType.VIEW.getName());
+    return String.format("Deletes a stream-%s. Streams are deprecated as of release 5.0," +
+                         " use Kafka as a replacement technology", ElementType.VIEW.getName());
   }
 }

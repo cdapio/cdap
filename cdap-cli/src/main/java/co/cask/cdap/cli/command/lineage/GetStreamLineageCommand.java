@@ -76,6 +76,7 @@ public class GetStreamLineageCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the lineage of a stream";
+    return "Gets the lineage of a stream." +
+           " Streams are deprecated as of release 5.0, use Kafka as a replacement technology";
   }
 }

@@ -74,7 +74,8 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Describes %s",
+    return String.format("Describes %s. Streams are deprecated as of release 5.0," +
+                         " use Kafka as a replacement technology",
                          Fragment.of(Article.A, ElementType.STREAM.getName()));
   }
 }
