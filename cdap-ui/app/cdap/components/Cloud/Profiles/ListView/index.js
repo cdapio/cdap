@@ -33,8 +33,7 @@ import {
   getDefaultProfile,
   setDefaultProfile,
   extractProfileName,
-  getProfileNameWithScope,
-  resetProfiles
+  getProfileNameWithScope
 } from 'components/Cloud/Profiles/Store/ActionCreator';
 import {connect, Provider} from 'react-redux';
 import Alert from 'components/Alert';
@@ -130,10 +129,6 @@ class ProfilesListView extends Component {
     getProfiles(this.props.namespace);
     getDefaultProfile(this.props.namespace);
     this.getProvisioners();
-  }
-
-  componentWillUnmount() {
-    resetProfiles();
   }
 
   componentWillReceiveProps(nextProps) {
