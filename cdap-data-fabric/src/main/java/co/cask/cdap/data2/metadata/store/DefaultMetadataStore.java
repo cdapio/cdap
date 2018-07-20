@@ -123,12 +123,12 @@ public class DefaultMetadataStore implements MetadataStore {
   @VisibleForTesting
   void deleteAndRecreate() throws Exception {
     try {
-      dsFramework.deleteInstance(BUSINESS_METADATA_INSTANCE_ID);
+      dsFramework.deleteInstance(V2_BUSINESS_METADATA_INSTANCE_ID);
     } catch (InstanceNotFoundException e) {
       // it's ok if it doesn't exist, we wanted to delete it anyway
     }
     try {
-      dsFramework.deleteInstance(SYSTEM_METADATA_INSTANCE_ID);
+      dsFramework.deleteInstance(V2_SYSTEM_METADATA_INSTANCE_ID);
     } catch (InstanceNotFoundException e) {
       // it's ok if it doesn't exist, we wanted to delete it anyway
     }
