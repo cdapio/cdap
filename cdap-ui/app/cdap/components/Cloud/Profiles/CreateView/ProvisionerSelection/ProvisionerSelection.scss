@@ -16,8 +16,8 @@
 
 @import "../../../../../styles/variables.scss";
 
-$box-width: 410px;
-$box-height: 300px;
+$box-width: 300px;
+$box-height: 250px;
 $icon-size: 93px;
 
 .profile-create-provisioner-selection {
@@ -56,11 +56,13 @@ $icon-size: 93px;
         }
 
         .provisioner-content {
-          text-align: center;
+          text-align: left;
 
           .provisioner-icon {
+            .icon-svg,
             > img {
               height: $icon-size;
+              width: $icon-size;
               border: 0;
             }
           }
