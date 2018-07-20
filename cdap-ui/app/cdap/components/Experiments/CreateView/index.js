@@ -119,7 +119,7 @@ export default class ExperimentCreateView extends Component {
       if (isModelTrained) {
         newState = {...newState, redirectToExperimentDetail: true};
       }
-      if (experimentError) {
+      if (this.state.experimentError !== experimentError) {
         newState = {...newState, experimentError};
       }
       if (Object.keys(newState).length > 0) {
