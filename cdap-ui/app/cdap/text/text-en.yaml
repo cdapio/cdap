@@ -1593,7 +1593,7 @@ features:
       namespace: Namespace
       noData: No data
       noRuns: No runs in the selected time bucket
-      start: Started
+      start: Start time
       startMethod: Start method
       status: Status
       timeRange: "{date} from {hour}:00 to {hour}:59 {ampm}"
