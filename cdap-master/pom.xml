@@ -272,6 +272,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-runtime-ext-remote-hadoop</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
@@ -526,7 +532,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.providers.ext.dir}/gce-dataproc</outputDirectory>
+                  <outputDirectory>${stage.runtime.providers.ext.dir}/gcp-dataproc</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -541,7 +547,35 @@
                         ${project.parent.basedir}/cdap-runtime-ext-dataproc/src/main/resources
                       </directory>
                       <includes>
-                        <include>gce-dataproc.json</include>
+                        <include>gcp-dataproc.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-runtime-ext-remote-hadoop</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.runtime.providers.ext.dir}/remote-hadoop</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-runtime-ext-remote-hadoop/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-runtime-ext-remote-hadoop/src/main/resources
+                      </directory>
+                      <includes>
+                        <include>remote-hadoop.json</include>
                       </includes>
                     </resource>
                   </resources>

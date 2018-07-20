@@ -16,6 +16,7 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
+import co.cask.cdap.runtime.spi.Constants;
 import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
