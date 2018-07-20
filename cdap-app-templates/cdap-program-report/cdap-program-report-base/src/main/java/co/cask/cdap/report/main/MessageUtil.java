@@ -29,6 +29,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +99,7 @@ public final class MessageUtil {
    * @param message TMS message
    * @return {@link ProgramRunInfo}
    */
-  public static ProgramRunInfo constructAndGetProgramRunInfo(Message message) {
+  public static ProgramRunInfo constructAndGetProgramRunInfo(Message message) throws IOException {
     Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
     ProgramRunInfo programRunInfo =
       GSON.fromJson(notification.getProperties().get(Constants.Notification.PROGRAM_RUN_ID), ProgramRunInfo.class);
@@ -123,6 +124,9 @@ public final class MessageUtil {
           GSON.fromJson(notification.getProperties().get(Constants.Notification.USER_OVERRIDES), MAP_TYPE);
 
         String principal = systemArguments.get(Constants.Notification.PRINCIPAL);
+        if (principal != null) {
+          principal = new KerberosName(principal).getShortName();
+        }
         ProgramStartInfo programStartInfo = new ProgramStartInfo(userArguments, artifactId, principal);
         programRunInfo.setStartInfo(programStartInfo);
         break;

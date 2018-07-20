@@ -45,9 +45,11 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -106,9 +108,10 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     Collection<RunRecordMeta> runRecordMetas =
       programHeartbeatService.scan(startTimeSecs, endTimeSecs + 1, namespaces);
 
-    List<DashboardProgramRunRecord> result =
-      runRecordMetas.stream()
-        .map(OperationsDashboardHttpHandler::runRecordToDashboardRecord).collect(Collectors.toList());
+    List<DashboardProgramRunRecord> result = new ArrayList<>();
+    for (RunRecordMeta runRecordMeta : runRecordMetas) {
+      result.add(OperationsDashboardHttpHandler.runRecordToDashboardRecord(runRecordMeta));
+    }
 
     Set<NamespaceId> namespaceIds = namespaces.stream().map(NamespaceId::new).collect(Collectors.toSet());
     // if the end time is in the future, also add scheduled program runs to the result
@@ -199,7 +202,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
    * Converts a {@link RunRecordMeta} to a {@link DashboardProgramRunRecord}
    */
   @VisibleForTesting
-  static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordMeta meta) {
+  static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordMeta meta) throws IOException {
     ProgramRunId runId = meta.getProgramRunId();
     String startMethod = MANUAL;
     String scheduleInfoJson = meta.getSystemArgs().get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO);
@@ -212,6 +215,11 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
         // return "manual" if there's no trigger in the schedule info, but this should never happen
         .orElse(MANUAL);
     }
-    return new DashboardProgramRunRecord(runId, meta, meta.getArtifactId(), meta.getPrincipal(), startMethod);
+    String user = meta.getPrincipal();
+    if (user != null) {
+      user = new KerberosName(user).getShortName();
+    }
+    return new DashboardProgramRunRecord(runId, meta, meta.getArtifactId(),
+                                        user, startMethod);
   }
 }
