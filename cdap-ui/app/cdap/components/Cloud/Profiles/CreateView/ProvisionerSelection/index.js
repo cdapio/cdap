@@ -25,6 +25,8 @@ import ProvisionerInfoStore from 'components/Cloud/Store';
 import {fetchProvisioners} from 'components/Cloud/Store/ActionCreator';
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import EntityTopPanel from 'components/EntityTopPanel';
+import ExperimentalBanner from 'components/ExperimentalBanner';
+import IconSVG from 'components/IconSVG';
 
 require('./ProvisionerSelection.scss');
 
@@ -57,19 +59,43 @@ class ProfileCreateProvisionerSelection extends Component {
 
   renderProvisionerBox(provisioner) {
     let namespace = this.props.match.params.namespace;
+    let provisionerName = provisioner.label || provisioner.name;
+    let src, icon;
+    if (objectQuery(provisioner, 'icon', 'type')) {
+      let iconType = provisioner.icon.type;
+      if (iconType === 'inline') {
+        src = objectQuery(provisioner, 'icon', 'arguments', 'data');
+      } else if (iconType === 'link') {
+        src = objectQuery(provisioner, 'icon', 'arguments', 'url');
+      }
+    }
+    if (!src) {
+      icon = `icon-${provisionerName[0].toUpperCase()}`;
+    }
 
     return (
       <Link
         to={`/ns/${namespace}/profiles/create/${provisioner.name}`}
         className="provisioner-box"
       >
+        {
+          provisioner.beta ?
+            <ExperimentalBanner />
+          :
+            null
+        }
         <div className="provisioner-content">
           <div className="provisioner-icon">
-            {/* TODO: Fetch image from backend when it's available */}
-            <img src="/cdap_assets/img/GCDataProc.png" />
+            {
+              src ?
+                <img src={src} />
+              :
+                <IconSVG name={icon} />
+            }
+
           </div>
           <div className="provisioner-label">
-            {provisioner.label || provisioner.name}
+            {provisionerName}
           </div>
           <div className="provisioner-description">
             {provisioner.description}
@@ -89,13 +115,20 @@ class ProfileCreateProvisionerSelection extends Component {
       pathname: '/administration/configuration',
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
     } : `/ns/${getCurrentNamespace()}/details`;
+    let createLabel;
+    if (this.state.isSystem) {
+      createLabel = 'Create a compute profile for all namespaces';
+    } else {
+      createLabel = `Create a compute profile for '${getCurrentNamespace()}'`;
+    }
+
 
     return (
       <div className="profile-create-provisioner-selection">
         <EntityTopPanel
           breadCrumbAnchorLink={breadCrumbAnchorLink}
           breadCrumbAnchorLabel={breadCrumbLabel}
-          title="Create a compute profile"
+          title={createLabel}
           closeBtnAnchorLink={linkObj}
         />
         <div className="provisioner-selection-container">
@@ -108,7 +141,7 @@ class ProfileCreateProvisionerSelection extends Component {
                 <LoadingSVGCentered />
               :
                 Object.values(this.props.provisionerJsonSpecMap)
-                  .filter(provisioner => provisioner.name !== 'yarn')
+                  .filter(provisioner => provisioner.name !== 'native')
                   .map(provisioner => {
                     return this.renderProvisionerBox(provisioner);
                   })
