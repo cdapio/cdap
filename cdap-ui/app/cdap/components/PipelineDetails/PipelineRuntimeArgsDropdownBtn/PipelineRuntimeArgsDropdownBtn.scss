@@ -18,15 +18,16 @@
 
 .arrow-btn-container {
   height: 100%;
+  border-radius: 0;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  border-left: 1px solid $grey-05;
   .pipeline-run-btn {
     padding: 0;
     &.btn-popover-open {
       background: $grey-06;
     }
   }
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-right: 1px solid $grey-05;
   &:hover {
     background: $grey-07;
   }

@@ -126,8 +126,8 @@ export default class PipelineRunButton extends Component {
     return (
       <div className="pipeline-action-container pipeline-run-container">
         {this.renderRunError()}
-        {this.renderRunDropdownBtn()}
         {this.renderPipelineRunButton()}
+        {this.renderRunDropdownBtn()}
       </div>
     );
   }
