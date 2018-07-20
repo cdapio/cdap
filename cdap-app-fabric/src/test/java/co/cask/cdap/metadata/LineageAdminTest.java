@@ -33,6 +33,7 @@ import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
@@ -40,6 +41,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
@@ -751,6 +753,12 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private void setStartAndRunning(Store store, ProgramId id, String pid, Map<String, String> runtimeArgs,
                                   Map<String, String> systemArgs, ArtifactId artifactId) {
+    if (!systemArgs.containsKey(SystemArguments.PROFILE_NAME)) {
+      systemArgs = ImmutableMap.<String, String>builder()
+        .putAll(systemArgs)
+        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName())
+        .build();
+    }
     long startTime = RunIds.getTime(pid, TimeUnit.SECONDS);
     store.setProvisioning(id.run(pid), runtimeArgs, systemArgs,
                           AppFabricTestHelper.createSourceId(++sourceId), artifactId);
@@ -779,6 +787,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NAME, workflowName);
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "workflowNodeId");
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
+    workflowIDMap.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     for (ProgramRunId run : runs) {
       ArtifactId artifactId = run.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
       store.setProvisioning(run, emptyMap, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId), artifactId);

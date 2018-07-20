@@ -129,6 +129,7 @@ public class ProgramNotificationSubscriberServiceTest {
     ProgramId programId = NamespaceId.DEFAULT.app("someapp").program(ProgramType.SERVICE, "s");
     Map<String, String> systemArguments = new HashMap<>();
     systemArguments.put(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString());
+    systemArguments.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
                                                              new BasicArguments());
     ProgramRunId runId = programId.run(RunIds.generate());
@@ -203,6 +204,7 @@ public class ProgramNotificationSubscriberServiceTest {
     ProgramId programId = NamespaceId.DEFAULT.app("someapp", "1.0-SNAPSHOT").program(ProgramType.SERVICE, "s");
     Map<String, String> systemArguments = new HashMap<>();
     systemArguments.put(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString());
+    systemArguments.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
                                                              new BasicArguments());
     ProgramRunId runId = programId.run(RunIds.generate());

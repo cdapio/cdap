@@ -21,6 +21,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.SimpleJob;
@@ -29,6 +30,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableList;
@@ -37,6 +39,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -55,13 +58,19 @@ public class ConcurrencyConstraintTest {
   private int sourceId;
   
   private void setStartAndRunning(Store store, ProgramRunId id) {
-    setStartAndRunning(store, id, ImmutableMap.of(), ImmutableMap.of());
+    setStartAndRunning(store, id, EMPTY_MAP, EMPTY_MAP);
 
   }
 
   private void setStartAndRunning(Store store, ProgramRunId id,
                                   Map<String, String> runtimeArgs,
                                   Map<String, String> systemArgs) {
+    if (!systemArgs.containsKey(SystemArguments.PROFILE_NAME)) {
+      systemArgs = ImmutableMap.<String, String>builder()
+        .putAll(systemArgs)
+        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName())
+        .build();
+    }
     long startTime = RunIds.getTime(id.getRun(), TimeUnit.SECONDS);
     store.setProvisioning(id, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId), ARTIFACT_ID);
     store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
