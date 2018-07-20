@@ -29,13 +29,4 @@ public interface MetadataMessageProcessor {
    */
   void processMessage(MetadataMessage message);
 
-  /**
-   * Determine if processing this message takes a long time
-   *
-   * @param message the message to be processed
-   * @return a boolean variable which indicates if the processing time is long
-   */
-  default boolean isTimeConsumingMessage(MetadataMessage message) {
-    return false;
-  }
 }

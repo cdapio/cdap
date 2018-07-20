@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.TxConstants;
 
 /**
  * Abstract class that fetches notifications from TMS
@@ -55,7 +56,9 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
                                                   MessagingService messagingService,
                                                   DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                                   MetricsCollectionService metricsCollectionService) {
-    super(NamespaceId.SYSTEM.topic(topicName), transactionalFetch, fetchSize, emptyFetchDelayMillis,
+    super(NamespaceId.SYSTEM.topic(topicName), transactionalFetch, fetchSize,
+          cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
+          emptyFetchDelayMillis,
           RetryStrategies.fromConfiguration(cConf, "system.notification."),
           metricsCollectionService.getContext(ImmutableMap.of(
             Constants.Metrics.Tag.COMPONENT, Constants.Service.MASTER_SERVICES,
