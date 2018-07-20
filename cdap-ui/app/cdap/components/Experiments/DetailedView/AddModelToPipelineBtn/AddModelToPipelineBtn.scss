@@ -19,6 +19,9 @@
     .btn.btn-primary {
       color: white;
       cursor: not-allowed;
+      &:focus {
+        outline: none;
+      }
     }
   }
   .btn.btn-primary {

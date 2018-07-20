@@ -27,6 +27,7 @@ import { connect } from 'react-redux';
 import uuidV4 from 'uuid/v4';
 import {myExperimentsApi} from 'api/experiments';
 import {createWorkspace, applyDirectives} from 'components/Experiments/store/CreateExperimentActionCreator';
+import classnames from 'classnames';
 require('./AddModelToPipelineBtn.scss');
 
 const MMDS_PLUGINS_ARTIFACT_NAME = 'mmds-plugins';
@@ -39,11 +40,16 @@ class AddModelToPipelineBtn extends Component {
     modelName: PropTypes.string,
     srcPath: PropTypes.string,
     directives: PropTypes.arrayOf(PropTypes.string),
-    splitId: PropTypes.string
+    splitId: PropTypes.string,
+    disabled: PropTypes.bool
+  };
+
+  static defaultProps = {
+    disabled: false
   };
 
   state = {
-    disabled: true,
+    disabled: this.props.disabled,
     error: null,
     mmdsPluginsArtifact: null,
     datapipelineArtifact: null,
@@ -79,10 +85,6 @@ class AddModelToPipelineBtn extends Component {
             workspaceId
           });
           applyDirectives(workspaceId, directives).subscribe();
-        }, () => {
-          this.setState({
-            disabled: true
-          });
         });
   };
 
@@ -138,7 +140,7 @@ class AddModelToPipelineBtn extends Component {
               wranglerArtifact,
               corepluginsArtifact,
               schema,
-              disabled: false
+              disabled: this.props.disabled || false
             });
           }
         },
@@ -179,10 +181,13 @@ class AddModelToPipelineBtn extends Component {
   }
 
   render() {
+    const AnchorTag = this.state.disabled ? 'button' : 'a';
     return (
       <fielset className="add-model-to-pipeline" disabled={this.state.disabled}>
-        <a
-          className="btn btn-primary btn-sm"
+        <AnchorTag
+          className={classnames("btn btn-primary btn-sm", {
+            'disabled': this.state.disabled
+          })}
           onClick={this.generatePipelineConfig}
           href={this.state.disabled ? null : this.batchPipelineUrl}
         >
@@ -198,7 +203,7 @@ class AddModelToPipelineBtn extends Component {
             :
               null
           }
-        </a>
+        </AnchorTag>
       </fielset>
     );
   }

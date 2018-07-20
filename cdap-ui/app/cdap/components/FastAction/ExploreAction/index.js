@@ -40,7 +40,8 @@ export default class ExploreAction extends Component {
     opened: PropTypes.bool,
     renderActionButton: PropTypes.func,
     argsToAction: PropTypes.object,
-    customTooltip: PropTypes.string
+    customTooltip: PropTypes.string,
+    onClose: PropTypes.func
   };
   constructor(props) {
     super(props);
@@ -65,6 +66,10 @@ export default class ExploreAction extends Component {
       showModal: !this.state.showModal,
       showRunningQueriesDoneLabel,
       runningQueries: !showRunningQueriesDoneLabel ? null : runningQueries,
+    }, () => {
+      if (typeof this.props.onClose === 'function') {
+        this.props.onClose();
+      }
     });
   }
   toggleTooltip() {
