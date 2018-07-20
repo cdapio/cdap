@@ -87,7 +87,7 @@ class PipelineAvailablePluginsActions {
         pluginInfo: stage.plugin
       };
 
-      pluginsList.push(pluginInfo.info);
+      pluginsList.push(pluginInfo);
     });
 
     this._fetchInfo(availablePluginsMap, namespace, pluginsList);
@@ -145,15 +145,17 @@ class PipelineAvailablePluginsActions {
   }
 
   _fetchInfo(availablePluginsMap, namespace, plugins) {
-    this.api.fetchAllPluginsProperties({ namespace }, plugins)
+    const reqBody = plugins.map((plugin) => plugin.info);
+
+    this.api.fetchAllPluginsProperties({ namespace }, reqBody)
       .$promise
       .then((res) => {
-        res.forEach((plugin) => {
+        res.forEach((plugin, index) => {
           let pluginProperties = Object.keys(plugin.properties);
           if (pluginProperties.length === 0) { return; }
 
           let pluginKey = pluginProperties[0].split('.')[1];
-          let key = `${pluginKey}-${plugin.name}-${plugin.version}-${plugin.scope}`;
+          let key = plugins[index].key;
 
           availablePluginsMap[key].doc = plugin.properties[`doc.${pluginKey}`];
 
@@ -209,7 +211,7 @@ class PipelineAvailablePluginsActions {
           pluginInfo: plugin
         };
 
-        plugins.push(pluginInfo.info);
+        plugins.push(pluginInfo);
       });
     });
 
