@@ -1205,6 +1205,7 @@ features:
       selectMLAlgorithm: Select a machine learning algorithm
       selectOutcome: Select an outcome
       setOutcome: Set outcome for this experiment
+      resplitAndVerify : Resplit data
       splitAndVerify: Split data and verify sample
       splitData: Split data
       SplitInfo:
