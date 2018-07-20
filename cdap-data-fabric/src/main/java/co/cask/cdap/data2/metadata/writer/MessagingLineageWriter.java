@@ -47,7 +47,7 @@ import javax.inject.Inject;
  */
 public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingLineageWriter.class);
-  private static final Gson GSON = new GsonBuilder()
+  private static final Gson GSON = new GsonBuilder().enableComplexMapKeySerialization()
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
 
