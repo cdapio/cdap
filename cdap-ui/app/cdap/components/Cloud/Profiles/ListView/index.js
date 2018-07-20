@@ -65,10 +65,6 @@ const PROFILES_TABLE_HEADERS = [
     label: T.translate('commons.scope')
   },
   {
-    property: 'pipelines',
-    label: T.translate('commons.pipelines')
-  },
-  {
     property: 'last24HrRuns',
     label: T.translate(`${PREFIX}.common.last24HrRuns`)
   },
@@ -270,7 +266,6 @@ class ProfilesListView extends Component {
           <div />
           <div />
           <div />
-          <div />
           <div className="sub-title">
             {T.translate(`${PREFIX}.ListView.pipelineUsage`)}
           </div>
@@ -371,7 +366,6 @@ class ProfilesListView extends Component {
         </div>
         <div>{profile.provisioner.label}</div>
         <div>{profile.scope}</div>
-        <div />
         <div>{profile.oneDayMetrics.runs}</div>
         <div>{profile.oneDayMetrics.minutes}</div>
         <div>{profile.overAllMetrics.minutes}</div>
