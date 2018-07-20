@@ -157,7 +157,6 @@ export default class ProductDropdown extends Component {
             >
               <a>{T.translate('features.Navbar.ProductDropdown.aboutLabel')}</a>
             </DropdownItem>
-            <DropdownItem divider />
             <DropdownItem tag="li">
               {
                 !this.props.nativeLink ?
@@ -175,7 +174,6 @@ export default class ProductDropdown extends Component {
                   </a>
               }
             </DropdownItem>
-            <DropdownItem divider />
             <DropdownItem tag="li">
               <a
                 href={docsUrl}

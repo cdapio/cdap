@@ -1270,6 +1270,8 @@ features:
       enableBtnLabel: Enable MMDS
       errorTitle: Enabling MMDS failed
       errorMessage: Please check logs for more information
+      environmentCheckMessage: Checking for environment before enabling Analytics
+      serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use Analytics
       title: Welcome to Model Management and Distribution Service
 
   FieldLevelLineage:
@@ -2108,6 +2110,8 @@ features:
         b6: Use-case based customization of report contents (columns).
       description: "Reports help users generate historical analysis of programs and pipelines running in their data infrastructure. The primary goal of these reports is to help decision makers and administrators make informed business decisions about resource utilization, capacity planning, and onboarding new processes."
       enable: Enable Reports
+      environmentCheckMessage: Checking for environment before enabling Reports
+      serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use Reports
       title: Welcome to Reports
       unableToStart: Unable to start Reports service
 

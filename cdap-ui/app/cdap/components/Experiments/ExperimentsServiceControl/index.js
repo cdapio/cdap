@@ -21,7 +21,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
 import {myExperimentsApi} from 'api/experiments';
-
+import {isSpark2Available} from 'services/CDAPComponentsVersions';
 require('./ExperimentsServiceControl.scss');
 
 const PREFIX = 'features.Experiments.ServiceControl';
@@ -32,8 +32,20 @@ export default class ExperimentsServiceControl extends Component {
     onServiceStart: PropTypes.func
   };
 
+  componentDidMount() {
+    isSpark2Available()
+      .subscribe(
+        isAvailable => this.setState({
+          checkingForSpark2: false,
+          disabled: !isAvailable
+        })
+      );
+  }
+
   state = {
     loading: false,
+    disabled: false,
+    checkingForSpark2: true,
     error: null
   };
 
@@ -58,6 +70,27 @@ export default class ExperimentsServiceControl extends Component {
   };
 
   renderEnableBtn = () => {
+    if (this.state.checkingForSpark2) {
+      return (
+        <div className="action-container service-disabled">
+          <IconSVG name="icon-spinner" className="fa-spin" />
+          <div className="text-primary">
+            {T.translate(`${PREFIX}.environmentCheckMessage`)}
+          </div>
+        </div>
+      );
+    }
+
+    if (this.state.disabled) {
+      return (
+        <div className="action-container service-disabled">
+          <IconSVG name="icon-exclamation-triangle" className="text-danger" />
+          <div className="text-danger">
+            {T.translate(`${PREFIX}.serviceDisabledMessage`)}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="action-container">
         <button
