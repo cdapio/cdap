@@ -130,9 +130,11 @@ object ReportGenerationHelper {
     // Writing the DataFrame to JSON files requires a non-existing directory to write report files.
     // Create a non-existing directory location with name ReportSparkHandler.REPORT_DIR
     val reportDir = reportIdDir.append(Constants.LocationName.REPORT_DIR).toURI.toString
-    // TODO: [CDAP-13290] output reports as avro instead of json text files
     // TODO: [CDAP-13291] improve how the number of partitions is configured
-    resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(reportDir)
+    // by default spart sql uses snappy compression codec, set it to uncompressed
+    sql.setConf("spark.sql.avro.compression.codec", "uncompressed")
+    resultDf.coalesce(1).write.option("timestampFormat",
+      "yyyy/MM/dd HH:mm:ss ZZ").format("com.databricks.spark.avro").save(reportDir)
     val count = resultDf.count
     // Create a _COUNT file and write the total number of report records in it
     writeToFile(count.toString, Constants.LocationName.COUNT_FILE, reportIdDir)
