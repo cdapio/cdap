@@ -36,6 +36,7 @@ import co.cask.cdap.common.utils.TimeBoundIterator;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.collect.AbstractIterator;
+import org.apache.tephra.TransactionNotInProgressException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +65,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
   private final long emptyFetchDelayMillis;
   private final MetricsContext metricsContext;
   private final int txTimeoutSeconds;
+  private final int maxTxTimeoutSeconds;
   private boolean messageIdInitialized;
   private String messageId;
 
@@ -74,18 +76,22 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
    * @param transactionalFetch {@code true} to indicate fetching from TMS needs to be performed inside transaction
    * @param fetchSize number of messages to fetch in each batch
    * @param txTimeoutSeconds transaction timeout in seconds to use when processing messages
+   * @param maxTxTimeoutSeconds max transaction timeout in seconds to use, any tx timeout larger than this number
+   *                           is not allowed
    * @param emptyFetchDelayMillis number of milliseconds to sleep after a fetch returns empty result
    * @param retryStrategy the {@link RetryStrategy} to determine retry on failure
    * @param metricsContext the {@link MetricsContext} for emitting metrics about the message consumption.
    */
   protected AbstractMessagingSubscriberService(TopicId topicId, boolean transactionalFetch, int fetchSize,
-                                               int txTimeoutSeconds, long emptyFetchDelayMillis,
+                                               int txTimeoutSeconds, int maxTxTimeoutSeconds,
+                                               long emptyFetchDelayMillis,
                                                RetryStrategy retryStrategy, MetricsContext metricsContext) {
     super(retryStrategy);
     this.topicId = topicId;
     this.transactionalFetch = transactionalFetch;
     this.fetchSize = fetchSize;
     this.txTimeoutSeconds = txTimeoutSeconds;
+    this.maxTxTimeoutSeconds = maxTxTimeoutSeconds;
     this.emptyFetchDelayMillis = emptyFetchDelayMillis;
     this.metricsContext = metricsContext;
   }
@@ -227,21 +233,40 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
 
     startTime = System.currentTimeMillis();
 
-    // Process the notifications and record the message id of where the processing is up to.
-    // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
-    long timeBoundMillis = 900L * txTimeoutSeconds;
-    MessageTrackingIterator iterator = Transactionals.execute(getTransactional(), context -> {
-      TimeBoundIterator<Message> timeBoundMessages = new TimeBoundIterator<>(messages.iterator(), timeBoundMillis);
-      MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
-      processMessages(context, trackingIterator);
-      String lastMessageId = trackingIterator.getLastMessageId();
+    MessageTrackingIterator iterator;
+    int curTxTimeout = txTimeoutSeconds;
+    while (true) {
+      try {
+        // Process the notifications and record the message id of where the processing is up to.
+        // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
+        long timeBoundMillis = 900L * curTxTimeout;
+        iterator = Transactionals.execute(getTransactional(), curTxTimeout, context -> {
+          TimeBoundIterator<Message> timeBoundMessages = new TimeBoundIterator<>(messages.iterator(), timeBoundMillis);
+          MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
+          processMessages(context, trackingIterator);
+          String lastMessageId = trackingIterator.getLastMessageId();
 
-      // Persist the message id of the last message being consumed from the iterator
-      if (lastMessageId != null) {
-        storeMessageId(context, lastMessageId);
+          // Persist the message id of the last message being consumed from the iterator
+          if (lastMessageId != null) {
+            storeMessageId(context, lastMessageId);
+          }
+          return trackingIterator;
+        });
+        break;
+      } catch (Exception e) {
+        // we double the tx timeout if we see a tx timeout, stop doubling if it exceeds our max tx timeout
+        if (e.getCause() instanceof TransactionNotInProgressException) {
+          if (curTxTimeout >= maxTxTimeoutSeconds) {
+            throw e;
+          }
+          curTxTimeout = Math.min(maxTxTimeoutSeconds, 2 * curTxTimeout);
+          LOG.warn("Timed out processing system message. Trying again with a larger timeout of {} seconds.",
+                   curTxTimeout);
+          continue;
+        }
+        throw e;
       }
-      return trackingIterator;
-    });
+    }
     messageId = iterator.getLastMessageId() == null ? messageId : iterator.getLastMessageId();
 
     long endTime = System.currentTimeMillis();

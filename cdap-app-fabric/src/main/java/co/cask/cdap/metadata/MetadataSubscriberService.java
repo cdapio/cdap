@@ -106,6 +106,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
       true, cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
       cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
+      cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT),
       cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
       RetryStrategies.fromConfiguration(cConf, "system.metadata."),
       metricsCollectionService.getContext(ImmutableMap.of(
