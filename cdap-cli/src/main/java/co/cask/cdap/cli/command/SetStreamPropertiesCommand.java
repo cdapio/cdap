@@ -78,6 +78,7 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Sets the properties of a stream, such as the time-to-live (TTL), format, and notification threshold";
+    return "Sets the properties of a stream, such as the time-to-live (TTL), format, and notification threshold." +
+           " Streams are deprecated as of release 5.0, use Kafka as a replacement technology";
   }
 }

@@ -67,6 +67,7 @@ public class ListStreamViewsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all stream-%s", ElementType.VIEW.getNamePlural());
+    return String.format("Lists all stream-%s. Streams are deprecated as of release 5.0, " +
+                         "use Kafka as a replacement technology", ElementType.VIEW.getNamePlural());
   }
 }

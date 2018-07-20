@@ -86,7 +86,14 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets the preferences of %s from a local JSON config file",
-                         Fragment.of(Article.A, type.getName()));
+    switch (type) {
+      case FLOW:
+        return String.format("Sets the preferences of %s from a local JSON config file. " +
+                             "Flows are deprecated as of release 5.0, use SparkStreaming as a replacement technology.",
+                             Fragment.of(Article.A, type.getName()));
+      default:
+        return String.format("Sets the preferences of %s from a local JSON config file",
+            Fragment.of(Article.A, type.getName()));
+    }
   }
 }

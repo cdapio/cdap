@@ -103,6 +103,13 @@ public class DeletePreferencesCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes the preferences of %s", Fragment.of(Article.A, type.getName()));
+    switch (type) {
+      case FLOW:
+        return String.format("Deletes the preferences of %s. Flows are deprecated as of release 5.0," +
+                             " use SparkStreaming as a replacement technology.",
+                             Fragment.of(Article.A, type.getName()));
+      default:
+        return String.format("Deletes the preferences of %s", Fragment.of(Article.A, type.getName()));
+    }
   }
 }

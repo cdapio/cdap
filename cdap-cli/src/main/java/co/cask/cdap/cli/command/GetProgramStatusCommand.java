@@ -63,6 +63,13 @@ public class GetProgramStatusCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the status of %s", Fragment.of(Article.A, elementType.getName()));
+    switch (elementType) {
+      case FLOW:
+        return String.format("Gets the status of %s. Flows are deprecated as of release 5.0," +
+                             " use SparkStreaming as a replacement technology.",
+                             Fragment.of(Article.A, elementType.getName()));
+      default:
+        return String.format("Gets the status of %s", Fragment.of(Article.A, elementType.getName()));
+    }
   }
 }

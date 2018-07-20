@@ -65,7 +65,14 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets the runtime arguments of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'.",
-      Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
+    switch (elementType) {
+      case FLOW:
+        return String.format("Sets the runtime arguments of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'. " +
+                             "Flows are deprecated as of release 5.0, use SparkStreaming as a replacement technology.",
+                             Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
+      default:
+        return String.format("Sets the runtime arguments of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'.",
+            Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
+    }
   }
 }
