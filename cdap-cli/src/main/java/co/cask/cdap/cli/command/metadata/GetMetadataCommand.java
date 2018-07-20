@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
@@ -23,18 +24,16 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.common.cli.Arguments;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
 
 /**
  * Gets the metadata of an entity.
@@ -51,28 +50,47 @@ public class GetMetadataCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    MetadataEntity metadataEntity =
+      MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
-    Set<MetadataRecord> metadata = scope == null ? client.getMetadata(entity) :
-      client.getMetadata(entity, MetadataScope.valueOf(scope.toUpperCase()));
+    Table table;
+    try {
+      // for backward compatibility if the user is trying to retrieve the metadata for EntityIds return the output
+      // in old format i.e. MetadataRecord the EntityiId.fromMetadataEntity will fail with an IllegalArgumentException
+      // if the metadataEntity is not a cdap entity
+      EntityId entityId = EntityId.fromMetadataEntity(metadataEntity);
+      Set<MetadataRecord> metadata = scope == null ? client.getMetadata(entityId) :
+        client.getMetadata(entityId, MetadataScope.valueOf(scope.toUpperCase()));
 
-    Table table = Table.builder()
-      .setHeader("entity", "tags", "properties", "scope")
-      .setRows(
-        Iterables.transform(metadata, new Function<MetadataRecord, List<String>>() {
-          @Nullable
-          @Override
-          public List<String> apply(MetadataRecord record) {
-            return Lists.newArrayList(
-              record.toString(),
-              Joiner.on("\n").join(record.getTags()),
-              Joiner.on("\n").withKeyValueSeparator(":").join(record.getProperties()),
-              record.getScope().name());
-          }
-        })
-      ).build();
+      table = getTableBuilder()
+        .setRows(
+          metadata.stream().map(record -> Lists.newArrayList(
+            record.toString(),
+            Joiner.on("\n").join(record.getTags()),
+            Joiner.on("\n").withKeyValueSeparator(":").join(record.getProperties()),
+            record.getScope().name())).collect(Collectors.toList())
+        ).build();
+    } catch (IllegalArgumentException e) {
+      // the get metadata was called for some custom entity so it is okay to return in new format as we don't care
+      // about backward compatibility for calls for custom entity
+      Set<MetadataRecordV2> metadata = scope == null ? client.getMetadata(metadataEntity) :
+        client.getMetadata(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
 
+      table = getTableBuilder()
+        .setRows(
+          metadata.stream().map(record -> Lists.newArrayList(
+            record.toString(),
+            Joiner.on("\n").join(record.getTags()),
+            Joiner.on("\n").withKeyValueSeparator(":").join(record.getProperties()),
+            record.getScope().name())).collect(Collectors.toList())
+        ).build();
+    }
     cliConfig.getTableRenderer().render(cliConfig, output, table);
+  }
+
+  private Table.Builder getTableBuilder() {
+    return Table.builder()
+      .setHeader("entity", "tags", "properties", "scope");
   }
 
   @Override
