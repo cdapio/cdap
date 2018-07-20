@@ -228,6 +228,11 @@ object ReportGenerationHelper {
       new NamespaceAggregate(r.getAs[String](Constants.NAMESPACE), r.getAs[Long](COUNT_COL)))
     // group the report details by artifact information including artifact name, version and scope,
     // and then collect the count and the corresponding unique artifact information
+    if (namespaces.isEmpty) {
+      // if no records are found matching the request,
+      // we still need to add the namespace aggregates with namespaces from the request and 0 records total.
+      namespaces.addAll(getNamespaceAggregates(request));
+    }
     val artifacts = ArrayBuffer[ArtifactAggregate]()
     df.groupBy(Constants.ARTIFACT_NAME, Constants.ARTIFACT_VERSION, Constants.ARTIFACT_SCOPE).count.collect
       .foreach(r => artifacts += new ArtifactAggregate(r.getAs[String](Constants.ARTIFACT_NAME),
