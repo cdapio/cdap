@@ -70,8 +70,6 @@ public final class Constants {
    */
   public static final class LocationName {
     public static final String REPORT_DIR = "reports";
-    public static final String COUNT_FILE = "COUNT";
-    public static final String SUCCESS_FILE = "_SUCCESS";
     public static final String SUMMARY = "_SUMMARY";
   }
 
