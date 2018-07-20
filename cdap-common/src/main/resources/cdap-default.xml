@@ -1058,7 +1058,7 @@
 
   <property>
     <name>dataset.service.worker.threads</name>
-    <value>4</value>
+    <value>10</value>
     <description>
       Number of Netty service worker threads for the dataset service
     </description>
