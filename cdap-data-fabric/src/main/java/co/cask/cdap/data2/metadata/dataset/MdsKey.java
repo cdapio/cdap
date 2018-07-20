@@ -27,13 +27,12 @@ import static co.cask.cdap.api.metadata.MetadataEntity.ARTIFACT;
 import static co.cask.cdap.api.metadata.MetadataEntity.DATASET;
 import static co.cask.cdap.api.metadata.MetadataEntity.PROGRAM;
 import static co.cask.cdap.api.metadata.MetadataEntity.STREAM;
-import static co.cask.cdap.api.metadata.MetadataEntity.V1_DATASET_INSTANCE;
-import static co.cask.cdap.api.metadata.MetadataEntity.V1_VIEW;
 import static co.cask.cdap.api.metadata.MetadataEntity.VIEW;
 
 /**
  * Key class to get v1 metadata key information
  */
+@Deprecated
 public final class MdsKey {
   private static final byte[] VALUE_ROW_PREFIX = {'v'}; // value row prefix to store metadata value
   private static final byte[] INDEX_ROW_PREFIX = {'i'}; // index row prefix used for metadata search
@@ -60,13 +59,13 @@ public final class MdsKey {
         break;
       case APPLICATION:
       case DATASET:
-      case V1_DATASET_INSTANCE:
+      case "datasetinstance":
       case STREAM:
         keySplitter.skipString();
         keySplitter.skipString();
         break;
       case VIEW:
-      case V1_VIEW:
+      case "view":
       case ARTIFACT:
         keySplitter.skipString();
         keySplitter.skipString();

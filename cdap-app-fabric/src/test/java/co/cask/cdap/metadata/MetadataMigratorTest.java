@@ -137,7 +137,7 @@ public class MetadataMigratorTest {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), transactionSystemClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }
@@ -222,15 +222,15 @@ public class MetadataMigratorTest {
   }
 
   private void assertHistory(MetadataDataset v2System, MetadataDataset v2Business, long sTs, long bTs) {
-    verifyhistory(v2System, app1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, dataset1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, stream1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, artifact1.toMetadataEntity(), sTs);
+    verifyHistory(v2System, app1.toMetadataEntity(), sTs);
+    verifyHistory(v2System, dataset1.toMetadataEntity(), sTs);
+    verifyHistory(v2System, stream1.toMetadataEntity(), sTs);
+    verifyHistory(v2System, artifact1.toMetadataEntity(), sTs);
 
-    verifyhistory(v2Business, app1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, dataset1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, stream1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, artifact1.toMetadataEntity(), bTs);
+    verifyHistory(v2Business, app1.toMetadataEntity(), bTs);
+    verifyHistory(v2Business, dataset1.toMetadataEntity(), bTs);
+    verifyHistory(v2Business, stream1.toMetadataEntity(), bTs);
+    verifyHistory(v2Business, artifact1.toMetadataEntity(), bTs);
   }
 
   private void assertIndex(MetadataDataset v2System) throws Exception {
@@ -246,7 +246,7 @@ public class MetadataMigratorTest {
     }
   }
 
-  private void verifyhistory(MetadataDataset v2, MetadataEntity entity, long timestamp) {
+  private void verifyHistory(MetadataDataset v2, MetadataEntity entity, long timestamp) {
     for (Metadata metadata : v2.getSnapshotBeforeTime(ImmutableSet.of(entity), timestamp)) {
       Map<String, String> properties = metadata.getProperties();
       Assert.assertEquals(1, properties.size());

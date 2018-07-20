@@ -142,7 +142,7 @@ public final class EntityIdKeyHelper {
       String name = keySplitter.getString();
       String version = keySplitter.getString();
       return new ArtifactId(namespaceId, name, version);
-    } else if (type.equals(TYPE_MAP.get(DatasetId.class)) || type.equals(MetadataEntity.V1_DATASET_INSTANCE)) {
+    } else if (type.equals(TYPE_MAP.get(DatasetId.class)) || type.equals("datasetinstance")) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return new DatasetId(namespaceId, instanceId);
@@ -150,7 +150,7 @@ public final class EntityIdKeyHelper {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return new StreamId(namespaceId, instanceId);
-    } else if (type.equals(TYPE_MAP.get(StreamViewId.class)) || type.equals(MetadataEntity.V1_VIEW)) {
+    } else if (type.equals(TYPE_MAP.get(StreamViewId.class)) || type.equals("view")) {
       String namespaceId = keySplitter.getString();
       String streamId  = keySplitter.getString();
       String viewId = keySplitter.getString();
@@ -180,10 +180,10 @@ public final class EntityIdKeyHelper {
     String v1Type = TYPE_MAP.get(namespacedEntityId.getClass());
     switch (v1Type) {
       case MetadataEntity.VIEW:
-        v1Type = MetadataEntity.V1_VIEW;
+        v1Type = "view";
         break;
       case MetadataEntity.DATASET:
-        v1Type = MetadataEntity.V1_DATASET_INSTANCE;
+        v1Type = "datasetinstance";
         break;
     }
     return v1Type;

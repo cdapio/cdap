@@ -25,6 +25,8 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -54,6 +56,9 @@ import java.util.concurrent.TimeUnit;
  */
 class MetadataMigrator extends AbstractRetryableScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataMigrator.class);
+  // For outage, only log once per 60 seconds per message.
+  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.perMessage(
+    () -> LogSamplers.limitRate(60000)));
   // For outage, only log once per 60 seconds per message.
   private final Queue<KeyValue<DatasetId, DatasetId>> datasetIds = new LinkedList<>();
 
@@ -126,7 +131,7 @@ class MetadataMigrator extends AbstractRetryableScheduledService {
         LOG.info("Migration for dataset {} is complete. This dataset is dropped.", datasetIdEntry.getKey());
       }
     } catch (Exception e) {
-      LOG.error("Error occurred while migrating metadata. ", e);
+      OUTAGE_LOG.error("Error occurred while migrating metadata. ", e);
       throw e;
     }
 
