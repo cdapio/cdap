@@ -1,4 +1,5 @@
 {
+  "beta": true,
   "configuration-groups": [
     {
       "label": "SSH Information",
