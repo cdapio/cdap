@@ -17,7 +17,6 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.api.lineage.field.InputField;
 import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
@@ -26,6 +25,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
 import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -220,104 +219,13 @@ public class FieldLineageAdmin {
    * @return list of FieldOperationInfo sorted topologically
    */
   private List<FieldOperationInfo> computeFieldOperationInfo(Set<Operation> operations) {
-
-    List<Operation> orderedOperations = getTopologicallySortedOperations(operations);
-
+    List<Operation> orderedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
     List<FieldOperationInfo> fieldOperationInfos = new ArrayList<>();
     for (Operation operation : orderedOperations) {
       fieldOperationInfos.add(convertToFieldOperationInfo(operation));
     }
 
     return fieldOperationInfos;
-  }
-
-  /**
-   * Sort the operations in topological order. In topological order, each operation in the list
-   * is guaranteed to occur before any other operation that reads its outputs.
-   *
-   * For example, consider following scenario:
-   *
-   *    read-----------------------write
-   *       \                        /
-   *       ----parse----normalize---
-   *
-   * Since write operation is dependent on the read and normalize for its input, it would be
-   * last in the order. normalize depends on the parse, so it would appear after parse. Similarly
-   * parse operation would appear after the read but before normalize in the returned list.
-   *
-   * @param operations set of operations to be sorted
-   * @return the list containing topologically sorted operations
-   */
-  @VisibleForTesting
-  List<Operation> getTopologicallySortedOperations(Set<Operation> operations) {
-    // Map of operation name to the set of Operations which take the output of the given operation as
-    // an input. This map basically represents the adjacency list for operation.
-    // For example consider the following scenario:
-    //
-    // read----------------------write
-    //   \                      /
-    //    ----parse---normalize
-    //
-    // The map would contain:
-    // read -> [parse, write]
-    // parse -> [normalize]
-    // normalize -> [write]
-    // write -> []
-
-    Map<String, Set<Operation>> outgoingOperations = new HashMap<>();
-    for (Operation operation : operations) {
-      List<InputField> inputFields = new ArrayList<>();
-      switch (operation.getType()) {
-        case TRANSFORM:
-          TransformOperation transform = (TransformOperation) operation;
-          inputFields.addAll(transform.getInputs());
-          break;
-        case WRITE:
-          WriteOperation write = (WriteOperation) operation;
-          inputFields.addAll(write.getInputs());
-          outgoingOperations.put(operation.getName(), new HashSet<>());
-          break;
-      }
-
-      for (InputField inputField : inputFields) {
-        // Add current operation to the adjacency list of operation represented by origin
-        Set<Operation> outgoings = outgoingOperations.computeIfAbsent(inputField.getOrigin(), k -> new HashSet<>());
-        outgoings.add(operation);
-      }
-    }
-
-    LinkedList<Operation> orderedOperations = new LinkedList<>();
-    Set<String> visitedOperations = new HashSet<>();
-    for (Operation currentOperation : operations) {
-      String currentOperationName = currentOperation.getName();
-      if (visitedOperations.contains(currentOperationName)) {
-        continue;
-      }
-      topologicalSortUtil(outgoingOperations, currentOperation, visitedOperations, orderedOperations);
-    }
-
-    return orderedOperations;
-  }
-
-  /**
-   * Helper function for performing recursion while finding the topological sorting.
-   */
-  private void topologicalSortUtil(Map<String, Set<Operation>> outgoingOperations, Operation currentOperation,
-                                   Set<String> visitedOperations, LinkedList<Operation> orderedOperations) {
-    String currentOperationName = currentOperation.getName();
-
-    if (!visitedOperations.add(currentOperationName)) {
-      // current operation is already processed.
-      return;
-    }
-
-    Set<Operation> outgoings = outgoingOperations.get(currentOperationName);
-
-    for (Operation outgoing : outgoings) {
-      topologicalSortUtil(outgoingOperations, outgoing, visitedOperations, orderedOperations);
-    }
-
-    orderedOperations.addFirst(currentOperation);
   }
 
   private FieldOperationInfo convertToFieldOperationInfo(Operation operation) {

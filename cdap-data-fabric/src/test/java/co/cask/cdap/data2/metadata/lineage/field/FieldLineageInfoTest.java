@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -513,5 +514,216 @@ public class FieldLineageInfoTest {
     Assert.assertEquals(expectedSet, outgoingSummary.get(new EndPointField(read1EndPoint, "body")));
     Assert.assertEquals(expectedSet, outgoingSummary.get(new EndPointField(read2EndPoint, "offset")));
     Assert.assertEquals(expectedSet, outgoingSummary.get(new EndPointField(read2EndPoint, "body")));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCycle() {
+    EndPoint readEndPoint = EndPoint.of("ns", "file1");
+    EndPoint writeEndPoint = EndPoint.of("ns", "file2");
+
+    ReadOperation read = new ReadOperation("read", "read", readEndPoint, "offset", "body");
+    TransformOperation parse = new TransformOperation("parse", "parse",
+                                                      Arrays.asList(InputField.of("read", "body"),
+                                                                    InputField.of("normalize", "name")),
+                                                      "name", "address");
+    TransformOperation normalize = new TransformOperation("normalize", "normalize",
+                                                          Collections.singletonList(InputField.of("parse", "name")),
+                                                          "name");
+    WriteOperation write = new WriteOperation("write", "writing to another file", writeEndPoint,
+                                              Arrays.asList(InputField.of("normalize", "name"),
+                                                            InputField.of("parse", "address")));
+
+    List<Operation> operations = new ArrayList<>();
+    operations.add(parse);
+    operations.add(read);
+    operations.add(normalize);
+    operations.add(write);
+    FieldLineageInfo.getTopologicallySortedOperations(new HashSet<>(operations));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCycleWithNonExistentOperationNames() {
+    EndPoint readEndPoint = EndPoint.of("ns", "file1");
+    EndPoint writeEndPoint = EndPoint.of("ns", "file2");
+
+    ReadOperation read = new ReadOperation("read", "read", readEndPoint, "offset", "body");
+    TransformOperation parse = new TransformOperation("parse", "parse",
+                                                      Arrays.asList(InputField.of("read", "body"),
+                                                                    InputField.of("normalize", "name"),
+                                                                    InputField.of("nop1", "field1")),
+                                                      "name", "address");
+    TransformOperation normalize = new TransformOperation("normalize", "normalize",
+                                                          Arrays.asList(InputField.of("parse", "name"),
+                                                                        InputField.of("nop2", "field2")),
+                                                          "name");
+    WriteOperation write = new WriteOperation("write", "writing to another file", writeEndPoint,
+                                              Arrays.asList(InputField.of("normalize", "name"),
+                                                            InputField.of("parse", "address"),
+                                                            InputField.of("nop3", "field3")));
+
+    List<Operation> operations = new ArrayList<>();
+    operations.add(parse);
+    operations.add(read);
+    operations.add(normalize);
+    operations.add(write);
+    FieldLineageInfo.getTopologicallySortedOperations(new HashSet<>(operations));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSelfReferentialOperations() {
+    TransformOperation parse = new TransformOperation("parse", "parse",
+                                                      Arrays.asList(InputField.of("read", "body"),
+                                                                    InputField.of("parse", "name")),
+                                                      "name", "address");
+    FieldLineageInfo.getTopologicallySortedOperations(Collections.singleton(parse));
+  }
+
+  @Test
+  public void testLinearTopologicalSort() {
+    // read---->parse---->normalize--->write
+    ReadOperation read = new ReadOperation("read", "read descr", EndPoint.of("ns", "input"), "offset", "body");
+    TransformOperation parse = new TransformOperation("parse", "parse descr",
+                                                      Collections.singletonList(InputField.of("read", "body")), "name",
+                                                      "address");
+    TransformOperation normalize = new TransformOperation("normalize", "normalize descr",
+                                                          Collections.singletonList(InputField.of("parse", "address")),
+                                                          "address");
+    List<InputField> writeInputs = new ArrayList<>();
+    writeInputs.add(InputField.of("parse", "name"));
+    writeInputs.add(InputField.of("normalize", "address"));
+    WriteOperation write = new WriteOperation("write", "write descr", EndPoint.of("ns", "output"), writeInputs);
+
+    Set<Operation> operations = new LinkedHashSet<>();
+    operations.add(read);
+    operations.add(parse);
+    operations.add(normalize);
+    operations.add(write);
+
+    List<Operation> topologicallySortedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
+    assertBefore(topologicallySortedOperations, read, parse);
+    assertBefore(topologicallySortedOperations, parse, normalize);
+    assertBefore(topologicallySortedOperations, normalize, write);
+    assertBefore(topologicallySortedOperations, read, write);
+
+    // try with few different insertion orders, the topological sort should give the same results
+    operations = new LinkedHashSet<>();
+    operations.add(parse);
+    operations.add(normalize);
+    operations.add(write);
+    operations.add(read);
+    topologicallySortedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
+    assertBefore(topologicallySortedOperations, read, parse);
+    assertBefore(topologicallySortedOperations, parse, normalize);
+    assertBefore(topologicallySortedOperations, normalize, write);
+    assertBefore(topologicallySortedOperations, read, write);
+
+    operations = new LinkedHashSet<>();
+    operations.add(write);
+    operations.add(normalize);
+    operations.add(parse);
+    operations.add(read);
+    topologicallySortedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
+    assertBefore(topologicallySortedOperations, read, parse);
+    assertBefore(topologicallySortedOperations, parse, normalize);
+    assertBefore(topologicallySortedOperations, normalize, write);
+    assertBefore(topologicallySortedOperations, read, write);
+  }
+
+  @Test
+  public void testBranchTopologicalSort() {
+    // read----------------------write
+    //   \                      /
+    //    ----parse---normalize
+
+    ReadOperation read = new ReadOperation("read", "read descr", EndPoint.of("ns", "input"), "offset", "body");
+    TransformOperation parse = new TransformOperation("parse", "parse descr",
+                                                      Collections.singletonList(InputField.of("read", "body")), "name",
+                                                      "address");
+    TransformOperation normalize = new TransformOperation("normalize", "normalize descr",
+                                                          Collections.singletonList(InputField.of("parse", "address")),
+                                                          "address");
+    List<InputField> writeInputs = new ArrayList<>();
+    writeInputs.add(InputField.of("read", "offset"));
+    writeInputs.add(InputField.of("parse", "name"));
+    writeInputs.add(InputField.of("normalize", "address"));
+    WriteOperation write = new WriteOperation("write", "write descr", EndPoint.of("ns", "output"), writeInputs);
+
+    Set<Operation> operations = new LinkedHashSet<>();
+    operations.add(read);
+    operations.add(parse);
+    operations.add(normalize);
+    operations.add(write);
+
+    List<Operation> topologicallySortedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
+    assertBefore(topologicallySortedOperations, read, parse);
+    assertBefore(topologicallySortedOperations, parse, normalize);
+    assertBefore(topologicallySortedOperations, normalize, write);
+    assertBefore(topologicallySortedOperations, read, write);
+
+    // try with different insertion orders
+    operations = new LinkedHashSet<>();
+    operations.add(parse);
+    operations.add(normalize);
+    operations.add(write);
+    operations.add(read);
+
+    topologicallySortedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
+    assertBefore(topologicallySortedOperations, read, parse);
+    assertBefore(topologicallySortedOperations, parse, normalize);
+    assertBefore(topologicallySortedOperations, normalize, write);
+    assertBefore(topologicallySortedOperations, read, write);
+
+    operations = new LinkedHashSet<>();
+    operations.add(write);
+    operations.add(normalize);
+    operations.add(parse);
+    operations.add(read);
+
+    topologicallySortedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
+    assertBefore(topologicallySortedOperations, read, parse);
+    assertBefore(topologicallySortedOperations, parse, normalize);
+    assertBefore(topologicallySortedOperations, normalize, write);
+    assertBefore(topologicallySortedOperations, read, write);
+
+    // When the field lineage is queried for offset field, we will only return the
+    // read and write operations, since parse and normalize operations are not affecting
+    // the offset field in anyway. In this case even though write operation has input with origin
+    // as normalize, topological sort should not affect by this case, where normalize operation
+    // itself is missing.
+    operations = new LinkedHashSet<>();
+    operations.add(write);
+    operations.add(read);
+
+    topologicallySortedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
+    assertBefore(topologicallySortedOperations, read, write);
+  }
+
+  @Test
+  public void testDisjointBranches() {
+    // read1 -----> write1
+    // read2 -----> write2
+    ReadOperation read1 = new ReadOperation("read1", "read descr", EndPoint.of("ns", "input1"), "offset", "body");
+    WriteOperation write1 = new WriteOperation("write1", "write descr", EndPoint.of("ns", "output"),
+                                               InputField.of("read1", "offset"));
+
+    ReadOperation read2 = new ReadOperation("read2", "read descr", EndPoint.of("ns", "input2"), "offset", "body");
+    WriteOperation write2 = new WriteOperation("write2", "write descr", EndPoint.of("ns", "output"),
+                                               InputField.of("read2", "offset"));
+
+    Set<Operation> operations = new LinkedHashSet<>();
+    operations.add(write1);
+    operations.add(write2);
+    operations.add(read2);
+    operations.add(read1);
+
+    List<Operation> topologicallySortedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
+    assertBefore(topologicallySortedOperations, read1, write1);
+    assertBefore(topologicallySortedOperations, read2, write2);
+  }
+
+  private void assertBefore(List<Operation> list, Operation a, Operation b) {
+    int aIndex = list.indexOf(a);
+    int bIndex = list.indexOf(b);
+    Assert.assertTrue(aIndex < bIndex);
   }
 }
