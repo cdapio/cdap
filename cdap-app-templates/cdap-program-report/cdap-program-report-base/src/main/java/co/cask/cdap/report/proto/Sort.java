@@ -20,6 +20,7 @@ import co.cask.cdap.report.util.ReportField;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -74,5 +75,22 @@ public class Sort extends ReportGenerationRequest.Field {
   public enum Order {
     ASCENDING,
     DESCENDING
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(order);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Sort that = (Sort) o;
+    return Objects.equals(this.order, that.order);
   }
 }

@@ -22,14 +22,17 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 import javax.annotation.Nullable;
 
 /**
- * JSON deserializer for {@link Filter}
+ * JSON codec for {@link Filter}
  */
-public class FilterDeserializer implements JsonDeserializer<Filter> {
+public class FilterCodec implements JsonSerializer<Filter>, JsonDeserializer<Filter> {
   private static final Type INT_RANGE_FILTER_TYPE =
     new TypeToken<RangeFilter<Integer>>() { }.getType();
   private static final Type LONG_RANGE_FILTER_TYPE =
@@ -83,5 +86,24 @@ public class FilterDeserializer implements JsonDeserializer<Filter> {
                                                  fieldName, field.getValueClass().getName()));
     }
     return filter;
+  }
+
+  @Override
+  public JsonElement serialize(Filter src, Type typeOfSrc, JsonSerializationContext context) {
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.add("fieldName", new JsonPrimitive(src.getFieldName()));
+    if (src instanceof RangeFilter) {
+      jsonObject.add("range", context.serialize(((RangeFilter) src).getRange()));
+    }
+    if (src instanceof ValueFilter) {
+      ValueFilter valueFilter = (ValueFilter) src;
+      if (valueFilter.getWhitelist().size() > 0) {
+        jsonObject.add("whitelist", context.serialize(valueFilter.getWhitelist()));
+      }
+      if (valueFilter.getBlacklist().size() > 0) {
+        jsonObject.add("blacklist", context.serialize(valueFilter.getBlacklist()));
+      }
+    }
+    return jsonObject;
   }
 }

@@ -19,6 +19,7 @@ package co.cask.cdap.report.proto;
 import co.cask.cdap.report.util.ReportField;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -121,5 +122,44 @@ public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
         ", max=" + max +
         '}';
     }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(min, max);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Range that = (Range) o;
+      return Objects.equals(this.min, that.min) &&
+        Objects.equals(this.max, that.max);
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), range);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!super.equals(o)) {
+      return false;
+    }
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    RangeFilter that = (RangeFilter) o;
+    return Objects.equals(this.range, that.range);
   }
 }

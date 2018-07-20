@@ -20,8 +20,8 @@ import co.cask.cdap.report.util.ReportField;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -88,5 +88,28 @@ public class ValueFilter<T> extends Filter<T> {
       ", whitelist=" + whitelist +
       ", blacklist=" + blacklist +
       '}';
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), whitelist, blacklist);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!super.equals(o)) {
+      return false;
+    }
+
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ValueFilter that = (ValueFilter) o;
+    return Objects.equals(this.whitelist, that.whitelist) &&
+      Objects.equals(this.blacklist, that.blacklist);
   }
 }

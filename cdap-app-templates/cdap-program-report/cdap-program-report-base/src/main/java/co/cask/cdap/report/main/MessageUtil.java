@@ -20,7 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.report.proto.Filter;
-import co.cask.cdap.report.proto.FilterDeserializer;
+import co.cask.cdap.report.proto.FilterCodec;
 import co.cask.cdap.report.util.Constants;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
@@ -51,7 +51,7 @@ public final class MessageUtil {
   private static final Logger LOG = LoggerFactory.getLogger(MessageUtil.class);
   private static final SampledLogging SAMPLED_LOGGING = new SampledLogging(LOG, 100);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Filter.class, new FilterDeserializer())
+    .registerTypeAdapter(Filter.class, new FilterCodec())
     .create();
   private static final Type MAP_TYPE =
     new TypeToken<Map<String, String>>() { }.getType();
