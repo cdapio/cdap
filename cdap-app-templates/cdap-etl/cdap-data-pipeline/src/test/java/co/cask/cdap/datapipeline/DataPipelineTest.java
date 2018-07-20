@@ -2838,8 +2838,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ImmutableMap<String, String> inputPropToAdd = ImmutableMap.of("kOne", "vOne", "kTwo", "vTwo");
     MetadataOperation op =
       new MetadataOperation(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
-                            MetadataOperation.Type.PUT, new Metadata(inputPropToAdd,
-                                                                     inputTagsToAdd));
+                            MetadataOperation.Type.PUT, new Metadata(inputPropToAdd, inputTagsToAdd));
     Set<MetadataOperation> operations = new HashSet<>(Collections.singletonList(op));
 
     // run pipeline with the metadata operations which need to be performed
@@ -2865,8 +2864,8 @@ public class DataPipelineTest extends HydratorTestBase {
 
     // delete some properties and tag
     op = new MetadataOperation(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
-                                       MetadataOperation.Type.DELETE, new Metadata(ImmutableMap.of("kOne", ""),
-                                                                                ImmutableSet.of("tOne")));
+                               MetadataOperation.Type.DELETE, new Metadata(ImmutableMap.of("kOne", ""),
+                                                                           ImmutableSet.of("tOne")));
     operations = new HashSet<>(Collections.singleton(op));
 
     runPipelineForMetadata(operations);
@@ -2880,11 +2879,8 @@ public class DataPipelineTest extends HydratorTestBase {
     for (MetadataRecordV2 actualRecord : actual) {
       if (actualRecord.getScope() == MetadataScope.USER) {
         // verify the user properties
-        Assert.assertEquals(1, actualRecord.getProperties().size());
-        Assert.assertEquals(1, actualRecord.getTags().size());
-        Assert.assertTrue(actualRecord.getProperties().containsKey("kTwo"));
-        Assert.assertEquals("vTwo", actualRecord.getProperties().get("kTwo"));
-        Assert.assertEquals("tTwo", actualRecord.getTags().iterator().next());
+        Assert.assertEquals(Collections.singletonMap("kTwo", "vTwo"), actualRecord.getProperties());
+        Assert.assertEquals(Collections.singleton("tTwo"), actualRecord.getTags());
       }
     }
   }
@@ -2922,8 +2918,9 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    int numRuns = workflowManager.getHistory().size();
     workflowManager.start();
-    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, numRuns + 1, 5, TimeUnit.MINUTES);
   }
 
   @Test
