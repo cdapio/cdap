@@ -39,7 +39,7 @@ public class MetadataServiceModule extends PrivateModule {
 
     CommonHandlers.add(handlerBinder);
     handlerBinder.addBinding().to(MetadataHttpHandler.class);
-    handlerBinder.addBinding().to(LineageHandler.class);
+    handlerBinder.addBinding().to(LineageHTTPHandler.class);
     expose(Key.get(new TypeLiteral<Set<HttpHandler>>() { }, Names.named(Constants.Metadata.HANDLERS_NAME)));
     bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
     expose(MetadataAdmin.class);
