@@ -34,7 +34,6 @@ $icon-size: 93px;
       .provisioner-box {
         width: $box-width;
         height: $box-height;
-        border: 1px solid $grey-03;
         color: $grey-01;
         margin-top: 30px;
         display: inline-flex;
@@ -43,17 +42,12 @@ $icon-size: 93px;
         margin-right: 30px;
         padding: 0 30px;
         position: relative;
+        box-shadow: 1px 2px 10px 0 rgba(0, 0, 0, 0.3);
 
         &:focus,
         &:hover {
           text-decoration: none;
-          background-color: $grey-08;
-
-          .provisioner-icon {
-            > img {
-              background-color: $grey-08;
-            }
-          }
+          box-shadow: 1px 2px 10px 0 #3b78e7;
         }
 
         .provisioner-content {
