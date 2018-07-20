@@ -21,6 +21,7 @@ import {MyReportsApi} from 'api/reports';
 import IconSVG from 'components/IconSVG';
 import BtnWithLoading from 'components/BtnWithLoading';
 import T from 'i18n-react';
+import {isSpark2Available} from 'services/CDAPComponentsVersions';
 import Helmet from 'react-helmet';
 
 require('./ReportsServiceControl.scss');
@@ -35,8 +36,20 @@ export default class ReportsServiceControl extends Component {
 
   state = {
     loading: false,
+    disabled: false,
+    checkingForSpark2: true,
     error: null
   };
+
+  componentDidMount() {
+    isSpark2Available()
+      .subscribe(
+        isAvailable => this.setState({
+          disabled: !isAvailable,
+          checkingForSpark2: false
+        })
+      );
+  }
 
   enableReports = () => {
     this.setState({
@@ -60,6 +73,27 @@ export default class ReportsServiceControl extends Component {
   };
 
   renderEnableBtn = () => {
+    if (this.state.checkingForSpark2) {
+      return (
+        <div className="action-container service-disabled">
+          <IconSVG name="icon-spinner" className="fa-spin" />
+          <div className="text-primary">
+            {T.translate(`${PREFIX}.environmentCheckMessage`)}
+          </div>
+        </div>
+      );
+    }
+
+    if (this.state.disabled) {
+      return (
+        <div className="action-container service-disabled">
+          <IconSVG name="icon-exclamation-triangle" className="text-danger" />
+          <div className="text-danger">
+            {T.translate(`${PREFIX}.serviceDisabledMessage`)}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="action-container">
         <BtnWithLoading
