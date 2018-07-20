@@ -22,6 +22,7 @@ import IconSVG from 'components/IconSVG';
 import BtnWithLoading from 'components/BtnWithLoading';
 import T from 'i18n-react';
 import {isSpark2Available} from 'services/CDAPComponentsVersions';
+import isObject from 'lodash/isObject';
 import Helmet from 'react-helmet';
 
 require('./ReportsServiceControl.scss');
@@ -38,7 +39,8 @@ export default class ReportsServiceControl extends Component {
     loading: false,
     disabled: false,
     checkingForSpark2: true,
-    error: null
+    error: null,
+    extendedError: null
   };
 
   componentDidMount() {
@@ -60,12 +62,17 @@ export default class ReportsServiceControl extends Component {
       shouldStopService: false,
       artifactName: ReportsArtifact,
       api: MyReportsApi,
-      i18nPrefix: ''
+      i18nPrefix: PREFIX
     }).subscribe(
       this.props.onServiceStart,
-      () => {
+      (err) => {
+        let extendedMessage = isObject(err.extendedMessage) ?
+          err.extendedMessage.response || err.extendedMessage.message
+        :
+          err.extendedMessage;
         this.setState({
-          error: 'Unable to start Report service',
+          error: err.error,
+          extendedError: extendedMessage,
           loading: false
         });
       }
@@ -114,10 +121,10 @@ export default class ReportsServiceControl extends Component {
       <div className="reports-service-control-error">
         <h5 className="text-danger">
           <IconSVG name="icon-exclamation-triangle" />
-          <span>{T.translate(`${PREFIX}.unableToStart`)}</span>
+          <span>{this.state.error}</span>
         </h5>
         <p className="text-danger">
-          {this.state.error}
+          {this.state.extendedError}
         </p>
       </div>
     );

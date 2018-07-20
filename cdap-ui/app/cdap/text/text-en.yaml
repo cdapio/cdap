@@ -354,6 +354,9 @@ features:
     btnLabel: Enable Data Preparation
     btnLoadingLabel: "Enabling..."
     description: CDAP Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
+    errorCommunicating: Error while communicating with Data Preparation service
+    errorTitle: Enabling Data Preparation failed
+    failedToStop: Failed to stop Data Preparation service
     list:
       1: Easy and interactive way to work with messy data
       2: Apply transformations using a variety of operations on various data types
@@ -1257,7 +1260,6 @@ features:
         1: "{context} experiment"
         _: "{context} experiments"
       numModels: No of models
-
     ServiceControl:
       Benefits:
         b1: Intuitive Web UI for building, training, testing and evaluating machine learning models.
@@ -1269,9 +1271,10 @@ features:
         title: "Some key benefits of MMDS are:"
       description: "Data scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models using CDAP."
       enableBtnLabel: Enable MMDS
+      environmentCheckMessage: Checking for environment before enabling Analytics
+      errorCommunicating: Error while communicating with MMDS service
       errorTitle: Enabling MMDS failed
       errorMessage: Please check logs for more information
-      environmentCheckMessage: Checking for environment before enabling Analytics
       serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use Analytics
       title: Welcome to Model Management and Distribution Service
 
@@ -2112,9 +2115,10 @@ features:
       description: "Reports help users generate historical analysis of programs and pipelines running in their data infrastructure. The primary goal of these reports is to help decision makers and administrators make informed business decisions about resource utilization, capacity planning, and onboarding new processes."
       enable: Enable Reports
       environmentCheckMessage: Checking for environment before enabling Reports
+      errorCommunicating: Error while communicating with Reports service
+      errorTitle: Enabling Reports failed
       serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use Reports
       title: Welcome to Reports
-      unableToStart: Unable to start Reports service
 
   Resource-Center:
     Application:
@@ -2229,8 +2233,8 @@ features:
       description: Business Rules Engine provides an easy way to create and manage a knowledge base that is executable in your big data environment.
                   The intuitive UI allows business analysts to set up business rules and use them within a data pipeline.
       enableBtnLabel: Enable Rules Engine
+      errorCommunicating: Error while communicating with Rules Engine service
       errorTitle: Enabling Rules Engine failed
-      errorMessage: Please check logs for more information
       title: Welcome to Rules Engine Management
     RulesList:
       dropContainerText: Add a rule by dragging and dropping from the Rules tab

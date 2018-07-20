@@ -20,6 +20,7 @@ import enableSystemApp from 'services/ServiceEnablerUtilities';
 import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
+import isObject from 'lodash/isObject';
 import {myExperimentsApi} from 'api/experiments';
 import {isSpark2Available} from 'services/CDAPComponentsVersions';
 require('./ExperimentsServiceControl.scss');
@@ -46,7 +47,8 @@ export default class ExperimentsServiceControl extends Component {
     loading: false,
     disabled: false,
     checkingForSpark2: true,
-    error: null
+    error: null,
+    extendedError: null
   };
 
   enableMMDS = () => {
@@ -57,12 +59,17 @@ export default class ExperimentsServiceControl extends Component {
       shouldStopService: false,
       artifactName: MMDSArtifact,
       api: myExperimentsApi,
-      i18nPrefix: ''
+      i18nPrefix: PREFIX
     }).subscribe(
       this.props.onServiceStart,
-      () => {
+      (err) => {
+        let extendedMessage = isObject(err.extendedMessage) ?
+          err.extendedMessage.response || err.extendedMessage.message
+        :
+          err.extendedMessage;
         this.setState({
-          error: T.translate(`${PREFIX}.errorMessage`),
+          error: err.error,
+          extendedError: extendedMessage,
           loading: false
         });
       }
@@ -118,10 +125,10 @@ export default class ExperimentsServiceControl extends Component {
       <div className="experiments-service-control-error">
         <h5 className="text-danger">
           <IconSVG name="icon-exclamation-triangle" />
-          <span>{T.translate(`${PREFIX}.errorTitle`)}</span>
+          <span>{this.state.error}</span>
         </h5>
         <p className="text-danger">
-          {this.state.error}
+          {this.state.extendedError}
         </p>
       </div>
     );
