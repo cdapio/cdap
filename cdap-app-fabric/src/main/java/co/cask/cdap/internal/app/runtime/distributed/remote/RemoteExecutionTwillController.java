@@ -170,7 +170,7 @@ class RemoteExecutionTwillController implements TwillController {
   public Future<? extends ServiceController> terminate() {
     if (!completion.isDone()) {
       try {
-        runtimeMonitor.kill();
+        runtimeMonitor.requestStop();
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }

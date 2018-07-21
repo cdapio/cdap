@@ -20,12 +20,12 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -51,9 +51,8 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner
   }
 
   @Override
-  public ProgramController createProgramController(TwillController twillController,
-                                                   ProgramDescriptor programDescriptor, RunId runId) {
-    return new ServiceTwillProgramController(programDescriptor.getProgramId(), twillController, runId).startListen();
+  public ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
+    return new ServiceTwillProgramController(programId, twillController, runId).startListen();
   }
 
   @Override

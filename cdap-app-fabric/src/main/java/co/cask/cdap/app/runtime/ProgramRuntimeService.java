@@ -63,6 +63,7 @@ public interface ProgramRuntimeService extends Service {
    * @param runId     The program {@link RunId}.
    * @return A {@link RuntimeInfo} for the running program or {@code null} if no such program is found.
    */
+  @Nullable
   RuntimeInfo lookup(ProgramId programId, RunId runId);
 
   /**

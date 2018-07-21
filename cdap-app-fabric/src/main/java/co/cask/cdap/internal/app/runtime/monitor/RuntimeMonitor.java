@@ -21,18 +21,20 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.MessagingContext;
+import co.cask.cdap.api.retry.RetryableException;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteProcessController;
+import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteRuntimeDataset;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
-import co.cask.cdap.internal.profile.ProfileMetricScheduledService;
+import co.cask.cdap.internal.profile.ProfileMetricService;
 import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.Notification;
@@ -44,6 +46,7 @@ import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Deque;
@@ -61,9 +64,6 @@ import java.util.stream.Stream;
 public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitor.class);
-  // For outage, only log once per 60 seconds per message.
-  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.perMessage(
-    () -> LogSamplers.limitRate(60000)));
 
   private static final Gson GSON = new Gson();
 
@@ -83,7 +83,9 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private final MessagingContext messagingContext;
   private final ScheduledExecutorService scheduledExecutorService;
   private final RemoteExecutionLogProcessor logProcessor;
-  private final ProfileMetricScheduledService metricScheduledService;
+  private final ProfileMetricService metricScheduledService;
+  private final RemoteProcessController remoteProcessController;
+  private final ProgramStateWriter programStateWriter;
 
   private Map<String, MonitorConsumeRequest> topicsToRequest;
   private long programFinishTime;
@@ -92,13 +94,14 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
                         DatasetFramework datasetFramework, Transactional transactional,
                         MessagingContext messagingContext, ScheduledExecutorService scheduledExecutorService,
                         RemoteExecutionLogProcessor logProcessor,
-                        ProfileMetricScheduledService metricScheduledService) {
+                        ProfileMetricService metricScheduledService,
+                        RemoteProcessController remoteProcessController, ProgramStateWriter programStateWriter) {
     super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
 
     this.programRunId = programRunId;
     this.cConf = cConf;
     this.monitorClient = monitorClient;
-    this.limit = cConf.getInt(Constants.RuntimeMonitor.BATCH_LIMIT);
+    this.limit = cConf.getInt(Constants.RuntimeMonitor.BATCH_SIZE);
     this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
     this.topicsToRequest = new HashMap<>();
@@ -111,6 +114,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.lastProgramStateMessages = new LinkedList<>();
     this.requestKeyToLocalTopic = createTopicConfigs(cConf);
     this.metricScheduledService = metricScheduledService;
+    this.remoteProcessController = remoteProcessController;
+    this.programStateWriter = programStateWriter;
   }
 
   @Override
@@ -120,6 +125,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   @Override
   protected void doStartUp() {
+    LOG.debug("Start monitoring program run {}", programRunId);
     try {
       metricScheduledService.startAndWait();
     } catch (Exception e) {
@@ -135,36 +141,23 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     } catch (Exception e) {
       LOG.warn("Failed to stop metrics service for program run {}", programRunId);
     }
-    if (!lastProgramStateMessages.isEmpty()) {
-      String topicConfig = Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC;
-      String topic = requestKeyToLocalTopic.get(topicConfig);
-
-      // Publish last program state messages with Retries
-      Retries.runWithRetries(() -> Transactionals.execute(transactional, context -> {
-        AppMetadataStore store = AppMetadataStore.create(cConf, context, datasetFramework);
-        publish(topicConfig, topic, lastProgramStateMessages, store);
-
-        // cleanup all the offsets after publishing terminal states.
-        for (String topicConf : requestKeyToLocalTopic.keySet()) {
-          store.deleteSubscriberState(topicConf, programRunId.getRun());
-        }
-      }), getRetryStrategy());
-    }
+    LOG.debug("Stopped monitoring program run {}", programRunId);
   }
 
   /**
    * Kills the runtime.
    */
-  public void kill() throws Exception {
+  public void requestStop() throws Exception {
     // Just issue a kill command to the runtime monitor server.
     // If the program is running, it will publish a killed state
-    monitorClient.kill();
+    monitorClient.requestStop();
   }
 
   @Override
   protected boolean shouldRetry(Exception ex) {
-    OUTAGE_LOG.warn("Failed to fetch monitoring data from program run {}. Will be retried in next iteration.",
-                    programRunId, ex);
+    if (!(ex instanceof ServiceUnavailableException)) {
+      LOG.warn("Exception raised when fetching monitoring data from program run {}.", programRunId, ex);
+    }
     return true;
   }
 
@@ -181,7 +174,24 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     }
 
     // Next to fetch data from the remote runtime
-    Map<String, Deque<MonitorMessage>> monitorResponses = monitorClient.fetchMessages(topicsToRequest);
+    Map<String, Deque<MonitorMessage>> monitorResponses;
+    try {
+      monitorResponses = monitorClient.fetchMessages(topicsToRequest);
+    } catch (ServiceUnavailableException | IOException e) {
+      // If the remote process is still running, just try to poll again in the next cycle
+      if (remoteProcessController.isRunning()) {
+        return pollTimeMillis;
+      }
+
+      // If failed to fetch messages and the remote process is not running, emit a failure program state and
+      // terminates the monitor
+      programStateWriter.error(programRunId,
+                               new IllegalStateException("Program runtime terminated abnormally. " +
+                                                           "Please inspect logs for root cause.", e));
+      clearStates();
+      stop();
+      return 0;
+    }
 
     // Update programFinishTime when remote runtime is in terminal state. Also buffer all the program status
     // events. This is done before transactional publishing to avoid re-fetching same remote runtime status
@@ -333,12 +343,54 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
    */
   private void triggerRuntimeShutdown() {
     LOG.debug("Program run {} completed at {}, shutting down remote runtime.", programRunId, programFinishTime);
+
+    // Publish all cached program state messages
+    if (!lastProgramStateMessages.isEmpty()) {
+      String topicConfig = Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC;
+      String topic = requestKeyToLocalTopic.get(topicConfig);
+
+      // Publish last program state messages with Retries
+      Retries.runWithRetries(() -> Transactionals.execute(transactional, context -> {
+        AppMetadataStore store = AppMetadataStore.create(cConf, context, datasetFramework);
+        publish(topicConfig, topic, lastProgramStateMessages, store);
+      }), getRetryStrategy());
+    }
+
+    // Request remote runtime to shutdown
     try {
       monitorClient.requestShutdown();
-    } catch (ServiceUnavailableException e) {
-      LOG.trace("Runtime monitor server is unavailable on shutting down of program run {}", programRunId);
     } catch (Exception e) {
-      LOG.warn("Exception raised when attempting to shutdown runtime for program run {}", programRunId);
+      // If there is exception, use the remote execution controller to try killing the remote process
+      try {
+        remoteProcessController.kill();
+      } catch (Exception ex) {
+        LOG.warn("Failed to terminate remote process for program run {}", programRunId, ex);
+      }
+    }
+
+    // Clear all program state
+    clearStates();
+  }
+
+  /**
+   * Clears all the persisted states.
+   */
+  private void clearStates() {
+    try {
+      Retries.runWithRetries(() -> Transactionals.execute(transactional, context -> {
+        AppMetadataStore store = AppMetadataStore.create(cConf, context, datasetFramework);
+        RemoteRuntimeDataset runtimeDataset = RemoteRuntimeDataset.create(context, datasetFramework);
+
+        // cleanup all the offsets after publishing terminal states.
+        for (String topicConf : requestKeyToLocalTopic.keySet()) {
+          store.deleteSubscriberState(topicConf, programRunId.getRun());
+        }
+
+        runtimeDataset.delete(programRunId);
+      }, RetryableException.class), getRetryStrategy());
+    } catch (Exception e) {
+      // Just log the exception. The state remained won't affect normal operation.
+      LOG.warn("Exception raised when clearing runtime monitor states", e);
     }
   }
 

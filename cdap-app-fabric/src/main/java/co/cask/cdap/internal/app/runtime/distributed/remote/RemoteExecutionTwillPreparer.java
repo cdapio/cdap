@@ -16,12 +16,17 @@
 
 package co.cask.cdap.internal.app.runtime.distributed.remote;
 
+import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
+import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import co.cask.cdap.security.tools.KeyStores;
 import com.google.common.base.Joiner;
@@ -41,7 +46,6 @@ import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.EventHandlerSpecification;
 import org.apache.twill.api.LocalFile;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.api.TwillController;
@@ -50,6 +54,7 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
@@ -121,7 +126,8 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final TwillSpecification twillSpec;
-  private final RunId runId;
+  private final ProgramRunId programRunId;
+  private final ProgramOptions programOptions;
 
   private final List<String> arguments = new ArrayList<>();
   private final Set<Class<?>> dependencies = Sets.newIdentityHashSet();
@@ -136,23 +142,21 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
   private final Map<String, Integer> maxRetries = new HashMap<>();
   private final Map<String, Map<String, String>> runnableConfigs = new HashMap<>();
   private final Map<String, String> runnableExtraOptions = new HashMap<>();
-  private final String remoteHost;
-  private final SSHKeyPair sshKeyPair;
+  private final SSHConfig sshConfig;
   private final KeyStore serverKeyStore;
   private final KeyStore clientKeyStore;
   private final LocationFactory locationFactory;
   private final RemoteExecutionTwillControllerFactory controllerFactory;
+
   private String extraOptions;
   private JvmOptions.DebugOptions debugOptions;
-
   private ClassAcceptor classAcceptor;
   private String classLoaderClassName;
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
-                               String remoteHost, SSHKeyPair sshKeyPair,
-                               KeyStore serverKeyStore, KeyStore clientKeyStore,
-                               TwillSpecification twillSpec,
-                               RunId runId, @Nullable String extraOptions,
+                               SSHConfig sshConfig, KeyStore serverKeyStore, KeyStore clientKeyStore,
+                               TwillSpecification twillSpec, ProgramRunId programRunId, ProgramOptions programOptions,
+                               @Nullable String extraOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
                                RemoteExecutionTwillControllerFactory controllerFactory) {
     // Check to prevent future mistake
@@ -163,12 +167,12 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
     this.debugOptions = JvmOptions.DebugOptions.NO_DEBUG;
     this.cConf = cConf;
     this.hConf = hConf;
-    this.remoteHost = remoteHost;
-    this.sshKeyPair = sshKeyPair;
+    this.sshConfig = sshConfig;
     this.serverKeyStore = serverKeyStore;
     this.clientKeyStore = clientKeyStore;
     this.twillSpec = twillSpec;
-    this.runId = runId;
+    this.programRunId = programRunId;
+    this.programOptions = programOptions;
     this.extraOptions = extraOptions == null ? "" : extraOptions;
     this.classAcceptor = new ClassAcceptor();
     this.locationCache = locationCache;
@@ -390,7 +394,12 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
       Path tempDir = java.nio.file.Paths.get(cConf.get(co.cask.cdap.common.conf.Constants.CFG_LOCAL_DATA_DIR),
                                              cConf.get(co.cask.cdap.common.conf.Constants.AppFabric.TEMP_DIR))
                                         .toAbsolutePath();
-      Path stagingDir = Files.createTempDirectory(tempDir, runId.getId());
+      Path stagingDir = Files.createTempDirectory(tempDir, programRunId.getRun());
+
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(
+        programRunId, programOptions.getArguments().asMap());
+      Cancellable cancelLoggingContext = LoggingContextAccessor.setLoggingContext(loggingContext);
+
       try {
         Map<String, LocalFile> localFiles = Maps.newHashMap();
 
@@ -417,9 +426,9 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
         RuntimeSpecification runtimeSpec = twillRuntimeSpec.getTwillSpecification().getRunnables().values()
           .stream().findFirst().orElseThrow(IllegalStateException::new);
 
-        try (SSHSession session = createSSHSession()) {
-          String targetPath = session.executeAndWait("mkdir -p ./" + runId.getId(),
-                                                     "echo `pwd`/" + runId.getId()).trim();
+        try (SSHSession session = new DefaultSSHSession(sshConfig)) {
+          String targetPath = session.executeAndWait("mkdir -p ./" + programRunId.getRun(),
+                                                     "echo `pwd`/" + programRunId.getRun()).trim();
           // Upload files
           localizeFiles(session, localFiles, targetPath, runtimeSpec);
 
@@ -445,11 +454,15 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
                        targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
 
           LOG.info("Starting runnable {} with SSH on {}", runnableName, session.getAddress().getHostName());
+
+          // Create the controller first. If the creation failed, the process won't get started.
+          RemoteExecutionTwillController controller = controllerFactory.create();
           session.executeAndWait("sudo " + targetPath + "/launcher.sh");
 
-          return controllerFactory.create();
+          return controller;
         }
       } finally {
+        cancelLoggingContext.cancel();
         DirUtils.deleteDirectoryContents(stagingDir.toFile(), false);
       }
     } catch (Exception e) {
@@ -724,7 +737,7 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
       }
 
       TwillRuntimeSpecification twillRuntimeSpec = new TwillRuntimeSpecification(
-        newTwillSpec, "", URI.create("."), "", runId, twillSpec.getName(),
+        newTwillSpec, "", URI.create("."), "", RunIds.fromString(programRunId.getRun()), twillSpec.getName(),
         null,
         logLevels, maxRetries, configMap, runnableConfigs);
       TwillRuntimeSpecificationAdapter.create().toJson(twillRuntimeSpec, writer);
@@ -892,8 +905,8 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
     scriptWriter.println("export HADOOP_CLASSPATH=`hadoop classpath`");
 
     scriptWriter.printf(
-      "nohup java -Djava.io.tmpdir=tmp -cp %s/%s -Xmx%dm %s %s '%s' true >%s/stdout 2>%s/stderr &\n",
-      targetPath, Constants.Files.LAUNCHER_JAR, memory,
+      "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true >%s/stdout 2>%s/stderr &\n",
+      programRunId.getRun(), targetPath, Constants.Files.LAUNCHER_JAR, memory,
       getJvmOptions().getRunnableExtraOptions(runnableName),
       RemoteLauncher.class.getName(),
       runtimeSpec.getRunnableSpecification().getClassName(),
@@ -903,18 +916,6 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
 
     // Expands the <LOG_DIR> placement holder to the log directory
     return writer.toString().replace(ApplicationConstants.LOG_DIR_EXPANSION_VAR, logsDir);
-  }
-
-  /**
-   * Creates a {@link SSHSession} for SSHing into the remote host.
-   */
-  private SSHSession createSSHSession() throws IOException {
-    SSHConfig sshConfig = SSHConfig.builder(remoteHost)
-      .setUser(sshKeyPair.getPublicKey().getUser())
-      .setPrivateKeySupplier(sshKeyPair.getPrivateKeySupplier())
-      .build();
-
-    return new DefaultSSHSession(sshConfig);
   }
 
   /**

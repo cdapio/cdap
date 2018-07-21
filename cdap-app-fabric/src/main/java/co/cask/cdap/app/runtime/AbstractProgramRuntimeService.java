@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
@@ -37,10 +38,16 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
+import co.cask.cdap.internal.app.runtime.distributed.TwillAppNames;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
+import co.cask.cdap.proto.InMemoryProgramLiveInfo;
+import co.cask.cdap.proto.NotRunningProgramLiveInfo;
+import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
@@ -54,7 +61,11 @@ import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -93,19 +104,17 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
-  private final ProgramStateWriter programStateWriter;
   private final ArtifactRepository noAuthArtifactRepository;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
+  private TwillRunnerService remoteTwillRunnerService;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf,
                                           ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository noAuthArtifactRepository,
-                                          ProgramStateWriter programStateWriter) {
+                                          ArtifactRepository noAuthArtifactRepository) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
-    this.programStateWriter = programStateWriter;
     this.noAuthArtifactRepository = noAuthArtifactRepository;
   }
 
@@ -116,6 +125,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   @Inject(optional = true)
   void setRemoteProgramRunnerFactory(@Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
     this.remoteProgramRunnerFactory = runnerFactory;
+  }
+
+  /**
+   * Optional guice injection for the {@link TwillRunnerService} used for remote execution. It is optional because
+   * in unit-test we don't have need for that.
+   */
+  @Inject(optional = true)
+  void setRemoteTwillRunnerService(@Constants.AppFabric.RemoteExecution TwillRunnerService twillRunnerService) {
+    this.remoteTwillRunnerService = twillRunnerService;
   }
 
   @Override
@@ -157,6 +175,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
   }
 
+  @Override
+  public ProgramLiveInfo getLiveInfo(ProgramId programId) {
+    return isRunning(programId) ? new InMemoryProgramLiveInfo(programId)
+      : new NotRunningProgramLiveInfo(programId);
+  }
+
   protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
     return noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
   }
@@ -187,32 +211,29 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   private Runnable createCleanupTask(final Object... resources) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        List<Object> resourceList = new ArrayList<>(Arrays.asList(resources));
-        Collections.reverse(resourceList);
-        for (Object resource : resourceList) {
-          if (resource == null) {
-            continue;
-          }
+    return () -> {
+      List<Object> resourceList = new ArrayList<>(Arrays.asList(resources));
+      Collections.reverse(resourceList);
+      for (Object resource : resourceList) {
+        if (resource == null) {
+          continue;
+        }
 
-          try {
-            if (resource instanceof File) {
-              File file = (File) resource;
-              if (file.isDirectory()) {
-                DirUtils.deleteDirectoryContents(file);
-              } else {
-                file.delete();
-              }
-            } else if (resource instanceof Closeable) {
-              Closeables.closeQuietly((Closeable) resource);
-            } else if (resource instanceof Runnable) {
-              ((Runnable) resource).run();
+        try {
+          if (resource instanceof File) {
+            File file = (File) resource;
+            if (file.isDirectory()) {
+              DirUtils.deleteDirectoryContents(file);
+            } else {
+              file.delete();
             }
-          } catch (Throwable t) {
-            LOG.warn("Exception when cleaning up resource {}", resource, t);
+          } else if (resource instanceof Closeable) {
+            Closeables.closeQuietly((Closeable) resource);
+          } else if (resource instanceof Runnable) {
+            ((Runnable) resource).run();
           }
+        } catch (Throwable t) {
+          LOG.warn("Exception when cleaning up resource {}", resource, t);
         }
       }
     };
@@ -303,8 +324,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private ProgramOptions updateProgramOptions(ArtifactId artifactId, ProgramId programId,
                                               ProgramOptions options, RunId runId) {
     // Build the system arguments
-    Map<String, String> systemArguments = new HashMap<>();
-    systemArguments.putAll(options.getArguments().asMap());
+    Map<String, String> systemArguments = new HashMap<>(options.getArguments().asMap());
     // don't add these system arguments if they're already there
     // this can happen if this is a program within a workflow, and the workflow already added these arguments
     for (Map.Entry<String, String> extraOption : getExtraProgramOptions().entrySet()) {
@@ -344,26 +364,57 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
   }
 
+  @Nullable
   @Override
   public RuntimeInfo lookup(ProgramId programId, RunId runId) {
     Lock lock = runtimeInfosLock.readLock();
     lock.lock();
     try {
-      return runtimeInfos.get(programId.getType(), runId);
+      RuntimeInfo info = runtimeInfos.get(programId.getType(), runId);
+      if (info != null || remoteTwillRunnerService == null) {
+        return info;
+      }
     } finally {
       lock.unlock();
     }
+
+    // The remote twill runner uses the same runId
+    return lookupFromTwillRunner(remoteTwillRunnerService, programId.run(runId.getId()), runId);
   }
 
   @Override
   public Map<RunId, RuntimeInfo> list(ProgramType type) {
+    Map<RunId, RuntimeInfo> result = new HashMap<>();
+
     Lock lock = runtimeInfosLock.readLock();
     lock.lock();
     try {
-      return ImmutableMap.copyOf(runtimeInfos.row(type));
+      result.putAll(runtimeInfos.row(type));
     } finally {
       lock.unlock();
     }
+
+    // Add any missing RuntimeInfo from the remote twill runner
+    if (remoteTwillRunnerService == null) {
+      return Collections.unmodifiableMap(result);
+    }
+
+    for (TwillRunner.LiveInfo liveInfo : remoteTwillRunnerService.lookupLive()) {
+      ProgramId programId = TwillAppNames.fromTwillAppName(liveInfo.getApplicationName(), false);
+      if (programId == null || !programId.getType().equals(type)) {
+        continue;
+      }
+
+      for (TwillController controller : liveInfo.getControllers()) {
+        // For remote twill runner, the twill run id and cdap run id are the same
+        RunId runId = controller.getRunId();
+        if (result.computeIfAbsent(runId, rid -> createRuntimeInfo(programId, runId, controller)) == null) {
+          LOG.warn("Unable to create runtime info for program {} with run id {}", programId, runId);
+        }
+      }
+    }
+
+    return Collections.unmodifiableMap(result);
   }
 
   @Override
@@ -380,7 +431,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public List<RuntimeInfo> listAll(ProgramType... types) {
     List<RuntimeInfo> runningPrograms = new ArrayList<>();
     for (ProgramType type : types) {
-      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : list(type).entrySet()) {
+      for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
         ProgramController.State programState = entry.getValue().getController().getState();
         if (programState.isDone()) {
           continue;
@@ -401,7 +452,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     // No-op
   }
 
-  protected void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
+  @VisibleForTesting
+  void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
     Lock lock = runtimeInfosLock.readLock();
     lock.lock();
     try {
@@ -411,6 +463,25 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     } finally {
       lock.unlock();
     }
+  }
+
+  /**
+   * Uses the given {@link TwillRunner} to lookup {@link RuntimeInfo} for the given program run.
+   *
+   * @param twillRunner the {@link TwillRunner} to lookup from
+   * @param programRunId the program run id
+   * @param twillRunId the twill {@link RunId}
+   * @return the corresponding {@link RuntimeInfo} or {@code null} if no runtime information was found
+   */
+  @Nullable
+  protected RuntimeInfo lookupFromTwillRunner(TwillRunner twillRunner, ProgramRunId programRunId, RunId twillRunId) {
+    TwillController twillController = twillRunner.lookup(TwillAppNames.toTwillAppName(programRunId.getParent()),
+                                                         twillRunId);
+    if (twillController == null) {
+      return null;
+    }
+
+    return createRuntimeInfo(programRunId.getParent(), RunIds.fromString(programRunId.getRun()), twillController);
   }
 
   /**
@@ -473,12 +544,70 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
   }
 
+  /**
+   * Returns {@code true} if there is any running instance of the given program.
+   */
   protected boolean isRunning(ProgramId programId) {
-    for (Map.Entry<RunId, RuntimeInfo> entry : list(programId.getType()).entrySet()) {
-      if (entry.getValue().getProgramId().equals(programId)) {
-        return true;
+    return !list(programId).isEmpty();
+  }
+
+  /**
+   * Creates a {@link RuntimeInfo} representing the given program run.
+   *
+   * @param programId the program id for the program run
+   * @param runId the run id for the program run
+   * @param controller the {@link TwillController} controlling the corresponding twill application
+   * @return a {@link RuntimeInfo} or {@code null} if not able to create the {@link RuntimeInfo} due to unexpected
+   *         and unrecoverable error/bug.
+   */
+  @Nullable
+  protected RuntimeInfo createRuntimeInfo(ProgramId programId, RunId runId, TwillController controller) {
+    try {
+      ProgramController programController = createController(programId, runId, controller);
+      SimpleRuntimeInfo runtimeInfo = programController == null ? null : new SimpleRuntimeInfo(programController,
+                                                                                               programId,
+                                                                                               controller.getRunId());
+      if (runtimeInfo != null) {
+        updateRuntimeInfo(programId.getType(), runId, runtimeInfo);
       }
+      return runtimeInfo;
+    } catch (Exception e) {
+      return null;
     }
-    return false;
+  }
+
+  /**
+   * Creates a {@link ProgramController} from the given {@link TwillController}.
+   *
+   * @param programId the program id for the program run
+   * @param runId the run id for the program run
+   * @param controller the {@link TwillController} controlling the corresponding twill application
+   * @return a {@link ProgramController} or {@code null} if there is unexpected error/bug
+   */
+  @Nullable
+  private ProgramController createController(ProgramId programId, RunId runId, TwillController controller) {
+    ProgramRunner programRunner;
+    try {
+      programRunner = programRunnerFactory.create(programId.getType());
+    } catch (IllegalArgumentException e) {
+      // This shouldn't happen. If it happen, it means CDAP was incorrectly install such that some of the program
+      // type is not support (maybe due to version mismatch in upgrade).
+      LOG.error("Unsupported program type {} for program {}. " +
+                  "It is likely caused by incorrect CDAP installation or upgrade to incompatible CDAP version",
+                programId.getType(), programId);
+      return null;
+    }
+
+    if (!(programRunner instanceof ProgramControllerCreator)) {
+      // This is also unexpected. If it happen, it means the CDAP core or the runtime provider extension was wrongly
+      // implemented
+      ResourceReport resourceReport = controller.getResourceReport();
+      LOG.error("Unable to create ProgramController for program {} for twill application {}. It is likely caused by " +
+                  "invalid CDAP program runtime extension.",
+                programId, resourceReport == null ? "'unknown twill application'" : resourceReport.getApplicationId());
+      return null;
+    }
+
+    return ((ProgramControllerCreator) programRunner).createProgramController(controller, programId, runId);
   }
 }

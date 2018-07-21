@@ -24,6 +24,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramControllerCreator;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.MainClassLoader;
@@ -104,7 +105,7 @@ import javax.annotation.Nullable;
 /**
  * Defines the base framework for starting {@link Program} in the cluster.
  */
-public abstract class DistributedProgramRunner implements ProgramRunner {
+public abstract class DistributedProgramRunner implements ProgramRunner, ProgramControllerCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRunner.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -150,8 +151,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
    * @param runId the run id of the particular execution
    * @return a new instance of {@link ProgramController}.
    */
-  protected abstract ProgramController createProgramController(TwillController twillController,
-                                                               ProgramDescriptor programDescriptor, RunId runId);
+  protected ProgramController createProgramController(TwillController twillController,
+                                                      ProgramDescriptor programDescriptor, RunId runId) {
+    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
+  }
 
   /**
    * Provides the configuration for launching an program container.

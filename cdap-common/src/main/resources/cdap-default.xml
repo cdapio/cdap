@@ -2369,7 +2369,7 @@
   </property>
 
   <property>
-    <name>app.program.runtime.monitor.batch.limit</name>
+    <name>app.program.runtime.monitor.batch.size</name>
     <value>1000</value>
     <description>
       Number of events to fetch from a runtime in each poll call
@@ -2390,6 +2390,14 @@
     <value>5000</value>
     <description>
       Number of milliseconds to wait for the runtime to shutdown after a program execution completed in that runtime.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.initialize.batch.size</name>
+    <value>100</value>
+    <description>
+      Number of runtime states to fetch from dataset in each batch during runtime monitor initialization.
     </description>
   </property>
 

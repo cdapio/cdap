@@ -126,6 +126,30 @@ public class ProvisioningServiceTest {
   }
 
   @Test
+  public void testGetClusterStatus() throws Exception {
+    TaskFields taskFields = createTaskInfo(new MockProvisioner.PropertyBuilder()
+                                             .setFirstClusterStatus(ClusterStatus.RUNNING)
+                                             .failRetryablyEveryN(2)
+                                             .build());
+
+    Cluster cluster = new Cluster("test", ClusterStatus.NOT_EXISTS, Collections.emptyList(), Collections.emptyMap());
+    Assert.assertEquals(ClusterStatus.RUNNING,
+                        provisioningService.getClusterStatus(taskFields.programRunId, taskFields.programOptions,
+                                                             cluster, "cdap"));
+  }
+
+  @Test(expected = Exception.class)
+  public void testGetClusterStatusFailure() throws Exception {
+    TaskFields taskFields = createTaskInfo(new MockProvisioner.PropertyBuilder()
+                                             .setFirstClusterStatus(ClusterStatus.RUNNING)
+                                             .failGet()
+                                             .build());
+
+    Cluster cluster = new Cluster("test", ClusterStatus.NOT_EXISTS, Collections.emptyList(), Collections.emptyMap());
+    provisioningService.getClusterStatus(taskFields.programRunId, taskFields.programOptions, cluster, "cdap");
+  }
+
+  @Test
   public void testGetSpecs() {
     Collection<ProvisionerDetail> specs = provisioningService.getProvisionerDetails();
     Assert.assertEquals(1, specs.size());

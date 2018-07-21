@@ -30,7 +30,6 @@ import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -111,9 +110,8 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   }
 
   @Override
-  protected ProgramController createProgramController(TwillController twillController,
-                                                      ProgramDescriptor programDescriptor, RunId runId) {
-    return new WorkflowTwillProgramController(programDescriptor.getProgramId(), twillController, runId).startListen();
+  public ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
+    return new WorkflowTwillProgramController(programId, twillController, runId).startListen();
   }
 
   @Override
