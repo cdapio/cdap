@@ -106,10 +106,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/**/metadata")
   public void getMetadata(HttpRequest request, HttpResponder responder,
                           @QueryParam("scope") String scope, @QueryParam("type") String type,
-                          @QueryParam("showCustom") boolean showCustom)
+                          @QueryParam("showCustom") boolean showCustom,
+                          @DefaultValue("true") @QueryParam("aggregateRun") boolean aggregateRun)
     throws BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
-    Set<MetadataRecordV2> metadata = getMetadata(metadataEntity, scope);
+    Set<MetadataRecordV2> metadata = getMetadata(metadataEntity, scope, aggregateRun);
     if (showCustom) {
       // if user has specified to show custom entity resources then no need to make the result compatible
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata, SET_METADATA_RECORD_V2_TYPE));
@@ -412,10 +413,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   private Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity,
-                                          @Nullable String scope) throws BadRequestException {
+                                            @Nullable String scope, boolean aggregateRun) throws BadRequestException {
     // the lineage admin handles the metadata call for program runs so delegate the call to that
     Set<MetadataRecordV2> metadata;
-    if (metadataEntity.getType().equals(MetadataEntity.PROGRAM_RUN)) {
+    if (aggregateRun && metadataEntity.getType().equals(MetadataEntity.PROGRAM_RUN)) {
+      // CDAP-13721 for backward compatibility we need to support metadata aggregation of runId.
       metadata = lineageAdmin.getMetadataForRun(EntityId.fromMetadataEntity(metadataEntity));
     } else {
       if (scope == null) {
