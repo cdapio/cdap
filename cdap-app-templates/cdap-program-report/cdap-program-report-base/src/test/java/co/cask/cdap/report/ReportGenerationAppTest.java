@@ -122,10 +122,11 @@ public class ReportGenerationAppTest extends TestBase {
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
+  private static final String USER_ALICE = "alice";
+  private static final String USER_BOB = "bob";
 
   @Test
   public void testGenerateReport() throws Exception {
-
     Long currentTimeMillis = System.currentTimeMillis();
     DatasetId metaFileset = createAndInitializeDataset(NamespaceId.DEFAULT, currentTimeMillis);
 
@@ -211,9 +212,43 @@ public class ReportGenerationAppTest extends TestBase {
     urlConn = (HttpURLConnection) reportDeleteURL.openConnection();
     urlConn.setRequestMethod("DELETE");
     Assert.assertEquals(404, urlConn.getResponseCode());
+
+    // test querying for time range before the start secs, to verify empty results contents
+    validateEmptyReports(reportURL, startSecs - TimeUnit.HOURS.toSeconds(2), startSecs - 30, filters);
+    // test querying for time range after the start secs, but with filter that doesnt match any records
+    // to verify empty results contents
+    List<Filter> filters2 =
+      ImmutableList.of(
+        new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
+        // all the programs are run by user alice, user bob will match no records.
+        new ValueFilter<>(Constants.USER, ImmutableSet.of(USER_BOB), null));
+    validateEmptyReports(reportURL, startSecs, startSecs + 30, filters2);
     sparkManager.stop();
     sparkManager.waitForStopped(60, TimeUnit.SECONDS);
     deleteDatasetInstance(metaFileset);
+  }
+
+  private void validateEmptyReports(URL reportURL, long startSecs,
+                                    long endSecs, List<Filter> filters) throws Exception {
+    ReportGenerationRequest request =
+      new ReportGenerationRequest("ns1_ns2_report", startSecs, endSecs,
+                                  new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
+                                  ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
+    HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(request).getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(200, urlConn.getResponseCode());
+    Map<String, String> reportIdMap = getResponseObject(urlConn, STRING_STRING_MAP);
+    String reportId = reportIdMap.get("id");
+    Assert.assertNotNull(reportId);
+    URL reportIdURL = reportURL.toURI().resolve("info?report-id=" + reportId).toURL();
+    validateEmptyReportSummary(reportIdURL);
+    URL reportRunsURL = reportURL.toURI().resolve("download?report-id=" + reportId).toURL();
+    validateEmptyReportContent(reportRunsURL);
   }
 
   private DatasetId createAndInitializeDataset(NamespaceId namespaceId, long currentTimeMillis) throws Exception {
@@ -369,9 +404,38 @@ public class ReportGenerationAppTest extends TestBase {
     // averages with difference smaller than 0.01 are considered equal
     Assert.assertTrue(Math.abs(300.0 - durationStats.getAverage()) < 0.01);
     Assert.assertEquals(new StartStats(startSecs, startSecs), summary.getStarts());
-    Assert.assertEquals(ImmutableSet.of(new UserAggregate("alice", 2)), new HashSet<>(summary.getOwners()));
+    Assert.assertEquals(ImmutableSet.of(new UserAggregate(USER_ALICE, 2)), new HashSet<>(summary.getOwners()));
     Assert.assertEquals(ImmutableSet.of(new StartMethodAggregate(ProgramRunStartMethod.TRIGGERED, 2)),
                         new HashSet<>(summary.getStartMethods()));
+  }
+
+  private void validateEmptyReportSummary(URL reportIdURL)
+    throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    Tasks.waitFor(ReportStatus.COMPLETED, () -> {
+      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+                                                                    REPORT_GEN_INFO_TYPE);
+      if (ReportStatus.FAILED.equals(reportGenerationInfo.getStatus())) {
+        Assert.fail("Report generation failed");
+      }
+      return reportGenerationInfo.getStatus();
+    }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
+
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+                                                                  REPORT_GEN_INFO_TYPE);
+    // assert the summary content is expected
+    ReportSummary summary = reportGenerationInfo.getSummary();
+    Assert.assertNotNull(summary);
+    Assert.assertEquals(ImmutableSet.of(new NamespaceAggregate("ns1", 0), new NamespaceAggregate("ns2" , 0)),
+                        new HashSet<>(summary.getNamespaces()));
+    Assert.assertEquals(new DurationStats(0L, 0L, 0.0), summary.getDurations());
+    Assert.assertEquals(new StartStats(0, 0), summary.getStarts());
+    Assert.assertEquals(0, summary.getOwners().size());
+    Assert.assertEquals(0, summary.getStartMethods().size());
+  }
+
+  private void validateEmptyReportContent(URL reportRunsURL) throws IOException {
+    ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
+    Assert.assertEquals(0, reportContent.getTotal());
   }
 
   private void validateReportContent(URL reportRunsURL) throws IOException {
@@ -420,7 +484,7 @@ public class ReportGenerationAppTest extends TestBase {
       "\"type\": \"PROGRAM_STATUS\"}]}";
     ProgramStartInfo startInfo =
       new ProgramStartInfo(ImmutableMap.of(Constants.Notification.SCHEDULE_INFO_KEY, scheduleInfo),
-                           new ArtifactId("Artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER), "alice");
+                           new ArtifactId("Artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER), USER_ALICE);
     long delay = TimeUnit.MINUTES.toMillis(5);
     int mockMessageId = 0;
     for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {

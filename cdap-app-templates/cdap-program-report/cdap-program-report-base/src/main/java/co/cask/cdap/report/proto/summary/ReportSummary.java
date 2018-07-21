@@ -30,11 +30,15 @@ public class ReportSummary {
   private final StartStats starts;
   private final List<UserAggregate> owners;
   private final List<StartMethodAggregate> startMethods;
+  private final long recordCount;
+  private final long creationTimeMillis;
+  private final long expirationTimeMillis;
 
   public ReportSummary(List<NamespaceAggregate> namespaces, long start, long end,
                        List<ArtifactAggregate> artifacts,
                        DurationStats durations, StartStats starts, List<UserAggregate> owners,
-                       List<StartMethodAggregate> startMethods) {
+                       List<StartMethodAggregate> startMethods, long recordCount, long creationTimeMillis,
+                       long reportExpiryDurationMillis) {
     this.namespaces = namespaces;
     this.start = start;
     this.end = end;
@@ -43,6 +47,9 @@ public class ReportSummary {
     this.starts = starts;
     this.owners = owners;
     this.startMethods = startMethods;
+    this.recordCount = recordCount;
+    this.creationTimeMillis = creationTimeMillis;
+    this.expirationTimeMillis = creationTimeMillis + reportExpiryDurationMillis;
   }
 
   /**
@@ -86,6 +93,34 @@ public class ReportSummary {
    */
   public StartStats getStarts() {
     return starts;
+  }
+
+  /**
+   * @return the total record count
+   */
+  public long getRecordCount() {
+    return recordCount;
+  }
+
+  /**
+   * @return the time when the report was successfully created
+   */
+  public long getCreationTimeMillis() {
+    return creationTimeMillis;
+  }
+
+  /**
+   * @return true if the report has passed expiration period
+   */
+  public boolean isExpired() {
+    return System.currentTimeMillis() > expirationTimeMillis;
+  }
+
+  /**
+   * @return expiration time of the report in milli seconds
+   */
+  public long getyExpirationTimeMillis() {
+    return expirationTimeMillis;
   }
 
   /**

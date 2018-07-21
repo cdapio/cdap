@@ -354,28 +354,42 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       // if the report generation completed, read the summary from _SUMMARY file and include the summary
       // in the response
       if (ReportStatus.COMPLETED.equals(metaInfo.getStatus())) {
-        ReportSummary summary = GSON.fromJson(readStringFromFile(reportIdDir, LocationName.SUMMARY),
+        ReportSummary summary = GSON.fromJson(readStringFromFile(reportIdDir.append(LocationName.SUMMARY)),
                                               ReportSummary.class);
         return new ReportGenerationInfo(metaInfo, null, reportRequest, summary);
       }
       // if the report generation failed, read the error from _FAILURE file and include it in the response
       if (ReportStatus.FAILED.equals(metaInfo.getStatus())) {
-        return new ReportGenerationInfo(metaInfo, readStringFromFile(reportIdDir, FAILURE_FILE), reportRequest, null);
+        return new ReportGenerationInfo(metaInfo, readStringFromFile(reportIdDir.append(FAILURE_FILE)),
+                                        reportRequest, null);
       }
       // if the report is neither COMPLETED nor FAILED, return response with error and summary as null
       return new ReportGenerationInfo(metaInfo, null, reportRequest, null);
     }
 
     /**
+     * Read report summary for the report if it exists, return null otherwise
+     * @param reportIdDir
+     * @return {@link ReportSummary}
+     * @throws Exception
+     */
+    @Nullable
+    private ReportSummary getReportSummaryIfExists(Location reportIdDir) throws Exception {
+      Location summaryFileLocation = reportIdDir.append(LocationName.SUMMARY);
+      if (!summaryFileLocation.exists()) {
+        return null;
+      }
+      return GSON.fromJson(readStringFromFile(summaryFileLocation), ReportSummary.class);
+    }
+
+    /**
      * Reads the String content from the given file under the given directory
      *
-     * @param dir the location of the directory
-     * @param fileName the name of the file
+     * @param fileLocation file location
      * @return the String content of the file
      * @throws Exception if the file does not exist or fails to read the content of the file
      */
-    private static String readStringFromFile(Location dir, String fileName) throws Exception {
-      Location fileLocation = dir.append(fileName);
+    private String readStringFromFile(Location fileLocation) throws Exception {
       if (!fileLocation.exists()) {
         throw new Exception(String.format("File %s does not exist.", fileLocation.toURI().toString()));
       }
@@ -385,9 +399,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     /**
      * Gets the report request from _START file, which was written at the beginning of report generation
      */
-    private static ReportGenerationRequest getReportRequest(Location reportIdDir) throws Exception {
+    private ReportGenerationRequest getReportRequest(Location reportIdDir) throws Exception {
       // read the report request from _START file, which was written at the beginning of report generation
-      String reportRequestString = readStringFromFile(reportIdDir, START_FILE);
+      String reportRequestString = readStringFromFile(reportIdDir.append(START_FILE));
       return GSON.fromJson(reportRequestString, REPORT_GENERATION_REQUEST_TYPE);
     }
 
@@ -406,14 +420,15 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
                                              ReportGenerationRequest generationRequest) throws Exception {
       // Get the creation time from the report ID, which is time based UUID
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
-      ReportStatus status = getReportStatus(reportIdDir);
+      ExtendedReportStatus extendedReportStatus = getReportStatus(reportIdDir);
+      ReportStatus status = extendedReportStatus.getReportStatus();
       Location savedFile = reportIdDir.append(SAVED_FILE);
       // if the report is not saved, get the name of the report from the report generation request and include the
       // expiry time in the response if the report is COMPLETED
       if (!savedFile.exists()) {
         Long expiryTimeSecs = null;
-        if (ReportStatus.COMPLETED.equals(status)) {
-          expiryTimeSecs = TimeUnit.MILLISECONDS.toSeconds(getExpiryTimeMillis(reportIdDir));
+        if (extendedReportStatus.getExpirationTime() != null) {
+          expiryTimeSecs = TimeUnit.MILLISECONDS.toSeconds(extendedReportStatus.getExpirationTime());
         }
         return new ReportMetaInfo(generationRequest.getName(), null, creationTime, expiryTimeSecs, status);
       }
@@ -446,7 +461,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       ReportStatus status;
       try {
-        status = getReportStatus(reportIdDir);
+        status = getReportStatus(reportIdDir).getReportStatus();
       } catch (Exception e) {
         LOG.error("Failed to get the status of the report {}", reportId, e);
         responder.sendError(500, String.format("Failed to get the status of the report %s becasue of error: %s",
@@ -495,7 +510,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       ReportStatus status;
       try {
-        status = getReportStatus(reportIdDir);
+        status = getReportStatus(reportIdDir).getReportStatus();
       } catch (Exception e) {
         LOG.error("Failed to get the status of the report {}", reportId, e);
         responder.sendError(500, String.format("Failed to get the status of the report %s because of error: %s",
@@ -521,7 +536,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         if (savedFile.exists()) {
           try {
             ReportSaveRequest saveRequest =
-              GSON.fromJson(readStringFromFile(reportIdDir, SAVED_FILE), REPORT_SAVE_REQUEST_TYPE);
+              GSON.fromJson(readStringFromFile(reportIdDir.append(SAVED_FILE)), REPORT_SAVE_REQUEST_TYPE);
             responder.sendError(403, String.format("Report with id %s is already saved with name '%s' " +
                                                      "and description '%s'. Updating the saved report is not allowed.",
                                                    reportId, saveRequest.getName(), saveRequest.getDescription()));
@@ -616,7 +631,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
                                  @QueryParam("offset") @DefaultValue("0") long offset,
                                  @QueryParam("limit") @DefaultValue(DEFAULT_LIMIT) int limit,
                                  @QueryParam("report-id") String reportId,
-                                 @QueryParam("share-id") String shareId) throws IOException {
+                                 @QueryParam("share-id") String shareId) throws Exception {
       if (offset < 0) {
         responder.sendError(400, "offset cannot be negative");
         return;
@@ -657,10 +672,53 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         responder.sendError(404, String.format("Report with %s does not exist.", idMessage));
         return;
       }
+      ReportSummary summary = getReportSummaryIfExists(reportIdDir);
+      if (summary != null) {
+        // report completed succcessfully, might be expired
+        if (summary.isExpired()) {
+          responder.sendError(404, String.format("Report with %s does not exist.", idMessage));
+          return;
+        }
+        // report completed and not expired, read contents and return
+        long totalRecords = summary.getRecordCount();
+        List<String> reportRecords = new ArrayList<>();
+        if (totalRecords > 0) {
+          long recordCount = 0;
+          Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
+          // TODO: [CDAP-13291] need to support reading multiple report files
+          Optional<Location> reportFile =
+            reportDir.list().stream().filter(l -> l.getName().endsWith(".avro")).findFirst();
+          // TODO: [CDAP-13292] use cache to store content of the reports
+          // Read the report file and add lines starting from the position
+          // of offset to the result until the result reaches
+          // the limit
+          if (reportFile.isPresent()) {
+            Location reportFileLocation = reportFile.get();
+            DataFileStream<GenericRecord> dataFileStream =
+              new DataFileStream<>(reportFileLocation.getInputStream(), new GenericDatumReader<>());
+            while (dataFileStream.hasNext()) {
+              GenericRecord record = dataFileStream.next();
+              if (recordCount++ < offset) {
+                continue;
+              }
+              reportRecords.add(record.toString());
+              if (reportRecords.size() >= limit) {
+                break;
+              }
+            }
+          }
+        }
+        // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
+        // without stringifying them
+        responder.sendString(200, new ReportContent(offset, limit, totalRecords, reportRecords).toJson(),
+                             StandardCharsets.UTF_8);
+        return;
+      }
+
       // Get the status of the report and only COMPLETED report can be read
       ReportStatus status;
       try {
-        status = getReportStatus(reportIdDir);
+        status = getReportStatus(reportIdDir).getReportStatus();
       } catch (Exception e) {
         LOG.error("Failed to get the status of the report {}", idMessage, e);
         responder.sendError(500, String.format("Failed to get the status of the %s because of error: %s",
@@ -675,49 +733,11 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
           responder.sendError(400, String.format("Reading details of the %s with failed status is not allowed.",
                                                  idMessage));
           return;
-        // expired report is considered as deleted
-        case EXPIRED:
-          responder.sendError(404, String.format("Report with %s does not exist.", idMessage));
-          return;
-        case COMPLETED:
-          break;
         default: // this should never happen
           responder.sendError(500, String.format("Unable to read report with %s with unknown status %s.",
                                                  idMessage, status));
           return;
       }
-      List<String> reportRecords = new ArrayList<>();
-      long recordCount = 0;
-      Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
-      // TODO: [CDAP-13290] reports should be in avro format instead of json text;
-      // TODO: [CDAP-13291] need to support reading multiple report files
-      Optional<Location> reportFile = reportDir.list().stream().filter(l -> l.getName().endsWith(".avro")).findFirst();
-      // TODO: [CDAP-13292] use cache to store content of the reports
-      // Read the report file and add lines starting from the position of offset to the result until the result reaches
-      // the limit
-      if (reportFile.isPresent()) {
-        Location reportFileLocation = reportFile.get();
-        DataFileStream<GenericRecord> dataFileStream =
-          new DataFileStream<>(reportFileLocation.getInputStream(), new GenericDatumReader<>());
-        while (dataFileStream.hasNext()) {
-          GenericRecord record = dataFileStream.next();
-          if (recordCount++ < offset) {
-            continue;
-          }
-          reportRecords.add(record.toString());
-          if (reportRecords.size() >= limit) {
-            break;
-          }
-        }
-      }
-      // Get the total number of records from the COUNT file
-      String total =
-        new String(ByteStreams.toByteArray(reportIdDir.append(LocationName.COUNT_FILE).getInputStream()),
-                   StandardCharsets.UTF_8);
-      // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
-      // without stringifying them
-      responder.sendString(200, new ReportContent(offset, limit, Long.parseLong(total), reportRecords).toJson(),
-                           StandardCharsets.UTF_8);
     }
 
     @POST
@@ -841,7 +861,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
       LOG.debug("Filtered meta files {}", metaFilePaths);
       // Generate the report with the request and program run meta files
-      ReportGenerationHelper.generateReport(sqlContext, reportRequest, metaFilePaths, reportIdDir);
+      ReportGenerationHelper.generateReport(sqlContext, reportRequest,
+                                            metaFilePaths, reportIdDir, reportsExpiryTimeMillis);
     }
 
     /**
@@ -865,43 +886,50 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     /**
-     * Gets the expiry time in milliseconds of a report by adding the reportsExpiryTimeMillis
-     * to the report generation completed time read from the _SUCCESS file.
-     *
-     * @param reportIdDir the base directory with report ID as directory name
-     * @return the expiry time in milliseconds or {@code null} if the expiry time cannot be determined
-     * @throws Exception _SUCCESS doesn't exist or reading the report generation completed time from it failed
-     */
-    private long getExpiryTimeMillis(Location reportIdDir) throws Exception {
-      // Get the report generation completed time from the _SUCCESS file
-      String completedTime = readStringFromFile(reportIdDir, LocationName.SUCCESS_FILE);
-      // the report file will be expired after reportsExpiryTimeMillis since report generation completed time
-      return Long.parseLong(completedTime) + reportsExpiryTimeMillis;
-    }
-
-    /**
-     * Returns the status of the report generation by checking the presence of the _TO_BE_DELETED file,
-     * _FAILURE file, or the _SUCCESS file. If none of these files exists, the report generation is still running.
+     * Returns the status of the report generation by checking the presence of the _SUMMARY file,
+     * _FAILURE file. If none of these files exists, the report generation is still running.
      *
      * TODO: [CDAP-13215] failure file may not be written if the Spark program is killed. Status of killed
      * report generation job might be returned as RUNNING
      *
      * @param reportIdDir the base directory with report ID as directory name
-     * @return status of the report generation
+     * @return {@link ExtendedReportStatus} if report is completed extended report status will have expiration time
      */
-    private ReportStatus getReportStatus(Location reportIdDir) throws Exception {
+    private ExtendedReportStatus getReportStatus(Location reportIdDir) throws Exception {
       // if the report is completed but has expired, return EXPIRED as its status too
-      if (reportIdDir.append(LocationName.SUCCESS_FILE).exists() &&
-        getExpiryTimeMillis(reportIdDir) < System.currentTimeMillis()) {
-        return ReportStatus.EXPIRED;
+      if (reportIdDir.append(LocationName.SUMMARY).exists()) {
+        ReportSummary reportSummary = getReportSummaryIfExists(reportIdDir);
+        return reportSummary.isExpired() ? new ExtendedReportStatus(ReportStatus.EXPIRED) :
+          new ExtendedReportStatus(ReportStatus.COMPLETED, reportSummary.getyExpirationTimeMillis());
       }
       if (reportIdDir.append(FAILURE_FILE).exists()) {
-        return ReportStatus.FAILED;
+        return new ExtendedReportStatus(ReportStatus.FAILED);
       }
-      if (reportIdDir.append(LocationName.SUCCESS_FILE).exists()) {
-        return ReportStatus.COMPLETED;
+      return new ExtendedReportStatus(ReportStatus.RUNNING);
+    }
+
+    private class ExtendedReportStatus {
+      private final ReportStatus status;
+      @Nullable
+      private final Long expirationTimeMillis;
+
+      private ExtendedReportStatus(ReportStatus status) {
+        this(status, null);
       }
-      return ReportStatus.RUNNING;
+
+      private ExtendedReportStatus(ReportStatus status, @Nullable Long expirationTime) {
+        this.status = status;
+        this.expirationTimeMillis = expirationTime;
+      }
+
+      private ReportStatus getReportStatus() {
+        return status;
+      }
+
+      @Nullable
+      private Long getExpirationTime() {
+        return expirationTimeMillis;
+      }
     }
 
     private Location getDatasetBaseLocation(String datasetName) {
