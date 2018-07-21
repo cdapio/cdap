@@ -51,24 +51,20 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntries;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.data2.metadata.dataset.MetadataV1;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -80,8 +76,9 @@ import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -98,24 +95,17 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.util.EnumSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Unit tests for Metadata Migrator Service.
  */
 public class MetadataMigratorTest {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
-    .create();
-
   private final ApplicationId app1 = new ApplicationId("ns1", "app1");
-  private final ProgramId flow1 = new ProgramId("ns1", "app1", ProgramType.FLOW, "flow1");
   private final DatasetId dataset1 = new DatasetId("ns1", "ds1");
   private final StreamId stream1 = new StreamId("ns1", "s1");
-  private final StreamViewId view1 = new StreamViewId(stream1.getNamespace(), stream1.getStream(), "v1");
   private final ArtifactId artifact1 = new ArtifactId("ns1", "a1", "1.0.0");
 
   private static CConfiguration cConf;
@@ -147,10 +137,9 @@ public class MetadataMigratorTest {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), transactionSystemClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
-
   }
 
   @After
@@ -170,8 +159,8 @@ public class MetadataMigratorTest {
     DatasetId v2BusinessDatasetId = NamespaceId.SYSTEM.dataset("v2.business.metadata");
 
     // We will keep track of last timestamp so that we can verify if the history rows are written with existing ts.
-    long sTs = generateMetadata(v1SystemDatasetId);
-    long bTs = generateMetadata(v1BusinessDatasetId);
+    List<Long> sList = generateMetadata(v1SystemDatasetId);
+    List<Long> bList = generateMetadata(v1BusinessDatasetId);
 
     MetadataMigrator migrator = new MetadataMigrator(cConf, datasetFramework, transactionSystemClient);
     migrator.start();
@@ -184,7 +173,7 @@ public class MetadataMigratorTest {
       MetadataDataset v2Business = getMetadataDataset(context, v2BusinessDatasetId);
 
       assertProperties(v2System, v2Business);
-      assertHistory(v2System, v2Business, sTs, bTs);
+      assertHistory(v2System, v2Business, sList, bList);
       assertIndex(v2System);
       assertIndex(v2Business);
     });
@@ -216,46 +205,38 @@ public class MetadataMigratorTest {
         total = total + scanCount;
       } while (scanCount != 0);
 
-      Assert.assertEquals(13, total);
+      Assert.assertEquals(9, total);
     });
   }
 
   private void assertProperties(MetadataDataset v2System, MetadataDataset v2Business) {
     Assert.assertEquals("avalue11", v2System.getProperties(app1.toMetadataEntity()).get("akey1"));
-    Assert.assertEquals("avalue2", v2System.getProperties(flow1.toMetadataEntity()).get("akey2"));
     Assert.assertEquals("avalue3", v2System.getProperties(dataset1.toMetadataEntity()).get("akey3"));
     Assert.assertEquals("avalue4", v2System.getProperties(stream1.toMetadataEntity()).get("akey4"));
-    Assert.assertEquals("avalue5", v2System.getProperties(view1.toMetadataEntity()).get("akey5"));
     Assert.assertEquals("avalue6", v2System.getProperties(artifact1.toMetadataEntity()).get("akey6"));
 
     Assert.assertEquals("avalue11", v2Business.getProperties(app1.toMetadataEntity()).get("akey1"));
-    Assert.assertEquals("avalue2", v2Business.getProperties(flow1.toMetadataEntity()).get("akey2"));
     Assert.assertEquals("avalue3", v2Business.getProperties(dataset1.toMetadataEntity()).get("akey3"));
     Assert.assertEquals("avalue4", v2Business.getProperties(stream1.toMetadataEntity()).get("akey4"));
-    Assert.assertEquals("avalue5", v2Business.getProperties(view1.toMetadataEntity()).get("akey5"));
     Assert.assertEquals("avalue6", v2Business.getProperties(artifact1.toMetadataEntity()).get("akey6"));
   }
 
-  private void assertHistory(MetadataDataset v2System, MetadataDataset v2Business, long sTs, long bTs) {
-    verifyhistory(v2System, app1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, flow1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, dataset1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, stream1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, view1.toMetadataEntity(), sTs);
-    verifyhistory(v2System, artifact1.toMetadataEntity(), sTs);
+  private void assertHistory(MetadataDataset v2System, MetadataDataset v2Business, List<Long> sTs, List<Long> bTs) {
+    verifyHistory(v2System, app1.toMetadataEntity(), sTs.get(0));
+    verifyHistory(v2System, dataset1.toMetadataEntity(), sTs.get(1));
+    verifyHistory(v2System, stream1.toMetadataEntity(), sTs.get(2));
+    verifyHistory(v2System, artifact1.toMetadataEntity(), sTs.get(3));
 
-    verifyhistory(v2Business, app1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, flow1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, dataset1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, stream1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, view1.toMetadataEntity(), bTs);
-    verifyhistory(v2Business, artifact1.toMetadataEntity(), bTs);
+    verifyHistory(v2Business, app1.toMetadataEntity(), bTs.get(0));
+    verifyHistory(v2Business, dataset1.toMetadataEntity(), bTs.get(1));
+    verifyHistory(v2Business, stream1.toMetadataEntity(), bTs.get(2));
+    verifyHistory(v2Business, artifact1.toMetadataEntity(), bTs.get(3));
   }
 
   private void assertIndex(MetadataDataset v2System) throws Exception {
     SearchRequest sr = new SearchRequest(new NamespaceId("ns1"), "avalue1",
-                                              ImmutableSet.of(EntityTypeSimpleName.ALL), SortInfo.DEFAULT, 0,
-                                              Integer.MAX_VALUE, 1, null, false, EnumSet.of(EntityScope.USER));
+                                         ImmutableSet.of(EntityTypeSimpleName.ALL), SortInfo.DEFAULT, 0,
+                                         Integer.MAX_VALUE, 1, null, false, EnumSet.of(EntityScope.USER));
 
 
     List<MetadataEntry> entries = v2System.search(sr).getResults();
@@ -265,21 +246,21 @@ public class MetadataMigratorTest {
     }
   }
 
-  private void verifyhistory(MetadataDataset v2, MetadataEntity entity, long timestamp) {
+  private void verifyHistory(MetadataDataset v2, MetadataEntity entity, long timestamp) {
     for (Metadata metadata : v2.getSnapshotBeforeTime(ImmutableSet.of(entity), timestamp)) {
       Assert.assertEquals(1, metadata.getProperties().size());
     }
   }
 
-  private long generateMetadata(DatasetId datasetId) throws Exception {
+  private List<Long> generateMetadata(DatasetId datasetId) throws Exception {
     // Set some properties
-    write(datasetId, app1, "akey1", "avalue1");
-    write(datasetId, flow1, "akey2", "avalue2");
-    write(datasetId, dataset1, "akey3", "avalue3");
-    write(datasetId, stream1, "akey4", "avalue4");
-    write(datasetId, view1, "akey5", "avalue5");
-    write(datasetId, artifact1, "akey6", "avalue6");
-    return write(datasetId, app1, "akey1", "avalue11");
+    List<Long> list = new LinkedList<>();
+    list.add(write(datasetId, app1, "akey1", "avalue1"));
+    list.add(write(datasetId, dataset1, "akey3", "avalue3"));
+    list.add(write(datasetId, stream1, "akey4", "avalue4"));
+    list.add(write(datasetId, artifact1, "akey6", "avalue6"));
+    list.add(write(datasetId, app1, "akey1", "avalue11"));
+    return list;
   }
 
   private long write(DatasetId datasetId, NamespacedEntityId targetId, String key, String value) throws Exception {
@@ -309,17 +290,127 @@ public class MetadataMigratorTest {
   }
 
   private Put createHistoryPut(NamespacedEntityId targetId, long time) {
-    MetadataV1 metadataV1 = getMetadataV1(targetId);
     byte[] row = MdsHistoryKey.getMdsKey(targetId, time).getKey();
+    String jsonValue = getJsonValue(targetId.getEntityType());
+
     Put put = new Put(row);
-    put.add(Bytes.toBytes("h"), Bytes.toBytes(GSON.toJson(metadataV1)));
+    put.add(Bytes.toBytes("h"), Bytes.toBytes(jsonValue));
     return put;
   }
 
-  private MetadataV1 getMetadataV1(NamespacedEntityId targetId) {
-    Map<String, String> properties = ImmutableMap.of("pk1", "pv1", "pk2", "pv2");
-    Set<String> tags = ImmutableSet.of("tag1, tag2");
-    return new MetadataV1(targetId, properties, tags);
+  private String getJsonValue(EntityType entityType) {
+    String value = "";
+    switch (entityType) {
+      case APPLICATION:
+        JsonObject namespaceId = new JsonObject();
+        namespaceId.addProperty("id", "ns1");
+
+        JsonObject applicationId = new JsonObject();
+        applicationId.add("namespace", namespaceId);
+        applicationId.addProperty("applicationId", "app1");
+
+        JsonObject entityId = new JsonObject();
+        entityId.addProperty("type", "application");
+        entityId.add("id", applicationId);
+
+        JsonObject properties = new JsonObject();
+        properties.addProperty("akey1", "avalue1");
+
+        JsonArray tags = new JsonArray();
+        tags.add(new JsonPrimitive("cdap-data-pipeline"));
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add("namespacedEntityId", entityId);
+        jsonObject.add("properties", properties);
+        jsonObject.add("tags", tags);
+
+        value = jsonObject.toString();
+        break;
+      case DATASET:
+        namespaceId = new JsonObject();
+        namespaceId.addProperty("id", "ns1");
+
+        JsonObject dsId = new JsonObject();
+        dsId.add("namespace", namespaceId);
+        dsId.addProperty("instanceId", "ds1");
+
+        entityId = new JsonObject();
+        entityId.addProperty("type", "datasetinstance");
+        entityId.add("id", dsId);
+
+        properties = new JsonObject();
+        properties.addProperty("akey3", "avalue3");
+
+        tags = new JsonArray();
+        tags.add(new JsonPrimitive("explore"));
+        tags.add(new JsonPrimitive("batch"));
+
+        jsonObject = new JsonObject();
+        jsonObject.add("namespacedEntityId", entityId);
+        jsonObject.add("properties", properties);
+        jsonObject.add("tags", tags);
+
+        value = jsonObject.toString();
+        break;
+      case ARTIFACT:
+        namespaceId = new JsonObject();
+        namespaceId.addProperty("id", "ns1");
+
+        JsonObject artifactId = new JsonObject();
+        artifactId.add("namespace", namespaceId);
+        artifactId.addProperty("name", "a1");
+
+        JsonObject version = new JsonObject();
+        version.addProperty("version", "1.0.0");
+        version.addProperty("major", "3");
+        version.addProperty("minor", "0");
+        version.addProperty("fix", "4");
+
+        artifactId.add("version", version);
+
+        entityId = new JsonObject();
+        entityId.addProperty("type", "artifact");
+        entityId.add("id", artifactId);
+
+        properties = new JsonObject();
+        properties.addProperty("akey1", "avalue1");
+
+        tags = new JsonArray();
+
+        jsonObject = new JsonObject();
+        jsonObject.add("namespacedEntityId", entityId);
+        jsonObject.add("properties", properties);
+        jsonObject.add("tags", tags);
+
+        value = jsonObject.toString();
+        break;
+      case STREAM:
+        namespaceId = new JsonObject();
+        namespaceId.addProperty("id", "ns1");
+
+        JsonObject streamId = new JsonObject();
+        streamId.add("namespace", namespaceId);
+        streamId.addProperty("streamName", "s1");
+
+        entityId = new JsonObject();
+        entityId.addProperty("type", "stream");
+        entityId.add("id", streamId);
+
+        properties = new JsonObject();
+        properties.addProperty("akey4", "avalue4");
+
+        tags = new JsonArray();
+
+        jsonObject = new JsonObject();
+        jsonObject.add("namespacedEntityId", entityId);
+        jsonObject.add("properties", properties);
+        jsonObject.add("tags", tags);
+
+        value = jsonObject.toString();
+        break;
+    }
+
+    return value;
   }
 
   /**

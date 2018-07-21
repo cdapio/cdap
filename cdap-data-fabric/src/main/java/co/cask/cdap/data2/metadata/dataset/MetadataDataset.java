@@ -42,6 +42,7 @@ import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -189,6 +190,9 @@ public class MetadataDataset extends AbstractDataset {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataDataset.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+    .create();
+  private static final Gson V1_GSON = new GsonBuilder()
+    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedIdCodec())
     .create();
 
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
@@ -824,11 +828,11 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   private void write(MetadataEntity metadataEntity, MetadataEntry entry, Set<Indexer> indexers) {
-    writeWithoutHistory(metadataEntity, entry, indexers);
+    writeValueWithIndexes(metadataEntity, entry, indexers);
     writeHistory(metadataEntity);
   }
 
-  private void writeWithoutHistory(MetadataEntity metadataEntity, MetadataEntry entry, Set<Indexer> indexers) {
+  private void writeValueWithIndexes(MetadataEntity metadataEntity, MetadataEntry entry, Set<Indexer> indexers) {
     String key = entry.getKey();
     MDSKey mdsValueKey = MetadataKey.createValueRowKey(metadataEntity, key);
     Put put = new Put(mdsValueKey.getKey());
@@ -1147,6 +1151,9 @@ public class MetadataDataset extends AbstractDataset {
    * Starts scanning of V1 table value row keys in batches. If there are no more value row keys available,
    * it will scan history rows. If there are no value/history rows, it returns empty list.
    *
+   * This would mean when metadata migration is in progress, for an entity, if corresponding history record is not
+   * migrated, the get query for that history record will fail.
+   *
    * @param limit  Batch size for scan/delete.
    * @return metadata entries with list of {@link KeyValue} where key is timestamp for history row other wise
    * it is null, value is {@link MetadataEntry} and list of rowkeys to be deleted.
@@ -1218,7 +1225,7 @@ public class MetadataDataset extends AbstractDataset {
     byte[] rowKey = row.getRow();
     // History rows does not store entity type in the key. So to get the entity, we will read the value, deserialize it.
     // However, in v2 tables, we are going to add type in the history row key.
-    MetadataV1 metadata = GSON.fromJson(row.getString(HISTORY_COLUMN), MetadataV1.class);
+    MetadataV1 metadata = V1_GSON.fromJson(row.getString(HISTORY_COLUMN), MetadataV1.class);
     if (metadata == null) {
       return null;
     }
@@ -1237,8 +1244,8 @@ public class MetadataDataset extends AbstractDataset {
     for (KeyValue<Long, MetadataEntry> kv : entries) {
       MetadataEntry entry = kv.getValue();
       if (kv.getKey() == null) {
-        writeWithoutHistory(entry.getMetadataEntity(), entry,
-                            getIndexersForKey(entry.getMetadataEntity(), entry.getKey()));
+        writeValueWithIndexes(entry.getMetadataEntity(), entry,
+                              getIndexersForKey(entry.getMetadataEntity(), entry.getKey()));
       } else {
         writeHistory(entry.getMetadataEntity(), kv.getKey());
       }
