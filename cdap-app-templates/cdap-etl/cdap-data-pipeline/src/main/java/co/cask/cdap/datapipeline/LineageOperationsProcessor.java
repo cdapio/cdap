@@ -21,10 +21,10 @@ import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
-import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
-import co.cask.cdap.etl.api.lineage.field.PipelineReadOperation;
-import co.cask.cdap.etl.api.lineage.field.PipelineTransformOperation;
-import co.cask.cdap.etl.api.lineage.field.PipelineWriteOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldReadOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldTransformOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldWriteOperation;
 import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
@@ -52,7 +52,7 @@ public class LineageOperationsProcessor {
   private final List<String> topologicalOrder;
   private final Dag stageDag;
   // Map of stage to list of operations recorded by that stage
-  private final Map<String, List<PipelineOperation>> stageOperations;
+  private final Map<String, List<FieldOperation>> stageOperations;
   // Map of stage name to another map which contains the output field names to the corresponding origin
   private final Map<String, Map<String, String>> stageOutputsWithOrigins;
   // Set of stages which requires no implicit merge operation for example stages of type join
@@ -60,7 +60,7 @@ public class LineageOperationsProcessor {
   private Map<String, Operation> processedOperations;
 
   public LineageOperationsProcessor(Set<Connection> stageConnections,
-                                    Map<String, List<PipelineOperation>> stageOperations,
+                                    Map<String, List<FieldOperation>> stageOperations,
                                     Set<String> noMergeRequiredStages) {
     this.stageDag = new Dag(stageConnections);
     this.topologicalOrder = stageDag.getTopologicalOrder();
@@ -89,20 +89,20 @@ public class LineageOperationsProcessor {
       if (stageInputs.size() > 1 && !noMergeRequiredStages.contains(stageName)) {
         addMergeOperation(stageInputs, processedOperations);
       }
-      List<PipelineOperation> pipelineOperations = stageOperations.get(stageName);
-      for (PipelineOperation pipelineOperation : pipelineOperations) {
+      List<FieldOperation> fieldOperations = stageOperations.get(stageName);
+      for (FieldOperation fieldOperation : fieldOperations) {
         Operation newOperation = null;
-        String newOperationName =  prefixedOperationName(stageName, pipelineOperation.getName());
+        String newOperationName =  prefixedOperationName(stageName, fieldOperation.getName());
         Set<String> currentOperationOutputs = new LinkedHashSet<>();
-        switch (pipelineOperation.getType()) {
+        switch (fieldOperation.getType()) {
           case READ:
-            PipelineReadOperation read = (PipelineReadOperation) pipelineOperation;
+            FieldReadOperation read = (FieldReadOperation) fieldOperation;
             newOperation = new ReadOperation(newOperationName, read.getDescription(),
                                               read.getSource(), read.getOutputFields());
             currentOperationOutputs.addAll(read.getOutputFields());
             break;
           case TRANSFORM:
-            PipelineTransformOperation transform = (PipelineTransformOperation) pipelineOperation;
+            FieldTransformOperation transform = (FieldTransformOperation) fieldOperation;
             List<InputField> inputFields = createInputFields(transform.getInputFields(), stageName,
                                                              processedOperations);
             newOperation = new TransformOperation(newOperationName, transform.getDescription(), inputFields,
@@ -110,7 +110,7 @@ public class LineageOperationsProcessor {
             currentOperationOutputs.addAll(transform.getOutputFields());
             break;
           case WRITE:
-            PipelineWriteOperation write = (PipelineWriteOperation) pipelineOperation;
+            FieldWriteOperation write = (FieldWriteOperation) fieldOperation;
             inputFields = createInputFields(write.getInputFields(), stageName, processedOperations);
             newOperation = new WriteOperation(newOperationName, write.getDescription(), write.getSink(), inputFields);
             break;

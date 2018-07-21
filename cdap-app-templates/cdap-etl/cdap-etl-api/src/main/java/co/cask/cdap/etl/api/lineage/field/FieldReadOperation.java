@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.api.lineage.field;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.lineage.field.EndPoint;
 
 import java.util.ArrayList;
@@ -26,7 +27,8 @@ import java.util.List;
 /**
  * Represents a read operation from a data source into a collection of output fields.
  */
-public class PipelineReadOperation extends PipelineOperation {
+@Beta
+public class FieldReadOperation extends FieldOperation {
   private final EndPoint source;
   private final List<String> outputFields;
 
@@ -38,7 +40,7 @@ public class PipelineReadOperation extends PipelineOperation {
    * @param source the source for the operation
    * @param outputFields the array of output fields to be generated
    */
-  public PipelineReadOperation(String name, String description, EndPoint source, String... outputFields) {
+  public FieldReadOperation(String name, String description, EndPoint source, String... outputFields) {
     this(name, description, source, Arrays.asList(outputFields));
   }
 
@@ -50,7 +52,7 @@ public class PipelineReadOperation extends PipelineOperation {
    * @param source the source for the operation
    * @param outputFields the list of output fields to be generated
    */
-  public PipelineReadOperation(String name, String description, EndPoint source, List<String> outputFields) {
+  public FieldReadOperation(String name, String description, EndPoint source, List<String> outputFields) {
     super(name, OperationType.READ, description);
     this.source = source;
     this.outputFields = Collections.unmodifiableList(new ArrayList<>(outputFields));
