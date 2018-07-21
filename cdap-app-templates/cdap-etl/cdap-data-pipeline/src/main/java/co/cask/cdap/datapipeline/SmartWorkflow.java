@@ -46,7 +46,7 @@ import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.condition.Condition;
-import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.batch.ActionSpec;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
@@ -63,8 +63,8 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.FieldOperationTypeAdapter;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
-import co.cask.cdap.etl.common.PipelineOperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.TrackedIterator;
@@ -118,9 +118,9 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                                                 Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(PipelineOperation.class, new PipelineOperationTypeAdapter()).create();
+    .registerTypeAdapter(FieldOperation.class, new FieldOperationTypeAdapter()).create();
   private static final Type STAGE_PROPERTIES_MAP = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
-  private static final Type STAGE_OPERATIONS_MAP = new TypeToken<Map<String, List<PipelineOperation>>>() { }.getType();
+  private static final Type STAGE_OPERATIONS_MAP = new TypeToken<Map<String, List<FieldOperation>>>() { }.getType();
 
   private final ApplicationConfigurer applicationConfigurer;
   private final Set<String> supportedPluginTypes;
@@ -550,14 +550,14 @@ public class SmartWorkflow extends AbstractWorkflow {
     // Collect field operations from each phase
     WorkflowToken token = workflowContext.getToken();
     List<NodeValue> allNodeValues = token.getAll(Constants.FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN);
-    Map<String, List<PipelineOperation>> allStageOperations = new HashMap<>();
+    Map<String, List<FieldOperation>> allStageOperations = new HashMap<>();
     for (StageSpec stageSpec : spec.getStages()) {
       allStageOperations.put(stageSpec.getName(), new ArrayList<>());
     }
     for (NodeValue nodeValue : allNodeValues) {
-      Map<String, List<PipelineOperation>> stageOperations
+      Map<String, List<FieldOperation>> stageOperations
               = GSON.fromJson(nodeValue.getValue().toString(), STAGE_OPERATIONS_MAP);
-      for (Map.Entry<String, List<PipelineOperation>> entry : stageOperations.entrySet()) {
+      for (Map.Entry<String, List<FieldOperation>> entry : stageOperations.entrySet()) {
         allStageOperations.get(entry.getKey()).addAll(entry.getValue());
       }
     }

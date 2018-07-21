@@ -16,16 +16,19 @@
 
 package co.cask.cdap.etl.api.lineage.field;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Abstract base class to represent a field lineage operation. Each operation has a
  * name and description. Operation typically has input and output fields.
  */
-public abstract class PipelineOperation {
+@Beta
+public abstract class FieldOperation {
   private final String name;
   private final OperationType type;
   private final String description;
 
-  protected PipelineOperation(String name, OperationType type, String description) {
+  protected FieldOperation(String name, OperationType type, String description) {
     this.name = name;
     this.type = type;
     this.description = description;

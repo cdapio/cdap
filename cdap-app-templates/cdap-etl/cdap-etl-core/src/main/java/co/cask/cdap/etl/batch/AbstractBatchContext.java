@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.etl.api.batch.BatchContext;
-import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.PipelineRuntime;
@@ -44,14 +44,14 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   private static final Caller CALLER = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   private final DatasetContext datasetContext;
   protected final Admin admin;
-  private final List<PipelineOperation> pipelineOperations;
+  private final List<FieldOperation> fieldOperations;
 
   protected AbstractBatchContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
                                  DatasetContext datasetContext, Admin admin) {
     super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(datasetContext));
     this.datasetContext = datasetContext;
     this.admin = admin;
-    this.pipelineOperations = new ArrayList<>();
+    this.fieldOperations = new ArrayList<>();
   }
 
   @Override
@@ -131,11 +131,11 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   }
 
   @Override
-  public void record(List<PipelineOperation> pipelineOperations) {
-    this.pipelineOperations.addAll(pipelineOperations);
+  public void record(List<FieldOperation> fieldOperations) {
+    this.fieldOperations.addAll(fieldOperations);
   }
 
-  public List<PipelineOperation> getPipelineOperations() {
-    return Collections.unmodifiableList(pipelineOperations);
+  public List<FieldOperation> getFieldOperations() {
+    return Collections.unmodifiableList(fieldOperations);
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.api.lineage.field;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.lineage.field.EndPoint;
 
 import java.util.ArrayList;
@@ -26,7 +27,8 @@ import java.util.List;
 /**
  * Represents a write operation from a collection of input fields into a data sink.
  */
-public class PipelineWriteOperation extends PipelineOperation {
+@Beta
+public class FieldWriteOperation extends FieldOperation {
   private final List<String> inputFields;
   private final EndPoint sink;
 
@@ -38,7 +40,7 @@ public class PipelineWriteOperation extends PipelineOperation {
    * @param sink the sink for the operation
    * @param inputFields the array of input fields to be written
    */
-  public PipelineWriteOperation(String name, String description, EndPoint sink, String... inputFields) {
+  public FieldWriteOperation(String name, String description, EndPoint sink, String... inputFields) {
     this(name, description, sink, Arrays.asList(inputFields));
   }
 
@@ -50,7 +52,7 @@ public class PipelineWriteOperation extends PipelineOperation {
    * @param sink the sink for the operation
    * @param inputFields the list of input fields to be written
    */
-  public PipelineWriteOperation(String name, String description, EndPoint sink, List<String> inputFields) {
+  public FieldWriteOperation(String name, String description, EndPoint sink, List<String> inputFields) {
     super(name, OperationType.WRITE, description);
     this.sink = sink;
     this.inputFields = Collections.unmodifiableList(new ArrayList<>(inputFields));
