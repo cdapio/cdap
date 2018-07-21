@@ -109,11 +109,16 @@ export default class ProfileAssociations extends Component {
 
   componentDidMount() {
     let {namespace, profile} = this.props;
-    MySearchApi
-      .search({
-        namespace,
+    let apiObservable$ = MySearchApi.search({
+      namespace,
+      query: `profile:${namespace}.${profile.name}`
+    });
+    if (namespace === 'system') {
+      apiObservable$ = MySearchApi.searchSystem({
         query: `profile:${namespace}.${profile.name}`
-      })
+      });
+    }
+    apiObservable$
       .subscribe(
         res => {
           let associationsMap = this.convertMetadataToAssociations(res.results);
