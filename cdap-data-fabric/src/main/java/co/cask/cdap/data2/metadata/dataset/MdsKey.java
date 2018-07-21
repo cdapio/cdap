@@ -31,6 +31,7 @@ import static co.cask.cdap.api.metadata.MetadataEntity.VIEW;
 
 /**
  * Key class to get v1 metadata key information
+ * @deprecated As of release 5.0.0, use {@link MetadataKey}
  */
 @Deprecated
 public final class MdsKey {

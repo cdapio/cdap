@@ -90,7 +90,7 @@ public class MetadataStoreMigrationTest {
   }
 
   @AfterClass
-  public static void teardown() {
+  public static void tearDown() {
     txManager.stopAndWait();
   }
 

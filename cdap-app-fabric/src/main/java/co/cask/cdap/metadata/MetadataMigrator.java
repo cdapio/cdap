@@ -93,6 +93,7 @@ class MetadataMigrator extends AbstractRetryableScheduledService {
   public long runTask() throws Exception {
     if (datasetIds.isEmpty()) {
       stop();
+      return 0;
     }
 
     try {

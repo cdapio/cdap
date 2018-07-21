@@ -95,8 +95,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.util.EnumSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -159,8 +159,8 @@ public class MetadataMigratorTest {
     DatasetId v2BusinessDatasetId = NamespaceId.SYSTEM.dataset("v2.business.metadata");
 
     // We will keep track of last timestamp so that we can verify if the history rows are written with existing ts.
-    long sTs = generateMetadata(v1SystemDatasetId);
-    long bTs = generateMetadata(v1BusinessDatasetId);
+    List<Long> sList = generateMetadata(v1SystemDatasetId);
+    List<Long> bList = generateMetadata(v1BusinessDatasetId);
 
     MetadataMigrator migrator = new MetadataMigrator(cConf, datasetFramework, transactionSystemClient);
     migrator.start();
@@ -173,7 +173,7 @@ public class MetadataMigratorTest {
       MetadataDataset v2Business = getMetadataDataset(context, v2BusinessDatasetId);
 
       assertProperties(v2System, v2Business);
-      assertHistory(v2System, v2Business, sTs, bTs);
+      assertHistory(v2System, v2Business, sList, bList);
       assertIndex(v2System);
       assertIndex(v2Business);
     });
@@ -221,16 +221,16 @@ public class MetadataMigratorTest {
     Assert.assertEquals("avalue6", v2Business.getProperties(artifact1.toMetadataEntity()).get("akey6"));
   }
 
-  private void assertHistory(MetadataDataset v2System, MetadataDataset v2Business, long sTs, long bTs) {
-    verifyHistory(v2System, app1.toMetadataEntity(), sTs);
-    verifyHistory(v2System, dataset1.toMetadataEntity(), sTs);
-    verifyHistory(v2System, stream1.toMetadataEntity(), sTs);
-    verifyHistory(v2System, artifact1.toMetadataEntity(), sTs);
+  private void assertHistory(MetadataDataset v2System, MetadataDataset v2Business, List<Long> sTs, List<Long> bTs) {
+    verifyHistory(v2System, app1.toMetadataEntity(), sTs.get(0));
+    verifyHistory(v2System, dataset1.toMetadataEntity(), sTs.get(1));
+    verifyHistory(v2System, stream1.toMetadataEntity(), sTs.get(2));
+    verifyHistory(v2System, artifact1.toMetadataEntity(), sTs.get(3));
 
-    verifyHistory(v2Business, app1.toMetadataEntity(), bTs);
-    verifyHistory(v2Business, dataset1.toMetadataEntity(), bTs);
-    verifyHistory(v2Business, stream1.toMetadataEntity(), bTs);
-    verifyHistory(v2Business, artifact1.toMetadataEntity(), bTs);
+    verifyHistory(v2Business, app1.toMetadataEntity(), bTs.get(0));
+    verifyHistory(v2Business, dataset1.toMetadataEntity(), bTs.get(1));
+    verifyHistory(v2Business, stream1.toMetadataEntity(), bTs.get(2));
+    verifyHistory(v2Business, artifact1.toMetadataEntity(), bTs.get(3));
   }
 
   private void assertIndex(MetadataDataset v2System) throws Exception {
@@ -248,18 +248,19 @@ public class MetadataMigratorTest {
 
   private void verifyHistory(MetadataDataset v2, MetadataEntity entity, long timestamp) {
     for (Metadata metadata : v2.getSnapshotBeforeTime(ImmutableSet.of(entity), timestamp)) {
-      Map<String, String> properties = metadata.getProperties();
-      Assert.assertEquals(1, properties.size());
+      Assert.assertEquals(1, metadata.getProperties().size());
     }
   }
 
-  private long generateMetadata(DatasetId datasetId) throws Exception {
+  private List<Long> generateMetadata(DatasetId datasetId) throws Exception {
     // Set some properties
-    write(datasetId, app1, "akey1", "avalue1");
-    write(datasetId, dataset1, "akey3", "avalue3");
-    write(datasetId, stream1, "akey4", "avalue4");
-    write(datasetId, artifact1, "akey6", "avalue6");
-    return write(datasetId, app1, "akey1", "avalue11");
+    List<Long> list = new LinkedList<>();
+    list.add(write(datasetId, app1, "akey1", "avalue1"));
+    list.add(write(datasetId, dataset1, "akey3", "avalue3"));
+    list.add(write(datasetId, stream1, "akey4", "avalue4"));
+    list.add(write(datasetId, artifact1, "akey6", "avalue6"));
+    list.add(write(datasetId, app1, "akey1", "avalue11"));
+    return list;
   }
 
   private long write(DatasetId datasetId, NamespacedEntityId targetId, String key, String value) throws Exception {
