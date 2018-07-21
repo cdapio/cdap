@@ -115,13 +115,20 @@ class ProfileCreateProvisionerSelection extends Component {
       pathname: '/administration/configuration',
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
     } : `/ns/${getCurrentNamespace()}/details`;
+    let createLabel;
+    if (this.state.isSystem) {
+      createLabel = 'Create a compute profile for all namespaces';
+    } else {
+      createLabel = `Create a compute profile for '${getCurrentNamespace()}'`;
+    }
+
 
     return (
       <div className="profile-create-provisioner-selection">
         <EntityTopPanel
           breadCrumbAnchorLink={breadCrumbAnchorLink}
           breadCrumbAnchorLabel={breadCrumbLabel}
-          title="Create a compute profile"
+          title={createLabel}
           closeBtnAnchorLink={linkObj}
         />
         <div className="provisioner-selection-container">
