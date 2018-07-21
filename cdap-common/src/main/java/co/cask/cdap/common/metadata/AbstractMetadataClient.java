@@ -244,9 +244,7 @@ public abstract class AbstractMetadataClient {
    */
   public Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
-    // for new getMetadata which takes MetadataEntity we don't want to do any aggregation of metadata for runId
-    // CDAP-13721
-    HttpResponse response = getMetadataHelper(metadataEntity, scope, true, false);
+    HttpResponse response = getMetadataHelper(metadataEntity, scope, true);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_V2_TYPE);
   }
 
@@ -258,9 +256,7 @@ public abstract class AbstractMetadataClient {
    */
   public Set<MetadataRecord> getMetadata(EntityId entityId, @Nullable MetadataScope scope)
     throws BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
-    // for old getMetadata which takes EntityId we want to do any aggregation of metadata for runId for backward
-    // compatibility CDAP-13721
-    HttpResponse response = getMetadataHelper(entityId.toMetadataEntity(), scope, false, true);
+    HttpResponse response = getMetadataHelper(entityId.toMetadataEntity(), scope, false);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
   }
 
@@ -275,10 +271,10 @@ public abstract class AbstractMetadataClient {
   }
 
   private HttpResponse getMetadataHelper(MetadataEntity metadataEntity, @Nullable MetadataScope scope,
-                                         boolean includeCustom, boolean aggregateRun)
+                                         boolean includeCustom)
     throws IOException, UnauthenticatedException, BadRequestException {
     String path = String.format("%s/metadata", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, scope, includeCustom, aggregateRun);
+    path = addQueryParas(path, metadataEntity, scope, includeCustom);
     return makeRequest(path, HttpMethod.GET, null);
   }
 
@@ -343,7 +339,7 @@ public abstract class AbstractMetadataClient {
   public Set<String> getTags(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws BadRequestException, UnauthenticatedException, IOException, UnauthorizedException, NotFoundException {
     String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, scope, true);
+    path = addQueryParas(path, metadataEntity, scope, true);
     HttpResponse response = makeRequest(path, HttpMethod.GET, null);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }
@@ -373,7 +369,7 @@ public abstract class AbstractMetadataClient {
   public void addTags(MetadataEntity metadataEntity, Set<String> tags) throws BadRequestException,
     UnauthenticatedException, IOException, UnauthorizedException {
     String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParas(path, metadataEntity, null, false);
     makeRequest(path, HttpMethod.POST, GSON.toJson(tags));
   }
 
@@ -437,7 +433,7 @@ public abstract class AbstractMetadataClient {
   public Map<String, String> getProperties(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, scope, false);
+    path = addQueryParas(path, metadataEntity, scope, false);
     HttpResponse response = makeRequest(path, HttpMethod.GET, null);
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
   }
@@ -451,7 +447,7 @@ public abstract class AbstractMetadataClient {
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParas(path, metadataEntity, null, false);
     makeRequest(path, HttpMethod.POST, GSON.toJson(properties));
   }
 
@@ -464,7 +460,7 @@ public abstract class AbstractMetadataClient {
   public void removeProperty(MetadataEntity metadataEntity, String propertyToRemove)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/properties/%s", constructPath(metadataEntity), propertyToRemove);
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParas(path, metadataEntity, null, false);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -476,7 +472,7 @@ public abstract class AbstractMetadataClient {
   public void removeProperties(MetadataEntity metadataEntity)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParas(path, metadataEntity, null, false);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -488,7 +484,7 @@ public abstract class AbstractMetadataClient {
   public void removeTag(MetadataEntity metadataEntity, String tagToRemove)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/tags/%s", constructPath(metadataEntity), tagToRemove);
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParas(path, metadataEntity, null, false);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -500,7 +496,7 @@ public abstract class AbstractMetadataClient {
   public void removeTags(MetadataEntity metadataEntity)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParas(path, metadataEntity, null, false);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -512,7 +508,7 @@ public abstract class AbstractMetadataClient {
   public void removeMetadata(MetadataEntity metadataEntity) throws IOException, UnauthenticatedException,
     BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParas(path, metadataEntity, null, false);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -549,15 +545,8 @@ public abstract class AbstractMetadataClient {
     return builder.toString();
   }
 
-  private String addQueryParams(String path, MetadataEntity metadataEntity, @Nullable  MetadataScope scope,
-                                boolean showCustom) {
-    // for all other queries except getMetadata called on EntityId we don't want aggregation of metadata for runIds.
-    // CDAP-13721
-    return addQueryParams(path, metadataEntity, scope, showCustom, false);
-  }
-
-  private String addQueryParams(String path, MetadataEntity metadataEntity, @Nullable  MetadataScope scope,
-                                boolean showCustom, boolean aggregateRun) {
+  private String addQueryParas(String path, MetadataEntity metadataEntity, @Nullable  MetadataScope scope,
+                               boolean showCustom) {
     StringBuilder builder = new StringBuilder(path);
     String prefix = "?";
     if (!Iterables.getLast(metadataEntity.getKeys()).equalsIgnoreCase(metadataEntity.getType())) {
@@ -571,13 +560,6 @@ public abstract class AbstractMetadataClient {
       builder.append(prefix);
       builder.append("showCustom=");
       builder.append(true);
-      prefix = "&";
-    }
-    // the default value of aggregateRun is true so in the case it is false we need to include it as query param
-    if (!aggregateRun) {
-      builder.append(prefix);
-      builder.append("aggregateRun=");
-      builder.append(false);
       prefix = "&";
     }
     if (scope == null) {

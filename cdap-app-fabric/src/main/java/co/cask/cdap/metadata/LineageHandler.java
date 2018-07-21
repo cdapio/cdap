@@ -56,7 +56,7 @@ import javax.ws.rs.QueryParam;
  * HttpHandler for lineage.
  */
 @Path(Constants.Gateway.API_VERSION_3)
-public class LineageHTTPHandler extends AbstractHttpHandler {
+public class LineageHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
@@ -65,7 +65,7 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
   private final FieldLineageAdmin fieldLineageAdmin;
 
   @Inject
-  LineageHTTPHandler(LineageAdmin lineageAdmin, FieldLineageAdmin fieldLineageAdmin) {
+  LineageHandler(LineageAdmin lineageAdmin, FieldLineageAdmin fieldLineageAdmin) {
     this.lineageAdmin = lineageAdmin;
     this.fieldLineageAdmin = fieldLineageAdmin;
   }
