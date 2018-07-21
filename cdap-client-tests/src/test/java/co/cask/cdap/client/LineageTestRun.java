@@ -61,8 +61,8 @@ import javax.annotation.Nullable;
  * Tests lineage recording and query.
  */
 @Category(SlowTests.class)
-public class LineageHttpHandlerTestRun extends MetadataTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(LineageHttpHandlerTestRun.class);
+public class LineageTestRun extends MetadataTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(LineageTestRun.class);
 
   @Test
   public void testFlowLineage() throws Exception {
