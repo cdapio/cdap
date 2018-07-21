@@ -162,11 +162,9 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractExecutionThr
       blockingThread = Thread.currentThread();
       try {
         if (isRunning()) {
-          LogMessage logMessage = messageQueue.poll(10, TimeUnit.SECONDS);
-          if (logMessage != null) {
-            buffer.add(createMessage(logMessage));
-            maxBufferSize--;
-          }
+          LogMessage logMessage = messageQueue.take();
+          buffer.add(createMessage(logMessage));
+          maxBufferSize--;
         }
       } catch (InterruptedException e) {
         // just ignore and keep going. This happen when this publisher is getting shutdown, but we still want
