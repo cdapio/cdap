@@ -71,6 +71,7 @@
           "widget-type": "textbox",
           "label": "EC2 Subnet",
           "name": "ec2SubnetId",
+          "required": true,
           "description": "A subnet defines a subset of a VPC (virtual private cloud) dedicated to your AWS account. For more information, refer to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-vpc-launching-job-flows.html and https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html#vpc-subnet-basics.",
           "widget-attributes": {
             "placeholder": "Specify your EC2 Subnet"
@@ -80,6 +81,7 @@
           "widget-type": "textbox",
           "label": "Additional EMR managed security group for the master instance",
           "name": "additionalMasterSecurityGroup",
+          "required": true,
           "description": "An additional EMR managed security group that will be applied to the master instance. For more information, refer to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-man-sec-groups.html.",
           "widget-attributes": {
             "placeholder": "Specify your EMR managed security group"
