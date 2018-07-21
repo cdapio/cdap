@@ -101,6 +101,7 @@ export default class ProductDropdown extends Component {
     if (this.state.username && window.CDAP_CONFIG.securityEnabled) {
       userSection = (
         <ul className="user-profile clearfix">
+          <DropdownItem divider />
           <DropdownItem
             tag="li"
             header
