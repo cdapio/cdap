@@ -2040,6 +2040,14 @@
     </description>
   </property>
 
+  <property>
+    <name>metadata.upgrade.migration.batch.size</name>
+    <value>1000</value>
+    <description>
+      Number of metadata value or history rows to be migrated to v2 metadata table in a batch
+    </description>
+  </property>
+
   <!-- Metrics Configuration -->
 
   <property>
