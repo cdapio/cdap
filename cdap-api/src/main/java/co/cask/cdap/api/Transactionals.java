@@ -111,6 +111,26 @@ public final class Transactionals {
   }
 
   /**
+   * Executes the given {@link TxCallable} using the given {@link Transactional} with a given timeout in seconds.
+   * @param transactional the {@link Transactional} to use for transactional execution.
+   * @param timeout the timeout in seconds for transactional execution
+   * @param callable the {@link TxCallable} to be executed inside a transaction
+   * @param <V> type of the result
+   * @return value returned by the given {@link TxCallable}.
+   * @throws  RuntimeException if failed to execute the given {@link TxRunnable} in a transaction.
+   * If the TransactionFailureException has a cause in it, the cause is propagated.
+   */
+  public static <V> V execute(Transactional transactional, int timeout, TxCallable<V> callable) {
+    AtomicReference<V> result = new AtomicReference<>();
+    try {
+      transactional.execute(timeout, context -> result.set(callable.call(context)));
+    } catch (TransactionFailureException e) {
+      throw propagate(e);
+    }
+    return result.get();
+  }
+
+  /**
    * Executes the given {@link TxCallable} using the given {@link Transactional}.
    *
    * @param transactional the {@link Transactional} to use for transactional execution.

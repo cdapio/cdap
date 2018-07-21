@@ -58,6 +58,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
                                                   MetricsCollectionService metricsCollectionService) {
     super(NamespaceId.SYSTEM.topic(topicName), transactionalFetch, fetchSize,
           cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
+          cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT),
           emptyFetchDelayMillis,
           RetryStrategies.fromConfiguration(cConf, "system.notification."),
           metricsCollectionService.getContext(ImmutableMap.of(
