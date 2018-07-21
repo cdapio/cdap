@@ -103,6 +103,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Data Pipeline Smart Workflow.
@@ -550,8 +551,14 @@ public class SmartWorkflow extends AbstractWorkflow {
     // Collect field operations from each phase
     WorkflowToken token = workflowContext.getToken();
     List<NodeValue> allNodeValues = token.getAll(Constants.FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN);
+
+    if (allNodeValues.isEmpty()) {
+      // no field lineage recorded by any stage
+      return;
+    }
+
     Map<String, List<FieldOperation>> allStageOperations = new HashMap<>();
-    for (StageSpec stageSpec : spec.getStages()) {
+    for (StageSpec stageSpec : stageSpecs.values()) {
       allStageOperations.put(stageSpec.getName(), new ArrayList<>());
     }
     for (NodeValue nodeValue : allNodeValues) {
@@ -571,8 +578,41 @@ public class SmartWorkflow extends AbstractWorkflow {
       }
     }
 
+    // validate the stage operations
+    Map<String, InvalidFieldOperations> stageInvalids = new HashMap<>();
+    for (StageSpec stageSpec : stageSpecs.values()) {
+      StageOperationsValidator.Builder builder =
+        new StageOperationsValidator.Builder(allStageOperations.get(stageSpec.getName()));
+
+      Map<String, Schema> inputSchemas = stageSpec.getInputSchemas();
+      for (Map.Entry<String, Schema> entry : inputSchemas.entrySet()) {
+        if (entry.getValue().getFields() != null) {
+          builder.addStageOutputs(entry.getValue().getFields().stream().map(Schema.Field::getName)
+                                    .collect(Collectors.toSet()));
+        }
+      }
+
+      Schema outputSchema = stageSpec.getOutputSchema();
+      if (outputSchema != null && outputSchema.getFields() != null) {
+        builder.addStageOutputs(outputSchema.getFields().stream().map(Schema.Field::getName)
+                                  .collect(Collectors.toSet()));
+      }
+
+      StageOperationsValidator stageOperationsValidator = builder.build();
+      stageOperationsValidator.validate();
+      InvalidFieldOperations invalidFieldOperations = stageOperationsValidator.getStageInvalids();
+      if (invalidFieldOperations != null) {
+        stageInvalids.put(stageSpec.getName(), invalidFieldOperations);
+      }
+    }
+
+    if (!stageInvalids.isEmpty()) {
+      throw new InvalidLineageException(stageInvalids);
+    }
+
     LineageOperationsProcessor processor = new LineageOperationsProcessor(spec.getConnections(), allStageOperations,
                                                                           noMergeRequiredStages);
+
     Set<Operation> processedOperations = processor.process();
     if (!processedOperations.isEmpty()) {
       workflowContext.record(processedOperations);
