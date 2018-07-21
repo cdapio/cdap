@@ -89,10 +89,14 @@ public class TMSSubscriber extends Thread {
              messageFetcher.fetch(NAMESPACE_SYSTEM, TOPIC, fetchSize, afterMessageId)) {
         while (!isStopped && messageCloseableIterator.hasNext()) {
           Message message  = messageCloseableIterator.next();
-          ProgramRunInfo programRunInfo = MessageUtil.constructAndGetProgramRunInfo(message);
-          runMetaFileManager.append(programRunInfo);
+          Notification notification = MessageUtil.messageToNotification(message);
+          // we want to skip appending pre 5.0 run records
+          if (MessageUtil.isCDAPVersionCompatible(notification)) {
+            ProgramRunInfo programRunInfo = MessageUtil.constructAndGetProgramRunInfo(message, notification);
+            runMetaFileManager.append(programRunInfo);
+            emitUserProgramMetrics(programRunInfo);
+          }
           afterMessageId = message.getId();
-          emitUserProgramMetrics(programRunInfo);
         }
       } catch (TopicNotFoundException tpe) {
         LOG.error("Unable to find topic {} in tms, returning, cant write to the Fileset, Please fix", TOPIC, tpe);
