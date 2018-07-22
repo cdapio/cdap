@@ -87,6 +87,7 @@ $dropdown_divider_bg_color: $grey-06;
       .secure-mode-icon {
         display: inline-flex;
         align-items: center;
+        padding-left: 10px;
         .icon-svg {
           font-size: 11px;
         }
@@ -131,6 +132,8 @@ $dropdown_divider_bg_color: $grey-06;
         min-width: inherit;
         max-width: inherit;
         margin-left: 0;
+        display: flex;
+        flex-direction: column;
 
         > {
           :not(:first-child) {
