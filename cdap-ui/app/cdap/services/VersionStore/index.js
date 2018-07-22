@@ -14,8 +14,8 @@
  * the License.
  */
 
-import { combineReducers, createStore } from 'redux';
-import VersionActions from './VersionActions';
+import {combineReducers, createStore} from 'redux';
+import VersionActions from 'services/VersionStore/VersionActions';
 
 const defaultAction = {
   action: '',
