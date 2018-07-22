@@ -33,6 +33,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.profile.ProfileMetricScheduledService;
+import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -81,6 +82,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private final Transactional transactional;
   private final MessagingContext messagingContext;
   private final ScheduledExecutorService scheduledExecutorService;
+  private final RemoteExecutionLogProcessor logProcessor;
   private final ProfileMetricScheduledService metricScheduledService;
 
   private Map<String, MonitorConsumeRequest> topicsToRequest;
@@ -89,6 +91,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   public RuntimeMonitor(ProgramRunId programRunId, CConfiguration cConf, RuntimeMonitorClient monitorClient,
                         DatasetFramework datasetFramework, Transactional transactional,
                         MessagingContext messagingContext, ScheduledExecutorService scheduledExecutorService,
+                        RemoteExecutionLogProcessor logProcessor,
                         ProfileMetricScheduledService metricScheduledService) {
     super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
 
@@ -103,6 +106,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.messagingContext = messagingContext;
     this.transactional = transactional;
     this.scheduledExecutorService = scheduledExecutorService;
+    this.logProcessor = logProcessor;
     this.programFinishTime = -1L;
     this.lastProgramStateMessages = new LinkedList<>();
     this.requestKeyToLocalTopic = createTopicConfigs(cConf);
@@ -295,9 +299,13 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private long publish(String topicConfig, String topic, Deque<MonitorMessage> messages,
                        AppMetadataStore store) throws Exception {
     // publish messages to tms
-    MessagePublisher messagePublisher = messagingContext.getMessagePublisher();
-    messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
-                             messages.stream().map(MonitorMessage::getMessage).iterator());
+    if (topic.startsWith(cConf.get(Constants.Logging.TMS_TOPIC_PREFIX))) {
+      logProcessor.process(messages.stream().map(MonitorMessage::getMessage).iterator());
+    } else {
+      MessagePublisher messagePublisher = messagingContext.getMessagePublisher();
+      messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
+              messages.stream().map(MonitorMessage::getMessage).iterator());
+    }
 
     // persist the last published message as offset in meta store
     MonitorMessage lastMessage = messages.getLast();
