@@ -18,7 +18,12 @@ package co.cask.cdap.common.logging;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
+import org.apache.hadoop.yarn.api.records.ContainerId;
+import org.apache.hadoop.yarn.util.ConverterUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -29,8 +34,41 @@ import java.util.Map;
  */
 public abstract class AbstractLoggingContext implements LoggingContext {
 
+  public static final String TAG_YARN_APP_ID = ".yarnAppId";
+  public static final String TAG_YARN_CONTAINER_ID = ".yarnContainerId";
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractLoggingContext.class);
+
   // Map looks not efficient here, it might be better to use set
-  private final Map<String, SystemTag> systemTags = Maps.newHashMap();
+  private final Map<String, SystemTag> systemTags;
+
+  protected AbstractLoggingContext() {
+    systemTags = Maps.newHashMap();
+
+    // Try picking up the YARN container id from the env, parse it and set it to context
+    String containerId = System.getenv("CONTAINER_ID");
+    if (containerId == null) {
+      return;
+    }
+
+    try {
+      ContainerId yarnContainerId;
+      try {
+        // For Hadoop 2.6+, use ContainerId.fromString(String)
+        Method fromString = ContainerId.class.getMethod("fromString", String.class);
+        yarnContainerId = (ContainerId) fromString.invoke(null, containerId);
+      } catch (NoSuchMethodException e) {
+        // This is for older Hadoop
+        yarnContainerId = ConverterUtils.toContainerId(containerId);
+      }
+
+      setSystemTag(TAG_YARN_APP_ID, yarnContainerId.getApplicationAttemptId().getApplicationId().toString());
+      setSystemTag(TAG_YARN_CONTAINER_ID, yarnContainerId.toString());
+    } catch (Exception e) {
+      // Ignore any exception
+      LOG.debug("Failed to set YARN application and container id to logging context", e);
+    }
+  }
 
   /**
    * Sets system tag.
