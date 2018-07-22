@@ -26,7 +26,8 @@ import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import NamespaceStore from 'services/NamespaceStore';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
-import CreateStreamWizardConfig, {CreateStreamUploadWizardConfig} from 'services/WizardConfigs/CreateStreamWizardConfig';
+import CreateStreamWizardConfig from 'services/WizardConfigs/CreateStreamWizardConfig';
+import CreateStreamUploadWizardConfig from 'services/WizardConfigs/CreateStreamWithUploadWizardConfig';
 import T from 'i18n-react';
 
 export default class StreamCreateWizard extends Component {

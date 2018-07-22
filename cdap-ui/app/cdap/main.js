@@ -50,6 +50,10 @@ import Page404 from 'components/404';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import HttpExecutor from 'components/HttpExecutor';
+const DAG = Loadable({
+  loader: () => import(/* webpackChunkName: "DAG" */'components/DAG'),
+  loading: LoadingSVGCentered
+});
 const SampleTSXComponent = Loadable({
   loader: () => import (/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
   loading: LoadingSVGCentered
@@ -126,6 +130,7 @@ class CDAP extends Component {
                   <Route path="/socket-example" component={ConnectionExample} />
                   <Route exact path="/httpexecutor" component={HttpExecutor} />
                   <Route exact path="/ts-example" component={SampleTSXComponent} />
+                  <Route exact path="/playground" component={DAG} />
                   <Route component={Page404} />
                 </Switch>
               </div>

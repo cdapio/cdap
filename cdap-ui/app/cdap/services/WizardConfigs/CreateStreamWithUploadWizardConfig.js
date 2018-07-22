@@ -19,7 +19,7 @@ import GeneralInfoStep from 'components/CaskWizards/StreamCreateWithUpload/Gener
 import SchemaStep from 'components/CaskWizards/StreamCreateWithUpload/SchemaStep';
 import ThresholdStep from 'components/CaskWizards/StreamCreateWithUpload/ThresholdStep';
 import UploadData from 'components/CaskWizards/StreamCreateWithUpload/UploadData';
-
+console.log('Loading CreateStreamUploadWizardConfig moduke');
 import T from 'i18n-react';
 let commonSteps = [
   {

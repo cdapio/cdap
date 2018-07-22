@@ -132,7 +132,7 @@ var rules = [
     ]
   },
   {
-    test: /\.tsx$/,
+    test: /\.tsx?$/,
     use: [
       {
         loader: 'ts-loader',
@@ -211,6 +211,7 @@ if (mode === 'development') {
 
 var webpackConfig = {
   mode,
+  devtool: 'eval-source-map',
   context: __dirname + '/app/cdap',
   entry: {
     'cdap': ['@babel/polyfill', './cdap.js']
@@ -226,7 +227,10 @@ var webpackConfig = {
   },
   stats: {
     chunks: false,
-    chunkModules: false
+    chunkModules: false,
+    chunkGroups: false,
+    chunkOrigins: false,
+    entrypoints: false
   },
   plugins: plugins,
   // TODO: Need to investigate this more.

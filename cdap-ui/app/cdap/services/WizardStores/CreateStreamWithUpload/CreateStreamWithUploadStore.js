@@ -73,7 +73,8 @@ const isComplete = (state, requiredFields) => {
     });
   return !emptyFieldsInState.length ? true : false;
 };
-const generalStepRequiredFields = head(
+// FIXME: This is a circular dependency.
+const generalStepRequiredFields = () => head(
   CreateStreamUploadWizardConfig
     .steps
     .filter(step => step.id === 'general')
@@ -122,7 +123,7 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy, generalStepRequiredFields),
+    __complete: isComplete(stateCopy, (generalStepRequiredFields())),
     __error: action.payload.error || false
   });
 };

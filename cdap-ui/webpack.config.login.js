@@ -127,7 +127,10 @@ var webpackConfig = {
   },
   stats: {
     chunks: false,
-    chunkModules: false
+    chunkModules: false,
+    chunkGroups: false,
+    chunkOrigins: false,
+    entrypoints: false
   },
   optimization: {
     splitChunks: false

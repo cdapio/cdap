@@ -76,12 +76,12 @@
     "style-loader": "0.19.0",
     "stylelint-webpack-plugin": "0.10.5",
     "svg-sprite-loader": "3.9.0",
+    "ts-loader": "4.4.2",
     "uglifyjs-webpack-plugin": "1.2.7",
     "url-loader": "0.6.2",
     "webpack": "4.16.0",
     "webpack-command": "^0.4.1",
-    "webpack-livereload-plugin": "2.1.1",
-    "ts-loader": "4.4.2"
+    "webpack-livereload-plugin": "2.1.1"
   },
   "dependencies": {
     "@babel/core": "^7.0.0-beta.53",
@@ -114,6 +114,7 @@
     "history": "2.1.2",
     "i18n-react": "0.3.0",
     "immutability-helper": "2.7.1",
+    "immutable": "^3.8.2",
     "intersection-observer": "0.4.2",
     "js-file-download": "0.4.1",
     "lodash": "4.2.0",

@@ -5,7 +5,8 @@
   ],
   "rules": {
     "quotemark": false,
-    "ordered-imports": false
+    "ordered-imports": false,
+    "member-ordering": false
   },
   "jsRules": {
     "arrow-parens": false,

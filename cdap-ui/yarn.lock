@@ -5451,6 +5451,10 @@ immutability-helper@2.7.1:
   dependencies:
     invariant "^2.2.0"
 
+immutable@^3.8.2:
+  version "3.8.2"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
+
 import-inspector@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/import-inspector/-/import-inspector-2.0.0.tgz#ce75fdb6a277d2800effe097e2295bc8690b2923"
