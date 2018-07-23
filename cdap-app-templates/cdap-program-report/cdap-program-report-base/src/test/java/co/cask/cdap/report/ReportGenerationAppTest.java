@@ -124,6 +124,7 @@ public class ReportGenerationAppTest extends TestBase {
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
   private static final String USER_ALICE = "alice";
   private static final String USER_BOB = "bob";
+  private static final String TEST_ARTIFACT_NAME = "TestArtifact";
 
   @Test
   public void testGenerateReport() throws Exception {
@@ -136,8 +137,11 @@ public class ReportGenerationAppTest extends TestBase {
     URL reportURL = url.toURI().resolve("reports/").toURL();
     List<Filter> filters =
       ImmutableList.of(
+        // white list filter
         new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
-        new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
+        new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)),
+        // black list filter
+        new ValueFilter<>(Constants.ARTIFACT_NAME, null, ImmutableSet.of("cdap-data-streams", "cdap-data-pipeline")));
     long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis);
     ReportGenerationRequest request =
       new ReportGenerationRequest("ns1_ns2_report", startSecs, startSecs + 30,
@@ -223,6 +227,12 @@ public class ReportGenerationAppTest extends TestBase {
         // all the programs are run by user alice, user bob will match no records.
         new ValueFilter<>(Constants.USER, ImmutableSet.of(USER_BOB), null));
     validateEmptyReports(reportURL, startSecs, startSecs + 30, filters2);
+    List<Filter>  filters3 =
+      ImmutableList.of(
+        new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
+        // all the programs have the same test artifact name, blacklisting that will provide empty results
+        new ValueFilter<>(Constants.ARTIFACT_NAME, null, ImmutableSet.of(TEST_ARTIFACT_NAME)));
+    validateEmptyReports(reportURL, startSecs, startSecs + 30, filters3);
     sparkManager.stop();
     sparkManager.waitForStopped(60, TimeUnit.SECONDS);
     deleteDatasetInstance(metaFileset);
@@ -396,7 +406,7 @@ public class ReportGenerationAppTest extends TestBase {
     Assert.assertNotNull(summary);
     Assert.assertEquals(ImmutableSet.of(new NamespaceAggregate("ns1", 1), new NamespaceAggregate("ns2" , 1)),
                         new HashSet<>(summary.getNamespaces()));
-    Assert.assertEquals(ImmutableSet.of(new ArtifactAggregate("Artifact", "1.0.0", "USER", 2)),
+    Assert.assertEquals(ImmutableSet.of(new ArtifactAggregate(TEST_ARTIFACT_NAME, "1.0.0", "USER", 2)),
                         new HashSet<>(summary.getArtifacts()));
     DurationStats durationStats = summary.getDurations();
     Assert.assertEquals(300L, durationStats.getMin());
@@ -484,7 +494,8 @@ public class ReportGenerationAppTest extends TestBase {
       "\"type\": \"PROGRAM_STATUS\"}]}";
     ProgramStartInfo startInfo =
       new ProgramStartInfo(ImmutableMap.of(Constants.Notification.SCHEDULE_INFO_KEY, scheduleInfo),
-                           new ArtifactId("Artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER), USER_ALICE);
+                           new ArtifactId(TEST_ARTIFACT_NAME,
+                                          new ArtifactVersion("1.0.0"), ArtifactScope.USER), USER_ALICE);
     long delay = TimeUnit.MINUTES.toMillis(5);
     int mockMessageId = 0;
     for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {
