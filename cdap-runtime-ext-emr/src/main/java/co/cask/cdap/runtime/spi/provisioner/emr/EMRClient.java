@@ -29,6 +29,7 @@ import com.amazonaws.services.elasticmapreduce.model.Cluster;
 import com.amazonaws.services.elasticmapreduce.model.ClusterState;
 import com.amazonaws.services.elasticmapreduce.model.ClusterStatus;
 import com.amazonaws.services.elasticmapreduce.model.ClusterSummary;
+import com.amazonaws.services.elasticmapreduce.model.Configuration;
 import com.amazonaws.services.elasticmapreduce.model.DescribeClusterRequest;
 import com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
@@ -88,9 +89,15 @@ public class EMRClient implements AutoCloseable {
     // name the keypair the same thing as the cluster name
     ec2.importKeyPair(new ImportKeyPairRequest(name, emrConf.getPublicKey().getKey()));
 
+    Map<String, String> yarnConf =
+            Collections.singletonMap("yarn.nodemanager.aux-services", "mapreduce_shuffle,spark_shuffle");
+
     RunJobFlowRequest request = new RunJobFlowRequest()
       .withName(name)
       .withApplications(new Application().withName("Spark"))
+      .withConfigurations(new Configuration()
+              .withClassification("yarn-site")
+              .withProperties(yarnConf))
       // all 4.9.x is java 7... which we don't support, so EMR 5.0.0 is our minimum
       .withReleaseLabel("emr-5.0.0")
       .withServiceRole(emrConf.getServiceRole())
