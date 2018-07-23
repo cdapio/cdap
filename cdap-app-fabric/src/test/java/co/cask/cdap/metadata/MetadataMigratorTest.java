@@ -155,8 +155,8 @@ public class MetadataMigratorTest {
   public void testMetadataMigration() throws Exception {
     DatasetId v1SystemDatasetId = NamespaceId.SYSTEM.dataset("system.metadata");
     DatasetId v1BusinessDatasetId = NamespaceId.SYSTEM.dataset("business.metadata");
-    DatasetId v2SystemDatasetId = NamespaceId.SYSTEM.dataset("v2.system.metadata");
-    DatasetId v2BusinessDatasetId = NamespaceId.SYSTEM.dataset("v2.business.metadata");
+    DatasetId v2SystemDatasetId = NamespaceId.SYSTEM.dataset("v2.system");
+    DatasetId v2BusinessDatasetId = NamespaceId.SYSTEM.dataset("v2.business");
 
     // We will keep track of last timestamp so that we can verify if the history rows are written with existing ts.
     List<Long> sList = generateMetadata(v1SystemDatasetId);
