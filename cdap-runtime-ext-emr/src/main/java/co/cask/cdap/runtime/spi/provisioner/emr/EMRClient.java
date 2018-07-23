@@ -29,6 +29,7 @@ import com.amazonaws.services.elasticmapreduce.model.Cluster;
 import com.amazonaws.services.elasticmapreduce.model.ClusterState;
 import com.amazonaws.services.elasticmapreduce.model.ClusterStatus;
 import com.amazonaws.services.elasticmapreduce.model.ClusterSummary;
+import com.amazonaws.services.elasticmapreduce.model.Configuration;
 import com.amazonaws.services.elasticmapreduce.model.DescribeClusterRequest;
 import com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
@@ -81,9 +82,9 @@ public class EMRClient implements AutoCloseable {
    */
   public String createCluster(String name) {
     AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
-            .withCredentials(emrConf.getCredentialsProvider())
-            .withRegion(emrConf.getRegion())
-            .build();
+      .withCredentials(emrConf.getCredentialsProvider())
+      .withRegion(emrConf.getRegion())
+      .build();
 
     // name the keypair the same thing as the cluster name
     ec2.importKeyPair(new ImportKeyPairRequest(name, emrConf.getPublicKey().getKey()));
@@ -91,6 +92,9 @@ public class EMRClient implements AutoCloseable {
     RunJobFlowRequest request = new RunJobFlowRequest()
       .withName(name)
       .withApplications(new Application().withName("Spark"))
+      .withConfigurations(new Configuration()
+        .withClassification("yarn-site")
+        .withProperties(Collections.singletonMap("yarn.nodemanager.aux-services", "mapreduce_shuffle,spark_shuffle")))
       // all 4.9.x is java 7... which we don't support, so EMR 5.0.0 is our minimum
       .withReleaseLabel("emr-5.0.0")
       .withServiceRole(emrConf.getServiceRole())
@@ -122,9 +126,9 @@ public class EMRClient implements AutoCloseable {
     client.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(id));
 
     AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
-            .withCredentials(emrConf.getCredentialsProvider())
-            .withRegion(emrConf.getRegion())
-            .build();
+      .withCredentials(emrConf.getCredentialsProvider())
+      .withRegion(emrConf.getRegion())
+      .build();
 
     // named the keypair the same thing as the cluster id
     ec2.deleteKeyPair(new DeleteKeyPairRequest().withKeyName(id));
@@ -168,10 +172,10 @@ public class EMRClient implements AutoCloseable {
     List<ClusterSummary> clusters = client.listClusters().getClusters();
 
     List<ClusterSummary> clustersWithSameName = clusters.stream()
-            .filter(clusterSummary -> name.equals(clusterSummary.getName()))
-            .filter(clusterSummary -> UNTERMINATED_STATES.contains(
-                    ClusterState.fromValue(clusterSummary.getStatus().getState())))
-            .collect(Collectors.toList());
+      .filter(clusterSummary -> name.equals(clusterSummary.getName()))
+      .filter(clusterSummary -> UNTERMINATED_STATES.contains(
+              ClusterState.fromValue(clusterSummary.getStatus().getState())))
+      .collect(Collectors.toList());
 
     if (clustersWithSameName.size() == 0) {
       return Optional.empty();
