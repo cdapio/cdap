@@ -58,6 +58,10 @@
 
   <repositories>
     <repository>
+      <id>apache</id>
+      <url>https://repository.apache.org/content/repositories/public/</url>
+    </repository>
+    <repository>
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
