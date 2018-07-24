@@ -97,6 +97,9 @@ public final class ProgramOptionConstants {
 
   public static final String PROGRAM_ERROR = "programError";
 
+  /**
+   * Option for the user who made the program launch request.
+   */
   public static final String USER_ID = "userId";
 
   public static final String SKIP_PROVISIONING = "skipProvisioning";

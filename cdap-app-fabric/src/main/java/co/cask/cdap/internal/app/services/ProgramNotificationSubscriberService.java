@@ -403,8 +403,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         Cluster cluster = GSON.fromJson(properties.get(ProgramOptionConstants.CLUSTER), Cluster.class);
         appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
 
-        // Update the ProgramOptions system arguments to include the cluster information
+        // Update the ProgramOptions system arguments to include information needed for program execution
         Map<String, String> systemArgs = new HashMap<>(programOptions.getArguments().asMap());
+        systemArgs.put(ProgramOptionConstants.USER_ID, properties.get(ProgramOptionConstants.USER_ID));
         systemArgs.put(ProgramOptionConstants.CLUSTER, properties.get(ProgramOptionConstants.CLUSTER));
         systemArgs.put(ProgramOptionConstants.SECURE_KEYS_DIR, properties.get(ProgramOptionConstants.SECURE_KEYS_DIR));
 

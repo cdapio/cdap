@@ -21,8 +21,8 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -36,11 +36,12 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteProcessController;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
-import co.cask.cdap.internal.profile.ProfileMetricScheduledService;
+import co.cask.cdap.internal.profile.ProfileMetricService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
@@ -104,14 +105,14 @@ public class RuntimeMonitorTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @Before
-  public void init() throws IOException, TopicAlreadyExistsException {
+  public void init() throws IOException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
     // clear the host to make sure it binds to loopback address
     cConf.unset(Constants.RuntimeMonitor.SERVER_HOST);
     cConf.set(Constants.RuntimeMonitor.SERVER_PORT, "0");
-    cConf.set(Constants.RuntimeMonitor.BATCH_LIMIT, "2");
+    cConf.set(Constants.RuntimeMonitor.BATCH_SIZE, "2");
     cConf.set(Constants.RuntimeMonitor.POLL_TIME_MS, "200");
     cConf.set(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, "1000");
 
@@ -195,12 +196,13 @@ public class RuntimeMonitorTest {
                                                                   runtimeServer.getBindAddress().getPort(),
                                                                   HttpRequestConfig.DEFAULT,
                                                                   clientKeyStore, serverKeyStore);
-    ProfileMetricScheduledService profileMetricScheduledService =
-      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 1, scheduler);
+    ProfileMetricService profileMetricService =
+      new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
-                                                       monitorMessage -> { }, profileMetricScheduledService);
+                                                       monitorMessage -> { }, profileMetricService,
+                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter());
 
     runtimeMonitor.startAndWait();
     // use different configuration for verification
@@ -214,7 +216,8 @@ public class RuntimeMonitorTest {
 
     runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                         datasetFramework, transactional, messagingContext, scheduler,
-                                        monitorMessage -> { }, profileMetricScheduledService);
+                                        monitorMessage -> { }, profileMetricService,
+                                        new MockRemoteProcessController(), new NoOpProgramStateWriter());
     runtimeMonitor.startAndWait();
     // use different configuration for verification
     lastProcessed = verifyPublishedMessages(monitorCConf, 2, lastProcessed);
@@ -260,8 +263,8 @@ public class RuntimeMonitorTest {
       messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), metricsPrefix + i, "test" + i);
     }
 
-    ProfileMetricScheduledService profileMetricScheduledService =
-      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 1, scheduler);
+    ProfileMetricService profileMetricService =
+      new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
     RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(runtimeServer.getBindAddress().getHostName(),
                                                                   runtimeServer.getBindAddress().getPort(),
@@ -270,7 +273,8 @@ public class RuntimeMonitorTest {
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
-                                                       monitorMessage -> { }, profileMetricScheduledService);
+                                                       monitorMessage -> { }, profileMetricService,
+                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter());
     runtimeMonitor.startAndWait();
 
     // Wait and verify messages as being republished by the runtime monitor to the "local" metrics topics
@@ -303,7 +307,7 @@ public class RuntimeMonitorTest {
   }
 
   @Test
-  public void testKillProgram() throws Exception {
+  public void testStopProgram() throws Exception {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5, Threads.createDaemonThreadFactory("test"));
 
     RunId runId = RunIds.generate();
@@ -322,12 +326,13 @@ public class RuntimeMonitorTest {
                                                                   HttpRequestConfig.DEFAULT,
                                                                   clientKeyStore, serverKeyStore);
 
-    ProfileMetricScheduledService profileMetricScheduledService =
-      new ProfileMetricScheduledService(metricsCollectionService, programRunId, profileId, 1, scheduler);
+    ProfileMetricService profileMetricService =
+      new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
-                                                       monitorMessage -> { }, profileMetricScheduledService);
+                                                       monitorMessage -> { }, profileMetricService,
+                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter());
 
     runtimeMonitor.startAndWait();
     verifyPublishedMessages(monitorCConf, 2, null);
@@ -336,7 +341,7 @@ public class RuntimeMonitorTest {
     publishProgramKilled.set(programRunId);
 
     // Kill the running program via RuntimeMonitor.
-    runtimeMonitor.kill();
+    runtimeMonitor.requestStop();
 
     // The RuntimeServer should be stopped upon the RuntimeMonitor received the program completed state
     Tasks.waitFor(Service.State.TERMINATED, runtimeServer::state, 10, TimeUnit.SECONDS);
@@ -395,6 +400,21 @@ public class RuntimeMonitorTest {
         break;
       default:
         throw new IllegalArgumentException("Unsupported program status " + status);
+    }
+  }
+
+  private static final class MockRemoteProcessController implements RemoteProcessController {
+
+    private boolean isRunning;
+
+    @Override
+    public boolean isRunning() throws Exception {
+      return isRunning;
+    }
+
+    @Override
+    public void kill() throws Exception {
+
     }
   }
 }

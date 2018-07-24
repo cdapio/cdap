@@ -30,38 +30,38 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Profile metrics schedule service which will emit metrics about profile, by default it will emit per 60 seconds
+ * A service which will emit metrics periodically about a profile, by default it will emit per 60 seconds
  */
-public class ProfileMetricScheduledService extends AbstractScheduledService {
-  private static final long DEFAULT_INTERVAL_MIN = 1L;
+public class ProfileMetricService extends AbstractScheduledService {
+  private static final long DEFAULT_INTERVAL_MINUTES = 1L;
 
   private final MetricsContext metricsContext;
-  private final long intervalMins;
+  private final long intervalMinutes;
   private final int numNodes;
   private final ScheduledExecutorService executor;
 
-  public ProfileMetricScheduledService(MetricsCollectionService metricsCollectionService, ProgramRunId programRunId,
-                                       ProfileId profileId, int numNodes, ScheduledExecutorService executor) {
-    this(metricsCollectionService, programRunId, profileId, numNodes, DEFAULT_INTERVAL_MIN, executor);
+  public ProfileMetricService(MetricsCollectionService metricsCollectionService, ProgramRunId programRunId,
+                              ProfileId profileId, int numNodes, ScheduledExecutorService executor) {
+    this(metricsCollectionService, programRunId, profileId, numNodes, DEFAULT_INTERVAL_MINUTES, executor);
   }
 
-  public ProfileMetricScheduledService(MetricsCollectionService metricsCollectionService, ProgramRunId programRunId,
-                                       ProfileId profileId, int numNodes, long intervalMins,
-                                       ScheduledExecutorService executor) {
+  public ProfileMetricService(MetricsCollectionService metricsCollectionService, ProgramRunId programRunId,
+                              ProfileId profileId, int numNodes, long intervalMinutes,
+                              ScheduledExecutorService executor) {
     this.metricsContext = getMetricsContextForProfile(metricsCollectionService, programRunId, profileId);
     this.numNodes = numNodes;
-    this.intervalMins = intervalMins;
+    this.intervalMinutes = intervalMinutes;
     this.executor = executor;
   }
 
   @Override
-  protected void runOneIteration() throws Exception {
+  protected void runOneIteration() {
     emitMetric();
   }
 
   @Override
   protected Scheduler scheduler() {
-    return Scheduler.newFixedRateSchedule(intervalMins, intervalMins, TimeUnit.MINUTES);
+    return Scheduler.newFixedRateSchedule(intervalMinutes, intervalMinutes, TimeUnit.MINUTES);
   }
 
   @Override
@@ -71,7 +71,7 @@ public class ProfileMetricScheduledService extends AbstractScheduledService {
 
   @VisibleForTesting
   void emitMetric() {
-    metricsContext.increment(Constants.Metrics.Program.PROGRAM_NODE_MINUTES, intervalMins * numNodes);
+    metricsContext.increment(Constants.Metrics.Program.PROGRAM_NODE_MINUTES, intervalMinutes * numNodes);
   }
 
   /**

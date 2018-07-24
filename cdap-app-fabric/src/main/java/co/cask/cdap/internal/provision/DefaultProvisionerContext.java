@@ -38,8 +38,8 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final SparkCompat sparkCompat;
   private final String cdapVersion;
 
-  DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
-                            SparkCompat sparkCompat, SSHContext sshContext) {
+  public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
+                                   SparkCompat sparkCompat, SSHContext sshContext) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));

@@ -21,16 +21,11 @@ import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.proto.InMemoryProgramLiveInfo;
-import co.cask.cdap.proto.NotRunningProgramLiveInfo;
-import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -63,16 +58,9 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
                                 // no privileges needed for artifacts
                                 @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                   ArtifactRepository noAuthArtifactRepository,
-                                @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-                                ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
+                                @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
+    super(cConf, programRunnerFactory, noAuthArtifactRepository);
     this.hostname = hostname.getCanonicalHostName();
-  }
-
-  @Override
-  public ProgramLiveInfo getLiveInfo(ProgramId programId) {
-    return isRunning(programId) ? new InMemoryProgramLiveInfo(programId)
-      : new NotRunningProgramLiveInfo(programId);
   }
 
   @Override

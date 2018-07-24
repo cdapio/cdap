@@ -85,7 +85,8 @@ public class DistributedProgramRunnerTxTimeoutTest {
     // System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(appSpec));
 
     cConf.setInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT, 60);
-    flowRunner = new DistributedFlowProgramRunner(cConf, yConf, null, null, null, null, ClusterMode.ON_PREMISE, null);
+    flowRunner = new DistributedFlowProgramRunner(cConf, yConf, null, null, null, null, null,
+                                                  ClusterMode.ON_PREMISE, null);
     serviceRunner = new DistributedServiceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
     workerRunner = new DistributedWorkerProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
     mapreduceRunner = new DistributedMapReduceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);

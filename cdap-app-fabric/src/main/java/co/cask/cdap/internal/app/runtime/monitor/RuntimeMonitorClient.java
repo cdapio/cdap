@@ -128,13 +128,13 @@ public final class RuntimeMonitorClient {
   }
 
   /**
-   * Requests killing of the running program.
+   * Requests graceful termination of the running program.
    *
    * @throws IOException if failed to issue the command to the server
    * @throws IllegalArgumentException if server responded with 400 Bad Request
    * @throws ServiceUnavailableException if the runtime monitor server is not available
    */
-  void kill() throws IOException {
+  void requestStop() throws IOException {
     HttpsURLConnection urlConn = connect("runtime/kill");
     try {
       urlConn.setRequestMethod("POST");

@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -54,13 +55,13 @@ public class ProvisionerDataset {
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .create();
-  private static final DatasetId TABLE_ID = NamespaceId.SYSTEM.dataset("app.meta");
   private static final byte[] STATE_PREFIX = Bytes.toBytes("pr.state");
   private final MetadataStoreDataset table;
 
   public static ProvisionerDataset get(DatasetContext datasetContext, DatasetFramework dsFramework) {
     try {
-      Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, TABLE_ID, Table.class.getName(),
+      Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, AppMetadataStore.APP_META_INSTANCE_ID,
+                                                    Table.class.getName(),
                                                     DatasetProperties.EMPTY);
       return new ProvisionerDataset(table);
     } catch (DatasetManagementException | IOException e) {

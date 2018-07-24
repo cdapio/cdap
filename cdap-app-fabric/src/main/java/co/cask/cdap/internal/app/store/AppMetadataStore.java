@@ -105,7 +105,7 @@ import javax.annotation.Nullable;
  */
 public class AppMetadataStore extends MetadataStoreDataset {
 
-  static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
+  public static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
 
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
