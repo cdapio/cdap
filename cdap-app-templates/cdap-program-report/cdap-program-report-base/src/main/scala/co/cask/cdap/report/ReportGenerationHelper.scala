@@ -128,16 +128,15 @@ object ReportGenerationHelper {
       }
     }))
     resultDf.persist()
+    writeSummary(request, resultDf, reportIdDir, reportExpiryDurationMillis)
     // drop the columns which should not be included in the report
     resultDf.columns.foreach(col => if (!reportFields.contains(col)) resultDf = resultDf.drop(col))
-    // Writing the DataFrame to JSON files requires a non-existing directory to write report files.
-    // Create a non-existing directory location with name ReportSparkHandler.REPORT_DIR
     val reportDir = reportIdDir.append(Constants.LocationName.REPORT_DIR).toURI.toString
     // TODO: [CDAP-13291] improve how the number of partitions is configured
     // by default spart sql uses snappy compression codec, set it to uncompressed
     sql.setConf("spark.sql.avro.compression.codec", "uncompressed")
-    resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(reportDir)
-    writeSummary(request, resultDf, reportIdDir, reportExpiryDurationMillis)
+    resultDf.coalesce(1).write.option("timestampFormat",
+      "yyyy/MM/dd HH:mm:ss ZZ").format("com.databricks.spark.avro").save(reportDir)
   }
 
   /**
