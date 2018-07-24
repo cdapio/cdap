@@ -25,6 +25,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -81,6 +82,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
+  public static final String CDAP_VERSION = "cdap.version";
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
@@ -428,8 +430,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           }
         });
       case DEPROVISIONING:
-        appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
-        return Optional.of(provisioningService.deprovision(programRunId, datasetContext));
+        RunRecordMeta recordedMeta = appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
+        // If we skipped recording the run status, that means this was a duplicate message,
+        // or an invalid state transition. In both cases, we should not try to deprovision the cluster.
+        if (recordedMeta != null) {
+          return Optional.of(provisioningService.deprovision(programRunId, datasetContext));
+        }
+        break;
       case DEPROVISIONED:
         appMetadataStore.recordProgramDeprovisioned(programRunId, endTs, messageIdBytes);
         break;
@@ -469,6 +476,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     Map<String, String> notificationProperties = new HashMap<>(notification.getProperties());
     notificationProperties.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId));
     notificationProperties.put(ProgramOptionConstants.PROGRAM_STATUS, status.name());
+    notificationProperties.put(CDAP_VERSION, ProjectInfo.getVersion().toString());
     Notification programStatusNotification =
       new Notification(Notification.Type.PROGRAM_STATUS, notificationProperties);
     getMessagingContext().getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(),

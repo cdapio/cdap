@@ -20,6 +20,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Contains the config for the provisioner
@@ -27,13 +28,29 @@ import java.util.Objects;
 public class ProvisionerConfig {
   @SerializedName("configuration-groups")
   private final List<Object> configurationGroups;
+  @SerializedName("icon")
+  private final Object icon;
+  @SerializedName("beta")
+  private final Boolean beta;
 
-  public ProvisionerConfig(List<Object> configurationGroups) {
+  public ProvisionerConfig(List<Object> configurationGroups, @Nullable Object icon, @Nullable Boolean beta) {
     this.configurationGroups = configurationGroups;
+    this.icon = icon;
+    this.beta = beta;
   }
 
   public List<Object> getConfigurationGroups() {
     return configurationGroups;
+  }
+
+  @Nullable
+  public Object getIcon() {
+    return icon;
+  }
+
+  @Nullable
+  public Boolean isBeta() {
+    return beta;
   }
 
   @Override
@@ -46,11 +63,13 @@ public class ProvisionerConfig {
     }
     ProvisionerConfig that = (ProvisionerConfig) o;
 
-    return Objects.equals(configurationGroups, that.configurationGroups);
+    return Objects.equals(configurationGroups, that.configurationGroups) &&
+      Objects.equals(configurationGroups, that.configurationGroups) &&
+      Objects.equals(beta, that.beta);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(configurationGroups);
+    return Objects.hash(configurationGroups, icon, beta);
   }
 }

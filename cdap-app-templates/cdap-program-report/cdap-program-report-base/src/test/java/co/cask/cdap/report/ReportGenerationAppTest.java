@@ -24,18 +24,20 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.report.main.ProgramRunInfo;
 import co.cask.cdap.report.main.ProgramRunInfoSerializer;
 import co.cask.cdap.report.main.ProgramStartInfo;
 import co.cask.cdap.report.proto.Filter;
-import co.cask.cdap.report.proto.FilterDeserializer;
+import co.cask.cdap.report.proto.FilterCodec;
 import co.cask.cdap.report.proto.ProgramRunStartMethod;
 import co.cask.cdap.report.proto.RangeFilter;
 import co.cask.cdap.report.proto.ReportContent;
 import co.cask.cdap.report.proto.ReportGenerationInfo;
 import co.cask.cdap.report.proto.ReportGenerationRequest;
+import co.cask.cdap.report.proto.ReportList;
 import co.cask.cdap.report.proto.ReportSaveRequest;
 import co.cask.cdap.report.proto.ReportStatus;
 import co.cask.cdap.report.proto.ShareId;
@@ -85,10 +87,12 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -112,63 +116,33 @@ public class ReportGenerationAppTest extends TestBase {
   private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationAppTest.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
-    .create();
-  // have a separate Gson for deserializing Filter to avoid error when serializing Filter to JSON
-  private static final Gson DES_GSON = new GsonBuilder()
-    .registerTypeAdapter(ReportContent.class, new ReportContentDeserializer())
-    .registerTypeAdapter(Filter.class, new FilterDeserializer())
+    .registerTypeAdapter(Filter.class, new FilterCodec())
+    .disableHtmlEscaping()
     .create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type REPORT_GEN_INFO_TYPE = new TypeToken<ReportGenerationInfo>() { }.getType();
   private static final Type REPORT_CONTENT_TYPE = new TypeToken<ReportContent>() { }.getType();
+  private static final String USER_ALICE = "alice";
+  private static final String USER_BOB = "bob";
+  private static final String TEST_ARTIFACT_NAME = "TestArtifact";
 
   @Test
   public void testGenerateReport() throws Exception {
-    DatasetId metaFileset = NamespaceId.DEFAULT.dataset(ReportGenerationApp.RUN_META_FILESET);
-    addDatasetInstance(metaFileset, FileSet.class.getName());
-    // TODO: [CDAP-13216] temporarily create the run meta fileset and generate mock program run meta files here.
-    // Will remove once the TMS subscriber writing to the run meta fileset is implemented.
-    DataSetManager<FileSet> fileSet = getDataset(metaFileset);
-    Long currentTime = System.currentTimeMillis();
-    populateMetaFiles(fileSet.get().getBaseLocation(), currentTime);
+    Long currentTimeMillis = System.currentTimeMillis();
+    DatasetId metaFileset = createAndInitializeDataset(NamespaceId.DEFAULT, currentTimeMillis);
 
-    // Trace the dependencies for the spark avro
-    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
-      @Override
-      public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        if (className.startsWith("org.apache.spark.")) {
-          return false;
-        }
-        if (className.startsWith("scala.")) {
-          return false;
-        }
-        if (className.startsWith("org.apache.hadoop.")) {
-          return false;
-        }
-        if (className.startsWith("org.codehaus.janino.")) {
-          return false;
-        }
-        return true;
-      }
-    });
-
-    Location avroSparkBundle = Locations.toLocation(TEMP_FOLDER.newFile());
-    // Since spark-avro and its dependencies need to be included into the application jar,
-    // but spark-avro is not used directly in the application code, explicitly add a class DefaultSource
-    // from spark-avro so that spark-avro and its dependencies will be included.
-    bundler.createBundle(avroSparkBundle, DefaultSource.class);
-    File unJarDir = BundleJarUtil.unJar(avroSparkBundle, TEMP_FOLDER.newFolder());
-
-    ApplicationManager app = deployApplication(ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());
-    SparkManager sparkManager = app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start();
+    SparkManager sparkManager = deployAndStartReportingApplication(NamespaceId.DEFAULT, new HashMap<>());
     URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
     Assert.assertNotNull(url);
     URL reportURL = url.toURI().resolve("reports/").toURL();
     List<Filter> filters =
       ImmutableList.of(
+        // white list filter
         new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
-        new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
-    long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTime);
+        new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)),
+        // black list filter
+        new ValueFilter<>(Constants.ARTIFACT_NAME, null, ImmutableSet.of("cdap-data-streams", "cdap-data-pipeline")));
+    long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis);
     ReportGenerationRequest request =
       new ReportGenerationRequest("ns1_ns2_report", startSecs, startSecs + 30,
                                   new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
@@ -242,14 +216,183 @@ public class ReportGenerationAppTest extends TestBase {
     urlConn = (HttpURLConnection) reportDeleteURL.openConnection();
     urlConn.setRequestMethod("DELETE");
     Assert.assertEquals(404, urlConn.getResponseCode());
+
+    // test querying for time range before the start secs, to verify empty results contents
+    validateEmptyReports(reportURL, startSecs - TimeUnit.HOURS.toSeconds(2), startSecs - 30, filters);
+    // test querying for time range after the start secs, but with filter that doesnt match any records
+    // to verify empty results contents
+    List<Filter> filters2 =
+      ImmutableList.of(
+        new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
+        // all the programs are run by user alice, user bob will match no records.
+        new ValueFilter<>(Constants.USER, ImmutableSet.of(USER_BOB), null));
+    validateEmptyReports(reportURL, startSecs, startSecs + 30, filters2);
+    List<Filter>  filters3 =
+      ImmutableList.of(
+        new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
+        // all the programs have the same test artifact name, blacklisting that will provide empty results
+        new ValueFilter<>(Constants.ARTIFACT_NAME, null, ImmutableSet.of(TEST_ARTIFACT_NAME)));
+    validateEmptyReports(reportURL, startSecs, startSecs + 30, filters3);
+    sparkManager.stop();
+    sparkManager.waitForStopped(60, TimeUnit.SECONDS);
+    deleteDatasetInstance(metaFileset);
+  }
+
+  private void validateEmptyReports(URL reportURL, long startSecs,
+                                    long endSecs, List<Filter> filters) throws Exception {
+    ReportGenerationRequest request =
+      new ReportGenerationRequest("ns1_ns2_report", startSecs, endSecs,
+                                  new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
+                                  ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
+    HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(request).getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(200, urlConn.getResponseCode());
+    Map<String, String> reportIdMap = getResponseObject(urlConn, STRING_STRING_MAP);
+    String reportId = reportIdMap.get("id");
+    Assert.assertNotNull(reportId);
+    URL reportIdURL = reportURL.toURI().resolve("info?report-id=" + reportId).toURL();
+    validateEmptyReportSummary(reportIdURL);
+    URL reportRunsURL = reportURL.toURI().resolve("download?report-id=" + reportId).toURL();
+    validateEmptyReportContent(reportRunsURL);
+  }
+
+  private DatasetId createAndInitializeDataset(NamespaceId namespaceId, long currentTimeMillis) throws Exception {
+    DatasetId metaFileset = namespaceId.dataset(ReportGenerationApp.RUN_META_FILESET);
+    addDatasetInstance(metaFileset, FileSet.class.getName());
+    // TODO: [CDAP-13216] temporarily create the run meta fileset and generate mock program run meta files here.
+    // Will remove once the TMS subscriber writing to the run meta fileset is implemented.
+    DataSetManager<FileSet> fileSet = getDataset(metaFileset);
+    populateMetaFiles(fileSet.get().getBaseLocation(), currentTimeMillis);
+    return metaFileset;
+  }
+
+  private SparkManager deployAndStartReportingApplication(NamespaceId deployNamespace,
+                                                          Map<String, String> runtimeArguments) throws IOException {
+    // Trace the dependencies for the spark avro
+    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (className.startsWith("org.apache.spark.")) {
+          return false;
+        }
+        if (className.startsWith("scala.")) {
+          return false;
+        }
+        if (className.startsWith("org.apache.hadoop.")) {
+          return false;
+        }
+        if (className.startsWith("org.codehaus.janino.")) {
+          return false;
+        }
+        return true;
+      }
+    });
+
+    Location avroSparkBundle = Locations.toLocation(TEMP_FOLDER.newFile());
+    // Since spark-avro and its dependencies need to be included into the application jar,
+    // but spark-avro is not used directly in the application code, explicitly add a class DefaultSource
+    // from spark-avro so that spark-avro and its dependencies will be included.
+    bundler.createBundle(avroSparkBundle, DefaultSource.class);
+    File unJarDir = BundleJarUtil.unJar(avroSparkBundle, TEMP_FOLDER.newFolder());
+
+    ApplicationManager app = deployApplication(deployNamespace,
+                                               ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());
+    return app.getSparkManager(ReportGenerationSpark.class.getSimpleName()).start(runtimeArguments);
+  }
+
+  @Test
+  public void testReportExpiration() throws Exception {
+    NamespaceId testNamespace = new NamespaceId("reporting");
+    NamespaceMeta reportingNamespace = new NamespaceMeta.Builder()
+      .setName(testNamespace)
+      .setDescription("Reporting namespace used to test report expiry")
+      .build();
+    getNamespaceAdmin().create(reportingNamespace);
+    long currentTimeMillis = System.currentTimeMillis();
+    DatasetId datasetId = createAndInitializeDataset(testNamespace, currentTimeMillis);
+    Map<String, String> runTimeArguments = new HashMap<>();
+    // set report expiration time to be 10 seconds
+    runTimeArguments.put(Constants.Report.REPORT_EXPIRY_TIME_SECONDS, "1");
+    SparkManager sparkManager = deployAndStartReportingApplication(testNamespace, runTimeArguments);
+
+    URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
+    Assert.assertNotNull(url);
+    URL reportURL = url.toURI().resolve("reports/").toURL();
+    List<Filter> filters =
+      ImmutableList.of(
+        new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
+        new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
+    long startSecs = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis);
+    ReportGenerationRequest request =
+      new ReportGenerationRequest("ns1_ns2_report", startSecs, startSecs + 30,
+                                  new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
+                                  ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
+    HttpURLConnection urlConn = (HttpURLConnection) reportURL.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.setRequestMethod("POST");
+    urlConn.getOutputStream().write(GSON.toJson(request).getBytes(StandardCharsets.UTF_8));
+    if (urlConn.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(urlConn.getErrorStream())));
+    }
+    Assert.assertEquals(200, urlConn.getResponseCode());
+
+    Map<String, String> reportIdMap = getResponseObject(urlConn, STRING_STRING_MAP);
+    String reportId = reportIdMap.get("id");
+    Assert.assertNotNull(reportId);
+
+    // perform get reports list for 60 seconds and make sure we get 0 reports due to expiry
+    Tasks.waitFor(0, () -> {
+      return getReportsList(url);
+    }, 5, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
+    sparkManager.stop();
+    sparkManager.waitForStopped(2, TimeUnit.MINUTES);
+    deleteDatasetInstance(datasetId);
+    getNamespaceAdmin().delete(testNamespace);
+  }
+
+  private int getReportsList(URL url) throws IOException, URISyntaxException {
+    URL reportURL = url.toURI().resolve("reports/").toURL();
+    HttpURLConnection reportsUrl = (HttpURLConnection) reportURL.openConnection();
+    reportsUrl.setDoOutput(true);
+    reportsUrl.setRequestMethod("GET");
+    if (reportsUrl.getErrorStream() != null) {
+      Assert.fail(Bytes.toString(ByteStreams.toByteArray(reportsUrl.getErrorStream())));
+    }
+    Assert.assertEquals(200, reportsUrl.getResponseCode());
+    ReportList reportList = getResponseObject(reportsUrl, ReportList.class);
+    // make sure the total number of reports returned and the actual report list returned are equal in size
+    Assert.assertEquals(reportList.getTotal(), reportList.getReports().size());
+    return reportList.getReports().size();
+  }
+
+  @Test
+  public void testFilterSerialization() throws Exception {
+    List<Filter> filters =
+      ImmutableList.of(
+        new ValueFilter<>(Constants.NAMESPACE, ImmutableSet.of("ns1", "ns2"), null),
+        new RangeFilter<>(Constants.DURATION, new RangeFilter.Range<>(null, 500L)));
+    long startSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    ReportGenerationRequest request =
+      new ReportGenerationRequest("ns1_ns2_report", startSecs, startSecs + 30,
+                                  new ArrayList<>(ReportField.FIELD_NAME_MAP.keySet()),
+                                  ImmutableList.of(new Sort(Constants.DURATION, Sort.Order.DESCENDING)), filters);
+    String serialized = GSON.toJson(request);
+    Assert.assertNotNull(serialized);
+    ReportGenerationRequest deserialized = GSON.fromJson(serialized, ReportGenerationRequest.class);
+    Assert.assertEquals(request, deserialized);
   }
 
 
   private void validateReportSummary(URL reportIdURL, long startSecs)
-          throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    throws InterruptedException, ExecutionException, TimeoutException, IOException {
     Tasks.waitFor(ReportStatus.COMPLETED, () -> {
       ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
-              REPORT_GEN_INFO_TYPE);
+                                                                    REPORT_GEN_INFO_TYPE);
       if (ReportStatus.FAILED.equals(reportGenerationInfo.getStatus())) {
         Assert.fail("Report generation failed");
       }
@@ -257,23 +400,52 @@ public class ReportGenerationAppTest extends TestBase {
     }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
 
     ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
-            REPORT_GEN_INFO_TYPE);
+                                                                  REPORT_GEN_INFO_TYPE);
     // assert the summary content is expected
     ReportSummary summary = reportGenerationInfo.getSummary();
     Assert.assertNotNull(summary);
     Assert.assertEquals(ImmutableSet.of(new NamespaceAggregate("ns1", 1), new NamespaceAggregate("ns2" , 1)),
-            new HashSet<>(summary.getNamespaces()));
-    Assert.assertEquals(ImmutableSet.of(new ArtifactAggregate("Artifact", "1.0.0", "USER", 2)),
-            new HashSet<>(summary.getArtifacts()));
+                        new HashSet<>(summary.getNamespaces()));
+    Assert.assertEquals(ImmutableSet.of(new ArtifactAggregate(TEST_ARTIFACT_NAME, "1.0.0", "USER", 2)),
+                        new HashSet<>(summary.getArtifacts()));
     DurationStats durationStats = summary.getDurations();
     Assert.assertEquals(300L, durationStats.getMin());
     Assert.assertEquals(300L, durationStats.getMax());
     // averages with difference smaller than 0.01 are considered equal
     Assert.assertTrue(Math.abs(300.0 - durationStats.getAverage()) < 0.01);
     Assert.assertEquals(new StartStats(startSecs, startSecs), summary.getStarts());
-    Assert.assertEquals(ImmutableSet.of(new UserAggregate("alice", 2)), new HashSet<>(summary.getOwners()));
+    Assert.assertEquals(ImmutableSet.of(new UserAggregate(USER_ALICE, 2)), new HashSet<>(summary.getOwners()));
     Assert.assertEquals(ImmutableSet.of(new StartMethodAggregate(ProgramRunStartMethod.TRIGGERED, 2)),
-            new HashSet<>(summary.getStartMethods()));
+                        new HashSet<>(summary.getStartMethods()));
+  }
+
+  private void validateEmptyReportSummary(URL reportIdURL)
+    throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    Tasks.waitFor(ReportStatus.COMPLETED, () -> {
+      ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+                                                                    REPORT_GEN_INFO_TYPE);
+      if (ReportStatus.FAILED.equals(reportGenerationInfo.getStatus())) {
+        Assert.fail("Report generation failed");
+      }
+      return reportGenerationInfo.getStatus();
+    }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS);
+
+    ReportGenerationInfo reportGenerationInfo = getResponseObject(reportIdURL.openConnection(),
+                                                                  REPORT_GEN_INFO_TYPE);
+    // assert the summary content is expected
+    ReportSummary summary = reportGenerationInfo.getSummary();
+    Assert.assertNotNull(summary);
+    Assert.assertEquals(ImmutableSet.of(new NamespaceAggregate("ns1", 0), new NamespaceAggregate("ns2" , 0)),
+                        new HashSet<>(summary.getNamespaces()));
+    Assert.assertEquals(new DurationStats(0L, 0L, 0.0), summary.getDurations());
+    Assert.assertEquals(new StartStats(0, 0), summary.getStarts());
+    Assert.assertEquals(0, summary.getOwners().size());
+    Assert.assertEquals(0, summary.getStartMethods().size());
+  }
+
+  private void validateEmptyReportContent(URL reportRunsURL) throws IOException {
+    ReportContent reportContent = getResponseObject(reportRunsURL.openConnection(), REPORT_CONTENT_TYPE);
+    Assert.assertEquals(0, reportContent.getTotal());
   }
 
   private void validateReportContent(URL reportRunsURL) throws IOException {
@@ -281,10 +453,10 @@ public class ReportGenerationAppTest extends TestBase {
     Assert.assertEquals(2, reportContent.getTotal());
     // Assert that all the records in the report contain startMethod TRIGGERED
     boolean startMethodIsCorrect =
-            reportContent.getDetails().stream().allMatch(content -> content.contains("\"startMethod\":\"TRIGGERED\""));
+      reportContent.getDetails().stream().allMatch(content -> content.contains("\"startMethod\":\"TRIGGERED\""));
     if (!startMethodIsCorrect) {
       Assert.fail("All report records are expected to contain startMethod TRIGGERED, " +
-              "but actual results do not meet this requirement: " + reportContent.getDetails());
+                    "but actual results do not meet this requirement: " + reportContent.getDetails());
     }
   }
 
@@ -296,7 +468,7 @@ public class ReportGenerationAppTest extends TestBase {
       ((HttpURLConnection) urlConnection).disconnect();
     }
     LOG.info(response);
-    return DES_GSON.fromJson(response, typeOfT);
+    return GSON.fromJson(response, typeOfT);
   }
 
   /**
@@ -322,7 +494,8 @@ public class ReportGenerationAppTest extends TestBase {
       "\"type\": \"PROGRAM_STATUS\"}]}";
     ProgramStartInfo startInfo =
       new ProgramStartInfo(ImmutableMap.of(Constants.Notification.SCHEDULE_INFO_KEY, scheduleInfo),
-                           new ArtifactId("Artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER), "alice");
+                           new ArtifactId(TEST_ARTIFACT_NAME,
+                                          new ArtifactVersion("1.0.0"), ArtifactScope.USER), USER_ALICE);
     long delay = TimeUnit.MINUTES.toMillis(5);
     int mockMessageId = 0;
     for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {
@@ -353,8 +526,8 @@ public class ReportGenerationAppTest extends TestBase {
   }
 
   private static GenericData.Record createRecord(String namespace, String application, String version,
-                                                String type, String program, String run, String status,
-                                                Long timestamp, ProgramStartInfo startInfo, String messageId) {
+                                                 String type, String program, String run, String status,
+                                                 Long timestamp, ProgramStartInfo startInfo, String messageId) {
     ProgramRunInfo runInfo = new ProgramRunInfo(namespace, application, version, type, program, run);
     runInfo.setStatus(status);
     runInfo.setTime(timestamp);

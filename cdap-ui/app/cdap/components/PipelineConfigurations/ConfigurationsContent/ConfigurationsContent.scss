@@ -26,7 +26,7 @@ $secondary-btn-color: $brand-primary;
 .pipeline-configurations-body {
   .configuration-content {
     width: 100%;
-    margin: 16px 30px 40px 50px;
+    margin: 16px 30px 40px 30px;
     font-size: $regular-font;
     position: relative;
 
@@ -76,9 +76,7 @@ $secondary-btn-color: $brand-primary;
         .key-label,
         .value-label,
         .provided-label {
-          display: inline-block;
           color: $input-label-color;
-          width: 40%;
           font-weight: 500;
         }
 
@@ -91,7 +89,7 @@ $secondary-btn-color: $brand-primary;
         margin-top: 10px;
 
         .key-value-pair-preference {
-          margin-bottom: 16px;
+          margin-bottom: 15px;
           justify-content: initial;
 
           input[type="text"] {

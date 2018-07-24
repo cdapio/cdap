@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.id.ProfileId;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Collections;
@@ -60,6 +61,9 @@ public class RunRecord {
   @SerializedName("cluster")
   private final ProgramRunCluster cluster;
 
+  @SerializedName("profile")
+  private final ProfileId profileId;
+
   /**
    * @deprecated use {@link #builder()} instead.
    */
@@ -67,7 +71,7 @@ public class RunRecord {
   public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
                    @Nullable Long suspendTs, @Nullable Long resumeTs,
                    ProgramRunStatus status, @Nullable Map<String, String> properties,
-                   ProgramRunCluster cluster) {
+                   ProgramRunCluster cluster, ProfileId profileId) {
     this.pid = pid;
     this.startTs = startTs;
     this.runTs = runTs;
@@ -78,6 +82,7 @@ public class RunRecord {
     this.properties = properties == null ? Collections.emptyMap() :
       Collections.unmodifiableMap(new LinkedHashMap<>(properties));
     this.cluster = cluster;
+    this.profileId = profileId;
   }
 
   /**
@@ -87,7 +92,7 @@ public class RunRecord {
     this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(),
          otherRunRecord.getStopTs(), otherRunRecord.getSuspendTs(), otherRunRecord.getResumeTs(),
          otherRunRecord.getStatus(), otherRunRecord.getProperties(),
-         otherRunRecord.getCluster());
+         otherRunRecord.getCluster(), otherRunRecord.getProfileId());
   }
 
   public String getPid() {
@@ -131,6 +136,11 @@ public class RunRecord {
     return cluster == null ? new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED, null, null) : cluster;
   }
 
+  public ProfileId getProfileId() {
+    // for backward compatibility, return native profile if the profile id is null
+    return profileId == null ? ProfileId.NATIVE : profileId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -150,12 +160,13 @@ public class RunRecord {
       Objects.equals(this.resumeTs, that.resumeTs) &&
       Objects.equals(this.status, that.status) &&
       Objects.equals(this.properties, that.properties) &&
-      Objects.equals(this.cluster, that.cluster);
+      Objects.equals(this.cluster, that.cluster) &&
+      Objects.equals(this.profileId, that.profileId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster);
+    return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster, profileId);
   }
 
   @Override
@@ -170,6 +181,7 @@ public class RunRecord {
       ", status=" + status +
       ", properties=" + properties +
       ", cluster=" + cluster +
+      ", profile=" + profileId +
       '}';
   }
 
@@ -204,6 +216,7 @@ public class RunRecord {
     protected Long resumeTs;
     protected Map<String, String> properties;
     protected ProgramRunCluster cluster;
+    protected ProfileId profileId;
 
     protected Builder() {
       properties = new HashMap<>();
@@ -219,6 +232,7 @@ public class RunRecord {
       stopTs = other.getStopTs();
       properties = new HashMap<>(other.getProperties());
       cluster = other.getCluster();
+      profileId = other.getProfileId();
     }
 
     public T setStatus(ProgramRunStatus status) {
@@ -267,6 +281,11 @@ public class RunRecord {
       return (T) this;
     }
 
+    public T setProfileId(ProfileId profileId) {
+      this.profileId = profileId;
+      return (T) this;
+    }
+
     public RunRecord build() {
       if (pid == null) {
         throw new IllegalArgumentException("Run record run id must be specified.");
@@ -280,7 +299,7 @@ public class RunRecord {
       if (status == null) {
         throw new IllegalArgumentException("Run record status must be specified.");
       }
-      return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster);
+      return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster, profileId);
     }
   }
 }

@@ -73,7 +73,7 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${ingest_url} cf2d8cac45b4be267adbb0e8ecdc88a4 cdap-flume
   download_readme_file_and_test ${includes_dir} ${ingest_url} a852e493aff54ffd726368691f248d80 cdap-stream-clients/java
   download_readme_file_and_test ${includes_dir} ${ingest_url} da242d9be7051417bd5ff73b3dc5edc2 cdap-stream-clients/python
-  download_readme_file_and_test ${includes_dir} ${ingest_url} b798091f24f6ecfe05d614f1dd1f7a03 cdap-stream-clients/ruby
+  download_readme_file_and_test ${includes_dir} ${ingest_url} 4475514acbba0a5f32a61d5c13c30fdb cdap-stream-clients/ruby
 
   echo_red_bold "Check included example files for changes"
 
@@ -85,7 +85,7 @@ function download_includes() {
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
   test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
 
-  test_an_include f9acd1e2ed73ba5e83b9a0cd6c75f988 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include fdf59cc4d67aef9abda0bc35e806a809 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include 26486a370532d820bde854d42990a868 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
 

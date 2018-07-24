@@ -34,7 +34,8 @@ export default class RulesEngineServiceControl extends Component {
 
   state = {
     loading: false,
-    error: null
+    error: null,
+    extendedError: null
   };
 
   enableRulesEngine = () => {
@@ -45,13 +46,14 @@ export default class RulesEngineServiceControl extends Component {
       shouldStopService: false,
       artifactName: RulesEngineArtifact,
       api: MyRuleEngineApi,
-      i18nPrefix: ''
+      i18nPrefix: PREFIX
     })
       .subscribe(
         this.props.onServiceStart,
-        () => {
+        (err) => {
           this.setState({
-            error: T.translate(`${PREFIX}.errorMessage`),
+            error: err.error,
+            extendedError: err.extendedMessage,
             loading: false
           });
         }
@@ -66,10 +68,10 @@ export default class RulesEngineServiceControl extends Component {
       <div className="rules-engine-service-control-error">
         <h5 className="text-danger">
           <IconSVG name="icon-exclamation-triangle" />
-          <span>{T.translate(`${PREFIX}.errorTitle`)}</span>
+          <span>{this.state.error}</span>
         </h5>
         <p className="text-danger">
-          {this.state.error}
+          {this.state.extendedError}
         </p>
       </div>
     );

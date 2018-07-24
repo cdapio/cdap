@@ -234,3 +234,16 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
 .db-other {
   @include db-image(7);
 }
+
+.db-mssql6 {
+  @include db-image(8);
+}
+
+.db-hive2binary,
+.db-hive2http {
+  @include db-image(9);
+}
+
+.db-redshift {
+  @include db-image(10);
+}

@@ -54,6 +54,7 @@ public final class Constants {
     public static final String TYPE = "type";
     public static final String SOURCE_TYPE = "source";
     public static final String SINK_TYPE = "sink";
+    public static final String DATA_DIR = "data";
   }
 
   /**

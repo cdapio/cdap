@@ -225,7 +225,7 @@ public class FieldLineageDataset extends AbstractDataset {
         fields = GSON.fromJson(value, SET_FIELD_TYPE);
       } catch (JsonSyntaxException e) {
         LOG.warn(String.format("Failed to parse json from row '%s' and column '%s'.", Bytes.toString(rowKey),
-                Bytes.toString(columnKey)));
+                               Bytes.toString(columnKey)));
       }
       if (fields != null) {
         result.addAll(fields);
@@ -276,7 +276,7 @@ public class FieldLineageDataset extends AbstractDataset {
         endPointFields = GSON.fromJson(value, SET_ENDPOINT_FIELD_TYPE);
       } catch (JsonSyntaxException e) {
         LOG.warn(String.format("Failed to parse json from row '%s' and column '%s'. Ignoring EndPoint.",
-                 Bytes.toString(rowKey), Bytes.toString(columnKey)));
+                               Bytes.toString(rowKey), Bytes.toString(columnKey)));
         continue;
       }
       if (endPointFields != null) {
@@ -317,7 +317,7 @@ public class FieldLineageDataset extends AbstractDataset {
 
   private Set<ProgramRunOperations> getOperations(byte[] direction, EndPoint endPoint, long start, long end) {
     Map<Long, Set<ProgramRunId>> checksumsWithProgramRunsInRange
-            = getChecksumsWithProgramRunsInRange(direction, endPoint, start, end);
+      = getChecksumsWithProgramRunsInRange(direction, endPoint, start, end);
 
     Set<ProgramRunOperations> result = new HashSet<>();
 

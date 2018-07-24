@@ -16,6 +16,8 @@
 
 package co.cask.cdap.report.util;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Constants used by the report generation app and file schema.
  */
@@ -28,6 +30,15 @@ public final class Constants {
     public static final String KEY_FILE_NAME = "security_key";
     public static final String KEY_FILE_PERMISSION = "700";
     public static final int ENCRYPTION_KEY_BITSIZE = 128;
+  }
+
+  /**
+   * Constants related to emitting metrics
+   */
+  public static final class Metrics {
+    public static final String SYSTEM_NAMESPACE = "system";
+    public static final String RECORDS_PROCESSED_METRIC = "program.status.processed";
+    public static final String SYNC_INTERVAL_TIME_MILLIS_METRIC = "run.metadata.last.sync.time.millis";
   }
 
   public static final String NAMESPACE = "namespace";
@@ -59,8 +70,6 @@ public final class Constants {
    */
   public static final class LocationName {
     public static final String REPORT_DIR = "reports";
-    public static final String COUNT_FILE = "COUNT";
-    public static final String SUCCESS_FILE = "_SUCCESS";
     public static final String SUMMARY = "_SUMMARY";
   }
 
@@ -96,5 +105,13 @@ public final class Constants {
       public static final String SUSPENDED = "SUSPENDED";
       public static final String RESUMING = "RESUMING";
     }
+  }
+  /**
+   * Constants related to report generation and expiration
+   */
+  public static final class Report {
+    // report files will expire after 48 hours after they are generated
+    public static final String DEFAULT_REPORT_EXPIRY_TIME_SECONDS = String.valueOf(TimeUnit.DAYS.toSeconds(2));
+    public static final String REPORT_EXPIRY_TIME_SECONDS = "report.expiry.duration.seconds";
   }
 }

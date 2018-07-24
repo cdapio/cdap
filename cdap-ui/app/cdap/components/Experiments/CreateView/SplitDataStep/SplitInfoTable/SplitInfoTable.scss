@@ -18,6 +18,9 @@
 
 .split-info-table {
   .split-info-collapsable-section {
+    padding: 5px 0;
+    border-bottom: 1px solid $grey-05;
+    margin: 5px 0;
     cursor: pointer;
   }
   .split-info-table-container {

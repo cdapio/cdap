@@ -36,6 +36,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -47,6 +48,7 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
@@ -74,6 +76,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -381,7 +384,14 @@ public class AppMetadataStore extends MetadataStoreDataset {
     if (existing != null) {
       LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existing "
                   + "run record in run state {} and cluster state {}.",
-                existing.getStatus(), existing.getCluster().getStatus());
+                programRunId, existing.getStatus(), existing.getCluster().getStatus());
+      return null;
+    }
+
+    Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs);
+    if (!profileId.isPresent()) {
+      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that does not have "
+                  + "a profile assigned to it.", programRunId);
       return null;
     }
 
@@ -393,6 +403,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .setProperties(getRecordProperties(systemArgs, runtimeArgs))
       .setSystemArgs(systemArgs)
       .setCluster(cluster)
+      .setProfileId(profileId.get())
       .setSourceId(sourceId)
       .setArtifactId(artifactId)
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
@@ -877,6 +888,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
                   "run record meta '{}'. Skip recording state transition to program state {} and cluster state {}.",
                 Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existing,
                 nextProgramState, nextClusterState);
+      return false;
+    }
+    // sometimes we expect duplicate messages. For example, multiple KILLED messages are sent, one by the CDAP master
+    // and one by the program. In these cases, we don't need to write, but we don't want to log a warning
+    if (existing.getStatus() == nextProgramState && existing.getCluster().getStatus() == nextClusterState) {
       return false;
     }
     if (!existing.getStatus().canTransitionTo(nextProgramState)) {

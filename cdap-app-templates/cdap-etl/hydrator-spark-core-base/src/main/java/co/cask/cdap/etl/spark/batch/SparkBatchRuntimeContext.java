@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spark.NoLookupProvider;
@@ -72,7 +72,7 @@ public class SparkBatchRuntimeContext extends AbstractTransformContext
   }
 
   @Override
-  public void record(List<PipelineOperation> operations) {
+  public void record(List<FieldOperation> operations) {
     throw new UnsupportedOperationException("Not supported");
   }
 }

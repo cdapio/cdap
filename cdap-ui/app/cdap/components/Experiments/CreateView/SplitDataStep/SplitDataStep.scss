@@ -26,6 +26,13 @@
       text-decoration: none;
     }
   }
+  .done-action-container {
+    display: inline-block;
+    margin: 0 10px;
+    > :first-child {
+      margin-right: 10px;
+    }
+  }
   .btn.btn-primary {
     .btn-inner-container {
       display: flex;

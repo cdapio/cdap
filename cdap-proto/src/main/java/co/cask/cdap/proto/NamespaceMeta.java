@@ -30,8 +30,7 @@ public final class NamespaceMeta {
   public static final NamespaceMeta DEFAULT =
     new NamespaceMeta.Builder()
       .setName(NamespaceId.DEFAULT)
-      .setDescription("The default namespace, which is always available, and can be used in " +
-                        "environments where multitenancy is not required.")
+      .setDescription("This is the default namespace, which is automatically created, and is always available.")
       .build();
 
   public static final NamespaceMeta SYSTEM =

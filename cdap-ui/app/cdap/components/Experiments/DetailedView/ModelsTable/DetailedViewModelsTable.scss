@@ -82,8 +82,9 @@
             white-space: nowrap;
             text-overflow: ellipsis;
             height: 100%;
+            padding: 0;
           }
-          > div {
+          > div:not(.model-action-btns) {
             strong {
               display: block;
             }
@@ -131,7 +132,7 @@
             margin-left: 20px;
             margin-top: 0;
             padding: 0;
-            padding-left: 10px;
+            padding-left: 0;
             .add-model-to-pipeline {
               margin: 5px 5px 5px 0;
             }
@@ -173,7 +174,7 @@
       .grid-body {
         .grid-row {
           &.opened {
-            grid-template-columns: 20px 1fr 1fr 1fr 1fr 20px;
+            grid-template-columns: 1fr;
             cursor: auto;
           }
         }

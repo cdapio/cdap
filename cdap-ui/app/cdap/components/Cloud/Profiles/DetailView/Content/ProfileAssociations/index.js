@@ -17,44 +17,48 @@
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import {MySearchApi} from 'api/search';
-import {isNilOrEmpty, humanReadableDuration} from 'services/helpers';
+import {isNilOrEmpty, humanReadableDuration, objectQuery} from 'services/helpers';
 import {GLOBALS} from 'services/global-constants';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import {ONEDAYMETRICKEY, OVERALLMETRICKEY, fetchAggregateProfileMetrics} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {Observable} from 'rxjs/Observable';
+require('./ProfileAssociations.scss');
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
+const HEADERPREFIX = `${PREFIX}.Associations.Header`;
 
-require('./ProfileAssociations.scss');
+
 const HEADERS = [
   {
-    label: 'Name',
+    label: T.translate(`${HEADERPREFIX}.name`),
     property: 'name'
   },
   {
-    label: 'Namespace',
+    label: T.translate(`${HEADERPREFIX}.namespace`),
     property: 'namespace'
   },
   {
-    label: 'Created',
+    label: T.translate(`${HEADERPREFIX}.created`),
     property: 'created'
   },
   {
-    label: 'Last 24 hrs runs'
+    label: T.translate(`${HEADERPREFIX}.last24hrsruns`)
   },
   {
-    label: 'Total runs'
+    label: T.translate(`${HEADERPREFIX}.totalruns`)
   },
   {
-    label: 'Last run node/hr'
+    label: T.translate(`${HEADERPREFIX}.lastrunnodehr`)
   },
   {
-    label: 'Total node/hr'
+    label: T.translate(`${HEADERPREFIX}.totalnodehr`)
   },
   {
-    label: 'Schedules'
+    label: T.translate(`${HEADERPREFIX}.schedules`)
   },
   {
-    label: 'Triggers'
+    label: T.translate(`${HEADERPREFIX}.triggers`)
   }
 ];
 
@@ -68,18 +72,65 @@ export default class ProfileAssociations extends Component {
     associationsMap: {}
   };
 
+  fetchMetricsForApp = (appid, metadata) => {
+    let {namespace, profile} = this.props;
+    let extraTags = {
+      program: metadata.program,
+      programtype: metadata.type,
+      profile: `${profile.scope}:${profile.name}`
+    };
+    fetchAggregateProfileMetrics(namespace, profile, extraTags)
+      .subscribe(
+        metricsMap => {
+          let {associationsMap} = this.state;
+          Object.keys(metricsMap).forEach(metricKey => {
+            associationsMap[appid].metadata[metricKey] = metricsMap[metricKey];
+          });
+          this.setState({
+            associationsMap
+          });
+        },
+        () => {
+          return Observable.create(observer => {
+            observer.next({
+              [ONEDAYMETRICKEY]: {
+                runs: '--',
+                minutes: '--'
+              },
+              [OVERALLMETRICKEY]: {
+                runs: '--',
+                minutes: '--'
+              }
+            });
+          });
+        }
+      );
+  }
+
   componentDidMount() {
     let {namespace, profile} = this.props;
-    MySearchApi
-      .search({
-        namespace,
+    let apiObservable$ = MySearchApi.search({
+      namespace,
+      query: `profile:${namespace}.${profile.name}`
+    });
+    if (namespace === 'system') {
+      apiObservable$ = MySearchApi.searchSystem({
         query: `profile:${namespace}.${profile.name}`
-      })
+      });
+    }
+    apiObservable$
       .subscribe(
         res => {
+          let associationsMap = this.convertMetadataToAssociations(res.results);
           this.setState({
-            associationsMap: this.convertMetadataToAssociations(res.results)
+            associationsMap
           });
+          // FIXME: We should probably look into batching this to one single call.
+          Object.keys(associationsMap)
+            .forEach(appid => {
+              let {metadata} = associationsMap[appid];
+              this.fetchMetricsForApp(appid, metadata);
+            });
         },
         err => {
           console.log(err);
@@ -95,6 +146,10 @@ export default class ProfileAssociations extends Component {
         existingEntry = {
           name: m.entityId.application,
           namespace: m.entityId.namespace,
+          metadata: {
+            type: m.entityId.type,
+            program: m.entityId.program
+          },
           schedules: [],
           triggers: []
         };
@@ -162,15 +217,17 @@ export default class ProfileAssociations extends Component {
         {
           Object.keys(associationsMap).map(app => {
             let appObj = associationsMap[app];
+            let onedayMetrics = objectQuery(appObj, 'metadata', ONEDAYMETRICKEY) || {};
+            let overallMetrics = objectQuery(appObj, 'metadata', OVERALLMETRICKEY) || {};
             return (
               <div className="grid-row">
                 <div>{appObj.name}</div>
                 <div>{appObj.namespace}</div>
                 <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true)}</div>
-                <div>--</div>
-                <div>--</div>
-                <div>--</div>
-                <div>--</div>
+                <div>{onedayMetrics.runs} </div>
+                <div>{overallMetrics.runs}</div>
+                <div>{onedayMetrics.minutes}</div>
+                <div>{overallMetrics.minutes}</div>
                 <div>{appObj.schedules.length}</div>
                 <div>{appObj.triggers.length}</div>
               </div>

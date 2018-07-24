@@ -28,6 +28,7 @@ import isEqual from 'lodash/isEqual';
 import {getProvisionerLabel, extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
 import ProfileStatusToggle from 'components/Cloud/Profiles/DetailView/Content/BasicInfo/ProfileStatusToggle';
 import {CLOUD} from 'services/global-constants';
+import {humanReadableDate} from 'services/helpers';
 import CopyableId from 'components/CopyableID';
 
 require('./BasicInfo.scss');
@@ -41,14 +42,30 @@ export default class ProfileDetailViewBasicInfo extends Component {
     extendedDeleteErrMsg: '',
     deleteLoading: false,
     redirectToListView: false,
-    provisionerLabel: getProvisionerLabel(this.props.profile, this.props.provisioners)
+    provisionerLabel: getProvisionerLabel(this.props.profile, this.props.provisioners),
+    oneDayMetrics: {
+      runs: this.props.oneDayMetrics.runs,
+      minutes: this.props.oneDayMetrics.minutes
+    },
+    overallMetrics: {
+      runs: this.props.overallMetrics.runs,
+      minutes: this.props.overallMetrics.minutes
+    }
   };
 
   static propTypes = {
     profile: PropTypes.object,
     provisioners: PropTypes.array,
     isSystem: PropTypes.bool,
-    toggleProfileStatusCallback: PropTypes.func
+    toggleProfileStatusCallback: PropTypes.func,
+    oneDayMetrics: PropTypes.shape({
+      runs: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      minutes: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    }),
+    overallMetrics: PropTypes.shape({
+      runs: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      minutes: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    })
   };
 
   componentWillReceiveProps(nextProps) {
@@ -57,6 +74,11 @@ export default class ProfileDetailViewBasicInfo extends Component {
         provisionerLabel: getProvisionerLabel(nextProps.profile, nextProps.provisioners)
       });
     }
+    let {oneDayMetrics, overallMetrics} = nextProps;
+    this.setState({
+      oneDayMetrics,
+      overallMetrics
+    });
   }
 
   toggleDeleteModal = () => {
@@ -72,11 +94,16 @@ export default class ProfileDetailViewBasicInfo extends Component {
       deleteLoading: true
     });
 
-    MyCloudApi
-      .delete({
-        namespace: this.props.isSystem ? 'system' : getCurrentNamespace(),
+    let apiObservable$ = MyCloudApi.delete({
+      namespace: getCurrentNamespace(),
+      profile: this.props.profile.name
+    });
+    if (this.props.isSystem) {
+      apiObservable$ = MyCloudApi.deleteSystemProfile({
         profile: this.props.profile.name
-      })
+      });
+    }
+    apiObservable$
       .subscribe(
         () => {
           this.setState({
@@ -140,11 +167,11 @@ export default class ProfileDetailViewBasicInfo extends Component {
                 <span>{this.state.provisionerLabel}</span>
               </div>
               <div>{profile.scope}</div>
-              <div />
-              <div />
-              <div />
-              <div />
-              <div />
+              <div>{this.state.oneDayMetrics.runs}</div>
+              <div>{this.state.overallMetrics.runs}</div>
+              <div>{this.state.oneDayMetrics.minutes}</div>
+              <div>{this.state.overallMetrics.minutes}</div>
+              <div>{humanReadableDate(profile.created, false)}</div>
             </div>
           </div>
         </div>

@@ -37,6 +37,7 @@ import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
 import co.cask.cdap.internal.profile.ProfileMetricScheduledService;
 import co.cask.cdap.internal.provision.LocationBasedSSHKeyPair;
+import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -47,6 +48,7 @@ import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.common.http.HttpRequestConfig;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -112,6 +114,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final Map<ProgramRunId, RemoteExecutionTwillController> controllers;
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
+  private final RemoteExecutionLogProcessor logProcessor;
   private final MetricsCollectionService metricsCollectionService;
 
   private LocationCache locationCache;
@@ -122,6 +125,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
                                     LocationFactory locationFactory, MessagingService messagingService,
                                     DatasetFramework datasetFramework, TransactionSystemClient txClient,
+                                    RemoteExecutionLogProcessor logProcessor,
                                     MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.hConf = hConf;
@@ -136,6 +140,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     );
 
     this.controllers = new ConcurrentHashMap<>();
+    this.logProcessor = logProcessor;
     this.metricsCollectionService = metricsCollectionService;
   }
 
@@ -215,7 +220,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
 
     Node masterNode = cluster.getNodes().stream()
-      .filter(node -> "master".equals(node.getProperties().get("type")))
+      .filter(node -> co.cask.cdap.runtime.spi.Constants.Node.MASTER_TYPE.equals(
+        node.getProperties().get(co.cask.cdap.runtime.spi.Constants.Node.TYPE)))
       .findFirst().orElseThrow(
       () -> new IllegalArgumentException("Missing master node information for the cluster " + cluster.getName()));
 
@@ -232,7 +238,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     SSHKeyPair sshKeyPair = createSSHKeyPair(keysDir, cluster);
 
     // Creates and return the twill preparer
-    String remoteHost = masterNode.getProperties().get("ip.external");
+    String remoteHost = Preconditions.checkNotNull(masterNode.getProperties().get("ip.external"));
 
     Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
                                                                        programOptions.getArguments().asMap());
@@ -302,7 +308,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
         RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConf, runtimeMonitorClient,
                                                            datasetFramework, transactional,
-                                                           messagingContext, monitorScheduler,
+                                                           messagingContext, monitorScheduler, logProcessor,
                                                            metricService);
         RemoteExecutionTwillController controller = new RemoteExecutionTwillController(runId, runtimeMonitor);
         controllers.put(programRunId, controller);

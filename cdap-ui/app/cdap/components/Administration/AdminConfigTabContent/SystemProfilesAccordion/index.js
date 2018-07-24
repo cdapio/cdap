@@ -25,7 +25,7 @@ import ProfilesStore from 'components/Cloud/Profiles/Store';
 import {importProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {connect, Provider} from 'react-redux';
 import {Label, Input} from 'reactstrap';
-import {getProfiles} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {getProfiles, resetProfiles} from 'components/Cloud/Profiles/Store/ActionCreator';
 require('./SystemProfilesAccordion.scss');
 
 const PREFIX = 'features.Administration.Accordions.SystemProfiles';
@@ -40,6 +40,10 @@ class SystemProfilesAccordion extends Component {
 
   componentDidMount() {
     getProfiles('system');
+  }
+
+  componentWillUnmount() {
+    resetProfiles();
   }
 
   renderLabel() {

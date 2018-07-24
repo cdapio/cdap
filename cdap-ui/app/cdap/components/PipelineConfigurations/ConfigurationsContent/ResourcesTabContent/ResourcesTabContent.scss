@@ -59,18 +59,14 @@ $input-label-color: $grey-03;
         }
       }
     }
-  }
 
-  &.configuration-content-batch {
-    #resources-tab-content {
+    &.batch-content {
       .executor {
         padding-left: 50px;
       }
     }
-  }
 
-  &.configuration-content-realtime {
-    #resources-tab-content {
+    &.realtime-content {
       .driver,
       .executor {
         padding-left: 20px;

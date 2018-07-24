@@ -33,8 +33,7 @@ import {
   getDefaultProfile,
   setDefaultProfile,
   extractProfileName,
-  getProfileNameWithScope,
-  resetProfiles
+  getProfileNameWithScope
 } from 'components/Cloud/Profiles/Store/ActionCreator';
 import {connect, Provider} from 'react-redux';
 import Alert from 'components/Alert';
@@ -64,10 +63,6 @@ const PROFILES_TABLE_HEADERS = [
   {
     property: 'scope',
     label: T.translate('commons.scope')
-  },
-  {
-    property: 'pipelines',
-    label: T.translate('commons.pipelines')
   },
   {
     property: 'last24HrRuns',
@@ -130,10 +125,6 @@ class ProfilesListView extends Component {
     getProfiles(this.props.namespace);
     getDefaultProfile(this.props.namespace);
     this.getProvisioners();
-  }
-
-  componentWillUnmount() {
-    resetProfiles();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -275,7 +266,6 @@ class ProfilesListView extends Component {
           <div />
           <div />
           <div />
-          <div />
           <div className="sub-title">
             {T.translate(`${PREFIX}.ListView.pipelineUsage`)}
           </div>
@@ -376,12 +366,11 @@ class ProfilesListView extends Component {
         </div>
         <div>{profile.provisioner.label}</div>
         <div>{profile.scope}</div>
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
+        <div>{profile.oneDayMetrics.runs}</div>
+        <div>{profile.oneDayMetrics.minutes}</div>
+        <div>{profile.overAllMetrics.minutes}</div>
+        <div>{profile.schedulesCount}</div>
+        <div>{profile.triggersCount}</div>
         <div className={`${profileStatus}-label`}>
           {T.translate(`${PREFIX}.common.${profileStatus}`)}
         </div>

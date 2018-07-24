@@ -101,6 +101,7 @@ export default class ProductDropdown extends Component {
     if (this.state.username && window.CDAP_CONFIG.securityEnabled) {
       userSection = (
         <ul className="user-profile clearfix">
+          <DropdownItem divider />
           <DropdownItem
             tag="li"
             header
@@ -157,7 +158,6 @@ export default class ProductDropdown extends Component {
             >
               <a>{T.translate('features.Navbar.ProductDropdown.aboutLabel')}</a>
             </DropdownItem>
-            <DropdownItem divider />
             <DropdownItem tag="li">
               {
                 !this.props.nativeLink ?
@@ -175,7 +175,6 @@ export default class ProductDropdown extends Component {
                   </a>
               }
             </DropdownItem>
-            <DropdownItem divider />
             <DropdownItem tag="li">
               <a
                 href={docsUrl}

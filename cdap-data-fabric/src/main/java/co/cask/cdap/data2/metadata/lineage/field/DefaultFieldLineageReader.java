@@ -106,19 +106,20 @@ public class DefaultFieldLineageReader implements FieldLineageReader {
                                                            long start, long end) {
     Set<ProgramRunOperations> endPointOperations = Transactionals.execute(transactional, context -> {
       FieldLineageDataset fieldLineageDataset = FieldLineageDataset.getFieldLineageDataset(context, datasetFramework,
-              fieldLineageDatasetId);
+                                                                                           fieldLineageDatasetId);
 
       return incoming ? fieldLineageDataset.getIncomingOperations(endPointField.getEndPoint(), start, end)
-              : fieldLineageDataset.getOutgoingOperations(endPointField.getEndPoint(), start, end);
+        : fieldLineageDataset.getOutgoingOperations(endPointField.getEndPoint(), start, end);
     });
 
     Set<ProgramRunOperations> endPointFieldOperations = new HashSet<>();
     for (ProgramRunOperations programRunOperation : endPointOperations) {
       try {
-        FieldLineageInfo info = new FieldLineageInfo(programRunOperation.getOperations());
+        // No need to compute summaries here.
+        FieldLineageInfo info = new FieldLineageInfo(programRunOperation.getOperations(), false);
         Set<Operation> fieldOperations = incoming ?
-                info.getIncomingOperationsForField(endPointField)
-                : Collections.EMPTY_SET;
+          info.getIncomingOperationsForField(endPointField)
+          : Collections.EMPTY_SET;
         ProgramRunOperations result = new ProgramRunOperations(programRunOperation.getProgramRunIds(), fieldOperations);
         endPointFieldOperations.add(result);
       } catch (Throwable e) {

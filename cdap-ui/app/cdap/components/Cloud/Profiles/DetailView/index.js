@@ -24,15 +24,23 @@ import ProfileDetailViewContent from 'components/Cloud/Profiles/DetailView/Conte
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
+import {ONEDAYMETRICKEY, OVERALLMETRICKEY, fetchAggregateProfileMetrics} from 'components/Cloud/Profiles/Store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
-
 require('./DetailView.scss');
 
 export default class ProfileDetailView extends Component {
   state = {
     profile: {},
+    [ONEDAYMETRICKEY]: {
+      runs: '--',
+      minutes: '--'
+    },
+    [OVERALLMETRICKEY]: {
+      runs: '--',
+      minutes: '--'
+    },
     provisioners: [],
     loading: true,
     error: null,
@@ -57,19 +65,39 @@ export default class ProfileDetailView extends Component {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
+  fetchAggregateMetrics = () => {
+    let {namespace} = this.props.match.params;
+    let {profile} = this.state;
+    let extraTags = {
+      profile: `${profile.scope}:${profile.name}`
+    };
+    fetchAggregateProfileMetrics(namespace, profile, extraTags)
+      .subscribe(
+        metricsMap => {
+          this.setState({
+            ...metricsMap
+          });
+        }
+      );
+  }
+
+  fetchMetrics = () => {
+    this.fetchAggregateMetrics();
+  };
+
   getProfile = () => {
     let {namespace, profileId} = this.props.match.params;
-    MyCloudApi
-      .get({
-        namespace,
-        profile: profileId
-      })
+    let apiObservable$ = MyCloudApi.get({ namespace, profile: profileId });
+    if (namespace === 'system') {
+      apiObservable$ = MyCloudApi.getSystemProfile({ profile: profileId });
+    }
+    apiObservable$
       .subscribe(
         (profile) => {
           this.setState({
             profile,
             loading: false
-          });
+          }, this.fetchMetrics);
         },
         (error) => {
           this.setState({
@@ -128,6 +156,8 @@ export default class ProfileDetailView extends Component {
               isSystem={this.state.isSystem}
               toggleProfileStatusCallback={this.getProfile}
               namespace={namespace}
+              oneDayMetrics={this.state[ONEDAYMETRICKEY]}
+              overallMetrics={this.state[OVERALLMETRICKEY]}
             />
         }
       </div>

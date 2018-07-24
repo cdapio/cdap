@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,7 @@ public class MetadataServiceModule extends PrivateModule {
 
     CommonHandlers.add(handlerBinder);
     handlerBinder.addBinding().to(MetadataHttpHandler.class);
-    handlerBinder.addBinding().to(LineageHandler.class);
+    handlerBinder.addBinding().to(LineageHTTPHandler.class);
     expose(Key.get(new TypeLiteral<Set<HttpHandler>>() { }, Names.named(Constants.Metadata.HANDLERS_NAME)));
     bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
     expose(MetadataAdmin.class);

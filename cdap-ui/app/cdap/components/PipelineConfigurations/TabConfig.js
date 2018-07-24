@@ -64,4 +64,5 @@ const TabConfig = {
   layout: 'vertical',
   defaultTab: 1
 };
+
 export default TabConfig;

@@ -24,6 +24,7 @@ import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginPropertyField;
@@ -217,6 +218,14 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                                        WordCountApp.class).getStatusLine().getStatusCode());
     addArtifactProperties(Id.Artifact.fromEntityId(wordcountId2), ImmutableMap.of("k2", "v20", "k3", "v30"));
 
+    // this is wordcount artifact with a newer version
+    ArtifactId newWordcountId1 = NamespaceId.DEFAULT.artifact("wordcount", "3.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
+                        addAppArtifact(Id.Artifact.fromEntityId(newWordcountId1),
+                                       WordCountApp.class).getStatusLine().getStatusCode());
+    addArtifactProperties(Id.Artifact.fromEntityId(newWordcountId1),
+                          ImmutableMap.of("k1", "new_v1", "k2", "new_v2"));
+
     List<String> props = ImmutableList.of("k1", "k2", "k3");
     List<ArtifactPropertiesRequest> requestList = ImmutableList.of(
       new ArtifactPropertiesRequest(wordcountId1.getArtifact(), wordcountId1.getVersion(), ArtifactScope.USER, props),
@@ -233,6 +242,26 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     List<ArtifactSummaryProperties> expected = ImmutableList.of(
       new ArtifactSummaryProperties(wordcountId1.getArtifact(), wordcountId1.getVersion(), ArtifactScope.USER,
                                     ImmutableMap.of("k1", "v1", "k2", "v2")),
+      new ArtifactSummaryProperties(wordcountId2.getArtifact(), wordcountId2.getVersion(), ArtifactScope.USER,
+                                    ImmutableMap.of("k2", "v20", "k3", "v30")));
+    Assert.assertEquals(expected, actual);
+
+    // try to get the property using a version range
+    ArtifactVersionRange wordCount1Range = ArtifactVersionRange.parse("[1.0.0, 4.0.0)");
+    requestList = ImmutableList.of(
+      new ArtifactPropertiesRequest(wordcountId1.getArtifact(), wordCount1Range.getVersionString(),
+                                    ArtifactScope.USER, props),
+      new ArtifactPropertiesRequest(wordcountId2.getArtifact(), wordcountId2.getVersion(), ArtifactScope.USER, props)
+    );
+    request = HttpRequest.post(url).withBody(GSON.toJson(requestList)).build();
+    response = HttpRequests.execute(request);
+    actual = GSON.fromJson(response.getResponseBodyAsString(),
+                           new TypeToken<List<ArtifactSummaryProperties>>() { }.getType());
+
+    // the returned list should contain the newest version
+    expected = ImmutableList.of(
+      new ArtifactSummaryProperties(newWordcountId1.getArtifact(), newWordcountId1.getVersion(),
+                                    ArtifactScope.USER, ImmutableMap.of("k1", "new_v1", "k2", "new_v2")),
       new ArtifactSummaryProperties(wordcountId2.getArtifact(), wordcountId2.getVersion(), ArtifactScope.USER,
                                     ImmutableMap.of("k2", "v20", "k3", "v30")));
     Assert.assertEquals(expected, actual);

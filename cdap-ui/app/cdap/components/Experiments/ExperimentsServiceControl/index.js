@@ -20,8 +20,9 @@ import enableSystemApp from 'services/ServiceEnablerUtilities';
 import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
+import isObject from 'lodash/isObject';
 import {myExperimentsApi} from 'api/experiments';
-
+import {isSpark2Available} from 'services/CDAPComponentsVersions';
 require('./ExperimentsServiceControl.scss');
 
 const PREFIX = 'features.Experiments.ServiceControl';
@@ -32,9 +33,22 @@ export default class ExperimentsServiceControl extends Component {
     onServiceStart: PropTypes.func
   };
 
+  componentDidMount() {
+    isSpark2Available()
+      .subscribe(
+        isAvailable => this.setState({
+          checkingForSpark2: false,
+          disabled: !isAvailable
+        })
+      );
+  }
+
   state = {
     loading: false,
-    error: null
+    disabled: false,
+    checkingForSpark2: true,
+    error: null,
+    extendedError: null
   };
 
   enableMMDS = () => {
@@ -45,12 +59,17 @@ export default class ExperimentsServiceControl extends Component {
       shouldStopService: false,
       artifactName: MMDSArtifact,
       api: myExperimentsApi,
-      i18nPrefix: ''
+      i18nPrefix: PREFIX
     }).subscribe(
       this.props.onServiceStart,
-      () => {
+      (err) => {
+        let extendedMessage = isObject(err.extendedMessage) ?
+          err.extendedMessage.response || err.extendedMessage.message
+        :
+          err.extendedMessage;
         this.setState({
-          error: T.translate(`${PREFIX}.errorMessage`),
+          error: err.error,
+          extendedError: extendedMessage,
           loading: false
         });
       }
@@ -58,6 +77,27 @@ export default class ExperimentsServiceControl extends Component {
   };
 
   renderEnableBtn = () => {
+    if (this.state.checkingForSpark2) {
+      return (
+        <div className="action-container service-disabled">
+          <IconSVG name="icon-spinner" className="fa-spin" />
+          <div className="text-primary">
+            {T.translate(`${PREFIX}.environmentCheckMessage`)}
+          </div>
+        </div>
+      );
+    }
+
+    if (this.state.disabled) {
+      return (
+        <div className="action-container service-disabled">
+          <IconSVG name="icon-exclamation-triangle" className="text-danger" />
+          <div className="text-danger">
+            {T.translate(`${PREFIX}.serviceDisabledMessage`)}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="action-container">
         <button
@@ -85,10 +125,10 @@ export default class ExperimentsServiceControl extends Component {
       <div className="experiments-service-control-error">
         <h5 className="text-danger">
           <IconSVG name="icon-exclamation-triangle" />
-          <span>{T.translate(`${PREFIX}.errorTitle`)}</span>
+          <span>{this.state.error}</span>
         </h5>
         <p className="text-danger">
-          {this.state.error}
+          {this.state.extendedError}
         </p>
       </div>
     );

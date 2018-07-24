@@ -41,7 +41,7 @@ import javax.inject.Inject;
 
 /**
  * Default implementation of the ProvsionerConfigProvider. It expects a json file for from each module dir and
- * expects a "configuration-groups" in the json file
+ * expects a "configuration-groups" in the json file. "icon" and "beta" fields are optional.
  */
 public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvider {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultProvisionerConfigProvider.class);
@@ -80,7 +80,7 @@ public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvid
                                  && provisioners.contains(name.substring(0, name.lastIndexOf('.')));
                              });
         if (jsonFiles.isEmpty()) {
-          LOG.info("Not able to find configuration groups file for module {}", moduleDir);
+          LOG.info("Not able to find JSON config file for module {}", moduleDir);
           continue;
         }
 
@@ -90,7 +90,7 @@ public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvid
           try (Reader reader = Files.newReader(configFile, Charsets.UTF_8)) {
             results.put(provisionerName, GSON.fromJson(new JsonReader(reader), ProvisionerConfig.class));
           } catch (Exception e) {
-            LOG.warn("Exception reading configuration groups file for provisioner {}. Ignoring file.",
+            LOG.warn("Exception reading JSON config file for provisioner {}. Ignoring file.",
                      provisionerName, e);
           }
         }

@@ -175,10 +175,13 @@ $btn-border-color: transparent;
 
     .pipeline-run-container,
     .pipeline-stop-container {
-      height: 42px;
+      height: 43px;
       border: 1px solid $grey-06;
       border-radius: 5px;
       display: inline-flex;
+      &:hover {
+        background-color: inherit;
+      }
     }
 
     .pipeline-run-container {
@@ -187,10 +190,9 @@ $btn-border-color: transparent;
       > .btn.btn-secondary {
         border: 0;
         border-radius: 5px;
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
         .btn-container {
-          height: 100%;
           display: flex;
           align-items: center;
         }

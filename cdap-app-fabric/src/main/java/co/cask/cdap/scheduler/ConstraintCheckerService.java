@@ -105,7 +105,7 @@ class ConstraintCheckerService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting ConstraintCheckerService.");
     taskExecutorService = MoreExecutors.listeningDecorator(
-      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("constraint-checker-task").build()));
+      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("constraint-checker-task-%d").build()));
     taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver, namespaceQueryAdmin, cConf);
 
     int numPartitions = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework).getNumPartitions();

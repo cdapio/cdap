@@ -20,7 +20,15 @@ import moment from 'moment';
 import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
 import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
 
-const DAY_IN_SEC = 24 * 60 * 60;
+// We are subtracting 1 second, as we don't want to get the runs scheduled
+// for the bucket after the rightmost bucket we are showing
+// For example, let's say we're querying from 11am of previous day to 11am today.
+// If there's a pipeline scheduled for 11:00am today, it will show up in the
+// last (current time) bucket. However, this is wrong, since the current bucket
+// will only show runs between 10:00:00 am and 10:59:59 am today. That's why we
+// need to subtract 1 second from the range we are requesting to the backend.
+
+export const DAY_IN_SEC = 24 * 60 * 60 - 1;
 
 export function enableLoading() {
   DashboardStore.dispatch({
@@ -34,7 +42,7 @@ export function getData(start, duration = DAY_IN_SEC, namespaces = DashboardStor
   let state = DashboardStore.getState().dashboard;
 
   if (!start) {
-    start = moment().subtract(23, 'h').format('x');
+    start = moment().startOf('hour').subtract(23, 'h').format('x');
     start = Math.floor(parseInt(start, 10) / 1000);
   }
 

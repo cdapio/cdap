@@ -45,9 +45,11 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -106,15 +108,19 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     Collection<RunRecordMeta> runRecordMetas =
       programHeartbeatService.scan(startTimeSecs, endTimeSecs + 1, namespaces);
 
-    List<DashboardProgramRunRecord> result =
-      runRecordMetas.stream()
-        .map(OperationsDashboardHttpHandler::runRecordToDashboardRecord).collect(Collectors.toList());
+    List<DashboardProgramRunRecord> result = new ArrayList<>();
+    for (RunRecordMeta runRecordMeta : runRecordMetas) {
+      result.add(OperationsDashboardHttpHandler.runRecordToDashboardRecord(runRecordMeta));
+    }
 
     Set<NamespaceId> namespaceIds = namespaces.stream().map(NamespaceId::new).collect(Collectors.toSet());
     // if the end time is in the future, also add scheduled program runs to the result
-    if (endTimeSecs > TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())) {
+    long currentTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    // if start time in query is earlier than current time, use currentTime as start when querying future schedules
+    long scheduleStartTimeSeconds = startTimeSecs > currentTimeInSeconds ? startTimeSecs : currentTimeInSeconds;
+    if (endTimeSecs > currentTimeInSeconds) {
       // end time is exclusive
-      result.addAll(getAllScheduledRuns(namespaceIds, startTimeSecs, endTimeSecs + 1));
+      result.addAll(getAllScheduledRuns(namespaceIds, scheduleStartTimeSeconds, endTimeSecs + 1));
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
@@ -124,8 +130,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
    *
    * @param namespaceIds the namespaces to get the program runs from
    * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
-   *                      equal to the start will be returned) If this is earlier than the current time,
-   *                      only scheduled runs later than the current time will be returned.
+   *                      equal to the start will be returned)
    * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
    *                    will be returned)
    * @return a list of dashboard program run records with scheduled time as start time
@@ -162,8 +167,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
    *
    * @param schedule the schedule to get scheduled program run with
    * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
-   *                      equal to the start will be returned) If this is earlier than the current time,
-   *                      only scheduled runs later than the current time will be returned.
+   *                      equal to the start will be returned)
    * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
    *                    will be returned)
    * @return a list of dashboard program run records with scheduled time as start time
@@ -173,7 +177,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
                                                                        long startTimeSecs, long endTimeSecs)
     throws Exception {
     ProgramId programId = schedule.getProgramId();
-    // get all the scheduled runtimes within the given time range of the given program
+    // get all the scheduled run times within the given time range of the given program
     List<ScheduledRuntime> scheduledRuntimes =
       timeSchedulerService.getAllScheduledRunTimes(programId, programId.getType().getSchedulableType(), startTimeSecs,
                                                    endTimeSecs);
@@ -198,7 +202,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
    * Converts a {@link RunRecordMeta} to a {@link DashboardProgramRunRecord}
    */
   @VisibleForTesting
-  static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordMeta meta) {
+  static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordMeta meta) throws IOException {
     ProgramRunId runId = meta.getProgramRunId();
     String startMethod = MANUAL;
     String scheduleInfoJson = meta.getSystemArgs().get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO);
@@ -211,6 +215,11 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
         // return "manual" if there's no trigger in the schedule info, but this should never happen
         .orElse(MANUAL);
     }
-    return new DashboardProgramRunRecord(runId, meta, meta.getArtifactId(), meta.getPrincipal(), startMethod);
+    String user = meta.getPrincipal();
+    if (user != null) {
+      user = new KerberosName(user).getShortName();
+    }
+    return new DashboardProgramRunRecord(runId, meta, meta.getArtifactId(),
+                                        user, startMethod);
   }
 }

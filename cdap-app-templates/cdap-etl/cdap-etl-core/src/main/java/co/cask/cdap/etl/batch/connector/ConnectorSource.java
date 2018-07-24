@@ -17,18 +17,17 @@
 package co.cask.cdap.etl.batch.connector;
 
 import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.common.Constants;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.util.HashMap;
@@ -49,6 +48,8 @@ import java.util.Map;
  * @param <T> type of output object
  */
 public class ConnectorSource<T> extends BatchSource<LongWritable, Text, T> {
+  // you can't read from the basedir of a FileSet so adding an arbitrary directory where data will be stored/read.
+  static final String DATA_DIR = "data";
   private final String datasetName;
 
   protected ConnectorSource(String datasetName) {
@@ -58,24 +59,18 @@ public class ConnectorSource<T> extends BatchSource<LongWritable, Text, T> {
   // not the standard configurePipeline method. Need a workflowConfigurer to create a local dataset
   // we may want to expose local datasets in cdap-etl-api, but that is a separate track.
   public void configure(WorkflowConfigurer workflowConfigurer) {
-    Partitioning partitioning = Partitioning.builder()
-      .addField("phase", Partitioning.FieldType.STRING)
-      .build();
-    workflowConfigurer.createLocalDataset(datasetName, PartitionedFileSet.class,
-                                          PartitionedFileSetProperties.builder()
-                                            .setPartitioning(partitioning)
+    workflowConfigurer.createLocalDataset(datasetName, FileSet.class,
+                                          FileSetProperties.builder()
                                             .setInputFormat(CombineTextInputFormat.class)
+                                            .setInputProperty(FileInputFormat.INPUT_DIR_RECURSIVE, "true")
                                             .setOutputFormat(TextOutputFormat.class)
                                             .build());
   }
 
   @Override
-  public void prepareRun(BatchSourceContext context) throws Exception {
+  public void prepareRun(BatchSourceContext context) {
     Map<String, String> arguments = new HashMap<>();
-    PartitionedFileSet inputFileset = context.getDataset(datasetName);
-    for (PartitionDetail partitionDetail : inputFileset.getPartitions(PartitionFilter.ALWAYS_MATCH)) {
-      PartitionedFileSetArguments.addInputPartition(arguments, partitionDetail);
-    }
+    FileSetArguments.setInputPath(arguments, Constants.Connector.DATA_DIR);
     context.setInput(Input.ofDataset(datasetName, arguments));
   }
 

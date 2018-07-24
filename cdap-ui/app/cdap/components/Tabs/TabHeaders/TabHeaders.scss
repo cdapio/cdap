@@ -17,6 +17,11 @@
 .cask-tab-headers {
   background-color: #efefef;
   .cask-tab-head {
-    padding: 10px;
+    padding: 10px 10px 10px 20px;
+  }
+  .cask-tab-group {
+    .cask-tab-head {
+      padding-left: 10px;
+    }
   }
 }

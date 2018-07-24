@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import moment from 'moment';
 require('./MarketPlaceUsecaseEntity.scss');
 import MarketActionsContainer from 'components/MarketActionsContainer';
 import MarketStore from 'components/Market/store/market-store.js';
+import ExperimentalBanner from 'components/ExperimentalBanner';
 import classnames from 'classnames';
 
 export default class MarketPlaceUsecaseEntity extends Component {
@@ -96,9 +97,9 @@ export default class MarketPlaceUsecaseEntity extends Component {
       >
         {
           this.props.entity.beta ?
-          <div className="experimental-banner">BETA</div>
+            <ExperimentalBanner />
           :
-          null
+            null
         }
         <div className="title clearfix">
           <span className="float-xs-left">{this.props.entity.label}</span>

@@ -97,7 +97,8 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
     return String.format("Loads a file to %s. The contents of the file will " +
                          "become multiple events in the %s, " +
                          "based on the content type ('%s'). If '<%s>' is not provided, " +
-                         "it will be detected by the file extension. Supported file extensions: '%s'.",
+                         "it will be detected by the file extension. Supported file extensions: '%s'." +
+                         " Streams are deprecated as of release 5.0, use Kafka as a replacement technology",
                          Fragment.of(Article.A, ElementType.STREAM.getName()),
                          ElementType.STREAM.getName(),
                          Joiner.on("', '").join(ImmutableSet.copyOf(CONTENT_TYPE_MAP.values())),

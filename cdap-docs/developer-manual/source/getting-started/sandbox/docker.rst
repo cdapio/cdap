@@ -103,13 +103,13 @@ started correctly.
      :languages: console,shell-session
      :keepslashes:
 
-     $ docker run -it --name cdap-sandbox-debugging -p 11011:11011 -p 11015:11015 caskdata/cdap-sandbox:|release| cdap sandbox start --enable-debug
+     $ docker run -it --name cdap-sandbox-debugging -p 11011:11011 -p 11015:11015 caskdata/cdap-sandbox:|release| cdap sandbox start --enable-debug --foreground
 
    This will start the container (in the foreground, the default), :ref:`enable debugging
    <debugging-sandbox>`, name it ``cdap-sandbox-debugging``, and set the proxying of ports.
 
 #. CDAP will start automatically once the container starts. CDAP’s software
-   directory is under ``/opt/cdap/sdk``.
+   directory is under ``/opt/cdap/sandbox``.
 
 #. Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
    at :cdap-ui:`http://localhost:11011/ <>`.
@@ -154,17 +154,6 @@ Options Starting CDAP Containers
 
     $ docker run -it --name cdap-cli --rm caskdata/cdap-sandbox cdap cli -u http://${CDAP_HOST}:11015
 
-- Use the CDAP CLI in its own container (*cdap-cli*), against the above *cdap-sandbox* container using container linking:
-
-  .. tabbed-parsed-literal::
-    :tabs: "Linux or Mac OS X",Windows
-    :mapping: linux,windows
-    :dependent: linux-windows
-    :languages: console,shell-session
-    :keepslashes:
-
-    $ docker run -it --link cdap-sandbox:sdk --name cdap-cli --rm caskdata/cdap-sandbox sh -c 'exec cdap cli -u http://${SDK_PORT_11011_TCP_ADDR}:${SDK_PORT_11011_TCP_PORT}'
-
 - Starting the CDAP Sandbox, in the foreground, with ports forwarded:
 
   .. tabbed-parsed-literal::
@@ -174,7 +163,7 @@ Options Starting CDAP Containers
     :languages: console,shell-session
     :keepslashes:
 
-    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sandbox caskdata/cdap-sandbox cdap sandbox start
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sandbox caskdata/cdap-sandbox cdap sandbox start --foreground
 
 - Starting the CDAP Sandbox, in the foreground, with ports forwarded, and with debugging enabled:
 
@@ -185,7 +174,7 @@ Options Starting CDAP Containers
     :languages: console,shell-session
     :keepslashes:
 
-    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sandbox caskdata/cdap-sandbox cdap sandbox start --enable-debug
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sandbox caskdata/cdap-sandbox cdap sandbox start --enable-debug --foreground
 
 - For information on mounting volumes and sharing data with the container, see the
   examples in Docker's documentation on `data volumes
@@ -195,8 +184,8 @@ Options Starting CDAP Containers
   <https://docs.docker.com/engine/tutorials/dockervolumes/#/mount-a-host-directory-as-a-data-volume>`__.
   However, if you mount a host directory, you must make sure that it exists and that
   permissions are set correctly. You pass such a directory using ``-v
-  /my/own/datadir:/opt/cdap/sdk/my/own/datadir``, which mounts the ``/my/own/datadir`` from the
-  host system as ``/opt/cdap/sdk/my/own/datadir`` in the container.
+  /my/own/datadir:/opt/cdap/sandbox/my/own/datadir``, which mounts the ``/my/own/datadir`` from the
+  host system as ``/opt/cdap/sandbox/my/own/datadir`` in the container.
 
 Controlling the CDAP Instance
 -----------------------------

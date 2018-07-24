@@ -41,7 +41,14 @@ public class StartDebugProgramCommand extends StartProgramCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Starts %s in debug mode. '<%s>' is specified in the format 'key1=a key2=b'.",
-      Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
+    switch (elementType) {
+      case FLOW:
+        return String.format("Starts %s in debug mode. '<%s>' is specified in the format 'key1=a key2=b'. " +
+                             "Flows are deprecated as of release 5.0, use SparkStreaming as a replacement technology.",
+                             Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
+      default:
+        return String.format("Starts %s in debug mode. '<%s>' is specified in the format 'key1=a key2=b'.",
+            Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
+    }
   }
 }

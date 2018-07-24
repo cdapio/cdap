@@ -19,8 +19,10 @@ import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/version';
+let cdapComponentsVersionsPath = '/versions';
 const MyCDAPVersionApi = {
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath)
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  getCDAPComponentVersions: apiCreator(dataSrc, 'GET', 'REQUEST', cdapComponentsVersionsPath),
 };
 
 export default MyCDAPVersionApi;

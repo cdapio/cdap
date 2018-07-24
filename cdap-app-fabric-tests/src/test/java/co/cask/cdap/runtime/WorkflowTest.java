@@ -33,7 +33,9 @@ import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Supplier;
@@ -55,6 +57,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -82,7 +85,8 @@ public class WorkflowTest {
 
   private void setStartAndRunning(Store store, ProgramId id, String pid, ArtifactId artifactId) {
     long startTime = RunIds.getTime(pid, TimeUnit.SECONDS);
-    store.setProvisioning(id.run(pid), ImmutableMap.of(), ImmutableMap.of(),
+    store.setProvisioning(id.run(pid), Collections.emptyMap(),
+                          Collections.singletonMap(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName()),
                           AppFabricTestHelper.createSourceId(++sourceId), artifactId);
     store.setProvisioned(id.run(pid), 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id.run(pid), null, ImmutableMap.of(), AppFabricTestHelper.createSourceId(++sourceId));

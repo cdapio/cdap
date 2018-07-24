@@ -295,7 +295,10 @@ class DatasetServiceClient {
       .withBody(body))
       .build();
     try {
-      return remoteClient.execute(request);
+      LOG.trace("executing {} {}", request.getMethod(), request.getURL().getPath());
+      HttpResponse response = remoteClient.execute(request);
+      LOG.trace("executed {} {}", request.getMethod(), request.getURL().getPath());
+      return response;
     } catch (IOException e) {
       throw new DatasetManagementException(remoteClient.createErrorMessage(request, body), e);
     }
@@ -312,7 +315,10 @@ class DatasetServiceClient {
   private HttpResponse doRequest(HttpRequest.Builder requestBuilder) throws DatasetManagementException {
     HttpRequest request = addUserIdHeader(requestBuilder).build();
     try {
-      return remoteClient.execute(request);
+      LOG.trace("executing {} {}", request.getMethod(), request.getURL().getPath());
+      HttpResponse response = remoteClient.execute(request);
+      LOG.trace("executed {} {}", request.getMethod(), request.getURL().getPath());
+      return response;
     } catch (ConnectException e) {
       throw new ServiceUnavailableException(Constants.Service.DATASET_MANAGER, e);
     } catch (IOException e) {

@@ -23,6 +23,7 @@ import NumExecutors from 'components/PipelineConfigurations/ConfigurationsConten
 import CustomConfig from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/CustomConfig';
 import {connect} from 'react-redux';
 import T from 'i18n-react';
+import classnames from 'classnames';
 require('./EngineConfigTabContent.scss');
 
 const PREFIX = 'features.PipelineConfigurations.EngineConfig';
@@ -73,7 +74,12 @@ class EngineConfigTabContent extends Component {
     return (
       <div
         id="engine-config-tab-content"
-        className="configuration-step-content configuration-content-container"
+        className={classnames(
+          "configuration-step-content configuration-content-container", {
+            "batch-content": this.props.isBatch,
+            "realtime-content": !this.props.isBatch
+          }
+        )}
       >
         <fieldset disabled={this.props.isDetailView}>
           <div className="step-content-heading">

@@ -51,6 +51,7 @@ import co.cask.cdap.metadata.profile.ProfileMetadataMessageProcessor;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.codec.OperationTypeAdapter;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -62,6 +63,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,6 +105,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
       true, cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
+      cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
+      cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT),
       cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
       RetryStrategies.fromConfiguration(cConf, "system.metadata."),
       metricsCollectionService.getContext(ImmutableMap.of(
@@ -182,6 +186,12 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
+  protected boolean shouldRunInSeparateTx(MetadataMessage message) {
+    EntityType entityType = message.getEntityId().getEntityType();
+    return entityType.equals(EntityType.INSTANCE) || entityType.equals(EntityType.NAMESPACE);
+  }
+
+  @Override
   protected void processMessages(DatasetContext datasetContext,
                                  Iterator<ImmutablePair<String, MetadataMessage>> messages) {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
@@ -223,11 +233,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       }
 
       processor.processMessage(message);
-
-      // if this message is time consuming, return to end the transaction to avoid tx timeout
-      if (processor.isTimeConsumingMessage(message)) {
-        return;
-      }
     }
   }
 
@@ -279,8 +284,20 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     @Override
     public void processMessage(MetadataMessage message) {
-      FieldLineageInfo info = message.getPayload(GSON, FieldLineageInfo.class);
+      if (!(message.getEntityId() instanceof ProgramRunId)) {
+        LOG.warn("Missing program run id from the field lineage information. Ignoring the message {}", message);
+        return;
+      }
+
       ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
+      FieldLineageInfo info;
+      try {
+        info = message.getPayload(GSON, FieldLineageInfo.class);
+      } catch (Throwable t) {
+        LOG.warn("Error while deserializing the field lineage information message received from TMS. Ignoring : {}",
+                 message, t);
+        return;
+      }
       fieldLineageDataset.addFieldLineageInfo(programRunId, info);
     }
   }

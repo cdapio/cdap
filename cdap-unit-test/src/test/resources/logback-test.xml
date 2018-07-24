@@ -43,6 +43,8 @@
     </appender>
 
     <logger name="co.cask.cdap" level="DEBUG" />
+    <logger name="co.cask.cdap.data2.datafabric.dataset.DatasetServiceClient" level="TRACE"/>
+    <logger name="co.cask.cdap.data2.datafabric.dataset.service.executor.RemoteDatasetOpExecutor" level="TRACE"/>
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>

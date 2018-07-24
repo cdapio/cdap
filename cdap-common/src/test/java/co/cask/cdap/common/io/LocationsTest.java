@@ -35,7 +35,57 @@ public class LocationsTest {
   private static final String TEST_PATH = "some/test/path";
 
   @Test
-  public void absolutePathTests() throws IOException {
+  public void testParentHDFS() {
+    Configuration conf = new Configuration();
+    conf.set("fs.defaultFS", "hdfs://1.2.3.4:8020");
+    LocationFactory locationFactory = new FileContextLocationFactory(conf, "abc");
+    Location location = locationFactory.create("def");
+    Assert.assertEquals("def", location.getName());
+    location = Locations.getParent(location);
+    Assert.assertNotNull(location);
+    Assert.assertEquals("abc", location.getName());
+    location = Locations.getParent(location);
+    Assert.assertNotNull(location);
+    Assert.assertTrue(Locations.isRoot(location));
+    Assert.assertTrue(location.getName().isEmpty());
+    Assert.assertNull(Locations.getParent(location));
+  }
+
+  @Test
+  public void testRootParentFile() {
+    Configuration conf = new Configuration();
+    conf.set("fs.defaultFS", "file:///");
+    LocationFactory locationFactory = new FileContextLocationFactory(conf, "abc");
+    Location location = locationFactory.create("def");
+    Assert.assertEquals("def", location.getName());
+    location = Locations.getParent(location);
+    Assert.assertNotNull(location);
+    Assert.assertEquals("abc", location.getName());
+    location = Locations.getParent(location);
+    Assert.assertNotNull(location);
+    Assert.assertTrue(Locations.isRoot(location));
+    Assert.assertTrue(location.getName().isEmpty());
+    Assert.assertNull(Locations.getParent(location));
+  }
+
+  @Test
+  public void testRootParentLocal() throws IOException {
+    LocationFactory locationFactory = new LocalLocationFactory(new File(File.separator));
+    Location location = locationFactory.create("abc");
+    location = location.append("def");
+    Assert.assertEquals("def", location.getName());
+    location = Locations.getParent(location);
+    Assert.assertNotNull(location);
+    Assert.assertEquals("abc", location.getName());
+    location = Locations.getParent(location);
+    Assert.assertNotNull(location);
+    Assert.assertTrue(Locations.isRoot(location));
+    Assert.assertTrue(location.getName().isEmpty());
+    Assert.assertNull(Locations.getParent(location));
+  }
+
+  @Test
+  public void absolutePathTests() {
     // Test HDFS:
     Configuration conf = new Configuration();
     conf.set("fs.defaultFS", "hdfs://1.2.3.4:8020/");

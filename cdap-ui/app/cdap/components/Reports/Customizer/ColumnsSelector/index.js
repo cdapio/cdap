@@ -55,13 +55,12 @@ function ColumnsSelectorView(props) {
       {
         OPTIONS.map((option) => {
           return (
-            <div
-              className="option"
-              onClick={props.onClick.bind(this, option)}
-            >
-              <IconSVG name={props[option] ? 'icon-check-square' : 'icon-square-o'} />
+            <div className="option">
+              <span onClick={props.onClick.bind(this, option)}>
+                <IconSVG name={props[option] ? 'icon-check-square' : 'icon-square-o'} />
 
-              {T.translate(`${PREFIX}.Options.${option}`)}
+                {T.translate(`${PREFIX}.Options.${option}`)}
+              </span>
             </div>
           );
         })

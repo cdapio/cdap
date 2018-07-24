@@ -478,6 +478,8 @@ public final class Constants {
       public static final String MAX_INSTANCES = "dataset.executor.max.instances";
 
       public static final String SERVICE_DESCRIPTION = "Service to perform dataset operations.";
+
+      public static final String IS_UPGRADE_NEEDED = "dataset.upgrade.needed";
     }
 
     /**
@@ -879,6 +881,8 @@ public final class Constants {
 
     // Configuration keys
     public static final String KAFKA_TOPIC = "log.kafka.topic";
+    public static final String TMS_TOPIC_PREFIX = "log.tms.topic.prefix";
+    public static final String TMS_APPENDER_QUEUE_SIZE = "log.tms.queue.size";
     public static final String NUM_PARTITIONS = "log.publish.num.partitions";
     public static final String LOG_PUBLISH_PARTITION_KEY = "log.publish.partition.key";
 
@@ -1304,7 +1308,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for metadata service
+   * Constants for metadata service and metadata migrator
    */
   public static final class Metadata {
     public static final String SERVICE_DESCRIPTION = "Service to perform metadata operations.";
@@ -1318,6 +1322,8 @@ public final class Constants {
     public static final String MESSAGING_TOPIC = "metadata.messaging.topic";
     public static final String MESSAGING_FETCH_SIZE = "metadata.messaging.fetch.size";
     public static final String MESSAGING_POLL_DELAY_MILLIS = "metadata.messaging.poll.delay.millis";
+
+    public static final String MIGRATOR_BATCH_SIZE = "metadata.upgrade.migration.batch.size";
   }
 
   /**

@@ -16,7 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import {connect} from 'react-redux';
 import {humanReadableDuration, humanReadableDate} from 'services/helpers';
 import SortableStickyGrid from 'components/SortableStickyGrid';
@@ -24,6 +23,7 @@ import capitalize from 'lodash/capitalize';
 import StatusMapper from 'services/StatusMapper';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import TopPanel from 'components/OpsDashboard/RunsList/TopPanel';
 
 const PREFIX = 'features.OpsDashboard.RunsList';
 
@@ -69,10 +69,15 @@ function renderBody(data) {
     <div className="grid-body">
       {
         data.map((run, i) => {
-          let duration = run.end ? run.end - run.start : '--';
+          let duration = run.end ? run.end - run.running : '--';
           duration = humanReadableDuration(duration);
 
-          let displayStatus = StatusMapper.lookupDisplayStatus(run.status) || '';
+          const displayStatus = StatusMapper.lookupDisplayStatus(run.status) || '';
+
+          let startTime = run.running || run.start;
+          startTime = humanReadableDate(startTime, false);
+
+          const user = run.user || '--';
 
           const statusIcon = (
             <IconSVG
@@ -86,13 +91,27 @@ function renderBody(data) {
               className="grid-row"
               key={`${run.application.name}${run.program}${run.start}${i}`}
             >
-              <div>{run.namespace}</div>
-              <div>{run.application.name}</div>
-              <div>{T.translate(`commons.entity.${run.type.toLowerCase()}.singular`)}</div>
-              <div>{humanReadableDate(run.start, false)}</div>
-              <div>{duration}</div>
-              <div>{run.user || '--'}</div>
-              <div>{capitalize(run.startMethod)}</div>
+              <div title={run.namespace}>
+                {run.namespace}
+              </div>
+              <div title={run.application.name}>
+                {run.application.name}
+              </div>
+              <div>
+                {T.translate(`commons.entity.${run.type.toLowerCase()}.singular`)}
+              </div>
+              <div>
+                {startTime}
+              </div>
+              <div>
+                {duration}
+              </div>
+              <div title={user}>
+                {user}
+              </div>
+              <div>
+                {capitalize(run.startMethod)}
+              </div>
               <div>
                 { displayStatus ? statusIcon : '--' }
                 <span>
@@ -142,52 +161,11 @@ function RunsListView({bucketInfo}) {
     );
   }
 
-  let date = parseInt(bucketInfo.time, 10);
-
-  let timeRangeStart = moment(date).format('h a');
-  let timeRangeStop = moment(date).add(1, 'h').format('h a');
-
   return (
     <div className="runs-list-container">
-      <div className="top-panel-data">
-        <div className="date">
-          <div className="title">
-            {T.translate(`${PREFIX}.date`)}
-          </div>
-          <div>{moment(date).format('ddd, MMM D, YYYY')}</div>
-        </div>
-
-        <div className="time-range">
-          <div className="title">
-            {T.translate(`${PREFIX}.timeRange`)}
-          </div>
-          <div>{timeRangeStart} - {timeRangeStop}</div>
-        </div>
-
-        <div className="type">
-          <div className="title">
-            {T.translate(`${PREFIX}.type`)}
-          </div>
-          <div>{T.translate(`${PREFIX}.all`)}</div>
-        </div>
-
-        <div className="start-method">
-          <div className="title">
-            {T.translate(`${PREFIX}.startMethod`)}
-          </div>
-          <div>{T.translate(`${PREFIX}.viewAll`)}</div>
-        </div>
-
-        <div className="status">
-          <div className="title">
-            {T.translate(`${PREFIX}.status`)}
-          </div>
-          <div>{T.translate(`${PREFIX}.all`)}</div>
-        </div>
-      </div>
+      <TopPanel />
 
       {renderGrid(bucketInfo.runsList)}
-
     </div>
   );
 }

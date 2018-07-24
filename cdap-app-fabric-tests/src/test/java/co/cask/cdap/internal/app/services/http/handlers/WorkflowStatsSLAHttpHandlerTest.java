@@ -29,6 +29,7 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.PercentileInformation;
@@ -38,6 +39,7 @@ import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.WorkflowStatsComparison;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableMap;
@@ -80,6 +82,12 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
   private void setStartAndRunning(ProgramId id, String pid, Map<String, String> runtimeArgs,
                                   Map<String, String> systemArgs, ArtifactId artifactId) {
+    if (!systemArgs.containsKey(SystemArguments.PROFILE_NAME)) {
+      systemArgs = ImmutableMap.<String, String>builder()
+        .putAll(systemArgs)
+        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName())
+        .build();
+    }
     long startTime = RunIds.getTime(pid, TimeUnit.SECONDS);
     store.setProvisioning(id.run(pid), runtimeArgs, systemArgs,
                           AppFabricTestHelper.createSourceId(++sourceId), artifactId);

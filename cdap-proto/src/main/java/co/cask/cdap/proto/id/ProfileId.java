@@ -18,6 +18,7 @@ package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.profile.Profile;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,7 +29,7 @@ import java.util.Objects;
  * Uniquely identifies an artifact.
  */
 public class ProfileId extends NamespacedEntityId implements ParentedId<NamespaceId> {
-  public static final ProfileId NATIVE = NamespaceId.SYSTEM.profile("native");
+  public static final ProfileId NATIVE = NamespaceId.SYSTEM.profile(Profile.NATIVE_NAME);
   private final String profileName;
   private transient Integer hashCode;
 

@@ -99,6 +99,13 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the run history of %s", Fragment.of(Article.A, elementType.getName()));
+    switch (elementType) {
+      case FLOW:
+        return String.format("Gets the run history of %s. Flows are deprecated as of release 5.0," +
+                             " use SparkStreaming as a replacement technology.",
+                             Fragment.of(Article.A, elementType.getName()));
+      default:
+        return String.format("Gets the run history of %s", Fragment.of(Article.A, elementType.getName()));
+    }
   }
 }

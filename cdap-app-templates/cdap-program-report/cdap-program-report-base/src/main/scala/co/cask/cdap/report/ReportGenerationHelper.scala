@@ -94,7 +94,11 @@ object ReportGenerationHelper {
     */
   @throws(classOf[IOException])
   def generateReport(sql: SQLContext, request: ReportGenerationRequest, inputURIs: java.util.List[String],
-                     reportIdDir: Location): Unit = {
+                     reportIdDir: Location, reportExpiryDurationMillis : Long): Unit = {
+    if (inputURIs.isEmpty) {
+      writeEmptySummaryFile(request, reportIdDir, reportExpiryDurationMillis);
+      return
+    }
     val df = SparkCompat.readAvroFiles(sql, inputURIs)
     // Get the fields to be included in the final report and additional fields required for filtering and sorting
     val (reportFields: Set[String], additionalFields: Set[String]) = getReportAndAdditionalFields(request)
@@ -124,45 +128,55 @@ object ReportGenerationHelper {
       }
     }))
     resultDf.persist()
-    writeSummary(request, resultDf, reportIdDir)
     // drop the columns which should not be included in the report
     resultDf.columns.foreach(col => if (!reportFields.contains(col)) resultDf = resultDf.drop(col))
     // Writing the DataFrame to JSON files requires a non-existing directory to write report files.
     // Create a non-existing directory location with name ReportSparkHandler.REPORT_DIR
     val reportDir = reportIdDir.append(Constants.LocationName.REPORT_DIR).toURI.toString
-    // TODO: [CDAP-13290] output reports as avro instead of json text files
     // TODO: [CDAP-13291] improve how the number of partitions is configured
+    // by default spart sql uses snappy compression codec, set it to uncompressed
+    sql.setConf("spark.sql.avro.compression.codec", "uncompressed")
     resultDf.coalesce(1).write.option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ").json(reportDir)
-    val count = resultDf.count
-    // Create a _COUNT file and write the total number of report records in it
-    writeToFile(count.toString, Constants.LocationName.COUNT_FILE, reportIdDir)
-    // Create a _SUCCESS file and write the current time in millis in it
-    writeToFile(System.currentTimeMillis().toString, Constants.LocationName.SUCCESS_FILE, reportIdDir)
+    writeSummary(request, resultDf, reportIdDir, reportExpiryDurationMillis)
   }
 
   /**
-    * Create a file with given filename in the given directory and write the given content in the file
-    *
-    * @param content the content to write
-    * @param fileName the name of the file
-    * @param baseLocation the location of the directory
+    * From the filters in ReportGenerationRequest figure out namespaces if they are provided, get the start
+    * and end time range of query and use default for all other fields of report summary and write to summary file
+    * with count 0
+    * @param request ReportGenerationRequest
+    * @param reportIdDir report directory where the summary, count and success files will be written to
     */
-  private def writeToFile(content: String, fileName: String, baseLocation: Location): Unit = {
-    var writer: Option[PrintWriter] = None
-    try {
-      val outputFile = baseLocation.append(fileName)
-      if (!outputFile.createNew) {
-        // use String.format to avoid log4j overloading issue in scala with 3 String arguments
-        LOG.error(String.format("Failed to create file %s for in %s", fileName, baseLocation.toURI.toString))
+  private def writeEmptySummaryFile(request: ReportGenerationRequest,
+                                    reportIdDir: Location,
+                                    reportExpiryDurationMillis : Long) = {
+    val namespacesAggregates = getNamespaceAggregates(request)
+    val count = 0
+    val creationTime = System.currentTimeMillis();
+    val summary = new ReportSummary(namespacesAggregates, request.getStart, request.getEnd,
+      new ArrayBuffer[ArtifactAggregate](), new DurationStats(0L, 0L, 0.0),
+      new StartStats(0l, 0l), new ArrayBuffer[UserAggregate](), new ArrayBuffer[StartMethodAggregate](),
+      count, creationTime, reportExpiryDurationMillis)
+    writeSummaryToFile(summary, reportIdDir)
+  }
+
+  private def getNamespaceAggregates(request: ReportGenerationRequest) : ArrayBuffer[NamespaceAggregate] = {
+    val namespacesAggregates = ArrayBuffer[NamespaceAggregate]()
+    val filters = request.getFilters
+    for (filter <- filters) {
+      if (filter.getFieldName.equals(Constants.NAMESPACE)) {
+        filter match {
+          case valueFilter: ValueFilter[_] => {
+            val namespaces = valueFilter.getWhitelist
+            for (namespace <- namespaces) {
+              namespacesAggregates.add(new NamespaceAggregate(namespace.asInstanceOf[String], 0));
+            }
+          }
+        }
+        return namespacesAggregates
       }
-      writer = Some(new PrintWriter(outputFile.getOutputStream))
-      writer.get.write(content)
-    } catch {
-      case e: IOException => {
-        LOG.error("Failed to write to {} in {}", fileName, baseLocation.toURI.toString, e)
-        throw e
-      }
-    } finally if (writer.isDefined) writer.get.close()
+    }
+    return namespacesAggregates
   }
 
   /**
@@ -173,13 +187,19 @@ object ReportGenerationHelper {
     * @param df the DataFrame containing report details
     * @param reportIdDir the location to write the summary to
     */
-  private def writeSummary(request: ReportGenerationRequest, df: DataFrame, reportIdDir: Location): Unit = {
+  private def writeSummary(request: ReportGenerationRequest, df: DataFrame, reportIdDir: Location,
+                           expiryDurationMillis : Long): Unit = {
     val namespaces = ArrayBuffer[NamespaceAggregate]()
     // group the report details by namespace, and then collect the count and the corresponding unique namespaces
     df.groupBy(Constants.NAMESPACE).count.collect.foreach(r => namespaces +=
       new NamespaceAggregate(r.getAs[String](Constants.NAMESPACE), r.getAs[Long](COUNT_COL)))
     // group the report details by artifact information including artifact name, version and scope,
     // and then collect the count and the corresponding unique artifact information
+    if (namespaces.isEmpty) {
+      // if no records are found matching the request,
+      // we still need to add the namespace aggregates with namespaces from the request and 0 records total.
+      namespaces.addAll(getNamespaceAggregates(request));
+    }
     val artifacts = ArrayBuffer[ArtifactAggregate]()
     df.groupBy(Constants.ARTIFACT_NAME, Constants.ARTIFACT_VERSION, Constants.ARTIFACT_SCOPE).count.collect
       .foreach(r => artifacts += new ArtifactAggregate(r.getAs[String](Constants.ARTIFACT_NAME),
@@ -208,7 +228,11 @@ object ReportGenerationHelper {
         new StartMethodAggregate(r.getAs[String](Constants.START_METHOD), r.getAs[Long](COUNT_COL)))
     // create the summary
     val summary = new ReportSummary(namespaces, request.getStart, request.getEnd, artifacts,
-      durations, starts, owners, startMethods)
+      durations, starts, owners, startMethods, df.count(), System.currentTimeMillis(), expiryDurationMillis)
+    writeSummaryToFile(summary, reportIdDir)
+  }
+
+  private def writeSummaryToFile(summary : ReportSummary, reportIdDir: Location): Unit = {
     // Save the report summary request in the _SUMMARY file in the given directory
     var writer: PrintWriter = null
     try {
@@ -278,9 +302,14 @@ object ReportGenerationHelper {
           }
           case valueFilter: ValueFilter[_] => {
             val whitelist = valueFilter.getWhitelist
-            newFilterCol &&= fieldCol.isin(whitelist.stream().collect(Collectors.toList()): _*)
             val blacklist = valueFilter.getBlacklist
-            newFilterCol &&= !fieldCol.isin(blacklist.stream().collect(Collectors.toList()): _*)
+            // only either of whitelist or blacklist can be non empty,
+            // and a value filter will have one of them non empty
+            if (whitelist.size() > 0) {
+              newFilterCol &&= fieldCol.isin(whitelist.stream().collect(Collectors.toList()): _*)
+            } else if (blacklist.size() > 0) {
+              newFilterCol &&= !fieldCol.isin(blacklist.stream().collect(Collectors.toList()): _*)
+            }
             // cast filter.getFieldName to Any to avoid ambiguous method reference error
             LOG.debug("Added ValueFilter {} for field {}", valueFilter, filter.getFieldName: Any)
           }
