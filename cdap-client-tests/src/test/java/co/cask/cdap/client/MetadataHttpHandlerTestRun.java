@@ -1528,9 +1528,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       properties.put(AbstractSystemMetadataWriter.DESCRIPTION_KEY, description);
     }
     if (profileId != null) {
-      properties.put("profile", profileId.toString());
+      properties.put("profile", profileId.getScopedName());
       // need to wait for the profile id to come up since we are updating it asyncly
-      Tasks.waitFor(profileId.toString(), () -> getProperties(programId, MetadataScope.SYSTEM).get("profile"),
+      Tasks.waitFor(profileId.getScopedName(), () -> getProperties(programId, MetadataScope.SYSTEM).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     }
     Assert.assertEquals(properties.build(), removeCreationTime(getProperties(programId, MetadataScope.SYSTEM)));
