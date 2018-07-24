@@ -116,13 +116,13 @@ Hadoop components, as required:
 +----------------+---------------------------------+---------------------------------------+
 | **Spark**      | Apache                          | Versions 1.2.x through 1.6.x          |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-versions| |note-4|               |
+|                | |cdh-title|                     | Version 1.6.x through 2.2.x           |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
+|                | Hortonworks Data Platform (HDP) | Version 1.6.x through 2.2.x           |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | |mapr-versions|                       |
+|                | MapR                            | Version 1.6.x through 2.2.x           |
 +                +---------------------------------+---------------------------------------+
-|                | Amazon Hadoop (EMR)             | |emr-versions|                        |
+|                | Amazon Hadoop (EMR)             | Version 1.6.1 through 1.6.3           |
 +----------------+---------------------------------+---------------------------------------+
 
 **Note 1:** Component versions shown in these tables are those that we have tested and are
