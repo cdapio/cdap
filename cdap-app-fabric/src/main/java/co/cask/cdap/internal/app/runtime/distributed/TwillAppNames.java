@@ -38,7 +38,7 @@ public final class TwillAppNames {
   /**
    * Returns the Twill app name to be used for a Twill app launched for a given program.
    */
-  static String toTwillAppName(ProgramId programId) {
+  public static String toTwillAppName(ProgramId programId) {
     return String.format("%s.%s.%s.%s", programId.getType().name().toLowerCase(),
                          programId.getNamespace(), programId.getApplication(), programId.getProgram());
   }
@@ -62,7 +62,7 @@ public final class TwillAppNames {
    *                                  and mustMatch is true.
    */
   @Nullable
-  static ProgramId fromTwillAppName(String twillAppName, boolean mustMatch) {
+  public static ProgramId fromTwillAppName(String twillAppName, boolean mustMatch) {
     Matcher matcher = APP_NAME_PATTERN.matcher(twillAppName);
     if (!matcher.matches()) {
       Preconditions.checkArgument(!mustMatch, "Twill app name '%s' does not match pattern for programs", twillAppName);

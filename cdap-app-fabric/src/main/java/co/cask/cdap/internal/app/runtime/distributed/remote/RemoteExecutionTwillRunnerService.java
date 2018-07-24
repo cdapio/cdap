@@ -17,13 +17,20 @@
 package co.cask.cdap.internal.app.runtime.distributed.remote;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.retry.RetryableException;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -33,22 +40,24 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
+import co.cask.cdap.internal.app.runtime.distributed.TwillAppNames;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
-import co.cask.cdap.internal.profile.ProfileMetricScheduledService;
+import co.cask.cdap.internal.profile.ProfileMetricService;
 import co.cask.cdap.internal.provision.LocationBasedSSHKeyPair;
+import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.common.http.HttpRequestConfig;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -84,6 +93,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,9 +101,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * A {@link TwillRunnerService} implementations that uses ssh and {@link RuntimeMonitor} to launch and monitor
@@ -102,6 +116,7 @@ import java.util.concurrent.TimeUnit;
 public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionTwillRunnerService.class);
+
   // Max out the HTTPS certificate validity.
   // We use max int of seconds to compute number of days to avoid overflow.
   private static final int CERT_VALIDITY_DAYS = (int) TimeUnit.SECONDS.toDays(Integer.MAX_VALUE);
@@ -111,11 +126,13 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final Configuration hConf;
   private final LocationFactory locationFactory;
   private final DatasetFramework datasetFramework;
-  private final Map<ProgramRunId, RemoteExecutionTwillController> controllers;
+  private final ConcurrentMap<ProgramRunId, RemoteExecutionTwillController> controllers;
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
   private final RemoteExecutionLogProcessor logProcessor;
   private final MetricsCollectionService metricsCollectionService;
+  private final ProvisioningService provisioningService;
+  private final ProgramStateWriter programStateWriter;
 
   private LocationCache locationCache;
   private Path cachePath;
@@ -126,7 +143,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                     LocationFactory locationFactory, MessagingService messagingService,
                                     DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                     RemoteExecutionLogProcessor logProcessor,
-                                    MetricsCollectionService metricsCollectionService) {
+                                    MetricsCollectionService metricsCollectionService,
+                                    ProvisioningService provisioningService, ProgramStateWriter programStateWriter) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -142,6 +160,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     this.controllers = new ConcurrentHashMap<>();
     this.logProcessor = logProcessor;
     this.metricsCollectionService = metricsCollectionService;
+    this.provisioningService = provisioningService;
+    this.programStateWriter = programStateWriter;
   }
 
   @Override
@@ -159,8 +179,10 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     monitorScheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
                                                         Threads.createDaemonThreadFactory("runtime-monitor-%d"));
 
-    // TODO CDAP-13417: Scan AppMetaStore for active run records that were launched with RemoteExecutionTwillRunner
-    // to initialize the controllers map.
+    long startMillis = System.currentTimeMillis();
+    Thread t = new Thread(() -> initializeRuntimeMonitors(startMillis), "runtime-monitor-initializer");
+    t.setDaemon(true);
+    t.start();
   }
 
   @Override
@@ -215,63 +237,84 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     ProgramRunId programRunId = programTwillApp.getProgramRunId();
     ProgramOptions programOptions = programTwillApp.getProgramOptions();
 
-    // Get the SSH information provided by the provisioner.
-    Arguments systemArgs = programOptions.getArguments();
-    Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
+    persistRunningState(programRunId, programOptions);
 
-    Node masterNode = cluster.getNodes().stream()
-      .filter(node -> co.cask.cdap.runtime.spi.Constants.Node.MASTER_TYPE.equals(
-        node.getProperties().get(co.cask.cdap.runtime.spi.Constants.Node.TYPE)))
-      .findFirst().orElseThrow(
-      () -> new IllegalArgumentException("Missing master node information for the cluster " + cluster.getName()));
+    try {
+      // Generate the KeyStores for HTTPS
+      Location keysDir = getKeysDirLocation(programOptions, locationFactory);
 
-    // Generate the KeyStores for HTTPS
-    Location keysDir = locationFactory.create(
-      GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.SECURE_KEYS_DIR), URI.class));
+      KeyStore serverKeyStore = KeyStores.generatedCertKeyStore(CERT_VALIDITY_DAYS, "");
+      KeyStore clientKeyStore = KeyStores.generatedCertKeyStore(CERT_VALIDITY_DAYS, "");
 
-    KeyStore serverKeyStore = KeyStores.generatedCertKeyStore(CERT_VALIDITY_DAYS, "");
-    KeyStore clientKeyStore = KeyStores.generatedCertKeyStore(CERT_VALIDITY_DAYS, "");
+      saveKeyStores(serverKeyStore, clientKeyStore, keysDir);
 
-    saveKeyStores(serverKeyStore, clientKeyStore, keysDir);
-
-    // Loads the SSH keys
-    SSHKeyPair sshKeyPair = createSSHKeyPair(keysDir, cluster);
-
-    // Creates and return the twill preparer
-    String remoteHost = Preconditions.checkNotNull(masterNode.getProperties().get("ip.external"));
-
-    Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
-                                                                       programOptions.getArguments().asMap());
-    ProfileId profileId = profile.orElseThrow(() ->
-      new IllegalStateException("Missing profile information for this program run %s " + programRunId));
-    ProfileMetricScheduledService metricScheduledService = new ProfileMetricScheduledService(metricsCollectionService,
-                                                                                             programRunId,
-                                                                                             profileId,
-                                                                                             cluster.getNodes().size(),
-                                                                                             monitorScheduler);
-    RunId runId = RunIds.fromString(programRunId.getRun());
-    return new RemoteExecutionTwillPreparer(cConf, config, remoteHost, sshKeyPair,
-                                            serverKeyStore, clientKeyStore,
-                                            application.configure(), runId,
-                                            null, locationCache, locationFactory,
-                                            createControllerFactory(programRunId, runId, remoteHost,
-                                                                    serverKeyStore, clientKeyStore,
-                                                                    metricScheduledService));
+      ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(programOptions, locationFactory);
+      return new RemoteExecutionTwillPreparer(cConf, config, clusterKeyInfo.getSSHConfig(),
+                                              serverKeyStore, clientKeyStore,
+                                              application.configure(), programRunId, programOptions, null,
+                                              locationCache, locationFactory,
+                                              createControllerFactory(programRunId, programOptions, clusterKeyInfo)) {
+        @Override
+        public TwillController start(long timeout, TimeUnit timeoutUnit) {
+          try {
+            return super.start(timeout, timeoutUnit);
+          } catch (Exception e) {
+            deleteRunningState(programRunId);
+            throw e;
+          }
+        }
+      };
+    } catch (Exception e) {
+      deleteRunningState(programRunId);
+      throw Throwables.propagate(e);
+    }
   }
 
+  @Nullable
   @Override
   public TwillController lookup(String applicationName, RunId runId) {
-    return null;
+    ProgramId programId = TwillAppNames.fromTwillAppName(applicationName, false);
+    if (programId == null) {
+      return null;
+    }
+    return controllers.get(programId.run(runId));
   }
 
   @Override
   public Iterable<TwillController> lookup(String applicationName) {
-    return null;
+    ProgramId programId = TwillAppNames.fromTwillAppName(applicationName, false);
+    if (programId == null) {
+      return Collections.emptyList();
+    }
+
+    return controllers.entrySet().stream()
+      .filter(entry -> programId.equals(entry.getKey().getParent()))
+      .map(Map.Entry::getValue)
+      .map(TwillController.class::cast)
+      ::iterator;
   }
 
   @Override
   public Iterable<LiveInfo> lookupLive() {
-    return null;
+    // Groups the controllers by the ProgramId, then transform it to an Iterator of LiveInfo
+    return controllers.entrySet().stream()
+      .collect(Collectors.groupingBy(e -> e.getKey().getParent(),
+                                     Collectors.mapping(e -> TwillController.class.cast(e.getValue()),
+                                                        Collectors.toList())))
+      .entrySet().stream()
+      .map(e -> new LiveInfo() {
+        @Override
+        public String getApplicationName() {
+          return TwillAppNames.toTwillAppName(e.getKey());
+        }
+
+        @Override
+        public Iterable<TwillController> getControllers() {
+          return e.getValue();
+        }
+      })
+      .map(LiveInfo.class::cast)
+      ::iterator;
   }
 
   @Override
@@ -285,58 +328,58 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   @Override
   public Cancellable setSecureStoreRenewer(SecureStoreRenewer renewer, long initialDelay,
                                            long delay, long retryDelay, TimeUnit unit) {
-    return null;
+    return () -> { };
   }
 
   /**
    * Creates a new instance of {@link RemoteExecutionTwillControllerFactory} for a given run.
    */
   private RemoteExecutionTwillControllerFactory createControllerFactory(ProgramRunId programRunId,
-                                                                        RunId runId,
-                                                                        String remoteHost,
-                                                                        KeyStore serverKeyStore,
-                                                                        KeyStore clientKeyStore,
-                                                                        ProfileMetricScheduledService metricService) {
-    return () -> {
-      try {
-        // Creates a runtime monitor and starts it
-        RuntimeMonitorClient runtimeMonitorClient = new RuntimeMonitorClient(
-          remoteHost,
-          cConf.getInt(Constants.RuntimeMonitor.SERVER_PORT),
-          HttpRequestConfig.DEFAULT, clientKeyStore, KeyStores.createTrustStore(serverKeyStore)
-        );
+                                                                        ProgramOptions programOptions,
+                                                                        ClusterKeyInfo clusterKeyInfo) {
+    return () -> controllers.computeIfAbsent(programRunId, key -> {
+      // Creates a runtime monitor and starts it
+      RuntimeMonitorClient runtimeMonitorClient = new RuntimeMonitorClient(
+        clusterKeyInfo.getSSHConfig().getHost(),
+        cConf.getInt(Constants.RuntimeMonitor.SERVER_PORT),
+        HttpRequestConfig.DEFAULT, clusterKeyInfo.getClientKeyStore(),
+        KeyStores.createTrustStore(clusterKeyInfo.getServerKeyStore())
+      );
 
-        RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConf, runtimeMonitorClient,
-                                                           datasetFramework, transactional,
-                                                           messagingContext, monitorScheduler, logProcessor,
-                                                           metricService);
-        RemoteExecutionTwillController controller = new RemoteExecutionTwillController(runId, runtimeMonitor);
-        controllers.put(programRunId, controller);
-        runtimeMonitor.start();
+      RemoteProcessController remoteProcessController = new SSHRemoteProcessController(key, programOptions,
+                                                                                       clusterKeyInfo.getSSHConfig(),
+                                                                                       provisioningService);
+      ProfileMetricService profileMetricsService = createProfileMetricsService(key, programOptions,
+                                                                               clusterKeyInfo.getCluster());
+      RuntimeMonitor runtimeMonitor = new RuntimeMonitor(key, cConf, runtimeMonitorClient,
+                                                         datasetFramework, transactional,
+                                                         messagingContext, monitorScheduler, logProcessor,
+                                                         profileMetricsService,
+                                                         remoteProcessController, programStateWriter);
+      RemoteExecutionTwillController controller = new RemoteExecutionTwillController(
+        RunIds.fromString(key.getRun()), runtimeMonitor);
 
-        // When the program completed, remove the controller from the map
-        controller.onTerminated(() -> controllers.remove(programRunId, controller), Threads.SAME_THREAD_EXECUTOR);
+      runtimeMonitor.start();
 
-        return controller;
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-    };
+      // When the program completed, remove the controller from the map
+      controller.onTerminated(() -> controllers.remove(key, controller), Threads.SAME_THREAD_EXECUTOR);
+
+      return controller;
+    });
   }
 
   /**
-   * Creates a {@link SSHKeyPair} by loading keys from the given location and {@link Cluster} properties.
+   * Creates a {@link ProfileMetricService} for the profile being used for the given program run.
    */
-  private SSHKeyPair createSSHKeyPair(Location keysDir, Cluster cluster) {
-    String sshUser = cluster.getProperties().get(Constants.RuntimeMonitor.SSH_USER);
-    if (sshUser == null) {
-      throw new IllegalStateException("Missing SSH user");
-    }
-    try {
-      return new LocationBasedSSHKeyPair(keysDir, sshUser);
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to create SSHKeyPair from location " + keysDir, e);
-    }
+  private ProfileMetricService createProfileMetricsService(ProgramRunId programRunId,
+                                                           ProgramOptions programOptions, Cluster cluster) {
+    Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
+                                                                       programOptions.getArguments().asMap());
+    ProfileId profileId = profile.orElseThrow(
+      () -> new IllegalStateException("Missing profile information for program run " + programRunId));
+
+    return new ProfileMetricService(metricsCollectionService, programRunId, profileId,
+                                    cluster.getNodes().size(), monitorScheduler);
   }
 
   /**
@@ -354,6 +397,163 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
+    }
+  }
+
+  /**
+   * Initialize {@link RuntimeMonitor} to re-monitor programs that are already running when this service starts.
+   *
+   * @param startMillis time in milliseconds that this service starts. It is used such that it will only monitor
+   *                    program runs launched before starting of this service.
+   */
+  private void initializeRuntimeMonitors(long startMillis) {
+    int limit = cConf.getInt(Constants.RuntimeMonitor.INIT_BATCH_SIZE);
+    AtomicReference<ProgramRunId> lastProgramRunId = new AtomicReference<>();
+    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor.");
+
+    boolean completed = false;
+
+    try {
+      while (!completed) {
+        // Scan the dataset and update the controllers map. Retry on all exception.
+        completed = Retries.callWithRetries(() -> Transactionals.execute(transactional, context -> {
+          RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+          List<Map.Entry<ProgramRunId, ProgramOptions>> scanResult = dataset.scan(limit, lastProgramRunId.get());
+          for (Map.Entry<ProgramRunId, ProgramOptions> entry : scanResult) {
+            ProgramRunId programRunId = entry.getKey();
+            ProgramOptions programOptions = entry.getValue();
+
+            lastProgramRunId.set(programRunId);
+
+            if (RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) > startMillis) {
+              continue;
+            }
+
+            ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(programOptions, locationFactory);
+            createControllerFactory(programRunId, programOptions, clusterKeyInfo).create();
+          }
+
+          return scanResult.isEmpty();
+        }, RetryableException.class), retryStrategy, e -> true);
+      }
+    } catch (Exception e) {
+      LOG.error("Failed to load runtime dataset", e);
+    }
+  }
+
+  /**
+   * Persists running state to the {@link RemoteRuntimeDataset}.
+   */
+  private void persistRunningState(ProgramRunId programRunId, ProgramOptions programOptions) {
+    // Only retry for a max of 5 seconds. If it still failed to persist, it will fail to launch the program.
+    RetryStrategy retryStrategy = RetryStrategies.timeLimit(5L, TimeUnit.SECONDS,
+                                                            RetryStrategies.exponentialDelay(100L, 1000L,
+                                                                                             TimeUnit.MILLISECONDS));
+    Retries.runWithRetries(() -> Transactionals.execute(transactional, context -> {
+      RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+      dataset.write(programRunId, programOptions);
+    }, RetryableException.class), retryStrategy);
+  }
+
+  /**
+   * Deletes the running state from the {@link RemoteRuntimeDataset}.
+   */
+  private void deleteRunningState(ProgramRunId programRunId) {
+    try {
+      // No need to retry. If deletion failed, the state will be left in the dataset until next time CDAP restarts,
+      // the state transition logic will have it cleared.
+      // The deletion is only needed when successfully write the states to dataset, but failed to run the launch script
+      // remote, which should be rare.
+      Transactionals.execute(transactional, context -> {
+        RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+        dataset.delete(programRunId);
+      });
+    } catch (Exception e) {
+      LOG.warn("Failed to delete execution state for program run {}", programRunId, e);
+    }
+  }
+
+  /**
+   * Static helper method to return the secure keys location from the given {@link ProgramOptions}.
+   */
+  private static Location getKeysDirLocation(ProgramOptions programOptions, LocationFactory locationFactory) {
+    return locationFactory.create(
+      GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.SECURE_KEYS_DIR), URI.class));
+  }
+
+  /**
+   * A private class to hold secure key information for a program runtime.
+   */
+  private static final class ClusterKeyInfo {
+    private final Cluster cluster;
+    private final SSHConfig sshConfig;
+    private final KeyStore serverKeyStore;
+    private final KeyStore clientKeyStore;
+
+    ClusterKeyInfo(ProgramOptions programOptions,
+                   LocationFactory locationFactory) throws IOException, GeneralSecurityException {
+      Arguments systemArgs = programOptions.getArguments();
+      Location keysDir = getKeysDirLocation(programOptions, locationFactory);
+
+      this.cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
+      this.sshConfig = createSSHConfig(cluster, keysDir);
+      this.serverKeyStore = KeyStores.load(keysDir.append(Constants.RuntimeMonitor.SERVER_KEYSTORE), () -> "");
+      this.clientKeyStore = KeyStores.load(keysDir.append(Constants.RuntimeMonitor.CLIENT_KEYSTORE), () -> "");
+    }
+
+    Cluster getCluster() {
+      return cluster;
+    }
+
+    SSHConfig getSSHConfig() {
+      return sshConfig;
+    }
+
+    KeyStore getServerKeyStore() {
+      return serverKeyStore;
+    }
+
+    KeyStore getClientKeyStore() {
+      return clientKeyStore;
+    }
+
+    /**
+     * Creates a {@link SSHKeyPair} by loading keys from the given location and {@link Cluster} properties.
+     */
+    private SSHKeyPair createSSHKeyPair(Location keysDir, Cluster cluster) {
+      String sshUser = cluster.getProperties().get(Constants.RuntimeMonitor.SSH_USER);
+      if (sshUser == null) {
+        throw new IllegalStateException("Missing SSH user");
+      }
+      try {
+        return new LocationBasedSSHKeyPair(keysDir, sshUser);
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to create SSHKeyPair from location " + keysDir, e);
+      }
+    }
+
+    /**
+     * Creates a {@link SSHConfig} for ssh to the master node of the given {@link Cluster}.
+     *
+     * @param cluster the cluster information
+     * @param keysDir the {@link Location} that contains the ssh keys
+     * @return a {@link SSHConfig}
+     */
+    private SSHConfig createSSHConfig(Cluster cluster, Location keysDir) {
+      // Loads the SSH keys
+      SSHKeyPair sshKeyPair = createSSHKeyPair(keysDir, cluster);
+
+      Node masterNode = cluster.getNodes().stream()
+        .filter(node -> co.cask.cdap.runtime.spi.Constants.Node.MASTER_TYPE.equals(
+          node.getProperties().get(co.cask.cdap.runtime.spi.Constants.Node.TYPE)))
+        .findFirst().orElseThrow(
+          () -> new IllegalArgumentException("Missing master node information for the cluster " + cluster.getName()));
+
+      // Creates and return the twill preparer
+      return SSHConfig.builder(masterNode.getProperties().get(co.cask.cdap.runtime.spi.Constants.Node.EXTERNAL_IP))
+        .setUser(sshKeyPair.getPublicKey().getUser())
+        .setPrivateKeySupplier(sshKeyPair.getPrivateKeySupplier())
+        .build();
     }
   }
 }

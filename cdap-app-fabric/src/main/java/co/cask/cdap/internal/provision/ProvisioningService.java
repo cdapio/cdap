@@ -33,6 +33,7 @@ import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
@@ -50,9 +51,11 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.runtime.spi.SparkCompat;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
+import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -60,7 +63,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
@@ -125,7 +127,7 @@ public class ProvisioningService extends AbstractIdleService {
                                                                    new TransactionSystemClientAdapter(txClient),
                                                                    NamespaceId.SYSTEM,
                                                                    Collections.emptyMap(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
+      org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
     this.sparkCompat = SparkCompatReader.get(cConf);
     this.secureStore = secureStore;
@@ -159,6 +161,45 @@ public class ProvisioningService extends AbstractIdleService {
       // Ignore it.
     }
     LOG.info("Stopped {}", getClass().getSimpleName());
+  }
+
+  /**
+   * Returns the {@link ClusterStatus} for the cluster being used to execute the given program run.
+   *
+   * @param programRunId the program run id for checking the cluster status
+   * @param programOptions the program options for the given run
+   * @param cluster the {@link Cluster} information for the given run
+   * @param userId the user id to use for {@link SecureStore} operation.
+   * @return the {@link ClusterStatus}
+   * @throws Exception if non-retryable exception is encountered when querying cluster status
+   */
+  public ClusterStatus getClusterStatus(ProgramRunId programRunId, ProgramOptions programOptions,
+                                        Cluster cluster, String userId) throws Exception {
+    Map<String, String> systemArgs = programOptions.getArguments().asMap();
+    String name = SystemArguments.getProfileProvisioner(systemArgs);
+    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+
+    // If there is no provisioner available, we can't do anything further, hence returning NOT_EXISTS
+    if (provisioner == null) {
+      return ClusterStatus.NOT_EXISTS;
+    }
+
+    Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
+
+    // Create the ProvisionerContext and query the cluster status using the provisioner
+    ProvisionerContext context;
+    try {
+      context = createContext(programRunId, userId, properties, new DefaultSSHContext(null, null));
+    } catch (InvalidMacroException e) {
+      // This shouldn't happen
+      runWithProgramLogging(programRunId, systemArgs,
+                            () -> LOG.error("Could not evaluate macros while checking cluster status.", e));
+      return ClusterStatus.NOT_EXISTS;
+    }
+
+    return Retries.callWithRetries(() -> provisioner.getClusterStatus(context, cluster),
+                                   RetryStrategies.exponentialDelay(1, 5, TimeUnit.SECONDS),
+                                   RetryableProvisionException.class::isInstance);
   }
 
   /**
@@ -494,7 +535,7 @@ public class ProvisioningService extends AbstractIdleService {
         ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
         return provisionerDataset.listTaskInfo();
       }),
-      co.cask.cdap.common.service.RetryStrategies.fixDelay(6, TimeUnit.SECONDS),
+      RetryStrategies.fixDelay(6, TimeUnit.SECONDS),
       t -> {
         // don't retry if we were interrupted, or if the service is not running
         // normally this is only called when the service is starting, but it can be running in unit test

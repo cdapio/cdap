@@ -30,6 +30,9 @@ import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
@@ -40,8 +43,10 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
@@ -57,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,17 +76,19 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
 
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
+  private final Store store;
   private final TransactionExecutorFactory txExecutorFactory;
   private final Impersonator impersonator;
 
   @Inject
-  DistributedFlowProgramRunner(CConfiguration cConfig, YarnConfiguration hConf, QueueAdmin queueAdmin,
+  DistributedFlowProgramRunner(CConfiguration cConfig, YarnConfiguration hConf, QueueAdmin queueAdmin, Store store,
                                StreamAdmin streamAdmin, TransactionExecutorFactory txExecutorFactory,
                                Impersonator impersonator, ClusterMode clusterMode,
                                @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
     super(cConfig, hConf, impersonator, clusterMode, twillRunner);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
+    this.store = store;
     this.txExecutorFactory = txExecutorFactory;
     this.impersonator = impersonator;
   }
@@ -105,6 +113,15 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
     );
     return new FlowTwillProgramController(programDescriptor.getProgramId(), twillController,
                                           instanceUpdater, runId).startListen();
+  }
+
+  @Override
+  public ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
+    try {
+      return createProgramController(twillController, store.loadProgram(programId), runId);
+    } catch (IOException | ApplicationNotFoundException | ProgramNotFoundException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

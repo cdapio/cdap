@@ -19,11 +19,9 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
-import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
@@ -40,17 +38,16 @@ import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
-import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
@@ -72,10 +69,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 import static co.cask.cdap.proto.Containers.ContainerInfo;
@@ -92,7 +90,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   // TODO (terence): Injection of Store and QueueAdmin is a hack for queue reconfiguration.
   // Need to remove it when FlowProgramRunner can runs inside Twill AM.
-  private final ProgramRunnerFactory programRunnerFactory;
   private final Store store;
   private final ProgramResourceReporter resourceReporter;
   private final Impersonator impersonator;
@@ -108,8 +105,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                      ArtifactRepository noAuthArtifactRepository,
                                    Impersonator impersonator, ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
-    this.programRunnerFactory = programRunnerFactory;
+    super(cConf, programRunnerFactory, noAuthArtifactRepository);
     this.twillRunner = twillRunner;
     this.store = store;
     this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf);
@@ -156,28 +152,15 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   protected void copyArtifact(ArtifactId artifactId,
                               final ArtifactDetail artifactDetail, final File targetFile) throws IOException {
     try {
-      impersonator.doAs(artifactId, new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
-          return null;
-        }
+      impersonator.doAs(artifactId, () -> {
+        Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
+        return null;
       });
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       // should not happen
       throw Throwables.propagate(e);
     }
-  }
-
-  // TODO SAGAR better data structure to support this efficiently
-  private synchronized boolean isTwillRunIdCached(RunId twillRunId) {
-    for (RuntimeInfo runtimeInfo : getRuntimeInfos()) {
-      if (twillRunId.equals(runtimeInfo.getTwillRunId())) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override
@@ -187,53 +170,29 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       return runtimeInfo;
     }
 
-    // Goes through all live application and fill the twillProgramInfo table
-    for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
-      String appName = liveInfo.getApplicationName();
-      ProgramId id = TwillAppNames.fromTwillAppName(appName, false);
-      if (id == null) {
-        continue;
-      }
-
-      if (!id.equals(programId)) {
-        continue;
-      }
-
-      // Program matched
-      RunRecordMeta record = store.getRun(programId.run(runId.getId()));
-      if (record == null) {
-        return null;
-      }
-      if (record.getTwillRunId() == null) {
-        LOG.warn("Twill RunId does not exist for the program {}, runId {}", programId, runId.getId());
-        return null;
-      }
-      RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
-
-      for (TwillController controller : liveInfo.getControllers()) {
-        RunId twillRunId = controller.getRunId();
-        if (!twillRunId.equals(twillRunIdFromRecord)) {
-          continue;
-        }
-        runtimeInfo = createRuntimeInfo(programId, controller, runId);
-        if (runtimeInfo != null) {
-          updateRuntimeInfo(programId.getType(), runId, runtimeInfo);
-        } else {
-          LOG.warn("Unable to find program for runId {}", runId);
-        }
-        return runtimeInfo;
-      }
+    // Lookup the Twill RunId for the given run
+    ProgramRunId programRunId = programId.run(runId.getId());
+    RunRecordMeta record = store.getRun(programRunId);
+    if (record == null) {
+      return null;
     }
-    return null;
+    if (record.getTwillRunId() == null) {
+      LOG.warn("Twill RunId does not exist for the program {}, runId {}", programId, runId.getId());
+      return null;
+    }
+
+    RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
+    return lookupFromTwillRunner(twillRunner, programRunId, twillRunIdFromRecord);
   }
 
   @Override
   public synchronized Map<RunId, RuntimeInfo> list(ProgramType type) {
-    Map<RunId, RuntimeInfo> result = Maps.newHashMap();
-    result.putAll(super.list(type));
+    Map<RunId, RuntimeInfo> result = new HashMap<>(super.list(type));
 
     // Table holds the Twill RunId and TwillController associated with the program matching the input type
     Table<ProgramId, RunId, TwillController> twillProgramInfo = HashBasedTable.create();
+
+    List<RuntimeInfo> runtimeInfos = getRuntimeInfos();
 
     // Goes through all live application and fill the twillProgramInfo table
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
@@ -248,7 +207,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
       for (TwillController controller : liveInfo.getControllers()) {
         RunId twillRunId = controller.getRunId();
-        if (isTwillRunIdCached(twillRunId)) {
+
+        // If it already in the runtime info, no need to lookup
+        if (runtimeInfos.stream().anyMatch(info -> twillRunId.equals(info.getTwillRunId()))) {
           continue;
         }
 
@@ -281,58 +242,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       Map.Entry<ProgramId, TwillController> entry = mapForTwillId.entrySet().iterator().next();
 
       // Create RuntimeInfo for the current Twill RunId
-      RuntimeInfo runtimeInfo = createRuntimeInfo(entry.getKey(), entry.getValue(), runId);
-      if (runtimeInfo != null) {
-        result.put(runId, runtimeInfo);
-        updateRuntimeInfo(type, runId, runtimeInfo);
-      } else {
-        LOG.warn("Unable to find program {} {}", type, entry.getKey());
+      if (result.computeIfAbsent(runId, rid -> createRuntimeInfo(entry.getKey(), rid, entry.getValue())) == null) {
+        LOG.warn("Unable to create runtime info for program {} with run id {}", entry.getKey(), runId);
       }
     }
 
     return ImmutableMap.copyOf(result);
-  }
-
-  @Nullable
-  private RuntimeInfo createRuntimeInfo(ProgramId programId, TwillController controller, RunId runId) {
-    try {
-      ProgramDescriptor programDescriptor = store.loadProgram(programId);
-      ProgramController programController = createController(programDescriptor, controller, runId);
-      return programController == null ? null : new SimpleRuntimeInfo(programController,
-                                                                      programId,
-                                                                      controller.getRunId());
-    } catch (Exception e) {
-      return null;
-    }
-  }
-
-  @Nullable
-  private ProgramController createController(ProgramDescriptor programDescriptor,
-                                             TwillController controller, RunId runId) {
-    ProgramId programId = programDescriptor.getProgramId();
-    ProgramRunner programRunner;
-    try {
-      programRunner = programRunnerFactory.create(programId.getType());
-    } catch (IllegalArgumentException e) {
-      // This shouldn't happen. If it happen, it means CDAP was incorrectly install such that some of the program
-      // type is not support (maybe due to version mismatch in upgrade).
-      LOG.error("Unsupported program type {} for program {}. " +
-                  "It is likely caused by incorrect CDAP installation or upgrade to incompatible CDAP version",
-                programId.getType(), programId);
-      return null;
-    }
-
-    if (!(programRunner instanceof DistributedProgramRunner)) {
-      // This is also unexpected. If it happen, it means the CDAP core or the runtime provider extension was wrongly
-      // implemented
-      ResourceReport resourceReport = controller.getResourceReport();
-      LOG.error("Unable to create ProgramController for program {} for twill application {}. It is likely caused by " +
-                  "invalid CDAP program runtime extension.",
-                programId, resourceReport == null ? "'unknown twill application'" : resourceReport.getApplicationId());
-      return null;
-    }
-
-    return ((DistributedProgramRunner) programRunner).createProgramController(controller, programDescriptor, runId);
   }
 
   @Override
@@ -371,7 +286,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         return liveInfo;
       }
     }
-    return new NotRunningProgramLiveInfo(program);
+
+    return super.getLiveInfo(program);
   }
 
   /**
@@ -480,13 +396,13 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void startUp() {
     resourceReporter.start();
     LOG.debug("started distributed program runtime service");
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected void shutDown() {
     resourceReporter.stop();
   }
 }

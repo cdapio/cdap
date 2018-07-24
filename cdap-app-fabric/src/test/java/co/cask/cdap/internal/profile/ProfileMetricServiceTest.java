@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class ProfileMetricScheduledServiceTest {
+public class ProfileMetricServiceTest {
   private static Injector injector;
 
   @BeforeClass
@@ -56,8 +56,8 @@ public class ProfileMetricScheduledServiceTest {
     MetricStore metricStore = injector.getInstance(MetricStore.class);
 
     // There are 5 nodes, we emit the metrics each 2 mins, so each time the node minute should go up by 10 min
-    ProfileMetricScheduledService scheduledService = new ProfileMetricScheduledService(collectionService, runId,
-                                                                                       profileId, 5, 2, null);
+    ProfileMetricService scheduledService = new ProfileMetricService(collectionService, runId, profileId, 5, 2, null);
+
     // emit and verify the results
     scheduledService.emitMetric();
     Tasks.waitFor(10L, () -> getMetric(metricStore, runId, profileId,
