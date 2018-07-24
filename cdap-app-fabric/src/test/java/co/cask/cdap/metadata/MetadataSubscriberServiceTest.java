@@ -145,7 +145,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
     // Write the field level lineage
     FieldLineageWriter fieldLineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
-    ProgramRunId spark1Run1 = spark1.run(RunIds.generate());
+    ProgramRunId spark1Run1 = spark1.run(RunIds.generate(100));
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("ns", "endpoint1"), "offset", "body");
     TransformOperation parse = new TransformOperation("parse", "parse body",
                                                       Collections.singletonList(InputField.of("read", "body")),
@@ -162,7 +162,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     FieldLineageInfo info1 = new FieldLineageInfo(operations);
     fieldLineageWriter.write(spark1Run1, info1);
 
-    ProgramRunId spark1Run2 = spark1.run(RunIds.generate());
+    ProgramRunId spark1Run2 = spark1.run(RunIds.generate(200));
     fieldLineageWriter.write(spark1Run2, info1);
 
     List<Operation> operations2 = new ArrayList<>();
@@ -178,7 +178,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                                                                    InputField.of("normalize", "address")));
     operations2.add(anotherWrite);
     FieldLineageInfo info2 = new FieldLineageInfo(operations2);
-    ProgramRunId spark1Run3 = spark1.run(RunIds.generate());
+    ProgramRunId spark1Run3 = spark1.run(RunIds.generate(300));
     fieldLineageWriter.write(spark1Run3, info2);
 
     // Emit some usages
@@ -218,18 +218,20 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
       Set<Operation> expectedOperations = new HashSet<>();
       expectedOperations.add(read);
-      expectedOperations.add(write);
-      Set<ProgramRunOperations> expectedSet = new HashSet<>();
-      expectedSet.add(new ProgramRunOperations(new HashSet<>(Arrays.asList(spark1Run1, spark1Run2)),
-                                               expectedOperations));
+      expectedOperations.add(anotherWrite);
+      List<ProgramRunOperations> expected = new ArrayList<>();
+      // Descending order of program execution
+      expected.add(new ProgramRunOperations(Collections.singleton(spark1Run3), expectedOperations));
+
       expectedOperations = new HashSet<>();
       expectedOperations.add(read);
-      expectedOperations.add(anotherWrite);
-      expectedSet.add(new ProgramRunOperations(Collections.singleton(spark1Run3), expectedOperations));
+      expectedOperations.add(write);
+      expected.add(new ProgramRunOperations(new HashSet<>(Arrays.asList(spark1Run1, spark1Run2)),
+                                            expectedOperations));
 
       EndPointField endPointField = new EndPointField(EndPoint.of("ns", "endpoint2"), "offset");
-      Tasks.waitFor(expectedSet, () -> fieldLineageReader.getIncomingOperations(endPointField, 1L, Long.MAX_VALUE - 1),
-              10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(expected, () -> fieldLineageReader.getIncomingOperations(endPointField, 1L, Long.MAX_VALUE - 1),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // Verifies usage has been written
       Set<EntityId> expectedUsage = new HashSet<>(Arrays.asList(dataset1, dataset3));

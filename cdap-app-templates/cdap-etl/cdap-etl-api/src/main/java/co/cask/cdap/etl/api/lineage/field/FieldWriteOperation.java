@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a write operation from a collection of input fields into a data sink.
@@ -70,5 +71,26 @@ public class FieldWriteOperation extends FieldOperation {
    */
   public List<String> getInputFields() {
     return inputFields;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    FieldWriteOperation that = (FieldWriteOperation) o;
+    return Objects.equals(inputFields, that.inputFields) &&
+      Objects.equals(sink, that.sink);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), inputFields, sink);
   }
 }

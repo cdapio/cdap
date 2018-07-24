@@ -28,6 +28,8 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,6 +56,7 @@ public class FieldLineageInfo {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
+  private static final Logger LOG = LoggerFactory.getLogger(FieldLineageInfo.class);
 
   private final Set<Operation> operations;
 
@@ -115,6 +118,7 @@ public class FieldLineageInfo {
    * @throws IllegalArgumentException if validation fails
    */
   public FieldLineageInfo(Collection<? extends Operation> operations, boolean computeSummaries) {
+    LOG.trace("Received field lineage operations {}", GSON.toJson(operations));
     this.operations = new HashSet<>(operations);
     computeAndValidateFieldLineageInfo(operations);
     this.checksum = computeChecksum();

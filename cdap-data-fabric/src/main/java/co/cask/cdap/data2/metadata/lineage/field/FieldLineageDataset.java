@@ -46,8 +46,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -319,7 +320,7 @@ public class FieldLineageDataset extends AbstractDataset {
     Map<Long, Set<ProgramRunId>> checksumsWithProgramRunsInRange
       = getChecksumsWithProgramRunsInRange(direction, endPoint, start, end);
 
-    Set<ProgramRunOperations> result = new HashSet<>();
+    Set<ProgramRunOperations> result = new LinkedHashSet<>();
 
     for (Map.Entry<Long, Set<ProgramRunId>> entry : checksumsWithProgramRunsInRange.entrySet()) {
       byte[] rowKey = getChecksumRowKey(entry.getKey());
@@ -347,7 +348,7 @@ public class FieldLineageDataset extends AbstractDataset {
     byte[] scanStartKey = getScanKey(direction, endPoint, end);
     // time is inverted, hence we need to pass start-time for getting end key
     byte[] scanEndKey = getScanKey(direction, endPoint, start);
-    Map<Long, Set<ProgramRunId>> result = new HashMap<>();
+    Map<Long, Set<ProgramRunId>> result = new LinkedHashMap<>();
     try (Scanner scanner = table.scan(scanStartKey, scanEndKey)) {
       Row row;
       while ((row = scanner.next()) != null) {

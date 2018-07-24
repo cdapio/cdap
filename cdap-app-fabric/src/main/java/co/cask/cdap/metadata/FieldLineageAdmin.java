@@ -158,19 +158,19 @@ public class FieldLineageAdmin {
     List<ProgramFieldOperationInfo> incoming = null;
     List<ProgramFieldOperationInfo> outgoing = null;
     if (direction == Constants.FieldLineage.Direction.INCOMING || direction == Constants.FieldLineage.Direction.BOTH) {
-      Set<ProgramRunOperations> incomingOperations = fieldLineageReader.getIncomingOperations(endPointField, start,
-                                                                                              end);
+      List<ProgramRunOperations> incomingOperations = fieldLineageReader.getIncomingOperations(endPointField, start,
+                                                                                               end);
       incoming = processOperations(incomingOperations);
     }
     if (direction == Constants.FieldLineage.Direction.OUTGOING || direction == Constants.FieldLineage.Direction.BOTH) {
-      Set<ProgramRunOperations> outgoingOperations = fieldLineageReader.getOutgoingOperations(endPointField, start,
-                                                                                              end);
+      List<ProgramRunOperations> outgoingOperations = fieldLineageReader.getOutgoingOperations(endPointField, start,
+                                                                                               end);
       outgoing = processOperations(outgoingOperations);
     }
     return new FieldLineageDetails(incoming, outgoing);
   }
 
-  private List<ProgramFieldOperationInfo> processOperations(Set<ProgramRunOperations> programRunOperations) {
+  private List<ProgramFieldOperationInfo> processOperations(List<ProgramRunOperations> programRunOperations) {
     List<ProgramFieldOperationInfo> result = new ArrayList<>();
     for (ProgramRunOperations entry : programRunOperations) {
       List<ProgramInfo> programInfo = computeProgramInfo(entry.getProgramRunIds());

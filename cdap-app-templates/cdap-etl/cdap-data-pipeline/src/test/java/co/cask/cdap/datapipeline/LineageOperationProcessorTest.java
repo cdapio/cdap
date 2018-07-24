@@ -430,4 +430,360 @@ public class LineageOperationProcessorTest {
 
     Assert.assertEquals(expectedOperations, processedOperations);
   }
+
+  @Test
+  public void testSimpleJoinOperation() {
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n3"));
+    connections.add(new Connection("n2", "n3"));
+    connections.add(new Connection("n3", "n4"));
+
+    EndPoint cEndPoint = EndPoint.of("default", "customer");
+    EndPoint pEndPoint = EndPoint.of("default", "purchase");
+    EndPoint cpEndPoint = EndPoint.of("default", "customer_purchase");
+
+
+    //  customer -> (id)------------
+    //                              |
+    //                            JOIN  ------->(id, customer_id)
+    //                              |
+    //  purchase -> (customer_id)---
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    stageOperations.put("n1", Collections.singletonList(new FieldReadOperation("ReadCustomer", "read description",
+                                                                               cEndPoint, "id")));
+    stageOperations.put("n2", Collections.singletonList(new FieldReadOperation("ReadPurchase", "read description",
+                                                                               pEndPoint, "customer_id")));
+    stageOperations.put("n3",
+                        Collections.singletonList(new FieldTransformOperation("Join", "Join Operation",
+                                                                              Arrays.asList("n1.id",
+                                                                                            "n2.customer_id"),
+                                                                              Arrays.asList("id", "customer_id"))));
+    stageOperations.put("n4", Collections.singletonList(new FieldWriteOperation("Write", "write description",
+                                                                                cpEndPoint, "id", "customer_id")));
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.singleton("n3"));
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id"));
+    expectedOperations.add(new TransformOperation("n3.Join", "Join Operation",
+                                                  Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
+                                                                InputField.of("n2.ReadPurchase", "customer_id")),
+                                                  "id", "customer_id"));
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", cpEndPoint,
+                                              Arrays.asList(InputField.of("n3.Join", "id"),
+                                                            InputField.of("n3.Join", "customer_id"))));
+    Assert.assertEquals(expectedOperations, processor.process());
+  }
+
+  @Test
+  public void testSimpleJoinWithAdditionalFields() {
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n3"));
+    connections.add(new Connection("n2", "n3"));
+    connections.add(new Connection("n3", "n4"));
+
+    EndPoint cEndPoint = EndPoint.of("default", "customer");
+    EndPoint pEndPoint = EndPoint.of("default", "purchase");
+    EndPoint cpEndPoint = EndPoint.of("default", "customer_purchase");
+
+
+    //  customer -> (id)------------
+    //                              |
+    //                            JOIN  ------->(id, customer_id)
+    //                              |
+    //  purchase -> (customer_id)---
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    stageOperations.put("n1", Collections.singletonList(new FieldReadOperation("ReadCustomer", "read description",
+                                                                               cEndPoint, "id", "name")));
+    stageOperations.put("n2", Collections.singletonList(new FieldReadOperation("ReadPurchase", "read description",
+                                                                               pEndPoint, "customer_id", "item")));
+
+    List<FieldOperation> operationsFromJoin = new ArrayList<>();
+    operationsFromJoin.add(new FieldTransformOperation("Join", "Join Operation",
+                                                       Arrays.asList("n1.id", "n2.customer_id"),
+                                                       Arrays.asList("id", "customer_id")));
+    operationsFromJoin.add(new FieldTransformOperation("Identity name", "Identity Operation",
+                                                       Collections.singletonList("n1.name"),
+                                                       Collections.singletonList("name")));
+    operationsFromJoin.add(new FieldTransformOperation("Identity item", "Identity Operation",
+                                                       Collections.singletonList("n2.item"),
+                                                       Collections.singletonList("item")));
+    stageOperations.put("n3", operationsFromJoin);
+
+    stageOperations.put("n4", Collections.singletonList(new FieldWriteOperation("Write", "write description",
+                                                                                cpEndPoint, "id", "name",
+                                                                                "customer_id", "item")));
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.singleton("n3"));
+
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id", "item"));
+    expectedOperations.add(new TransformOperation("n3.Join", "Join Operation",
+                                                  Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
+                                                                InputField.of("n2.ReadPurchase", "customer_id")),
+                                                  "id", "customer_id"));
+    expectedOperations.add(new TransformOperation("n3.Identity name", "Identity Operation",
+                                                  Collections.singletonList(InputField.of("n1.ReadCustomer", "name")),
+                                                  "name"));
+    expectedOperations.add(new TransformOperation("n3.Identity item", "Identity Operation",
+                                                  Collections.singletonList(InputField.of("n2.ReadPurchase", "item")),
+                                                  "item"));
+
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", cpEndPoint,
+                                              Arrays.asList(InputField.of("n3.Join", "id"),
+                                                            InputField.of("n3.Identity name", "name"),
+                                                            InputField.of("n3.Join", "customer_id"),
+                                                            InputField.of("n3.Identity item", "item"))));
+    Set<Operation> processedOperations = processor.process();
+    Assert.assertEquals(expectedOperations, processedOperations);
+  }
+
+  @Test
+  public void testSimpleJoinWithRenameJoinKeys() {
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n3"));
+    connections.add(new Connection("n2", "n3"));
+    connections.add(new Connection("n3", "n4"));
+
+    EndPoint cEndPoint = EndPoint.of("default", "customer");
+    EndPoint pEndPoint = EndPoint.of("default", "purchase");
+    EndPoint cpEndPoint = EndPoint.of("default", "customer_purchase");
+
+
+    //  customer -> (id, name)------------
+    //                                    |
+    //                                  JOIN  ------->(id_from_customer, id_from_purchase, name, item)
+    //                                    |
+    //  purchase -> (customer_id, item)---
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    stageOperations.put("n1", Collections.singletonList(new FieldReadOperation("ReadCustomer", "read description",
+                                                                               cEndPoint, "id", "name")));
+    stageOperations.put("n2", Collections.singletonList(new FieldReadOperation("ReadPurchase", "read description",
+                                                                               pEndPoint, "customer_id", "item")));
+
+    List<FieldOperation> operationsFromJoin = new ArrayList<>();
+    operationsFromJoin.add(new FieldTransformOperation("Join", "Join Operation",
+                                                       Arrays.asList("n1.id", "n2.customer_id"),
+                                                       Arrays.asList("id", "customer_id")));
+    operationsFromJoin.add(new FieldTransformOperation("Rename id", "Rename id", Collections.singletonList("id"),
+                                                       "id_from_customer"));
+    operationsFromJoin.add(new FieldTransformOperation("Rename customer_id", "Rename customer_id",
+                                                       Collections.singletonList("customer_id"), "id_from_purchase"));
+    operationsFromJoin.add(new FieldTransformOperation("Identity name", "Identity Operation",
+                                                       Collections.singletonList("n1.name"),
+                                                       Collections.singletonList("name")));
+    operationsFromJoin.add(new FieldTransformOperation("Identity item", "Identity Operation",
+                                                       Collections.singletonList("n2.item"),
+                                                       Collections.singletonList("item")));
+    stageOperations.put("n3", operationsFromJoin);
+
+    stageOperations.put("n4", Collections.singletonList(new FieldWriteOperation("Write", "write description",
+                                                                                cpEndPoint, "id_from_customer",
+                                                                                "id_from_purchase",
+                                                                                "name", "item")));
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.singleton("n3"));
+    Set<Operation> processedOperations = processor.process();
+
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id", "item"));
+    expectedOperations.add(new TransformOperation("n3.Join", "Join Operation",
+                                                  Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
+                                                                InputField.of("n2.ReadPurchase", "customer_id")),
+                                                  "id", "customer_id"));
+    expectedOperations.add(new TransformOperation("n3.Rename id", "Rename id",
+                                                  Collections.singletonList(InputField.of("n3.Join", "id")),
+                                                  "id_from_customer"));
+    expectedOperations.add(new TransformOperation("n3.Rename customer_id", "Rename customer_id",
+                                                  Collections.singletonList(InputField.of("n3.Join", "customer_id")),
+                                                  "id_from_purchase"));
+    expectedOperations.add(new TransformOperation("n3.Identity name", "Identity Operation",
+                                                       Collections.singletonList(InputField.of("n1.ReadCustomer",
+                                                                                               "name")), "name"));
+    expectedOperations.add(new TransformOperation("n3.Identity item", "Identity Operation",
+                                                  Collections.singletonList(InputField.of("n2.ReadPurchase", "item")),
+                                                  "item"));
+
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", cpEndPoint,
+                                              Arrays.asList(InputField.of("n3.Rename id", "id_from_customer"),
+                                                            InputField.of("n3.Rename customer_id", "id_from_purchase"),
+                                                            InputField.of("n3.Identity name", "name"),
+                                                            InputField.of("n3.Identity item", "item"))));
+
+    Assert.assertEquals(expectedOperations, processedOperations);
+  }
+
+  @Test
+  public void testSimpleJoinWithRenameOnAdditionalFields() {
+    //  customer -> (id, name)----------
+    //                                  |
+    //                                JOIN  --->(id_from_customer, customer_id, name_from_customer, item_from_purchase)
+    //                                  |
+    //  purchase ->(customer_id, item)---
+
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n3"));
+    connections.add(new Connection("n2", "n3"));
+    connections.add(new Connection("n3", "n4"));
+
+    EndPoint cEndPoint = EndPoint.of("default", "customer");
+    EndPoint pEndPoint = EndPoint.of("default", "purchase");
+    EndPoint cpEndPoint = EndPoint.of("default", "customer_purchase");
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    stageOperations.put("n1", Collections.singletonList(new FieldReadOperation("ReadCustomer", "read description",
+                                                                               cEndPoint, "id", "name")));
+    stageOperations.put("n2", Collections.singletonList(new FieldReadOperation("ReadPurchase", "read description",
+                                                                               pEndPoint, "customer_id", "item")));
+
+    List<FieldOperation> operationsFromJoin = new ArrayList<>();
+    operationsFromJoin.add(new FieldTransformOperation("Join", "Join Operation",
+                                                       Arrays.asList("n1.id", "n2.customer_id"),
+                                                       Arrays.asList("id", "customer_id")));
+    operationsFromJoin.add(new FieldTransformOperation("Rename id", "Rename id", Collections.singletonList("id"),
+                                                       "id_from_customer"));
+    operationsFromJoin.add(new FieldTransformOperation("Rename name", "Rename name",
+                                                       Collections.singletonList("n1.name"), "name_from_customer"));
+    operationsFromJoin.add(new FieldTransformOperation("Rename item", "Rename item",
+                                                       Collections.singletonList("n2.item"), "item_from_purchase"));
+    stageOperations.put("n3", operationsFromJoin);
+
+    stageOperations.put("n4", Collections.singletonList(new FieldWriteOperation("Write", "write description",
+                                                                                cpEndPoint, "id_from_customer",
+                                                                                "customer_id", "name_from_customer",
+                                                                                "item_from_purchase")));
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.singleton("n3"));
+    Set<Operation> processedOperations = processor.process();
+
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id", "item"));
+    expectedOperations.add(new TransformOperation("n3.Join", "Join Operation",
+                                                  Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
+                                                                InputField.of("n2.ReadPurchase", "customer_id")),
+                                                  "id", "customer_id"));
+    expectedOperations.add(new TransformOperation("n3.Rename id", "Rename id",
+                                                  Collections.singletonList(InputField.of("n3.Join", "id")),
+                                                  "id_from_customer"));
+    expectedOperations.add(new TransformOperation("n3.Rename name", "Rename name",
+                                                  Collections.singletonList(InputField.of("n1.ReadCustomer",
+                                                                                          "name")),
+                                                  "name_from_customer"));
+    expectedOperations.add(new TransformOperation("n3.Rename item", "Rename item",
+                                                  Collections.singletonList(InputField.of("n2.ReadPurchase",
+                                                                                          "item")),
+                                                  "item_from_purchase"));
+
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", cpEndPoint,
+                                              Arrays.asList(InputField.of("n3.Rename id", "id_from_customer"),
+                                                            InputField.of("n3.Join", "customer_id"),
+                                                            InputField.of("n3.Rename name", "name_from_customer"),
+                                                            InputField.of("n3.Rename item", "item_from_purchase"))));
+
+    Assert.assertEquals(expectedOperations, processedOperations);
+  }
+
+  @Test
+  public void testJoinWith3Inputs() {
+    // customer -> (id, name)---------- |
+    //                                  |
+    // purchase ->(customer_id, item)------> JOIN --->(id_from_customer, customer_id, address_id,
+    //                                  |                   name_from_customer, address)
+    //                                  |
+    // address ->(address_id, address)--|
+
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n4"));
+    connections.add(new Connection("n2", "n4"));
+    connections.add(new Connection("n3", "n4"));
+    connections.add(new Connection("n4", "n5"));
+
+    EndPoint cEndPoint = EndPoint.of("default", "customer");
+    EndPoint pEndPoint = EndPoint.of("default", "purchase");
+    EndPoint aEndPoint = EndPoint.of("default", "address");
+    EndPoint acpEndPoint = EndPoint.of("default", "customer_purchase_address");
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    stageOperations.put("n1", Collections.singletonList(new FieldReadOperation("ReadCustomer", "read description",
+                                                                               cEndPoint, "id", "name")));
+    stageOperations.put("n2", Collections.singletonList(new FieldReadOperation("ReadPurchase", "read description",
+                                                                               pEndPoint, "customer_id", "item")));
+    stageOperations.put("n3", Collections.singletonList(new FieldReadOperation("ReadAddress", "read description",
+                                                                               aEndPoint, "address_id", "address")));
+
+    List<FieldOperation> operationsFromJoin = new ArrayList<>();
+
+    operationsFromJoin.add(new FieldTransformOperation("Join", "Join Operation",
+                                             Arrays.asList("n1.id", "n2.customer_id", "n3.address_id"),
+                                             Arrays.asList("id", "customer_id", "address_id")));
+
+    operationsFromJoin.add(new FieldTransformOperation("Rename id", "Rename Operation",
+                                             Collections.singletonList("id"),
+                                             Collections.singletonList("id_from_customer")));
+
+    operationsFromJoin.add(new FieldTransformOperation("Rename customer.name", "Rename Operation",
+                                             Collections.singletonList("n1.name"),
+                                             Collections.singletonList("name_from_customer")));
+
+    operationsFromJoin.add(new FieldTransformOperation("Identity address.address", "Identity Operation",
+                                             Collections.singletonList("n3.address"),
+                                             Collections.singletonList("address")));
+
+    stageOperations.put("n4", operationsFromJoin);
+
+    stageOperations.put("n5", Collections.singletonList(new FieldWriteOperation("Write", "Write Operation",
+                                                                                acpEndPoint, "id_from_customer",
+                                                                                "customer_id", "address_id",
+                                                                                "name_from_customer",
+                                                                                "address")));
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.singleton("n4"));
+    Set<Operation> processedOperations = processor.process();
+
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id", "item"));
+    expectedOperations.add(new ReadOperation("n3.ReadAddress", "read description", aEndPoint, "address_id", "address"));
+
+    expectedOperations.add(new TransformOperation("n4.Join", "Join Operation",
+                                                  Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
+                                                                InputField.of("n2.ReadPurchase", "customer_id"),
+                                                                InputField.of("n3.ReadAddress", "address_id")),
+                                                  "id", "customer_id", "address_id"));
+
+    expectedOperations.add(new TransformOperation("n4.Rename id", "Rename Operation",
+                                                  Collections.singletonList(InputField.of("n4.Join", "id")),
+                                                  "id_from_customer"));
+
+    expectedOperations.add(new TransformOperation("n4.Rename customer.name", "Rename Operation",
+                                                  Collections.singletonList(InputField.of("n1.ReadCustomer",
+                                                                                          "name")),
+                                                  "name_from_customer"));
+
+    expectedOperations.add(new TransformOperation("n4.Identity address.address", "Identity Operation",
+                                                  Collections.singletonList(InputField.of("n3.ReadAddress",
+                                                                                          "address")),
+                                                  "address"));
+
+    expectedOperations.add(new WriteOperation("n5.Write", "Write Operation", acpEndPoint,
+                                              Arrays.asList(InputField.of("n4.Rename id", "id_from_customer"),
+                                                            InputField.of("n4.Join", "customer_id"),
+                                                            InputField.of("n4.Join", "address_id"),
+                                                            InputField.of("n4.Rename customer.name",
+                                                                          "name_from_customer"),
+                                                            InputField.of("n4.Identity address.address", "address"))));
+
+    Assert.assertEquals(expectedOperations, processedOperations);
+
+  }
 }
