@@ -53,6 +53,12 @@ export default class ActionPopover extends Component {
 
     MyReportsApi.getReport(params)
       .subscribe((res) => {
+        // Has to clear current selections, otherwise current selections in the
+        // store will union with the cloned selections
+        ReportsStore.dispatch({
+          type: ReportsActions.clearSelection
+        });
+
         let {request} = res;
 
         let selectedFields = difference(request.fields, DefaultSelection);
@@ -91,7 +97,7 @@ export default class ActionPopover extends Component {
               }
 
               payload.statusSelections = statusSelections;
-            } else if (filter.fieldName === 'artifact') {
+            } else if (filter.fieldName === 'artifactName') {
               if (filter.whitelist) {
                 payload.selections.pipelines = true;
               } else if (filter.blacklist) {
