@@ -222,7 +222,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private void setProfileMetadata(NamespacedEntityId entityId, ProfileId profileId) {
     // if we are able to get profile from preferences or schedule properties, use it
     // otherwise default profile will be used
-    metadataDataset.setProperty(entityId.toMetadataEntity(), PROFILE_METADATA_KEY, profileId.toString());
+    metadataDataset.setProperty(entityId.toMetadataEntity(), PROFILE_METADATA_KEY, profileId.getScopedName());
   }
 
   /**

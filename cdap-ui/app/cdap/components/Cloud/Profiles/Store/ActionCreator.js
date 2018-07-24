@@ -241,11 +241,16 @@ export const getProfiles = (namespace) => {
             });
           });
         profiles.forEach(profile => {
-          MySearchApi
-            .search({
-              namespace,
-              query: `profile:${namespace}.${profile.name}`
-            })
+          let {scope} = profile;
+          scope = scope.toLowerCase();
+          let profileName = `profile:${scope}:${profile.name}`;
+          let apiObservable$;
+          if (namespace === 'system') {
+            apiObservable$ = MySearchApi.searchSystem({ query: profileName });
+          } else {
+            apiObservable$ = MySearchApi.search({ namespace, query: profileName });
+          }
+          apiObservable$
             .subscribe(res => updateScheduleAndTriggersToStore(profile.name, res.results));
         });
       },
