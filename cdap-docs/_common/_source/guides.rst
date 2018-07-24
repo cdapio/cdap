@@ -53,6 +53,9 @@ Guides
 .. |dev-man-p-black| replace:: `Pipelines:`
 .. _dev-man-p-black: developer-manual/pipelines/index.html
 
+.. |dev-man-cr-black| replace:: `Cloud Runtimes:`
+.. _dev-man-cr-black: developer-manual/cloud-runtimes/index.html
+
 .. |dev-man-s-black| replace:: `Security:`
 .. _dev-man-s-black: developer-manual/security/index.html
 
@@ -72,6 +75,7 @@ Guides
   - |dev-man-bb-black|_ The two core abstractions in CDAP: *Data* and *Applications*, and their components
   - |dev-man-m-black|_ CDAP can automatically capture metadata and let you see **how data is flowing**
   - |dev-man-p-black|_ A capability of CDAP that that allows users to **build, deploy, and manage data pipelines**
+  - |dev-man-cr-black|_ Set up profiles to run pipelines in different cloud environments
   - |dev-man-s-black|_ Perimeter security, configuration and client authentication
   - |dev-man-tad-black|_ Test framework plus tools and practices for debugging your applications
   - |dev-man-id-black|_ Different techniques for ingesting data into CDAP
