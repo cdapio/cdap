@@ -26,8 +26,10 @@ CDAP HTTP RESTful API v3
     Metrics <metrics>
     Monitor <monitor>
     Namespace <namespace>
+    Dashboard <dashboard>
     Preferences <preferences>
     Query <query>
+    Reports <reports>
     Route Config <routeconfig>
     Security <security>
     Service <service>
@@ -84,6 +86,8 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Logging: <logging>` retrieving application logs
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various system and custom CDAP services
+- :doc:`Dashboard: <dashboard>` check in real time status of past program runs and predict future resource usage
+- :doc:`Reports: <reports>` generate reports to understand and monitor program runs and their performance
 
 
 .. rubric:: Alphabetical List of APIs
@@ -105,8 +109,10 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various system and custom CDAP services
 - :doc:`Namespace: <namespace>` creating and managing namespaces
+- :doc:`Dashboard: <dashboard>` check in real time status of past program runs and predict future resource usage
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets
+- :doc:`Reports: <reports>` generate reports to understand and monitor program runs and their performance
 - :doc:`Route Config: <query>` create, fetch, and delete route configurations (*route
   configs*) which allocate requests between different versions of a service
 - :doc:`Security: <security>` granting, revoking, and listing privileges, as well as adding, retrieving,

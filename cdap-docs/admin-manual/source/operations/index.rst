@@ -15,6 +15,7 @@ Operations
    
     Logging and Monitoring <logging>
     Metrics <metrics>
+    Dashboard and Reports <operations-dashboard>
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
     Resource Guarantees in YARN <resource-guarantees>
@@ -38,6 +39,10 @@ Operations
 
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
 
+.. |operations-dashboard| replace:: **Dashboard and Reports:**
+.. _operations-dashboard: operations-dashboard.html
+
+- |operations-dashboard|_ Real-time dashboard and reports for program run statistics.
 
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html
