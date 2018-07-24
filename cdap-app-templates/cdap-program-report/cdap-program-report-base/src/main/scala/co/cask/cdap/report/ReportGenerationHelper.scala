@@ -302,9 +302,14 @@ object ReportGenerationHelper {
           }
           case valueFilter: ValueFilter[_] => {
             val whitelist = valueFilter.getWhitelist
-            newFilterCol &&= fieldCol.isin(whitelist.stream().collect(Collectors.toList()): _*)
             val blacklist = valueFilter.getBlacklist
-            newFilterCol &&= !fieldCol.isin(blacklist.stream().collect(Collectors.toList()): _*)
+            // only either of whitelist or blacklist can be non empty,
+            // and a value filter will have one of them non empty
+            if (whitelist.size() > 0) {
+              newFilterCol &&= fieldCol.isin(whitelist.stream().collect(Collectors.toList()): _*)
+            } else if (blacklist.size() > 0) {
+              newFilterCol &&= !fieldCol.isin(blacklist.stream().collect(Collectors.toList()): _*)
+            }
             // cast filter.getFieldName to Any to avoid ambiguous method reference error
             LOG.debug("Added ValueFilter {} for field {}", valueFilter, filter.getFieldName: Any)
           }
