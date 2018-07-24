@@ -252,7 +252,7 @@ features:
         Associations:
           Header:
             created: Created
-            lastrunnodehr: Last run node hours
+            last24hrsnodehr: Last 24 hrs node hours
             last24hrsruns: Last 24 hrs runs
             name: Name
             namespace: Namespace

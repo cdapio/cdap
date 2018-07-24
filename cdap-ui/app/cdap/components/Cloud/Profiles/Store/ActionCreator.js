@@ -24,6 +24,7 @@ import {CLOUD} from 'services/global-constants';
 import {MyMetricApi} from 'api/metric';
 import {MySearchApi} from 'api/search';
 import {GLOBALS} from 'services/global-constants';
+import isNil from 'lodash/isNil';
 
 export const getProfileMetricsBody = (queryId, namespace, profileScope, startTime, endTime, extraTags) => {
   let metricBody = {
@@ -34,6 +35,8 @@ export const getProfileMetricsBody = (queryId, namespace, profileScope, startTim
       },
       metrics: [
         'system.program.completed.runs',
+        'system.program.failed.runs',
+        'system.program.killed.runs',
         'system.program.node.minutes'
       ],
       timeRange: {
@@ -133,10 +136,14 @@ export const fetchAggregateProfileMetrics = (namespace, profile, extraTags) => {
             if (!metricsMap.hasOwnProperty(query)) {
               metricsMap[query] = {};
             }
-            metricsMap[query]= {
-              ...metricsMap[query],
-              [metricName]: metricValue
-            };
+            if (metricsMap[query][metricName] !== '--' && !isNil(metricsMap[query][metricName])) {
+              metricsMap[query][metricName] += metricValue;
+            } else {
+              metricsMap[query]= {
+                ...metricsMap[query],
+                [metricName]: metricValue
+              };
+            }
           });
         });
         return Observable.create(observer => {
@@ -185,11 +192,13 @@ export const getProfiles = (namespace) => {
 
             One metadata call for entityScope=USER for schedules and triggers count
         */
-
-        let oneDayUSERMetricsBody = getProfileMetricsBody('oneDayUSERMetrics', namespace, 'USER', 'now-24h', 'now');
-        let overAllUSERMetricsBody = getProfileMetricsBody('overAllUSERMetrics', namespace, 'USER', 0, 0);
-        let oneDaySYSTEMMetricsBody = getProfileMetricsBody('oneDaySYSTEMMetrics', namespace, 'SYSTEM', 'now-24h', 'now');
-        let overAllSYSTEMMetricsBody = getProfileMetricsBody('overAllSYSTEMMetrics', namespace, 'SYSTEM', 0, 0);
+        const extraTags = {
+          programtype: 'Workflow'
+        };
+        let oneDayUSERMetricsBody = getProfileMetricsBody('oneDayUSERMetrics', namespace, 'USER', 'now-24h', 'now', extraTags);
+        let overAllUSERMetricsBody = getProfileMetricsBody('overAllUSERMetrics', namespace, 'USER', 0, 0, extraTags);
+        let oneDaySYSTEMMetricsBody = getProfileMetricsBody('oneDaySYSTEMMetrics', namespace, 'SYSTEM', 'now-24h', 'now', extraTags);
+        let overAllSYSTEMMetricsBody = getProfileMetricsBody('overAllSYSTEMMetrics', namespace, 'SYSTEM', 0, 0, extraTags);
         MyMetricApi
           .query(null, {...oneDayUSERMetricsBody, ...overAllUSERMetricsBody, ...oneDaySYSTEMMetricsBody, ...overAllSYSTEMMetricsBody})
           .subscribe(metrics => {
@@ -450,4 +459,11 @@ export const highlightNewProfile = (profileName) => {
       }
     });
   }, 3000);
+};
+
+export const getNodeHours = (nodeminutes) => {
+  if (typeof nodeminutes === 'number') {
+    return nodeminutes / 60;
+  }
+  return nodeminutes;
 };

@@ -21,7 +21,12 @@ import {isNilOrEmpty, humanReadableDuration, objectQuery} from 'services/helpers
 import {GLOBALS} from 'services/global-constants';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
-import {ONEDAYMETRICKEY, OVERALLMETRICKEY, fetchAggregateProfileMetrics} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {
+  ONEDAYMETRICKEY,
+  OVERALLMETRICKEY,
+  fetchAggregateProfileMetrics,
+  getNodeHours
+} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {Observable} from 'rxjs/Observable';
 require('./ProfileAssociations.scss');
 
@@ -49,7 +54,7 @@ const HEADERS = [
     label: T.translate(`${HEADERPREFIX}.totalruns`)
   },
   {
-    label: T.translate(`${HEADERPREFIX}.lastrunnodehr`)
+    label: T.translate(`${HEADERPREFIX}.last24hrsnodehr`)
   },
   {
     label: T.translate(`${HEADERPREFIX}.totalnodehr`)
@@ -77,7 +82,9 @@ export default class ProfileAssociations extends Component {
     let extraTags = {
       program: metadata.program,
       programtype: metadata.type,
-      profile: `${profile.scope}:${profile.name}`
+      profile: `${profile.scope}:${profile.name}`,
+      app: metadata.app,
+      namespace: metadata.namespace
     };
     fetchAggregateProfileMetrics(namespace, profile, extraTags)
       .subscribe(
@@ -109,12 +116,14 @@ export default class ProfileAssociations extends Component {
 
   componentDidMount() {
     let {namespace, profile} = this.props;
-    let apiObservable$ = MySearchApi.search({
-      namespace,
-      query: `profile:${namespace}.${profile.name}`
-    });
+    let apiObservable$;
     if (namespace === 'system') {
       apiObservable$ = MySearchApi.searchSystem({
+        query: `profile:${namespace}.${profile.name}`
+      });
+    } else {
+      apiObservable$ = MySearchApi.search({
+        namespace,
         query: `profile:${namespace}.${profile.name}`
       });
     }
@@ -146,10 +155,6 @@ export default class ProfileAssociations extends Component {
         existingEntry = {
           name: m.entityId.application,
           namespace: m.entityId.namespace,
-          metadata: {
-            type: m.entityId.type,
-            program: m.entityId.program
-          },
           schedules: [],
           triggers: []
         };
@@ -171,7 +176,13 @@ export default class ProfileAssociations extends Component {
       } else if (!isNilOrEmpty(m.entityId.type)) {
         appsMap[m.entityId.application] = {
           ...existingEntry,
-          created: m.metadata.SYSTEM.properties['creation-time']
+          created: m.metadata.SYSTEM.properties['creation-time'],
+          metadata: {
+            type: m.entityId.type,
+            program: m.entityId.program,
+            app: m.entityId.application,
+            namespace: m.entityId.namespace
+          }
         };
       }
     });
@@ -224,10 +235,17 @@ export default class ProfileAssociations extends Component {
                 <div>{appObj.name}</div>
                 <div>{appObj.namespace}</div>
                 <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true)}</div>
-                <div>{onedayMetrics.runs} </div>
-                <div>{overallMetrics.runs}</div>
-                <div>{onedayMetrics.minutes}</div>
-                <div>{overallMetrics.minutes}</div>
+                {/*
+                  We should set the defaults in the metrics call but since it is not certain that we get metrics
+                  for all the profiles all the time I have added the defaults here in the view
+                  Ideally we should set the defaults when we create the map of profiles.
+
+                  This is the minimal change for 5.0
+                */}
+                <div>{onedayMetrics.runs || '--'} </div>
+                <div>{overallMetrics.runs || '--'}</div>
+                <div>{getNodeHours(onedayMetrics.minutes || '--')}</div>
+                <div>{getNodeHours(overallMetrics.minutes || '--')}</div>
                 <div>{appObj.schedules.length}</div>
                 <div>{appObj.triggers.length}</div>
               </div>
