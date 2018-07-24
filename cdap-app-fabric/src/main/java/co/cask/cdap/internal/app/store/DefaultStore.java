@@ -69,9 +69,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionConflictException;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
@@ -85,8 +82,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -96,8 +91,6 @@ import javax.annotation.Nullable;
  */
 public class DefaultStore implements Store {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
-
-  private static final String NAME = DefaultStore.class.getSimpleName();
 
   // mds is specific for metadata, we do not want to add workflow stats related information to the mds,
   // as it is not specifically metadata
@@ -120,15 +113,6 @@ public class DefaultStore implements Store {
         NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
-  }
-
-  // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
-  // updated asynchronously.
-  public boolean isUpgradeComplete() {
-    return Transactionals.execute(transactional, context -> {
-      // The create call will update the upgradeComplete flag
-      return AppMetadataStore.create(configuration, context, dsFramework).hasUpgraded();
-    });
   }
 
   /**
@@ -689,60 +673,6 @@ public class DefaultStore implements Store {
   void clear() throws Exception {
     truncate(dsFramework.getAdmin(AppMetadataStore.APP_META_INSTANCE_ID, null));
     truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID, null));
-  }
-
-  /**
-   * Method to add version in DefaultStore.
-   *
-   * @throws InterruptedException if the thread is interrupted
-   * @throws IOException if failed to access the AppMetadataStore
-   * @throws DatasetManagementException if failed to instantiate the AppMetadataStore
-   */
-  public void upgrade() throws InterruptedException, IOException, DatasetManagementException {
-    // If upgrade is already complete, then simply return.
-    if (isUpgradeComplete()) {
-      LOG.info("{} is already upgraded.", NAME);
-      return;
-    }
-
-    AtomicInteger maxRows = new AtomicInteger(1000);
-    AtomicInteger sleepTimeInSecs = new AtomicInteger(60);
-
-    LOG.info("Starting upgrade of {}.", NAME);
-
-    while (!isUpgradeComplete()) {
-      sleepTimeInSecs.set(60);
-      try {
-        transactional.execute(context -> {
-          AppMetadataStore store = getAppMetadataStore(context);
-          boolean upgradeComplete = store.upgradeVersionKeys(maxRows.get());
-          if (upgradeComplete) {
-            store.upgradeCompleted();
-          }
-        });
-      } catch (TransactionFailureException e) {
-        if (e instanceof TransactionConflictException) {
-          LOG.debug("Upgrade step faced Transaction Conflict exception. Retrying operation now.", e);
-          sleepTimeInSecs.set(10);
-        } else if (e instanceof TransactionNotInProgressException) {
-          int currMaxRows = maxRows.get();
-          if (currMaxRows > 500) {
-            maxRows.decrementAndGet();
-          } else {
-            LOG.warn("Could not complete upgrade of {}, tried for 500 times", NAME);
-            return;
-          }
-          sleepTimeInSecs.set(10);
-          LOG.debug("Upgrade step faced a Transaction Timeout exception. " +
-                      "Reducing the number of max rows to : {} and retrying the operation now.", maxRows.get(), e);
-        } else {
-          LOG.error("Upgrade step faced exception. Will retry operation after some delay.", e);
-          sleepTimeInSecs.set(60);
-        }
-      }
-      TimeUnit.SECONDS.sleep(sleepTimeInSecs.get());
-    }
-    LOG.info("Upgrade of {} is complete.", NAME);
   }
 
   private void truncate(DatasetAdmin admin) throws Exception {

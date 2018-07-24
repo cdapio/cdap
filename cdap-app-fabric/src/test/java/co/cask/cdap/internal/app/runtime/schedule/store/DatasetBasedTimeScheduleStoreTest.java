@@ -67,7 +67,6 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
-import org.quartz.TriggerKey;
 import org.quartz.impl.DirectSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.simpl.RAMJobStore;
@@ -176,9 +175,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     schedulerSetup(true);
     String jobGroup = "jg";
     JobDetail jobDetail = getJobDetail(jobGroup, "job1", version);
-    JobDetail versionLessJobDetail = getJobDetail(jobGroup, "job1", null);
 
-    scheduler.addJob(versionLessJobDetail, true);
     scheduler.addJob(jobDetail, true);
     schedulerTearDown();
 
@@ -188,9 +185,8 @@ public class DatasetBasedTimeScheduleStoreTest {
       Assert.assertEquals(1, keys.size());
       Assert.assertTrue(scheduler.deleteJob(jobDetail.getKey()));
     } else {
-      Assert.assertEquals(2, keys.size());
+      Assert.assertEquals(1, keys.size());
       Assert.assertTrue(scheduler.deleteJob(jobDetail.getKey()));
-      Assert.assertTrue(scheduler.deleteJob(versionLessJobDetail.getKey()));
     }
     schedulerTearDown();
     schedulerSetup(true);
