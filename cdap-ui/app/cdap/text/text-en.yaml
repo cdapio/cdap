@@ -2072,7 +2072,6 @@ features:
       byTrigger: By trigger
       customApp: custom app
       expiresIn: Expires in
-      export: Export
       generatedTime: Report generated on {time}
       getReportName: "{statusLabel} runs - {startDate} to {endDate}"
       lastStarted: "Newest: {newest}; Oldest: {oldest}"

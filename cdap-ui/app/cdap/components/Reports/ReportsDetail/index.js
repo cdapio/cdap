@@ -117,10 +117,6 @@ class ReportsDetailView extends Component {
 
           <div className="action-button float-xs-right">
             <SaveButton />
-
-            <button className="btn btn-link">
-              {T.translate(`${PREFIX}.export`)}
-            </button>
           </div>
         </div>
 
