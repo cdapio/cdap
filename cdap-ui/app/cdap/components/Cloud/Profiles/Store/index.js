@@ -21,6 +21,8 @@ const PROFILES_ACTIONS = {
   SET_PROFILES: 'SET_PROFILES',
   SET_DEFAULT_PROFILE: 'SET_DEFAULT_PROFILE',
   SET_NEW_PROFILE: 'SET_NEW_PROFILE',
+  SET_PROFILE_METRICS: 'SET_PROFILE_METRICS',
+  SET_SCHEDULES_TRIGGERS_COUNT: 'SET_SCHEDULES_TRIGGERS_COUNT',
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
   RESET: 'RESET'
@@ -49,6 +51,47 @@ const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
         error: null,
         loading: false
       };
+    case PROFILES_ACTIONS.SET_PROFILE_METRICS: {
+      let {profilesToMetricsMap} = action.payload;
+      let {profiles} = state;
+      profiles = profiles.map(profile => {
+        let metricObj = {runs: '--', minutes: '--'};
+        let profileMetrics = profilesToMetricsMap[profile.name] || {};
+        /*
+          We are adding empty oneday and overall metrics AND metrics from backend
+          as we are not sure UI will get all metrics from backend. This will give
+          a default value of '--' for those that are unavailable.
+        */
+        return {
+          ...profile,
+          oneDayMetrics: metricObj,
+          overAllMetrics: metricObj,
+          ...profileMetrics
+        };
+      });
+      return {
+        ...state,
+        profiles
+      };
+    }
+    case PROFILES_ACTIONS.SET_SCHEDULES_TRIGGERS_COUNT: {
+      let {profile: profileToUpdate, schedulesCount, triggersCount} = action.payload;
+      let {profiles} = state;
+      profiles = profiles.map(profile => {
+        if (profile.name === profileToUpdate) {
+          return {
+            ...profile,
+            schedulesCount,
+            triggersCount
+          };
+        }
+        return profile;
+      });
+      return {
+        ...state,
+        profiles
+      };
+    }
     case PROFILES_ACTIONS.SET_DEFAULT_PROFILE:
       return {
         ...state,

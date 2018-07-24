@@ -16,11 +16,11 @@
 
 package co.cask.cdap.cli.command.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.MetadataClient;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -42,9 +42,10 @@ public class AddMetadataPropertiesCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    MetadataEntity metadataEntity =
+      MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
     Map<String, String> properties = parseMap(arguments.get("properties"), "<properties>");
-    client.addProperties(entity, properties);
+    client.addProperties(metadataEntity, properties);
     output.println("Successfully added metadata properties");
   }
 

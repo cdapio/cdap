@@ -97,16 +97,7 @@ export default class DataPrepServiceControl extends Component {
               <h2 className="text-xs-left">
                 {T.translate(`${PREFIX}.title`)}
               </h2>
-              <p>
-                {T.translate(`${PREFIX}.description`)}
-              </p>
-              <ul className="dataprep-checklist">
-                <li>{T.translate(`${PREFIX}.list.1`)}</li>
-                <li>{T.translate(`${PREFIX}.list.2`)}</li>
-                <li>{T.translate(`${PREFIX}.list.3`)}</li>
-                <li>{T.translate(`${PREFIX}.list.4`)}</li>
-              </ul>
-              <div className="text-xs-left">
+              <div className="text-xs-left action-container">
                 <button
                   className="btn btn-primary"
                   onClick={this.enableService}
@@ -121,6 +112,15 @@ export default class DataPrepServiceControl extends Component {
                   }
                 </button>
               </div>
+              <p>
+                {T.translate(`${PREFIX}.description`)}
+              </p>
+              <ul className="dataprep-checklist">
+                <li>{T.translate(`${PREFIX}.list.1`)}</li>
+                <li>{T.translate(`${PREFIX}.list.2`)}</li>
+                <li>{T.translate(`${PREFIX}.list.3`)}</li>
+                <li>{T.translate(`${PREFIX}.list.4`)}</li>
+              </ul>
               {this.renderError()}
             </div>
           </div>

@@ -30,9 +30,10 @@ import javax.annotation.Nullable;
  * environment. A profile is identified by name and must be assigned a provisioner and its related configuration.
  */
 public class Profile {
-  public static final Profile NATIVE = new Profile("native", "native", "Runs programs locally on the cluster",
+  public static final String NATIVE_NAME = "native";
+  public static final Profile NATIVE = new Profile(NATIVE_NAME, NATIVE_NAME, "Runs programs locally on the cluster",
                                                    EntityScope.SYSTEM,
-                                                   new ProvisionerInfo("yarn", Collections.emptyList()));
+                                                   new ProvisionerInfo(NATIVE_NAME, Collections.emptyList()));
   private final String name;
   private final String label;
   private final String description;

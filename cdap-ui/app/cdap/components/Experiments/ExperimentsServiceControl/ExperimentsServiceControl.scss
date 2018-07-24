@@ -65,6 +65,12 @@
           fill: $blue-06;
         }
       }
+      &.service-disabled {
+        display: grid;
+        align-items: center;
+        grid-template-columns: 20px 1fr;
+        grid-gap: 5px;
+      }
     }
     .mail-to-link {
       color: $brand-primary-color;
@@ -75,8 +81,7 @@
       }
     }
   }
-  .exepriments-service-control-error {
-    margin-top: 20px;
+  .experiments-service-control-error {
     .icon-svg {
       margin-right: 5px;
     }

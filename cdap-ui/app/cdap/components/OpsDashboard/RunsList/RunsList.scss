@@ -14,19 +14,19 @@
  * the License.
 */
 
+@import '~styles/variables.scss';
+
+$time-info-color: $grey-03;
+$border-color: $grey-05;
+
 .runs-list-container {
   padding: 10px 25px;
 
   .top-panel-data {
-    margin-bottom: 10px;
-    > div {
-      display: inline-block;
-      margin-right: 70px;
+    padding: 5px 10px 15px;
 
-      .title {
-        font-weight: bold;
-      }
-    }
+    .title { font-size: 18px; }
+    .time-info { color: $time-info-color; }
   }
 
   .list-view {
@@ -52,7 +52,11 @@
     .grid.grid-container {
       max-height: 100%;
 
-      .grid-header { font-weight: bold; }
+      .grid-header {
+        font-weight: bold;
+        border-top: 1px solid $border-color;
+        border-bottom: 2px solid $border-color;
+      }
 
       .grid-body {
         .grid-row {

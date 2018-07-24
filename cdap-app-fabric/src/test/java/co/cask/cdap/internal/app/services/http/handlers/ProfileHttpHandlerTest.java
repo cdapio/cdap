@@ -162,7 +162,7 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
     // if given some unrelated json, it should return a 400 instead of 500
     ProvisionerSpecification spec = new MockProvisioner().getSpec();
     ProvisionerDetail test = new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
-                                                   new ArrayList<>());
+                                                   new ArrayList<>(), null, null);
     putProfile(NamespaceId.DEFAULT.profile(test.getName()), test, 400);
   }
 

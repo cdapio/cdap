@@ -73,7 +73,7 @@ public class DataSetInitApp extends AbstractApplication {
     public void initialize(FlowletContext context) throws Exception {
       super.initialize(context);
       // Put some data in initialize, expect be able to read it back in the next flowlet.
-      confTable.put(new Put("key", "column", "generator"));
+      confTable.put(new Put("key" + context.getInstanceId(), "column", "generator"));
     }
 
     @Tick(delay = 10, unit = TimeUnit.MINUTES)
@@ -95,7 +95,7 @@ public class DataSetInitApp extends AbstractApplication {
     @ProcessInput (maxRetries = 0)
     public void process(String str) {
       // Read data from Dataset, supposed to be written from Generator initialize method
-      if (!"generator".equals(confTable.get(new Get("key", "column")).getString("column"))) {
+      if (!"generator".equals(confTable.get(new Get("key0", "column")).getString("column"))) {
         throw new IllegalArgumentException("Illegal value");
       }
 

@@ -33,6 +33,10 @@ $border-shadow-color: #cccccc;
     .text-container {
       width: 50%;
     }
+    .action-container {
+      padding-top: 25px;
+      padding-bottom: 25px;
+    }
     .image-container {
       align-items: center;
       display: flex;
@@ -71,7 +75,6 @@ $border-shadow-color: #cccccc;
     width: 80%;
   }
   .dataprep-service-control-error {
-    margin-top: 20px;
     p {
       line-height: 1.8;
     }

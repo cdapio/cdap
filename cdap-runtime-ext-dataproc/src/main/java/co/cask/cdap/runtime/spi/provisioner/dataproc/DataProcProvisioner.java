@@ -16,6 +16,7 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
+import co.cask.cdap.runtime.spi.Constants;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
@@ -44,7 +45,7 @@ public class DataProcProvisioner implements Provisioner {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataProcProvisioner.class);
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
-    "gce-dataproc", "Google Cloud Dataproc Provisioner",
+    "gcp-dataproc", "Google Cloud Dataproc",
     "Google Cloud Dataproc is a fast, easy-to-use, fully-managed cloud service for running Apache Spark and Apache " +
       "Hadoop clusters in a simpler, more cost-efficient way.",
     new HashMap<>());
@@ -72,6 +73,9 @@ public class DataProcProvisioner implements Provisioner {
     try (DataProcClient client = DataProcClient.fromConf(conf)) {
       // if it already exists, it means this is a retry. We can skip actually making the request
       Optional<Cluster> existing = client.getCluster(clusterName);
+      if (existing.isPresent()) {
+        return existing.get();
+      }
 
       String imageVersion;
       switch (context.getSparkCompat()) {
@@ -88,12 +92,8 @@ public class DataProcProvisioner implements Provisioner {
       String cdapVersion = context.getCDAPVersion().toLowerCase();
       cdapVersion = cdapVersion.replaceAll("\\.", "_");
       Map<String, String> labels = Collections.singletonMap("cdap-version", cdapVersion);
-      if (!existing.isPresent()) {
-        client.createCluster(clusterName, imageVersion, labels);
-        return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
-      } else {
-        return existing.get();
-      }
+      client.createCluster(clusterName, imageVersion, labels);
+      return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
     }
   }
 

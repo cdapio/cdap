@@ -149,7 +149,9 @@ public class DefaultOwnerStore extends OwnerStore {
   }
 
   private static byte[] createRowKey(NamespacedEntityId targetId) {
-    String targetType = EntityIdKeyHelper.getTargetType(targetId);
+    // We are not going to upgrade owner.meta table in 5.0, when we upgrade this table,
+    // we should call  EntityIdKeyHelper#getTargetType()
+    String targetType = EntityIdKeyHelper.getV1TargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(OWNER_PREFIX);
     builder.add(targetType);

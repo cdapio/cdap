@@ -152,6 +152,13 @@ export default class PipelineStopPopover extends Component {
             <tbody>
               {
                 this.props.runs.map((run, i) => {
+                  let runStartTime;
+                  if (run.start) {
+                    runStartTime = moment.unix(run.start).calendar();
+                  } else {
+                    runStartTime = '--';
+                  }
+
                   return (
                     <tr
                       key={i}
@@ -165,7 +172,7 @@ export default class PipelineStopPopover extends Component {
                             null
                         }
                       </td>
-                      <td>{moment.unix(run.start).calendar()}</td>
+                      <td>{runStartTime}</td>
                       <td>
                         <Duration
                           targetTime={run.start}

@@ -25,7 +25,8 @@ const MarketCategoriesIconMap = {
   cloudera: 'icon-cloudera',
   hortonworks: 'icon-Hortonworks',
   datawarehouse: 'icon-datawarehouse',
-  mapr: 'icon-mapr'
+  mapr: 'icon-mapr',
+  gcp: 'icon-google'
 };
 
 export default MarketCategoriesIconMap;

@@ -301,8 +301,12 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
         <AddModelToPipelineBtn
           modelName={model.name}
           modelId={model.id}
+          disabled={model.status === MODEL_STATUS.TRAINING_FAILED}
         />
-        <PredictionDatasetExploreModal predictionDataset={model.predictionsDataset} />
+        <PredictionDatasetExploreModal
+          predictionDataset={model.predictionsDataset}
+          disabled={model.status === MODEL_STATUS.TRAINING_FAILED}
+        />
       </div>
     </div>
   );

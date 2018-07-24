@@ -104,7 +104,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
   public String getDescription() {
     return String.format("Sets the format of %s. A valid '<%s>' is one of '%s'. A '<%s>' is an SQL-like schema " +
       "'column_name data_type, ...' or an Avro-like JSON schema. A '<%s>' is specified in the format " +
-      "'key1=v1 key2=v2'.",
+      "'key1=v1 key2=v2'. Streams are deprecated as of release 5.0, use Kafka as a replacement technology",
       Fragment.of(Article.A, ElementType.STREAM.getName()), ArgumentName.FORMAT, Joiner.on("', '").join(Formats.ALL),
       ArgumentName.SCHEMA, ArgumentName.SETTINGS);
   }

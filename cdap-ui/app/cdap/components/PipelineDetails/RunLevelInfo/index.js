@@ -48,14 +48,18 @@ export default function RunLevelInfo() {
     <Provider store={PipelineDetailStore}>
       <div className="pipeline-details-run-level-info">
         <CurrentRunIndex />
-        <ConnectedRunConfigs />
-        <RunLogs />
-        <RunStatus />
-        <RunStartTime />
-        <RunDuration />
-        <ConnectedRunNumWarnings />
-        <ConnectedRunNumErrors />
-        <RunComputeProfile />
+        <div className="run-container">
+          <div>
+            <ConnectedRunConfigs />
+            <RunLogs />
+            <RunStatus />
+            <RunStartTime />
+            <RunDuration />
+            <ConnectedRunNumWarnings />
+            <ConnectedRunNumErrors />
+          </div>
+          <RunComputeProfile />
+        </div>
       </div>
     </Provider>
   );

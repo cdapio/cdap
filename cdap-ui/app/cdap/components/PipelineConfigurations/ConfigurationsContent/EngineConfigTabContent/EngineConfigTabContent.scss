@@ -56,10 +56,30 @@ $input-label-color: $grey-03;
         display: flex;
       }
 
+      .key-value-pair-labels {
+        display: grid;
+        grid-template-columns: 1fr 1fr 62px 100px;
+        grid-gap: 10px;
+        margin-right: -25px;
+      }
+      .key-value-pair-preference {
+        margin-bottom: 15px;
+        justify-content: initial;
+        display: grid;
+        grid-template-columns: 1fr 1fr auto 100px;
+        grid-gap: 10px;
+        input {
+          width: 100%;
+        }
+      }
       .custom-config-values {
-        /* 144px = 32px (height of input box) * 3
-                 + 16px (margin between each boxes) * 3 */
-        max-height: 144px;
+        /*
+          156px = 32px (height of input box) * 3
+              + 15px (margin between each boxes) * 3
+              + 15px  (container margin top)
+          ((32 + 15) * 3) + 15
+        */
+        max-height: 156px;
         overflow-x: hidden;
         overflow-y: auto;
       }
@@ -69,10 +89,8 @@ $input-label-color: $grey-03;
         margin-left: auto;
       }
     }
-  }
 
-  &.configuration-content-realtime {
-    #engine-config-tab-content {
+    &.realtime-content {
       .label-with-toggle {
         margin-bottom: 12px;
 
@@ -101,8 +119,17 @@ $input-label-color: $grey-03;
       }
 
       .custom-config-values {
+        /*
+          141px = 32px (height of input box) * 3
+              + 15px (margin between each boxes) * 3
+              + 15px  (container margin top)
+          ((32 + 15) * 3)
+          Contents on the realtime occupies more height than the batch.
+          Hence the difference between realtime vs batch.
+        */
+        max-height: 141px;
         &.key-value-pair-values {
-          margin-top: 5px;
+          margin-top: 0;
         }
       }
     }

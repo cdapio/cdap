@@ -24,6 +24,7 @@ import SplitInfo from 'components/Experiments/CreateView/SplitDataStep/SplitInfo
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 import isEmpty from 'lodash/isEmpty';
+import classnames from 'classnames';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Experiments.CreateView';
@@ -45,7 +46,7 @@ const getSplitLogsUrl = (experimentId, splitInfo) => {
 const getSplitFailedElem = (experimentId, splitInfo) => {
   return (
     <span className="split-error-container">
-      {T.translate(`${PREFIX}.failedToSplit`), {experimentId}}
+      {T.translate(`${PREFIX}.failedToSplit`, {experimentId})}
       <a href={getSplitLogsUrl(experimentId, splitInfo)} target="_blank">
         {T.translate(`${PREFIX}.logs`)}
       </a>
@@ -92,11 +93,33 @@ class SplitDataStep extends Component {
       return (
         <div>
           <button
-            className="btn btn-primary"
+            className={classnames("btn btn-primary", {
+              'btn-secondary' : isSplitCreated && isSplitComplete
+            })}
             onClick={createSplitAndUpdateStatus}
           >
-            {T.translate(`${PREFIX}.splitAndVerify`)}
+            {
+              this.state.splitFailed ||  isSplitCreated ?
+                T.translate(`${PREFIX}.resplitAndVerify`)
+              :
+                T.translate(`${PREFIX}.splitAndVerify`)
+            }
           </button>
+          {
+            isSplitCreated && isSplitComplete ?
+              <div className="done-action-container">
+                <button
+                  className="btn btn-primary"
+                  onClick={setSplitFinalized}
+                  disabled={splitStatus !== 'Complete'}
+                >
+                  {T.translate('commons.doneLabel')}
+                </button>
+                <span>{T.translate(`${PREFIX}.nextSelect`)}</span>
+              </div>
+            :
+              null
+          }
         </div>
       );
     }
@@ -123,14 +146,6 @@ class SplitDataStep extends Component {
     return (
       <div className="action-button-group">
         <SplitInfo />
-        <button
-          className="btn btn-primary"
-          onClick={setSplitFinalized}
-          disabled={splitStatus !== 'Complete'}
-        >
-          {T.translate('commons.doneLabel')}
-        </button>
-        <span>{T.translate(`${PREFIX}.nextSelect`)}</span>
       </div>
     );
   }
@@ -146,7 +161,7 @@ class SplitDataStep extends Component {
       2. When the split request or split status request returns error code
     */
 
-    if (this.state.splitFailed) {
+    if (this.state.splitFailed && !this.props.error) {
       return (
         <Alert
           element={getSplitFailedElem(this.props.experimentId, this.props.splitInfo)}
@@ -162,7 +177,10 @@ class SplitDataStep extends Component {
         message={this.props.error}
         type='error'
         showAlert={true}
-        onClose={setModelCreateError}
+        onClose={() => {
+          this.closeSplitFailedAlert();
+          setModelCreateError();
+        }}
       />
     );
   }

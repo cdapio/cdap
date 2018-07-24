@@ -52,11 +52,9 @@ import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.store.NamespaceMDS;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -106,12 +104,6 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         // This shouldn't happen
         LOG.warn("Unknown message type for profile metadata update. Ignoring the message {}", message);
     }
-  }
-
-  @Override
-  public boolean isTimeConsumingMessage(MetadataMessage message) {
-    EntityType entityType = message.getEntityId().getEntityType();
-    return entityType.equals(EntityType.INSTANCE) || entityType.equals(EntityType.NAMESPACE);
   }
 
   private void updateProfileMetadata(EntityId entityId, MetadataMessage message) {

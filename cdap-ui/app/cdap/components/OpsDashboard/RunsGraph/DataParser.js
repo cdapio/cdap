@@ -15,8 +15,8 @@
  */
 
 import moment from 'moment';
-import uniqBy from 'lodash/uniqBy';
-import {ONE_DAY_SECONDS} from 'services/helpers';
+import {DAY_IN_SEC} from 'components/OpsDashboard/store/ActionCreator';
+import uniqWith from 'lodash/uniqWith';
 
 export function parseDashboardData(rawData, startTime, duration, pipeline, customApp) {
   let {
@@ -40,10 +40,12 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
 
     let startTime = getBucket(runInfo.start * 1000);
     let endTime = getBucket(runInfo.end * 1000);
+    let runningTime;
+
 
     if (buckets[startTime]) {
       // add start method
-      if (runInfo.startMethod === 'manual') {
+      if (runInfo.startMethod === 'MANUAL') {
         buckets[startTime].manual++;
       } else {
         buckets[startTime].schedule++;
@@ -58,7 +60,7 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
     }
 
     // add status
-    if (endTime && buckets[endTime]) {
+    if (buckets[endTime]) {
       if (runInfo.status === 'COMPLETED') {
         buckets[endTime].successful++;
       } else if (runInfo.status === 'FAILED') {
@@ -67,41 +69,40 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
       buckets[endTime].runsList.push(runInfo);
     }
 
-    // if end time is not present, that means the program is still running
-    let end = runInfo.end * 1000 || Date.now();
-    let start = runInfo.start * 1000;
-
-    let startIndex = timeArray.indexOf(startTime);
-    // if startTime not found, then the program started before the graph
-    // so set start value to start of first bucket
-    if (startIndex === -1) {
-      startIndex = 0;
-      start = parseInt(timeArray[startIndex], 10);
-    }
-
-    let endIndex = timeArray.indexOf(endTime);
-    // if endTime not found, then the program end after the graph
-    if (endIndex === -1) {
-      end = Date.now();
-    }
-
     // add running
-    let duration = end - start;
-    duration = moment.duration(duration).asHours();
-    duration = parseInt(duration, 10);
+    if (runInfo.running) {
+      runningTime = getBucket(runInfo.running * 1000);
+      let startIndex = timeArray.indexOf(runningTime);
+      // if startTime not found, then the program started before the graph
+      // so set start index to first bucket
+      if (startIndex === -1) {
+        startIndex = 0;
+      }
 
-    for (let i = 0; i < duration + 1; i++) {
-      let time = timeArray[startIndex + i];
+      let endIndex = timeArray.indexOf(endTime);
+      // if endTime not found, then the program ended after the graph
+      // or the program is still running, but we shouldn't show it as
+      // running past the bucket of current time
+      if (endIndex === -1) {
+        let currentTimeBucketIndex = timeArray.indexOf(getBucket(Date.now()));
+        endIndex = currentTimeBucketIndex === -1 ? timeArray.length - 1 : currentTimeBucketIndex;
+      }
 
-      if (buckets[time]) {
-        buckets[time].running++;
-        buckets[time].runsList.push(runInfo);
+      for (let i = startIndex; i <= endIndex; i++) {
+        let time = timeArray[i];
+
+        if (buckets[time]) {
+          buckets[time].running++;
+          buckets[time].runsList.push(runInfo);
+        }
       }
     }
   });
 
   timeArray.forEach((time) => {
-    buckets[time].runsList = uniqBy(buckets[time].runsList, 'run');
+    buckets[time].runsList = uniqWith(buckets[time].runsList, (a, b) => {
+      return (a.run && b.run) && (a.run === b.run);
+    });
   });
 
   let data = Object.keys(buckets).map((time) => {
@@ -131,11 +132,11 @@ function setBuckets(startTime, duration) {
   let start = startTime * 1000;
 
   // hourly or per 5 minutes
-  let numBuckets = duration === ONE_DAY_SECONDS ? 24 : 12;
+  let numBuckets = duration === DAY_IN_SEC ? 24 : 12;
 
   for (let i = 0; i < numBuckets; i++) {
     let time = moment(start).startOf('hour');
-    if (duration === ONE_DAY_SECONDS) {
+    if (duration === DAY_IN_SEC) {
       time = time.add(i, 'h').format('x');
     } else {
       time = time.add(i*5, 'm').format('x');

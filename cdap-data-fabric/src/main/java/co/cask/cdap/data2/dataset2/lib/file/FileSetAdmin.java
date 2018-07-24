@@ -94,10 +94,10 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
       }
 
       // we can't simply mkdirs() the base location, because we need to set the group id on
-      // every directory we create. Thus find the first ancestor of the base that does not exist:
+      // every directory we create. Thus find the first ancestor of the base that does not exist
       Location ancestor = baseLocation;
       Location firstDirToCreate = null;
-      while (ancestor != null && !ancestor.exists()) {
+      while (ancestor != null && (Locations.isRoot(ancestor) || !ancestor.exists())) {
         firstDirToCreate = ancestor;
         ancestor = Locations.getParent(ancestor);
       }

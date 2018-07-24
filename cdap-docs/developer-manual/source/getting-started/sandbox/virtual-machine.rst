@@ -26,7 +26,7 @@ The CDAP Sandbox Virtual Machine is configured with the recommended settings for
 
 It has pre-installed all the software that you need to run and develop CDAP applications:
 
-- The CDAP Sandbox is installed under ``/opt/cdap/sdk``
+- The CDAP Sandbox is installed under ``/opt/cdap/sandbox``
   and will automatically start when the virtual machine starts.
 - A Java JDK is installed.
 - Maven is installed and configured to work for CDAP.
@@ -76,15 +76,15 @@ remove software, the admin user and password are both ``cdap``.
 Starting and Stopping CDAP Sandbox
 ========================================
 
-Use the ``cdap`` script (located in ``/opt/cdap/sdk/bin``) to start and stop the CDAP Sandbox:
+Use the ``cdap`` script (located in ``/opt/cdap/sandbox/bin``) to start and stop the CDAP Sandbox:
 
 .. tabbed-parsed-literal::
    :tabs: "Linux Virtual Machine"
    :independent:
 
-   $ /opt/cdap/sdk/bin/cdap sandbox start
+   $ /opt/cdap/sandbox/bin/cdap sandbox start
      . . .
-   $ /opt/cdap/sdk/bin/cdap sandbox stop
+   $ /opt/cdap/sandbox/bin/cdap sandbox stop
 
 Note that starting CDAP is not necessary if you use the Virtual Machine, as it
 starts the CDAP Sandbox automatically on startup.

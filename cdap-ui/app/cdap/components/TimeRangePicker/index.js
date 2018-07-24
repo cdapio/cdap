@@ -73,8 +73,10 @@ export default class TimeRangePicker extends Component {
         hour = this.state.hour,
         minute = this.state.minute;
 
-    if (this.state[type]) {
-      let time = new Date(this.state[type]);
+    let initTime = this.state[type] ? this.state[type] : this.state[this.state.displayCalendar];
+
+    if (initTime) {
+      const time = new Date(initTime);
       date = new Date(time.getFullYear(), time.getMonth(), time.getDate());
       hour = time.getHours();
       minute = time.getMinutes();
@@ -158,6 +160,10 @@ export default class TimeRangePicker extends Component {
 
     if (this.state.displayCalendar === 'end' && this.state.start) {
       min = new Date(this.state.start);
+    }
+
+    if (this.state.displayCalendar === 'start' && this.state.end) {
+      max = new Date(this.state.end);
     }
 
     return (

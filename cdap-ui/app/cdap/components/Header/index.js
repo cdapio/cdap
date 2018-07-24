@@ -157,6 +157,7 @@ export default class Header extends Component {
     let rulesengineUrl = `${baseCDAPURL}/rulesengine`;
     let dataprepUrl = `${baseCDAPURL}/dataprep`;
     let mmdsurl = `${baseCDAPURL}/experiments`;
+    let administrationURL = '/administration/configuration';
 
     let pipelinesListUrl =  window.getHydratorUrl({
       stateName: 'hydrator.list',
@@ -257,7 +258,9 @@ export default class Header extends Component {
                     <NamespaceDropdown tag="a"/>
                 }
               </li>
-              <li className="with-pointer cdap-menu clearfix">
+              <li className={classnames("with-pointer cdap-menu clearfix", {
+                'admin-view': administrationURL === location.pathname.replace(/\/cdap/, '')
+              })}>
                 <ProductDropdown
                   nativeLink={this.props.nativeLink}
                 />

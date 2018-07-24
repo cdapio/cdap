@@ -1058,7 +1058,7 @@
 
   <property>
     <name>dataset.service.worker.threads</name>
-    <value>4</value>
+    <value>10</value>
     <description>
       Number of Netty service worker threads for the dataset service
     </description>
@@ -1375,6 +1375,22 @@
     <value>logs.user-v2</value>
     <description>
       Kafka topic name used to publish logs
+    </description>
+  </property>
+
+  <property>
+    <name>log.tms.topic.prefix</name>
+    <value>logs</value>
+    <description>
+      TMS topic prefix used to publish logs
+    </description>
+  </property>
+
+  <property>
+    <name>log.tms.queue.size</name>
+    <value>512</value>
+    <description>
+      The buffer size used in TMS Log Appender
     </description>
   </property>
 
@@ -1915,7 +1931,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic}</value>
+    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -2037,6 +2053,14 @@
     <description>
       The delay in milliseconds that the lineage processor checks again for
       new events after it detects there was no event
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.upgrade.migration.batch.size</name>
+    <value>1000</value>
+    <description>
+      Number of metadata value or history rows to be migrated to v2 metadata table in a batch
     </description>
   </property>
 
@@ -2340,7 +2364,7 @@
     <name>app.program.runtime.monitor.polltime.ms</name>
     <value>2000</value>
     <description>
-      Polling time in millis to poll updates from a runtime
+      Polling time in milliseconds to poll updates from a runtime
     </description>
   </property>
 
@@ -2348,15 +2372,15 @@
     <name>app.program.runtime.monitor.batch.limit</name>
     <value>1000</value>
     <description>
-      Number of events to fetch from a runtime in each poll call.
+      Number of events to fetch from a runtime in each poll call
     </description>
   </property>
 
   <property>
     <name>app.program.runtime.monitor.topics.configs</name>
-    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic</value>
+    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,log.tms.topic.prefix:${log.publish.num.partitions}</value>
     <description>
-      A comma-separated list of topics config to be monitored by runtime monitor.
+      A comma-separated list of topic config to be monitored by runtime monitor
     </description>
     <final>true</final>
   </property>
@@ -2373,7 +2397,7 @@
     <name>app.program.runtime.monitor.server.port</name>
     <value>443</value>
     <description>
-      CDAP Runtime monitor server bind port
+      CDAP Runtime monitor server port
     </description>
   </property>
 
@@ -2800,7 +2824,7 @@
 
   <property>
     <name>system.metadata.retry.policy.max.time.secs</name>
-    <value>120</value>
+    <value>2147483647</value>
     <description>
       The maximum elapsed time in seconds before retries are aborted
     </description>
@@ -3678,7 +3702,7 @@
     <name>program.heartbeat.interval.seconds</name>
     <value>1800</value>
     <description>
-      Interval of heartbeat sent from program while its running, default 30 minutes
+      Interval of heartbeat sent from program while it's running, default 30 minutes
     </description>
   </property>
 

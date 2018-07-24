@@ -281,6 +281,80 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   }
 
   /**
+   * @return a {@link String} which describes the {@link MetadataEntity} for a user in plain english.
+   * If the {@link MetadataEntity} represents a known CDAP entity then the description is worded to show relations
+   * in the hierarchy.
+   */
+  public String getDescription() {
+    return getDescription(new StringBuilder(), getType());
+  }
+
+  private String getDescription(StringBuilder builder, String type) {
+    switch (type) {
+      case MetadataEntity.NAMESPACE:
+        builder.append(String.format("%s: %s", MetadataEntity.NAMESPACE, getValue(MetadataEntity.NAMESPACE)));
+        return builder.toString();
+      case MetadataEntity.APPLICATION:
+        String description = String.format("%s: %s", MetadataEntity.APPLICATION, getValue(MetadataEntity.APPLICATION));
+        // MetadataEntity can be created without version and in that case cdap treats it as default version
+        // internally but for no surprises to user no need to display version if user specifically created this
+        // without version. If the cdap system has created the MetadataEntity it will have version info set even for
+        // default version
+        if (containsKey(MetadataEntity.VERSION)) {
+          description = String.format("%s of %s: %s", description, MetadataEntity.VERSION,
+                                      getValue(MetadataEntity.VERSION));
+        }
+        description = description + " deployed in ";
+        builder.append(description);
+        return getDescription(builder, MetadataEntity.NAMESPACE);
+      case MetadataEntity.ARTIFACT:
+        builder.append(String.format("%s: %s of %s: %s deployed in ", MetadataEntity.ARTIFACT,
+                                     getValue(MetadataEntity.ARTIFACT),
+                                     MetadataEntity.VERSION, getValue(MetadataEntity.VERSION)));
+        return getDescription(builder, MetadataEntity.NAMESPACE);
+      case MetadataEntity.DATASET:
+        builder.append(String.format("%s: %s which exists in ", MetadataEntity.DATASET,
+                                     getValue(MetadataEntity.DATASET)));
+        return getDescription(builder, MetadataEntity.NAMESPACE);
+      case MetadataEntity.STREAM:
+        builder.append(String.format("%s: %s which exists in ", MetadataEntity.STREAM,
+                                     getValue(MetadataEntity.STREAM)));
+        return getDescription(builder, MetadataEntity.NAMESPACE);
+      case MetadataEntity.VIEW:
+        builder.append(String.format("view: %s of ", getValue(MetadataEntity.VIEW)));
+        return getDescription(builder, MetadataEntity.STREAM);
+      case MetadataEntity.PROGRAM:
+        builder.append(String.format("%s: %s in ", getValue(MetadataEntity.TYPE).toLowerCase(),
+                                     getValue(MetadataEntity.PROGRAM)));
+        return getDescription(builder, MetadataEntity.APPLICATION);
+      case MetadataEntity.SCHEDULE:
+        builder.append(String.format("%s: %s in ", MetadataEntity.SCHEDULE,
+                                     getValue(MetadataEntity.SCHEDULE)));
+        return getDescription(builder, MetadataEntity.APPLICATION);
+      case MetadataEntity.PROGRAM_RUN:
+        builder.append(String.format("%s: %s of ", MetadataEntity.PROGRAM_RUN,
+                                     getValue(MetadataEntity.PROGRAM_RUN)));
+        return getDescription(builder, MetadataEntity.PROGRAM);
+      case MetadataEntity.FLOWLET:
+        builder.append(String.format("%s: %s of flow: %s in ", MetadataEntity.FLOWLET,
+                                     getValue(MetadataEntity.FLOWLET), getValue(MetadataEntity.FLOW)));
+        return getDescription(builder, MetadataEntity.APPLICATION);
+      default:
+        for (MetadataEntity.KeyValue keyValue : this) {
+          builder.append(keyValue.getKey());
+          builder.append("=");
+          builder.append(keyValue.getValue());
+          builder.append(",");
+        }
+        // delete the last , and space
+        builder.deleteCharAt(builder.length() - 1);
+        builder.deleteCharAt(builder.length() - 1);
+        builder.append(String.format(" of type '%s'", getType()));
+        return builder.toString();
+    }
+  }
+
+  /**
    * @return the type of the MetadataEntity
    */
   public String getType() {

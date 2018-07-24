@@ -19,10 +19,31 @@ class MyPipelineRuntimeArgsCtrl {
     'ngInject';
 
     this.providedPopoverOpen = false;
-    this.runtimeArguments = this.checkForReset(this.runtimeArguments);
+    this.runtimeArguments = this.getRuntimeResolvedArguments(
+      this.checkForReset(this.runtimeArguments)
+    );
     this.onRuntimeArgumentsChange = this.onRuntimeArgumentsChange.bind(this);
     this.getResettedRuntimeArgument = this.getResettedRuntimeArgument.bind(this);
     this.checkForReset = this.checkForReset.bind(this);
+  }
+
+  getRuntimeResolvedArguments(runtimeArguments) {
+    let runtimeArgumentsPairs = runtimeArguments.pairs;
+    for (let i = 0; i < runtimeArgumentsPairs.length; i++) {
+      if (runtimeArgumentsPairs[i].notDeletable) {
+        if (runtimeArgumentsPairs[i].provided) {
+          runtimeArgumentsPairs[i].showReset = false;
+        } else {
+          let runtimeArgKey = runtimeArgumentsPairs[i].key;
+          if (this.resolvedMacros.hasOwnProperty(runtimeArgKey)) {
+            if (this.resolvedMacros[runtimeArgKey] !== runtimeArgumentsPairs[i].value) {
+              runtimeArgumentsPairs[i].value = this.resolvedMacros[runtimeArgKey];
+            }
+          }
+        }
+      }
+    }
+    return runtimeArguments;
   }
 
   onRuntimeArgumentsChange(newRuntimeArguments) {

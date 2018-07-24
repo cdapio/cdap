@@ -19,7 +19,7 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.etl.api.action.ActionContext;
-import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
@@ -72,7 +72,7 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
   }
 
   @Override
-  public void record(List<PipelineOperation> pipelineOperations) {
+  public void record(List<FieldOperation> fieldOperations) {
     throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }

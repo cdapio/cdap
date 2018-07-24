@@ -65,9 +65,13 @@ $key-value-pair-visible-number: 6;
   }
 
   .runtime-arguments-values {
-    /* 192px = 32px (height of input box) * 4
-             + 16px (margin between each boxes) * 4 */
-    max-height: calc(#{$key-value-pair-input-height} * #{$key-value-pair-visible-number} + (#{$key-value-pair-margin} * #{$key-value-pair-visible-number}));
+    /*
+      192px = 32px (height of input box) * 4
+             + 16px (margin between each boxes) * 4
+      Extra +1 is to have half of the last element visible so that the user
+      will know that they need to scroll to find new run time args.
+    */
+    max-height: calc(#{$key-value-pair-input-height} * #{$key-value-pair-visible-number} + (#{$key-value-pair-margin} * #{$key-value-pair-visible-number + 1}));
     overflow-x: hidden;
     overflow-y: auto;
 
@@ -93,7 +97,7 @@ $key-value-pair-visible-number: 6;
     // This is incorrect. We shouldn't be modifying the style outside of the component
     // in all the places. It becomes unmanageable to reuse/recycle the component.
     .key-value-pair-preference {
-      margin-bottom: 16px;
+      margin-bottom: 15px;
       justify-content: initial;
       display: grid;
       grid-template-columns: 1fr 1fr auto 100px;

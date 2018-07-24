@@ -47,7 +47,8 @@ export default function enableSystemApp({
 
         if (appArtifact.length === 0) {
           observer.error({
-            error: T.translate('features.ServiceEnableUtility.serviceNotFound', {artifactName})
+            error: T.translate(`${i18nPrefix}.errorTitle`),
+            extendedMessage: T.translate('features.ServiceEnableUtility.serviceNotFound', {artifactName})
           });
           return;
         }
@@ -116,7 +117,7 @@ export default function enableSystemApp({
         startService(observer);
       }, (err) => {
         observer.error({
-          error: 'Failed to enable data preparation',
+          error: T.translate(`${i18nPrefix}.errorTitle`),
           extendedMessage: err.data || err
         });
       });
@@ -130,7 +131,7 @@ export default function enableSystemApp({
         pollServiceStatus(observer);
       }, (err) => {
         observer.error({
-          error: 'Failed to enable data preparation',
+          error: T.translate(`${i18nPrefix}.errorTitle`),
           extendedMessage: err.data || err
         });
       });
@@ -147,7 +148,7 @@ export default function enableSystemApp({
         }
       }, (err) => {
         observer.error({
-          error: 'Failed to enable data preparation',
+          error: T.translate(`${i18nPrefix}.errorTitle`),
           extendedMessage: err.data || err
         });
       });
@@ -169,7 +170,7 @@ export default function enableSystemApp({
           }
 
           observer.error({
-            error: 'Error while communicating with Data Preparation Service',
+            error: T.translate(`${i18nPrefix}.errorCommunicating`),
             extendedMessage: err.data || err
           });
         });
@@ -186,7 +187,7 @@ export default function enableSystemApp({
         pollStopServiceStatus(observer);
       }, (err) => {
         observer.error({
-          error: 'Failed to stop Data Preparation service',
+          error: T.translate(`${i18nPrefix}.failedToStop`),
           extendedMessage: err.data || err
         });
       });
@@ -205,7 +206,7 @@ export default function enableSystemApp({
         }
       }, (err) => {
         observer.error({
-          error: 'Failed to stop Data Preparation service',
+          error: T.translate(`${i18nPrefix}.failedToStop`),
           extendedMessage: err.data || err
         });
       });

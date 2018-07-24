@@ -20,6 +20,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * A class which contains the config of a provisioner
@@ -30,12 +31,19 @@ public class ProvisionerDetail {
   private final String description;
   @SerializedName("configuration-groups")
   private final List<Object> configurationGroups;
+  @SerializedName("icon")
+  private final Object icon;
+  @SerializedName("beta")
+  private final Boolean beta;
 
-  public ProvisionerDetail(String name, String label, String description, List<Object> configurationGroups) {
+  public ProvisionerDetail(String name, String label, String description, List<Object> configurationGroups,
+                           @Nullable Object icon, @Nullable Boolean beta) {
     this.name = name;
     this.label = label;
     this.description = description;
     this.configurationGroups = configurationGroups;
+    this.icon = icon;
+    this.beta = beta;
   }
 
   public String getName() {
@@ -48,10 +56,6 @@ public class ProvisionerDetail {
 
   public String getDescription() {
     return description;
-  }
-
-  public List<Object> getConfigurationGroups() {
-    return configurationGroups;
   }
 
   @Override
@@ -67,11 +71,13 @@ public class ProvisionerDetail {
     return Objects.equals(name, that.name) &&
       Objects.equals(label, that.label) &&
       Objects.equals(description, that.description) &&
-      Objects.equals(configurationGroups, that.configurationGroups);
+      Objects.equals(configurationGroups, that.configurationGroups) &&
+      Objects.equals(icon, that.icon) &&
+      Objects.equals(beta, that.beta);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, label, description, configurationGroups);
+    return Objects.hash(name, label, description, configurationGroups, icon, beta);
   }
 }

@@ -51,6 +51,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunCluster;
@@ -61,6 +62,7 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
@@ -127,6 +129,12 @@ public class DefaultStoreTest {
 
   private void setStart(ProgramRunId id, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
                         ArtifactId artifactId) {
+    if (!systemArgs.containsKey(SystemArguments.PROFILE_NAME)) {
+      systemArgs = ImmutableMap.<String, String>builder()
+        .putAll(systemArgs)
+        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName())
+        .build();
+    }
     store.setProvisioning(id, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId), artifactId);
     store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
     store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));

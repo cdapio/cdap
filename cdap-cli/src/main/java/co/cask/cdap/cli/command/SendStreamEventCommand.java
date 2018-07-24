@@ -59,7 +59,9 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
 
   @Override
   public String getDescription() {
-    return String.format("Sends an event to %s", Fragment.of(Article.A, ElementType.STREAM.getName()));
+    return String.format("Sends an event to %s. Streams are deprecated as of release 5.0," +
+                         " use Kafka as a replacement technology",
+                         Fragment.of(Article.A, ElementType.STREAM.getName()));
   }
 
   @Override

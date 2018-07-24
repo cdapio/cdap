@@ -21,7 +21,7 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
-import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 
@@ -56,7 +56,7 @@ public class WorkflowBackedActionContext extends AbstractBatchContext implements
   }
 
   @Override
-  public void record(List<PipelineOperation> pipelineOperations) {
+  public void record(List<FieldOperation> fieldOperations) {
     throw new UnsupportedOperationException("Lineage recording is not supported.");
   }
 }

@@ -38,7 +38,7 @@ export default class SplitInfoTable extends Component {
   };
 
   state = {
-    collapsed: true,
+    collapsed: false,
     splitInfo: this.props.splitInfo,
     search: '',
     selectedTypes: [

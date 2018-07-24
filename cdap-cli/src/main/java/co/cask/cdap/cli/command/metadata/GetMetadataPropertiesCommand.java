@@ -16,13 +16,13 @@
 
 package co.cask.cdap.cli.command.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -49,10 +49,11 @@ public class GetMetadataPropertiesCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    MetadataEntity metadataEntity =
+      MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
-    Map<String, String> properties = scope == null ? client.getProperties(entity) :
-      client.getProperties(entity, MetadataScope.valueOf(scope.toUpperCase()));
+    Map<String, String> properties = scope == null ? client.getProperties(metadataEntity) :
+      client.getProperties(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
       .setHeader("key", "value")

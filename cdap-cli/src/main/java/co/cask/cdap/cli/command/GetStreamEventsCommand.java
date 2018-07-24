@@ -87,7 +87,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
     return String.format("Gets events from %s. The time format for '<%s>' and '<%s>' can be a timestamp in " +
       "milliseconds or a relative time in the form of '[+|-][0-9][d|h|m|s]'. '<%s>' is relative to current time; " + 
       "'<%s>' is relative to '<%s>'. Special constants 'min' and 'max' can be used to represent '0' and " +
-      "'max timestamp' respectively.",
+      "'max timestamp' respectively. Streams are deprecated as of release 5.0, use Kafka as a replacement technology",
       Fragment.of(Article.A, ElementType.STREAM.getName()), ArgumentName.START_TIME, ArgumentName.END_TIME,
       ArgumentName.START_TIME, ArgumentName.END_TIME, ArgumentName.START_TIME);
   }

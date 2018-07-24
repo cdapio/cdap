@@ -28,6 +28,6 @@ public class MockProvisionerProvider implements ProvisionerProvider {
 
   @Override
   public Map<String, Provisioner> loadProvisioners() {
-    return ImmutableMap.of("yarn", new MockProvisioner());
+    return ImmutableMap.of(MockProvisioner.NAME, new MockProvisioner());
   }
 }

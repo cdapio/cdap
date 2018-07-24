@@ -189,6 +189,7 @@ function createExperiment() {
     .mergeMap((schema) => {
       // The outcome will always be simple type. So ["null", "anything"] should give correct outcomeType at the end.
       let outcomeType = schema
+        .map(field => Array.isArray(field.type) ? field : {...field, type: [field.type]})
         .find(field => field.name === experiment.outcome)
         .type
         .filter(t => t !== 'null')
@@ -287,7 +288,18 @@ function createSplitAndUpdateStatus() {
     })
     .subscribe(
       setSplitDetails.bind(null, experiments_create.name),
-      (err) => setModelCreateError(`Failed to create split for the model '${modelName}' - ${err.response || err}`),
+      (err) => {
+        setModelCreateError(`Failed to create split for the model '${modelName}' - ${err.response || err}`);
+        createExperimentStore.dispatch({
+          type: CREATEEXPERIMENTACTIONS.SET_SPLIT_INFO,
+          payload: {
+            splitInfo: {
+              id: null,
+              status: 'Failed'
+            }
+          }
+        });
+      },
       () => console.log('Split Task complete ', arguments)
     );
 }
@@ -391,6 +403,15 @@ function createWorkspace(filePath) {
       'Content-Type': 'text/plain' // FIXME: THIS IS A HACK. NEED TO GET THIS FROM EXPERIMENT
     };
 
+    // FIXME: When we go to split step and create a workspace for
+    // switching between steps we don't have the file content type
+    // Need to store that somehow in the model/experiment
+    // JIRA: CDAP-13815
+    let filePathLength = filePath.length;
+    if (filePathLength > 5 && filePath.substr(filePathLength - 5) === '.json') {
+      headers['Content-Type'] = 'application/json';
+    }
+
     return MyDataPrepApi.readFile(params, null, headers);
 }
 
@@ -426,10 +447,11 @@ function applyDirectives(workspaceId, directives) {
 */
 const getExperimentForEdit = (experimentId) => {
   setExperimentLoading();
-  let experiment;
+  let experiment, directives;
+  const namespace = getCurrentNamespace();
   myExperimentsApi
     .getExperiment({
-      namespace: getCurrentNamespace(),
+      namespace,
       experimentId
     })
     .mergeMap(exp => {
@@ -439,15 +461,15 @@ const getExperimentForEdit = (experimentId) => {
     .mergeMap(res => {
       let workspaceId = res.values[0].id;
       experiment.workspaceId = workspaceId;
-      return applyDirectives(workspaceId, experiment.directives);
+      directives = experiment.directives;
+      setDirectives(directives);
+      return applyDirectives(workspaceId, directives);
     })
     .mergeMap(() => {
     // Get schema with workspaceId and directives
-      let {directives} = experiment;
-      setDirectives(directives);
       let requestBody = directiveRequestBodyCreator(directives);
       return MyDataPrepApi.getSchema({
-        namespace: getCurrentNamespace(),
+        namespace,
         workspaceId: experiment.workspaceId
       }, requestBody);
     })
@@ -466,7 +488,9 @@ const getExperimentForEdit = (experimentId) => {
       });
     }, (err) => {
       // The error message returned from backend for this request is at err.response.message instead of just err.response
-      setExperimentCreateError(`Failed to retrieve the experiment '${experimentId}' - ${err.response.message || err.response || err}`);
+      const error = err.response.message || err.response || err;
+      setExperimentLoading(false);
+      setExperimentCreateError(`Failed to retrieve the experiment '${experimentId}' - ${error}`);
     });
 };
 
@@ -540,27 +564,35 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
     })
     .subscribe(
       splitInfo => {
-        let payload = {
-          experimentDetails: experiment,
-          modelDetails: model
-        };
-        if (splitInfo) {
-          payload.splitInfo = splitInfo;
-        }
-        createExperimentStore.dispatch({
-          type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT,
-          payload
-        });
+        setExperimentModelForEdit(experiment, model, splitInfo);
         if (typeof splitInfo === 'object' && splitInfo.status !== 'Complete') {
           pollForSplitStatus(experiment.name, modelId)
             .subscribe(setSplitDetails.bind(null, experiment.name));
         }
       },
       (err) => {
-        setExperimentCreateError(`Failed to retrieve the experiment '${experimentId}' and the model '${model.name}' - ${err.response || err}`);
+        // The error message returned from backend for this request is at err.response.message instead of just err.response
+        const error = err.response.message || err.response || err;
+        setExperimentCreateError(`Failed to retrieve the model '${model.name}' of the experiment '${experimentId}' - ${error}`);
+        setExperimentLoading(false);
+        setExperimentModelForEdit(experiment, model);
       }
     );
 };
+
+function setExperimentModelForEdit(experiment, model, splitInfo) {
+  let payload = {
+    experimentDetails: experiment,
+    modelDetails: model
+  };
+  if (splitInfo) {
+    payload.splitInfo = splitInfo;
+  }
+  createExperimentStore.dispatch({
+    type: CREATEEXPERIMENTACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT,
+    payload
+  });
+}
 
 function setAlgorithmList() {
   let {experiments_create} = createExperimentStore.getState();

@@ -23,10 +23,10 @@ import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
-import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
-import co.cask.cdap.etl.api.lineage.field.PipelineReadOperation;
-import co.cask.cdap.etl.api.lineage.field.PipelineTransformOperation;
-import co.cask.cdap.etl.api.lineage.field.PipelineWriteOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldReadOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldTransformOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldWriteOperation;
 import co.cask.cdap.etl.proto.Connection;
 import org.junit.Assert;
 import org.junit.Test;
@@ -52,19 +52,19 @@ public class LineageOperationProcessorTest {
     connections.add(new Connection("n1", "n2"));
     connections.add(new Connection("n2", "n3"));
 
-    Map<String, List<PipelineOperation>> stageOperations = new HashMap<>();
-    List<PipelineOperation> pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineReadOperation("read", "reading data", EndPoint.of("default", "file"), "offset",
-                                                     "body"));
-    stageOperations.put("n1", pipelineOperations);
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineTransformOperation("parse", "parsing data", Collections.singletonList("body"),
-                                                          Arrays.asList("name", "address", "zip")));
-    stageOperations.put("n2", pipelineOperations);
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineWriteOperation("write", "writing data", EndPoint.of("default", "file2"),
-                                                      "name", "address", "zip"));
-    stageOperations.put("n3", pipelineOperations);
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    List<FieldOperation> fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("read", "reading data", EndPoint.of("default", "file"), "offset",
+                                               "body"));
+    stageOperations.put("n1", fieldOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldTransformOperation("parse", "parsing data", Collections.singletonList("body"),
+                                                    Arrays.asList("name", "address", "zip")));
+    stageOperations.put("n2", fieldOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("write", "writing data", EndPoint.of("default", "file2"),
+                                                "name", "address", "zip"));
+    stageOperations.put("n3", fieldOperations);
 
     LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
                                                                           Collections.emptySet());
@@ -96,27 +96,27 @@ public class LineageOperationProcessorTest {
     connections.add(new Connection("n2", "n3"));
     connections.add(new Connection("n3", "n4"));
 
-    Map<String, List<PipelineOperation>> stageOperations = new HashMap<>();
-    List<PipelineOperation> pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineReadOperation("read", "some read", EndPoint.of("ns", "file1"), "offset",
-                                                     "body"));
-    stageOperations.put("n1", pipelineOperations);
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    List<FieldOperation> fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("read", "some read", EndPoint.of("ns", "file1"), "offset",
+                                               "body"));
+    stageOperations.put("n1", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineTransformOperation("parse", "parsing body", Collections.singletonList("body"),
-                                                          "first_name", "last_name"));
-    stageOperations.put("n2", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldTransformOperation("parse", "parsing body", Collections.singletonList("body"),
+                                                    "first_name", "last_name"));
+    stageOperations.put("n2", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineTransformOperation("concat", "concatinating the fields",
-                                                          Arrays.asList("first_name", "last_name"), "name"));
-    stageOperations.put("n3", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldTransformOperation("concat", "concatinating the fields",
+                                                    Arrays.asList("first_name", "last_name"), "name"));
+    stageOperations.put("n3", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineWriteOperation("write_op", "writing data to file",
-                                                      EndPoint.of("myns", "another_file"),
-                                                      Arrays.asList("offset", "name")));
-    stageOperations.put("n4", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("write_op", "writing data to file",
+                                                EndPoint.of("myns", "another_file"),
+                                                Arrays.asList("offset", "name")));
+    stageOperations.put("n4", fieldOperations);
 
     LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
                                                                           Collections.emptySet());
@@ -167,23 +167,23 @@ public class LineageOperationProcessorTest {
     EndPoint info = EndPoint.of("ns", "info");
     EndPoint location = EndPoint.of("ns", "location");
 
-    Map<String, List<PipelineOperation>> stageOperations = new HashMap<>();
-    List<PipelineOperation> pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineReadOperation("read", "reading from file", source, "offset", "body"));
-    stageOperations.put("n1", pipelineOperations);
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    List<FieldOperation> fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("read", "reading from file", source, "offset", "body"));
+    stageOperations.put("n1", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineTransformOperation("parse", "parsing body", Collections.singletonList("body"),
-                                                          "id", "name", "address", "zip"));
-    stageOperations.put("n2", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldTransformOperation("parse", "parsing body", Collections.singletonList("body"),
+                                                    "id", "name", "address", "zip"));
+    stageOperations.put("n2", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineWriteOperation("infoWrite", "writing info", info, "id", "name"));
-    stageOperations.put("n3", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("infoWrite", "writing info", info, "id", "name"));
+    stageOperations.put("n3", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineWriteOperation("locationWrite", "writing location", location, "address", "zip"));
-    stageOperations.put("n4", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("locationWrite", "writing location", location, "address", "zip"));
+    stageOperations.put("n4", fieldOperations);
 
     LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
                                                                           Collections.emptySet());
@@ -238,24 +238,24 @@ public class LineageOperationProcessorTest {
     EndPoint testEndPoint = EndPoint.of("ns", "testStore");
     EndPoint prodEndPoint = EndPoint.of("ns", "prodStore");
 
-    Map<String, List<PipelineOperation>> stageOperations = new HashMap<>();
-    List<PipelineOperation> pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineReadOperation("pRead", "Reading from person file", pEndPoint, "offset", "body"));
-    stageOperations.put("n1", pipelineOperations);
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    List<FieldOperation> fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("pRead", "Reading from person file", pEndPoint, "offset", "body"));
+    stageOperations.put("n1", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineReadOperation("hRead", "Reading from hr file", hEndPoint, "offset", "body"));
-    stageOperations.put("n2", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("hRead", "Reading from hr file", hEndPoint, "offset", "body"));
+    stageOperations.put("n2", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineWriteOperation("write1", "Writing to test store", testEndPoint, "offset",
-                                                      "body"));
-    stageOperations.put("n3", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("write1", "Writing to test store", testEndPoint, "offset",
+                                                "body"));
+    stageOperations.put("n3", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineWriteOperation("write2", "Writing to prod store", prodEndPoint, "offset",
-                                                      "body"));
-    stageOperations.put("n4", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("write2", "Writing to prod store", prodEndPoint, "offset",
+                                                "body"));
+    stageOperations.put("n4", fieldOperations);
 
     LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
                                                                           Collections.emptySet());
@@ -323,46 +323,46 @@ public class LineageOperationProcessorTest {
     EndPoint n6EndPoint = EndPoint.of("ns", "file3");
     EndPoint n8EndPoint = EndPoint.of("ns", "file4");
 
-    Map<String, List<PipelineOperation>> stageOperations = new HashMap<>();
-    List<PipelineOperation> pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineReadOperation("read", "reading file 1", n1EndPoint, "offset", "body"));
-    stageOperations.put("n1", pipelineOperations);
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    List<FieldOperation> fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("read", "reading file 1", n1EndPoint, "offset", "body"));
+    stageOperations.put("n1", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineTransformOperation("parse", "parsing file 1", Collections.singletonList("body"),
-                                                          "name", "address", "zip"));
-    stageOperations.put("n2", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldTransformOperation("parse", "parsing file 1", Collections.singletonList("body"),
+                                                    "name", "address", "zip"));
+    stageOperations.put("n2", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineReadOperation("read", "reading file 2", n3EndPoint, "offset", "body"));
-    stageOperations.put("n3", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("read", "reading file 2", n3EndPoint, "offset", "body"));
+    stageOperations.put("n3", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineTransformOperation("parse", "parsing file 2", Collections.singletonList("body"),
-                                                          "name", "address", "zip"));
-    stageOperations.put("n4", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldTransformOperation("parse", "parsing file 2", Collections.singletonList("body"),
+                                                    "name", "address", "zip"));
+    stageOperations.put("n4", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineTransformOperation("normalize", "normalizing address",
-                                                          Collections.singletonList("address"), "address"));
-    pipelineOperations.add(new PipelineTransformOperation("rename", "renaming address to state_address",
-                                                          Collections.singletonList("address"), "state_address"));
-    stageOperations.put("n5", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldTransformOperation("normalize", "normalizing address",
+                                                    Collections.singletonList("address"), "address"));
+    fieldOperations.add(new FieldTransformOperation("rename", "renaming address to state_address",
+                                                    Collections.singletonList("address"), "state_address"));
+    stageOperations.put("n5", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineWriteOperation("write", "writing file 3", n6EndPoint, "offset", "name",
-                                                      "address"));
-    stageOperations.put("n6", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("write", "writing file 3", n6EndPoint, "offset", "name",
+                                                "address"));
+    stageOperations.put("n6", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineTransformOperation("rename", "renaming offset to file_offset",
-                                                          Collections.singletonList("offset"), "file_offset"));
-    stageOperations.put("n7", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldTransformOperation("rename", "renaming offset to file_offset",
+                                                    Collections.singletonList("offset"), "file_offset"));
+    stageOperations.put("n7", fieldOperations);
 
-    pipelineOperations = new ArrayList<>();
-    pipelineOperations.add(new PipelineWriteOperation("write", "writing file 4", n8EndPoint, "file_offset", "name",
-                                                      "address", "zip"));
-    stageOperations.put("n8", pipelineOperations);
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("write", "writing file 4", n8EndPoint, "file_offset", "name",
+                                                "address", "zip"));
+    stageOperations.put("n8", fieldOperations);
 
     LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
                                                                           Collections.emptySet());

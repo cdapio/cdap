@@ -35,6 +35,7 @@ const statusMap = {
   [PROGRAM_STATUSES.SCHEDULING]: 'Scheduling',
   [PROGRAM_STATUSES.STOPPING]: 'Stopping',
   [PROGRAM_STATUSES.SUSPENDING]: 'Suspending',
+  [PROGRAM_STATUSES.PENDING]: 'Pending',
 };
 
 function lookupDisplayStatus (systemStatus) {

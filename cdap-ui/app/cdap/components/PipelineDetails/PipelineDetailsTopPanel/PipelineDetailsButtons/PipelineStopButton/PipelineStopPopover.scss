@@ -17,6 +17,9 @@
 @import "../../../../../styles/variables.scss";
 
 .stop-btn-popover {
+  .pipeline-stop-btn {
+    padding: 0 12px;
+  }
   .popper {
     z-index: 999;
     width: 450px;
@@ -36,6 +39,9 @@
         border: 1px solid $grey-03;
         padding: 5px;
         border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
         .icon-stop {
           margin-right: 3px;

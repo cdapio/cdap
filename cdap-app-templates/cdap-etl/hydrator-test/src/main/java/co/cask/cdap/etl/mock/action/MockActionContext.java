@@ -26,7 +26,7 @@ import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
-import co.cask.cdap.etl.api.lineage.field.PipelineOperation;
+import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.mock.common.MockArguments;
 import co.cask.cdap.proto.id.NamespaceId;
 
@@ -215,7 +215,7 @@ public class MockActionContext implements ActionContext {
   }
 
   @Override
-  public void record(List<PipelineOperation> pipelineOperations) {
+  public void record(List<FieldOperation> fieldOperations) {
     // no-op
   }
 }

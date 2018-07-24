@@ -19,9 +19,16 @@
 $box-border-color: $green-01;
 $header-border-color: $grey-03;
 $count-font-color: $grey-04;
+$no-fields-color: $grey-02;
 
 .fields-list-container {
   position: relative;
+
+  &.no-fields {
+    font-size: 18px;
+    color: $no-fields-color;
+    padding-top: 150px;
+  }
 
   .fields-box {
     width: 250px;
@@ -58,7 +65,18 @@ $count-font-color: $grey-04;
     }
 
     .fields-list {
-      height: 300px;
+      // FIXME: This max-height calculation is quite brittle. It will break if any of the height change.
+
+      $topnav: 50px;
+      $subnav: 50px;
+      $metadata-section: 180px;
+      $timepicker: 45px;
+      $fields-header: 60px;
+      $fields-search: 32px;
+      $footer: 54px;
+      $bottom-padding: 25px;
+
+      max-height: calc(100vh - #{$topnav} - #{$subnav} - #{$metadata-section} - #{$timepicker} - #{$fields-header} - #{$fields-search} - #{$footer} - #{$bottom-padding});
       overflow: auto;
     }
   }

@@ -25,6 +25,7 @@ import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -45,6 +46,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.test.SlowTests;
@@ -94,7 +96,13 @@ public class MockLogReader implements LogReader {
   }
 
   private void setStartAndRunning(ProgramRunId id, Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
-      ArtifactId artifactId = id.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
+    if (!systemArgs.containsKey(SystemArguments.PROFILE_NAME)) {
+      systemArgs = ImmutableMap.<String, String>builder()
+        .putAll(systemArgs)
+        .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName())
+        .build();
+    }
+    ArtifactId artifactId = id.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
     long startTime = RunIds.getTime(id.getRun(), TimeUnit.SECONDS);
     store.setProvisioning(id, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId), artifactId);
     store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));

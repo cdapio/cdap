@@ -27,8 +27,12 @@ export const MyCloudApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', profilesPath),
   getSystemProfiles: apiCreator(dataSrc, 'GET', 'REQUEST', `${systemProfilesPath}`),
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${profilesPath}/:profile`),
+  createSystemProfile: apiCreator(dataSrc, 'PUT', 'REQUEST', `${systemProfilesPath}/:profile`),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', `${profilesPath}/:profile`),
+  getSystemProfile: apiCreator(dataSrc, 'GET', 'REQUEST', `${systemProfilesPath}/:profile`),
+  deleteSystemProfile: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${systemProfilesPath}/:profile`),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${profilesPath}/:profile`),
+  toggleSystemProfileStatus: apiCreator(dataSrc, 'POST', 'REQUEST', `${systemProfilesPath}/:profile/:action`),
   toggleProfileStatus: apiCreator(dataSrc, 'POST', 'REQUEST', `${profilesPath}/:profile/:action`),
 
   getProvisioners: apiCreator(dataSrc, 'GET', 'REQUEST', `${provisionersPath}`),

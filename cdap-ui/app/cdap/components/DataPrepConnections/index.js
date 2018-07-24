@@ -546,7 +546,7 @@ export default class DataPrepConnections extends Component {
           <ExpandableMenu>
             <div>
               <span className="fa fa-fw">
-                <IconSVG name="icon-google" />
+                <IconSVG name="icon-storage" />
               </span>
               <span>
               {T.translate(`${PREFIX}.gcs`, {count: this.state.gcsList.length})}
@@ -558,7 +558,7 @@ export default class DataPrepConnections extends Component {
           <ExpandableMenu>
             <div>
               <span className="fa fa-fw">
-                <IconSVG name="icon-google" />
+                <IconSVG name="icon-bigquery" />
               </span>
               <span>
               {T.translate(`${PREFIX}.bigquery`, {count: this.state.bigQueryList.length})}

@@ -84,20 +84,27 @@ const TabConfig = {
     },
     {
       id: 11,
+      filter: 'gcp',
+      icon: 'icon-google',
+      name: T.translate('features.Market.tabs.gcp'),
+      content: <AllTabContents />
+    },
+    {
+      id: 12,
       filter: 'Azure',
       icon: 'icon-azureblobstore',
       name: T.translate('features.Market.tabs.azure'),
       content: <AllTabContents />
     },
     {
-      id: 12,
+      id: 13,
       filter: 'AWS',
       icon: 'icon-aws',
       name: T.translate('features.Market.tabs.aws'),
       content: <AllTabContents />
     },
     {
-      id: 13,
+      id: 14,
       filter: 'Directives',
       icon: 'icon-directives',
       name: T.translate('features.Market.tabs.directives'),

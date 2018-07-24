@@ -240,17 +240,28 @@ features:
         disabled: Disabled
         enabled: Enabled
         export: Export
-        last24HrNodeHr: Last 24 hrs node/hr
+        last24HrNodeHr: Last 24 hrs node hours
         last24HrRuns: Last 24 hrs runs
         provisioner: Provisioner
-        totalNodeHr: Total node/hr
+        totalNodeHr: Total node hours
         totalRuns: Total runs
       CreateView:
         profileName: Profile name
         profileLabel: Profile label
       DetailView:
+        Associations:
+          Header:
+            created: Created
+            lastrunnodehr: Last run node hours
+            last24hrsruns: Last 24 hrs runs
+            name: Name
+            namespace: Namespace
+            schedules: Schedules
+            totalnodehr: Total node hours
+            totalruns: Total runs
+            triggers: Triggers
         computeProfileOverview: Compute profile overview
-        creation: Creation date and time
+        creation: Created
         disableConfirmation: Are you sure you want to disable the profile *_{profile}_*? Any programs or pipelines using this profile will fail to start.
         disableError: There was a problem disabling the profile
         disableTitle: Disable profile
@@ -343,6 +354,9 @@ features:
     btnLabel: Enable Data Preparation
     btnLoadingLabel: "Enabling..."
     description: CDAP Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
+    errorCommunicating: Error while communicating with Data Preparation service
+    errorTitle: Enabling Data Preparation failed
+    failedToStop: Failed to stop Data Preparation service
     list:
       1: Easy and interactive way to work with messy data
       2: Apply transformations using a variety of operations on various data types
@@ -1194,6 +1208,7 @@ features:
       selectMLAlgorithm: Select a machine learning algorithm
       selectOutcome: Select an outcome
       setOutcome: Set outcome for this experiment
+      resplitAndVerify : Resplit data
       splitAndVerify: Split data and verify sample
       splitData: Split data
       SplitInfo:
@@ -1245,7 +1260,6 @@ features:
         1: "{context} experiment"
         _: "{context} experiments"
       numModels: No of models
-
     ServiceControl:
       Benefits:
         b1: Intuitive Web UI for building, training, testing and evaluating machine learning models.
@@ -1257,14 +1271,18 @@ features:
         title: "Some key benefits of MMDS are:"
       description: "Data scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models using CDAP."
       enableBtnLabel: Enable MMDS
+      environmentCheckMessage: Checking for environment before enabling Analytics
+      errorCommunicating: Error while communicating with MMDS service
       errorTitle: Enabling MMDS failed
       errorMessage: Please check logs for more information
+      serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use Analytics
       title: Welcome to Model Management and Distribution Service
 
   FieldLevelLineage:
     fieldsCount:
       1: "{context} field"
       _: "{context} fields"
+    noFields: "Field level lineage is not available for the dataset '{datasetId}' in the selected time interval"
     OperationsModal:
       lastExecution: "Last executed by '{app}' on {time}"
       summaryText: "Operations between {sources} and '{target}'"
@@ -1452,6 +1470,7 @@ features:
       edwOffload: EDW Offload
       emptyTab: No entities found
       examples: Applications
+      gcp: Google Cloud
       pipelines: Pipelines
       plugins: Plugins
       useCases: Solutions
@@ -1575,20 +1594,18 @@ features:
         customAppsWithCount: Custom apps ({count})
         pipelinesWithCount: Pipelines ({count})
     RunsList:
-      all: All
-      date: Date
       duration: Duration
       name: Name
       namespace: Namespace
       noData: No data
       noRuns: No runs in the selected time bucket
-      start: Started
+      start: Start time
       startMethod: Start method
       status: Status
-      timeRange: Time range
+      timeRange: "{date} from {hour}:00 to {hour}:59 {ampm}"
+      title: Selected runs ({count})
       type: Type
       user: User
-      viewAll: View All
 
   Overview:
     DatasetTab:
@@ -1697,18 +1714,18 @@ features:
       toCreate: to create one
 
     RunLevel:
-      configs: Run Configs
+      configs: Runtime Args
       configsModelessTitle: "Runtime arguments for run #{currentRunIndex}"
       copyRuntimeArgsBtnLabel: Copy Runtime Arguments
       currentIndex: '({currentRunIndex} of {numRuns})'
       currentRunIndex: 'Run {currentRunIndex} of {numRuns}'
       errors: Errors
-      logs: Run Logs
+      logs: Logs
       noRuns: No Runs
-      noRuntimeArgs: No runtime arguments available
+      noRuntimeArgsForRun: No runtime arguments available for this run.
       pipelineNeverRun: 'This pipeline has never been run.'
       RunComputeProfile:
-        label: Run compute profile
+        label: Compute profile
         noInfo: Profile information unavailable
       runsCurrentlyRunning: Runs currently running - select one to view
       status: Status
@@ -2097,8 +2114,11 @@ features:
         b6: Use-case based customization of report contents (columns).
       description: "Reports help users generate historical analysis of programs and pipelines running in their data infrastructure. The primary goal of these reports is to help decision makers and administrators make informed business decisions about resource utilization, capacity planning, and onboarding new processes."
       enable: Enable Reports
+      environmentCheckMessage: Checking for environment before enabling Reports
+      errorCommunicating: Error while communicating with Reports service
+      errorTitle: Enabling Reports failed
+      serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use Reports
       title: Welcome to Reports
-      unableToStart: Unable to start Reports service
 
   Resource-Center:
     Application:
@@ -2213,8 +2233,8 @@ features:
       description: Business Rules Engine provides an easy way to create and manage a knowledge base that is executable in your big data environment.
                   The intuitive UI allows business analysts to set up business rules and use them within a data pipeline.
       enableBtnLabel: Enable Rules Engine
+      errorCommunicating: Error while communicating with Rules Engine service
       errorTitle: Enabling Rules Engine failed
-      errorMessage: Please check logs for more information
       title: Welcome to Rules Engine Management
     RulesList:
       dropContainerText: Add a rule by dragging and dropping from the Rules tab

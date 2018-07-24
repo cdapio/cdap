@@ -851,8 +851,10 @@ public class  MetadataDatasetTest {
     TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
     txnl.execute(() -> {
       Indexer indexer = new ReversingIndexer();
-      dataset.setMetadata(new MetadataEntry(flow1, "flowKey", "flowValue"), Collections.singleton(indexer));
-      dataset.setMetadata(new MetadataEntry(dataset1, "datasetKey", "datasetValue"), Collections.singleton(indexer));
+      dataset.writeValue(new MetadataEntry(flow1, "flowKey", "flowValue"), Collections.singleton(indexer));
+      dataset.storeIndexes(new MetadataEntry(flow1, "flowKey", "flowValue"), Collections.singleton(indexer));
+      dataset.writeValue(new MetadataEntry(dataset1, "datasetKey", "datasetValue"), Collections.singleton(indexer));
+      dataset.storeIndexes(new MetadataEntry(dataset1, "datasetKey", "datasetValue"), Collections.singleton(indexer));
     });
     final String namespaceId = flow1.getValue(MetadataEntity.NAMESPACE);
     final Set<EntityTypeSimpleName> targetTypes = Collections.singleton(EntityTypeSimpleName.ALL);

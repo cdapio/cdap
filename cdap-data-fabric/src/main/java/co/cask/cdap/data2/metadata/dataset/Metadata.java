@@ -21,6 +21,8 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -50,9 +52,12 @@ public class Metadata {
   }
 
   public Metadata(MetadataEntity metadataEntity, Map<String, String> properties, Set<String> tags) {
+    if (metadataEntity == null || properties == null || tags == null) {
+      throw new IllegalArgumentException("Valid and non-null metadata entity, properties and tags must be provided.");
+    }
     this.metadataEntity = metadataEntity;
-    this.properties = properties;
-    this.tags = tags;
+    this.properties = new HashMap<>(properties);
+    this.tags = new HashSet<>(tags);
   }
 
   public MetadataEntity getMetadataEntity() {

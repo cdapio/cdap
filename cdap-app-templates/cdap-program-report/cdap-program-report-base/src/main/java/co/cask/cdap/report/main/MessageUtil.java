@@ -20,7 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.report.proto.Filter;
-import co.cask.cdap.report.proto.FilterDeserializer;
+import co.cask.cdap.report.proto.FilterCodec;
 import co.cask.cdap.report.util.Constants;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
@@ -29,6 +29,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ public final class MessageUtil {
   private static final Logger LOG = LoggerFactory.getLogger(MessageUtil.class);
   private static final SampledLogging SAMPLED_LOGGING = new SampledLogging(LOG, 100);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Filter.class, new FilterDeserializer())
+    .registerTypeAdapter(Filter.class, new FilterCodec())
     .create();
   private static final Type MAP_TYPE =
     new TypeToken<Map<String, String>>() { }.getType();
@@ -59,6 +60,7 @@ public final class MessageUtil {
   private static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
   // Multiplier to convert millisecond into 100ns
   private static final long HUNDRED_NANO_MULTIPLIER = 10000;
+  private static final String CDAP_VERSION = "cdap.version";
 
   private MessageUtil() {
 
@@ -93,13 +95,33 @@ public final class MessageUtil {
   }
 
   /**
+   * Deserialize TMS message into {@link Notification}
+   * @param message
+   * @return Notification
+   */
+  public static Notification messageToNotification(Message message) {
+   return GSON.fromJson(message.getPayloadAsString(), Notification.class);
+  }
+
+  /**
+   * CDAP_VERSION key was added only on CDAP 5.0 and Reporting app only works after CDAP 5.0 and we want
+   * to skip pre 5.0 records. This method checks and return true if the key is present.
+   * @param notification
+   * @return true if CDAP_VERSION key is present in Notification properties
+   */
+  public static boolean isCDAPVersionCompatible(Notification notification) {
+    return notification.getProperties().containsKey(CDAP_VERSION);
+  }
+
+  /**
    * Based on the {@link Message} and its ProgramStatus,
    * construct by setting the fields of {@link ProgramRunInfo} and return that.
    * @param message TMS message
+   * @param notification
    * @return {@link ProgramRunInfo}
    */
-  public static ProgramRunInfo constructAndGetProgramRunInfo(Message message) {
-    Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
+  public static ProgramRunInfo constructAndGetProgramRunInfo(Message message,
+                                                             Notification notification) throws IOException {
     ProgramRunInfo programRunInfo =
       GSON.fromJson(notification.getProperties().get(Constants.Notification.PROGRAM_RUN_ID), ProgramRunInfo.class);
     programRunInfo.setMessageId(message.getId());
@@ -123,6 +145,9 @@ public final class MessageUtil {
           GSON.fromJson(notification.getProperties().get(Constants.Notification.USER_OVERRIDES), MAP_TYPE);
 
         String principal = systemArguments.get(Constants.Notification.PRINCIPAL);
+        if (principal != null) {
+          principal = new KerberosName(principal).getShortName();
+        }
         ProgramStartInfo programStartInfo = new ProgramStartInfo(userArguments, artifactId, principal);
         programRunInfo.setStartInfo(programStartInfo);
         break;
