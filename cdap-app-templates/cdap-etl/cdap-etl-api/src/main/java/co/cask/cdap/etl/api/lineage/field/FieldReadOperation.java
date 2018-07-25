@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a read operation from a data source into a collection of output fields.
@@ -71,5 +72,26 @@ public class FieldReadOperation extends FieldOperation {
    */
   public List<String> getOutputFields() {
     return outputFields;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    FieldReadOperation that = (FieldReadOperation) o;
+    return Objects.equals(source, that.source) &&
+      Objects.equals(outputFields, that.outputFields);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), source, outputFields);
   }
 }

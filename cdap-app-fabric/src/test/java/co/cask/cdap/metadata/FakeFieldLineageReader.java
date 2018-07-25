@@ -21,8 +21,10 @@ import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
 import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -32,13 +34,13 @@ public class FakeFieldLineageReader implements FieldLineageReader {
 
   private final Set<String> fields;
   private final Set<EndPointField> summary;
-  private final Set<ProgramRunOperations> programRunOperations;
+  private final List<ProgramRunOperations> programRunOperations;
 
   public FakeFieldLineageReader(Set<String> fields, Set<EndPointField> summary,
                                 Set<ProgramRunOperations> programRunOperations) {
     this.fields = Collections.unmodifiableSet(new HashSet<>(fields));
     this.summary = Collections.unmodifiableSet(new HashSet<>(summary));
-    this.programRunOperations = Collections.unmodifiableSet(new HashSet<>(programRunOperations));
+    this.programRunOperations = Collections.unmodifiableList(new ArrayList<>(programRunOperations));
   }
 
   public FakeFieldLineageReader() {
@@ -62,12 +64,12 @@ public class FakeFieldLineageReader implements FieldLineageReader {
   }
 
   @Override
-  public Set<ProgramRunOperations> getIncomingOperations(EndPointField endPointField, long start, long end) {
+  public List<ProgramRunOperations> getIncomingOperations(EndPointField endPointField, long start, long end) {
     return programRunOperations;
   }
 
   @Override
-  public Set<ProgramRunOperations> getOutgoingOperations(EndPointField endPointField, long start, long end) {
+  public List<ProgramRunOperations> getOutgoingOperations(EndPointField endPointField, long start, long end) {
     return programRunOperations;
   }
 }

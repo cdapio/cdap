@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represent the transform operation from collection of input fields to collection of output fields.
@@ -70,5 +71,26 @@ public class FieldTransformOperation extends FieldOperation {
    */
   public List<String> getOutputFields() {
     return outputFields;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    FieldTransformOperation that = (FieldTransformOperation) o;
+    return Objects.equals(inputFields, that.inputFields) &&
+      Objects.equals(outputFields, that.outputFields);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), inputFields, outputFields);
   }
 }

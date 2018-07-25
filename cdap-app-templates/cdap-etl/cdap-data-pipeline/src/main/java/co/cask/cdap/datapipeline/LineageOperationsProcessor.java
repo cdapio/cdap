@@ -28,10 +28,12 @@ import co.cask.cdap.etl.api.lineage.field.FieldWriteOperation;
 import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -173,9 +175,35 @@ public class LineageOperationsProcessor {
                                              Map<String, Operation> processedOperations) {
     // We need to return InputFields in the same order as fields.
     // Keep them in map so we can iterate later on received fields to return InputFields.
+
     Map<String, InputField> inputFields = new HashMap<>();
     List<String> parents = findParentStages(currentStage);
+
+    List<String> fieldsForJoin = new ArrayList<>();
     for (String field : fields) {
+      if (noMergeRequiredStages.contains(currentStage)) {
+        // Current stage is of type JOIN.
+        // JOIN creates operation with input fields in format <stagename.fieldname>
+        // if the field is directly read from the schema of the one of the input stage.
+        // However it is also possible to have operation with input not tagged with the stage name, for example
+        // in case if rename is done on the join keys. In this case Join operation will read fields of the form
+        // <stagename.fieldname> however rename operations followed by it will simply read the output of the
+        // Join which wont be tagged with stagename.
+
+        //TODO CDAP-13298 Field names and stage names can have '.' in them.
+        // Probably better to support new JOIN operation type which takes stage name and field name.
+        Iterator<String> stageFieldPairIter = Splitter.on(".").omitEmptyStrings().trimResults().split(field).iterator();
+        String stageName = stageFieldPairIter.next();
+        if (stageFieldPairIter.hasNext() && stageOperations.keySet().contains(stageName)) {
+          field = stageFieldPairIter.next();
+          fieldsForJoin.add(field);
+          List<String> parentStages = findParentStages(stageName);
+          parents.addAll(0, parentStages);
+        } else {
+          // field belongs to one of the operations output from join stage
+          fieldsForJoin.add(field);
+        }
+      }
       ListIterator<String> parentsIterator = parents.listIterator(parents.size());
       while (parentsIterator.hasPrevious()) {
         // Iterate in parents in the reverse order so that we find the most recently updated origin
@@ -191,7 +219,7 @@ public class LineageOperationsProcessor {
     }
 
     Set<String> stageInputs = stageDag.getNodeInputs(parents.get(0));
-    if (stageInputs.size() > 1 && !noMergeRequiredStages.contains(currentStage)) {
+    if (stageInputs.size() > 1 && !noMergeRequiredStages.contains(parents.get(0))) {
       String mergeOperationName = mergeOperationName(stageInputs);
       Operation operation = processedOperations.get(mergeOperationName);
       List<String> outputs = ((TransformOperation) operation).getOutputs();
@@ -203,8 +231,9 @@ public class LineageOperationsProcessor {
       }
     }
 
+    List<String> fieldsToIterateOn = noMergeRequiredStages.contains(currentStage) ? fieldsForJoin : fields;
     List<InputField> result = new ArrayList<>();
-    for (String field : fields) {
+    for (String field : fieldsToIterateOn) {
       if (inputFields.containsKey(field)) {
         result.add(inputFields.get(field));
       }
