@@ -1236,7 +1236,7 @@ features:
       data: Data
       evariance: Evariance
       f1: F1
-      mae: Mean avg error
+      mae: Mean absolute error
       modelDescription: Model description
       modelName: Model name
       models:
