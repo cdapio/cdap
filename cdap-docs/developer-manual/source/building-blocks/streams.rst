@@ -7,7 +7,7 @@
 =======
 Streams
 =======
-** Streams are deprecated as of release 5.0, use kafka as a replacement technology. Support for streams will be discontinued in 6.0 release **
+**Streams are deprecated as of release 5.0, use kafka as a replacement technology. Support for streams will be discontinued in 6.0 release**
 
 *Streams* are the primary means of bringing data from external systems into the CDAP in real time.
 They are ordered, time-partitioned sequences of data, usable for real-time collection and consumption of data.
