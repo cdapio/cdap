@@ -21,6 +21,7 @@ import enableSystemApp from 'services/ServiceEnablerUtilities';
 import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
+import isObject from 'lodash/isObject';
 
 require('./RulesEngineServiceControl.scss');
 const PREFIX = 'features.RulesEngine.RulesEngineServiceControl';
@@ -51,9 +52,13 @@ export default class RulesEngineServiceControl extends Component {
       .subscribe(
         this.props.onServiceStart,
         (err) => {
+          let extendedMessage = isObject(err.extendedMessage) ?
+            err.extendedMessage.response || err.extendedMessage.message
+          :
+            err.extendedMessage;
           this.setState({
             error: err.error,
-            extendedError: err.extendedMessage,
+            extendedError: extendedMessage,
             loading: false
           });
         }
