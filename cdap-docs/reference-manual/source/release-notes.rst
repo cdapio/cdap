@@ -35,7 +35,11 @@ Cask Data Application Platform Release Notes
 Deprecated and Removed Features
 -------------------------------
 
-- The Following deprecations have been removed from the `cdap-api` module:
+- Streams are deprecated in this release, use kafka as a replacement technology. Streams will be removed in 6.0 release.
+
+- Flows are deprecated in this release, use spark streaming as a replacement technology. Flows will be removed in 6.0 release.
+
+- The following deprecations have been removed from the `cdap-api` module:
 	- Scheduling workflow using co.cask.cdap.api.schedule.Schedule in AbstractApplication is removed, Use co.cask.cdap.internal.schedule.ScheduleCreationSpec for scheduling workflow.
 	- Adding schedule using co.cask.cdap.api.schedule.Schedule is removed in ApplicationConfigurer, use co.cask.cdap.internal.schedule.ScheduleCreationSpec for adding schedules.
 	- Deprecated methods getStreams, getDatasetModules and getDatasetSpecs have been removed from FlowletDefinition.
@@ -46,7 +50,7 @@ Deprecated and Removed Features
 	- MapReduceTaskContext#getInputName has been removed, use getInputContext instead.
 
 
-- The Following deprecations have been removed from the `cdap-proto` module:
+- The following deprecations have been removed from the `cdap-proto` module:
 	- ApplicationDetail#getArtifactVersion has been removed, use ApplicationDetail#getArtifact instead.
 	- getId() method has been removed in ApplicationRecord, DatasetRecord, ProgramLiveInfo and ProgramRecord.
 	- Id class has been removed.
@@ -55,7 +59,7 @@ Deprecated and Removed Features
 	- Methods for getting ScheduleSpecification toScheduleSpec() and toScheduleSpecs(List<ScheduleDetail> details), have been removed from ScheduleDetail.
 	- Deprecated MetadataRecord class has been removed.
 
-- The Following deprecations have been removed from the `cdap-client` module:
+- The following deprecations have been removed from the `cdap-client` module:
  	- Removed Methods which were using the old co.cask.cdap.proto.Id classes in ApplicationClient, ArtifactClient, ClientConfig, DatsetClient, DatasetModuleClient, DatasetTypeClient, LineageClient, MetricsClient, ProgramClient, ScheduleClient, ServiceClient, StreamClient, StreamViewClient and WorkflowClient.
  	- Removed methods to add, update schedules using ScheduleInstanceConfiguration in ScheduleClient, use methods taking ScheduleDetail as parameter instead.
 
