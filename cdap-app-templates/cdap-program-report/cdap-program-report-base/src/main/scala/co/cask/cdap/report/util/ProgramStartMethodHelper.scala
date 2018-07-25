@@ -34,9 +34,9 @@ object ProgramStartMethodHelper {
     *         was started manually, scheduled by time, or triggered by certain condition such as new dataset partition
     *         and program status.
     */
-  def getStartMethod(runtimeArgs: Option[scala.collection.Map[String, String]]): ProgramRunStartMethod = {
-    if (runtimeArgs.isEmpty) return ProgramRunStartMethod.MANUAL
-    val scheduleInfoJson = runtimeArgs.get.get(Constants.Notification.SCHEDULE_INFO_KEY)
+  def getStartMethod(systemArgs: Option[scala.collection.Map[String, String]]): ProgramRunStartMethod = {
+    if (systemArgs.isEmpty) return ProgramRunStartMethod.MANUAL
+    val scheduleInfoJson = systemArgs.get.get(Constants.Notification.SCHEDULE_INFO_KEY)
     if (scheduleInfoJson.isEmpty) return ProgramRunStartMethod.MANUAL
     val scheduleInfo: TriggeringScheduleInfo = GSON.fromJson(scheduleInfoJson.get, classOf[TriggeringScheduleInfo])
     val triggers = scheduleInfo.getTriggerInfos

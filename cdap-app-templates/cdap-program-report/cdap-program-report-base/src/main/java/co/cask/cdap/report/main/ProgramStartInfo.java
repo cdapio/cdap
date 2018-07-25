@@ -16,6 +16,7 @@
 package co.cask.cdap.report.main;
 
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -27,11 +28,14 @@ public class ProgramStartInfo {
   private Map<String, String> runtimeArguments;
   private ArtifactId artifactId;
   private String principal;
+  private Map<String, String> systemArguments;
 
-  public ProgramStartInfo(Map<String, String> arguments, ArtifactId artifactId, String principal) {
+  public ProgramStartInfo(Map<String, String> arguments, ArtifactId artifactId, String principal,
+                          Map<String, String> systemArguments) {
     this.runtimeArguments = arguments;
     this.artifactId = artifactId;
     this.principal = principal;
+    this.systemArguments = systemArguments;
   }
 
   public Map<String, String> getRuntimeArguments() {
@@ -40,6 +44,13 @@ public class ProgramStartInfo {
 
   public ArtifactId getArtifactId() {
     return artifactId;
+  }
+
+  /**
+   * Get the system arguemnts map
+   */
+  public Map<String, String> getSystemArguments() {
+    return systemArguments;
   }
 
   /**

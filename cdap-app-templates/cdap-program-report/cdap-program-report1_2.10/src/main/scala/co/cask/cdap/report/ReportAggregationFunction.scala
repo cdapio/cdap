@@ -210,7 +210,8 @@ class ReportAggregationFunction extends UserDefinedAggregateFunction {
     val artifactInfo = startInfo.map(_.getAs[Row](Constants.ARTIFACT_ID))
     val duration = end.flatMap(e => start.map(e - _))
     val runtimeArgs = startInfo.map(_.getAs[Map[String, String]](Constants.RUNTIME_ARGUMENTS))
-    val startMethod = ProgramStartMethodHelper.getStartMethod(runtimeArgs).name()
+    val systemArgs = startInfo.map(_.getAs[Map[String, String]](Constants.SYSTEM_ARGUMENTS))
+    val startMethod = ProgramStartMethodHelper.getStartMethod(systemArgs).name()
     Row(bufferRow.getAs[String](Constants.NAMESPACE),
       artifactInfo.map(_.getAs[String](Constants.ARTIFACT_NAME)).orNull,
       artifactInfo.map(_.getAs[String](Constants.ARTIFACT_SCOPE)).orNull,
@@ -239,6 +240,8 @@ object ReportAggregationFunction {
     .add(Constants.USER, StringType, true)
     .add(Constants.RUNTIME_ARGUMENTS, MapType(StringType, StringType), false)
     .add(Constants.ARTIFACT_ID, ARTIFACT_SCHEMA, false)
+    .add(Constants.SYSTEM_ARGUMENTS, MapType(StringType, StringType), false)
+
   val STATUS_TIME_SCHEMA: StructType = new StructType()
     .add(Constants.STATUS, StringType, false)
     .add(Constants.TIME, LongType)

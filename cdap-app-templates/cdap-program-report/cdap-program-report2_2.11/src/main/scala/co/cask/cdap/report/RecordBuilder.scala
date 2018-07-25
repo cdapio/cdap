@@ -75,7 +75,8 @@ case class RecordBuilder(namespace: String, applicationName: String, application
       .reduceOption(Math.min(_, _)) // avoid compilation error with Math.min(_, _) instead of Math.min
     val duration = end.flatMap(e => start.map(e - _))
     val runtimeArgs = startInfo.map(_.runtimeArgs)
-    val startMethod = ProgramStartMethodHelper.getStartMethod(runtimeArgs).name()
+    val systemArgs = startInfo.map(_.systemArgs)
+    val startMethod = ProgramStartMethodHelper.getStartMethod(systemArgs).name()
     Record(namespace,
       startInfo.map(_.artifactName), startInfo.map(_.artifactVersion), startInfo.map(_.artifactScope),
       applicationName, applicationVersion,
@@ -94,10 +95,13 @@ case class RecordBuilder(namespace: String, applicationName: String, application
 case class StartInfo(user: String,
                      // Use scala.collection.Map to avoid compilation error in Janino generated code
                      runtimeArgs: scala.collection.Map[String, String],
-                     artifactName: String,  artifactVersion: String, artifactScope: String) {
+                     artifactName: String,  artifactVersion: String, artifactScope: String,
+                     systemArgs: scala.collection.Map[String, String]) {
   def this(user: String, runtimeArgs: java.util.Map[String, String],
-           artifactName: String, artifactVersion: String, artifactScope: String) =
-    this(user, mapAsScalaMap(runtimeArgs).toMap, artifactName, artifactVersion, artifactScope)
+           artifactName: String, artifactVersion: String, artifactScope: String,
+           systemArgs: java.util.Map[String, String]) =
+    this(user, mapAsScalaMap(runtimeArgs).toMap, artifactName, artifactVersion, artifactScope,
+      mapAsScalaMap(systemArgs).toMap)
   def getRuntimeArgsAsJavaMap(): java.util.Map[String, String] = runtimeArgs
 }
 
