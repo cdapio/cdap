@@ -27,6 +27,7 @@ Flows and Flowlets
    :hidden:
 
    flows
+** Flows are deprecated as of release 5.0, use spark streaming as replacement technology. Support for flows will be discontinued in 6.0 release **
    
 *Flows* are user-implemented real-time stream processors. They are comprised of one or
 more *Flowlets* that are wired together into a directed acyclic graph or DAG. Flowlets

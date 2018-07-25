@@ -15,10 +15,10 @@ Building Blocks
 
     Core Abstractions <core>
     Applications <applications>
-    Streams <streams>
+    Streams <streams> *Streams are deprecated as of release 5.0, use kafka as a replacement technology*
     Datasets <datasets/index>
     Views <views>
-    Flows and Flowlets <flows-flowlets/index>
+    Flows and Flowlets <flows-flowlets/index> *Flows are deprecated as of release 5.0, use spark streaming as a replacement technology*
     MapReduce Programs<mapreduce-programs>
     Plugins <plugins>
     Schedules <schedules>
