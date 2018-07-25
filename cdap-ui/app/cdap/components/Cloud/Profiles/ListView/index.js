@@ -78,11 +78,11 @@ const PROFILES_TABLE_HEADERS = [
     label: T.translate(`${PREFIX}.common.totalNodeHr`)
   },
   {
-    property: 'schedules',
+    property: 'schedulesCount',
     label: T.translate(`${PREFIX}.ListView.schedules`)
   },
   {
-    property: 'triggers',
+    property: 'triggersCount',
     label: T.translate(`${PREFIX}.ListView.triggers`)
   },
   {
@@ -371,7 +371,10 @@ class ProfilesListView extends Component {
           for all the profiles all the time I have added the defaults here in the view
           Ideally we should set the defaults when we create the map of profiles.
 
-          This is the minimal change for 5.0
+          This is the minimal change for 5.0.
+
+          Also, need to make these properties sortable, using SortableStickyGrid.
+          JIRA: CDAP-13895
         */}
         <div>{profile.oneDayMetrics.runs || '--'}</div>
         <div>{getNodeHours(profile.oneDayMetrics.minutes || '--')}</div>
