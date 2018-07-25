@@ -59,12 +59,12 @@ export default class AddConnection extends Component {
         component: S3Connection
       },
       {
-        type: 'GCS',
+        type: 'Google Cloud Storage',
         icon: 'icon-storage',
         component: GCSConnection
       },
       {
-        type: 'Big Query',
+        type: 'Google BigQuery',
         icon: 'icon-bigquery',
         component: BigQueryConnection
       }
