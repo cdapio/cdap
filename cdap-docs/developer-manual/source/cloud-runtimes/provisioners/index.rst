@@ -17,8 +17,9 @@ Provisioners
     Amazon Elastic MapReduce <aws-emr>
     Remote Hadoop <remote-hadoop>
 
-Insert some overview of what a provisioner is and what it is responsible for.
-
+Provisioners are responsible for creating, initializing, and destroying the cloud environment that pipelines
+will run in. Each provisioner exposes a set of configuration settings that are used to control what type
+of cluster is created and deleted. Different provisioners create different types of clusters.
 
 .. |gcp-dataproc| replace:: **Google Dataproc:**
 .. _gcp-dataproc: gcp-dataproc.html
@@ -29,11 +30,11 @@ Insert some overview of what a provisioner is and what it is responsible for.
 .. |remote-hadoop| replace:: **Remote Hadoop:**
 .. _remote-hadoop: remote-hadoop.html
 
-- |gcp-dataproc|_ Google Cloud Dataproc is a fast, easy to use, fully managed cloud service for running
-  Apache Spark and Apache Hadoop clusters in a simpler, more cost efficient way.
+- |gcp-dataproc|_ A fast, easy-to-use, and fully-managed cloud service for running Apache Spark and Apache Hadoop clusters in a simple,
+  cost efficient way.
 
-- |aws-emr|_ Amazon EMR provides a managed Hadoop framework that makes it easy, fast, and cost effective
-  to process vast amounts of data across dynamically scalable Amazon EC2 instances.
+- |aws-emr|_ Provides a managed Hadoop framework that makes it easy, fast, and cost effective to process vast amounts of data across
+  dynamically scalable Amazon EC2 instances.
 
-- |remote-hadoop|_ Runs jobs on a pre-existing Hadoop cluster, whether it is on premise or in the cloud.
+- |remote-hadoop|_ Runs jobs on a pre-existing Hadoop cluster, whether on premise or in the cloud.
 

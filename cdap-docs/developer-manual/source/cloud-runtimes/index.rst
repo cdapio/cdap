@@ -18,10 +18,13 @@ Cloud Runtimes
     Concepts <concepts/index>
     Provisioners <provisioners/index>
     Profiles <profiles/index>
-    Admin Controls <admin-controls/index>
     Example <example/index>
 
-Insert some introduction text
+Cloud Runtimes allow you to configure batch pipelines to run in a cloud environment.
+Before the pipeline runs, a cluster is provisioned in the cloud. The pipeline is
+executed on that cluster, and the cluster is deleted after the run finishes. Cloud Runtimes allow
+you to only use compute resources when you need them, allowing you to make better use of
+your resources.
 
 .. |concepts| replace:: **Concepts:**
 .. _concepts: concepts/index.html
@@ -32,9 +35,6 @@ Insert some introduction text
 .. |profiles| replace:: **Profiles:**
 .. _profiles: profiles/index.html
 
-.. |admin-controls| replace:: **Admin Controls:**
-.. _admin-controls: admin-controls/index.html
-
 .. |example| replace:: **Example:**
 .. _example: example/index.html
 
@@ -44,8 +44,6 @@ Insert some introduction text
 - |provisioners|_ Provisioners are responsible for creating and deleting cloud clusters for a program run
 
 - |profiles|_ Profiles are used to configure programs to run in different cloud environments
-
-- |admin-controls|_ Administrative controls for profiles
 
 - |example|_ A step by step walk-through of creating and using a profile
 

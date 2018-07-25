@@ -17,8 +17,10 @@ Profiles
     Assigning Profiles <assigning-profiles>
     Admin Controls <admin-controls>
 
-Insert some introduction to profiles
-
+Profiles consist of a provisioner name and provisioner configuration settings. They can be
+created by CDAP admins and assigned to batch pipelines. When a pipeline is assigned to a pipeline,
+CDAP will use the provisioner specified in the profile to create a cluster, run the pipeline on
+that cluster, then tear down the cluster after the run has finished.
 
 .. |creating-profiles| replace:: **Creating Profiles:**
 .. _creating-profiles: creating-profiles.html
@@ -33,5 +35,5 @@ Insert some introduction to profiles
 
 - |assigning-profiles|_ How to assign profiles to pipelines
 
-- |admin-controls|_ Administrative controls, such as disabling, enabling, and deleting profiles.
+- |admin-controls|_ How to monitor and control profile usage, such as enabling and disabling profiles
 

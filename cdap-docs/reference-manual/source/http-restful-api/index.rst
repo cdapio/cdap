@@ -27,6 +27,7 @@ CDAP HTTP RESTful API v3
     Monitor <monitor>
     Namespace <namespace>
     Preferences <preferences>
+    Profile <profile>
     Query <query>
     Route Config <routeconfig>
     Security <security>
@@ -67,6 +68,7 @@ data isolation. This is an inital step towards introducing `multi-tenancy
   available to artifacts and classes contained within artifacts
 - :doc:`Lifecycle: <lifecycle>` deploying and managing applications, and managing the
   lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services
+- :doc:`Profile: <profile>` management of cloud runtime profiles
 - :doc:`Stream: <stream>` sending data events to a stream or to inspect the contents of a stream
 - :doc:`Dataset: <dataset>` interacting with datasets, dataset modules, and dataset types
 - :doc:`Service: <service>` supports making requests to the methods of an application’s services
