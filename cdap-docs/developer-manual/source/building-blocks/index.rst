@@ -15,7 +15,7 @@ Building Blocks
 
     Core Abstractions <core>
     Applications <applications>
-    Streams <streams> 
+    Streams <streams>
     Datasets <datasets/index>
     Views <views>
     Flows and Flowlets <flows-flowlets/index> 
