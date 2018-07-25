@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2018 Cask Data, Inc.
 
 .. _quick-start:
 
@@ -20,15 +20,16 @@ Data Pipeline
 =============
 
 CDAP Pipelines is a self-service, reconfigurable, extendable framework to develop, run,
-automate, and operate **data pipelines** on Hadoop. Follow the instructions :ref:`here <cdap-pipelines-getting-started-start>` to build and run your data pipeline.
+automate, and operate **data pipelines** on Hadoop. Follow the instructions
+:ref:`here <cdap-pipelines-getting-started-start>` to build and run your data pipeline.
 
 Data Pipeline Tutorials
 =======================
 
-- :ref: `Use CDAP's data preparation and data pipelines to clean, prepare, and store customer data stored in a MySQL database. <tutorials-campaign>`
+- :ref:`Cleaning and preparing customer data in MySQL <tutorials-campaign>`
 
-- :ref: `Learn how to process XML data using data preparation and data pipelines <tutorials-nytimes>`
+- :ref:`Processing XML data <tutorials-nytimes>`
 
-- :ref: `Use CDAP data pipelines for analyzing and Masking IoT Device Data <tutorials-fitbit>`
+- :ref:`Analyzing and masking IoT device data <tutorials-fitbit>`
 
-- :ref: `Building a Stock Selection Pipeline. <tutorials-stocks>`
+- :ref:`Building a Stock Selection Pipeline. <tutorials-stocks>`
