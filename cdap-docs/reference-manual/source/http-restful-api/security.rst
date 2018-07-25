@@ -391,8 +391,8 @@ with the secure keys in the namespace returned as a JSON string map of string-st
 in the response body (shown here pretty-printed)::
 
   {
-    secure-key-id-1: data-1,
-    secure-key-id-2: data-2,
+    secure-key-id-1: secure key description,
+    secure-key-id-2: secure key description,
     ...
   }
 
@@ -401,8 +401,8 @@ in the response body (shown here pretty-printed)::
 such as (depending on what was stored)::
 
   {
-    "securekey": "securedata",
-    "password": "passw0rd",
+    "securekey": "secure key description",
+    "password": "password description",
     ...
   }
 
