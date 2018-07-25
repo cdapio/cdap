@@ -258,21 +258,17 @@ class ConstraintCheckerService extends AbstractIdleService {
       while (readyJobsIter.hasNext() && !stopping) {
         final Job job = readyJobsIter.next();
         try {
-          transactional.execute(context -> {
-            if (runReadyJob(job)) {
-              readyJobsIter.remove();
-            }
-          });
+          transactional.execute(context -> runReadyJob(job));
         } catch (TransactionFailureException e) {
           LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
                    job.getSchedule().getProgramId(), job.getSchedule().getName(), e);
-          // don't delete the job or remove it from 'readyJobs', as it will be retried in some later iteration
         }
+        readyJobsIter.remove();
       }
     }
 
     // return whether or not the job should be removed from the readyJobs in-memory Deque
-    private boolean runReadyJob(Job job) throws Exception {
+    private boolean runReadyJob(Job job) {
       // We should check the stored job's state (whether it actually is PENDING_LAUNCH), because
       // the schedule could have gotten deleted in the meantime or the transaction that marked it as PENDING_LAUNCH
       // may have failed / rolled back.
@@ -293,18 +289,9 @@ class ConstraintCheckerService extends AbstractIdleService {
 
       try {
         taskRunner.launch(job);
-      } catch (NamespaceNotFoundException | TaskExecutionException e) {
-        if (e instanceof TaskExecutionException && !(e.getCause() instanceof ProgramNotFoundException
-          || e.getCause() instanceof ApplicationNotFoundException)) {
-          // Only catch the TaskExecutionException if its cause is ProgramNotFoundException
-          // or ApplicationNotFoundException
-          throw e;
-        }
-        // This can happen when the namespace or app containing the program is deleted, but the job is already in
-        // PENDING_LAUNCH state, so the job is not marked as to be deleted. Simply catch the TaskExecutionException
-        // to skip retrying on failure and continue to delete this job
-        LOG.info("Skip launching job {} because the program {} it tries to launch no longer exists",
-                 job.getJobKey(), job.getSchedule().getProgramId());
+      } catch (Exception e) {
+        LOG.error("Skip launching job {} because the program {} encountered an exception while launching.",
+                  job.getJobKey(), job.getSchedule().getProgramId(), e);
       }
       // this should not have a conflict, because any updates to the job will first check to make sure that
       // it is not PENDING_LAUNCH
