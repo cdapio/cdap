@@ -80,9 +80,11 @@ class ProfilesForSchedule extends Component {
       return;
     }
     let profileName = extractProfileName(this.state.selectedProfile);
-    let apiObservable$ = MyCloudApi.get({ namespace: getCurrentNamespace(), profile: profileName });
+    let apiObservable$;
     if (isSystemProfile(this.state.selectedProfile)) {
       apiObservable$ = MyCloudApi.getSystemProfile({ profile: profileName });
+    } else {
+      apiObservable$ = MyCloudApi.get({ namespace: getCurrentNamespace(), profile: profileName });
     }
     apiObservable$
       .subscribe(profileDetails => {

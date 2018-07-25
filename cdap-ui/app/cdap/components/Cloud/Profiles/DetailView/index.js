@@ -69,7 +69,8 @@ export default class ProfileDetailView extends Component {
     let {namespace} = this.props.match.params;
     let {profile} = this.state;
     let extraTags = {
-      profile: `${profile.scope}:${profile.name}`
+      profile: `${profile.scope}:${profile.name}`,
+      programtype: 'Workflow'
     };
     fetchAggregateProfileMetrics(namespace, profile, extraTags)
       .subscribe(
@@ -87,9 +88,11 @@ export default class ProfileDetailView extends Component {
 
   getProfile = () => {
     let {namespace, profileId} = this.props.match.params;
-    let apiObservable$ = MyCloudApi.get({ namespace, profile: profileId });
+    let apiObservable$;
     if (namespace === 'system') {
       apiObservable$ = MyCloudApi.getSystemProfile({ profile: profileId });
+    } else {
+      apiObservable$ = MyCloudApi.get({ namespace, profile: profileId });
     }
     apiObservable$
       .subscribe(
