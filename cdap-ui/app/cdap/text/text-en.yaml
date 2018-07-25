@@ -354,9 +354,6 @@ features:
     btnLabel: Enable Data Preparation
     btnLoadingLabel: "Enabling..."
     description: CDAP Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
-    errorCommunicating: Error while communicating with Data Preparation service
-    errorTitle: Enabling Data Preparation failed
-    failedToStop: Failed to stop Data Preparation service
     list:
       1: Easy and interactive way to work with messy data
       2: Apply transformations using a variety of operations on various data types
@@ -1003,6 +1000,9 @@ features:
       upload: Local File Upload
       viewSchemaBtnLabel: View Schema
     Upgrade:
+      errorCommunicating: Error while communicating with Data Preparation service
+      errorTitle: Enabling Data Preparation failed
+      failedToStop: Failed to stop Data Preparation service
       minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Hub."
     WorkspaceTabs:
       DeleteModal:

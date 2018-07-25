@@ -20,9 +20,9 @@ import React, { Component } from 'react';
 import enableSystemApp from 'services/ServiceEnablerUtilities';
 import T from 'i18n-react';
 import classnames from 'classnames';
-import {objectQuery} from 'services/helpers';
 import MyDataPrepApi from 'api/dataprep';
 import {i18nPrefix, MIN_DATAPREP_VERSION, artifactName} from 'components/DataPrep';
+import isObject from 'lodash/isObject';
 
 require('./DataPrepServiceControl.scss');
 
@@ -59,9 +59,13 @@ export default class DataPrepServiceControl extends Component {
       .subscribe(() => {
         this.props.onServiceStart();
       }, (err) => {
+        let extendedMessage = isObject(err.extendedMessage) ?
+          err.extendedMessage.response || err.extendedMessage.message
+        :
+          err.extendedMessage;
         this.setState({
           error: err.error,
-          extendedMessage: objectQuery(err, 'extendedMessage', 'response'),
+          extendedMessage,
           loading: false
         });
       });
@@ -112,6 +116,7 @@ export default class DataPrepServiceControl extends Component {
                   }
                 </button>
               </div>
+              {this.renderError()}
               <p>
                 {T.translate(`${PREFIX}.description`)}
               </p>
@@ -121,7 +126,6 @@ export default class DataPrepServiceControl extends Component {
                 <li>{T.translate(`${PREFIX}.list.3`)}</li>
                 <li>{T.translate(`${PREFIX}.list.4`)}</li>
               </ul>
-              {this.renderError()}
             </div>
           </div>
         </div>
