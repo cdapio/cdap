@@ -14,3 +14,4 @@ CDAP User Guide Table of Contents
     Tutorials <tutorials/index>
     Data Preparation <data-preparation/index>
     Data Pipelines <pipelines/index>
+    Analytics <mmds/index>
