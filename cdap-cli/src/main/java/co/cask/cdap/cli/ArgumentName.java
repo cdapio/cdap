@@ -152,31 +152,38 @@ public enum ArgumentName {
     return name;
   }
 
-  public static final String ENTITY_DESCRIPTION_TEMPLATE_STRING = "'<%s>' " +
-    "is of the form '<entity-type>:<entity-id>', where '<entity-type>' is one of " +
+  public static final String ENTITY_DESCRIPTION_TEMPLATE_STRING = "<%s> " +
+    "is of the form <entity-type>:<entity-id>, where <entity-type> is one of " +
     "%s" +
     "'artifact', 'application', 'dataset', 'program', 'stream', or 'view'.\n" +
     "\n" +
     "%s" +
     "For artifacts and apps, " +
-    "'<entity-id>' is composed of the namespace, entity name, and version, such as " +
-    "'<namespace-name>.<artifact-name>.<artifact-version>' or " +
-    "'<namespace-name>.<app-name>.<app-version>'.\n" +
+    "<entity-id> is composed of the namespace, entity name, and version, such as " +
+    "<namespace-name>.<artifact-name>.<artifact-version> or " +
+    "<namespace-name>.<app-name>.<app-version>.\n" +
     "\n" +
     "Note:  Metadata for versioned entities is not versioned, including entities such as applications, " +
     "programs, schedules, and program runs. Additions to metadata in one version are reflected in all versions.\n" +
     "\n" +
-    "For programs, '<entity-id>' includes the " +
+    "For programs, <entity-id> includes the " +
     "application name and the program type: " +
-    "'<namespace-name>.<app-name>.<program-type>.<program-name>'. '<program-type>' is one of " +
+    "<namespace-name>.<app-name>.<program-type>.<program-name>. <program-type> is one of " +
     "flow, mapreduce, service, spark, worker, or workflow.\n" +
     "\n" +
     "For datasets and streams, " +
-    "'<entity-id>' is the namespace and entity names, such as '<namespace-name>.<dataset-name>' " +
-    "or '<namespace-name>.<stream-name>'.\n" +
+    "<entity-id> is the namespace and entity names, such as <namespace-name>.<dataset-name> " +
+    "or <namespace-name>.<stream-name>.\n" +
     "\n" +
-    "For (stream) views, '<entity-id>' includes the stream " +
-    "that they were created from: '<namespace-name>.<stream-name>.<view-name>'.";
+    "For (stream) views, <entity-id> includes the stream " +
+    "that they were created from: <namespace-name>.<stream-name>.<view-name>.\n" +
+    "\n" +
+    "Custom entities can be specified as hierarchical key-value pair with an optional type if the last key in " +
+    "hierarchy is not the type of the entity. For example a 'field' in dataset can be specified as: " +
+    "namespace=<namespace-name>,dataset=<dataset-name>,field=<field-name>." +
+    "\n" +
+    "A 'jar' in a namespace can be specified as: " +
+    "namespace=<namespace-name>,jar=<jar-name>,version=<version-number>,type=jar.";
 
   public static final String ENTITY_DESCRIPTION_STRING = String.format(ENTITY_DESCRIPTION_TEMPLATE_STRING,
     ENTITY, "", "");
