@@ -43,10 +43,6 @@ const WIZARD_MAP = {
     wizardType: 'create_library_rc',
     input: {headerLabel: T.translate('features.Resource-Center.Library.modalheadertitle')}
   },
-  createMicroserviceWizard: {
-    wizardType: 'create_microservice_rc',
-    input: {headerLabel: T.translate('features.Resource-Center.Microservice.modalheadertitle')}
-  },
   createDirectiveArtifactWizard: {
     wizardType: 'create_directive_artifact_rc',
     input: {headerLabel: T.translate('features.Resource-Center.Directive.modalheadertitle')}
@@ -99,14 +95,6 @@ export default class ResourceCenter extends Component {
           actionLabel: T.translate('features.Resource-Center.Stream.actionbtn0'),
           iconClassName: 'icon-streams',
           wizardId: 'createStreamWizard'
-        },
-        {
-          // Microservice
-          title: T.translate('features.Resource-Center.Microservice.label'),
-          description: T.translate('features.Resource-Center.Microservice.description'),
-          actionLabel: T.translate('features.Resource-Center.Microservice.actionbtn0'),
-          iconClassName: 'icon-app',
-          wizardId: 'createMicroserviceWizard'
         },
         {
           // Directives
