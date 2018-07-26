@@ -59,6 +59,7 @@ public final class Constants {
   public static final String USER = "user";
   public static final String START_METHOD = "startMethod";
   public static final String RUNTIME_ARGUMENTS = "runtimeArgs";
+  public static final String SYSTEM_ARGUMENTS = "systemArgs";
   public static final String NUM_LOG_WARNINGS = "numLogWarnings";
   public static final String NUM_LOG_ERRORS = "numLogErrors";
   public static final String NUM_RECORDS_OUT = "numRecordsOut";

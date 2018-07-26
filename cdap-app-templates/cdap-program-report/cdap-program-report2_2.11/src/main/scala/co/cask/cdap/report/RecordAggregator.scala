@@ -55,6 +55,6 @@ class RecordAggregator extends Aggregator[Row, RecordBuilder, Record] {
     val artifact: Row = startInfoRow.getAs[Row](Constants.ARTIFACT_ID)
     StartInfo(startInfoRow.getAs(Constants.USER), startInfoRow.getAs(Constants.RUNTIME_ARGUMENTS),
       artifact.getAs(Constants.ARTIFACT_NAME), artifact.getAs(Constants.ARTIFACT_VERSION),
-      artifact.getAs(Constants.ARTIFACT_SCOPE))
+      artifact.getAs(Constants.ARTIFACT_SCOPE), startInfoRow.getAs(Constants.SYSTEM_ARGUMENTS))
   }
 }
