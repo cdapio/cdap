@@ -78,8 +78,8 @@ public class StandaloneAppFabricServer extends AppFabricServer {
     super(cConf, sConf, discoveryService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, runRecordCorrectorService, applicationLifecycleService,
           programNotificationSubscriberService, streamCoordinatorClient, servicesNames,
-          handlerHookNames, namespaceAdmin, systemArtifactLoader, pluginService, null, routeStore,
-          coreSchedulerService, profileService, provisioningService);
+          handlerHookNames, namespaceAdmin, systemArtifactLoader, pluginService, routeStore, coreSchedulerService,
+          profileService, provisioningService);
     this.metricStore = metricStore;
   }
 

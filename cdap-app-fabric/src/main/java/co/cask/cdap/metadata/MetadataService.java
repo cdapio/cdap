@@ -29,7 +29,6 @@ import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
@@ -106,5 +105,12 @@ public class MetadataService extends AbstractIdleService {
       metadataMigrator.stop();
     }
     LOG.info("Metadata HTTP service stopped");
+  }
+
+  /**
+   * Adding this convenience method for debugging. Returns true if metadata migration is in progress.
+   */
+  public boolean isMigrationInProcess() {
+    return metadataMigrator.isRunning();
   }
 }

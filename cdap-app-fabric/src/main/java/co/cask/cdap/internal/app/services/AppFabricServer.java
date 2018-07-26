@@ -82,7 +82,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
   private final CoreSchedulerService coreSchedulerService;
-  private final AppVersionUpgradeService appVersionUpgradeService;
   private final ProvisioningService provisioningService;
   private final RouteStore routeStore;
   private final CConfiguration cConf;
@@ -114,7 +113,6 @@ public class AppFabricServer extends AbstractIdleService {
                          NamespaceAdmin namespaceAdmin,
                          SystemArtifactLoader systemArtifactLoader,
                          PluginService pluginService,
-                         @Nullable AppVersionUpgradeService appVersionUpgradeService,
                          RouteStore routeStore,
                          CoreSchedulerService coreSchedulerService,
                          ProfileService profileService,
@@ -135,7 +133,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
-    this.appVersionUpgradeService = appVersionUpgradeService;
     this.routeStore = routeStore;
     this.defaultEntityEnsurer = new DefaultEntityEnsurer(namespaceAdmin, profileService);
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
@@ -198,9 +195,6 @@ public class AppFabricServer extends AbstractIdleService {
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
     defaultEntityEnsurer.startAndWait();
-    if (appVersionUpgradeService != null) {
-      appVersionUpgradeService.startAndWait();
-    }
   }
 
   @Override
@@ -216,9 +210,6 @@ public class AppFabricServer extends AbstractIdleService {
     programNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     pluginService.stopAndWait();
-    if (appVersionUpgradeService != null) {
-      appVersionUpgradeService.stopAndWait();
-    }
     provisioningService.stopAndWait();
   }
 

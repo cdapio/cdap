@@ -121,7 +121,7 @@ and then restart CDAP:
 
    Returning::
 
-      {"defaultStore":true,"streamSizeScheduleStore":true,"timeScheduleStore":true }
+      {"metadata":true }
 
 
 .. _admin-upgrading-packages-upgrading-hadoop:

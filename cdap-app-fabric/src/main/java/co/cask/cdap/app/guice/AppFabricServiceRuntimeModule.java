@@ -106,6 +106,7 @@ import co.cask.cdap.logging.run.InMemoryMetricsServiceManager;
 import co.cask.cdap.logging.run.InMemoryStreamServiceManager;
 import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.messaging.distributed.MessagingServiceManager;
+import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
@@ -292,6 +293,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule().getDistributedModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
+                           new MetadataServiceModule(),
                            new ProvisionerModule(),
                            new AbstractModule() {
                              @Override
