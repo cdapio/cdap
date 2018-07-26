@@ -273,16 +273,25 @@ export default class ProfileAssociations extends Component {
   };
 
   render() {
+    let profileName = this.props.profile.label || this.props.profile.name;
+
     if (isNilOrEmpty(this.state.associationsMap)) {
       return (
         <div className="profile-associations empty">
           <IconSVG name="icon-info-circle" />
-          <h6> This profile is not associated with any schedules or triggers </h6>
+          <h6>
+            {T.translate(`${HEADERPREFIX}.noAssociations`)}
+          </h6>
         </div>
       );
     }
     return (
       <div className="profile-associations">
+        <h5 className="section-label">
+          <strong>
+            {T.translate(`${HEADERPREFIX}.label`, {profile: profileName})}
+          </strong>
+        </h5>
         <div className="grid grid-container">
           {this.renderGridHeader()}
           {this.renderGridBody()}

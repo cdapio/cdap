@@ -252,10 +252,12 @@ features:
         Associations:
           Header:
             created: Created
+            label: Pipelines currently using "{profile}"
             last24hrsnodehr: Last 24 hrs node hours
             last24hrsruns: Last 24 hrs runs
             name: Name
             namespace: Namespace
+            noAssociations: This profile is not associated with any schedules or triggers
             schedules: Schedules
             totalnodehr: Total node hours
             totalruns: Total runs
