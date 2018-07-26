@@ -79,10 +79,10 @@
         },
         {
           "widget-type": "textbox",
-          "label": "Additional EMR managed security group for the master instance",
+          "label": "Additional Master Security Group",
           "name": "additionalMasterSecurityGroup",
           "required": true,
-          "description": "An additional EMR managed security group that will be applied to the master instance. For more information, refer to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-man-sec-groups.html.",
+          "description": "An additional EMR managed security group that will be applied to the master instance. It must have an inbound rule that allows ssh and https (ports 22 and 443). For more information, refer to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-man-sec-groups.html.",
           "widget-attributes": {
             "placeholder": "Specify your EMR managed security group"
           }
