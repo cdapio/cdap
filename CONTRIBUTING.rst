@@ -33,7 +33,7 @@ Build Environment
 =================
 
 For instructions on setting up your development environment, please see the
-`BUILD.rst <https://github.com/caskco/cdap/blob/develop/BUILD.rst>`__ file.
+`BUILD.rst <https://github.com/caskdata/cdap/blob/develop/BUILD.rst>`__ file.
 
 Contribution Guidelines
 =======================
@@ -48,7 +48,7 @@ problem as well. This will help us in prioritization.
 Discuss on the Mailing List
 ---------------------------
 We recommend that you discuss your plan on the mailing list 
-`cdap-developers@cask.co <mailto:cdap-developers@cask.co>`__
+`cdap-dev@googlegroups.com <mailto:cdap-dev@googlegroups.com>`__
 before starting to code. This gives us a chance to add feedback and help point you in the right direction.
 
 Pull Requests
