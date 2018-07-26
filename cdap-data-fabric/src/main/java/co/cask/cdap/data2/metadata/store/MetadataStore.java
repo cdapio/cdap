@@ -113,8 +113,8 @@ public interface MetadataStore {
   Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
-   * Removes all metadata (including properties and tags) for the specified {@link MetadataEntity} in both
-   * {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
+   * Removes all metadata (including properties and tags) for the specified {@link MetadataEntity} and it's
+   * custom sub-entity in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove all metadata for
    */
