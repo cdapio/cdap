@@ -164,9 +164,9 @@ When you initially create the pipeline, you will see the view below.
 
 You need a way to feed the output from the Wrangler (Data Preparation) node into a node which will select the top 20 stocks.
 
-You can turn to Cask Market for the Top-N plugin. CDAP comes bundled with many useful plugins. However, Cask Market - which is open app store for Big Data Applications - contains many more. 
+You can turn to the Hub for the Top-N plugin. CDAP comes bundled with many useful plugins. However, the Hub - which is open app store for Big Data Applications - contains many more. 
 
-Click `Cask Market` in the upper right hand corner to open the market.
+Click `Hub` in the upper right hand corner to open the hub.
 
 .. figure:: /_images/tutorials/stocks/percentage.jpeg
 	:figwidth: 100%

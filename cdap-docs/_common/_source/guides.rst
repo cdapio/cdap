@@ -116,8 +116,8 @@ Guides
 .. |integrations| replace:: **Integrations**
 .. _integrations: integrations/index.html
 
-.. |integ-man-cm-black| replace:: `Cask Market:`
-.. _integ-man-cm-black: integrations/cask-market.html
+.. |integ-man-hub-black| replace:: `Hub:`
+.. _integ-man-hub-black: integrations/cask-market.html
 
 .. |integ-man-cl-black| replace:: `Cloudera:`
 .. _integ-man-cl-black: integrations/partners/cloudera/index.html
@@ -146,7 +146,7 @@ Guides
 
 - |integrations|_
 
-  - |integ-man-cm-black|_ A source for re-usable applications, data, and code for all CDAP users
+  - |integ-man-hub-black|_ A source for re-usable applications, data, and code for all CDAP users
   - |integ-man-cl-black|_ Integrating CDAP into Cloudera, using Cloudera Manager, running interactive queries with Impala, and
     bridging CDAP Metadata with Cloudera's data management tool, Navigator
   - |integ-man-as-black|_ Configuring and integrating CDAP with *Apache Sentry*

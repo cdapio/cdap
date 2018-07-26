@@ -45,7 +45,7 @@ In your shell, nagivate to the same directory as ``demo.sql,`` and run ``mysql -
 
 Open CDAP and nagivate to Data Preparation using the top bar. In the left sidebar (this can be accessed through the arrow in the top left corner if it not already visible), click "Add Connection." Select the source "Database."
 
-If you have the MySQL driver installed, skip this step. If not, exit the prompt and click "Cask Market" in the upper right hand corner. On the left menu bar, select "Drivers." Click on the MySQL JDBC driver, and then follow the on-screen wizard to install the driver.
+If you have the MySQL driver installed, skip this step. If not, exit the prompt and click "Hub" in the upper right hand corner. On the left menu bar, select "Drivers." Click on the MySQL JDBC driver, and then follow the on-screen wizard to install the driver.
 
 In the "Add Connection" prompt, choose a name for the database (this is a name for your own reference). Specify ``host`` as ``localhost``, ``port`` as ``3306``, and correct username/password (for me, this is ``root`` with no password). Click "Test Connection" to verify the connection works, and select the database ``demo``.
 
