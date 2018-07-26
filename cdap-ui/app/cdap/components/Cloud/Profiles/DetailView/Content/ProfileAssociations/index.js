@@ -233,8 +233,18 @@ export default class ProfileAssociations extends Component {
             let appObj = associationsMap[app];
             let onedayMetrics = objectQuery(appObj, 'metadata', ONEDAYMETRICKEY) || {};
             let overallMetrics = objectQuery(appObj, 'metadata', OVERALLMETRICKEY) || {};
+            let pipelineUrl = window.getHydratorUrl({
+              stateName: 'hydrator.detail',
+              stateParams: {
+                namespace: appObj.namespace,
+                pipelineId: appObj.name
+              }
+            });
             return (
-              <div className="grid-row">
+              <a
+                className="grid-row"
+                href={pipelineUrl}
+              >
                 <div>{appObj.name}</div>
                 <div>{appObj.namespace}</div>
                 <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true)}</div>
@@ -251,7 +261,7 @@ export default class ProfileAssociations extends Component {
                 <div>{getNodeHours(overallMetrics.minutes || '--')}</div>
                 <div>{appObj.schedules.length}</div>
                 <div>{appObj.triggers.length}</div>
-              </div>
+              </a>
             );
           })
         }

@@ -33,6 +33,7 @@
     max-height: none;
     .grid-row {
       grid-template-columns: 1.5fr 1fr 1.5fr 1fr 1fr 1fr 1fr 1fr 1fr;
+      color: $grey-01;
     }
     .grid-header {
       .grid-row {
