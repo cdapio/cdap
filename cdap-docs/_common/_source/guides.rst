@@ -26,6 +26,9 @@ Guides
 .. |user-guide-pipe-black| replace:: `Data Pipelines:`
 .. _user-guide-pipe-black: user-guide/pipelines/index.html
 
+.. |user-guide-mmds-black| replace:: `Analytics:`
+.. _user-guide-mmds-black: user-guide/mmds/index.html
+
 - |user-guide|_
 
   - |user-guide-t-black|_ Tutorials on how to use Data Preparation and Data Pipelines for common data science use cases
@@ -33,6 +36,8 @@ Guides
   - |user-guide-prep-black|_ Documentation on usage of Data Preparation and Data Preparation transforms
 
   - |user-guide-pipe-black|_ Documentation on usage of Data Pipelines UI
+
+  - |user-guide-mmds-black|_ Interactive, UI-driven analytics and machine learning
 
 
 .. |developer-manual| replace:: **Developer Manual**
