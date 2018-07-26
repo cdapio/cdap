@@ -80,11 +80,11 @@ export default class ProfileAssociations extends Component {
   fetchMetricsForApp = (appid, metadata) => {
     let {namespace, profile} = this.props;
     let extraTags = {
-      program: metadata.program,
-      programtype: metadata.type,
+      program: objectQuery(metadata, 'program'),
+      programtype: objectQuery(metadata, 'type'),
       profile: `${profile.scope}:${profile.name}`,
-      app: metadata.app,
-      namespace: metadata.namespace
+      app: objectQuery(metadata, 'app'),
+      namespace: objectQuery(metadata, 'namespace')
     };
     fetchAggregateProfileMetrics(namespace, profile, extraTags)
       .subscribe(
