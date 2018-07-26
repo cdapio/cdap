@@ -81,7 +81,7 @@ export default class ProfileAssociations extends Component {
     let {namespace, profile} = this.props;
     let extraTags = {
       program: objectQuery(metadata, 'program'),
-      programtype: objectQuery(metadata, 'type'),
+      programtype: objectQuery(metadata, 'type') || 'Workflow',
       profile: `${profile.scope}:${profile.name}`,
       app: objectQuery(metadata, 'app'),
       namespace: objectQuery(metadata, 'namespace')
@@ -159,7 +159,11 @@ export default class ProfileAssociations extends Component {
           name: m.entityId.application,
           namespace: m.entityId.namespace,
           schedules: [],
-          triggers: []
+          triggers: [],
+          metadata: {
+            app: m.entityId.application,
+            namespace: m.entityId.namespace
+          }
         };
         appsMap[m.entityId.application] = existingEntry;
       }
@@ -181,10 +185,9 @@ export default class ProfileAssociations extends Component {
           ...existingEntry,
           created: m.metadata.SYSTEM.properties['creation-time'],
           metadata: {
+            ...existingEntry.metadata,
             type: m.entityId.type,
-            program: m.entityId.program,
-            app: m.entityId.application,
-            namespace: m.entityId.namespace
+            program: m.entityId.program
           }
         };
       }
@@ -247,7 +250,7 @@ export default class ProfileAssociations extends Component {
               >
                 <div>{appObj.name}</div>
                 <div>{appObj.namespace}</div>
-                <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true)}</div>
+                <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true) || '--'}</div>
                 {/*
                   We should set the defaults in the metrics call but since it is not certain that we get metrics
                   for all the profiles all the time I have added the defaults here in the view
