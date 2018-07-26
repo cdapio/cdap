@@ -81,7 +81,8 @@ function getData() {
   let searchParams = {
     namespace,
     target: ['dataset', 'app'],
-    query: '*'
+    query: '*',
+    sort: 'entity-name asc'
   };
 
   Observable
