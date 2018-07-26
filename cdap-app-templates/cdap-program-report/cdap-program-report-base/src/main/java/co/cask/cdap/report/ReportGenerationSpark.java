@@ -24,7 +24,6 @@ import co.cask.cdap.api.spark.AbstractExtendedSpark;
 import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
 import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
 import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
-import co.cask.cdap.report.main.ProgramRunInfoSerializer;
 import co.cask.cdap.report.main.SparkPersistRunRecordMain;
 import co.cask.cdap.report.proto.Filter;
 import co.cask.cdap.report.proto.FilterCodec;
@@ -43,6 +42,7 @@ import co.cask.cdap.report.proto.summary.ReportSummary;
 import co.cask.cdap.report.util.Constants;
 import co.cask.cdap.report.util.ReportField;
 import co.cask.cdap.report.util.ReportIds;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -58,10 +58,8 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -77,6 +75,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -105,6 +104,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     .registerTypeAdapter(Filter.class, new FilterCodec())
     .disableHtmlEscaping()
     .create();
+  private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationSpark.class);
   private static final ExecutorService REPORT_EXECUTOR =
     new ThreadPoolExecutor(0, 3, 60L, TimeUnit.SECONDS,
                            new SynchronousQueue<>(), Threads.createDaemonThreadFactory("report-generation-%d"));
@@ -118,6 +118,59 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
   protected void configure() {
     setMainClass(SparkPersistRunRecordMain.class);
     addHandlers(new ReportSparkHandler());
+    String version = getSparkVersion();
+    if (!isSparkVersionSupported(version)) {
+      throw new RuntimeException(
+        String.format("Spark Version %s is not supported, Please upgrade to Spark version 2.1 or later", version));
+    }
+  }
+
+  /**
+   * Spark version returned using SparkContext#version() is set by org.apache.spark.SparkBuildInfo in a similar manner
+   * by loading the spark-version-info.properties file and getting the property version.
+   * @return version string or null if unable to load the file due to error
+   */
+  @Nullable
+  private String getSparkVersion() {
+    ClassLoader classLoader = org.apache.spark.SparkContext.class.getClassLoader();
+    try (InputStream inputStream = classLoader.getResourceAsStream("spark-version-info.properties")) {
+      if (inputStream == null) {
+        return null;
+      }
+      Properties properties = new Properties();
+      properties.load(inputStream);
+      String version = properties.getProperty("version");
+      return version;
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  /**
+   * ReportGeneration is supported only from Spark version 2.1 currrently, we return false for versions lower than 2.1
+   */
+  private boolean isSparkVersionSupported(@Nullable String version) {
+    LOG.debug("Spark version is {}", version);
+    // if version cannot be loaded assume its supported
+    if (version == null || version.isEmpty()) {
+      return true;
+    }
+    Iterator<String> versionSplits = Splitter.on('.').split(version).iterator();
+    if (!versionSplits.hasNext()) {
+      return false;
+    }
+    int majorVersion = Integer.parseInt(versionSplits.next());
+    if (majorVersion < 2) {
+      return false;
+    }
+    if (!versionSplits.hasNext()) {
+      return false;
+    }
+    int minorVersion = Integer.parseInt(versionSplits.next());
+    if (minorVersion < 1) {
+      return false;
+    }
+    return true;
   }
 
   /**
