@@ -352,6 +352,12 @@ public class DefaultMetadataStore implements MetadataStore {
     // delete all sub entities metadata
     Set<MetadataSearchResultRecordV2> subEntities = getSubEntities(metadataEntity);
     for (MetadataSearchResultRecordV2 subEntity : subEntities) {
+      // every known entity is also tagged as parent of itself so we will see it as a subEntity too. If the
+      // subEntity and entity being initially deleted is same then just continue else we will be in an infinite
+      // recursive call
+      if (subEntity.getMetadataEntity().equals(metadataEntity)) {
+        continue;
+      }
       LOG.trace("Deleting sub-entity {} metadata", subEntity.getMetadataEntity());
       removeMetadata(subEntity.getMetadataEntity());
     }

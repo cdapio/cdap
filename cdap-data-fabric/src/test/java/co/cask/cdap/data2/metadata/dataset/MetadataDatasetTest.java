@@ -963,10 +963,12 @@ public class MetadataDatasetTest {
       Assert.assertEquals(ImmutableList.of(expectedDatasetEntry), searchResults);
     });
     // delete indexes
-    // 6 indexes should have been deleted
+    // 8 indexes should have been deleted
     //   ns1:flowValue, ns1:flowKey:flowValue, ns1:datasetValue, ns1:datasetKey:datasetValue
     //   and then the types with their name i.e. ns1:flow:flow1, ns1:dataset:dataset1
-    for (int i = 0; i < 6; i++) {
+    //   also the indexes of parent known entityid ns1:parent_entity:flow:ns1.app1.flow1,
+    //   ns1:parent_entity:dataset:ns1.dataset1
+    for (int i = 0; i < 8; i++) {
       txnl.execute(() -> Assert.assertEquals(1, dataset.deleteAllIndexes(1)));
     }
     txnl.execute(() -> Assert.assertEquals(0, dataset.deleteAllIndexes(1)));
