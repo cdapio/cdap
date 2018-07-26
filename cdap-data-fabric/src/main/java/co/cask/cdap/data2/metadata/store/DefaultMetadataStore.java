@@ -45,10 +45,13 @@ import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.data2.metadata.indexer.ParentIndexer;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
@@ -333,7 +336,8 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   /**
-   * Removes all metadata (including properties and tags) for the specified {@link MetadataEntity}.
+   * Removes all metadata (including properties and tags) for the specified {@link MetadataEntity} and it's
+   * custom sub entity
    */
   @Override
   public void removeMetadata(final MetadataScope scope, final MetadataEntity metadataEntity) {
@@ -345,6 +349,12 @@ public class DefaultMetadataStore implements MetadataStore {
                                                      metadataChange.getExisting().getProperties(),
                                                      metadataChange.getExisting().getTags());
     publishAudit(previous, new MetadataRecordV2(metadataEntity, scope), new MetadataRecordV2(previous));
+    // delete all sub entities metadata
+    Set<MetadataSearchResultRecordV2> subEntities = getSubEntities(metadataEntity);
+    for (MetadataSearchResultRecordV2 subEntity : subEntities) {
+      LOG.trace("Deleting sub-entity {} metadata", subEntity.getMetadataEntity());
+      removeMetadata(subEntity.getMetadataEntity());
+    }
   }
 
   /**
@@ -729,6 +739,22 @@ public class DefaultMetadataStore implements MetadataStore {
       return true;
     }
     return false;
+  }
+
+  private Set<MetadataSearchResultRecordV2> getSubEntities(MetadataEntity metadataEntity) {
+    Set<MetadataSearchResultRecordV2> subEntities = new HashSet<>();
+    EntityId selfOrParentEntityId = EntityId.getSelfOrParentEntityId(metadataEntity);
+    // if a known entity is being deleted then we need to delete all it's sub-entity metadata too
+    if (selfOrParentEntityId.getEntityType().toString().equalsIgnoreCase(metadataEntity.getType())) {
+      // non-custom known type search for all subEntities which has been tagged with this entity as parent
+      SearchRequest request = new SearchRequest(new NamespaceId(metadataEntity.getValue(MetadataEntity.NAMESPACE)),
+                                                ParentIndexer.PARENT_KEY + MetadataDataset.KEYVALUE_SEPARATOR +
+                                                  selfOrParentEntityId,
+                                                Collections.emptySet(), SortInfo.DEFAULT,
+                                                0, Integer.MAX_VALUE, 1, null, false, EnumSet.allOf(EntityScope.class));
+      subEntities = search(request).getResults();
+    }
+    return subEntities;
   }
 
   private String getVersionFromVersionTag(String tag) {

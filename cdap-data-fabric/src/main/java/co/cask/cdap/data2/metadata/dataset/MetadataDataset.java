@@ -966,9 +966,6 @@ public class MetadataDataset extends AbstractDataset {
                      "Ignoring.", metadataKey, metadataEntity);
           continue;
         }
-        // we also want to index all the entity with its type so in addition to the indexers determined by the key add
-        // the type indexer
-        indexers.add(new MetadataEntityTypeIndexer());
         // storeIndexes deletes old indexes
         storeIndexes(metadataEntry, indexers);
         limit--;
@@ -1336,7 +1333,7 @@ public class MetadataDataset extends AbstractDataset {
         boolean isNewEntity = previouslySeenEntities.add(entry.getMetadataEntity());
         Set<Indexer> indexers = getIndexersForKey(entry.getKey(), isNewEntity);
         writeValue(entry, indexers);
-        // store indexes for the tags being added
+        // store indexes for the metadata being added
         storeIndexes(entry, indexers);
       } else {
         MetadataV1 metadataV1 = (MetadataV1) kv.getValue();

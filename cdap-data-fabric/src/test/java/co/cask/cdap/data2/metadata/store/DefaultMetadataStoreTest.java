@@ -409,6 +409,60 @@ public class DefaultMetadataStoreTest {
   }
 
   @Test
+  public void testSubEntityDeletion() {
+    // test for tags
+    MetadataEntity dsEntity = NamespaceId.DEFAULT.dataset("myDs").toMetadataEntity();
+    MetadataEntity fieldEntity = MetadataEntity.builder(dsEntity).appendAsType("field", "empName").build();
+    MetadataEntity deepEntity = MetadataEntity.builder(fieldEntity).appendAsType("deep", "anotherLevel").build();
+
+    store.addTags(MetadataScope.USER, dsEntity, ImmutableSet.of("someTag"));
+    store.addTags(MetadataScope.USER, fieldEntity, ImmutableSet.of("anotherTag"));
+    store.addTags(MetadataScope.USER, fieldEntity, ImmutableSet.of("moreTags"));
+    store.addTags(MetadataScope.USER, deepEntity, ImmutableSet.of("deepTag"));
+
+    store.removeMetadata(dsEntity);
+
+    Assert.assertTrue(store.getTags(dsEntity).isEmpty());
+    Assert.assertTrue(store.getTags(fieldEntity).isEmpty());
+    Assert.assertTrue(store.getTags(deepEntity).isEmpty());
+
+    // test for key-value properties
+    store.setProperties(MetadataScope.USER, dsEntity, ImmutableMap.of("k1", "v1"));
+    store.setProperties(MetadataScope.USER, fieldEntity, ImmutableMap.of("k2", "v2"));
+    store.setProperties(MetadataScope.USER, fieldEntity, ImmutableMap.of("k3", "v3"));
+    store.setProperties(MetadataScope.USER, deepEntity, ImmutableMap.of("k4", "v4"));
+
+    store.removeMetadata(dsEntity);
+
+    Assert.assertTrue(store.getProperties(dsEntity).isEmpty());
+    Assert.assertTrue(store.getProperties(fieldEntity).isEmpty());
+    Assert.assertTrue(store.getProperties(deepEntity).isEmpty());
+
+    // test for system entities as child
+    MetadataEntity appEntity = NamespaceId.DEFAULT.app("app1").toMetadataEntity();
+    MetadataEntity progEntity = NamespaceId.DEFAULT.app("app1").program(ProgramType.MAPREDUCE, "mr1")
+      .toMetadataEntity();
+
+    store.addTags(MetadataScope.USER, appEntity, ImmutableSet.of("someTag"));
+    store.addTags(MetadataScope.USER, progEntity, ImmutableSet.of("anotherTag"));
+    store.addTags(MetadataScope.USER, progEntity, ImmutableSet.of("moreTags"));
+    store.setProperties(MetadataScope.USER, appEntity, ImmutableMap.of("k1", "v1"));
+    store.setProperties(MetadataScope.USER, progEntity, ImmutableMap.of("k2", "v2"));
+    store.setProperties(MetadataScope.USER, progEntity, ImmutableMap.of("k3", "v3"));
+
+    // removing metadata for app should not remove metadata for program which is known cdap type
+    store.removeMetadata(appEntity);
+    Assert.assertTrue(store.getProperties(appEntity).isEmpty());
+    Assert.assertTrue(store.getTags(appEntity).isEmpty());
+    Assert.assertFalse(store.getProperties(progEntity).isEmpty());
+    Assert.assertFalse(store.getTags(progEntity).isEmpty());
+
+    store.removeMetadata(progEntity);
+    Assert.assertTrue(store.getProperties(progEntity).isEmpty());
+    Assert.assertTrue(store.getTags(progEntity).isEmpty());
+  }
+
+  @Test
   public void testCrossNamespacePagination() {
     NamespaceId ns1 = new NamespaceId("ns1");
     NamespaceId ns2 = new NamespaceId("ns2");
