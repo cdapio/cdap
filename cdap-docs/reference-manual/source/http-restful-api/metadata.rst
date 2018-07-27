@@ -15,6 +15,9 @@ Metadata HTTP RESTful API
 Use the CDAP Metadata HTTP RESTful API to set, retrieve, and delete the metadata annotations
 of applications, datasets, streams, and other entities in CDAP.
 
+**Note**: Metadata for versioned entities is not versioned, including entities such as applications,
+programs, schedules, and program runs. Additions to metadata in one version are reflected in all versions.
+
 Metadata consists of **properties** (a list of key-value pairs) or **tags** (a list of keys).
 Metadata and their use are described in the :ref:`Developer Manual: Metadata and Lineage
 <metadata-lineage>`.

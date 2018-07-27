@@ -163,6 +163,9 @@ public enum ArgumentName {
     "'<namespace-name>.<artifact-name>.<artifact-version>' or " +
     "'<namespace-name>.<app-name>.<app-version>'.\n" +
     "\n" +
+    "Note:  Metadata for versioned entities is not versioned, including entities such as applications, " +
+    "programs, schedules, and program runs. Additions to metadata in one version are reflected in all versions.\n" +
+    "\n" +
     "For programs, '<entity-id>' includes the " +
     "application name and the program type: " +
     "'<namespace-name>.<app-name>.<program-type>.<program-name>'. '<program-type>' is one of " +
