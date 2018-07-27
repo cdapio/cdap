@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2017 Cask Data, Inc.
+    :copyright: Copyright © 2015-2018 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -18,9 +18,10 @@ Metadata
     Discovery and Lineage <discovery-lineage>
     Audit Logging <audit-logging>
     CDAP Metadata UI <metadata-ui>
+    Accessing metadata programmatically <programmatic-metadata>
 
 
-*Metadata* is an important capability of CDAP. CDAP Metadata helps show how datasets and
+*Metadata* is an important capability of CDAP. It helps show how datasets and
 programs are related to each other and helps in understanding the impact of a change
 before the change is made.
 
@@ -38,7 +39,7 @@ and governance for every application.
 
 CDAP metadata |---| consisting of **properties** (a list of key-value pairs) or **tags** (a
 list of keys) |---| can be used to annotate artifacts, applications, programs, datasets,
-streams, and views.
+streams, views and custom entities.
 
 Using the CDAP :ref:`Metadata HTTP RESTful API <http-restful-api-metadata>`, you can set,
 retrieve, and delete these metadata annotations.
@@ -77,6 +78,12 @@ object associated with a single entity is limited to 10K bytes in size.
 
 - |metadata-ui|_ lets you see how data is flowing into and out of datasets, streams, and
   stream views.
+
+.. |programmatic-metadata| replace:: **Accessing metadata programmatically:**
+.. _programmatic-metadata: programmatic-metadata.html
+
+- |programmatic-metadata|_ Metadata can be retrieved or updated programmatically from CDAP programs and plugins,
+  primarily for enabling metadata based processing.
 
 
 .. _metadata-navigator-integration:
