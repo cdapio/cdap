@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metadata.lineage.field;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.table.Put;
@@ -45,6 +46,7 @@ import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -100,7 +102,7 @@ public class FieldLineageDataset extends AbstractDataset {
   // ---------------------------------------------------------------------
 
 
-  public static final DatasetId FIELD_LINEAGE_DATASET_ID = NamespaceId.SYSTEM.dataset("fieldLineage");
+  public static final DatasetId FIELD_LINEAGE_DATASET_ID = NamespaceId.SYSTEM.dataset("fieldlineage");
 
   private static final Logger LOG = LoggerFactory.getLogger(FieldLineageDataset.class);
   private static final Gson GSON = new GsonBuilder()
@@ -123,6 +125,16 @@ public class FieldLineageDataset extends AbstractDataset {
   public FieldLineageDataset(String instanceName, Table table) {
     super(instanceName, table);
     this.table = table;
+  }
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework}.
+   * Used by the upgrade tool to upgrade Field Lineage Dataset.
+   *
+   * @param framework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+    framework.addInstance(FieldLineageDataset.class.getName(), FIELD_LINEAGE_DATASET_ID, DatasetProperties.EMPTY);
   }
 
   /**
