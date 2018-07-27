@@ -620,7 +620,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException,
     DatasetManagementException {
-    datasetFramework.addInstance(ProgramScheduleStoreDataset.class.getSimpleName(),
-                                 Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
+    datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME, Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
   }
 }
