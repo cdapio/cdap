@@ -361,7 +361,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
    *
    * @param datasetFramework framework to add types and datasets to
    */
-  public static void setupJobQueueDataset(DatasetFramework datasetFramework) throws IOException,
+  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException,
     DatasetManagementException {
     datasetFramework.addInstance(JobQueueDataset.class.getSimpleName(), Schedulers.JOB_QUEUE_DATASET_ID,
                                  DatasetProperties.EMPTY);

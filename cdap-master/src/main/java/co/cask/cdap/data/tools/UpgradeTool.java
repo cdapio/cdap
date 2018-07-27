@@ -516,8 +516,8 @@ public class UpgradeTool {
     // Usage registry
     UsageDataset.setupDatasets(datasetFramework);
 
-    JobQueueDataset.setupJobQueueDataset(datasetFramework);
-    ProgramScheduleStoreDataset.setupSchedulerStoreDataset(datasetFramework);
+    JobQueueDataset.setupDatasets(datasetFramework);
+    ProgramScheduleStoreDataset.setupDatasets(datasetFramework);
 
     DatasetServiceStore.setupDatasets(datasetFramework);
 
