@@ -69,7 +69,7 @@ export default class ProfileDetailView extends Component {
     let {namespace} = this.props.match.params;
     let {profile} = this.state;
     let extraTags = {
-      profile: `${profile.scope}:${profile.name}`,
+      profile: `${profile.name}`,
       programtype: 'Workflow'
     };
     fetchAggregateProfileMetrics(namespace, profile, extraTags)

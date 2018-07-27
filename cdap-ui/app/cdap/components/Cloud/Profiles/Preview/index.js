@@ -19,9 +19,13 @@ import PropTypes from 'prop-types';
 import {MyCloudApi} from 'api/cloud';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
-import {getProvisionerLabel} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {
+  getProvisionerLabel,
+  getNodeHours,
+  fetchAggregateProfileMetrics,
+  ONEDAYMETRICKEY
+} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
-import {MyMetricApi} from 'api/metric';
 import {humanReadableDate} from 'services/helpers';
 import T from 'i18n-react';
 require('./Preview.scss');
@@ -51,73 +55,45 @@ export default class ProfilePreview extends Component {
 
   getProfileDetails() {
     let namespace = getCurrentNamespace();
+    let apiObservable$;
     if (this.props.profileScope === 'system') {
-      namespace = 'system';
+      apiObservable$ = MyCloudApi.getSystemProfile({ profile: this.props.profileName});
+    } else {
+      apiObservable$ = MyCloudApi.get({
+        namespace,
+        profile: this.props.profileName
+      });
     }
-    MyCloudApi.get({
-      namespace,
-      profile: this.props.profileName
-    })
-    .subscribe(
-      profileDetails => {
-        this.setState({
-          profileDetails,
-          loading: false
-        }, this.getProfileMetrics);
-      },
-      error => {
-        this.setState({
-          error,
-          loading: false
-        });
-      }
-    );
+    apiObservable$
+      .subscribe(
+        profileDetails => {
+          this.setState({
+            profileDetails,
+            loading: false
+          }, this.getProfileMetrics);
+        },
+        error => {
+          this.setState({
+            error,
+            loading: false
+          });
+        }
+      );
   }
 
-  getMetricsQueryBody = (startTime, endTime) => {
-    let namespace = getCurrentNamespace();
-    let {profileName, profileScope} = this.props;
-    profileScope = profileScope.toUpperCase();
-    return {
-      "qid": {
-        "tags": {
-          namespace,
-          "profilescope": profileScope,
-          "profile": `${profileScope}:${profileName}`
-        },
-        "metrics": [
-          "system.program.completed.runs",
-          "system.program.node.minutes"
-        ],
-        "timeRange": {
-          "start": startTime,
-          "end": endTime,
-          "resolution": "auto",
-          "aggregate": true
-        }
-      }
-    };
-  };
-
   getProfileMetrics = () => {
-    let metricsBody24 = this.getMetricsQueryBody('now-24h', 'now');
-    MyMetricApi
-      .query(null, metricsBody24)
-      .subscribe(metrics => {
-        let runs = '--', minutes = '--';
-        metrics.qid.series.forEach(metric => {
-          if (metric.metricName === 'system.program.completed.runs' && Array.isArray(metric.data)) {
-            runs = metric.data[0].value;
-          }
-          if (metric.metricName === 'system.program.node.minutes' && Array.isArray(metric.data)) {
-            minutes = metric.data[0].value;
-          }
-        });
+    let {profileName} = this.props;
+    let {profileDetails} = this.state;
+    const extraTags = {
+      profilescope: profileDetails.scope,
+      programtype: "Workflow",
+      profile: `${profileName}`
+    };
+    fetchAggregateProfileMetrics(getCurrentNamespace(), profileDetails, extraTags)
+      .subscribe(metricsMap => {
+        let oneDayMetrics = metricsMap[ONEDAYMETRICKEY];
         this.setState({
-          metrics: {
-            runs,
-            minutes
-          }
+          metrics: oneDayMetrics
         });
       });
   };
@@ -186,8 +162,8 @@ export default class ProfilePreview extends Component {
               <div className="truncate-text">
                 {this.state.profileDetails.scope}
               </div>
-              <div>{this.state.metrics.runs}</div>
-              <div>{this.state.metrics.minutes}</div>
+              <div>{this.state.metrics.runs || '--'}</div>
+              <div>{getNodeHours(this.state.metrics.minutes || '--')}</div>
               <div>{humanReadableDate(this.state.profileDetails.created, false, true)}</div>
               <div className={`profile-status ${profileStatus}`}>
                 {T.translate(`features.Cloud.Profiles.common.${profileStatus}`)}

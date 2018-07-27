@@ -26,13 +26,17 @@ import {MySearchApi} from 'api/search';
 import {GLOBALS} from 'services/global-constants';
 import isNil from 'lodash/isNil';
 
-export const getProfileMetricsBody = (queryId, namespace, profileScope, startTime, endTime, extraTags) => {
+export const getProfileMetricsBody = (queryId, namespace, profilescope, startTime, endTime, extraTags = {}) => {
+  let tags = {
+    profilescope,
+    ...extraTags
+  };
+  if (namespace !== 'system') {
+    tags.namespace = namespace;
+  }
   let metricBody = {
     [queryId]: {
-      tags: {
-        namespace,
-        profilescope: profileScope
-      },
+      tags,
       metrics: [
         'system.program.completed.runs',
         'system.program.failed.runs',
@@ -47,18 +51,6 @@ export const getProfileMetricsBody = (queryId, namespace, profileScope, startTim
       groupBy: ['profile']
     }
   };
-  if (extraTags) {
-    metricBody = {
-      ...metricBody,
-      [queryId]: {
-        ...metricBody[queryId],
-        tags: {
-          ...metricBody[queryId].tags,
-          ...extraTags
-        }
-      }
-    };
-  }
   if (!startTime && !endTime) {
     metricBody = {
       ...metricBody,
@@ -205,9 +197,17 @@ export const getProfiles = (namespace) => {
             let profilesToMetricsMap = {};
             Object.keys(metrics).forEach(query => {
               // oneDayMetrics, overMetrics are the keys for metrics for each profile.
+              let profileScope = query.indexOf('USER') !== -1 ? 'user' : 'system';
               let metricsKey = query.replace(/USER|SYSTEM/, '');
               metrics[query].series.forEach(metric => {
-                let profileName = extractProfileName(metric.grouping.profile);
+                let profileName = metric.grouping.profile;
+                /*
+                  The map index cannot be just profile name as
+                  two different profiles (in user and system scopes)
+                  can have the same name. This will overwrite the one from the other scope.
+                  Hence the addition of scope to make sure the metrics are not overwritten.
+                */
+                let profileKey = `${profileScope}:${profileName}`;
                 let metricName = metric.metricName.split('.').pop();
                 let metricValue;
                 if (!metric.data.length) {
@@ -219,12 +219,15 @@ export const getProfiles = (namespace) => {
                     metricValue = metric.data.reduce((prev, curr) => prev + curr.value, 0);
                   }
                 }
-                if (!profilesToMetricsMap.hasOwnProperty(profileName)) {
-                    profilesToMetricsMap[profileName] = {[metricsKey]: {}};
+                if (!profilesToMetricsMap.hasOwnProperty(profileKey)) {
+                    profilesToMetricsMap[profileKey] = {[metricsKey]: {}};
+                }
+                if (!isNil(objectQuery(profilesToMetricsMap, profileKey, metricsKey, metricName))) {
+                  metricValue += profilesToMetricsMap[profileKey][metricsKey][metricName];
                 }
                 /*
                   {
-                    profile1: {
+                    system:profile1: {
                       oneDayMetrics: {
                         runs: 1,
                         minutes: 2
@@ -236,9 +239,12 @@ export const getProfiles = (namespace) => {
                     }
                   }
                 */
-                profilesToMetricsMap[profileName] = {
-                  ...profilesToMetricsMap[profileName],
-                  [metricsKey]: { ...profilesToMetricsMap[profileName][metricsKey], [metricName]: metricValue }
+                profilesToMetricsMap[profileKey] = {
+                  ...profilesToMetricsMap[profileKey],
+                  [metricsKey]: {
+                    ...profilesToMetricsMap[profileKey][metricsKey],
+                    [metricName]: metricValue
+                  }
                 };
               });
             });
