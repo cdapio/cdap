@@ -38,6 +38,7 @@ import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.indexer.InvertedTimeIndexer;
 import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.MetadataEntityTypeIndexer;
+import co.cask.cdap.data2.metadata.indexer.NearestKnownAncestorIndexer;
 import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
@@ -1025,11 +1026,13 @@ public class MetadataDataset extends AbstractDataset {
     // We use the current metadata information to determine if we have any record for this entity in the store or not.
     // If we have some properties then we can definitely say we have some metadata record for this
     // entity and hence there is no need for indexing with new entity indexers. We always index with new entity
-    // indexers even if there might be some tags as tags update happens as combined action of deleting tags
-    // (which will delete all indexes) and rewriting the tag as new record. In case of existing tag an optimization
+    // indexers for tags as tags update happens as combined action of deleting tags
+    // (which will delete all indexes including the indexes which is associated with the entity)
+    // and rewriting the tag as new record. In case of existing tag an optimization
     // can be made to check if the new metadata being written is properties or tags as in case of properties we will
     // not need include new entity indexes but keep the code cleaner we avoid that conditional check here.
-    Set<Indexer> indexersForKey = getIndexersForKey(metadataEntry.getKey(), existingMetadata.getProperties().isEmpty());
+    Set<Indexer> indexersForKey = getIndexersForKey(metadataEntry.getKey(), existingMetadata.getProperties().isEmpty()
+      || metadataEntry.getKey().equals(TAGS_KEY));
     Metadata updatedMetadata = writeWithHistory(existingMetadata, metadataEntry, indexersForKey);
     return new MetadataChange(existingMetadata, updatedMetadata);
   }
@@ -1088,6 +1091,7 @@ public class MetadataDataset extends AbstractDataset {
       }
       if (isNewEntity) {
         indexers.add(new MetadataEntityTypeIndexer());
+        indexers.add(new NearestKnownAncestorIndexer());
       }
       return indexers;
     }
