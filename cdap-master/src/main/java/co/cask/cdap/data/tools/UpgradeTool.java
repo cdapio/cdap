@@ -448,8 +448,8 @@ public class UpgradeTool {
 
   private void performCoprocessorUpgrade() throws Exception {
     LOG.info("Disabling TMS Tables...");
-    tmsTableFactory.disableMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
-    tmsTableFactory.disablePayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+    tmsTableFactory.disableTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+    tmsTableFactory.disableTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
 
     LOG.info("Upgrading User and System HBase Tables ...");
     dsUpgrade.upgrade();

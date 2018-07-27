@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,6 +68,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A {@link TableFactory} for creating messaging tables backed by HBase.
@@ -191,23 +192,20 @@ public final class HBaseTableFactory implements TableFactory {
   }
 
   public void upgradeMessageTable(String tableName) throws IOException {
-    upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
-                       tableUtil.getMessageTableRegionObserverClassForVersion());
+    upgradeTable(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
+                 tableUtil.getMessageTableRegionObserverClassForVersion());
   }
 
   public void upgradePayloadTable(String tableName) throws IOException {
-    upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
-                       tableUtil.getPayloadTableRegionObserverClassForVersion());
+    upgradeTable(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
+                 tableUtil.getPayloadTableRegionObserverClassForVersion());
   }
 
-  public void disableMessageTable(String tableName) throws IOException {
-    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
-    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
-      disableTable(ddlExecutor, tableId);
-    }
+  public void upgradeMetaTable(String tableName) throws IOException {
+    upgradeTable(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName), null);
   }
 
-  public void disablePayloadTable(String tableName) throws IOException {
+  public void disableTable(String tableName) throws IOException {
     TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       disableTable(ddlExecutor, tableId);
@@ -273,7 +271,7 @@ public final class HBaseTableFactory implements TableFactory {
     }
   }
 
-  private void upgradeCoProcessor(TableId tableId, Class<? extends Coprocessor> coprocessor) throws IOException {
+  private void upgradeTable(TableId tableId, @Nullable Class<? extends Coprocessor> coprocessor) throws IOException {
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       HTableDescriptor tableDescriptor;
       try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
@@ -305,18 +303,21 @@ public final class HBaseTableFactory implements TableFactory {
       // create a new descriptor for the table update
       HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
 
-      // Remove old coprocessor
-      Map<String, HBaseTableUtil.CoprocessorInfo> coprocessorInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
-      for (Map.Entry<String, HBaseTableUtil.CoprocessorInfo> coprocessorEntry : coprocessorInfo.entrySet()) {
-        newDescriptor.removeCoprocessor(coprocessorEntry.getValue().getClassName());
-      }
+      if (coprocessor != null) {
+        // Remove old coprocessor
+        Map<String, HBaseTableUtil.CoprocessorInfo> coprocessorInfo = HBaseTableUtil
+          .getCoprocessorInfo(tableDescriptor);
+        for (Map.Entry<String, HBaseTableUtil.CoprocessorInfo> coprocessorEntry : coprocessorInfo.entrySet()) {
+          newDescriptor.removeCoprocessor(coprocessorEntry.getValue().getClassName());
+        }
 
-      // Add new coprocessor
-      CoprocessorDescriptor coprocessorDescriptor =
-        coprocessorManager.getCoprocessorDescriptor(coprocessor, Coprocessor.PRIORITY_USER);
-      Path path = coprocessorDescriptor.getPath() == null ? null : new Path(coprocessorDescriptor.getPath());
-      newDescriptor.addCoprocessor(coprocessorDescriptor.getClassName(), path, coprocessorDescriptor.getPriority(),
-                                   coprocessorDescriptor.getProperties());
+        // Add new coprocessor
+        CoprocessorDescriptor coprocessorDescriptor =
+          coprocessorManager.getCoprocessorDescriptor(coprocessor, Coprocessor.PRIORITY_USER);
+        Path path = coprocessorDescriptor.getPath() == null ? null : new Path(coprocessorDescriptor.getPath());
+        newDescriptor.addCoprocessor(coprocessorDescriptor.getClassName(), path, coprocessorDescriptor.getPriority(),
+                                     coprocessorDescriptor.getProperties());
+      }
 
       // Update CDAP version, table prefix
       HBaseTableUtil.setVersion(newDescriptor);
