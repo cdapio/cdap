@@ -217,7 +217,7 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
         scheduleView: action.payload.scheduleView
       };
     case ACTIONS.SET_CURRENT_BACKEND_SCHEDULE: {
-      let {currentBackendSchedule} = action.payload;
+      let {currentBackendSchedule, profileFromPreferences} = action.payload;
       let profileFromBackend = objectQuery(currentBackendSchedule, 'properties', CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY);
       let profileCustomizations = getCustomizationMap(objectQuery(currentBackendSchedule, 'properties') || {});
       let constraintFromBackend = (currentBackendSchedule.constraints || []).find(constraint => {
@@ -225,13 +225,14 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
       });
       let maxConcurrencyFromBackend = objectQuery(constraintFromBackend, 'maxConcurrency');
       let cronFromBackend = objectQuery(currentBackendSchedule, 'trigger', 'cronExpression');
+      let selectedProfile = profileFromBackend || profileFromPreferences || CLOUD.DEFAULT_PROFILE_NAME;
       return {
         ...state,
         currentBackendSchedule: action.payload.currentBackendSchedule,
         cron: cronFromBackend,
         maxConcurrentRuns: maxConcurrencyFromBackend,
         profiles: {
-          selectedProfile: profileFromBackend || CLOUD.DEFAULT_PROFILE_NAME,
+          selectedProfile,
           profileCustomizations
         }
       };

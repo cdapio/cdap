@@ -252,7 +252,7 @@ features:
         Associations:
           Header:
             created: Created
-            label: Pipelines currently using "{profile}"
+            label: Pipelines currently using {profile}
             last24hrsnodehr: Last 24 hrs node hours
             last24hrsruns: Last 24 hrs runs
             name: Name

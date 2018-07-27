@@ -26,7 +26,9 @@ import PipelineSchedulerStore, {
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import {MyScheduleApi} from 'api/schedule';
-import {GLOBALS} from 'services/global-constants';
+import {MyPreferenceApi} from 'api/preference';
+import {GLOBALS, CLOUD} from 'services/global-constants';
+import {Observable} from 'rxjs/Observable';
 
 function setStateFromCron(cron = PipelineSchedulerStore.getState().cron) {
   let cronValues = cron.split(' ');
@@ -183,18 +185,23 @@ function setSelectedProfile(selectedProfile, profileCustomizations = {}) {
 
 function getTimeBasedSchedule() {
   let {name: appId} = PipelineDetailStore.getState();
-  MyScheduleApi
-    .get({
-      namespace: getCurrentNamespace(),
-      appId,
-      scheduleName: GLOBALS.defaultScheduleId
-    })
+  const namespace = getCurrentNamespace();
+  const scheduleName = GLOBALS.defaultScheduleId;
+
+  Observable
+    .forkJoin(
+      MyScheduleApi.get({ namespace, appId, scheduleName }),
+      MyPreferenceApi.getAppPreferencesResolved({ namespace, appId })
+    )
     .subscribe(
-      (currentBackendSchedule) => {
+      (res) => {
+        let [currentBackendSchedule, appPrefs] = res;
+        let profileFromPreferences = appPrefs[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY];
         PipelineSchedulerStore.dispatch({
           type: PipelineSchedulerActions.SET_CURRENT_BACKEND_SCHEDULE,
           payload: {
-            currentBackendSchedule
+            currentBackendSchedule,
+            profileFromPreferences
           }
         });
         setStateFromCron();
