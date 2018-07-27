@@ -48,7 +48,7 @@ problem as well. This will help us in prioritization.
 Discuss on the Mailing List
 ---------------------------
 We recommend that you discuss your plan on the mailing list 
-`cdap-developers@cask.co <mailto:cdap-developers@cask.co>`__
+`cdap-dev@googlegroups.com <mailto:cdap-dev@googlegroups.com>`__
 before starting to code. This gives us a chance to add feedback and help point you in the right direction.
 
 Pull Requests
@@ -56,7 +56,7 @@ Pull Requests
 We love having pull requests and we do our best to review them as quickly as possible. 
 If your pull request is not accepted on the first try, don't be discouraged. 
 If there is a problem with the implementation, you will receive feedback on what to improve.
-Add a link to your PR on the issue, and in an email to `cdap-developers@cask.co <mailto:cdap-developers@cask.co>`__.
+Add a link to your PR on the issue, and in an email to `cdap-dev@googlegroups.com <mailto:cdap-dev@googlegroups.com>`__.
 
 Conventions
 -----------
