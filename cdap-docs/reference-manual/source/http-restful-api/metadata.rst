@@ -28,6 +28,7 @@ The HTTP RESTful API is divided into these sections:
 - :ref:`metadata tags <http-restful-api-metadata-tags>`
 - :ref:`searching metadata <http-restful-api-metadata-searching>`
 - :ref:`viewing lineage <http-restful-api-metadata-lineage>`
+- :ref:`field level lineage <http-restful-api-metadata-fieldlevellineage>`
 - :ref:`metadata for a run of a program <http-restful-api-metadata-run>`
 
 Metadata keys, values, and tags must conform to the CDAP :ref:`alphanumeric extra extended
@@ -1212,6 +1213,330 @@ Rolling up the above using ``rollup=workflow`` would group the programs together
       },
     },
   }
+
+.. highlight:: console
+
+.. _http-restful-api-metadata-fieldlevellineage:
+
+Field Level Lineage
+===================
+
+Fields associated with the Dataset
+----------------------------------
+
+Gets the fields that were associated with the dataset for the specified range of time::
+
+  GET /namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields?start=<start-ts>&end=<end-ts>[&prefix=<prefix>]
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``dataset-id``
+     - Name of the ``dataset``
+   * - ``start-ts``
+     - Starting time-stamp (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``end-ts``
+     - Ending time-stamp (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``prefix``
+     - Optional ``prefix``, when provided only fields that have given prefix will be returned
+
+Following is sample response::
+
+  ["firstName","lastName","item","id","customer_id"]
+
+.. highlight:: console
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Fields of dataset are returned as a list of strings in the body of the response
+   * - ``400 BAD REQUEST``
+     - Failure to parse the time range provided
+
+Field Lineage Summary
+---------------------
+
+Gets the field lineage summary for a specified field of a dataset. The field lineage summary consists of the
+sets of datasets and their respective fields used to compute the specified field of a dataset::
+
+  GET /namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}?start=<start-ts>&end=<end-ts>&direction=incoming
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``dataset-id``
+     - Name of the ``dataset``
+   * - ``field-name``
+     - Name of the ``field``
+   * - ``start-ts``
+     - Starting time-stamp (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``end-ts``
+     - Ending time-stamp (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``direction``
+     - ``incoming``, to return the set of dataset and fields which participated in the computation of the given field
+
+The returned response consists of the direction in which the summary is requested and the datasets and fields
+that were responsible for the computation of a specified field. Currently, the only supported direction is ``incoming``.
+
+Following is a sample response::
+
+  {
+      "incoming": [
+          {
+              "dataset": {
+                  "dataset": "Customer",
+                  "entity": "DATASET",
+                  "namespace": "default"
+              },
+              "fields": [
+                  "body"
+              ]
+          },
+          {
+              "dataset": {
+                  "dataset": "purchases",
+                  "entity": "DATASET",
+                  "namespace": "default"
+              },
+              "fields": [
+                  "body"
+              ]
+          }
+      ]
+  }
+
+.. highlight:: console
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Fields of dataset are returned as a list of strings in the body of the response
+   * - ``400 BAD REQUEST``
+     - Failure to parse the time range provided
+
+Field Lineage Operations
+------------------------
+
+Gets the details of operations responsible for computation of a specified field of a dataset for a specified range of time::
+
+  GET /namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}/operations?start=<start-ts>&end=<end-ts>&direction=incoming
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``dataset-id``
+     - Name of the ``dataset``
+   * - ``field-name``
+     - Name of the ``field``
+   * - ``start-ts``
+     - Starting time-stamp (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``end-ts``
+     - Ending time-stamp (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``direction``
+     - ``incoming``, to return the operations which participated in the computation of the given field
+
+The single field can be computed in multiple ways, where each unique way consists of a list of operations that
+participated in the computation and the list of programs that performed the computation. The returned response
+consists of the direction in which the operations are requested. Currently, the only supported direction is ``incoming``.
+For the specified direction, the response includes the different ways that the field was computed.
+
+Following is a sample response::
+
+    {
+      "incoming": [
+        {
+            "operations": [
+                {
+                    "description": "Read files",
+                    "inputs": {
+                        "endPoint": {
+                            "name": "purchases",
+                            "namespace": "default"
+                        }
+                    },
+                    "name": "File2.Read",
+                    "outputs": {
+                        "fields": [
+                            "offset",
+                            "body"
+                        ]
+                    }
+                },
+                {
+                    "description": "Parsed field",
+                    "inputs": {
+                        "fields": [
+                            {
+                                "name": "body",
+                                "origin": "File2.Read"
+                            }
+                        ]
+                    },
+                    "name": "CSVParser2.CSV Parse",
+                    "outputs": {
+                        "fields": [
+                            "customer_id",
+                            "item",
+                            "price"
+                        ]
+                    }
+                },
+                {
+                    "description": "Read files",
+                    "inputs": {
+                        "endPoint": {
+                            "name": "Customer",
+                            "namespace": "default"
+                        }
+                    },
+                    "name": "File.Read",
+                    "outputs": {
+                        "fields": [
+                            "offset",
+                            "body"
+                        ]
+                    }
+                },
+                {
+                    "description": "Parsed field",
+                    "inputs": {
+                        "fields": [
+                            {
+                                "name": "body",
+                                "origin": "File.Read"
+                            }
+                        ]
+                    },
+                    "name": "CSVParser.CSV Parse",
+                    "outputs": {
+                        "fields": [
+                            "id",
+                            "first_name",
+                            "last_name"
+                        ]
+                    }
+                },
+                {
+                    "description": "Used as a key in a join",
+                    "inputs": {
+                        "fields": [
+                            {
+                                "name": "id",
+                                "origin": "CSVParser.CSV Parse"
+                            },
+                            {
+                                "name": "customer_id",
+                                "origin": "CSVParser2.CSV Parse"
+                            }
+                        ]
+                    },
+                    "name": "Joiner.Join",
+                    "outputs": {
+                        "fields": [
+                            "id",
+                            "customer_id"
+                        ]
+                    }
+                },
+                {
+                    "description": "Wrote to TPFS dataset",
+                    "inputs": {
+                        "fields": [
+                            {
+                                "name": "id_from_customer",
+                                "origin": "Joiner.Rename id"
+                            },
+                            {
+                                "name": "fname",
+                                "origin": "Joiner.Rename CSVParser.first_name"
+                            },
+                            {
+                                "name": "lname",
+                                "origin": "Joiner.Rename CSVParser.last_name"
+                            },
+                            {
+                                "name": "customer_id",
+                                "origin": "Joiner.Join"
+                            },
+                            {
+                                "name": "item",
+                                "origin": "Joiner.Identity CSVParser2.item"
+                            }
+                        ]
+                    },
+                    "name": "Parquet Time Partitioned Dataset.Write",
+                    "outputs": {
+                        "endPoint": {
+                            "name": "parquet_data",
+                            "namespace": "default"
+                        }
+                    }
+                }
+            ],
+            "programs": [
+                {
+                    "lastExecutedTimeInSeconds": 1532468358,
+                    "program": {
+                        "application": "customer_pipeline_spark",
+                        "entity": "PROGRAM",
+                        "namespace": "default",
+                        "program": "DataPipelineWorkflow",
+                        "type": "Workflow",
+                        "version": "-SNAPSHOT"
+                    }
+                }
+            ]
+        }
+      ]
+    }
+
+.. highlight:: console
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Fields of dataset are returned as a list of strings in the body of the response
+   * - ``400 BAD REQUEST``
+     - Failure to parse the time range provided
 
 .. highlight:: console
 

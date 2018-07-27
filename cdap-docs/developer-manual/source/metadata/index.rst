@@ -16,6 +16,7 @@ Metadata
    
     System Metadata <system-metadata>
     Discovery and Lineage <discovery-lineage>
+    Field Level Lineage <field-lineage>
     Audit Logging <audit-logging>
     CDAP Metadata UI <metadata-ui>
     Accessing metadata programmatically <programmatic-metadata>
