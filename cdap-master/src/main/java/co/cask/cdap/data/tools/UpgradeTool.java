@@ -59,11 +59,9 @@ import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.handlers.DatasetServiceStore;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
@@ -450,8 +448,8 @@ public class UpgradeTool {
 
   private void performCoprocessorUpgrade() throws Exception {
     LOG.info("Disabling TMS Tables...");
-    tmsTableFactory.disableTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
-    tmsTableFactory.disableTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+    tmsTableFactory.disableMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+    tmsTableFactory.disablePayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
 
     LOG.info("Upgrading User and System HBase Tables ...");
     dsUpgrade.upgrade();
@@ -518,9 +516,5 @@ public class UpgradeTool {
 
     JobQueueDataset.setupDatasets(datasetFramework);
     ProgramScheduleStoreDataset.setupDatasets(datasetFramework);
-
-    DatasetServiceStore.setupDatasets(datasetFramework);
-
-    ConfigurationWriter.upgradeTable(cConf, hConf);
   }
 }

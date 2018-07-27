@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.retry.RetryableException;
 import co.cask.cdap.app.store.ServiceStore;
@@ -42,7 +41,6 @@ import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -135,16 +133,5 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
       throw new IllegalStateException("Unable to find latest restart request for " + serviceName);
     }
     return GSON.fromJson(jsonString, RestartServiceInstancesStatus.class);
-  }
-
-  /**
-   * Adds datasets and types to the given {@link DatasetFramework}. Used by the upgrade tool to upgrade Datasets.
-   *
-   * @param framework Dataset framework to add types and datasets to
-   */
-  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(NoTxKeyValueTable.class.getName(),
-                          NamespaceId.SYSTEM.dataset(Constants.Service.SERVICE_INSTANCE_TABLE_NAME),
-                          DatasetProperties.EMPTY);
   }
 }
