@@ -276,8 +276,9 @@ public class MetadataDataset extends AbstractDataset {
     Iterator<Map.Entry<String, String>> iterator = properties.entrySet().iterator();
     if (iterator.hasNext()) {
       Map.Entry<String, String> first = iterator.next();
-      previousMetadata = setMetadata(new MetadataEntry(metadataEntity, first.getKey(), first.getValue())).getExisting();
-      finalMetadata = setMetadata(new MetadataEntry(metadataEntity, first.getKey(), first.getValue())).getLatest();
+      MetadataChange metadataChange = setMetadata(new MetadataEntry(metadataEntity, first.getKey(), first.getValue()));
+      previousMetadata = metadataChange.getExisting();
+      finalMetadata = metadataChange.getLatest();
     } else {
       // if properties was empty then we do need to the existing metadata as it is
       previousMetadata = getMetadata(metadataEntity);
@@ -300,8 +301,8 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   @VisibleForTesting
-  void addTags(MetadataEntity entity, String ... tags) {
-    addTags(entity, Sets.newHashSet(tags));
+  MetadataChange addTags(MetadataEntity entity, String ... tags) {
+    return addTags(entity, Sets.newHashSet(tags));
   }
 
   /**
@@ -481,7 +482,7 @@ public class MetadataDataset extends AbstractDataset {
     byte[] prefix = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
-    Map<String, String> exitingMetadata = new HashMap<>();
+    Map<String, String> existingMetadata = new HashMap<>();
     Map<String, String> deletedMetadata = new HashMap<>();
 
     try (Scanner scan = indexedTable.scan(prefix, stopKey)) {
@@ -494,7 +495,7 @@ public class MetadataDataset extends AbstractDataset {
         String metadataKey = MetadataKey.extractMetadataKey(next.getRow());
 
         // put all the metadata for this entity as existing
-        exitingMetadata.put(metadataKey, value);
+        existingMetadata.put(metadataKey, value);
 
         if (filter.test(metadataKey)) {
           // if the key matches the key to be deleted delete it and put it in deleted
@@ -505,7 +506,7 @@ public class MetadataDataset extends AbstractDataset {
       }
     }
     // current metadata is existing - deleted
-    Map<String, String> currentMetadata = new HashMap<>(exitingMetadata);
+    Map<String, String> currentMetadata = new HashMap<>(existingMetadata);
     // delete all the indexes for all deleted metadata key
     for (String deletedMetadataKey : deletedMetadata.keySet()) {
       deleteIndexes(metadataEntity, deletedMetadataKey);
@@ -514,7 +515,7 @@ public class MetadataDataset extends AbstractDataset {
 
     Metadata changedMetadata = getMetadata(metadataEntity, currentMetadata);
     writeHistory(changedMetadata);
-    return new MetadataChange(getMetadata(metadataEntity, exitingMetadata), changedMetadata);
+    return new MetadataChange(getMetadata(metadataEntity, existingMetadata), changedMetadata);
   }
 
   /**
