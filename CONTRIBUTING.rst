@@ -51,6 +51,10 @@ We recommend that you discuss your plan on the mailing list
 `cdap-dev@googlegroups.com <mailto:cdap-dev@googlegroups.com>`__
 before starting to code. This gives us a chance to add feedback and help point you in the right direction.
 
+Design Document
+---------------
+Document the design the feature design in `http://wiki.cask.co` 
+
 Pull Requests
 -------------
 We love having pull requests and we do our best to review them as quickly as possible. 
