@@ -159,7 +159,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
       // TODO CDAP-13574 Support authorization for custom entities/resources
       ImmutableSet.copyOf(
         AuthorizationUtil.isVisible(results.getResults(), authorizationEnforcer, authenticationContext.getPrincipal(),
-                                    input -> EntityId.getSelfOrParentEntityId(input.getMetadataEntity()), null)),
+                                    input -> EntityId.getNearestKnownEntity(input.getMetadataEntity()), null)),
       results.getCursors(), results.isShowHidden(), results.getEntityScope());
   }
 

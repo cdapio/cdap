@@ -306,7 +306,9 @@ public class RouterPathLookupTest {
   public void testRouterExplorePathLookUp() {
     String explorePath = "/v3/namespaces/default//data///explore//datasets////mydataset//enable";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), explorePath);
+    System.out.println("Before " + System.currentTimeMillis());
     RouteDestination result = pathLookup.getRoutingService(explorePath, httpRequest);
+    System.out.println("After " + System.currentTimeMillis());
     Assert.assertEquals(RouterPathLookup.EXPLORE_HTTP_USER_SERVICE, result);
   }
 

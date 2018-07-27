@@ -1029,7 +1029,8 @@ public class MetadataDataset extends AbstractDataset {
     // (which will delete all indexes) and rewriting the tag as new record. In case of existing tag an optimization
     // can be made to check if the new metadata being written is properties or tags as in case of properties we will
     // not need include new entity indexes but keep the code cleaner we avoid that conditional check here.
-    Set<Indexer> indexersForKey = getIndexersForKey(metadataEntry.getKey(), existingMetadata.getProperties().isEmpty());
+    Set<Indexer> indexersForKey = getIndexersForKey(metadataEntry.getKey(), existingMetadata.getProperties().isEmpty()
+      || metadataEntry.getKey().equals(TAGS_KEY));
     Metadata updatedMetadata = writeWithHistory(existingMetadata, metadataEntry, indexersForKey);
     return new MetadataChange(existingMetadata, updatedMetadata);
   }
