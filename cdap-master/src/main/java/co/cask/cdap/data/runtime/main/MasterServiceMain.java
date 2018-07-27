@@ -117,6 +117,7 @@ import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.internal.zookeeper.ReentrantDistributedLock;
 import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKOperations;
@@ -929,6 +930,11 @@ public class MasterServiceMain extends DaemonMain {
 
           // Add HBase dependencies
           preparer.withDependencies(injector.getInstance(HBaseTableUtil.class).getClass());
+
+          // Add secure tokens
+          if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
+            preparer.addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
+          }
 
           // add hadoop classpath to application classpath and exclude hadoop classes from bundle jar.
           List<String> yarnAppClassPath = Arrays.asList(
