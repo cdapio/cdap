@@ -65,8 +65,9 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.DatasetServiceStore;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
@@ -515,8 +516,8 @@ public class UpgradeTool {
     // Usage registry
     UsageDataset.setupDatasets(datasetFramework);
 
-    Schedulers.setupJobQueueDataset(datasetFramework);
-    Schedulers.setupSchedulerStoreDataset(datasetFramework);
+    JobQueueDataset.setupJobQueueDataset(datasetFramework);
+    ProgramScheduleStoreDataset.setupSchedulerStoreDataset(datasetFramework);
 
     DatasetServiceStore.setupDatasets(datasetFramework);
 
