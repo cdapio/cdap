@@ -133,7 +133,7 @@ import javax.annotation.Nullable;
  * The 'c' column is for creation-time indexes
  * The 'ic' column is for creation-time indexes in reverse order
  *
- * Which indexes are used will depend on {@link #getIndexersForKey(String)}, which essentially
+ * Which indexes are used will depend on {@link #getIndexersForKey(String, boolean)}, which essentially
  * looks for special keys that {@link AbstractSystemMetadataWriter} are known to write.
  *
  * Each index will generate one or more index values from the single {@link MetadataEntry} value.
@@ -270,20 +270,25 @@ public class MetadataDataset extends AbstractDataset {
    * @return {@link MetadataChange} representing the change in metadata for the metadataEntity
    */
   public MetadataChange setProperty(MetadataEntity metadataEntity, Map<String, String> properties) {
-    Metadata previousMetadata;
-    Metadata finalMetadata = new Metadata(metadataEntity, Collections.emptyMap(), Collections.emptySet());
-
+    Metadata previousMetadata, finalMetadata;
     Iterator<Map.Entry<String, String>> iterator = properties.entrySet().iterator();
+    // properties can have none, one or more than one entry to be updated
     if (iterator.hasNext()) {
+      // if there is at least one entry then we need to process that entry to update metadata and at that point we want
+      // to store what was the previousMetadata before we called setMetadata
       Map.Entry<String, String> first = iterator.next();
       MetadataChange metadataChange = setMetadata(new MetadataEntry(metadataEntity, first.getKey(), first.getValue()));
+      // metadata before setMetadata was applied
       previousMetadata = metadataChange.getExisting();
+      // metadata after setMetadata was applied
       finalMetadata = metadataChange.getLatest();
     } else {
-      // if properties was empty then we do need to the existing metadata as it is
+      // if properties was empty then we do need to the existing metadata as it is and also the final state is
+      // same as previous state
       previousMetadata = getMetadata(metadataEntity);
+      finalMetadata = previousMetadata;
     }
-
+    // if there are more key-value properties then process them updating the final metadata state
     while (iterator.hasNext()) {
       Map.Entry<String, String> next = iterator.next();
       finalMetadata = setMetadata(new MetadataEntry(metadataEntity, next.getKey(), next.getValue())).getExisting();
@@ -940,6 +945,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   @Nullable
   public byte[] rebuildIndexes(@Nullable byte[] startRowKey, int limit) {
+    Set<MetadataEntity> previouslySeenEntities = new HashSet<>();
     // Now rebuild indexes for all values in the metadata dataset
     byte[] valueRowPrefix = MetadataKey.getValueRowPrefix();
     // If startRow is null, start at the beginning, else start at the provided start row
@@ -952,7 +958,8 @@ public class MetadataDataset extends AbstractDataset {
         byte[] rowKey = row.getRow();
         MetadataEntity metadataEntity = MetadataKey.extractMetadataEntityFromKey(rowKey);
         String metadataKey = MetadataKey.extractMetadataKey(rowKey);
-        Set<Indexer> indexers = getIndexersForKey(metadataKey);
+        boolean isNewEntity = previouslySeenEntities.add(metadataEntity);
+        Set<Indexer> indexers = getIndexersForKey(metadataKey, isNewEntity);
         MetadataEntry metadataEntry = getMetadata(metadataEntity, metadataKey);
         if (metadataEntry == null) {
           LOG.warn("Found null metadata entry for a known metadata key {} for entity {} which has an index stored. " +
@@ -1012,14 +1019,20 @@ public class MetadataDataset extends AbstractDataset {
    * @return {@link MetadataChange} representing the metadata before the change and after
    */
   private MetadataChange setMetadata(MetadataEntry metadataEntry) {
-    Set<Indexer> indexersForKey = getIndexersForKey(metadataEntry.getKey());
     // get existing metadata
     Metadata existingMetadata = getMetadata(metadataEntry.getMetadataEntity());
-
-    // the entity does not have any metadata associated with it so we should index it with its type too
-    if (existingMetadata.getProperties().isEmpty() && existingMetadata.getTags().isEmpty()) {
-      indexersForKey.add(new MetadataEntityTypeIndexer());
-    }
+    // existingMetadata is a Metadata object containing key-value properties and list of tags. We need to determine if
+    // we are writing this entity for the first time in our metadata store as there is some special indexes which we
+    // generate for the entity itself and this does not need to be regenerated for every metadata record for a
+    // particular entity to minimize writes.
+    // We use the current metadata information to determine if we have any record for this entity in the store or not.
+    // If we have some properties then we can definitely say we have some metadata record for this
+    // entity and hence there is no need for indexing with new entity indexers. We always index with new entity
+    // indexers even if there might be some tags as tags update happens as combined action of deleting tags
+    // (which will delete all indexes) and rewriting the tag as new record. In case of existing tag an optimization
+    // can be made to check if the new metadata being written is properties or tags as in case of properties we will
+    // not need include new entity indexes but keep the code cleaner we avoid that conditional check here.
+    Set<Indexer> indexersForKey = getIndexersForKey(metadataEntry.getKey(), existingMetadata.getProperties().isEmpty());
     Metadata updatedMetadata = writeWithHistory(existingMetadata, metadataEntry, indexersForKey);
     return new MetadataChange(existingMetadata, updatedMetadata);
   }
@@ -1065,17 +1078,22 @@ public class MetadataDataset extends AbstractDataset {
   /**
    * Returns all the {@link Indexer indexers} that apply to a specified metadata key.
    * @param key the metadata key
+   * @param isNewEntity whether to include indexers which should be used only if this is the first
+   * time a metadata record is being stored for the given metadata entity
    */
-  private Set<Indexer> getIndexersForKey(String key) {
-    Set<Indexer> indexers = new HashSet<>();
-    // for known keys in system scope, return appropriate indexers
-    if (MetadataScope.SYSTEM == scope && SYSTEM_METADATA_KEY_TO_INDEXERS.containsKey(key)) {
-      indexers.addAll(SYSTEM_METADATA_KEY_TO_INDEXERS.get(key));
-    } else {
-      indexers.addAll(DEFAULT_INDEXERS);
+    private Set<Indexer> getIndexersForKey(String key, boolean isNewEntity) {
+      Set<Indexer> indexers = new HashSet<>();
+      // for known keys in system scope, return appropriate indexers
+      if (MetadataScope.SYSTEM == scope && SYSTEM_METADATA_KEY_TO_INDEXERS.containsKey(key)) {
+        indexers.addAll(SYSTEM_METADATA_KEY_TO_INDEXERS.get(key));
+      } else {
+        indexers.addAll(DEFAULT_INDEXERS);
+      }
+      if (isNewEntity) {
+        indexers.add(new MetadataEntityTypeIndexer());
+      }
+      return indexers;
     }
-    return indexers;
-  }
 
   /**
    * Deletes a row if the value in the index column is non-null. This is necessary because at least in the
@@ -1311,10 +1329,12 @@ public class MetadataDataset extends AbstractDataset {
    * @param entries list of entries to be written.
    */
   public void writeUpgradedRows(List<KeyValue<Long, Object>> entries) {
+    Set<MetadataEntity> previouslySeenEntities = new HashSet<>();
     for (KeyValue<Long, Object> kv : entries) {
       if (kv.getKey() == null) {
         MetadataEntry entry = (MetadataEntry) kv.getValue();
-        Set<Indexer> indexers = getIndexersForKey(entry.getKey());
+        boolean isNewEntity = previouslySeenEntities.add(entry.getMetadataEntity());
+        Set<Indexer> indexers = getIndexersForKey(entry.getKey(), isNewEntity);
         writeValue(entry, indexers);
         // store indexes for the tags being added
         storeIndexes(entry, indexers);

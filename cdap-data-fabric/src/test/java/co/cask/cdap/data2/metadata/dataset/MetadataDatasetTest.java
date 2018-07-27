@@ -122,7 +122,12 @@ public class MetadataDatasetTest {
     // Set some properties
     txnl.execute(() -> {
       dataset.setProperty(app1, "akey1", "avalue1");
-      MetadataChange metadataChange = dataset.setProperty(flow1, "fkey1", "fvalue1");
+      MetadataChange metadataChange = dataset.setProperty(flow1, Collections.emptyMap());
+      Assert.assertEquals(metadataChange.getExisting(), new Metadata(flow1, Collections.emptyMap(),
+                                                                     Collections.emptySet()));
+      Assert.assertEquals(metadataChange.getLatest(), new Metadata(flow1, Collections.emptyMap(),
+                                                                     Collections.emptySet()));
+      metadataChange = dataset.setProperty(flow1, "fkey1", "fvalue1");
       // assert the metadata change which happens on setting property for the first time
       Assert.assertEquals(new Metadata(flow1), metadataChange.getExisting());
       Assert.assertEquals(new Metadata(flow1, ImmutableMap.of("fkey1", "fvalue1"), Collections.emptySet()),
@@ -236,7 +241,12 @@ public class MetadataDatasetTest {
     });
     txnl.execute(() -> {
       dataset.addTags(app1, "tag1", "tag2", "tag3");
-      MetadataChange metadataChange = dataset.addTags(flow1, "tag1");
+      MetadataChange metadataChange = dataset.addTags(flow1, Collections.emptySet());
+      Assert.assertEquals(metadataChange.getExisting(), new Metadata(flow1, Collections.emptyMap(),
+                                                                     Collections.emptySet()));
+      Assert.assertEquals(metadataChange.getLatest(), new Metadata(flow1, Collections.emptyMap(),
+                                                                   Collections.emptySet()));
+      metadataChange = dataset.addTags(flow1, "tag1");
       // assert the metadata change which happens on setting tag for the first time
       Assert.assertEquals(new Metadata(flow1), metadataChange.getExisting());
       Assert.assertEquals(new Metadata(flow1, Collections.emptyMap(), ImmutableSet.of("tag1")),
