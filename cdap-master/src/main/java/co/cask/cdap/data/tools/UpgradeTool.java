@@ -59,6 +59,7 @@ import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -518,5 +519,7 @@ public class UpgradeTool {
     Schedulers.setupSchedulerStoreDataset(datasetFramework);
 
     DatasetServiceStore.setupDatasets(datasetFramework);
+
+    ConfigurationWriter.upgradeTable(cConf, hConf);
   }
 }

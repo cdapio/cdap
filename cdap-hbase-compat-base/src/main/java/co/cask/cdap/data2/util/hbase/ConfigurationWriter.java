@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,20 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotDisabledException;
+import org.apache.hadoop.hbase.TableNotEnabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.slf4j.Logger;
@@ -113,6 +121,81 @@ public class ConfigurationWriter extends ConfigurationReader {
       TableDescriptorBuilder tdBuilder =
         HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf).addColumnFamily(cfdBuilder.build());
       ddlExecutor.createTableIfNotExists(tdBuilder.build(), null);
+    }
+  }
+
+  public static void upgradeTable(CConfiguration cConf, Configuration hConf) throws IOException {
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, TABLE_NAME);
+
+    try (HBaseDDLExecutor ddlExecutor = new HBaseDDLExecutorFactory(cConf, hConf).get()) {
+      HTableDescriptor tableDescriptor;
+      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+        if (!tableUtil.tableExists(admin, tableId)) {
+          LOG.debug("Table {} was not found. Skip upgrading.", tableId);
+          return;
+        }
+
+        tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
+      }
+
+      // Get cdap version from the table
+      ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
+      String hbaseVersion = HBaseTableUtil.getHBaseVersion(tableDescriptor);
+
+      if (hbaseVersion != null
+        && hbaseVersion.equals(HBaseVersion.getVersionString())
+        && version.compareTo(ProjectInfo.getVersion()) >= 0) {
+        // If cdap has version has not changed or is greater, no need to update. Just enable it, in case
+        // it has been disabled by the upgrade tool, and return
+        LOG.info("Table '{}' has not changed and its version '{}' is same or greater than current CDAP version '{}'." +
+                   " The underlying HBase version {} has also not changed.",
+                 tableId, version, ProjectInfo.getVersion(), hbaseVersion);
+        enableTable(ddlExecutor, tableId, cConf);
+        return;
+      }
+
+      // create a new descriptor for the table update
+      HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
+
+      // Update CDAP version, table prefix
+      HBaseTableUtil.setVersion(newDescriptor);
+      HBaseTableUtil.setHBaseVersion(newDescriptor);
+      HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
+
+      // Disable Table
+      disableTable(ddlExecutor, tableId, cConf);
+
+      tableUtil.modifyTable(ddlExecutor, newDescriptor.build());
+      LOG.debug("Enabling table '{}'...", tableId);
+      enableTable(ddlExecutor, tableId, cConf);
+    }
+    LOG.info("Table '{}' update completed.", tableId);
+  }
+
+  private static void enableTable(HBaseDDLExecutor ddlExecutor, TableId tableId,
+                                  CConfiguration cConf) throws IOException {
+    try {
+      TableName tableName = HTableNameConverter.toTableName(cConf.get(Constants.Dataset.TABLE_PREFIX), tableId);
+      ddlExecutor.enableTableIfDisabled(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+      LOG.debug("Table {} has been enabled.", tableName);
+    } catch (TableNotFoundException ex) {
+      LOG.debug("Table {} was not found. Skipping enable.", tableId, ex);
+    } catch (TableNotDisabledException ex) {
+      LOG.debug("Table {} was already in enabled state.", tableId, ex);
+    }
+  }
+
+  private static void disableTable(HBaseDDLExecutor ddlExecutor, TableId tableId,
+                                   CConfiguration cConf) throws IOException {
+    try {
+      TableName tableName = HTableNameConverter.toTableName(cConf.get(Constants.Dataset.TABLE_PREFIX), tableId);
+      ddlExecutor.disableTableIfEnabled(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+      LOG.debug("Table {} has been disabled.", tableId);
+    } catch (TableNotFoundException ex) {
+      LOG.debug("Table {} was not found. Skipping disable.", tableId, ex);
+    } catch (TableNotEnabledException ex) {
+      LOG.debug("Table {} was already in disabled state.", tableId, ex);
     }
   }
 }

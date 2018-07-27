@@ -323,9 +323,11 @@ public final class HBaseTableFactory implements TableFactory {
       HBaseTableUtil.setVersion(newDescriptor);
       HBaseTableUtil.setHBaseVersion(newDescriptor);
       HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
-      // Disable auto-splitting
-      newDescriptor.setValue(HTableDescriptor.SPLIT_POLICY,
-                             cConf.get(Constants.MessagingSystem.TABLE_HBASE_SPLIT_POLICY));
+      if (coprocessor != null) {
+        // Disable auto-splitting
+        newDescriptor.setValue(HTableDescriptor.SPLIT_POLICY,
+                               cConf.get(Constants.MessagingSystem.TABLE_HBASE_SPLIT_POLICY));
+      }
 
       // Disable Table
       disableTable(ddlExecutor, tableId);
