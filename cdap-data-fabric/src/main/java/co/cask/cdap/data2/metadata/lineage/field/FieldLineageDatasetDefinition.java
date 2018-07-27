@@ -30,15 +30,17 @@ import java.util.Map;
  * {@link DatasetDefinition} for {@link FieldLineageDataset}.
  */
 public class FieldLineageDatasetDefinition extends CompositeDatasetDefinition<FieldLineageDataset> {
+  private static final String FIELD_LINEAGE_INFO_TABLE = "info";
+
   public FieldLineageDatasetDefinition(String name, DatasetDefinition<Table, ? extends DatasetAdmin> tableDefinition) {
-    super(name, "fieldLineage", tableDefinition);
+    super(name, FIELD_LINEAGE_INFO_TABLE, tableDefinition);
   }
 
 
   @Override
   public FieldLineageDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                         Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    Table table = getDataset(datasetContext, "fieldLineage", spec, arguments, classLoader);
+    Table table = getDataset(datasetContext, FIELD_LINEAGE_INFO_TABLE, spec, arguments, classLoader);
     return new FieldLineageDataset(spec.getName(), table);
   }
 }

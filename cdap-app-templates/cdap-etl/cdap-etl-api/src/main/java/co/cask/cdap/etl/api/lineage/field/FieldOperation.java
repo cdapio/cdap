@@ -22,7 +22,8 @@ import java.util.Objects;
 
 /**
  * Abstract base class to represent a field lineage operation. Each operation has a
- * name and description. Operation typically has input and output fields.
+ * name and description. The name of operation must be unique within all operations
+ * recorded by the same pipeline stage. Operation typically has input and output fields.
  */
 @Beta
 public abstract class FieldOperation {
