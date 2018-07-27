@@ -125,7 +125,7 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 
     examples/|example-dir|/target/|example|-|release|.jar
 
-- In the :ref:`new beta CDAP UI <cdap-ui-beta>`,  use the green "plus" button |---| found on either
+- In the CDAP UI, use the green "plus" button |---| found on either
   the |home-page|_ or |management-page|_ pages |---| to bring up the *Hub/Resource
   Center*. Click the button to change to the *Resource Center* if it is not already
   visible. Click the *Upload* button on the *Application* card, and then either
