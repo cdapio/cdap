@@ -11,6 +11,12 @@ Admin Controls
 There are several administrative controls in place to monitor and control profile usage.
 To access the controls, navigate to the Administration page in CDAP and click a profile.
 
+.. figure:: /_images/cloud-runtimes/profile-overview.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
 The Administration page shows you information about which pipelines the profile is assigned to and profile usage.
 For example, you can see how many runs ended in completion and failure when used with the profile or see an
 estimate of the node hours spent using the profile.

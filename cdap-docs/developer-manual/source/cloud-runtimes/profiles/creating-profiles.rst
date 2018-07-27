@@ -33,7 +33,20 @@ Creation
 --------
 
 To create a profile, first select the provisioner that the profile uses to create and configure the cloud runtime.
+
+.. figure:: /_images/cloud-runtimes/provisioners.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
 Once you select a provisioner, you need to provide the configuration that the provisioner requires.
+
+.. figure:: /_images/cloud-runtimes/provisioner-configure.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
 
 Note that the fields marked with the shields contain sensitive information, such as secret keys.
 We recommend that you provide sensitive information through the CDAP

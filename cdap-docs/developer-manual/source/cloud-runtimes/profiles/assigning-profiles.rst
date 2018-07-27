@@ -35,6 +35,12 @@ Assigning Default Profiles
 You can assign default profiles to a namespace and to the CDAP instance through the UI.
 Navigate to the Administration page and click the star next to the profile.
 
+.. figure:: /_images/cloud-runtimes/namespace-default-profile.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
 Alternatively, you can use the :ref:`Preferences RESTful API <http-restful-api-preferences>` to set default profiles.
 
   - To set the default profile for all of CDAP, set a preference on the CDAP instance with key `system.profile.name` and value `system:<profile-name>`.
@@ -46,6 +52,12 @@ You can assign a profile to use for manual pipeline runs.
 Navigate to the pipeline detail page and click the configure button > Advanced Options > Compute config.
 Next, select a profile and save. From that point on, the profile is used any time the pipeline is run manually.
 
+.. figure:: /_images/cloud-runtimes/pipeline-profile-manual.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
 Alternatively, you can use the :ref:`Preferences RESTful API <http-restful-api-preferences>` to set the profile for manual runs
 by setting preference on the DataPipelineWorkflow entity with key `system.profile.name` and value `<scope>:<profile-name>`.
 
@@ -55,6 +67,12 @@ Any time you create a schedule for a pipeline, you can assign a profile to it.
 Whenever the schedule triggers a pipeline run, it will use that profile for the run.
 This is true for time schedules and schedules that other pipelines trigger.
 
+.. figure:: /_images/cloud-runtimes/schedule-profile.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
 Alternatively, you can use the :ref:`Schedules RESTful API <http-restful-api-lifecycle-schedule-add>` to assign a profile to a schedule.
 
 Overriding Profile Configuration
@@ -62,6 +80,12 @@ Overriding Profile Configuration
 When a profile is created, each configuration settings can be made immutable by locking it.
 All other configuration settings can be overridden at runtime. You can edit configuration settings
 in the same page where you assign the profile.
+
+.. figure:: /_images/cloud-runtimes/pipeline-profile-override.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
 
 You can use runtime arguments and schedule properties to modify the size of the cluster or other important settings.
 
