@@ -82,7 +82,7 @@ export default class ProfileAssociations extends Component {
     let extraTags = {
       program: objectQuery(metadata, 'program'),
       programtype: objectQuery(metadata, 'type') || 'Workflow',
-      profile: `${profile.scope}:${profile.name}`,
+      profile: `${profile.name}`,
       app: objectQuery(metadata, 'app'),
       namespace: objectQuery(metadata, 'namespace')
     };
