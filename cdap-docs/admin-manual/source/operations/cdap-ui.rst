@@ -9,9 +9,8 @@
 CDAP UI
 =======
 
-The **CDAP UI** is available for deploying, querying and managing the Cask Data
-Application Platform in all modes of CDAP except as an
-:ref:`in-memory CDAP <in-memory-data-application-platform>`.
+The CDAP UI is a web UI for deploying and managing applications and datasets. In addition, it also contains UIs
+for the data pipeline and data preparation applications.
 
 Supported Browsers and Components
 ---------------------------------
