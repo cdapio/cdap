@@ -205,34 +205,61 @@ Improvements
 
 - :cask-issue:`CDAP-12989` - Added rate limiting to router logs in the event of zookeeper outages
 
+- :cask-issue:`CDAP-13759` - Renamed system metadata tables to v2.system.metadata_index.d, v2.system.metadata_index.i. and business metadata tables to v2.business.metadata_index.d, v2.business.metadata_index.i
+
 Bug Fixes
 ---------
+
 - :cask-issue:`CDAP-13033` - Fixed a bug in TMS that prevented from correctly consuming multiple events emitted in the same transaction.
+
 - :cask-issue:`CDAP-12875` - Fixed a bug that caused errors in the File source if it read parquet files that were not generated through Hadoop.
-- :cask-issue:`CDAP-12693` - Fixed a bug that causes PySpark to fail to run with Spark 2 in local sandbox.
+
+- :cask-issue:`CDAP-12693` - Fixed a bug that caused PySpark to fail to run with Spark 2 in local sandbox.
+
 - :cask-issue:`CDAP-13296` - Fixed a bug that could cause the status of a running program to be falsely returned as stopped if the run happened to change state in the middle of calculating the program state. Also fixed a bug where the state for a suspended workflow was stopped instead of running.
+
 - :cask-issue:`CDAP-7052` - Fixed a bug that prevented MapReduce AM logs from YARN to show the right URI.
+
 - :cask-issue:`CDAP-12973` - Fixed a bug that prevented Spark jobs from running after CDAP upgrade due to caching of jars.
+
 - :cask-issue:`CDAP-13026` - Fixed a bug that prevented a parquet snapshot source and sink to be used in the same pipeline
+
 - :cask-issue:`CDAP-13593` - Fixed a bug that under some race condition, running a pipeline preview may cause the CDAP process to shut down.
+
 - :cask-issue:`CDAP-12752` - Fixed a bug where a Spark program would fail to run when spark authentication is turned on
+
 - :cask-issue:`CDAP-13123` - Fixed a bug where an ad-hoc exploration query on streams would fail in an impersonated namespace.
+
 - :cask-issue:`CDAP-13463` - Fixed a bug where pipelines with conditions on different branches could not be deployed.
+
 - :cask-issue:`CDAP-12743` - Fixed a bug where the Scala Spark compiler had missing classes from classloader, causing compilation failure
+
 - :cask-issue:`CDAP-13372` - Fixed a bug where the upgrade tool did not upgrade the owner meta table
+
 - :cask-issue:`CDAP-12647` - Fixed a bug with artifacts count, as when we we get artifact count from a namespace we also include system artifacts count causing the total artifact count to be much larger than real count.
+
 - :cask-issue:`CDAP-13364` - Fixed a class loading issue and a schema mismatch issue in the whole-file-ingest plugin.
+
 - :cask-issue:`CDAP-12970` - Fixed a dependency bug that could cause HBase region servers to deadlock during a cold start
+
 - :cask-issue:`CDAP-12742` - Fixed an issue that caused pipeline failures if a Spark plugin tried to read or write a DataFrame using csv format.
+
 - :cask-issue:`CDAP-13532` - Fixed an issue that prevented user runtime arguments from being used in CDAP programs
+
 - :cask-issue:`CDAP-13281` - Fixed an issue where Spark 2.2 batch pipelines with HDFS sinks would fail with delegation token issue error
+
 - :cask-issue:`CDAP-12731` - Fixed an issue with that caused hbase sink to fail when used alongside other sinks, using spark execution engine.
+
 - :cask-issue:`CDAP-13002` - Fixed an issue with the retrieval of non-ASCII strings from Table datasets.
+
 - :cask-issue:`CDAP-13040` - Fixed avro fileset plugins so that reserved hive keywords can be used as column names
+
 - :cask-issue:`CDAP-13331` - Fixed macro enabled properties in plugin configuration to only have macro behavior if the entire value is a macro.
+
 - :cask-issue:`CDAP-12988` - Fixed the logs REST API to return a valid json object when filters are specified
+
 - :cask-issue:`CDAP-13110` - Fixes an issue where a dataset's class loader was closed before the dataset itself, preventing the dataset from closing properly.
-- :cask-issue:`CDAP-13759` - Renamed system metadata tables to v2.system.metadata_index.d, v2.system.metadata_index.i. and business metadata tables to v2.business.metadata_index.d, v2.business.metadata_index.i
+
 
 Deprecated and Removed Features
 -------------------------------
