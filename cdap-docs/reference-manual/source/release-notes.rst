@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Release notes for the Cask Data Application Platform
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2018 Cask Data, Inc.
 
 :hide-nav: true
 
@@ -32,6 +32,34 @@ Cask Data Application Platform Release Notes
 
 `Release 5.0.0 <http://docs.cask.co/cdap/5.0.0/index.html>`__
 =============================================================
+
+Summary
+-------
+
+1. **Cloud Runtime**
+    - Cloud Runtimes allow you to configure batch pipelines to run in a cloud environment.
+    - Before the pipeline runs, a cluster is provisioned in the cloud. The pipeline is executed on that cluster,
+	  and the cluster is deleted after the run finishes.
+    - Cloud Runtimes allow you to only use compute resources when you need them, enabling you to make better use of
+	  your resources.
+
+2. **Metadata**
+    - *Metadata Driven Processing*
+       - Annotate metadata to custom entities such as fields in a dataset, partitions of a dataset, files in a fileset
+       - Access metadata from a program or plugin at runtime to facilitate metadata driven processing
+    - *Field Level Lineage*
+       - APIs to register operations being performed on fields from a program or a pipeline plugin
+       - Platform feature to compute field level lineage based on operations
+
+3. **Analytics**
+    - A simple, interactive, UI-driven approach to machine learning.
+    - Lowers the bar for machine learning, allowing users of any level to understand their data and train models
+      while preserving the switches and levers that advanced users might want to tweak.
+
+4. **Operational Dashboard**
+    - A real-time interactive interface that visualizes program run statistics
+    - Reporting for comprehensive insights into program runs over large periods of time
+
 
 New Features
 ------------
