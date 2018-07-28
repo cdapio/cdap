@@ -151,9 +151,7 @@ Improvements
 
 - :cask-issue:`CDAP-13280` - Added Spark 2 support for Kafka realtime source
 
-- :cask-issue:`CDAP-12727` - Added support for CDH 5.13.
-
-- :cask-issue:`CDAP-13068` - Added support for CDH 5.14.
+- :cask-issue:`CDAP-12727`, :cask-issue:`CDAP-13068` - Added support for CDH 5.13 and 5.14.
 
 - :cask-issue:`CDAP-11805` - Added support for EMR 5.4 through 5.7
 
@@ -287,6 +285,7 @@ Deprecated and Removed Features
 - :cask-issue:`CDAP-13419` - Deprecated streams and flows. Use Apache Kafka as a replacement technology for streams and spark streaming as a replacement technology for flows. Streams and flows will be removed in 6.0 release.
 
 - :cask-issue:`CDAP-5966` - Removed multiple deprecated programmatic API's in CDAP. Also removed deprecated REST API to get workflow run's current status, the workflow node state endpoint should be used to get workflow's state.
+
 
 - The following deprecations have been removed from the `cdap-api` module:
 	- Scheduling workflow using co.cask.cdap.api.schedule.Schedule in AbstractApplication is removed, Use co.cask.cdap.internal.schedule.ScheduleCreationSpec for scheduling workflow.
