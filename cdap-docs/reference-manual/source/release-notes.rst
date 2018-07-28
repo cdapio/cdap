@@ -285,27 +285,41 @@ Deprecated and Removed Features
 - :cask-issue:`CDAP-13419` - Deprecated streams and flows. Use Apache Kafka as a replacement technology for streams and spark streaming as a replacement technology for flows. Streams and flows will be removed in 6.0 release.
 
 - :cask-issue:`CDAP-5966` - Removed multiple deprecated programmatic and RESTful API's in CDAP.
-    - Deprecated public APIs removed from the `cdap-api` module:
-    	- Scheduling workflow using `co.cask.cdap.api.schedule.Schedule` in `AbstractApplication` is removed, use `co.cask.cdap.internal.schedule.ScheduleCreationSpec` for scheduling workflow.
-    	- Adding schedule using `co.cask.cdap.api.schedule.Schedule` is removed in `ApplicationConfigurer`, use `co.cask.cdap.internal.schedule.ScheduleCreationSpec` for adding schedules.
-    	- Deprecated methods `getStreams`, `getDatasetModules` and `getDatasetSpec`s have been removed from `FlowletDefinition`.
-    	- `beforeSubmit` and `onFinish` methods have been removed from `Mapreduce`, `Spark` interface. use `ProgramLifecycle#initialize` and `ProgramLifecycle#destroy` instead.
-    	- `RunConstraints`, `ScheduleSpecification` and `Schedule` classes in package `co.cask.cdap.api.schedule` have been removed.
-    	- `WorkflowAction`, `WorkflowActionConfigurer`, `WorkflowActionSpecification`, `AbstractWorkflowAction` have been removed from the package `co.cask.cdap.api.workflow`. Use `CustomAction` for workflows instead.
-    	- `WorkflowConfigurer#addAction(WorkflowAction action)`` has been removed, use `addAction(CustomAction action)`` instead.
-    	- `MapReduceTaskContext#getInputName` has been removed, use `getInputContext` instead.
-    - The following deprecations have been removed from the `cdap-proto` module:
-    	- `ApplicationDetail#getArtifactVersion has been removed, use ApplicationDetail#getArtifact instead.
-    	- `getId() method has been removed in ApplicationRecord, DatasetRecord, ProgramLiveInfo and ProgramRecord.
-    	- `Id` class has been removed.
-    	- `ScheduleUpdateDetail` has been removed, use `ScheduleDetail` instead.
-    	- `ScheduleType` has been removed, use `Trigger` instead.
-    	- Methods for getting `ScheduleSpecification` `toScheduleSpec()` and `toScheduleSpecs(List<ScheduleDetail> details)``, have been removed from `ScheduleDetail`.
-    	- Deprecated `MetadataRecord` class has been removed.
-    - The following deprecations have been removed from the `cdap-client` module:
-     	- Removed methods which were using the old `co.cask.cdap.proto.Id` classes in `ApplicationClient`, `ArtifactClient`, `ClientConfig`, `DatsetClient`, `DatasetModuleClient`, `DatasetTypeClient`, `LineageClient`, `MetricsClient`, `ProgramClient`, `ScheduleClient`, `ServiceClient`, `StreamClient`, `StreamViewClient` and `WorkflowClient`.
-     	- Removed methods to add, update schedules using `ScheduleInstanceConfiguration` in `ScheduleClient`, use methods accepting `ScheduleDetail` as parameter instead.
-    - The REST API to get workflow status using `current` endpoint has been removed, use the workflow node state endpoint `/nodes/state` instead to get workflow status.
+    - Deprecated public APIs removed from the ``cdap-api`` module:
+    	- Scheduling workflow using ``co.cask.cdap.api.schedule.Schedule`` in ``AbstractApplication`` has been removed,
+    	  use ``co.cask.cdap.internal.schedule.ScheduleCreationSpec`` for scheduling workflow.
+    	- Adding schedule using ``co.cask.cdap.api.schedule.Schedule`` is removed in ``ApplicationConfigurer``, use
+    	  ``co.cask.cdap.internal.schedule.ScheduleCreationSpec`` for adding schedules.
+    	- Deprecated methods ``getStreams``, ``getDatasetModules` and ``getDatasetSpec``s have been removed from
+    	  ```FlowletDefinition``.
+    	- ``beforeSubmit`` and ``onFinish`` methods have been removed from ``Mapreduce`` and ``Spark`` interfaces, use
+    	  ``ProgramLifecycle#initialize`` and ``ProgramLifecycle#destroy`` instead.
+    	- ``RunConstraints``, ``ScheduleSpecification`` and ``Schedule`` classes in package
+    	  ``co.cask.cdap.api.schedule`` have been removed.
+    	- ``WorkflowAction``, ``WorkflowActionConfigurer``, ``WorkflowActionSpecification`, ``AbstractWorkflowAction``
+    	  have been removed from the package ``co.cask.cdap.api.workflow``. Use ``CustomAction`` for workflows instead.
+    	- ``WorkflowConfigurer#addAction(WorkflowAction action)`` has been removed, use
+    	  ``addAction(CustomAction action)`` instead.
+    	- ``MapReduceTaskContext#getInputName`` has been removed, use ``getInputContext`` instead.
+    - The following deprecations have been removed from the ``cdap-proto`` module:
+    	- ``ApplicationDetail#getArtifactVersion`` has been removed, use ``ApplicationDetail#getArtifact`` instead.
+    	- ``getId()`` method has been removed in ``ApplicationRecord``, ``DatasetRecord``, ``ProgramLiveInfo`` and
+    	  ``ProgramRecord``.
+    	- ``Id`` class has been removed.
+    	- ``ScheduleUpdateDetail`` has been removed, use ``ScheduleDetail`` instead.
+    	- ``ScheduleType`` has been removed, use ```Trigger`` instead.
+    	- Methods for getting ``ScheduleSpecification`` - ``toScheduleSpec()`` and
+    	  ``toScheduleSpecs(List<ScheduleDetail> details)```, have been removed from ``ScheduleDetail``.
+    	- Deprecated ``MetadataRecord` class has been removed.
+    - The following deprecations have been removed from the ``cdap-client`` module:
+     	- Removed methods which were using the old ``co.cask.cdap.proto.Id` classes in ``ApplicationClient``,
+     	  ``ArtifactClient``, ``ClientConfig``, ``DatsetClient``, ``DatasetModuleClient``, ``DatasetTypeClient``,
+     	  ``LineageClient``, ``MetricsClient``, ``ProgramClient``, ``ScheduleClient``, ``ServiceClient``,
+     	  ``StreamClient``, ```StreamViewClient`` and ``WorkflowClient``.
+     	- Removed methods to add and update schedules using ``ScheduleInstanceConfiguration`` in ``ScheduleClient``,
+     	  use methods accepting ``ScheduleDetail`` as parameter instead.
+    - The REST API to get workflow status using ``current`` endpoint has been removed, use the workflow node state
+      endpoint ``/nodes/state`` instead to get workflow status.
 
 
 `Release 4.3.4 <http://docs.cask.co/cdap/4.3.4/index.html>`__
