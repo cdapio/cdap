@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
@@ -31,6 +33,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
@@ -53,6 +56,7 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -607,5 +611,15 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
 
   private static byte[] keyPrefixForNamespaceScan(NamespaceId namespaceId) {
     return Bytes.toBytes(namespaceId.getNamespace() + ROW_KEY_SEPARATOR);
+  }
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework}. Used by the upgrade tool to upgrade Datasets
+   *
+   * @param datasetFramework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException,
+    DatasetManagementException {
+    datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME, Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
   }
 }

@@ -63,6 +63,8 @@ import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -483,11 +485,12 @@ public class UpgradeTool {
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
     // artifacts
     ArtifactStore.setupDatasets(datasetFramework);
-    // Note: do no remove this if block even if it's empty. Read comment below and function doc above
+    // Note: do no remove this block even if it's empty. Read the comment below and function doc above
     if (includeNewDatasets) {
       // Add all new system dataset introduced in the current release in this block. If no new dataset was introduced
       // then leave this block empty but do not remove block so that it can be used in next release if needed
       FieldLineageDataset.setupDatasets(datasetFramework);
+      DefaultMetadataStore.setupV2Datasets(datasetFramework);
     }
 
     // owner metadata
@@ -510,5 +513,8 @@ public class UpgradeTool {
 
     // Usage registry
     UsageDataset.setupDatasets(datasetFramework);
+
+    JobQueueDataset.setupDatasets(datasetFramework);
+    ProgramScheduleStoreDataset.setupDatasets(datasetFramework);
   }
 }

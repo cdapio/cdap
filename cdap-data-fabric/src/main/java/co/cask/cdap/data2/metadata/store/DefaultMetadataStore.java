@@ -682,6 +682,17 @@ public class DefaultMetadataStore implements MetadataStore {
     framework.addInstance(MetadataDataset.class.getName(), SYSTEM_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 
+  /**
+   * Adds V2 datasets and types to the given {@link DatasetFramework}. Used by the upgrade tool to upgrade Metadata
+   * Datasets.
+   *
+   * @param framework Dataset framework to add types and datasets to
+   */
+  public static void setupV2Datasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+    framework.addInstance(MetadataDataset.class.getName(), V2_BUSINESS_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
+    framework.addInstance(MetadataDataset.class.getName(), V2_SYSTEM_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
+  }
+
   @Override
   public void markUpgradeComplete(MetadataScope scope) {
     DatasetId datasetId = getMetadataDatasetInstance(scope);
