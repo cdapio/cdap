@@ -87,6 +87,7 @@ Cloud Runtime
 
 - :cask-issue:`CDAP-13276` - Added the capability to export or import compute profiles
 
+- :cask-issue:`CDAP-13359` - Added the ability to set the default profile at namespace and instance levels.
 
 Metadata
 ........
@@ -147,36 +148,61 @@ Miscellaneous
 
 Improvements
 ------------
+
 - :cask-issue:`CDAP-13280` - Added Spark 2 support for Kafka realtime source
+
 - :cask-issue:`CDAP-12727` - Added support for CDH 5.13.
-- :cask-issue:`CDAP-11805` - Added support for EMR 5.4 through 5.7
-- :cask-issue:`CDAP-13179` - Added support for automatically restarting long running program types (Service and Flow) upon application master process failure in YARN
-- :cask-issue:`CDAP-12549` - Added support for specifying custom consumer configs in Kafka source
-- :cask-issue:`CDAP-13143` - Added support for specifying recursive schemas
-- :cask-issue:`CDAP-12275` - Added support to pass in YARN application ID in the logging context. This can help in correlating the ID of the program run in CDAP to the ID of the corresponding YARN application, thereby facilitating better debugging.
-- :cask-issue:`CDAP-9080` - Added the ability to deploy plugin artifacts without requiring a parent artifact. Such plugins are available for use in any parent artifacts
-- :cask-issue:`CDAP-12274` - Added the ability to import pipelines from the add entity modal (plus button)
-- :cask-issue:`CDAP-11844` - Added the ability to save the runtime arguments of a pipeline as preferences, so that they do not have to be entered again.
-- :cask-issue:`CDAP-13359` - Added the ability to set the default profile at namespace and instance levels.
-- :cask-issue:`CDAP-12724` - Added the ability to specify dependencies to ScalaSparkCompute Action
-- :cask-issue:`CDAP-12426` - Added the ability to update the keytab URI for namespace's impersonation configuration.
-- :cask-issue:`CDAP-12279` - Added the ability to upload a User Defined Directive (UDD) using the plus button
-- :cask-issue:`CDAP-12963` - Allowed CDAP user programs to talk to Kerberos enabled HiveServer2 in the cluster without using a keytab
-- :cask-issue:`CDAP-11096` - Allowed users to configure the transaction isolation level in database plugins
-- :cask-issue:`CDAP-13573` - Configured sandbox to have secure store APIs enabled by default
-- :cask-issue:`CDAP-13353` - Deprecated HDFS Sink. Use the File sink instead.
-- :cask-issue:`CDAP-13411` - Improved robustness of unit test framework by fixing flaky tests
-- :cask-issue:`CDAP-13405` - Increased default twill reserved memory from 300mb to 768mb in order to prevent YARN from killing containers in standard cluster setups.
-- :cask-issue:`CDAP-13116` - Macro enabled all fields in the HTTP Callback plugin
-- :cask-issue:`CDAP-12974` - Removed concurrent upgrades of HBase coprocessors since it could lead to regions getting stuck in transit.
-- :cask-issue:`CDAP-12692` - Removed deprecated stream size based schedules
-- :cask-issue:`CDAP-13409` - Updated the CDAP sandbox to use Spark 2.1.0 as the default Spark version.
-- :cask-issue:`CDAP-6308` - Upgraded CDAP Router to use Netty 4.1
+
 - :cask-issue:`CDAP-13068` - Added support for CDH 5.14.
+
+- :cask-issue:`CDAP-11805` - Added support for EMR 5.4 through 5.7
+
+- :cask-issue:`CDAP-6308` - Upgraded CDAP Router to use Netty 4.1
+
+- :cask-issue:`CDAP-13179` - Added support for automatically restarting long running program types (Service and Flow) upon application master process failure in YARN
+
+- :cask-issue:`CDAP-12549` - Added support for specifying custom consumer configs in Kafka source
+
+- :cask-issue:`CDAP-13143` - Added support for specifying recursive schemas
+
+- :cask-issue:`CDAP-12275` - Added support to pass in YARN application ID in the logging context. This can help in correlating the ID of the program run in CDAP to the ID of the corresponding YARN application, thereby facilitating better debugging.
+
+- :cask-issue:`CDAP-9080` - Added the ability to deploy plugin artifacts without requiring a parent artifact. Such plugins are available for use in any parent artifacts
+
+- :cask-issue:`CDAP-12274` - Added the ability to import pipelines from the add entity modal (plus button)
+
+- :cask-issue:`CDAP-11844` - Added the ability to save the runtime arguments of a pipeline as preferences, so that they do not have to be entered again.
+
+- :cask-issue:`CDAP-12724` - Added the ability to specify dependencies to ScalaSparkCompute Action
+
+- :cask-issue:`CDAP-12426` - Added the ability to update the keytab URI for namespace's impersonation configuration.
+
+- :cask-issue:`CDAP-12279` - Added the ability to upload a User Defined Directive (UDD) using the plus button
+
+- :cask-issue:`CDAP-12963` - Allowed CDAP user programs to talk to Kerberos enabled HiveServer2 in the cluster without using a keytab
+
+- :cask-issue:`CDAP-11096` - Allowed users to configure the transaction isolation level in database plugins
+
+- :cask-issue:`CDAP-13573` - Configured sandbox to have secure store APIs enabled by default
+
+- :cask-issue:`CDAP-13411` - Improved robustness of unit test framework by fixing flaky tests
+
+- :cask-issue:`CDAP-13405` - Increased default twill reserved memory from 300mb to 768mb in order to prevent YARN from killing containers in standard cluster setups.
+
+- :cask-issue:`CDAP-13116` - Macro enabled all fields in the HTTP Callback plugin
+
+- :cask-issue:`CDAP-12974` - Removed concurrent upgrades of HBase coprocessors since it could lead to regions getting stuck in transit.
+
+- :cask-issue:`CDAP-13409` - Updated the CDAP sandbox to use Spark 2.1.0 as the default Spark version.
+
 - :cask-issue:`CDAP-13157` - Improved the documentation for defining Apache Ranger policies for CDAP entities
+
 - :cask-issue:`CDAP-12992` - Improved resiliency of router to zookeeper outages.
+
 - :cask-issue:`CDAP-13756` - Improved the performance of metadata upgrade by adding a dataset cache.
+
 - :cask-issue:`CDAP-7644` - Added CLI command to fetch service logs
+
 - :cask-issue:`CDAP-12989` - Added rate limiting to router logs in the event of zookeeper outages
 
 Bug Fixes
@@ -218,6 +244,8 @@ Deprecated and Removed Features
 - :cask-issue:`CDAP-11870` - Removed deprecated error datasets from pipelines. Error transforms should be used instead of error datasets, as they offer more functionality and flexibility.
 - :cask-issue:`CDAP-6032` - Reduced CDAP Master's local storage usage by deleting temporary directories created for programs as soon as programs are launched on the cluster.
 - :cask-issue:`CDAP-13680` - Removed deprecated "cdap.sh" and "cdap-cli.sh" scripts.  Use "cdap sandbox" or "cdap cli" instead.
+- :cask-issue:`CDAP-13353` - Deprecated HDFS Sink. Use the File sink instead.
+- :cask-issue:`CDAP-12692` - Removed deprecated stream size based schedules
 
 - :cask-issue:`CDAP-13419` - Deprecated streams and flows are deprecated as of 5.0. Use Kafka as a replacement technology for streams and spark streaming as a replacement technology for flows. Streams and flows will be removed in 6.0 release.
 - :cask-issue:`CDAP-5966` - Removed multiple deprecated programmatic API's in CDAP. Also removed deprecated REST API to get workflow run's current status, the workflow node state endpoint should be used to get workflow's state.
