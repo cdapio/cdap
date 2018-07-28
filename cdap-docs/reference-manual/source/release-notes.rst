@@ -310,7 +310,7 @@ Deprecated and Removed Features
     	- ``ScheduleType`` has been removed, use ```Trigger`` instead.
     	- Methods for getting ``ScheduleSpecification`` - ``toScheduleSpec()`` and
     	  ``toScheduleSpecs(List<ScheduleDetail> details)```, have been removed from ``ScheduleDetail``.
-    	- Deprecated ``MetadataRecord` class has been removed.
+    	- Deprecated ``MetadataRecord`` class has been removed.
     - The following deprecations have been removed from the ``cdap-client`` module:
      	- Removed methods which were using the old ``co.cask.cdap.proto.Id` classes in ``ApplicationClient``,
      	  ``ArtifactClient``, ``ClientConfig``, ``DatsetClient``, ``DatasetModuleClient``, ``DatasetTypeClient``,
