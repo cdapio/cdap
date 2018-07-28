@@ -207,6 +207,8 @@ Improvements
 
 - :cask-issue:`CDAP-13759` - Renamed system metadata tables to v2.system.metadata_index.d, v2.system.metadata_index.i. and business metadata tables to v2.business.metadata_index.d, v2.business.metadata_index.i
 
+- :cask-issue:`CDAP-6032` - Reduced CDAP Master's local storage usage by deleting temporary directories created for programs as soon as programs are launched on the cluster.
+
 Bug Fixes
 ---------
 
@@ -263,19 +265,29 @@ Bug Fixes
 
 Deprecated and Removed Features
 -------------------------------
+
 - :cask-issue:`CDAP-13721` - Deprecated the aggregation of metadata annotated with all the entities (application, programs, dataset, streams) associated in a run. From this release onwards metadata for program runs behaves like any other entity where a metadata can be directly annotated to it and retrieved from it. For backward compatibility, to achieve the new behavior an additional query parameter 'runAggregation' should be set to false while making the REST call to retrieve metadata of program runs.
+
 - :cask-issue:`CDAP-8141` - Dropped support for CDH 5.1, 5.2, 5.3 and HDP 2.0, 2.1 due to security vulnerabilities identified in them
+
 - :cask-issue:`CDAP-13493` - Removed HDFS, YARN, and HBase operational stats. These stats were not very useful, could generate confusing log warnings, and were confusing when used in conjunction with cloud profiles.
+
 - :cask-issue:`CDAP-13720` - Removed analytics plugins such as decision tree, naive bayes and logistic regression from Hub. The new Analytics flow in the UI should be used as a substitute for this functionality.
+
 - :cask-issue:`CDAP-12584` - Removed deprecated "cdap sdk" commands. Use "cdap sandbox" instead.
-- :cask-issue:`CDAP-11870` - Removed deprecated error datasets from pipelines. Error transforms should be used instead of error datasets, as they offer more functionality and flexibility.
-- :cask-issue:`CDAP-6032` - Reduced CDAP Master's local storage usage by deleting temporary directories created for programs as soon as programs are launched on the cluster.
+
 - :cask-issue:`CDAP-13680` - Removed deprecated "cdap.sh" and "cdap-cli.sh" scripts.  Use "cdap sandbox" or "cdap cli" instead.
+
+- :cask-issue:`CDAP-11870` - Removed deprecated error datasets from pipelines. Error transforms should be used instead of error datasets, as they offer more functionality and flexibility.
+
 - :cask-issue:`CDAP-13353` - Deprecated HDFS Sink. Use the File sink instead.
+
 - :cask-issue:`CDAP-12692` - Removed deprecated stream size based schedules
 
-- :cask-issue:`CDAP-13419` - Deprecated streams and flows are deprecated as of 5.0. Use Kafka as a replacement technology for streams and spark streaming as a replacement technology for flows. Streams and flows will be removed in 6.0 release.
+- :cask-issue:`CDAP-13419` - Deprecated streams and flows. Use Apache Kafka as a replacement technology for streams and spark streaming as a replacement technology for flows. Streams and flows will be removed in 6.0 release.
+
 - :cask-issue:`CDAP-5966` - Removed multiple deprecated programmatic API's in CDAP. Also removed deprecated REST API to get workflow run's current status, the workflow node state endpoint should be used to get workflow's state.
+
 - The following deprecations have been removed from the `cdap-api` module:
 	- Scheduling workflow using co.cask.cdap.api.schedule.Schedule in AbstractApplication is removed, Use co.cask.cdap.internal.schedule.ScheduleCreationSpec for scheduling workflow.
 	- Adding schedule using co.cask.cdap.api.schedule.Schedule is removed in ApplicationConfigurer, use co.cask.cdap.internal.schedule.ScheduleCreationSpec for adding schedules.
