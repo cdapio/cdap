@@ -52,7 +52,7 @@ MASTER_CSV_TYPES = ('bower', 'npm', 'jar')
 
 ENTERPRISE    = 'cdap-enterprise-dependencies'
 LEVEL_1       = 'cdap-level-1-dependencies'
-LOCAL_SANDBOX = 'cdap-local-sandbox-dependencies'
+LOCAL_SANDBOX = 'cdap-sandbox-dependencies'
 CDAP_UI       = 'cdap-ui-dependencies'
 
 CASK_REVERSE_DOMAIN = 'co.cask'
