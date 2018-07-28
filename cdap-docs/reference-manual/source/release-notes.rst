@@ -36,6 +36,7 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 - :cask-issue:`CDAP-13921` - Added CDAP Analytics as an interactive, UI-driver application that allows users to train machine learning models and use them in their pipelines to make predictions.
+- :cask-issue:`CDAP-13089` - Added Cloud Runtimes, which allow users to assign profiles to batch pipelines that control what environment the pipeline will run in. For each program run, a cluster in a cloud environment can be created for just that run, allowing efficient use of resources.
 - :cask-issue:`CDAP-12839` - Added 'Error' and 'Alert' ports for plugins that support this functionality. To enable this functionality in your plugin, in addition to emitting alerts and errors from the plugin code, users have to set "emit-errors: true" and "emit-alerts: true" in their plugin json. Users can create connections from 'Error' port to Error Handlers plugins, and from 'Alert' port to Alert plugins
 - :cask-issue:`CDAP-12865` - Added a Dashboard for real-time monitoring of programs and pipelines
 - :cask-issue:`CDAP-13100` - Added a Google BigQuery connection for Data Preparation
@@ -58,7 +59,7 @@ New Features
 - :cask-issue:`CDAP-13006` - Added the ability to view the runtime arguments, logs and other details of a particular run of a pipeline.
 - :cask-issue:`CDAP-13206` - Allows users to specify a compute profile in UI to run the pipelines in cloud environments. Compute profiles can be specified either while running a pipeline manually or via a time schedule or via a pipeline state based trigger.
 - :cask-issue:`CDAP-13242` - Implemented a new Administration page, with two tabs, Configuration and Management. In the Configuration tab, users can view and manage all namespaces, system preferences and system profiles. In the Management tab, users can get an overview of system services in CDAP and scale them.
-
+- :cask-issue:`CDAP-13242` - Added UI support for Splitter plugins
 
 Improvements
 ------------
