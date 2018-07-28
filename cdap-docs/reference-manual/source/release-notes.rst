@@ -38,10 +38,8 @@ Summary
 
 1. **Cloud Runtime**
     - Cloud Runtimes allow you to configure batch pipelines to run in a cloud environment.
-    - Before the pipeline runs, a cluster is provisioned in the cloud. The pipeline is executed on that cluster,
-	  and the cluster is deleted after the run finishes.
-    - Cloud Runtimes allow you to only use compute resources when you need them, enabling you to make better use of
-	  your resources.
+    - Before the pipeline runs, a cluster is provisioned in the cloud. The pipeline is executed on that cluster, and the cluster is deleted after the run finishes.
+    - Cloud Runtimes allow you to only use compute resources when you need them, enabling you to make better use of your resources.
 
 2. **Metadata**
     - *Metadata Driven Processing*
@@ -75,7 +73,7 @@ Cloud Runtime
 
 - :cask-issue:`CDAP-13094` - Added a provisioner that allows users to run pipelines on Google Cloud Dataproc clusters.
 
-- :cask-issue:`CDAP-13774` - Added a provisioner that can run pipelines on remote Hadoop clusters
+- :cask-issue:`CDAP-13774` - Added a provisioner that can run pipelines on remote Apache Hadoop clusters
 
 - :cask-issue:`CDAP-13709` - Added an Amazon Elastic MapReduce provisioner that can run pipelines on AWS EMR.
 
@@ -92,7 +90,13 @@ Cloud Runtime
 Metadata
 ........
 
-- :cask-issue:`CDAP-13511` - Added the ability to view Field Level Lineage for datasets
+- :cask-issue:`CDAP-13260` - Added support for annotating metadata to custom entities. For example now a field in a dataset can be annotated with metadata.
+
+- :cask-issue:`CDAP-13264` - Added programmatic APIs for users to register field level operations from programs and plugins.
+
+- :cask-issue:`CDAP-13269` - Added REST APIs to retrieve the fields which were updated for a given dataset in a given time range, a summary of how those fields were computed, and details about operations which were responsible for updated those fields.
+
+- :cask-issue:`CDAP-13511` - Added the ability to view Field Level Lineage for datasets.
 
 Analytics
 .........
@@ -272,9 +276,9 @@ Deprecated and Removed Features
 
 - :cask-issue:`CDAP-13720` - Removed analytics plugins such as decision tree, naive bayes and logistic regression from Hub. The new Analytics flow in the UI should be used as a substitute for this functionality.
 
-- :cask-issue:`CDAP-12584` - Removed deprecated "cdap sdk" commands. Use "cdap sandbox" instead.
+- :cask-issue:`CDAP-12584` - Removed deprecated ``cdap sdk`` commands. Use ``cdap sandbox`` commands instead.
 
-- :cask-issue:`CDAP-13680` - Removed deprecated "cdap.sh" and "cdap-cli.sh" scripts.  Use "cdap sandbox" or "cdap cli" instead.
+- :cask-issue:`CDAP-13680` - Removed deprecated ``cdap.sh`` and ``cdap-cli.sh`` scripts.  Use ``cdap sandbox`` or ``cdap cli`` instead.
 
 - :cask-issue:`CDAP-11870` - Removed deprecated error datasets from pipelines. Error transforms should be used instead of error datasets, as they offer more functionality and flexibility.
 
@@ -290,13 +294,13 @@ Deprecated and Removed Features
     	  use ``co.cask.cdap.internal.schedule.ScheduleCreationSpec`` for scheduling workflow.
     	- Adding schedule using ``co.cask.cdap.api.schedule.Schedule`` is removed in ``ApplicationConfigurer``, use
     	  ``co.cask.cdap.internal.schedule.ScheduleCreationSpec`` for adding schedules.
-    	- Deprecated methods ``getStreams``, ``getDatasetModules` and ``getDatasetSpec``s have been removed from
-    	  ```FlowletDefinition``.
+    	- Deprecated methods ``getStreams``, ``getDatasetModules``
+    	  and ``getDatasetSpecs`` have been removed from ``FlowletDefinition``.
     	- ``beforeSubmit`` and ``onFinish`` methods have been removed from ``Mapreduce`` and ``Spark`` interfaces, use
     	  ``ProgramLifecycle#initialize`` and ``ProgramLifecycle#destroy`` instead.
     	- ``RunConstraints``, ``ScheduleSpecification`` and ``Schedule`` classes in package
     	  ``co.cask.cdap.api.schedule`` have been removed.
-    	- ``WorkflowAction``, ``WorkflowActionConfigurer``, ``WorkflowActionSpecification`, ``AbstractWorkflowAction``
+    	- ``WorkflowAction``, ``WorkflowActionConfigurer``, ``WorkflowActionSpecification``, ``AbstractWorkflowAction``
     	  have been removed from the package ``co.cask.cdap.api.workflow``. Use ``CustomAction`` for workflows instead.
     	- ``WorkflowConfigurer#addAction(WorkflowAction action)`` has been removed, use
     	  ``addAction(CustomAction action)`` instead.
@@ -307,19 +311,46 @@ Deprecated and Removed Features
     	  ``ProgramRecord``.
     	- ``Id`` class has been removed.
     	- ``ScheduleUpdateDetail`` has been removed, use ``ScheduleDetail`` instead.
-    	- ``ScheduleType`` has been removed, use ```Trigger`` instead.
+    	- ``ScheduleType`` has been removed, use ``Trigger`` instead.
     	- Methods for getting ``ScheduleSpecification`` - ``toScheduleSpec()`` and
-    	  ``toScheduleSpecs(List<ScheduleDetail> details)```, have been removed from ``ScheduleDetail``.
+    	  ``toScheduleSpecs(List<ScheduleDetail> details)``, have been removed from ``ScheduleDetail``.
     	- Deprecated ``MetadataRecord`` class has been removed.
     - The following deprecations have been removed from the ``cdap-client`` module:
-     	- Removed methods which were using the old ``co.cask.cdap.proto.Id` classes in ``ApplicationClient``,
+     	- Removed methods which were using the old ``co.cask.cdap.proto.Id`` classes in ``ApplicationClient``,
      	  ``ArtifactClient``, ``ClientConfig``, ``DatsetClient``, ``DatasetModuleClient``, ``DatasetTypeClient``,
      	  ``LineageClient``, ``MetricsClient``, ``ProgramClient``, ``ScheduleClient``, ``ServiceClient``,
-     	  ``StreamClient``, ```StreamViewClient`` and ``WorkflowClient``.
+     	  ``StreamClient``, ``StreamViewClient`` and ``WorkflowClient``.
      	- Removed methods to add and update schedules using ``ScheduleInstanceConfiguration`` in ``ScheduleClient``,
      	  use methods accepting ``ScheduleDetail`` as parameter instead.
     - The REST API to get workflow status using ``current`` endpoint has been removed, use the workflow node state
       endpoint ``/nodes/state`` instead to get workflow status.
+
+
+Known Issues
+------------
+
+- :cask-issue:`CDAP-13853` - Updating the compute profile to use to manually run a pipeline using the UI can remove the
+  existing schedules and triggers of the pipeline.
+
+- :cask-issue:`CDAP-13919` - The reports feature does not work with Apache Spark 2.0 currently. As a workaround,
+  upgrade to use Spark version 2.1 or later to use reports.
+
+- :cask-issue:`CDAP-13896` - Plugins that are not supported while running a pipeline using a cloud runtime throw
+  unclear error messages at runtime.
+
+- :cask-issue:`CDAP-13274` - While some built-in plugins have been updated to emit operations for capturing field level
+  lineage, a number of them do not yet emit these operations.
+
+- :cask-issue:`CDAP-13326` - Pipelines cannot propagate dynamic schemas at runtime.
+
+- :cask-issue:`CDAP-13963` - Reading metadata is not supported when pipelines or programs run using a cloud runtime.
+
+- :cask-issue:`CDAP-13971` - Creating a pipeline from Data Preparation when using an Apache Kafka plugin fails. As
+  a workaround, after clicking the Create Pipeline button, manually update the schema of the Kafka plugin to set a
+  single field named body as a non-nullable string.
+
+- :cask-issue:`CDAP-13910` - Metadata for custom entities is not deleted if it's nearest known ancestor entity
+  (parent) is deleted.
 
 
 `Release 4.3.4 <http://docs.cask.co/cdap/4.3.4/index.html>`__
