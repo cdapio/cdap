@@ -63,36 +63,91 @@ Summary
 
 New Features
 ------------
-- :cask-issue:`CDAP-13921` - Added CDAP Analytics as an interactive, UI-driver application that allows users to train machine learning models and use them in their pipelines to make predictions.
+
+Cloud Runtime
+.............
+
 - :cask-issue:`CDAP-13089` - Added Cloud Runtimes, which allow users to assign profiles to batch pipelines that control what environment the pipeline will run in. For each program run, a cluster in a cloud environment can be created for just that run, allowing efficient use of resources.
-- :cask-issue:`CDAP-12839` - Added 'Error' and 'Alert' ports for plugins that support this functionality. To enable this functionality in your plugin, in addition to emitting alerts and errors from the plugin code, users have to set "emit-errors: true" and "emit-alerts: true" in their plugin json. Users can create connections from 'Error' port to Error Handlers plugins, and from 'Alert' port to Alert plugins
-- :cask-issue:`CDAP-12865` - Added a Dashboard for real-time monitoring of programs and pipelines
-- :cask-issue:`CDAP-13100` - Added a Google BigQuery connection for Data Preparation
-- :cask-issue:`CDAP-12901` - Added a UI to generate reports on programs and pipelines that ran over a period of time
-- :cask-issue:`CDAP-13180` - Added a page to view and manage a namespace. Users can click on the current namespace card in the namespace dropdown to go the namespace's detail page. In this page, they can see entities and profiles created in this namespace, as well as preferences, mapping and security configurations for this namespace.
-- :cask-issue:`CDAP-12880` - Added a point-and-click interaction to change the data type of a column in the Data Preparation UI
-- :cask-issue:`CDAP-13774` - Added a provisioner that can run pipelines on remote Hadoop clusters
+
 - :cask-issue:`CDAP-13213` - Added a way for users to create compute profiles from UI to run programs in remote (cloud) environments using one of the available provisioners.
+
+- :cask-issue:`CDAP-13206` - Allowed users to specify a compute profile in UI to run the pipelines in cloud environments. Compute profiles can be specified either while running a pipeline manually or via a time schedule or via a pipeline state based trigger.
+
+- :cask-issue:`CDAP-13094` - Added a provisioner that allows users to run pipelines on Google Cloud Dataproc clusters.
+
+- :cask-issue:`CDAP-13774` - Added a provisioner that can run pipelines on remote Hadoop clusters
+
 - :cask-issue:`CDAP-13709` - Added an Amazon Elastic MapReduce provisioner that can run pipelines on AWS EMR.
-- :cask-issue:`CDAP-13432` - Added metadata such has pipelines, schedules and triggers that are associated with profiles. Also added metrics such as the total number of runs of a pipeline using a profile.
-- :cask-issue:`CDAP-13147` - Added feature to support Reports and Dashboard. Dashboard provides realtime status of program runs and future schedules. Reports is a tool for administrators to take a historical look at their applications program runs, statistics and performance
-- :cask-issue:`CDAP-13045` - Added support for Apache Phoenix as a source in Data Pipelines.
-- :cask-issue:`CDAP-13499` - Added support for Apache Phoenix database as a sink in Data Pipelines.
+
 - :cask-issue:`CDAP-13380` - Added support for viewing logs in CDAP for programs executing using the Cloud Runtime.
+
+- :cask-issue:`CDAP-13432` - Added metadata such has pipelines, schedules and triggers that are associated with profiles. Also added metrics such as the total number of runs of a pipeline using a profile.
+
 - :cask-issue:`CDAP-13494` - Added the ability to disable and enable a profile
-- :cask-issue:`CDAP-12951` - Added the ability to restart CDAP programs to make it resilient to YARN outages.
-- :cask-issue:`CDAP-12944` - Added the ability to support macro behavior for all widget types
+
+- :cask-issue:`CDAP-13276` - Added the capability to export or import compute profiles
+
+
+Metadata
+........
+
 - :cask-issue:`CDAP-13511` - Added the ability to view Field Level Lineage for datasets
+
+Analytics
+.........
+
+- :cask-issue:`CDAP-13921` - Added CDAP Analytics as an interactive, UI-driver application that allows users to train machine learning models and use them in their pipelines to make predictions.
+
+
+Operational Dashboard
+.....................
+
+- :cask-issue:`CDAP-12865` - Added a Dashboard for real-time monitoring of programs and pipelines
+
+- :cask-issue:`CDAP-12901` - Added a UI to generate reports on programs and pipelines that ran over a period of time
+
+- :cask-issue:`CDAP-13147` - Added feature to support Reports and Dashboard. Dashboard provides realtime status of program runs and future schedules. Reports is a tool for administrators to take a historical look at their applications program runs, statistics and performance
+
+
+Other New Features
+..................
+
+Data Pipelines
+^^^^^^^^^^^^^^
+
+- :cask-issue:`CDAP-12839` - Added 'Error' and 'Alert' ports for plugins that support this functionality. To enable this functionality in your plugin, in addition to emitting alerts and errors from the plugin code, users have to set "emit-errors: true" and "emit-alerts: true" in their plugin json. Users can create connections from 'Error' port to Error Handlers plugins, and from 'Alert' port to Alert plugins
+
+- :cask-issue:`CDAP-13045` - Added support for Apache Phoenix as a source in Data Pipelines.
+
+- :cask-issue:`CDAP-13499` - Added support for Apache Phoenix database as a sink in Data Pipelines.
+
+- :cask-issue:`CDAP-12944` - Added the ability to support macro behavior for all widget types
+
 - :cask-issue:`CDAP-13057` - Added the ability to view all the concurrent runs of a pipeline
+
 - :cask-issue:`CDAP-13006` - Added the ability to view the runtime arguments, logs and other details of a particular run of a pipeline.
-- :cask-issue:`CDAP-13206` - Allows users to specify a compute profile in UI to run the pipelines in cloud environments. Compute profiles can be specified either while running a pipeline manually or via a time schedule or via a pipeline state based trigger.
-- :cask-issue:`CDAP-13242` - Implemented a new Administration page, with two tabs, Configuration and Management. In the Configuration tab, users can view and manage all namespaces, system preferences and system profiles. In the Management tab, users can get an overview of system services in CDAP and scale them.
+
 - :cask-issue:`CDAP-13242` - Added UI support for Splitter plugins
+
+Data Preparation
+^^^^^^^^^^^^^^^^
+
+- :cask-issue:`CDAP-13100` - Added a Google BigQuery connection for Data Preparation
+
+- :cask-issue:`CDAP-12880` - Added a point-and-click interaction to change the data type of a column in the Data Preparation UI
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- :cask-issue:`CDAP-13180` - Added a page to view and manage a namespace. Users can click on the current namespace card in the namespace dropdown to go the namespace's detail page. In this page, they can see entities and profiles created in this namespace, as well as preferences, mapping and security configurations for this namespace.
+
+- :cask-issue:`CDAP-12951` - Added the ability to restart CDAP programs to make it resilient to YARN outages.
+
+- :cask-issue:`CDAP-13242` - Implemented a new Administration page, with two tabs, Configuration and Management. In the Configuration tab, users can view and manage all namespaces, system preferences and system profiles. In the Management tab, users can get an overview of system services in CDAP and scale them.
 
 Improvements
 ------------
 - :cask-issue:`CDAP-13280` - Added Spark 2 support for Kafka realtime source
-- :cask-issue:`CDAP-13094` - Added a provisioner that allows users to run pipelines on Google Cloud Dataproc clusters.
 - :cask-issue:`CDAP-12727` - Added support for CDH 5.13.
 - :cask-issue:`CDAP-11805` - Added support for EMR 5.4 through 5.7
 - :cask-issue:`CDAP-13179` - Added support for automatically restarting long running program types (Service and Flow) upon application master process failure in YARN
@@ -106,7 +161,6 @@ Improvements
 - :cask-issue:`CDAP-12724` - Added the ability to specify dependencies to ScalaSparkCompute Action
 - :cask-issue:`CDAP-12426` - Added the ability to update the keytab URI for namespace's impersonation configuration.
 - :cask-issue:`CDAP-12279` - Added the ability to upload a User Defined Directive (UDD) using the plus button
-- :cask-issue:`CDAP-13276` - Added the capability to export or import compute profiles
 - :cask-issue:`CDAP-12963` - Allowed CDAP user programs to talk to Kerberos enabled HiveServer2 in the cluster without using a keytab
 - :cask-issue:`CDAP-11096` - Allowed users to configure the transaction isolation level in database plugins
 - :cask-issue:`CDAP-13573` - Configured sandbox to have secure store APIs enabled by default
