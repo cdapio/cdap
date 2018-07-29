@@ -2,9 +2,6 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
-=====================================
-Cask Data Application Platform - CDAP
-=====================================
 .. image:: cdap-docs/developer-manual/source/_images/CDAP.png
 
 .. image:: https://cdap-users.herokuapp.com/badge.svg?t=1
@@ -20,7 +17,7 @@ Cask Data Application Platform - CDAP
 Introduction
 ============
 
-The Cask™ Data Application Platform (CDAP)is an integrated, open source application
+The CDAP is an integrated, open source application
 development platform for the Hadoop ecosystem that provides developers with data and
 application abstractions to simplify and accelerate application development, address a
 broader range of real-time and batch use cases, and deploy applications into production
