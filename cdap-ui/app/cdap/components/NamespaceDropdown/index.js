@@ -143,7 +143,8 @@ export default class NamespaceDropdown extends Component {
     let params = {
       namespace: NamespaceStore.getState().selectedNamespace,
       target: ['app', 'dataset', 'stream'],
-      query: "*"
+      query: '*',
+      sort: 'entity-name asc'
     };
     let numApplications = 0;
     let numStreams = 0;

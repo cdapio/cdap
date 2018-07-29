@@ -58,7 +58,7 @@
     .grid-header,
     .grid-body {
       .grid-row {
-        grid-template-columns: 20px 2fr 1fr 2fr 1fr 1fr 1fr 1fr 20px;
+        grid-template-columns: 20px 1.5fr 1fr 1.5fr 1fr 1fr 1fr 1.5fr 20px;
         white-space: nowrap;
         &:hover {
           [class*="icon-"] {

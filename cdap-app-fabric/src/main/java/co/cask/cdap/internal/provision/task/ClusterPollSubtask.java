@@ -45,11 +45,13 @@ public class ClusterPollSubtask extends ProvisioningSubtask {
     PollingStrategy pollingStrategy = provisioner.getPollingStrategy(provisionerContext, cluster);
     long startTime = System.currentTimeMillis();
     int numPolls = 0;
-    ClusterStatus currentStatus = status;
-    while (currentStatus == status) {
-      TimeUnit.MILLISECONDS.sleep(pollingStrategy.nextPoll(numPolls++, startTime));
+    ClusterStatus currentStatus;
+    do {
       currentStatus = provisioner.getClusterStatus(provisionerContext, cluster);
-    }
+      if (currentStatus == status) {
+        TimeUnit.MILLISECONDS.sleep(pollingStrategy.nextPoll(numPolls++, startTime));
+      }
+    } while (currentStatus == status);
     return new Cluster(cluster, currentStatus);
   }
 }

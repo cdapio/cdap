@@ -24,6 +24,7 @@ import CardActionFeedback from 'components/CardActionFeedback';
 import ee from 'event-emitter';
 import {i18nPrefix, MIN_DATAPREP_VERSION, artifactName} from 'components/DataPrep';
 import MyDataPrepApi from 'api/dataprep';
+import isObject from 'lodash/isObject';
 
 const PREFIX = `features.DataPrep.TopPanel.UpgradeModal`;
 
@@ -61,10 +62,14 @@ export default class UpgradeModal extends Component {
       .subscribe(() => {
         this.eventEmitter.emit('REFRESH_DATAPREP');
       }, (err) => {
+        let extendedMessage = isObject(err.extendedMessage) ?
+          err.extendedMessage.response || err.extendedMessage.message
+        :
+          err.extendedMessage;
         this.setState({
           loading: false,
           error: err.error,
-          extendedMessage: err.extendedMessage
+          extendedMessage
         });
       });
   }

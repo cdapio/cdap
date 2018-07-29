@@ -9,23 +9,23 @@ Integrations
 ============
 
 
-.. rubric:: Cask Market
+.. rubric:: Hub
 
 .. |cask-market-overview| replace:: **Overview:**
 .. _cask-market-overview: cask-market.html#overview
 
-- |cask-market-overview|_ Summary of the **Cask Market,** a source for re-usable
+- |cask-market-overview|_ Summary of the **Hub,** a source for re-usable
   applications, data, and code for CDAP users
 
 .. |cask-market-api| replace:: **API:**
 .. _cask-market-api: cask-market.html#api
 
-- |cask-market-api|_ Cask Market APIs used to create entities in a Cask Market
+- |cask-market-api|_ Hub APIs used to create entities in a Hub
 
 .. |cask-market-custom| replace:: **Custom Hosting:**
 .. _cask-market-custom: cask-market.html#custom
 
-- |cask-market-custom|_ Hosting your own custom Cask Market
+- |cask-market-custom|_ Hosting your own custom Hub
 
 
 .. rubric:: Cloudera

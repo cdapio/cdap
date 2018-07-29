@@ -148,7 +148,7 @@ public final class MessageUtil {
         if (principal != null) {
           principal = new KerberosName(principal).getShortName();
         }
-        ProgramStartInfo programStartInfo = new ProgramStartInfo(userArguments, artifactId, principal);
+        ProgramStartInfo programStartInfo = new ProgramStartInfo(userArguments, artifactId, principal, systemArguments);
         programRunInfo.setStartInfo(programStartInfo);
         break;
       case Constants.Notification.Status.RUNNING:

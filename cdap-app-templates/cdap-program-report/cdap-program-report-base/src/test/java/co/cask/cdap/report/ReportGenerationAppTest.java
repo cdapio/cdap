@@ -493,9 +493,10 @@ public class ReportGenerationAppTest extends TestBase {
       "\"run\":\"randomRunId\",\"entity\": \"PROGRAM\",\"program\": \"wf\",\"programStatus\": \"KILLED\"," +
       "\"type\": \"PROGRAM_STATUS\"}]}";
     ProgramStartInfo startInfo =
-      new ProgramStartInfo(ImmutableMap.of(Constants.Notification.SCHEDULE_INFO_KEY, scheduleInfo),
+      new ProgramStartInfo(ImmutableMap.of(),
                            new ArtifactId(TEST_ARTIFACT_NAME,
-                                          new ArtifactVersion("1.0.0"), ArtifactScope.USER), USER_ALICE);
+                                          new ArtifactVersion("1.0.0"), ArtifactScope.USER), USER_ALICE,
+                           ImmutableMap.of(Constants.Notification.SCHEDULE_INFO_KEY, scheduleInfo));
     long delay = TimeUnit.MINUTES.toMillis(5);
     int mockMessageId = 0;
     for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {

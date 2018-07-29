@@ -56,7 +56,8 @@ const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
       let {profiles} = state;
       profiles = profiles.map(profile => {
         let metricObj = {runs: '--', minutes: '--'};
-        let profileMetrics = profilesToMetricsMap[profile.name] || {};
+        let profileKey = `${profile.scope.toLowerCase()}:${profile.name}`;
+        let profileMetrics = profilesToMetricsMap[profileKey] || {};
         /*
           We are adding empty oneday and overall metrics AND metrics from backend
           as we are not sure UI will get all metrics from backend. This will give

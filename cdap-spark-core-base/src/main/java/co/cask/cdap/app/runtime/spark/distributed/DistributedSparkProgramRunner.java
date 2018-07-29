@@ -22,7 +22,6 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -94,12 +93,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   }
 
   @Override
-  public ProgramController createProgramController(TwillController twillController,
-                                                   ProgramDescriptor programDescriptor, RunId runId) {
-    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
-  }
-
-  private ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
+  public ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
     return new SparkTwillProgramController(programId, twillController, runId).startListen();
   }
 

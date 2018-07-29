@@ -252,10 +252,12 @@ features:
         Associations:
           Header:
             created: Created
-            lastrunnodehr: Last run node hours
+            label: Pipelines currently using {profile}
+            last24hrsnodehr: Last 24 hrs node hours
             last24hrsruns: Last 24 hrs runs
             name: Name
             namespace: Namespace
+            noAssociations: No pipelines currently using this profile
             schedules: Schedules
             totalnodehr: Total node hours
             totalruns: Total runs
@@ -354,9 +356,6 @@ features:
     btnLabel: Enable Data Preparation
     btnLoadingLabel: "Enabling..."
     description: CDAP Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
-    errorCommunicating: Error while communicating with Data Preparation service
-    errorTitle: Enabling Data Preparation failed
-    failedToStop: Failed to stop Data Preparation service
     list:
       1: Easy and interactive way to work with messy data
       2: Apply transformations using a variety of operations on various data types
@@ -925,12 +924,12 @@ features:
         title: Swap two column names
     pageTitle: CDAP | Data Preparation
     PipelineError:
-      bigquery: Unable to find Big Query plugin. Please install Google Cloud Plugins from Hub.
+      bigquery: Unable to find Google BigQuery plugin. Please install Google Cloud Plugins from Hub.
       database: Unable to find Database Plugins. Please make sure Database Plugins are available.
       defaultMessage: Error adding to pipeline.
       fileBatch: Unable to find Core Plugins. Please make sure Core Plugins are available.
       fileRealtime: Unable to find Spark Plugins. Please make sure Spark Plugins are available.
-      gcs: Unable find GCS plugin. Please install Google Cloud Plugins from Hub.
+      gcs: Unable find Google Cloud Storage plugin. Please install Google Cloud Plugins from Hub.
       kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Hub.
       s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Hub.
       missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Hub
@@ -945,7 +944,7 @@ features:
         realtimePipelineBtn: Realtime pipeline
         errorTitle: Unable to create pipeline
       applyBtnLabel: Apply
-      bigquery: Big Query
+      bigquery: Google BigQuery
       cleanseLinkLabel: "cleanse "
       copyToCDAPDatasetBtn:
         btnLabel: Ingest Data
@@ -978,7 +977,7 @@ features:
       database: Database
       databaseTitle: "Table: {name}"
       file: File System
-      gcs: GCS
+      gcs: Google Cloud Storage
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
       invalidFieldNameRemedies2: "You can try to "
@@ -1003,6 +1002,9 @@ features:
       upload: Local File Upload
       viewSchemaBtnLabel: View Schema
     Upgrade:
+      errorCommunicating: Error while communicating with Data Preparation service
+      errorTitle: Enabling Data Preparation failed
+      failedToStop: Failed to stop Data Preparation service
       minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Hub."
     WorkspaceTabs:
       DeleteModal:
@@ -1014,18 +1016,18 @@ features:
   DataPrepConnections:
     AddConnections:
       BigQuery:
-        bucket: Temporary GCS bucket
+        bucket: Temporary Google Cloud Storage bucket
         Buttons:
           ADD: Add Connection
           DUPLICATE: Duplicate Connection
           EDIT: Save Changes
-        defaultTestErrorMessage: Cannot connect to Google Big Query
+        defaultTestErrorMessage: Cannot connect to Google BigQuery
         ErrorMessages:
           ADD: Failed to add connection
           DUPLICATE: Failed to duplicate connection
           EDIT: Failed to edit connection
         ModalHeader:
-          ADD: "Add connection: Big Query"
+          ADD: "Add connection: Google BigQuery"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
         name: Name
@@ -1080,7 +1082,7 @@ features:
           DUPLICATE: Failed to duplicate connection
           EDIT: Failed to edit connection
         ModalHeader:
-          ADD: "Add connection: GCS"
+          ADD: "Add connection: Google Cloud Storage"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
         name: Name
@@ -1135,7 +1137,7 @@ features:
         region: Region
         required: Required
         testConnection: Test Connection
-    bigquery: Google Big Query ({count})
+    bigquery: Google BigQuery ({count})
 
     ConnectionManagement:
       Confirmations:
@@ -1149,7 +1151,7 @@ features:
       duplicate: Duplicate
       edit: Edit
     database: Database ({count})
-    gcs: Google Cloud Service ({count})
+    gcs: Google Cloud Storage ({count})
     hdfs: File System
     kafka: Kafka ({count})
     s3: S3 ({count})
@@ -1236,7 +1238,7 @@ features:
       data: Data
       evariance: Evariance
       f1: F1
-      mae: Mean avg error
+      mae: Mean absolute error
       modelDescription: Model description
       modelName: Model name
       models:
@@ -2072,7 +2074,6 @@ features:
       byTrigger: By trigger
       customApp: custom app
       expiresIn: Expires in
-      export: Export
       generatedTime: Report generated on {time}
       getReportName: "{statusLabel} runs - {startDate} to {endDate}"
       lastStarted: "Newest: {newest}; Oldest: {oldest}"

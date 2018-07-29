@@ -25,7 +25,7 @@ import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
-import {getProvisionerLabel, extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {getProvisionerLabel, extractProfileName, getNodeHours} from 'components/Cloud/Profiles/Store/ActionCreator';
 import ProfileStatusToggle from 'components/Cloud/Profiles/DetailView/Content/BasicInfo/ProfileStatusToggle';
 import {CLOUD} from 'services/global-constants';
 import {humanReadableDate} from 'services/helpers';
@@ -94,12 +94,14 @@ export default class ProfileDetailViewBasicInfo extends Component {
       deleteLoading: true
     });
 
-    let apiObservable$ = MyCloudApi.delete({
-      namespace: getCurrentNamespace(),
-      profile: this.props.profile.name
-    });
+    let apiObservable$;
     if (this.props.isSystem) {
       apiObservable$ = MyCloudApi.deleteSystemProfile({
+        profile: this.props.profile.name
+      });
+    } else {
+      apiObservable$ = MyCloudApi.delete({
+        namespace: getCurrentNamespace(),
         profile: this.props.profile.name
       });
     }
@@ -145,7 +147,6 @@ export default class ProfileDetailViewBasicInfo extends Component {
 
   renderProfileInfoGrid() {
     let profile = this.props.profile;
-
     return (
       <div className="grid-wrapper profile-info-grid">
         <div className="grid grid-container">
@@ -169,8 +170,8 @@ export default class ProfileDetailViewBasicInfo extends Component {
               <div>{profile.scope}</div>
               <div>{this.state.oneDayMetrics.runs}</div>
               <div>{this.state.overallMetrics.runs}</div>
-              <div>{this.state.oneDayMetrics.minutes}</div>
-              <div>{this.state.overallMetrics.minutes}</div>
+              <div>{getNodeHours(this.state.oneDayMetrics.minutes || '--')}</div>
+              <div>{getNodeHours(this.state.overallMetrics.minutes || '--')}</div>
               <div>{humanReadableDate(profile.created, false)}</div>
             </div>
           </div>

@@ -243,7 +243,7 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
 
   private Constants.FieldLineage.Direction parseDirection(String directionStr) throws BadRequestException {
     try {
-      return Constants.FieldLineage.Direction.valueOf(directionStr);
+      return Constants.FieldLineage.Direction.valueOf(directionStr.toUpperCase());
     } catch (IllegalArgumentException e) {
       String directionValues = Joiner.on(", ").join(Constants.FieldLineage.Direction.values());
       throw new BadRequestException(String.format("Direction must be specified to get the field lineage " +

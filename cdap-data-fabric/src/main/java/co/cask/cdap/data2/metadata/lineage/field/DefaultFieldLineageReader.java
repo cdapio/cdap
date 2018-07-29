@@ -34,8 +34,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -93,17 +94,17 @@ public class DefaultFieldLineageReader implements FieldLineageReader {
   }
 
   @Override
-  public Set<ProgramRunOperations> getIncomingOperations(EndPointField endPointField, long start, long end) {
+  public List<ProgramRunOperations> getIncomingOperations(EndPointField endPointField, long start, long end) {
     return computeFieldOperations(true, endPointField, start, end);
   }
 
   @Override
-  public Set<ProgramRunOperations> getOutgoingOperations(EndPointField endPointField, long start, long end) {
+  public List<ProgramRunOperations> getOutgoingOperations(EndPointField endPointField, long start, long end) {
     return computeFieldOperations(false, endPointField, start, end);
   }
 
-  private Set<ProgramRunOperations> computeFieldOperations(boolean incoming, EndPointField endPointField,
-                                                           long start, long end) {
+  private List<ProgramRunOperations> computeFieldOperations(boolean incoming, EndPointField endPointField,
+                                                            long start, long end) {
     Set<ProgramRunOperations> endPointOperations = Transactionals.execute(transactional, context -> {
       FieldLineageDataset fieldLineageDataset = FieldLineageDataset.getFieldLineageDataset(context, datasetFramework,
                                                                                            fieldLineageDatasetId);
@@ -112,7 +113,7 @@ public class DefaultFieldLineageReader implements FieldLineageReader {
         : fieldLineageDataset.getOutgoingOperations(endPointField.getEndPoint(), start, end);
     });
 
-    Set<ProgramRunOperations> endPointFieldOperations = new HashSet<>();
+    List<ProgramRunOperations> endPointFieldOperations = new ArrayList<>();
     for (ProgramRunOperations programRunOperation : endPointOperations) {
       try {
         // No need to compute summaries here.

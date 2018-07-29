@@ -18,7 +18,7 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.services.AppVersionUpgradeService;
+import co.cask.cdap.metadata.MetadataService;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -28,6 +28,8 @@ import com.google.inject.Singleton;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -40,17 +42,19 @@ import javax.ws.rs.Path;
 public class UpgradeHttpHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new Gson();
-
-  private final AppVersionUpgradeService appVersionUpgradeService;
+  private Map<String, Boolean> upgradeStatus;
+  private MetadataService metadataService;
 
   @Inject
-  UpgradeHttpHandler(AppVersionUpgradeService appVersionUpgradeService) {
-    this.appVersionUpgradeService = appVersionUpgradeService;
+  UpgradeHttpHandler(MetadataService metadataService) {
+    this.upgradeStatus = new HashMap<>();
+    this.metadataService = metadataService;
   }
 
   @GET
   @Path("/status")
   public void getUpgradeStatus(HttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appVersionUpgradeService.getUpgradeStatus()));
+    upgradeStatus.put("metadata", metadataService.isMigrationInProcess());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(upgradeStatus));
   }
 }

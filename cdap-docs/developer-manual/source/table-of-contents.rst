@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2018 Cask Data, Inc.
 
 =======================================
 CDAP Developer Manual Table of Contents
@@ -15,6 +15,7 @@ CDAP Developer Manual Table of Contents
     Building Blocks <building-blocks/index>
     Metadata <metadata/index>
     Pipelines <pipelines/index>
+    Cloud Runtimes <cloud-runtimes/index>
     Security <security/index>
     Testing and Debugging <testing/index>
     Ingesting Data <ingesting-tools/index>

@@ -57,13 +57,15 @@ export default class ProfileStatusToggle extends Component {
 
     const profile = this.props.profile;
     const action = PROFILE_STATUSES[profile.status] === 'enabled' ? 'disable' : 'enable';
-    let apiObservable$ = MyCloudApi.toggleProfileStatus({
-      namespace: this.props.namespace,
-      profile: profile.name,
-      action
-    });
+    let apiObservable$;
     if (this.props.namespace === 'system') {
       apiObservable$ = MyCloudApi.toggleSystemProfileStatus({
+        profile: profile.name,
+        action
+      });
+    } else {
+      apiObservable$ = MyCloudApi.toggleProfileStatus({
+        namespace: this.props.namespace,
         profile: profile.name,
         action
       });

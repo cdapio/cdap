@@ -37,7 +37,10 @@ public class ProgramRunInfoSerializer {
     Schema.Field.of(Constants.RUNTIME_ARGUMENTS, Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                               Schema.of(Schema.Type.STRING))
     ),
-    Schema.Field.of(Constants.ARTIFACT_ID, ARTIFACT_INFO));
+    Schema.Field.of(Constants.ARTIFACT_ID, ARTIFACT_INFO),
+    Schema.Field.of(Constants.SYSTEM_ARGUMENTS, Schema.mapOf(Schema.of(Schema.Type.STRING),
+                                                             Schema.of(Schema.Type.STRING))
+    ));
 
   private static final String SCHEMA_STRING = Schema.recordOf(
     "ReportRecord",
@@ -74,6 +77,7 @@ public class ProgramRunInfoSerializer {
       artifactRecord.put(Constants.ARTIFACT_VERSION, artifactId.getVersion().toString());
       artifactRecord.put(Constants.ARTIFACT_SCOPE, artifactId.getScope().toString());
       startInfoRecord.put(Constants.ARTIFACT_ID, artifactRecord);
+      startInfoRecord.put(Constants.SYSTEM_ARGUMENTS, runInfo.getProgramSartInfo().getSystemArguments());
     }
     GenericData.Record record = new GenericData.Record(SCHEMA);
     record.put(Constants.NAMESPACE, runInfo.getNamespace());

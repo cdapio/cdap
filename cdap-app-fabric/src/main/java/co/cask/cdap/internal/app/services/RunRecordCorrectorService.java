@@ -17,6 +17,7 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
@@ -198,6 +199,13 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
       ProgramRunId programRunId = record.getProgramRunId();
 
       if (excludedIds.contains(programRunId)) {
+        return false;
+      }
+
+      // Don't fix ClusterMode.ISOLATED runs. The runtime monitor system should handle it.
+      String clusterMode = record.getSystemArgs().get(ProgramOptionConstants.CLUSTER_MODE);
+      // Use equals instead of valueOf to handle null for old records and also potential future name change
+      if (ClusterMode.ISOLATED.name().equals(clusterMode)) {
         return false;
       }
 

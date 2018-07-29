@@ -24,16 +24,23 @@ import {CLOUD} from 'services/global-constants';
 import {MyMetricApi} from 'api/metric';
 import {MySearchApi} from 'api/search';
 import {GLOBALS} from 'services/global-constants';
+import isNil from 'lodash/isNil';
 
-export const getProfileMetricsBody = (queryId, namespace, profileScope, startTime, endTime, extraTags) => {
+export const getProfileMetricsBody = (queryId, namespace, profilescope, startTime, endTime, extraTags = {}) => {
+  let tags = {
+    profilescope,
+    ...extraTags
+  };
+  if (namespace !== 'system') {
+    tags.namespace = namespace;
+  }
   let metricBody = {
     [queryId]: {
-      tags: {
-        namespace,
-        profilescope: profileScope
-      },
+      tags,
       metrics: [
         'system.program.completed.runs',
+        'system.program.failed.runs',
+        'system.program.killed.runs',
         'system.program.node.minutes'
       ],
       timeRange: {
@@ -44,18 +51,6 @@ export const getProfileMetricsBody = (queryId, namespace, profileScope, startTim
       groupBy: ['profile']
     }
   };
-  if (extraTags) {
-    metricBody = {
-      ...metricBody,
-      [queryId]: {
-        ...metricBody[queryId],
-        tags: {
-          ...metricBody[queryId].tags,
-          ...extraTags
-        }
-      }
-    };
-  }
   if (!startTime && !endTime) {
     metricBody = {
       ...metricBody,
@@ -133,10 +128,14 @@ export const fetchAggregateProfileMetrics = (namespace, profile, extraTags) => {
             if (!metricsMap.hasOwnProperty(query)) {
               metricsMap[query] = {};
             }
-            metricsMap[query]= {
-              ...metricsMap[query],
-              [metricName]: metricValue
-            };
+            if (metricsMap[query][metricName] !== '--' && !isNil(metricsMap[query][metricName])) {
+              metricsMap[query][metricName] += metricValue;
+            } else {
+              metricsMap[query]= {
+                ...metricsMap[query],
+                [metricName]: metricValue
+              };
+            }
           });
         });
         return Observable.create(observer => {
@@ -185,20 +184,30 @@ export const getProfiles = (namespace) => {
 
             One metadata call for entityScope=USER for schedules and triggers count
         */
-
-        let oneDayUSERMetricsBody = getProfileMetricsBody('oneDayUSERMetrics', namespace, 'USER', 'now-24h', 'now');
-        let overAllUSERMetricsBody = getProfileMetricsBody('overAllUSERMetrics', namespace, 'USER', 0, 0);
-        let oneDaySYSTEMMetricsBody = getProfileMetricsBody('oneDaySYSTEMMetrics', namespace, 'SYSTEM', 'now-24h', 'now');
-        let overAllSYSTEMMetricsBody = getProfileMetricsBody('overAllSYSTEMMetrics', namespace, 'SYSTEM', 0, 0);
+        const extraTags = {
+          programtype: 'Workflow'
+        };
+        let oneDayUSERMetricsBody = getProfileMetricsBody('oneDayUSERMetrics', namespace, 'USER', 'now-24h', 'now', extraTags);
+        let overAllUSERMetricsBody = getProfileMetricsBody('overAllUSERMetrics', namespace, 'USER', 0, 0, extraTags);
+        let oneDaySYSTEMMetricsBody = getProfileMetricsBody('oneDaySYSTEMMetrics', namespace, 'SYSTEM', 'now-24h', 'now', extraTags);
+        let overAllSYSTEMMetricsBody = getProfileMetricsBody('overAllSYSTEMMetrics', namespace, 'SYSTEM', 0, 0, extraTags);
         MyMetricApi
           .query(null, {...oneDayUSERMetricsBody, ...overAllUSERMetricsBody, ...oneDaySYSTEMMetricsBody, ...overAllSYSTEMMetricsBody})
           .subscribe(metrics => {
             let profilesToMetricsMap = {};
             Object.keys(metrics).forEach(query => {
               // oneDayMetrics, overMetrics are the keys for metrics for each profile.
+              let profileScope = query.indexOf('USER') !== -1 ? 'user' : 'system';
               let metricsKey = query.replace(/USER|SYSTEM/, '');
               metrics[query].series.forEach(metric => {
-                let profileName = extractProfileName(metric.grouping.profile);
+                let profileName = metric.grouping.profile;
+                /*
+                  The map index cannot be just profile name as
+                  two different profiles (in user and system scopes)
+                  can have the same name. This will overwrite the one from the other scope.
+                  Hence the addition of scope to make sure the metrics are not overwritten.
+                */
+                let profileKey = `${profileScope}:${profileName}`;
                 let metricName = metric.metricName.split('.').pop();
                 let metricValue;
                 if (!metric.data.length) {
@@ -210,12 +219,15 @@ export const getProfiles = (namespace) => {
                     metricValue = metric.data.reduce((prev, curr) => prev + curr.value, 0);
                   }
                 }
-                if (!profilesToMetricsMap.hasOwnProperty(profileName)) {
-                    profilesToMetricsMap[profileName] = {[metricsKey]: {}};
+                if (!profilesToMetricsMap.hasOwnProperty(profileKey)) {
+                    profilesToMetricsMap[profileKey] = {[metricsKey]: {}};
+                }
+                if (!isNil(objectQuery(profilesToMetricsMap, profileKey, metricsKey, metricName))) {
+                  metricValue += profilesToMetricsMap[profileKey][metricsKey][metricName];
                 }
                 /*
                   {
-                    profile1: {
+                    system:profile1: {
                       oneDayMetrics: {
                         runs: 1,
                         minutes: 2
@@ -227,9 +239,12 @@ export const getProfiles = (namespace) => {
                     }
                   }
                 */
-                profilesToMetricsMap[profileName] = {
-                  ...profilesToMetricsMap[profileName],
-                  [metricsKey]: { ...profilesToMetricsMap[profileName][metricsKey], [metricName]: metricValue }
+                profilesToMetricsMap[profileKey] = {
+                  ...profilesToMetricsMap[profileKey],
+                  [metricsKey]: {
+                    ...profilesToMetricsMap[profileKey][metricsKey],
+                    [metricName]: metricValue
+                  }
                 };
               });
             });
@@ -241,11 +256,16 @@ export const getProfiles = (namespace) => {
             });
           });
         profiles.forEach(profile => {
-          MySearchApi
-            .search({
-              namespace,
-              query: `profile:${namespace}.${profile.name}`
-            })
+          let {scope} = profile;
+          scope = scope.toLowerCase();
+          let profileName = `profile:${scope}:${profile.name}`;
+          let apiObservable$;
+          if (namespace === 'system') {
+            apiObservable$ = MySearchApi.searchSystem({ query: profileName });
+          } else {
+            apiObservable$ = MySearchApi.search({ namespace, query: profileName });
+          }
+          apiObservable$
             .subscribe(res => updateScheduleAndTriggersToStore(profile.name, res.results));
         });
       },
@@ -445,4 +465,11 @@ export const highlightNewProfile = (profileName) => {
       }
     });
   }, 3000);
+};
+
+export const getNodeHours = (nodeminutes) => {
+  if (typeof nodeminutes === 'number') {
+    return nodeminutes / 60;
+  }
+  return nodeminutes;
 };

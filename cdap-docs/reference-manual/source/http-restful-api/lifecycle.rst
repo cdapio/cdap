@@ -1562,7 +1562,9 @@ For workflows, you can retrieve:
 
 - the information about the currently running node(s) in the workflow::
 
-    GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/current
+    GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/nodes/state
+
+More information about workflow endpoint can be found at :ref:`Workflows <http-restful-api-workflow>`
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 

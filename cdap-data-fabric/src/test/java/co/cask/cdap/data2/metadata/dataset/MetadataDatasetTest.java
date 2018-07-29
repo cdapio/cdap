@@ -65,7 +65,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Test class for {@link MetadataDataset} class.
  */
-public class  MetadataDatasetTest {
+public class MetadataDatasetTest {
 
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
@@ -122,8 +122,22 @@ public class  MetadataDatasetTest {
     // Set some properties
     txnl.execute(() -> {
       dataset.setProperty(app1, "akey1", "avalue1");
-      dataset.setProperty(flow1, "fkey1", "fvalue1");
-      dataset.setProperty(flow1, "fK", "fV");
+      MetadataChange metadataChange = dataset.setProperty(flow1, Collections.emptyMap());
+      Assert.assertEquals(metadataChange.getExisting(), new Metadata(flow1, Collections.emptyMap(),
+                                                                     Collections.emptySet()));
+      Assert.assertEquals(metadataChange.getLatest(), new Metadata(flow1, Collections.emptyMap(),
+                                                                     Collections.emptySet()));
+      metadataChange = dataset.setProperty(flow1, "fkey1", "fvalue1");
+      // assert the metadata change which happens on setting property for the first time
+      Assert.assertEquals(new Metadata(flow1), metadataChange.getExisting());
+      Assert.assertEquals(new Metadata(flow1, ImmutableMap.of("fkey1", "fvalue1"), Collections.emptySet()),
+                          metadataChange.getLatest());
+      metadataChange = dataset.setProperty(flow1, "fK", "fV");
+      // assert the metadata change which happens when setting property with existing property
+      Assert.assertEquals(new Metadata(flow1, ImmutableMap.of("fkey1", "fvalue1"), Collections.emptySet()),
+                          metadataChange.getExisting());
+      Assert.assertEquals(new Metadata(flow1, ImmutableMap.of("fkey1", "fvalue1", "fK", "fV"), Collections.emptySet()),
+                          metadataChange.getLatest());
       dataset.setProperty(dataset1, "dkey1", "dvalue1");
       dataset.setProperty(stream1, "skey1", "svalue1");
       dataset.setProperty(stream1, "skey2", "svalue2");
@@ -227,7 +241,22 @@ public class  MetadataDatasetTest {
     });
     txnl.execute(() -> {
       dataset.addTags(app1, "tag1", "tag2", "tag3");
-      dataset.addTags(flow1, "tag1");
+      MetadataChange metadataChange = dataset.addTags(flow1, Collections.emptySet());
+      Assert.assertEquals(metadataChange.getExisting(), new Metadata(flow1, Collections.emptyMap(),
+                                                                     Collections.emptySet()));
+      Assert.assertEquals(metadataChange.getLatest(), new Metadata(flow1, Collections.emptyMap(),
+                                                                   Collections.emptySet()));
+      metadataChange = dataset.addTags(flow1, "tag1");
+      // assert the metadata change which happens on setting tag for the first time
+      Assert.assertEquals(new Metadata(flow1), metadataChange.getExisting());
+      Assert.assertEquals(new Metadata(flow1, Collections.emptyMap(), ImmutableSet.of("tag1")),
+                          metadataChange.getLatest());
+      metadataChange = dataset.addTags(flow1, "tag2");
+      // assert the metadata change which happens on setting tag when a tag exists
+      Assert.assertEquals(new Metadata(flow1, Collections.emptyMap(), ImmutableSet.of("tag1")),
+                          metadataChange.getExisting());
+      Assert.assertEquals(new Metadata(flow1, Collections.emptyMap(), ImmutableSet.of("tag1", "tag2")),
+                          metadataChange.getLatest());
       dataset.addTags(dataset1, "tag3", "tag2");
       dataset.addTags(stream1, "tag2");
       dataset.addTags(view1, "tag4");
@@ -258,8 +287,8 @@ public class  MetadataDatasetTest {
     txnl.execute(() -> {
       Assert.assertEquals(3, dataset.getTags(app1).size());
       Set<String> tags = dataset.getTags(flow1);
-      Assert.assertEquals(1, tags.size());
-      Assert.assertTrue(tags.contains("tag1"));
+      Assert.assertEquals(2, tags.size());
+      Assert.assertTrue(tags.containsAll(ImmutableSet.of("tag1", "tag2")));
       tags = dataset.getTags(dataset1);
       Assert.assertEquals(2, tags.size());
       Assert.assertTrue(tags.contains("tag3"));
@@ -419,10 +448,12 @@ public class  MetadataDatasetTest {
 
   @Test
   public void testSearchOnTypes() throws Exception {
-    MetadataEntity myField1 = MetadataEntity.builder(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(),
-                                                       "myDs")).appendAsType("field", "myField1").build();
-    MetadataEntity myField2 = MetadataEntity.builder(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(),
-                                                       "myDs")).appendAsType("field", "myField2").build();
+    MetadataEntity myField1 =
+      MetadataEntity.builder(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(), "myDs"))
+        .appendAsType("field", "myField1").build();
+    MetadataEntity myField2 =
+      MetadataEntity.builder(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getEntityName(), "myDs"))
+        .appendAsType("field", "myField2").build();
     final MetadataEntry myFieldEntry1 = new MetadataEntry(myField1, "testKey1", "testValue1");
     final MetadataEntry myFieldEntry2 = new MetadataEntry(myField2, "testKey2", "testValue2");
     txnl.execute(() -> {
@@ -1008,7 +1039,7 @@ public class  MetadataDatasetTest {
     });
 
     SearchRequest request1 = new SearchRequest(null, "v1", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
-                                              0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
+                                               0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     SearchResults results = txnl.execute(() -> dataset.search(request1));
     Set<MetadataEntry> actual = new HashSet<>(results.getResults());
     Set<MetadataEntry> expected = new HashSet<>();

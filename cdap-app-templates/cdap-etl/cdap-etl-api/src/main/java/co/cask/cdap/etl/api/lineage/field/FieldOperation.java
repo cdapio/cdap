@@ -18,9 +18,12 @@ package co.cask.cdap.etl.api.lineage.field;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.util.Objects;
+
 /**
  * Abstract base class to represent a field lineage operation. Each operation has a
- * name and description. Operation typically has input and output fields.
+ * name and description. The name of operation must be unique within all operations
+ * recorded by the same pipeline stage. Operation typically has input and output fields.
  */
 @Beta
 public abstract class FieldOperation {
@@ -53,5 +56,24 @@ public abstract class FieldOperation {
    */
   public String getDescription() {
     return description;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    FieldOperation operation = (FieldOperation) o;
+    return Objects.equals(name, operation.name) &&
+      type == operation.type &&
+      Objects.equals(description, operation.description);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, type, description);
   }
 }

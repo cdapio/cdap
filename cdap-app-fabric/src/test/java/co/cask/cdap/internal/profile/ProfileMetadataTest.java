@@ -84,11 +84,11 @@ public class ProfileMetadataTest extends AppFabricTestBase {
     ProgramId programId = defaultAppId.workflow(AppWithSchedule.WORKFLOW_NAME);
 
     // Verify the workflow and schedule has been updated to native profile
-    Tasks.waitFor(ProfileId.NATIVE.toString(), () -> getMetadataProperties(programId).get("profile"),
+    Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(ProfileId.NATIVE.toString(), () -> getMetadataProperties(scheduleId1).get("profile"),
+    Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(ProfileId.NATIVE.toString(), () -> getMetadataProperties(scheduleId2).get("profile"),
+    Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
 
@@ -97,11 +97,11 @@ public class ProfileMetadataTest extends AppFabricTestBase {
                    Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:MyProfile"), 200);
 
     // Verify the workflow and schedule has been updated to my profile
-    Tasks.waitFor(myProfile.toString(), () -> getMetadataProperties(programId).get("profile"),
+    Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(myProfile.toString(), () -> getMetadataProperties(scheduleId1).get("profile"),
+    Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(myProfile.toString(), () -> getMetadataProperties(scheduleId2).get("profile"),
+    Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // set it at app level through preferences
@@ -109,33 +109,33 @@ public class ProfileMetadataTest extends AppFabricTestBase {
                    Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:MyProfile2"), 200);
 
     // Verify the workflow and schedule has been updated to my profile 2
-    Tasks.waitFor(myProfile2.toString(), () -> getMetadataProperties(programId).get("profile"),
+    Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(myProfile2.toString(), () -> getMetadataProperties(scheduleId1).get("profile"),
+    Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(myProfile2.toString(), () -> getMetadataProperties(scheduleId2).get("profile"),
+    Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // delete app level pref, metadata should point to ns level
     deletePreferences(getPreferenceURI(TEST_NAMESPACE1, defaultAppId.getApplication()), 200);
 
     // Verify the workflow and schedule has been updated to my profile
-    Tasks.waitFor(myProfile.toString(), () -> getMetadataProperties(programId).get("profile"),
+    Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(myProfile.toString(), () -> getMetadataProperties(scheduleId1).get("profile"),
+    Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(myProfile.toString(), () -> getMetadataProperties(scheduleId2).get("profile"),
+    Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // delete at ns level should let the program use native profile since no profile is set at instance level
     deletePreferences(getPreferenceURI(TEST_NAMESPACE1), 200);
 
     // Verify the workflow and schedule has been updated to native profile
-    Tasks.waitFor(ProfileId.NATIVE.toString(), () -> getMetadataProperties(programId).get("profile"),
+    Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(ProfileId.NATIVE.toString(), () -> getMetadataProperties(scheduleId1).get("profile"),
+    Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(ProfileId.NATIVE.toString(), () -> getMetadataProperties(scheduleId2).get("profile"),
+    Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     deleteApp(defaultAppId, 200);

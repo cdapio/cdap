@@ -1,28 +1,28 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016-2017 Cask Data, Inc.
+    :copyright: Copyright © 2016-2018 Cask Data, Inc.
 
 .. :hide-toc: true
 
 .. _cask-market:
 
-===========
-Cask Market
-===========
+===
+Hub
+===
 
 Overview
 ========
 
-The Cask Market allows CDAP users to create and update CDAP artifacts, applications, and
+The Hub allows CDAP users to create and update CDAP artifacts, applications, and
 datasets using simple wizards. Instead of building code, deploying artifacts, and
 configuring applications, users can simply point and click. This allows users of varying
 technical skill the ability to deploy and run common use-cases in a self-service manner.
 
-The Cask Market allows system administrators to distribute re-usable applications, data,
+The Hub allows system administrators to distribute re-usable applications, data,
 and code to all CDAP users in their organization. Though there is currently no method for
-publishing packages to the public Cask-hosted market, administrators can host their own
-market and then configure their CDAP instances to use their own market instead of the
-public Cask Market.
+publishing packages to the public Cask-hosted Hub, administrators can host their own
+Hub and then configure their CDAP instances to use their own Hub instead of the
+public Hub.
 
 .. rubric:: Terminology
 
@@ -40,35 +40,35 @@ installation process.
 configuration file, a JAR, or data that should be loaded into a dataset. Resources are
 referenced by name in the actions defined in the package specification.
 
-**Catalog:** The catalog is a list of all the packages in the Cask Market. The catalog
+**Catalog:** The catalog is a list of all the packages in the Hub. The catalog
 contains metadata about each package.
 
 .. rubric:: Architecture
 
-The Cask Market is a service that is separate from a CDAP instance. Each CDAP UI instance
-can be configured to read from a separate Cask Market instance. By default, the UI points
-to the public Cask-hosted market. During package installation, the UI will make calls to
-the Cask Market and to a CDAP Router instance to create or update various CDAP entities.
+The Hub is a service that is separate from a CDAP instance. Each CDAP UI instance
+can be configured to read from a separate Hub instance. By default, the UI points
+to the public Cask-hosted Hub. During package installation, the UI will make calls to
+the Hub and to a CDAP Router instance to create or update various CDAP entities.
 For example, a package may contain an action to create a stream, and then load data to a
-stream. The Cask Market UI will interact with the CDAP RESTful APIs to create the stream,
-then fetch the data from the Cask Market and add it to the CDAP stream through the CDAP
+stream. The Hub UI will interact with the CDAP RESTful APIs to create the stream,
+then fetch the data from the Hub and add it to the CDAP stream through the CDAP
 RESTful APIs.
 
-A market is essentially just a server that serves static package specifications and
-resources. As such, administrators can easily set up their own markets in the same way
+A Hub is essentially just a server that serves static package specifications and
+resources. As such, administrators can easily set up their own Hub instances in the same way
 they would serve any static content. For example, an Apache web server can be placed on
-top of a local directory structure that matches the expected market directory structure.
+top of a local directory structure that matches the expected Hub directory structure.
 
 
 .. _cask-market-api:
 
-Cask Market HTTP RESTful API
+Hub HTTP RESTful API
 ============================
 
 .. highlight:: console
 
-The Cask Market HTTP RESTful APIs are simply a contract about the directory structure of the marketplace.
-All APIs are relative to a base path. For example, the base path for the public Cask-hosted market
+The Hub HTTP RESTful APIs are simply a contract about the directory structure of the Hub.
+All APIs are relative to a base path. For example, the base path for the public Cask-hosted Hub
 is ``market.cask.co``.
 
 .. directory-structure-start
@@ -95,8 +95,8 @@ The directory structure must be:
 
 .. _cask-market-get-catalog:
 
-Get Market Catalog
-------------------
+Get Hub Catalog
+---------------
 
 .. highlight:: console
 
@@ -885,12 +885,12 @@ To retrieve the icon for a package, submit an HTTP GET request:
   GET /|cask-market-version|/packages/<package-name>/<version>/icon.png
 
 
-Hosting a Custom Cask Market
+Hosting a Custom Hub
 ============================
 
 .. highlight:: console
 
-The Cask Market APIs are simply a contract about the directory structure of the marketplace.
+The Hub APIs are simply a contract about the directory structure of the Hub.
 
 .. Directory structure
 .. --------------------
@@ -898,20 +898,20 @@ The Cask Market APIs are simply a contract about the directory structure of the 
     :start-after: .. directory-structure-start
     :end-before: .. directory-structure-end
 
-As such, hosting a custom market can be done by setting up a server that follows the same
+As such, hosting a custom Hub can be done by setting up a server that follows the same
 path structure.
 
 One possible setup is to keep your packages in a source control repository whose directory
-structure matches the one required by the market. The repository can be checked out onto one or
+structure matches the one required by the Hub. The repository can be checked out onto one or
 more machines, with an Apache server configured to serve content from that directory. A tool
 can be run to create the catalog file from all the package specifications, and to create all
 the signature files.
 
-Another possible setup is to serve the market catalog and packages from Amazon S3.
+Another possible setup is to serve the Hub catalog and packages from Amazon S3.
 
-To configure the location of the Cask Market, when you are using a custom market instead
-of the public Cask Market, configure the property ``market.base.url`` in the
-``cdap-site.xml`` file to point to the location of your custom market. See the
-:ref:`Market <appendix-cdap-default-market>` section in the :ref:`Appendix
+To configure the location of the Hub, when you are using a custom Hub instead
+of the public Hub, configure the property ``market.base.url`` in the
+``cdap-site.xml`` file to point to the location of your custom Hub. See the
+:ref:`Hub <appendix-cdap-default-market>` section in the :ref:`Appendix
 <appendix-cdap-site.xml>` of the :ref:`Administration Manual <admin-index>`
 for details on configuring the file.

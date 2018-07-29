@@ -15,6 +15,9 @@ Metadata HTTP RESTful API
 Use the CDAP Metadata HTTP RESTful API to set, retrieve, and delete the metadata annotations
 of applications, datasets, streams, and other entities in CDAP.
 
+**Note**: Metadata for versioned entities is not versioned, including entities such as applications,
+programs, schedules, and program runs. Additions to metadata in one version are reflected in all versions.
+
 Metadata consists of **properties** (a list of key-value pairs) or **tags** (a list of keys).
 Metadata and their use are described in the :ref:`Developer Manual: Metadata and Lineage
 <metadata-lineage>`.
@@ -25,6 +28,7 @@ The HTTP RESTful API is divided into these sections:
 - :ref:`metadata tags <http-restful-api-metadata-tags>`
 - :ref:`searching metadata <http-restful-api-metadata-searching>`
 - :ref:`viewing lineage <http-restful-api-metadata-lineage>`
+- :ref:`field level lineage <http-restful-api-metadata-fieldlevellineage>`
 - :ref:`metadata for a run of a program <http-restful-api-metadata-run>`
 
 Metadata keys, values, and tags must conform to the CDAP :ref:`alphanumeric extra extended
@@ -33,6 +37,11 @@ metadata object associated with a single entity is limited to 10K bytes in size.
 
 There is one reserved word for property keys and values: *tags*, either as ``tags`` or
 ``TAGS``. Tags themselves have no reserved words.
+
+The online metadata is migrated when CDAP is upgraded from 4.3.x to 5.0.0. During metadata migration,
+writes to non-migrated entities fail and reads on metadata for non-migrated entities do not have all the metadata.
+Metadata migration takes approximately 2-3 minutes. You can check the metadata migration status by using the
+:ref:upgrade status <http-restful-api-monitor-status-system-upgrade> REST endpoint.
 
 .. Base URL explanation
 .. --------------------
@@ -46,9 +55,10 @@ Metadata Properties
 
 Annotating Properties
 ---------------------
-To annotate user metadata properties for an application, dataset, or stream, submit an HTTP POST request::
+To annotate user metadata properties for an application, dataset, or other entities including custom entities,
+submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties
+  POST /v3/namespaces/<namespace-id>/<entity-details>/metadata/properties
 
 or, for a particular program of a specific application::
 
@@ -61,6 +71,10 @@ or, for a particular version of an artifact::
 or, for a particular view of a stream::
 
   POST /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/properties
+
+or, for a custom entity like field of a dataset::
+
+    POST /v3/namespaces/<namespace-id>/datasets/<dataset-id>/field/<field-name>/metadata/properties
 
 .. highlight:: json-ellipsis
 
@@ -75,8 +89,8 @@ request body::
 
 .. highlight:: console
 
-If the entity requested is found, new keys will be added and existing keys will be
-updated. Existing keys not in the properties map will not be deleted.
+New property keys will be added and existing keys will be updated.
+Existing keys not in the properties map will not be deleted.
 
 .. list-table::
    :widths: 20 80
@@ -86,10 +100,8 @@ updated. Existing keys not in the properties map will not be deleted.
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
-     - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entity-details``
+     - :ref:`Hierarchical key-value representation of the entity <metadata_custom_entities>`
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -104,6 +116,10 @@ updated. Existing keys not in the properties map will not be deleted.
      - Name of the stream
    * - ``view-id``
      - Name of the stream view
+   * - ``dataset-id``
+     - Name of the dataset
+   * - ``field-name``
+     - Name of the field
 
 .. rubric:: HTTP Responses
 
@@ -115,8 +131,6 @@ updated. Existing keys not in the properties map will not be deleted.
      - Description
    * - ``200 OK``
      - The properties were set
-   * - ``404 NOT FOUND``
-     - The entity or program for which properties are being set was not found
 
 **Note**: When using this API, properties can be added to the metadata of the specified entity
 only in the *user* scope.
@@ -124,9 +138,10 @@ only in the *user* scope.
 
 Retrieving Properties
 ---------------------
-To retrieve user metadata properties for an application, dataset, or stream, submit an HTTP GET request::
+To retrieve user metadata properties for an application, dataset, or other entities including custom entities,
+submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/<entity-details>/metadata/properties[?scope=<scope>]
 
 or, for a particular program of a specific application::
 
@@ -139,6 +154,10 @@ or, for a particular version of an artifact::
 or, for a particular view of a stream::
 
   GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/properties[?scope=<scope>]
+
+or, for a custom entity like field of a dataset::
+
+  GET /v3/namespaces/<namespace-id>/datasets/<dataset-id>/field/<field-name>/metadata/properties[?scope=<scope>]
 
 .. highlight:: json-ellipsis
 
@@ -161,10 +180,8 @@ in the response body (pretty-printed)::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
-     - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entity-details``
+     - :ref:`Hierarchical key-value representation of the entity <metadata_custom_entities>`
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -179,6 +196,10 @@ in the response body (pretty-printed)::
      - Name of the stream
    * - ``view-id``
      - Name of the stream view
+   * - ``dataset-id``
+     - Name of the dataset
+   * - ``field-name``
+     - Name of the field
    * - ``scope``
      - Optional scope filter. If not specified, properties in the ``user`` and
        ``system`` scopes are returned. Otherwise, only properties in the specified scope are returned.
@@ -192,17 +213,15 @@ in the response body (pretty-printed)::
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The properties requested were returned as a JSON string in the body of the response
-   * - ``404 NOT FOUND``
-     - The entity or program for which properties are being retrieved was not found
+     - The properties requested were returned as a JSON string in the body of the response which can be empty if there are no properties associated with the entity, or the entity does not exist
 
 
 Deleting Properties
 -------------------
-To delete **all** user metadata properties for an application, dataset, or stream, submit an
-HTTP DELETE request::
+To delete **all** user metadata properties for an application, dataset, or other entities including custom entities,
+submit an HTTP DELETE request::
 
-  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties
+  DELETE /v3/namespaces/<namespace-id>/<entity-details>/metadata/properties
 
 or, for all user metadata properties of a particular program of a specific application::
 
@@ -233,6 +252,10 @@ or, for a particular view of a stream::
 
   DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/properties/<key>
 
+or, for a custom entity like field of a dataset::
+
+    DELETE /v3/namespaces/<namespace-id>/datasets/<dataset-id>/field/<field-name>/metadata/properties/<key>
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -241,10 +264,8 @@ or, for a particular view of a stream::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
-     - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entity-details``
+     - :ref:`Hierarchical key-value representation of the entity <metadata_custom_entities>`
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -259,6 +280,10 @@ or, for a particular view of a stream::
      - Name of the stream
    * - ``view-id``
      - Name of the stream view
+   * - ``dataset-id``
+     - Name of the dataset
+   * - ``field-name``
+     - Name of the field
    * - ``key``
      - Metadata property key
 
@@ -272,9 +297,7 @@ or, for a particular view of a stream::
      - Description
    * - ``200 OK``
      - The method was successfully called, and the properties were deleted, or in the case of a
-       specific key, were either deleted or the key was not present
-   * - ``404 NOT FOUND``
-     - The entity or program for which properties are being deleted was not found
+       specific key, were either deleted or the key was not present, or the entity itself was not present
 
 **Note**: When using this API, only properties in the *user* scope can be deleted.
 
@@ -285,9 +308,10 @@ Metadata Tags
 
 Adding Tags
 -----------
-To add user metadata tags for an application, dataset, or stream, submit an HTTP POST request::
+To add user metadata tags for an application, dataset, or other entities including custom entities,
+submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags
+  POST /v3/namespaces/<namespace-id>/<entity-details>/metadata/tags
 
 or, for a particular program of a specific application::
 
@@ -301,6 +325,10 @@ or, for a particular view of a stream::
 
   POST /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/tags
 
+or, for a custom entity like field of a dataset::
+
+  POST /v3/namespaces/<namespace-id>/datasets/<dataset-id>/field/<field-name>/metadata/tags
+
 with the metadata tags, as a list of strings, passed in the JSON request body::
 
   ["tag1", "tag2"]
@@ -313,10 +341,8 @@ with the metadata tags, as a list of strings, passed in the JSON request body::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
-     - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entity-details``
+     - :ref:`Hierarchical key-value representation of the entity <metadata_custom_entities>`
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -331,6 +357,10 @@ with the metadata tags, as a list of strings, passed in the JSON request body::
      - Name of the stream
    * - ``view-id``
      - Name of the stream view
+   * - ``dataset-id``
+     - Name of the dataset
+   * - ``field-name``
+     - Name of the field
 
 .. rubric:: HTTP Responses
 
@@ -342,29 +372,32 @@ with the metadata tags, as a list of strings, passed in the JSON request body::
      - Description
    * - ``200 OK``
      - The tags were set
-   * - ``404 NOT FOUND``
-     - The entity or program for which tags are being set was not found
 
 **Note**: When using this API, tags can be added to the metadata of the specified entity only in the user scope.
 
 
 Retrieving Tags
 ---------------
-To retrieve user metadata tags for an application, dataset, or stream, submit an HTTP GET request::
+To retrieve user metadata tags for an application, dataset, or other entities including custom entities,
+submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags[?scope=<scope>
+  GET /v3/namespaces/<namespace-id>/<entity-details>/metadata/tags[?scope=<scope>]
 
 or, for a particular program of a specific application::
 
-  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags[?scope=<scope>
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags[?scope=<scope>]
 
 or, for a particular version of an artifact::
 
-  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags[?scope=<scope>
+  GET /v3/namespaces/<namespace-id>/artifacts/<artifact-id>/versions/<artifact-version>/metadata/tags[?scope=<scope>]
 
 or, for a particular view of a stream::
 
-  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/tags[?scope=<scope>
+  GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/tags[?scope=<scope>]
+
+or, for a custom entity like field of a dataset::
+
+  GET /v3/namespaces/<namespace-id>/dataset/<dataset-id>/field/<field-name>/metadata/tags[?scope=<scope>]
 
 with the metadata tags returned as a JSON string in the return body::
 
@@ -378,10 +411,8 @@ with the metadata tags returned as a JSON string in the return body::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
-     - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entity-details``
+     - :ref:`Hierarchical key-value representation of the entity <metadata_custom_entities>`
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -396,6 +427,10 @@ with the metadata tags returned as a JSON string in the return body::
      - Name of the stream
    * - ``view-id``
      - Name of the stream view
+   * - ``dataset-id``
+     - Name of the dataset
+   * - ``field-name``
+     - Name of the field
    * - ``scope``
      - Optional scope filter. If not specified, properties in the ``user`` and
        ``system`` scopes are returned. Otherwise, only properties in the specified scope are returned.
@@ -409,17 +444,15 @@ with the metadata tags returned as a JSON string in the return body::
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The properties requested were returned as a JSON string in the body of the response
-   * - ``404 NOT FOUND``
-     - The entity or program for which properties are being retrieved was not found
+     - The tags requested were returned as a JSON string in the body of the response which can be empty if there are no tags associated with the entity or entity does not exist
 
 
 Removing Tags
 -------------
-To delete all user metadata tags for an application, dataset, or stream, submit an
+To delete all user metadata tags for an application, dataset, or other entities including custom entities, submit an
 HTTP DELETE request::
 
-  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags
+  DELETE /v3/namespaces/<namespace-id>/<entity-details>/metadata/tags
 
 or, for all user metadata tags of a particular program of a specific application::
 
@@ -450,6 +483,10 @@ or, for a particular view of a stream::
 
   DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/tags/<tag>
 
+or, for a custom entity like field of a dataset::
+
+  DELETE /v3/namespaces/<namespace-id>/datasets/<dataset-id>/field/<field-name>/metadata/tags/<tag>
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -458,10 +495,8 @@ or, for a particular view of a stream::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
-     - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entity-details``
+     - :ref:`Hierarchical key-value representation of the entity <metadata_custom_entities>`
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -476,6 +511,10 @@ or, for a particular view of a stream::
      - Name of the stream
    * - ``view-id``
      - Name of the stream view
+   * - ``dataset-id``
+     - Name of the dataset
+   * - ``field-name``
+     - Name of the field
    * - ``tag``
      - Metadata tag
 
@@ -489,9 +528,7 @@ or, for a particular view of a stream::
      - Description
    * - ``200 OK``
      - The method was successfully called, and the tags were deleted, or in the case of a
-       specific tag, was either deleted or the tag was not present
-   * - ``404 NOT FOUND``
-     - The entity or program for which tags are being deleted was not found
+       specific tag, was either deleted or the tag was not present, or the entity itself was not present
 
 **Note**: When using this API, only tags in the user scope can be deleted.
 
@@ -519,7 +556,7 @@ metadata property or metadata tag, submit an HTTP GET request::
      - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
        ``program``, ``stream``, ``view``
    * - ``option``
-     - Options for controlling cursors, limits, offsets, the inclusion of hidden entities, and sorting:
+     - Options for controlling cursors, limits, offsets, the inclusion of hidden and custom entities, and sorting:
 
        .. list-table::
           :widths: 20 80
@@ -547,6 +584,9 @@ metadata property or metadata tag, submit an HTTP GET request::
           * - ``showHidden``
             - By default, metadata search hides entities whose name starts with an ``_`` (underscore) from the search
               results. Set this to ``true`` to include these hidden entities in search results. Default is ``false``.
+          * - ``showCustom``
+            - By default, metadata search hides custom entities from the search results for backward compatibility.
+              Set this to ``true`` to include these custom entities in search results. Default is ``false``.
           * - ``entityScope``
             - The scope of entities for the metadata search. By default, all entities will be returned. Set this to
               ``USER`` to include only user entities; set this to ``SYSTEM`` to include only system entities.
@@ -1207,10 +1247,334 @@ Rolling up the above using ``rollup=workflow`` would group the programs together
 
 .. highlight:: console
 
+.. _http-restful-api-metadata-fieldlevellineage:
+
+Field Level Lineage
+===================
+
+Fields associated with the Dataset
+----------------------------------
+
+Gets the fields that were associated with the dataset for the specified range of time::
+
+  GET /namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields?start=<start-ts>&end=<end-ts>[&prefix=<prefix>]
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``dataset-id``
+     - Name of the ``dataset``
+   * - ``start-ts``
+     - Starting time-stamp (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``end-ts``
+     - Ending time-stamp (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``prefix``
+     - Optional ``prefix``, when provided only fields that have given prefix will be returned
+
+Following is sample response::
+
+  ["firstName","lastName","item","id","customer_id"]
+
+.. highlight:: console
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Fields of dataset are returned as a list of strings in the body of the response
+   * - ``400 BAD REQUEST``
+     - Failure to parse the time range provided
+
+Field Lineage Summary
+---------------------
+
+Gets the field lineage summary for a specified field of a dataset. The field lineage summary consists of the
+sets of datasets and their respective fields used to compute the specified field of a dataset::
+
+  GET /namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}?start=<start-ts>&end=<end-ts>&direction=incoming
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``dataset-id``
+     - Name of the ``dataset``
+   * - ``field-name``
+     - Name of the ``field``
+   * - ``start-ts``
+     - Starting time-stamp (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``end-ts``
+     - Ending time-stamp (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``direction``
+     - ``incoming``, to return the set of dataset and fields which participated in the computation of the given field
+
+The returned response consists of the direction in which the summary is requested and the datasets and fields
+that were responsible for the computation of a specified field. Currently, the only supported direction is ``incoming``.
+
+Following is a sample response::
+
+  {
+      "incoming": [
+          {
+              "dataset": {
+                  "dataset": "Customer",
+                  "entity": "DATASET",
+                  "namespace": "default"
+              },
+              "fields": [
+                  "body"
+              ]
+          },
+          {
+              "dataset": {
+                  "dataset": "purchases",
+                  "entity": "DATASET",
+                  "namespace": "default"
+              },
+              "fields": [
+                  "body"
+              ]
+          }
+      ]
+  }
+
+.. highlight:: console
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Fields of dataset are returned as a list of strings in the body of the response
+   * - ``400 BAD REQUEST``
+     - Failure to parse the time range provided
+
+Field Lineage Operations
+------------------------
+
+Gets the details of operations responsible for computation of a specified field of a dataset for a specified range of time::
+
+  GET /namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}/operations?start=<start-ts>&end=<end-ts>&direction=incoming
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``dataset-id``
+     - Name of the ``dataset``
+   * - ``field-name``
+     - Name of the ``field``
+   * - ``start-ts``
+     - Starting time-stamp (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``end-ts``
+     - Ending time-stamp (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
+   * - ``direction``
+     - ``incoming``, to return the operations which participated in the computation of the given field
+
+The single field can be computed in multiple ways, where each unique way consists of a list of operations that
+participated in the computation and the list of programs that performed the computation. The returned response
+consists of the direction in which the operations are requested. Currently, the only supported direction is ``incoming``.
+For the specified direction, the response includes the different ways that the field was computed.
+
+Following is a sample response::
+
+    {
+      "incoming": [
+        {
+            "operations": [
+                {
+                    "description": "Read files",
+                    "inputs": {
+                        "endPoint": {
+                            "name": "purchases",
+                            "namespace": "default"
+                        }
+                    },
+                    "name": "File2.Read",
+                    "outputs": {
+                        "fields": [
+                            "offset",
+                            "body"
+                        ]
+                    }
+                },
+                {
+                    "description": "Parsed field",
+                    "inputs": {
+                        "fields": [
+                            {
+                                "name": "body",
+                                "origin": "File2.Read"
+                            }
+                        ]
+                    },
+                    "name": "CSVParser2.CSV Parse",
+                    "outputs": {
+                        "fields": [
+                            "customer_id",
+                            "item",
+                            "price"
+                        ]
+                    }
+                },
+                {
+                    "description": "Read files",
+                    "inputs": {
+                        "endPoint": {
+                            "name": "Customer",
+                            "namespace": "default"
+                        }
+                    },
+                    "name": "File.Read",
+                    "outputs": {
+                        "fields": [
+                            "offset",
+                            "body"
+                        ]
+                    }
+                },
+                {
+                    "description": "Parsed field",
+                    "inputs": {
+                        "fields": [
+                            {
+                                "name": "body",
+                                "origin": "File.Read"
+                            }
+                        ]
+                    },
+                    "name": "CSVParser.CSV Parse",
+                    "outputs": {
+                        "fields": [
+                            "id",
+                            "first_name",
+                            "last_name"
+                        ]
+                    }
+                },
+                {
+                    "description": "Used as a key in a join",
+                    "inputs": {
+                        "fields": [
+                            {
+                                "name": "id",
+                                "origin": "CSVParser.CSV Parse"
+                            },
+                            {
+                                "name": "customer_id",
+                                "origin": "CSVParser2.CSV Parse"
+                            }
+                        ]
+                    },
+                    "name": "Joiner.Join",
+                    "outputs": {
+                        "fields": [
+                            "id",
+                            "customer_id"
+                        ]
+                    }
+                },
+                {
+                    "description": "Wrote to TPFS dataset",
+                    "inputs": {
+                        "fields": [
+                            {
+                                "name": "id_from_customer",
+                                "origin": "Joiner.Rename id"
+                            },
+                            {
+                                "name": "fname",
+                                "origin": "Joiner.Rename CSVParser.first_name"
+                            },
+                            {
+                                "name": "lname",
+                                "origin": "Joiner.Rename CSVParser.last_name"
+                            },
+                            {
+                                "name": "customer_id",
+                                "origin": "Joiner.Join"
+                            },
+                            {
+                                "name": "item",
+                                "origin": "Joiner.Identity CSVParser2.item"
+                            }
+                        ]
+                    },
+                    "name": "Parquet Time Partitioned Dataset.Write",
+                    "outputs": {
+                        "endPoint": {
+                            "name": "parquet_data",
+                            "namespace": "default"
+                        }
+                    }
+                }
+            ],
+            "programs": [
+                {
+                    "lastExecutedTimeInSeconds": 1532468358,
+                    "program": {
+                        "application": "customer_pipeline_spark",
+                        "entity": "PROGRAM",
+                        "namespace": "default",
+                        "program": "DataPipelineWorkflow",
+                        "type": "Workflow",
+                        "version": "-SNAPSHOT"
+                    }
+                }
+            ]
+        }
+      ]
+    }
+
+.. highlight:: console
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Fields of dataset are returned as a list of strings in the body of the response
+   * - ``400 BAD REQUEST``
+     - Failure to parse the time range provided
+
+.. highlight:: console
+
 .. _http-restful-api-metadata-run:
 
-Retrieving Metadata for a Program Run
-=====================================
+Retrieving Metadata for a Program Run (Deprecated)
+==================================================
 At every run of a program, the metadata associated with the program, the application it is part of, and any datasets
 and streams used by the program run are recorded. To retrieve the metadata for a program run, submit an HTTP GET request::
 
@@ -1302,3 +1666,47 @@ with the metadata returned as a JSON string in the return body::
      - The properties requested were returned as a JSON string in the body of the response
    * - ``404 NOT FOUND``
      - The entity, program, or run for which properties are being requested was not found
+
+**Note**: The Metadata aggregation of program, application, stream and dataset associated with a program is
+deprecated. Program runs are treated like any other entity to which metadata can be associated directly.
+To retrieve the direct metadata of program run please refer to
+:ref:`Metadata Properties <http-restful-api-metadata-properties>` and
+:ref:`Metadata Tags <http-restful-api-metadata-tags>`. An additional query parameter ``aggregateRun`` must be set to
+``false`` while operating with metadata directly associated with program runs.
+
+.. _metadata_custom_entities:
+
+Metadata for Custom Entities
+============================
+
+Metadata can also be associated with custom entities. In CDAP Entities are separated into two kinds:
+
+- CDAP Entities: These are system defined entities that have special meaning in CDAP. ``Namespace``, ``Stream``, ``Application``, ``Dataset`` etc. are example of CDAP Entities.
+
+- Custom Entities: These are user defined entities that represent a resource that exists in CDAP.
+
+Custom Entities are represented as a hierarchical key-value pair and can optionally have a explicitly defined type.
+
+If a type is not specified then the last key in the hierarchy is considered as the type.
+
+In REST APIs, custom entities are represented as hierarchical key-value pairs. If the last key in the hierarchy is
+not a type, the type is specified as a query parameter.
+
+For example, to add tags to a custom file entity in a dataset::
+
+  POST /v3/namespaces/<namespace-id>/datasets/<dataset-id>/file/<file-name>/metadata/tags
+
+In the example above, the custom entity is a single key-value pair where ``file`` is the key and ``<file-name>``
+is the value.
+
+To add tags to a custom jar entity in a namespace::
+
+  POST /v3/namespaces/<namespace-id>/jar/<jar-id>/versions/<jar-version>/metadata/tags[?type=jar]
+
+In the example above, the custom entity consists of two key-value pairs. The first has key ``jar`` and value
+``<jar-id>``. The second has key ``versions`` and value ``<jar-version>``. We pass the jar as the type to specify
+the type of the entity since the last key in the hierarchy is not the type in this case.
+
+In both examples, the metadata tags are passed as a JSON list of strings in the request body::
+
+  ["tag1", "tag2"]

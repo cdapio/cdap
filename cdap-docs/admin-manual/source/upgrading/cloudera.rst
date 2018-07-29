@@ -83,7 +83,7 @@ CDAP:
 
    Returning::
 
-      {"defaultStore":true,"timeScheduleStore":true }
+      {"metadata":true }
 
 
 Upgrading CDH

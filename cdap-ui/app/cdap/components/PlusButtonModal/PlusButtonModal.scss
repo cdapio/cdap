@@ -16,6 +16,8 @@
 
 @import '../../styles/variables.scss';
 
+$sidepanel-width: 160px;
+
 .plus-button-modal {
   overflow-x: hidden;
   position: relative;
@@ -32,10 +34,10 @@
       // Should make it cleaner to expand till a max width and show ellipsis
       // from there on.
       .cask-tab-headers {
-        width: 150px;
+        width: $sidepanel-width;
       }
       .tab-content {
-        width: calc(100% - 150px);
+        width: calc(100% - #{$sidepanel-width});
       }
     }
   }

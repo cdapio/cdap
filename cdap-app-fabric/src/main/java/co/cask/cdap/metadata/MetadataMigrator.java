@@ -78,10 +78,10 @@ class MetadataMigrator extends AbstractRetryableScheduledService {
       org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
     datasetIds.add(new KeyValue<>(NamespaceId.SYSTEM.dataset("system.metadata"),
-                                  NamespaceId.SYSTEM.dataset("v2.system.metadata")));
+                                  NamespaceId.SYSTEM.dataset("v2.system")));
 
     datasetIds.add(new KeyValue<>(NamespaceId.SYSTEM.dataset("business.metadata"),
-                                  NamespaceId.SYSTEM.dataset("v2.business.metadata")));
+                                  NamespaceId.SYSTEM.dataset("v2.business")));
   }
 
   @Override

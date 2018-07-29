@@ -69,6 +69,24 @@
       <artifactId>spark-core_2.11</artifactId>
       <version>${spark2.version}</version>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>asm</groupId>
+          <artifactId>asm</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-common</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-client</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -82,6 +100,10 @@
       <version>${project.version}</version>
       <scope>test</scope>
       <exclusions>
+        <exclusion>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-explore-jdbc</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>org.apache.hive</groupId>
           <artifactId>hive-exec</artifactId>
@@ -126,6 +148,12 @@
       <groupId>com.databricks</groupId>
       <artifactId>spark-avro_2.11</artifactId>
       <version>4.0.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>scala-library</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- Hadoop Dependencies -->
     <dependency>

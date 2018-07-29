@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Release notes for the Cask Data Application Platform
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2018 Cask Data, Inc.
 
 :hide-nav: true
 
@@ -32,32 +32,325 @@ Cask Data Application Platform Release Notes
 
 `Release 5.0.0 <http://docs.cask.co/cdap/5.0.0/index.html>`__
 =============================================================
+
+Summary
+-------
+
+1. **Cloud Runtime**
+    - Cloud Runtimes allow you to configure batch pipelines to run in a cloud environment.
+    - Before the pipeline runs, a cluster is provisioned in the cloud. The pipeline is executed on that cluster, and the cluster is deleted after the run finishes.
+    - Cloud Runtimes allow you to only use compute resources when you need them, enabling you to make better use of your resources.
+
+2. **Metadata**
+    - *Metadata Driven Processing*
+       - Annotate metadata to custom entities such as fields in a dataset, partitions of a dataset, files in a fileset
+       - Access metadata from a program or plugin at runtime to facilitate metadata driven processing
+    - *Field Level Lineage*
+       - APIs to register operations being performed on fields from a program or a pipeline plugin
+       - Platform feature to compute field level lineage based on operations
+
+3. **Analytics**
+    - A simple, interactive, UI-driven approach to machine learning.
+    - Lowers the bar for machine learning, allowing users of any level to understand their data and train models
+      while preserving the switches and levers that advanced users might want to tweak.
+
+4. **Operational Dashboard**
+    - A real-time interactive interface that visualizes program run statistics
+    - Reporting for comprehensive insights into program runs over large periods of time
+
+
+New Features
+------------
+
+Cloud Runtime
+.............
+
+- :cask-issue:`CDAP-13089` - Added Cloud Runtimes, which allow users to assign profiles to batch pipelines that control what environment the pipeline will run in. For each program run, a cluster in a cloud environment can be created for just that run, allowing efficient use of resources.
+
+- :cask-issue:`CDAP-13213` - Added a way for users to create compute profiles from UI to run programs in remote (cloud) environments using one of the available provisioners.
+
+- :cask-issue:`CDAP-13206` - Allowed users to specify a compute profile in UI to run the pipelines in cloud environments. Compute profiles can be specified either while running a pipeline manually or via a time schedule or via a pipeline state based trigger.
+
+- :cask-issue:`CDAP-13094` - Added a provisioner that allows users to run pipelines on Google Cloud Dataproc clusters.
+
+- :cask-issue:`CDAP-13774` - Added a provisioner that can run pipelines on remote Apache Hadoop clusters
+
+- :cask-issue:`CDAP-13709` - Added an Amazon Elastic MapReduce provisioner that can run pipelines on AWS EMR.
+
+- :cask-issue:`CDAP-13380` - Added support for viewing logs in CDAP for programs executing using the Cloud Runtime.
+
+- :cask-issue:`CDAP-13432` - Added metadata such has pipelines, schedules and triggers that are associated with profiles. Also added metrics such as the total number of runs of a pipeline using a profile.
+
+- :cask-issue:`CDAP-13494` - Added the ability to disable and enable a profile
+
+- :cask-issue:`CDAP-13276` - Added the capability to export or import compute profiles
+
+- :cask-issue:`CDAP-13359` - Added the ability to set the default profile at namespace and instance levels.
+
+Metadata
+........
+
+- :cask-issue:`CDAP-13260` - Added support for annotating metadata to custom entities. For example now a field in a dataset can be annotated with metadata.
+
+- :cask-issue:`CDAP-13264` - Added programmatic APIs for users to register field level operations from programs and plugins.
+
+- :cask-issue:`CDAP-13269` - Added REST APIs to retrieve the fields which were updated for a given dataset in a given time range, a summary of how those fields were computed, and details about operations which were responsible for updated those fields.
+
+- :cask-issue:`CDAP-13511` - Added the ability to view Field Level Lineage for datasets.
+
+Analytics
+.........
+
+- :cask-issue:`CDAP-13921` - Added CDAP Analytics as an interactive, UI-driver application that allows users to train machine learning models and use them in their pipelines to make predictions.
+
+
+Operational Dashboard
+.....................
+
+- :cask-issue:`CDAP-12865` - Added a Dashboard for real-time monitoring of programs and pipelines
+
+- :cask-issue:`CDAP-12901` - Added a UI to generate reports on programs and pipelines that ran over a period of time
+
+- :cask-issue:`CDAP-13147` - Added feature to support Reports and Dashboard. Dashboard provides realtime status of program runs and future schedules. Reports is a tool for administrators to take a historical look at their applications program runs, statistics and performance
+
+
+Other New Features
+..................
+
+Data Pipelines
+^^^^^^^^^^^^^^
+
+- :cask-issue:`CDAP-12839` - Added 'Error' and 'Alert' ports for plugins that support this functionality. To enable this functionality in your plugin, in addition to emitting alerts and errors from the plugin code, users have to set "emit-errors: true" and "emit-alerts: true" in their plugin json. Users can create connections from 'Error' port to Error Handlers plugins, and from 'Alert' port to Alert plugins
+
+- :cask-issue:`CDAP-13045` - Added support for Apache Phoenix as a source in Data Pipelines.
+
+- :cask-issue:`CDAP-13499` - Added support for Apache Phoenix database as a sink in Data Pipelines.
+
+- :cask-issue:`CDAP-12944` - Added the ability to support macro behavior for all widget types
+
+- :cask-issue:`CDAP-13057` - Added the ability to view all the concurrent runs of a pipeline
+
+- :cask-issue:`CDAP-13006` - Added the ability to view the runtime arguments, logs and other details of a particular run of a pipeline.
+
+- :cask-issue:`CDAP-13242` - Added UI support for Splitter plugins
+
+Data Preparation
+^^^^^^^^^^^^^^^^
+
+- :cask-issue:`CDAP-13100` - Added a Google BigQuery connection for Data Preparation
+
+- :cask-issue:`CDAP-12880` - Added a point-and-click interaction to change the data type of a column in the Data Preparation UI
+
+Miscellaneous
+^^^^^^^^^^^^^
+
+- :cask-issue:`CDAP-13180` - Added a page to view and manage a namespace. Users can click on the current namespace card in the namespace dropdown to go the namespace's detail page. In this page, they can see entities and profiles created in this namespace, as well as preferences, mapping and security configurations for this namespace.
+
+- :cask-issue:`CDAP-12951` - Added the ability to restart CDAP programs to make it resilient to YARN outages.
+
+- :cask-issue:`CDAP-13242` - Implemented a new Administration page, with two tabs, Configuration and Management. In the Configuration tab, users can view and manage all namespaces, system preferences and system profiles. In the Management tab, users can get an overview of system services in CDAP and scale them.
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-13280` - Added Spark 2 support for Kafka realtime source
+
+- :cask-issue:`CDAP-12727`, :cask-issue:`CDAP-13068` - Added support for CDH 5.13 and 5.14.
+
+- :cask-issue:`CDAP-11805` - Added support for EMR 5.4 through 5.7
+
+- :cask-issue:`CDAP-6308` - Upgraded CDAP Router to use Netty 4.1
+
+- :cask-issue:`CDAP-13179` - Added support for automatically restarting long running program types (Service and Flow) upon application master process failure in YARN
+
+- :cask-issue:`CDAP-12549` - Added support for specifying custom consumer configs in Kafka source
+
+- :cask-issue:`CDAP-13143` - Added support for specifying recursive schemas
+
+- :cask-issue:`CDAP-12275` - Added support to pass in YARN application ID in the logging context. This can help in correlating the ID of the program run in CDAP to the ID of the corresponding YARN application, thereby facilitating better debugging.
+
+- :cask-issue:`CDAP-9080` - Added the ability to deploy plugin artifacts without requiring a parent artifact. Such plugins are available for use in any parent artifacts
+
+- :cask-issue:`CDAP-12274` - Added the ability to import pipelines from the add entity modal (plus button)
+
+- :cask-issue:`CDAP-11844` - Added the ability to save the runtime arguments of a pipeline as preferences, so that they do not have to be entered again.
+
+- :cask-issue:`CDAP-12724` - Added the ability to specify dependencies to ScalaSparkCompute Action
+
+- :cask-issue:`CDAP-12426` - Added the ability to update the keytab URI for namespace's impersonation configuration.
+
+- :cask-issue:`CDAP-12279` - Added the ability to upload a User Defined Directive (UDD) using the plus button
+
+- :cask-issue:`CDAP-12963` - Allowed CDAP user programs to talk to Kerberos enabled HiveServer2 in the cluster without using a keytab
+
+- :cask-issue:`CDAP-11096` - Allowed users to configure the transaction isolation level in database plugins
+
+- :cask-issue:`CDAP-13573` - Configured sandbox to have secure store APIs enabled by default
+
+- :cask-issue:`CDAP-13411` - Improved robustness of unit test framework by fixing flaky tests
+
+- :cask-issue:`CDAP-13405` - Increased default twill reserved memory from 300mb to 768mb in order to prevent YARN from killing containers in standard cluster setups.
+
+- :cask-issue:`CDAP-13116` - Macro enabled all fields in the HTTP Callback plugin
+
+- :cask-issue:`CDAP-12974` - Removed concurrent upgrades of HBase coprocessors since it could lead to regions getting stuck in transit.
+
+- :cask-issue:`CDAP-13409` - Updated the CDAP sandbox to use Spark 2.1.0 as the default Spark version.
+
+- :cask-issue:`CDAP-13157` - Improved the documentation for defining Apache Ranger policies for CDAP entities
+
+- :cask-issue:`CDAP-12992` - Improved resiliency of router to zookeeper outages.
+
+- :cask-issue:`CDAP-13756` - Improved the performance of metadata upgrade by adding a dataset cache.
+
+- :cask-issue:`CDAP-7644` - Added CLI command to fetch service logs
+
+- :cask-issue:`CDAP-12989` - Added rate limiting to router logs in the event of zookeeper outages
+
+- :cask-issue:`CDAP-13759` - Renamed system metadata tables to v2.system.metadata_index.d, v2.system.metadata_index.i. and business metadata tables to v2.business.metadata_index.d, v2.business.metadata_index.i
+
+- :cask-issue:`CDAP-6032` - Reduced CDAP Master's local storage usage by deleting temporary directories created for programs as soon as programs are launched on the cluster.
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-13033` - Fixed a bug in TMS that prevented from correctly consuming multiple events emitted in the same transaction.
+
+- :cask-issue:`CDAP-12875` - Fixed a bug that caused errors in the File source if it read parquet files that were not generated through Hadoop.
+
+- :cask-issue:`CDAP-12693` - Fixed a bug that caused PySpark to fail to run with Spark 2 in local sandbox.
+
+- :cask-issue:`CDAP-13296` - Fixed a bug that could cause the status of a running program to be falsely returned as stopped if the run happened to change state in the middle of calculating the program state. Also fixed a bug where the state for a suspended workflow was stopped instead of running.
+
+- :cask-issue:`CDAP-7052` - Fixed a bug that prevented MapReduce AM logs from YARN to show the right URI.
+
+- :cask-issue:`CDAP-12973` - Fixed a bug that prevented Spark jobs from running after CDAP upgrade due to caching of jars.
+
+- :cask-issue:`CDAP-13026` - Fixed a bug that prevented a parquet snapshot source and sink to be used in the same pipeline
+
+- :cask-issue:`CDAP-13593` - Fixed a bug that under some race condition, running a pipeline preview may cause the CDAP process to shut down.
+
+- :cask-issue:`CDAP-12752` - Fixed a bug where a Spark program would fail to run when spark authentication is turned on
+
+- :cask-issue:`CDAP-13123` - Fixed a bug where an ad-hoc exploration query on streams would fail in an impersonated namespace.
+
+- :cask-issue:`CDAP-13463` - Fixed a bug where pipelines with conditions on different branches could not be deployed.
+
+- :cask-issue:`CDAP-12743` - Fixed a bug where the Scala Spark compiler had missing classes from classloader, causing compilation failure
+
+- :cask-issue:`CDAP-13372` - Fixed a bug where the upgrade tool did not upgrade the owner meta table
+
+- :cask-issue:`CDAP-12647` - Fixed a bug with artifacts count, as when we we get artifact count from a namespace we also include system artifacts count causing the total artifact count to be much larger than real count.
+
+- :cask-issue:`CDAP-13364` - Fixed a class loading issue and a schema mismatch issue in the whole-file-ingest plugin.
+
+- :cask-issue:`CDAP-12970` - Fixed a dependency bug that could cause HBase region servers to deadlock during a cold start
+
+- :cask-issue:`CDAP-12742` - Fixed an issue that caused pipeline failures if a Spark plugin tried to read or write a DataFrame using csv format.
+
+- :cask-issue:`CDAP-13532` - Fixed an issue that prevented user runtime arguments from being used in CDAP programs
+
+- :cask-issue:`CDAP-13281` - Fixed an issue where Spark 2.2 batch pipelines with HDFS sinks would fail with delegation token issue error
+
+- :cask-issue:`CDAP-12731` - Fixed an issue with that caused hbase sink to fail when used alongside other sinks, using spark execution engine.
+
+- :cask-issue:`CDAP-13002` - Fixed an issue with the retrieval of non-ASCII strings from Table datasets.
+
+- :cask-issue:`CDAP-13040` - Fixed avro fileset plugins so that reserved hive keywords can be used as column names
+
+- :cask-issue:`CDAP-13331` - Fixed macro enabled properties in plugin configuration to only have macro behavior if the entire value is a macro.
+
+- :cask-issue:`CDAP-12988` - Fixed the logs REST API to return a valid json object when filters are specified
+
+- :cask-issue:`CDAP-13110` - Fixes an issue where a dataset's class loader was closed before the dataset itself, preventing the dataset from closing properly.
+
+
 Deprecated and Removed Features
 -------------------------------
 
-- The Following deprecations have been removed from the `cdap-api` module:
-	- Scheduling workflow using co.cask.cdap.api.schedule.Schedule in AbstractApplication is removed, Use co.cask.cdap.internal.schedule.ScheduleCreationSpec for scheduling workflow.
-	- Adding schedule using co.cask.cdap.api.schedule.Schedule is removed in ApplicationConfigurer, use co.cask.cdap.internal.schedule.ScheduleCreationSpec for adding schedules.
-	- Deprecated methods getStreams, getDatasetModules and getDatasetSpecs have been removed from FlowletDefinition.
-	- beforeSubmit and onFinish methods have been removed from Mapreduce, Spark interface. use ProgramLifecycle#initialize and ProgramLifecycle#destroy instead.
-	- RunConstraints, ScheduleSpecification and Schedule classes in package co.cask.cdap.api.schedule have been removed.
-	- WorkflowAction, WorkflowActionConfigurer, WorkflowActionSpecification, AbstractWorkflowAction have been removed from the package co.cask.cdap.api.workflow. Use CustomAction for workflows instead.
-	- WorkflowConfigurer#addAction(WorkflowAction action) has been removed, use addAction(CustomAction action) instead.
-	- MapReduceTaskContext#getInputName has been removed, use getInputContext instead.
+- :cask-issue:`CDAP-13721` - Deprecated the aggregation of metadata annotated with all the entities (application, programs, dataset, streams) associated in a run. From this release onwards metadata for program runs behaves like any other entity where a metadata can be directly annotated to it and retrieved from it. For backward compatibility, to achieve the new behavior an additional query parameter 'runAggregation' should be set to false while making the REST call to retrieve metadata of program runs.
+
+- :cask-issue:`CDAP-8141` - Dropped support for CDH 5.1, 5.2, 5.3 and HDP 2.0, 2.1 due to security vulnerabilities identified in them
+
+- :cask-issue:`CDAP-13493` - Removed HDFS, YARN, and HBase operational stats. These stats were not very useful, could generate confusing log warnings, and were confusing when used in conjunction with cloud profiles.
+
+- :cask-issue:`CDAP-13720` - Removed analytics plugins such as decision tree, naive bayes and logistic regression from Hub. The new Analytics flow in the UI should be used as a substitute for this functionality.
+
+- :cask-issue:`CDAP-12584` - Removed deprecated ``cdap sdk`` commands. Use ``cdap sandbox`` commands instead.
+
+- :cask-issue:`CDAP-13680` - Removed deprecated ``cdap.sh`` and ``cdap-cli.sh`` scripts.  Use ``cdap sandbox`` or ``cdap cli`` instead.
+
+- :cask-issue:`CDAP-11870` - Removed deprecated error datasets from pipelines. Error transforms should be used instead of error datasets, as they offer more functionality and flexibility.
+
+- :cask-issue:`CDAP-13353` - Deprecated HDFS Sink. Use the File sink instead.
+
+- :cask-issue:`CDAP-12692` - Removed deprecated stream size based schedules
+
+- :cask-issue:`CDAP-13419` - Deprecated streams and flows. Use Apache Kafka as a replacement technology for streams and spark streaming as a replacement technology for flows. Streams and flows will be removed in 6.0 release.
+
+- :cask-issue:`CDAP-5966` - Removed multiple deprecated programmatic and RESTful API's in CDAP.
+    - Deprecated public APIs removed from the ``cdap-api`` module:
+    	- Scheduling workflow using ``co.cask.cdap.api.schedule.Schedule`` in ``AbstractApplication`` has been removed,
+    	  use ``co.cask.cdap.internal.schedule.ScheduleCreationSpec`` for scheduling workflow.
+    	- Adding schedule using ``co.cask.cdap.api.schedule.Schedule`` is removed in ``ApplicationConfigurer``, use
+    	  ``co.cask.cdap.internal.schedule.ScheduleCreationSpec`` for adding schedules.
+    	- Deprecated methods ``getStreams``, ``getDatasetModules``
+    	  and ``getDatasetSpecs`` have been removed from ``FlowletDefinition``.
+    	- ``beforeSubmit`` and ``onFinish`` methods have been removed from ``Mapreduce`` and ``Spark`` interfaces, use
+    	  ``ProgramLifecycle#initialize`` and ``ProgramLifecycle#destroy`` instead.
+    	- ``RunConstraints``, ``ScheduleSpecification`` and ``Schedule`` classes in package
+    	  ``co.cask.cdap.api.schedule`` have been removed.
+    	- ``WorkflowAction``, ``WorkflowActionConfigurer``, ``WorkflowActionSpecification``, ``AbstractWorkflowAction``
+    	  have been removed from the package ``co.cask.cdap.api.workflow``. Use ``CustomAction`` for workflows instead.
+    	- ``WorkflowConfigurer#addAction(WorkflowAction action)`` has been removed, use
+    	  ``addAction(CustomAction action)`` instead.
+    	- ``MapReduceTaskContext#getInputName`` has been removed, use ``getInputContext`` instead.
+    - The following deprecations have been removed from the ``cdap-proto`` module:
+    	- ``ApplicationDetail#getArtifactVersion`` has been removed, use ``ApplicationDetail#getArtifact`` instead.
+    	- ``getId()`` method has been removed in ``ApplicationRecord``, ``DatasetRecord``, ``ProgramLiveInfo`` and
+    	  ``ProgramRecord``.
+    	- ``Id`` class has been removed.
+    	- ``ScheduleUpdateDetail`` has been removed, use ``ScheduleDetail`` instead.
+    	- ``ScheduleType`` has been removed, use ``Trigger`` instead.
+    	- Methods for getting ``ScheduleSpecification`` - ``toScheduleSpec()`` and
+    	  ``toScheduleSpecs(List<ScheduleDetail> details)``, have been removed from ``ScheduleDetail``.
+    	- Deprecated ``MetadataRecord`` class has been removed.
+    - The following deprecations have been removed from the ``cdap-client`` module:
+     	- Removed methods which were using the old ``co.cask.cdap.proto.Id`` classes in ``ApplicationClient``,
+     	  ``ArtifactClient``, ``ClientConfig``, ``DatsetClient``, ``DatasetModuleClient``, ``DatasetTypeClient``,
+     	  ``LineageClient``, ``MetricsClient``, ``ProgramClient``, ``ScheduleClient``, ``ServiceClient``,
+     	  ``StreamClient``, ``StreamViewClient`` and ``WorkflowClient``.
+     	- Removed methods to add and update schedules using ``ScheduleInstanceConfiguration`` in ``ScheduleClient``,
+     	  use methods accepting ``ScheduleDetail`` as parameter instead.
+    - The REST API to get workflow status using ``current`` endpoint has been removed, use the workflow node state
+      endpoint ``/nodes/state`` instead to get workflow status.
 
 
-- The Following deprecations have been removed from the `cdap-proto` module:
-	- ApplicationDetail#getArtifactVersion has been removed, use ApplicationDetail#getArtifact instead.
-	- getId() method has been removed in ApplicationRecord, DatasetRecord, ProgramLiveInfo and ProgramRecord.
-	- Id class has been removed.
-	- ScheduleUpdateDetail has been removed, use ScheduleDetail instead.
-	- ScheduleType has been removed, use Trigger instead.
-	- Methods for getting ScheduleSpecification toScheduleSpec() and toScheduleSpecs(List<ScheduleDetail> details), have been removed from ScheduleDetail.
-	- Deprecated MetadataRecord class has been removed.
+Known Issues
+------------
 
-- The Following deprecations have been removed from the `cdap-client` module:
- 	- Removed Methods which were using the old co.cask.cdap.proto.Id classes in ApplicationClient, ArtifactClient, ClientConfig, DatsetClient, DatasetModuleClient, DatasetTypeClient, LineageClient, MetricsClient, ProgramClient, ScheduleClient, ServiceClient, StreamClient, StreamViewClient and WorkflowClient.
- 	- Removed methods to add, update schedules using ScheduleInstanceConfiguration in ScheduleClient, use methods taking ScheduleDetail as parameter instead.
+- :cask-issue:`CDAP-13853` - Updating the compute profile to use to manually run a pipeline using the UI can remove the
+  existing schedules and triggers of the pipeline.
+
+- :cask-issue:`CDAP-13919` - The reports feature does not work with Apache Spark 2.0 currently. As a workaround,
+  upgrade to use Spark version 2.1 or later to use reports.
+
+- :cask-issue:`CDAP-13896` - Plugins that are not supported while running a pipeline using a cloud runtime throw
+  unclear error messages at runtime.
+
+- :cask-issue:`CDAP-13274` - While some built-in plugins have been updated to emit operations for capturing field level
+  lineage, a number of them do not yet emit these operations.
+
+- :cask-issue:`CDAP-13326` - Pipelines cannot propagate dynamic schemas at runtime.
+
+- :cask-issue:`CDAP-13963` - Reading metadata is not supported when pipelines or programs run using a cloud runtime.
+
+- :cask-issue:`CDAP-13971` - Creating a pipeline from Data Preparation when using an Apache Kafka plugin fails. As
+  a workaround, after clicking the Create Pipeline button, manually update the schema of the Kafka plugin to set a
+  single field named body as a non-nullable string.
+
+- :cask-issue:`CDAP-13910` - Metadata for custom entities is not deleted if it's nearest known ancestor entity
+  (parent) is deleted.
 
 
 `Release 4.3.4 <http://docs.cask.co/cdap/4.3.4/index.html>`__

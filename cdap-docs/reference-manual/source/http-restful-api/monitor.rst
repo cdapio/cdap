@@ -165,12 +165,10 @@ To check the status of a :ref:`CDAP system upgrade <upgrading-index>`, use::
 
 .. rubric:: Example
 
-The response body will contain a JSON-formatted list of upgraded tables::
+The response body will contain a JSON-formatted list of upgraded components::
 
   {
-      "defaultStore":false,
-      "streamSizeScheduleStore":false,
-      "timeScheduleStore":false
+      "metadata":true,
   }
 
 

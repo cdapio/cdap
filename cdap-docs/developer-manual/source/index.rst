@@ -50,6 +50,10 @@ CDAP Developer Manual
 - |pipelines|_ A capability of CDAP that combines a user interface with back-end services
   to enable the **building, deploying, and managing of data pipelines.**
 
+.. |cloud-runtimes| replace:: **Cloud Runtimes:**
+.. _cloud-runtimes: cloud-runtimes/index.html
+
+- |cloud-runtimes|_ Configuring pipelines to run in the cloud instead of on premise.
 
 .. |security| replace:: **Security:**
 .. _security: security/index.html

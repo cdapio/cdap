@@ -103,6 +103,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -563,7 +564,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
     for (NodeValue nodeValue : allNodeValues) {
       Map<String, List<FieldOperation>> stageOperations
-              = GSON.fromJson(nodeValue.getValue().toString(), STAGE_OPERATIONS_MAP);
+        = GSON.fromJson(nodeValue.getValue().toString(), STAGE_OPERATIONS_MAP);
       for (Map.Entry<String, List<FieldOperation>> entry : stageOperations.entrySet()) {
         allStageOperations.get(entry.getKey()).addAll(entry.getValue());
       }
@@ -585,21 +586,40 @@ public class SmartWorkflow extends AbstractWorkflow {
         new StageOperationsValidator.Builder(allStageOperations.get(stageSpec.getName()));
 
       Map<String, Schema> inputSchemas = stageSpec.getInputSchemas();
-      for (Map.Entry<String, Schema> entry : inputSchemas.entrySet()) {
-        if (entry.getValue().getFields() != null) {
-          builder.addStageOutputs(entry.getValue().getFields().stream().map(Schema.Field::getName)
-                                    .collect(Collectors.toSet()));
+      // If current stage is of type JOIN add fields as inputstageName.fieldName
+      Set<String> stageInputs = new HashSet<>();
+      Set<String> stageOutputs = new HashSet<>();
+      if (BatchJoiner.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
+        for (Map.Entry<String, Schema> entry : inputSchemas.entrySet()) {
+          if (entry.getValue().getFields() != null) {
+            stageInputs.addAll(entry.getValue().getFields()
+                                 .stream().map(field -> entry.getKey() + "." + field.getName())
+                                 .collect(Collectors.toSet()));
+          }
+        }
+      } else {
+        for (Map.Entry<String, Schema> entry : inputSchemas.entrySet()) {
+          if (entry.getValue().getFields() != null) {
+            stageInputs.addAll(entry.getValue().getFields().stream().map(Schema.Field::getName)
+                                 .collect(Collectors.toSet()));
+          }
         }
       }
 
       Schema outputSchema = stageSpec.getOutputSchema();
       if (outputSchema != null && outputSchema.getFields() != null) {
-        builder.addStageOutputs(outputSchema.getFields().stream().map(Schema.Field::getName)
-                                  .collect(Collectors.toSet()));
+        stageOutputs.addAll(outputSchema.getFields().stream().map(Schema.Field::getName)
+                              .collect(Collectors.toSet()));
       }
 
+      builder.addStageInputs(stageInputs);
+      builder.addStageOutputs(stageOutputs);
       StageOperationsValidator stageOperationsValidator = builder.build();
       stageOperationsValidator.validate();
+      LOG.trace("Stage Name: {}", stageSpec.getName());
+      LOG.trace("Stage Operations {}", GSON.toJson(allStageOperations.get(stageSpec.getName())));
+      LOG.trace("Stage inputs: {}", stageInputs);
+      LOG.trace("Stage outputs: {}", stageOutputs);
       InvalidFieldOperations invalidFieldOperations = stageOperationsValidator.getStageInvalids();
       if (invalidFieldOperations != null) {
         stageInvalids.put(stageSpec.getName(), invalidFieldOperations);

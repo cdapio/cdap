@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2018 Cask Data, Inc.
 
 .. _cdap-building-running:
 
@@ -10,25 +10,6 @@ Building and Running CDAP Applications
 
 .. |example| replace:: <example>
 .. |example-dir| replace:: <example-directory>
-
-.. |development| replace:: *Development Home*
-.. _development: http://localhost:11011/oldcdap/ns/default
-
-.. |all_apps| replace:: *All Applications*
-.. _all_apps: http://localhost:11011/oldcdap/ns/default/apps
-
-.. |management| replace:: *Management Applications*
-.. _management: http://localhost:11011/oldcdap/admin/namespace/detail/default/apps
-
-.. |datasets| replace:: *Management Datasets*
-.. _datasets: http://localhost:11011/oldcdap/admin/namespace/detail/default/data
-
-.. |home-page| replace:: *Home*
-.. _home-page: http://localhost:11011/cdap/ns/default
-
-.. |management-page| replace:: *Management*
-.. _management-page: http://localhost:11011/cdap/management
-
 
 
 .. highlight:: console
@@ -115,27 +96,11 @@ CDAP is running.
 Deploying an Application
 ------------------------
 
-Once CDAP is started, you can deploy an application using an example JAR by any of these methods:
+Once CDAP is started, there are multiple ways to deploy an application using an example JAR:
 
-- In the CDAP UI, use the *Add App* button |---| found on either the |development|_ or
-  |management|_ pages |---| selecting the *Custom App* menu item, and then browse and upload an
-  artifact to create an app:
+- Using the green "plus" button to upload the application's JAR file on the CDAP UI
 
-  .. tabbed-parsed-literal::
-
-    examples/|example-dir|/target/|example|-|release|.jar
-
-- In the :ref:`new beta CDAP UI <cdap-ui-beta>`,  use the green "plus" button |---| found on either
-  the |home-page|_ or |management-page|_ pages |---| to bring up the *Cask Market/Resource
-  Center*. Click the button to change to the *Resource Center* if it is not already
-  visible. Click the *Upload* button on the *Application* card, and then either
-  drag-and-drop the JAR file to be uploaded or browse and upload the artifact to create an app:
-
-  .. tabbed-parsed-literal::
-
-    examples/|example-dir|/target/|example|-|release|.jar
-
-- From the CDAP Sandbox home directory, use the :ref:`Command Line Interface (CLI) <cli>`:
+- Using the :ref:`Command Line Interface (CLI) <cli>`:
 
   .. tabbed-parsed-literal::
 
@@ -147,7 +112,7 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 
   The CLI can be accessed under Windows using the ``bin\cdap.bat cli`` script.
 
-- Use an application such as ``curl`` (a Windows-version is included in the CDAP Sandbox in
+- Using an application such as ``curl`` (a Windows-version is included in the CDAP Sandbox in
   ``libexec\bin\curl.exe``):
 
   .. tabbed-parsed-literal::
@@ -169,12 +134,9 @@ Starting an Application's Programs
 
 Once an application is deployed, there are multiple methods for starting an application's programs:
 
-- You can go to the application's detail page in the CDAP UI by clicking on the
-  application's name in either the |development|_ page or on the |all_apps|_ page. Now you can
-  see the status of any of the programs associated with the application and, by clicking
-  on them, go to their detail page where you can start or stop them.
+- The CDAP UI.
 
-- From the CDAP Sandbox home directory, use the :ref:`Command Line Interface<cli>` to start a specific program of an application.
+- The :ref:`Command Line Interface<cli>` to start a specific program of an application.
   (In each CDAP example, the CLI commands for that particular example are provided):
 
   .. tabbed-parsed-literal::
@@ -196,7 +158,7 @@ Once an application is deployed, there are multiple methods for starting an appl
 
 ..
 
-- Use the :ref:`Command Line Interface<cli>` to start all or selected types of programs of an application at once:
+- The :ref:`Command Line Interface<cli>` to start all or selected types of programs of an application at once:
 
   .. tabbed-parsed-literal::
 
@@ -218,7 +180,7 @@ Once an application is deployed, there are multiple methods for starting an appl
 
 ..
 
-- Use the :ref:`Program Lifecycle <http-restful-api-lifecycle-start>` of the Lifecycle
+- The :ref:`Program Lifecycle <http-restful-api-lifecycle-start>` of the Lifecycle
   HTTP RESTful API to start the programs of an application using a program such as ``curl``
 
 .. _cdap-building-running-stopping:
@@ -228,12 +190,11 @@ Once an application is deployed, there are multiple methods for starting an appl
 Stopping an Application's Programs
 ----------------------------------
 
-Once an application is deployed, use one of these methods for stoping an application's programs:
+Once an application is deployed, there are multiple ways for stopping an application's programs:
 
-- On an application's detail page in the CDAP UI, you can click on a program to go
-  to its detail page and then click the *Stop* button there
+- The CDAP UI.
 
-- From the CDAP Sandbox home directory, use the :ref:`Command Line Interface <cli>` to stop a specific program of an application:
+- The :ref:`Command Line Interface <cli>` to stop a specific program of an application:
 
   .. tabbed-parsed-literal::
 
@@ -254,7 +215,7 @@ Once an application is deployed, use one of these methods for stoping an applica
 
 ..
 
-- Use the :ref:`Command Line Interface<cli>` to stop all or selected types of programs of an application at once:
+- The :ref:`Command Line Interface<cli>` to stop all or selected types of programs of an application at once:
 
   .. tabbed-parsed-literal::
 
@@ -284,28 +245,23 @@ Once an application is deployed, use one of these methods for stoping an applica
 Removing an Application
 -----------------------
 
-Once an application is "stopped" |---| when all of its programs (flows, MapReduce programs,
-workflows, services, etc.) are stopped |---| you can go to the |all_apps|_
-page of the CDAP UI, click on the particular application to go to its detail page, click
-the *Actions* menu on the right side and select *Manage* to go to the Management pane for
-the application, then click the *Actions* menu on the right side and select *Delete*.
+Once an application is "stopped" |---| when all of its programs are stopped |---| you can remove the application using
+the CDAP UI.
 
-After confirmation, the application will be deleted.
-
-From the CDAP Sandbox home directory, you can also use the Command Line Interface:
+Alternatively, you can also use the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
   $ cdap cli delete app <app-id>
 
-Note that any storage (datasets) created or used by the application will remain, as they
-are independent of the application. Datasets can be deleted from the |datasets|_ page of
-the CDAP UI, or by using the :ref:`HTTP Restful API <restful-api>`, the
-:ref:`Java Client API <java-client-api>`, or the :ref:`Command Line Interface API <cli>`.
+Note that any datasets created or used by the application will remain, as they
+are independent of the application. Datasets can be deleted from the CDAP UI, or by using the
+:ref:`HTTP Restful API <restful-api>`, the :ref:`Java Client API <java-client-api>`, or the
+:ref:`Command Line Interface API <cli>`.
 
 Streams can be either truncated or deleted, using similar methods.
 
 The artifact used to create the application will also remain, as multiple
-applications can be created from the same artifact. Artifacts can be deleted using the
+applications can be created from the same artifact. Artifacts can be deleted using the UI,
 :ref:`Http Restful API <restful-api>`, the
 :ref:`Java Client API <java-client-api>`, or the :ref:`Command Line Interface API <cli>`.

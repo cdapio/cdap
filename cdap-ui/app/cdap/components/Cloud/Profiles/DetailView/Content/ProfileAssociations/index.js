@@ -21,7 +21,12 @@ import {isNilOrEmpty, humanReadableDuration, objectQuery} from 'services/helpers
 import {GLOBALS} from 'services/global-constants';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
-import {ONEDAYMETRICKEY, OVERALLMETRICKEY, fetchAggregateProfileMetrics} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {
+  ONEDAYMETRICKEY,
+  OVERALLMETRICKEY,
+  fetchAggregateProfileMetrics,
+  getNodeHours
+} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {Observable} from 'rxjs/Observable';
 require('./ProfileAssociations.scss');
 
@@ -49,7 +54,7 @@ const HEADERS = [
     label: T.translate(`${HEADERPREFIX}.totalruns`)
   },
   {
-    label: T.translate(`${HEADERPREFIX}.lastrunnodehr`)
+    label: T.translate(`${HEADERPREFIX}.last24hrsnodehr`)
   },
   {
     label: T.translate(`${HEADERPREFIX}.totalnodehr`)
@@ -75,9 +80,11 @@ export default class ProfileAssociations extends Component {
   fetchMetricsForApp = (appid, metadata) => {
     let {namespace, profile} = this.props;
     let extraTags = {
-      program: metadata.program,
-      programtype: metadata.type,
-      profile: `${profile.scope}:${profile.name}`
+      program: objectQuery(metadata, 'program'),
+      programtype: objectQuery(metadata, 'type') || 'Workflow',
+      profile: `${profile.name}`,
+      app: objectQuery(metadata, 'app'),
+      namespace: objectQuery(metadata, 'namespace')
     };
     fetchAggregateProfileMetrics(namespace, profile, extraTags)
       .subscribe(
@@ -109,13 +116,18 @@ export default class ProfileAssociations extends Component {
 
   componentDidMount() {
     let {namespace, profile} = this.props;
-    let apiObservable$ = MySearchApi.search({
-      namespace,
-      query: `profile:${namespace}.${profile.name}`
-    });
+    let {scope} = profile;
+    scope = scope.toLowerCase();
+    let profileName = `profile:${scope}:${profile.name}`;
+    let apiObservable$;
     if (namespace === 'system') {
       apiObservable$ = MySearchApi.searchSystem({
-        query: `profile:${namespace}.${profile.name}`
+        query: profileName
+      });
+    } else {
+      apiObservable$ = MySearchApi.search({
+        namespace,
+        query: profileName
       });
     }
     apiObservable$
@@ -146,12 +158,12 @@ export default class ProfileAssociations extends Component {
         existingEntry = {
           name: m.entityId.application,
           namespace: m.entityId.namespace,
-          metadata: {
-            type: m.entityId.type,
-            program: m.entityId.program
-          },
           schedules: [],
-          triggers: []
+          triggers: [],
+          metadata: {
+            app: m.entityId.application,
+            namespace: m.entityId.namespace
+          }
         };
         appsMap[m.entityId.application] = existingEntry;
       }
@@ -171,7 +183,12 @@ export default class ProfileAssociations extends Component {
       } else if (!isNilOrEmpty(m.entityId.type)) {
         appsMap[m.entityId.application] = {
           ...existingEntry,
-          created: m.metadata.SYSTEM.properties['creation-time']
+          created: m.metadata.SYSTEM.properties['creation-time'],
+          metadata: {
+            ...existingEntry.metadata,
+            type: m.entityId.type,
+            program: m.entityId.program
+          }
         };
       }
     });
@@ -219,18 +236,35 @@ export default class ProfileAssociations extends Component {
             let appObj = associationsMap[app];
             let onedayMetrics = objectQuery(appObj, 'metadata', ONEDAYMETRICKEY) || {};
             let overallMetrics = objectQuery(appObj, 'metadata', OVERALLMETRICKEY) || {};
+            let pipelineUrl = window.getHydratorUrl({
+              stateName: 'hydrator.detail',
+              stateParams: {
+                namespace: appObj.namespace,
+                pipelineId: appObj.name
+              }
+            });
             return (
-              <div className="grid-row">
+              <a
+                className="grid-row"
+                href={pipelineUrl}
+              >
                 <div>{appObj.name}</div>
                 <div>{appObj.namespace}</div>
-                <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true)}</div>
-                <div>{onedayMetrics.runs} </div>
-                <div>{overallMetrics.runs}</div>
-                <div>{onedayMetrics.minutes}</div>
-                <div>{overallMetrics.minutes}</div>
+                <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true) || '--'}</div>
+                {/*
+                  We should set the defaults in the metrics call but since it is not certain that we get metrics
+                  for all the profiles all the time I have added the defaults here in the view
+                  Ideally we should set the defaults when we create the map of profiles.
+
+                  This is the minimal change for 5.0
+                */}
+                <div>{onedayMetrics.runs || '--'} </div>
+                <div>{overallMetrics.runs || '--'}</div>
+                <div>{getNodeHours(onedayMetrics.minutes || '--')}</div>
+                <div>{getNodeHours(overallMetrics.minutes || '--')}</div>
                 <div>{appObj.schedules.length}</div>
                 <div>{appObj.triggers.length}</div>
-              </div>
+              </a>
             );
           })
         }
@@ -239,16 +273,25 @@ export default class ProfileAssociations extends Component {
   };
 
   render() {
+    let profileName = this.props.profile.label || this.props.profile.name;
+
     if (isNilOrEmpty(this.state.associationsMap)) {
       return (
         <div className="profile-associations empty">
           <IconSVG name="icon-info-circle" />
-          <h6> This profile is not associated with any schedules or triggers </h6>
+          <h6>
+            {T.translate(`${HEADERPREFIX}.noAssociations`)}
+          </h6>
         </div>
       );
     }
     return (
       <div className="profile-associations">
+        <h5 className="section-label">
+          <strong>
+            {T.translate(`${HEADERPREFIX}.label`, {profile: profileName})}
+          </strong>
+        </h5>
         <div className="grid grid-container">
           {this.renderGridHeader()}
           {this.renderGridBody()}

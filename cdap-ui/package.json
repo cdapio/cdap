@@ -166,7 +166,7 @@
     "yml-loader": "2.1.0"
   },
   "engines": {
-    "node": ">= 4.5.0"
+    "node": ">= 8.7.0"
   },
   "jest": {
     "testEnvironment": "jsdom",
