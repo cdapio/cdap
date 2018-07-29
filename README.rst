@@ -2,8 +2,6 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
-.. image:: cdap-docs/developer-manual/source/_images/CDAP.png
-
 .. image:: https://cdap-users.herokuapp.com/badge.svg?t=1
     :target: https://cdap-users.herokuapp.com
 
