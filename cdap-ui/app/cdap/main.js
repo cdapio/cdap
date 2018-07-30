@@ -49,6 +49,7 @@ import Page404 from 'components/404';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import HttpExecutor from 'components/HttpExecutor';
+import ErrorBoundary from 'components/ErrorBoundary';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -112,14 +113,51 @@ class CDAP extends Component {
             :
               <div className="container-fluid">
                 <Switch>
-                  <Route exact path="/" component={RouteToNamespace} />
-                  <Route exact path="/notfound" component={Page404} />
-                  <Route path="/administration" component={Administration} />
-                  <Route exact path="/ns" component={RouteToNamespace} />
-                  <Route path="/ns/:namespace" history={history} component={Home} />
-                  <Route path="/socket-example" component={ConnectionExample} />
-                  <Route exact path="/httpexecutor" component={HttpExecutor} />
-                  <Route component={Page404} />
+                  <Route exact path="/" render={(props) => (
+                    <ErrorBoundary>
+                      <RouteToNamespace {...props} />
+                    </ErrorBoundary>
+                   )} />
+                  <Route exact path="/notfound" render={(props) => (
+                    <ErrorBoundary>
+                      <Page404 {...props} />
+                    </ErrorBoundary>
+                  )} />
+                  <Route path="/administration" render={(props) => (
+                    <ErrorBoundary>
+                      <Administration {...props} />
+                    </ErrorBoundary>
+                  )} />
+                  <Route exact path="/ns" render={(props) => (
+                    <ErrorBoundary>
+                      <RouteToNamespace {...props} />
+                    </ErrorBoundary>
+                  )} />
+                  <Route path="/ns/:namespace" history={history} render={(props) => (
+                    <ErrorBoundary>
+                      <Home {...props} />
+                    </ErrorBoundary>
+                  )} />
+                  <Route path="/socket-example" render={(props) => (
+                    <ErrorBoundary>
+                      <ConnectionExample {...props} />
+                    </ErrorBoundary>
+                  )} />
+                  <Route exact path="/httpexecutor" render={(props) => (
+                    <ErrorBoundary>
+                      <HttpExecutor {...props} />
+                    </ErrorBoundary>
+                  )} />
+                  {
+                    /*
+                    Eventually handling 404 should move to the error boundary and all container components will have the error object.
+                    */
+                  }
+                  <Route render={(props) => (
+                    <ErrorBoundary>
+                      <Page404 {...props} />
+                    </ErrorBoundary>
+                  )} />
                 </Switch>
               </div>
           }
