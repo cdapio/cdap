@@ -167,7 +167,9 @@ $dropdown_divider_bg_color: $grey-06;
       }
     }
     &.show {
-      .dropdown-menu {
+      // This is because we patch the bootstrap 4 dropdowns to have a display block
+      // When we upgrade bootstrap to 4 we should be able to remove this.
+      .dropdown-menu[aria-hidden="false"] {
         display: flex;
         flex-direction: column;
       }
