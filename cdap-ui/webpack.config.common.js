@@ -18,6 +18,8 @@ var mode = process.env.NODE_ENV || 'production';
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+var ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 let pathsToClean = [
   'common_dist'
 ];
@@ -31,19 +33,25 @@ let cleanOptions = {
 const COMMON_LIB_NAME = 'common-lib-new';
 
 var plugins = [
+  new LodashModuleReplacementPlugin({
+    shorthands: true,
+    collections: true,
+    caching: true
+  }),
   new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
-  new webpack.optimize.CommonsChunkPlugin({
-    name: COMMON_LIB_NAME,
-    fileName: COMMON_LIB_NAME + '.js',
-    minChunks: Infinity
-  }),
   // by default minify it.
   new webpack.DefinePlugin({
     'process.env':{
       'NODE_ENV': JSON.stringify(mode)
     },
-  })
+  }),
+  new ForkTsCheckerWebpackPlugin({
+    tsconfig: __dirname + '/tsconfig.json',
+    tslint: __dirname + '/tslint.json',
+    // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
+    memoryLimit: 4096
+  }),
 ];
 var rules = [
   {
@@ -64,23 +72,6 @@ var rules = [
       'style-loader',
       'css-loader',
       'sass-loader'
-    ]
-  },
-  {
-    test: /\.json$/,
-    use: 'json-loader'
-  },
-  {
-    enforce: 'pre',
-    test: /\.js$/,
-    use: 'eslint-loader',
-    exclude: [
-      /node_modules/,
-      /bower_components/,
-      /dist/,
-      /old_dist/,
-      /cdap_dist/,
-      /login_dist/
     ]
   },
   {
@@ -130,11 +121,19 @@ if (mode === 'production') {
   );
 }
 var webpackConfig = {
+  mode,
   context: __dirname + '/app/common',
+  optimization: {
+    splitChunks: {
+      name: COMMON_LIB_NAME,
+      fileName: COMMON_LIB_NAME + '.js',
+      minChunks: Infinity
+    }
+  },
   entry: {
     'common-new': ['./cask-shared-components.js'],
     [COMMON_LIB_NAME]: [
-      'babel-polyfill',
+      '@babel/polyfill',
       'classnames',
       'reactstrap',
       'i18n-react',
@@ -148,13 +147,20 @@ var webpackConfig = {
   module: {
     rules
   },
+  stats: {
+    chunks: false,
+    chunkModules: false
+  },
   output: {
-    filename: './[name].js',
-    chunkFilename: '[name]-[chunkhash].js',
+    filename: '[name].js',
+    chunkFilename: '[name].[chunkhash].js',
     path: __dirname + '/common_dist',
     library: 'CaskCommon',
     libraryTarget: 'umd',
     publicPath: '/common_assets/'
+  },
+  optimization: {
+    splitChunks: false
   },
   externals: {
     'react': {
@@ -186,10 +192,5 @@ var webpackConfig = {
   },
   plugins
 };
-if (mode !== 'production') {
-  webpackConfig = Object.assign({}, webpackConfig, {
-    devtool: 'source-map'
-  });
-}
 
 module.exports = webpackConfig;

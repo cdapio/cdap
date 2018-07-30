@@ -50,6 +50,10 @@ import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import HttpExecutor from 'components/HttpExecutor';
 import ErrorBoundary from 'components/ErrorBoundary';
+const SampleTSXComponent = Loadable({
+  loader: () => import (/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
+  loading: LoadingSVGCentered
+});
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -146,6 +150,11 @@ class CDAP extends Component {
                   <Route exact path="/httpexecutor" render={(props) => (
                     <ErrorBoundary>
                       <HttpExecutor {...props} />
+                    </ErrorBoundary>
+                  )} />
+                  <Route exact path="/ts-example" render={(props) => (
+                    <ErrorBoundary>
+                      <SampleTSXComponent {...props} />
                     </ErrorBoundary>
                   )} />
                   {

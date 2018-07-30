@@ -17,6 +17,7 @@
 var webpack = require('webpack');
 var path = require('path');
 var mode = process.env.NODE_ENV || 'production';
+var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const processEnv = {
   'NODE_ENV': JSON.stringify(mode),
   '__DEVTOOLS__': false
@@ -55,15 +56,23 @@ var plugins = [
 
 if (mode === 'production') {
   plugins.push(
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
+    new UglifyJsPlugin({
+      uglifyOptions: {
+        ie8: false,
+        compress: {
+          warnings: false
+        },
+        output: {
+          comments: false,
+          beautify: false,
+        }
       }
     })
   );
 }
 
 var webpackConfig = {
+  mode,
   entry: {
     vendor: [
       'whatwg-fetch',
@@ -95,17 +104,12 @@ var webpackConfig = {
   output: getWebpackOutputObj(mode),
   plugins,
   stats: {
-    chunks: false
+    chunks: false,
+    chunkModules: false
   },
   resolve: {
     modules: ['node_modules']
   }
 };
-
-if (mode === 'development') {
-  webpackConfig = Object.assign({}, webpackConfig, {
-    devtool: 'source-map'
-  });
-}
 
 module.exports = webpackConfig;
