@@ -17,11 +17,9 @@
 @import '../../styles/variables.scss';
 @import './DropdownStyling.scss';
 
-$header-bg-color: $navbar-bg;
-
 .global-navbar {
   height: 50px;
-  background: $header-bg-color;
+  background: var(--brand-primary-color);
   position: fixed;
   width: 100%;
   top: 0;

@@ -89,7 +89,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: process.env.NODE_ENV === 'production',
-      sandboxMode: process.env.NODE_ENV
+      sandboxMode: process.env.NODE_ENV,
+      // Experimental
+      uiTheme: 'dark'
     });
 
     res.header({

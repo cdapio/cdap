@@ -1,0 +1,8 @@
+{
+  "dark": {
+    "brand-primary-color": "rgba(51, 51, 51, 1)"
+  },
+  "blue": {
+    "brand-primary-color": "#3b78e7"
+  }
+}

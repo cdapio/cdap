@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,14 @@
  * the License.
 */
 
-@import '~styles/variables.scss';
+import skinsJson from '../styles/skins';
 
-:root {
-  --brand-primary-color: $brand-primary-color;
-}
-
-body {
-  .cdap-container {
-    height: inherit;
-    .container-fluid {
-      height: inherit;
-      padding: 0;
-      > div {
-        height: inherit;
-      }
-    }
+export function applySkin() {
+  if (window.CDAP_CONFIG.uiTheme) {
+    const customizations = skinsJson[window.CDAP_CONFIG.uiTheme];
+    Object.keys(customizations).forEach(cssVar => {
+      const cssValue = customizations[cssVar];
+      document.documentElement.style.setProperty(`--${cssVar}`, cssValue);
+    });
   }
 }
