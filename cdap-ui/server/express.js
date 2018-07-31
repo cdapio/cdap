@@ -89,9 +89,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: process.env.NODE_ENV === 'production',
-      sandboxMode: process.env.NODE_ENV,
-      // Experimental
-      uiTheme: cdapConfig['ui.theme']
+      sandboxMode: process.env.NODE_ENV
     });
 
     res.header({
@@ -164,7 +162,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
           });
           res.send(`window.CDAP_UI_THEME = ${fileConfig};`);
         } catch (e) {
-          log.debug("Missing 'ui.theme' property in cdap-site.xml");
+          log.debug(`Missing ${uiThemeName}.json file in server/config/themes directory`);
           res.end();
         }
 
