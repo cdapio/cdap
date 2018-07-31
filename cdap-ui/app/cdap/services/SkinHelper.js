@@ -14,14 +14,12 @@
  * the License.
 */
 
-import skinsJson from '../styles/skins';
-
 export function applySkin() {
-  if (window.CDAP_CONFIG.uiTheme) {
-    const customizations = skinsJson[window.CDAP_CONFIG.uiTheme];
-    Object.keys(customizations).forEach(cssVar => {
-      const cssValue = customizations[cssVar];
-      document.documentElement.style.setProperty(`--${cssVar}`, cssValue);
-    });
-  }
+  if (!window.CDAP_UI_THEME) { return; }
+
+  const skinProperties = window.CDAP_UI_THEME;
+  Object.keys(skinProperties).forEach(cssVar => {
+    const cssValue = skinProperties[cssVar];
+    document.documentElement.style.setProperty(`--${cssVar}`, cssValue);
+  });
 }

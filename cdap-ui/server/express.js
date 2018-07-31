@@ -91,7 +91,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       isEnterprise: process.env.NODE_ENV === 'production',
       sandboxMode: process.env.NODE_ENV,
       // Experimental
-      uiTheme: 'dark'
+      uiTheme: cdapConfig['ui.theme']
     });
 
     res.header({
@@ -112,6 +112,64 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       'Cache-Control': 'no-store, must-revalidate'
     });
     res.send('window.CDAP_UI_CONFIG = ' + fileConfig+ ';');
+  });
+
+  app.get('/ui-theme.js', function (req, res) {
+    let {protocol, port} = getProtocolPort(cdapConfig);
+
+    let headers = {};
+
+    if (req.cookies['CDAP_Auth_Token']) {
+      headers = {
+        ...headers,
+        authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token']
+      };
+    }
+
+    let url = [
+      protocol,
+      cdapConfig['router.server.address'],
+      ':',
+      port,
+      '/v3/config/cdap'
+    ].join('');
+
+    let requestObject = {
+      method: 'GET',
+      url,
+      rejectUnauthorized: false,
+      requestCert: true,
+      agent: false,
+      headers
+    };
+
+    request(requestObject, function(err, resp, body) {
+      if (err) {
+        log.error('Error getting theme: ', err);
+      } else {
+        let cdapProperties = JSON.parse(body);
+        let uiThemeName = cdapProperties.filter(obj => obj.name === 'ui.theme');
+        if (uiThemeName.length) {
+          uiThemeName = uiThemeName[0].value;
+        } else {
+          uiThemeName = 'default';
+        }
+
+        let path = `${__dirname}/config/themes/${uiThemeName}.json`;
+        try {
+          let fileConfig = fs.readFileSync(path, 'utf8');
+          res.header({
+            'Content-Type': 'text/javascript',
+            'Cache-Control': 'no-store, must-revalidate'
+          });
+          res.send(`window.CDAP_UI_THEME = ${fileConfig};`);
+        } catch (e) {
+          log.debug("Missing 'ui.theme' property in cdap-site.xml");
+          res.end();
+        }
+
+      }
+    });
   });
 
   app.post('/downloadQuery', function(req, res) {
@@ -646,4 +704,21 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   return app;
 
+  function getProtocolPort(cdapConfig) {
+    let protocol, port;
+    if (cdapConfig['ssl.external.enabled'] === 'true') {
+      protocol = 'https://';
+    } else {
+      protocol = 'http://';
+    }
+    if (cdapConfig['ssl.external.enabled'] === 'true') {
+      port = cdapConfig['router.ssl.server.port'];
+    } else {
+      port = cdapConfig['router.server.port'];
+    }
+    return {
+      protocol,
+      port
+    };
+  }
 }

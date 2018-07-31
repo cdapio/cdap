@@ -49,7 +49,7 @@ import Page404 from 'components/404';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import HttpExecutor from 'components/HttpExecutor';
-import {applySkin} from 'services/SkinCustomizer';
+import {applySkin} from 'services/SkinHelper';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
