@@ -268,4 +268,13 @@
     </description>
   </property>
 
+   <!-- UI Theme -->
+  <property>
+    <name>ui.theme</name>
+    <value>default</value>
+    <description>
+      Theme to use in the UI
+    </description>
+  </property>
+
 </configuration>

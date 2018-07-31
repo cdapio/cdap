@@ -137,5 +137,6 @@ AuthAddress.prototype.get = function () {
   if (!this.addresses.length) {
     return null;
   }
-  return this.addresses[Math.floor(Math.random() * this.addresses.length)];
+  // return this.addresses[Math.floor(Math.random() * this.addresses.length)];
+  return "http://localhost:10009/token";
 };
