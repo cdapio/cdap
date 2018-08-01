@@ -31,35 +31,41 @@ export default class ErrorBoundary extends Component {
     info: {}
   };
   componentDidCatch(error, info) {
-    let err, message, statusCode;
-    try {
-      err = JSON.parse(error.message);
-      message = err.message || DEFAULT_ERROR_MESSAGE;
-      statusCode = err.statusCode || DEFAULT_STATUS_CODE;
-    } catch (e) {
-      message = DEFAULT_ERROR_MESSAGE;
+    let err, message, statusCode, stackTrace;
+    if (error instanceof Error) {
+      message = error.message;
       statusCode = DEFAULT_STATUS_CODE;
+    } else {
+      try {
+        err = JSON.parse(error.message);
+        message = err.message || DEFAULT_ERROR_MESSAGE;
+        statusCode = err.statusCode || DEFAULT_STATUS_CODE;
+      } catch (e) {
+        message = DEFAULT_ERROR_MESSAGE;
+        statusCode = DEFAULT_STATUS_CODE;
+      }
     }
+    stackTrace = info.componentStack;
     this.setState({
       error: true,
       message,
       statusCode,
-      info
+      info: stackTrace
     });
   }
   render() {
     if (!this.state.error) {
       return this.props.children;
     }
-    if (this.state.statuCode === 500) {
+    if (this.state.statusCode === 500) {
       return (
         <Page500
           message={this.state.message}
-          stack={this.state.info.componentStack}
+          stack={this.state.info}
         />
       );
     }
-    if (this.state.statuCode === 404) {
+    if (this.state.statusCode === 404) {
       return (
         <Page404
           entityType={this.state.info.entityType}
