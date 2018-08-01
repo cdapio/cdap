@@ -52,7 +52,11 @@ export default class S3Browser extends Component {
     const {selectedNamespace: namespace} = NamespaceStore.getState();
     const {connectionId, prefix} = DataPrepBrowserStore.getState().s3;
     const strippedPrefix = prefix.slice(prefix.indexOf('/') + 1);
-    const activeBucket = strippedPrefix.slice(0, strippedPrefix.indexOf('/'));
+    const trailingSlashIndex = strippedPrefix.indexOf('/');
+    let activeBucket = strippedPrefix;
+    if (trailingSlashIndex !== -1) {
+      activeBucket = strippedPrefix.slice(0, trailingSlashIndex);
+    }
     setS3Loading();
     let headers = {
       'Content-Type': file.type
