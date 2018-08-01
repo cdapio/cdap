@@ -251,7 +251,6 @@ export default class IngestDataFromDataPrep extends Component {
       'File': {
         path: '${filename}',
         referenceName: 'FileNode',
-        schema: "{\"name\":\"fileRecord\",\"type\":\"record\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
       },
       'Table': {
         'schema.row.field': '${schemaRowField}',
@@ -268,8 +267,6 @@ export default class IngestDataFromDataPrep extends Component {
         referenceName: 'KafkaNode',
         kafkaBrokers: '${kafkaBrokers}',
         topic: '${topic}',
-        tableName: 'kafka-offset',
-        schema: "{\"name\":\"kafkaAvroSchema\",\"type\":\"record\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
       },
       'TPFSOrc': dataFormatProperties,
       'TPFSParquet': dataFormatProperties,
@@ -279,7 +276,6 @@ export default class IngestDataFromDataPrep extends Component {
         path: '${path}',
         accessKey: '${accessKey}',
         authenticationMethod: 'Access Credentials',
-        schema: "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
         recursive: 'false'
       },
       'GCS': {
@@ -289,7 +285,6 @@ export default class IngestDataFromDataPrep extends Component {
         serviceFilePath: '${serviceFilePath}',
         project: '${project}',
         recursive: 'false',
-        schema: "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
         ignoreNonExistingFolders: "false"
       },
       'BigQueryTable': {
