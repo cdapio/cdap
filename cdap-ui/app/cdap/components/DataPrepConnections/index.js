@@ -330,7 +330,7 @@ export default class DataPrepConnections extends Component {
                 to={`${baseLinkPath}/kafka/${kafka.id}`}
                 activeClassName="active"
                 className="menu-item-expanded-list"
-                onClick={this.handlePropagation.bind(this, kafka)}
+                onClick={this.handlePropagation.bind(this, 'kafka')}
                 singleWorkspaceMode={this.props.singleWorkspaceMode}
               >
                 {kafka.name}
