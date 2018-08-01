@@ -23,13 +23,48 @@ import {objectQuery} from 'services/helpers';
 const setBigQueryAsActiveBrowser = (payload) => {
   let {bigquery} = DataPrepBrowserStore.getState();
 
-  if (bigquery.loading) { return; }
+  /*
+    TL;DR - This is needed to prevent UI from making a redundant datasets list call even though the user clicked on one single dataset.
 
+    Detailed version:
+
+    Scenario that warranted this change.
+    1. User goes to /connections/browser
+    2. Clicks on a big query connection by clicking on the left panel
+    3. The datasetList will be empty and we go and fetch the list of datasets from bigquery
+    4. User clicks on a dataset
+    5. If the routing is enabled (meaning if the user clicks on react side of this) it is a link.
+    6. If its a link the event propagates up till the DataPrepConnections where we handle /connections/bigquery/:bigqueryid render method
+    <Route
+      path={`${BASEPATH}/bigquery/:bigQueryId`}
+      render={(match) => {
+        let id  = match.match.params.bigQueryId;
+        setBigQueryAsActiveBrowser({name: 'bigquery', id});
+        return (
+          <DataPrepBrowser
+            match={match}
+            location={location}
+            toggle={this.toggleSidePanel}
+            onWorkspaceCreate={this.onUploadSuccess}
+          />
+        );
+      }}
+    />
+    Here in the render method we set bigquery as the default browser which will again call this
+    7. Without this check we get the list of datasets AGAIN even though the user clicked on A dataset
+    8. In the /connections/bigquery/:bigqueryid/datasets/:datasetid which renders TableList makes the list of tables call
+    9. This is redundant.
+
+    This will prevent the user from clicking on the connection in the left panel to refresh the contents.
+  */
+  if (bigquery.loading || bigquery.datasetList.length) { return; }
+
+  let {id} = payload;
   setActiveBrowser(payload);
   setBigQueryLoading();
+  listBiqQueryDatasets(id);
 
   let namespace = getCurrentNamespace();
-  let {id} = payload;
   let params = {
     namespace,
     connectionId: id
