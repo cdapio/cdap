@@ -143,29 +143,36 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
     request(requestObject, function(err, resp, body) {
       if (err) {
-        log.error('Error getting theme: ', err);
+        log.debug('Error getting cdap-site.xml: ', err);
+        res.end();
       } else {
-        let cdapProperties = JSON.parse(body);
-        let uiThemeName = cdapProperties.filter(obj => obj.name === 'ui.theme');
-        if (uiThemeName.length) {
-          uiThemeName = uiThemeName[0].value;
-        } else {
-          uiThemeName = 'default';
-        }
-
-        let path = `${__dirname}/config/themes/${uiThemeName}.json`;
         try {
-          let fileConfig = fs.readFileSync(path, 'utf8');
-          res.header({
-            'Content-Type': 'text/javascript',
-            'Cache-Control': 'no-store, must-revalidate'
-          });
-          res.send(`window.CDAP_UI_THEME = ${fileConfig};`);
+          let cdapProperties = JSON.parse(body);
+          let uiThemeName = cdapProperties.filter(obj => obj.name === 'ui.theme');
+          if (uiThemeName.length) {
+            uiThemeName = uiThemeName[0].value;
+          } else {
+            uiThemeName = 'default';
+          }
+
+          let path = `${__dirname}/config/themes/${uiThemeName}.json`;
+          try {
+            let fileConfig = fs.readFileSync(path, 'utf8');
+            res.header({
+              'Content-Type': 'text/javascript',
+              'Cache-Control': 'no-store, must-revalidate'
+            });
+            res.send(`window.CDAP_UI_THEME = ${fileConfig};`);
+
+          } catch (err) {
+            log.debug(`Missing ${uiThemeName}.json file in server/config/themes directory`);
+            res.end();
+          }
+
         } catch (e) {
-          log.debug(`Missing ${uiThemeName}.json file in server/config/themes directory`);
+          log.debug('Error parsing cdap-site.xml body');
           res.end();
         }
-
       }
     });
   });
