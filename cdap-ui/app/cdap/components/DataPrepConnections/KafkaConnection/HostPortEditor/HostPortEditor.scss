@@ -17,6 +17,8 @@
 .host-port-editor-container {
   .host-port-row-container {
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
 
     .port-input-container,
     .host-input-container,
@@ -32,6 +34,8 @@
 
     .action-buttons-container {
       width: 80px;
+      display: flex;
+      justify-content: space-evenly;
 
       .add-row-btn { color: inherit; }
     }

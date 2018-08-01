@@ -51,8 +51,10 @@ export default class S3Browser extends Component {
   onWorkspaceCreate = (file) => {
     const {selectedNamespace: namespace} = NamespaceStore.getState();
     const {connectionId, prefix} = DataPrepBrowserStore.getState().s3;
-    const strippedPrefix = prefix.slice(prefix.indexOf('/') + 1);
-    const activeBucket = strippedPrefix.slice(0, strippedPrefix.indexOf('/'));
+    let activeBucket = prefix;
+    if (prefix.length > 1 && prefix[prefix.length - 1] === '/') {
+      activeBucket = prefix.slice(0, prefix.length - 1);
+    }
     setS3Loading();
     let headers = {
       'Content-Type': file.type
@@ -120,7 +122,7 @@ export default class S3Browser extends Component {
           <div className={classnames("sub-panel", {'routing-disabled': !this.props.enableRouting})}>
             <div className="path-container">
               <S3Path
-                baseStatePath={this.props.match.url}
+                baseStatePath={this.props.enableRouting ? this.props.match.url : '/'}
                 enableRouting={this.props.enableRouting}
               />
             </div>

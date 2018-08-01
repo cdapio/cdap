@@ -45,8 +45,8 @@ const UpgradeModal = Loadable({
   loader: () => import(/* webpackChunkName: "UpgradeModal" */ 'components/DataPrep/TopPanel/UpgradeModal'),
   loading: LoadingSVGCentered
 });
-const CreateDatasetBtn = Loadable({
-  loader: () => import(/* webpackChunkName: "CreateDatasetBtn" */ 'components/DataPrep/TopPanel/CreateDatasetBtn'),
+const IngestDataFromDataPrep = Loadable({
+  loader: () => import(/* webpackChunkName: "IngestDataFromDataPrep" */ 'components/DataPrep/TopPanel/IngestDataFromDataPrep'),
   loading: LoadingSVGCentered
 });
 
@@ -175,7 +175,7 @@ export default class DataPrepTopPanel extends Component {
   menu = [
     {
       label: T.translate(`${PREFIX}.copyToCDAPDatasetBtn.btnLabel`),
-      component: CreateDatasetBtn,
+      component: IngestDataFromDataPrep,
       iconName: 'icon-upload',
       shouldRender: () => !this.props.singleWorkspaceMode,
       disabled: () => isNil(this.state.workspaceInfo) || objectQuery(this.state, 'workspaceInfo', 'properties', 'connection') === 'upload'
