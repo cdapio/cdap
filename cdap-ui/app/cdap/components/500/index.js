@@ -18,28 +18,30 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {isNilOrEmpty} from 'services/helpers';
 import {DEFAULT_ERROR_MESSAGE} from 'components/ErrorBoundary';
+import Page500ErrorStack from 'components/500/Page500ErrorStack';
+require('./500.scss');
 
 export default function Page500({message, stack}) {
   return (
-    <div className="page-not-found">
+    <div className="page-500">
       <img src="/cdap_assets/img/404.png" />
-      <h1>
-        <strong>
-          {
-            isNilOrEmpty(message) ?
-              DEFAULT_ERROR_MESSAGE
-            :
-              message
-          }
-        </strong>
-      </h1>
+      <h4>
+        <strong>Sorry, something unexpected happend.</strong>
+        <small>Bug/JIRA integration coming soon...</small>
+        <small>
+          Please
+          <a href={window.location.href}> click here </a>
+          to reload the application
+        </small>
+      </h4>
       {
         isNilOrEmpty(stack) ?
           null
         :
-          <div className="message-section">
-            <pre>{JSON.stringify(stack, null, 2)}</pre>
-          </div>
+          <Page500ErrorStack
+            stack={stack}
+            message={isNilOrEmpty(message) ? DEFAULT_ERROR_MESSAGE : message}
+          />
       }
     </div>
   );
