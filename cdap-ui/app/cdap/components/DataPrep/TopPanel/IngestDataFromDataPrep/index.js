@@ -38,7 +38,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import {Observable} from 'rxjs/Observable';
 import CardActionFeedback from 'components/CardActionFeedback';
 
-require('./CreateDatasetBtn.scss');
+require('./IngestDataFromDataPrep.scss');
 
 const PREFIX = `features.DataPrep.TopPanel.copyToCDAPDatasetBtn`;
 const fielsetDataType = [
@@ -67,17 +67,15 @@ const copyingSteps = [
     status: null
   }
 ];
-export default class CreateDatasetBtn extends Component {
-  constructor(props) {
-    super(props);
-    this.state = this.getDefaultState();
-    this.toggleModal = this.toggleModal.bind(this);
-    this.handleOnSubmit = this.handleOnSubmit.bind(this);
-    this.handleRowkeyChange = this.handleRowkeyChange.bind(this);
-    this.submitForm = this.submitForm.bind(this);
-    this.handleFormatChange = this.handleFormatChange.bind(this);
-    this.handleDatasetNameChange = this.handleDatasetNameChange.bind(this);
-  }
+export default class IngestDataFromDataPrep extends Component {
+
+  static propTypes = {
+    className: PropTypes.string,
+    disabledState: PropTypes.bool,
+    title: PropTypes.string
+  };
+
+  state = this.getDefaultState();
 
   getDefaultState() {
     let {headers} = DataPrepStore.getState().dataprep;
@@ -133,7 +131,7 @@ export default class CreateDatasetBtn extends Component {
       });
   }
 
-  toggleModal() {
+  toggleModal = () => {
     let state = Object.assign(this.getDefaultState(), {
       showModal: !this.state.showModal,
       sinkPluginsForDataset: this.state.sinkPluginsForDataset,
@@ -156,25 +154,25 @@ export default class CreateDatasetBtn extends Component {
     }
   }
 
-  handleDatasetNameChange(e) {
+  handleDatasetNameChange = (e) => {
     this.setState({
       datasetName: e.target.value
     });
   }
 
-  handleRowkeyChange(e) {
+  handleRowkeyChange = (e) => {
     this.setState({
       rowKey: e.target.value
     });
   }
 
-  handleFormatChange(e) {
+  handleFormatChange = (e) => {
     this.setState({
       format: e.target.value
     });
   }
 
-  handleOnSubmit(e) {
+  handleOnSubmit = (e) => {
     preventPropagation(e);
     return false;
   }
@@ -344,7 +342,7 @@ export default class CreateDatasetBtn extends Component {
     return {appConfig, macroMap};
   }
 
-  submitForm() {
+  submitForm = () => {
     let steps = cloneDeep(copyingSteps);
     let {dataprep} = DataPrepStore.getState();
     let workspaceProps = objectQuery(dataprep, 'workspaceInfo', 'properties');
@@ -809,8 +807,3 @@ export default class CreateDatasetBtn extends Component {
     );
   }
 }
-CreateDatasetBtn.propTypes = {
-  className: PropTypes.string,
-  disabledState: PropTypes.bool,
-  title: PropTypes.string
-};
