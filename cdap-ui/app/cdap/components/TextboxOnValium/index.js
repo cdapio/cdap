@@ -15,7 +15,7 @@
  */
 
 import PropTypes from 'prop-types';
-
+import isNil from 'lodash/isNil';
 import React, { Component } from 'react';
 export default class TextboxOnValium extends Component {
   constructor(props) {
@@ -42,6 +42,13 @@ export default class TextboxOnValium extends Component {
 
     if (!this.props.allowSpace) {
       textValue = textValue.trim();
+    }
+    if (
+      !isNil(this.props.validCharacterRegex) &&
+      this.props.validCharacterRegex instanceof RegExp &&
+      !this.props.validCharacterRegex.test(textValue)
+    ) {
+      return;
     }
 
     this.setState({
@@ -88,7 +95,8 @@ export default class TextboxOnValium extends Component {
 }
 
 TextboxOnValium.defaultProps = {
-  allowSpace: true
+  allowSpace: true,
+  validCharacterRegex: null
 };
 
 TextboxOnValium.propTypes = {
@@ -97,5 +105,6 @@ TextboxOnValium.propTypes = {
   onWarning: PropTypes.func,
   className: PropTypes.string,
   allowSpace: PropTypes.bool,
-  shouldSelect: PropTypes.bool
+  shouldSelect: PropTypes.bool,
+  validCharacterRegex: PropTypes.object // regex expression
 };
