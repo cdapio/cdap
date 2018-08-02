@@ -125,6 +125,7 @@ export default class CutDirective extends Component {
               className={classnames("form-control mousetrap", CELLHIGHLIGHTCLASSNAME)}
               onChange={this.handleColNameChange}
               value={this.newColName}
+              validCharacterRegex={/^\w+$/}
             />
           </div>
           <div
