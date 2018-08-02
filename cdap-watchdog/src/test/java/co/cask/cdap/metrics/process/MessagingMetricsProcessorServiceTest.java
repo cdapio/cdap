@@ -97,7 +97,16 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
 
       // validate metrics processor metrics
       // 50 counter and 50 gauge metrics are emitted in each iteration above
-      Assert.assertEquals(100, metricStore.getMetricsProcessedByMetricsProcessor());
+      Tasks.waitFor(100L, () -> metricStore.getMetricsProcessedByMetricsProcessor(),
+                    15, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+      // publish a dummy metric
+      // this is to force the metrics processor to publish delay metrics for all the topics
+      publishMessagingMetrics(100, startTime, METRICS_CONTEXT, expected, "", MetricType.GAUGE);
+      // validate the newly published metric
+      Tasks.waitFor(101L, () -> metricStore.getMetricsProcessedByMetricsProcessor(),
+                    15, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
       // in MessagingMetricsProcessorService, before persisting the metrics and topic metas, a copy of the topic metas
       // containing the metrics processor delay metrics is made before making a copy of metric values.
       // Therefore, there can be a very small chance where all metric values are persisted but the corresponding

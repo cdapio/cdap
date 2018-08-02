@@ -509,6 +509,11 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         // the number of metrics being persisted each time
         Deque<MetricValues> metricsCopy = new LinkedList<>();
         Iterator<MetricValues> iterator = metricsFromAllTopics.iterator();
+        // Though the blocking queue(metricsFromAllTopics) has upper bound on its size (which is the "queueSize")
+        // there can be a scenario, as the current thread is removing entries from blocking queue
+        // and adding it to a copy list, other threads are simultaneously adding entries to the queue and
+        // the current list might become very big causing out of memory issues, we avoid this
+        // by making the copy list size also to be limited by the max queue size.
         while (iterator.hasNext() && metricsCopy.size() < queueSize) {
           metricsCopy.add(iterator.next());
           iterator.remove();
