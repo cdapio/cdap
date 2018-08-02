@@ -27,7 +27,8 @@ import {
   setKafkaAsActiveBrowser,
   setGCSAsActiveBrowser,
   setBigQueryAsActiveBrowser,
-  listBigQueryTables
+  listBigQueryTables,
+  reset as resetDataPrepBrowserStore,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, NavLink, Redirect, Switch} from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
@@ -133,6 +134,7 @@ export default class DataPrepConnections extends Component {
 
   componentWillUnmount() {
     if (this.dataprepSubscription) {
+      resetDataPrepBrowserStore();
       this.dataprepSubscription();
     }
   }
@@ -330,7 +332,7 @@ export default class DataPrepConnections extends Component {
                 to={`${baseLinkPath}/kafka/${kafka.id}`}
                 activeClassName="active"
                 className="menu-item-expanded-list"
-                onClick={this.handlePropagation.bind(this, 'kafka')}
+                onClick={this.handlePropagation.bind(this, {...kafka, name: 'kafka'})}
                 singleWorkspaceMode={this.props.singleWorkspaceMode}
               >
                 {kafka.name}

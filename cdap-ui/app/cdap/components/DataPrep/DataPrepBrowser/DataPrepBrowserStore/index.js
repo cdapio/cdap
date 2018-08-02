@@ -52,7 +52,9 @@ const Actions = {
   SET_BIGQUERY_CONNECTION_DETAILS: 'SET_BIGQUERY_CONNECTION_DETAILS',
   SET_BIGQUERY_LOADING: 'SET_BIGQUERY_LOADING',
   SET_BIGQUERY_DATASET_LIST: 'SET_BIGQUERY_DATASET_LIST',
-  SET_BIGQUERY_TABLE_LIST: 'SET_BIGQUERY_TABLE_LIST'
+  SET_BIGQUERY_TABLE_LIST: 'SET_BIGQUERY_TABLE_LIST',
+
+  RESET: 'RESET'
 };
 
 export {Actions};
@@ -126,6 +128,8 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
         info: objectQuery(action, 'payload', 'info') || state.info,
         loading: false
       });
+    case Actions.RESET:
+      return defaultDatabaseValue;
     default:
       return state;
   }
@@ -152,6 +156,8 @@ const kafka = (state = defaultKafkaValue, action = defaultAction) => {
         info: objectQuery(action, 'payload', 'info') || state.info,
         loading: false
       });
+    case Actions.RESET:
+      return defaultKafkaValue;
     default:
       return state;
   }
@@ -192,6 +198,8 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
         ...state,
         search: action.payload.search
       };
+    case Actions.RESET:
+      return defaultS3Value;
     default:
       return state;
   }
@@ -232,6 +240,8 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
         ...state,
         search: action.payload.search
       };
+    case Actions.RESET:
+      return defaultGCSValue;
     default:
       return state;
   }
@@ -270,6 +280,8 @@ const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
         datasetId: action.payload.datasetId,
         tableList: action.payload.tableList
       };
+    case Actions.RESET:
+      return defaultBigQueryValue;
     default:
       return state;
   }
