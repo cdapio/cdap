@@ -124,7 +124,7 @@ export default class S3Browser extends Component {
           <div className={classnames("sub-panel", {'routing-disabled': !this.props.enableRouting})}>
             <div className="path-container">
               <S3Path
-                baseStatePath={this.props.match.url}
+                baseStatePath={this.props.enableRouting ? this.props.match.url : '/'}
                 enableRouting={this.props.enableRouting}
               />
             </div>
