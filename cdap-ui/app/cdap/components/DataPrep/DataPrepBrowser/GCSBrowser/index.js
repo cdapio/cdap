@@ -121,7 +121,7 @@ export default class GCSBrowser extends Component {
           <div className={classnames("sub-panel", {'routing-disabled': !this.props.enableRouting})}>
             <div className="path-container">
               <GCSPath
-                baseStatePath={this.props.match.url}
+                baseStatePath={this.props.enableRouting ? this.props.match.url : '/'}
                 enableRouting={this.props.enableRouting}
               />
             </div>

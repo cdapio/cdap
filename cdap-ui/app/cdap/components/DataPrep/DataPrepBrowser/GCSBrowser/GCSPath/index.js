@@ -31,7 +31,7 @@ class GCSPath extends FilePath {
 
     let parts = path.split(/\//);
     let individualPaths = [];
-    let pathname = window.location.pathname.replace(/\/cdap/, '');
+    let pathname = this.props.baseStatePath || window.location.pathname.replace(/\/cdap/, '');
     if (path === '/') {
       individualPaths.push({
         name: 'Root',
