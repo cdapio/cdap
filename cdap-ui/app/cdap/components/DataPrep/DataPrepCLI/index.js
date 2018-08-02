@@ -28,7 +28,8 @@ export default class DataPrepCLI extends Component {
     this.state = {
       directiveInput: '',
       error: null,
-      autoCompleteOpen: false
+      autoCompleteOpen: false,
+      currentWorkspace: null
     };
 
     this.handleDirectiveChange = this.handleDirectiveChange.bind(this);
@@ -38,11 +39,18 @@ export default class DataPrepCLI extends Component {
     this.execute = this.execute.bind(this);
 
     this.sub = DataPrepStore.subscribe(() => {
-      let storeState = DataPrepStore.getState().error;
-
-      this.setState({
-        error: storeState.cliError
-      });
+      let {error, dataprep} = DataPrepStore.getState();
+      let newState = {
+        error: error.cliError
+      };
+      if (dataprep.workspaceId !== this.state.currentWorkspace) {
+        newState = {
+          ...newState,
+          currentWorkspace: dataprep.workspaceId,
+          directiveInput: ''
+        };
+      }
+      this.setState(newState);
     });
   }
 
