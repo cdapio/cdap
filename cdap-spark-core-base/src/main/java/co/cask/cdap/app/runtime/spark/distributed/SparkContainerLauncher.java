@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -74,17 +75,10 @@ public final class SparkContainerLauncher {
     urls.remove(getURLByClass(systemClassLoader, mainClassName));
 
     // Remove the first scala from the set of classpath. This ensure the one from Spark is used for spark
-    URL scalaURL = getURLByClass(systemClassLoader, "scala.language");
-    Enumeration<URL> resources = systemClassLoader.getResources("scala/language.class");
-    // Only remove the scala if there are more than one in the classpath
-    int count = 0;
-    while (resources.hasMoreElements()) {
-      resources.nextElement();
-      count++;
-    }
-    if (count > 1) {
-      urls.remove(scalaURL);
-    }
+    removeFirstJar(systemClassLoader, "scala.language", urls);
+    // Remove the first jar containing LZBlockInputStream from the set of classpath.
+    // The one from Kafka is not compatible with Spark
+    removeFirstJar(systemClassLoader, "net.jpountz.lz4.LZ4BlockInputStream", urls);
 
     // First create a FilterClassLoader that only loads JVM and kafka classes from the system classloader
     // This is to isolate the scala library from children
@@ -206,5 +200,29 @@ public final class SparkContainerLauncher {
 
   private static boolean isPySpark() {
     return System.getenv("PYTHONPATH") != null;
+  }
+
+  /**
+   * Removes the first jar file containing the given class based on the ordering providing by
+   * the given {@link ClassLoader} if there are multiple jars containing the given class.
+   *
+   * @param classLoader the {@link ClassLoader} for finding the jar containing the given class
+   * @param className the class to look for
+   * @param urls a {@link Set} of {@link URL} for the removal jar file
+   * @throws IOException if failed to lookup the class location
+   */
+  private static void removeFirstJar(ClassLoader classLoader, String className, Set<URL> urls) throws IOException {
+    URL url = getURLByClass(classLoader, className);
+    Enumeration<URL> resources = classLoader.getResources(className.replace('.', '/') + ".class");
+    // Only remove if there are more than one in the classpath
+    int count = 0;
+    while (resources.hasMoreElements()) {
+      resources.nextElement();
+      count++;
+    }
+    if (count > 1) {
+      LOG.info("Removing {}", url);
+      urls.remove(url);
+    }
   }
 }
