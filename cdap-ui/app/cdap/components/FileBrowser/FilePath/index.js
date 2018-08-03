@@ -18,42 +18,15 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import uuidV4 from 'uuid/v4';
-import {Link} from 'react-router-dom';
 import classnames from 'classnames';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import {preventPropagation} from 'services/helpers';
+import NavLinkWrapper from 'components/NavLinkWrapper';
 
 require('./FilePath.scss');
 
 const VIEW_LIMIT = 3;
-
-const LinkWrapper = ({enableRouting, children, to, ...attributes}) => {
-  if (enableRouting) {
-    return (
-      <Link
-        to={to}
-        {...attributes}
-      >
-        {children}
-      </Link>
-    );
-  }
-  return (
-    <a
-      href={to}
-      {...attributes}
-    >
-      {children}
-    </a>
-  );
-};
-
-LinkWrapper.propTypes = {
-  enableRouting: PropTypes.string,
-  children: PropTypes.node,
-  to: PropTypes.string
-};
 
 export default class FilePath extends Component {
   constructor(props) {
@@ -133,15 +106,16 @@ export default class FilePath extends Component {
                   <DropdownItem
                     key={i}
                     title={path.name}
+                    tag="div"
                   >
-                    <LinkWrapper
+                    <NavLinkWrapper
                       key={path.id}
                       to={path.link}
                       onClick={this.handlePropagation.bind(this, path.link)}
-                      enableRouting={this.props.enableRouting}
+                      isNativeLink={!this.props.enableRouting}
                     >
                       {path.name}
-                    </LinkWrapper>
+                    </NavLinkWrapper>
                   </DropdownItem>
                 );
               })
@@ -158,18 +132,18 @@ export default class FilePath extends Component {
         {
           links.map((path, index) => {
             return (
-              <LinkWrapper
+              <NavLinkWrapper
                 key={path.id}
                 to={path.link}
                 className={classnames({'active-directory': index === links.length - 1})}
                 onClick={this.handlePropagation.bind(this, path.link)}
-                enableRouting={this.props.enableRouting}
+                isNativeLink={!this.props.enableRouting}
               >
                 <span>{path.name}</span>
                 {
                   index !== links.length - 1 ? <span className="path-divider">/</span> : null
                 }
-              </LinkWrapper>
+              </NavLinkWrapper>
             );
           })
         }

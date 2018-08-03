@@ -29,7 +29,7 @@ import {
   setBigQueryAsActiveBrowser,
   listBigQueryTables
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
-import {Route, NavLink, Redirect, Switch} from 'react-router-dom';
+import {Route, Redirect, Switch} from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
@@ -45,6 +45,7 @@ import {objectQuery, preventPropagation} from 'services/helpers';
 import Helmet from 'react-helmet';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import queryString from 'query-string';
+import NavLinkWrapper from 'components/NavLinkWrapper';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -55,32 +56,6 @@ const RouteToHDFS = () => {
   return (
     <Redirect to={`/ns/${namespace}/connections/browser`} />
   );
-};
-const NavLinkWrapper = ({children, to, singleWorkspaceMode, ...attributes}) => {
-  if (singleWorkspaceMode) {
-    return (
-      <a
-        href={to}
-        {...attributes}
-      >
-        {children}
-      </a>
-    );
-  }
-  return (
-    <NavLink
-      to={to}
-      {...attributes}
-    >
-      {children}
-    </NavLink>
-  );
-};
-
-NavLinkWrapper.propTypes = {
-  children: PropTypes.node,
-  to: PropTypes.string,
-  singleWorkspaceMode: PropTypes.bool
 };
 
 export default class DataPrepConnections extends Component {
@@ -297,7 +272,7 @@ export default class DataPrepConnections extends Component {
                 activeClassName="active"
                 className="menu-item-expanded-list"
                 onClick={this.handlePropagation.bind(this, database)}
-                singleWorkspaceMode={this.props.singleWorkspaceMode}
+                isNativeLink={this.props.singleWorkspaceMode}
               >
                 {database.name}
               </NavLinkWrapper>
@@ -331,7 +306,7 @@ export default class DataPrepConnections extends Component {
                 activeClassName="active"
                 className="menu-item-expanded-list"
                 onClick={this.handlePropagation.bind(this, kafka)}
-                singleWorkspaceMode={this.props.singleWorkspaceMode}
+                isNativeLink={this.props.singleWorkspaceMode}
               >
                 {kafka.name}
               </NavLinkWrapper>
@@ -365,7 +340,7 @@ export default class DataPrepConnections extends Component {
                 activeClassName="active"
                 className="menu-item-expanded-list"
                 onClick={this.handlePropagation.bind(this, {...s3, name: s3.type.toLowerCase()})}
-                singleWorkspaceMode={this.props.singleWorkspaceMode}
+                isNativeLink={this.props.singleWorkspaceMode}
               >
                 {s3.name}
               </NavLinkWrapper>
@@ -399,7 +374,7 @@ export default class DataPrepConnections extends Component {
                 activeClassName="active"
                 className="menu-item-expanded-list"
                 onClick={this.handlePropagation.bind(this, {...gcs, name: gcs.type.toLowerCase()})}
-                singleWorkspaceMode={this.props.singleWorkspaceMode}
+                isNativeLink={this.props.singleWorkspaceMode}
               >
                 {gcs.name}
               </NavLinkWrapper>
@@ -433,7 +408,7 @@ export default class DataPrepConnections extends Component {
                 activeClassName="active"
                 className="menu-item-expanded-list"
                 onClick={this.handlePropagation.bind(this, {...bq, name: bq.type.toLowerCase()})}
-                singleWorkspaceMode={this.props.singleWorkspaceMode}
+                isNativeLink={this.props.singleWorkspaceMode}
               >
                 {bq.name}
               </NavLinkWrapper>
@@ -478,7 +453,7 @@ export default class DataPrepConnections extends Component {
               to={`${baseLinkPath}/upload`}
               activeClassName="active"
               onClick={this.handlePropagation.bind(this, {type: 'upload'})}
-              singleWorkspaceMode={this.props.singleWorkspaceMode}
+              isNativeLink={this.props.singleWorkspaceMode}
             >
               <span className="fa fa-fw">
                 <IconSVG name="icon-upload" />
@@ -495,7 +470,7 @@ export default class DataPrepConnections extends Component {
               to={`${baseLinkPath}/browser`}
               activeClassName="active"
               onClick={this.handlePropagation.bind(this, {type: 'file'})}
-              singleWorkspaceMode={this.props.singleWorkspaceMode}
+              isNativeLink={this.props.singleWorkspaceMode}
             >
               <span className="fa fa-fw">
                 <IconSVG name="icon-hdfs" />
