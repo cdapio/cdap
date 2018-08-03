@@ -259,7 +259,6 @@ export const getProfiles = (namespace) => {
           });
         profiles.forEach(profile => {
           let {scope} = profile;
-          scope = scope.toLowerCase();
           let profileName = `profile:${scope}:${profile.name}`;
           let apiObservable$;
           if (namespace === SYSTEM_NAMESPACE) {

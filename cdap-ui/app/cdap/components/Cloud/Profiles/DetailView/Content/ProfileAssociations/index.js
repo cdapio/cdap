@@ -118,7 +118,6 @@ export default class ProfileAssociations extends Component {
   componentDidMount() {
     let {namespace, profile} = this.props;
     let {scope} = profile;
-    scope = scope.toLowerCase();
     let profileName = `profile:${scope}:${profile.name}`;
     let apiObservable$;
     if (namespace === SYSTEM_NAMESPACE) {
