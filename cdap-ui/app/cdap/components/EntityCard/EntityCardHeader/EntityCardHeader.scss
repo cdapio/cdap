@@ -31,7 +31,7 @@
   &.artifact { background-color: $artifact-entity-header-bg; }
 
   &.application {
-    background-color: $application-entity-header-bg;
+    background-color: var(--application-entity-header-bg);
   }
 
   &.datapipeline {

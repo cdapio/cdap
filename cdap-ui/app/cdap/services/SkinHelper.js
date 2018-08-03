@@ -14,12 +14,24 @@
  * the License.
 */
 
+import cssVars from 'css-vars-ponyfill';
+
 export function applySkin() {
+  // need to run this at least once even if there's no theme customization
+  // so that css variables are parsed correctly even in older browsers
+  cssVars();
+
   if (!window.CDAP_UI_THEME) { return; }
 
   const skinProperties = window.CDAP_UI_THEME;
   Object.keys(skinProperties).forEach(cssVar => {
     const cssValue = skinProperties[cssVar];
-    document.documentElement.style.setProperty(`--${cssVar}`, cssValue);
+    cssVars({
+      variables: {
+        [cssVar]: cssValue
+      }
+    });
+    // this is what's going on under the hood for modern browsers:
+    // document.documentElement.style.setProperty(`--${cssVar}`, cssValue);
   });
 }

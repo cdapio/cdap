@@ -658,6 +658,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.all(['/', '/cdap', '/cdap*'], [
     function(req, res) {
+      // TODO: Check if user is authenticated. If not, send to login page instead
       res.sendFile(CDAP_DIST_PATH + '/cdap_assets/cdap.html');
     }
   ]);

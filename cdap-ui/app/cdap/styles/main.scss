@@ -16,8 +16,17 @@
 
 @import '~styles/variables.scss';
 
+/*
+NOTE: Always define CSS variables here (global scope). This is because if the
+user customizes a value, currently our code will only look for the corresponding
+variable in the 'document' DOM element and update the value. We should be careful
+to never re/define a CSS variable in any local scope
+*/
+
 :root {
   --brand-primary-color: $brand-primary-color;
+  --navbar-color: $navbar-bg;
+  --application-entity-header-bg: green;
 }
 
 body {
