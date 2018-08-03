@@ -77,11 +77,14 @@ export default class FilePath extends Component {
       .filter((directory) => {
         return directory.length > 0;
       });
-
+    let bspath = this.props.baseStatePath;
+    if (bspath[bspath.length - 1] !== '/') {
+      bspath = `${bspath}/`;
+    }
     let paths = [{
       id: uuidV4(),
       name: 'Root',
-      link: `${this.props.baseStatePath}/`
+      link: bspath
     }];
 
     splitPath.forEach((value, index) => {
