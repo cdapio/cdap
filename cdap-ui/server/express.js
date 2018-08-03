@@ -80,7 +80,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         routerServerPort: cdapConfig['router.server.port'],
         routerSSLServerPort: cdapConfig['router.ssl.server.port'],
         standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] === 'true' || false,
-        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false
+        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false,
+        uiTheme: uiSettings['ui.theme']
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.preview'] === 'true'
@@ -110,6 +111,23 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       'Cache-Control': 'no-store, must-revalidate'
     });
     res.send('window.CDAP_UI_CONFIG = ' + fileConfig+ ';');
+  });
+
+  app.get('/ui-theme.js', function (req, res) {
+    let uiThemeName = uiSettings['ui.theme'] || 'default';
+
+    let path = `${__dirname}/config/themes/${uiThemeName}.json`;
+    try {
+      let fileConfig = fs.readFileSync(path, 'utf8');
+      res.header({
+        'Content-Type': 'text/javascript',
+        'Cache-Control': 'no-store, must-revalidate'
+      });
+      res.send(`window.CDAP_UI_THEME = ${fileConfig};`);
+    } catch (err) {
+      log.debug(`Missing ${uiThemeName}.json file in server/config/themes directory`);
+      res.end();
+    }
   });
 
   app.post('/downloadQuery', function(req, res) {
