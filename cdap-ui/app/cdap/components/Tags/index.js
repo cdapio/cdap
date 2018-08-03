@@ -242,6 +242,7 @@ export default class Tags extends Component {
                 onDelete={this.deleteTag.bind(this, tag)}
                 scope='USER'
                 isNativeLink={this.props.isNativeLink}
+                key={tag}
               />
             );
           })

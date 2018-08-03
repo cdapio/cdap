@@ -21,7 +21,6 @@ import T from 'i18n-react';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceDropdown from 'components/NamespaceDropdown';
 import ProductDropdown from 'components/Header/ProductDropdown';
-import MetadataDropdown from 'components/Header/MetadataDropdown';
 import CaskMarketButton from 'components/Header/CaskMarketButton';
 import {MyNamespaceApi} from 'api/namespace';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
@@ -153,13 +152,13 @@ export default class Header extends Component {
   };
 
   render() {
-    let baseCDAPURL = `/ns/${this.state.currentNamespace}`;
-    let rulesengineUrl = `${baseCDAPURL}/rulesengine`;
-    let dataprepUrl = `${baseCDAPURL}/dataprep`;
-    let mmdsurl = `${baseCDAPURL}/experiments`;
-    let administrationURL = '/administration/configuration';
+    const baseCDAPURL = `/ns/${this.state.currentNamespace}`;
+    const rulesengineUrl = `${baseCDAPURL}/rulesengine`;
+    const dataprepUrl = `${baseCDAPURL}/dataprep`;
+    const mmdsurl = `${baseCDAPURL}/experiments`;
+    const administrationURL = '/administration/configuration';
 
-    let pipelinesListUrl =  window.getHydratorUrl({
+    const pipelinesListUrl =  window.getHydratorUrl({
       stateName: 'hydrator.list',
       stateParams: {
         namespace: this.state.currentNamespace,
@@ -167,7 +166,14 @@ export default class Header extends Component {
         sortBy: '_stats.lastStartTime'
       }
     });
-    let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
+    const isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
+    const isMetadataActive = location.pathname.indexOf('metadata') !== -1;
+    const metadataHomeUrl = window.getTrackerUrl({
+        stateName: 'tracker',
+        stateParams: {
+          namespace: this.state.currentNamespace
+        }
+    });
 
     return (
       <div className="global-navbar">
@@ -234,8 +240,10 @@ export default class Header extends Component {
                 {T.translate(`features.Navbar.rulesmgmt`)}
               </NavLinkWrapper>
           </li>
-          <li className={classnames({'active': location.pathname.indexOf('metadata') !== -1})}>
-            <MetadataDropdown />
+          <li className={classnames({'active': isMetadataActive})}>
+            <a href={metadataHomeUrl}>
+              {T.translate('features.Navbar.metadataLabel')}
+            </a>
           </li>
         </ul>
         <div className={classnames("global-navbar-collapse", {

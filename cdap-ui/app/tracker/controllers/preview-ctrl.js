@@ -100,7 +100,5 @@ class TrackerPreviewController {
   }
 }
 
-TrackerPreviewController.$inject = ['$state', 'myTrackerApi', '$scope','MyCDAPDataSource'];
-
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerPreviewController', TrackerPreviewController);

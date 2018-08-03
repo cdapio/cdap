@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 
-export default function UsageTab({entity}) {
+export default function LineageTab({entity}) {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let url = window.getTrackerUrl({
@@ -48,6 +48,6 @@ export default function UsageTab({entity}) {
   );
 }
 
-UsageTab.propTypes = {
+LineageTab.propTypes = {
   entity: PropTypes.object
 };

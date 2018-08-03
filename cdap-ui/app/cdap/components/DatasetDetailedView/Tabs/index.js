@@ -17,13 +17,11 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
+import { Nav, NavItem, TabContent} from 'reactstrap';
 import isNil from 'lodash/isNil';
 import {Route, Switch, NavLink as RouterNavLink} from 'react-router-dom';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import SchemaTab from 'components/Overview/Tabs/SchemaTab';
-import UsageTab from 'components/DatasetDetailedView/Tabs/UsageTab';
-import AuditTab from 'components/DatasetDetailedView/Tabs/AuditTab';
 import LineageTab from 'components/DatasetDetailedView/Tabs/LineageTab';
 import PropertiesTab from 'components/DatasetDetailedView/Tabs/PropertiesTab';
 import T from 'i18n-react';
@@ -54,33 +52,22 @@ export default class DatasetDetailedViewTabs extends Component {
       <div className="overview-tab">
         <Nav tabs>
           <NavItem>
-            <NavLink>
-              <RouterNavLink
-                to={`${baseLinkPath}/usage`}
-                activeClassName="active"
-                isActive={(match, location) => {
-                  let basepath = `^${baseLinkPath}(/usage)?$`;
-                   return location.pathname.match(basepath);
-                }}
-              >
-                {T.translate(`${PREFIX}.usage`)}
-              </RouterNavLink>
-            </NavLink>
-          </NavItem>
-
-          <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/schema`}
                 activeClassName="active"
+                isActive={(match, location) => {
+                  let basepath = `^${baseLinkPath}(/schema)?$`;
+                  return location.pathname.match(basepath);
+                }}
               >
                 {T.translate(`${PREFIX}.schema`)}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/programs`}
                 activeClassName="active"
@@ -89,40 +76,29 @@ export default class DatasetDetailedViewTabs extends Component {
                   count: this.state.entity.programs.length
                 })}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/lineage`}
                 activeClassName="active"
               >
                 {T.translate(`${PREFIX}.lineage`)}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
-              <RouterNavLink
-                to={`${baseLinkPath}/audit`}
-                activeClassName="active"
-              >
-                {T.translate(`${PREFIX}.auditLog`)}
-              </RouterNavLink>
-            </NavLink>
-          </NavItem>
-
-          <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/properties`}
                 activeClassName="active"
               >
                 {T.translate(`${PREFIX}.properties`)}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
         </Nav>
         <TabContent>
@@ -130,14 +106,7 @@ export default class DatasetDetailedViewTabs extends Component {
             <Route exact path={`${baseMatchPath}/`} render={
               () => {
                 return (
-                  <UsageTab entity={this.state.entity} />
-                );
-              }}
-            />
-            <Route exact path={`${baseMatchPath}/usage`} render={
-              () => {
-                return (
-                  <UsageTab entity={this.state.entity} />
+                  <SchemaTab entity={this.state.entity} />
                 );
               }}
             />
@@ -159,13 +128,6 @@ export default class DatasetDetailedViewTabs extends Component {
               () => {
                 return (
                   <LineageTab entity={this.state.entity} />
-                );
-              }}
-            />
-            <Route exact path={`${baseMatchPath}/audit`} render={
-              () => {
-                return (
-                  <AuditTab entity={this.state.entity} />
                 );
               }}
             />

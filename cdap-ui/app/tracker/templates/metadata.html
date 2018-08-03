@@ -29,38 +29,21 @@
         <h4>Business tags</h4>
         <div class="tags-container">
 
-          <div ng-if="MetadataController.tags.preferredTags.length > 0"
-              ng-repeat="tag in MetadataController.tags.preferredTags"
-              class="tag preferred user">
-            <span uib-tooltip="{{ tag.name }}"
-                  tooltip-append-to-body="true"
-                  tooltip-popup-delay="300"
-                  tooltip-ellipsis="{{ tag.name }}"
-                  tooltip-enable="ellipsis"
-                  data-ellipsis="ellipsis"
-                  data-offset-value="15"
-                  tooltip-class="tracker-tooltip"
-                  ng-click="MetadataController.goToTag($event, tag.name)">
-              {{ tag.name }}
-            </span>
-            <span ng-click="MetadataController.deleteTag(tag.name)"
-                  class="fa fa-times pull-right"></span>
-          </div>
-          <div ng-if="MetadataController.tags.userTags.length > 0"
-              ng-repeat="tag in MetadataController.tags.userTags"
+          <div ng-if="MetadataController.userTags.length > 0"
+              ng-repeat="tag in MetadataController.userTags"
               class="tag user">
-            <span uib-tooltip="{{ tag.name }}"
+            <span uib-tooltip="{{ tag }}"
                   tooltip-append-to-body="true"
                   tooltip-popup-delay="300"
-                  tooltip-ellipsis="{{ tag.name }}"
+                  tooltip-ellipsis="{{ tag }}"
                   tooltip-enable="ellipsis"
                   data-ellipsis="ellipsis"
                   data-offset-value="15"
                   tooltip-class="tracker-tooltip"
-                  ng-click="MetadataController.goToTag($event, tag.name)">
-              {{ tag.name }}
+                  ng-click="MetadataController.goToTag($event, tag)">
+              {{ tag }}
             </span>
-            <span ng-click="MetadataController.deleteTag(tag.name)"
+            <span ng-click="MetadataController.deleteTag(tag)"
                   class="fa fa-times pull-right"></span>
           </div>
 
@@ -73,11 +56,15 @@
               ng-if="MetadataController.inputOpen"
               ng-class="{'invalid': MetadataController.invalidFormat || MetadataController.duplicateTag}">
             <div my-escape-close="MetadataController.escapeInput()">
-              <my-typeahead-tracker-tags
-                list="MetadataController.tags.availableTags"
-                on-select="MetadataController.addTag(input)"
-                on-change="MetadataController.invalidFormat = false">
-              </my-typeahead-tracker-tags>
+              <input
+                type="text"
+                class="form-control"
+                ng-model="MetadataController.tagInputModel"
+                placeholder="Enter a tag"
+                max-length="50"
+                cask-focus="tagInput"
+                ng-keypress="$event.keyCode === 13 && MetadataController.addTag()"
+                ng-click="$event.stopPropagation()" />
             </div>
           </div>
           <p ng-if="MetadataController.invalidFormat"
@@ -114,7 +101,7 @@
       </div>
 
       <div class="no-properties-message text-center"
-           ng-if="MetadataController.systemTags.system.length === 0 && MetadataController.tags.userTags.length === 0 && MetadataController.tags.preferredTags.length === 0">
+           ng-if="MetadataController.systemTags.system.length === 0 && MetadataController.userTags.length === 0">
         <h4>There are no tags</h4>
       </div>
 

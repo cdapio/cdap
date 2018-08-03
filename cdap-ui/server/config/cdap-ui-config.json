@@ -1,23 +1,4 @@
 {
-  "tracker": {
-    "artifact": {
-      "name": "tracker",
-      "version": "0.8.0-SNAPSHOT",
-      "scope": "SYSTEM"
-    },
-    "appId": "_Tracker",
-    "serviceId": "TrackerService",
-    "flowProgramId": "AuditLogFlow"
-  },
-  "navigator": {
-    "artifact": {
-      "name": "navigator",
-      "version": "0.9.0-SNAPSHOT",
-      "scope": "SYSTEM"
-    },
-    "appId": "_ClouderaNavigator",
-    "programId": "MetadataFlow"
-  },
   "dataprep": {
     "jdbcMarketMap": {
       "mysql": {

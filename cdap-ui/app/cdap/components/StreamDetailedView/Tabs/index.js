@@ -22,8 +22,6 @@ import isNil from 'lodash/isNil';
 import {Route, NavLink as RouterNavLink} from 'react-router-dom';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import SchemaTab from 'components/Overview/Tabs/SchemaTab';
-import UsageTab from 'components/StreamDetailedView/Tabs/UsageTab';
-import AuditTab from 'components/StreamDetailedView/Tabs/AuditTab';
 import LineageTab from 'components/StreamDetailedView/Tabs/LineageTab';
 import PropertiesTab from 'components/StreamDetailedView/Tabs/PropertiesTab';
 import T from 'i18n-react';
@@ -56,25 +54,14 @@ export default class StreamDetailedViewTabs extends Component {
           <NavItem>
             <div className="nav-link">
               <RouterNavLink
-                to={`${baseLinkPath}/usage`}
+                to={`${baseLinkPath}/schema`}
                 activeClassName="active"
                 isActive={(match, location) => {
-                  let basepath = `^${baseLinkPath}(/usage)?$`;
+                  let basepath = `^${baseLinkPath}(/schema)?$`;
                    return location.pathname.match(basepath);
                 }}
               >
-              {T.translate(`${PREFIX}.usage`)}
-              </RouterNavLink>
-            </div>
-          </NavItem>
-
-          <NavItem>
-            <div className="nav-link">
-              <RouterNavLink
-                to={`${baseLinkPath}/schema`}
-                activeClassName="active"
-              >
-                {T.translate(`${PREFIX}.schema`)}
+              {T.translate(`${PREFIX}.schema`)}
               </RouterNavLink>
             </div>
           </NavItem>
@@ -106,17 +93,6 @@ export default class StreamDetailedViewTabs extends Component {
           <NavItem>
             <div className="nav-link">
               <RouterNavLink
-                to={`${baseLinkPath}/audit`}
-                activeClassName="active"
-              >
-                {T.translate(`${PREFIX}.auditLog`)}
-              </RouterNavLink>
-            </div>
-          </NavItem>
-
-          <NavItem>
-            <div className="nav-link">
-              <RouterNavLink
                 to={`${baseLinkPath}/properties`}
                 activeClassName="active"
               >
@@ -129,14 +105,7 @@ export default class StreamDetailedViewTabs extends Component {
           <Route exact path={`${baseMatchPath}/`} render={
             () => {
               return (
-                <UsageTab entity={this.state.entity} />
-              );
-            }}
-          />
-        <Route exact path={`${baseMatchPath}/usage`} render={
-            () => {
-              return (
-                <UsageTab entity={this.state.entity} />
+                <SchemaTab entity={this.state.entity} />
               );
             }}
           />
@@ -158,13 +127,6 @@ export default class StreamDetailedViewTabs extends Component {
             () => {
               return (
                 <LineageTab entity={this.state.entity} />
-              );
-            }}
-          />
-        <Route exact path={`${baseMatchPath}/audit`} render={
-            () => {
-              return (
-                <AuditTab entity={this.state.entity} />
               );
             }}
           />
