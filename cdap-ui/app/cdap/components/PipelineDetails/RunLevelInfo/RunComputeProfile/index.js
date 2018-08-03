@@ -27,6 +27,8 @@ import ProfilesStore from 'components/Cloud/Profiles/Store';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {CLOUD} from 'services/global-constants';
 import T from 'i18n-react';
+import isObject from 'lodash/isObject';
+import {SCOPES, SYSTEM_NAMESPACE} from 'services/global-constants';
 
 const PREFIX = 'features.PipelineDetails.RunLevel.RunComputeProfile';
 
@@ -125,7 +127,7 @@ class RunLevelComputeProfile extends Component {
               <ProfilePreview
                 profileLabel={this.getProfileLabel()}
                 profileName={extractProfileName(this.props.profileName)}
-                profileScope={this.props.profileName.indexOf('SYSTEM:') !== -1 ? 'system' : 'user'}
+                profileScope={this.props.profileName.indexOf(`${SCOPES.SYSTEM}:`) !== -1 ? SCOPES.SYSTEM : SCOPES.USER}
               />
             </Popover>
         }
@@ -150,18 +152,18 @@ function ProfileWrappedRunLevelComputeProfile({...restProps}) {
   );
 }
 
-const getProfileName = (runProperties) => {
-  let runtimeArgs;
-  try {
-    runtimeArgs = JSON.parse(runProperties);
-  } catch (e) {
+const getProfileName = (profileObj) => {
+  if (isNilOrEmpty(profileObj) || !isObject(profileObj)) {
     return null;
   }
-  return runtimeArgs[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] || null;
+  if (profileObj.namespace === SYSTEM_NAMESPACE) {
+    return `SYSTEM:${profileObj.profileName}`;
+  }
+  return `USER:${profileObj.profileName}`;
 };
 const mapStateToProps = (state) => {
   return {
-    profileName: getProfileName(objectQuery(state, 'currentRun', 'properties', 'runtimeArgs'))
+    profileName: getProfileName(objectQuery(state, 'currentRun', 'profile'))
   };
 };
 

@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import {MySearchApi} from 'api/search';
 import {isNilOrEmpty, humanReadableDuration, objectQuery} from 'services/helpers';
-import {GLOBALS} from 'services/global-constants';
+import {GLOBALS, SYSTEM_NAMESPACE} from 'services/global-constants';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import {
@@ -117,10 +117,9 @@ export default class ProfileAssociations extends Component {
   componentDidMount() {
     let {namespace, profile} = this.props;
     let {scope} = profile;
-    scope = scope.toLowerCase();
     let profileName = `profile:${scope}:${profile.name}`;
     let apiObservable$;
-    if (namespace === 'system') {
+    if (namespace === SYSTEM_NAMESPACE) {
       apiObservable$ = MySearchApi.searchSystem({
         query: profileName
       });

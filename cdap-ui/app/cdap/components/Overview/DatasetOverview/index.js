@@ -29,6 +29,7 @@ import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
+import {SCOPES} from 'services/global-constants';
 
 export default class DatasetOverview extends Component {
   constructor(props) {
@@ -70,7 +71,7 @@ export default class DatasetOverview extends Component {
         namespace,
         entityType: 'datasets',
         entityId: this.props.entity.id,
-        scope: 'SYSTEM'
+        scope: SCOPES.SYSTEM
       };
 
       MyMetadataApi.getProperties(metadataParams)

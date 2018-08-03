@@ -28,6 +28,7 @@ import {
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
 import {humanReadableDate} from 'services/helpers';
 import T from 'i18n-react';
+import {SCOPES, SYSTEM_NAMESPACE} from 'services/global-constants';
 require('./Preview.scss');
 
 export default class ProfilePreview extends Component {
@@ -56,7 +57,7 @@ export default class ProfilePreview extends Component {
   getProfileDetails() {
     let namespace = getCurrentNamespace();
     let apiObservable$;
-    if (this.props.profileScope === 'system') {
+    if (this.props.profileScope === SCOPES.SYSTEM) {
       apiObservable$ = MyCloudApi.getSystemProfile({ profile: this.props.profileName});
     } else {
       apiObservable$ = MyCloudApi.get({
@@ -122,7 +123,7 @@ export default class ProfilePreview extends Component {
         </div>
       );
     }
-    let profileNamespace = this.state.profileDetails.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
+    let profileNamespace = this.state.profileDetails.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : getCurrentNamespace();
     let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
     let profileProvisionerLabel = getProvisionerLabel(this.state.profileDetails, this.state.provisioners);
     const profileStatus = PROFILE_STATUSES[this.state.profileDetails.status];

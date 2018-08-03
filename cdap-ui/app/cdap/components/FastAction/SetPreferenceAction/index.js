@@ -82,7 +82,7 @@ export default class SetPreferenceAction extends Component {
       {'fa-lg': this.props.setAtLevel === PREFERENCES_LEVEL.NAMESPACE},
       {'text-success': this.state.preferencesSaved}
     );
-    let tooltipID = `${this.namespace}-setpreferences`;
+    let tooltipID = `setpreferences-${this.namespace}`;
     if (this.props.entity) {
       tooltipID = `setpreferences-${this.props.entity.uniqueId}`;
     }

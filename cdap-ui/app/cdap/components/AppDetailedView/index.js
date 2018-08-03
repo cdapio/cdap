@@ -38,6 +38,7 @@ import Helmet from 'react-helmet';
 import OverviewHeader from 'components/Overview/OverviewHeader';
 import {MyMetadataApi} from 'api/metadata';
 import EntityType from 'services/metadata-parser/EntityType';
+import {SCOPES} from 'services/global-constants';
 require('./AppDetailedView.scss');
 
 export default class AppDetailedView extends Component {
@@ -77,7 +78,7 @@ export default class AppDetailedView extends Component {
         namespace,
         entityType: 'apps',
         entityId: appId,
-        scope: 'SYSTEM'
+        scope: SCOPES.SYSTEM
       };
       MyMetadataApi
         .getProperties(metadataParams)

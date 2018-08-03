@@ -26,6 +26,7 @@ import {contructUrl, insertAt, removeAt, humanReadableDate} from 'services/helpe
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 require('./ExploreModal.scss');
 import NamespaceStore from 'services/NamespaceStore';
+import {SCOPES} from 'services/global-constants';
 import T from 'i18n-react';
 
 const PREFIX = 'features.FastAction.Explore';
@@ -494,7 +495,7 @@ ExploreModal.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
     version: PropTypes.string,
-    scope: PropTypes.oneOf(['SYSTEM', 'USER']),
+    scope: PropTypes.oneOf([SCOPES.SYSTEM, SCOPES.USER]),
     type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
     databaseName: PropTypes.string,
     tableName: PropTypes.string
