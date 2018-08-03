@@ -1,0 +1,10 @@
+{
+  "spec-version": "1.0",
+  "styles": {
+    "brand-primary-color": "#3b78e7",
+    "navbar-color": "#3b78e7"
+  },
+  "features": {
+    "rules-engine": false
+  }
+}

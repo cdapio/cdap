@@ -1,0 +1,20 @@
+{
+  "spec-version": "1.0",
+  "styles": {
+    "brand-primary-color": "#3b78e7",
+    "navbar-color": "#333333"
+  },
+  "content": {
+    "logo": {
+      "type": "link",
+      "arguments": {
+         "url": "/cdap_assets/img/company_logo.png"
+      }
+    },
+    "footer-text": "Licensed under the Apache License, Version 2.0",
+    "footer-link": "https://www.apache.org/licenses/LICENSE-2.0"
+  },
+  "features": {
+    "rules-engine": true
+  }
+}
