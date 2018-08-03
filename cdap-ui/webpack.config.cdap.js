@@ -136,7 +136,7 @@ var rules = [
     ]
   },
   {
-    test: /\.tsx$/,
+    test: /\.tsx?$/,
     use: [
       'babel-loader',
       {

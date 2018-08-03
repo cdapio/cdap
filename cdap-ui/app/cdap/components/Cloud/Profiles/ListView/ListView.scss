@@ -114,7 +114,7 @@ $disabled-color: $red-02;
 
         .default-star {
           .default-profile {
-            color: $brand-primary-color;
+            color: var(--brand-primary-color);
           }
 
           .not-default-profile {

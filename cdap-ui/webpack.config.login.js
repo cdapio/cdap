@@ -111,6 +111,22 @@ var rules = [
     exclude: /node_modules/
   },
   {
+    test: /\.tsx?$/,
+    use: [
+      'babel-loader',
+      {
+        loader: 'ts-loader',
+        options: {
+          transpileOnly: true
+        }
+      },
+    ],
+    exclude: [
+      /node_modules/,
+      /lib/
+    ]
+  },
+  {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
     use: [
       {
@@ -148,7 +164,14 @@ var webpackConfig = {
     path: __dirname + '/login_dist/login_assets',
     publicPath: '/login_assets/'
   },
-  plugins: plugins
+  plugins: plugins,
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    alias: {
+      components: __dirname + '/app/login/components',
+      services: __dirname + '/app/cdap/services'
+    }
+  }
 };
 
 if (mode === 'production') {

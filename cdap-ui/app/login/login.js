@@ -19,8 +19,8 @@ import ReactDOM from 'react-dom';
 import 'whatwg-fetch';
 import cookie from 'react-cookie';
 
-import Card from './components/Card';
-import CardActionFeedback from './components/CardActionFeedback';
+import Card from 'components/Card';
+import CardActionFeedback from 'components/CardActionFeedback';
 
 import * as util from './utils';
 import Footer from '../cdap/components/Footer';

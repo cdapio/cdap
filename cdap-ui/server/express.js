@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -80,7 +80,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         routerServerPort: cdapConfig['router.server.port'],
         routerSSLServerPort: cdapConfig['router.ssl.server.port'],
         standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] === 'true' || false,
-        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false
+        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false,
+        uiTheme: uiSettings['ui.theme']
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.preview'] === 'true'
@@ -110,6 +111,29 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       'Cache-Control': 'no-store, must-revalidate'
     });
     res.send('window.CDAP_UI_CONFIG = ' + fileConfig+ ';');
+  });
+
+  app.get('/ui-theme.js', function (req, res) {
+    let uiThemeName = uiSettings['ui.theme'] || 'default';
+    let path = `${__dirname}/config/themes/${uiThemeName}.json`;
+    try {
+      let file = fs.readFileSync(path, 'utf8');
+      try {
+        let fileConfig = JSON.parse(file);
+        res.header({
+          'Content-Type': 'text/javascript',
+          'Cache-Control': 'no-store, must-revalidate'
+        });
+        res.send(`window.CDAP_UI_THEME = ${JSON.stringify(fileConfig)};`);
+      } catch (err) {
+        log.debug(`Invalid ${uiThemeName}.json file in server/config/themes directory: ${err}`);
+        res.end();
+      }
+    } catch (e) {
+      log.debug(`File ${uiThemeName}.json doesn't exist in server/config/themes directory: ${e}`);
+      res.end();
+    }
+
   });
 
   app.post('/downloadQuery', function(req, res) {

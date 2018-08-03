@@ -37,7 +37,7 @@ export const ADMIN_CONFIG_ACCORDIONS = {
 
 export default class AdminConfigTabContent extends Component {
   state = {
-    namespaces: 0,
+    namespaces: [],
     namespacesCountLoading: true,
     expandedAccordion: this.props.accordionToExpand || ADMIN_CONFIG_ACCORDIONS.namespaces
   };

@@ -53,4 +53,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('pipelineDetailsRunLevelInfo', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineDetailsRunLevelInfo);
+  })
+  .directive('globalFooter', function(reactDirective) {
+    return reactDirective(window.CaskCommon.Footer);
   });

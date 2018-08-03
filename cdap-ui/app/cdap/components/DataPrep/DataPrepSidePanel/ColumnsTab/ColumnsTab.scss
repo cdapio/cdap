@@ -198,7 +198,7 @@ $option-hover-bg-color: #eeeeee;
       font-size: 14px;
       .link-text {
         cursor: pointer;
-        color: $brand-primary-color;
+        color: var(--brand-primary-color);
       }
     }
   }

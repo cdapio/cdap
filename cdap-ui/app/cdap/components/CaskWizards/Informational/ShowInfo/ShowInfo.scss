@@ -31,10 +31,10 @@
   }
 
   .step-number {
-    border: 1px solid $brand-primary-color;
+    border: 1px solid var(--brand-primary-color);
     padding: 3px 5px;
     border-radius: 6px;
-    background-color: $brand-primary-color;
+    background-color: var(--brand-primary-color);
     color: white;
     width: 20px;
     display: inline-block;
