@@ -29,6 +29,7 @@ require('./Administration.scss');
 
 const PREFIX = 'features.Administration';
 const WAITTIME_FOR_ALTERNATE_STATUS = 10000;
+export const SYSTEM_NAMESPACE = 'system';
 
 class Administration extends Component {
   state = {

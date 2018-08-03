@@ -27,6 +27,8 @@ import ProfilesStore from 'components/Cloud/Profiles/Store';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {CLOUD} from 'services/global-constants';
 import T from 'i18n-react';
+import isObject from 'lodash/isObject';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 
 const PREFIX = 'features.PipelineDetails.RunLevel.RunComputeProfile';
 
@@ -150,18 +152,18 @@ function ProfileWrappedRunLevelComputeProfile({...restProps}) {
   );
 }
 
-const getProfileName = (runProperties) => {
-  let runtimeArgs;
-  try {
-    runtimeArgs = JSON.parse(runProperties);
-  } catch (e) {
+const getProfileName = (profileObj) => {
+  if (isNilOrEmpty(profileObj) || !isObject(profileObj)) {
     return null;
   }
-  return runtimeArgs[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] || null;
+  if (profileObj.namespace === SYSTEM_NAMESPACE) {
+    return `SYSTEM:${profileObj.profileName}`;
+  }
+  return `USER:${profileObj.profileName}`;
 };
 const mapStateToProps = (state) => {
   return {
-    profileName: getProfileName(objectQuery(state, 'currentRun', 'properties', 'runtimeArgs'))
+    profileName: getProfileName(objectQuery(state, 'currentRun', 'profile'))
   };
 };
 
