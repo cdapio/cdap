@@ -38,7 +38,7 @@ require('./FileBrowser.scss');
 
 const BASEPATH = '/';
 const PREFIX = 'features.FileBrowser';
-const trimPrefixSlash = (path) => path.replace(/\/\//, '/');
+const trimSuffixSlash = (path) => path.replace(/\/\//, '/');
 
 export default class FileBrowser extends Component {
 
@@ -142,7 +142,7 @@ export default class FileBrowser extends Component {
   }
 
   goToPath = (path) => {
-    path = trimPrefixSlash(path);
+    path = trimSuffixSlash(path);
     this.setState({
       loading: true,
       path
@@ -336,7 +336,7 @@ export default class FileBrowser extends Component {
     }
 
     let linkPath = `${this.state.statePath}${content.path}`;
-    linkPath = trimPrefixSlash(linkPath);
+    linkPath = trimSuffixSlash(linkPath);
     return (
       <Link
         to={linkPath}
