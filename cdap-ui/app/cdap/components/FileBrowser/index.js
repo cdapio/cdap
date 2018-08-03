@@ -296,7 +296,7 @@ export default class FileBrowser extends Component {
         </div>
         <div className="col-xs-1">
           <span title={row.displaySize}>
-            {row.displaySize}
+            {row.directory ? '--' : row.displaySize}
           </span>
         </div>
         <div className="col-xs-2">
