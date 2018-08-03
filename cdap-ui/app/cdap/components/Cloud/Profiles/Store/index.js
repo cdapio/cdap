@@ -41,7 +41,6 @@ const PROFILE_STATUSES = {
   DISABLED: 'disabled'
 };
 
-
 const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
   switch (action.type) {
     case PROFILES_ACTIONS.SET_PROFILES:
@@ -56,7 +55,7 @@ const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
       let {profiles} = state;
       profiles = profiles.map(profile => {
         let metricObj = {runs: '--', minutes: '--'};
-        let profileKey = `${profile.scope.toLowerCase()}:${profile.name}`;
+        let profileKey = `${profile.scope}:${profile.name}`;
         let profileMetrics = profilesToMetricsMap[profileKey] || {};
         /*
           We are adding empty oneday and overall metrics AND metrics from backend

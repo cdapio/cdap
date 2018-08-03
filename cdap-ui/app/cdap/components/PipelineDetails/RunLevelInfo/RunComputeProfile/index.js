@@ -29,6 +29,7 @@ import {CLOUD} from 'services/global-constants';
 import T from 'i18n-react';
 import isObject from 'lodash/isObject';
 import {SYSTEM_NAMESPACE} from 'components/Administration';
+import {SCOPES} from 'services/global-constants';
 
 const PREFIX = 'features.PipelineDetails.RunLevel.RunComputeProfile';
 
@@ -127,7 +128,7 @@ class RunLevelComputeProfile extends Component {
               <ProfilePreview
                 profileLabel={this.getProfileLabel()}
                 profileName={extractProfileName(this.props.profileName)}
-                profileScope={this.props.profileName.indexOf('SYSTEM:') !== -1 ? 'system' : 'user'}
+                profileScope={this.props.profileName.indexOf(`${SCOPES.SYSTEM}:`) !== -1 ? SCOPES.SYSTEM : SCOPES.USER}
               />
             </Popover>
         }

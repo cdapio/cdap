@@ -31,6 +31,7 @@ import SearchStore from 'components/EntityListView/SearchStore';
 import {JUSTADDED_THRESHOLD_TIME} from 'components/EntityListView/SearchStore/SearchConstants';
 import isNil from 'lodash/isNil';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
+import {SCOPES} from 'services/global-constants';
 require('./JustAddedSection.scss');
 
 export default class JustAddedSection extends Component {
@@ -116,7 +117,7 @@ export default class JustAddedSection extends Component {
         return res.results
           .map(parseMetadata)
           .filter((entity) => {
-            let creationTime = objectQuery(entity, 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
+            let creationTime = objectQuery(entity, 'metadata', 'metadata', SCOPES.SYSTEM, 'properties', 'creation-time');
 
             creationTime = parseInt(creationTime, 10);
             let thresholdTime = Date.now() - JUSTADDED_THRESHOLD_TIME;

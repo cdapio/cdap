@@ -17,7 +17,7 @@
 import EntityIconMap from 'services/entity-icon-map';
 import intersection from 'lodash/intersection';
 import EntityType from 'services/metadata-parser/EntityType';
-import {GLOBALS} from 'services/global-constants';
+import {GLOBALS, SCOPES} from 'services/global-constants';
 import {objectQuery} from 'services/helpers';
 import {SYSTEM_NAMESPACE} from 'components/Administration';
 
@@ -75,7 +75,7 @@ function entityIsApp(entity) {
 }
 
 function entityIsPipeline(entity) {
-  return intersection(GLOBALS.etlPipelineTypes, objectQuery(entity, 'metadata', 'SYSTEM', 'tags')).length > 0;
+  return intersection(GLOBALS.etlPipelineTypes, objectQuery(entity, 'metadata', SCOPES.SYSTEM, 'tags')).length > 0;
 }
 
 function createArtifactObj(entity) {
@@ -84,7 +84,7 @@ function createArtifactObj(entity) {
     type: entity.entityId.entity.toLowerCase(),
     version: entity.entityId.version,
     metadata: entity,
-    scope: entity.entityId.namespace.toLowerCase() === SYSTEM_NAMESPACE ? 'SYSTEM' : 'USER',
+    scope: entity.entityId.namespace.toLowerCase() === SYSTEM_NAMESPACE ? SCOPES.SYSTEM : SCOPES.USER,
     icon: EntityIconMap['artifact']
   };
 }

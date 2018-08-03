@@ -20,6 +20,7 @@ import {MyArtifactApi} from 'api/artifact';
 import Version from 'services/VersionRange/Version';
 import T from 'i18n-react';
 import {Subject} from 'rxjs/Subject';
+import {SCOPES} from 'services/global-constants';
 
 export default function enableSystemApp({
   shouldStopService,
@@ -83,7 +84,7 @@ export default function enableSystemApp({
           // when there are two artifacts with the same version;
           // USER and SYSTEM scope. In that case, take the USER scope
           highestVersionArtifact = highestVersionArtifact[0];
-          highestVersionArtifact.scope = 'USER';
+          highestVersionArtifact.scope = SCOPES.USER;
         } else {
           highestVersionArtifact = highestVersionArtifact[0];
         }

@@ -46,6 +46,7 @@ import {CLOUD} from 'services/global-constants';
 import {preventPropagation} from 'services/helpers';
 import findIndex from 'lodash/findIndex';
 import {SYSTEM_NAMESPACE} from 'components/Administration';
+import {SCOPES} from 'services/global-constants';
 require('./ListView.scss');
 
 const PREFIX = 'features.Cloud.Profiles';
@@ -182,7 +183,7 @@ class ProfilesListView extends Component {
   };
 
   deleteProfile = (profile) => {
-    let namespace = profile.scope === 'SYSTEM' ? SYSTEM_NAMESPACE : this.props.namespace;
+    let namespace = profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : this.props.namespace;
 
     deleteProfile(namespace, profile.name, this.props.namespace)
       .subscribe(() => {
@@ -312,7 +313,7 @@ class ProfilesListView extends Component {
   }
 
   renderProfilerow = (profile) => {
-    let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
+    let namespace = profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : this.props.namespace;
     let provisionerName = profile.provisioner.name;
     profile.provisioner.label = this.state.provisionersMap[provisionerName] || provisionerName;
     let profileStatus = PROFILE_STATUSES[profile.status];

@@ -25,6 +25,7 @@ import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import T from 'i18n-react';
 import {Subject} from 'rxjs/Subject';
 import find from 'lodash/find';
+import {SCOPES} from 'services/global-constants';
 
 const PREFIX = 'features.DataPrep.PipelineError';
 
@@ -72,7 +73,7 @@ function findWranglerArtifacts(artifacts, pluginVersion) {
   let returnArtifact = filteredArtifacts[0];
 
   if (filteredArtifacts.length > 1) {
-    returnArtifact.scope = 'USER';
+    returnArtifact.scope = SCOPES.USER;
   }
 
   return returnArtifact;
@@ -422,13 +423,13 @@ function constructProperties(workspaceInfo, pluginVersion) {
       let batchArtifact = {
         name: 'cdap-data-pipeline',
         version: highestBatchArtifactVersion,
-        scope: 'SYSTEM'
+        scope: SCOPES.SYSTEM
       };
 
       let realtimeArtifact = {
         name: 'cdap-data-streams',
         version: highestRealtimeArtifactVersion,
-        scope: 'SYSTEM'
+        scope: SCOPES.SYSTEM
       };
 
       let wranglerArtifact;

@@ -20,6 +20,7 @@ import React, { Component } from 'react';
 import SpotlightModal from 'components/SpotlightSearch/SpotlightModal';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
+import {SCOPES} from 'services/global-constants';
 
 require('./Tag.scss');
 
@@ -47,8 +48,8 @@ export default class Tag extends Component {
 
   render() {
     let tagClasses = classnames("btn btn-secondary tag-btn", {
-      "system-tag": this.props.scope === 'SYSTEM',
-      "user-tag": this.props.scope === 'USER'
+      "system-tag": this.props.scope === SCOPES.SYSTEM,
+      "user-tag": this.props.scope === SCOPES.USER
     });
     return (
       <span className={tagClasses}>
@@ -58,7 +59,7 @@ export default class Tag extends Component {
         >
           <span>{this.props.value}</span>
           {
-            this.props.scope === 'USER' ?
+            this.props.scope === SCOPES.USER ?
               <IconSVG
                 name="icon-close"
                 onClick={this.props.onDelete}

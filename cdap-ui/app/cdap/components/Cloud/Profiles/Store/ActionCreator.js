@@ -26,6 +26,7 @@ import {MySearchApi} from 'api/search';
 import {GLOBALS} from 'services/global-constants';
 import isNil from 'lodash/isNil';
 import {SYSTEM_NAMESPACE} from 'components/Administration';
+import {SCOPES} from 'services/global-constants';
 
 export const getProfileMetricsBody = (queryId, namespace, profilescope, startTime, endTime, extraTags = {}) => {
   let tags = {
@@ -188,17 +189,17 @@ export const getProfiles = (namespace) => {
         const extraTags = {
           programtype: 'Workflow'
         };
-        let oneDayUSERMetricsBody = getProfileMetricsBody('oneDayUSERMetrics', namespace, 'USER', 'now-24h', 'now', extraTags);
-        let overAllUSERMetricsBody = getProfileMetricsBody('overAllUSERMetrics', namespace, 'USER', 0, 0, extraTags);
-        let oneDaySYSTEMMetricsBody = getProfileMetricsBody('oneDaySYSTEMMetrics', namespace, 'SYSTEM', 'now-24h', 'now', extraTags);
-        let overAllSYSTEMMetricsBody = getProfileMetricsBody('overAllSYSTEMMetrics', namespace, 'SYSTEM', 0, 0, extraTags);
+        let oneDayUSERMetricsBody = getProfileMetricsBody('oneDayUSERMetrics', namespace, SCOPES.USER, 'now-24h', 'now', extraTags);
+        let overAllUSERMetricsBody = getProfileMetricsBody('overAllUSERMetrics', namespace, SCOPES.USER, 0, 0, extraTags);
+        let oneDaySYSTEMMetricsBody = getProfileMetricsBody('oneDaySYSTEMMetrics', namespace, SCOPES.SYSTEM, 'now-24h', 'now', extraTags);
+        let overAllSYSTEMMetricsBody = getProfileMetricsBody('overAllSYSTEMMetrics', namespace, SCOPES.SYSTEM, 0, 0, extraTags);
         MyMetricApi
           .query(null, {...oneDayUSERMetricsBody, ...overAllUSERMetricsBody, ...oneDaySYSTEMMetricsBody, ...overAllSYSTEMMetricsBody})
           .subscribe(metrics => {
             let profilesToMetricsMap = {};
             Object.keys(metrics).forEach(query => {
               // oneDayMetrics, overMetrics are the keys for metrics for each profile.
-              let profileScope = query.indexOf('USER') !== -1 ? 'user' : 'system';
+              let profileScope = query.indexOf(SCOPES.USER) !== -1 ? SCOPES.USER : SCOPES.SYSTEM;
               let metricsKey = query.replace(/USER|SYSTEM/, '');
               metrics[query].series.forEach(metric => {
                 let profileName = metric.grouping.profile;
@@ -228,7 +229,7 @@ export const getProfiles = (namespace) => {
                 }
                 /*
                   {
-                    system:profile1: {
+                    SYSTEM:profile1: {
                       oneDayMetrics: {
                         runs: 1,
                         minutes: 2
@@ -340,7 +341,7 @@ export const importProfile = (namespace, e) => {
       .subscribe(
         () => {
           getProfiles(namespace);
-          let profilePrefix = namespace === SYSTEM_NAMESPACE ? 'SYSTEM' : 'USER';
+          let profilePrefix = namespace === SYSTEM_NAMESPACE ? SCOPES.SYSTEM : SCOPES.USER;
           let profileName = `${profilePrefix}:${jsonSpec.name}`;
           highlightNewProfile(profileName);
         },
@@ -387,10 +388,10 @@ export const extractProfileName = (name = '') => {
 
 export const getProfileNameWithScope = (name = '', scope) => {
   if (name && scope) {
-    if (scope === 'SYSTEM') {
-      return `SYSTEM:${name}`;
+    if (scope === SCOPES.SYSTEM) {
+      return `${SCOPES.SYSTEM}:${name}`;
     }
-    return `USER:${name}`;
+    return `${SCOPES.USER}:${name}`;
   }
   return name;
 };

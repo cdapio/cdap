@@ -271,6 +271,11 @@ const CLOUD = {
   PROFILE_PROPERTIES_PREFERENCE: 'system.profile.properties'
 };
 
+const SCOPES = {
+  SYSTEM: 'SYSTEM',
+  USER: 'USER'
+};
+
 export {
   NUMBER_TYPES,
   GLOBALS,
@@ -278,5 +283,6 @@ export {
   PROGRAM_STATUSES,
   SECURE_KEY_PREFIX,
   SECURE_KEY_SUFFIX,
-  CLOUD
+  CLOUD,
+  SCOPES
 };

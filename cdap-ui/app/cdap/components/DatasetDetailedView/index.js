@@ -36,6 +36,7 @@ import Helmet from 'react-helmet';
 import queryString from 'query-string';
 import {Route, Switch} from 'react-router-dom';
 import FieldLevelLineage from 'components/FieldLevelLineage';
+import {SCOPES} from 'services/global-constants';
 require('./DatasetDetailedView.scss');
 
 export default class DatasetDetailedView extends Component {
@@ -116,7 +117,7 @@ export default class DatasetDetailedView extends Component {
         namespace,
         entityType: 'datasets',
         entityId: datasetId,
-        scope: 'SYSTEM'
+        scope: SCOPES.SYSTEM
       };
 
       MyMetadataApi.getProperties(metadataParams)

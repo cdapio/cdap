@@ -28,6 +28,7 @@ import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 require('./Tags.scss');
 import T from 'i18n-react';
+import {SCOPES} from 'services/global-constants';
 
 const PREFIX = 'features.Tags';
 
@@ -65,8 +66,8 @@ export default class Tags extends Component {
     Mousetrap.bind('return', this.addTag);
     Mousetrap.bind('escape', this.closeInputFieldIfEmpty);
 
-    let systemParams = Object.assign({}, this.params, { scope: 'SYSTEM' });
-    let userParams = Object.assign({}, this.params, { scope: 'USER' });
+    let systemParams = Object.assign({}, this.params, { scope: SCOPES.SYSTEM });
+    let userParams = Object.assign({}, this.params, { scope: SCOPES.USER });
 
     this.setState({
       loading: true
@@ -127,7 +128,7 @@ export default class Tags extends Component {
   };
 
   fetchUserTags() {
-    let params = Object.assign({}, this.params, { scope: 'USER' });
+    let params = Object.assign({}, this.params, { scope: SCOPES.USER });
 
     let fetchTagsSubscription = MyMetadataApi
       .getTags(params)
@@ -220,7 +221,7 @@ export default class Tags extends Component {
             return (
               <Tag
                 value={tag}
-                scope='SYSTEM'
+                scope={SCOPES.SYSTEM}
                 isNativeLink={this.props.isNativeLink}
               />
             );
@@ -239,7 +240,7 @@ export default class Tags extends Component {
               <Tag
                 value={tag}
                 onDelete={this.deleteTag.bind(this, tag)}
-                scope='USER'
+                scope={SCOPES.USER}
                 isNativeLink={this.props.isNativeLink}
               />
             );

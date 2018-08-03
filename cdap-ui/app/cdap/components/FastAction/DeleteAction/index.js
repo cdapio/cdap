@@ -27,6 +27,7 @@ import ConfirmationModal from 'components/ConfirmationModal';
 import {Tooltip} from 'reactstrap';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import {SCOPES} from 'services/global-constants';
 import T from 'i18n-react';
 
 export default class DeleteAction extends Component {
@@ -43,7 +44,7 @@ export default class DeleteAction extends Component {
       tooltipOpen: false,
       errorMessage: '',
       extendedMessage: '',
-      disabled: this.props.entity.type === 'artifact' && this.props.entity.scope === 'SYSTEM'
+      disabled: this.props.entity.type === 'artifact' && this.props.entity.scope === SCOPES.SYSTEM
     };
     this.eventEmitter = ee(ee);
   }
@@ -159,7 +160,7 @@ DeleteAction.propTypes = {
     id: PropTypes.string.isRequired,
     uniqueId: PropTypes.string,
     version: PropTypes.string,
-    scope: PropTypes.oneOf(['SYSTEM', 'USER']),
+    scope: PropTypes.oneOf([SCOPES.SYSTEM, SCOPES.USER]),
     type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired
   }),
   onSuccess: PropTypes.func

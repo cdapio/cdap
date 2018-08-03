@@ -42,6 +42,7 @@ import CreateProfileStore from 'components/Cloud/Profiles/CreateView/CreateProfi
 import {highlightNewProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
 import T from 'i18n-react';
 import {SYSTEM_NAMESPACE} from 'components/Administration';
+import {SCOPES} from 'services/global-constants';
 
 const PREFIX = 'features.Cloud.Profiles.CreateView';
 
@@ -126,7 +127,7 @@ class ProfileCreateView extends Component {
             });
           }
 
-          let profilePrefix = this.state.isSystem ? 'SYSTEM' : 'USER';
+          let profilePrefix = this.state.isSystem ? SCOPES.SYSTEM : SCOPES.USER;
           name = `${profilePrefix}:${name}`;
           highlightNewProfile(name);
         },

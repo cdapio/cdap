@@ -26,6 +26,7 @@ import T from 'i18n-react';
 import DeleteConfirmation from 'components/PropertiesEditor/DeleteConfirmation';
 import EditProperty from 'components/PropertiesEditor/EditProperty';
 import classnames from 'classnames';
+import {SCOPES} from 'services/global-constants';
 
 require('./PropertiesEditor.scss');
 
@@ -61,8 +62,8 @@ export default class PropertiesEditor extends Component {
       entityId: this.props.entityId
     };
 
-    let systemParams = Object.assign({}, baseRequestObject, { scope: 'SYSTEM' });
-    let userParams = Object.assign({}, baseRequestObject, { scope: 'USER' });
+    let systemParams = Object.assign({}, baseRequestObject, { scope: SCOPES.SYSTEM });
+    let userParams = Object.assign({}, baseRequestObject, { scope: SCOPES.USER });
 
     MyMetadataApi.getProperties(systemParams)
       .map(convertObjToArr)
@@ -83,7 +84,7 @@ export default class PropertiesEditor extends Component {
       namespace,
       entityType: this.props.entityType,
       entityId: this.props.entityId,
-      scope: 'USER'
+      scope: SCOPES.USER
     };
 
     MyMetadataApi.getProperties(params)

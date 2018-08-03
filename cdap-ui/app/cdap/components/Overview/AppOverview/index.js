@@ -31,6 +31,7 @@ import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
 import EntityType from 'services/metadata-parser/EntityType';
+import {SCOPES} from 'services/global-constants';
 
 export default class AppOverview extends Component {
   constructor(props) {
@@ -64,7 +65,7 @@ export default class AppOverview extends Component {
       namespace,
       entityType: 'apps',
       entityId,
-      scope: 'SYSTEM'
+      scope: SCOPES.SYSTEM
     };
 
     if (entityId) {

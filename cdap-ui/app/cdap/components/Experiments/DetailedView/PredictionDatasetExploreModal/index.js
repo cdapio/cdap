@@ -23,6 +23,7 @@ import {isNilOrEmpty} from 'services/helpers';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import uuidV4 from 'uuid/v4';
+import {SCOPES} from 'services/global-constants';
 require('./PredictionDatasetExploreModal.scss');
 
 export default class PredictionDatasetExploreModal extends Component {
@@ -57,7 +58,7 @@ export default class PredictionDatasetExploreModal extends Component {
         namespace: getCurrentNamespace(),
         entityType: 'datasets',
         entityId: this.state.predictionDataset,
-        scope: 'SYSTEM'
+        scope: SCOPES.SYSTEM
       })
       .subscribe(
         (datasetDetails) => {
