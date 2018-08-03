@@ -17,6 +17,7 @@
 import {combineReducers, createStore} from 'redux';
 import NamespaceActions from './NamespaceActions';
 import {composeEnhancers, objectQuery, isNilOrEmpty} from 'services/helpers';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 
 const defaultAction = {
   action : '',
@@ -41,14 +42,14 @@ const username = (state = '', action = defaultAction) => {
 const selectedNamespace = (state = '', action = defaultAction) => {
   switch (action.type) {
     case NamespaceActions.selectNamespace: {
-      if (action.payload.selectedNamespace === 'system') {
+      if (action.payload.selectedNamespace === SYSTEM_NAMESPACE) {
         return localStorage.getItem('CurrentNamespace');
       }
       return action.payload.selectedNamespace;
     }
     case NamespaceActions.updateNamespaces: {
       let previouslyAccessedNs = localStorage.getItem('CurrentNamespace');
-      if (isNilOrEmpty(state) || state === 'system') {
+      if (isNilOrEmpty(state) || state === SYSTEM_NAMESPACE) {
         return !isNilOrEmpty(previouslyAccessedNs) ? previouslyAccessedNs : objectQuery(action.payload, 'namespaces', 0, 'name');
       }
       return state;

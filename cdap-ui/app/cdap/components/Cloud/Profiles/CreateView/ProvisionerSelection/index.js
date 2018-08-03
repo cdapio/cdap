@@ -27,6 +27,7 @@ import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabC
 import EntityTopPanel from 'components/EntityTopPanel';
 import ExperimentalBanner from 'components/ExperimentalBanner';
 import IconSVG from 'components/IconSVG';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 
 require('./ProvisionerSelection.scss');
 
@@ -43,7 +44,7 @@ class ProfileCreateProvisionerSelection extends Component {
   };
 
   state = {
-    isSystem: objectQuery(this.props.match, 'params', 'namespace') === 'system'
+    isSystem: objectQuery(this.props.match, 'params', 'namespace') === SYSTEM_NAMESPACE
   };
 
   componentDidMount() {

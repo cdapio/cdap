@@ -28,6 +28,7 @@ import {
   getNodeHours
 } from 'components/Cloud/Profiles/Store/ActionCreator';
 import {Observable} from 'rxjs/Observable';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 require('./ProfileAssociations.scss');
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
@@ -120,7 +121,7 @@ export default class ProfileAssociations extends Component {
     scope = scope.toLowerCase();
     let profileName = `profile:${scope}:${profile.name}`;
     let apiObservable$;
-    if (namespace === 'system') {
+    if (namespace === SYSTEM_NAMESPACE) {
       apiObservable$ = MySearchApi.searchSystem({
         query: profileName
       });

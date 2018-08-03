@@ -26,6 +26,7 @@ import {importProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {connect, Provider} from 'react-redux';
 import {Label, Input} from 'reactstrap';
 import {getProfiles, resetProfiles} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 require('./SystemProfilesAccordion.scss');
 
 const PREFIX = 'features.Administration.Accordions.SystemProfiles';
@@ -39,7 +40,7 @@ class SystemProfilesAccordion extends Component {
   }
 
   componentDidMount() {
-    getProfiles('system');
+    getProfiles(SYSTEM_NAMESPACE);
   }
 
   componentWillUnmount() {
@@ -96,12 +97,12 @@ class SystemProfilesAccordion extends Component {
               type="file"
               accept='.json'
               id="import-profile"
-              onChange={importProfile.bind(this, 'system')}
+              onChange={importProfile.bind(this, SYSTEM_NAMESPACE)}
               onClick={(e) => e.target.value = null}
             />
           </Label>
         </div>
-        <ProfilesListView namespace='system' />
+        <ProfilesListView namespace={SYSTEM_NAMESPACE} />
       </div>
     );
   }

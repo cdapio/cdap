@@ -31,7 +31,8 @@ import {getCustomizationMap} from 'components/PipelineConfigurations/Store/Actio
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
 import {extractProfileName, getProfileNameWithScope} from 'components/Cloud/Profiles/Store/ActionCreator';
-import {CLOUD} from 'services/global-constants';
+import {CLOUD, SCOPES} from 'services/global-constants';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.ProfilesListView';
@@ -173,7 +174,7 @@ export default class ProfilesListViewInPipeline extends Component {
   };
 
   renderProfileRow = (profile) => {
-    let profileNamespace = profile.scope === 'SYSTEM' ? 'system' : getCurrentNamespace();
+    let profileNamespace = profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : getCurrentNamespace();
     let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
     let profileName = getProfileNameWithScope(profile.name, profile.scope);
     let selectedProfile = this.state.selectedProfile || '';

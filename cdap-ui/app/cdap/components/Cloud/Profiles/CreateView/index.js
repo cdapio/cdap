@@ -41,6 +41,7 @@ import uuidV4 from 'uuid/v4';
 import CreateProfileStore from 'components/Cloud/Profiles/CreateView/CreateProfileStore';
 import {highlightNewProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
 import T from 'i18n-react';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 
 const PREFIX = 'features.Cloud.Profiles.CreateView';
 
@@ -61,7 +62,7 @@ class ProfileCreateView extends Component {
     redirectToNamespace: false,
     redirectToAdmin: false,
     creatingProfile: false,
-    isSystem: objectQuery(this.props.match, 'params', 'namespace') === 'system',
+    isSystem: objectQuery(this.props.match, 'params', 'namespace') === SYSTEM_NAMESPACE,
     selectedProvisioner: objectQuery(this.props.match, 'params', 'provisionerId')
   };
 
@@ -198,7 +199,7 @@ class ProfileCreateView extends Component {
   renderGroup = (group) => {
     let {properties} = CreateProfileStore.getState();
     const extraConfig = {
-      namespace: this.state.isSystem ? 'system' : getCurrentNamespace()
+      namespace: this.state.isSystem ? SYSTEM_NAMESPACE : getCurrentNamespace()
     };
 
     return (

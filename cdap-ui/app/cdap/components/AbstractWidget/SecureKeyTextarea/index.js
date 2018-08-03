@@ -23,7 +23,7 @@ import classnames from 'classnames';
 import T from 'i18n-react';
 import {objectQuery} from 'services/helpers';
 import {SECURE_KEY_PREFIX, SECURE_KEY_SUFFIX} from 'services/global-constants';
-
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 require('./SecureKeyTextarea.scss');
 
 const PREFIX = 'features.AbstractWidget.SecureKeyTextarea';
@@ -42,7 +42,7 @@ export default class SecureKeyTextarea extends Component {
   componentWillMount() {
     const namespace = objectQuery(this.props, 'extraConfig', 'namespace') || getCurrentNamespace();
 
-    if (namespace === 'system') { return; }
+    if (namespace === SYSTEM_NAMESPACE) { return; }
 
     const params = {
       namespace

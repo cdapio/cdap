@@ -26,6 +26,7 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {ONEDAYMETRICKEY, OVERALLMETRICKEY, fetchAggregateProfileMetrics} from 'components/Cloud/Profiles/Store/ActionCreator';
 import T from 'i18n-react';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
 require('./DetailView.scss');
@@ -44,7 +45,7 @@ export default class ProfileDetailView extends Component {
     provisioners: [],
     loading: true,
     error: null,
-    isSystem: objectQuery(this.props.match, 'params', 'namespace') === 'system'
+    isSystem: objectQuery(this.props.match, 'params', 'namespace') === SYSTEM_NAMESPACE
   };
 
   static propTypes = {
@@ -89,7 +90,7 @@ export default class ProfileDetailView extends Component {
   getProfile = () => {
     let {namespace, profileId} = this.props.match.params;
     let apiObservable$;
-    if (namespace === 'system') {
+    if (namespace === SYSTEM_NAMESPACE) {
       apiObservable$ = MyCloudApi.getSystemProfile({ profile: profileId });
     } else {
       apiObservable$ = MyCloudApi.get({ namespace, profile: profileId });

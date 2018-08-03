@@ -45,6 +45,7 @@ import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {CLOUD} from 'services/global-constants';
 import {preventPropagation} from 'services/helpers';
 import findIndex from 'lodash/findIndex';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 require('./ListView.scss');
 
 const PREFIX = 'features.Cloud.Profiles';
@@ -181,7 +182,7 @@ class ProfilesListView extends Component {
   };
 
   deleteProfile = (profile) => {
-    let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
+    let namespace = profile.scope === 'SYSTEM' ? SYSTEM_NAMESPACE : this.props.namespace;
 
     deleteProfile(namespace, profile.name, this.props.namespace)
       .subscribe(() => {
@@ -211,7 +212,7 @@ class ProfilesListView extends Component {
       return (
         <div className="text-xs-center">
           {
-            this.props.namespace === 'system' ?
+            this.props.namespace === SYSTEM_NAMESPACE ?
               (
                 <span>
                   {T.translate(`${PREFIX}.ListView.noProfilesSystem`)}

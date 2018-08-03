@@ -19,6 +19,7 @@ import intersection from 'lodash/intersection';
 import EntityType from 'services/metadata-parser/EntityType';
 import {GLOBALS} from 'services/global-constants';
 import {objectQuery} from 'services/helpers';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 
 export function parseMetadata(entity) {
   let type = entity.entityId.entity;
@@ -83,7 +84,7 @@ function createArtifactObj(entity) {
     type: entity.entityId.entity.toLowerCase(),
     version: entity.entityId.version,
     metadata: entity,
-    scope: entity.entityId.namespace.toLowerCase() === 'system' ? 'SYSTEM' : 'USER',
+    scope: entity.entityId.namespace.toLowerCase() === SYSTEM_NAMESPACE ? 'SYSTEM' : 'USER',
     icon: EntityIconMap['artifact']
   };
 }

@@ -24,6 +24,7 @@ import {extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator'
 import {MyCloudApi} from 'api/cloud';
 import T from 'i18n-react';
 import {CLOUD} from 'services/global-constants';
+import {SYSTEM_NAMESPACE} from 'components/Administration';
 
 const PREFIX = 'features.Cloud.Profiles';
 
@@ -58,7 +59,7 @@ export default class ProfileStatusToggle extends Component {
     const profile = this.props.profile;
     const action = PROFILE_STATUSES[profile.status] === 'enabled' ? 'disable' : 'enable';
     let apiObservable$;
-    if (this.props.namespace === 'system') {
+    if (this.props.namespace === SYSTEM_NAMESPACE) {
       apiObservable$ = MyCloudApi.toggleSystemProfileStatus({
         profile: profile.name,
         action
