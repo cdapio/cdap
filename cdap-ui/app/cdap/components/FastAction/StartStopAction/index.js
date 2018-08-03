@@ -151,7 +151,7 @@ export default class StartStopAction extends Component {
         iconClass = 'text-danger';
       }
     }
-    let tooltipID = `${this.props.entity.uniqueId}-${this.startStop}`;
+    let tooltipID = `startstopaction-${this.props.entity.uniqueId}-${this.startStop}`;
 
     return (
       <span className="btn btn-secondary btn-sm">
