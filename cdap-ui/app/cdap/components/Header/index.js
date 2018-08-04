@@ -152,6 +152,32 @@ export default class Header extends Component {
     return false;
   };
 
+  renderBrandSection(baseCDAPURL) {
+    let brandLogoSrc;
+    if (objectQuery(window, 'CDAP_UI_THEME', 'content', 'logo', 'type')) {
+      let logo = window.CDAP_UI_THEME.content.logo;
+      let logoType = logo.type;
+      if (logoType === 'inline') {
+        brandLogoSrc = objectQuery(logo, 'arguments', 'data');
+      } else if (logoType === 'link') {
+        brandLogoSrc = objectQuery(logo, 'arguments', 'url');
+      }
+    } else {
+      brandLogoSrc = '/cdap_assets/img/company_logo.png';
+    }
+
+    return (
+      <div className="brand-section">
+          <NavLinkWrapper
+            isNativeLink={this.props.nativeLink}
+            to={this.props.nativeLink ? `/cdap${baseCDAPURL}` : baseCDAPURL}
+          >
+            <img src={brandLogoSrc} />
+          </NavLinkWrapper>
+        </div>
+    );
+  }
+
   renderRulesEngineLink(rulesengineUrl) {
     let hideRulesEngine = objectQuery(window, 'CDAP_UI_THEME', 'features', 'rules-engine') === 'false';
     if (hideRulesEngine) {
@@ -209,14 +235,7 @@ export default class Header extends Component {
               <i className="fa fa-times fa-2x"></i>
           }
         </div>
-        <div className="brand-section">
-          <NavLinkWrapper
-            isNativeLink={this.props.nativeLink}
-            to={this.props.nativeLink ? `/cdap${baseCDAPURL}` : baseCDAPURL}
-          >
-            <img src="/cdap_assets/img/company_logo.png" />
-          </NavLinkWrapper>
-        </div>
+        {this.renderBrandSection(baseCDAPURL)}
         <ul className="navbar-list-section control-center">
           <li className={classnames({ 'active': this.isCDAPActive() })}>
             <ControlCenterDropdown
