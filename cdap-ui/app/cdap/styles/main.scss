@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,7 +12,21 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
+
+@import '~styles/variables.scss';
+
+/*
+NOTE: Always define CSS variables here (global scope). This is because if the
+user customizes a value, currently our code will only look for the corresponding
+variable in the 'document' DOM element and update the value. We should be careful
+to never re/define a CSS variable in any local scope
+*/
+
+:root {
+  --brand-primary-color: $brand-primary-color;
+  --navbar-color: $navbar-bg;
+}
 
 body {
   .cdap-container {

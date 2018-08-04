@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,6 +49,7 @@ import Page404 from 'components/404';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import HttpExecutor from 'components/HttpExecutor';
+import {applyTheme} from 'services/ThemeHelper';
 import ErrorBoundary from 'components/ErrorBoundary';
 const SampleTSXComponent = Loadable({
   loader: () => import (/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
@@ -72,6 +73,7 @@ class CDAP extends Component {
   }
 
   componentWillMount() {
+    applyTheme();
     cookie.save('DEFAULT_UI', 'NEW', {path: '/'});
     if (window.CDAP_CONFIG.securityEnabled) {
       NamespaceStore.dispatch({

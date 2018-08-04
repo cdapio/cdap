@@ -18,11 +18,9 @@
 @import './DropdownStyling.scss';
 @import "../../styles/bootstrap_4_patch.scss";
 
-$header-bg-color: $navbar-bg;
-
 .global-navbar {
   height: 50px;
-  background: $header-bg-color;
+  background: var(--navbar-color);
   position: fixed;
   width: 100%;
   top: 0;
