@@ -15,6 +15,6 @@
     "footer-link": "https://www.apache.org/licenses/LICENSE-2.0"
   },
   "features": {
-    "rules-engine": true
+    "rules-engine": "true"
   }
 }

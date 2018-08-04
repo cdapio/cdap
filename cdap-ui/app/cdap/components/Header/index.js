@@ -152,6 +152,26 @@ export default class Header extends Component {
     return false;
   };
 
+  renderRulesEngineLink(rulesengineUrl) {
+    let hideRulesEngine = objectQuery(window, 'CDAP_UI_THEME', 'features', 'rules-engine') === 'false';
+    if (hideRulesEngine) {
+      return null;
+    }
+
+    return (
+      <li className={classnames({
+        'active': this.isRulesEnginedActive()
+      })}>
+          <NavLinkWrapper
+            isNativeLink={this.props.nativeLink}
+            to={this.props.nativeLink ? `/cdap${rulesengineUrl}` : rulesengineUrl}
+          >
+            {T.translate(`features.Navbar.rulesmgmt`)}
+          </NavLinkWrapper>
+      </li>
+    );
+  }
+
   render() {
     const baseCDAPURL = `/ns/${this.state.currentNamespace}`;
     const rulesengineUrl = `${baseCDAPURL}/rulesengine`;
@@ -231,6 +251,7 @@ export default class Header extends Component {
               {T.translate(`features.Navbar.MMDS`)}
             </NavLinkWrapper>
           </li>
+<<<<<<< HEAD
           <li className={classnames({
             'active': this.isRulesEnginedActive()
           })}>
@@ -245,6 +266,11 @@ export default class Header extends Component {
             <a href={metadataHomeUrl}>
               {T.translate('features.Navbar.metadataLabel')}
             </a>
+=======
+          {this.renderRulesEngineLink(rulesengineUrl)}
+          <li className={classnames({'active': location.pathname.indexOf('metadata') !== -1})}>
+            <MetadataDropdown />
+>>>>>>> 1faafa37a5... Shows or hides rules engine based on theme
           </li>
         </ul>
         <div className={classnames("global-navbar-collapse", {

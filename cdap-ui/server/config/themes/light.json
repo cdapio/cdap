@@ -5,6 +5,6 @@
     "navbar-color": "#3b78e7"
   },
   "features": {
-    "rules-engine": false
+    "rules-engine": "false"
   }
 }
