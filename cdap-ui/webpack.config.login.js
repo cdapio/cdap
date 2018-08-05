@@ -17,6 +17,7 @@ var webpack = require('webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var path = require('path');
+var uuidV4 = require('uuid/v4');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
@@ -29,14 +30,23 @@ let cleanOptions = {
   verbose:  true,
   dry:      false
 };
-
+var mode = process.env.NODE_ENV || 'production';
+const getWebpackDllPlugins = (mode) => {
+  var sharedDllManifestFileName = 'shared-vendor-manifest.json';
+  if (mode === 'development') {
+    sharedDllManifestFileName = 'shared-vendor-development-manifest.json';
+  }
+  return (
+    new webpack.DllReferencePlugin({
+      context: path.resolve(__dirname, 'dll'),
+      manifest: require(path.join(__dirname, 'dll', sharedDllManifestFileName))
+    })
+  );
+};
 var plugins = [
   new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
-  new webpack.DllReferencePlugin({
-    context: path.resolve(__dirname, 'dll'),
-    manifest: require(path.join(__dirname, 'dll', '/shared-vendor-manifest.json'))
-  }),
+  getWebpackDllPlugins(mode),
   new CopyWebpackPlugin([
     {
       from: './styles/fonts',
@@ -51,14 +61,15 @@ var plugins = [
     title: 'CDAP',
     template: './login.html',
     filename: 'login.html',
-    hash: true
+    hash: true,
+    hashId: uuidV4(),
+    mode: mode === 'production' ? '' : 'development.'
   }),
   new StyleLintPlugin({
     syntax: 'scss',
     files: ['**/*.scss']
   })
 ];
-var mode = process.env.NODE_ENV;
 var rules = [
   {
     test: /\.scss$/,

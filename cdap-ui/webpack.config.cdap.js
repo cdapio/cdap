@@ -57,7 +57,7 @@ const getWebpackDllPlugins = (mode) => {
 var plugins = [
   new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
-  ...getWebpackDllPlugins(),
+  ...getWebpackDllPlugins(mode),
   new LodashModuleReplacementPlugin({
     shorthands: true,
     collections: true,
@@ -86,7 +86,8 @@ var plugins = [
     template: './cdap.html',
     filename: 'cdap.html',
     hash: true,
-    hashId: uuidV4()
+    hashId: uuidV4(),
+    mode: mode === 'production' ? '' : 'development.'
   })
 ];
 
