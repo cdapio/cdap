@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import ColumnTextSelection from 'components/DataPrep/ColumnTextSelection';
-import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
+import { Popover, PopoverHeader, PopoverBody } from 'reactstrap';
 import T from 'i18n-react';
 import TextboxOnValium from 'components/TextboxOnValium';
 import classnames from 'classnames';
@@ -89,31 +89,36 @@ export default class CutDirective extends Component {
     if (!this.state.showPopover) {
       return null;
     }
-    let tetherConfig = {
-      classPrefix: POPOVERTHETHERCLASSNAME,
-      attachment: 'top right',
-      targetAttachment: 'bottom left',
-      constraints: [
-        {
-          to: 'scrollParent',
-          attachment: 'together'
-        }
-      ]
-    };
     let {start, end} = this.state.textSelectionRange;
+    let tableContainer = document.getElementById('dataprep-table-id');
+    let targetId = `highlight-cell-${this.state.textSelectionRange.index}`;
+    /*
+    FIXME: Follow up on this issue: https://github.com/FezVrasta/popper.js/issues/276
+    */
     return (
       <Popover
-        placement="bottom left"
-        className="cut-directive-popover"
+        placement="bottom-start"
+        className="highlight-popover"
+        innerClassName="cut-directive-popover"
         isOpen={this.state.showPopover}
-        target={`highlight-cell-${this.state.textSelectionRange.index}`}
-        toggle={this.togglePopover}
-        tether={tetherConfig}
-        tetherRef={(ref) => this.tetherRef = ref}
+        target={targetId}
+        container={tableContainer}
+        modifiers={{
+          shift: {
+            order: 800,
+            enabled: true
+          },
+          preventOverflow: {
+            boundariesElement: tableContainer,
+            priority: ['top', 'bottom'],
+            escapeWithReference: true
+          }
+        }}
+        hideArrow
       >
-        <PopoverTitle className={CELLHIGHLIGHTCLASSNAME}>{T.translate(`${PREFIX}.popoverTitle`)}</PopoverTitle>
-        <PopoverContent
-          className={CELLHIGHLIGHTCLASSNAME}
+        <PopoverHeader className={`${CELLHIGHLIGHTCLASSNAME} popover-title`}>{T.translate(`${PREFIX}.popoverTitle`)}</PopoverHeader>
+        <PopoverBody
+          className={`${CELLHIGHLIGHTCLASSNAME} popover-content`}
           onClick={this.preventPropagation}
         >
           <span className={CELLHIGHLIGHTCLASSNAME}>
@@ -139,7 +144,7 @@ export default class CutDirective extends Component {
           >
             {T.translate(`${PREFIX}.cancelBtnLabel`)}
           </div>
-        </PopoverContent>
+        </PopoverBody>
       </Popover>
     );
   }
