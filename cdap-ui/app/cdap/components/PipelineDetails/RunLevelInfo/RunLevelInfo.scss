@@ -52,6 +52,11 @@ $border-color: $grey-05;
     position: relative;
     background-color: $grey-06;
     padding-right: 100px;
+
+    & > div:first-child {
+      overflow: hidden;
+    }
+
     &:before {
       content: '';
       border: 10px solid $grey-06;
