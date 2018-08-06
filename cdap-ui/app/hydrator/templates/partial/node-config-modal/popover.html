@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2018 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@
   <h4 class="modal-title pull-left"
       ng-class="{'with-jump': HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.jumpConfig.datasets.length}">
     <span>
-      {{HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}} Properties
+      {{ HydratorPlusPlusNodeConfigCtrl.state.config['display-name'] || HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name }} Properties
       <small>{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.artifact.version }}</small>
     </span>
     <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">({{HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage}})</small>
