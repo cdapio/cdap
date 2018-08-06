@@ -92,7 +92,7 @@ let KeyValuePairCopy = connect(
 export default class KeyValuePairs extends Component {
   constructor(props) {
     super(props);
-    var { keyValues, onKeyValueChange } = props;
+    var { keyValues } = props;
     this.state = {
       pairs: [...keyValues.pairs]
     };
@@ -100,6 +100,11 @@ export default class KeyValuePairs extends Component {
       type: KeyValueStoreActions.onUpdate,
       payload: {pairs: keyValues.pairs}
     });
+    console.log('Inside keyvalue pairs constructor');
+  }
+
+  componentDidMount() {
+    var { onKeyValueChange } = this.props;
     this.subscription = KeyValueStore.subscribe(() => {
       this.setState(KeyValueStore.getState().keyValues);
       if (typeof onKeyValueChange === 'function') {
@@ -107,7 +112,6 @@ export default class KeyValuePairs extends Component {
       }
     });
   }
-
   shouldComponentUpdate(nextProps) {
     if (this.state.pairs.length !== nextProps.keyValues.pairs.length) {
       KeyValueStore.dispatch({
