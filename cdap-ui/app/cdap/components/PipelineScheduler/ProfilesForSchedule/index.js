@@ -57,6 +57,7 @@ class ProfilesForSchedule extends Component {
     this.setProvisionersMap();
     this.setProfileDetails();
   }
+
   componentWillReceiveProps(nextProps) {
     this.setState({
       selectedProfile: nextProps.selectedProfile,
@@ -136,6 +137,26 @@ class ProfilesForSchedule extends Component {
       provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
     }
 
+    const getDropdownToggleLabel = () => {
+      if (!this.state.selectedProfile) {
+        return (
+          <span>{T.translate(`${PREFIX}.selectAProfile`)}</span>
+        );
+      }
+      let profileLabel = extractProfileName(this.state.selectedProfile);
+      if (provisionerLabel) {
+        profileLabel += ` (${provisionerLabel})`;
+      }
+      return (
+        <span
+          className="dropdown-toggle-label"
+          title={profileLabel}
+        >
+          {profileLabel}
+        </span>
+      );
+    };
+
     return (
       <Dropdown
         className={PROFILES_DROPDOWN_DOM_CLASS}
@@ -147,19 +168,7 @@ class ProfilesForSchedule extends Component {
           disabled={isScheduled}
           caret
         >
-          {
-            this.state.selectedProfile ?
-              <span>
-                {
-                  provisionerLabel ?
-                    `${extractProfileName(this.state.selectedProfile)} (${provisionerLabel})`
-                  :
-                    `${extractProfileName(this.state.selectedProfile)}`
-                }
-              </span>
-            :
-              <span>Select a Profile</span>
-          }
+          {getDropdownToggleLabel()}
           <IconSVG name="icon-caret-down" />
         </DropdownToggle>
         <DropdownMenu>

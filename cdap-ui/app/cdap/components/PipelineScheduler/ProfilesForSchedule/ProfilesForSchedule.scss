@@ -22,8 +22,15 @@
       display: flex;
       justify-content: space-between;
       min-width: 150px;
+      max-width: 350px;
       &.open {
         width: 400px;
+      }
+      .dropdown-toggle-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 90%;
       }
     }
     .dropdown-toggle,

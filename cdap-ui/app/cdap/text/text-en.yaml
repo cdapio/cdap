@@ -1800,6 +1800,7 @@ features:
       label: Repeats every
     saveSchedule: Save Schedule
     saveAndStartSchedule: Save and Start Schedule
+    selectAProfile: Select a profile
     startingAt:
       label: Starting at
       pastTheHour: past the hour
