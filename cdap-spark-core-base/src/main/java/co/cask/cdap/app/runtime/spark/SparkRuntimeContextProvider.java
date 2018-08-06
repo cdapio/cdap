@@ -152,7 +152,7 @@ public final class SparkRuntimeContextProvider {
       SparkRuntimeContextConfig contextConfig = new SparkRuntimeContextConfig(hConf);
 
       // Should be yarn only and only for executor node, not the driver node.
-      Preconditions.checkState(!contextConfig.isLocal() && Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE")),
+      Preconditions.checkState(!contextConfig.isLocal(),
                                "SparkContextProvider.getSparkContext should only be called in Spark executor process.");
 
       // Create the program
