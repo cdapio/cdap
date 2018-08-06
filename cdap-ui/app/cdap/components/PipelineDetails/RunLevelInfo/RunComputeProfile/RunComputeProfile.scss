@@ -15,9 +15,13 @@
 */
 
 @import "../../../../styles/variables.scss";
+$run-profile-width: 150px;
+$icon-margin-right: 5px;
 
 .run-level-compute-profile {
   &.run-info-container {
+    width: $run-profile-width;
+
     &:after {
       display: none;
     }
@@ -32,9 +36,17 @@
         cursor: not-allowed;
       }
 
-      > div {
+      .profile-preview-label-content {
         display: flex;
         align-items: center;
+
+        & > span {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          display: block;
+          max-width: calc(#{$run-profile-width} - 30px - 15px - #{$icon-margin-right});
+        }
       }
 
       .btn.btn-link[disabled] {
