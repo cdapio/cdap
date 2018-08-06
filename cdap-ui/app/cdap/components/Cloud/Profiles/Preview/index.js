@@ -126,10 +126,15 @@ export default class ProfilePreview extends Component {
     let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
     let profileProvisionerLabel = getProvisionerLabel(this.state.profileDetails, this.state.provisioners);
     const profileStatus = PROFILE_STATUSES[this.state.profileDetails.status];
+    const profileLabel = this.props.profileLabel || this.props.profileName;
 
     return (
       <div className="profile-preview text-xs-left">
-        <strong>{this.props.profileLabel || this.props.profileName}</strong>
+        <div className="profile-label">
+          <strong title={profileLabel}>
+            {profileLabel}
+          </strong>
+        </div>
         <div className="profile-descripion">
           <p className="multi-line-text">
             {this.state.profileDetails.description}

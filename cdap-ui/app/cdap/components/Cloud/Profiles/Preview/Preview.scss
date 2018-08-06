@@ -24,6 +24,15 @@ $disabled-color: $red-02;
   width: inherit;
   padding: 20px;
 
+  .profile-label {
+    & > strong {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
   .profile-descripion {
     margin-bottom: 20px;
     font-size: 12px;
