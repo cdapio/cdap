@@ -183,6 +183,7 @@ export default class ProfilesListViewInPipeline extends Component {
     const profileStatus = PROFILE_STATUSES[profile.status];
     const profileIsEnabled = profileStatus === 'enabled';
     const onProfileSelectHandler = this.onProfileSelectWithoutCustomization.bind(this, profileName, profileIsEnabled);
+    const profileLabel = profile.label || profile.name;
 
     const CustomizeLabel = () => {
       if (!profileIsEnabled) {
@@ -230,9 +231,12 @@ export default class ProfilesListViewInPipeline extends Component {
             ) : null
           }
         </div>
-        <div onClick={onProfileSelectHandler}>
+        <div
+          title={profileLabel}
+          onClick={onProfileSelectHandler}
+        >
           {renderDefaultProfileStar(profileName)}
-          {profile.label || profile.name}
+          {profileLabel}
         </div>
         <div onClick={onProfileSelectHandler}>
           {provisionerLabel}
