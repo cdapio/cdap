@@ -213,9 +213,9 @@ export default class ProfileAssociations extends Component {
         </div>
         <div className="grid-row">
           {
-            HEADERS.map(header => {
+            HEADERS.map((header, i) => {
               return (
-                <strong>
+                <strong key={i}>
                   {header.label}
                 </strong>
               );
@@ -246,6 +246,7 @@ export default class ProfileAssociations extends Component {
               <a
                 className="grid-row"
                 href={pipelineUrl}
+                key={app}
               >
                 <div>{appObj.name}</div>
                 <div>{appObj.namespace}</div>

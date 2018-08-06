@@ -122,6 +122,10 @@ $disabled-color: $red-02;
           }
         }
 
+        .profile-label {
+          white-space: nowrap;
+        }
+
         .enabled-label {
           color: $enabled-color;
         }

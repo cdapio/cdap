@@ -15,9 +15,12 @@
 */
 
 @import "../../../../styles/variables.scss";
+$run-profile-width: 150px;
 
 .run-level-compute-profile {
   &.run-info-container {
+    width: $run-profile-width;
+
     &:after {
       display: none;
     }
@@ -27,14 +30,16 @@
       user-select: none;
       display: flex;
       justify-content: center;
+      align-items: center;
       height: 18px;
+
       &.disabled {
         cursor: not-allowed;
       }
 
-      > div {
-        display: flex;
-        align-items: center;
+      .profile-preview-label-content {
+        height: 100%;
+        max-width: 100%;
       }
 
       .btn.btn-link[disabled] {

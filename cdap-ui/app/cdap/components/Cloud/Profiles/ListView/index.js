@@ -362,7 +362,10 @@ class ProfilesListView extends Component {
               />
           }
         </div>
-        <div title={profile.label || profile.name}>
+        <div
+          className="profile-label"
+          title={profile.label || profile.name}
+        >
           {profile.label || profile.name}
         </div>
         <div>{profile.provisioner.label}</div>

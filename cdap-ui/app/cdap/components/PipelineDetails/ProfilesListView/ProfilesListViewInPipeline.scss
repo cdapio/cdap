@@ -91,6 +91,9 @@ $enabled-color: $green-02;
           color: $brand-primary-color;
           margin-right: 5px;
         }
+        .profile-label {
+          white-space: nowrap;
+        }
       }
     }
     &.disabled {

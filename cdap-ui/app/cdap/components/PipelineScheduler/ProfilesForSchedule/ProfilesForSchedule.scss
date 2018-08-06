@@ -15,6 +15,7 @@
 */
 
 @import "../../../styles/mixins.scss";
+$dropdown-max-width: 400px;
 
 .profiles-list-dropdown {
   &.dropdown {
@@ -22,8 +23,12 @@
       display: flex;
       justify-content: space-between;
       min-width: 150px;
+      max-width: $dropdown-max-width;
       &.open {
-        width: 400px;
+        width: $dropdown-max-width;
+      }
+      .dropdown-toggle-label {
+        max-width: 90%;
       }
     }
     .dropdown-toggle,
