@@ -148,7 +148,13 @@ var webpackConfig = {
     path: __dirname + '/login_dist/login_assets',
     publicPath: '/login_assets/'
   },
-  plugins: plugins
+  plugins: plugins,
+  resolve: {
+    alias: {
+      components: __dirname + '/app/login/components',
+      services: __dirname + '/app/cdap/services'
+    }
+  }
 };
 
 if (mode === 'production') {
