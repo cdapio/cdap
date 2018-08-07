@@ -40,18 +40,9 @@
   <div class="alerts" id="alerts"></div>
   <loading-indicator></loading-indicator>
   <status-alert-message></status-alert-message>
-
-  <footer ng-if="!$state.params.iframe">
-    <div class="container">
-      <div class="row text-muted" ng-cloak>
-        <div class="text-uppercase">
-          <p class="text-center">
-            <span>Copyright &copy; {{ copyrightYear }} Cask Data, Inc.</span>
-          </p>
-        </div>
-      </div>
-    </div>
-  </footer>
+  <div ng-if="!$state.params.iframe">
+    <global-footer></global-footer>
+  </div>
 
   <script type="text/javascript" src="/config.js"></script>
   <script type="text/javascript" src="/ui-config.js"></script>

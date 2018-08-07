@@ -56,6 +56,7 @@ var PipelineMetricsStore = require('../cdap/services/PipelineMetricsStore').defa
 var PipelineMetricsActionCreator = require('../cdap/services/PipelineMetricsStore/ActionCreator');
 var PipelineConfigurationsActionCreator = require('../cdap/components/PipelineConfigurations/Store/ActionCreator');
 var ThemeHelper = require('../cdap/services/ThemeHelper');
+var Footer = require('../cdap/components/Footer').default;
 
 export {
   Store,
@@ -97,5 +98,6 @@ export {
   PipelineMetricsStore,
   PipelineMetricsActionCreator,
   PipelineConfigurationsActionCreator,
-  ThemeHelper
+  ThemeHelper,
+  Footer
 };
