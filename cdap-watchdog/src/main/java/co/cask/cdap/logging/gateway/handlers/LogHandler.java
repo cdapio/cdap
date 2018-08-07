@@ -65,12 +65,12 @@ public class LogHandler extends AbstractLogHandler {
                       @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr,
-                      @QueryParam("format") @DefaultValue("text") String format) {
+                      @QueryParam("format") @DefaultValue("text") String format,
+                      @QueryParam("suppress") List<String> suppress) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              ProgramType.valueOfCategoryName(programType));
-    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, null, format,
-              Collections.emptyList());
+    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, null, format, suppress);
   }
 
   @GET
@@ -102,12 +102,12 @@ public class LogHandler extends AbstractLogHandler {
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr,
-                   @QueryParam("format") @DefaultValue("text") String format) {
+                   @QueryParam("format") @DefaultValue("text") String format,
+                   @QueryParam("suppress") List<String> suppress) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId,
                                              programId, ProgramType.valueOfCategoryName(programType));
-    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format,
-           Collections.emptyList());
+    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
   @GET
@@ -138,12 +138,12 @@ public class LogHandler extends AbstractLogHandler {
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr,
-                   @QueryParam("format") @DefaultValue("text") String format) {
+                   @QueryParam("format") @DefaultValue("text") String format,
+                   @QueryParam("suppress") List<String> suppress) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              ProgramType.valueOfCategoryName(programType));
-    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format,
-           Collections.emptyList());
+    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
   @GET

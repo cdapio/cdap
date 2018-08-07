@@ -44,7 +44,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -58,6 +57,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private static final Type LIST_LOGDATA_OFFSET_TYPE = new TypeToken<List<LogDataOffset>>() { }.getType();
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(LogOffset.class, new LogOffsetAdapter()).create();
+  private static final String[] FORMATS = new String[] { "text", "json" };
 
   private static MockLogReader mockLogReader;
 
@@ -74,9 +74,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testNextNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testNext("testApp1", "flows", "testFlow1", false, MockLogReader.TEST_NAMESPACE);
-    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.<String>of());
+    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.of());
     testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
   }
@@ -89,9 +89,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextNoFrom("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testNext("testApp4", "services", "testService1", false, MockLogReader.TEST_NAMESPACE);
     testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "text",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
   }
@@ -109,9 +109,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextFilter("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
     testNextNoFrom("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
     testNextRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "text",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testNextRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testNextRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
                   ImmutableList.of("logLevel", "lineNumber"));
   }
@@ -122,9 +122,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevNoMax("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testPrevFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testPrevNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.<String>of());
+    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.of());
     testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
   }
@@ -136,9 +136,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testPrevNoFrom("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "text",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
   }
@@ -150,9 +150,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevFilter("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
     testPrevNoFrom("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
     testPrevRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "text",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testPrevRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testPrevRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
                   ImmutableList.of("logLevel", "lineNumber"));
     try {
@@ -169,9 +169,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testLogs("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testLogsFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
     try {
@@ -188,9 +188,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testLogs("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testLogsFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "text",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
   }
@@ -200,9 +200,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testLogs("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
     testLogsFilter("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
     testLogsRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "text",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testLogsRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testLogsRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
                   ImmutableList.of("logLevel", "lineNumber"));
     try {
@@ -235,12 +235,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
     testPrevNoFrom("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
     testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "text",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("timestamp", "logLevel", "threadName", "className", "simpleClassName",
                                    "lineNumber", "message", "stackTrace"));
     testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "json",
-                  ImmutableList.<String>of());
+                  ImmutableList.of());
     testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "threadName"));
   }
@@ -327,14 +327,14 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     String out = EntityUtils.toString(response.getEntity());
     List<LogDataOffset> logDataOffsetList = GSON.fromJson(out, LIST_LOGDATA_OFFSET_TYPE);
     Assert.assertEquals(logDataOffsetList.size(), 15);
-    Assert.assertEquals(logDataOffsetList.get(0).getLog().getNativeMethod(), true);
-    Assert.assertEquals(logDataOffsetList.get(1).getLog().getNativeMethod(), false);
-    Assert.assertEquals(logDataOffsetList.get(2).getLog().getNativeMethod(), false);
+    Assert.assertTrue(logDataOffsetList.get(0).getLog().getNativeMethod());
+    Assert.assertFalse(logDataOffsetList.get(1).getLog().getNativeMethod());
+    Assert.assertFalse(logDataOffsetList.get(2).getLog().getNativeMethod());
   }
 
 
   private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
-                                                                   String endPoint) throws Exception {
+                                String endPoint) throws Exception {
     return getLogs(namespaceId, appId, programType, programName, runId, endPoint, HttpResponseStatus.OK.code());
   }
 
@@ -364,33 +364,42 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doGet(getVersionedAPIPath(logsUrl, namespace));
     verifyLogs(response, entityId, "json", true, true, true, 0, 0);
   }
-  
+
   private void testNext(String appId, String entityType, String entityId, boolean escape, String namespace)
     throws Exception {
-    String nextUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=10&escape=%s",
-                                   appId, entityType, entityId, getFromOffset(5), escape);
-    HttpResponse response = doGet(getVersionedAPIPath(nextUrl, namespace));
-    verifyLogs(response, entityId, "text", false, false, escape, 10, 5);
+    for (String format : FORMATS) {
+      String nextUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=10&escape=%s&format=%s",
+                                     appId, entityType, entityId, getFromOffset(5), escape, format);
+      HttpResponse response = doGet(getVersionedAPIPath(nextUrl, namespace));
+      verifyLogs(response, entityId, format, false, false, escape, 10, 5);
+    }
   }
 
   private void testNextNoMax(String appId, String entityType, String entityId, String namespace) throws Exception {
-    String nextNoMaxUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s",
-                                        appId, entityType, entityId, getFromOffset(10));
-    HttpResponse response = doGet(getVersionedAPIPath(nextNoMaxUrl, namespace));
-    verifyLogs(response, entityId, "text", false, false, true, 50, 10);
+    for (String format : FORMATS) {
+      String nextNoMaxUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&format=%s",
+                                          appId, entityType, entityId, getFromOffset(10), format);
+      HttpResponse response = doGet(getVersionedAPIPath(nextNoMaxUrl, namespace));
+      verifyLogs(response, entityId, format, false, false, true, 50, 10);
+    }
   }
 
   private void testNextFilter(String appId, String entityType, String entityId, String namespace) throws Exception {
-    String nextFilterUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=16&filter=loglevel=ERROR", appId,
-                                         entityType, entityId, getFromOffset(12));
-    HttpResponse response = doGet(getVersionedAPIPath(nextFilterUrl, namespace));
-    verifyLogs(response, entityId, "text", true, false, true, 8, 12);
+    for (String format : FORMATS) {
+      String nextFilterUrl =
+        String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=16&filter=loglevel=ERROR&format=%s",
+                      appId, entityType, entityId, getFromOffset(12), format);
+      HttpResponse response = doGet(getVersionedAPIPath(nextFilterUrl, namespace));
+      verifyLogs(response, entityId, format, true, false, true, 8, 12);
+    }
   }
 
   private void testNextNoFrom(String appId, String entityType, String entityId, String namespace) throws Exception {
-    String nextNoFromUrl = String.format("apps/%s/%s/%s/logs/next", appId, entityType, entityId);
-    HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
-    verifyLogs(response, entityId, "text", false, false, true, 50, 30);
+    for (String format : FORMATS) {
+      String nextNoFromUrl = String.format("apps/%s/%s/%s/logs/next?format=%s", appId, entityType, entityId, format);
+      HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
+      verifyLogs(response, entityId, format, false, false, true, 50, 30);
+    }
   }
 
   private void testNextRunId(String appId, String entityType, String entityId, String namespace, String format,
@@ -417,10 +426,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private void testPrev(String appId, String entityType, String entityId, String namespace) throws Exception {
-    String prevUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=10",
-                                   appId, entityType, entityId, getToOffset(25));
-    HttpResponse response = doGet(getVersionedAPIPath(prevUrl, namespace));
-    verifyLogs(response, entityId, "text", false, false, true, 10, 15);
+    for (String format : FORMATS) {
+      String prevUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=10&format=%s",
+                                     appId, entityType, entityId, getToOffset(25), format);
+      HttpResponse response = doGet(getVersionedAPIPath(prevUrl, namespace));
+      verifyLogs(response, entityId, format, false, false, true, 10, 15);
+    }
   }
 
   private void testPrevRunId(String appId, String entityType, String entityId, String namespace, String format,
@@ -448,31 +459,40 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private void testNextSystemLogs(String serviceName) throws Exception {
-    String prevUrl = String.format("/%s/system/services/%s/logs/next?max=10",
-                                   Constants.Gateway.API_VERSION_3_TOKEN, serviceName);
-    HttpResponse response = doGet(prevUrl);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    for (String format : FORMATS) {
+      String prevUrl = String.format("/%s/system/services/%s/logs/next?max=10&format=%s",
+                                     Constants.Gateway.API_VERSION_3_TOKEN, serviceName, format);
+      HttpResponse response = doGet(prevUrl);
+      Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    }
   }
 
   private void testPrevSystemLogs(String serviceName) throws Exception {
-    String prevUrl = String.format("/%s/system/services/%s/logs/prev?max=10",
-                                   Constants.Gateway.API_VERSION_3_TOKEN, serviceName);
-    HttpResponse response = doGet(prevUrl);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    for (String format : FORMATS) {
+      String prevUrl = String.format("/%s/system/services/%s/logs/prev?max=10&format=%s",
+                                     Constants.Gateway.API_VERSION_3_TOKEN, serviceName, format);
+      HttpResponse response = doGet(prevUrl);
+      Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    }
   }
 
   private void testPrevNoMax(String appId, String entityType, String entityId, String namespace) throws Exception {
-    String prevNoMaxUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s",
-                                        appId, entityType, entityId, getToOffset(70));
-    HttpResponse response = doGet(getVersionedAPIPath(prevNoMaxUrl, namespace));
-    verifyLogs(response, entityId, "text", false, false, true, 50, 20);
+    for (String format : FORMATS) {
+      String prevNoMaxUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&format=%s",
+                                          appId, entityType, entityId, getToOffset(70), format);
+      HttpResponse response = doGet(getVersionedAPIPath(prevNoMaxUrl, namespace));
+      verifyLogs(response, entityId, format, false, false, true, 50, 20);
+    }
   }
 
   private void testPrevFilter(String appId, String entityType, String entityId, String namespace) throws Exception {
-    String prevFilterUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=16&filter=loglevel=ERROR",
-                                         appId, entityType, entityId, getToOffset(41));
-    HttpResponse response = doGet(getVersionedAPIPath(prevFilterUrl, namespace));
-    verifyLogs(response, entityId, "text", true, false, true, 8, 26);
+    for (String format : FORMATS) {
+      String prevFilterUrl =
+        String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=16&format=%s&filter=loglevel=ERROR",
+                      appId, entityType, entityId, getToOffset(41), format);
+      HttpResponse response = doGet(getVersionedAPIPath(prevFilterUrl, namespace));
+      verifyLogs(response, entityId, format, true, false, true, 8, 26);
+    }
   }
 
   private void testPrevNoFrom(String appId, String entityType, String entityId, String namespace) throws Exception {
@@ -509,48 +529,52 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private void testLogs(String appId, String entityType, String entityId, String namespace) throws Exception {
     long startTime = MockLogReader.getMockTimeSecs(20);
     long stopTime = MockLogReader.getMockTimeSecs(35);
-    String logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s",
-                                   appId, entityType, entityId, startTime, stopTime);
-    HttpResponse response = doGet(getVersionedAPIPath(logsUrl, namespace));
-    verifyLogs(response, entityId, "text", false, true, true, 15, 20);
+    for (String format : FORMATS) {
+      String logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s",
+                                     appId, entityType, entityId, startTime, stopTime, format);
+      HttpResponse response = doGet(getVersionedAPIPath(logsUrl, namespace));
+      verifyLogs(response, entityId, format, false, true, true, 15, 20);
 
-    // Try with invalid time range -> start > stop
-    logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s",
-                            appId, entityType, entityId, 350, 300);
-    response = doGet(getVersionedAPIPath(logsUrl, namespace));
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
+      // Try with invalid time range -> start > stop
+      logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s",
+                              appId, entityType, entityId, 350, 300, format);
+      response = doGet(getVersionedAPIPath(logsUrl, namespace));
+      Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
+    }
   }
 
   private void testLogsFilter(String appId, String entityType, String entityId, String namespace) throws Exception {
     long startTime = MockLogReader.getMockTimeSecs(20);
     long stopTime = MockLogReader.getMockTimeSecs(35);
-    String logsFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=loglevel=ERROR", appId,
-                                         entityType, entityId, startTime, stopTime);
-    HttpResponse response = doGet(getVersionedAPIPath(logsFilterUrl, namespace));
-    verifyLogs(response, entityId, "text", true, true, true, 8, 20);
+    for (String format : FORMATS) {
+      String logsFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s&filter=loglevel=ERROR", appId,
+                                           entityType, entityId, startTime, stopTime, format);
+      HttpResponse response = doGet(getVersionedAPIPath(logsFilterUrl, namespace));
+      verifyLogs(response, entityId, format, true, true, true, 8, 20);
 
-    // Test origin filter
-    String originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=.origin=plugin", appId,
-                                             entityType, entityId, startTime, stopTime);
-    // There are 2 logs with .origin=plugin and loglevel=ERROR starting from 24
-    response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20loglevel=ERROR", namespace));
-    verifyLogs(response, entityId, "text", 6, true, true, 2, 24, ImmutableList.<String>of());
+      // Test origin filter
+      String originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s&filter=.origin=plugin",
+                                             appId, entityType, entityId, startTime, stopTime, format);
+      // There are 2 logs with .origin=plugin and loglevel=ERROR starting from 24
+      response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20loglevel=ERROR", namespace));
+      verifyLogs(response, entityId, format, 6, true, true, 2, 24, ImmutableList.of());
 
-    // There are 3 logs with .origin=program and MDC:eventType=lifeCycle starting from 22
-    originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=.origin=program", appId,
-                                    entityType, entityId, startTime, stopTime);
-    response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20MDC:eventType=lifecycle", namespace));
-    verifyLogs(response, entityId, "text", 6, true, true, 3, 22, ImmutableList.<String>of());
+      // There are 3 logs with .origin=program and MDC:eventType=lifeCycle starting from 22
+      originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s&filter=.origin=program", appId,
+                                      entityType, entityId, startTime, stopTime, format);
+      response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20MDC:eventType=lifecycle", namespace));
+      verifyLogs(response, entityId, format, 6, true, true, 3, 22, ImmutableList.of());
 
-    originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=loglevel=ERROR", appId,
-                                    entityType, entityId, startTime, stopTime);
-    // Test complex filters with combining AndFilter and OrFilter. Filters are combined from right to left.
-    // Therefore, ".origin=plugin OR .origin=program OR .origin=system" is first combined to a single OrFilter,
-    // which all logs can pass. Then loglevel=ERROR is combined with this OrFilter to form an AndFilter.
-    // The whole filter therefore filters out logs with loglevel=ERROR.
-    response = doGet(getVersionedAPIPath(
-      originFilterUrl + "%20AND%20.origin=plugin%20OR%20.origin=program%20OR%20.origin=system", namespace));
-    verifyLogs(response, entityId, "text", 2, true, true, 8, 20, ImmutableList.<String>of());
+      originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s&filter=loglevel=ERROR", appId,
+                                      entityType, entityId, startTime, stopTime, format);
+      // Test complex filters with combining AndFilter and OrFilter. Filters are combined from right to left.
+      // Therefore, ".origin=plugin OR .origin=program OR .origin=system" is first combined to a single OrFilter,
+      // which all logs can pass. Then loglevel=ERROR is combined with this OrFilter to form an AndFilter.
+      // The whole filter therefore filters out logs with loglevel=ERROR.
+      response = doGet(getVersionedAPIPath(
+        originFilterUrl + "%20AND%20.origin=plugin%20OR%20.origin=program%20OR%20.origin=system", namespace));
+      verifyLogs(response, entityId, format, 2, true, true, 8, 20, ImmutableList.of());
+    }
   }
 
   /**
@@ -571,7 +595,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
                           boolean fullLogs, boolean escapeChoice, int expectedEvents, int expectedStartValue)
     throws IOException {
     verifyLogs(response, entityId, format, runIdOrFilter, fullLogs, escapeChoice, expectedEvents, expectedStartValue,
-    ImmutableList.<String>of());
+    ImmutableList.of());
   }
 
   /**
@@ -676,11 +700,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private String getFromOffset(long offset) throws UnsupportedEncodingException {
+  private String getFromOffset(long offset) {
     return FormattedTextLogEvent.formatLogOffset(new LogOffset(offset, -1));
   }
 
-  private String getToOffset(long offset) throws UnsupportedEncodingException {
+  private String getToOffset(long offset) {
     return FormattedTextLogEvent.formatLogOffset(new LogOffset(offset, Long.MAX_VALUE));
   }
 
