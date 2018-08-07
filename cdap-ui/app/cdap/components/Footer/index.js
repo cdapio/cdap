@@ -15,7 +15,7 @@
  */
 
 import React, { PureComponent } from 'react';
-import {objectQuery} from 'services/helpers';
+import {objectQuery} from '../../services/helpers';
 import T from 'i18n-react';
 
 require('./Footer.scss');

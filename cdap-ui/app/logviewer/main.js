@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -96,6 +96,11 @@ angular
     // for debugging... or to trigger easter eggs?
     window.$go = $state.go;
   })
+
+  .run(function() {
+    window.CaskCommon.ThemeHelper.applyTheme();
+  })
+
   .run(function($rootScope, MY_CONFIG, myAuth, MYAUTH_EVENT) {
     $rootScope.$on('$stateChangeStart', function () {
       if (MY_CONFIG.securityEnabled) {
