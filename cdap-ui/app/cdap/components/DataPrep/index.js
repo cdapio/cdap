@@ -26,7 +26,6 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ee from 'event-emitter';
-import NamespaceStore from 'services/NamespaceStore';
 import {setWorkspace, getWorkspaceList} from 'components/DataPrep/store/DataPrepActionCreator';
 import WorkspaceTabs from 'components/DataPrep/WorkspaceTabs';
 import IconSVG from 'components/IconSVG';
@@ -35,6 +34,7 @@ import {checkDataPrepHigherVersion} from 'components/DataPrep/helper';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 
 require('./DataPrep.scss');
 
@@ -123,7 +123,7 @@ export default class DataPrep extends Component {
       return;
     }
 
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    const namespace = getCurrentNamespace();
 
     MyDataPrepApi.ping({ namespace })
       .subscribe(() => {

@@ -45,6 +45,8 @@ import {objectQuery, preventPropagation} from 'services/helpers';
 import Helmet from 'react-helmet';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import queryString from 'query-string';
+import Version from 'services/VersionRange/Version';
+import { MIN_DATAPREP_VERSION } from 'components/DataPrep';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -140,7 +142,24 @@ export default class DataPrepConnections extends Component {
     let namespace = getCurrentNamespace();
 
     MyDataPrepApi.ping({ namespace })
-      .subscribe(() => {
+      .combineLatest(MyDataPrepApi.getApp({ namespace }))
+      .subscribe((res) => {
+        const appSpec = res[1];
+
+        let minimumVersion = new Version(MIN_DATAPREP_VERSION);
+
+        if (minimumVersion.compareTo(new Version(appSpec.artifactVersion)) > 0) {
+          console.log('dataprep minimum version not met');
+
+          this.setState({
+            backendChecking: false,
+            backendDown: true
+          });
+
+          return;
+        }
+
+
         this.setState({
           backendChecking: false,
           backendDown: false
