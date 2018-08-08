@@ -22,9 +22,12 @@ import SystemProfilesAccordion from 'components/Administration/AdminConfigTabCon
 import SystemPrefsAccordion from 'components/Administration/AdminConfigTabContent/SystemPrefsAccordion';
 import {MyNamespaceApi} from 'api/namespace';
 import {Link} from 'react-router-dom';
+import Helmet from 'react-helmet';
 import T from 'i18n-react';
 
 require('./AdminConfigTabContent.scss');
+
+const I18N_PREFIX = 'features.Administration.Configure';
 
 export const ADMIN_CONFIG_ACCORDIONS = {
   namespaces: 'NAMESPACES',
@@ -80,13 +83,14 @@ export default class AdminConfigTabContent extends Component {
   render() {
     return (
       <div className="admin-config-tab-content">
+        <Helmet title={T.translate(`${I18N_PREFIX}.pageTitle`)} />
         <div className="action-buttons">
           <ReloadSystemArtifacts />
           <Link
             to="/httpexecutor"
             className="btn btn-secondary"
           >
-            {T.translate(`features.Administration.Configure.buttons.MakeRESTCalls.label`)}
+            {T.translate(`${I18N_PREFIX}.buttons.MakeRESTCalls.label`)}
           </Link>
         </div>
         <NamespacesAccordion

@@ -87,11 +87,13 @@ export default class Experiments extends Component {
     }
 
     return (
-      <Switch>
-        <Route exact path="/ns/:namespace/experiments" component={ExperimentsList} />
-        <Route exact path="/ns/:namespace/experiments/create" component={ExperimentsCreateView} />
-        <Route exact path="/ns/:namespace/experiments/:experimentId" component={ExperimentDetailedView} />
-      </Switch>
+      <div>
+        <Switch>
+          <Route exact path="/ns/:namespace/experiments" component={ExperimentsList} />
+          <Route exact path="/ns/:namespace/experiments/create" component={ExperimentsCreateView} />
+          <Route exact path="/ns/:namespace/experiments/:experimentId" component={ExperimentDetailedView} />
+        </Switch>
+      </div>
     );
   }
 }

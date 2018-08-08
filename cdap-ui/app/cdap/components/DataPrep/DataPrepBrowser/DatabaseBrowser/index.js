@@ -28,6 +28,7 @@ import IconSVG from 'components/IconSVG';
 import ee from 'event-emitter';
 import {objectQuery} from 'services/helpers';
 import {setDatabaseAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 
 require('./DatabaseBrowser.scss');
 
@@ -220,6 +221,10 @@ export default class DatabaseBrowser extends Component {
 
     return (
       <div className="database-browser">
+        <DataPrepBrowserPageTitle
+          browserI18NName="DatabaseBrowser"
+          browserStateName="database"
+        />
         <div className="top-panel">
           <div className="title">
             <h5>

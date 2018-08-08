@@ -25,6 +25,7 @@ import DatasetList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/Dat
 import TableList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/TableList';
 import {Route, Switch} from 'react-router-dom';
 import Page404 from 'components/404';
+import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 
 require('./BigQueryBrowser.scss');
 
@@ -45,6 +46,16 @@ export default class BiqQueryBrowser extends Component {
     return (
       <Provider store={DataPrepBrowserStore}>
         <div className="bigquery-browser">
+          {
+            this.props.enableRouting ?
+              <DataPrepBrowserPageTitle
+                browserI18NName="BigQueryBrowser"
+                browserStateName="bigquery"
+                locationToPathInState={['datasetId']}
+              />
+            :
+              null
+          }
           <div className="top-panel">
             <div className="title">
               <h5>

@@ -16,6 +16,7 @@
 
 import {combineReducers, createStore} from 'redux';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import {composeEnhancers} from 'services/helpers';
 
 const defaultAction = {
   action : '',
@@ -255,7 +256,7 @@ const DataPrepStore = createStore(
     error: errorInitialState,
     workspaces: workspacesInitialState
   },
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  composeEnhancers('DataPrepStore')()
 );
 
 export default DataPrepStore;

@@ -111,8 +111,6 @@ function setWorkspaceRetry(params, observer, workspaceId) {
 
       MyDataPrepApi.execute(params, requestBody)
         .subscribe((response) => {
-          observer.next(response);
-
           DataPrepStore.dispatch({
             type: DataPrepActions.setWorkspace,
             payload: {
@@ -127,6 +125,7 @@ function setWorkspaceRetry(params, observer, workspaceId) {
             }
           });
 
+          observer.next(response);
           fetchColumnsInformation(params, requestBody, response.header);
 
         }, (err) => {
