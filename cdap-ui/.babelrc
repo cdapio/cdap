@@ -1,21 +1,31 @@
 {
   "presets": [
     [
-      "env",
+      "@babel/env",
       {
         "targets": {
           "browsers": [
             "last 10 versions",
             "safari >= 7"
           ]
-        }
+        },
+        "modules": false
       }
     ],
-    "stage-2",
-    "react"
+    [
+      "@babel/preset-stage-2",
+      {
+        "decoratorsLegacy": true
+      }
+    ],
+    "@babel/preset-react",
+    "@babel/preset-typescript"
   ],
   "comments": true,
   "plugins": [
-    "lodash"
+    "lodash",
+    "@babel/proposal-class-properties",
+    "@babel/proposal-object-rest-spread",
+    "@babel/plugin-syntax-dynamic-import"
   ]
 }

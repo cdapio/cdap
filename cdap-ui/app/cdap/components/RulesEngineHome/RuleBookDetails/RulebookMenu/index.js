@@ -145,12 +145,13 @@ export default class RulebookMenu extends Component {
           </DropdownToggle>
           <DropdownMenu right>
             {
-              menuItems.map((menu) => {
+              menuItems.map((menu, i) => {
                 if (menu.label === 'divider') {
-                  return <hr />;
+                  return <hr key={i} />;
                 }
                 return (
                   <DropdownItem
+                    key={i}
                     title={menu.label}
                     onClick={menu.onClick}
                   >

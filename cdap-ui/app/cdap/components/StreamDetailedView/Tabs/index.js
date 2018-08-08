@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
+import { Nav, NavItem, TabContent} from 'reactstrap';
 import isNil from 'lodash/isNil';
 import {Route, NavLink as RouterNavLink} from 'react-router-dom';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
@@ -54,7 +54,7 @@ export default class StreamDetailedViewTabs extends Component {
       <div className="overview-tab">
         <Nav tabs>
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/usage`}
                 activeClassName="active"
@@ -65,22 +65,22 @@ export default class StreamDetailedViewTabs extends Component {
               >
               {T.translate(`${PREFIX}.usage`)}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/schema`}
                 activeClassName="active"
               >
                 {T.translate(`${PREFIX}.schema`)}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/programs`}
                 activeClassName="active"
@@ -89,40 +89,40 @@ export default class StreamDetailedViewTabs extends Component {
                   count: this.state.entity.programs.length
                 })}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/lineage`}
                 activeClassName="active"
               >
                 {T.translate(`${PREFIX}.lineage`)}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/audit`}
                 activeClassName="active"
               >
                 {T.translate(`${PREFIX}.auditLog`)}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
 
           <NavItem>
-            <NavLink>
+            <div className="nav-link">
               <RouterNavLink
                 to={`${baseLinkPath}/properties`}
                 activeClassName="active"
               >
                 {T.translate(`${PREFIX}.properties`)}
               </RouterNavLink>
-            </NavLink>
+            </div>
           </NavItem>
         </Nav>
         <TabContent>

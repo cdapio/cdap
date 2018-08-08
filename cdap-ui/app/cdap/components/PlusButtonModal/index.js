@@ -22,7 +22,7 @@ import ResourceCenter from 'components/ResourceCenter';
 import IconSVG from 'components/IconSVG';
 import CardActionFeedback from 'components/CardActionFeedback';
 import classnames from 'classnames';
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import { CSSTransition } from 'react-transition-group';
 import T from 'i18n-react';
 
 require('./PlusButtonModal.scss');
@@ -80,6 +80,7 @@ export default class PlusButtonModal extends Component {
         size="lg"
         backdrop='static'
         zIndex="1061"
+        fade
       >
         <ModalHeader>
           <span className="float-xs-left">
@@ -97,10 +98,11 @@ export default class PlusButtonModal extends Component {
           </div>
         </ModalHeader>
         <ModalBody>
-          <ReactCSSTransitionGroup
+          <CSSTransition
             transitionName="plus-button-modal-content"
             transitionEnterTimeout={500}
             transitionLeaveTimeout={300}
+            timeout={5000}
             component="div"
           >
             {
@@ -112,7 +114,7 @@ export default class PlusButtonModal extends Component {
                   onError={this.onError}
                 />
             }
-          </ReactCSSTransitionGroup>
+          </CSSTransition>
         </ModalBody>
         { this.renderError() }
       </Modal>

@@ -76,9 +76,9 @@ class Rule extends Component {
     detailsLoading: false,
     ruleDetails: null,
     edit: false,
-    errorMessage: false,
+    errorMessage: '',
     loading: false,
-    extendedMessage: false,
+    extendedMessage: '',
     confirmationModalIsOpen: false
   };
 

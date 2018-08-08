@@ -173,16 +173,10 @@ export default class WorkspaceTabs extends Component {
 
     let list = this.state.dropdownTabs;
 
-    let tetherConfig = {
-      classes: {
-        element: 'workspace-list-popover'
-      }
-    };
-
     return (
       <div className="workspace-tab workspace-dropdown text-xs-center">
         <UncontrolledPopover
-          tetherOption={tetherConfig}
+          popoverClassName="workspace-list-popover"
         >
           {
             list.map((workspace) => {

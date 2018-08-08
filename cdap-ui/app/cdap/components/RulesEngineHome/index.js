@@ -39,7 +39,7 @@ export default class RulesEngineHome extends Component {
     rulebookid: PropTypes.string
   };
 
-  defaultProps = {
+  static defaultProps = {
     onApply: () => {}
   };
 
@@ -79,7 +79,7 @@ export default class RulesEngineHome extends Component {
     }
   }
 
-  componentDidUnmount() {
+  componentWillUnmount() {
     resetStore();
   }
 

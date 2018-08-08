@@ -25,7 +25,7 @@ require('./PlusButton.scss');
 const PLUSBUTTON_DIMENSION = 58;
 
 export default class PlusButton extends Component {
-  propTypes = {
+  static propTypes = {
     contextItems: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
       to: PropTypes.string,
@@ -84,10 +84,10 @@ export default class PlusButton extends Component {
     return (
       <ul>
         {
-          this.props.contextItems.map(item => {
+          this.props.contextItems.map((item, i) => {
             if (item.to) {
               return (
-                <li>
+                <li key={i}>
                   <Link to={item.to} key={item.label}>{item.label}</Link>
                 </li>
               );

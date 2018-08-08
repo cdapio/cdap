@@ -188,6 +188,6 @@ export default class ExtractFields extends Component {
 
 ExtractFields.propTypes = {
   isOpen: PropTypes.bool,
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func
 };

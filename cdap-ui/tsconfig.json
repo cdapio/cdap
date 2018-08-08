@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "outDir": "./cdap_dist",
+    "allowJs": true,
+    "checkJs": false,
+    "module": "esnext",
+    "target": "es5",
+    "jsx": "react",
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "lib": [
+      "es2015",
+      "dom"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "components/*": ["./app/cdap/components/*"],
+      "services/*": ["./app/cdap/services/*"],
+      "api/*": ["./app/cdap/api/*"],
+      "lib/*": ["./app/cdap/lib/*"],
+      "styles/*": ["./app/cdap/styles/*"]
+    }
+  },
+  "include": [
+    "app/cdap/**/*.js",
+    "app/cdap/**/*.ts",
+    "app/cdap/**/*.jsx",
+    "app/cdap/**/*.tsx",
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

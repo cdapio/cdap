@@ -48,7 +48,7 @@ export default class Overview extends Component {
       'stream': StreamOverview
     };
   }
-  componentWillMount() {
+  componentDidMount() {
     this.searchStoreSubscription = SearchStore.subscribe(() => {
       let searchState = SearchStore.getState().search;
       if (isNil(searchState.overviewEntity)) {
@@ -101,8 +101,7 @@ export default class Overview extends Component {
           }
         );
     });
-  }
-  componentDidMount() {
+
     this.bindKeyboardShortcuts();
     this.scrollEntityToView();
   }

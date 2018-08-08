@@ -96,30 +96,31 @@ export default class MaskSelection extends Component {
     if (!this.state.showPopover) {
       return null;
     }
-    let tetherConfig = {
-      classPrefix: POPOVERTHETHERCLASSNAME,
-      attachment: 'top right',
-      targetAttachment: 'bottom left',
-      constraints: [
-        {
-          to: 'scrollParent',
-          attachment: 'together'
-        }
-      ]
-    };
+    /*
+      FIXME: Follow up on this issue: https://github.com/FezVrasta/popper.js/issues/276
+      The right fix should be to upgrade react-popper to 1.0 and use in-house popover
+      to make sure this works.
+    */
+    let tableContainer = document.getElementById('dataprep-table-id');
     return (
       <Popover
-        placement="bottom left"
-        className="cut-directive-popover"
+        placement="auto"
+        className="highlight-popover"
+        innerClassName="cut-directive-popover"
         isOpen={this.state.showPopover}
         target={`highlight-cell-${this.state.textSelectionRange.index}`}
-        toggle={this.togglePopover}
-        tether={tetherConfig}
-        tetherRef={(ref) => this.tetherRef = ref}
+        modifiers={{
+          shift: {
+            order: 800,
+            enabled: true
+          }
+        }}
+        container={tableContainer}
+        hideArrow
       >
-        <PopoverTitle className={CELLHIGHLIGHTCLASSNAME}>{T.translate(`${PREFIX}.popoverTitle`)}</PopoverTitle>
+        <PopoverTitle className={`${CELLHIGHLIGHTCLASSNAME} popover-title`}>{T.translate(`${PREFIX}.popoverTitle`)}</PopoverTitle>
         <PopoverContent
-          className={CELLHIGHLIGHTCLASSNAME}
+          className={`${CELLHIGHLIGHTCLASSNAME} popover-content`}
           onClick={this.preventPropagation}
         >
           <p className={`${CELLHIGHLIGHTCLASSNAME}`}>

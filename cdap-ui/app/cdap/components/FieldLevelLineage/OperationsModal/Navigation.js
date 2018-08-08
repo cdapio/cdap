@@ -29,7 +29,7 @@ function NavigationView({activeIndex, limit, prev, next}) {
     <div className="navigation">
       <span
         className={classnames('nav-icon', { 'disabled': prevDisabled })}
-        onClick={!prevDisabled && prev}
+        onClick={!prevDisabled ? prev : undefined}
       >
         <IconSVG name="icon-caret-left" />
       </span>
@@ -38,7 +38,7 @@ function NavigationView({activeIndex, limit, prev, next}) {
       <span>{limit}</span>
       <span
         className={classnames('nav-icon', { 'disabled': nextDisabled })}
-        onClick={!nextDisabled && next}
+        onClick={!nextDisabled ? next : undefined}
       >
         <IconSVG name="icon-caret-right" />
       </span>

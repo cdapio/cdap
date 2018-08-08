@@ -170,5 +170,5 @@ export default class MaskData extends Component {
 MaskData.propTypes = {
   isOpen: PropTypes.bool,
   onComplete: PropTypes.func,
-  column: PropTypes.string
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string])
 };

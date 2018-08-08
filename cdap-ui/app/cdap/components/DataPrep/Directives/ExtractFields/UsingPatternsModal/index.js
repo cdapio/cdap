@@ -449,6 +449,6 @@ export default class UsingPatternsModal extends Component {
 UsingPatternsModal.propTypes = {
   onClose: PropTypes.func,
   isOpen: PropTypes.isOpen,
-  column: PropTypes.string,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func
 };

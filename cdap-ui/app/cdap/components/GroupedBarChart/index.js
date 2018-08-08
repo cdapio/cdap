@@ -74,7 +74,7 @@ GroupedBarChart.propTypes = {
     count: PropTypes.number
   })).isRequired,
   customEncoding: PropTypes.object,
-  width: PropTypes.oneOfType(PropTypes.number, PropTypes.func),
+  width: PropTypes.oneOfType([PropTypes.number, PropTypes.func]),
   heightOffset: PropTypes.number,
   tooltipOptions:  PropTypes.object
 };

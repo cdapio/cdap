@@ -73,7 +73,7 @@ export default class OperationsTable extends Component {
                           this.state.activeOrigin === field.origin;
 
       return (
-        <span>
+        <span key={i}>
           <span
             className={classnames('input-field', { 'selected': isSelected })}
             onClick={this.handleInputClick.bind(this, field, operation)}

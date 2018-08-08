@@ -48,6 +48,7 @@ $workspace-link-active-color: $brand-primary-color;
 .workspace-list-popover.popover {
   width: 250px;
   border-radius: 0;
+  margin-top: 3px;
 
   &.bs-tether-element-attached-right {
     margin-left: 0;

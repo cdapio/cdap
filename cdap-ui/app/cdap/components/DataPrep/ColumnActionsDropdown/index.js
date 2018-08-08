@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import {isDescendant} from 'services/helpers';
-import {Popover, PopoverContent} from 'reactstrap';
+import {Popover, PopoverBody} from 'reactstrap';
 import {Observable} from 'rxjs/Observable';
 import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
@@ -279,28 +279,27 @@ export default class ColumnActionsDropdown extends Component {
 
   renderMenu() {
     let tableContainer = document.getElementById('dataprep-table-id');
-
-    const tetherOption = {
-      attachment: 'top right',
-      targetAttachment: 'bottom left',
-      classPrefix: 'column_actions_dropdown',
-      constraints: [
-        {
-          to: tableContainer,
-          attachment: 'none together'
-        }
-      ]
-    };
-
     return (
       <Popover
-        placement="bottom left"
+        placement="bottom-start"
         isOpen={this.state.dropdownOpen}
         target={`dataprep-action-${this.dropdownId}`}
-        className="dataprep-columns-action-dropdown"
-        tether={tetherOption}
+        innerClassName="dataprep-columns-action-dropdown"
+        className="column_actions_dropdown-element"
+        modifiers={{
+          shift: {
+            order: 800,
+            enabled: true
+          },
+          preventOverflow: {
+            boundariesElement: tableContainer,
+            priority: ['top', 'bottom'],
+            escapeWithReference: true
+          }
+        }}
+        hideArrow
       >
-        <PopoverContent>
+        <PopoverBody>
           <ScrollableList target={`dataprep-action-${this.dropdownId}`}>
               {
                 this.directives.map((directive, index) => {
@@ -327,7 +326,7 @@ export default class ColumnActionsDropdown extends Component {
                 return (
                   <div
                     key={directive.id}
-                    onClick={!disabled && this.directiveClick.bind(this, directive.id)}
+                    onClick={!disabled ? this.directiveClick.bind(this, directive.id) : undefined}
                     className={classnames({'disabled': disabled})}
                   >
                     <Tag
@@ -342,7 +341,7 @@ export default class ColumnActionsDropdown extends Component {
               })
             }
           </ScrollableList>
-        </PopoverContent>
+        </PopoverBody>
       </Popover>
     );
   }

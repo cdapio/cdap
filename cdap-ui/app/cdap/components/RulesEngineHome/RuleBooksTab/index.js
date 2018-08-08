@@ -87,7 +87,7 @@ export default class RuleBooksTab extends Component {
         this.state
           .rulebooks
           .map(rulebook => {
-            return (<RuleBook bookDetails={rulebook}/>);
+            return (<RuleBook key={rulebook.id} bookDetails={rulebook}/>);
           })
       );
     }
@@ -112,7 +112,9 @@ export default class RuleBooksTab extends Component {
     return (
       fuse.search(this.state.searchStr)
         .map(rulebook => {
-          return (<RuleBook bookDetails={rulebook}/>);
+          return (
+            <RuleBook key={rulebook.id} bookDetails={rulebook}/>
+          );
         })
     );
   }
@@ -124,7 +126,7 @@ export default class RuleBooksTab extends Component {
           {T.translate(`${PREFIX}.searchLabel`)}
         </span>
         <InputGroup className="rule-books-search-group">
-          <InputGroupAddon>
+          <InputGroupAddon addonType="prepend">
             <IconSVG name="icon-search" />
           </InputGroupAddon>
           <Input
@@ -144,11 +146,11 @@ export default class RuleBooksTab extends Component {
             <div onClick={this.toggleImportWizard}>
               <strong> {T.translate(`${PREFIX}.importrulebook`)} </strong>
               <IconSVG name="icon-import" />
-              <ImportRulebookWizard
-                isOpen={this.state.isOpenImportWizard}
-                onClose={this.toggleImportWizard}
-              />
             </div>
+            <ImportRulebookWizard
+              isOpen={this.state.isOpenImportWizard}
+              onClose={this.toggleImportWizard}
+            />
           </div>
           {this.renderRulebooks()}
         </div>

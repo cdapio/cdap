@@ -110,12 +110,13 @@ export default class ColumnTextSelection extends Component {
       this.setState({
         showPopover: true,
         textSelectionRange
+      }, () => {
+        this.props.onSelect({
+          textSelectionRange,
+          rowNumber: index
+        });
+        this.props.togglePopover(true);
       });
-      this.props.onSelect({
-        textSelectionRange,
-        rowNumber: index
-      });
-      this.props.togglePopover(true);
       this.newColName = this.props.columns[0] + '_copy';
     } else {
       if (this.state.showPopover) {

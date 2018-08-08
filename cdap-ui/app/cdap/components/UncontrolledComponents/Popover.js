@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Popover, PopoverContent} from 'reactstrap';
+import {Popover, PopoverBody} from 'reactstrap';
 import {isDescendant} from 'services/helpers';
 import Mousetrap from 'mousetrap';
 import {Observable} from 'rxjs/Observable';
@@ -66,15 +66,16 @@ export default class UncontrolledPopover extends Component {
     return (
       <Popover
         toggle={this.togglePopover}
-        placement="bottom right"
+        placement="bottom-end"
         isOpen={this.state.dropdownOpen}
         target={this.state.id}
-        className="dataprep-toggle-all-dropdown"
+        innerClassName="dataprep-toggle-all-dropdown"
+        className={this.props.popoverClassName}
         tether={tetherOption}
       >
-        <PopoverContent>
+        <PopoverBody>
           {this.props.children}
-        </PopoverContent>
+        </PopoverBody>
       </Popover>
     );
   }
@@ -117,5 +118,6 @@ UncontrolledPopover.propTypes = {
   tetherOption: PropTypes.object,
   documentElement: PropTypes.node,
   icon: PropTypes.string,
-  className: PropTypes.string
+  className: PropTypes.string,
+  popoverClassName: PropTypes.string
 };

@@ -52,6 +52,8 @@ export default class StartStopAction extends Component {
     this.toggleModal = this.toggleModal.bind(this);
   }
 
+  tooltipID = `A-${this.props.entity.uniqueId}`;
+
   toggleTooltip() {
     this.setState({ tooltipOpen : !this.state.tooltipOpen });
   }
@@ -151,7 +153,6 @@ export default class StartStopAction extends Component {
         iconClass = 'text-danger';
       }
     }
-    let tooltipID = `${this.props.entity.uniqueId}-${this.startStop}`;
 
     return (
       <span className="btn btn-secondary btn-sm">
@@ -187,12 +188,12 @@ export default class StartStopAction extends Component {
                 icon={icon}
                 iconClasses={iconClass}
                 action={this.toggleModal}
-                id={tooltipID}
+                id={this.tooltipID}
               />
               <Tooltip
                 placement="top"
                 isOpen={this.state.tooltipOpen}
-                target={tooltipID}
+                target={this.tooltipID}
                 toggle={this.toggleTooltip}
                 delay={0}
               >

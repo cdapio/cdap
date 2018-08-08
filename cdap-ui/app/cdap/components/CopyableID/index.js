@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import Clipboard from 'clipboard';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
@@ -65,26 +65,33 @@ export default class CopyableID extends Component {
     return T.translate(`${PREFIX}.notAvailable`);
   }
 
-  renderTooltip(idlabel) {
-    if (!this.props.tooltipText && !this.state.showTooltip) {
-      return null;
+  render() {
+    let idlabel = `A-${uuidV4()}`;
+    if (this.props.idprefix) {
+      idlabel = `${this.props.idprefix}-${this.props.id}`;
     }
-
-    let tetherConfig = {
-      classPrefix: 'copyable-id-tooltip'
-    };
-    let tooltipProps = {
-      target: idlabel,
-      placement: this.props.placement || 'right',
-      tether: tetherConfig,
-      delay: 0
-    };
-    if (this.state.showTooltip) {
-      tooltipProps.isOpen = true;
-    }
+    // FIXME: Not sure how else to do this. Looks adhoc. Need this for copy to clipboard.
+    new Clipboard(`#${idlabel}`);
+    const target = (
+      <span
+        className="copyable-id btn-link"
+        id={idlabel}
+        onClick={this.onIDClickHandler.bind(this, this.props.id)}
+        onMouseOut={() => {
+          this.state.showTooltip ? this.onIDClickHandler() : null;
+        }}
+        data-clipboard-text={this.props.id}
+      >
+        <span>{this.props.label}</span>
+      </span>
+    );
     return (
-      <UncontrolledTooltip
-        {...tooltipProps}
+      <Popover
+        target={() => target}
+        showOn="Hover"
+        bubbleEvent={false}
+        placement="right"
+        className="copyable-id"
       >
         <span>{this.renderToolTipText()}</span>
         {
@@ -96,30 +103,7 @@ export default class CopyableID extends Component {
           :
             null
         }
-      </UncontrolledTooltip>
-    );
-  }
-
-  render() {
-    let idlabel = `A-${uuidV4()}`;
-    if (this.props.idprefix) {
-      idlabel = `${this.props.idprefix}-${this.props.id}`;
-    }
-    // FIXME: Not sure how else to do this. Looks adhoc. Need this for copy to clipboard.
-    new Clipboard(`#${idlabel}`);
-    return (
-      <span
-        className="copyable-id btn-link"
-        id={idlabel}
-        onClick={this.onIDClickHandler.bind(this, this.props.id)}
-        onMouseOut={() => {
-          this.state.showTooltip ? this.onIDClickHandler() : null;
-        }}
-        data-clipboard-text={this.props.id}
-      >
-        <span>{this.props.label}</span>
-        {this.renderTooltip(idlabel)}
-      </span>
+      </Popover>
     );
   }
 }

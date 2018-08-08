@@ -41,7 +41,7 @@ export default class CreateRule extends Component {
   }
 
   state = {
-    when: null,
+    when: '',
     description: '',
     then: [{
       property: '',
@@ -106,7 +106,7 @@ export default class CreateRule extends Component {
               value={this.state.name}
               onChange={this.onNameChange}
               placeholder={T.translate(`${PREFIX}.form.nameplaceholder`)}
-              getRef={(ref) => this.nameRef = ref}
+              innerRef={(ref) => this.nameRef = ref}
             />
           </Col>
           <Col xs="6">

@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Dropdown, DropdownMenu} from 'reactstrap';
+import {Dropdown, DropdownMenu, DropdownToggle} from 'reactstrap';
 import AbstractWizard from 'components/AbstractWizard';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
@@ -242,8 +242,9 @@ export default class NamespaceDropdown extends Component {
           isOpen={this.state.openDropdown}
           toggle={this.toggle}
         >
-          <div
+          <DropdownToggle
             className="current-namespace"
+            tag="div"
             onClick={this.toggle}
           >
             <div className="namespace-text">
@@ -255,7 +256,7 @@ export default class NamespaceDropdown extends Component {
               </span>
               <IconSVG name="icon-caret-down" />
             </div>
-          </div>
+          </DropdownToggle>
           <DropdownMenu>
             {
               isValidNamespace ?
