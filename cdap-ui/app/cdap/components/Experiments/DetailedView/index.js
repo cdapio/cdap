@@ -35,8 +35,11 @@ import Mousetrap from 'mousetrap';
 import isNil from 'lodash/isNil';
 import queryString from 'query-string';
 import Alert from 'components/Alert';
+import ExperimentDetailPageTitle from 'components/Experiments/DetailedView/ExperimentDetailPageTitle';
+
 
 require('./DetailedView.scss');
+
 
 export default class ExperimentDetails extends Component {
   static propTypes = {
@@ -141,6 +144,7 @@ export default class ExperimentDetails extends Component {
     return (
       <Provider store={experimentDetailStore}>
         <div className="experiment-detailed-view">
+          <ExperimentDetailPageTitle />
           <ConnectedTopPanel />
           <ModelsTableWrapper />
           {this.showNewlyTrainingModel()}

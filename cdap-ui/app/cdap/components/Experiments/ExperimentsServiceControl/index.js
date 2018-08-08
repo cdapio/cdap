@@ -23,9 +23,12 @@ import IconSVG from 'components/IconSVG';
 import isObject from 'lodash/isObject';
 import {myExperimentsApi} from 'api/experiments';
 import {isSpark2Available} from 'services/CDAPComponentsVersions';
+import Helmet from 'react-helmet';
+
 require('./ExperimentsServiceControl.scss');
 
-const PREFIX = 'features.Experiments.ServiceControl';
+const EXPERIMENTS_I18N_PREFIX = 'features.Experiments';
+const PREFIX = `${EXPERIMENTS_I18N_PREFIX}.ServiceControl`;
 const MMDSArtifact = 'mmds-app';
 
 export default class ExperimentsServiceControl extends Component {
@@ -137,6 +140,7 @@ export default class ExperimentsServiceControl extends Component {
   render() {
     return (
       <div className="experiments-service-control">
+        <Helmet title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`)} />
         <div className="image-containers">
           <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview1.png" />
           <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview2.png" />
