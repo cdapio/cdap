@@ -51,11 +51,9 @@ export default class S3Browser extends Component {
   onWorkspaceCreate = (file) => {
     const {selectedNamespace: namespace} = NamespaceStore.getState();
     const {connectionId, prefix} = DataPrepBrowserStore.getState().s3;
-    const strippedPrefix = prefix.slice(prefix.indexOf('/') + 1);
-    const trailingSlashIndex = strippedPrefix.indexOf('/');
-    let activeBucket = strippedPrefix;
-    if (trailingSlashIndex !== -1) {
-      activeBucket = strippedPrefix.slice(0, trailingSlashIndex);
+    let activeBucket = prefix;
+    if (prefix.length > 1 && prefix[prefix.length - 1] === '/') {
+      activeBucket = prefix.slice(0, prefix.length - 1);
     }
     setS3Loading();
     let headers = {
