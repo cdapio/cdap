@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.schedule.Trigger;
@@ -67,6 +68,7 @@ import javax.ws.rs.QueryParam;
  * TODO: [CDAP-13355] Move this handler into report generation app
  */
 @Singleton
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3)
 public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(OperationsDashboardHttpHandler.class);

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -42,6 +44,7 @@ import javax.ws.rs.QueryParam;
  * Search metrics handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/metrics")
+@Service(Constants.Service.METRICS)
 public class MetricsHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsHandler.class);
   private static final Gson GSON = new Gson();

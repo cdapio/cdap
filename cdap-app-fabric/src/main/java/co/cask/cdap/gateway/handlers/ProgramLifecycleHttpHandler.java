@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -139,6 +140,7 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.http.HttpHandler} to manage program lifecycle for v3 REST APIs
  */
 @Singleton
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);

@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.schema.Schema;
@@ -100,6 +102,7 @@ import javax.ws.rs.PathParam;
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
+@Service(Constants.Service.STREAMS)
 public final class StreamHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new GsonBuilder()

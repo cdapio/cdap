@@ -17,15 +17,11 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.logging.AuditLogConfig;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.internal.asm.Classes;
-import co.cask.http.HttpHandler;
 import co.cask.http.internal.PatternPathRouterWithGroups;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import io.netty.handler.codec.http.HttpMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,23 +29,17 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 /**
  * Class to match the request path to the audit log content that needs to be logged.
  */
-public final class RouterAuditLookUp {
+public final class RouterAuditLookUp extends HandlerInspector {
 
   private static final Logger LOG = LoggerFactory.getLogger(RouterAuditLookUp.class);
   private static final RouterAuditLookUp INSTANCE = new RouterAuditLookUp();
@@ -68,7 +58,7 @@ public final class RouterAuditLookUp {
   }
 
   @Nullable
-  public AuditLogConfig getAuditLogContent(String path, HttpMethod httpMethod) throws Exception {
+  public AuditLogConfig findMatch(String path, HttpMethod httpMethod) throws Exception {
     List<PatternPathRouterWithGroups.RoutableDestination<AuditLogConfig>> destinations =
       patternMatcher.getDestinations(path);
     for (PatternPathRouterWithGroups.RoutableDestination<AuditLogConfig> entry : destinations) {
@@ -138,40 +128,6 @@ public final class RouterAuditLookUp {
     return count;
   }
 
-  private HttpMethod getHttpMethod(Method method) {
-    if (method.isAnnotationPresent(PUT.class)) {
-      return HttpMethod.PUT;
-    }
-    if (method.isAnnotationPresent(POST.class)) {
-      return HttpMethod.POST;
-    }
-    if (method.isAnnotationPresent(DELETE.class)) {
-      return HttpMethod.DELETE;
-    }
-    return null;
-  }
-
-  private List<ClassPath.ClassInfo> getAllHandlerClasses() throws IOException {
-    ClassLoader cl = getClass().getClassLoader();
-    Map<String, Boolean> cache = new HashMap<>();
-    Function<String, URL> lookup = ClassLoaders.createClassResourceLookup(cl);
-    ClassPath cp = ClassPath.from(cl);
-    List<ClassPath.ClassInfo> results = new ArrayList<>();
-    for (ClassPath.ClassInfo info : cp.getAllClasses()) {
-      if (!info.getPackageName().startsWith("co.cask.cdap")) {
-        continue;
-      }
-      if (Classes.isSubTypeOf(info.getName(), HttpHandler.class.getName(), lookup, cache)) {
-        results.add(info);
-      }
-    }
-    return results;
-  }
-
-  private boolean isTestClass(ClassPath.ClassInfo classInfo) {
-    URL url = classInfo.url();
-    return url != null && url.getPath().contains("target/test-classes");
-  }
 
   @VisibleForTesting
   int getNumberOfPaths() {

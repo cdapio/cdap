@@ -111,6 +111,6 @@ public class RouterAuditLookUpTest {
   }
 
   private void assertContent(String path, AuditLogConfig expected) throws Exception {
-    Assert.assertEquals(expected, AUDIT_LOOK_UP.getAuditLogContent(path, expected.getHttpMethod()));
+    Assert.assertEquals(expected, AUDIT_LOOK_UP.findMatch(path, expected.getHttpMethod()));
   }
 }

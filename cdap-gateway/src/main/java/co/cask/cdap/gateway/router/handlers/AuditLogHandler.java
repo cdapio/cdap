@@ -61,7 +61,7 @@ public class AuditLogHandler extends ChannelDuplexHandler {
 
       // Extra configurations for audit log
       AuditLogConfig logConfig = AUDIT_LOG_LOOKUP_METHOD.contains(request.method())
-        ? RouterAuditLookUp.getInstance().getAuditLogContent(request.uri(), request.method()) : null;
+        ? RouterAuditLookUp.getInstance().findMatch(request.uri(), request.method()) : null;
 
       if (logConfig == null) {
         logEntry = new AuditLogEntry(request, Networks.getIP(ctx.channel().remoteAddress()));

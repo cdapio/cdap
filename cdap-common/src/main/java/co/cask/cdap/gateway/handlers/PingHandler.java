@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -31,6 +32,7 @@ import javax.ws.rs.Path;
 /**
  * Handles ping requests.
  */
+@Service(value = Constants.Router.DYNAMIC_ROUTE_SERVICE, position = 3)
 public class PingHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(PingHandler.class);
   protected static final JsonObject OK_JSON;

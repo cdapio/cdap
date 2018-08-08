@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
@@ -57,6 +58,7 @@ import javax.ws.rs.PathParam;
  * HTTP handler to access the service managing {@link NotificationFeedId} objects.
  * These endpoints are only reachable internally.
  */
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class NotificationFeedHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationFeedHttpHandler.class);

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -64,6 +65,7 @@ import javax.ws.rs.PathParam;
 /**
  * Exposes {@link Authorizer} operations via HTTP.
  */
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3 + "/security/authorization")
 public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 

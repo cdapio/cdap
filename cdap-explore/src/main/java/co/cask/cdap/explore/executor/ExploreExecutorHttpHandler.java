@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.executor;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
@@ -81,6 +82,7 @@ import javax.ws.rs.PathParam;
 /**
  * Handler that implements internal explore APIs.
  */
+@Service(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/data/explore")
 public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreExecutorHttpHandler.class);

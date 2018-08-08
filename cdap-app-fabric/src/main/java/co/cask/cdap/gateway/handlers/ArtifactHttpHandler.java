@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
@@ -116,6 +117,7 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.http.HttpHandler} for managing artifacts.
  */
 @Singleton
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3)
 public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactHttpHandler.class);
@@ -798,6 +800,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   // the following endpoints with path "artifact-internals" are only called by CDAP programs, not exposed via router.
   @GET
   @Path("/namespaces/{namespace-id}/artifact-internals/artifacts")
+  @Service(Constants.Router.DONT_ROUTE_SERVICE)
   public void listArtifactsInternal(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId) {
     try {
@@ -813,6 +816,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/namespaces/{namespace-id}/artifact-internals/artifacts/{artifact-name}/versions/{artifact-version}/location")
+  @Service(Constants.Router.DONT_ROUTE_SERVICE)
   public void getArtifactLocation(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("artifact-name") String artifactName,

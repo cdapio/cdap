@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.runtime.main.transaction;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpResponder;
@@ -32,6 +33,7 @@ import javax.ws.rs.Path;
  * Handles ping requests for Transaction service.
  * Similar to PingHandler, but overriding the status endpoint, to also check transaction manager status.
  */
+@Service(value = Constants.Router.DYNAMIC_ROUTE_SERVICE, position = 3)
 public class TransactionPingHandler extends PingHandler {
   private static final JsonObject NOT_OK_JSON;
   static {

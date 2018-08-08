@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers.preview;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -68,6 +69,7 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.http.HttpHandler} to manage preview lifecycle for v3 REST APIs
  */
 @Singleton
+@Service(Constants.Service.PREVIEW_HTTP)
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class PreviewHttpHandler extends AbstractLogHandler {
   private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);

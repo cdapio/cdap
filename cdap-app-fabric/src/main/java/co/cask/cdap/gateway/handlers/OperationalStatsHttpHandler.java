@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.operations.OperationalStats;
@@ -46,6 +47,7 @@ import javax.ws.rs.PathParam;
 /**
  * {@link co.cask.http.HttpHandler} for service provider statistics.
  */
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3 + "/system/serviceproviders")
 public class OperationalStatsHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(OperationalStatsHttpHandler.class);

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.ProgramType;
@@ -38,6 +39,7 @@ import javax.ws.rs.PathParam;
 /**
  * The {@link co.cask.http.HttpHandler} for handling REST calls to the usage registry.
  */
+@Name(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3)
 public class UsageHandler extends AbstractHttpHandler {
 

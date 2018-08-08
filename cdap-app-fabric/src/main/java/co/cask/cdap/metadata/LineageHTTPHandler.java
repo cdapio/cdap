@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
@@ -56,6 +58,7 @@ import javax.ws.rs.QueryParam;
  * HttpHandler for lineage.
  */
 @Path(Constants.Gateway.API_VERSION_3)
+@Service(Constants.Service.METADATA_SERVICE)
 public class LineageHTTPHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())

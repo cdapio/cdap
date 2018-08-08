@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -46,6 +47,7 @@ import javax.ws.rs.PathParam;
  * Exposes REST APIs for {@link co.cask.cdap.api.security.store.SecureStore} and
  * {@link co.cask.cdap.api.security.store.SecureStoreManager}.
  */
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/securekeys")
 public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = new Gson();

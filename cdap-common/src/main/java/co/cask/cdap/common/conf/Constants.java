@@ -607,6 +607,7 @@ public final class Constants {
 
     public static final String GATEWAY_DISCOVERY_NAME = Service.GATEWAY;
     public static final String DONT_ROUTE_SERVICE = "dont-route-to-service";
+    public static final String DYNAMIC_ROUTE_SERVICE = "dynamic-route-to-service";
     public static final String AUDIT_LOGGER_NAME = "http-access";
   }
 

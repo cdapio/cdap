@@ -16,6 +16,8 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ForbiddenException;
@@ -55,6 +57,7 @@ import javax.ws.rs.PathParam;
 /**
  * Monitor Handler V3
  */
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3)
 public class MonitorHandler extends AbstractAppFabricHttpHandler {
 

@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -97,6 +98,7 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.http.HttpHandler} for managing application lifecycle.
  */
 @Singleton
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   // Gson for writing response

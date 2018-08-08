@@ -16,6 +16,8 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
@@ -59,7 +61,8 @@ import javax.ws.rs.QueryParam;
 /**
  * {@link co.cask.http.HttpHandler} for managing profiles.
  */
-@Path(Constants.Gateway.API_VERSION_3)
+@Name(Constants.Service.APP_FABRIC_HTTP)
+@Service(Constants.Gateway.API_VERSION_3)
 public class ProfileHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().create();
 

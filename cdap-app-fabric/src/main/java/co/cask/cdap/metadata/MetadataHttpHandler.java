@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.client.MetadataClient;
@@ -79,6 +81,7 @@ import javax.ws.rs.QueryParam;
 /**
  * HttpHandler for Metadata
  */
+@Service(Constants.Service.METADATA_SERVICE)
 @Path(Constants.Gateway.API_VERSION_3)
 public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataHttpHandler.class);

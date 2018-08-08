@@ -16,6 +16,8 @@
 
 package co.cask.cdap.logging.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -45,6 +47,7 @@ import javax.ws.rs.QueryParam;
  * v3 {@link HttpHandler} to handle /logs requests
  */
 @Singleton
+@Service(Constants.Service.METRICS)
 @Path(Constants.Gateway.API_VERSION_3)
 public class LogHandler extends AbstractLogHandler {
 

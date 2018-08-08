@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.executor;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -29,6 +30,7 @@ import javax.ws.rs.Path;
 /**
  * Explore status handler - reachable outside of CDAP.
  */
+@Service(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
 @Path(Constants.Gateway.API_VERSION_3)
 public class ExploreStatusHandler extends AbstractHttpHandler {
 

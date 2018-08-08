@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -36,6 +37,7 @@ import javax.ws.rs.QueryParam;
 /**
  * Returns information about threads, including their stack traces.
  */
+@Service(value=Constants.Router.DYNAMIC_ROUTE_SERVICE, position=3)
 public class StackHandler extends AbstractHttpHandler {
 
   private static final ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();

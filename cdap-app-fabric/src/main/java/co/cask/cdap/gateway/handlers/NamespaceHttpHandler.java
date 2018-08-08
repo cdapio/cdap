@@ -16,6 +16,8 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Service;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -45,6 +47,7 @@ import javax.ws.rs.PathParam;
 /**
  * The {@link HttpHandler} for handling REST calls to namespace endpoints.
  */
+@Service(Constants.Service.APP_FABRIC_HTTP)
 @Path(Constants.Gateway.API_VERSION_3)
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
