@@ -93,7 +93,7 @@ export default class CutDirective extends Component {
     let tableContainer = document.getElementById('dataprep-table-id');
     let targetId = `highlight-cell-${this.state.textSelectionRange.index}`;
     /*
-    FIXME: Follow up on this issue: https://github.com/FezVrasta/popper.js/issues/276
+      FIXME: Follow up on this issue: https://github.com/FezVrasta/popper.js/issues/276
     */
     return (
       <Popover
@@ -107,11 +107,6 @@ export default class CutDirective extends Component {
           shift: {
             order: 800,
             enabled: true
-          },
-          preventOverflow: {
-            boundariesElement: tableContainer,
-            priority: ['top', 'bottom'],
-            escapeWithReference: true
           }
         }}
         hideArrow
