@@ -31,7 +31,19 @@ import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import ControlCenterDropdown from 'components/Header/ControlCenterDropdown';
 import {objectQuery} from 'services/helpers';
+<<<<<<< HEAD
 import {SYSTEM_NAMESPACE} from 'services/global-constants';
+=======
+import {
+  hideDataPrep,
+  hidePipelines,
+  hideAnalytics,
+  hideRulesEngine,
+  hideMetadata,
+  hideHub,
+  getLogo
+} from 'services/ThemeHelper';
+>>>>>>> 75078e7b6f... Gets customizations from one source (ThemeHelper), instead of having them all over the place
 
 require('./Header.scss');
 
@@ -152,25 +164,14 @@ export default class Header extends Component {
     return false;
   };
 
-  renderBrandSection(baseCDAPURL) {
-    let brandLogoSrc;
-    if (objectQuery(window, 'CDAP_UI_THEME', 'content', 'logo', 'type')) {
-      let logo = window.CDAP_UI_THEME.content.logo;
-      let logoType = logo.type;
-      if (logoType === 'inline') {
-        brandLogoSrc = objectQuery(logo, 'arguments', 'data');
-      } else if (logoType === 'link') {
-        brandLogoSrc = objectQuery(logo, 'arguments', 'url');
-      }
-    } else {
-      brandLogoSrc = '/cdap_assets/img/company_logo.png';
-    }
-
+  renderBrandSection() {
+    const baseCDAPUrl = `/ns/${this.state.currentNamespace}`;
+    const brandLogoSrc = getLogo() || '/cdap_assets/img/company_logo.png';
     return (
       <div className="brand-section">
           <NavLinkWrapper
             isNativeLink={this.props.nativeLink}
-            to={this.props.nativeLink ? `/cdap${baseCDAPURL}` : baseCDAPURL}
+            to={this.props.nativeLink ? `/cdap${baseCDAPUrl}` : baseCDAPUrl}
           >
             <img src={brandLogoSrc} />
           </NavLinkWrapper>
@@ -178,32 +179,41 @@ export default class Header extends Component {
     );
   }
 
-  renderRulesEngineLink(rulesengineUrl) {
-    let hideRulesEngine = objectQuery(window, 'CDAP_UI_THEME', 'features', 'rules-engine') === 'false';
-    if (hideRulesEngine) {
-      return null;
-    }
-
+  renderControlCenterDropdown() {
     return (
-      <li className={classnames({
-        'active': this.isRulesEnginedActive()
-      })}>
-          <NavLinkWrapper
-            isNativeLink={this.props.nativeLink}
-            to={this.props.nativeLink ? `/cdap${rulesengineUrl}` : rulesengineUrl}
-          >
-            {T.translate(`features.Navbar.rulesmgmt`)}
-          </NavLinkWrapper>
+      <li className={classnames({ 'active': this.isCDAPActive() })}>
+        <ControlCenterDropdown
+          nativeLink={this.props.nativeLink}
+          namespace={this.state.currentNamespace}
+        />
       </li>
     );
   }
 
-  render() {
-    const baseCDAPURL = `/ns/${this.state.currentNamespace}`;
-    const rulesengineUrl = `${baseCDAPURL}/rulesengine`;
-    const dataprepUrl = `${baseCDAPURL}/dataprep`;
-    const mmdsurl = `${baseCDAPURL}/experiments`;
-    const administrationURL = '/administration/configuration';
+  renderDataPrepLink() {
+    if (hideDataPrep()) {
+      return null;
+    }
+
+    const dataPrepUrl = `/ns/${this.state.currentNamespace}/dataprep`;
+    return (
+      <li className={classnames({
+        'active': this.isDataPrepActive()
+      })}>
+        <NavLinkWrapper
+          isNativeLink={this.props.nativeLink}
+          to={this.props.nativeLink ? `/cdap${dataPrepUrl}` : dataPrepUrl}
+        >
+          {T.translate(`features.Navbar.Dataprep`)}
+        </NavLinkWrapper>
+      </li>
+    );
+  }
+
+  renderPipelinesLink() {
+    if (hidePipelines()) {
+      return null;
+    }
 
     const pipelinesListUrl =  window.getHydratorUrl({
       stateName: 'hydrator.list',
@@ -214,13 +224,87 @@ export default class Header extends Component {
       }
     });
     const isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
+
+    return (
+      <li className={classnames({
+        'active': isPipelinesViewActive
+      })}>
+        <a href={pipelinesListUrl}>
+          {T.translate('features.Navbar.pipelinesLabel')}
+        </a>
+      </li>
+    );
+  }
+
+  renderRulesEngineLink() {
+    if (hideRulesEngine()) {
+      return null;
+    }
+
+    const rulesEngineUrl = `/ns/${this.state.currentNamespace}/rulesengine`;
+    return (
+      <li className={classnames({
+        'active': this.isRulesEnginedActive()
+      })}>
+          <NavLinkWrapper
+            isNativeLink={this.props.nativeLink}
+            to={this.props.nativeLink ? `/cdap${rulesEngineUrl}` : rulesEngineUrl}
+          >
+            {T.translate(`features.Navbar.rulesmgmt`)}
+          </NavLinkWrapper>
+      </li>
+    );
+  }
+
+  renderAnalyticsLink() {
+    if (hideAnalytics()) {
+      return null;
+    }
+
+    const analyticsUrl = `/ns/${this.state.currentNamespace}/experiments`;
+    return (
+      <li className={classnames({
+        'active': this.isMMDSActive()
+      })}>
+        <NavLinkWrapper
+          isNativeLink={this.props.nativeLink}
+          to={this.props.nativeLink ? `/cdap${analyticsUrl}` : analyticsUrl}
+          >
+          {T.translate(`features.Navbar.MMDS`)}
+        </NavLinkWrapper>
+      </li>
+    );
+  }
+
+  renderMetadataLink() {
+    if (hideMetadata()) {
+      return null;
+    }
+
     const isMetadataActive = location.pathname.indexOf('metadata') !== -1;
-    const metadataHomeUrl = window.getTrackerUrl({
-        stateName: 'tracker',
-        stateParams: {
-          namespace: this.state.currentNamespace
-        }
-    });
+    return (
+      <li className={classnames({'active': isMetadataActive})}>
+        <MetadataDropdown />
+      </li>
+    );
+  }
+
+  renderHubButton() {
+    if (hideHub()) {
+      return null;
+    }
+
+    return (
+      <li className="with-pointer">
+        <CaskMarketButton>
+          <span className="hub-text-wrapper">{T.translate('commons.market')}</span>
+        </CaskMarketButton>
+      </li>
+    );
+  }
+
+  render() {
+    let administrationURL = '/administration/configuration';
 
     return (
       <div className="global-navbar">
@@ -235,73 +319,21 @@ export default class Header extends Component {
               <i className="fa fa-times fa-2x"></i>
           }
         </div>
-        {this.renderBrandSection(baseCDAPURL)}
+        {this.renderBrandSection()}
         <ul className="navbar-list-section control-center">
-          <li className={classnames({ 'active': this.isCDAPActive() })}>
-            <ControlCenterDropdown
-              nativeLink={this.props.nativeLink}
-              namespace={this.state.currentNamespace}
-            />
-          </li>
-          <li className={classnames({
-            'active': this.isDataPrepActive()
-          })}>
-            <NavLinkWrapper
-              isNativeLink={this.props.nativeLink}
-              to={this.props.nativeLink ? `/cdap${dataprepUrl}` : dataprepUrl}
-            >
-              {T.translate(`features.Navbar.Dataprep`)}
-            </NavLinkWrapper>
-          </li>
-          <li className={classnames({
-            'active': isPipelinesViewActive
-          })}>
-            <a href={pipelinesListUrl}>
-              {T.translate('features.Navbar.pipelinesLabel')}
-            </a>
-          </li>
-          <li className={classnames({
-            'active': this.isMMDSActive()
-          })}>
-            <NavLinkWrapper
-              isNativeLink={this.props.nativeLink}
-              to={this.props.nativeLink ? `/cdap${mmdsurl}` : mmdsurl}
-              >
-              {T.translate(`features.Navbar.MMDS`)}
-            </NavLinkWrapper>
-          </li>
-<<<<<<< HEAD
-          <li className={classnames({
-            'active': this.isRulesEnginedActive()
-          })}>
-              <NavLinkWrapper
-                isNativeLink={this.props.nativeLink}
-                to={this.props.nativeLink ? `/cdap${rulesengineUrl}` : rulesengineUrl}
-              >
-                {T.translate(`features.Navbar.rulesmgmt`)}
-              </NavLinkWrapper>
-          </li>
-          <li className={classnames({'active': isMetadataActive})}>
-            <a href={metadataHomeUrl}>
-              {T.translate('features.Navbar.metadataLabel')}
-            </a>
-=======
-          {this.renderRulesEngineLink(rulesengineUrl)}
-          <li className={classnames({'active': location.pathname.indexOf('metadata') !== -1})}>
-            <MetadataDropdown />
->>>>>>> 1faafa37a5... Shows or hides rules engine based on theme
-          </li>
+          {this.renderControlCenterDropdown()}
+          {this.renderDataPrepLink()}
+          {this.renderPipelinesLink()}
+          {this.renderAnalyticsLink()}
+          {this.renderRulesEngineLink()}
+          {this.renderMetadataLink()}
         </ul>
         <div className={classnames("global-navbar-collapse", {
             'minimized': this.state.toggleNavbar
           })}>
           <div className="navbar-right-section">
             <ul>
-              <li className="with-pointer">
-                <CaskMarketButton>
-                  <span className="hub-text-wrapper">{T.translate('commons.market')}</span>
-                </CaskMarketButton>
-              </li>
+              {this.renderHubButton()}
               <li
                 id="header-namespace-dropdown"
                 className="with-pointer namespace-dropdown-holder">

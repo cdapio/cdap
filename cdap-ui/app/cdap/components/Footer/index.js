@@ -14,33 +14,36 @@
  * the License.
  */
 
-import React, { PureComponent } from 'react';
-import {objectQuery} from 'services/helpers';
+import React from 'react';
 import T from 'i18n-react';
+import {
+  hideFooter,
+  getFooterText,
+  getFooterLink
+} from 'services/ThemeHelper';
 
 require('./Footer.scss');
 
-const footerText = objectQuery(window, 'CDAP_UI_THEME', 'content', 'footer-text') ||
-                      T.translate('features.LicenseText');
-const footerUrl = objectQuery(window, 'CDAP_UI_THEME', 'content', 'footer-link') ||
-                      'https://www.apache.org/licenses/LICENSE-2.0';
+export default function Footer() {
+  if (hideFooter()) {
+    return null;
+  }
 
-export default class Footer extends PureComponent {
-  render() {
-    return (
-      <footer>
-        <div className="container">
-          <div className="row text-muted">
-            <div>
-              <p className="text-xs-center">
-                <a href={footerUrl} target="_blank" rel="noopener noreferrer">
-                  {footerText}
-                </a>
-              </p>
-            </div>
+  const footerText = getFooterText() || T.translate('features.LicenseText');
+  const footerUrl = getFooterLink() || 'https://www.apache.org/licenses/LICENSE-2.0';
+  return (
+    <footer>
+      <div className="container">
+        <div className="row text-muted">
+          <div>
+            <p className="text-xs-center">
+              <a href={footerUrl} target="_blank" rel="noopener noreferrer">
+                {footerText}
+              </a>
+            </p>
           </div>
         </div>
-      </footer>
-    );
-  }
+      </div>
+    </footer>
+  );
 }

@@ -21,6 +21,10 @@ import NavLinkWrapper from 'components/NavLinkWrapper';
 import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
+import {
+  hideDashboard,
+  hideReports
+} from 'services/ThemeHelper';
 
 require('./ControlCenterDropdown.scss');
 
@@ -108,12 +112,60 @@ export default class ControlCenterDropdown extends Component {
     return false;
   };
 
+  renderEntitiesLink() {
+    const baseCDAPURL = `/ns/${this.props.namespace}`;
+    return (
+      <DropdownItem tag="li">
+        <NavLinkWrapper
+          isNativeLink={this.props.nativeLink}
+          to={this.props.nativeLink ? `/cdap${baseCDAPURL}` : baseCDAPURL}
+          isActive={this.isEntitiesActive}
+        >
+          {T.translate(`${PREFIX}.entities`)}
+        </NavLinkWrapper>
+      </DropdownItem>
+    );
+  }
+
+  renderDashboardLink() {
+    if (hideDashboard()) {
+      return null;
+    }
+
+    const dashboardURL = `/ns/${this.props.namespace}/operations`;
+    return (
+      <DropdownItem tag="li">
+        <NavLinkWrapper
+          isNativeLink={this.props.nativeLink}
+          to={this.props.nativeLink ? `/cdap${dashboardURL}` : dashboardURL}
+          isActive={this.isDashboardActive}
+        >
+          {T.translate(`${PREFIX}.dashboard`)}
+        </NavLinkWrapper>
+      </DropdownItem>
+    );
+  }
+
+  renderReportsLink() {
+    if (hideReports()) {
+      return null;
+    }
+
+    const reportsURL = `/ns/${this.props.namespace}/reports`;
+    return (
+      <DropdownItem tag="li">
+        <NavLinkWrapper
+          isNativeLink={this.props.nativeLink}
+          to={this.props.nativeLink ? `/cdap${reportsURL}` : reportsURL}
+          isActive={this.isReportsActive}
+        >
+          {T.translate(`${PREFIX}.reports`)}
+        </NavLinkWrapper>
+      </DropdownItem>
+    );
+  }
 
   render() {
-    let baseCDAPURL = `/ns/${this.props.namespace}`;
-    let dashboardURL = `${baseCDAPURL}/operations`;
-    let reportsURL = `${baseCDAPURL}/reports`;
-
     return (
       <UncontrolledDropdown
         className="header-dropdown control-center"
@@ -122,35 +174,9 @@ export default class ControlCenterDropdown extends Component {
           {T.translate(`${PREFIX}.label`)}
         </DropdownToggle>
         <CustomDropdownMenu>
-          <DropdownItem tag="li">
-            <NavLinkWrapper
-              isNativeLink={this.props.nativeLink}
-              to={this.props.nativeLink ? `/cdap${baseCDAPURL}` : baseCDAPURL}
-              isActive={this.isEntitiesActive}
-            >
-              {T.translate(`${PREFIX}.entities`)}
-            </NavLinkWrapper>
-          </DropdownItem>
-
-          <DropdownItem tag="li">
-            <NavLinkWrapper
-              isNativeLink={this.props.nativeLink}
-              to={this.props.nativeLink ? `/cdap${dashboardURL}` : dashboardURL}
-              isActive={this.isDashboardActive}
-            >
-              {T.translate(`${PREFIX}.dashboard`)}
-            </NavLinkWrapper>
-          </DropdownItem>
-
-          <DropdownItem tag="li">
-            <NavLinkWrapper
-              isNativeLink={this.props.nativeLink}
-              to={this.props.nativeLink ? `/cdap${reportsURL}` : reportsURL}
-              isActive={this.isReportsActive}
-            >
-              {T.translate(`${PREFIX}.reports`)}
-            </NavLinkWrapper>
-          </DropdownItem>
+          {this.renderEntitiesLink()}
+          {this.renderDashboardLink()}
+          {this.renderReportsLink()}
         </CustomDropdownMenu>
       </UncontrolledDropdown>
     );
