@@ -40,6 +40,7 @@ import CreateProfileBtn from 'components/Cloud/Profiles/CreateView/CreateProfile
 import uuidV4 from 'uuid/v4';
 import CreateProfileStore from 'components/Cloud/Profiles/CreateView/CreateProfileStore';
 import {highlightNewProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
+import Helmet from 'react-helmet';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Cloud.Profiles.CreateView';
@@ -83,6 +84,13 @@ class ProfileCreateView extends Component {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
     resetCreateProfileStore();
   }
+
+  getProvisionerLabel = () => {
+    const {selectedProvisioner} = this.state;
+    const label = objectQuery(this.props, 'provisionerJsonSpecMap', selectedProvisioner, 'label');
+    const provisionerLabel = isNilOrEmpty(label) ? '' : `${label}`;
+    return provisionerLabel;
+  };
 
   createProfile = () => {
     this.setState({
@@ -291,14 +299,12 @@ class ProfileCreateView extends Component {
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
     } : () => history.back();
 
-    const {selectedProvisioner} = this.state;
-    const label = objectQuery(this.props, 'provisionerJsonSpecMap', selectedProvisioner, 'label');
-    const provisionerLabel = isNilOrEmpty(label) ? '' : `for ${label}`;
     return (
       <Provider store={CreateProfileStore}>
         <div className="profile-create-view">
+          <Helmet title={T.translate(`${PREFIX}.pageTitle`, {provisioner_name: this.getProvisionerLabel()})} />
           <EntityTopPanel
-            title={`Create a profile ${provisionerLabel}`}
+            title={`Create a profile for ${this.getProvisionerLabel()}`}
             closeBtnAnchorLink={linkObj}
           />
           <div className="create-form-container">
@@ -367,7 +373,9 @@ const ConnectedProfileCreateView = connect(mapStateToProps)(ProfileCreateView);
 export default function ProfileCreateViewFn({...props}) {
   return (
     <Provider store={ProvisionerInfoStore}>
-      <ConnectedProfileCreateView {...props} />
+      <div>
+        <ConnectedProfileCreateView {...props} />
+      </div>
     </Provider>
   );
 }

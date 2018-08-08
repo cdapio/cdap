@@ -27,6 +27,10 @@ import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabC
 import EntityTopPanel from 'components/EntityTopPanel';
 import ExperimentalBanner from 'components/ExperimentalBanner';
 import IconSVG from 'components/IconSVG';
+import Helmet from 'react-helmet';
+import T from 'i18n-react';
+
+const PREFIX = 'features.Cloud.Profiles.CreateView';
 
 require('./ProvisionerSelection.scss');
 
@@ -173,7 +177,10 @@ const ConnectedProfileCreateProvisionerSelection = connect(mapStateToProps)(Prof
 export default function ProfileCreateProvisionerSelectionFn({...props}) {
   return (
     <Provider store={ProvisionerInfoStore}>
-      <ConnectedProfileCreateProvisionerSelection {...props} />
+      <div>
+        <Helmet title={T.translate(`${PREFIX}.ProvisionerSelection.pageTitle`)} />
+        <ConnectedProfileCreateProvisionerSelection {...props} />
+      </div>
     </Provider>
   );
 }

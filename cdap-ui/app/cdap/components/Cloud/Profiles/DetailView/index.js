@@ -25,6 +25,7 @@ import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabC
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
 import {ONEDAYMETRICKEY, OVERALLMETRICKEY, fetchAggregateProfileMetrics} from 'components/Cloud/Profiles/Store/ActionCreator';
+import Helmet from 'react-helmet';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
@@ -139,6 +140,7 @@ export default class ProfileDetailView extends Component {
     }
     return (
       <div className="profile-detail-view">
+        <Helmet title={T.translate(`${PREFIX}.pageTitle`, {profile_name: this.state.profile.label || this.state.profile.name})} />
         <EntityTopPanel
           breadCrumbAnchorLink={breadCrumbAnchorLink}
           breadCrumbAnchorLabel={breadCrumbLabel}
