@@ -168,6 +168,9 @@ features:
           confirmationText: "Are you sure you want to reload all system artifacts?"
           errorMessage: Failed to load system artifacts
           label: Reload System Artifacts
+      pageTitle: CDAP | Administration | Configuration
+    Management:
+      pageTitle: CDAP | Administration | Management
     PageTitle: CDAP | Management
     Services:
       title: Services
@@ -206,7 +209,6 @@ features:
         singular: second ago
       version-label: Version
     Title: Administration
-    TitleWithCDAP: CDAP | Administration
     uptimeLabel: Uptime {time}
   AppDetailedView:
     History:
@@ -246,6 +248,9 @@ features:
         totalNodeHr: Total node hours
         totalRuns: Total runs
       CreateView:
+        ProvisionerSelection:
+          pageTitle: CDAP | Profiles | Create
+        pageTitle: CDAP | Profiles | Create | {provisioner_name}
         profileName: Profile name
         profileLabel: Profile label
       DetailView:
@@ -271,6 +276,7 @@ features:
         enableError: "There was a problem enabling the profile: {message}"
         hideDetails: Hide Details
         noProperties: No properties available for this profile
+        pageTitle: CDAP | Profiles | {profile_name}
         profileDetails: Profile details
         profileUsage: "{profile} usage"
         secureKeyPopover: Service account is stored using a secure key
@@ -411,6 +417,7 @@ features:
           _: "{context} datasets"
         datasets: Datasets
         name: Name
+        pageTitle: CDAP | Connections | Google BigQuery | {connectionId}
         title: Select table
       DatabaseBrowser:
         EmptyMessage:
@@ -419,6 +426,7 @@ features:
           suggestionTitle: "You can try to:"
           suggestion1: your search
           title: 'No match found for "{searchText}"'
+        pageTitle: CDAP | Connections | Database | {connectionId}
         searchPlaceholder: Search table name
         table:
           namecollabel: NAME
@@ -438,6 +446,7 @@ features:
             Name: Name
             Size: Size
             Type: Type
+        pageTitle: CDAP | Connections | Google Cloud Storage | {connectionId}
         Search:
           placeholder: Search this directory
         TopPanel:
@@ -451,6 +460,7 @@ features:
           suggestionTitle: "You can try to:"
           suggestion1: your search
           title: 'No match found for "{searchText}"'
+        pageTitle: CDAP | Connections | Kafka | {connectionId}
         searchPlaceholder: Search topic
         table:
           topics: Topics
@@ -469,6 +479,7 @@ features:
             Name: Name
             Owner: Owner
             Size: Size
+        pageTitle: CDAP | Connections | S3 | {connectionId}
         Search:
           placeholder: Search this directory
         TopPanel:
@@ -922,7 +933,7 @@ features:
         variableNamePlaceholder: Enter counter name
       Swap:
         title: Swap two column names
-    pageTitle: CDAP | Data Preparation
+    pageTitle: CDAP | Data Preparation {workspaceUri}
     PipelineError:
       bigquery: Unable to find Google BigQuery plugin. Please install Google Cloud Plugins from Hub.
       database: Unable to find Database Plugins. Please make sure Database Plugins are available.
@@ -1154,6 +1165,7 @@ features:
     gcs: Google Cloud Storage ({count})
     hdfs: File System
     kafka: Kafka ({count})
+    pageTitle: CDAP | Connections
     s3: S3 ({count})
     title: "Connections in \"{namespace}\""
     upload: Upload
@@ -1248,6 +1260,7 @@ features:
       modelTrainingLogs: Model training logs
       numModels: No of models
       outcome: Outcome
+      pageTitle: CDAP | Analytics | {experiment_name}
       precision: Precision
       r2: R2
       recall: Recall
@@ -1262,6 +1275,7 @@ features:
         1: "{context} experiment"
         _: "{context} experiments"
       numModels: No of models
+    pageTitle: CDAP | Analytics
     ServiceControl:
       Benefits:
         b1: Intuitive Web UI for building, training, testing and evaluating machine learning models.
@@ -1504,6 +1518,7 @@ features:
       schedulerQueueName: 'Scheduler queue name: '
     namespace: Namespace
     namespaceName: Namespace '{namespace}'
+    pageTitle: CDAP | Namespace | {namespace_name}
     pipelines: Pipelines
     preferences:
       label: Preferences
