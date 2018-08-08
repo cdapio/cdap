@@ -98,7 +98,7 @@ $dropdown_divider_bg_color: $grey-06;
           line-height: 1;
 
           &.active {
-            color: $brand-primary-color;
+            color: var(--brand-primary-color);
           }
         }
         &:hover,

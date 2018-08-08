@@ -25,12 +25,12 @@
   align-items: center;
 
   a {
-    color: $brand-primary-color;
+    color: var(--brand-primary-color);
     padding: 0 5px;
     border-right: 1px solid darkgray;
 
     &:hover {
-      color: $brand-primary-color;
+      color: var(--brand-primary-color);
     }
     &:before {
       content: '< ';

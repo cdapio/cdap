@@ -54,7 +54,7 @@ $height-of-image: 75px;
       }
     }
     .content-action-label {
-      color: $brand-primary-color;
+      color: var(--brand-primary-color);
       cursor: pointer;
     }
   }

@@ -33,14 +33,14 @@
           transform: translateY(-75%) scale(2);
 
           rect {
-            fill: $brand-primary-color;
+            fill: var(--brand-primary-color);
           }
         }
       }
 
       .fa {
         font-size: 84px;
-        color: $brand-primary-color;
+        color: var(--brand-primary-color);
       }
       h2 {
         margin-top: 10px;

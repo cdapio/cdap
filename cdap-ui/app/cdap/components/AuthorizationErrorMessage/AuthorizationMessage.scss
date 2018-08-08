@@ -34,7 +34,7 @@
   }
 
   .link {
-    color: $brand-primary-color;
+    color: var(--brand-primary-color);
     cursor: pointer;
   }
 }

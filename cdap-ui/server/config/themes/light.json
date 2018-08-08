@@ -12,7 +12,7 @@
     "analytics": "true",
     "rules-engine": "true",
     "metadata": "true",
-    "hub": "false",
+    "hub": "true",
     "footer": "false"
   }
 }

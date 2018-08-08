@@ -34,7 +34,7 @@
       transform: translateY(-50%) scale(1.7);
 
       rect {
-        fill: $brand-primary-color;
+        fill: var(--brand-primary-color);
       }
     }
   }

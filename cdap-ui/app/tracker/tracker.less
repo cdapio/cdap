@@ -198,7 +198,7 @@ body.state-tracker {
       .tracker-filters {
         .filter-show-all,
         .only-button {
-          color: @brand-primary-color;
+          color: var(--brand-primary-color);
           text-decoration: underline;
         }
 
@@ -436,7 +436,7 @@ body.state-tracker-detail-entity {
 
         &.active {
           a { color: @title-font-color; }
-          border-bottom: 4px solid @brand-primary-color;
+          border-bottom: 4px solid var(--brand-primary-color);
         }
         a {
           color: @tracker-grey;
@@ -694,7 +694,7 @@ body.state-tracker-detail-entity {
           border-radius: 0;
 
           &:focus {
-            border: 1px solid @brand-primary-color;
+            border: 1px solid var(--brand-primary-color);
             box-shadow: none;
           }
         }

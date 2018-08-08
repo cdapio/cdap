@@ -17,7 +17,7 @@
 @import '../../styles/variables.scss';
 
 $row-bg-color: #efefef;
-$active-color: $brand-primary-color;
+$active-color: var(--brand-primary-color);
 $disabled-color: #cccccc;
 $status-code-color: #dedede;
 
