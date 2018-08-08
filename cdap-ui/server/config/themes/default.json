@@ -2,7 +2,8 @@
   "spec-version": "1.0",
   "styles": {
     "brand-primary-color": "#3b78e7",
-    "navbar-color": "#333333"
+    "navbar-color": "#333333",
+    "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
   },
   "content": {
     "logo": {
