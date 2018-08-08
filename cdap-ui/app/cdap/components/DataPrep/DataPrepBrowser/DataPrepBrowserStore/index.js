@@ -16,7 +16,7 @@
 
 import {createStore, combineReducers} from 'redux';
 import {defaultAction} from 'services/helpers';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, composeEnhancers} from 'services/helpers';
 const Actions = {
   // Database
   SET_DATABASE_PROPERTIES: 'SET_DATABASE_PROPERTIES',
@@ -301,7 +301,7 @@ const DataPrepBrowserStore = createStore(
     activeBrowser: defaultActiveBrowser,
     bigquery: defaultBigQueryValue
   },
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  composeEnhancers('DataPrepBrowserStore')()
 );
 
 export default DataPrepBrowserStore;

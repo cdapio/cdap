@@ -30,6 +30,7 @@ import ListingInfo from 'components/DataPrep/DataPrepBrowser/GCSBrowser/ListingI
 import GCSSearch from 'components/DataPrep/DataPrepBrowser/GCSBrowser/GCSSearch';
 import BrowserData from 'components/DataPrep/DataPrepBrowser/GCSBrowser/BrowserData';
 import classnames from 'classnames';
+import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 
 require('./GCSBrowser.scss');
 
@@ -102,6 +103,16 @@ export default class GCSBrowser extends Component {
     return (
       <Provider store={DataPrepBrowserStore}>
         <div className="gcs-browser">
+          {
+            this.props.enableRouting ?
+              <DataPrepBrowserPageTitle
+                browserI18NName="GCSBrowser"
+                browserStateName="gcs"
+                locationToPathInState={['prefix']}
+              />
+            :
+              null
+          }
           <div className="top-panel">
             <div className="title">
               <h5>

@@ -31,6 +31,7 @@ import S3Path from 'components/DataPrep/DataPrepBrowser/S3Browser/S3Path';
 import ListingInfo from 'components/DataPrep/DataPrepBrowser/S3Browser/ListingInfo';
 import S3Search from 'components/DataPrep/DataPrepBrowser/S3Browser/S3Search';
 import classnames from 'classnames';
+import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 
 require('./S3Browser.scss');
 
@@ -101,6 +102,16 @@ export default class S3Browser extends Component {
     return (
       <Provider store={DataPrepBrowserStore}>
         <div className="s3-browser">
+          {
+            this.props.enableRouting ?
+              <DataPrepBrowserPageTitle
+              browserI18NName="S3Browser"
+              browserStateName="s3"
+              locationToPathInState={['prefix']}
+            />
+          :
+            null
+          }
           <div className="top-panel">
             <div className="title">
               <h5>
