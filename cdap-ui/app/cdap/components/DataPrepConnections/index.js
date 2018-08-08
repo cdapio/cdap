@@ -48,6 +48,7 @@ import queryString from 'query-string';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
+const DATAPREP_I18N_PREFIX = 'features.DataPrep.pageTitle';
 
 const RouteToHDFS = () => {
   let namespace = getCurrentNamespace();
@@ -740,7 +741,7 @@ export default class DataPrepConnections extends Component {
   render() {
     let pageTitle = (
       <Helmet
-        title={T.translate('features.DataPrep.pageTitle')}
+        title={T.translate(DATAPREP_I18N_PREFIX)}
       />
     );
     if (this.state.backendChecking) {
@@ -769,6 +770,12 @@ export default class DataPrepConnections extends Component {
     }
     return (
       <div className="dataprep-connections-container">
+        {
+          this.props.enableRouting ?
+            <Helmet title={T.translate(`${PREFIX}.pageTitle`)} />
+          :
+            null
+        }
         {this.props.singleWorkspaceMode || this.props.enableRouting ? null : pageTitle}
         {this.renderPanel()}
 
