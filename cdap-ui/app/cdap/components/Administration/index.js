@@ -16,18 +16,15 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import Helmet from 'react-helmet';
 import {MyServiceProviderApi} from 'api/serviceproviders';
 import {humanReadableNumber, objectQuery} from 'services/helpers';
 import AdminManagementTabContent from 'components/Administration/AdminManagementTabContent';
 import AdminConfigTabContent from 'components/Administration/AdminConfigTabContent';
 import AdminTabSwitch from 'components/Administration/AdminTabSwitch';
-import T from 'i18n-react';
 import {Route, Switch} from 'react-router-dom';
 
 require('./Administration.scss');
 
-const PREFIX = 'features.Administration';
 const WAITTIME_FOR_ALTERNATE_STATUS = 10000;
 
 class Administration extends Component {
@@ -111,9 +108,6 @@ class Administration extends Component {
   render () {
     return (
       <div className="administration">
-        <Helmet
-          title={T.translate(`${PREFIX}.TitleWithCDAP`)}
-        />
         <AdminTabSwitch uptime={this.state.uptime} />
         <Switch>
           <Route exact path="/administration" render={() => {
