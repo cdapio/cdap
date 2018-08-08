@@ -29,7 +29,7 @@ import Mapping from 'components/NamespaceDetails/Mapping';
 import Security from 'components/NamespaceDetails/Security';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
-
+import NamespaceDetailsPageTitle from 'components/NamespaceDetails/NamespaceDetailsPageTitle';
 require('./NamespaceDetails.scss');
 
 const mapStateToProps = (state) => {
@@ -86,7 +86,10 @@ export default class NamespaceDetails extends Component {
   render() {
     return (
       <Provider store={NamespaceDetailsStore}>
-        <ConnectedNamespaceDetailsComp />
+        <div>
+          <NamespaceDetailsPageTitle />
+          <ConnectedNamespaceDetailsComp />
+        </div>
       </Provider>
     );
   }
