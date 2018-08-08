@@ -55,9 +55,16 @@ const setBigQueryAsActiveBrowser = (payload) => {
     8. In the /connections/bigquery/:bigqueryid/datasets/:datasetid which renders TableList makes the list of tables call
     9. This is redundant.
 
+    One other reason we want to avoid redundant requests is to avoid race condition between TableList and dataset list.
+    One overwrites the other and hence the path gets screwed in the breadcrumb while browsing datasets
+    (one overwrites dataestId and the other overwrites tableList)
+
     This will prevent the user from clicking on the connection in the left panel to refresh the contents.
   */
-  if (bigquery.loading || bigquery.datasetList.length) { return; }
+  if (
+    bigquery.loading ||
+    bigquery.connectionId === payload.id
+  ) { return; }
 
   let {id} = payload;
   setActiveBrowser(payload);
