@@ -32,13 +32,16 @@ import WorkspaceTabs from 'components/DataPrep/WorkspaceTabs';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import {checkDataPrepHigherVersion} from 'components/DataPrep/helper';
+import {isNilOrEmpty} from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
+import Helmet from 'react-helmet';
 
 require('./DataPrep.scss');
 
 const i18nPrefix = 'features.DataPrep.Upgrade';
+const DATAPREP_I18N_PREFIX = 'features.DataPrep';
 const MIN_DATAPREP_VERSION = '3.0.3-SNAPSHOT';
 const artifactName = 'wrangler-service';
 
@@ -56,7 +59,8 @@ export default class DataPrep extends Component {
       loading: true,
       onSubmitError: null,
       currentWorkspace: null,
-      sidePanelToggle: false
+      sidePanelToggle: false,
+      workspaceName: null
     };
 
     this.toggleBackendDown = this.toggleBackendDown.bind(this);
@@ -157,9 +161,12 @@ export default class DataPrep extends Component {
   setCurrentWorkspace(workspaceId) {
     setWorkspace(workspaceId)
       .subscribe(() => {
+        let {properties} = DataPrepStore.getState().dataprep;
+        let workspaceName = properties.name;
         this.setState({
           loading: false,
-          currentWorkspace: workspaceId
+          currentWorkspace: workspaceId,
+          workspaceName
         });
       }, () => {
         this.setState({loading: false});
@@ -274,6 +281,14 @@ export default class DataPrep extends Component {
       <div className={classnames('dataprep-container', {
         'single-workspace': this.props.singleWorkspaceMode
       })}>
+        {
+          this.props.singleWorkspaceMode ?
+            null
+          :
+            <Helmet title={T.translate(`${DATAPREP_I18N_PREFIX}.pageTitle`, {
+              workspaceUri: !isNilOrEmpty(this.state.workspaceName) ? `| ${this.state.workspaceName}`: ''
+            })} />
+        }
         <DataPrepErrorAlert />
 
         <div className="top-section clearfix">
