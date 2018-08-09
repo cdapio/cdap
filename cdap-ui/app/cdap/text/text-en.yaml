@@ -1444,7 +1444,7 @@ features:
     systemDashboard: View system services dashboard
     tryMessage: 'You can try to: '
 
-  LicenseText: Licensed under the Apache License, Version 2.0
+  licenseText: Licensed under the Apache License, Version 2.0
 
   Market:
     action-types:

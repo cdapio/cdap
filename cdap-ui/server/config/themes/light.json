@@ -5,14 +5,14 @@
     "navbar-color": "#3b78e7"
   },
   "features": {
-    "dashboard": "false",
-    "reports": "true",
-    "data-prep": "false",
-    "pipelines": "true",
-    "analytics": "true",
-    "rules-engine": "true",
-    "metadata": "true",
-    "hub": "true",
-    "footer": "false"
+    "dashboard": false,
+    "reports": true,
+    "data-prep": false,
+    "pipelines": true,
+    "analytics": true,
+    "rules-engine": true,
+    "metadata": true,
+    "hub": true,
+    "footer": false
   }
 }
