@@ -128,10 +128,18 @@ public class ReportGenerationAppTest extends TestBase {
 
   @Test
   public void testGenerateReport() throws Exception {
+    Map<String, String> runTimeArguments = new HashMap<>();
+    // disable tms subscriber thread as the RunMetaFileSet avro files are written directly by the test case
+    // if the tms subscriber thread is enabled, in order to find the latest message id to start fetching from,
+    // we read the latest RunMetaFileSet avro file's content
+    // whereas the derived message_id will be invalid in TMS as these runs aren't in TMS,
+    // in order to avoid the exception we disable the tms subscriber thread for the test case
+    runTimeArguments.put(Constants.DISABLE_TMS_SUBSCRIBER_THREAD, "true");
+
     Long currentTimeMillis = System.currentTimeMillis();
     DatasetId metaFileset = createAndInitializeDataset(NamespaceId.DEFAULT, currentTimeMillis);
 
-    SparkManager sparkManager = deployAndStartReportingApplication(NamespaceId.DEFAULT, new HashMap<>());
+    SparkManager sparkManager = deployAndStartReportingApplication(NamespaceId.DEFAULT, runTimeArguments);
     URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);
     Assert.assertNotNull(url);
     URL reportURL = url.toURI().resolve("reports/").toURL();
@@ -318,6 +326,7 @@ public class ReportGenerationAppTest extends TestBase {
     Map<String, String> runTimeArguments = new HashMap<>();
     // set report expiration time to be 10 seconds
     runTimeArguments.put(Constants.Report.REPORT_EXPIRY_TIME_SECONDS, "1");
+    runTimeArguments.put(Constants.DISABLE_TMS_SUBSCRIBER_THREAD, "true");
     SparkManager sparkManager = deployAndStartReportingApplication(testNamespace, runTimeArguments);
 
     URL url = sparkManager.getServiceURL(1, TimeUnit.MINUTES);

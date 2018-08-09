@@ -128,7 +128,7 @@ object ReportGenerationHelper {
       }
     }))
     resultDf.persist()
-    writeSummary(request, resultDf, reportIdDir, reportExpiryDurationMillis)
+    val reportSummary = getSummary(request, resultDf, reportExpiryDurationMillis)
     // drop the columns which should not be included in the report
     resultDf.columns.foreach(col => if (!reportFields.contains(col)) resultDf = resultDf.drop(col))
     val reportDir = reportIdDir.append(Constants.LocationName.REPORT_DIR).toURI.toString
@@ -137,6 +137,7 @@ object ReportGenerationHelper {
     sql.setConf("spark.sql.avro.compression.codec", "uncompressed")
     resultDf.coalesce(1).write.option("timestampFormat",
       "yyyy/MM/dd HH:mm:ss ZZ").format("com.databricks.spark.avro").save(reportDir)
+    writeSummaryToFile(reportSummary, reportIdDir)
   }
 
   /**
@@ -184,10 +185,10 @@ object ReportGenerationHelper {
     *
     * @param request the report generation request
     * @param df the DataFrame containing report details
-    * @param reportIdDir the location to write the summary to
+    * @return summary of the report
     */
-  private def writeSummary(request: ReportGenerationRequest, df: DataFrame, reportIdDir: Location,
-                           expiryDurationMillis : Long): Unit = {
+  private def getSummary(request: ReportGenerationRequest, df: DataFrame,
+                         expiryDurationMillis : Long): ReportSummary = {
     val namespaces = ArrayBuffer[NamespaceAggregate]()
     // group the report details by namespace, and then collect the count and the corresponding unique namespaces
     df.groupBy(Constants.NAMESPACE).count.collect.foreach(r => namespaces +=
@@ -226,9 +227,8 @@ object ReportGenerationHelper {
       .foreach(r => startMethods +=
         new StartMethodAggregate(r.getAs[String](Constants.START_METHOD), r.getAs[Long](COUNT_COL)))
     // create the summary
-    val summary = new ReportSummary(namespaces, request.getStart, request.getEnd, artifacts,
+    return new ReportSummary(namespaces, request.getStart, request.getEnd, artifacts,
       durations, starts, owners, startMethods, df.count(), System.currentTimeMillis(), expiryDurationMillis)
-    writeSummaryToFile(summary, reportIdDir)
   }
 
   private def writeSummaryToFile(summary : ReportSummary, reportIdDir: Location): Unit = {

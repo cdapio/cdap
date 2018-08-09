@@ -55,15 +55,19 @@ public class SparkPersistRunRecordMain implements JavaSparkMain {
     }
     Location reportFileSetLocation = getDatasetBaseLocationWithRetry(sec, ReportGenerationApp.REPORT_FILESET);
     createSecurityKeyFile(reportFileSetLocation);
-    tmsSubscriber = new TMSSubscriber(sec.getMessagingContext().getMessageFetcher(),
-                                      getDatasetBaseLocationWithRetry(sec, ReportGenerationApp.RUN_META_FILESET),
-                                      sec.getRuntimeArguments(), sec.getMetrics());
-    tmsSubscriber.start();
-    try {
-      tmsSubscriber.join();
-    } catch (InterruptedException ie) {
-      tmsSubscriber.requestStop();
-      tmsSubscriber.interrupt();
+    // enabled by default, configuration to help disable this thread in unit tests
+    if (!Boolean.parseBoolean(
+      sec.getRuntimeArguments().getOrDefault(Constants.DISABLE_TMS_SUBSCRIBER_THREAD, "false"))) {
+      tmsSubscriber = new TMSSubscriber(sec.getMessagingContext().getMessageFetcher(),
+                                        getDatasetBaseLocationWithRetry(sec, ReportGenerationApp.RUN_META_FILESET),
+                                        sec.getRuntimeArguments(), sec.getMetrics());
+      tmsSubscriber.start();
+      try {
+        tmsSubscriber.join();
+      } catch (InterruptedException ie) {
+        tmsSubscriber.requestStop();
+        tmsSubscriber.interrupt();
+      }
     }
   }
 
