@@ -17,13 +17,13 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import DataPrep from 'components/DataPrep';
+import DataPrep, { MIN_DATAPREP_VERSION } from 'components/DataPrep';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import MyDataPrepApi from 'api/dataprep';
-import NamespaceStore from 'services/NamespaceStore';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import {Redirect} from 'react-router-dom';
 import orderBy from 'lodash/orderBy';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
@@ -32,6 +32,7 @@ import DataPrepConnections from 'components/DataPrepConnections';
 import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import ee from 'event-emitter';
+import Version from 'services/VersionRange/Version';
 
 require('./DataPrepHome.scss');
 /**
@@ -47,11 +48,12 @@ export default class DataPrepHome extends Component {
       error: null,
       backendDown: false,
       backendCheck: true,
+      isMinVersionMet: false,
       toggleConnectionsViewFlag: isNil(this.props.workspaceId) && this.props.singleWorkspaceMode ? true : false,
       currentWorkspaceId: objectQuery(this.props, 'match', 'params', 'workspaceId') || this.props.workspaceId || ''
     };
 
-    this.namespace = NamespaceStore.getState().selectedNamespace;
+    this.namespace = getCurrentNamespace();
     this.onServiceStart = this.onServiceStart.bind(this);
     this.toggleConnectionsView = this.toggleConnectionsView.bind(this);
     this.onWorkspaceCreate = this.onWorkspaceCreate.bind(this);
@@ -62,10 +64,11 @@ export default class DataPrepHome extends Component {
 
   componentWillMount() {
     this.checkBackendUp();
-    this.checkWorkspaceId(this.props);
   }
 
   componentWillReceiveProps(nextProps) {
+    if (this.state.backendCheck) { return; }
+
     this.setState({
       rerouteTo: null,
       isEmpty: false,
@@ -74,14 +77,31 @@ export default class DataPrepHome extends Component {
   }
 
   checkBackendUp() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
+    let namespace = getCurrentNamespace();
     MyDataPrepApi.ping({ namespace })
-      .subscribe(() => {
+      .combineLatest(MyDataPrepApi.getApp({ namespace }))
+      .subscribe((res) => {
+        const appSpec = res[1];
+
+        let minimumVersion = new Version(MIN_DATAPREP_VERSION);
+
+        if (minimumVersion.compareTo(new Version(appSpec.artifactVersion)) > 0) {
+          console.log('dataprep minimum version not met');
+
+          this.setState({
+            backendCheck: false,
+            backendDown: true
+          });
+
+          return;
+        }
+
         this.setState({
-          backendCheck: false,
-          backendDown: false
+          isMinVersionMet: true,
+          backendCheck: false
         });
+
+        this.checkWorkspaceId(this.props);
       }, (err) => {
         if (err.statusCode === 503) {
           console.log('backend not started');
@@ -176,7 +196,7 @@ export default class DataPrepHome extends Component {
   }
 
   updateWorkspaceList() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = getCurrentNamespace();
 
     this.workspaceListRetries = 0;
     DataPrepStore.dispatch({
@@ -199,6 +219,7 @@ export default class DataPrepHome extends Component {
       isEmpty: false,
       rerouteTo: null,
       backendDown: false,
+      backendCheck: false,
       error: null,
       currentWorkspaceId: props.match.params.workspaceId
     });
@@ -209,7 +230,8 @@ export default class DataPrepHome extends Component {
   onServiceStart() {
     this.setState({
       backendCheck: false,
-      backendDown: false
+      backendDown: false,
+      isMinVersionMet: true
     });
     this.fetching = false;
     this.checkWorkspaceId(this.props);
@@ -266,7 +288,7 @@ export default class DataPrepHome extends Component {
       );
     }
 
-    if (this.state.backendDown) {
+    if (this.state.backendDown || !this.state.isMinVersionMet) {
       return (
         <div>
           {renderPageTitle()}
