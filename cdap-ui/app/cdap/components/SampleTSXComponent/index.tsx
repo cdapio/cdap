@@ -22,12 +22,12 @@ const SubTSXComponent = Loadable({
   loading: LoadingSVGCentered,
 });
 
-interface IFCProps {
+interface FCProps {
   prop1: boolean;
   prop2: string;
 }
 
-const FunctionalComponent: React.SFC<IFCProps> = ({ prop1, prop2 }) => {
+const FunctionalComponent: React.SFC<FCProps> = ({ prop1, prop2 }) => {
   return (
     <React.Fragment>
       <h4> Stateless component </h4>
@@ -39,11 +39,11 @@ const FunctionalComponent: React.SFC<IFCProps> = ({ prop1, prop2 }) => {
   );
 };
 
-interface IStatefulComponentProps {
+interface StatefulComponentProps {
   prop3: string;
 }
 
-class StatefullComponent extends React.PureComponent<IStatefulComponentProps, {}> {
+class StatefullComponent extends React.PureComponent<StatefulComponentProps, {}> {
   public render() {
     return (
       <>

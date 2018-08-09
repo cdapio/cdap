@@ -55,7 +55,7 @@ var MetricsQueryHelper = require('../cdap/services/MetricsQueryHelper').default;
 var PipelineMetricsStore = require('../cdap/services/PipelineMetricsStore').default;
 var PipelineMetricsActionCreator = require('../cdap/services/PipelineMetricsStore/ActionCreator');
 var PipelineConfigurationsActionCreator = require('../cdap/components/PipelineConfigurations/Store/ActionCreator');
-var ThemeHelper = require('../cdap/services/ThemeHelper');
+var ThemeHelper = require('../cdap/services/ThemeHelper.ts');
 var Footer = require('../cdap/components/Footer').default;
 
 export {

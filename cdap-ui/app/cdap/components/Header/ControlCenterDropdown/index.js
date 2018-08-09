@@ -21,10 +21,7 @@ import NavLinkWrapper from 'components/NavLinkWrapper';
 import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
-import {
-  hideDashboard,
-  hideReports
-} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper.ts';
 
 require('./ControlCenterDropdown.scss');
 
@@ -128,7 +125,7 @@ export default class ControlCenterDropdown extends Component {
   }
 
   renderDashboardLink() {
-    if (hideDashboard()) {
+    if (Theme.showDashboard === false) {
       return null;
     }
 
@@ -147,7 +144,7 @@ export default class ControlCenterDropdown extends Component {
   }
 
   renderReportsLink() {
-    if (hideReports()) {
+    if (Theme.showReports === false) {
       return null;
     }
 

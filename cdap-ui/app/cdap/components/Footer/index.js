@@ -16,21 +16,17 @@
 
 import React from 'react';
 import T from 'i18n-react';
-import {
-  hideFooter,
-  getFooterText,
-  getFooterLink
-} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper.ts';
 
 require('./Footer.scss');
 
 export default function Footer() {
-  if (hideFooter()) {
+  if (Theme.showFooter === false) {
     return null;
   }
 
-  const footerText = getFooterText() || T.translate('features.LicenseText');
-  const footerUrl = getFooterLink() || 'https://www.apache.org/licenses/LICENSE-2.0';
+  const footerText = Theme.footerText || T.translate('features.LicenseText');
+  const footerUrl = Theme.footerLink || 'https://www.apache.org/licenses/LICENSE-2.0';
   return (
     <footer>
       <div className="container">
