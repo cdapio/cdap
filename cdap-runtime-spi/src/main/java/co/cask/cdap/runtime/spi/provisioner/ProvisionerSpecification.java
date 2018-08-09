@@ -16,8 +16,6 @@
 
 package co.cask.cdap.runtime.spi.provisioner;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -28,14 +26,11 @@ public class ProvisionerSpecification {
   private final String name;
   private final String label;
   private final String description;
-  private final Map<String, ProvisionerProperty> properties;
 
-  public ProvisionerSpecification(String name, String label, String description,
-                                  Map<String, ProvisionerProperty> properties) {
+  public ProvisionerSpecification(String name, String label, String description) {
     this.name = name;
     this.label = label;
     this.description = description;
-    this.properties = Collections.unmodifiableMap(properties);
   }
 
   public String getName() {
@@ -48,10 +43,6 @@ public class ProvisionerSpecification {
 
   public String getDescription() {
     return description;
-  }
-
-  public Map<String, ProvisionerProperty> getProperties() {
-    return properties;
   }
 
   @Override
@@ -67,12 +58,11 @@ public class ProvisionerSpecification {
 
     return Objects.equals(name, that.name) &&
       Objects.equals(label, that.label) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(properties, that.properties);
+      Objects.equals(description, that.description);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, label, description, properties);
+    return Objects.hash(name, label, description);
   }
 }

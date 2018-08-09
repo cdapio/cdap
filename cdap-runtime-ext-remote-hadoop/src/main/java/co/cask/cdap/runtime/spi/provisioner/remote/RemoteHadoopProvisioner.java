@@ -40,8 +40,7 @@ public class RemoteHadoopProvisioner implements Provisioner {
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "remote-hadoop", "Remote Hadoop Provisioner",
     "Runs programs on a pre-existing Hadoop cluster. The cluster must contain compatible software, must not use "
-      + "Kerberos, and must be accessible via ssh and https (ports 22 and 443).",
-    new HashMap<>());
+      + "Kerberos, and must be accessible via ssh and https (ports 22 and 443).");
 
   @Override
   public ProvisionerSpecification getSpec() {

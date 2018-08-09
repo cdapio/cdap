@@ -52,8 +52,7 @@ public class ElasticMapReduceProvisioner implements Provisioner {
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "aws-emr", "Amazon EMR",
     "Amazon EMR provides a managed Hadoop framework that makes it easy, fast, and cost-effective to " +
-            "process vast amounts of data across dynamically scalable Amazon EC2 instances.",
-    new HashMap<>());
+            "process vast amounts of data across dynamically scalable Amazon EC2 instances.");
   private static final String CLUSTER_PREFIX = "cdap-";
 
   @Override
