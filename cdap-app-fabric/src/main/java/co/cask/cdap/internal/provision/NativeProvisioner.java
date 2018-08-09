@@ -36,9 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class NativeProvisioner implements Provisioner {
 
   public static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
-    Profile.NATIVE_NAME, "Native",
-    "Runs programs on the CDAP master cluster. Does not provision any resources.",
-    new HashMap<>());
+    Profile.NATIVE_NAME, "Native", "Runs programs on the CDAP master cluster. Does not provision any resources.");
 
   @Override
   public ProvisionerSpecification getSpec() {
