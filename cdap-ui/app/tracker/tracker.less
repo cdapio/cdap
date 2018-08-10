@@ -34,12 +34,6 @@
 body { background-color: #e5e5e5; }
 
 body[class*='state-tracker'] {
-  &:not(.state-tracker-home) {
-    main.container { width: 100%; }
-  }
-  &:not(.state-tracker-tags):not(.state-tracker-dictionary) {
-    main.container { padding: 0 0 15px 0; }
-  }
   main.container {
     margin: 0;
     margin-top: 50px;
@@ -48,6 +42,7 @@ body[class*='state-tracker'] {
     // FIXME: ad-hoc - This is added here because of the resource center button.
     min-height: 500px;
     overflow-y: auto;
+    padding: 0 0 15px 0;
 
     h1,
     h2,
@@ -89,28 +84,28 @@ body.state-tracker-home.state-tracker {
     width: 100%;
   }
 
-  div.tracker-search {
-    background: #efefef;
-    border-bottom: 1px solid #c9c9c9;
-
-    .form-group {
-      margin: 5px;
-
-      span {
-        line-height: 33px;
-        font-size: 18px;
-        color: @tracker-grey;
-        margin-right: 8px;
-      }
-    }
+  main.container {
+    margin-top: 0;
   }
 
-  cask-resource-center-button {
-    display: inline-block;
-    width: 58px;
-    .cask-resourcecenter-button {
-      position: absolute;
-      top: 30px;
+
+  div.tracker-search.form-group {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    top: 50vh;
+    left: 50vw;
+    width: 500px;
+    margin-bottom: 0;
+
+    .form-control {
+      height: 40px;
+    }
+
+    span {
+      line-height: 40px;
+      font-size: 18px;
+      color: @tracker-grey;
+      margin-right: 8px;
     }
   }
 }
