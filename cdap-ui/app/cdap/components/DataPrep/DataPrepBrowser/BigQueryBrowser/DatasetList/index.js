@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import {listBigQueryTables, listBiqQueryDatasets} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {listBigQueryTables} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import {Link} from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
@@ -37,18 +37,6 @@ class DatasetListView extends Component {
   static defaultProps = {
     enableRouting: true
   };
-
-  componentWillMount() {
-    if (this.props.connectionId) {
-      listBiqQueryDatasets(this.props.connectionId);
-    }
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.connectionId !== this.props.connectionId) {
-      listBiqQueryDatasets(nextProps.connectionId);
-    }
-  }
 
   clickHandler = (datasetId) => {
     if (this.props.enableRouting) { return; }

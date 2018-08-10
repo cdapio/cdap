@@ -188,16 +188,16 @@ function constructKafkaSource(artifactsList, kafkaInfo) {
 
   plugin = plugin[pluginName];
 
-  plugin.properties.schema = {
+  plugin.properties.schema = JSON.stringify({
     name: 'kafkaAvroSchema',
     type: 'record',
     fields: [
       {
-        name: 'message',
-        type: ['bytes', 'null']
+        name: 'body',
+        type: 'string'
       }
     ]
-  };
+  });
 
   let batchPluginInfo = {
     name: plugin.name,

@@ -23,4 +23,10 @@ const setActiveBrowser = (payload) => {
   });
 };
 
-export {setActiveBrowser};
+const reset = () => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.RESET
+  });
+};
+
+export {setActiveBrowser, reset};
