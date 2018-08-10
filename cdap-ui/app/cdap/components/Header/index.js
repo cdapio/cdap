@@ -31,6 +31,7 @@ import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import ControlCenterDropdown from 'components/Header/ControlCenterDropdown';
 import {objectQuery} from 'services/helpers';
+import {SYSTEM_NAMESPACE} from 'services/global-constants';
 
 require('./Header.scss');
 
@@ -68,7 +69,7 @@ export default class Header extends Component {
     this.nsSubscription = NamespaceStore.subscribe(() => {
       let selectedNamespace = getLastSelectedNamespace();
       let {namespaces} = NamespaceStore.getState();
-      if (selectedNamespace === 'system') {
+      if (selectedNamespace === SYSTEM_NAMESPACE) {
         selectedNamespace = objectQuery(namespaces, 0, 'name');
       }
       if (selectedNamespace !== this.state.currentNamespace) {

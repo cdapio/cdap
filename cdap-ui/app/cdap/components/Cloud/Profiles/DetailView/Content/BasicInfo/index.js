@@ -27,7 +27,7 @@ import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
 import {getProvisionerLabel, extractProfileName, getNodeHours} from 'components/Cloud/Profiles/Store/ActionCreator';
 import ProfileStatusToggle from 'components/Cloud/Profiles/DetailView/Content/BasicInfo/ProfileStatusToggle';
-import {CLOUD} from 'services/global-constants';
+import {CLOUD, SYSTEM_NAMESPACE} from 'services/global-constants';
 import {humanReadableDate} from 'services/helpers';
 import CopyableId from 'components/CopyableID';
 
@@ -193,7 +193,7 @@ export default class ProfileDetailViewBasicInfo extends Component {
       pathname: '/administration/configuration',
       state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
     } : `/ns/${getCurrentNamespace()}/details`;
-    let namespace = this.props.isSystem ? 'system' : getCurrentNamespace();
+    let namespace = this.props.isSystem ? SYSTEM_NAMESPACE : getCurrentNamespace();
     const isNativeProfile = profile.name === extractProfileName(CLOUD.DEFAULT_PROFILE_NAME);
 
     const actionsElem = () => {

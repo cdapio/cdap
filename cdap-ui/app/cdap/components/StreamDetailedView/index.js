@@ -34,6 +34,7 @@ import BreadCrumb from 'components/BreadCrumb';
 import PlusButton from 'components/PlusButton';
 import Helmet from 'react-helmet';
 import queryString from 'query-string';
+import {SCOPES} from 'services/global-constants';
 
 require('./StreamDetailedView.scss');
 
@@ -115,7 +116,7 @@ export default class StreamDetailedView extends Component {
         namespace,
         entityType: 'streams',
         entityId: streamId,
-        scope: 'SYSTEM'
+        scope: SCOPES.SYSTEM
       };
 
       MyMetadataApi.getProperties(metadataParams)

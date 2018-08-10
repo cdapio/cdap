@@ -23,15 +23,16 @@ import {Observable} from 'rxjs/Observable';
 import {CLOUD} from 'services/global-constants';
 import {MyMetricApi} from 'api/metric';
 import {MySearchApi} from 'api/search';
-import {GLOBALS} from 'services/global-constants';
+import {GLOBALS, SYSTEM_NAMESPACE} from 'services/global-constants';
 import isNil from 'lodash/isNil';
+import {SCOPES} from 'services/global-constants';
 
 export const getProfileMetricsBody = (queryId, namespace, profilescope, startTime, endTime, extraTags = {}) => {
   let tags = {
     profilescope,
     ...extraTags
   };
-  if (namespace !== 'system') {
+  if (namespace !== SYSTEM_NAMESPACE) {
     tags.namespace = namespace;
   }
   let metricBody = {
@@ -154,7 +155,7 @@ export const getProfiles = (namespace) => {
   });
 
   let profileObservable = MyCloudApi.getSystemProfiles();
-  if (namespace !== 'system') {
+  if (namespace !== SYSTEM_NAMESPACE) {
     profileObservable = profileObservable.combineLatest(MyCloudApi.list({ namespace }));
   } else {
     profileObservable = profileObservable.combineLatest(Observable.of([]));
@@ -187,17 +188,17 @@ export const getProfiles = (namespace) => {
         const extraTags = {
           programtype: 'Workflow'
         };
-        let oneDayUSERMetricsBody = getProfileMetricsBody('oneDayUSERMetrics', namespace, 'USER', 'now-24h', 'now', extraTags);
-        let overAllUSERMetricsBody = getProfileMetricsBody('overAllUSERMetrics', namespace, 'USER', 0, 0, extraTags);
-        let oneDaySYSTEMMetricsBody = getProfileMetricsBody('oneDaySYSTEMMetrics', namespace, 'SYSTEM', 'now-24h', 'now', extraTags);
-        let overAllSYSTEMMetricsBody = getProfileMetricsBody('overAllSYSTEMMetrics', namespace, 'SYSTEM', 0, 0, extraTags);
+        let oneDayUSERMetricsBody = getProfileMetricsBody('oneDayUSERMetrics', namespace, SCOPES.USER, 'now-24h', 'now', extraTags);
+        let overAllUSERMetricsBody = getProfileMetricsBody('overAllUSERMetrics', namespace, SCOPES.USER, 0, 0, extraTags);
+        let oneDaySYSTEMMetricsBody = getProfileMetricsBody('oneDaySYSTEMMetrics', namespace, SCOPES.SYSTEM, 'now-24h', 'now', extraTags);
+        let overAllSYSTEMMetricsBody = getProfileMetricsBody('overAllSYSTEMMetrics', namespace, SCOPES.SYSTEM, 0, 0, extraTags);
         MyMetricApi
           .query(null, {...oneDayUSERMetricsBody, ...overAllUSERMetricsBody, ...oneDaySYSTEMMetricsBody, ...overAllSYSTEMMetricsBody})
           .subscribe(metrics => {
             let profilesToMetricsMap = {};
             Object.keys(metrics).forEach(query => {
               // oneDayMetrics, overMetrics are the keys for metrics for each profile.
-              let profileScope = query.indexOf('USER') !== -1 ? 'user' : 'system';
+              let profileScope = query.indexOf(SCOPES.USER) !== -1 ? SCOPES.USER : SCOPES.SYSTEM;
               let metricsKey = query.replace(/USER|SYSTEM/, '');
               metrics[query].series.forEach(metric => {
                 let profileName = metric.grouping.profile;
@@ -227,7 +228,7 @@ export const getProfiles = (namespace) => {
                 }
                 /*
                   {
-                    system:profile1: {
+                    SYSTEM:profile1: {
                       oneDayMetrics: {
                         runs: 1,
                         minutes: 2
@@ -257,10 +258,9 @@ export const getProfiles = (namespace) => {
           });
         profiles.forEach(profile => {
           let {scope} = profile;
-          scope = scope.toLowerCase();
           let profileName = `profile:${scope}:${profile.name}`;
           let apiObservable$;
-          if (namespace === 'system') {
+          if (namespace === SYSTEM_NAMESPACE) {
             apiObservable$ = MySearchApi.searchSystem({ query: profileName });
           } else {
             apiObservable$ = MySearchApi.search({ namespace, query: profileName });
@@ -275,7 +275,7 @@ export const getProfiles = (namespace) => {
 
 export const exportProfile = (namespace, profile) => {
   let apiObservable$ = MyCloudApi.get({ namespace, profile: profile.name });
-  if (namespace === 'system') {
+  if (namespace === SYSTEM_NAMESPACE) {
     apiObservable$ = MyCloudApi.getSystemProfile({ profile: profile.name });
   }
   apiObservable$
@@ -330,7 +330,7 @@ export const importProfile = (namespace, e) => {
       namespace,
       profile: jsonSpec.name
     }, jsonSpec);
-    if (namespace === 'system') {
+    if (namespace === SYSTEM_NAMESPACE) {
       apiObservable$ = MyCloudApi.createSystemProfile({
         profile: jsonSpec.name
       }, jsonSpec);
@@ -339,7 +339,7 @@ export const importProfile = (namespace, e) => {
       .subscribe(
         () => {
           getProfiles(namespace);
-          let profilePrefix = namespace === 'system' ? 'SYSTEM' : 'USER';
+          let profilePrefix = namespace === SYSTEM_NAMESPACE ? SCOPES.SYSTEM : SCOPES.USER;
           let profileName = `${profilePrefix}:${jsonSpec.name}`;
           highlightNewProfile(profileName);
         },
@@ -386,10 +386,10 @@ export const extractProfileName = (name = '') => {
 
 export const getProfileNameWithScope = (name = '', scope) => {
   if (name && scope) {
-    if (scope === 'SYSTEM') {
-      return `SYSTEM:${name}`;
+    if (scope === SCOPES.SYSTEM) {
+      return `${SCOPES.SYSTEM}:${name}`;
     }
-    return `USER:${name}`;
+    return `${SCOPES.USER}:${name}`;
   }
   return name;
 };
@@ -401,7 +401,7 @@ export const isSystemProfile = (name = '') => {
 export const getDefaultProfile = (namespace) => {
   let preferenceApi;
 
-  if (namespace === 'system') {
+  if (namespace === SYSTEM_NAMESPACE) {
     preferenceApi = MyPreferenceApi.getSystemPreferences();
   } else {
     preferenceApi = MyPreferenceApi.getNamespacePreferences({namespace});
@@ -411,7 +411,7 @@ export const getDefaultProfile = (namespace) => {
     .subscribe(
       (preferences = {}) => {
         let defaultProfile = preferences[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY];
-        if (!defaultProfile && namespace === 'system') {
+        if (!defaultProfile && namespace === SYSTEM_NAMESPACE) {
           defaultProfile = CLOUD.DEFAULT_PROFILE_NAME;
         }
         if (defaultProfile) {
@@ -432,7 +432,7 @@ export const setDefaultProfile = (namespace, profileName) => {
 
   let preferenceApi;
 
-  if (namespace === 'system') {
+  if (namespace === SYSTEM_NAMESPACE) {
     preferenceApi = MyPreferenceApi.setSystemPreferences({}, postBody);
   } else {
     preferenceApi = MyPreferenceApi.setNamespacePreferences({namespace}, postBody);

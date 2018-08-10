@@ -42,9 +42,10 @@ import uuidV4 from 'uuid/v4';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
 import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
-import {CLOUD} from 'services/global-constants';
+import {CLOUD, SYSTEM_NAMESPACE} from 'services/global-constants';
 import {preventPropagation} from 'services/helpers';
 import findIndex from 'lodash/findIndex';
+import {SCOPES} from 'services/global-constants';
 require('./ListView.scss');
 
 const PREFIX = 'features.Cloud.Profiles';
@@ -181,7 +182,7 @@ class ProfilesListView extends Component {
   };
 
   deleteProfile = (profile) => {
-    let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
+    let namespace = profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : this.props.namespace;
 
     deleteProfile(namespace, profile.name, this.props.namespace)
       .subscribe(() => {
@@ -211,7 +212,7 @@ class ProfilesListView extends Component {
       return (
         <div className="text-xs-center">
           {
-            this.props.namespace === 'system' ?
+            this.props.namespace === SYSTEM_NAMESPACE ?
               (
                 <span>
                   {T.translate(`${PREFIX}.ListView.noProfilesSystem`)}
@@ -311,7 +312,7 @@ class ProfilesListView extends Component {
   }
 
   renderProfilerow = (profile) => {
-    let namespace = profile.scope === 'SYSTEM' ? 'system' : this.props.namespace;
+    let namespace = profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : this.props.namespace;
     let provisionerName = profile.provisioner.name;
     profile.provisioner.label = this.state.provisionersMap[provisionerName] || provisionerName;
     let profileStatus = PROFILE_STATUSES[profile.status];

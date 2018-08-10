@@ -31,9 +31,10 @@ import KeyValueStoreActions from 'components/KeyValuePairs/KeyValueStoreActions'
 import NamespaceStore from 'services/NamespaceStore';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import {SCOPES} from 'services/global-constants';
 
 export const PREFERENCES_LEVEL = {
-  SYSTEM: 'SYSTEM',
+  SYSTEM: SCOPES.SYSTEM,
   NAMESPACE: 'NAMESPACE'
 };
 
@@ -289,7 +290,7 @@ export default class SetPreferenceModal extends Component {
       if (this.props.entity) {
         entity = this.props.entity.id;
         entityWithType = `${this.props.entity.type} "${entity}"`;
-        tooltipID = `${this.props.entity.uniqueId}-title`;
+        tooltipID = `setpreference-modaltitle-${this.props.entity.uniqueId}`;
         if (this.props.entity.type === 'application') {
           description = T.translate(`${PREFIX}.DescriptionLabel.app`);
         } else {

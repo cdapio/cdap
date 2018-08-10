@@ -26,6 +26,7 @@ import {objectQuery} from 'services/helpers';
 import myExploreApi from 'api/explore';
 import NamespaceStore from 'services/NamespaceStore';
 import classnames from 'classnames';
+import {SCOPES} from 'services/global-constants';
 require('./ExploreAction.scss');
 
 export default class ExploreAction extends Component {
@@ -34,7 +35,7 @@ export default class ExploreAction extends Component {
       id: PropTypes.string.isRequired,
       version: PropTypes.string,
       uniqueId: PropTypes.string,
-      scope: PropTypes.oneOf(['SYSTEM', 'USER']),
+      scope: PropTypes.oneOf([SCOPES.SYSTEM, SCOPES.USER]),
       type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
     }),
     opened: PropTypes.bool,

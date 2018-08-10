@@ -21,6 +21,7 @@ import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
 import {MyMetadataApi} from 'api/metadata';
 import NamespaceStore from 'services/NamespaceStore';
+import {SCOPES} from 'services/global-constants';
 import T from 'i18n-react';
 
 export default class EditProperty extends Component {
@@ -55,7 +56,7 @@ export default class EditProperty extends Component {
       namespace,
       entityType: this.props.entityType,
       entityId: this.props.entityId,
-      scope: 'USER'
+      scope: SCOPES.USER
     };
 
     let requestBody = {};
