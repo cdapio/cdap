@@ -130,7 +130,7 @@ export default class ProfilePreview extends Component {
 
     return (
       <div className="profile-preview text-xs-left">
-        <div className="profile-label">
+        <div className="truncate">
           <strong title={profileLabel}>
             {profileLabel}
           </strong>

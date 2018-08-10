@@ -149,7 +149,7 @@ class ProfilesForSchedule extends Component {
       }
       return (
         <span
-          className="dropdown-toggle-label"
+          className="dropdown-toggle-label truncate"
           title={profileLabel}
         >
           {profileLabel}

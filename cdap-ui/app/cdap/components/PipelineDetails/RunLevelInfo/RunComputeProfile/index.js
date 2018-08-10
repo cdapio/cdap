@@ -91,7 +91,7 @@ class RunLevelComputeProfile extends Component {
             </button>
           :
             <div
-              className="profile-preview-label-content"
+              className="profile-preview-label-content truncate"
               onClick={(e) => {
                 if (this.props.profileName === CLOUD.DEFAULT_PROFILE_NAME) {
                   preventPropagation(e);
