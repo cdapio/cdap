@@ -1,7 +1,6 @@
 antlr.antlr-2.7.7.jar
 aopalliance.aopalliance-1.0.jar
 cdap-data-pipeline-5.0.0.jar
-cdap-data-quality-5.0.0.jar
 cdap-data-streams-5.0.0.jar
 cdap-etl-tools-5.0.0.jar
 cdap-hbase-compat-0.96-5.0.0-fat.jar
