@@ -128,12 +128,17 @@ export default class ProfileDetailViewBasicInfo extends Component {
     }
 
     const confirmationText = T.translate(`${PREFIX}.common.deleteConfirmation`, {profile: this.props.profile.name});
+    const confirmationElem = (
+      <span title={this.props.profile.name}>
+        {confirmationText}
+      </span>
+    );
 
     return (
       <ConfirmationModal
         headerTitle={T.translate(`${PREFIX}.common.deleteTitle`)}
         toggleModal={this.toggleDeleteModal}
-        confirmationText={confirmationText}
+        confirmationElem={confirmationElem}
         confirmButtonText={T.translate('commons.delete')}
         confirmFn={this.deleteProfile}
         cancelFn={this.toggleDeleteModal}
