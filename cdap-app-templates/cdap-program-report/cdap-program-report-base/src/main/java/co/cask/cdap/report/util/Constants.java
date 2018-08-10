@@ -115,4 +115,6 @@ public final class Constants {
     public static final String DEFAULT_REPORT_EXPIRY_TIME_SECONDS = String.valueOf(TimeUnit.DAYS.toSeconds(2));
     public static final String REPORT_EXPIRY_TIME_SECONDS = "report.expiry.duration.seconds";
   }
+
+  public static final String DISABLE_TMS_SUBSCRIBER_THREAD = "disable.tms.subscriber.thread";
 }

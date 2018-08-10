@@ -738,6 +738,10 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         if (totalRecords > 0) {
           long recordCount = 0;
           Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
+          if (!reportDir.exists() || reportDir.list().size() < 1) {
+            responder.sendError(404, String.format("Content files not found for report %s", idMessage));
+            return;
+          }
           // TODO: [CDAP-13291] need to support reading multiple report files
           Optional<Location> reportFile =
             reportDir.list().stream().filter(l -> l.getName().endsWith(".avro")).findFirst();
