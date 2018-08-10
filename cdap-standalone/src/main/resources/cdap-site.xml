@@ -233,19 +233,6 @@
   </property>
 
   <property>
-    <name>tracker.app.config</name>
-    <value>{
-             "auditLogConfig" : {
-               "topic" : "${audit.topic}"
-             }
-           }
-    </value>
-    <description>
-      Application configuration for Tracker
-    </description>
-  </property>
-
-  <property>
     <name>kerberos.auth.enabled</name>
     <value>false</value>
     <description>

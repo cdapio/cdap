@@ -128,7 +128,6 @@ public class StandaloneMain {
   private final CConfiguration cConf;
   private final DatasetService datasetService;
   private final ExploreClient exploreClient;
-  private final TrackerAppCreationService trackerAppCreationService;
   private final WranglerAppCreationService wranglerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final MessagingService messagingService;
@@ -145,13 +144,6 @@ public class StandaloneMain {
     this.cConf = cConf;
 
     injector = Guice.createInjector(modules);
-
-    // Start ZK client, Kafka client, ZK Server and Kafka Server only when audit is enabled
-    if (cConf.getBoolean(Constants.Audit.ENABLED)) {
-      trackerAppCreationService = injector.getInstance(TrackerAppCreationService.class);
-    } else {
-      trackerAppCreationService = null;
-    }
 
     wranglerAppCreationService = injector.getInstance(WranglerAppCreationService.class);
     messagingService = injector.getInstance(MessagingService.class);
@@ -268,10 +260,6 @@ public class StandaloneMain {
     }
     metadataService.startAndWait();
 
-    if (trackerAppCreationService != null) {
-      trackerAppCreationService.startAndWait();
-    }
-
     wranglerAppCreationService.startAndWait();
 
     operationalStatsService.startAndWait();
@@ -297,9 +285,6 @@ public class StandaloneMain {
       }
 
       wranglerAppCreationService.stopAndWait();
-      if (trackerAppCreationService != null) {
-        trackerAppCreationService.stopAndWait();
-      }
 
       //  shut down router to stop all incoming traffic
       router.stopAndWait();

@@ -808,11 +808,10 @@ public class MetadataDataset extends AbstractDataset {
     }
 
     MetadataEntity metadataEntity = MetadataKey.extractMetadataEntityFromKey(rowKey);
-    // if the entity starts with _ then skip it unless the caller choose to showHidden.
-    // This is done to hide entities from Tracker. See: CDAP-7910
 
     try {
       NamespacedEntityId namespacedEntityId = EntityId.fromMetadataEntity(metadataEntity);
+      // if the entity starts with _ then skip it unless the caller choose to showHidden.
       if (!showHidden && namespacedEntityId != null && namespacedEntityId.getEntityName().startsWith("_")) {
         return Optional.empty();
       }
