@@ -295,6 +295,7 @@ export default class DataPrepTable extends Component {
                                 onWarning={this.showWarningMessage.bind(this, index)}
                                 allowSpace={false}
                                 shouldSelect={true}
+                                validCharacterRegex={/^\w+$/}
                               />
                               {
                                 head.showWarning ?
