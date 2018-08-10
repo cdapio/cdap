@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -315,14 +314,19 @@ class DatasetServiceClient {
   private HttpResponse doRequest(HttpRequest.Builder requestBuilder) throws DatasetManagementException {
     HttpRequest request = addUserIdHeader(requestBuilder).build();
     try {
-      LOG.trace("executing {} {}", request.getMethod(), request.getURL().getPath());
+      LOG.trace("Executing {} {}", request.getMethod(), request.getURL().getPath());
       HttpResponse response = remoteClient.execute(request);
-      LOG.trace("executed {} {}", request.getMethod(), request.getURL().getPath());
+      LOG.trace("Executed {} {}", request.getMethod(), request.getURL().getPath());
       return response;
     } catch (ConnectException e) {
+      LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().getPath(), e);
       throw new ServiceUnavailableException(Constants.Service.DATASET_MANAGER, e);
     } catch (IOException e) {
+      LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().getPath(), e);
       throw new DatasetManagementException(remoteClient.createErrorMessage(request, null), e);
+    } catch (Throwable e) {
+      LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().getPath(), e);
+      throw e;
     }
   }
 

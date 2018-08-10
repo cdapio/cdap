@@ -55,13 +55,13 @@ CDAP Sandbox and Distributed CDAP
 - Build CDAP Sandbox distribution ZIP::
 
     MAVEN_OPTS="-Xmx1024m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-app-templates/cdap-program-report,cdap-examples \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report,cdap-examples \
     -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 
 - Build CDAP Sandbox distribution ZIP with additional system artifacts::
 
     MAVEN_OPTS="-Xmx1024m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-app-templates/cdap-program-report,cdap-examples \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report,cdap-examples \
     -am -amd -DskipTests -P examples,templates,dist,release,unit-tests \
     -Dadditional.artifacts.dir=</path/to/additional/artifacts>
 
@@ -132,7 +132,7 @@ CDAP Sandbox and Distributed CDAP
 License and Trademarks
 ======================
 
-Copyright © 2014-2017 Cask Data, Inc.
+Copyright © 2014-2018 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at

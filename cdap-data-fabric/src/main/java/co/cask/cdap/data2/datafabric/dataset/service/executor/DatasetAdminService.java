@@ -103,17 +103,21 @@ public class DatasetAdminService {
       UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
       final DatasetType type = ImpersonationUtils.doAs(ugi, () -> {
+        LOG.trace("Getting dataset type {}", typeMeta.getName());
         DatasetType type1 = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
         if (type1 == null) {
           throw new BadRequestException(
             String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
         }
+        LOG.trace("Got dataset type {}", typeMeta.getName());
         return type1;
       });
 
       DatasetSpecification spec = ImpersonationUtils.doAs(ugi, () -> {
+        LOG.trace("Configuring dataset {} of type {}", datasetInstanceId.getDataset(), typeMeta.getName());
         DatasetSpecification spec1 = existing == null ? type.configure(datasetInstanceId.getEntityName(), props)
           : type.reconfigure(datasetInstanceId.getEntityName(), props, existing);
+        LOG.trace("Configured dataset {} of type {}", datasetInstanceId.getDataset(), typeMeta.getName());
 
         DatasetAdmin admin = type.getAdmin(context, spec1);
         try {
@@ -124,7 +128,9 @@ public class DatasetAdminService {
               admin.upgrade();
             }
           } else {
+            LOG.trace("Creating dataset {} of type {}", datasetInstanceId.getDataset(), typeMeta.getName());
             admin.create();
+            LOG.trace("Created dataset {} of type {}", datasetInstanceId.getDataset(), typeMeta.getName());
           }
         } finally {
           Closeables.closeQuietly(admin);
@@ -133,7 +139,9 @@ public class DatasetAdminService {
       });
 
       // Writing system metadata should be done without impersonation since user may not have access to system tables.
+      LOG.trace("Writing metadata for dataset {}", datasetInstanceId.getDataset());
       writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null, ugi);
+      LOG.trace("Wrote metadata for dataset {}", datasetInstanceId.getDataset());
       return spec;
     } catch (Exception e) {
       if (e instanceof IncompatibleUpdateException) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2018 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,24 @@
   -->
 
 <configuration>
-     <!--Supressing some chatty loggers -->
-    <logger name="org.apache.hadoop" level="ERROR"/>
-    <logger name="org.apache.hive" level="INFO"/>
-    <logger name="org.mortbay.log" level="INFO"/>
+    <!--Suppressing some chatty loggers -->
+    <logger name="com.ning" level="WARN"/>
+    <logger name="io.netty.util.internal" level="OFF"/>
+    <logger name="org.apache.commons.beanutils" level="ERROR"/>
+    <logger name="org.apache.directory" level="WARN"/>
+    <logger name="org.apache.spark" level="WARN"/>
+    <logger name="org.apache.hadoop" level="WARN"/>
+    <logger name="org.apache.http" level="ERROR"/>
+    <logger name="org.apache.hive" level="WARN"/>
+    <logger name="org.apache.zookeeper" level="ERROR"/>
+    <logger name="org.mortbay.log" level="WARN"/>
+    <logger name="org.spark-project" level="WARN"/>
+    <logger name="org.quartz.core" level="WARN"/>
 
+    <!-- log levels for CDAP classes -->
+    <logger name="co.cask.cdap" level="DEBUG" />
+    <logger name="co.cask.cdap.data2.datafabric.dataset.DatasetServiceClient" level="TRACE"/>
+    <logger name="co.cask.cdap.data2.datafabric.dataset.service.executor.RemoteDatasetOpExecutor" level="TRACE"/>
     <logger name="co.cask.cdap.explore" level="TRACE"/>
     <logger name="co.cask.cdap.hive" level="DEBUG"/>
 

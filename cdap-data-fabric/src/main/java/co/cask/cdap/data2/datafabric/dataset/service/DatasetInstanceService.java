@@ -191,15 +191,19 @@ public class DatasetInstanceService {
   DatasetMeta get(final DatasetId instance, List<? extends EntityId> owners) throws Exception {
     // ensure user has correct privileges before getting the meta if the dataset is not a system dataset
     if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
+      LOG.trace("Authorizing GET for dataset {}", instance.getDataset());
       AuthorizationUtil.ensureOnePrivilege(instance, EnumSet.allOf(Action.class),
                                            authorizationEnforcer, authenticationContext.getPrincipal());
+      LOG.trace("Authorized GET for dataset {}", instance.getDataset());
     }
     // Application Deployment first makes a call to the dataset service to check if the instance already exists with
     // a different type. To make sure that that call responds with the right exceptions if necessary, first fetch the
     // meta from the cache and throw appropriate exceptions if necessary.
     DatasetMeta datasetMeta;
     try {
+      LOG.trace("Retrieving instance metadata from cache for dataset {}", instance.getDataset());
       datasetMeta = metaCache.get(instance);
+      LOG.trace("Retrieved instance metadata from cache for dataset {}", instance.getDataset());
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if ((cause instanceof Exception) && (cause instanceof HttpErrorStatusProvider)) {
@@ -218,10 +222,12 @@ public class DatasetInstanceService {
    */
   private DatasetMeta getFromMds(DatasetId instance) throws Exception {
     // TODO: CDAP-3901 add back namespace existence check
+    LOG.trace("Retrieving instance metadata from MDS for dataset {}", instance.getDataset());
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
       throw new NotFoundException(instance);
     }
+    LOG.trace("Retrieved instance metadata from MDS for dataset {}", instance.getDataset());
     spec = DatasetsUtil.fixOriginalProperties(spec);
 
     DatasetTypeId datasetTypeId = instance.getParent().datasetType(spec.getType());
@@ -236,7 +242,9 @@ public class DatasetInstanceService {
     // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts
     String ownerPrincipal = null;
     if (!NamespaceId.SYSTEM.equals(instance.getNamespaceId())) {
+      LOG.trace("Retrieving owner principal for dataset {}", instance.getDataset());
       ownerPrincipal = ownerAdmin.getOwnerPrincipal(instance);
+      LOG.trace("Retrieved owner principal for dataset {}", instance.getDataset());
     }
     return new DatasetMeta(spec, typeMeta, null, ownerPrincipal);
   }
@@ -281,21 +289,30 @@ public class DatasetInstanceService {
     Principal requestingUser = authenticationContext.getPrincipal();
     String ownerPrincipal = props.getOwnerPrincipal();
 
+    LOG.info("Received request to create dataset {}.{}, type name: {}, properties: {}",
+             namespaceId, name, props.getTypeName(), props.getProperties());
+
     // need to enforce on the principal id if impersonation is involved
     KerberosPrincipalId effectiveOwner = SecurityUtil.getEffectiveOwner(ownerAdmin, namespace, ownerPrincipal);
     if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
+      LOG.trace("Authorizing impersonation for dataset {}", name);
       if (effectiveOwner != null) {
         authorizationEnforcer.enforce(effectiveOwner, requestingUser, Action.ADMIN);
       }
       authorizationEnforcer.enforce(datasetId, requestingUser, Action.ADMIN);
+      LOG.trace("Authorized impersonation for dataset {}", name);
     }
 
+    LOG.trace("Ensuring existence of namespace {} for dataset {}", namespace, name);
     ensureNamespaceExists(namespace);
+    LOG.trace("Ensured existence of namespace {} for dataset {}", namespace, name);
 
+    LOG.trace("Retrieving instance metadata from MDS for dataset {}", name);
     DatasetSpecification existing = instanceManager.get(datasetId);
     if (existing != null) {
       throw new DatasetAlreadyExistsException(datasetId);
     }
+    LOG.trace("Retrieved instance metadata from MDS for dataset {}", name);
 
     // for creation, we need enforcement for dataset type for user dataset, but bypass for system datasets
     DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName(),
@@ -314,23 +331,34 @@ public class DatasetInstanceService {
     // it has already been established that the dataset doesn't exists so no need to check if an owner principal
     // exists or not
     if (ownerPrincipal != null) {
+      LOG.trace("Adding owner for dataset {}", name);
       KerberosPrincipalId owner = new KerberosPrincipalId(ownerPrincipal);
       ownerAdmin.add(datasetId, owner);
+      LOG.trace("Added owner {} for dataset {}", owner, name);
     }
     try {
       DatasetProperties datasetProperties = DatasetProperties.builder()
         .addAll(props.getProperties())
         .setDescription(props.getDescription())
         .build();
-      DatasetSpecification spec = opExecutorClient.create(datasetId, typeMeta, datasetProperties);
 
+      LOG.trace("Calling op executor service to configure dataset {}", name);
+      DatasetSpecification spec = opExecutorClient.create(datasetId, typeMeta, datasetProperties);
+      LOG.trace("Received spec from op executor service for dataset {}: ", name, spec);
+
+      LOG.trace("Adding instance metadata for dataset {}", name);
       instanceManager.add(namespace, spec);
+      LOG.trace("Added instance metadata for dataset {}", name);
       metaCache.invalidate(datasetId);
 
+      LOG.trace("Publishing audit for creation of dataset {}", name);
       publishAudit(datasetId, AuditType.CREATE);
+      LOG.trace("Published audit for creation of dataset {}", name);
       if (publishCUD && !isLocalDataset(datasetProperties.getProperties()) && !isLocalDataset(spec.getProperties())) {
+        LOG.trace("Publishing metadata for creation of dataset {}", name);
         metadataPublisher.publish(datasetId, DatasetInstanceOperation.create(requestingUser,
                                                                              props.getTypeName(), datasetProperties));
+        LOG.trace("Published metadata for creation of dataset {}", name);
       }
 
       // Enable explore
@@ -521,12 +549,17 @@ public class DatasetInstanceService {
   private DatasetTypeMeta getTypeInfo(NamespaceId namespaceId, String typeName, boolean byPassCheck) throws Exception {
     DatasetTypeId datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName);
     try {
-      return byPassCheck ? noAuthDatasetTypeService.getType(datasetTypeId) :
+      LOG.trace("Retrieving metadata from mds for dataset type {} with authorization: {}", typeName, byPassCheck);
+      DatasetTypeMeta meta = byPassCheck ? noAuthDatasetTypeService.getType(datasetTypeId) :
         authorizationDatasetTypeService.getType(datasetTypeId);
+      LOG.trace("Retrieved metadata from mds for dataset type {}", typeName);
+      return meta;
     } catch (DatasetTypeNotFoundException | UnauthorizedException e) {
       try {
         // Type not found in the instance's namespace. Now try finding it in the system namespace
+        LOG.trace("Retrieving metadata from mds for system dataset type {}", typeName);
         DatasetTypeId systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(NamespaceId.SYSTEM, typeName);
+        LOG.trace("Retrieved metadata from mds for system dataset type {}", typeName);
         return noAuthDatasetTypeService.getType(systemDatasetTypeId);
       } catch (DatasetTypeNotFoundException exnWithSystemNS) {
         // if it's not found in system namespace, throw the original exception with the correct namespace
@@ -579,7 +612,9 @@ public class DatasetInstanceService {
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-1393
     try {
+      LOG.trace("Enabling explore for dataset {}", datasetInstance.getDataset());
       exploreFacade.enableExploreDataset(datasetInstance, spec, false);
+      LOG.trace("Enabled explore for dataset {}", datasetInstance.getDataset());
     } catch (Exception e) {
       LOG.error("Cannot enable Explore for dataset instance {} of type {} with properties {}",
                 datasetInstance, creationProperties.getTypeName(), creationProperties.getProperties(), e);
