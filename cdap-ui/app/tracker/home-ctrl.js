@@ -45,22 +45,22 @@ angular.module(PKG.name + '.feature.tracker')
         .then(function (latest) {
 
           if (latest && checkNamespace(latest)) {
-            $state.go('tracker-enable', {namespace: latest}, {reload: true});
+            $state.go('tracker.home', {namespace: latest}, {reload: true});
             return;
           }
           // check for default
           if (checkNamespace('default')) {
-            $state.go('tracker-enable', {namespace: 'default'}, {reload: true});
+            $state.go('tracker.home', {namespace: 'default'}, {reload: true});
             return;
           } else {
-            $state.go('tracker-enable', { namespace: rNsList[0].name }, { reload: true });
+            $state.go('tracker.home', { namespace: rNsList[0].name }, { reload: true });
             return;
           }
         });
     }
     else {
       mySessionStorage.set(PREFKEY, $state.params.namespace);
-      $state.go('tracker-enable', { namespace: setNamespace }, { reload: true});
+      $state.go('tracker.home', { namespace: setNamespace }, { reload: true});
     }
     myLoadingService.hideLoadingIcon();
   });

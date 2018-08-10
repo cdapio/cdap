@@ -26,13 +26,14 @@
  */
 
 class TrackerMetadataController {
-  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout, $q) {
+  constructor($state, myTrackerApi, $scope, myAlertOnValium, $timeout, $q, caskFocusManager) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
     this.myAlertOnValium = myAlertOnValium;
     this.$timeout = $timeout;
     this.$q = $q;
+    this.caskFocusManager = caskFocusManager;
     this.duplicateTag = false;
 
     this.propertyInput = {
@@ -63,19 +64,14 @@ class TrackerMetadataController {
     }
 
     this.systemTags = {};
-    this.tags = {
-      preferredTags: [],
-      userTags: [],
-      allPreferredTags: [],
-      allUserTags: [],
-      availableTags: []
-    };
-    this.fetchEntityTags();
-    this.fetchAllTags();
+    this.userTags = [];
+
+    this.getUserTags();
 
     this.schema = [];
     this.properties = {};
     this.activePropertyTab = 0;
+    this.tagInputModel = '';
 
     this.loading = true;
 
@@ -215,145 +211,65 @@ class TrackerMetadataController {
 
   /* TAGS CONTROL */
 
-  fetchEntityTags() {
-    let params = {
+  getUserTags() {
+    const params = {
       namespace: this.$state.params.namespace,
       entityId: this.$state.params.entityId,
       entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
       scope: this.$scope
     };
 
-    return this.myTrackerApi.getEntityTags(params)
+    this.myTrackerApi.getUserTags(params)
       .$promise
-      .then((response) => {
-        const getTags = (tagsObj) => {
-           return Object.keys(tagsObj)
-            .map(tag => ({
-              name: tag
-            }));
-        };
-        this.tags.preferredTags = getTags(response.preferredTags);
-        this.tags.userTags = getTags(response.userTags);
-
-        this.updateAvailableTags();
-      }, (err) => {
-        console.log('Error', err);
+      .then((res) => {
+        this.userTags = res;
       });
   }
 
-  fetchAllTags() {
-    let params = {
+  deleteTag(tag) {
+    const params = {
       namespace: this.$state.params.namespace,
+      entityId: this.$state.params.entityId,
+      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+      tag,
       scope: this.$scope
     };
 
-    this.myTrackerApi.getTags(params)
+    this.myTrackerApi.deleteTag(params)
       .$promise
-      .then((response) => {
-        this.response = response;
-        const getPreferredTags = (tagsObj) => {
-           return Object.keys(tagsObj)
-            .map(tag => ({
-              name: tag,
-              count: tagsObj[tag],
-              label: tag + ' (' + tagsObj[tag] + ')',
-              preferredTag: true
-            }));
-        };
-        const getUserTags = (tagsObj) => {
-           return Object.keys(tagsObj)
-            .map(tag => ({
-              name: tag,
-              count: tagsObj[tag],
-              label: tag
-            }));
-        };
-
-        this.tags.allPreferredTags = getPreferredTags(response.preferredTags);
-        this.tags.allUserTags = getUserTags(response.userTags);
-        this.updateAvailableTags();
-      }, (err) => {
-        console.log('Error', err);
+      .then(() => {
+        this.getUserTags();
       });
   }
 
-  updateAvailableTags() {
-    const getFilteredTags = (allTags, addedTags) => {
-      var addedTagNames = addedTags.map(tag => tag.name);
-      return allTags.filter(tag => addedTagNames.indexOf(tag.name) === -1);
-    };
-    var filteredPrefferedTags = getFilteredTags(this.tags.allPreferredTags, this.tags.preferredTags);
-    var filteredUserTags = getFilteredTags(this.tags.allUserTags, this.tags.userTags);
-    this.tags.availableTags = filteredPrefferedTags.concat(filteredUserTags);
-    return this.tags.availableTags;
-  }
+  addTag() {
+    const input = this.tagInputModel;
+    if (!input) { return; }
 
-  addTag(input) {
     this.invalidFormat = false;
-    this.duplicateTag = false;
 
-    let defer = this.$q.defer();
-
-    if (!input) {
-      defer.reject();
-      return defer.promise;
-    }
-
-    let userTagCheck = this.tags.userTags
-              .filter(tag => input === tag.name).length > 0 ? true : false;
-    let preferredTagCheck = this.tags.preferredTags
-              .filter(tag => input === tag.name).length > 0 ? true : false;
-
-    this.duplicateTag = userTagCheck || preferredTagCheck;
+    this.duplicateTag = this.userTags
+      .filter(tag => input === tag.name).length > 0 ? true : false;
 
     if (!this.duplicateTag) {
-      let addParams = {
+      const params = {
         namespace: this.$state.params.namespace,
         entityId: this.$state.params.entityId,
         entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
         scope: this.$scope
       };
 
-      this.myTrackerApi.addEntityTag(addParams, [input])
+      this.myTrackerApi.addTag(params, [input])
         .$promise
         .then(() => {
-          this.fetchEntityTags()
-            .then(this.updateAvailableTags.bind(this));
-
-          defer.resolve('success');
+          this.getUserTags();
+          this.tagInputModel = '';
         }, (err) => {
-          if (err.statusCode === 500) {
+          if (err.statusCode === 400) {
             this.invalidFormat = true;
           }
-          defer.reject('error');
         });
-    } else {
-      defer.reject('duplicate');
     }
-
-    return defer.promise;
-  }
-
-  deleteTag(tag) {
-    this.tag = tag;
-    let deleteParams = {
-      namespace: this.$state.params.namespace,
-      tagname: tag,
-      entityId: this.$state.params.entityId,
-      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
-      scope: this.$scope
-    };
-
-    this.myTrackerApi.deleteEntityTag(deleteParams)
-      .$promise
-      .then(() => {
-        this.fetchEntityTags();
-      }, (err) => {
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: err.data
-        });
-      });
   }
 
   goToTag(event, tag) {
@@ -364,6 +280,7 @@ class TrackerMetadataController {
   openTagInput(event) {
     event.stopPropagation();
     this.inputOpen = true;
+    this.caskFocusManager.focus('tagInput');
 
     this.eventFunction = () => {
       this.escapeInput();
@@ -380,8 +297,6 @@ class TrackerMetadataController {
   }
 
 }
-
-TrackerMetadataController.$inject = ['$state', 'myTrackerApi', '$scope', 'myAlertOnValium', '$timeout', '$q'];
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerMetadataController', TrackerMetadataController);

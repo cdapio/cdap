@@ -155,12 +155,7 @@ window.getTrackerUrl = function(navigationObj = {}) {
     'tracker.detail': '',
     'tracker.detail.entity': '/entity/:entityType/:entityId',
     'tracker.detail.entity.metadata': '/entity/:entityType/:entityId/metadata',
-    'tracker.integrations': '/integrations',
-    'tracker.detail.entity.audit': '/entity/:entityType/:entityId/audit',
-    'tracker.detail.entity.lineage': '/entity/:entityType/:entityId/lineage',
-    'tracker.detail.entity.usage': '/entity/:entityType/:entityId/usage',
-    'tracker.tags': '/tags',
-    'tracker.dictionary': '/dictionary'
+    'tracker.detail.entity.lineage': '/entity/:entityType/:entityId/lineage'
   };
   let url = baseUrl + stateToUrlMap[stateName || 'tracker'];
   url = buildCustomUrl(url, stateParams);

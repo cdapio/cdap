@@ -37,136 +37,11 @@ angular.module(PKG.name + '.feature.tracker')
           highlightTab: 'development'
         }
       })
-      .state('tracker-enable', {
-        url: '/enable-metadata?iframe&sourceUrl',
-        parent: 'ns',
-        templateUrl: '/assets/features/tracker/templates/tracker-enable.html',
-        controller: 'TrackerEnableController',
-        controllerAs: 'EnableController',
-        onEnter: function() {
-          document.title = 'CDAP | Enable Metadata';
-        },
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all,
-        },
-        resolve: {
-          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, CDAP_UI_CONFIG, myAlertOnValium, $cookies) {
-            let defer = $q.defer();
-            let params = {
-              namespace: $stateParams.namespace || $cookies.get('CDAP_Namespace') || 'default'
-            };
-
-            myTrackerApi.getTrackerApp(params)
-              .$promise
-              .then( (appConfig) => {
-                if (appConfig.artifact.version !== CDAP_UI_CONFIG.tracker.artifact.version) {
-                  defer.resolve(true);
-                  return;
-                }
-
-                let trackerServiceParams = {
-                  namespace: $stateParams.namespace,
-                  programType: 'services',
-                  programId: CDAP_UI_CONFIG.tracker.serviceId
-                };
-
-                let auditFlowParams = {
-                  namespace: $stateParams.namespace,
-                  programType: 'flows',
-                  programId: CDAP_UI_CONFIG.tracker.flowProgramId
-                };
-
-                $q.all([
-                  myTrackerApi.trackerProgramStatus(trackerServiceParams).$promise,
-                  myTrackerApi.trackerProgramStatus(auditFlowParams).$promise,
-                ]).then( (res) => {
-                  let isRunning = true;
-                  angular.forEach(res, (program) => {
-                    if (program.status === 'STOPPED') {
-                      isRunning = false;
-                    }
-                  });
-
-                  if (isRunning) {
-                    $state.go('tracker.home', $stateParams);
-                  } else {
-                    defer.resolve(true);
-                  }
-                }, (err) => {
-                  myAlertOnValium.show({
-                    type: 'danger',
-                    content: err.data
-                  });
-                });
-              }, () => {
-                defer.resolve(true);
-              });
-
-            return defer.promise;
-          }
-        }
-      })
       .state('tracker', {
         url: '?iframe&sourceUrl',
         abstract: true,
         parent: 'ns',
-        template: '<ui-view/>',
-        resolve: {
-          rTrackerApp: function (myTrackerApi, $q, $stateParams, $state, CDAP_UI_CONFIG, myAlertOnValium, $cookies) {
-            let defer = $q.defer();
-            let params = {
-              namespace: $stateParams.namespace || $cookies.get('CDAP_Namespace') || 'default'
-            };
-
-            myTrackerApi.getTrackerApp(params)
-              .$promise
-              .then( (appConfig) => {
-                if (appConfig.artifact.version !== CDAP_UI_CONFIG.tracker.artifact.version) {
-                  $state.go('tracker-enable', $stateParams);
-                  return;
-                }
-
-                let trackerServiceParams = {
-                  namespace: $stateParams.namespace,
-                  programType: 'services',
-                  programId: CDAP_UI_CONFIG.tracker.serviceId
-                };
-
-                let auditFlowParams = {
-                  namespace: $stateParams.namespace,
-                  programType: 'flows',
-                  programId: CDAP_UI_CONFIG.tracker.flowProgramId
-                };
-
-                $q.all([
-                  myTrackerApi.trackerProgramStatus(trackerServiceParams).$promise,
-                  myTrackerApi.trackerProgramStatus(auditFlowParams).$promise,
-                ]).then( (res) => {
-                  let isRunning = true;
-                  angular.forEach(res, (program) => {
-                    if (program.status === 'STOPPED') {
-                      isRunning = false;
-                    }
-                  });
-
-                  if (!isRunning) {
-                    $state.go('tracker-enable', $stateParams);
-                  } else {
-                    defer.resolve(true);
-                  }
-                }, (err) => {
-                  myAlertOnValium.show({
-                    type: 'danger',
-                    content: err.data
-                  });
-                });
-              }, () => {
-                $state.go('tracker-enable', $stateParams);
-              });
-
-            return defer.promise;
-          }
-        }
+        template: '<ui-view/>'
       })
 
       .state('tracker.home', {
@@ -181,48 +56,6 @@ angular.module(PKG.name + '.feature.tracker')
           document.title = 'CDAP | Search';
         },
         controllerAs: 'MainController'
-      })
-
-      .state('tracker.integrations', {
-        url: '/integrations',
-        templateUrl: '/assets/features/tracker/templates/integrations.html',
-        onEnter: function() {
-          document.title = 'CDAP | Integrations';
-        },
-        controller: 'TrackerIntegrationsController',
-        controllerAs: 'IntegrationsController',
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'integrations'
-        }
-      })
-
-      .state('tracker.tags', {
-        url: '/tags',
-        templateUrl: '/assets/features/tracker/templates/tags.html',
-        controller: 'TrackerTagsController',
-        controllerAs: 'TagsController',
-        onEnter: function() {
-          document.title = 'CDAP | Tags';
-        },
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'tags'
-        }
-      })
-
-      .state('tracker.dictionary', {
-        url: '/dictionary',
-        templateUrl: '/assets/features/tracker/templates/dictionary.html',
-        controller: 'TrackerDictionaryController',
-        controllerAs: 'DictionaryController',
-        onEnter: function() {
-          document.title = 'CDAP | Dictionary';
-        },
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'dictionary'
-        }
       })
 
       .state('tracker.detail', {
@@ -331,32 +164,6 @@ angular.module(PKG.name + '.feature.tracker')
               highlightTab: 'search'
             }
           })
-          .state('tracker.detail.entity.audit', {
-            url: '/audit?start&end',
-            templateUrl: '/assets/features/tracker/templates/audit.html',
-            controller: 'TrackerAuditController',
-            controllerAs: 'AuditController',
-            onEnter: function($stateParams) {
-              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Audit Log';
-            },
-            data: {
-              authorizedRoles: MYAUTH_ROLE.all,
-              highlightTab: 'search'
-            }
-          })
-          .state('tracker.detail.entity.usage', {
-            url: '/usage?startTime&endTime',
-            templateUrl: '/assets/features/tracker/templates/usage.html',
-            controller: 'TrackerUsageController',
-            controllerAs: 'UsageController',
-            onEnter: function($stateParams) {
-              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Usage';
-            },
-            data: {
-              authorizedRoles: MYAUTH_ROLE.all,
-              highlightTab: 'search'
-            }
-          })
           .state('tracker.detail.entity.preview', {
             url: '/preview',
             templateUrl: '/assets/features/tracker/templates/preview.html',
@@ -364,19 +171,6 @@ angular.module(PKG.name + '.feature.tracker')
             controllerAs: 'PreviewController',
             onEnter: function($stateParams) {
               document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Preview';
-            },
-            data: {
-              authorizedRoles: MYAUTH_ROLE.all,
-              highlightTab: 'search'
-            }
-          })
-          .state('tracker.detail.entity.compliance', {
-            url: '/compliance',
-            templateUrl: '/assets/features/tracker/templates/compliance.html',
-            controller: 'TrackerComplianceController',
-            controllerAs: 'ComplianceController',
-            onEnter: function($stateParams) {
-              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Compliance';
             },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,

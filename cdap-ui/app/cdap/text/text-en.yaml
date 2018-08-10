@@ -1166,12 +1166,10 @@ features:
 
   DatasetDetailedView:
     Tabs:
-      auditLog: Audit log
       lineage: Lineage
       programsWithCount: Programs ({count})
       properties: Properties
       schema: Schema
-      usage: Usage
     Title: CDAP | Dataset | {datasetId}
   Dashboard:
     Title: Dashboard
@@ -1534,11 +1532,6 @@ features:
     dataprepLabel: Data Preparation
     Dataprep: Preparation
     metadataLabel: Metadata
-    Metadata:
-      dictionaryLabel: Dictionary
-      integrationsLabel: Integrations
-      searchLabel: Search
-      tagsLabel: Tags
     MMDS: Analytics
     NamespaceDropdown:
       addNS: "Add Namespace"

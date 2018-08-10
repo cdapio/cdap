@@ -28,7 +28,5 @@ class TrackerContainerController {
   }
 }
 
-TrackerContainerController.$inject = ['$state'];
-
 angular.module(PKG.name + '.feature.tracker')
 .controller('TrackerContainerController', TrackerContainerController);

@@ -123,7 +123,5 @@ class TrackerLineageController{
   }
 }
 
-TrackerLineageController.$inject = ['$state', 'myTrackerApi', '$scope', 'LineageActions', 'LineageStore'];
-
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerLineageController', TrackerLineageController);

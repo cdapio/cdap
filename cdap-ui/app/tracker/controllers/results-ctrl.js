@@ -43,14 +43,6 @@ class TrackerResultsController {
       {
         name: 'Z → A',
         sort: '-name'
-      },
-      {
-        name: 'Highest score',
-        sort: '-meter'
-      },
-      {
-        name: 'Lowest score',
-        sort: 'meter'
       }
     ];
 
@@ -152,9 +144,6 @@ class TrackerResultsController {
         this.fullResults = res.results.map(this.parseResult.bind(this));
         this.numMetadataFiltersMatched = this.getMatchedFiltersCount();
         this.searchResults = angular.copy(this.fullResults);
-        if (this.searchResults.length) {
-          this.fetchTruthMeter();
-        }
         this.loading = false;
       }, (err) => {
         console.log('error', err);
@@ -348,45 +337,7 @@ class TrackerResultsController {
     });
     return metadataFilterCount;
   }
-
-  fetchTruthMeter() {
-    let params = {
-      namespace: this.$state.params.namespace,
-      scope: this.$scope
-    };
-
-    let streamsList = [];
-    let datasetsList = [];
-
-    angular.forEach(this.fullResults, (entity) => {
-      if (entity.type === 'Stream') {
-        streamsList.push(entity.name);
-      } else if (entity.type === 'Dataset') {
-        datasetsList.push(entity.name);
-      }
-    });
-
-    this.myTrackerApi.getTruthMeter(params, {
-      streams: streamsList,
-      datasets: datasetsList
-    })
-      .$promise
-      .then((response) => {
-        if (!response) { return; }
-        this.truthMeterMap = response;
-
-        angular.forEach(this.fullResults, (entity) => {
-          if (!response[entity.entityTypeState]) { return; }
-          entity.meter = response[entity.entityTypeState][entity.name];
-        });
-        this.filterResults();
-      }, (err) => {
-        console.log('error', err);
-      });
-  }
 }
-
-TrackerResultsController.$inject = ['$state', 'myTrackerApi', '$scope', 'myHelpers'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerResultsController', TrackerResultsController);

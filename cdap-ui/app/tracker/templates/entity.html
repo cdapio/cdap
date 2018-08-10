@@ -37,13 +37,6 @@
     </div>
   </div>
 
-  <div class="truth-meter-container">
-    <my-truth-meter score="EntityController.truthMeterMap[$state.params.entityType][$state.params.entityId]"
-                    show-info-icon="true"
-                    show-beta-text="true"
-                    width="125"></my-truth-meter>
-  </div>
-
   <div class="tab-options">
     <ul class="list-inline">
       <li ng-class="{'active': $state.is('tracker.detail.entity.metadata')}">
@@ -52,18 +45,9 @@
       <li ng-class="{'active': $state.is('tracker.detail.entity.lineage')}">
         <a ui-sref="tracker.detail.entity.lineage">Lineage</a>
       </li>
-      <li ng-class="{'active': $state.is('tracker.detail.entity.audit')}">
-        <a ui-sref="tracker.detail.entity.audit">Audit log</a>
-      </li>
       <li ng-class="{'active': $state.is('tracker.detail.entity.preview')}"
           ng-if="::($state.params.entityType === 'streams' || EntityController.datasetExplorable)">
         <a ui-sref="tracker.detail.entity.preview">Preview</a>
-      </li>
-      <li ng-class="{'active': $state.is('tracker.detail.entity.usage')}">
-        <a ui-sref="tracker.detail.entity.usage">Usage</a>
-      </li>
-      <li ng-class="{'active': $state.is('tracker.detail.entity.compliance')}">
-        <a ui-sref="tracker.detail.entity.compliance">Compliance</a>
       </li>
     </ul>
   </div>
