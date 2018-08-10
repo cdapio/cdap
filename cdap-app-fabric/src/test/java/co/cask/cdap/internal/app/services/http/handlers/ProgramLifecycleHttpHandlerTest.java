@@ -1337,7 +1337,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testStartProgramWithDisabledRuntimeArgs() throws Exception {
+  public void testStartProgramWithDisabledProfile() throws Exception {
     // put my profile and disable it, using this profile to start program should fail
     ProfileId profileId = new NamespaceId(TEST_NAMESPACE1).profile("MyProfile");
     Profile profile = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
@@ -1346,8 +1346,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     disableProfile(profileId, 200);
 
     // deploy, check the status
-    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
-           TEST_NAMESPACE1);
+    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     ProgramId programId =
       new NamespaceId(TEST_NAMESPACE1).app(APP_WITH_WORKFLOW_APP_ID).workflow(APP_WITH_WORKFLOW_WORKFLOW_NAME);
@@ -1359,12 +1358,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(programId, Collections.singletonMap(SystemArguments.PROFILE_NAME, profileId.getScopedName()), 409);
     Assert.assertEquals(STOPPED, getProgramStatus(programId));
 
-    // use native profile to start workflow should work since it is always enabled
+    // use native profile to start workflow should work since it is always enabled.
+    // the workflow should start but fail because we are not passing in required runtime args.
+    int runs = getProgramRuns(programId, ProgramRunStatus.FAILED).size();
+
     startProgram(programId, Collections.singletonMap(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName()),
                  200);
 
     // wait for the workflow to stop and check the status
-    waitState(programId, STOPPED);
+    Tasks.waitFor(runs + 1, () -> getProgramRuns(programId, ProgramRunStatus.FAILED).size(), 60, TimeUnit.SECONDS);
   }
 
   private void testAddSchedule(String scheduleName) throws Exception {
