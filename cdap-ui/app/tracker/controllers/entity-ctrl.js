@@ -15,19 +15,13 @@
  */
 
 class TrackerEntityController{
-  constructor($state, myJumpFactory, rDatasetType, rSystemTags, $scope, myTrackerApi) {
+  constructor($state) {
     'ngInject';
 
     this.$state = $state;
-    this.$scope = $scope;
-    this.myJumpFactory = myJumpFactory;
-    this.myTrackerApi = myTrackerApi;
 
     let entityParams = this.$state.params.entityType;
     let entitySplit = entityParams.split(':');
-
-    this.datasetType = rDatasetType;
-    this.datasetExplorable = Array.isArray(rSystemTags) && rSystemTags.indexOf('explore') !== -1;
 
     switch (entitySplit[0]) {
       case 'streams':
