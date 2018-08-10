@@ -199,6 +199,7 @@ var webpackConfig = {
     }
   },
   resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
     alias: {
       components: __dirname + '/app/cdap/components',
       services: __dirname + '/app/cdap/services',

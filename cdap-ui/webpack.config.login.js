@@ -166,6 +166,7 @@ var webpackConfig = {
   },
   plugins: plugins,
   resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
     alias: {
       components: __dirname + '/app/login/components',
       services: __dirname + '/app/cdap/services'

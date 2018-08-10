@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 @import '../../styles/variables.scss';
 @import './DropdownStyling.scss';
@@ -51,15 +51,6 @@
       i {
         line-height: 47px;
       }
-    }
-  }
-
-  .brand-section {
-    display: inline-block;
-    vertical-align: top;
-    min-width: 108px;
-    img {
-      height: 50px;
     }
   }
 

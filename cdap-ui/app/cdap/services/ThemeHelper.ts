@@ -42,7 +42,7 @@ export function applyTheme() {
 }
 
 interface ThemeObj {
-  [key: string]: boolean;
+  [key: string]: any;
 }
 
 function getTheme(): ThemeObj {
@@ -63,6 +63,9 @@ function getTheme(): ThemeObj {
 
 function get10Content(theme, themeJSON): ThemeObj {
   const content = themeJSON.content;
+  if (isNilOrEmpty(content)) {
+    return theme;
+  }
   if ('footer-text' in content) {
     theme.footerText = content['footer-text'];
   }
@@ -85,6 +88,9 @@ function get10Content(theme, themeJSON): ThemeObj {
 
 function get10Features(theme, themeJSON): ThemeObj {
   const features = themeJSON.features;
+  if (isNilOrEmpty(features)) {
+    return theme;
+  }
   if ('dashboard' in features) {
     theme.showDashboard = features.dashboard;
   }

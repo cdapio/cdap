@@ -16,7 +16,7 @@
 
 import React from 'react';
 import T from 'i18n-react';
-import { Theme } from 'services/ThemeHelper.ts';
+import { Theme } from 'services/ThemeHelper';
 
 require('./Footer.scss');
 

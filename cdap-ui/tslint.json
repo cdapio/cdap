@@ -6,7 +6,8 @@
   "rules": {
     "quotemark": false,
     "ordered-imports": false,
-    "interface-name" : [true, "never-prefix"]
+    "interface-name" : [true, "never-prefix"],
+    "no-var-requires": false
   },
   "jsRules": {
     "arrow-parens": false,

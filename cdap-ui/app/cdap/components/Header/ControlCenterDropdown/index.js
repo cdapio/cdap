@@ -21,7 +21,8 @@ import NavLinkWrapper from 'components/NavLinkWrapper';
 import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
-import { Theme } from 'services/ThemeHelper.ts';
+import { Theme } from 'services/ThemeHelper';
+import classnames from 'classnames';
 
 require('./ControlCenterDropdown.scss');
 
@@ -164,18 +165,20 @@ export default class ControlCenterDropdown extends Component {
 
   render() {
     return (
-      <UncontrolledDropdown
-        className="header-dropdown control-center"
-      >
-        <DropdownToggle caret>
-          {T.translate(`${PREFIX}.label`)}
-        </DropdownToggle>
-        <CustomDropdownMenu>
-          {this.renderEntitiesLink()}
-          {this.renderDashboardLink()}
-          {this.renderReportsLink()}
-        </CustomDropdownMenu>
-      </UncontrolledDropdown>
+      <li className={classnames({ 'active': this.isCDAPActive() })}>
+        <UncontrolledDropdown
+          className="header-dropdown control-center"
+        >
+          <DropdownToggle caret>
+            {T.translate(`${PREFIX}.label`)}
+          </DropdownToggle>
+          <CustomDropdownMenu>
+            {this.renderEntitiesLink()}
+            {this.renderDashboardLink()}
+            {this.renderReportsLink()}
+          </CustomDropdownMenu>
+        </UncontrolledDropdown>
+      </li>
     );
   }
 }
