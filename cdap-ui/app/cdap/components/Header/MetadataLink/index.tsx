@@ -16,19 +16,45 @@
 import * as React from 'react';
 import { Theme } from 'services/ThemeHelper';
 import classnames from 'classnames';
-import MetadataDropdown from 'components/Header/MetadataDropdown';
+import T from 'i18n-react';
+import {withContext} from 'components/Header/NamespaceLinkContext';
 
-export default function MetadataLink() {
+declare global {
+  interface Window {
+    getTrackerUrl: ({}) => string;
+  }
+}
+interface MetadataLinkProps {
+  context: {
+    namespace: string;
+  };
+}
+
+const MetadataLink: React.SFC<MetadataLinkProps> = ({ context }) => {
   if (Theme.showMetadata === false) {
     return null;
   }
 
   const isMetadataActive = location.pathname.indexOf('metadata') !== -1;
+  const {namespace} = context;
+  const metadataHomeUrl = window.getTrackerUrl({
+      stateName: 'tracker',
+      stateParams: {
+        namespace,
+      },
+  });
+
   return (
     <li className={classnames({
       active: isMetadataActive,
     })}>
-      <MetadataDropdown />
+      <a href={metadataHomeUrl}>
+        {T.translate('features.Navbar.metadataLabel')}
+      </a>
     </li>
   );
-}
+};
+
+const MetadataLinkWithContext = withContext(MetadataLink);
+
+export default MetadataLinkWithContext;
