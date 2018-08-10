@@ -24,6 +24,8 @@
     "rules-engine": true,
     "metadata": true,
     "hub": true,
-    "footer": true
+    "footer": true,
+    "ingest-data": true,
+    "add-namespace": true
   }
 }

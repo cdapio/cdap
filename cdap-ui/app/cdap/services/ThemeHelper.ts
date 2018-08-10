@@ -118,6 +118,12 @@ function get10Features(theme, themeJSON): ThemeObj {
   if ('footer' in features) {
     theme.showFooter = features.footer;
   }
+  if ('ingest-data' in features) {
+    theme.showIngestData = features['ingest-data'];
+  }
+  if ('add-namespace' in features) {
+    theme.showAddNamespace = features['add-namespace'];
+  }
   return theme;
 }
 

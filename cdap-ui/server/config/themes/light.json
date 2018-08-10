@@ -7,12 +7,14 @@
   "features": {
     "dashboard": false,
     "reports": true,
-    "data-prep": false,
+    "data-prep": true,
     "pipelines": true,
     "analytics": true,
     "rules-engine": true,
     "metadata": true,
     "hub": true,
-    "footer": false
+    "footer": false,
+    "ingest-data": false,
+    "add-namespace": false
   }
 }

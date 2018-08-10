@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ import {Switch} from 'components/DataPrep/DataPrepContentWrapper';
 import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
 import DataPrepPlusButton from 'components/DataPrep/TopPanel/PlusButton';
-
+import { Theme } from 'services/ThemeHelper';
 
 const SchemaModal = Loadable({
   loader: () => import(/* webpackChunkName: "SchemaModal"*/ 'components/DataPrep/TopPanel/SchemaModal'),
@@ -177,7 +177,7 @@ export default class DataPrepTopPanel extends Component {
       label: T.translate(`${PREFIX}.copyToCDAPDatasetBtn.btnLabel`),
       component: IngestDataFromDataPrep,
       iconName: 'icon-upload',
-      shouldRender: () => !this.props.singleWorkspaceMode,
+      shouldRender: () => !this.props.singleWorkspaceMode && Theme.showIngestData !== false,
       disabled: () => isNil(this.state.workspaceInfo) || objectQuery(this.state, 'workspaceInfo', 'properties', 'connection') === 'upload'
     },
     {

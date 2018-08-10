@@ -34,6 +34,7 @@ import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
 import EntityType from 'services/metadata-parser/EntityType';
 import {preventPropagation} from 'services/helpers';
+import { Theme } from 'services/ThemeHelper';
 require('./NamespaceDropdown.scss');
 
 export default class NamespaceDropdown extends Component {
@@ -374,12 +375,19 @@ export default class NamespaceDropdown extends Component {
                   })
               }
             </div>
-            <div
-              className="namespace-action text-xs-center"
-              onClick={this.showNamespaceWizard}
-            >
-              {T.translate('features.Navbar.NamespaceDropdown.addNS')}
-            </div>
+            {
+              Theme.showAddNamespace === false ?
+                null
+              :
+                (
+                  <div
+                    className="namespace-action text-xs-center"
+                    onClick={this.showNamespaceWizard}
+                  >
+                    {T.translate('features.Navbar.NamespaceDropdown.addNS')}
+                  </div>
+                )
+            }
           </DropdownMenu>
         </Dropdown>
 
