@@ -187,7 +187,8 @@ var webpackConfig = {
       components: __dirname + '/app/cdap/components',
       services: __dirname + '/app/cdap/services',
       api: __dirname + '/app/cdap/api',
-      wrangler: __dirname + '/app/wrangler'
+      wrangler: __dirname + '/app/wrangler',
+      styles: __dirname + '/app/cdap/styles'
     }
   },
   plugins

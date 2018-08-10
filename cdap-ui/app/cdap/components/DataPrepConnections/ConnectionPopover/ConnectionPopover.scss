@@ -14,6 +14,10 @@
  * the License.
  */
 
+@import '~styles/variables.scss';
+
+$action-hover-bg-color: $grey-08;
+
 .expanded-menu-popover-icon {
   padding: 10px 0;
 
@@ -40,6 +44,8 @@
   .connection-action-item {
     padding: 10px 15px;
     cursor: pointer;
+
+    &:hover { background-color: $action-hover-bg-color; }
   }
 }
 
