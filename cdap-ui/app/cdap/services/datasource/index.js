@@ -45,7 +45,20 @@ export default class Datasource {
         genericResponseHandlers.forEach(handler => handler(data));
 
         if (data.statusCode > 299 || data.warning) {
-          this.bindings[hash].rx.error({
+          /*
+            When backend goes down we get a 5xx error from backend upon which
+            we throw the error down the stream. Once an error is thrown the
+            stream is closed in rxjs and all observers are notified one last time
+            before is reset to null.
+
+            Now what happens here is this gets called everytime we can get a 5xx response
+            from backend and we blindly pick the rx subject we store in the bindings and
+            throw the error. This will cause problem when the observable is already closed
+            and the observers list is now null.
+
+            Hence this check to avoid js error.
+          */
+          !this.bindings[hash].rx.observers && this.bindings[hash].rx.error({
             statusCode: data.statusCode,
             response: data.response || data.body || data.error
           });
