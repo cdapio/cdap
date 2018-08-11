@@ -21,11 +21,9 @@
 // Hence this specificity is needed when we want to deliberately override bootstrap
 // styles (say .input-group).
 .cdap-body-container {
-  .dropdown {
-    .dropdown-menu {
-      &[aria-hidden="false"] {
-        display: block;
-      }
+  .dropdown-menu {
+    &[aria-hidden="false"] {
+      display: block;
     }
   }
 
