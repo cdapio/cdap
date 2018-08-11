@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { ModalBody, ModalFooter } from 'reactstrap';
-import HydratorModal from 'components/HydratorModal';
+import {Modal} from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 
@@ -38,7 +38,7 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
   };
 
   return (
-    <HydratorModal
+    <Modal
       isOpen={isOpen}
       toggle={onClose}
       size="lg"
@@ -88,7 +88,7 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
           <a id="pipeline-export-config-link" />
         </div>
       </ModalFooter>
-    </HydratorModal>
+    </Modal>
   );
 }
 
