@@ -380,7 +380,8 @@ const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
       };
       return getActiveStep(newState);
     }
-
+    case ACTIONS.RESET:
+      return DEFAULT_ACTIVE_STEP;
     default:
       return getActiveStep(state);
   }
@@ -403,6 +404,11 @@ const createExperimentStore = createStore(
   },
   composeEnhancers('CreateExperimentStore')()
 );
-
-export {ACTIONS, POPOVER_TYPES};
+const SPLIT_STATUS = {
+  SPLITTING: 'Splitting',
+  COMPLETE: 'Complete',
+  FAILED: 'Failed',
+  CREATING: 'CREATING' // Purely UI state. Used when UI calls backend to create a split.
+}
+export {ACTIONS, POPOVER_TYPES, SPLIT_STATUS};
 export default createExperimentStore;

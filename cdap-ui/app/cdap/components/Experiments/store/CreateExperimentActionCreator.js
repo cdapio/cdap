@@ -14,7 +14,7 @@
  * the License.
 */
 
-import createExperimentStore, {ACTIONS as CREATEEXPERIMENTACTIONS, POPOVER_TYPES} from 'components/Experiments/store/createExperimentStore';
+import createExperimentStore, {ACTIONS as CREATEEXPERIMENTACTIONS, POPOVER_TYPES, SPLIT_STATUS} from 'components/Experiments/store/createExperimentStore';
 import experimentDetailStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
 import {setAlgorithmsList} from 'components/Experiments/store/SharedActionCreator';
 import {myExperimentsApi} from 'api/experiments';
@@ -273,7 +273,7 @@ function createSplitAndUpdateStatus() {
     payload: {
       splitInfo: {
         id: null,
-        status: 'CREATING' // INTERMEDIATE STATE TO SHOW LOADING ANIMATION FOR THE SPLIT BUTTON
+        status: SPLIT_STATUS.CREATING // INTERMEDIATE STATE TO SHOW LOADING ANIMATION FOR THE SPLIT BUTTON
       }
     }
   });
@@ -294,8 +294,7 @@ function createSplitAndUpdateStatus() {
           type: CREATEEXPERIMENTACTIONS.SET_SPLIT_INFO,
           payload: {
             splitInfo: {
-              id: null,
-              status: 'Failed'
+              id: null
             }
           }
         });

@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import {connect, Provider} from 'react-redux';
-import createExperimentStore from 'components/Experiments/store/createExperimentStore';
+import createExperimentStore, {SPLIT_STATUS} from 'components/Experiments/store/createExperimentStore';
 import {createSplitAndUpdateStatus, setSplitFinalized, setModelCreateError} from 'components/Experiments/store/CreateExperimentActionCreator';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import SplitInfo from 'components/Experiments/CreateView/SplitDataStep/SplitInfo';
@@ -32,15 +32,11 @@ const PREFIX = 'features.Experiments.CreateView';
 require('./SplitDataStep.scss');
 const getSplitLogsUrl = (experimentId, splitInfo) => {
   let splitId = splitInfo.id;
-  let {routerServerUrl, routerServerPort} = window.CDAP_CONFIG.cdap;
-  let protocol = window.CDAP_CONFIG.sslEnabled ? 'https' : 'http';
-  if (routerServerUrl === '127.0.0.1') {
-    routerServerUrl = 'localhost';
-  }
-  let hostPort = `${protocol}://${routerServerUrl}:${routerServerPort}`;
-  let baseUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/ModelManagementApp/spark/ModelManagerService/logs`;
-  let queryParams = encodeURI(`?filter=MDC:experiment="${experimentId}" AND MDC:split=${splitId}`);
-  return `${hostPort}${baseUrl}${queryParams}`;
+  let startTime = splitInfo.start;
+  let endTime = splitInfo.end;
+  let baseUrl = `/logviewer/view?namespace=${getCurrentNamespace()}&appId=ModelManagementApp&programType=spark&programId=ModelManagerService`;
+  let queryParams = `&filter=${encodeURIComponent(`MDC:experiment="${experimentId}" AND MDC:split=${splitId}`)}&startTime=${startTime}&endTime=${endTime}`;
+  return `${baseUrl}${queryParams}`;
 };
 
 const getSplitFailedElem = (experimentId, splitInfo) => {
@@ -67,11 +63,9 @@ class SplitDataStep extends Component {
   };
 
   componentWillReceiveProps(nextProps) {
-    const isValidSplitStatus = this.props.splitInfo.status;
-    const wasSplitting = ['CREATING', 'Splitting'].indexOf(this.props.splitInfo.status) !== -1;
-    const isCurrentSplitStatusFailed = nextProps.splitInfo.status === 'Failed';
-
-    if (isValidSplitStatus && wasSplitting && isCurrentSplitStatusFailed) {
+    const isCurrentSplitStatusFailed = nextProps.splitInfo.status === SPLIT_STATUS.FAILED;
+    const isStartingSplitFailed = this.props.splitInfo.status === SPLIT_STATUS.CREATING && nextProps.error;
+    if (isCurrentSplitStatusFailed || isStartingSplitFailed) {
       this.setState({
         splitFailed: true
       });
@@ -87,7 +81,7 @@ class SplitDataStep extends Component {
   renderSplitBtn() {
     let isSplitCreated = Object.keys(this.props.splitInfo).length;
     let splitStatus = (this.props.splitInfo || {}).status;
-    let isSplitComplete = ['Complete', 'Failed'].indexOf(splitStatus) !== -1;
+    let isSplitComplete = [SPLIT_STATUS.COMPLETE, SPLIT_STATUS.FAILED].indexOf(splitStatus) !== -1;
 
     if (!isSplitCreated || (isSplitCreated && isSplitComplete)) {
       return (
@@ -111,7 +105,7 @@ class SplitDataStep extends Component {
                 <button
                   className="btn btn-primary"
                   onClick={setSplitFinalized}
-                  disabled={splitStatus !== 'Complete'}
+                  disabled={splitStatus !== SPLIT_STATUS.COMPLETE}
                 >
                   {T.translate('commons.doneLabel')}
                 </button>
@@ -137,9 +131,9 @@ class SplitDataStep extends Component {
   }
 
   renderSplitInfo() {
-    const splitStatus = this.props.splitInfo.status || 'Complete';
-
-    if (isEmpty(this.props.splitInfo) || splitStatus !== 'Complete') {
+    const splitStatus = this.props.splitInfo.status || SPLIT_STATUS.COMPLETE;
+    const isSplitFailed = this.props.splitInfo.status === SPLIT_STATUS.FAILED;
+    if (isEmpty(this.props.splitInfo) || !this.props.splitInfo.id || isSplitFailed) {
       return null;
     }
 
@@ -151,7 +145,7 @@ class SplitDataStep extends Component {
   }
 
   renderError() {
-    if (!this.props.error && !this.state.splitFailed) {
+    if (!this.state.splitFailed) {
       return null;
     }
 
@@ -161,7 +155,7 @@ class SplitDataStep extends Component {
       2. When the split request or split status request returns error code
     */
 
-    if (this.state.splitFailed && !this.props.error) {
+    if (this.props.splitInfo.id) {
       return (
         <Alert
           element={getSplitFailedElem(this.props.experimentId, this.props.splitInfo)}
