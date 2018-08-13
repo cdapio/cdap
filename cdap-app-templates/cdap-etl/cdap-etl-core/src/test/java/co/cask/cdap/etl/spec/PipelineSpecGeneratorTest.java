@@ -103,7 +103,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testUniqueStageNames() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
       .addStage(new ETLStage("t1", MOCK_TRANSFORM_B))
@@ -115,7 +116,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testConnectionWithMissingStage() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addConnection("source", "sink")
@@ -126,7 +128,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testConnectionIntoSource() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addStage(new ETLStage("transform", MOCK_TRANSFORM_A))
@@ -138,7 +141,7 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testConnectionOutOfSink() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addStage(new ETLStage("transform", MOCK_TRANSFORM_A))
@@ -150,7 +153,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testUnreachableStage() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addStage(new ETLStage("transform", MOCK_TRANSFORM_A))
@@ -162,7 +166,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testDeadEndStage() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addStage(new ETLStage("transform", MOCK_TRANSFORM_A))
@@ -174,7 +179,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalStateException.class)
   public void testCycle() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
@@ -199,7 +205,8 @@ public class PipelineSpecGeneratorTest {
      *           |                        |
      *           -------------------------
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink1", MOCK_SINK))
       .addStage(new ETLStage("sink2", MOCK_SINK))
@@ -271,7 +278,8 @@ public class PipelineSpecGeneratorTest {
      *           |                             |
      *           ---- transformB ---- sinkB ----
      */
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("tA", MOCK_TRANSFORM_A))
       .addStage(new ETLStage("tB", MOCK_TRANSFORM_B))
@@ -334,7 +342,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test
   public void testSingleAction() {
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("action", MOCK_ACTION))
       .build();
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -364,7 +373,8 @@ public class PipelineSpecGeneratorTest {
      *
      * portA has output schemaA, portB has output schemaB, portC has null output schema
      */
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("split", MOCK_SPLITTER))
       .addStage(new ETLStage("sinkA", MOCK_SINK))
@@ -420,7 +430,8 @@ public class PipelineSpecGeneratorTest {
     /*
      * source --> condition --> sink
      */
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("cond", MOCK_CONDITION))
       .addStage(new ETLStage("sink", MOCK_SINK))
@@ -466,7 +477,8 @@ public class PipelineSpecGeneratorTest {
      *
      * sink gets schema A and schema B as input, should fail
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addStage(new ETLStage("tA", MOCK_TRANSFORM_A))
@@ -492,7 +504,8 @@ public class PipelineSpecGeneratorTest {
      *
      * sink gets schema A and schema B as input, should fail
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addStage(new ETLStage("tA", MOCK_TRANSFORM_A))
@@ -516,7 +529,8 @@ public class PipelineSpecGeneratorTest {
      *
      * error gets schema B from transformA and schema A from transformB, should fail
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addStage(new ETLStage("tA", MOCK_TRANSFORM_A))
@@ -536,7 +550,8 @@ public class PipelineSpecGeneratorTest {
     /*
      * source --> joiner --> error --> sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("joiner", MOCK_JOINER))
       .addStage(new ETLStage("error", MOCK_ERROR))
@@ -559,7 +574,8 @@ public class PipelineSpecGeneratorTest {
                                    MockPlugin.builder().putPipelineProperty("prop1", "val2").build(), artifactIds);
 
     Map<String, String> empty = ImmutableMap.of();
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("a1", new ETLPlugin("action1", Action.PLUGIN_TYPE, empty)))
       .addStage(new ETLStage("a2", new ETLPlugin("action2", Action.PLUGIN_TYPE, empty)))
       .addConnection("a1", "a2")
@@ -584,7 +600,7 @@ public class PipelineSpecGeneratorTest {
                                    MockPlugin.builder().putPipelineProperty("prop2", "val2").build(), artifactIds);
 
     Map<String, String> empty = ImmutableMap.of();
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
       .setProperties(ImmutableMap.of("system.spark.spark.test", "abc", "system.mapreduce.prop3", "val3"))
       .addStage(new ETLStage("a1", new ETLPlugin("action1", Action.PLUGIN_TYPE, empty)))
       .addStage(new ETLStage("a2", new ETLPlugin("action2", Action.PLUGIN_TYPE, empty)))
@@ -616,7 +632,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testSimpleConditionConnectionWithNoBranchInfo() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("condition", MOCK_CONDITION))
       .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
@@ -630,7 +647,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testSimpleConditionConnectionWithMultipleTrueBranches() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("condition", MOCK_CONDITION))
       .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
@@ -648,7 +666,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNestedConditionConnectionWithNoBranchInfo() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("condition1", MOCK_CONDITION))
       .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
@@ -664,7 +683,8 @@ public class PipelineSpecGeneratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNestedConditionConnectionWithMultipleTrueBranches() {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("condition1", MOCK_CONDITION))
       .addStage(new ETLStage("condition2", MOCK_CONDITION))
@@ -694,7 +714,8 @@ public class PipelineSpecGeneratorTest {
     //                                  |
     //                    source2-------
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source1", MOCK_SOURCE))
       .addStage(new ETLStage("source2", MOCK_SOURCE))
       .addStage(new ETLStage("condition", MOCK_CONDITION))
@@ -718,7 +739,8 @@ public class PipelineSpecGeneratorTest {
     //             |                      |-----------t12--------
     //             t2---------sink2
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("anothersource", MOCK_SOURCE))
       .addStage(new ETLStage("condition1", MOCK_CONDITION))
@@ -748,7 +770,8 @@ public class PipelineSpecGeneratorTest {
 
     //  source--condition-----t1-----sink
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("condition", MOCK_CONDITION))
       .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
@@ -768,7 +791,8 @@ public class PipelineSpecGeneratorTest {
     //             |                      |-----------t12--------
     //             t2---------sink2
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("condition1", MOCK_CONDITION))
       .addStage(new ETLStage("condition2", MOCK_CONDITION))
@@ -802,7 +826,8 @@ public class PipelineSpecGeneratorTest {
     //                                                |
     //  anotherSource--------->condition3----------------------sink3
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("anotherSource", MOCK_SOURCE))
       .addStage(new ETLStage("condition1", MOCK_CONDITION))
