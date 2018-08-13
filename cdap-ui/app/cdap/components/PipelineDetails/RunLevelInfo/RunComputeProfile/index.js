@@ -93,12 +93,14 @@ class RunLevelComputeProfile extends Component {
             </button>
           :
             <div
+              className="profile-preview-label-content truncate"
               onClick={(e) => {
                 if (this.props.profileName === CLOUD.DEFAULT_PROFILE_NAME) {
                   preventPropagation(e);
                   return false;
                 }
               }}
+              title={this.getProfileLabel()}
             >
               <IconSVG name="icon-cloud" />
               <span>{this.getProfileLabel()}</span>

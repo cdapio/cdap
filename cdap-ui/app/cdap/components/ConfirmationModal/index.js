@@ -74,7 +74,7 @@ export default class ConfirmationModal extends Component {
 
     return (
       <ModalBody>
-        <div className="confirmation">
+        <div className="confirmation truncate">
           {confirmation}
         </div>
         <div className="confirmation-button-options">

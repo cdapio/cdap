@@ -32,7 +32,7 @@ export default class ProfileDetailViewDetailsInfo extends Component {
 
   static propTypes = {
     profile: PropTypes.object,
-    provisioners: PropTypes.object
+    provisioners: PropTypes.array
   };
 
   toggleViewDetails = () => {
