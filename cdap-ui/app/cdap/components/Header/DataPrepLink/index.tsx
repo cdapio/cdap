@@ -36,7 +36,7 @@ class DataPrepLink extends React.PureComponent<DataPrepLinkProps> {
       return null;
     }
 
-    const {namespace, isNativeLink } = this.props.context;
+    const { namespace, isNativeLink } = this.props.context;
     const dataPrepUrl = `/ns/${namespace}/dataprep`;
 
     return (

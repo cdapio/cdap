@@ -36,7 +36,7 @@ class AnalyticsLink extends React.PureComponent<AnalyticsLinkProps> {
       return null;
     }
 
-    const {namespace, isNativeLink } = this.props.context;
+    const { namespace, isNativeLink } = this.props.context;
     const analyticsUrl = `/ns/${namespace}/experiments`;
     return (
       <li className={classnames({

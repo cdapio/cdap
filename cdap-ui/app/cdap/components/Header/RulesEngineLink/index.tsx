@@ -36,7 +36,7 @@ class RulesEngineLink extends React.PureComponent<RulesEngineLinkProps> {
       return null;
     }
 
-    const {namespace, isNativeLink } = this.props.context;
+    const { namespace, isNativeLink } = this.props.context;
     const rulesEngineUrl = `/ns/${namespace}/rulesengine`;
     return (
       <li className={classnames({
