@@ -20,8 +20,14 @@ import co.cask.cdap.runtime.spi.Constants;
 import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.Throwables;
+import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
@@ -32,9 +38,12 @@ import com.google.api.services.compute.model.Firewall;
 import com.google.api.services.compute.model.FirewallList;
 import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.NetworkInterface;
+import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
+import com.google.cloud.dataproc.v1.ClusterControllerSettings;
 import com.google.cloud.dataproc.v1.ClusterStatus;
 import com.google.cloud.dataproc.v1.DeleteClusterRequest;
 import com.google.cloud.dataproc.v1.DiskConfig;
@@ -42,8 +51,16 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
+import com.google.common.io.CharStreams;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -60,6 +77,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
@@ -70,13 +88,87 @@ public class DataProcClient implements AutoCloseable {
   private final DataProcConf conf;
   private final ClusterControllerClient client;
   private final Compute compute;
+  private final String projectId;
 
   public static DataProcClient fromConf(DataProcConf conf) throws IOException, GeneralSecurityException {
-    ClusterControllerClient client = ClusterControllerClient.create(conf.getControllerSettings());
-    return new DataProcClient(conf, client, conf.getCompute());
+    String projectId = conf.getProjectId();
+    if (projectId == null) {
+      projectId = getProjectId();
+    }
+
+    String accountKey = conf.getAccountKey();
+    ClusterControllerClient client = getClusterControllerClient(accountKey);
+    Compute compute = getCompute(accountKey);
+
+    return new DataProcClient(projectId, conf, client, compute);
   }
 
-  private DataProcClient(DataProcConf conf, ClusterControllerClient client, Compute compute) {
+  /**
+   * Uses the metadata server that lives on the VM, as described at
+   * https://cloud.google.com/compute/docs/storing-retrieving-metadata.
+   */
+  private static String getProjectId() throws IOException {
+    URL url = new URL("http://metadata.google.internal/computeMetadata/v1/project/project-id");
+    HttpURLConnection connection = null;
+    try {
+      connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestProperty("Metadata-Flavor", "Google");
+      connection.connect();
+      try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
+        return CharStreams.toString(reader);
+      }
+    } catch (IOException e) {
+      throw new IOException("Unable to get project id from the environment. "
+                              + "Please explicitly set the project id and account key.", e);
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
+  }
+
+  private static ClusterControllerClient getClusterControllerClient(@Nullable String accountKey) throws IOException {
+    GoogleCredentials credentials;
+    if (accountKey != null) {
+      try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
+        credentials = GoogleCredentials.fromStream(is);
+      }
+    } else {
+      try {
+        credentials = ComputeEngineCredentials.create();
+        credentials.refreshAccessToken();
+      } catch (IOException e) {
+        throw new IOException("Unable to get credentials from the environment. "
+                                + "Please explicitly set the account key.", e);
+      }
+    }
+    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
+
+    ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
+      .setCredentialsProvider(credentialsProvider)
+      .build();
+    return ClusterControllerClient.create(controllerSettings);
+  }
+
+  private static Compute getCompute(@Nullable String accountKey) throws GeneralSecurityException, IOException {
+    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+
+    GoogleCredential credential;
+    if (accountKey == null) {
+      credential = GoogleCredential.getApplicationDefault();
+    } else {
+      try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
+        credential = GoogleCredential.fromStream(is)
+          .createScoped(Collections.singleton("https://www.googleapis.com/auth/cloud-platform"));
+      }
+    }
+    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), credential)
+      .setApplicationName("cdap")
+      .build();
+  }
+
+  private DataProcClient(String projectId, DataProcConf conf, ClusterControllerClient client, Compute compute) {
+    this.projectId = projectId;
     this.conf = conf;
     this.client = client;
     this.compute = compute;
@@ -139,7 +231,7 @@ public class DataProcClient implements AutoCloseable {
                      .build())
         .build();
 
-      return client.createClusterAsync(conf.getProjectId(), conf.getRegion(), cluster).getInitialFuture().get();
+      return client.createClusterAsync(projectId, conf.getRegion(), cluster).getInitialFuture().get();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
@@ -164,7 +256,7 @@ public class DataProcClient implements AutoCloseable {
     try {
       DeleteClusterRequest request = DeleteClusterRequest.newBuilder()
         .setClusterName(name)
-        .setProjectId(conf.getProjectId())
+        .setProjectId(projectId)
         .setRegion(conf.getRegion())
         .build();
 
@@ -227,7 +319,7 @@ public class DataProcClient implements AutoCloseable {
     try {
       return Optional.of(client.getCluster(GetClusterRequest.newBuilder()
                                              .setClusterName(name)
-                                             .setProjectId(conf.getProjectId())
+                                             .setProjectId(projectId)
                                              .setRegion(conf.getRegion())
                                              .build()));
     } catch (NotFoundException e) {
@@ -246,7 +338,7 @@ public class DataProcClient implements AutoCloseable {
   // returning target tags for those rules
   private Collection<String> getFirewallTargetTags() throws IOException {
     // figure out the tag to open port 443
-    FirewallList firewalls = compute.firewalls().list(conf.getProjectId()).execute();
+    FirewallList firewalls = compute.firewalls().list(projectId).execute();
     List<String> tags = new ArrayList<>();
     Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
     for (Firewall firewall : firewalls.getItems()) {
@@ -298,7 +390,7 @@ public class DataProcClient implements AutoCloseable {
   private Node getNode(Compute compute, String type, String nodeName) throws IOException {
     Instance instance;
     try {
-      instance = compute.instances().get(conf.getProjectId(), conf.getZone(), nodeName).execute();
+      instance = compute.instances().get(projectId, conf.getZone(), nodeName).execute();
     } catch (GoogleJsonResponseException e) {
       // this can happen right after a cluster is created
       if (e.getStatusCode() == 404) {
