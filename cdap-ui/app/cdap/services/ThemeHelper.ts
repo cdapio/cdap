@@ -55,76 +55,87 @@ function getTheme(): ThemeObj {
   const specVersion = themeJSON['spec-version'];
 
   if (specVersion === '1.0') {
-    theme = get10Content(theme, themeJSON);
-    theme = get10Features(theme, themeJSON);
+    theme = parse1Point0Spec(themeJSON);
   }
   return theme;
 }
 
-function get10Content(theme, themeJSON): ThemeObj {
-  const content = themeJSON.content;
-  if (isNilOrEmpty(content)) {
-    return theme;
-  }
-  if ('footer-text' in content) {
-    theme.footerText = content['footer-text'];
-  }
-  if ('footer-link' in content) {
-    theme.footerLink = content['footer-link'];
-  }
-  if ('logo' in content) {
-    const logo = window.CDAP_UI_THEME.content.logo;
-    if (logo.type) {
-      const logoType = logo.type;
-      if (logoType === 'inline') {
-        theme.logo = objectQuery(logo, 'arguments', 'data');
-      } else if (logoType === 'link') {
-        theme.logo = objectQuery(logo, 'arguments', 'url');
+function parse1Point0Spec(themeJSON): ThemeObj {
+  const theme: ThemeObj = {};
+
+  function getContent(): ThemeObj {
+    const contentJson = themeJSON.content;
+    const content: ThemeObj = {};
+    if (isNilOrEmpty(contentJson)) {
+      return content;
+    }
+    if ('footer-text' in contentJson) {
+      content.footerText = contentJson['footer-text'];
+    }
+    if ('footer-link' in contentJson) {
+      content.footerLink = contentJson['footer-link'];
+    }
+    if ('logo' in contentJson) {
+      const logo = window.CDAP_UI_THEME.content.logo;
+      if (logo.type) {
+        const logoType = logo.type;
+        if (logoType === 'inline') {
+          content.logo = objectQuery(logo, 'arguments', 'data');
+        } else if (logoType === 'link') {
+          content.logo = objectQuery(logo, 'arguments', 'url');
+        }
       }
     }
+    return content;
   }
-  return theme;
-}
 
-function get10Features(theme, themeJSON): ThemeObj {
-  const features = themeJSON.features;
-  if (isNilOrEmpty(features)) {
-    return theme;
+  function getFeatures(): ThemeObj {
+    const featuresJson = themeJSON.features;
+    const features: ThemeObj = {};
+    if (isNilOrEmpty(featuresJson)) {
+      return features;
+    }
+    if ('dashboard' in featuresJson) {
+      features.showDashboard = featuresJson.dashboard;
+    }
+    if ('reports' in featuresJson) {
+      features.showReports = featuresJson.reports;
+    }
+    if ('data-prep' in featuresJson) {
+      features.showDataPrep = featuresJson['data-prep'];
+    }
+    if ('pipelines' in featuresJson) {
+      features.showPipelines = featuresJson.pipelines;
+    }
+    if ('analytics' in featuresJson) {
+      features.showAnalytics = featuresJson.analytics;
+    }
+    if ('rules-engine' in featuresJson) {
+      features.showRulesEngine = featuresJson['rules-engine'];
+    }
+    if ('metadata' in featuresJson) {
+      features.showMetadata = featuresJson.metadata;
+    }
+    if ('hub' in featuresJson) {
+      features.showHub = featuresJson.hub;
+    }
+    if ('footer' in featuresJson) {
+      features.showFooter = featuresJson.footer;
+    }
+    if ('ingest-data' in featuresJson) {
+      features.showIngestData = featuresJson['ingest-data'];
+    }
+    if ('add-namespace' in featuresJson) {
+      features.showAddNamespace = featuresJson['add-namespace'];
+    }
+    return features;
   }
-  if ('dashboard' in features) {
-    theme.showDashboard = features.dashboard;
-  }
-  if ('reports' in features) {
-    theme.showReports = features.reports;
-  }
-  if ('data-prep' in features) {
-    theme.showDataPrep = features['data-prep'];
-  }
-  if ('pipelines' in features) {
-    theme.showPipelines = features.pipelines;
-  }
-  if ('analytics' in features) {
-    theme.showAnalytics = features.analytics;
-  }
-  if ('rules-engine' in features) {
-    theme.showRulesEngine = features['rules-engine'];
-  }
-  if ('metadata' in features) {
-    theme.showMetadata = features.metadata;
-  }
-  if ('hub' in features) {
-    theme.showHub = features.hub;
-  }
-  if ('footer' in features) {
-    theme.showFooter = features.footer;
-  }
-  if ('ingest-data' in features) {
-    theme.showIngestData = features['ingest-data'];
-  }
-  if ('add-namespace' in features) {
-    theme.showAddNamespace = features['add-namespace'];
-  }
-  return theme;
+
+  return {
+    ...theme,
+    ...getContent(),
+    ...getFeatures(),
+  };
 }
 
 export const Theme = getTheme();

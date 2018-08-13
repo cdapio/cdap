@@ -45,7 +45,7 @@ class AnalyticsLink extends React.PureComponent<AnalyticsLinkProps> {
         <NavLinkWrapper
           isNativeLink={isNativeLink}
           to={isNativeLink ? `/cdap${analyticsUrl}` : analyticsUrl}
-          >
+        >
           {T.translate(`features.Navbar.MMDS`)}
         </NavLinkWrapper>
       </li>
