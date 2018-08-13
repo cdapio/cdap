@@ -19,13 +19,16 @@ import PropTypes from 'prop-types';
 import T from 'i18n-react';
 import PlatformsDetails from 'components/Administration/AdminManagementTabContent/PlatformsDetails';
 import ServicesTable from 'components/Administration/AdminManagementTabContent/ServicesTable';
+import Helmet from 'react-helmet';
 
 const PREFIX = 'features.Administration';
+const I18NPREFIX = `${PREFIX}.Management`;
 require('./AdminManagementTabContent.scss');
 
 export default function AdminManagementTabContent(props) {
   return (
     <div className="admin-management-tab-content">
+    <Helmet title={T.translate(`${I18NPREFIX}.pageTitle`)} />
       <div className="services-details">
         <div className="services-table-section">
           <strong> {T.translate(`${PREFIX}.Services.title`)} </strong>

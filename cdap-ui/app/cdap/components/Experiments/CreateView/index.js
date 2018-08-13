@@ -301,9 +301,13 @@ export default class ExperimentCreateView extends Component {
     );
   }
   render() {
+    const {experimentId, addModel} = queryString.parse(this.props.location.search);
+    let expId = experimentId ? `${experimentId} | ` : '';
+    let labelSuffix = addModel ? 'Add model' : 'Create Experiment';
+    let pageTitle = `CDAP | Analytics | ${expId} ${labelSuffix}`;
     return (
       <div className="experiments-create-view">
-        <Helmet title="CDAP | Create Experiment" />
+        <Helmet title={pageTitle} />
         {this.renderSteps()}
         {this.renderError()}
         <Prompt

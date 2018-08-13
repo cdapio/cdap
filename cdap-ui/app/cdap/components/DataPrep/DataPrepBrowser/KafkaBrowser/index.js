@@ -28,12 +28,23 @@ import isNil from 'lodash/isNil';
 import {setKafkaAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {objectQuery} from 'services/helpers';
 import ee from 'event-emitter';
+import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
+import {Provider} from 'react-redux';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.KafkaBrowser`;
 
 require('./KafkaBrowser.scss');
 
 export default class KafkaBrowser extends Component {
+  static propTypes = {
+    toggle: PropTypes.func,
+    enableRouting: PropTypes.bool,
+    onWorkspaceCreate: PropTypes.func
+  };
+  static defaultProps = {
+    enableRouting: true
+  };
+
   constructor(props) {
     super(props);
 
@@ -223,9 +234,20 @@ export default class KafkaBrowser extends Component {
     if (this.state.search) {
       filteredTopics = this.state.topics.filter(topic => topic.toLowerCase().indexOf(this.state.search.toLowerCase()) !== -1);
     }
-
+    const PageTitle = () => (
+      this.props.enableRouting ?
+        <DataPrepBrowserPageTitle
+          browserI18NName="KafkaBrowser"
+          browserStateName="kafka"
+        />
+      :
+        null
+    );
     return (
       <div className="kafka-browser">
+        <Provider store={DataPrepBrowserStore}>
+          <PageTitle />
+        </Provider>
         <div className="top-panel">
           <div className="title">
             <h5>
@@ -278,7 +300,3 @@ export default class KafkaBrowser extends Component {
   }
 }
 
-KafkaBrowser.propTypes = {
-  toggle: PropTypes.func,
-  onWorkspaceCreate: PropTypes.func
-};
