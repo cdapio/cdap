@@ -23,6 +23,7 @@ import classnames from 'classnames';
 import {preventPropagation, isDescendant} from 'services/helpers';
 import uuidV4 from 'uuid/v4';
 import ee from 'event-emitter';
+import debounce from 'lodash/debounce';
 require('./Popover.scss');
 
 export default class Popover extends PureComponent {
@@ -30,7 +31,7 @@ export default class Popover extends PureComponent {
   static propTypes = {
     children: PropTypes.node,
     target: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
-    targetDimension: PropTypes.object.isRequired,
+    targetDimension: PropTypes.object,
     className: PropTypes.string,
     showOn: PropTypes.oneOf(['Click', 'Hover']),
     bubbleEvent: PropTypes.bool,
@@ -145,6 +146,16 @@ export default class Popover extends PureComponent {
       return false;
     }
   }
+  onMouseOverToggle = () => {
+    if (!this.state.showPopover) {
+      this.togglePopover();
+    }
+  }
+  onMouseOutToggle = () => {
+    if (this.state.showPopover) {
+      this.togglePopover();
+    }
+  }
 
   render() {
     let targetProps = {
@@ -153,8 +164,10 @@ export default class Popover extends PureComponent {
     if (this.props.showOn === 'Click') {
       targetProps[`on${this.props.showOn}`] = this.togglePopover;
     } else if (this.props.showOn === 'Hover') {
-      targetProps['onMouseOver'] = this.togglePopover;
-      targetProps['onMouseOut'] = this.togglePopover;
+      // We can debounce this by 100ms as the mouse move events are 
+      // triggered way too often.
+      targetProps['onMouseOver'] = debounce(this.onMouseOverToggle, 100);
+      targetProps['onMouseOut'] = debounce(this.onMouseOutToggle, 100);
     }
     const TargetElement = this.props.target;
     return (

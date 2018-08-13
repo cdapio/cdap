@@ -21,11 +21,25 @@ $tooltip_bg_color: #000000;
   display: inline-block;
   padding: 0 10px;
   cursor: pointer;
+  &.hide {
+    .popper {
+      &.tooltip {
+        opacity: 0;
+      }
+    }
+  }
   .popper {
     width: auto;
     min-width: unset;
+    display: inline-flex;
+    align-items: center;
     .copied-label {
       margin: 0 5px;
+      display: inline-flex;
+      align-items: center;
+      .icon-check-circle {
+        margin-right: 3px;
+      }
     }
   }
 }

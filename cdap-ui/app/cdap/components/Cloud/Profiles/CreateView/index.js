@@ -29,7 +29,7 @@ import {fetchProvisionerSpec} from 'components/Cloud/Store/ActionCreator';
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import EntityTopPanel from 'components/EntityTopPanel';
 import PropertyLock from 'components/Cloud/Profiles/CreateView/PropertyLock';
-import { UncontrolledTooltip } from 'components/UncontrolledComponents';
+import Popover from 'components/Popover';
 import {ConnectedProfileName, ConnectedProfileDescription, ConnectedProfileLabel} from 'components/Cloud/Profiles/CreateView/CreateProfileMetadata';
 import {
   initializeProperties,
@@ -221,31 +221,33 @@ class ProfileCreateView extends Component {
           {
             group.properties.map(property => {
               let uniqueId = `provisioner-${uuidV4()}`;
+              const LabelComp = () => (
+                <strong
+                  className="label"
+                  id={uniqueId}
+                >
+                  {property.label}
+                </strong>
+              );
               return (
                 <FormGroup key={uniqueId} row>
                   <Col xs="3">
-                    <strong
-                      className="label"
-                      id={uniqueId}
-                    >
-                      {property.label}
-                    </strong>
+                    {
+                      property.description ?
+                        <Popover
+                          target={LabelComp}
+                          showOn="Hover"
+                          placement="right"
+                          className="profile-label-container"
+                        >
+                        {property.description}
+                        </Popover>
+                      :
+                        <LabelComp />
+                    }
                     {
                       property.required ?
                         <span className="required-marker text-danger">*</span>
-                      :
-                        null
-                    }
-                    {
-                      property.description ?
-                        <UncontrolledTooltip
-                          placement="right"
-                          delay={0}
-                          target={uniqueId}
-                          className="provisioner-tooltip"
-                        >
-                          {property.description}
-                        </UncontrolledTooltip>
                       :
                         null
                     }

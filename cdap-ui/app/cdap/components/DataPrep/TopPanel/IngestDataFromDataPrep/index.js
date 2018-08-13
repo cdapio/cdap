@@ -41,7 +41,7 @@ import CardActionFeedback from 'components/CardActionFeedback';
 require('./IngestDataFromDataPrep.scss');
 
 const PREFIX = `features.DataPrep.TopPanel.copyToCDAPDatasetBtn`;
-const fielsetDataType = [
+const fieldsetDataType = [
   {
     id: 'TPFSAvro',
     label: T.translate(`${PREFIX}.Formats.avro`)
@@ -83,7 +83,7 @@ export default class IngestDataFromDataPrep extends Component {
       showModal: false,
       inputType: 'fileset',
       rowKey: headers.length ? headers[0] : null,
-      format: fielsetDataType[0].id,
+      format: fieldsetDataType[0].id,
       sinkPluginsForDataset: {},
       batchPipelineConfig: {},
       datasetName: '',
@@ -312,7 +312,7 @@ export default class IngestDataFromDataPrep extends Component {
     let {name: pipelineName} = workspaceInfo.properties;
     let pipelineconfig = cloneDeep(this.state.batchPipelineConfig);
     if (this.state.inputType === 'fileset') {
-      sink = fielsetDataType.find(dataType => dataType.id === this.state.format);
+      sink = fieldsetDataType.find(dataType => dataType.id === this.state.format);
       if (sink) {
         sink = this.state.sinkPluginsForDataset[sink.id];
       }
@@ -562,7 +562,7 @@ export default class IngestDataFromDataPrep extends Component {
               value={this.state.format}
             >
               {
-                fielsetDataType.map((datatype, index) => {
+                fieldsetDataType.map((datatype, index) => {
                   return (
                     <option value={datatype.id} key={index}>{datatype.label}</option>
                   );
