@@ -1020,7 +1020,12 @@ cdap_sdk_start() {
     CDAP_SDK_DEFAULT_JVM_OPTS="-Xmx2048m"
   fi
 
-  eval split_jvm_opts ${CDAP_SDK_DEFAULT_JVM_OPTS} ${CDAP_SDK_OPTS} ${JAVA_OPTS}
+  SDK_GC_OPTS="-verbose:gc -Xloggc:${LOG_DIR}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
+  if [[ ${HEAPDUMP_ON_OOM} == true ]]; then
+    CDAP_SDK_OPTS+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${LOG_DIR}"
+  fi
+
+  eval split_jvm_opts ${CDAP_SDK_DEFAULT_JVM_OPTS} ${CDAP_SDK_OPTS} ${SDK_GC_OPTS} ${JAVA_OPTS}
 
   cdap_sdk_check_before_start || return 1
   cdap_create_local_dir || die "Failed to create LOCAL_DIR: ${LOCAL_DIR}"
