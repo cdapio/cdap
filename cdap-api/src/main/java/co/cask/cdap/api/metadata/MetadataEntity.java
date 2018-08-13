@@ -88,7 +88,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   private final LinkedHashMap<String, String> details;
   private String type;
 
-  private static final Map<String, String[][]> TYPES_TO_KEY_SEQUENCES;
+  private static final Map<String, String[][]> KNOWN_TYPES_TO_KEY_SEQUENCES;
 
   static {
     Map<String, String[][]> typesToKeys = new HashMap<>();
@@ -106,7 +106,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
       {NAMESPACE, APPLICATION, FLOW, FLOWLET}});
     typesToKeys.put(PROGRAM_RUN, new String[][]{{NAMESPACE, APPLICATION, VERSION, TYPE, PROGRAM, PROGRAM_RUN},
       {NAMESPACE, APPLICATION, TYPE, PROGRAM, PROGRAM_RUN}});
-    TYPES_TO_KEY_SEQUENCES = Collections.unmodifiableMap(typesToKeys);
+    KNOWN_TYPES_TO_KEY_SEQUENCES = Collections.unmodifiableMap(typesToKeys);
   }
 
   /**
@@ -195,8 +195,8 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
     }
 
     private void validateHierarchy() {
-      if (TYPES_TO_KEY_SEQUENCES.containsKey(type)) {
-        String[][] validSequences = TYPES_TO_KEY_SEQUENCES.get(type);
+      if (KNOWN_TYPES_TO_KEY_SEQUENCES.containsKey(type)) {
+        String[][] validSequences = KNOWN_TYPES_TO_KEY_SEQUENCES.get(type);
         for (String[] validSequence : validSequences) {
           if (Arrays.equals(validSequence, parts.keySet().toArray())) {
             // valid sequence found
@@ -352,6 +352,15 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
         builder.append(String.format(" of type '%s'", getType()));
         return builder.toString();
     }
+  }
+
+  /**
+   * @return true of {@link MetadataEntity} is not a known CDAP entity else false
+   */
+  public boolean isCustomEntity() {
+    // all known CDAP entities have a fixed hierarchy of key sequences and the KNOWN_TYPES_TO_KEY_SEQUENCES map
+    // contains type name to key sequence map if the type is not present in then we know it is a custom type
+    return (!KNOWN_TYPES_TO_KEY_SEQUENCES.containsKey(type));
   }
 
   /**

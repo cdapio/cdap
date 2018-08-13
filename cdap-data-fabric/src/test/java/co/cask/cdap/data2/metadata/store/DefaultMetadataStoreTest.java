@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -29,8 +28,10 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
+import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.data2.metadata.indexer.NearestKnownAncestorIndexer;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.audit.AuditMessage;
@@ -39,6 +40,7 @@ import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
@@ -409,6 +411,74 @@ public class DefaultMetadataStoreTest {
   }
 
   @Test
+  public void testSubEntityDeletion() {
+    // test for tags
+    DatasetId datasetId = NamespaceId.DEFAULT.dataset("myDs");
+    MetadataEntity dsEntity = datasetId.toMetadataEntity();
+    MetadataEntity fieldEntity = MetadataEntity.builder(dsEntity).appendAsType("field", "empName").build();
+    MetadataEntity deepEntity = MetadataEntity.builder(fieldEntity).appendAsType("deep", "anotherLevel").build();
+
+    store.addTags(MetadataScope.USER, dsEntity, ImmutableSet.of("someTag"));
+    store.addTags(MetadataScope.USER, fieldEntity, ImmutableSet.of("anotherTag"));
+    store.addTags(MetadataScope.USER, fieldEntity, ImmutableSet.of("moreTags"));
+    store.addTags(MetadataScope.USER, deepEntity, ImmutableSet.of("deepTag"));
+
+
+    assertSubEntityPresentOrEmpty(datasetId, fieldEntity, true);
+
+    store.removeMetadata(dsEntity);
+
+    Assert.assertTrue(store.getTags(dsEntity).isEmpty());
+    Assert.assertTrue(store.getTags(fieldEntity).isEmpty());
+    Assert.assertTrue(store.getTags(deepEntity).isEmpty());
+
+    assertSubEntityPresentOrEmpty(datasetId, fieldEntity, false);
+
+    // test for key-value properties
+    store.setProperties(MetadataScope.USER, dsEntity, ImmutableMap.of("k1", "v1"));
+    store.setProperties(MetadataScope.USER, fieldEntity, ImmutableMap.of("k2", "v2"));
+    store.setProperties(MetadataScope.USER, fieldEntity, ImmutableMap.of("k3", "v3"));
+    store.setProperties(MetadataScope.USER, deepEntity, ImmutableMap.of("k4", "v4"));
+
+    assertSubEntityPresentOrEmpty(datasetId, fieldEntity, true);
+
+    store.removeMetadata(dsEntity);
+
+    Assert.assertTrue(store.getProperties(dsEntity).isEmpty());
+    Assert.assertTrue(store.getProperties(fieldEntity).isEmpty());
+    Assert.assertTrue(store.getProperties(deepEntity).isEmpty());
+
+    assertSubEntityPresentOrEmpty(datasetId, fieldEntity, false);
+
+    // test for system entities as child
+    ApplicationId appId = NamespaceId.DEFAULT.app("app1");
+    MetadataEntity appEntity = appId.toMetadataEntity();
+    MetadataEntity progEntity = appId.program(ProgramType.MAPREDUCE, "mr1")
+      .toMetadataEntity();
+
+    store.addTags(MetadataScope.USER, appEntity, ImmutableSet.of("someTag"));
+    store.addTags(MetadataScope.USER, progEntity, ImmutableSet.of("anotherTag"));
+    store.addTags(MetadataScope.USER, progEntity, ImmutableSet.of("moreTags"));
+    store.setProperties(MetadataScope.USER, appEntity, ImmutableMap.of("k1", "v1"));
+    store.setProperties(MetadataScope.USER, progEntity, ImmutableMap.of("k2", "v2"));
+    store.setProperties(MetadataScope.USER, progEntity, ImmutableMap.of("k3", "v3"));
+
+    // known entity should not be indexed with last known ancestor indexes
+    assertSubEntityPresentOrEmpty(appId, progEntity, false);
+
+    // removing metadata for app should not remove metadata for program which is known cdap type
+    store.removeMetadata(appEntity);
+    Assert.assertTrue(store.getProperties(appEntity).isEmpty());
+    Assert.assertTrue(store.getTags(appEntity).isEmpty());
+    Assert.assertFalse(store.getProperties(progEntity).isEmpty());
+    Assert.assertFalse(store.getTags(progEntity).isEmpty());
+
+    store.removeMetadata(progEntity);
+    Assert.assertTrue(store.getProperties(progEntity).isEmpty());
+    Assert.assertTrue(store.getTags(progEntity).isEmpty());
+  }
+
+  @Test
   public void testCrossNamespacePagination() {
     NamespaceId ns1 = new NamespaceId("ns1");
     NamespaceId ns2 = new NamespaceId("ns2");
@@ -571,7 +641,34 @@ public class DefaultMetadataStoreTest {
     txManager.stopAndWait();
   }
 
-  private MetadataSearchResponseV2 search(String ns, String searchQuery) throws BadRequestException {
+  /**
+   * Asserts either absence of presence of subEntity by searching through a query which matches index generated by
+   * {@link NearestKnownAncestorIndexer}.
+   * @param nearestKnownAncestorId the {@link EntityId} of the nearest known ancestor
+   * @param subEntity the {@link MetadataEntity} of the sub entity
+   * @param isPresent test for presence of given subEntity if true else for absence
+   */
+  private void assertSubEntityPresentOrEmpty(EntityId nearestKnownAncestorId, MetadataEntity subEntity,
+                                             boolean isPresent) {
+    String selfOrNearestKnownAncestorIndex =
+      new NearestKnownAncestorIndexer().getSelfOrNearestKnownAncestorIndex(nearestKnownAncestorId.toMetadataEntity());
+    MetadataSearchResponseV2 results = search(subEntity.getValue(MetadataEntity.NAMESPACE),
+                                              selfOrNearestKnownAncestorIndex);
+    if (isPresent) {
+      Set<MetadataSearchResultRecordV2> records = results.getResults();
+      for (MetadataSearchResultRecordV2 record : records) {
+        if (record.getMetadataEntity().equals(subEntity)) {
+          // found
+          return;
+        }
+      }
+      Assert.fail(String.format("Expected %s to be in search results.", subEntity));
+    } else {
+      Assert.assertTrue(results.getResults().isEmpty());
+    }
+  }
+
+  private MetadataSearchResponseV2 search(String ns, String searchQuery) {
     return search(ns, searchQuery, 0, Integer.MAX_VALUE, 0);
   }
 

@@ -963,7 +963,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(ImmutableList.of(expectedDatasetEntry), searchResults);
     });
     // delete indexes
-    // 6 indexes should have been deleted
+    // 8 indexes should have been deleted
     //   ns1:flowValue, ns1:flowKey:flowValue, ns1:datasetValue, ns1:datasetKey:datasetValue
     //   and then the types with their name i.e. ns1:flow:flow1, ns1:dataset:dataset1
     for (int i = 0; i < 6; i++) {

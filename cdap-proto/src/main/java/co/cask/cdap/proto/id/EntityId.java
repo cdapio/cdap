@@ -155,20 +155,20 @@ public abstract class EntityId {
   public static <T extends EntityId> T fromMetadataEntity(MetadataEntity metadataEntity) {
     // check that the type of teh metadata entity is known type
     EntityType.valueOf(metadataEntity.getType().toUpperCase());
-    return getSelfOrParentEntityId(metadataEntity);
+    return getNearestKnownEntity(metadataEntity);
   }
 
   /**
-   * Creates a valid known CDAP entity which can be considered as the parent for the MetadataEntity by walking up the
-   * key-value hierarchy of the MetadataEntity till a known CDAP {@link EntityType} is found. If the last node itself
-   * is known type then that will be considered as the parent.
+   * Creates a valid known CDAP entity which can be considered as the nearest known EntityId for the MetadataEntity
+   * by walking up the key-value hierarchy of the MetadataEntity till a known CDAP {@link EntityType} is found.
+   * If the last node itself is known type then that will be considered as nearest known EntityId.
    *
    * @param metadataEntity whose parent entityId needs to be found
    * @return {@link EntityId} of the given metadataEntity
    * @throws IllegalArgumentException if the metadataEntity does not have any know entity type in it's hierarchy or if
    * it does not have all the required key-value pairs to construct the identified EntityId.
    */
-  public static <T extends EntityId> T getSelfOrParentEntityId(MetadataEntity metadataEntity) {
+  public static <T extends EntityId> T getNearestKnownEntity(MetadataEntity metadataEntity) {
     EntityType entityType = findParentType(metadataEntity);
     if (entityType == null) {
       throw new IllegalArgumentException(String.format("No known type found in the hierarchy of %s", metadataEntity));
