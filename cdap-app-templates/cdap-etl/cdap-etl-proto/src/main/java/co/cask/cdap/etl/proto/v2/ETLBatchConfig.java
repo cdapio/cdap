@@ -94,6 +94,7 @@ public final class ETLBatchConfig extends ETLConfig {
     return engine == null ? Engine.MAPREDUCE : engine;
   }
 
+  @Nullable
   public String getSchedule() {
     return schedule;
   }
@@ -141,8 +142,18 @@ public final class ETLBatchConfig extends ETLConfig {
       "} " + super.toString();
   }
 
+  /**
+   * @return a builder used to create the config for a data pipeline
+   */
   public static Builder builder(String schedule) {
     return new Builder(schedule);
+  }
+
+  /**
+   * @return a builder used to create the config for a data pipeline
+   */
+  public static Builder builder() {
+    return new Builder();
   }
 
   /**
@@ -153,6 +164,10 @@ public final class ETLBatchConfig extends ETLConfig {
     private Engine engine;
     private List<ETLStage> endingActions;
     private Integer maxConcurrentRuns;
+
+    private Builder() {
+      this(null);
+    }
 
     public Builder(String schedule) {
       super();

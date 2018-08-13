@@ -83,7 +83,6 @@ import co.cask.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -189,7 +188,7 @@ public class DataPipelineTest extends HydratorTestBase {
      *               |
      *               |--> TMS publisher
      */
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
       .setEngine(engine)
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
       .addStage(new ETLStage("nullAlert", NullAlertTransform.getPlugin("id")))
@@ -230,7 +229,7 @@ public class DataPipelineTest extends HydratorTestBase {
         actualMessages.add(alert);
       }
     }
-    Set<Alert> expectedMessages = ImmutableSet.of(new Alert("nullAlert", new HashMap<String, String>()));
+    Set<Alert> expectedMessages = ImmutableSet.of(new Alert("nullAlert", new HashMap<>()));
     Assert.assertEquals(expectedMessages, actualMessages);
 
     validateMetric(3, appId, "source.records.out");
@@ -267,7 +266,7 @@ public class DataPipelineTest extends HydratorTestBase {
       "outputPath", filterOutput.getAbsolutePath(),
       "filterStr", "bad");
 
-    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder()
       .addStage(new ETLStage("wordcount", new ETLPlugin(WORDCOUNT_PLUGIN, SPARK_TYPE, wordCountProperties, null)))
       .addStage(new ETLStage("filter", new ETLPlugin(FILTER_PLUGIN, SPARK_TYPE, filterProperties, null)))
       .addConnection("wordcount", "filter")
@@ -358,7 +357,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Map<String, String> runtimeArguments = ImmutableMap.of("head-arg", expectedValue1);
     ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
                                                                     expectedValue2));
-    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder()
       .addStage(action1)
       .setEngine(engine)
       .build();
@@ -382,7 +381,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String sinkName = "macroActionWithScheduleOutput-" + pipelineName + engine;
     String key1 = key1Mapping.getTarget();
     String key2 = key2Mapping.getTarget();
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       // 'filter' stage is configured to remove samuel, but action will set an argument that will make it filter dwayne
       .addStage(new ETLStage("action1", MockAction.getPlugin(tableName, "row1", "column1",
                                                              String.format("${%s}", key1))))
@@ -428,7 +427,7 @@ public class DataPipelineTest extends HydratorTestBase {
                          scheduleId.getSchedule(), "",
                          new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, SmartWorkflow.NAME),
                          ImmutableMap.of(SmartWorkflow.TRIGGERING_PROPERTIES_MAPPING, GSON.toJson(propertyMapping)),
-                         completeTrigger, ImmutableList.<Constraint>of(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null));
+                         completeTrigger, ImmutableList.of(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null));
     appManager.enableSchedule(scheduleId);
     return appManager.getWorkflowManager(SmartWorkflow.NAME);
   }
@@ -459,10 +458,10 @@ public class DataPipelineTest extends HydratorTestBase {
     testMacroEvaluationActionPipeline(Engine.SPARK);
   }
 
-  public void testMacroEvaluationActionPipeline(Engine engine) throws Exception {
+  private void testMacroEvaluationActionPipeline(Engine engine) throws Exception {
     ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
                                                                     "${value}"));
-    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(action1)
       .setEngine(engine)
       .build();
@@ -514,7 +513,7 @@ public class DataPipelineTest extends HydratorTestBase {
      * as well as errors from one stage going to multiple stages
      * and transforms that have an error schema different from their output schema
      */
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
       .setEngine(engine)
       .addStage(new ETLStage("source1", MockSource.getPlugin(source1TableName, inputSchema)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2TableName, inputSchema)))
@@ -634,7 +633,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String action3ColumnKey = "action3.column";
     String action3Value = "action3.value";
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, action1RowKey, action1ColumnKey,
                                                              action1Value)))
       .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, action2RowKey, action2ColumnKey,
@@ -712,7 +711,7 @@ public class DataPipelineTest extends HydratorTestBase {
       "testRecord",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
     );
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, action1RowKey, action1ColumnKey,
                                                              action1Value)))
       .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, action2RowKey, action2ColumnKey,
@@ -795,7 +794,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String falseSink = "false" + appName + "Sink-" + engine;
     String conditionTableName = "condition-" + engine;
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin(source, schema)))
       .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
       .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseSink)))
@@ -886,7 +885,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String falseSink = "false" + appName + "Sink";
     String actionTable = "actionTable" + appName;
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
       .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
       .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
@@ -958,7 +957,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String falseSink = "false" + appName + "Sink";
     String actionTable = "actionTable" + appName;
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
       .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
       .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
@@ -1034,7 +1033,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String falseSink = "false" + appName + "Sink";
     String actionTable = "actionTable" + appName;
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
       .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
       .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
@@ -1113,7 +1112,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String sink2Name = "branchConditionsSink2";
     String sink3Name = "branchConditionsSink3";
     String sink4Name = "branchConditionsSink4";
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName, schema)))
       .addStage(new ETLStage("condition1", MockCondition.getPlugin("condition1")))
       .addStage(new ETLStage("transform", IdentityTransform.getPlugin()))
@@ -1177,7 +1176,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String falseSink = "false" + appName + "Sink";
     String actionTable = "actionTable" + appName;
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
       .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
       .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
@@ -1250,7 +1249,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String falseSink = "false" + appName + "Sink";
     String actionTable = "actionTable" + appName;
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
       .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
       .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
@@ -1312,7 +1311,7 @@ public class DataPipelineTest extends HydratorTestBase {
     testNestedCondition(Engine.SPARK);
   }
 
-  public void testNestedCondition(Engine engine) throws Exception {
+  private void testNestedCondition(Engine engine) throws Exception {
     Schema schema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
@@ -1340,7 +1339,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String sink3 = appName + "Sink3-" + engine;
     String actionTable = "actionTable" + appName + "-" + engine;
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin(source, schema)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2)))
@@ -1425,7 +1424,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String trueActionTable = "trueActionTable" + appName;
     String falseActionTable = "falseActionTable" + appName;
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("condition", MockCondition.getPlugin("condition")))
       .addStage(new ETLStage("action1", MockAction.getPlugin(trueActionTable, "row1", "key1", "val1")))
       .addStage(new ETLStage("action2", MockAction.getPlugin(falseActionTable, "row2", "key2", "val2")))
@@ -1470,7 +1469,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String appName = "MultiConditionControlOnlyDag";
     String actionTable = "actionTable" + appName;
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("condition1", MockCondition.getPlugin("condition1")))
       .addStage(new ETLStage("condition2", MockCondition.getPlugin("condition2")))
       .addStage(new ETLStage("condition3", MockCondition.getPlugin("condition3")))
@@ -1517,7 +1516,7 @@ public class DataPipelineTest extends HydratorTestBase {
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
     );
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin("simpleNoConnectorConditionSource", schema)))
       .addStage(new ETLStage("trueSink", MockSink.getPlugin("trueOutput")))
       .addStage(new ETLStage("condition1", MockCondition.getPlugin("condition1")))
@@ -1559,7 +1558,7 @@ public class DataPipelineTest extends HydratorTestBase {
     /*
      * source --> sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin("singleInput", schema)))
       .addStage(new ETLStage("sink", MockSink.getPlugin("singleOutput")))
       .addConnection("source", "sink")
@@ -1609,7 +1608,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String source1Name = String.format("simpleMSInput1-%s", engine);
     String source2Name = String.format("simpleMSInput2-%s", engine);
     String sinkName = String.format("simpleMSOutput-%s", engine);
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
       .addStage(new ETLStage("sleep", SleepTransform.getPlugin(2L)))
@@ -1697,7 +1696,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String source3Name = String.format("msInput3-%s", engine);
     String sink1Name = String.format("msOutput1-%s", engine);
     String sink2Name = String.format("msOutput2-%s", engine);
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name, schema)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name, schema)))
       .addStage(new ETLStage("source3", MockSource.getPlugin(source3Name, schema)))
@@ -1786,7 +1785,7 @@ public class DataPipelineTest extends HydratorTestBase {
     /*
      * source --> filter1 --> aggregator1 --> aggregator2 --> filter2 --> sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setEngine(engine)
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
@@ -1855,7 +1854,7 @@ public class DataPipelineTest extends HydratorTestBase {
                  |
        source2 --|--> agg2 --> sink2
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setEngine(engine)
       .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name, inputSchema)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name, inputSchema)))
@@ -1945,7 +1944,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testPostAction() throws Exception {
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin("actionInput")))
       .addStage(new ETLStage("sink", MockSink.getPlugin("actionOutput")))
       .addPostAction(new ETLStage("tokenWriter", NodeStatesAction.getPlugin("tokenTable")))
@@ -1985,7 +1984,7 @@ public class DataPipelineTest extends HydratorTestBase {
      *            |--> sparksink
      * source2 ---|
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source1", MockSource.getPlugin("messages1", SpamMessage.SCHEMA)))
       .addStage(new ETLStage("source2", MockSource.getPlugin("messages2", SpamMessage.SCHEMA)))
       .addStage(new ETLStage("customsink",
@@ -2058,7 +2057,7 @@ public class DataPipelineTest extends HydratorTestBase {
      */
     String classifiedTextsTable = "classifiedTextTable";
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin(NaiveBayesTrainer.TEXTS_TO_CLASSIFY, SpamMessage.SCHEMA)))
       .addStage(new ETLStage("sparkcompute",
                              new ETLPlugin(NaiveBayesClassifier.PLUGIN_NAME, SparkCompute.PLUGIN_TYPE,
@@ -2125,7 +2124,7 @@ public class DataPipelineTest extends HydratorTestBase {
     testInnerJoinWithMultiOutput(Engine.SPARK);
   }
 
-  public void testInnerJoinWithMultiOutput(Engine engine) throws Exception {
+  private void testInnerJoinWithMultiOutput(Engine engine) throws Exception {
     Schema inputSchema1 = Schema.recordOf(
       "customerRecord",
       Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
@@ -2155,7 +2154,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String joinerName = "innerJoiner-" + engine;
     String sinkName = "innerJoinSink-" + engine;
     String sinkName2 = "innerJoinSink-2" + engine;
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name, inputSchema1)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name, inputSchema2)))
       .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name, inputSchema3)))
@@ -2258,7 +2257,7 @@ public class DataPipelineTest extends HydratorTestBase {
     testOuterJoin(Engine.SPARK);
   }
 
-  public void testOuterJoin(Engine engine) throws Exception {
+  private void testOuterJoin(Engine engine) throws Exception {
     Schema inputSchema1 = Schema.recordOf(
       "customerRecord",
       Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
@@ -2286,7 +2285,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String outputName = "outerJoinOutput-" + engine;
     String joinerName = "outerJoiner-" + engine;
     String sinkName = "outerJoinSink-" + engine;
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source1", MockSource.getPlugin(input1Name, inputSchema1)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(input2Name, inputSchema2)))
       .addStage(new ETLStage("source3", MockSource.getPlugin(input3Name, inputSchema3)))
@@ -2441,7 +2440,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String outputName = "multiJoinOutput-" + engine;
     String sinkName = "multiJoinOutputSink-" + engine;
     String outerJoinName = "multiJoinOuter-" + engine;
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source1", MockSource.getPlugin(source1MulitJoinInput, inputSchema1)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2MultiJoinInput, inputSchema2)))
       .addStage(new ETLStage("source3", MockSource.getPlugin(source3MultiJoinInput, inputSchema3)))
@@ -2538,7 +2537,7 @@ public class DataPipelineTest extends HydratorTestBase {
      *
      * source --------- sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("input", "${secure(" + prefix + "source)}")))
       .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("output", "${secure(" + prefix + "sink)}")))
       .addConnection("source", "sink")
@@ -2547,9 +2546,9 @@ public class DataPipelineTest extends HydratorTestBase {
 
     // place dataset names into secure storage
     getSecureStoreManager().putSecureData("default", prefix + "source", prefix + "MockSecureSourceDataset",
-                                          "secure source dataset name", new HashMap<String, String>());
+                                          "secure source dataset name", new HashMap<>());
     getSecureStoreManager().putSecureData("default", prefix + "sink", prefix + "MockSecureSinkDataset",
-                                          "secure dataset name", new HashMap<String, String>());
+                                          "secure dataset name", new HashMap<>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("App-" + engine);
@@ -2609,7 +2608,7 @@ public class DataPipelineTest extends HydratorTestBase {
       Assert.assertNull(getDataset(NamespaceId.DEFAULT.dataset(expectedExternalDatasetOutput)).get());
     }
 
-    ETLBatchConfig.Builder builder = ETLBatchConfig.builder("* * * * *");
+    ETLBatchConfig.Builder builder = ETLBatchConfig.builder();
     ETLBatchConfig etlConfig = builder
       .setEngine(engine)
         // TODO: test multiple inputs CDAP-5654
@@ -2666,7 +2665,7 @@ public class DataPipelineTest extends HydratorTestBase {
      *
      * source --------- sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("mrinput", "${runtime${source}}")))
       .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("mroutput", "${runtime}${sink}")))
       .addConnection("source", "sink")
@@ -2707,7 +2706,7 @@ public class DataPipelineTest extends HydratorTestBase {
      *
      * source --------- sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setEngine(Engine.SPARK)
       .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("sparkinput", "${runtime${source}}")))
       .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("sparkoutput", "${runtime}${sink}")))
@@ -2751,7 +2750,7 @@ public class DataPipelineTest extends HydratorTestBase {
      *
      * source --------- sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("mrinput", "configTimeMockSourceDataset")))
       .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("mroutput", "configTimeMockSinkDataset")))
       .addConnection("source", "sink")
@@ -2787,7 +2786,7 @@ public class DataPipelineTest extends HydratorTestBase {
     lookupTable.get().write("jane".getBytes(Charsets.UTF_8), "25".getBytes(Charsets.UTF_8));
     lookupTable.flush();
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin("inputTable")))
       .addStage(new ETLStage("transform", LookupTransform.getPlugin("person", "age", "ageTable")))
       .addStage(new ETLStage("sink", MockSink.getPlugin("outputTable")))
@@ -2907,7 +2906,7 @@ public class DataPipelineTest extends HydratorTestBase {
     /*
      * source --> sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin("singleInput", schema, operations)))
       .addStage(new ETLStage("sink", MockSink.getPlugin("singleOutput")))
       .addConnection("source", "sink")
@@ -2932,7 +2931,7 @@ public class DataPipelineTest extends HydratorTestBase {
   private void testRuntimeArgs(Engine engine) throws Exception {
     String sourceName = "runtimeArgInput-" + engine;
     String sinkName = "runtimeArgOutput-" + engine;
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       // 'filter' stage is configured to remove samuel, but action will set an argument that will make it filter dwayne
       .addStage(new ETLStage("action", MockAction.getPlugin("dumy", "val", "ue", "dwayne")))
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
@@ -2981,7 +2980,7 @@ public class DataPipelineTest extends HydratorTestBase {
     lookupTable.put("jane".getBytes(Charsets.UTF_8), "gender".getBytes(Charsets.UTF_8), "f".getBytes(Charsets.UTF_8));
     lookupTableManager.flush();
 
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin("inputTable")))
       .addStage(new ETLStage("transform", LookupTransform.getPlugin("person", "age", "personTable")))
       .addStage(new ETLStage("sink", MockSink.getPlugin("outputTable")))
@@ -3047,7 +3046,7 @@ public class DataPipelineTest extends HydratorTestBase {
     testServiceUrl(Engine.SPARK);
   }
 
-  public void testServiceUrl(Engine engine) throws Exception {
+  private void testServiceUrl(Engine engine) throws Exception {
 
     // Deploy the ServiceApp application
     ApplicationManager appManager = deployApplication(ServiceApp.class);
@@ -3079,7 +3078,7 @@ public class DataPipelineTest extends HydratorTestBase {
     /*
      * source --> filter --> sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setEngine(engine)
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
       .addStage(new ETLStage("filter", FilterTransform.getPlugin("name")))
@@ -3149,7 +3148,7 @@ public class DataPipelineTest extends HydratorTestBase {
      *                       |                                                 |--> sink2
      *                       |non-null-----------------------------------------|
      */
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
       .setEngine(engine)
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
       .addStage(new ETLStage("splitter1", NullFieldSplitterTransform.getPlugin("name")))
@@ -3238,7 +3237,7 @@ public class DataPipelineTest extends HydratorTestBase {
      * signups --> namesplitter --|
      *                            |non-null --> sink2
      */
-    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig config = ETLBatchConfig.builder()
       .setEngine(engine)
       .addStage(new ETLStage("signups", MockSource.getPlugin(signupsName, schema)))
       .addStage(new ETLStage("userInfo", MockSource.getPlugin(userInfoName, infoSchema)))

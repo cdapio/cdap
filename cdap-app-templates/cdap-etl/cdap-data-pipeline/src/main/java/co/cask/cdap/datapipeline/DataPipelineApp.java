@@ -67,12 +67,15 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
 
     addWorkflow(new SmartWorkflow(spec, supportedPluginTypes, getConfigurer(), config.getEngine()));
 
-    ScheduleBuilder scheduleBuilder = buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, SmartWorkflow.NAME)
-      .setDescription("Data pipeline schedule");
-    Integer maxConcurrentRuns = config.getMaxConcurrentRuns();
-    if (maxConcurrentRuns != null) {
-      scheduleBuilder.withConcurrency(maxConcurrentRuns);
+    String timeSchedule = config.getSchedule();
+    if (timeSchedule != null) {
+      ScheduleBuilder scheduleBuilder = buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, SmartWorkflow.NAME)
+        .setDescription("Data pipeline schedule");
+      Integer maxConcurrentRuns = config.getMaxConcurrentRuns();
+      if (maxConcurrentRuns != null) {
+        scheduleBuilder.withConcurrency(maxConcurrentRuns);
+      }
+      schedule(scheduleBuilder.triggerByTime(timeSchedule));
     }
-    schedule(scheduleBuilder.triggerByTime(config.getSchedule()));
   }
 }
