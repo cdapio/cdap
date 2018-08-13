@@ -68,7 +68,6 @@ $star-color: #373a3c;
     padding: 0;
     padding-left: 10px;
     color: inherit;
-    margin-left: -10px;
 
     &:hover {
       background-color: $current-namespace-hover-bg;
@@ -112,7 +111,7 @@ $star-color: #373a3c;
   .dropdown-menu {
     position: absolute;
     width: 220px;
-    left: -61px;
+    left: -60px;
     border-bottom-left-radius: 3px;
     outline: none;
     border-top-left-radius: 0;

@@ -241,6 +241,7 @@ export default class NamespaceDropdown extends Component {
         <Dropdown
           isOpen={this.state.openDropdown}
           toggle={this.toggle}
+          inNavbar={true}
         >
           <DropdownToggle
             className="current-namespace"
