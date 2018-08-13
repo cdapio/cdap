@@ -23,7 +23,12 @@ import org.junit.Test;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -75,6 +80,44 @@ public class SparkRunnerClassLoaderTest {
       if (ex != null) {
         throw ex;
       }
+    }
+  }
+
+  @Test
+  public void testConcurrentLoadClass() throws Exception {
+    // This test the fix for CDAP-13598 that loading the same class concurrently from the same classloader is
+    // synchronized correctly.
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    try {
+      // Try it 100 times since the error comes from race condition of multiple threads loading the same class
+      for (int i = 0; i < 100; i++) {
+        List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<URL>());
+        final URL[] urlArray = urls.toArray(new URL[urls.size()]);
+
+        SparkRunnerClassLoader classLoader = new SparkRunnerClassLoader(urlArray, getClass().getClassLoader(), false);
+
+        // Load the same class concurrently from two threads.
+        CyclicBarrier barrier = new CyclicBarrier(2);
+        String className = "org.apache.spark.SparkContext";
+
+        CompletionService<?> completionService = new ExecutorCompletionService<>(executor);
+
+        for (int j = 0; j < 2; j++) {
+          completionService.submit(() -> {
+            barrier.await();
+            classLoader.loadClass(className);
+            return null;
+          });
+        }
+
+        for (int j = 0; j < 2; j++) {
+          // Shouldn't throw exception
+          completionService.take().get();
+        }
+      }
+    } finally {
+      executor.shutdownNow();
     }
   }
 }
