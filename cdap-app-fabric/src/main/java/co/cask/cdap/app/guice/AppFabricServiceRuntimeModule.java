@@ -88,6 +88,7 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.DistributedRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.LocalRunRecordCorrectorService;
+import co.cask.cdap.internal.app.services.NoopRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.RunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
@@ -171,7 +172,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new AbstractModule() {
                              @Override
                              protected void configure() {
-                               bind(RunRecordCorrectorService.class).to(LocalRunRecordCorrectorService.class)
+                               bind(RunRecordCorrectorService.class).to(NoopRunRecordCorrectorService.class)
                                  .in(Scopes.SINGLETON);
                                bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
                                  .in(Scopes.SINGLETON);
