@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfigurationUtil;
@@ -45,7 +44,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.AbstractDatasetFrameworkTest;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
@@ -73,8 +72,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
@@ -123,9 +122,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Singleton.class);
-          install(new FactoryModuleBuilder()
-                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                    .build(DatasetDefinitionRegistryFactory.class));
+          bind(DatasetDefinitionRegistryFactory.class)
+            .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
           // through the injector, we only need RemoteDatasetFramework in these tests
           bind(RemoteDatasetFramework.class);
         }

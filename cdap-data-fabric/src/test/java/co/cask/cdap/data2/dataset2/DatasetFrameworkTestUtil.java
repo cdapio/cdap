@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -37,7 +36,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.Scopes;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -88,9 +87,8 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
       new PrivateModule() {
         @Override
         protected void configure() {
-          install(new FactoryModuleBuilder()
-                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                    .build(DatasetDefinitionRegistryFactory.class));
+          bind(DatasetDefinitionRegistryFactory.class)
+            .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
           bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
           expose(DatasetFramework.class);
         }

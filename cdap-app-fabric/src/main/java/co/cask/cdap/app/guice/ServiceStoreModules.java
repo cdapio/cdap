@@ -16,13 +16,11 @@
 
 package co.cask.cdap.app.guice;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.HBaseKVTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.kv.InMemoryKVTableDefinition;
@@ -101,16 +99,7 @@ public class ServiceStoreModules extends RuntimeModule {
 
     @Override
     public DatasetFramework get() {
-      DatasetDefinitionRegistryFactory registryFactory = new DatasetDefinitionRegistryFactory() {
-        @Override
-        public DatasetDefinitionRegistry create() {
-          DefaultDatasetDefinitionRegistry registry = new DefaultDatasetDefinitionRegistry();
-          injector.injectMembers(registry);
-          return registry;
-        }
-      };
-
-      return new InMemoryDatasetFramework(registryFactory, datasetModules);
+      return new InMemoryDatasetFramework(new DefaultDatasetDefinitionRegistryFactory(injector), datasetModules);
     }
   }
 }
