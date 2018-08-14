@@ -94,48 +94,6 @@ angular.module(PKG.name + '.feature.tracker')
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'search'
-          },
-          resolve: {
-            rDatasetType: function ($q, myTrackerApi, $stateParams) {
-              if ($stateParams.entityType !== 'datasets') {
-                return null;
-              }
-
-              let defer = $q.defer();
-
-              let params = {
-                namespace: $stateParams.namespace,
-                entityType: $stateParams.entityType,
-                entityId: $stateParams.entityId
-              };
-              myTrackerApi.getDatasetSystemProperties(params)
-                .$promise
-                .then( (res) => {
-                  defer.resolve(res.type);
-                }, () => {
-                  defer.reject();
-                });
-
-              return defer.promise;
-            },
-            rSystemTags: function ($q, myTrackerApi, $stateParams) {
-              if ($stateParams.entityType !== 'datasets') {
-                return null;
-              }
-
-              let defer = $q.defer();
-
-              let params = {
-                namespace: $stateParams.namespace,
-                entityType: $stateParams.entityType,
-                entityId: $stateParams.entityId
-              };
-              myTrackerApi.getSystemTags(params)
-                .$promise
-                .then( defer.resolve, defer.reject);
-
-              return defer.promise;
-            }
           }
         })
           .state('tracker.detail.entity.metadata', {
@@ -159,19 +117,6 @@ angular.module(PKG.name + '.feature.tracker')
               document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Lineage';
             },
             controllerAs: 'LineageController',
-            data: {
-              authorizedRoles: MYAUTH_ROLE.all,
-              highlightTab: 'search'
-            }
-          })
-          .state('tracker.detail.entity.preview', {
-            url: '/preview',
-            templateUrl: '/assets/features/tracker/templates/preview.html',
-            controller: 'TrackerPreviewController',
-            controllerAs: 'PreviewController',
-            onEnter: function($stateParams) {
-              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Preview';
-            },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'
