@@ -111,7 +111,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     /*
      * source --> transform -> sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceTableName, schema)))
       .addStage(new ETLStage("transform", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("sink", MockSink.getPlugin(sinkTableName)))
@@ -231,7 +231,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     String outputName = "multiJoinOutput-" + engine;
     String sinkName = "multiJoinOutputSink-" + engine;
     String outerJoinName = "multiJoinOuter-" + engine;
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source1", MockSource.getPlugin(source1MulitJoinInput, inputSchema1)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2MultiJoinInput, inputSchema2)))
       .addStage(new ETLStage("source3", MockSource.getPlugin(source3MultiJoinInput, inputSchema3)))
@@ -340,7 +340,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     /*
      * source --> transform -> sink
      */
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceTableName, schema)))
       .addStage(new ETLStage("transform", ExceptionTransform.getPlugin("name", "samuel")))
       .addStage(new ETLStage("sink", MockSink.getPlugin(sinkTableName)))

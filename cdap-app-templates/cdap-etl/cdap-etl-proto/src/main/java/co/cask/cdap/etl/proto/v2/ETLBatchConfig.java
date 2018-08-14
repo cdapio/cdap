@@ -94,6 +94,7 @@ public final class ETLBatchConfig extends ETLConfig {
     return engine == null ? Engine.MAPREDUCE : engine;
   }
 
+  @Nullable
   public String getSchedule() {
     return schedule;
   }
@@ -141,24 +142,49 @@ public final class ETLBatchConfig extends ETLConfig {
       "} " + super.toString();
   }
 
+  /**
+   * @return a builder used to create the config for a data pipeline
+   * @deprecated use {@link #builder()} and {@link Builder#setTimeSchedule(String)} instead.
+   */
+  @Deprecated
   public static Builder builder(String schedule) {
     return new Builder(schedule);
+  }
+
+  /**
+   * @return a builder used to create the config for a data pipeline
+   */
+  public static Builder builder() {
+    return new Builder();
   }
 
   /**
    * Builder for creating configs.
    */
   public static class Builder extends ETLConfig.Builder<Builder> {
-    private final String schedule;
+    private String schedule;
     private Engine engine;
     private List<ETLStage> endingActions;
     private Integer maxConcurrentRuns;
 
+    private Builder() {
+      this(null);
+    }
+
+    /**
+     * @deprecated use {@link #builder()} and {@link #setTimeSchedule(String)} instead.
+     */
+    @Deprecated
     public Builder(String schedule) {
       super();
       this.schedule = schedule;
       this.engine = Engine.MAPREDUCE;
       this.endingActions = new ArrayList<>();
+    }
+
+    public Builder setTimeSchedule(String schedule) {
+      this.schedule = schedule;
+      return this;
     }
 
     public Builder setEngine(Engine engine) {
