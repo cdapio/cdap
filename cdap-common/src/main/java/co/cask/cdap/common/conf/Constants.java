@@ -634,7 +634,11 @@ public final class Constants {
     public static final String TIME_SERIES_TABLE_ROLL_TIME = "metrics.data.table.ts.rollTime";
 
     // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
-    public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution";
+    public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution.";
+    public static final int SECOND_RESOLUTION = 1;
+    public static final int MINUTE_RESOLUTION = 60;
+    public static final int HOUR_RESOLUTION = 3600;
+    public static final String RETENTION_SECONDS_SUFFIX = ".seconds";
 
     public static final String TOPIC_PREFIX = "metrics.topic.prefix";
     // legacy name, we no longer use Kafka for metrics, we use TMS
@@ -651,8 +655,6 @@ public final class Constants {
     public static final String METRICS_TABLE_HBASE_SPLIT_POLICY = "metrics.table.hbase.split.policy";
 
     public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
-
-    public static final long DEFAULT_RETENTION_HOURS = 2;
 
     public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
 

@@ -70,12 +70,14 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     String v3TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                    Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX) + ".ts." + resolution;
 
-    int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
-
     TableProperties.Builder props = TableProperties.builder();
     // don't add TTL for MAX_RESOLUTION table. CDAP-1626
-    if (ttl > 0 && resolution != Integer.MAX_VALUE) {
-      props.setTTL(ttl);
+    if (resolution != Integer.MAX_VALUE) {
+      int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + resolution +
+                               Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+      if (ttl > 0) {
+        props.setTTL(ttl);
+      }
     }
     // for efficient counters
     props.setReadlessIncrementSupport(true);
@@ -156,9 +158,9 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
    */
   public static void setupDatasets(DefaultMetricDatasetFactory factory) {
     // adding all fact tables
-    factory.getOrCreateFactTable(1);
-    factory.getOrCreateFactTable(60);
-    factory.getOrCreateFactTable(3600);
+    factory.getOrCreateFactTable(Constants.Metrics.SECOND_RESOLUTION);
+    factory.getOrCreateFactTable(Constants.Metrics.MINUTE_RESOLUTION);
+    factory.getOrCreateFactTable(Constants.Metrics.HOUR_RESOLUTION);
     factory.getOrCreateFactTable(Integer.MAX_VALUE);
 
     // adding kafka consumer meta

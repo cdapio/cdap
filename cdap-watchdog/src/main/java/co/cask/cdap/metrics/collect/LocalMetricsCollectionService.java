@@ -88,11 +88,10 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
     // It will only do cleanup if the underlying table doesn't supports TTL.
     scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
-    long retentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + ".1.seconds",
-                                       TimeUnit.HOURS.toSeconds(Constants.Metrics.DEFAULT_RETENTION_HOURS));
-
-    // Try right away if there's anything to cleanup, then we'll schedule to do that periodically
-    scheduler.schedule(createCleanupTask(retentionSecs), 1, TimeUnit.SECONDS);
+    long secRetentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.SECOND_RESOLUTION +
+                                            Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+    // Try right away if there's anything to cleanup, we will then schedule based on the min retention interval
+    scheduler.schedule(createCleanupTask(secRetentionSecs), 1, TimeUnit.SECONDS);
   }
 
   @Override
@@ -129,22 +128,24 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   /**
    * Creates a task for cleanup.
-   * @param retention Retention in seconds.
+   *
+   * @param nextScheduleDelaySecs The next schedule delay in seconds for the clean up task.
    */
-  private Runnable createCleanupTask(final long retention) {
+  private Runnable createCleanupTask(long nextScheduleDelaySecs) {
     return new Runnable() {
       @Override
       public void run() {
         // We perform CleanUp only in LocalMetricsCollectionService , where TTL is NOT supported
         // by underlying data store.
         long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-        long deleteBefore = currentTime - retention;
         try {
-          metricStore.deleteBefore(deleteBefore);
+          // delete metrics from metrics resolution table
+          metricStore.deleteTTLExpired();
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
-        scheduler.schedule(this, 1, TimeUnit.HOURS);
+        // delete based on the min retention interval
+        scheduler.schedule(this, nextScheduleDelaySecs, TimeUnit.SECONDS);
       }
     };
   }
