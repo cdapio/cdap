@@ -1,6 +1,6 @@
 {
   "router.ssl.bind.port": "10443",
-  "dashboard.bind.address": "0.0.0.0",
+  "dashboard.bind.address": "127.0.0.1",
   "router.ssl.server.port": "10443",
   "router.server.port": "11015",
   "dashboard.ssl.bind.port": "9443",
