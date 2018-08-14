@@ -32,7 +32,7 @@
   }
 
   &:hover {
-    box-shadow: 1px 2px 10px 0 $brand-primary-color;
+    box-shadow: 1px 2px 10px 0 var(--brand-primary-color);
   }
 
   /*

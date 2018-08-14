@@ -5,7 +5,10 @@
   ],
   "rules": {
     "quotemark": false,
-    "ordered-imports": false
+    "ordered-imports": false,
+    "interface-name" : [true, "always-prefix"],
+    "no-var-requires": false,
+    "object-literal-sort-keys": false
   },
   "jsRules": {
     "arrow-parens": false,

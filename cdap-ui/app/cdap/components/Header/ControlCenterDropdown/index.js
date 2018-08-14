@@ -17,10 +17,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
-import NavLinkWrapper from 'components/NavLinkWrapper';
 import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
+import classnames from 'classnames';
+import DashboardLink from 'components/Header/DashboardLink';
+import EntitiesLink from 'components/Header/EntitiesLink';
+import ReportsLink from 'components/Header/ReportsLink';
 
 require('./ControlCenterDropdown.scss');
 
@@ -64,95 +67,22 @@ export default class ControlCenterDropdown extends Component {
     return false;
   };
 
-  isDashboardActive = (match, location = window.location) => {
-    if (match && match.isExact) {
-      return true;
-    }
-
-    let path = `/ns/${this.props.namespace}/operations`;
-
-    if (location.pathname.startsWith(path)) {
-      return true;
-    }
-
-    return false;
-  };
-
-  isReportsActive = (match, location = window.location) => {
-    if (match && match.isExact) {
-      return true;
-    }
-
-    let path = `/ns/${this.props.namespace}/reports`;
-
-    if (location.pathname.startsWith(path)) {
-      return true;
-    }
-
-    return false;
-  };
-
-  isEntitiesActive = (match, location = window.location) => {
-    if (match && match.isExact) {
-      return true;
-    }
-
-    if (
-      this.isCDAPActive() &&
-      !this.isDashboardActive(match, location) &&
-      !this.isReportsActive(match, location)
-    ) {
-      return true;
-    }
-
-    return false;
-  };
-
-
   render() {
-    let baseCDAPURL = `/ns/${this.props.namespace}`;
-    let dashboardURL = `${baseCDAPURL}/operations`;
-    let reportsURL = `${baseCDAPURL}/reports`;
-
     return (
-      <UncontrolledDropdown
-        className="header-dropdown control-center"
-      >
-        <DropdownToggle caret>
-          {T.translate(`${PREFIX}.label`)}
-        </DropdownToggle>
-        <CustomDropdownMenu>
-          <DropdownItem tag="li">
-            <NavLinkWrapper
-              isNativeLink={this.props.nativeLink}
-              to={this.props.nativeLink ? `/cdap${baseCDAPURL}` : baseCDAPURL}
-              isActive={this.isEntitiesActive}
-            >
-              {T.translate(`${PREFIX}.entities`)}
-            </NavLinkWrapper>
-          </DropdownItem>
-
-          <DropdownItem tag="li">
-            <NavLinkWrapper
-              isNativeLink={this.props.nativeLink}
-              to={this.props.nativeLink ? `/cdap${dashboardURL}` : dashboardURL}
-              isActive={this.isDashboardActive}
-            >
-              {T.translate(`${PREFIX}.dashboard`)}
-            </NavLinkWrapper>
-          </DropdownItem>
-
-          <DropdownItem tag="li">
-            <NavLinkWrapper
-              isNativeLink={this.props.nativeLink}
-              to={this.props.nativeLink ? `/cdap${reportsURL}` : reportsURL}
-              isActive={this.isReportsActive}
-            >
-              {T.translate(`${PREFIX}.reports`)}
-            </NavLinkWrapper>
-          </DropdownItem>
-        </CustomDropdownMenu>
-      </UncontrolledDropdown>
+      <li className={classnames({ 'active': this.isCDAPActive() })}>
+        <UncontrolledDropdown
+          className="header-dropdown control-center"
+        >
+          <DropdownToggle caret>
+            {T.translate(`${PREFIX}.label`)}
+          </DropdownToggle>
+          <CustomDropdownMenu>
+            <EntitiesLink />
+            <DashboardLink />
+            <ReportsLink />
+          </CustomDropdownMenu>
+        </UncontrolledDropdown>
+      </li>
     );
   }
 }

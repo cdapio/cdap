@@ -29,7 +29,7 @@
   a:hover,
   a:focus,
   a:active {
-    color: $brand-primary-color;
+    color: var(--brand-primary-color);
     margin: 0 5px;
     cursor: pointer;
   }

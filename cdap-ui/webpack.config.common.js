@@ -80,6 +80,22 @@ var rules = [
     exclude: /node_modules/
   },
   {
+    test: /\.tsx?$/,
+    use: [
+      'babel-loader',
+      {
+        loader: 'ts-loader',
+        options: {
+          transpileOnly: true
+        }
+      },
+    ],
+    exclude: [
+      /node_modules/,
+      /lib/
+    ]
+  },
+  {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
     use: [
       {
@@ -183,6 +199,7 @@ var webpackConfig = {
     }
   },
   resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
     alias: {
       components: __dirname + '/app/cdap/components',
       services: __dirname + '/app/cdap/services',

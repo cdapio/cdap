@@ -116,7 +116,7 @@ $dropdown_divider_bg_color: $grey-06;
           line-height: 1;
 
           &.active {
-            color: $brand-primary-color;
+            color: var(--brand-primary-color);
           }
         }
       }
@@ -160,7 +160,7 @@ $dropdown_divider_bg_color: $grey-06;
             padding: 5px 5px;
             background: rgba(255, 205, 128, 1);
             margin-right: 8px;
-            color: $brand-primary-color;
+            color: var(--brand-primary-color);
             display: inline-flex;
           }
         }

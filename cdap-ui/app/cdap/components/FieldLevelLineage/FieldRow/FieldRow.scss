@@ -17,7 +17,7 @@
 @import '../../../styles/variables.scss';
 $border-color: $grey-05;
 $active-bg: $yellow-02-lighter;
-$active-border-color: $brand-primary-color;
+$active-border-color: var(--brand-primary-color);
 
 .field-level-lineage-container {
   .fields-box .fields-list {

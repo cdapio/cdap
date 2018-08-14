@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2017 Cask Data, Inc.
+  Copyright © 2017-2018 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -40,21 +40,13 @@
   <div class="alerts" id="alerts"></div>
   <loading-indicator></loading-indicator>
   <status-alert-message></status-alert-message>
-
-  <footer ng-if="!$state.params.iframe">
-    <div class="container">
-      <div class="row text-muted" ng-cloak>
-        <div class="text-uppercase">
-          <p class="text-center">
-            <span>Copyright &copy; {{ copyrightYear }} Cask Data, Inc.</span>
-          </p>
-        </div>
-      </div>
-    </div>
-  </footer>
+  <div ng-if="!$state.params.iframe">
+    <global-footer></global-footer>
+  </div>
 
   <script type="text/javascript" src="/config.js"></script>
   <script type="text/javascript" src="/ui-config.js"></script>
+  <script type="text/javascript" src="/ui-theme.js"></script>
   <script type="text/javascript" src="/assets/bundle/polyfill.js"></script>
   <script type="text/javascript" src="/assets/bundle/lib.js"></script>
   <script type="text/javascript" src="/common_assets/common-lib-new.js"></script>

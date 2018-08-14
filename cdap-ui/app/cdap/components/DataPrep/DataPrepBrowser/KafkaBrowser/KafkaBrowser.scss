@@ -100,7 +100,7 @@ $hr_color: #999999;
         font-size: 14px;
         .link-text {
           cursor: pointer;
-          color: $brand-primary-color;
+          color: var(--brand-primary-color);
         }
       }
     }

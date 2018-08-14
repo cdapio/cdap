@@ -31,6 +31,8 @@ import isEqual from 'lodash/isEqual';
 import SortableStickyGrid from 'components/SortableStickyGrid';
 import {Link} from 'react-router-dom';
 import uuidV4 from 'uuid/v4';
+import { Theme } from 'services/ThemeHelper';
+import If from 'components/If';
 require('./NamespacesAccordion.scss');
 
 const PREFIX = 'features.Administration.Accordions.Namespace';
@@ -261,12 +263,14 @@ export default class NamespacesAccordion extends Component {
 
     return (
       <div className="admin-config-container-content namespaces-container-content">
-        <button
-          className="btn btn-secondary"
-          onClick={this.toggleNamespaceWizard}
-        >
-          {T.translate(`${PREFIX}.create`)}
-        </button>
+        <If condition={Theme.showAddNamespace}>
+          <button
+            className="btn btn-secondary"
+            onClick={this.toggleNamespaceWizard}
+          >
+            {T.translate(`${PREFIX}.create`)}
+          </button>
+        </If>
         <ViewAllLabel
           arrayToLimit={this.state.namespacesInfo}
           limit={NUM_NS_TO_SHOW}

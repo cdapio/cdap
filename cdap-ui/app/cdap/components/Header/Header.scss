@@ -12,17 +12,15 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 @import '../../styles/variables.scss';
 @import './DropdownStyling.scss';
 @import "../../styles/bootstrap_4_patch.scss";
 
-$header-bg-color: $navbar-bg;
-
 .global-navbar {
   height: 50px;
-  background: $header-bg-color;
+  background: var(--navbar-color);
   position: fixed;
   width: 100%;
   top: 0;
@@ -53,15 +51,6 @@ $header-bg-color: $navbar-bg;
       i {
         line-height: 47px;
       }
-    }
-  }
-
-  .brand-section {
-    display: inline-block;
-    vertical-align: top;
-    min-width: 108px;
-    img {
-      height: 50px;
     }
   }
 

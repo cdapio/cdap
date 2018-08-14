@@ -18,6 +18,16 @@
 @import (less) "./variables.less";
 @import (less) "../../bower_components/bootstrap/less/mixins.less";
 
+/*
+NOTE: Need to have these definitions here so that these CSS variables have default
+values in Angular apps
+*/
+:root {
+  --brand-primary-color: @brand-primary-color;
+  --navbar-color: @navbar-bg;
+  --font-family: @font-family-base; // base font defined in bootstrap/less/variables.less
+}
+
 html {
   position: relative;
   min-height: 100%;

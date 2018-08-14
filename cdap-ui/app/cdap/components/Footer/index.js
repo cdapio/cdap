@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,26 +14,32 @@
  * the License.
  */
 
-import React, { PureComponent } from 'react';
+import React from 'react';
+import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 
 require('./Footer.scss');
 
-const LICENSE_TEXT = 'Licensed under the Apache License, Version 2.0';
+export default function Footer() {
+  if (Theme.showFooter === false) {
+    return null;
+  }
 
-export default class Footer extends PureComponent {
-  render() {
-    return (
-      <footer>
-        <div className="container">
-          <div className="row text-muted">
-            <div>
-              <p className="text-xs-center">
-                <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer">{LICENSE_TEXT}</a>
-              </p>
-            </div>
+  const footerText = Theme.footerText || T.translate('features.licenseText');
+  const footerUrl = Theme.footerLink || 'https://www.apache.org/licenses/LICENSE-2.0';
+  return (
+    <footer>
+      <div className="container">
+        <div className="row text-muted">
+          <div>
+            <p className="text-xs-center">
+              <a href={footerUrl} target="_blank" rel="noopener noreferrer">
+                {footerText}
+              </a>
+            </p>
           </div>
         </div>
-      </footer>
-    );
-  }
+      </div>
+    </footer>
+  );
 }

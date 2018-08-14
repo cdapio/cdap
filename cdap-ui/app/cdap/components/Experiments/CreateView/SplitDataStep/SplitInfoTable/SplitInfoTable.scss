@@ -54,7 +54,7 @@
           }
           .outcome-field {
             .icon-svg.icon-star {
-              color: $brand-primary-color;
+              color: var(--brand-primary-color);
               margin-right: 5px;
               height: 12px;
             }
