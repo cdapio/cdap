@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import {listBiqQueryDatasets, listBigQueryTables} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {listBiqQueryDatasets, listBigQueryTables, setBigQueryLoading, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import IconSVG from 'components/IconSVG';
@@ -27,6 +27,60 @@ import T from 'i18n-react';
 import {objectQuery} from 'services/helpers';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.BigQueryBrowser`;
+
+const TableListComp = ({tableList, datasetId, createWorkspace}) => {
+  if (!tableList.length) {
+    return (
+      <div className="empty-search-container">
+        <div className="empty-search text-xs-center">
+          <strong>
+            {T.translate(`${PREFIX}.EmptyMessage.emptyTableList`, {
+              datasetName: datasetId
+            })}
+          </strong>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="list-table">
+      <div className="table-header">
+        <div className="row">
+          <div className="col-xs-12">
+            {T.translate(`${PREFIX}.name`)}
+          </div>
+        </div>
+      </div>
+
+      <div className="table-body">
+        {
+          tableList.map((table) => {
+            return (
+              <div
+                key={table.id}
+                onClick={createWorkspace.bind(null, table.id)}
+              >
+                <div className="row content-row">
+                  <div className="col-xs-12">
+                    <IconSVG name="icon-table" />
+                    {table.id}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        }
+      </div>
+    </div>
+  );
+};
+
+TableListComp.propTypes = {
+  tableList: PropTypes.array,
+  datasetId: PropTypes.string,
+  createWorkspace: PropTypes.func
+};
 
 class TableListView extends Component {
   static propTypes = {
@@ -43,10 +97,6 @@ class TableListView extends Component {
     enableRouting: true
   };
 
-  state = {
-    loading: false
-  };
-
   componentWillMount() {
     if (!this.props.enableRouting) { return; }
 
@@ -59,9 +109,7 @@ class TableListView extends Component {
   }
 
   createWorkspace = (tableId) => {
-    this.setState({
-      loading: true
-    });
+    setBigQueryLoading();
 
     let namespace = getCurrentNamespace();
 
@@ -73,18 +121,23 @@ class TableListView extends Component {
     };
 
     MyDataPrepApi.readBigQueryTable(params)
-      .subscribe((res) => {
-        let workspaceId = objectQuery(res, 'values', 0, 'id');
-        if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
-          this.props.onWorkspaceCreate(workspaceId);
-          return;
+      .subscribe(
+        (res) => {
+          let workspaceId = objectQuery(res, 'values', 0, 'id');
+          if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
+            this.props.onWorkspaceCreate(workspaceId);
+            return;
+          }
+          window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+        },
+        (err) => {
+          setError(err);
         }
-        window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-      });
+      );
   };
 
   render() {
-    if (this.props.loading || this.state.loading) {
+    if (this.props.loading) {
       return <LoadingSVGCentered />;
     }
 
@@ -108,35 +161,11 @@ class TableListView extends Component {
             <span>{this.props.datasetId}</span>
           </div>
         </div>
-
-        <div className="list-table">
-          <div className="table-header">
-            <div className="row">
-              <div className="col-xs-12">
-                {T.translate(`${PREFIX}.name`)}
-              </div>
-            </div>
-          </div>
-
-          <div className="table-body">
-            {
-              this.props.tableList.map((table) => {
-                return (
-                  <div
-                    onClick={this.createWorkspace.bind(this, table.id)}
-                  >
-                    <div className="row content-row">
-                      <div className="col-xs-12">
-                        <IconSVG name="icon-table" />
-                        {table.id}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            }
-          </div>
-        </div>
+        <TableListComp
+          tableList={this.props.tableList}
+          datasetId={this.props.datasetId}
+          createWorkspace={this.createWorkspace}
+        />
       </div>
     );
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,12 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
-import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
-import moment from 'moment';
 import {Link} from 'react-router-dom';
 import FilePath from 'components/FileBrowser/FilePath';
-import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL, preventPropagation as preventPropagationService, objectQuery} from 'services/helpers';
+import {preventPropagation as preventPropagationService, objectQuery} from 'services/helpers';
+import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import {setError, goToPath, trimSuffixSlash} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 import IconSVG from 'components/IconSVG';
@@ -38,7 +38,7 @@ require('./FileBrowser.scss');
 
 const BASEPATH = '/';
 const PREFIX = 'features.FileBrowser';
-const trimSuffixSlash = (path) => path.replace(/\/\//, '/');
+
 
 export default class FileBrowser extends Component {
 
@@ -46,7 +46,6 @@ export default class FileBrowser extends Component {
     contents: [],
     path: '',
     statePath: objectQuery(this.props, 'match', 'url') || '',
-    error: null,
     loading: true,
     search: '',
     sort: 'name',
@@ -74,25 +73,52 @@ export default class FileBrowser extends Component {
     browserTitle: PropTypes.string
   };
 
-  componentWillMount() {
+  componentDidMount() {
+    this._isMounted = true;
     if (!this.props.enableRouting) {
       let path = this.getFilePath();
       this.dataprepSubscription = DataPrepStore.subscribe(() => {
         let path = this.getFilePath();
         if (!isNil(path) && path !== this.state.path) {
-          this.goToPath(path);
+          goToPath(path);
         }
       });
-      this.goToPath(path);
+      goToPath(path);
     } else {
       this.fetchDirectory(this.props);
     }
+
+    this.browserStoreSubscription = DataPrepBrowserStore.subscribe(() => {
+      let {file, activeBrowser} = DataPrepBrowserStore.getState();
+      if (activeBrowser.name !== 'file') {
+        return;
+      }
+
+      if (this._isMounted) {
+        this.setState({
+          contents: file.contents,
+          loading: file.loading,
+          path: file.path,
+          search: file.search
+        });
+      }
+    });
   }
 
   componentWillUnmount() {
-    if (this.dataprepSubscription) {
+    this._isMounted = false;
+    if (typeof this.dataprepSubscription === 'function') {
       this.dataprepSubscription();
     }
+    if (typeof this.browserStoreSubscription === 'function') {
+      this.browserStoreSubscription();
+    }
+    if (
+      objectQuery(this.explorePathObservable, 'unsubscribe') &&
+      typeof this.explorePathObservable.unsubscribe === 'function'
+    ) {
+       this.explorePathObservable.unsubscribe();
+      }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -100,7 +126,7 @@ export default class FileBrowser extends Component {
       // When routing is disabled location, match are not entirely right.
       let path = this.getFilePath();
       if (!isNil(path) && path !== this.state.path) {
-        this.goToPath(path);
+        goToPath(path);
       }
     } else {
       this.fetchDirectory(nextProps);
@@ -111,7 +137,7 @@ export default class FileBrowser extends Component {
     let {workspaceInfo} = DataPrepStore.getState().dataprep;
     let filePath = objectQuery(workspaceInfo, 'properties', 'path');
     filePath = !isEmpty(filePath) ? filePath.slice(0, lastIndexOf(filePath, '/') + 1) : this.state.path;
-    if (isEmpty(filePath)) {
+    if (isEmpty(filePath) || objectQuery(workspaceInfo, 'properties', 'connection') !== 'file') {
       filePath = BASEPATH;
     }
     return filePath;
@@ -138,53 +164,7 @@ export default class FileBrowser extends Component {
 
     if (hdfsPath === this.state.path) { return; }
 
-    this.goToPath(hdfsPath);
-  }
-
-  goToPath = (path) => {
-    path = trimSuffixSlash(path);
-    this.setState({
-      loading: true,
-      path
-    });
-
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    MyDataPrepApi.explorer({
-      namespace,
-      path,
-      hidden: true
-    }).subscribe((res) => {
-      this.setState({
-        loading: false,
-        contents: this.formatResponse(res.values),
-        error: null,
-        search: ''
-      });
-    }, (err) => {
-      console.log('err', err);
-
-      this.setState({
-        loading: false,
-        error: err.response.message || err.response,
-        search: ''
-      });
-    });
-  }
-
-  formatResponse(contents) {
-    return contents.map((content) => {
-      content.uniqueId = uuidV4();
-      content['last-modified'] = moment(content['last-modified']).format('MM/DD/YY HH:mm');
-      content.displaySize = convertBytesToHumanReadable(content.size, HUMANREADABLESTORAGE_NODECIMAL, true);
-
-      if (content.directory) {
-        content.type = T.translate(`${PREFIX}.directory`);
-      }
-      content.type = content.type === 'UNKNOWN' ? '--' : content.type;
-
-      return content;
-    });
+    goToPath(hdfsPath);
   }
 
   handleSearch = (e) => {
@@ -238,6 +218,8 @@ export default class FileBrowser extends Component {
         }
         let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         window.location.href = navigatePath;
+      }, (err) => {
+        setError(err);
       });
 
   }
@@ -327,8 +309,9 @@ export default class FileBrowser extends Component {
     if (this.props.noState || !this.props.enableRouting) {
       return (
         <div
+          key={content.uniqueId}
           className="row-container"
-          onClick={this.goToPath.bind(this, content.path)}
+          onClick={goToPath.bind(this, content.path)}
         >
           {this.renderRowContent(content)}
         </div>
@@ -339,6 +322,7 @@ export default class FileBrowser extends Component {
     linkPath = trimSuffixSlash(linkPath);
     return (
       <Link
+        key={content.uniqueId}
         to={linkPath}
       >
         {this.renderRowContent(content)}
@@ -349,6 +333,7 @@ export default class FileBrowser extends Component {
   renderFileContent(content) {
     return (
       <div
+        key={content.uniqueId}
         className="row-container"
         onClick={this.ingestFile.bind(this, content)}
       >
@@ -388,7 +373,7 @@ export default class FileBrowser extends Component {
               >
                 {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
               </span>
-              <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
+              <span>{T.translate(`${PREFIX}.EmptyMessage.suggestion1`)}</span>
             </li>
           </ul>
         </div>
@@ -398,27 +383,20 @@ export default class FileBrowser extends Component {
 
   renderContent() {
     if (this.state.loading) {
-      // NEED TO REPLACE WITH ACTUAL LOADING ICON
-
       return (
         <LoadingSVGCentered />
       );
     }
 
-    if (this.state.error) {
-      return (
-        <div className="error-container">
-          <br />
-          <h4 className="text-xs-center text-danger">
-            {this.state.error}
-          </h4>
-        </div>
-      );
-    }
-
     if (this.state.contents.length === 0) {
       return (
-        <h5 className="text-xs-center">{T.translate(`${PREFIX}.EmptyMessage.noFilesOrDirectories`)}</h5>
+        <div className="empty-search-container">
+          <div className="empty-search text-xs-center">
+            <strong>
+              {T.translate(`${PREFIX}.EmptyMessage.noFilesOrDirectories`)}
+            </strong>
+          </div>
+        </div>
       );
     }
 
@@ -539,7 +517,7 @@ export default class FileBrowser extends Component {
               baseStatePath={this.state.statePath}
               fullpath={this.state.path}
               enableRouting={this.props.enableRouting}
-              onPathChange={this.goToPath}
+              onPathChange={goToPath}
             />
           </div>
 

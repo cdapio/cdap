@@ -12,34 +12,32 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import * as React from 'react';
+import {objectQuery} from 'services/helpers';
+import Alert from 'components/Alert';
 
-const setActiveBrowser = (payload) => {
-  DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_ACTIVEBROWSER,
-    payload
-  });
+interface IErrorProps {
+  error: object | string | null;
+  onClose: () => void;
+}
+
+const ErrorBanner: React.SFC<IErrorProps> = ({ error, onClose }) => {
+  if (!error) {
+    return null;
+  }
+
+  const errorMessage: string = objectQuery(error, 'response', 'message') || objectQuery(error, 'response') || error;
+
+  return (
+    <Alert
+      message={errorMessage}
+      type='error'
+      showAlert={true}
+      onClose={onClose}
+    />
+  );
 };
 
-const setError = (error = null) => {
-  DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_ERROR,
-    payload: {
-      error
-    }
-  });
-};
-
-const reset = () => {
-  DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.RESET
-  });
-};
-
-export {
-  setActiveBrowser,
-  setError,
-  reset
-};
+export default ErrorBanner;

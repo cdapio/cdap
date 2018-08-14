@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,26 +55,34 @@ export default class ColumnsTab extends Component {
     this.clearAllColumns = this.clearAllColumns.bind(this);
     this.selectAllColumns = this.selectAllColumns.bind(this);
     this.setSelect = this.setSelect.bind(this);
+  }
 
+  componentDidMount() {
+    this._isMounted = true;
     this.sub = DataPrepStore.subscribe(() => {
-      let {dataprep: dataprepstate, columnsInformation: columnInfo} = DataPrepStore.getState();
-      this.setState({
-        selectedHeaders: dataprepstate.selectedHeaders,
-        columns: columnInfo.columns,
-        headers: dataprepstate.headers.map((res) => {
-          let obj = {
-            name: res,
-            uniqueId: uuidV4()
-          };
-          return obj;
-        }),
-        loading: dataprepstate.loading
-      });
+      if (this._isMounted) {
+        let {dataprep: dataprepstate, columnsInformation: columnInfo} = DataPrepStore.getState();
+        this.setState({
+          selectedHeaders: dataprepstate.selectedHeaders,
+          columns: columnInfo.columns,
+          headers: dataprepstate.headers.map((res) => {
+            let obj = {
+              name: res,
+              uniqueId: uuidV4()
+            };
+            return obj;
+          }),
+          loading: dataprepstate.loading
+        });
+      }
     });
   }
 
   componentWillUnmount() {
-    this.sub();
+    this._isMounted = false;
+    if (this.sub && typeof this.sub === 'function') {
+      this.sub();
+    }
   }
 
   componentDidUpdate() {
@@ -226,7 +234,7 @@ export default class ColumnsTab extends Component {
                   >
                     {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
                   </span>
-                  <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
+                  <span>{T.translate(`${PREFIX}.EmptyMessage.suggestion1`)}</span>
                 </li>
               </ul>
             </div>
