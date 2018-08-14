@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -327,6 +327,7 @@ export default class FileBrowser extends Component {
     if (this.props.noState || !this.props.enableRouting) {
       return (
         <div
+          key={content.uniqueId}
           className="row-container"
           onClick={this.goToPath.bind(this, content.path)}
         >
@@ -339,6 +340,7 @@ export default class FileBrowser extends Component {
     linkPath = trimSuffixSlash(linkPath);
     return (
       <Link
+        key={content.uniqueId}
         to={linkPath}
       >
         {this.renderRowContent(content)}
@@ -349,6 +351,7 @@ export default class FileBrowser extends Component {
   renderFileContent(content) {
     return (
       <div
+        key={content.uniqueId}
         className="row-container"
         onClick={this.ingestFile.bind(this, content)}
       >
@@ -398,8 +401,6 @@ export default class FileBrowser extends Component {
 
   renderContent() {
     if (this.state.loading) {
-      // NEED TO REPLACE WITH ACTUAL LOADING ICON
-
       return (
         <LoadingSVGCentered />
       );

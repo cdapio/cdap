@@ -55,7 +55,9 @@ export default class ColumnsTab extends Component {
     this.clearAllColumns = this.clearAllColumns.bind(this);
     this.selectAllColumns = this.selectAllColumns.bind(this);
     this.setSelect = this.setSelect.bind(this);
+  }
 
+  componentDidMount() {
     this.sub = DataPrepStore.subscribe(() => {
       let {dataprep: dataprepstate, columnsInformation: columnInfo} = DataPrepStore.getState();
       this.setState({
@@ -74,7 +76,9 @@ export default class ColumnsTab extends Component {
   }
 
   componentWillUnmount() {
-    this.sub();
+    if (this.sub && typeof this.sub === 'function') {
+      this.sub();
+    }
   }
 
   componentDidUpdate() {
