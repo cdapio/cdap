@@ -107,33 +107,35 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
       return super.loadClass(name, resolve);
     }
 
-    // If the class is already loaded, return it
-    Class<?> cls = findLoadedClass(name);
-    if (cls != null) {
-      return cls;
-    }
-
-    // Define the class with this ClassLoader
-    try (InputStream is = openResource(name.replace('.', '/') + ".class")) {
-      if (is == null) {
-        throw new ClassNotFoundException("Failed to find resource for class " + name);
+    synchronized (getClassLoadingLock(name)) {
+      // If the class is already loaded, return it
+      Class<?> cls = findLoadedClass(name);
+      if (cls != null) {
+        return cls;
       }
 
-      byte[] byteCode = rewriter.rewriteClass(name, is);
+      // Define the class with this ClassLoader
+      try (InputStream is = openResource(name.replace('.', '/') + ".class")) {
+        if (is == null) {
+          throw new ClassNotFoundException("Failed to find resource for class " + name);
+        }
 
-      // If no rewrite was performed, just define the class with this classloader by calling findClass.
-      if (byteCode == null) {
-        cls = findClass(name);
-      } else {
-        cls = defineClass(name, byteCode, 0, byteCode.length);
-      }
+        byte[] byteCode = rewriter.rewriteClass(name, is);
 
-      if (resolve) {
-        resolveClass(cls);
+        // If no rewrite was performed, just define the class with this classloader by calling findClass.
+        if (byteCode == null) {
+          cls = findClass(name);
+        } else {
+          cls = defineClass(name, byteCode, 0, byteCode.length);
+        }
+
+        if (resolve) {
+          resolveClass(cls);
+        }
+        return cls;
+      } catch (IOException e) {
+        throw new ClassNotFoundException("Failed to read class definition for class " + name, e);
       }
-      return cls;
-    } catch (IOException e) {
-      throw new ClassNotFoundException("Failed to read class definition for class " + name, e);
     }
   }
 
