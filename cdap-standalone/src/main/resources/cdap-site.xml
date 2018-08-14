@@ -206,7 +206,7 @@
 
   <property>
     <name>router.bind.address</name>
-    <value>0.0.0.0</value>
+    <value>127.0.0.1</value>
     <description>
       CDAP Router service bind address
     </description>
@@ -265,6 +265,80 @@
       The 'file' provider is only used in the sandbox. In distributed environments, this should
       be set to 'kms', presuming your cluster has been configured to use KMS. The 'file' provider
       will not work in distributed environments.
+    </description>
+  </property>
+
+  <!-- Override default 0.0.0.0 to 127.0.0.1 (localhost) for all http services
+  to protect from xss vulnerabilities while running in sandbox -->
+  <property>
+    <name>dashboard.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      CDAP UI bind address
+    </description>
+  </property>
+
+  <property>
+    <name>master.services.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      Bind address for app fabric service and dataset service
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      Transaction service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>log.saver.status.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      Log saver HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.service.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      Metadata HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.processor.status.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      Metrics processor HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>remote.system.op.service.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      Remote system operation HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>security.auth.server.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      CDAP Authentication service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>stream.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      Stream HTTP service bind address
     </description>
   </property>
 
