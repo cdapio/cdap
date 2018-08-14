@@ -16,12 +16,11 @@
 
 package co.cask.cdap.data.runtime;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
@@ -42,7 +41,6 @@ import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 
 /**
@@ -57,9 +55,8 @@ public class DataSetsModules extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new FactoryModuleBuilder()
-                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                  .build(DatasetDefinitionRegistryFactory.class));
+        bind(DatasetDefinitionRegistryFactory.class)
+          .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(MetadataStore.class).to(NoOpMetadataStore.class);
         expose(MetadataStore.class);
@@ -111,9 +108,8 @@ public class DataSetsModules extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new FactoryModuleBuilder()
-                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                  .build(DatasetDefinitionRegistryFactory.class));
+        bind(DatasetDefinitionRegistryFactory.class)
+          .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(MetadataStore.class).to(DefaultMetadataStore.class);
         expose(MetadataStore.class);

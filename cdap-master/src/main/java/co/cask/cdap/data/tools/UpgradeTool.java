@@ -18,7 +18,6 @@ package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
@@ -46,7 +45,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
@@ -90,7 +89,6 @@ import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
@@ -208,9 +206,8 @@ public class UpgradeTool {
             bind(DatasetFramework.class)
               .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
               .to(DatasetFramework.class);
-            install(new FactoryModuleBuilder()
-                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                      .build(DatasetDefinitionRegistryFactory.class));
+            bind(DatasetDefinitionRegistryFactory.class)
+              .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
             // CDAP-5954 Upgrade tool does not need to record lineage and metadata changes for now.
             bind(LineageWriter.class).to(NoOpLineageWriter.class);
             bind(FieldLineageWriter.class).to(NoOpLineageWriter.class);

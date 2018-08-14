@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.runtime;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
@@ -32,7 +31,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExec
 import co.cask.cdap.data2.datafabric.dataset.service.executor.YarnDatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.StaticDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
@@ -47,7 +46,6 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -70,9 +68,9 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new PrivateModule() {
           @Override
           protected void configure() {
-            install(new FactoryModuleBuilder()
-                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                      .build(DatasetDefinitionRegistryFactory.class));
+            bind(DatasetDefinitionRegistryFactory.class)
+              .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+
             bind(DatasetFramework.class)
               .annotatedWith(Names.named("datasetMDS"))
               .toProvider(DatasetMdsProvider.class)
@@ -117,9 +115,9 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new PrivateModule() {
           @Override
           protected void configure() {
-            install(new FactoryModuleBuilder()
-                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                      .build(DatasetDefinitionRegistryFactory.class));
+            bind(DatasetDefinitionRegistryFactory.class)
+              .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+
             bind(DatasetFramework.class)
               .annotatedWith(Names.named("datasetMDS"))
               .toProvider(DatasetMdsProvider.class)
@@ -166,9 +164,9 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new PrivateModule() {
           @Override
           protected void configure() {
-            install(new FactoryModuleBuilder()
-                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                      .build(DatasetDefinitionRegistryFactory.class));
+            bind(DatasetDefinitionRegistryFactory.class)
+              .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+
             bind(DatasetFramework.class)
               .annotatedWith(Names.named("datasetMDS"))
               .toProvider(DatasetMdsProvider.class)
