@@ -37,6 +37,8 @@
     <logger name="co.cask.cdap" level="INFO" />
     <logger name="co.cask.cdap.data2.datafabric.dataset.DatasetServiceClient" level="TRACE"/>
     <logger name="co.cask.cdap.data2.datafabric.dataset.service.executor.RemoteDatasetOpExecutor" level="TRACE"/>
+    <logger name="co.cask.cdap.app.runtime.spark.SparkProgramRunner" level="TRACE"/>
+    <logger name="co.cask.cdap.internal.app.runtime.AbstractProgramController" level="TRACE"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT"/>

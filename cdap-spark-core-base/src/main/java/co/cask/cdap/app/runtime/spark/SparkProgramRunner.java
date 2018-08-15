@@ -142,6 +142,9 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
+    LOG.trace("Starting Spark program {} with SparkProgramRunner of ClassLoader {}",
+              program.getId(), getClass().getClassLoader());
+
     // Get the RunId first. It is used for the creation of the ClassLoader closing thread.
     Arguments arguments = options.getArguments();
     RunId runId = ProgramRunners.getRunId(options);
@@ -245,7 +248,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         if (classLoader instanceof Closeable) {
           Closeables.closeQuietly((Closeable) classLoader);
-          LOG.trace("Closed ClassLoader for SparkProgramRunner");
+          LOG.trace("Closed SparkProgramRunner ClassLoader {}", classLoader);
         }
       }
     };
