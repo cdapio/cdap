@@ -100,6 +100,7 @@ public class PluginInstantiator implements Closeable {
   private final File tmpDir;
   private final File pluginDir;
   private final ClassLoader parentClassLoader;
+  private final boolean ownedParentClassLoader;
 
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir) {
     this(cConf, parentClassLoader, pluginDir, true);
@@ -117,6 +118,7 @@ public class PluginInstantiator implements Closeable {
       .removalListener(new ClassLoaderRemovalListener())
       .build(new ClassLoaderCacheLoader());
     this.parentClassLoader = filterClassloader ? PluginClassLoader.createParent(parentClassLoader) : parentClassLoader;
+    this.ownedParentClassLoader = filterClassloader;
   }
 
   /**
@@ -383,7 +385,7 @@ public class PluginInstantiator implements Closeable {
   public void close() throws IOException {
     // Cleanup the ClassLoader cache and the temporary directory for the expanded plugin jar.
     classLoaders.invalidateAll();
-    if (parentClassLoader instanceof Closeable) {
+    if (ownedParentClassLoader) {
       Closeables.closeQuietly((Closeable) parentClassLoader);
     }
     try {
