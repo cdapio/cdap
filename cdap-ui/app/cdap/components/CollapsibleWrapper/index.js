@@ -24,7 +24,7 @@ require('./CollapsibleWrapper.scss');
 export default class CollapsibleWrapper extends Component {
   static propTypes = {
     content: PropTypes.string,
-    popoverContent: PropTypes.element,
+    popoverContent: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
     alwaysShowViewLink: PropTypes.bool
   };
 

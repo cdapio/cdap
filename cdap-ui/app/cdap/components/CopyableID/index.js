@@ -22,6 +22,8 @@ import Clipboard from 'clipboard';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import uuidV4 from 'uuid/v4';
+import classnames from 'classnames';
+import {preventPropagation} from 'services/helpers';
 
 require('./CopyableID.scss');
 
@@ -33,22 +35,39 @@ export default class CopyableID extends Component {
     idprefix: PropTypes.string,
     label: PropTypes.string,
     placement: PropTypes.string,
-    tooltipText: PropTypes.oneOfType([PropTypes.string, PropTypes.bool])
+    tooltipText: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+    bubbleEvent: PropTypes.bool
   };
 
   static defaultProps = {
     label: T.translate(`${PREFIX}.label`),
-    tooltipText: true
+    tooltipText: true,
+    bubbleEvent: false
   };
 
   state = {
     showTooltip: false
   };
 
-  onIDClickHandler() {
+  onIDClickHandler = (e) => {
     this.setState({
       showTooltip: !this.state.showTooltip
     });
+    if (!this.props.bubbleEvent) {
+      preventPropagation(e);
+      return false;
+    }
+  };
+
+  // When the user clicks the link we show a "Copied!" message
+  // This has to go away after moving away so that we show the
+  // tooltip with the original message.
+  onPopoverClose = (showPopover) => {
+    if (!showPopover) {
+      this.setState({
+        showTooltip: showPopover
+      });
+    }
   }
 
   renderToolTipText() {
@@ -76,10 +95,7 @@ export default class CopyableID extends Component {
       <span
         className="copyable-id btn-link"
         id={idlabel}
-        onClick={this.onIDClickHandler.bind(this, this.props.id)}
-        onMouseOut={() => {
-          this.state.showTooltip ? this.onIDClickHandler() : null;
-        }}
+        onClick={this.onIDClickHandler}
         data-clipboard-text={this.props.id}
       >
         <span>{this.props.label}</span>
@@ -91,15 +107,25 @@ export default class CopyableID extends Component {
         showOn="Hover"
         bubbleEvent={false}
         placement="right"
-        className="copyable-id"
+        className={classnames("copyable-id", {
+          'hide': !this.props.tooltipText && !this.state.showTooltip
+        })}
+        showPopover={this.state.showTooltip}
+        modifiers={{
+          shift: {
+            order: 800,
+            enabled: true
+          }
+        }}
+        onTogglePopover={this.onPopoverClose}
       >
         <span>{this.renderToolTipText()}</span>
         {
           this.state.showTooltip ?
-            <span className="copied-label text-success">
+            <div className="copied-label text-success">
               <IconSVG name="icon-check-circle" />
               <span>{T.translate(`${PREFIX}.copiedLabel`)}</span>
-            </span>
+            </div>
           :
             null
         }

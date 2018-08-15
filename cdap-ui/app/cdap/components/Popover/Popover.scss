@@ -76,7 +76,7 @@ $tooltip-bg-color: $grey-01;
 
 .popper[data-placement^="top"] {
   margin-bottom: 10px;
-  .popper__arrow {
+  > .popper__arrow {
     border-right: 1px solid $grey-02;
     border-bottom: 1px solid $grey-02;
     bottom: -6px;
@@ -86,7 +86,7 @@ $tooltip-bg-color: $grey-01;
 
 .popper[data-placement^="bottom"] {
   margin-top: 10px;
-  .popper__arrow {
+  > .popper__arrow {
     border-right: 1px solid $grey-02;
     border-bottom: 1px solid $grey-02;
     top: -6px;
@@ -95,7 +95,7 @@ $tooltip-bg-color: $grey-01;
 }
 .popper[data-placement^="right"] {
   margin-left: 10px;
-  .popper__arrow {
+  > .popper__arrow {
     border-right: 1px solid $grey-02;
     border-bottom: 1px solid $grey-02;
     left: -6px;
@@ -104,7 +104,7 @@ $tooltip-bg-color: $grey-01;
 }
 .popper[data-placement^="left"] {
   margin-right: 10px;
-  .popper__arrow {
+  > .popper__arrow {
     border-right: 1px solid $grey-02;
     border-bottom: 1px solid $grey-02;
     right: -6px;

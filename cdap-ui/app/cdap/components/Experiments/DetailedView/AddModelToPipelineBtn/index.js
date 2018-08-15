@@ -183,7 +183,7 @@ class AddModelToPipelineBtn extends Component {
   render() {
     const AnchorTag = this.state.disabled ? 'button' : 'a';
     return (
-      <fielset className="add-model-to-pipeline" disabled={this.state.disabled}>
+      <fieldset className="add-model-to-pipeline" disabled={this.state.disabled}>
         <AnchorTag
           className={classnames("btn btn-primary btn-sm", {
             'disabled': this.state.disabled
@@ -204,7 +204,7 @@ class AddModelToPipelineBtn extends Component {
               null
           }
         </AnchorTag>
-      </fielset>
+      </fieldset>
     );
   }
 }
