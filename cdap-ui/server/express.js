@@ -466,10 +466,6 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         headers: headers
       }, function (err, response) {
         if (err) {
-          if (err.code === 'ECONNREFUSED') {
-            res.status(404).send(err);
-            return;
-          }
           res.status(500).send(err);
         } else {
           res.status(response.statusCode).send('OK');
