@@ -245,7 +245,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         if (classLoader instanceof Closeable) {
           Closeables.closeQuietly((Closeable) classLoader);
-          LOG.trace("Closed ClassLoader for SparkProgramRunner");
+          LOG.trace("Closed SparkProgramRunner ClassLoader {}", classLoader);
         }
       }
     };
