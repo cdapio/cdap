@@ -13,8 +13,7 @@
           "widget-type": "textbox",
           "label": "Project ID",
           "name": "projectId",
-          "required": true,
-          "description": "Google Cloud Project ID, which uniquely identifies your project. You can find it on the Dashboard in the Cloud Platform Console.",
+          "description": "Google Cloud Project ID, which uniquely identifies your project. You can find it on the Dashboard in the Cloud Platform Console. Not required when running on Google Cloud Platform.",
           "widget-attributes": {
             "placeholder": "Specify your GCP Project ID"
           }
@@ -23,10 +22,9 @@
           "widget-type": "securekey-textarea",
           "label": "Service Account Key",
           "name": "accountKey",
-          "required": true,
-          "description": "A service account is a special type of Google account that belongs to your application or a virtual machine (VM), instead of to an individual end user. Paste the contents of the service account key JSON file that you can download from the service accounts section under IAM and admin on the Cloud Console.",
+          "description": "A service account is a special type of Google account that belongs to your application or a virtual machine (VM), instead of to an individual end user. Paste the contents of the service account key JSON file that you can download from the service accounts section under IAM and admin on the Cloud Console. Not required when running on Google Cloud Platform.",
           "widget-attributes": {
-            "placeholder": "Specify the GCP service account to use to run pipelines using this profile"
+            "placeholder": "Specify the GCP service account"
           }
         }
       ]

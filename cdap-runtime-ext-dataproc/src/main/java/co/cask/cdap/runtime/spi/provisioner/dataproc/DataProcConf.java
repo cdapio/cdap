@@ -23,11 +23,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.gax.core.CredentialsProvider;
-import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.services.compute.Compute;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.dataproc.v1.ClusterControllerSettings;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -65,8 +61,8 @@ public class DataProcConf {
 
   private final SSHPublicKey publicKey;
 
-  private DataProcConf(String accountKey, String region, String zone, String projectId, String network,
-                       int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
+  private DataProcConf(@Nullable String accountKey, String region, String zone, @Nullable String projectId,
+                       String network, int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
                        int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        @Nullable SSHPublicKey publicKey) {
@@ -98,8 +94,14 @@ public class DataProcConf {
     return zone;
   }
 
+  @Nullable
   public String getProjectId() {
     return projectId;
+  }
+
+  @Nullable
+  public String getAccountKey() {
+    return accountKey;
   }
 
   public String getNetwork() {
@@ -157,29 +159,6 @@ public class DataProcConf {
     return String.format("custom-%d-%d", cpus, memoryGB);
   }
 
-  public ClusterControllerSettings getControllerSettings() throws IOException {
-    CredentialsProvider credentialsProvider;
-    try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
-      credentialsProvider = FixedCredentialsProvider.create(GoogleCredentials.fromStream(is));
-    }
-
-    return ClusterControllerSettings.newBuilder()
-      .setCredentialsProvider(credentialsProvider)
-      .build();
-  }
-
-  public Compute getCompute() throws GeneralSecurityException, IOException {
-    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-
-    try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
-      GoogleCredential credential = GoogleCredential.fromStream(is)
-        .createScoped(Collections.singleton("https://www.googleapis.com/auth/cloud-platform"));
-      return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), credential)
-        .setApplicationName("cdap")
-        .build();
-    }
-  }
-
   public static DataProcConf fromProvisionerContext(ProvisionerContext context) {
     return create(context.getProperties(),
                   context.getSSHContext().getSSHKeyPair().map(SSHKeyPair::getPublicKey).orElse(null));
@@ -193,8 +172,14 @@ public class DataProcConf {
   }
 
   private static DataProcConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
-    String accountKey = getString(properties, "accountKey");
-    String projectId = getString(properties, "projectId");
+    String accountKey = properties.get("accountKey");
+    if (accountKey != null && accountKey.isEmpty()) {
+      accountKey = null;
+    }
+    String projectId = properties.get("projectId");
+    if (projectId != null && projectId.isEmpty()) {
+      projectId = null;
+    }
 
     // TODO: validate zone based on the region
     String region = getString(properties, "region", "global");
@@ -234,22 +219,14 @@ public class DataProcConf {
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval, publicKey);
   }
 
-  private static String getString(Map<String, String> properties, String key) {
-    String val = properties.get(key);
-    if (val == null) {
-      throw new IllegalArgumentException(String.format("Invalid config. '%s' must be specified.", key));
-    }
-    return val;
-  }
-
   private static String getString(Map<String, String> properties, String key, String defaultVal) {
     String val = properties.get(key);
-    return val == null ? defaultVal : val;
+    return val == null || val.isEmpty() ? defaultVal : val;
   }
 
   private static int getInt(Map<String, String> properties, String key, int defaultVal) {
     String valStr = properties.get(key);
-    if (valStr == null) {
+    if (valStr == null || valStr.isEmpty()) {
       return defaultVal;
     }
     try {
@@ -267,7 +244,7 @@ public class DataProcConf {
 
   private static long getLong(Map<String, String> properties, String key, long defaultVal) {
     String valStr = properties.get(key);
-    if (valStr == null) {
+    if (valStr == null || valStr.isEmpty()) {
       return defaultVal;
     }
     try {

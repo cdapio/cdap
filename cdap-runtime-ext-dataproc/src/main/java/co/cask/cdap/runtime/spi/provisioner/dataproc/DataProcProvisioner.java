@@ -35,8 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +60,12 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public void validateProperties(Map<String, String> properties) {
-    DataProcConf.fromProperties(properties);
+    DataProcConf conf = DataProcConf.fromProperties(properties);
+    try {
+      DataProcClient.fromConf(conf);
+    } catch (IOException | GeneralSecurityException e) {
+      throw new IllegalArgumentException(e.getMessage(), e);
+    }
   }
 
   @Override
