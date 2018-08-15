@@ -35,7 +35,19 @@ var log = log4js.getLogger('default');
 function extractUISettings() {
   try {
     if (require.resolve('./ui-settings.json')) {
-      return require('./ui-settings.json') || {};
+      const uiSettings = require('./ui-settings.json') || {};
+      const uiThemeName = uiSettings['ui.theme'] || 'default';
+      const uiThemePath = `./themes/${uiThemeName}.json`;
+      let uiThemeConfig = {};
+      try {
+        if (require.resolve(uiThemePath)) {
+          uiThemeConfig = require(uiThemePath);
+        }
+      } catch (err) {
+        // The error can either be file doesn't exist, or file contains invalid json
+        log.debug(err.toString());
+      }
+      return {uiSettings, uiThemeConfig};
     }
   } catch(e) {
     log.info('Unable to find UI settings json file.');

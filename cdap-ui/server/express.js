@@ -48,7 +48,7 @@ var express = require('express'),
 
 var log = log4js.getLogger('default');
 
-function makeApp (authAddress, cdapConfig, uiSettings) {
+function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
 
   var app = express();
 
@@ -114,26 +114,11 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   });
 
   app.get('/ui-theme.js', function (req, res) {
-    let uiThemeName = uiSettings['ui.theme'] || 'default';
-    let path = `${__dirname}/config/themes/${uiThemeName}.json`;
-    try {
-      let file = fs.readFileSync(path, 'utf8');
-      try {
-        let fileConfig = JSON.parse(file);
-        res.header({
-          'Content-Type': 'text/javascript',
-          'Cache-Control': 'no-store, must-revalidate'
-        });
-        res.send(`window.CDAP_UI_THEME = ${JSON.stringify(fileConfig)};`);
-      } catch (err) {
-        log.debug(`Invalid ${uiThemeName}.json file in server/config/themes directory: ${err}`);
-        res.end();
-      }
-    } catch (e) {
-      log.debug(`File ${uiThemeName}.json doesn't exist in server/config/themes directory: ${e}`);
-      res.end();
-    }
-
+    res.header({
+      'Content-Type': 'text/javascript',
+      'Cache-Control': 'no-store, must-revalidate'
+    });
+    res.send(`window.CDAP_UI_THEME = ${JSON.stringify(uiThemeConfig)};`);
   });
 
   app.post('/downloadQuery', function(req, res) {
