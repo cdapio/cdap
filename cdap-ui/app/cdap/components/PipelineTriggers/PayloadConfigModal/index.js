@@ -17,8 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { ModalHeader, ModalBody } from 'reactstrap';
-import HydratorModal from 'components/HydratorModal';
+import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import ScheduleRuntimeArgs from 'components/PipelineTriggers/ScheduleRuntimeArgs';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
@@ -57,7 +56,7 @@ export default class PayloadConfigModal extends Component {
     }
 
     return (
-      <HydratorModal
+      <Modal
         isOpen={this.state.isOpen}
         toggle={this.toggle}
         modalClassName="payload-config-modal"
@@ -89,7 +88,7 @@ export default class PayloadConfigModal extends Component {
             scheduleInfo={this.props.scheduleInfo}
           />
         </ModalBody>
-      </HydratorModal>
+      </Modal>
     );
   };
 

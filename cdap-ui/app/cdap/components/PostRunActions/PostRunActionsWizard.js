@@ -22,8 +22,7 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import AvailablePluginsStore from 'services/AvailablePluginsStore';
 import {MyArtifactApi} from 'api/artifact';
 import {generateNodeConfig} from 'services/HydratorPluginConfigFactory';
-import { ModalBody } from 'reactstrap';
-import HydratorModal from 'components/HydratorModal';
+import { Modal, ModalBody } from 'reactstrap';
 import SelectWithOptions from 'components/SelectWithOptions';
 import KeyValuePairs from 'components/KeyValuePairs';
 import RadioGroup from 'components/RadioGroup';
@@ -232,7 +231,7 @@ export default class PostRunActionsWizard extends Component {
     let action = this.props.action;
 
     return (
-      <HydratorModal
+      <Modal
         isOpen={this.props.isOpen}
         toggle={this.toggleAndPreventPropagation}
         backdrop="static"
@@ -267,7 +266,7 @@ export default class PostRunActionsWizard extends Component {
             Close
           </div>
         </ModalBody>
-      </HydratorModal>
+      </Modal>
     );
   }
 }
