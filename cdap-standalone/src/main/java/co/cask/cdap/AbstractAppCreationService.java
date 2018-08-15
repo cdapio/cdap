@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,27 +75,24 @@ class AbstractAppCreationService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected void run() throws Exception {
+  protected void run() {
     try {
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          // Exit if stop has been triggered.
-          if (stopping) {
-            return true;
-          }
-
-          List<ArtifactSummary> artifacts = null;
-          try {
-            artifacts = artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM, artifactName,
-                                                                Integer.MAX_VALUE, ArtifactSortOrder.DESC);
-          } catch (ArtifactNotFoundException ex) {
-            // expected, so suppress it
-          }
-          return artifacts != null && !artifacts.isEmpty();
+      Tasks.waitFor(true, () -> {
+        // Exit if stop has been triggered.
+        if (stopping) {
+          return true;
         }
+
+        List<ArtifactSummary> artifacts = null;
+        try {
+          artifacts = artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM, artifactName,
+                                                              Integer.MAX_VALUE, ArtifactSortOrder.DESC);
+        } catch (ArtifactNotFoundException ex) {
+          // expected, so suppress it
+        }
+        return artifacts != null && !artifacts.isEmpty();
       }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS, String.format("Waiting for %s artifact to become available.",
-                                                                 artifactName));
+                                                                   artifactName));
 
       // Get all artifacts present in system namespace
       List<ArtifactSummary> artifacts = new ArrayList<>(artifactRepository.getArtifactSummaries(
@@ -123,13 +119,18 @@ class AbstractAppCreationService extends AbstractExecutionThreadService {
         }
       }
 
+      // don't attempt to start the app if shutdown is in progress
       if (stopping) {
         LOG.debug("{} AppCreationService is shutting down.", appId.getApplication());
+        return;
       }
       createAppAndStartProgram(maxSummary);
     } catch (Exception ex) {
-      // Not able to create application. But it is not catastrophic, hence just log a warning.
-      LOG.warn("Got an exception while trying to create and start {} app.", appId, ex);
+      // if shutdown happens before the program has started, exceptions can happen
+      if (!stopping) {
+        // Not able to create application. But it is not catastrophic, hence just log a warning.
+        LOG.warn("Got an exception while trying to create and start {} app.", appId, ex);
+      }
     }
   }
 

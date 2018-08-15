@@ -107,8 +107,9 @@ import java.util.List;
  */
 public class StandaloneMain {
 
-  // A special key in the CConfiguration to disable UI. It's mainly used for unit-tests that start Standalone.
+  // Special keys in the CConfiguration to disable stuff. It's mainly used for unit-tests that start Standalone.
   public static final String DISABLE_UI = "standalone.disable.ui";
+  public static final String DISABLE_DATAPREP = "standalone.disable.dataprep";
 
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
@@ -125,6 +126,7 @@ public class StandaloneMain {
   private final MetadataService metadataService;
   private final boolean securityEnabled;
   private final boolean sslEnabled;
+  private final boolean dataPrepEnabled;
   private final CConfiguration cConf;
   private final DatasetService datasetService;
   private final ExploreClient exploreClient;
@@ -182,6 +184,8 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
+
+    dataPrepEnabled = !cConf.getBoolean(DISABLE_DATAPREP, false);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -260,7 +264,9 @@ public class StandaloneMain {
     }
     metadataService.startAndWait();
 
-    wranglerAppCreationService.startAndWait();
+    if (dataPrepEnabled) {
+      wranglerAppCreationService.startAndWait();
+    }
 
     operationalStatsService.startAndWait();
 
@@ -284,7 +290,9 @@ public class StandaloneMain {
         userInterfaceService.stopAndWait();
       }
 
-      wranglerAppCreationService.stopAndWait();
+      if (dataPrepEnabled) {
+        wranglerAppCreationService.stopAndWait();
+      }
 
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
