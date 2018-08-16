@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.iq80.leveldb.DB;
@@ -50,7 +51,7 @@ import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
  * Service maintaining all LevelDB tables.
  */
 @Singleton
-public class LevelDBTableService {
+public class LevelDBTableService implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBTableService.class);
 
@@ -58,6 +59,7 @@ public class LevelDBTableService {
   private long cacheSize;
   private String basePath;
   private WriteOptions writeOptions;
+  private boolean isClosed;
 
   private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
 
@@ -81,7 +83,7 @@ public class LevelDBTableService {
    * For guice injecting configuration object to this singleton.
    */
   @Inject
-  public void setConfiguration(CConfiguration config) throws IOException {
+  public void setConfiguration(CConfiguration config) {
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
 
@@ -95,10 +97,23 @@ public class LevelDBTableService {
    * only use in unit test since the singleton may be reused for multiple tests.
    */
   public void clearTables() {
+    for (DB entries : tables.values()) {
+      Closeables.closeQuietly(entries);
+    }
     tables.clear();
   }
 
+  private void ensureOpen() {
+    Preconditions.checkState(!isClosed, "%s has already been closed.", getClass().getSimpleName());
+  }
+
+  public void close() {
+    isClosed = true;
+    clearTables();
+  }
+
   public Collection<String> list() throws Exception {
+    ensureOpen();
     File baseDir = new File(basePath);
     String[] subDirs = baseDir.list();
     if (subDirs == null) {
@@ -118,6 +133,7 @@ public class LevelDBTableService {
    * @throws Exception
    */
   public Map<TableId, TableStats> getTableStats() throws Exception {
+    ensureOpen();
     File baseDir = new File(basePath);
     File[] subDirs = baseDir.listFiles();
     if (subDirs == null) {
@@ -157,6 +173,7 @@ public class LevelDBTableService {
   }
 
   public DB getTable(String tableName) throws IOException {
+    ensureOpen();
     DB db = tables.get(tableName);
     if (db == null) {
       synchronized (tables) {
@@ -171,6 +188,7 @@ public class LevelDBTableService {
   }
 
   public void ensureTableExists(String tableName) throws IOException {
+    ensureOpen();
     DB db = tables.get(tableName);
     if (db == null) {
       synchronized (tables) {
@@ -220,6 +238,7 @@ public class LevelDBTableService {
   }
 
   public void dropTable(String name) throws IOException {
+    ensureOpen();
     DB db = tables.remove(name);
     if (db != null) {
       db.close();

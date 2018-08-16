@@ -50,7 +50,6 @@ public final class LevelDBTableFactory implements TableFactory {
 
   private final File baseDir;
   private final Options dbOptions;
-  private final ScheduledExecutorService executor;
 
   private LevelDBMetadataTable metadataTable;
   private LevelDBMessageTable messageTable;
@@ -65,11 +64,11 @@ public final class LevelDBTableFactory implements TableFactory {
       .cacheSize(cConf.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE))
       .errorIfExists(false)
       .createIfMissing(true);
-    this.executor = Executors.newSingleThreadScheduledExecutor(
+    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("leveldb-tms-data-cleanup"));
-    this.executor.scheduleAtFixedRate(new DataCleanup(), 0L,
-                                      Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY)),
-                                      TimeUnit.SECONDS);
+    executor.scheduleAtFixedRate(new DataCleanup(), 0L,
+                                 Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY)),
+                                 TimeUnit.SECONDS);
   }
 
   @Override

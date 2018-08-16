@@ -24,6 +24,7 @@ import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -38,15 +39,20 @@ public class LevelDBKVTableTest extends NoTxKeyValueTableTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  static LevelDBTableService service;
+  private static LevelDBTableService levelDBTableService;
 
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     conf.set(Constants.CFG_DATA_LEVELDB_DIR, tmpFolder.newFolder().getAbsolutePath());
-    service = new LevelDBTableService();
-    service.setConfiguration(conf);
+    levelDBTableService = new LevelDBTableService();
+    levelDBTableService.setConfiguration(conf);
+  }
+
+  @After
+  public void clear() {
+    levelDBTableService.clearTables();
   }
 
   @Override
@@ -58,7 +64,7 @@ public class LevelDBKVTableTest extends NoTxKeyValueTableTest {
         CConfiguration conf = CConfiguration.create();
         conf.set(Constants.CFG_DATA_LEVELDB_DIR, dataDir);
         bind(CConfiguration.class).toInstance(conf);
-        bind(LevelDBTableService.class).toInstance(service);
+        bind(LevelDBTableService.class).toInstance(levelDBTableService);
       }
     });
 

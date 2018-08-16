@@ -47,6 +47,7 @@ import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -134,6 +135,7 @@ public class StandaloneMain {
   private final OperationalStatsService operationalStatsService;
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
+  private final LevelDBTableService levelDBTableService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -145,6 +147,7 @@ public class StandaloneMain {
 
     injector = Guice.createInjector(modules);
 
+    levelDBTableService = injector.getInstance(LevelDBTableService.class);
     wranglerAppCreationService = injector.getInstance(WranglerAppCreationService.class);
     messagingService = injector.getInstance(MessagingService.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
@@ -323,6 +326,7 @@ public class StandaloneMain {
 
       logAppenderInitializer.close();
       authorizerInstantiator.close();
+      levelDBTableService.close();
     } catch (Throwable e) {
       halt = true;
       LOG.error("Exception during shutdown", e);
