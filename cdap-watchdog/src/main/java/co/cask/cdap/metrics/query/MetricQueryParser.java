@@ -19,7 +19,6 @@ import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Interpolator;
 import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.TimeMathParser;
@@ -144,18 +143,6 @@ final class MetricQueryParser {
     // +8 for "/metrics"
     int startPos = Constants.Gateway.API_VERSION_3.length() + 8;
     return path.substring(startPos, path.length());
-  }
-
-  static MetricDeleteQuery parseDelete(URI requestURI, String metricPrefix) throws MetricsPathException {
-    MetricDataQueryBuilder builder = new MetricDataQueryBuilder();
-    parseContext(requestURI.getPath(), builder);
-    builder.setStartTs(0);
-    builder.setEndTs(Integer.MAX_VALUE - 1);
-    builder.setMetricName(metricPrefix);
-
-    MetricDataQuery query = builder.build();
-    return new MetricDeleteQuery(query.getStartTs(), query.getEndTs(),
-                                 query.getMetrics().keySet(), query.getSliceByTags());
   }
 
   static MetricDataQuery parse(URI requestURI) throws MetricsPathException {

@@ -228,7 +228,7 @@ public class DefaultCube implements Cube, MeteredDataset {
     // find all the aggregations that match the dimensionValues in the query and
     // use the dimension values of the aggregation to delete entries in all the fact-tables.
     for (Aggregation agg : aggregations.values()) {
-      if (agg.getDimensionNames().containsAll(query.getDimensionValues().keySet())) {
+      if (query.getTagPredicate().test(agg.getDimensionNames())) {
         dimensionValues.clear();
         for (String dimensionName : agg.getDimensionNames()) {
           dimensionValues.add(new DimensionValue(dimensionName, query.getDimensionValues().get(dimensionName)));

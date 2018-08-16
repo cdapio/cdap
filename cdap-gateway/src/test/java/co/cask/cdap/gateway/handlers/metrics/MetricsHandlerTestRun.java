@@ -23,6 +23,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.MetricQueryResult;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -38,7 +39,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -479,8 +483,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         "&metric=system.reads&interpolate=linear&start=" + start + "&end="
         + end, 4, 1000);
 
+    Map<String, String> deleteTags = new LinkedHashMap<>();
+    deleteTags.put(Constants.Metrics.Tag.NAMESPACE, "interspace");
+    deleteTags.put(Constants.Metrics.Tag.APP, "WordCount1");
+    deleteTags.put(Constants.Metrics.Tag.FLOW, "WordCounter");
     // delete the added metrics for testing interpolator
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, end, sliceBy);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, end, Collections.emptySet(),
+                                                          deleteTags, new ArrayList<>(deleteTags.keySet()));
     metricStore.delete(deleteQuery);
   }
 
@@ -551,8 +560,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
         + (start + 36000), 3, 6);
 
+    Map<String, String> deleteTags = new LinkedHashMap<>();
+    deleteTags.put(Constants.Metrics.Tag.NAMESPACE, "resolutions");
+    deleteTags.put(Constants.Metrics.Tag.APP, "WordCount1");
+    deleteTags.put(Constants.Metrics.Tag.FLOW, "WordCounter");
     // delete the added metrics for testing auto resolutions
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, (start + 36000), sliceBy);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, (start + 36000), Collections.emptySet(), deleteTags,
+                                                          new ArrayList<>(deleteTags.keySet()));
     metricStore.delete(deleteQuery);
   }
 

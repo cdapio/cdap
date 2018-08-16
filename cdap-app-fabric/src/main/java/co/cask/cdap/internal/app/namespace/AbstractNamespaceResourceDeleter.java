@@ -35,7 +35,9 @@ import co.cask.cdap.security.impersonation.Impersonator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -136,9 +138,10 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
 
   private void deleteMetrics(NamespaceId namespaceId) throws Exception {
     long endTs = System.currentTimeMillis() / 1000;
-    Map<String, String> tags = new HashMap<>();
+    Map<String, String> tags = new LinkedHashMap<>();
     tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getNamespace());
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
+                                                          new ArrayList<>(tags.keySet()));
     metricStore.delete(deleteQuery);
   }
 }

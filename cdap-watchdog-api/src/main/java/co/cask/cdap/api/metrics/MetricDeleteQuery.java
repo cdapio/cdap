@@ -18,33 +18,41 @@ package co.cask.cdap.api.metrics;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Query that specifies parameters to delete entries from {@link MetricStore}.
  */
 public class MetricDeleteQuery {
-
   private final long startTs;
   private final long endTs;
   private final Collection<String> metricNames;
   private final Map<String, String> sliceByTagValues;
+  private final Predicate<List<String>> tagPredicate;
 
+  /**
+   * Creates instance of {@link MetricDeleteQuery} that defines selection of data to delete from the metric store.
+   *
+   * @param startTs start time of the data selection, in seconds since epoch
+   * @param endTs end time of the data selection, in seconds since epoch
+   * @param metricNames ame of the metric names to delete, empty collection means delete all
+   * @param sliceByTagValues the key value pair of the tag and value
+   * @param aggregationTags list of tags for the metric aggregation group, the order must be same as the prefix of the
+   *                        aggregation groups we defined in {@link MetricStore}
+   */
   public MetricDeleteQuery(long startTs, long endTs, Collection<String> metricNames,
-                           Map<String, String> sliceByTagValues) {
+                           Map<String, String> sliceByTagValues, List<String> aggregationTags) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.metricNames = metricNames;
-    this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
-  }
-
-  public MetricDeleteQuery(long startTs, long endTs,
-                           Map<String, String> sliceByTagValues) {
-    this(startTs, endTs, ImmutableList.<String>of(), sliceByTagValues);
+    this.sliceByTagValues = new LinkedHashMap<>(sliceByTagValues);
+    this.tagPredicate = aggregates -> Collections.indexOfSubList(aggregates, aggregationTags) == 0;
   }
 
   public long getStartTs() {
@@ -61,6 +69,10 @@ public class MetricDeleteQuery {
 
   public Map<String, String> getSliceByTags() {
     return sliceByTagValues;
+  }
+
+  public Predicate<List<String>> getTagPredicate() {
+    return tagPredicate;
   }
 
   @Override
