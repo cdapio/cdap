@@ -39,12 +39,11 @@ import javax.annotation.Nullable;
 public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorService {
   private static final Logger LOG = LoggerFactory.getLogger(ScheduledRunRecordCorrectorService.class);
 
-  private final CConfiguration cConf;
   private ScheduledExecutorService scheduledExecutorService;
   private final long initialDelay;
   private final long interval;
   private final boolean runOnce;
-  private boolean done = false;
+  private boolean done;
 
   @Inject
   ScheduledRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
@@ -58,13 +57,12 @@ public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorServic
                                      DatasetFramework datasetFramework,
                                      long initialDelay, @Nullable Long interval, boolean runOnce) {
     super(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework);
-    this.cConf = cConf;
     this.runOnce = runOnce;
     this.interval = computeInterval(interval, cConf);
     this.initialDelay = initialDelay;
   }
 
-  private long computeInterval(Long givenInterval, CConfiguration cConf) {
+  private long computeInterval(@Nullable Long givenInterval, CConfiguration cConf) {
     if (givenInterval != null) {
       return givenInterval;
     }
@@ -81,7 +79,7 @@ public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorServic
     super.startUp();
 
     scheduledExecutorService = Executors.newScheduledThreadPool(1);
-    // Schedule the run record corrector with 5 minutes initial delay and 180 seconds interval between runs
+    // Schedule the run record corrector with the configured initial delay and interval between runs
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(),
        initialDelay, interval, TimeUnit.SECONDS);
   }
@@ -107,6 +105,7 @@ public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorServic
 
     @Override
     public void run() {
+      // in case the scheduledExecutorService does not shutdown right away, avoid running repeatedly
       if (done) {
         return;
       }
