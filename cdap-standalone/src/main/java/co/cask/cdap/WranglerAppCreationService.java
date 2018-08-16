@@ -38,7 +38,7 @@ public class WranglerAppCreationService extends AbstractAppCreationService {
   private static final ProgramId WRANGLER_SERVICEID = WRANGLER_APPID.service("service");
 
   private static final Map<ProgramId, Map<String, String>> PROGRAM_ID_MAP =
-    ImmutableMap.<ProgramId, Map<String, String>>of(WRANGLER_SERVICEID, ImmutableMap.<String, String>of());
+    ImmutableMap.of(WRANGLER_SERVICEID, ImmutableMap.of());
 
 
   @Inject
