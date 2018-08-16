@@ -82,7 +82,7 @@ export default class NodesRecordsGraph extends Component {
         x = x + (id + 1);
       }
       if (xDomainType === 'time') {
-        x = run.start;
+        x = run.start || run.starting;
       }
       return {
         x,

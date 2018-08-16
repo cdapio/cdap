@@ -57,6 +57,8 @@ $min_height_of_graph: 340px;
           font-weight: 600;
         }
         .viz-switcher {
+          display: flex;
+          align-items: center;
           > span {
             cursor: pointer;
             &.chart {
@@ -122,6 +124,8 @@ $min_height_of_graph: 340px;
   .filter-container {
     padding: 5px 10px 5px 10px;
     background: white;
+    display: flex;
+    align-items: center;
     .runs-dropdown {
       display: inline-block;
       margin-left: 10px;

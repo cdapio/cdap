@@ -78,14 +78,22 @@ export default class NodesMetricsGraph extends Component {
       return;
     }
     let activeNode = Object.keys(this.props.nodesMap).pop();
-    let activeNodeRuns = this.props.nodesMap[activeNode].map((run, i) => Object.assign({}, run, {index: i + 1}));
+    let activeNodeRuns = this.props.nodesMap[activeNode].map((run, i) => ({
+      ...run,
+      start: run.start || run.starting,
+      index: i + 1
+    }));
     this.setState({
       activeNode,
       activeNodeRuns
     });
   }
   setActiveNode(activeNode) {
-    let activeNodeRuns = objectQuery(this.state.nodesMap, activeNode).map((run, i) => Object.assign({}, run, {index: i + 1}));
+    let activeNodeRuns = objectQuery(this.state.nodesMap, activeNode).map((run, i) => ({
+      ...run,
+      index: i + 1,
+      start: run.start || run.starting
+    }));
     this.setState({
       activeNode,
       activeNodeRuns
@@ -163,7 +171,7 @@ export default class NodesMetricsGraph extends Component {
     return (
       <SortableStickyTable
         tableHeaders={this.tableHeaders}
-        entities={this.state.activeNodeRuns.map((run, i) => Object.assign({}, run, {index: i + 1}))}
+        entities={this.state.activeNodeRuns}
         renderTableBody={this.renderTableBody}
       />
     );
