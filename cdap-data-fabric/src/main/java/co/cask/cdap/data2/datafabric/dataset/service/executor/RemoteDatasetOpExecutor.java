@@ -44,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -78,16 +77,13 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
     int timeout = cConf.getInt(Constants.Startup.STARTUP_SERVICE_TIMEOUT);
     if (timeout > 0) {
       try {
-        Tasks.waitFor(true, new Callable<Boolean>() {
-          @Override
-          public Boolean call() {
-            try {
-              remoteClient.resolve("");
-            } catch (ServiceUnavailableException e) {
-              return false;
-            }
-            return true;
+        Tasks.waitFor(true, () -> {
+          try {
+            remoteClient.resolve("");
+          } catch (ServiceUnavailableException e) {
+            return false;
           }
+          return true;
         }, timeout, TimeUnit.SECONDS, Math.min(timeout, Math.max(10, timeout / 10)), TimeUnit.SECONDS);
         LOG.info("DatasetOpExecutor started.");
       } catch (TimeoutException e) {
@@ -107,7 +103,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
 
   @Override
   public boolean exists(DatasetId datasetInstanceId) throws Exception {
-    return (Boolean) executeAdminOp(datasetInstanceId, "exists", null).getResult();
+    return (Boolean) executeAdminOp(datasetInstanceId, "exists").getResult();
   }
 
   @Override
@@ -135,18 +131,17 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
 
   @Override
   public void truncate(DatasetId datasetInstanceId) throws Exception {
-    executeAdminOp(datasetInstanceId, "truncate", null);
+    executeAdminOp(datasetInstanceId, "truncate");
   }
 
   @Override
   public void upgrade(DatasetId datasetInstanceId) throws Exception {
-    executeAdminOp(datasetInstanceId, "upgrade", null);
+    executeAdminOp(datasetInstanceId, "upgrade");
   }
 
-  private DatasetAdminOpResponse executeAdminOp(
-    DatasetId datasetInstanceId, String opName,
-    @Nullable String body) throws IOException, HandlerException, ConflictException {
-    HttpResponse httpResponse = doRequest(datasetInstanceId, opName, body);
+  private DatasetAdminOpResponse executeAdminOp(DatasetId datasetInstanceId, String opName)
+    throws IOException, HandlerException, ConflictException {
+    HttpResponse httpResponse = doRequest(datasetInstanceId, opName, null);
     return GSON.fromJson(Bytes.toString(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
   }
 
@@ -155,18 +150,23 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
     String path = String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespace(),
                                 datasetInstanceId.getEntityName(), opName);
     LOG.trace("executing POST on {} with body {}", path, body);
-    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path);
-    if (body != null) {
-      builder.withBody(body);
+    try {
+      HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path);
+      if (body != null) {
+        builder.withBody(body);
+      }
+      String userId = authenticationContext.getPrincipal().getName();
+      if (userId != null) {
+        builder.addHeader(Constants.Security.Headers.USER_ID, userId);
+      }
+      HttpResponse httpResponse = remoteClient.execute(builder.build());
+      LOG.trace("executed POST on {} with body {}: {}", path, body, httpResponse.getResponseCode());
+      verifyResponse(httpResponse);
+      return httpResponse;
+    } catch (Exception e) {
+      LOG.trace("Caught exception for POST on {} with body {}", path, body, e);
+      throw e;
     }
-    String userId = authenticationContext.getPrincipal().getName();
-    if (userId != null) {
-      builder.addHeader(Constants.Security.Headers.USER_ID, userId);
-    }
-    HttpResponse httpResponse = remoteClient.execute(builder.build());
-    LOG.trace("executed POST on {} with body {}", path, body);
-    verifyResponse(httpResponse);
-    return httpResponse;
   }
 
   private void verifyResponse(HttpResponse httpResponse) throws ConflictException {
