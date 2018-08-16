@@ -31,22 +31,47 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A distributed-mode only run record corrector service that corrects run records at a scheduled, configurable rate.
  */
-public class DistributedRunRecordCorrectorService extends RunRecordCorrectorService {
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedRunRecordCorrectorService.class);
+public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorService {
+  private static final Logger LOG = LoggerFactory.getLogger(ScheduledRunRecordCorrectorService.class);
 
-  private final CConfiguration cConf;
   private ScheduledExecutorService scheduledExecutorService;
+  private final long initialDelay;
+  private final long interval;
+  private final boolean runOnce;
+  private boolean done;
 
   @Inject
-  DistributedRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                       ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
-                                       DatasetFramework datasetFramework) {
+  ScheduledRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
+                                     ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+                                     DatasetFramework datasetFramework) {
+    this(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework, 300L, null, false);
+  }
+
+  ScheduledRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
+                                     ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+                                     DatasetFramework datasetFramework,
+                                     long initialDelay, @Nullable Long interval, boolean runOnce) {
     super(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework);
-    this.cConf = cConf;
+    this.runOnce = runOnce;
+    this.interval = computeInterval(interval, cConf);
+    this.initialDelay = initialDelay;
+  }
+
+  private long computeInterval(@Nullable Long givenInterval, CConfiguration cConf) {
+    if (givenInterval != null) {
+      return givenInterval;
+    }
+    long configuredInterval = cConf.getLong(Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS);
+    if (configuredInterval <= 0) {
+      LOG.debug("Invalid run id corrector interval {}. Setting it to 180 seconds.", configuredInterval);
+      configuredInterval = 180L;
+    }
+    return configuredInterval;
   }
 
   @Override
@@ -54,14 +79,9 @@ public class DistributedRunRecordCorrectorService extends RunRecordCorrectorServ
     super.startUp();
 
     scheduledExecutorService = Executors.newScheduledThreadPool(1);
-    long interval = cConf.getLong(Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS);
-    if (interval <= 0) {
-      LOG.debug("Invalid run id corrector interval {}. Setting it to 180 seconds.", interval);
-      interval = 180L;
-    }
-    // Schedule the run record corrector with 5 minutes initial delay and 180 seconds interval between runs
+    // Schedule the run record corrector with the configured initial delay and interval between runs
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(),
-                                                    300L, interval, TimeUnit.SECONDS);
+       initialDelay, interval, TimeUnit.SECONDS);
   }
 
   @Override
@@ -85,6 +105,10 @@ public class DistributedRunRecordCorrectorService extends RunRecordCorrectorServ
 
     @Override
     public void run() {
+      // in case the scheduledExecutorService does not shutdown right away, avoid running repeatedly
+      if (done) {
+        return;
+      }
       try {
         LOG.trace("Start correcting invalid run records ...");
 
@@ -92,6 +116,13 @@ public class DistributedRunRecordCorrectorService extends RunRecordCorrectorServ
         fixRunRecords();
 
         LOG.trace("End correcting invalid run records.");
+
+        // if configured to run only until successful once, mark success and shutdown the executor
+        if (runOnce) {
+          done = true;
+          LOG.debug("Corrected run records successfully. Run record correction will run again when CDAP restarts.");
+          scheduledExecutorService.shutdown();
+        }
       } catch (Throwable t) {
         // Ignore any exception thrown since this behaves like daemon thread.
         //noinspection ThrowableResultOfMethodCallIgnored
