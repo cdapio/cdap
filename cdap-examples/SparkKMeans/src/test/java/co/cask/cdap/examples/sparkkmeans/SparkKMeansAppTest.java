@@ -24,7 +24,7 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
-import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * SparkKMeansApp main tests.
  */
-public class SparkKMeansAppTest extends TestBase {
+public class SparkKMeansAppTest extends TestBaseWithSpark2 {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);

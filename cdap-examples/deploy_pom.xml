@@ -26,8 +26,8 @@
   <name>CDAP Examples</name>
 
   <modules>
-    <module>ClicksAndViews</module>
     <module>CountRandom</module>
+    <module>ClicksAndViews</module>
     <module>CubeService</module>
     <module>DataCleansing</module>
     <module>DecisionTreeRegression</module>
@@ -67,9 +67,10 @@
     <guava.version>@guava.version@</guava.version>
     <slf4j.version>@slf4j.version@</slf4j.version>
     <junit.version>@junit.version@</junit.version>
-    <spark.version>@spark1.version@</spark.version>
-    <scala.version>@scala2.10.version@</scala.version>
+    <spark.version>@spark2.version@</spark.version>
+    <scala.version>@scala2.11.version@</scala.version>
     <cask.common.version>@cask.common.version@</cask.common.version>
+    <junit.version>@junit.version@</junit.version>
   </properties>
 
   <build>
@@ -220,27 +221,15 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-unit-test</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-unit-test-spark2_2.11</artifactId>
-    </dependency>
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-api-spark</artifactId>
-        <version>${cdap.version}</version>
-        <scope>provided</scope>
-      </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
         <artifactId>cdap-api-spark2_2.11</artifactId>
@@ -256,7 +245,7 @@
       <dependency>
         <groupId>co.cask.cdap</groupId>
         <artifactId>cdap-unit-test-spark2_2.11</artifactId>
-        <version>${project.version}</version>
+        <version>${cdap.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -268,6 +257,10 @@
           <exclusion>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-all</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -283,7 +276,7 @@
       </dependency>
       <dependency> <!-- Spark dependency -->
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-core_2.10</artifactId>
+        <artifactId>spark-core_2.11</artifactId>
         <version>${spark.version}</version>
         <scope>provided</scope>
         <exclusions>
@@ -295,11 +288,31 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-mllib_2.10</artifactId>
+        <artifactId>spark-sql_2.11</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-mllib_2.11</artifactId>
         <version>${spark.version}</version>
         <scope>provided</scope>
         <exclusions>
@@ -311,13 +324,13 @@
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-streaming_2.10</artifactId>
+        <artifactId>spark-streaming_2.11</artifactId>
         <version>${spark.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-streaming-kafka_2.10</artifactId>
+        <artifactId>spark-streaming-kafka-0-8_2.11</artifactId>
         <version>${spark.version}</version>
       </dependency>
       <dependency>
@@ -382,6 +395,10 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

@@ -41,11 +41,11 @@
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api-spark</artifactId>
+      <artifactId>cdap-api-spark2_2.11</artifactId>
     </dependency>
     <dependency>
       <groupId>org.scalanlp</groupId>
-      <artifactId>breeze_2.10</artifactId>
+      <artifactId>breeze_2.11</artifactId>
       <version>0.9</version>
     </dependency>
     <dependency>
@@ -54,8 +54,12 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
+      <artifactId>spark-core_2.11</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-unit-test-spark2_2.11</artifactId>
     </dependency>
   </dependencies>
 

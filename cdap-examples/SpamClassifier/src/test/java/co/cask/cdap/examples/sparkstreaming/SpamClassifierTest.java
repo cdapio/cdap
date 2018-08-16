@@ -23,7 +23,7 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
-import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -60,7 +60,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Test for {@link SpamClassifier}
  */
-public class SpamClassifierTest extends TestBase {
+public class SpamClassifierTest extends TestBaseWithSpark2 {
   private static final Logger LOG = LoggerFactory.getLogger(SpamClassifierTest.class);
 
   @ClassRule

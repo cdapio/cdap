@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,8 +30,8 @@ import org.apache.spark.rdd.RDD
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
- * Implementation of KMeans Clustering Spark Program.
- */
+  * Implementation of KMeans Clustering Spark Program.
+  */
 class SparkKMeansProgram extends SparkMain {
 
   import SparkKMeansProgram._
@@ -88,7 +88,7 @@ object SparkKMeansProgram {
   private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkKMeansProgram])
 
   private def pointVector(point: Point): Vector[Double] = {
-    DenseVector(Array(point.getX, point.getX, point.getZ).map(_.doubleValue()))
+    DenseVector(Array(point.getX, point.getY, point.getZ).map(_.doubleValue()))
   }
 
   private def closestPoint(p: Vector[Double], centers: Array[Vector[Double]]): Int = {

@@ -23,7 +23,7 @@ import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
-import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Unit test for {@link LogAnalysisApp}
  */
-public class LogAnalysisAppTest extends TestBase {
+public class LogAnalysisAppTest extends TestBaseWithSpark2 {
 
   private static final Gson GSON = new Gson();
   private static final String LOG_1 = "127.0.0.1 - - [21/Jul/2014:9:55:27 -0800] \"GET /home.html HTTP/1.1\" 200 2048";

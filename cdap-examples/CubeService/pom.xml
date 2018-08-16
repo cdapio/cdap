@@ -32,4 +32,12 @@
     <properties>
         <app.main.class>co.cask.cdap.examples.cube.CubeService</app.main.class>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>co.cask.cdap</groupId>
+            <artifactId>cdap-unit-test</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

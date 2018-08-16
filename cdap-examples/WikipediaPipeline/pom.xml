@@ -35,8 +35,7 @@
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api</artifactId>
-      <version>${project.version}</version>
+      <artifactId>cdap-api-spark2_2.11</artifactId>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -50,7 +49,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
+      <artifactId>spark-core_2.11</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -59,13 +58,17 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-mllib_2.10</artifactId>
+      <artifactId>spark-mllib_2.11</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.sweble.wikitext</groupId>
       <artifactId>swc-example-basic</artifactId>
       <version>${sweble.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-unit-test-spark2_2.11</artifactId>
     </dependency>
   </dependencies>
 

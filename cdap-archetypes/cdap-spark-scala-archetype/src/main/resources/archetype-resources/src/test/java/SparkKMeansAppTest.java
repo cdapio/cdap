@@ -17,12 +17,14 @@
 package $package;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
-import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -38,10 +40,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * SparkKMeansApp main tests.
  */
-public class SparkKMeansAppTest extends TestBase {
+public class SparkKMeansAppTest extends TestBaseWithSpark2 {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
   public void test() throws Exception {
@@ -51,19 +53,21 @@ public class SparkKMeansAppTest extends TestBase {
     FlowManager flowManager = appManager.getFlowManager("PointsFlow").start();
     // Send a few points to the stream
     StreamManager streamManager = getStreamManager("pointsStream");
-    streamManager.send("10.6 519.2 110.3");
-    streamManager.send("10.6 518.1 110.1");
-    streamManager.send("10.6 519.6 109.9");
-    streamManager.send("10.6 517.9 108.9");
-    streamManager.send("10.7 518 109.2");
+
+    // one cluster around (0, 500, 0) and another around (100, 0, 0)
+    for (int i = 0; i < 100; i++) {
+      double diff = Math.random() / 100;
+      streamManager.send(String.format("%f %f %f", diff, 500 + diff, diff));
+      streamManager.send(String.format("%f %f %f", 100 + diff, diff, diff));
+    }
 
     //  Wait for the events to be processed, or at most 5 seconds
     RuntimeMetrics metrics = flowManager.getFlowletMetrics("reader");
-    metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+    metrics.waitForProcessed(200, 10, TimeUnit.SECONDS);
 
     // Start a Spark Program
     SparkManager sparkManager = appManager.getSparkManager("SparkKMeansProgram").start();
-    sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
 
     flowManager.stop();
 
@@ -71,15 +75,35 @@ public class SparkKMeansAppTest extends TestBase {
     ServiceManager serviceManager = appManager.getServiceManager(SparkKMeansApp.CentersService.SERVICE_NAME).start();
 
     // Wait service startup
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Request data and verify it
-    String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/1"));
+    String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/0"));
     String[] coordinates = response.split(",");
-    Assert.assertTrue(coordinates.length == 3);
-    for (String coordinate : coordinates) {
-      double value = Double.parseDouble(coordinate);
-      Assert.assertTrue(value > 0);
+    int x0 = Double.valueOf(coordinates[0]).intValue();
+    int y0 = Double.valueOf(coordinates[1]).intValue();
+    int z0 = Double.valueOf(coordinates[2]).intValue();
+
+    response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/1"));
+    coordinates = response.split(",");
+    int x1 = Double.valueOf(coordinates[0]).intValue();
+    int y1 = Double.valueOf(coordinates[1]).intValue();
+    int z1 = Double.valueOf(coordinates[2]).intValue();
+
+    // one cluster should be around (0, 500, 0) and the other around (100, 0, 0)
+    if (x0 == 100) {
+      Assert.assertEquals(0, y0);
+      Assert.assertEquals(0, z0);
+      Assert.assertEquals(0, x1);
+      Assert.assertEquals(500, y1);
+      Assert.assertEquals(0, z1);
+    } else {
+      Assert.assertEquals(0, x0);
+      Assert.assertEquals(500, y0);
+      Assert.assertEquals(0, z0);
+      Assert.assertEquals(100, x1);
+      Assert.assertEquals(0, y1);
+      Assert.assertEquals(0, z1);
     }
 
     // Request data by incorrect index and verify response

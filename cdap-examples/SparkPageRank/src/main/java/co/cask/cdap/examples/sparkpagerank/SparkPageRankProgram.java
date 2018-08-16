@@ -32,10 +32,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFlatMapFunction;
-import org.apache.spark.api.java.function.PairFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -84,81 +81,63 @@ public class SparkPageRankProgram implements JavaSparkMain {
     LOG.info("Grouping data by key");
     // Grouping backlinks by unique URL in key
     JavaPairRDD<String, Iterable<String>> links =
-      backlinkURLs.values().mapToPair(new PairFunction<String, String, String>() {
-        @Override
-        public Tuple2<String, String> call(String s) {
-          String[] parts = SPACES.split(s);
-          return new Tuple2<>(parts[0], parts[1]);
-        }
+      backlinkURLs.values().mapToPair(s -> {
+        String[] parts = SPACES.split(s);
+        return new Tuple2<>(parts[0], parts[1]);
       }).distinct().groupByKey().cache();
 
     // Initialize default rank for each key URL
-    JavaPairRDD<String, Double> ranks = links.mapValues(new Function<Iterable<String>, Double>() {
-      @Override
-      public Double call(Iterable<String> rs) {
-        return 1.0;
-      }
-    });
+    JavaPairRDD<String, Double> ranks = links.<Double>mapValues(strings -> 1.0d);
+
     // Calculates and updates URL ranks continuously using PageRank algorithm.
     for (int current = 0; current < iterationCount; current++) {
       LOG.debug("Processing data with PageRank algorithm. Iteration {}/{}", current + 1, (iterationCount));
       // Calculates URL contributions to the rank of other URLs.
       JavaPairRDD<String, Double> contribs = links.join(ranks).values()
-        .flatMapToPair(new PairFlatMapFunction<Tuple2<Iterable<String>, Double>, String, Double>() {
-          @Override
-          public Iterable<Tuple2<String, Double>> call(Tuple2<Iterable<String>, Double> s) {
-            LOG.debug("Processing {} with rank {}", s._1(), s._2());
-            int urlCount = Iterables.size(s._1());
-            List<Tuple2<String, Double>> results = new ArrayList<>();
-            for (String n : s._1()) {
-              results.add(new Tuple2<>(n, s._2() / urlCount));
-            }
-            return results;
+        .<String, Double>flatMapToPair(tuple -> {
+          LOG.debug("Processing {} with rank {}", tuple._1(), tuple._2());
+          int urlCount = Iterables.size(tuple._1());
+          List<Tuple2<String, Double>> results = new ArrayList<>();
+          for (String n : tuple._1()) {
+            results.add(new Tuple2<>(n, tuple._2() / urlCount));
           }
+          return results.iterator();
         });
+
       // Re-calculates URL ranks based on backlink contributions.
-      ranks = contribs.reduceByKey(new Sum()).mapValues(new Function<Double, Double>() {
-        @Override
-        public Double call(Double sum) {
-          return 0.15 + sum * 0.85;
-        }
-      });
+      ranks = contribs.reduceByKey(new Sum()).<Double>mapValues(sum -> 0.15 + sum * 0.85);
     }
 
     LOG.info("Writing ranks data");
 
     final ServiceDiscoverer discoveryServiceContext = sec.getServiceDiscoverer();
     final Metrics sparkMetrics = sec.getMetrics();
-    JavaPairRDD<byte[], Integer> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>, byte[],
-      Integer>() {
-      @Override
-      public Tuple2<byte[], Integer> call(Tuple2<String, Double> tuple) throws Exception {
-        LOG.debug("URL {} has rank {}", Arrays.toString(tuple._1().getBytes(Charsets.UTF_8)), tuple._2());
-        URL serviceURL = discoveryServiceContext.getServiceURL(SparkPageRankApp.SERVICE_HANDLERS);
-        if (serviceURL == null) {
-          throw new RuntimeException("Failed to discover service: " + SparkPageRankApp.SERVICE_HANDLERS);
-        }
-        try {
-          URLConnection connection = new URL(serviceURL, String.format("%s/%s",
-                                                                       SparkPageRankApp.SparkPageRankServiceHandler.
-                                                                         TRANSFORM_PATH,
-                                                                       tuple._2().toString())).openConnection();
-          try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
-                                                                                Charsets.UTF_8))) {
-            String pr = reader.readLine();
-            if ((Integer.parseInt(pr)) == POPULAR_PAGE_THRESHOLD) {
-              sparkMetrics.count(POPULAR_PAGES, 1);
-            } else if (Integer.parseInt(pr) <= UNPOPULAR_PAGE_THRESHOLD) {
-              sparkMetrics.count(UNPOPULAR_PAGES, 1);
-            } else {
-              sparkMetrics.count(REGULAR_PAGES, 1);
-            }
-            return new Tuple2<>(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
+    JavaPairRDD<byte[], Integer> ranksRaw = ranks.<byte[], Integer>mapToPair(tuple -> {
+      LOG.debug("URL {} has rank {}", Arrays.toString(tuple._1().getBytes(Charsets.UTF_8)), tuple._2());
+      URL serviceURL = discoveryServiceContext.getServiceURL(SparkPageRankApp.SERVICE_HANDLERS);
+      if (serviceURL == null) {
+        throw new RuntimeException("Failed to discover service: " + SparkPageRankApp.SERVICE_HANDLERS);
+      }
+      try {
+        URLConnection connection = new URL(serviceURL, String.format("%s/%s",
+                                                                     SparkPageRankApp.SparkPageRankServiceHandler.
+                                                                       TRANSFORM_PATH,
+                                                                     tuple._2().toString())).openConnection();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
+                                                                              Charsets.UTF_8))) {
+          int pr = Integer.parseInt(reader.readLine());
+          if (pr == POPULAR_PAGE_THRESHOLD) {
+            sparkMetrics.count(POPULAR_PAGES, 1);
+          } else if (pr <= UNPOPULAR_PAGE_THRESHOLD) {
+            sparkMetrics.count(UNPOPULAR_PAGES, 1);
+          } else {
+            sparkMetrics.count(REGULAR_PAGES, 1);
           }
-        } catch (Exception e) {
-          LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.SERVICE_HANDLERS, e);
-          throw Throwables.propagate(e);
+          return new Tuple2<>(tuple._1().getBytes(Charsets.UTF_8), pr);
         }
+      } catch (Exception e) {
+        LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.SERVICE_HANDLERS, e);
+        throw Throwables.propagate(e);
       }
     });
 

@@ -34,4 +34,12 @@
   <properties>
     <app.main.class>co.cask.cdap.examples.fileset.FileSetExample</app.main.class>
   </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-unit-test</artifactId>
+    </dependency>
+  </dependencies>
+
 </project>
