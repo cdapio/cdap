@@ -13,9 +13,12 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div class="log-viewer-container" ng-class="{'full-screen': LogViewer.fullScreen}">
+<div
+  class="log-viewer-container"
+  ng-class="{'full-screen': LogViewer.fullScreen, 'program-logs': !LogViewer.runId}"
+>
   <!-- LOGS HEADERBAR -->
-  <div class="logs-headerbar">
+  <div class="logs-headerbar" ng-if="LogViewer.runId">
     <div class="log-stats-container">
       <div class="logs-status-container" ng-if="LogViewer.fullScreen">
         <span class="application-name" ng-bind="LogViewer.entityName"></span>
@@ -78,13 +81,16 @@
   <a class="sr-only" id="logs-export-link" href="{{LogViewer.url}}" download="{{LogViewer.exportFileName}}.log">Export</a>
 
   <!-- LOGS TIMELINE -->
-  <my-timeline
-    namespace-id="{{LogViewer.namespaceId}}"
-    app-id="{{LogViewer.appId}}"
-    program-type="{{LogViewer.programType}}"
-    program-id="{{LogViewer.programId}}"
-    run-id="{{LogViewer.runId}}">
-  </my-timeline>
+  <div ng-if="LogViewer.runId">
+    <my-timeline
+      namespace-id="{{LogViewer.namespaceId}}"
+      app-id="{{LogViewer.appId}}"
+      program-type="{{LogViewer.programType}}"
+      program-id="{{LogViewer.programId}}"
+      run-id="{{LogViewer.runId}}"
+    >
+    </my-timeline>
+  </div>
 
   <!-- LOGS TABLE -->
   <div class="logs-table">

@@ -19,7 +19,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
   /**
    *  For reference:
-   *  The entry point for this log is startTimeRequest()
+   *  The entry point for this log is @ line 732. #START_POINT #sigh
    **/
 
   // Collapsing LogViewer Table Columns
@@ -210,40 +210,6 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     }
   };
 
-  if (vm.runId) {
-    // Get Initial Status
-    myLogsApi.getLogsMetadata({
-      namespace : vm.namespaceId,
-      appId : vm.appId,
-      programType : vm.programType,
-      programId : vm.programId,
-      runId : vm.runId
-    }).$promise.then(
-      (statusRes) => {
-        LogViewerStore.dispatch({
-          type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
-          payload: {
-            status: statusRes.status,
-            startTime: statusRes.starting,
-            endTime: statusRes.end
-          }
-        });
-        vm.setProgramMetadata(statusRes.status);
-      },
-      (statusErr) => {
-        console.log('ERROR: ', statusErr);
-
-        if (statusErr.statusCode === 404) {
-          myAlertOnValium.show({
-            type: 'danger',
-            content: statusErr.data
-          });
-        }
-      });
-  } else {
-    vm.loading = false;
-  }
-
   vm.filterSearch = () => {
     // Rerender data
     vm.renderData();
@@ -350,7 +316,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   };
 
   function validUrl() {
-    return vm.namespaceId && vm.appId && vm.programType && vm.runId && vm.fromOffset;
+    return vm.namespaceId && vm.appId && vm.programType;
   }
 
   function requestWithOffset() {
@@ -367,20 +333,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       stopPoll();
     }
 
-    let filter = `loglevel=${vm.selectedLogLevel}`;
-    if (!vm.includeSystemLogs) {
-      filter += showCondensedLogsQuery;
-    }
-
-    myLogsApi.nextLogsJsonOffset({
-      'namespace' : vm.namespaceId,
-      'appId' : vm.appId,
-      'programType' : vm.programType,
-      'programId' : vm.programId,
-      'runId' : vm.runId,
-      'fromOffset' : vm.fromOffset,
-      filter
-    }).$promise.then(
+    fetchLogs().$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
         vm.loading = false;
@@ -420,54 +373,17 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   }
 
   function getStatus () {
-    myLogsApi.getLogsMetadata({
-      namespace : vm.namespaceId,
-      appId : vm.appId,
-      programType : vm.programType,
-      programId : vm.programId,
-      runId : vm.runId
-    }).$promise.then(
-      (statusRes) => {
-        LogViewerStore.dispatch({
-          type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
-          payload: {
-            status: statusRes.status,
-            startTime: statusRes.starting,
-            endTime: statusRes.end
-          }
-        });
-        vm.setProgramMetadata(statusRes.status);
-
-        if (vm.statusType !== 0) {
-          if (pollStarted) {
-            stopPoll();
-          }
-        }
-      },
-      (statusErr) => {
-        console.log('ERROR: ', statusErr);
-      }
-    );
+    if (!vm.runId) {
+      return;
+    }
+    fetchLogsMetadata();
   }
 
   // NEW IMPLEMENTATION
   function pollForNewLogs() {
     pollStarted = true;
 
-    let filter = `loglevel=${vm.selectedLogLevel}`;
-    if (!vm.includeSystemLogs) {
-      filter += showCondensedLogsQuery;
-    }
-
-    myLogsApi.nextLogsJsonOffset({
-      'namespace' : vm.namespaceId,
-      'appId' : vm.appId,
-      'programType' : vm.programType,
-      'programId' : vm.programId,
-      'runId' : vm.runId,
-      'fromOffset' : vm.fromOffset,
-      filter
-    }).$promise.then(
+    fetchLogs().$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
         vm.loading = false;
@@ -559,20 +475,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     // binds window element to check whether scrollbar has appeared on resize event
     angular.element($window).bind('resize', checkForScrollbar);
 
-    let filter = `loglevel=${vm.selectedLogLevel}`;
-    if (!vm.includeSystemLogs) {
-      filter += showCondensedLogsQuery;
-    }
-
-    myLogsApi.nextLogsJsonOffset({
-      namespace : vm.namespaceId,
-      appId : vm.appId,
-      programType : vm.programType,
-      programId : vm.programId,
-      runId : vm.runId,
-      fromOffset: vm.fromOffset,
-      filter
-    }).$promise.then(
+    fetchLogs().$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
         vm.loading = false;
@@ -712,8 +615,11 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     // Whenever we change the log level filter, the data needs
     // to start from scratch
     vm.data = [];
+    // We should mark the offset here to null to start from the beggining
+    // when we change the log level. However there is also this case where
+    // the user changes the timeline. We have to have the offset from that
+    // particular start time. :sigh:
     vm.fromOffset = -10000 + '.' + vm.startTimeMs;
-
     vm.selectedLogLevel = eventType;
     startTimeRequest();
   };
@@ -823,6 +729,81 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       stopPoll();
     }
   });
+
+  // #START_POINT. This gets executed first to get the logs metadata if we have a run context.
+  // Otherwise we just fetch the logs based on what context we have.
+  if (vm.runId) {
+    // Get Initial Status
+    fetchLogsMetadata();
+  } else {
+    vm.loading = false;
+    if (vm.startTime) {
+      vm.startTimeMs = vm.startTime;
+      vm.fromOffset = -10000 + '.' + vm.startTimeMs;
+    }
+    startTimeRequest();
+  }
+
+  function fetchLogs() {
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
+
+    if (vm.filter) {
+      filter = `${filter} AND ${vm.filter}`;
+    }
+
+    let api;
+    let queryParams = {
+      namespace : vm.namespaceId,
+      appId : vm.appId,
+      programType : vm.programType,
+      programId : vm.programId,
+      filter
+    };
+    if (vm.fromOffset) {
+      queryParams.fromOffset = vm.fromOffset;
+    }
+    if (!vm.runId) {
+      api = myLogsApi.nextProgramLogsJsonOffset(queryParams);
+    } else {
+      queryParams.runId = vm.runId;
+      api = myLogsApi.nextLogsJsonOffset(queryParams);
+    }
+    return api;
+  }
+
+  function fetchLogsMetadata() {
+    myLogsApi.getLogsMetadata({
+      namespace : vm.namespaceId,
+      appId : vm.appId,
+      programType : vm.programType,
+      programId : vm.programId,
+      runId : vm.runId
+    }).$promise.then(
+      (statusRes) => {
+        LogViewerStore.dispatch({
+          type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
+          payload: {
+            status: statusRes.status,
+            startTime: statusRes.starting,
+            endTime: statusRes.end
+          }
+        });
+        vm.setProgramMetadata(statusRes.status);
+      },
+      (statusErr) => {
+        console.log('ERROR: ', statusErr);
+
+        if (statusErr.statusCode === 404) {
+          myAlertOnValium.show({
+            type: 'danger',
+            content: statusErr.data
+          });
+        }
+      });
+  }
 }
 
 const link = (scope) => {
@@ -842,6 +823,9 @@ angular.module(PKG.name + '.commons')
         programType: '@',
         programId: '@',
         runId: '@',
+        startTime: '@',
+        endTime: '@',
+        filter: '@',
         getDownloadFilename: '&',
         entityName: '@',
         isPipeline: '@'

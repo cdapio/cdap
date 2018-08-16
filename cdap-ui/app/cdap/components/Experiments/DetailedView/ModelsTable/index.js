@@ -207,17 +207,12 @@ const constructModelTrainingLogs = (model, experimentId) => {
   let splitId = objectQuery(model, 'splitDetails', 'id');
   let nowInSeconds = Math.floor(Date.now() / 1000);
   let startTime = Math.floor(model.createtime / 1000);
-  let endTime = Math.floor(model.trainedtime / 1000) || nowInSeconds;
+  let endTime = model.trainedtime === -1 ? model.trainingtime : model.trainedtime;
+  endTime = Math.floor( endTime / 1000);
   if (splitId) {
-    let {routerServerUrl, routerServerPort} = window.CDAP_CONFIG.cdap;
-    let protocol = window.CDAP_CONFIG.sslEnabled ? 'https' : 'http';
-    if (routerServerUrl === '127.0.0.1') {
-      routerServerUrl = 'localhost';
-    }
-    let hostPort = `${protocol}://${routerServerUrl}:${routerServerPort}`;
-    let baseUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/ModelManagementApp/spark/ModelManagerService/logs`;
-    let queryParams = encodeURI(`?filter=MDC:experiment="${experimentId}" AND MDC:model=${model.id}&start=${startTime}&end=${endTime}`);
-    return `${hostPort}${baseUrl}${queryParams}`;
+    let baseUrl = `/logviewer/view?namespace=${getCurrentNamespace()}&appId=ModelManagementApp&programType=spark&programId=ModelManagerService`;
+    let queryParams = `&filter=${encodeURIComponent(`MDC:experiment="${experimentId}" AND MDC:model=${model.id}`)}&startTime=${startTime}&endTime=${endTime}`;
+    return `${baseUrl}${queryParams}`;
   }
 };
 

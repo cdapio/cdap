@@ -27,6 +27,9 @@ class LogsAppHomeController {
       programType,
       programId,
       runId,
+      filter,
+      startTime,
+      endTime
     } = $state.params;
 
     this.namespace = namespace;
@@ -34,7 +37,9 @@ class LogsAppHomeController {
     this.programType = programType;
     this.programId = programId;
     this.runId = runId;
-
+    this.filter = filter;
+    this.startTime = startTime;
+    this.endTime = endTime;
     this.getStatusInfo();
     this.sub = LogViewerStore.subscribe(this.getStatusInfo.bind(this));
 
@@ -45,8 +50,8 @@ class LogsAppHomeController {
 
   getStatusInfo() {
     let statusInfo = this.LogViewerStore.getState().statusInfo;
-    this.startTime = statusInfo.startTime;
-    this.endTime = statusInfo.endTime;
+    this.startTime = statusInfo.startTime || this.startTime;
+    this.endTime = statusInfo.endTime || this.endTime;
     this.status = statusInfo.status;
     if (document.title.indexOf('started at') === -1 && this.startTime) {
       document.title = document.title + ' (started at ' + this.moment.utc(this.startTime * 1000).format('MM/DD/YYYY HH:mm:ss')+ ' )';
@@ -58,8 +63,7 @@ class LogsAppHomeController {
       !this.namespace ||
       !this.appId ||
       !this.programType ||
-      !this.programId ||
-      !this.runId
+      !this.programId
     ) {
       return false;
     }
