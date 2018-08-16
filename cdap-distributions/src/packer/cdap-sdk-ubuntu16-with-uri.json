@@ -208,10 +208,10 @@
         },
         "nodejs": {
           "install_method": "binary",
-          "version": "4.5.0",
+          "version": "8.7.0",
           "binary": {
             "checksum": {
-              "linux_x64": "5678ad94ee35e40fc3a2c545e136a0dc946ac4c039fca5898e1ea51ecf9e7c39"
+              "linux_x64": "115c7bd133170fd7a1bf408b2e293021e4b5a80a66a4962829ce5d362ce43762"
             }
           }
         },
