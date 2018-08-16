@@ -86,7 +86,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.TriggerMisfireLogger;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.internal.app.services.DistributedRunRecordCorrectorService;
+import co.cask.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.LocalRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.NoopRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
@@ -299,7 +299,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new AbstractModule() {
                              @Override
                              protected void configure() {
-                               bind(RunRecordCorrectorService.class).to(DistributedRunRecordCorrectorService.class)
+                               bind(RunRecordCorrectorService.class).to(ScheduledRunRecordCorrectorService.class)
                                  .in(Scopes.SINGLETON);
                                bind(TimeSchedulerService.class).to(DistributedTimeSchedulerService.class)
                                  .in(Scopes.SINGLETON);
