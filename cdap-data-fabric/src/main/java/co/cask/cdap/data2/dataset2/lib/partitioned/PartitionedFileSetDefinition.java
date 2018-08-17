@@ -88,7 +88,7 @@ public class PartitionedFileSetDefinition
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     Partitioning partitioning = PartitionedFileSetProperties.getPartitioning(properties.getProperties());
-    Preconditions.checkNotNull(partitioning, "Properties do not contain partitioning");
+    Preconditions.checkArgument(partitioning != null, "Properties do not contain partitioning");
     // define the columns for indexing on the partitionsTable
     DatasetProperties indexedTableProperties = DatasetProperties.builder()
       .addAll(properties.getProperties())

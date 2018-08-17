@@ -121,6 +121,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (DatasetAlreadyExistsException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (DatasetTypeNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (HandlerException e) {

@@ -119,8 +119,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(modulesBeforeDelete, getModules().getResponseObject().size());
 
       // Verify that dataset instance can be retrieved using specified properties
-      Map<String, String> properties = new HashMap<>();
-      properties.putAll(props.getProperties());
+      Map<String, String> properties = new HashMap<>(props.getProperties());
       instances = getInstancesWithProperties(NamespaceId.DEFAULT.getNamespace(), properties).getResponseObject();
       Assert.assertEquals(1, instances.size());
       properties.put("some_prop_not_associated_with_dataset", "somevalue");
@@ -203,7 +202,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // should not be able to create a dataset with invalid kerberos principal format
     HttpResponse response = createInstance(NamespaceId.DEFAULT.dataset("ownedDataset"), "datasetType1", null,
                                            DatasetProperties.EMPTY, "alice/bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getResponseCode());
+    Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getResponseCode());
 
     // should be able to create a dataset with valid kerberos principal format
     String alicePrincipal = "alice/somehost.net@somekdc.net";
@@ -223,7 +222,16 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // deleting the dataset should delete the owner information
     response = deleteInstance(NamespaceId.DEFAULT.dataset("ownedDataset"));
     Assert.assertEquals(HttpStatus.SC_OK, response.getResponseCode());
-    Assert.assertEquals(null, ownerAdmin.getOwner(NamespaceId.DEFAULT.dataset("ownedDataset")));
+    Assert.assertNull(ownerAdmin.getOwner(NamespaceId.DEFAULT.dataset("ownedDataset")));
+  }
+
+  @Test
+  public void testInvalidProperties() throws Exception {
+    // creating a partitionedFileSet without the appropriate properties (partitioning) should return a 400
+    HttpResponse response = createInstance("dataset1", "partitionedFileSet", DatasetProperties.EMPTY);
+    Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getResponseCode());
+    // ensure that we get the error we expect
+    Assert.assertEquals("Properties do not contain partitioning", response.getResponseBodyAsString());
   }
 
   @Test
