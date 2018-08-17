@@ -18,6 +18,8 @@ package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -29,7 +31,6 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class PluginClass {
-
   private final String type;
   private final String name;
   private final String description;
@@ -37,10 +38,11 @@ public class PluginClass {
   private final String configFieldName;
   private final Map<String, PluginPropertyField> properties;
   private final Set<String> endpoints;
+  private final Set<String> requirements;
 
   public PluginClass(String type, String name, String description, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
-                     Set<String> endpoints) {
+                     Set<String> endpoints, Set<String> requirements) {
     if (type == null) {
       throw new IllegalArgumentException("Plugin class type cannot be null");
     }
@@ -57,18 +59,34 @@ public class PluginClass {
       throw new IllegalArgumentException("Plugin class properties cannot be null");
     }
 
+    if (endpoints == null) {
+      throw new IllegalArgumentException("Plugin endpoints cannot be null");
+    }
+
+    if (requirements == null) {
+      throw new IllegalArgumentException("Plugin requirements cannot be null");
+    }
+
     this.type = type;
     this.name = name;
     this.description = description;
     this.className = className;
     this.configFieldName = configfieldName;
-    this.properties = properties;
-    this.endpoints = endpoints;
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+    this.endpoints = Collections.unmodifiableSet(new HashSet<>(endpoints));
+    this.requirements = Collections.unmodifiableSet(new HashSet<>(requirements));
+  }
+
+  public PluginClass(String type, String name, String description, String className, @Nullable String configfieldName,
+                     Map<String, PluginPropertyField> properties) {
+    this(type, name, description, className, configfieldName, properties, Collections.emptySet(),
+         Collections.emptySet());
   }
 
   public PluginClass(String type, String name, String description, String className,
-                     @Nullable String configfieldName, Map<String, PluginPropertyField> properties) {
-    this(type, name, description, className, configfieldName, properties, new HashSet<>());
+                     @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
+                     Set<String> endpoints) {
+    this(type, name, description, className, configfieldName, properties, endpoints, Collections.emptySet());
   }
 
   /**
@@ -123,6 +141,13 @@ public class PluginClass {
     return properties;
   }
 
+  /**
+   * @return the requirements of the plugin
+   */
+  public Set<String> getRequirements() {
+    return requirements;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -140,31 +165,26 @@ public class PluginClass {
       && Objects.equals(className, that.className)
       && Objects.equals(configFieldName, that.configFieldName)
       && Objects.equals(properties, that.properties)
-      && Objects.equals(endpoints, that.endpoints);
+      && Objects.equals(endpoints, that.endpoints)
+      && Objects.equals(requirements, that.requirements);
   }
 
   @Override
   public int hashCode() {
-    int result = type.hashCode();
-    result = 31 * result + name.hashCode();
-    result = 31 * result + description.hashCode();
-    result = 31 * result + className.hashCode();
-    result = 31 * result + (configFieldName != null ? configFieldName.hashCode() : 0);
-    result = 31 * result + properties.hashCode();
-    result = 31 * result + (endpoints != null ? endpoints.hashCode() : 0);
-    return result;
+    return Objects.hash(type, name, description, className, configFieldName, properties, endpoints, requirements);
   }
 
   @Override
   public String toString() {
     return "PluginClass{" +
-      "className='" + className + '\'' +
-      ", type='" + type + '\'' +
+      "type='" + type + '\'' +
       ", name='" + name + '\'' +
       ", description='" + description + '\'' +
+      ", className='" + className + '\'' +
       ", configFieldName='" + configFieldName + '\'' +
-      ", properties=" + properties + '\'' +
-      ", endpoints='" + endpoints +
+      ", properties=" + properties +
+      ", endpoints=" + endpoints +
+      ", requirements=" + requirements +
       '}';
   }
 }
