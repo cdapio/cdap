@@ -26,7 +26,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -44,6 +43,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
@@ -55,7 +55,7 @@ import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 public class LevelDBTableService implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBTableService.class);
-  private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
+  private final ConcurrentMap<String, DB> tables = new ConcurrentHashMap<>();;
 
   private String tablePrefix;
   private int blockSize;
@@ -100,8 +100,12 @@ public class LevelDBTableService implements AutoCloseable {
     userTablesMaxOpenFiles = config.getInt(Constants.CFG_DATA_LEVELDB_USER_TABLE_MAX_OPEN_FILES);
     systemTablesMaxOpenFiles = config.getInt(Constants.CFG_DATA_LEVELDB_SYSTEM_TABLE_MAX_OPEN_FILES);
     // sanity checks to fail fast
-    Preconditions.checkArgument(userTablesMaxOpenFiles >= 0);
-    Preconditions.checkArgument(systemTablesMaxOpenFiles >= 0);
+    Preconditions.checkArgument(userTablesMaxOpenFiles >= 0,
+                                "Must give a non-negative value for %s.",
+                                Constants.CFG_DATA_LEVELDB_USER_TABLE_MAX_OPEN_FILES);
+    Preconditions.checkArgument(systemTablesMaxOpenFiles >= 0,
+                                "Must give a non-negative value for %s.",
+                                Constants.CFG_DATA_LEVELDB_SYSTEM_TABLE_MAX_OPEN_FILES);
   }
 
   /**
