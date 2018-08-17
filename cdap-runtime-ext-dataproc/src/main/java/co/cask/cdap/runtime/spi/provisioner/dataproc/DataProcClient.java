@@ -16,7 +16,6 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
-import co.cask.cdap.runtime.spi.Constants;
 import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
@@ -89,26 +88,82 @@ public class DataProcClient implements AutoCloseable {
   private final ClusterControllerClient client;
   private final Compute compute;
   private final String projectId;
+  private final String network;
+  private final String zone;
+  private final String systemNetwork;
 
   public static DataProcClient fromConf(DataProcConf conf) throws IOException, GeneralSecurityException {
     String projectId = conf.getProjectId();
     if (projectId == null) {
       projectId = getProjectId();
     }
+    String network = conf.getNetwork();
+    if (network == null) {
+      network = getNetwork();
+    }
+    String zone = conf.getZone();
+    if (zone == null) {
+      zone = getZone();
+    }
+
+    String systemNetwork = null;
+    try {
+      systemNetwork = getNetwork();
+    } catch (IOException e) {
+      // expected when not running on GCP
+    }
 
     String accountKey = conf.getAccountKey();
     ClusterControllerClient client = getClusterControllerClient(accountKey);
     Compute compute = getCompute(accountKey);
 
-    return new DataProcClient(projectId, conf, client, compute);
+    return new DataProcClient(projectId, systemNetwork, network, zone, conf, client, compute);
   }
 
   /**
-   * Uses the metadata server that lives on the VM, as described at
-   * https://cloud.google.com/compute/docs/storing-retrieving-metadata.
+   * Get network from the metadata server.
+   */
+  private static String getNetwork() throws IOException {
+    try {
+      String network = getMetadata("instance/network-interfaces/0/network");
+      // will be something like projects/<project-number>/networks/default
+      return network.substring(network.lastIndexOf('/') + 1);
+    } catch (IOException e) {
+      throw new IOException("Unable to get the network from the environment. Please explicitly set the network.", e);
+    }
+  }
+
+  /**
+   * Get zone from the metadata server.
+   */
+  private static String getZone() throws IOException {
+    try {
+      String zone = getMetadata("instance/zone");
+      // will be something like projects/<project-number>/zones/us-east1-b
+      return zone.substring(zone.lastIndexOf('/') + 1);
+    } catch (IOException e) {
+      throw new IOException("Unable to get the zone from the environment. Please explicitly set the zone.", e);
+    }
+  }
+
+  /**
+   * Get project id from the metadata server.
    */
   private static String getProjectId() throws IOException {
-    URL url = new URL("http://metadata.google.internal/computeMetadata/v1/project/project-id");
+    try {
+      return getMetadata("project/project-id");
+    } catch (IOException e) {
+      throw new IOException("Unable to get project id from the environment. "
+                              + "Please explicitly set the project id and account key.", e);
+    }
+  }
+
+  /**
+   * Makes a request to the metadata server that lives on the VM, as described at
+   * https://cloud.google.com/compute/docs/storing-retrieving-metadata.
+   */
+  private static String getMetadata(String resource) throws IOException {
+    URL url = new URL("http://metadata.google.internal/computeMetadata/v1/" + resource);
     HttpURLConnection connection = null;
     try {
       connection = (HttpURLConnection) url.openConnection();
@@ -117,9 +172,6 @@ public class DataProcClient implements AutoCloseable {
       try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
         return CharStreams.toString(reader);
       }
-    } catch (IOException e) {
-      throw new IOException("Unable to get project id from the environment. "
-                              + "Please explicitly set the project id and account key.", e);
     } finally {
       if (connection != null) {
         connection.disconnect();
@@ -167,8 +219,12 @@ public class DataProcClient implements AutoCloseable {
       .build();
   }
 
-  private DataProcClient(String projectId, DataProcConf conf, ClusterControllerClient client, Compute compute) {
+  private DataProcClient(String projectId, @Nullable String systemNetwork, String network, String zone,
+                         DataProcConf conf, ClusterControllerClient client, Compute compute) {
     this.projectId = projectId;
+    this.systemNetwork = systemNetwork;
+    this.network = network;
+    this.zone = zone;
     this.conf = conf;
     this.client = client;
     this.compute = compute;
@@ -199,8 +255,8 @@ public class DataProcClient implements AutoCloseable {
       }
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
-        .setNetworkUri(conf.getNetwork())
-        .setZoneUri(conf.getZone())
+        .setNetworkUri(network)
+        .setZoneUri(zone)
         .putAllMetadata(metadata);
       for (String targetTag : getFirewallTargetTags()) {
         clusterConfig.addTags(targetTag);
@@ -306,10 +362,10 @@ public class DataProcClient implements AutoCloseable {
 
     List<Node> nodes = new ArrayList<>();
     for (String masterName : cluster.getConfig().getMasterConfig().getInstanceNamesList()) {
-      nodes.add(getNode(compute, Constants.Node.MASTER_TYPE, masterName));
+      nodes.add(getNode(compute, Node.Type.MASTER, masterName));
     }
     for (String workerName : cluster.getConfig().getWorkerConfig().getInstanceNamesList()) {
-      nodes.add(getNode(compute, Constants.Node.WORKER_TYPE, workerName));
+      nodes.add(getNode(compute, Node.Type.WORKER, workerName));
     }
     return Optional.of(new co.cask.cdap.runtime.spi.provisioner.Cluster(
       cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
@@ -346,7 +402,7 @@ public class DataProcClient implements AutoCloseable {
       // we want to get the last section of the path and compare to the configured network name
       int idx = firewall.getNetwork().lastIndexOf('/');
       String networkName = idx >= 0 ? firewall.getNetwork().substring(idx + 1) : firewall.getNetwork();
-      if (!networkName.equals(conf.getNetwork())) {
+      if (!networkName.equals(network)) {
         continue;
       }
 
@@ -382,35 +438,34 @@ public class DataProcClient implements AutoCloseable {
       throw new IllegalArgumentException(String.format(
         "Could not find an ingress firewall rule for network '%s' for ports '%s'. " +
           "Please create a rule to allow incoming traffic on those ports for your IP range.",
-        conf.getNetwork(), portList));
+        network, portList));
     }
     return tags;
   }
 
-  private Node getNode(Compute compute, String type, String nodeName) throws IOException {
+  private Node getNode(Compute compute, Node.Type type, String nodeName) throws IOException {
     Instance instance;
     try {
-      instance = compute.instances().get(projectId, conf.getZone(), nodeName).execute();
+      instance = compute.instances().get(projectId, zone, nodeName).execute();
     } catch (GoogleJsonResponseException e) {
       // this can happen right after a cluster is created
       if (e.getStatusCode() == 404) {
-        return new Node(nodeName, -1L, Collections.emptyMap());
+        return new Node(nodeName, Node.Type.UNKNOWN, "", -1L, Collections.emptyMap());
       }
       throw e;
     }
     Map<String, String> properties = new HashMap<>();
-    properties.put(Constants.Node.TYPE, type);
     for (NetworkInterface networkInterface : instance.getNetworkInterfaces()) {
       Path path = Paths.get(networkInterface.getNetwork());
       String networkName = path.getFileName().toString();
-      if (conf.getNetwork().equals(networkName)) {
+      if (network.equals(networkName)) {
         for (AccessConfig accessConfig : networkInterface.getAccessConfigs()) {
           if (accessConfig.getNatIP() != null) {
-            properties.put(Constants.Node.EXTERNAL_IP, accessConfig.getNatIP());
+            properties.put("ip.external", accessConfig.getNatIP());
             break;
           }
         }
-        properties.put(Constants.Node.INTERNAL_IP, networkInterface.getNetworkIP());
+        properties.put("ip.internal", networkInterface.getNetworkIP());
       }
     }
     long ts;
@@ -419,7 +474,11 @@ public class DataProcClient implements AutoCloseable {
     } catch (ParseException e) {
       ts = -1L;
     }
-    return new Node(nodeName, ts, properties);
+    String ip = properties.get("ip.external");
+    if (network.equals(systemNetwork) && !conf.preferExternalIP()) {
+      ip = properties.get("ip.internal");
+    }
+    return new Node(nodeName, type, ip, ts, properties);
   }
 
   private co.cask.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {

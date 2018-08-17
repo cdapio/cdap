@@ -16,7 +16,6 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
-import co.cask.cdap.runtime.spi.Constants;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
@@ -162,10 +161,10 @@ public class DataProcProvisioner implements Provisioner {
 
   private String getMasterExternalIp(Cluster cluster) {
     Node masterNode = cluster.getNodes().stream()
-      .filter(node -> Constants.Node.MASTER_TYPE.equals(node.getProperties().get(Constants.Node.TYPE)))
+      .filter(node -> Node.Type.MASTER == node.getType())
       .findFirst().orElseThrow(() -> new IllegalArgumentException("Cluster has no node of master type: " + cluster));
 
-    String ip = masterNode.getProperties().get(Constants.Node.EXTERNAL_IP);
+    String ip = masterNode.getIpAddress();
     if (ip == null) {
       throw new IllegalArgumentException(String.format("External IP is not defined for node '%s' in cluster %s",
                                                        masterNode.getId(), cluster));

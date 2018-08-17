@@ -16,7 +16,6 @@
 
 package co.cask.cdap.runtime.spi.provisioner.emr;
 
-import co.cask.cdap.runtime.spi.Constants;
 import co.cask.cdap.runtime.spi.provisioner.Node;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
@@ -41,9 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -144,11 +141,8 @@ public class EMRClient implements AutoCloseable {
     Cluster cluster = describeCluster(id);
 
     List<Node> nodes = new ArrayList<>();
-    // required by RemoteExecutionTwillRunnerService
-    Map<String, String> properties = new HashMap<>();
-    properties.put(Constants.Node.TYPE, Constants.Node.MASTER_TYPE);
-    properties.put(Constants.Node.EXTERNAL_IP, cluster.getMasterPublicDnsName());
-    nodes.add(new Node("id", System.currentTimeMillis(), properties));
+    nodes.add(new Node("id", Node.Type.MASTER, cluster.getMasterPublicDnsName(),
+                       System.currentTimeMillis(), Collections.emptyMap()));
 
     return Optional.of(new co.cask.cdap.runtime.spi.provisioner.Cluster(
       cluster.getId(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));

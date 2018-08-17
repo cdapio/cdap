@@ -19,18 +19,7 @@ package co.cask.cdap.runtime.spi.provisioner.dataproc;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.compute.Compute;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -59,13 +48,14 @@ public class DataProcConf {
   private final long pollDeleteDelay;
   private final long pollInterval;
 
+  private final boolean preferExternalIP;
   private final SSHPublicKey publicKey;
 
   private DataProcConf(@Nullable String accountKey, String region, String zone, @Nullable String projectId,
                        String network, int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
                        int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
-                       @Nullable SSHPublicKey publicKey) {
+                       boolean preferExternalIP, @Nullable SSHPublicKey publicKey) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -83,6 +73,7 @@ public class DataProcConf {
     this.pollCreateJitter = pollCreateJitter;
     this.pollDeleteDelay = pollDeleteDelay;
     this.pollInterval = pollInterval;
+    this.preferExternalIP = preferExternalIP;
     this.publicKey = publicKey;
   }
 
@@ -90,6 +81,7 @@ public class DataProcConf {
     return region;
   }
 
+  @Nullable
   public String getZone() {
     return zone;
   }
@@ -104,6 +96,7 @@ public class DataProcConf {
     return accountKey;
   }
 
+  @Nullable
   public String getNetwork() {
     return network;
   }
@@ -148,6 +141,10 @@ public class DataProcConf {
     return pollInterval;
   }
 
+  public boolean preferExternalIP() {
+    return preferExternalIP;
+  }
+
   @Nullable
   public SSHPublicKey getPublicKey() {
     return publicKey;
@@ -172,19 +169,26 @@ public class DataProcConf {
   }
 
   private static DataProcConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
-    String accountKey = properties.get("accountKey");
-    if (accountKey != null && accountKey.isEmpty()) {
-      accountKey = null;
-    }
-    String projectId = properties.get("projectId");
-    if (projectId != null && projectId.isEmpty()) {
-      projectId = null;
-    }
+    String accountKey = getString(properties, "accountKey");
+    String projectId = getString(properties, "projectId");
 
-    // TODO: validate zone based on the region
-    String region = getString(properties, "region", "global");
-    String zone = getString(properties, "zone", "us-central1-a");
-    String network = getString(properties, "network", "default");
+    String region = getString(properties, "region");
+    if (region == null) {
+      region = "global";
+    }
+    String zone = getString(properties, "zone");
+    String network = getString(properties, "network");
+
+    // a zone is always <region>-<letter>
+    if (!"global".equals(region) && zone != null) {
+      if (!zone.startsWith(region + "-")) {
+        throw new IllegalArgumentException(
+          String.format("Invalid zone '%s' for region '%s'. Unless the region is 'global', "
+                          + "the zone must begin with the region. "
+                          + "For example, zone 'us-central1-a' belongs to region 'us-central1'.",
+                        zone, region));
+      }
+    }
 
     int masterNumNodes = getInt(properties, "masterNumNodes", 1);
     if (masterNumNodes != 1 && masterNumNodes != 3) {
@@ -213,15 +217,23 @@ public class DataProcConf {
     long pollDeleteDelay = getLong(properties, "pollDeleteDelay", 30);
     long pollInterval = getLong(properties, "pollInterval", 2);
 
+    boolean preferExternalIP = Boolean.parseBoolean(properties.get("preferExternalIP"));
+
     return new DataProcConf(accountKey, region, zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
-                            pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval, publicKey);
+                            pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
+                            preferExternalIP, publicKey);
   }
 
-  private static String getString(Map<String, String> properties, String key, String defaultVal) {
+  // the UI never sends nulls, it only sends empty strings.
+  @Nullable
+  private static String getString(Map<String, String> properties, String key) {
     String val = properties.get(key);
-    return val == null || val.isEmpty() ? defaultVal : val;
+    if (val != null && val.isEmpty()) {
+      return null;
+    }
+    return val;
   }
 
   private static int getInt(Map<String, String> properties, String key, int defaultVal) {

@@ -17,7 +17,6 @@
 
 package co.cask.cdap.runtime.spi.provisioner.remote;
 
-import co.cask.cdap.runtime.spi.Constants;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
@@ -29,7 +28,6 @@ import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -56,10 +54,8 @@ public class RemoteHadoopProvisioner implements Provisioner {
   public Cluster createCluster(ProvisionerContext context) {
     RemoteHadoopConf conf = RemoteHadoopConf.fromProperties(context.getProperties());
     context.getSSHContext().setSSHKeyPair(conf.getKeyPair());
-    Map<String, String> properties = new HashMap<>();
-    properties.put(Constants.Node.EXTERNAL_IP, conf.getHost());
-    properties.put(Constants.Node.TYPE, Constants.Node.MASTER_TYPE);
-    Collection<Node> nodes = Collections.singletonList(new Node(conf.getHost(), 0, properties));
+    Collection<Node> nodes = Collections.singletonList(new Node(conf.getHost(), Node.Type.MASTER, conf.getHost(),
+                                                                0, Collections.emptyMap()));
     return new Cluster(conf.getHost(), ClusterStatus.RUNNING, nodes, Collections.emptyMap());
   }
 
