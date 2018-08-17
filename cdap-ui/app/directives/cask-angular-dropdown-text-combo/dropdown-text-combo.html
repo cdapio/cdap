@@ -1,0 +1,60 @@
+<!--
+  Copyright © 2015-2018 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="dropdown-control-group am-fade-and-slide-right" ng-repeat="(key, value) in model">
+  <div class="row">
+    <div class="col-xs-5">
+      <input type="text" value="{{key}}" class="form-control" readonly />
+    </div>
+    <div class="col-xs-7">
+      <div ng-repeat="field in textFields">
+
+        <div class="input-group">
+          <label for="cask-ddtc-{{key}}-{{$index}}" class="input-group-addon">
+            {{field.placeholder || (field.name | caskCapitalizeFilter)}}
+          </label>
+          <input type="text"
+                  id="cask-ddtc-{{key}}-{{$index}}"
+                  ng-model="value[field.name]"
+                  name="{{field.name}}"
+                  class="form-control" />
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <p class="remove">
+    <a href="" class="btn btn-danger btn-xs"
+      ng-click="rmAsset(key)"
+    >
+      <span class="fa fa-trash"></span>
+      <span class="sr-only">remove {{assetLabel}}</span>
+    </a>
+  </p>
+
+</div>
+
+<p class="form-control-static">
+  <a href="" class="btn btn-info btn-xs"
+    bs-dropdown="dropdownValues"
+    ng-disabled="!dropdownValues.length"
+  >
+    <span class="fa fa-plus"></span>
+    Add {{assetLabel}}
+  </a>
+</p>

@@ -32,26 +32,12 @@ angular
         'ngResource',
         'ngStorage',
         'ui.router',
-        'cask-angular-window-manager',
-        'cask-angular-theme',
-        'cask-angular-focus',
         'ngCookies'
       ]).name,
 
       angular.module(PKG.name+'.filters', [
-        PKG.name+'.services',
-        'cask-angular-capitalize'
+        PKG.name+'.services'
       ]).name,
-
-      'cask-angular-sortable',
-      'cask-angular-confirmable',
-      'cask-angular-promptable',
-      'cask-angular-json-edit',
-      'cask-angular-eventpipe',
-      'cask-angular-observable-promise',
-      'cask-angular-socket-datasource',
-      'cask-angular-dispatcher',
-
       'mgcrea.ngStrap.datepicker',
       'mgcrea.ngStrap.timepicker',
 
