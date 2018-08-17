@@ -37,7 +37,7 @@ export default class Datasource {
     let socketData = Socket.getObservable();
     this.bindings = {};
 
-    this.socketSubscription =  socketData.subscribe(
+    this.socketSubscription = socketData.subscribe(
       (data) => {
         let hash = data.resource.id;
         if (!this.bindings[hash]) { return; }
@@ -46,19 +46,13 @@ export default class Datasource {
 
         if (data.statusCode > 299 || data.warning) {
           /*
-            When backend goes down we get a 5xx error from backend upon which
-            we throw the error down the stream. Once an error is thrown the
-            stream is closed in rxjs and all observers are notified one last time
-            before is reset to null.
-
-            Now what happens here is this gets called everytime we can get a 5xx response
-            from backend and we blindly pick the rx subject we store in the bindings and
-            throw the error. This will cause problem when the observable is already closed
-            and the observers list is now null.
-
-            Hence this check to avoid js error.
+            There is an issue here. When backend goes down we stop all the poll
+            and inspite of stopping all polling calls and unsubscribing all subscribers
+            we still get the rx.error call which tries to set the observers length to 0
+            and errors out. This doesn't harm us today as when system comes up we refresh
+            the UI and everything loads.
           */
-          !this.bindings[hash].rx.observers && this.bindings[hash].rx.error({
+          this.bindings[hash].rx.error({
             statusCode: data.statusCode,
             response: data.response || data.body || data.error
           });
