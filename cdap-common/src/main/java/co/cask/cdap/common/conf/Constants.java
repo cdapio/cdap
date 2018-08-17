@@ -1230,6 +1230,10 @@ public final class Constants {
   public static final String CFG_DATA_LEVELDB_BLOCKSIZE = "data.local.storage.blocksize";
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.storage.cachesize";
   public static final String CFG_DATA_LEVELDB_FSYNC = "data.local.storage.fsync";
+  public static final String CFG_DATA_LEVELDB_USER_TABLE_MAX_OPEN_FILES =
+          "data.local.storage.user.table.max.open.files";
+  public static final String CFG_DATA_LEVELDB_SYSTEM_TABLE_MAX_OPEN_FILES =
+          "data.local.storage.system.table.max.open.files";
 
   /**
    * Defaults for Data Fabric.
@@ -1246,7 +1250,7 @@ public final class Constants {
   public static final String DEFAULT_LOG_COLLECTION_ROOT = "data/logs";
 
   /**
-   * Used for upgrade and backwards compatability
+   * Used for upgrade and backwards compatibility
    */
   public static final String DEVELOPER_ACCOUNT = "developer";
   public static final String APP_META_UPGRADE_TIMEOUT_SECS = "app.meta.upgrade.timeout.secs";

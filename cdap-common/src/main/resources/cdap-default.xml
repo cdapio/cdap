@@ -679,6 +679,22 @@
   </property>
 
   <property>
+    <name>data.local.storage.user.table.max.open.files</name>
+    <value>100</value>
+    <description>
+      Maximum number of open files per user table.
+    </description>
+  </property>
+
+  <property>
+    <name>data.local.storage.system.table.max.open.files</name>
+    <value>500</value>
+    <description>
+      Maximum number of open files per system table.
+    </description>
+  </property>
+
+  <property>
     <name>data.event.topic</name>
     <value>dataevent</value>
     <description>
