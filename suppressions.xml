@@ -35,6 +35,7 @@
 
   <!-- copied from apache hadoop, won't fix style to keep diff minimal -->
   <suppress checks=".*" files=".*[/\\]LocalJobRunnerWithFix.java" />
+  <suppress checks=".*" files=".*[/\\]org[/\\]apache[/\\]hadoop[/\\]util[/\\]Shell.java" />
 
   <!-- do not check thrift generated files -->
   <suppress checks=".*" files=".*[/\\]transaction[/\\]distributed[/\\]thrift[/\\].*" />
