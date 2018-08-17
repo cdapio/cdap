@@ -35,6 +35,8 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -57,6 +59,8 @@ import javax.ws.rs.QueryParam;
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetInstanceHandler extends AbstractHttpHandler {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
 
   private final DatasetInstanceService instanceService;
   private static final Gson GSON = new Gson();
@@ -97,10 +101,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   @PathParam("namespace-id") String namespaceId,
                   @PathParam("name") String name,
                   @QueryParam("owner") List<String> owners) throws Exception {
+    LOG.trace("Received {} for {}", request.method(), request.uri());
     responder.sendJson(HttpResponseStatus.OK,
                        GSON.toJson(instanceService.get(ConversionHelpers.toDatasetInstanceId(namespaceId, name),
                                                        ConversionHelpers.strings2ProgramIds(owners)),
                                    DatasetMeta.class));
+    LOG.trace("Responded to {} for {}", request.method(), request.uri());
   }
 
   /**
@@ -114,7 +120,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void create(FullHttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) throws Exception {
-
+    LOG.trace("Received {} for {}", request.method(), request.uri());
     DatasetInstanceConfiguration creationProperties = ConversionHelpers.getInstanceConfiguration(request);
     try {
       instanceService.create(namespaceId, name, creationProperties);
@@ -126,6 +132,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     } catch (HandlerException e) {
       responder.sendString(e.getFailureStatus(), e.getMessage());
     }
+    LOG.trace("Responded to {} for {}", request.method(), request.uri());
   }
 
   @GET
@@ -133,10 +140,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void getProperties(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("name") String name) throws Exception {
+    LOG.trace("Received {} for {}", request.method(), request.uri());
     DatasetId instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     responder.sendJson(HttpResponseStatus.OK,
                        GSON.toJson(instanceService.getOriginalProperties(instance),
                                    new TypeToken<Map<String, String>>() { }.getType()));
+    LOG.trace("Responded to {} for {}", request.method(), request.uri());
   }
 
   /**
@@ -152,10 +161,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void update(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) throws Exception {
+    LOG.trace("Received {} for {}", request.method(), request.uri());
     DatasetId instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     Map<String, String> properties = ConversionHelpers.getProperties(request);
     instanceService.update(instance, properties);
     responder.sendStatus(HttpResponseStatus.OK);
+    LOG.trace("Responded to {} for {}", request.method(), request.uri());
   }
 
   /**
@@ -169,9 +180,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}")
   public void drop(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                    @PathParam("name") String name) throws Exception {
+    LOG.trace("Received {} for {}", request.method(), request.uri());
     DatasetId instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     instanceService.drop(instance);
     responder.sendStatus(HttpResponseStatus.OK);
+    LOG.trace("Responded to {} for {}", request.method(), request.uri());
   }
 
   @DELETE
