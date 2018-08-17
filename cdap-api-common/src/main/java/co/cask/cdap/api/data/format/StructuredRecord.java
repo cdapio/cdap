@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,15 +19,25 @@ package co.cask.cdap.api.data.format;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.Schema.LogicalType;
 
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -39,7 +49,7 @@ public class StructuredRecord implements Serializable {
   private final Schema schema;
   private final Map<String, Object> fields;
 
-  private static final long serialVersionUID = -4648752378975451591L;
+  private static final long serialVersionUID = -6547770456592865613L;
 
   {
     DEFAULT_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -67,8 +77,166 @@ public class StructuredRecord implements Serializable {
    * @return value of the field.
    */
   @SuppressWarnings("unchecked")
+  @Nullable
   public <T> T get(String fieldName) {
     return (T) fields.get(fieldName);
+  }
+
+  /**
+   * Get the {@link LocalDate} from field. The field must have {@link LogicalType#DATE} as its logical type.
+   *
+   * @param fieldName date field to get.
+   * @return value of the field as a {@link LocalDate}
+   * @throws UnexpectedFormatException if the provided field is not of {@link LogicalType#DATE} type.
+   */
+  @Nullable
+  public LocalDate getDate(String fieldName) {
+    LogicalType logicalType = validateAndGetLogicalType(schema.getField(fieldName), EnumSet.of(LogicalType.DATE));
+    Integer value = (Integer) fields.get(fieldName);
+    return (value == null || logicalType == null) ? null : LocalDate.ofEpochDay(value.longValue());
+  }
+
+  /**
+   * Get {@link LocalTime} from field. The field must have {@link LogicalType#TIME_MILLIS}
+   * or {@link LogicalType#TIME_MICROS} as its logical type.
+   *
+   * @param fieldName time field to get.
+   * @return value of the field as a {@link LocalTime}
+   * @throws UnexpectedFormatException if the provided field is not of {@link LogicalType#TIME_MILLIS} or
+   *                                   {@link LogicalType#TIME_MICROS} type.
+   */
+  @Nullable
+  public LocalTime getTime(String fieldName) {
+    LogicalType logicalType = validateAndGetLogicalType(schema.getField(fieldName),
+                                                        EnumSet.of(LogicalType.TIME_MILLIS, LogicalType.TIME_MICROS));
+    Object value = fields.get(fieldName);
+    if (value == null || logicalType == null) {
+      return null;
+    }
+
+    if (logicalType == LogicalType.TIME_MILLIS) {
+      return LocalTime.ofNanoOfDay(TimeUnit.MILLISECONDS.toNanos(((Integer) value)));
+    }
+
+    return LocalTime.ofNanoOfDay(TimeUnit.MICROSECONDS.toNanos((Long) value));
+  }
+
+  /**
+   * Get the {@link ZonedDateTime} with timezone 'UTC' for the specified field.
+   * The field must have {@link Schema.LogicalType#TIMESTAMP_MILLIS} or {@link Schema.LogicalType#TIMESTAMP_MICROS}
+   * as its logical type.
+   *
+   * @param fieldName zoned date time field to get.
+   * @return value of the field as a {@link ZonedDateTime}
+   * @throws UnexpectedFormatException if the provided field is not of {@link LogicalType#TIMESTAMP_MILLIS} or
+   *                                   {@link LogicalType#TIMESTAMP_MICROS} type.
+   */
+  @Nullable
+  public ZonedDateTime getTimestamp(String fieldName) {
+    return getTimestamp(fieldName, ZoneId.ofOffset("UTC", ZoneOffset.UTC));
+  }
+
+  /**
+   * Get the {@link ZonedDateTime} with provided timezone.
+   * The field must have {@link Schema.LogicalType#TIMESTAMP_MILLIS} or {@link Schema.LogicalType#TIMESTAMP_MICROS}
+   * as its logical type.
+   *
+   * @param fieldName zoned date time field to get.
+   * @param zoneId zone id for the field
+   * @return value of the field as a {@link ZonedDateTime}
+   * @throws UnexpectedFormatException if the provided field is not of {@link LogicalType#TIMESTAMP_MILLIS} or
+   *                                   {@link LogicalType#TIMESTAMP_MICROS} type.
+   */
+  @Nullable
+  public ZonedDateTime getTimestamp(String fieldName, ZoneId zoneId) {
+    LogicalType logicalType = validateAndGetLogicalType(schema.getField(fieldName),
+                                                        EnumSet.of(LogicalType.TIMESTAMP_MILLIS,
+                                                                   LogicalType.TIMESTAMP_MICROS));
+    Object value = fields.get(fieldName);
+    if (value == null || logicalType == null) {
+      return null;
+    }
+
+    if (logicalType == LogicalType.TIMESTAMP_MILLIS) {
+      return getZonedDateTime((long) value, TimeUnit.MILLISECONDS, zoneId);
+    }
+
+    return getZonedDateTime((long) value, TimeUnit.MICROSECONDS, zoneId);
+  }
+
+  /**
+   * Get zoned date and time represented by the field.
+   *
+   * @param ts timestamp to be used to get {@link ZonedDateTime}
+   * @param zoneId zone id for the field
+   * @param unit time unit for ts
+   * @return {@link ZonedDateTime} represented by field.
+   */
+  private ZonedDateTime getZonedDateTime(long ts, TimeUnit unit, ZoneId zoneId) {
+    long mod = unit.convert(1, TimeUnit.SECONDS);
+    int fraction = (int) (ts % mod);
+    long tsInSeconds = unit.toSeconds(ts);
+    // create an Instant with time in seconds and fraction which will be stored as nano seconds.
+    Instant instant = Instant.ofEpochSecond(tsInSeconds, unit.toNanos(fraction));
+    return ZonedDateTime.ofInstant(instant, zoneId);
+  }
+
+  /**
+   * Validates and returns the underlying {@link LogicalType} of the given {@link Schema.Field}.
+   *
+   * @param field field with logical type
+   * @param allowedTypes acceptable logical types
+   * @return the underlying {@link LogicalType} for the field
+   * @throws UnexpectedFormatException if the field provided does not have a {@link LogicalType} that is
+   *                                   one of the acceptable types
+   */
+  @Nullable
+  private static LogicalType validateAndGetLogicalType(Schema.Field field, Set<LogicalType> allowedTypes) {
+    if (field == null) {
+      return null;
+    }
+
+    String fieldName = field.getName();
+    LogicalType logicalType = getLogicalType(field.getSchema(), allowedTypes);
+
+    if (logicalType == null) {
+      throw new UnexpectedFormatException(String.format("Field %s does not have a logical type.", fieldName));
+    }
+
+    if (!allowedTypes.contains(logicalType)) {
+      throw new UnexpectedFormatException(String.format("Field %s must be of logical type %s, instead it is of type %s",
+                                                       fieldName, allowedTypes, logicalType));
+    }
+    return logicalType;
+  }
+
+  /**
+   * Gets the {@link LogicalType} defined in the given {@link Schema}.
+   * If the given {@link Schema} is a {@link Schema.Type#UNION}, this method will find
+   * the {@link LogicalType} recursively and return the first {@link LogicalType} it encountered.
+   *
+   * @param schema the {@link Schema} for finding the {@link LogicalType}
+   * @param allowedTypes acceptable logical types
+   * @return the {@link LogicalType} defined in the given schema or {@code null} if no {@link LogicalType} was found
+   */
+  @Nullable
+  private static LogicalType getLogicalType(Schema schema, Set<LogicalType> allowedTypes) {
+    LogicalType logicalType = schema.getLogicalType();
+
+    if (logicalType != null && allowedTypes.contains(logicalType)) {
+      return logicalType;
+    }
+
+    if (schema.getType() == Schema.Type.UNION) {
+      for (Schema unionSchema : schema.getUnionSchemas()) {
+        logicalType = getLogicalType(unionSchema, allowedTypes);
+
+        if (logicalType != null) {
+          return logicalType;
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -101,9 +269,9 @@ public class StructuredRecord implements Serializable {
     /**
      * Set the field to the given value.
      *
-     * @param fieldName Name of the field to set
-     * @param value Value for the field
-     * @return This builder
+     * @param fieldName name of the field to set
+     * @param value value for the field
+     * @return this builder
      * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
      *                                   value is given
      */
@@ -114,15 +282,119 @@ public class StructuredRecord implements Serializable {
     }
 
     /**
+     * Sets the date value for {@link LogicalType#DATE} field
+     *
+     * @param fieldName name of the field to set
+     * @param localDate value for the field
+     * @return this builder
+     * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
+     *                                   value is given or if the provided date is an invalid date
+     */
+    public Builder setDate(String fieldName, @Nullable LocalDate localDate) {
+      validateAndGetLogicalType(validateAndGetField(fieldName, localDate), EnumSet.of(LogicalType.DATE));
+      if (localDate == null) {
+        fields.put(fieldName, null);
+        return this;
+      }
+      try {
+        fields.put(fieldName, Math.toIntExact(localDate.toEpochDay()));
+      } catch (ArithmeticException e) {
+        // Highest integer is 2,147,483,647 which is Jan 1 2038.
+        throw new UnexpectedFormatException(String.format("Field %s was set to a date that is too large." +
+                                                           "Valid date should be below Jan 1 2038", fieldName));
+      }
+      return this;
+    }
+
+    /**
+     * Sets the time value for {@link LogicalType#TIME_MILLIS} or {@link LogicalType#TIME_MICROS} field
+     *
+     * @param fieldName name of the field to set
+     * @param localTime value for the field
+     * @return this builder
+     * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
+     *                                   value is given
+     */
+    public Builder setTime(String fieldName, @Nullable LocalTime localTime) {
+      LogicalType logicalType = validateAndGetLogicalType(validateAndGetField(fieldName, localTime),
+                                                          EnumSet.of(LogicalType.TIME_MILLIS, LogicalType.TIME_MICROS));
+
+      if (localTime == null) {
+        fields.put(fieldName, null);
+        return this;
+      }
+
+      long nanos = localTime.toNanoOfDay();
+
+      if (logicalType == LogicalType.TIME_MILLIS) {
+        try {
+          int millis = Math.toIntExact(TimeUnit.NANOSECONDS.toMillis(nanos));
+          fields.put(fieldName, millis);
+        } catch (ArithmeticException e) {
+          throw new UnexpectedFormatException(String.format("Field %s was set to a time that is too large.",
+                                                            fieldName));
+        }
+        return this;
+      }
+
+      long micros = TimeUnit.NANOSECONDS.toMicros(nanos);
+      fields.put(fieldName, micros);
+      return this;
+    }
+
+    /**
+     * Sets the timestamp value for {@link LogicalType#TIMESTAMP_MILLIS} or
+     * {@link LogicalType#TIMESTAMP_MICROS} field
+     *
+     * @param fieldName name of the field to set
+     * @param zonedDateTime value for the field
+     * @return this builder
+     * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
+     *                                   value is given or if the provided date is an invalid timestamp
+     */
+    public Builder setTimestamp(String fieldName, @Nullable ZonedDateTime zonedDateTime) {
+      LogicalType logicalType = validateAndGetLogicalType(validateAndGetField(fieldName, zonedDateTime),
+                                                          EnumSet.of(LogicalType.TIMESTAMP_MILLIS,
+                                                                     LogicalType.TIMESTAMP_MICROS));
+
+      if (zonedDateTime == null) {
+        fields.put(fieldName, null);
+        return this;
+      }
+
+      Instant instant = zonedDateTime.toInstant();
+      try {
+        if (logicalType == LogicalType.TIMESTAMP_MILLIS) {
+          long millis = TimeUnit.SECONDS.toMillis(instant.getEpochSecond());
+          long tsMillis = Math.addExact(millis, TimeUnit.NANOSECONDS.toMillis(instant.getNano()));
+          fields.put(fieldName, tsMillis);
+          return this;
+        }
+
+        long micros = TimeUnit.SECONDS.toMicros(instant.getEpochSecond());
+        long tsMicros = Math.addExact(micros, TimeUnit.NANOSECONDS.toMicros(instant.getNano()));
+        fields.put(fieldName, tsMicros);
+        return this;
+      } catch (ArithmeticException e) {
+        throw new UnexpectedFormatException(String.format("Field %s was set to a timestamp that is too large.",
+                                                          fieldName));
+      }
+    }
+
+    /**
      * Convert the given date into the type of the given field, and set the value for that field.
      * A Date can be converted into a long or a string.
+     * This method does not support {@link LogicalType#DATE}
      *
-     * @param fieldName Name of the field to set
-     * @param date Date value for the field
-     * @return This builder
+     * @deprecated As of release 5.1.0, use {@link StructuredRecord.Builder#setDate(String, LocalDate)} instead.
+     *
+     * @param fieldName name of the field to set
+     * @param date date value for the field
+     * @return this builder
      * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
      *                                   value is given, or the date cannot be converted to the type for the field
      */
+    @Deprecated
     public Builder convertAndSet(String fieldName, @Nullable Date date) throws UnexpectedFormatException {
       return convertAndSet(fieldName, date, DEFAULT_FORMAT);
     }
@@ -130,15 +402,19 @@ public class StructuredRecord implements Serializable {
     /**
      * Convert the given date into the type of the given field, and set the value for that field.
      * A Date can be converted into a long or a string, using a date format, if supplied.
+     * This method does not support {@link LogicalType#DATE}
      *
-     * @param fieldName Name of the field to set
-     * @param date Date value for the field
-     * @param dateFormat Format for the date if it is a string. If null, the default format of
+     * @deprecated As of release 5.1.0, use {@link StructuredRecord.Builder#setDate(String, LocalDate)} instead.
+     *
+     * @param fieldName name of the field to set
+     * @param date date value for the field
+     * @param dateFormat format for the date if it is a string. If null, the default format of
      *                   "YYYY-MM-DD'T'HH:mm:ss z" will be used
-     * @return This builder
+     * @return this builder
      * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
      *                                   value is given, or the date cannot be converted to the type for the field
      */
+    @Deprecated
     public Builder convertAndSet(String fieldName, @Nullable Date date,
                                  @Nullable DateFormat dateFormat) throws UnexpectedFormatException {
       Schema.Field field = validateAndGetField(fieldName, date);
@@ -164,9 +440,9 @@ public class StructuredRecord implements Serializable {
      * Convert the given string into the type of the given field, and set the value for that field. A String can be
      * converted to a boolean, int, long, float, double, bytes, string, or null.
      *
-     * @param fieldName Name of the field to set
-     * @param strVal String value for the field
-     * @return This builder
+     * @param fieldName name of the field to set
+     * @param strVal string value for the field
+     * @return this builder
      * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
      *                                   value is given, or the string cannot be converted to the type for the field
      */
@@ -179,7 +455,7 @@ public class StructuredRecord implements Serializable {
     /**
      * Build a {@link StructuredRecord} with the fields set by this builder.
      *
-     * @return A {@link StructuredRecord} with the fields set by this builder
+     * @return a {@link StructuredRecord} with the fields set by this builder
      * @throws UnexpectedFormatException if there is at least one non-nullable field without a value
      */
     public StructuredRecord build() throws UnexpectedFormatException {
