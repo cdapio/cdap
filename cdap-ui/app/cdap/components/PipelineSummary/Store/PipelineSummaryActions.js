@@ -29,8 +29,10 @@ function setRuns(runs) {
       runs: runs.map(run => ({
         runid: run.runid,
         start: run.start,
+        starting: run.starting,
         end: run.end,
-        duration: isNil(run.end) ? (Math.ceil(Date.now()/1000) - run.start) : (run.end - run.start),
+        // If the pipeline is starting there is either start nor end times.
+        duration: isNil(run.start) ? 0 : isNil(run.end) ? (Math.ceil(Date.now()/1000) - run.start) : (run.end - run.start),
         status: run.status
       }))
     }

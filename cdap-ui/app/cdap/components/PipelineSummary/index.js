@@ -182,6 +182,10 @@ export default class PipelineSummary extends Component {
     });
     this.storeSubscription = PipelineSummaryStore.subscribe(() => {
       let {runs, loading, nodesMap, nodeMetricsLoading} = PipelineSummaryStore.getState().pipelinerunssummary;
+      runs = runs.map(run => ({
+        ...run,
+        start: run.start || run.starting
+      }));
       let logsMetrics = runs.map(run => ({
         runid: run.runid,
         logsMetrics: run.logsMetrics || {},
