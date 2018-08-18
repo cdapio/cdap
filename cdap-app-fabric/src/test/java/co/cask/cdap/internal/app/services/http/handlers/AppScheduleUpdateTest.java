@@ -35,10 +35,23 @@ import java.util.List;
 public class AppScheduleUpdateTest extends AppFabricTestBase {
   @ClassRule
   public static final ExternalResource RESOURCE = new ExternalResource() {
+    private String previousAppUpdateSchedules;
     @Override
-    protected void before() throws Throwable {
+    protected void before() {
+      // store the previous value
+      previousAppUpdateSchedules = System.getProperty(Constants.AppFabric.APP_UPDATE_SCHEDULES);
       // Set app schedule update to be false
       System.setProperty(Constants.AppFabric.APP_UPDATE_SCHEDULES, "false");
+    }
+
+    @Override
+    protected void after() {
+      // reset the system property
+      if (previousAppUpdateSchedules == null) {
+        System.clearProperty(Constants.AppFabric.APP_UPDATE_SCHEDULES);
+      } else {
+        System.setProperty(Constants.AppFabric.APP_UPDATE_SCHEDULES, previousAppUpdateSchedules);
+      }
     }
   };
 

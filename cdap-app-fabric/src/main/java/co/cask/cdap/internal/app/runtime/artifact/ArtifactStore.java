@@ -38,6 +38,8 @@ import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -84,6 +86,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -189,9 +192,10 @@ public class ArtifactStore {
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
   private final Impersonator impersonator;
+  private final Set<String> requirementBlacklist;
 
   @Inject
-  ArtifactStore(DatasetFramework datasetFramework,
+  ArtifactStore(CConfiguration cConf, DatasetFramework datasetFramework,
                 NamespacedLocationFactory namespacedLocationFactory,
                 LocationFactory locationFactory,
                 TransactionSystemClient txClient,
@@ -207,6 +211,9 @@ public class ArtifactStore {
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.impersonator = impersonator;
+    this.requirementBlacklist =
+      new HashSet<>(cConf.getTrimmedStringCollection(Constants.REQUIREMENTS_BLACKLIST))
+        .stream().map(String::toLowerCase).collect(Collectors.toSet());
   }
 
   /**
@@ -331,15 +338,15 @@ public class ArtifactStore {
       .limit(limit)
       .map(e -> {
         ArtifactData data = GSON.fromJson(Bytes.toString(e.getValue()), ArtifactData.class);
+        ArtifactMeta filteredArtifactMeta = filterPlugins(data.meta);
         ArtifactId artifactId = new ArtifactId(artifactKey.name, e.getKey(),
                                                artifactKey.namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
                                                  ArtifactScope.SYSTEM : ArtifactScope.USER);
         Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath());
-        return new ArtifactDetail(new ArtifactDescriptor(artifactId, artifactLocation), data.meta);
+        return new ArtifactDetail(new ArtifactDescriptor(artifactId, artifactLocation), filteredArtifactMeta);
       })
       .collect(collector);
   }
-
 
   /**
    * Get information about all versions of the given artifact.
@@ -390,7 +397,8 @@ public class ArtifactStore {
     try {
       Location artifactLocation = impersonator.doAs(artifactId.getNamespace().toEntityId(), () ->
         Locations.getLocationFromAbsolutePath(locationFactory, artifactData.getLocationPath()));
-      return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), artifactLocation), artifactData.meta);
+      ArtifactMeta artifactMeta = filterPlugins(artifactData.meta);
+      return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), artifactLocation), artifactMeta);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -496,7 +504,7 @@ public class ArtifactStore {
     return Transactionals.execute(transactional, context -> {
       Table metaTable = getMetaTable(context);
       SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPluginsInArtifact(
-        metaTable, parentArtifactId, input -> type == null || type.equals(input.getType()));
+        metaTable, parentArtifactId, input -> (type == null || type.equals(input.getType())) && isAllowed(input));
 
       List<Scan> scans = Arrays.asList(
         scanPlugins(parentArtifactId, type),
@@ -585,7 +593,7 @@ public class ArtifactStore {
 
         Set<PluginClass> parentPlugins = parentArtifactDetail.getMeta().getClasses().getPlugins();
         for (PluginClass pluginClass : parentPlugins) {
-          if (pluginClass.getName().equals(name) && pluginClass.getType().equals(type)) {
+          if (pluginClass.getName().equals(name) && pluginClass.getType().equals(type) && isAllowed(pluginClass)) {
             plugins.put(parentArtifactDetail.getDescriptor(), pluginClass);
             break;
           }
@@ -956,7 +964,7 @@ public class ArtifactStore {
     // column is the artifact namespace, name, and version. value is the serialized PluginData
     for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
       ImmutablePair<ArtifactDescriptor, PluginClass> pluginEntry = getPluginEntry(namespace, parentArtifactId, column);
-      if (pluginEntry != null) {
+      if (pluginEntry != null && isAllowed(pluginEntry.getSecond())) {
         ArtifactDescriptor artifactDescriptor = pluginEntry.getFirst();
         if (!map.containsKey(artifactDescriptor)) {
           map.put(artifactDescriptor, Sets.<PluginClass>newHashSet());
@@ -1016,7 +1024,7 @@ public class ArtifactStore {
 
       // filter out plugins that don't extend this version of the parent artifact
       for (Id.Artifact parentArtifactId : parentArtifacts) {
-        if (pluginData.isUsableBy(parentArtifactId.toEntityId())) {
+        if (pluginData.isUsableBy(parentArtifactId.toEntityId()) && isAllowed(pluginData.pluginClass)) {
           plugins.put(new ArtifactDescriptor(
             artifactColumn.artifactId.toArtifactId(),
             Locations.getLocationFromAbsolutePath(locationFactory, pluginData.getArtifactLocationPath())),
@@ -1050,6 +1058,36 @@ public class ArtifactStore {
   private Scan scanAppClasses(NamespaceId namespace) {
     byte[] startRow = Bytes.toBytes(String.format("%s:%s:", APPCLASS_PREFIX, namespace.getNamespace()));
     return new Scan(startRow, Bytes.stopKeyForPrefix(startRow));
+  }
+
+  /**
+   * Filters the plugins contained in the {@link ArtifactMeta} by using {@link #isAllowed(PluginClass)}
+   *
+   * @param artifactMeta the artifact meta
+   * @return the {@link ArtifactMeta} containing only the plugins which are not excluded
+   */
+  private ArtifactMeta filterPlugins(ArtifactMeta artifactMeta) {
+    ArtifactClasses classes = artifactMeta.getClasses();
+    Set<PluginClass> filteredPlugins = classes.getPlugins().stream()
+      .filter(this::isAllowed).collect(Collectors.toSet());
+    ArtifactClasses filteredClasses = ArtifactClasses.builder()
+      .addApps(classes.getApps())
+      .addPlugins(filteredPlugins)
+      .build();
+    return new ArtifactMeta(filteredClasses, artifactMeta.getUsableBy(), artifactMeta.getProperties());
+  }
+
+  /**
+   * Checks whether the plugin is excluded from being displayed/used and should be filtered out. The exclusion is
+   * determined by the requirements of the plugin and the configuration for
+   * {@link Constants#REQUIREMENTS_BLACKLIST}
+   *
+   * @param pluginClass the plugins class to check
+   * @return true if the plugin should not be excluded and is allowed else false
+   */
+  private boolean isAllowed(PluginClass pluginClass) {
+    // if a plugin has any requirement which is marked excluded in the config then the plugin should not be allowed
+    return pluginClass.getRequirements().stream().noneMatch(requirementBlacklist::contains);
   }
 
   private static class AppClassKey {

@@ -357,10 +357,11 @@ final class ArtifactInspector {
   }
 
   /**
-   * Get all the {@link Requirements} specified by a plugin.
+   * Get all the {@link Requirements} specified by a plugin. The requirements are case insensitive and always
+   * represented in lowercase
    *
    * @param cls the plugin class whose requirement needs to be found
-   * @return requirements specified by the plugin or an empty set if the plugin does not specify any
+   * @return requirements specified by the plugin (in lowercase) or an empty set if the plugin does not specify any
    * {@link Requirements}
    */
   @VisibleForTesting
