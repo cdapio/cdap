@@ -79,7 +79,7 @@ const mapDispatchToProps = () => {
       // split with '=' and the second element in the path we need.
       let p = path.split('=').pop();
       p = p[p.length - 1] !== '/' ? `${p}/` : p;
-      setGCSPrefix(p);
+      fetchGCSDetails(p);
     }
   };
 };

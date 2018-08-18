@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {setActiveBrowser} from './commons';
+import {setActiveBrowser, setError} from './commons';
 import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
@@ -43,24 +43,11 @@ const setKafkaAsActiveBrowser = (payload) => {
             connectionId: params.connectionId
           });
         }, (err) => {
-          setKafkaError({
-            error: err,
-            info
-          });
+          setError(err);
         });
-
     }, (err) => {
-      setKafkaError({
-        payload: err
-      });
+      setError(err);
     });
-};
-
-const setKafkaError = (payload) => {
-  DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_KAFKA_ERROR,
-    payload: payload
-  });
 };
 
 const setKafkaProperties = (payload) => {
@@ -81,7 +68,6 @@ const setKafkaInfoLoading = () => {
 
 export {
   setKafkaAsActiveBrowser,
-  setKafkaError,
   setKafkaProperties,
   setKafkaInfoLoading
 };

@@ -27,6 +27,7 @@ import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
 import {humanReadableDate} from 'services/helpers';
+import If from 'components/If';
 
 const PREFIX = 'features.DataPrep.DataPrepBrowser.S3Browser.BucketData';
 const props = {
@@ -92,18 +93,7 @@ const TableHeader = ({enableRouting}) => {
 };
 TableHeader.propTypes = props;
 
-const TableContents = ({enableRouting, search, data, onWorkspaceCreate, prefix, clearSearch}) => {
-  let filteredData = data.filter(d => {
-    if (search && search.length) {
-      let isSearchTextInName = d.name.indexOf(search);
-      if (d.type === 'bucket') {
-        return isSearchTextInName !== -1 || d.owner.indexOf(search) !== -1;
-      }
-      return isSearchTextInName !== -1 || d.path.indexOf(search) !== -1;
-    }
-    return true;
-  });
-
+const TableContents = ({enableRouting, search, filteredData, onWorkspaceCreate, prefix, clearSearch}) => {
   let ContainerElement = enableRouting ? Link : 'div';
   let pathname = window.location.pathname.replace(/\/cdap/, '');
   if (!filteredData.length) {
@@ -197,28 +187,51 @@ const TableContents = ({enableRouting, search, data, onWorkspaceCreate, prefix, 
     </div>
   );
 };
-TableContents.propTypes = props;
+TableContents.propTypes = {
+  ...props,
+  filteredData: PropTypes.array
+};
 
 const BucketData = ({data, search, clearSearch, loading, prefix, enableRouting, onWorkspaceCreate}) => {
   if (loading) {
     return <LoadingSVGCentered />;
   }
 
-  // FIXME: Possible? May be a proper empty message?
-  if (!Object.keys(data).length) {
-    return null;
+  if (!data.length && !search.length) {
+    return (
+      <div className="empty-search-container">
+        <div className="empty-search text-xs-center">
+          <strong>
+            {T.translate(`${PREFIX}.Content.emptyBucket`)}
+          </strong>
+        </div>
+      </div>
+    );
   }
+
+  const filteredData = data.filter(d => {
+    if (search && search.length && d.name) {
+      let isSearchTextInName = d.name.indexOf(search);
+      if (d.type && d.type === 'bucket') {
+        return isSearchTextInName !== -1 || (d.owner && d.owner.indexOf(search) !== -1);
+      }
+      return isSearchTextInName !== -1 || (d.path && d.path.indexOf(search) !== -1);
+    }
+    return true;
+  });
 
   return (
     <div>
-      <div className="s3-content-header">
-        <TableHeader enableRouting={enableRouting} />
-      </div>
+      <If condition={filteredData.length}>
+        <div className="s3-content-header">
+          <TableHeader enableRouting={enableRouting} />
+        </div>
+      </If>
       <div className="s3-content-body">
         <TableContents
           search={search}
           clearSearch={clearSearch}
-          data={data}
+          filteredData={filteredData}
           prefix={prefix}
           enableRouting={enableRouting}
           onWorkspaceCreate={onWorkspaceCreate}

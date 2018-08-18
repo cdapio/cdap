@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {setActiveBrowser} from './commons';
+import {setActiveBrowser, setError} from './commons';
 import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
@@ -53,6 +53,8 @@ const setS3AsActiveBrowser = (payload) => {
         if (path) {
           setPrefix(path);
         }
+      }, (err) => {
+        setError(err);
       });
   } else {
     if (path) {
@@ -88,13 +90,16 @@ const fetchBucketDetails = (path = '') => {
   MyDataPrepApi
     .exploreBucketDetails(params)
     .subscribe(
-      res => {
+      (res) => {
         DataPrepBrowserStore.dispatch({
           type: BrowserStoreActions.SET_S3_ACTIVE_BUCKET_DETAILS,
           payload: {
             activeBucketDetails: res.values
           }
         });
+      },
+      (err) => {
+        setError(err);
       }
     );
 };

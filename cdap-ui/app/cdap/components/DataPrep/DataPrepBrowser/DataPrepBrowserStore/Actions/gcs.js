@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {setActiveBrowser} from './commons';
+import {setActiveBrowser, setError} from './commons';
 import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
@@ -55,6 +55,8 @@ const setGCSAsActiveBrowser = (payload) => {
         if (path) {
           setGCSPrefix(path);
         }
+      }, (err) => {
+        setError(err);
       });
   } else {
     if (path) {
@@ -89,13 +91,15 @@ const fetchGCSDetails = (path = '') => {
   }
   MyDataPrepApi.exploreGCSBucketDetails(params)
     .subscribe(
-      res => {
+      (res) => {
         DataPrepBrowserStore.dispatch({
           type: BrowserStoreActions.SET_GCS_ACTIVE_BUCKET_DETAILS,
           payload: {
             activeBucketDetails: res.values
           }
         });
+      }, (err) => {
+        setError(err);
       }
     );
 };

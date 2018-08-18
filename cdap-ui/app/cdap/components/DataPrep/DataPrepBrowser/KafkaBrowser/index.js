@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,9 +24,7 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {Input} from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
-import isNil from 'lodash/isNil';
-import {setKafkaAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
-import {objectQuery} from 'services/helpers';
+import {setKafkaAsActiveBrowser, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import ee from 'event-emitter';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 import {Provider} from 'react-redux';
@@ -41,33 +39,27 @@ export default class KafkaBrowser extends Component {
     enableRouting: PropTypes.bool,
     onWorkspaceCreate: PropTypes.func
   };
+
   static defaultProps = {
     enableRouting: true
   };
 
-  constructor(props) {
-    super(props);
+  store = DataPrepBrowserStore.getState();
 
-    let store = DataPrepBrowserStore.getState();
+  state = {
+    connectionId: this.store.kafka.connectionId,
+    info: this.store.kafka.info,
+    loading: this.store.kafka.loading,
+    search: '',
+    searchFocus: true,
+    error: null,
+    topics: []
+  };
 
-    this.state = {
-      connectionId: store.kafka.connectionId,
-      info: store.kafka.info,
-      loading: store.kafka.loading,
-      search: '',
-      searchFocus: true,
-      error: null,
-      topics: []
-    };
-
-    this.eventEmitter = ee(ee);
-    this.handleSearch = this.handleSearch.bind(this);
-    this.eventBasedFetchTopics = this.eventBasedFetchTopics.bind(this);
-
-    this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_KAFKA', this.eventBasedFetchTopics);
-  }
+  eventEmitter = ee(ee);
 
   componentDidMount() {
+    this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_KAFKA', this.eventBasedFetchTopics);
     this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
       let {kafka, activeBrowser} = DataPrepBrowserStore.getState();
       if (activeBrowser.name !== 'kafka') {
@@ -78,7 +70,6 @@ export default class KafkaBrowser extends Component {
         info: kafka.info,
         connectionId: kafka.connectionId,
         topics: kafka.topics,
-        error: kafka.error,
         loading: kafka.loading
       });
     });
@@ -86,22 +77,22 @@ export default class KafkaBrowser extends Component {
 
   componentWillUnmount() {
     this.eventEmitter.off('DATAPREP_CONNECTION_EDIT_KAFKA', this.eventBasedFetchTopics);
-    if (this.storeSubscription) {
+    if (typeof this.storeSubscription === 'function') {
       this.storeSubscription();
     }
   }
 
-  eventBasedFetchTopics(connectionId) {
+  eventBasedFetchTopics = (connectionId) => {
     if (this.state.connectionId === connectionId) {
       setKafkaAsActiveBrowser({name: 'database', id: connectionId});
     }
-  }
+  };
 
-  handleSearch(e) {
+  handleSearch = (e) => {
     this.setState({
       search: e.target.value
     });
-  }
+  };
 
   prepTopic(topic) {
     this.setState({
@@ -126,7 +117,7 @@ export default class KafkaBrowser extends Component {
           window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         },
         (err) => {
-          console.log('ERROR: ', err);
+          setError(err);
         }
       );
   }
@@ -173,23 +164,7 @@ export default class KafkaBrowser extends Component {
     );
   }
 
-  renderError() {
-    let error = this.state.error;
-    let errorMessage = objectQuery(error, 'response', 'message') || objectQuery(error, 'response') || error;
-
-    return (
-      <div className="empty-search-container">
-        <div className="empty-search">
-          <strong>{errorMessage}</strong>
-        </div>
-      </div>
-    );
-  }
-
   renderContents(topics) {
-    if (this.state.error) {
-      return this.renderError();
-    }
     if (!topics.length) {
       return this.renderEmpty();
     }
@@ -264,34 +239,28 @@ export default class KafkaBrowser extends Component {
             </h5>
           </div>
         </div>
-        {
-          isNil(this.state.error) ?
-            <div>
-              <div className="kafka-browser-header">
-                <div className="kafka-metadata">
-                  <h5>{this.state.info.name}</h5>
-                  <span className="tables-count">
-                    {
-                      T.translate(`${PREFIX}.topicCount`, {
-                        count: this.state.topics.length
-                      })
-                    }
-                  </span>
-                </div>
-                <div className="table-name-search">
-                  <Input
-                    placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
-                    value={this.state.search}
-                    onChange={this.handleSearch}
-                    autoFocus={this.state.searchFocus}
-                  />
-                </div>
-              </div>
+        <div>
+          <div className="kafka-browser-header">
+            <div className="kafka-metadata">
+              <h5>{this.state.info.name}</h5>
+              <span className="tables-count">
+                {
+                  T.translate(`${PREFIX}.topicCount`, {
+                    count: this.state.topics.length
+                  })
+                }
+              </span>
             </div>
-          :
-            null
-        }
-
+            <div className="table-name-search">
+              <Input
+                placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
+                value={this.state.search}
+                onChange={this.handleSearch}
+                autoFocus={this.state.searchFocus}
+              />
+            </div>
+          </div>
+        </div>
         <div className="kafka-browser-content">
           { this.renderContents(filteredTopics) }
         </div>

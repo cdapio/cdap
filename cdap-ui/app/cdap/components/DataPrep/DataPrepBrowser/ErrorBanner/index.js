@@ -12,34 +12,28 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import React from 'react';
+import { connect } from 'react-redux';
+import {setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/Actions/commons';
+import ErrorBanner from 'components/ErrorBanner';
 
-const setActiveBrowser = (payload) => {
-  DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_ACTIVEBROWSER,
-    payload
-  });
+const mapStateToProps = (state) => {
+  return {
+    error: state.error
+  };
 };
 
-const setError = (error = null) => {
-  DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_ERROR,
-    payload: {
-      error
-    }
-  });
+const mapDispatchToProps = () => {
+  return {
+    onClose: setError
+  };
 };
 
-const reset = () => {
-  DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.RESET
-  });
-};
+const DataPrepErrorBanner = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ErrorBanner);
 
-export {
-  setActiveBrowser,
-  setError,
-  reset
-};
+export default DataPrepErrorBanner;

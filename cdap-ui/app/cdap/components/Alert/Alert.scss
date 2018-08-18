@@ -14,6 +14,7 @@
  * the License.
  */
 @import "../../styles/variables.scss";
+$close-btn-size: 13px;
 
 .global-alert {
   &.modal-dialog {
@@ -38,8 +39,12 @@
       .error {
         background-color: $brand-danger;
       }
+      .message {
+        max-width: calc(100% - #{$close-btn-size});
+      }
       .icon-close {
         cursor: pointer;
+        font-size: $close-btn-size;
       }
     }
   }

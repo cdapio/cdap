@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {setActiveBrowser} from './commons';
+import {setActiveBrowser, setError} from './commons';
 import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
@@ -94,6 +94,8 @@ const setBigQueryAsActiveBrowser = (payload) => {
           connectionId: id
         }
       });
+    }, (err) => {
+      setError(err);
     });
 };
 
@@ -113,6 +115,8 @@ const listBiqQueryDatasets = (connectionId) => {
           datasetList: res.values
         }
       });
+    }, (err) => {
+      setError(err);
     });
 };
 
@@ -134,6 +138,8 @@ const listBigQueryTables = (connectionId, datasetId) => {
           tableList: res.values
         }
       });
+    }, (err) => {
+      setError(err);
     });
 };
 

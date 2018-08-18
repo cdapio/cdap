@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,8 @@ import S3Browser from 'components/DataPrep/DataPrepBrowser/S3Browser';
 import KafkaBrowser from 'components/DataPrep/DataPrepBrowser/KafkaBrowser';
 import GCSBrowser from 'components/DataPrep/DataPrepBrowser/GCSBrowser';
 import BigQueryBrowser from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser';
+import DataPrepErrorBanner from 'components/DataPrep/DataPrepBrowser/ErrorBanner';
+import {Provider} from 'react-redux';
 
 const browserMap = {
   database: DatabaseBrowser,
@@ -35,15 +37,12 @@ const browserMap = {
 };
 
 export default class DataPrepBrowser extends Component {
-  constructor(props) {
-    super(props);
-    let store = DataPrepBrowserStore.getState();
-    this.state = {
-      activeBrowser: store.activeBrowser
-    };
-  }
-  componentWillMount() {
-    DataPrepBrowserStore.subscribe(() => {
+  state = {
+    activeBrowser: DataPrepBrowserStore.getState().activeBrowser
+  };
+
+  componentDidMount() {
+    this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
       let {activeBrowser} = DataPrepBrowserStore.getState();
       if (activeBrowser.name && this.state.activeBrowser.name !== activeBrowser.name) {
         this.setState({
@@ -51,15 +50,36 @@ export default class DataPrepBrowser extends Component {
         });
       }
     });
+    if (typeof this.props.setActiveBrowser === 'function') {
+      this.props.setActiveBrowser();
+    }
   }
+
+  componentDidUpdate() {
+    if (typeof this.props.setActiveBrowser === 'function') {
+      this.props.setActiveBrowser();
+    }
+  }
+
+  componentWillUnmount() {
+    if (typeof this.storeSubscription === 'function') {
+      this.storeSubscription();
+    }
+  }
+
   render() {
     let activeBrowser = this.state.activeBrowser.name.toLowerCase();
     if (browserMap.hasOwnProperty(activeBrowser)) {
       let Tag = browserMap[activeBrowser];
       return (
-        <Tag
-          {...this.props}
-        />
+        <Provider store={DataPrepBrowserStore}>
+          <React.Fragment>
+            <DataPrepErrorBanner />
+            <Tag
+              {...this.props}
+            />
+          </React.Fragment>
+        </Provider>
       );
     }
 
@@ -68,5 +88,6 @@ export default class DataPrepBrowser extends Component {
 }
 DataPrepBrowser.propTypes = {
   location: PropTypes.object,
-  match: PropTypes.object
+  match: PropTypes.object,
+  setActiveBrowser: PropTypes.func
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,12 +22,10 @@ const Actions = {
   SET_DATABASE_PROPERTIES: 'SET_DATABASE_PROPERTIES',
   SET_DATABASE_LOADING: 'SET_DATABASE_LOADING',
   SET_ACTIVEBROWSER: 'SET_ACTIVE_BROWSER',
-  SET_DATABASE_ERROR: 'SET_DATABASE_ERROR',
 
   // Kafka
   SET_KAFKA_PROPERTIES: 'SET_KAFKA_PROPERTIES',
   SET_KAFKA_LOADING: 'SET_KAFKA_LOADING',
-  SET_KAFKA_ERROR: 'SET_KAFKA_ERROR',
 
   // S3
   SET_S3_LOADING: 'SET_S3_LOADING',
@@ -54,6 +52,7 @@ const Actions = {
   SET_BIGQUERY_DATASET_LIST: 'SET_BIGQUERY_DATASET_LIST',
   SET_BIGQUERY_TABLE_LIST: 'SET_BIGQUERY_TABLE_LIST',
 
+  SET_ERROR: 'SET_ERROR',
   RESET: 'RESET'
 };
 
@@ -81,7 +80,8 @@ const defaultS3Value = {
   error: null,
   activeBucketDetails: [],
   prefix: '',
-  connectionId: ''
+  connectionId: '',
+  search: ''
 };
 
 const defaultGCSValue = {
@@ -90,7 +90,8 @@ const defaultGCSValue = {
   error: null,
   activeBucketDetails: [],
   prefix: '',
-  connectionId: ''
+  connectionId: '',
+  search: ''
 };
 
 const defaultBigQueryValue = {
@@ -107,6 +108,8 @@ const defaultActiveBrowser = {
   name: 'database'
 };
 
+const defaultError = null;
+
 const database = (state = defaultDatabaseValue, action = defaultAction) => {
   switch (action.type) {
     case Actions.SET_DATABASE_PROPERTIES:
@@ -122,12 +125,12 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
         loading: action.payload.loading,
         error: null
       });
-    case Actions.SET_DATABASE_ERROR:
-      return Object.assign({}, state, {
-        error: action.payload.error,
+    case Actions.SET_ERROR:
+      return {
+        ...state,
         info: objectQuery(action, 'payload', 'info') || state.info,
         loading: false
-      });
+      };
     case Actions.RESET:
       return defaultDatabaseValue;
     default:
@@ -150,12 +153,12 @@ const kafka = (state = defaultKafkaValue, action = defaultAction) => {
         loading: action.payload.loading,
         error: null
       });
-    case Actions.SET_KAFKA_ERROR:
-      return Object.assign({}, state, {
-        error: action.payload.error,
+    case Actions.SET_ERROR:
+      return {
+        ...state,
         info: objectQuery(action, 'payload', 'info') || state.info,
         loading: false
-      });
+      };
     case Actions.RESET:
       return defaultKafkaValue;
     default:
@@ -197,6 +200,12 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
       return {
         ...state,
         search: action.payload.search
+      };
+    case Actions.SET_ERROR:
+      return {
+        ...state,
+        info: objectQuery(action, 'payload', 'info') || state.info,
+        loading: false
       };
     case Actions.RESET:
       return defaultS3Value;
@@ -240,6 +249,12 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
         ...state,
         search: action.payload.search
       };
+    case Actions.SET_ERROR:
+      return {
+        ...state,
+        info: objectQuery(action, 'payload', 'info') || state.info,
+        loading: false
+      };
     case Actions.RESET:
       return defaultGCSValue;
     default:
@@ -280,6 +295,12 @@ const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
         datasetId: action.payload.datasetId,
         tableList: action.payload.tableList
       };
+    case Actions.SET_ERROR:
+      return {
+        ...state,
+        info: objectQuery(action, 'payload', 'info') || state.info,
+        loading: false
+      };
     case Actions.RESET:
       return defaultBigQueryValue;
     default:
@@ -298,6 +319,15 @@ const activeBrowser = (state = defaultActiveBrowser, action = defaultAction) => 
   }
 };
 
+const error = (state = defaultError, action = defaultAction) => {
+  switch (action.type) {
+    case Actions.SET_ERROR:
+      return action.payload.error;
+    default:
+      return state;
+  }
+};
+
 const DataPrepBrowserStore = createStore(
   combineReducers({
     database,
@@ -305,13 +335,17 @@ const DataPrepBrowserStore = createStore(
     activeBrowser,
     s3,
     gcs,
-    bigquery
+    bigquery,
+    error
   }),
   {
     database: defaultDatabaseValue,
     kafka: defaultKafkaValue,
     activeBrowser: defaultActiveBrowser,
-    bigquery: defaultBigQueryValue
+    s3: defaultS3Value,
+    gcs: defaultGCSValue,
+    bigquery: defaultBigQueryValue,
+    error: defaultError
   },
   composeEnhancers('DataPrepBrowserStore')()
 );

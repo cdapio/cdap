@@ -416,6 +416,9 @@ features:
           1: "{context} dataset"
           _: "{context} datasets"
         datasets: Datasets
+        EmptyMessage:
+          emptyDatasetList: 'No datasets in connection _{connectionName}_'
+          emptyTableList: 'No tables in dataset _{datasetName}_'
         name: Name
         pageTitle: CDAP | Connections | Google BigQuery | {connectionId}
         title: Select table
@@ -439,8 +442,9 @@ features:
         BrowserData:
           Content:
             directory: Directory
+            emptyBucket: No files or directories found in this bucket
             EmptymessageContainer:
-              suggestion1: your search
+              suggestion1: ' your search'
           Headers:
             LastModified: Last modified
             Name: Name
@@ -469,11 +473,13 @@ features:
           1: '{count} topic'
           _: "{count} topics"
         title: Select topic
+      noDataMsg: No data
       S3Browser:
         BucketData:
           Content:
+            emptyBucket: No files or directories found in this bucket
             EmptymessageContainer:
-              suggestion1: your search
+              suggestion1: ' your search'
           Headers:
             LastModified: Last modified
             Name: Name
