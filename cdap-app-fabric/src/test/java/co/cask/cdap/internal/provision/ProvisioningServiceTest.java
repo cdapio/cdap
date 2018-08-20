@@ -242,15 +242,11 @@ public class ProvisioningServiceTest {
     provisioningService.resumeTasks(t -> { });
 
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.PROVISION);
-    Tasks.waitFor(ProvisioningOp.Status.CREATED, () -> Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      ProvisioningTaskInfo tinfo = provisionerDataset.getTaskInfo(taskKey);
-      return tinfo == null ? null : tinfo.getProvisioningOp().getStatus();
-    }), 20, TimeUnit.SECONDS);
+    waitForExpectedProvisioningState(taskKey, ProvisioningOp.Status.CREATED);
   }
 
   @Test
-  public void testCancelProvision() {
+  public void testCancelProvision() throws InterruptedException, ExecutionException, TimeoutException {
     ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder().waitCreate(1, TimeUnit.MINUTES).build();
     TaskFields taskFields = createTaskInfo(provisionerInfo);
 
@@ -265,12 +261,7 @@ public class ProvisioningServiceTest {
 
     // check that the state of the task is cancelled
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.PROVISION);
-    ProvisioningOp.Status actualState = Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      ProvisioningTaskInfo provisioningTaskInfo = provisionerDataset.getTaskInfo(taskKey);
-      return provisioningTaskInfo == null ? null : provisioningTaskInfo.getProvisioningOp().getStatus();
-    });
-    Assert.assertEquals(ProvisioningOp.Status.CANCELLED, actualState);
+    waitForExpectedProvisioningState(taskKey, ProvisioningOp.Status.CANCELLED);
   }
 
   @Test
@@ -287,12 +278,7 @@ public class ProvisioningServiceTest {
 
     // check that the state of the task is cancelled
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.DEPROVISION);
-    ProvisioningOp.Status actualState = Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      ProvisioningTaskInfo provisioningTaskInfo = provisionerDataset.getTaskInfo(taskKey);
-      return provisioningTaskInfo == null ? null : provisioningTaskInfo.getProvisioningOp().getStatus();
-    });
-    Assert.assertEquals(ProvisioningOp.Status.CANCELLED, actualState);
+    waitForExpectedProvisioningState(taskKey, ProvisioningOp.Status.CANCELLED);
   }
 
   private TaskFields testProvision(ProvisioningOp.Status expectedState, ProvisionerInfo provisionerInfo)
@@ -307,11 +293,7 @@ public class ProvisioningServiceTest {
     task.run();
 
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.PROVISION);
-    Tasks.waitFor(expectedState, () -> Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      ProvisioningTaskInfo provisioningTaskInfo = provisionerDataset.getTaskInfo(taskKey);
-      return provisioningTaskInfo == null ? null : provisioningTaskInfo.getProvisioningOp().getStatus();
-    }), 60, TimeUnit.SECONDS);
+    waitForExpectedProvisioningState(taskKey, expectedState);
     return taskFields;
   }
 
@@ -323,11 +305,7 @@ public class ProvisioningServiceTest {
     task.run();
 
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION);
-    Tasks.waitFor(expectedState, () -> Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      ProvisioningTaskInfo provisioningTaskInfo = provisionerDataset.getTaskInfo(taskKey);
-      return provisioningTaskInfo == null ? null : provisioningTaskInfo.getProvisioningOp().getStatus();
-    }), 60, TimeUnit.SECONDS);
+    waitForExpectedProvisioningState(taskKey, expectedState);
   }
 
   private TaskFields createTaskInfo(ProvisionerInfo provisionerInfo) {
@@ -349,6 +327,15 @@ public class ProvisioningServiceTest {
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programRunId.getParent(), appSpec);
 
     return new TaskFields(programDescriptor, programOptions, programRunId);
+  }
+
+  private void waitForExpectedProvisioningState(ProvisioningTaskKey taskKey, ProvisioningOp.Status expectedState)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    Tasks.waitFor(expectedState, () -> Transactionals.execute(transactional, dsContext -> {
+      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
+      ProvisioningTaskInfo provisioningTaskInfo = provisionerDataset.getTaskInfo(taskKey);
+      return provisioningTaskInfo == null ? null : provisioningTaskInfo.getProvisioningOp().getStatus();
+    }), 60, TimeUnit.SECONDS);
   }
 
   @Test
