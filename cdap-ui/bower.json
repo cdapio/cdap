@@ -14,18 +14,6 @@
     "angular-ui-router": "0.3.0",
     "angular-loading-bar": "0.8.0",
     "ngstorage": "0.3.10",
-    "cask-angular-capitalize": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-capitalize.zip",
-    "cask-angular-theme": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-theme.zip",
-    "cask-angular-focus": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-focus.zip",
-    "cask-angular-window-manager": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-window-manager.zip",
-    "cask-angular-sortable": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-sortable.zip",
-    "cask-angular-confirmable": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-confirmable.zip",
-    "cask-angular-promptable": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-promptable.zip",
-    "cask-angular-json-edit": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-json-edit.zip",
-    "cask-angular-eventpipe": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-eventpipe.zip",
-    "cask-angular-observable-promise": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-observable-promise.zip",
-    "cask-angular-socket-datasource": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-socket-datasource.zip",
-    "cask-angular-dispatcher": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-dispatcher.zip",
     "d3": "3.5.5",
     "angular-breadcrumb": "0.3.3",
     "dagre-d3": "0.4.10",
@@ -44,7 +32,8 @@
     "esprima": "2.0.0",
     "ngInfiniteScroll": "1.2.1",
     "d3-timeline": "0.0.5",
-    "angular-inview": "1.5.7"
+    "angular-inview": "1.5.7",
+    "node-uuid": "1.4.3"
   },
   "resolutions": {
     "angular": "1.4.3",
