@@ -300,8 +300,21 @@ public class ProgramLifecycleService {
                                         boolean debug) throws NotFoundException, IOException, ProfileConflictException {
     LOG.info("Attempt to run {} program {} as user {}", programId.getType(), programId.getProgram(),
              authenticationContext.getPrincipal().getName());
-    ProfileId profileId =
-      SystemArguments.getProfileIdFromArgs(programId.getNamespaceId(), userArgs).orElse(ProfileId.NATIVE);
+
+    ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
+
+    RunId runId = RunIds.generate();
+    ProgramDescriptor programDescriptor = store.loadProgram(programId);
+    String userId = SecurityRequestContext.getUserId();
+    userId = userId == null ? "" : userId;
+    provisionerNotifier.provisioning(programId.run(runId), programOptions, programDescriptor, userId);
+    return runId;
+  }
+
+  @VisibleForTesting
+  ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> userArgs, Map<String, String> sysArgs,
+                                      boolean debug) throws NotFoundException, ProfileConflictException {
+    ProfileId profileId = SystemArguments.getProfileIdForProgram(programId, userArgs);
     Map<String, String> profileProperties = SystemArguments.getProfileProperties(userArgs);
     Profile profile = profileService.getProfile(profileId, profileProperties);
     if (profile.getStatus() == ProfileStatus.DISABLED) {
@@ -325,17 +338,8 @@ public class ProgramLifecycleService {
     systemArgs.put(ProgramOptionConstants.CLUSTER_MODE,
                    (ProfileId.NATIVE.equals(profileId) ? ClusterMode.ON_PREMISE : ClusterMode.ISOLATED).name());
 
-    ProgramOptions programOptions = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
-                                                             new BasicArguments(userArgs), debug);
-
-    RunId runId = RunIds.generate();
-    ProgramDescriptor programDescriptor = store.loadProgram(programId);
-    String userId = SecurityRequestContext.getUserId();
-    userId = userId == null ? "" : userId;
-    provisionerNotifier.provisioning(programId.run(runId), programOptions, programDescriptor, userId);
-    return runId;
+    return new SimpleProgramOptions(programId, new BasicArguments(systemArgs), new BasicArguments(userArgs), debug);
   }
-
 
   /**
    * Starts a Program with the specified argument overrides, skipping cluster lifecycle steps in the run.
