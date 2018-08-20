@@ -28,6 +28,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
   // Type for the PluginClass.properties map.
   private static final Type PROPERTIES_TYPE = new TypeToken<Map<String, PluginPropertyField>>() { }.getType();
   //Type for endpoints property
-  private static final Type ENDPOINTS_TYPE = new TypeToken<Set<String>>() { }.getType();
+  private static final Type SET_OF_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   @Override
   public PluginClass deserialize(JsonElement json, Type typeOfT,
@@ -59,14 +60,19 @@ public class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
 
     Set<String> endpointsSet = new HashSet<>();
     if (jsonObj.has("endpoints")) {
-      endpointsSet = context.deserialize(jsonObj.get("endpoints"), ENDPOINTS_TYPE);
+      endpointsSet = context.deserialize(jsonObj.get("endpoints"), SET_OF_STRING_TYPE);
     }
 
     Map<String, PluginPropertyField> properties = jsonObj.has("properties")
       ? context.<Map<String, PluginPropertyField>>deserialize(jsonObj.get("properties"), PROPERTIES_TYPE)
       : ImmutableMap.<String, PluginPropertyField>of();
 
-    return new PluginClass(type, name, description, className, null, properties, endpointsSet);
+    Set<String> requirements = Collections.emptySet();
+    if (jsonObj.has("requirements")) {
+      requirements = context.deserialize(jsonObj.get("requirements"), SET_OF_STRING_TYPE);
+    }
+
+    return new PluginClass(type, name, description, className, null, properties, endpointsSet, requirements);
   }
 
   private JsonElement getRequired(JsonObject jsonObj, String name) {

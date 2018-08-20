@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactRange;
@@ -27,6 +28,8 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.MetadataClient;
@@ -41,6 +44,7 @@ import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.endpointtest.PluginEndpointContextTestPlugin;
@@ -151,6 +155,28 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(getArtifacts(NamespaceId.DEFAULT).isEmpty());
     Assert.assertNull(getArtifacts(NamespaceId.DEFAULT, "wordcount"));
     Assert.assertNull(getArtifact(NamespaceId.DEFAULT.artifact("wordcount", "1.0.0")));
+  }
+
+  @Test
+  public void testPluginRequirements() throws Exception {
+    // add a system artifact
+    ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
+    addSystemArtifacts();
+
+    Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
+      systemId.getNamespace(), systemId.getArtifact(),
+      new ArtifactVersion(systemId.getVersion()), true, new ArtifactVersion(systemId.getVersion()), true));
+
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, InspectionApp.class.getPackage().getName());
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("inspection", "1.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
+                        addPluginArtifact(Id.Artifact.fromEntityId(artifactId), InspectionApp.class, manifest, parents)
+                          .getStatusLine().getStatusCode());
+    Set<PluginClass> plugins = getArtifact(artifactId).getClasses().getPlugins();
+    // check that requirement is being stored
+    validateRequirement(plugins, InspectionApp.SingleRequirementPlugin.class.getName(),
+                        ImmutableSet.of(Requirements.TRANSACTIONS));
   }
 
   @Test
@@ -996,5 +1022,14 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     String responseStr = new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8);
     urlConn.disconnect();
     return GSON.fromJson(responseStr, type);
+  }
+
+  private void validateRequirement(Set<PluginClass> plugins, String pluginClassName,
+                                   ImmutableSet<String> expectedRequirements) {
+    for (PluginClass plugin : plugins) {
+      if (plugin.getClassName().equals(pluginClassName)) {
+        Assert.assertEquals(expectedRequirements, plugin.getRequirements());
+      }
+    }
   }
 }

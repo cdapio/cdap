@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
@@ -49,6 +50,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Manifest;
 
@@ -87,12 +89,37 @@ public class ArtifactInspectorTest {
   }
 
   @Test
-  public void inspectAppsAndPlugins() throws Exception {
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, InspectionApp.class.getPackage().getName());
-    File appFile =
-      createJar(InspectionApp.class, new File(TMP_FOLDER.newFolder(), "InspectionApp-1.0.0.jar"), manifest);
+  public void testGetPluginRequirements() {
+    // check that if a plugin does not specify requirement annotation then it has empty requirements
+    Assert.assertTrue(artifactInspector.getPluginRequirements(InspectionApp.AppPlugin.class).isEmpty());
 
+    // check that if a plugin specify a requirement it is captured
+    Assert.assertEquals(ImmutableSet.of(Requirements.TRANSACTIONS),
+                        artifactInspector.getPluginRequirements(InspectionApp.SingleRequirementPlugin.class));
+
+    // check if a plugin specify a requirement annotation but it is empty the requirement captured is no requirement
+    Assert.assertTrue(artifactInspector.getPluginRequirements(InspectionApp.EmptyRequirementPlugin.class).isEmpty());
+
+    // check if a plugin specify multiple requirement all of them are captured
+    Assert.assertEquals(ImmutableSet.of(Requirements.TRANSACTIONS, "secondrequirement"),
+                        artifactInspector.getPluginRequirements(InspectionApp.MultipleRequirementsPlugin.class));
+
+    // check if a plugin has specified empty string as requirement is captured as no requirements
+    Assert.assertTrue(artifactInspector
+                        .getPluginRequirements(InspectionApp.SingleEmptyRequirementPlugin.class).isEmpty());
+
+    // check if a plugin has specified empty string with a valid requirement only the valid requirement is captured
+    Assert.assertEquals(ImmutableSet.of(Requirements.TRANSACTIONS),
+                        artifactInspector.getPluginRequirements(InspectionApp.ValidAndEmptyRequirementsPlugin.class));
+
+    // test that duplicate requirements are only stored once and the beginning and ending white spaces are trimmed
+    Assert.assertEquals(ImmutableSet.of(Requirements.TRANSACTIONS, "duplicate"),
+                        artifactInspector.getPluginRequirements(InspectionApp.DuplicateRequirementsPlugin.class));
+  }
+
+  @Test
+  public void inspectAppsAndPlugins() throws Exception {
+    File appFile = getAppFile();
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InspectionApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader =
@@ -114,8 +141,21 @@ public class ArtifactInspectorTest {
         ImmutableMap.of(
           "y", new PluginPropertyField("y", "", "double", true, true),
           "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)));
-      Assert.assertEquals(ImmutableSet.of(expectedPlugin), classes.getPlugins());
+      PluginClass multipleRequirementPlugin = new PluginClass(
+        InspectionApp.PLUGIN_TYPE, InspectionApp.MULTIPLE_REQUIREMENTS_PLUGIN, InspectionApp.PLUGIN_DESCRIPTION,
+        InspectionApp.MultipleRequirementsPlugin.class.getName(), "pluginConf",
+        ImmutableMap.of(
+          "y", new PluginPropertyField("y", "", "double", true, true),
+          "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)),
+        new HashSet<>(), ImmutableSet.of(Requirements.TRANSACTIONS, "secondrequirement"));
+      Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
     }
+  }
+
+  private File getAppFile() throws IOException {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, InspectionApp.class.getPackage().getName());
+    return createJar(InspectionApp.class, new File(TMP_FOLDER.newFolder(), "InspectionApp-1.0.0.jar"), manifest);
   }
 
   private static File createJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {

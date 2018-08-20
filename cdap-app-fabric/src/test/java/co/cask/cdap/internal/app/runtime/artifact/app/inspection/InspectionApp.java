@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.plugin.PluginConfig;
 
@@ -31,6 +32,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   public static final String PLUGIN_DESCRIPTION = "some plugin";
   public static final String PLUGIN_NAME = "pluginA";
   public static final String PLUGIN_TYPE = "A";
+  public static final String MULTIPLE_REQUIREMENTS_PLUGIN = "MultipleRequirementsPlugin";
 
   public static class AConfig extends Config {
     private int x;
@@ -52,6 +54,78 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Name(PLUGIN_NAME)
   @Description(PLUGIN_DESCRIPTION)
   public static class AppPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name("SingleRequirementPlugin")
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements(Requirements.TRANSACTIONS)
+  public static class SingleRequirementPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name(MULTIPLE_REQUIREMENTS_PLUGIN)
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements({Requirements.TRANSACTIONS, "secondRequirement"})
+  public static class MultipleRequirementsPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name("EmptyRequirementPlugin")
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements({})
+  public static class EmptyRequirementPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name("SingleEmptyRequirementPlugin")
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements("")
+  public static class SingleEmptyRequirementPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name("ValidAndEmptyRequirementsPlugin")
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements({Requirements.TRANSACTIONS, ""})
+  public static class ValidAndEmptyRequirementsPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name("DuplicateRequirementsPlugin")
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements({Requirements.TRANSACTIONS, "   DupliCate    ", "    duplicate    "})
+  public static class DuplicateRequirementsPlugin {
     private PConfig pluginConf;
 
     public double doSomething() {

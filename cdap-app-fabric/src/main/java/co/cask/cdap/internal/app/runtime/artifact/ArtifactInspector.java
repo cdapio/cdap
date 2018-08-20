@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
@@ -42,8 +43,10 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
@@ -73,6 +76,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -82,6 +87,7 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import java.util.zip.ZipException;
 import javax.annotation.Nullable;
 
@@ -242,7 +248,8 @@ final class ArtifactInspector {
           Set<String> pluginEndpoints = getPluginEndpoints(cls);
           PluginClass pluginClass = new PluginClass(pluginAnnotation.type(), getPluginName(cls),
                                                     getPluginDescription(cls), cls.getName(),
-                                                    configField, pluginProperties, pluginEndpoints);
+                                                    configField, pluginProperties, pluginEndpoints,
+                                                    getPluginRequirements(cls));
           builder.addPlugin(pluginClass);
         } catch (UnsupportedTypeException e) {
           LOG.warn("Plugin configuration type not supported. Plugin ignored. {}", cls, e);
@@ -347,6 +354,23 @@ final class ArtifactInspector {
   private String getPluginName(Class<?> cls) {
     Name annotation = cls.getAnnotation(Name.class);
     return annotation == null || annotation.value().isEmpty() ? cls.getName() : annotation.value();
+  }
+
+  /**
+   * Get all the {@link Requirements} specified by a plugin.
+   *
+   * @param cls the plugin class whose requirement needs to be found
+   * @return requirements specified by the plugin or an empty set if the plugin does not specify any
+   * {@link Requirements}
+   */
+  @VisibleForTesting
+  Set<String> getPluginRequirements(Class<?> cls) {
+    Requirements annotation = cls.getAnnotation(Requirements.class);
+    if (annotation == null) {
+      return Collections.emptySet();
+    }
+    return Arrays.stream(annotation.value()).map(s -> s.trim().toLowerCase())
+      .filter(s -> !Strings.isNullOrEmpty(s)).collect(Collectors.toSet());
   }
 
   /**
