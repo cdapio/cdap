@@ -682,7 +682,7 @@
     <name>data.local.storage.user.table.max.open.files</name>
     <value>100</value>
     <description>
-      Maximum number of open files per user table.
+      Maximum number of open file descriptors per user table to be used when in CDAP Local Sandbox.
     </description>
   </property>
 
@@ -690,7 +690,7 @@
     <name>data.local.storage.system.table.max.open.files</name>
     <value>500</value>
     <description>
-      Maximum number of open files per system table.
+      Maximum number of open file descriptors per system table to be used when in CDAP Local Sandbox.
     </description>
   </property>
 
