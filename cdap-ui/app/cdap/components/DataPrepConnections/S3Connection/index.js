@@ -22,11 +22,13 @@ import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
-import CardActionFeedback from 'components/CardActionFeedback';
+import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
 import {objectQuery} from 'services/helpers';
+import BtnWithLoading from 'components/BtnWithLoading';
 import ee from 'event-emitter';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.S3';
+const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
 
 const LABEL_COL_CLASS = 'col-xs-3 col-form-label text-xs-right';
 const INPUT_COL_CLASS = 'col-xs-8';
@@ -107,7 +109,10 @@ export default class S3Connection extends Component {
       accessSecretKey: '',
       region: '',
       testConnectionLoading: false,
-      connectionResult: null
+      connectionResult: {
+        type: null,
+        message: null
+      }
     };
 
     this.eventEmitter = ee(ee);
@@ -215,7 +220,10 @@ export default class S3Connection extends Component {
   testConnection() {
     this.setState({
       testConnectionLoading: true,
-      connectionResult: null,
+      connectionResult: {
+        type: null,
+        message: null
+      },
       error: null
     });
 
@@ -235,7 +243,7 @@ export default class S3Connection extends Component {
       .subscribe((res) => {
         this.setState({
           connectionResult: {
-            type: 'success',
+            type: CARD_ACTION_TYPES.SUCCESS,
             message: res.message
           },
           testConnectionLoading: false
@@ -247,7 +255,7 @@ export default class S3Connection extends Component {
 
         this.setState({
           connectionResult: {
-            type: 'danger',
+            type: CARD_ACTION_TYPES.DANGER,
             message: errorMessage
           },
           testConnectionLoading: false
@@ -268,37 +276,14 @@ export default class S3Connection extends Component {
       !this.state.region;
 
     return (
-      <span className="test-connection-button">
-        <button
-          className="btn btn-secondary"
-          onClick={this.testConnection}
-          disabled={disabled}
-        >
-          {T.translate(`${PREFIX}.testConnection`)}
-        </button>
-        {
-          this.state.testConnectionLoading ?
-            (
-              <span className="fa loading-indicator">
-                <LoadingSVG />
-              </span>
-            )
-          :
-            null
-        }
-        {
-          this.state.connectionResult ?
-            (
-              <span
-                className={`connection-check text-${this.state.connectionResult.type}`}
-              >
-                {this.state.connectionResult.message}
-              </span>
-            )
-          :
-            null
-        }
-      </span>
+      <BtnWithLoading
+        className="btn btn-secondary"
+        onClick={this.testConnection}
+        disabled={disabled}
+        label={T.translate(`${PREFIX}.testConnection`)}
+        loading={this.state.testConnectionLoading}
+        darker={true}
+      />
     );
   }
 
@@ -315,19 +300,17 @@ export default class S3Connection extends Component {
     }
 
     return (
-      <div className="row">
-        <div className="col-xs-9 offset-xs-3 col-xs-offset-3">
-          <button
-            className="btn btn-primary"
-            onClick={onClickFn}
-            disabled={disabled}
-          >
-            {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
-          </button>
+      <ModalFooter>
+        <button
+          className="btn btn-primary"
+          onClick={onClickFn}
+          disabled={disabled}
+        >
+          {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
+        </button>
 
-          {this.renderTestButton()}
-        </div>
-      </div>
+        {this.renderTestButton()}
+      </ModalFooter>
     );
   }
 
@@ -343,12 +326,6 @@ export default class S3Connection extends Component {
 
     return (
       <div className="s3-detail">
-        <div className="row">
-          <div className={`${INPUT_COL_CLASS} offset-xs-3 col-xs-offset-3`}>
-            <span className="asterisk">*</span>
-            <em>{T.translate(`${PREFIX}.required`)}</em>
-          </div>
-        </div>
 
         <div className="form">
           <div className="form-group row">
@@ -432,26 +409,31 @@ export default class S3Connection extends Component {
             </div>
           </div>
 
-          <br />
-
-          {this.renderAddConnectionButton()}
-
         </div>
       </div>
     );
   }
 
   renderError() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error && !this.state.connectionResult.message) { return null; }
 
-    return (
-      <ModalFooter>
+    if (this.state.error) {
+      return (
         <CardActionFeedback
-          type="DANGER"
+          type={CARD_ACTION_TYPES.DANGER}
           message={T.translate(`${PREFIX}.ErrorMessages.${this.props.mode}`)}
           extendedMessage={this.state.error}
         />
-      </ModalFooter>
+      );
+    }
+
+    const connectionResultType = this.state.connectionResult.type;
+    return (
+      <CardActionFeedback
+        message={T.translate(`${ADDCONN_PREFIX}.TestConnectionLabels.${connectionResultType.toLowerCase()}`)}
+        extendedMessage={connectionResultType === CARD_ACTION_TYPES.SUCCESS ? null : this.state.connectionResult.message}
+        type={connectionResultType}
+      />
     );
   }
 
@@ -462,7 +444,7 @@ export default class S3Connection extends Component {
           isOpen={true}
           toggle={this.props.close}
           size="lg"
-          className="s3-connection-modal"
+          className="s3-connection-modal cdap-modal"
           backdrop="static"
           zIndex="1061"
         >
@@ -474,6 +456,7 @@ export default class S3Connection extends Component {
             {this.renderContent()}
           </ModalBody>
 
+          {this.renderAddConnectionButton()}
           {this.renderError()}
         </Modal>
       </div>

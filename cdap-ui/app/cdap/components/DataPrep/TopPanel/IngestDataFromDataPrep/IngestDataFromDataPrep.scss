@@ -20,8 +20,8 @@ $error-bg-color: #2c3e50;
 $error-font-color: #cdcdcd;
 $max_height_error_container: 200px;
 
-.dataprep-parse-modal {
-  &.create-dataset-modal {
+.cdap-modal {
+  &.dataprep-create-dataset-modal {
     form {
       input.form-control,
       select.form-control {
@@ -81,21 +81,6 @@ $max_height_error_container: 200px;
           .btn.btn-primary {
             margin-top: 15px;
           }
-        }
-      }
-    }
-    .modal-footer {
-      &.dataset-copy-error-container {
-        padding: 0;
-        text-align: left;
-        .step-error-container {
-          background: $error-bg-color;
-          color: $error-font-color;
-          padding: 5px 15px;
-          width: 100%;
-          text-align: left;
-          max-height: $max_height_error_container;
-          overflow-y: auto;
         }
       }
     }

@@ -89,19 +89,7 @@ $workspace-link-active-color: var(--brand-primary-color);
 }
 
 .workspace-delete-confirmation {
-  .modal-header {
-    border-bottom: 0;
-
-    .close { opacity: 1; }
-  }
-
   .modal-body {
     h4 { margin-bottom: 15px; }
-
-    .action-buttons {
-      margin-top: 25px;
-
-      .btn { margin-right: 10px; }
-    }
   }
 }

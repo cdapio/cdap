@@ -29,22 +29,41 @@ require('./CardActionFeedback.scss');
 import isObject from 'lodash/isObject';
 
 var classNames = require('classnames');
+export const CARD_ACTION_TYPES = {
+  SUCCESS: 'SUCCESS',
+  DANGER: 'DANGER',
+  WARNING: 'WARNING',
+  LOADING: 'LOADING'
+};
 
 export default class CardActionFeedback extends Component {
-  constructor(props) {
-    super(props);
 
-    this.state = {
-      isExpanded: false
-    };
-  }
+  static propTypes = {
+    type: PropTypes.oneOf([
+      CARD_ACTION_TYPES.SUCCESS,
+      CARD_ACTION_TYPES.WARNING,
+      CARD_ACTION_TYPES.DANGER,
+      CARD_ACTION_TYPES.LOADING
+    ]).isRequired,
+    message: PropTypes.string,
+    extendedMessage: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        response: PropTypes.string
+      })
+    ])
+  };
+
+  state = {
+    isExpanded: false
+  };
 
   getIcon() {
     let icon = classNames('fa',
-      { 'fa-check': this.props.type === 'SUCCESS' },
-      { 'fa-exclamation': this.props.type === 'DANGER' },
-      { 'fa-exclamation-triangle': this.props.type === 'WARNING' },
-      { 'fa-spinner fa-spin': this.props.type === 'LOADING' }
+      { 'fa-check': this.props.type === CARD_ACTION_TYPES.SUCCESS },
+      { 'fa-exclamation': this.props.type === CARD_ACTION_TYPES.DANGER },
+      { 'fa-exclamation-triangle': this.props.type === CARD_ACTION_TYPES.WARNING },
+      { 'fa-spinner fa-spin': this.props.type === CARD_ACTION_TYPES.LOADING }
     );
 
     return <span className="feedback-icon"><span className={icon}></span></span>;
@@ -111,14 +130,3 @@ export default class CardActionFeedback extends Component {
     );
   }
 }
-
-CardActionFeedback.propTypes = {
-  type: PropTypes.oneOf(['SUCCESS', 'WARNING', 'DANGER', 'LOADING']).isRequired,
-  message: PropTypes.string,
-  extendedMessage: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.shape({
-      response: PropTypes.string
-    })
-  ])
-};

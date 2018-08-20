@@ -24,6 +24,8 @@ import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import IconSVG from 'components/IconSVG';
 import MouseTrap from 'mousetrap';
+import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
+import If from 'components/If';
 
 require('./ReplaceColumns.scss');
 
@@ -188,7 +190,7 @@ export default class ReplaceColumns extends Component {
         size="md"
         backdrop="static"
         zIndex="1061"
-        className="dataprep-parse-modal changecolumns-columnactions-modal"
+        className="changecolumns-columnactions-modal cdap-modal"
       >
         <ModalHeader>
           <span>
@@ -273,6 +275,12 @@ export default class ReplaceColumns extends Component {
             </button>
           </fieldset>
         </ModalFooter>
+        <If condition={this.state.error}>
+          <CardActionFeedback
+            type={CARD_ACTION_TYPES.DANGER}
+            message={this.state.error}
+          />
+        </If>
       </Modal>
     );
   }

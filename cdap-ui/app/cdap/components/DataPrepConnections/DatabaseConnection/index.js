@@ -148,7 +148,7 @@ export default class DatabaseConnection extends Component {
           isOpen={true}
           toggle={this.props.close}
           size="lg"
-          className="database-connection-modal"
+          className="database-connection-modal cdap-modal"
           backdrop="static"
           zIndex="1061"
         >

@@ -665,6 +665,7 @@ features:
           pipe: Pipe
           tab: Tab
           whitespace: Whitespace
+      failedApplyDirectiveMessage: Failed to apply directive. Please modify input and try again #temporary fallback until backend sends non-null error
       FillNullOrEmpty:
         title: Fill null or empty cells
       Filter:
@@ -1044,7 +1045,6 @@ features:
           EDIT: "Edit connection: {connection}"
         name: Name
         projectId: Project ID
-        required: Required
         serviceAccountKeyfile: Service account key file location
         testConnection: Test Connection
       Database:
@@ -1125,7 +1125,6 @@ features:
         testConnection: Test Connection
         zkQuorum: Zookeeper host
         zookeeper: Zookeeper
-
       label: Add Connection
       Popover:
         title: Select a source to connect
@@ -1149,6 +1148,9 @@ features:
         region: Region
         required: Required
         testConnection: Test Connection
+      TestConnectionLabels:
+        danger: Test connection failed
+        success: Test connection succcessful
     bigquery: Google BigQuery ({count})
 
     ConnectionManagement:

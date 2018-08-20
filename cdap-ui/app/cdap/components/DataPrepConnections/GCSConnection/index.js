@@ -22,11 +22,13 @@ import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
-import CardActionFeedback from 'components/CardActionFeedback';
+import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
 import {objectQuery} from 'services/helpers';
 import ee from 'event-emitter';
+import BtnWithLoading from 'components/BtnWithLoading';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.GCS';
+const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
 
 const LABEL_COL_CLASS = 'col-xs-3 col-form-label text-xs-right';
 const INPUT_COL_CLASS = 'col-xs-8';
@@ -43,7 +45,10 @@ export default class GCSConnection extends Component {
       projectId: '',
       serviceAccountKeyfile: '',
       testConnectionLoading: false,
-      connectionResult: null
+      connectionResult: {
+        message: null,
+        type: null
+      }
     };
 
     this.eventEmitter = ee(ee);
@@ -147,7 +152,10 @@ export default class GCSConnection extends Component {
   testConnection() {
     this.setState({
       testConnectionLoading: true,
-      connectionResult: null,
+      connectionResult: {
+        message: null,
+        type: null
+      },
       error: null
     });
 
@@ -166,7 +174,7 @@ export default class GCSConnection extends Component {
       .subscribe((res) => {
         this.setState({
           connectionResult: {
-            type: 'success',
+            type: CARD_ACTION_TYPES.SUCCESS,
             message: res.message
           },
           testConnectionLoading: false
@@ -178,7 +186,7 @@ export default class GCSConnection extends Component {
 
         this.setState({
           connectionResult: {
-            type: 'danger',
+            type: CARD_ACTION_TYPES.DANGER,
             message: errorMessage
           },
           testConnectionLoading: false
@@ -195,40 +203,18 @@ export default class GCSConnection extends Component {
   renderTestButton() {
     let disabled = !this.state.name ||
       !this.state.projectId ||
-      !this.state.serviceAccountKeyfile;
+      !this.state.serviceAccountKeyfile ||
+      this.state.testConnectionLoading;
 
     return (
-      <span className="test-connection-button">
-        <button
-          className="btn btn-secondary"
-          onClick={this.testConnection}
-          disabled={disabled}
-        >
-          {T.translate(`${PREFIX}.testConnection`)}
-        </button>
-        {
-          this.state.testConnectionLoading ?
-            (
-              <span className="fa loading-indicator">
-                <LoadingSVG />
-              </span>
-            )
-          :
-            null
-        }
-        {
-          this.state.connectionResult ?
-            (
-              <span
-                className={`connection-check text-${this.state.connectionResult.type}`}
-              >
-                {this.state.connectionResult.message}
-              </span>
-            )
-          :
-            null
-        }
-      </span>
+      <BtnWithLoading
+        loading={this.state.testConnectionLoading}
+        label={T.translate(`${PREFIX}.testConnection`)}
+        className="btn btn-secondary"
+        onClick={this.testConnection}
+        disabled={disabled}
+        darker={true}
+      />
     );
   }
 
@@ -244,19 +230,17 @@ export default class GCSConnection extends Component {
     }
 
     return (
-      <div className="row">
-        <div className="col-xs-9 offset-xs-3 col-xs-offset-3">
-          <button
-            className="btn btn-primary"
-            onClick={onClickFn}
-            disabled={disabled}
-          >
-            {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
-          </button>
+      <ModalFooter>
+        <button
+          className="btn btn-primary"
+          onClick={onClickFn}
+          disabled={disabled}
+        >
+          {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
+        </button>
 
-          {this.renderTestButton()}
-        </div>
-      </div>
+        {this.renderTestButton()}
+      </ModalFooter>
     );
   }
 
@@ -272,12 +256,6 @@ export default class GCSConnection extends Component {
 
     return (
       <div className="gcs-detail">
-        <div className="row">
-          <div className={`${INPUT_COL_CLASS} offset-xs-3 col-xs-offset-3`}>
-            <span className="asterisk">*</span>
-            <em>{T.translate(`${PREFIX}.required`)}</em>
-          </div>
-        </div>
 
         <div className="form">
           <div className="form-group row">
@@ -332,26 +310,31 @@ export default class GCSConnection extends Component {
             </div>
           </div>
 
-          <br />
-
-          {this.renderAddConnectionButton()}
-
         </div>
       </div>
     );
   }
 
   renderError() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error && !this.state.connectionResult.message) { return null; }
 
-    return (
-      <ModalFooter>
+    if (this.state.error) {
+      return (
         <CardActionFeedback
-          type="DANGER"
+          type={this.state.connectionResult.type}
           message={T.translate(`${PREFIX}.ErrorMessages.${this.props.mode}`)}
           extendedMessage={this.state.error}
         />
-      </ModalFooter>
+      );
+    }
+
+    const connectionResultType = this.state.connectionResult.type;
+    return (
+      <CardActionFeedback
+        message={T.translate(`${ADDCONN_PREFIX}.TestConnectionLabels.${connectionResultType.toLowerCase()}`)}
+        extendedMessage={connectionResultType === CARD_ACTION_TYPES.SUCCESS ? null : this.state.connectionResult.message}
+        type={connectionResultType}
+      />
     );
   }
 
@@ -362,7 +345,7 @@ export default class GCSConnection extends Component {
           isOpen={true}
           toggle={this.props.close}
           size="lg"
-          className="gcs-connection-modal"
+          className="gcs-connection-modal cdap-modal"
           backdrop="static"
           zIndex="1061"
         >
@@ -373,7 +356,7 @@ export default class GCSConnection extends Component {
           <ModalBody>
             {this.renderContent()}
           </ModalBody>
-
+          {this.renderAddConnectionButton()}
           {this.renderError()}
         </Modal>
       </div>

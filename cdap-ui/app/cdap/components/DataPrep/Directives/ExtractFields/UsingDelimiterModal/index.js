@@ -116,7 +116,7 @@ export default class UsingDelimiterModal extends Component {
         size="md"
         backdrop="static"
         zIndex="1061"
-        className="dataprep-parse-modal using-delimiter-modal"
+        className="dataprep-parse-modal using-delimiter-modal cdap-modal"
       >
         <ModalHeader>
 

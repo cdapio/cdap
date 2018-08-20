@@ -719,13 +719,11 @@ export default class IngestDataFromDataPrep extends Component {
   renderFooter() {
     if (this.state.error) {
       return (
-        <ModalFooter className="dataset-copy-error-container">
-          <CardActionFeedback
-            type='DANGER'
-            message={T.translate(`${PREFIX}.ingestFailMessage`)}
-            extendedMessage={this.state.error}
-          />
-        </ModalFooter>
+        <CardActionFeedback
+          type='DANGER'
+          message={T.translate(`${PREFIX}.ingestFailMessage`)}
+          extendedMessage={this.state.error}
+        />
       );
     }
     if (!this.state.copyInProgress) {
@@ -766,9 +764,8 @@ export default class IngestDataFromDataPrep extends Component {
           isOpen={this.state.showModal}
           size="md"
           backdrop="static"
-          keyboard={false}
           zIndex="1061"
-          className="dataprep-parse-modal create-dataset-modal"
+          className="cdap-modal dataprep-create-dataset-modal"
         >
           <ModalHeader>
             <span>

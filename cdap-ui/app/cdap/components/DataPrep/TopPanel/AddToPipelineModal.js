@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {getCurrentNamespace} from 'services/NamespaceStore';
@@ -27,6 +27,8 @@ import classnames from 'classnames';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import CardActionFeedback from 'components/CardActionFeedback';
 import getPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
+import isString from 'lodash/isString';
+import If from 'components/If';
 
 const mapErrorToMessage = (message) => {
   if (message.indexOf('invalid field name') !== -1) {
@@ -234,7 +236,7 @@ export default class AddToHydratorModal extends Component {
         isOpen={true}
         toggle={this.props.toggle}
         size="lg"
-        className="add-to-pipeline-dataprep-modal"
+        className="add-to-pipeline-dataprep-modal cdap-modal"
       >
         <ModalHeader>
           <span>
@@ -250,20 +252,14 @@ export default class AddToHydratorModal extends Component {
         </ModalHeader>
         <ModalBody>
           {showContent ? content : this.renderInvalidFieldError()}
-
         </ModalBody>
-        {
-          this.state.error && showContent ?
-            <ModalFooter className="dataset-copy-error-container">
-              <CardActionFeedback
-                type='DANGER'
-                message={T.translate(`${PREFIX}.addToPipelineModal.errorTitle`)}
-                extendedMessage={this.state.error}
-              />
-            </ModalFooter>
-          :
-            null
-        }
+        <If condition={this.state.error}>
+          <CardActionFeedback
+            type='DANGER'
+            message={T.translate(`${PREFIX}.addToPipelineModal.errorTitle`)}
+            extendedMessage={isString(this.state.error) ? this.state.error : null}
+          />
+        </If>
       </Modal>
     );
   }

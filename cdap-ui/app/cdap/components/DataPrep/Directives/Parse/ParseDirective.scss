@@ -41,9 +41,6 @@ $option-hover-active-bg-color: #dddddd;
 }
 
 .dataprep-parse-modal.modal-dialog {
-  margin-top: 100px;
-
-  .close-section { cursor: pointer; }
 
   .modal-body {
     h5 {
@@ -67,11 +64,6 @@ $option-hover-active-bg-color: #dddddd;
     .list-options { margin-bottom: 10px; }
   }
 
-  .modal-footer {
-    .btn {
-      margin-left: 5px;
-    }
-  }
 }
 
 .dataprep-parse-modal {

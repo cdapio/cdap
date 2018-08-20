@@ -14,11 +14,10 @@
  * the License.
  */
 
-$top-panel-connection-color: #999999;
-$action-btn-inactive-color: #aaaaaa;
-
 @import '../../../styles/variables.scss';
 
+$action-btn-inactive-color: #aaaaaa;
+$top-panel-connection-color: $grey-03;
 $dropdown_menu_color: $link-color;
 $dropdown_item_font_color: black;
 $success_alert_color: white;
@@ -27,7 +26,7 @@ $success_alert_bg_color: $brand-success;
 .dataprep-container {
   .top-panel {
     height: 50px;
-    border-bottom: 1px solid #cccccc;
+    border-bottom: 1px solid $grey-05;
     margin-left: 0;
     display: flex;
 
@@ -211,7 +210,6 @@ $success_alert_bg_color: $brand-success;
 
 .add-to-pipeline-dataprep-modal.modal-dialog,
 .dataprep-upgrade-modal.modal-dialog {
-  margin-top: 100px;
 
   .modal-body {
     padding: 0;
@@ -247,10 +245,10 @@ $success_alert_bg_color: $brand-success;
         width: 50%;
         border-radius: 0;
         border: none;
-        border-top: 1px solid #cccccc;
+        border-top: 1px solid $grey-05;
         padding: 10px 0;
 
-        &:first-child { border-right: 1px solid #cccccc; }
+        &:first-child { border-right: 1px solid $grey-05; }
         .fa { margin-right: 10px; }
 
         &.inactive {
@@ -273,15 +271,10 @@ $success_alert_bg_color: $brand-success;
   }
 }
 .dataprep-schema-modal.modal-dialog {
-  margin-top: 100px;
   .modal-header {
-    .fa {
-      cursor: pointer;
-    }
-
     .btn.btn-link {
       padding: 0;
-      margin-right: 50px;
+      margin-right: 20px;
       color: inherit;
       font-size: inherit;
 
@@ -306,10 +299,6 @@ $success_alert_bg_color: $brand-success;
     .btn-link {
       cursor: pointer;
       color: var(--brand-primary-color);
-    }
-    .fa.fa-exclamation-triangle {
-      margin-right: 5px;
-      font-size: 15px;
     }
   }
 }
