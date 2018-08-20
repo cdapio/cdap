@@ -18,6 +18,8 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBNameConverter;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -55,8 +57,9 @@ import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 public class LevelDBTableService implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBTableService.class);
-  private final ConcurrentMap<String, DB> tables = new ConcurrentHashMap<>();;
+  private final ConcurrentMap<String, DB> tables = new ConcurrentHashMap<>();
 
+  private CConfiguration cConf;
   private String tablePrefix;
   private int blockSize;
   private long cacheSize;
@@ -88,6 +91,7 @@ public class LevelDBTableService implements AutoCloseable {
    */
   @Inject
   public void setConfiguration(CConfiguration config) {
+    this.cConf = config;
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
     tablePrefix = config.get(Constants.Dataset.TABLE_PREFIX);
@@ -225,7 +229,8 @@ public class LevelDBTableService implements AutoCloseable {
     options.comparator(new KeyValueDBComparator());
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
-    options.maxOpenFiles(isSystemTable(tableName) ? systemTablesMaxOpenFiles : userTablesMaxOpenFiles);
+    boolean userDataset = DatasetsUtil.isUserDataset(PrefixedNamespaces.getDatasetId(cConf, tableName));
+    options.maxOpenFiles(userDataset ? userTablesMaxOpenFiles : systemTablesMaxOpenFiles);
 
     if (!createIfMissing) {
       // unfortunately, with the java version of leveldb, with createIfMissing set to false, factory.open will
@@ -238,10 +243,6 @@ public class LevelDBTableService implements AutoCloseable {
       }
     }
     return factory.open(new File(dbPath), options);
-  }
-
-  private boolean isSystemTable(String tableName) {
-    return tableName.startsWith(String.format("%s_%s", tablePrefix, NamespaceId.SYSTEM.getNamespace()));
   }
 
   public void dropTable(String name) throws IOException {

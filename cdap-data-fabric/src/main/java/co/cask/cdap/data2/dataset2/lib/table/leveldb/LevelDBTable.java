@@ -49,7 +49,7 @@ public class LevelDBTable extends BufferingTable {
 
   public LevelDBTable(DatasetContext datasetContext, String tableName,
                       LevelDBTableService service, CConfiguration cConf,
-                      DatasetSpecification spec) throws IOException {
+                      DatasetSpecification spec) {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName),
           false, spec.getProperties());
     this.core = new LevelDBTableCore(getTableName(), service);
@@ -156,7 +156,7 @@ public class LevelDBTable extends BufferingTable {
     };
   }
 
-  // Helper methods to help operate on the Scanner with authroization
+  // Helper methods to help operate on the Scanner with authorization
 
   @ReadOnly
   private Row next(Scanner scanner) {

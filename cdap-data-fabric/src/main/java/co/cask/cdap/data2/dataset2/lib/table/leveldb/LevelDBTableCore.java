@@ -54,7 +54,7 @@ public class LevelDBTableCore {
   private static final Scanner EMPTY_SCANNER = createEmptyScanner();
 
   // this represents deleted values
-  protected static final byte[] DELETE_MARKER = { };
+  private static final byte[] DELETE_MARKER = { };
 
   // we use the empty column family for all data
   private static final byte[] DATA_COLFAM = { };
@@ -72,13 +72,13 @@ public class LevelDBTableCore {
   // empty immutable row's column->value map constant
   // Using ImmutableSortedMap instead of Maps.unmodifiableNavigableMap to avoid conflicts with
   // Hadoop, which uses an older version of guava without that method.
-  static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
+  private static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
     ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).build();
 
   private final String tableName;
   private final LevelDBTableService service;
 
-  public LevelDBTableCore(String tableName, LevelDBTableService service) throws IOException {
+  public LevelDBTableCore(String tableName, LevelDBTableService service) {
     this.tableName = tableName;
     this.service = service;
   }

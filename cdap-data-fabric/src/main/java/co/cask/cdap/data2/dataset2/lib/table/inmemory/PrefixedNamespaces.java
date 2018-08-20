@@ -18,14 +18,13 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 
 /**
  * Defines a prefix-based namespace strategy for in-memory and LevelDB tables.
  * Only used to generate internal representation (name) of datasets, in-memory and LevelDB tables.
- *
- * Note: This namespacing should always only be one-way, i.e. we should never have to derive the components
- * (root prefix, namespace id and dataset name) from the namespaced name.
  */
 public class PrefixedNamespaces {
 
@@ -47,5 +46,24 @@ public class PrefixedNamespaces {
     String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     String namespace = Joiner.on("_").join(rootPrefix, namespaceId);
     return Joiner.on(".").join(namespace, name);
+  }
+
+  /**
+   * Extracts the {@link DatasetId} from a dataset's namespaced name.
+   *
+   * @param cConf CDAP configuration
+   * @param namespacedName the dataset's name qualified with a root prefix and a namespace id, as constructed
+   *                       by {@link #namespace(CConfiguration, String, String)}.
+   * @return {@link DatasetId} for the
+   */
+  public static DatasetId getDatasetId(CConfiguration cConf, String namespacedName) {
+    String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX) + "_";
+    Preconditions.checkArgument(namespacedName.startsWith(rootPrefix),
+                                "Expected '%s' to start with '%s'.", namespacedName, rootPrefix);
+    String namespaceAndName = namespacedName.substring(rootPrefix.length());
+    String[] parts = namespaceAndName.split("\\.", 2);
+    Preconditions.checkArgument(parts.length == 2,
+                                "Expected there to be at least one '.' in: %s.", namespaceAndName);
+    return new DatasetId(parts[0], parts[1]);
   }
 }
