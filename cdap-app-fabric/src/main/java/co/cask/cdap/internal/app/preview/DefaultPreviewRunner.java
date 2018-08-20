@@ -30,6 +30,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
@@ -75,11 +76,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewRunner.class);
   private static final Gson GSON = new Gson();
 
-  private static final ProgramTerminator NOOP_PROGRAM_TERMINATOR = new ProgramTerminator() {
-    @Override
-    public void stop(ProgramId programId) throws Exception {
-      // no-op
-    }
+  private static final ProgramTerminator NOOP_PROGRAM_TERMINATOR = programId -> {
+    // no-op
   };
 
   private final MessagingService messagingService;
@@ -95,6 +93,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final MetricsCollectionService metricsCollectionService;
   private final MetricsQueryHelper metricsQueryHelper;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
+  private final LevelDBTableService levelDBTableService;
 
   private volatile PreviewStatus status;
   private volatile boolean killedByTimer;
@@ -111,7 +110,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
                        NamespaceAdmin namespaceAdmin, ProgramStore programStore,
                        MetricsCollectionService metricsCollectionService, MetricsQueryHelper metricsQueryHelper,
-                       ProgramNotificationSubscriberService programNotificationSubscriberService) {
+                       ProgramNotificationSubscriberService programNotificationSubscriberService,
+                       LevelDBTableService levelDBTableService) {
     this.messagingService = messagingService;
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
@@ -126,6 +126,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.metricsCollectionService = metricsCollectionService;
     this.metricsQueryHelper = metricsQueryHelper;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
+    this.levelDBTableService = levelDBTableService;
   }
 
   @Override
@@ -273,6 +274,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
+    levelDBTableService.close();
   }
 
   private void shutDownUnrequiredServices() {

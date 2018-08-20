@@ -40,6 +40,7 @@ import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -53,6 +54,8 @@ public class LevelDBQueueTest extends QueueTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static LevelDBTableService levelDBTableService;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -76,7 +79,12 @@ public class LevelDBQueueTest extends QueueTest {
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    LevelDBTableService.getInstance().clearTables();
+    levelDBTableService = injector.getInstance(LevelDBTableService.class);
+  }
+
+  @After
+  public void clear() {
+    levelDBTableService.clearTables();
   }
 
   // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class

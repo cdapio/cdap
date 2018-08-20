@@ -28,9 +28,11 @@ import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -52,16 +54,14 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  static LevelDBTableService service;
-  static Injector injector = null;
-
+  private static LevelDBTableService service;
   private static CConfiguration cConf;
 
   @BeforeClass
   public static void init() throws Exception {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
-    injector = Guice.createInjector(
+    Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new NonCustomLocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
@@ -106,10 +106,11 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
       Assert.assertTrue(admin.exists());
     }
 
-    // clearing in-mem cache - mimicing JVM restart
+    // clearing in-mem cache - mimicking JVM restart
     service.clearTables();
     for (String tableName : tableNames) {
-      service.list().contains(tableName);
+      Preconditions.checkState(service.list().contains(
+        PrefixedNamespaces.namespace(cConf, CONTEXT1.getNamespaceId(), tableName)));
     }
   }
 }
