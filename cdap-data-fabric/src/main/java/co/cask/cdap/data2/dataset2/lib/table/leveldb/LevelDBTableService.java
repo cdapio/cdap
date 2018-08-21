@@ -18,14 +18,16 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBNameConverter;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -43,6 +45,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
@@ -54,14 +57,18 @@ import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 public class LevelDBTableService implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBTableService.class);
+  private final ConcurrentMap<String, DB> tables = new ConcurrentHashMap<>();
 
+  private CConfiguration cConf;
+  private String tablePrefix;
   private int blockSize;
   private long cacheSize;
   private String basePath;
   private WriteOptions writeOptions;
-  private boolean isClosed;
+  private int userTablesMaxOpenFiles;
+  private int systemTablesMaxOpenFiles;
 
-  private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
+  private boolean isClosed;
 
   /**
    * To avoid database locking issues make sure that the single LevelDBTableService instance
@@ -84,13 +91,25 @@ public class LevelDBTableService implements AutoCloseable {
    */
   @Inject
   public void setConfiguration(CConfiguration config) {
+    this.cConf = config;
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
+    tablePrefix = config.get(Constants.Dataset.TABLE_PREFIX);
 
     blockSize = config.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
     writeOptions = new WriteOptions().sync(
       config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC));
+
+    userTablesMaxOpenFiles = config.getInt(Constants.CFG_DATA_LEVELDB_USER_TABLE_MAX_OPEN_FILES);
+    systemTablesMaxOpenFiles = config.getInt(Constants.CFG_DATA_LEVELDB_SYSTEM_TABLE_MAX_OPEN_FILES);
+    // sanity checks to fail fast
+    Preconditions.checkArgument(userTablesMaxOpenFiles >= 0,
+                                "Must give a non-negative value for %s.",
+                                Constants.CFG_DATA_LEVELDB_USER_TABLE_MAX_OPEN_FILES);
+    Preconditions.checkArgument(systemTablesMaxOpenFiles >= 0,
+                                "Must give a non-negative value for %s.",
+                                Constants.CFG_DATA_LEVELDB_SYSTEM_TABLE_MAX_OPEN_FILES);
   }
 
   /**
@@ -168,7 +187,7 @@ public class LevelDBTableService implements AutoCloseable {
     return size;
   }
 
-  public WriteOptions getWriteOptions() {
+  WriteOptions getWriteOptions() {
     return writeOptions;
   }
 
@@ -179,7 +198,7 @@ public class LevelDBTableService implements AutoCloseable {
       synchronized (tables) {
         db = tables.get(tableName);
         if (db == null) {
-          db = openTable(tableName);
+          db = getDB(tableName, false);
           tables.put(tableName, db);
         }
       }
@@ -194,47 +213,36 @@ public class LevelDBTableService implements AutoCloseable {
       synchronized (tables) {
         db = tables.get(tableName);
         if (db == null) {
-          createTable(tableName);
+          db = getDB(tableName, true);
+          tables.put(tableName, db);
         }
       }
     }
   }
 
-  private DB openTable(String tableName) throws IOException {
+  private DB getDB(String tableName, boolean createIfMissing) throws IOException {
     String dbPath = getDBPath(basePath, tableName);
 
     Options options = new Options();
-    options.createIfMissing(false);
+    options.createIfMissing(createIfMissing);
     options.errorIfExists(false);
     options.comparator(new KeyValueDBComparator());
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
+    boolean userDataset = DatasetsUtil.isUserDataset(PrefixedNamespaces.getDatasetId(cConf, tableName));
+    options.maxOpenFiles(userDataset ? userTablesMaxOpenFiles : systemTablesMaxOpenFiles);
 
-    // unfortunately, with the java version of leveldb, with createIfMissing set to false, factory.open will
-    // see that there is no table and throw an exception, but it wont clean up after itself and will leave a
-    // directory there with a lock.  So we want to avoid calling open if the path doesn't already exist and
-    // throw the exception ourselves.
-    File dbDir = new File(dbPath);
-    if (!dbDir.exists()) {
-      throw new IOException("Database " + dbPath + " does not exist and the create if missing option is disabled");
+    if (!createIfMissing) {
+      // unfortunately, with the java version of leveldb, with createIfMissing set to false, factory.open will
+      // see that there is no table and throw an exception, but it wont clean up after itself and will leave a
+      // directory there with a lock.  So we want to avoid calling open if the path doesn't already exist and
+      // throw the exception ourselves.
+      File dbDir = new File(dbPath);
+      if (!dbDir.exists()) {
+        throw new IOException("Database " + dbPath + " does not exist and the create if missing option is disabled");
+      }
     }
-    DB db = factory.open(dbDir, options);
-    tables.put(tableName, db);
-    return db;
-  }
-
-  private void createTable(String name) throws IOException {
-    String dbPath = getDBPath(basePath, name);
-
-    Options options = new Options();
-    options.createIfMissing(true);
-    options.errorIfExists(false);
-    options.comparator(new KeyValueDBComparator());
-    options.blockSize(blockSize);
-    options.cacheSize(cacheSize);
-
-    DB db = factory.open(new File(dbPath), options);
-    tables.put(name, db);
+    return factory.open(new File(dbPath), options);
   }
 
   public void dropTable(String name) throws IOException {
