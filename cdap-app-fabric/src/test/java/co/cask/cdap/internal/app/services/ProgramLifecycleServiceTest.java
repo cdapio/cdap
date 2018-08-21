@@ -19,24 +19,63 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.MethodNotAllowedException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.profile.ProfileService;
+import co.cask.cdap.internal.provision.MockProvisioner;
+import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.profile.Profile;
+import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import com.google.inject.Injector;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * ProgramLifecycleService tests.
  */
-public class ProgramLifecycleServiceTest {
+public class ProgramLifecycleServiceTest extends AppFabricTestBase {
+  private static ProgramLifecycleService programLifecycleService;
+  private static ProfileService profileService;
+  private static ProvisioningService provisioningService;
+
+  @BeforeClass
+  public static void setup() {
+    Injector injector = AppFabricTestHelper.getInjector();
+    programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
+    profileService = injector.getInstance(ProfileService.class);
+    provisioningService = injector.getInstance(ProvisioningService.class);
+    provisioningService.startAndWait();
+  }
 
   @Test
   public void testEmptyRunsIsStopped() {
@@ -124,5 +163,34 @@ public class ProgramLifecycleServiceTest {
     // end states are stopped
     status = ProgramLifecycleService.getProgramStatus(Arrays.asList(killed, failed, completed));
     Assert.assertEquals(ProgramStatus.STOPPED, status);
+  }
+
+  @Test
+  public void testProfileProgramTypeRestrictions()
+    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
+    ProfileId profileId = NamespaceId.DEFAULT.profile("profABC");
+    ProvisionerInfo provisionerInfo = new ProvisionerInfo(MockProvisioner.NAME, Collections.emptyList());
+    Profile profile = new Profile("profABC", "label", "desc", provisionerInfo);
+    profileService.createIfNotExists(profileId, profile);
+
+    try {
+      Map<String, String> userArgs = new HashMap<>();
+      userArgs.put(SystemArguments.PROFILE_NAME, profileId.getProfile());
+      Map<String, String> systemArgs = new HashMap<>();
+
+      for (ProgramType programType : Arrays.asList(ProgramType.SERVICE, ProgramType.WORKER, ProgramType.MAPREDUCE,
+                                                   ProgramType.SPARK, ProgramType.FLOW)) {
+        ProgramId programId = NamespaceId.DEFAULT.app("app").program(programType, "p");
+        ProgramOptions options = programLifecycleService.createProgramOptions(programId, userArgs,
+                                                                              systemArgs, false);
+        Optional<ProfileId> opt = SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT,
+                                                                       options.getArguments().asMap());
+        Assert.assertTrue(opt.isPresent());
+        Assert.assertEquals(ProfileId.NATIVE, opt.get());
+      }
+    } finally {
+      profileService.disableProfile(profileId);
+      profileService.deleteProfile(profileId);
+    }
   }
 }
