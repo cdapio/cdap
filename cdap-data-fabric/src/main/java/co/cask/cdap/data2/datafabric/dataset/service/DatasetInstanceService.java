@@ -178,10 +178,9 @@ public class DatasetInstanceService {
   }
 
   /**
-   * Gets a dataset instance.
+   * Gets the metadata for a dataset instance.
    *
    * @param instance instance to get
-   * @param owners the {@link EntityId entities} that will be using the dataset instance
    * @return the dataset instance's {@link DatasetMeta}
    * @throws NotFoundException if either the namespace or dataset instance is not found,
    * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists
@@ -267,7 +266,6 @@ public class DatasetInstanceService {
     if (spec == null) {
       throw new NotFoundException(instance);
     }
-
     return DatasetsUtil.fixOriginalProperties(spec).getOriginalProperties();
   }
 
@@ -288,9 +286,6 @@ public class DatasetInstanceService {
     DatasetId datasetId = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     Principal requestingUser = authenticationContext.getPrincipal();
     String ownerPrincipal = props.getOwnerPrincipal();
-
-    LOG.info("Received request to create dataset {}.{}, type name: {}, properties: {}",
-             namespaceId, name, props.getTypeName(), props.getProperties());
 
     // need to enforce on the principal id if impersonation is involved
     KerberosPrincipalId effectiveOwner = SecurityUtil.getEffectiveOwner(ownerAdmin, namespace, ownerPrincipal);

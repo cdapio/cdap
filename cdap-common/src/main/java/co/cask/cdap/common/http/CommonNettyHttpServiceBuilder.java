@@ -23,16 +23,21 @@ import co.cask.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.concurrent.EventExecutor;
 
+import javax.annotation.Nullable;
+
 /**
  * Provides a {@link co.cask.http.NettyHttpService.Builder} that has common settings built-in.
  */
 public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
 
+  private ChannelPipelineModifier pipelineModifier;
+  private ChannelPipelineModifier additionalModifier;
+
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName) {
     super(serviceName);
 
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
-      setChannelPipelineModifier(new ChannelPipelineModifier() {
+      pipelineModifier = new ChannelPipelineModifier() {
         @Override
         public void modify(ChannelPipeline pipeline) {
           // Adds the AuthenticationChannelHandler before the dispatcher, using the same
@@ -42,8 +47,45 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", "authenticator", new AuthenticationChannelHandler());
         }
-      });
+      };
     }
     this.setExceptionHandler(new HttpExceptionHandler());
+  }
+
+  @Override
+  public NettyHttpService.Builder setChannelPipelineModifier(ChannelPipelineModifier channelPipelineModifier) {
+    pipelineModifier = channelPipelineModifier;
+    return this;
+  }
+
+  public NettyHttpService.Builder addChannelPipelineModifier(ChannelPipelineModifier additionalPipelineModifier) {
+    additionalModifier = combine(additionalModifier, additionalPipelineModifier);
+    return this;
+  }
+
+  @Override
+  public NettyHttpService build() {
+    ChannelPipelineModifier modifier = combine(pipelineModifier, additionalModifier);
+    if (modifier != null) {
+      super.setChannelPipelineModifier(modifier);
+    }
+    return super.build();
+  }
+
+  private ChannelPipelineModifier combine(@Nullable ChannelPipelineModifier existing,
+                                          @Nullable ChannelPipelineModifier additional) {
+    if (existing == null) {
+      return additional;
+    }
+    if (additional == null) {
+      return existing;
+    }
+    return new ChannelPipelineModifier() {
+      @Override
+      public void modify(ChannelPipeline pipeline) {
+        existing.modify(pipeline);
+        additional.modify(pipeline);
+      }
+    };
   }
 }

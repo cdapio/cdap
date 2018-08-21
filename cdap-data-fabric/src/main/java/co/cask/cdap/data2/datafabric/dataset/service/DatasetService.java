@@ -24,6 +24,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.http.ChannelPipelineModifier;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -32,6 +33,10 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpRequest;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -73,12 +78,30 @@ public class DatasetService extends AbstractExecutionThreadService {
                         DatasetOpExecutor opExecutorClient,
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetTypeService datasetTypeService,
-                        DatasetInstanceService datasetInstanceService) throws Exception {
+                        DatasetInstanceService datasetInstanceService) {
     this.cConf = cConf;
     this.typeService = datasetTypeService;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(datasetTypeService);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.DATASET_MANAGER)
+    CommonNettyHttpServiceBuilder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.DATASET_MANAGER);
+    if (LOG.isTraceEnabled()) {
+      builder.addChannelPipelineModifier(new ChannelPipelineModifier() {
+        @Override
+        public void modify(ChannelPipeline channelPipeline) {
+          channelPipeline.addBefore("router", "logger", new ChannelInboundHandlerAdapter() {
+            @Override
+            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+              if (msg instanceof HttpRequest) {
+                HttpRequest req = (HttpRequest) msg;
+                LOG.trace("Received {} for {} on channel {}", req.method(), req.uri(), ctx.channel());
+              }
+              super.channelRead(ctx, msg);
+            }
+          });
+        }
+      });
+    }
+    this.httpService = builder
       .setHttpHandlers(datasetTypeHandler, datasetInstanceHandler)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.DATASET_MANAGER)))
@@ -87,9 +110,8 @@ public class DatasetService extends AbstractExecutionThreadService {
       .setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS))
       .setExecThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.BOSS_THREADS))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.WORKER_THREADS));
-
-    this.httpService = builder.build();
+      .setWorkerThreadPoolSize(cConf.getInt(Constants.Dataset.Manager.WORKER_THREADS))
+      .build();
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.opExecutorClient = opExecutorClient;
@@ -108,13 +130,10 @@ public class DatasetService extends AbstractExecutionThreadService {
     ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_EXECUTOR);
     opExecutorDiscovered = SettableFuture.create();
     opExecutorServiceWatch = discover.watchChanges(
-      new ServiceDiscovered.ChangeListener() {
-        @Override
-        public void onChange(ServiceDiscovered serviceDiscovered) {
-          if (!Iterables.isEmpty(serviceDiscovered)) {
-            LOG.info("Discovered {} service", Constants.Service.DATASET_EXECUTOR);
-            opExecutorDiscovered.set(serviceDiscovered);
-          }
+      serviceDiscovered -> {
+        if (!Iterables.isEmpty(serviceDiscovered)) {
+          LOG.info("Discovered {} service", Constants.Service.DATASET_EXECUTOR);
+          opExecutorDiscovered.set(serviceDiscovered);
         }
       }, MoreExecutors.sameThreadExecutor());
 

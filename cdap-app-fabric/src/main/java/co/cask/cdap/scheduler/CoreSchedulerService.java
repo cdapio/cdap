@@ -79,6 +79,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
@@ -122,6 +123,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     this.impersonator = impersonator;
     // Use a retry on failure service to make it resilience to transient service unavailability during startup
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
+
+      @Override
+      protected Executor executor(final State state) {
+        return command -> new Thread(command, "core scheduler service " + state).start();
+      }
+
       @Override
       protected void startUp() throws Exception {
         if (!datasetFramework.hasInstance(Schedulers.STORE_DATASET_ID)) {
