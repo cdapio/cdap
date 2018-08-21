@@ -56,6 +56,7 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.BatchProgram;
+import co.cask.cdap.proto.BatchProgramCount;
 import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
@@ -71,6 +72,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.RunCountResult;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ServiceInstances;
@@ -1223,6 +1225,102 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       output.add(getProgramInstances(runnable, spec, programId));
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output));
+  }
+
+  /**
+   * Returns the run counts for all program runnables that are passed into the data. The data is an array of
+   * Json objects where each object must contain the following three elements: appId, programType, and programId.
+   * The max number of programs in the request is 100.
+   * <p>
+   * Example input:
+   * <pre><code>
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
+   *  {"appId": "App1", "programType": "Workflow", "programId": "testWorkflow"},
+   *  {"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow"}]
+   * </code></pre>
+   * </p><p>
+   * </p><p>
+   * The response will be an array of JsonObjects each of which will contain the three input parameters
+   * as well as 2 fields, "count" which maps to the count of the program and "statusCode" which maps to the
+   * status code for the data in that JsonObjects.
+   * </p><p>
+   * If an error occurs in the input (for the example above, workflow in app1 does not exist),
+   * then all JsonObjects for which the parameters have a valid status will have the count field but all JsonObjects
+   * for which the parameters do not have a valid status will have an error message and statusCode.
+   * </p><p>
+   * For example, if there is no workflow in App1 in the data above, then the response would be 200 OK with following
+   * possible data:
+   * </p>
+   * <pre><code>
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1",
+   * "statusCode": 200, "runCount": 20},
+   * {"appId": "App1", "programType": "Workflow", "programId": "testWorkflow", "statusCode": 404,
+   * "error": "Program 'testWorkflow' is not found"},
+   *  {"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow", "runnableId": "Flowlet1",
+   *  "statusCode": 200, "runCount": 300}]
+   * </code></pre>
+   */
+  @POST
+  @Path("/runcount")
+  public void getRunCounts(FullHttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId) throws Exception {
+    List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    if (programs.size() > 100) {
+      throw new BadRequestException(String.format("%d programs found in the request, the maximum number " +
+                                                    "supported is 100", programs.size()));
+    }
+
+    List<ProgramId> programIds =
+      programs.stream().map(batchProgram -> new ProgramId(namespaceId, batchProgram.getAppId(),
+                                                          batchProgram.getProgramType(),
+                                                          batchProgram.getProgramId())).collect(Collectors.toList());
+    List<BatchProgramCount> counts = new ArrayList<>(programs.size());
+    for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programIds)) {
+      ProgramId programId = runCountResult.getProgramId();
+      Exception exception = runCountResult.getException();
+      if (exception == null) {
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.OK.code(), null, runCountResult.getCount()));
+      } else if (exception instanceof NotFoundException) {
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.BAD_REQUEST.code(),
+                                         exception.getMessage(), null));
+      } else if (exception instanceof UnauthorizedException) {
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.FORBIDDEN.code(),
+                                         exception.getMessage(), null));
+      } else {
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                         exception.getMessage(), null));
+      }
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(counts));
+  }
+
+  /**
+   * Returns the count of the given program runs
+   */
+  @GET
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runcount")
+  public void getProgramRunCount(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-name") String appName,
+                                 @PathParam("program-type") String type,
+                                 @PathParam("program-name") String programName) throws Exception {
+    getProgramRunCount(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+  /**
+   * Returns the count of the given program runs
+   */
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runcount")
+  public void getProgramRunCount(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-name") String appName,
+                                 @PathParam("app-version") String appVersion,
+                                 @PathParam("program-type") String type,
+                                 @PathParam("program-name") String programName) throws Exception {
+    ProgramType programType = getProgramType(type);
+    ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(lifecycleService.getProgramRunCount(programId)));
   }
 
   /*

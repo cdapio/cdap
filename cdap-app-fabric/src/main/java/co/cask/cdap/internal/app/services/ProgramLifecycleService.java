@@ -55,7 +55,9 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunCountResult;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -92,12 +94,16 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -158,6 +164,43 @@ public class ProgramLifecycleService {
     }
 
     return getExistingAppProgramStatus(appSpec, programId);
+  }
+
+  /**
+   * Returns the program run count of the given program.
+   *
+   * @param programId the id of the program for which the count call is made
+   * @return the run count of the program
+   * @throws NotFoundException if the application to which this program belongs was not found or the program is not
+   *                           found in the app
+   */
+  public long getProgramRunCount(ProgramId programId) throws Exception {
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    return store.getProgramRunCount(programId);
+  }
+
+  /**
+   * Returns the program run count of the given program id list.
+   *
+   * @param programIds the list of program ids to get the count
+   * @return the counts of given program ids
+   */
+  public List<RunCountResult> getProgramRunCounts(List<ProgramId> programIds) throws Exception {
+    List<RunCountResult> result = store.getProgramRunCounts(programIds);
+
+    // filter the result
+    Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programIds),
+                                                                              authenticationContext.getPrincipal());
+    return result.stream()
+      .map(runCount -> {
+        if (!visibleEntities.contains(runCount.getProgramId())) {
+          return new RunCountResult(runCount.getProgramId(), null,
+                                    new UnauthorizedException(authenticationContext.getPrincipal(),
+                                                              runCount.getProgramId()));
+        }
+        return runCount;
+      })
+      .collect(Collectors.toList());
   }
 
   /**

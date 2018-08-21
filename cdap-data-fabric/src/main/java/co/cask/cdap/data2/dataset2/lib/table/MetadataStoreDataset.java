@@ -39,6 +39,7 @@ import com.google.gson.Gson;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -153,21 +154,32 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   /**
-   * Get all non-null values with the given ids for default COLUMN
+   * Get the value at the row and default COLUMN
+   *
+   * @param id the mds key for the row
+   * @return the actual value at the row and column
+   */
+  @Nullable
+  public byte[] getValue(MDSKey id) {
+    Row row = table.get(id.getKey());
+   return row.isEmpty() ? null : row.get(COLUMN);
+  }
+
+  /**
+   * Get all non-null values of type T with the given ids for default COLUMN in a map
    *
    * @param ids set of the mds keys
    * @param typeOfT the type of the result
-   * @return a list of the deserialized value of the result
+   * @return a map of the deserialized value of the result
    */
-  public <T> List<T> get(Set<MDSKey> ids, Type typeOfT) {
-    List<T> resultList = new ArrayList<>();
+  protected <T> Map<MDSKey, T> getKV(Set<MDSKey> ids, Type typeOfT) {
+    Map<MDSKey, T> resultMap = new HashMap<>();
     List<Get> getList = new ArrayList<>();
     for (MDSKey id : ids) {
       getList.add(new Get(id.getKey()));
     }
     List<Row> rowList = table.get(getList);
     for (Row row : rowList) {
-      // This shouldn't fail, otherwise table is breaking contract.
       if (row.isEmpty()) {
         continue;
       }
@@ -176,10 +188,39 @@ public class MetadataStoreDataset extends AbstractDataset {
       if (value == null) {
         continue;
       }
-      T result = deserialize(new MDSKey(row.getRow()), value, typeOfT);
-      resultList.add(result);
+      MDSKey key = new MDSKey(row.getRow());
+      T result = deserialize(key, value, typeOfT);
+      resultMap.put(key, result);
     }
-    return resultList;
+    return resultMap;
+  }
+
+  /**
+   * Get all non-null values with the given ids for default COLUMN in a map
+   *
+   * @param ids set of the mds keys
+   * @return a map of the deserialized value of the result
+   */
+  protected Map<MDSKey, byte[]> getKV(Set<MDSKey> ids) {
+    Map<MDSKey, byte[]> resultMap = new HashMap<>();
+    List<Get> getList = new ArrayList<>();
+    for (MDSKey id : ids) {
+      getList.add(new Get(id.getKey()));
+    }
+    List<Row> rowList = table.get(getList);
+    for (Row row : rowList) {
+      if (row.isEmpty()) {
+        continue;
+      }
+
+      byte[] value = row.get(COLUMN);
+      if (value == null) {
+        continue;
+      }
+      MDSKey key = new MDSKey(row.getRow());
+      resultMap.put(key, value);
+    }
+    return resultMap;
   }
 
   /**
@@ -418,6 +459,20 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
   }
 
+  /**
+   * Increment the value in the row key and default COLUMN by the specified amount
+   *
+   * @param id row key
+   * @param amount amount to increment
+   */
+  public <T> void increment(MDSKey id, long amount) {
+    try {
+      table.increment(id.getKey(), COLUMN, amount);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
   private <T> Map<MDSKey, T> listCombinedFilterKV(Scan runScan, Type typeOfT, int limit,
                                                   @Nullable Predicate<KeyValue<T>> combinedFilter) {
     try {
@@ -554,29 +609,6 @@ public class MetadataStoreDataset extends AbstractDataset {
       builder.add(programRunId.getNamespace());
       builder.add(programRunId.getApplication());
       builder.add(programRunId.getVersion());
-      builder.add(programRunId.getType().name());
-      builder.add(programRunId.getProgram());
-      builder.add(programRunId.getRun());
-    }
-    return builder;
-  }
-
-  protected MDSKey.Builder getVersionLessProgramKeyBuilder(String recordType, @Nullable ProgramId programId) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
-    if (programId != null) {
-      builder.add(programId.getNamespace());
-      builder.add(programId.getApplication());
-      builder.add(programId.getType().name());
-      builder.add(programId.getProgram());
-    }
-    return builder;
-  }
-
-  protected MDSKey.Builder getVersionLessProgramKeyBuilder(String recordType, @Nullable ProgramRunId programRunId) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
-    if (programRunId != null) {
-      builder.add(programRunId.getNamespace());
-      builder.add(programRunId.getApplication());
       builder.add(programRunId.getType().name());
       builder.add(programRunId.getProgram());
       builder.add(programRunId.getRun());

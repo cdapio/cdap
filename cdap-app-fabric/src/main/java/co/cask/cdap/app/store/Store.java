@@ -28,12 +28,14 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunCountResult;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -493,4 +495,21 @@ public interface Store {
    * @return programs that were running between given start and end time.
    */
   Set<RunId> getRunningInRange(long startTimeInSecs, long endTimeInSecs);
+
+  /**
+   * Get the run count of the given program.
+   *
+   * @param programId the program to get the count
+   * @return the number of run count
+   * @throws NotFoundException if the app or the program does not exist
+   */
+  long getProgramRunCount(ProgramId programId) throws NotFoundException;
+
+  /**
+   * Get the run count of the given program collection
+   *
+   * @param programIds collection of program ids to get the count
+   * @return the run count result of each program in the collection
+   */
+  List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds);
 }
