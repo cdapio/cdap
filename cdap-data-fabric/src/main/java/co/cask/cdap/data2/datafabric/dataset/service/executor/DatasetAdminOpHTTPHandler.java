@@ -101,7 +101,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
       DatasetId instanceId = new DatasetId(namespaceId, name);
       DatasetSpecification spec = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, null);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec));
-    } catch (BadRequestException e) {
+    } catch (BadRequestException | IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
