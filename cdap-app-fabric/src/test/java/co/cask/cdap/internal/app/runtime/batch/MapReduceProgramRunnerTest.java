@@ -91,12 +91,30 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
   @ClassRule
   public static final ExternalResource RESOURCE = new ExternalResource() {
+    private final Map<String, String> previousProperties = new HashMap<>();
     @Override
     protected void before() throws Throwable {
+      // store the previous property
+      previousProperties.put(TxConstants.Manager.CFG_TX_TIMEOUT,
+                             System.getProperty(TxConstants.Manager.CFG_TX_TIMEOUT));
+      previousProperties.put(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL,
+                             System.getProperty(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL));
       // Set the tx timeout to a ridiculously low value that will test that the long-running transactions
       // actually bypass that timeout.
       System.setProperty(TxConstants.Manager.CFG_TX_TIMEOUT, "1");
       System.setProperty(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, "2");
+    }
+
+    @Override
+    protected void after() {
+      // reset properties
+      for (Map.Entry<String, String> previousProperty : previousProperties.entrySet()) {
+        if (previousProperty.getValue() == null) {
+          System.clearProperty(previousProperty.getKey());
+        } else {
+          System.setProperty(previousProperty.getKey(), previousProperty.getValue());
+        }
+      }
     }
   };
 
