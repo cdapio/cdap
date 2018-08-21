@@ -86,9 +86,16 @@ export default class Alert extends Component {
   render() {
     let msgElem = null;
     if (this.state.element) {
-      msgElem = this.state.element;
+      msgElem = <span className="message truncate">{this.state.element}</span>;
     } else if (this.state.message) {
-      msgElem = <span className="message">{this.state.message}</span>;
+      msgElem = (
+        <span
+          className="message truncate"
+          title={this.state.message}
+        >
+          {this.state.message}
+        </span>
+      );
     }
     return (
       <Modal

@@ -41,6 +41,7 @@ $close-btn-size: 13px;
       }
       .message {
         max-width: calc(100% - #{$close-btn-size});
+        padding-right: 5px;
       }
       .icon-close {
         cursor: pointer;
