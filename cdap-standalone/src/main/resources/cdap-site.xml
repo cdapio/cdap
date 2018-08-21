@@ -204,9 +204,11 @@
     </description>
   </property>
 
+  <!-- Bind to 127.0.0.1 (localhost) to protect from xss vulnerabilities while running in sandbox.
+  This must be changed if access to router is needed from a machine other than local machine. See CDAP-14102 -->
   <property>
     <name>router.bind.address</name>
-    <value>0.0.0.0</value>
+    <value>127.0.0.1</value>
     <description>
       CDAP Router service bind address
     </description>
@@ -252,6 +254,25 @@
       The 'file' provider is only used in the sandbox. In distributed environments, this should
       be set to 'kms', presuming your cluster has been configured to use KMS. The 'file' provider
       will not work in distributed environments.
+    </description>
+  </property>
+
+  <!-- Override default 0.0.0.0 to 127.0.0.1 (localhost) to protect from xss vulnerabilities while
+  running in sandbox. These must be changed if access is needed from a machine other than local machine.
+  See CDAP-14102 -->
+  <property>
+    <name>dashboard.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      CDAP UI bind address
+    </description>
+  </property>
+
+  <property>
+    <name>security.auth.server.bind.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      CDAP Authentication service bind address
     </description>
   </property>
 
