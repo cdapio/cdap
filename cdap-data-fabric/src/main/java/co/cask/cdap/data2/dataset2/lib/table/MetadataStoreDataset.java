@@ -560,27 +560,4 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
     return builder;
   }
-
-  protected MDSKey.Builder getVersionLessProgramKeyBuilder(String recordType, @Nullable ProgramId programId) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
-    if (programId != null) {
-      builder.add(programId.getNamespace());
-      builder.add(programId.getApplication());
-      builder.add(programId.getType().name());
-      builder.add(programId.getProgram());
-    }
-    return builder;
-  }
-
-  protected MDSKey.Builder getVersionLessProgramKeyBuilder(String recordType, @Nullable ProgramRunId programRunId) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
-    if (programRunId != null) {
-      builder.add(programRunId.getNamespace());
-      builder.add(programRunId.getApplication());
-      builder.add(programRunId.getType().name());
-      builder.add(programRunId.getProgram());
-      builder.add(programRunId.getRun());
-    }
-    return builder;
-  }
 }

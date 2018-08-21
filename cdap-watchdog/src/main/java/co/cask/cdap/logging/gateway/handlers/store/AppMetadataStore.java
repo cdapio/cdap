@@ -21,7 +21,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Iterables;
 
@@ -76,27 +75,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
     MDSKey runningKey = getProgramKeyBuilder(recordType, programId)
       .add(runid)
       .build();
-
-    RunRecordMeta runRecordMeta = get(runningKey, RunRecordMeta.class);
-
-    if (runRecordMeta == null && programId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      runningKey = getVersionLessProgramKeyBuilder(recordType, programId).add(runid).build();
-      return get(runningKey, RunRecordMeta.class);
-    }
-
-    return runRecordMeta;
+    return get(runningKey, RunRecordMeta.class);
   }
 
   private RunRecordMeta getCompletedRun(ProgramId programId, final String runid) {
     MDSKey completedKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
-    RunRecordMeta runRecordMeta = getCompletedRun(completedKey, runid);
-
-    if (runRecordMeta == null && programId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      completedKey = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
-      return getCompletedRun(completedKey, runid);
-    }
-
-    return runRecordMeta;
+    return getCompletedRun(completedKey, runid);
   }
 
   private RunRecordMeta getCompletedRun(MDSKey completedKey, final String runid) {

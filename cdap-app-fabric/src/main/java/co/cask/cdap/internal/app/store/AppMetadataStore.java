@@ -190,15 +190,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                                                 appId.getApplication(),
                                                                 appId.getVersion()).build(),
                                        ApplicationMeta.class);
-
-    if (appMeta != null) {
-      return appMeta;
-    }
-
-    if (!hasUpgraded() && appId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      appMeta = get(new MDSKey.Builder().add(TYPE_APP_META, appId.getNamespace(),
-                                             appId.getApplication()).build(), ApplicationMeta.class);
-    }
     return appMeta;
   }
 
@@ -230,27 +221,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
-    if (!hasUpgraded() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
-      MDSKey mdsKey = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
-      ApplicationMeta appMeta = get(mdsKey, ApplicationMeta.class);
-      // If app meta exists for the application without a version, delete that key.
-      if (appMeta != null) {
-        delete(mdsKey);
-      }
-    }
     write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build(),
           new ApplicationMeta(appId, spec));
   }
 
   public void deleteApplication(String namespaceId, String appId, String versionId) {
-    if (!hasUpgraded() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
-      MDSKey mdsKey = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
-      ApplicationMeta appMeta = get(mdsKey, ApplicationMeta.class);
-      // If app meta exists for the application without a version, delete only that key.
-      if (appMeta != null) {
-        delete(mdsKey);
-      }
-    }
     deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build());
   }
 
@@ -262,15 +237,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public void updateAppSpec(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
     MDSKey key = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build();
-    MDSKey versionLessKey = null;
     ApplicationMeta existing = getFirst(key, ApplicationMeta.class);
     ApplicationMeta updated;
-
-    // Check again without the version to account for old data format if might not have been upgraded yet
-    if (!hasUpgraded() && existing == null && (versionId.equals(ApplicationId.DEFAULT_VERSION))) {
-      versionLessKey = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
-      existing = get(versionLessKey, ApplicationMeta.class);
-    }
 
     if (existing == null) {
       String msg = String.format("No meta for namespace %s app %s exists", namespaceId, appId);
@@ -280,11 +248,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     updated = ApplicationMeta.updateSpec(existing, spec);
     LOG.trace("Application exists in mds: id: {}, spec: {}", existing);
-
-    // Delete the old spec since the old spec has been replaced with this one.
-    if (versionLessKey != null) {
-      delete(versionLessKey);
-    }
     write(key, updated);
   }
 
@@ -293,18 +256,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
    */
   public List<WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId) {
     MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId).build();
-
-    List<WorkflowNodeStateDetail> nodeStateDetails = list(key, WorkflowNodeStateDetail.class);
-
-    // Check again without the version to account for old data format since they might not have been updated yet
-    // Since all the programs needs to be stopped before upgrade tool is run, either we will have node state details for
-    // one specific run-id either in the old format or in the new format.
-    if (!hasUpgraded() && nodeStateDetails.isEmpty() &&
-      workflowRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      key = getVersionLessProgramKeyBuilder(TYPE_WORKFLOW_NODE_STATE, workflowRunId).build();
-      nodeStateDetails = list(key, WorkflowNodeStateDetail.class);
-    }
-    return nodeStateDetails;
+    return list(key, WorkflowNodeStateDetail.class);
   }
 
   /**
@@ -645,17 +597,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return recordProgramRunning(programRunId, stateChangeTime, twillRunId, key, sourceId);
   }
 
-  /**
-   * Logs start of program run and persists program status to {@link ProgramRunStatus#STARTING} with version-less key.
-   * See {@link #recordProgramRunning(ProgramRunId, long, String, byte[])}
-   */
-  @VisibleForTesting
-  void recordProgramRunningOldFormat(ProgramRunId programRunId, long stateChangeTime, String twillRunId,
-                                     byte[] sourceId) {
-    MDSKey key = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programRunId).build();
-    recordProgramRunning(programRunId, stateChangeTime, twillRunId, key, sourceId);
-  }
-
   @Nullable
   private RunRecordMeta recordProgramRunning(ProgramRunId programRunId, long runTs, String twillRunId,
                                              MDSKey key, byte[] sourceId) {
@@ -735,21 +676,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
       // Skip recording resumed if the existing records are not valid
       return null;
     }
-    // Only if existingRecords is empty & upgrade is not complete & the version is default version,
-    // also try to get the record without the version string
-    if (!hasUpgraded() && programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      MDSKey key = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, programRunId.getParent())
-        .add(programRunId.getRun())
-        .build();
-      existing = get(key, RunRecordMeta.class);
-    }
-    if (existing == null) {
-      LOG.error("No run record meta for program '{}' pid '{}' exists. Skip recording program suspend.",
-                programRunId.getParent(), programRunId.getRun());
-      return null;
-    }
-
-
     return recordProgramSuspendResume(programRunId, sourceId, existing, "resume", timestamp);
   }
 
@@ -796,13 +722,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                          @Nullable BasicThrowable failureCause, byte[] sourceId) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
     return recordProgramStop(programRunId, stopTs, runStatus, failureCause, builder, sourceId);
-  }
-
-  @VisibleForTesting
-  void recordProgramStopOldFormat(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
-                                  @Nullable BasicThrowable failureCause, byte[] sourceId) {
-    MDSKey.Builder builder = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
-    recordProgramStop(programRunId, stopTs, runStatus, failureCause, builder, sourceId);
   }
 
   @Nullable
@@ -1070,30 +989,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
     MDSKey runningKey = getProgramKeyBuilder(recordType, programRunId.getParent())
       .add(programRunId.getRun())
       .build();
-
-    RunRecordMeta runRecordMeta = get(runningKey, RunRecordMeta.class);
-
-    if (!hasUpgraded() && runRecordMeta == null &&
-      programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      runningKey = getVersionLessProgramKeyBuilder(recordType, programRunId.getParent())
-        .add(programRunId.getRun()).build();
-      return get(runningKey, RunRecordMeta.class);
-    }
-
-    return runRecordMeta;
+    return get(runningKey, RunRecordMeta.class);
   }
 
   private RunRecordMeta getCompletedRun(ProgramRunId programRunId) {
     MDSKey completedKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent()).build();
-    RunRecordMeta runRecordMeta = getCompletedRun(completedKey, programRunId.getRun());
-
-    if (!hasUpgraded() && runRecordMeta == null &&
-      programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      completedKey = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent()).build();
-      return getCompletedRun(completedKey, programRunId.getRun());
-    }
-
-    return runRecordMeta;
+    return getCompletedRun(completedKey, programRunId.getRun());
   }
 
   private RunRecordMeta getCompletedRun(MDSKey completedKey, final String runid) {
@@ -1131,29 +1032,16 @@ public class AppMetadataStore extends MetadataStoreDataset {
     Predicate<MDSKey> keyPredicate = new AppVersionPredicate(ApplicationId.DEFAULT_VERSION);
     MDSKey key = getProgramKeyBuilder(recordType, programId).build();
     Map<MDSKey, RunRecordMeta> newRecords = listKV(key, null, RunRecordMeta.class, limit, keyPredicate, valuePredicate);
-
-    int remaining = limit - newRecords.size();
-    if (remaining > 0 && !hasUpgraded()) {
-      // We need to scan twice since the scan key is modified based on whether we include the app version or not.
-      key = getVersionLessProgramKeyBuilder(recordType, programId).build();
-      Map<MDSKey, RunRecordMeta> oldRecords = listKV(key, null, RunRecordMeta.class, remaining, keyPredicate,
-                                                     valuePredicate);
-      newRecords.putAll(oldRecords);
-    }
     return getProgramRunIdMap(newRecords);
   }
 
   private Map<ProgramRunId, RunRecordMeta> getRunsForRunIds(final Set<ProgramRunId> runIds, String recordType,
                                                             int limit) {
     Set<MDSKey> keySet = new HashSet<>();
-    boolean includeVersionLessKeys = !hasUpgraded();
     for (ProgramRunId programRunId : runIds) {
       keySet.add(getProgramKeyBuilder(recordType, programRunId.getParent()).build());
-      if (includeVersionLessKeys && programRunId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-        keySet.add(getVersionLessProgramKeyBuilder(recordType, programRunId.getParent()).build());
-      }
     }
-
+    
     Predicate<KeyValue<RunRecordMeta>> combinedFilter = input -> {
       ProgramId programId = getProgramID(input.getKey());
       RunRecordMeta meta = input.getValue();
@@ -1190,19 +1078,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     Predicate<MDSKey> keyPredicate = new AppVersionPredicate(ApplicationId.DEFAULT_VERSION);
     MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
-    Map<ProgramRunId, RunRecordMeta> newRecords = getHistoricalRuns(
-      key, status, startTime, endTime, limit, keyPredicate, filter);
-
-    int remaining = limit - newRecords.size();
-    if (remaining > 0 && !hasUpgraded()) {
-      // We need to scan twice since the key is modified again in getHistoricalRuns since we want to use the
-      // endTime and startTime to reduce the scan range
-      key = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
-      Map<ProgramRunId, RunRecordMeta> oldRecords = getHistoricalRuns(
-        key, status, startTime, endTime, remaining, keyPredicate, filter);
-      newRecords.putAll(oldRecords);
-    }
-    return newRecords;
+    return getHistoricalRuns(key, status, startTime, endTime, limit, keyPredicate, filter);
   }
 
   /**
@@ -1303,18 +1179,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void deleteProgramHistory(String namespaceId, String appId, String versionId) {
-    if (!hasUpgraded() && versionId.equals(ApplicationId.DEFAULT_VERSION)) {
-      Predicate<MDSKey> keyPredicate = new AppVersionPredicate(ApplicationId.DEFAULT_VERSION);
-      deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTING, namespaceId, appId).build(), keyPredicate);
-      deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId).build(), keyPredicate);
-      deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId).build(), keyPredicate);
-      deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_SUSPENDED, namespaceId, appId).build(), keyPredicate);
-    } else {
-      deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTING, namespaceId, appId, versionId).build());
-      deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, versionId).build());
-      deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, versionId).build());
-      deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_SUSPENDED, namespaceId, appId, versionId).build());
-    }
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTING, namespaceId, appId, versionId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, versionId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, versionId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_SUSPENDED, namespaceId, appId, versionId).build());
   }
 
   public void deleteProgramHistory(String namespaceId) {
@@ -1362,13 +1230,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     BasicWorkflowToken workflowToken = get(key, BasicWorkflowToken.class);
 
-    // Check without the version string only for default version
-    if (!hasUpgraded() && workflowToken == null &&
-      workflowId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      key = getVersionLessProgramKeyBuilder(TYPE_WORKFLOW_TOKEN, workflowId).add(workflowRunId).build();
-      workflowToken = get(key, BasicWorkflowToken.class);
-    }
-
     if (workflowToken == null) {
       LOG.debug("No workflow token available for workflow: {}, runId: {}", workflowId, workflowRunId);
       // Its ok to not allow any updates by returning a 0 size token.
@@ -1399,9 +1260,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   /**
-   * @return true if the row key is value is greater or than or equal to the expected version
+   * @return true if the upgrade of the app meta store is complete
+   * TODO: CDAP-14114 change the logic to run count upgrade
    */
-  public boolean hasUpgraded() {
+  private boolean hasUpgraded() {
     boolean upgraded = upgradeCompleted;
     if (upgraded) {
       return true;
@@ -1436,6 +1298,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   /**
    * Mark the table that the upgrade is complete.
+   * TODO: CDAP-14114 change the logic to run count upgrade
    */
   public void upgradeCompleted() {
     MDSKey.Builder keyBuilder = new MDSKey.Builder();
@@ -1532,190 +1395,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
       startKey = new MDSKey(Bytes.stopKeyForPrefix(scanFunction.getLastKey().getKey()));
     }
     return batches;
-  }
-
-  /**
-   * Upgrades the keys in table to include version if it is not already present.
-   */
-  boolean upgradeVersionKeys(int maxRows) {
-    boolean upgradeDone = upgradeVersionKeys(TYPE_APP_META, ApplicationMeta.class, maxRows);
-    upgradeDone &= upgradeVersionKeys(TYPE_RUN_RECORD_COMPLETED, RunRecordMeta.class, maxRows);
-    upgradeDone &= upgradeVersionKeys(TYPE_WORKFLOW_NODE_STATE, WorkflowNodeStateDetail.class, maxRows);
-    upgradeDone &= upgradeVersionKeys(TYPE_WORKFLOW_TOKEN, BasicWorkflowToken.class, maxRows);
-    return upgradeDone;
-  }
-
-  /**
-   * Upgrades the rowkeys for the given record type.
-   *
-   * @param recordType type of the record
-   * @param typeOfT    content type of the record
-   * @param <T>        type param
-   * @param maxRows    maximum number of rows to be upgraded in this call.
-   * @return true if no rows required an upgrade
-   */
-  private <T> boolean upgradeVersionKeys(String recordType, Type typeOfT, int maxRows) {
-    LOG.info("Checking upgrade for {}", recordType);
-    MDSKey startKey = new MDSKey.Builder().add(recordType).build();
-    Map<MDSKey, T> oldMap = listKV(startKey, typeOfT);
-    Map<MDSKey, T> newMap = new HashMap<>();
-    Set<MDSKey> deleteKeys = new HashSet<>();
-
-    for (Map.Entry<MDSKey, T> oldEntry : oldMap.entrySet()) {
-      MDSKey oldKey = oldEntry.getKey();
-      MDSKey newKey = appendDefaultVersion(recordType, oldKey);
-      // If the key has been modified, only then add it to the map.
-      if (!newKey.equals(oldKey)) {
-        deleteKeys.add(oldKey);
-
-        // If a row with the new key doesn't exists, only then upgrade the old key otherwise just delete the old key.
-        Object valueOfNewKey = get(newKey, typeOfT);
-        if (valueOfNewKey == null) {
-          newMap.put(newKey, oldEntry.getValue());
-        }
-
-        // We want to modify only certain number of rows
-        if (deleteKeys.size() >= maxRows) {
-          break;
-        }
-      }
-    }
-
-    // No rows needs to be modified
-    if (deleteKeys.size() == 0) {
-      return true;
-    }
-
-    LOG.info("Upgrading {} entries, deleting {} entries of {}", newMap.size(), deleteKeys.size(), recordType);
-    // Delete old keys
-    for (MDSKey oldKey : deleteKeys) {
-      delete(oldKey);
-    }
-
-    // Write new rows
-    for (Map.Entry<MDSKey, T> newEntry : newMap.entrySet()) {
-      write(newEntry.getKey(), newEntry.getValue());
-    }
-    return false;
-  }
-
-  private static MDSKey getUpgradedAppMetaKey(MDSKey originalKey) {
-    // Key format after upgrade: appMeta.namespace.appName.appVersion
-    MDSKey.Splitter splitter = originalKey.split();
-    String recordType = splitter.getString();
-    String namespace = splitter.getString();
-    String appName = splitter.getString();
-    String appVersion;
-    try {
-      appVersion = splitter.getString();
-    } catch (BufferUnderflowException e) {
-      appVersion = ApplicationId.DEFAULT_VERSION;
-    }
-    LOG.trace("Upgrade AppMeta key to {}.{}.{}.{}", recordType, namespace, appName, appVersion);
-    return new MDSKey.Builder()
-      .add(recordType)
-      .add(namespace)
-      .add(appName)
-      .add(appVersion)
-      .build();
-  }
-
-  private static MDSKey getUpgradedCompletedRunRecordKey(MDSKey originalKey) {
-    // Key format after upgrade:
-    // runRecordCompleted.namespace.appName.appVersion.programType.programName.invertedTs.runId
-    MDSKey.Splitter splitter = originalKey.split();
-    String recordType = splitter.getString();
-    String namespace = splitter.getString();
-    String appName = splitter.getString();
-    String programType = splitter.getString();
-    // If nextValue is programType then we need to upgrade the key
-    try {
-      ProgramType.valueOf(programType);
-    } catch (IllegalArgumentException e) {
-      // Version is already part of the key. So return the original key
-      LOG.trace("No need to upgrade completed RunRecord key starting with {}.{}.{}.{}.{}",
-                recordType, namespace, appName, ApplicationId.DEFAULT_VERSION, programType);
-      return originalKey;
-    }
-    String programName = splitter.getString();
-    long invertedTs = splitter.getLong();
-    String runId = splitter.getString();
-    LOG.trace("Upgrade completed RunRecord key to {}.{}.{}.{}.{}.{}.{}.{}", recordType, namespace, appName,
-              ApplicationId.DEFAULT_VERSION, programType, programName, invertedTs, runId);
-    return new MDSKey.Builder()
-      .add(recordType)
-      .add(namespace)
-      .add(appName)
-      .add(ApplicationId.DEFAULT_VERSION)
-      .add(programType)
-      .add(programName)
-      .add(invertedTs)
-      .add(runId)
-      .build();
-  }
-
-  private static MDSKey.Builder getUpgradedWorkflowRunKey(MDSKey.Splitter splitter) {
-    // Key format after upgrade: recordType.namespace.appName.appVersion.WORKFLOW.workflowName.workflowRun
-    String recordType = splitter.getString();
-    String namespace = splitter.getString();
-    String appName = splitter.getString();
-    String nextString = splitter.getString();
-    String appVersion;
-    String programType;
-    if ("WORKFLOW".equals(nextString)) {
-      appVersion = ApplicationId.DEFAULT_VERSION;
-      programType = nextString;
-    } else {
-      // App version is already present in the key.
-      LOG.trace("App version exists in workflow run id starting with {}.{}.{}.{}", recordType, namespace,
-                appName, nextString);
-      appVersion = nextString;
-      programType = splitter.getString();
-    }
-    String workflowName = splitter.getString();
-    String workflowRun = splitter.getString();
-    LOG.trace("Upgrade workflow run id to {}.{}.{}.{}.{}.{}.{}", recordType, namespace, appName,
-              ApplicationId.DEFAULT_VERSION, programType, workflowName, workflowRun);
-    return new MDSKey.Builder()
-      .add(recordType)
-      .add(namespace)
-      .add(appName)
-      .add(appVersion)
-      .add(programType)
-      .add(workflowName)
-      .add(workflowRun);
-  }
-
-  private static MDSKey getUpgradedWorkflowNodeStateRecordKey(MDSKey originalKey) {
-    // Key format after upgrade: wns.namespace.appName.appVersion.WORKFLOW.workflowName.workflowRun.workflowNodeId
-    MDSKey.Splitter splitter = originalKey.split();
-    MDSKey.Builder builder = getUpgradedWorkflowRunKey(splitter);
-    String workflowNodeId = splitter.getString();
-    LOG.trace("Upgrade workflow node state record with WorkflowNodeId {}", workflowNodeId);
-    return builder.add(workflowNodeId)
-      .build();
-  }
-
-  private static MDSKey getUpgradedWorkflowTokenRecordKey(MDSKey originalKey) {
-    // Key format after upgrade: wft.namespace.appName.appVersion.WORKFLOW.workflowName,workflowRun
-    MDSKey.Splitter splitter = originalKey.split();
-    return getUpgradedWorkflowRunKey(splitter).build();
-  }
-
-  // Append version only if it doesn't have version in the key
-  private static MDSKey appendDefaultVersion(String recordType, MDSKey originalKey) {
-    switch (recordType) {
-      case TYPE_APP_META:
-        return getUpgradedAppMetaKey(originalKey);
-      case TYPE_RUN_RECORD_COMPLETED:
-        return getUpgradedCompletedRunRecordKey(originalKey);
-      case TYPE_WORKFLOW_NODE_STATE:
-        return getUpgradedWorkflowNodeStateRecordKey(originalKey);
-      case TYPE_WORKFLOW_TOKEN:
-        return getUpgradedWorkflowTokenRecordKey(originalKey);
-      default:
-        throw new IllegalArgumentException(String.format("Invalid row key type '%s'", recordType));
-    }
   }
 
   /**

@@ -99,51 +99,6 @@ public class AppMetadataStoreTest {
                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
   }
 
-  // TODO: [CDAP-12458] since recordProgramStart doesn't use version-less key builder, this test fails.
-  @Ignore
-  @Test
-  public void testOldRunRecordFormat() throws Exception {
-    DatasetId storeTable = NamespaceId.DEFAULT.dataset("testOldRunRecordFormat");
-    datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
-
-    Table table = datasetFramework.getDataset(storeTable, Collections.emptyMap(), null);
-    Assert.assertNotNull(table);
-    final AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf);
-    TransactionExecutor txnl = txExecutorFactory.createExecutor(
-      Collections.singleton(metadataStoreDataset));
-
-    ApplicationId application = NamespaceId.DEFAULT.app("app");
-    final ProgramId program = application.program(ProgramType.values()[ProgramType.values().length - 1],
-                                                  "program");
-    final RunId runId = RunIds.generate();
-    final ProgramRunId programRunId = program.run(runId);
-    txnl.execute(() -> {
-      recordProvisionAndStart(programRunId, metadataStoreDataset);
-      metadataStoreDataset.recordProgramRunningOldFormat(
-        programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null,
-        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-    });
-
-    txnl.execute(() -> {
-      Set<RunId> runIds = metadataStoreDataset.getRunningInRange(0, Long.MAX_VALUE);
-      Assert.assertEquals(1, runIds.size());
-      RunRecordMeta meta = metadataStoreDataset.getRun(program.run(runIds.iterator().next().getId()));
-      Assert.assertNotNull(meta);
-      Assert.assertEquals(runId.getId(), meta.getPid());
-    });
-
-    txnl.execute(() -> {
-      metadataStoreDataset.recordProgramStopOldFormat(
-        programRunId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-        ProgramRunStatus.COMPLETED, null, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      Map<ProgramRunId, RunRecordMeta> runRecordMap = metadataStoreDataset.getRuns(
-        program, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, Integer.MAX_VALUE, null);
-      Assert.assertEquals(1, runRecordMap.size());
-      ProgramRunId fetchedRunId = runRecordMap.keySet().iterator().next();
-      Assert.assertEquals(programRunId, fetchedRunId);
-    });
-  }
-
   private AppMetadataStore getMetadataStore(String tableName) throws Exception {
     DatasetId storeTable = NamespaceId.DEFAULT.dataset(tableName);
     datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
