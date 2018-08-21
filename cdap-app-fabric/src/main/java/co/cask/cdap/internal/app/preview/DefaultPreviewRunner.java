@@ -167,9 +167,10 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
             public void run() {
               try {
                 LOG.info("Stopping the preview since it has reached running time: {} mins.", timeOutMinutes);
-                stopPreview();
                 killedByTimer = true;
+                stopPreview();
               } catch (Exception e) {
+                killedByTimer = false;
                 LOG.debug("Error shutting down the preview run with id: {}", programId);
               }
             }
