@@ -21,14 +21,22 @@ import MyDataPrepApi from 'api/dataprep';
 import {objectQuery} from 'services/helpers';
 
 const setKafkaAsActiveBrowser = (payload) => {
+  let {id: connectionId} = payload;
+
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_KAFKA_CONNECTION_ID,
+    payload: {
+      connectionId
+    }
+  });
   setActiveBrowser(payload);
   setKafkaInfoLoading();
 
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let {id} = payload;
+
   let params = {
     namespace,
-    connectionId: id
+    connectionId
   };
 
   MyDataPrepApi.getConnection(params)

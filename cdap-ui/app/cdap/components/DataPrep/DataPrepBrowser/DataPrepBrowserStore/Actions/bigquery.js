@@ -66,23 +66,24 @@ const setBigQueryAsActiveBrowser = (payload) => {
     bigquery.connectionId === payload.id
   ) { return; }
 
-  let {id} = payload;
-  setActiveBrowser(payload);
-  setBigQueryLoading();
-  listBiqQueryDatasets(id);
-
-  let namespace = getCurrentNamespace();
-  let params = {
-    namespace,
-    connectionId: id
-  };
+  let {id: connectionId} = payload;
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_BIGQUERY_CONNECTION_ID,
     payload: {
-      connectionId: id
+      connectionId
     }
   });
+
+  setActiveBrowser(payload);
+  setBigQueryLoading();
+  listBiqQueryDatasets(connectionId);
+
+  let namespace = getCurrentNamespace();
+  let params = {
+    namespace,
+    connectionId
+  };
 
   MyDataPrepApi.getConnection(params)
     .subscribe((res) => {
@@ -91,7 +92,7 @@ const setBigQueryAsActiveBrowser = (payload) => {
         type: BrowserStoreActions.SET_BIGQUERY_CONNECTION_DETAILS,
         payload: {
           info,
-          connectionId: id
+          connectionId
         }
       });
     }, (err) => {

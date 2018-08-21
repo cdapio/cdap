@@ -30,14 +30,23 @@ const setDatabaseInfoLoading = () => {
 };
 
 const setDatabaseAsActiveBrowser = (payload) => {
+  let {id: connectionId} = payload;
+
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_DATABASE_CONNECTION_ID,
+    payload: {
+      connectionId
+    }
+  });
+
   setActiveBrowser(payload);
   setDatabaseInfoLoading();
 
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let {id} = payload;
+
   let params = {
     namespace,
-    connectionId: id
+    connectionId
   };
   MyDataPrepApi.getConnection(params)
     .subscribe((res) => {

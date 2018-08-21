@@ -20,11 +20,13 @@ import {defaultAction, composeEnhancers, objectQuery} from 'services/helpers';
 const Actions = {
   // Database
   SET_DATABASE_PROPERTIES: 'SET_DATABASE_PROPERTIES',
+  SET_DATABASE_CONNECTION_ID: 'SET_DATABASE_CONNECTION_ID',
   SET_DATABASE_LOADING: 'SET_DATABASE_LOADING',
   SET_ACTIVEBROWSER: 'SET_ACTIVE_BROWSER',
 
   // Kafka
   SET_KAFKA_PROPERTIES: 'SET_KAFKA_PROPERTIES',
+  SET_KAFKA_CONNECTION_ID: 'SET_KAFKA_CONNECTION_ID',
   SET_KAFKA_LOADING: 'SET_KAFKA_LOADING',
 
   // S3
@@ -112,6 +114,12 @@ const defaultError = null;
 
 const database = (state = defaultDatabaseValue, action = defaultAction) => {
   switch (action.type) {
+    case Actions.SET_DATABASE_CONNECTION_ID:
+      // This means the user is starting afresh. Reset everything to default and set the connectionID
+      return {
+        ...defaultDatabaseValue,
+        connectionId: action.payload.connectionId
+      };
     case Actions.SET_DATABASE_PROPERTIES:
       return Object.assign({}, state, {
         info: objectQuery(action, 'payload', 'info') || state.info,
@@ -139,6 +147,12 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
 
 const kafka = (state = defaultKafkaValue, action = defaultAction) => {
   switch (action.type) {
+    case Actions.SET_KAFKA_CONNECTION_ID:
+      // This means the user is starting afresh. Reset everything to default and set the connectionID
+      return {
+        ...defaultKafkaValue,
+        connectionId: action.payload.connectionId
+      };
     case Actions.SET_KAFKA_PROPERTIES:
       return Object.assign({}, state, {
         info: objectQuery(action, 'payload', 'info') || state.info,
@@ -260,9 +274,10 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
 
 const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
   switch (action.type) {
+    // This means the user is starting afresh. Reset everything to default and set the connectionID
     case Actions.SET_BIGQUERY_CONNECTION_ID:
       return {
-        ...state,
+        ...defaultBigQueryValue,
         connectionId: action.payload.connectionId
       };
     case Actions.SET_BIGQUERY_CONNECTION_DETAILS:

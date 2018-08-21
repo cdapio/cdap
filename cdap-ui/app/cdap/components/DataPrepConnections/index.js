@@ -580,13 +580,14 @@ export default class DataPrepConnections extends Component {
         <Route
           path={`${BASEPATH}/browser`}
           render={({match, location}) => {
-            setActiveBrowser({name: 'file'});
+            const setBrowserToDisplay = setActiveBrowser.bind(null, {name: 'file'});
             return (
               <DataPrepBrowser
                 match={match}
                 location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
+                setActiveBrowser={setBrowserToDisplay}
               />
             );
           }}
@@ -606,13 +607,14 @@ export default class DataPrepConnections extends Component {
           path={`${BASEPATH}/database/:databaseId`}
           render={(match) => {
             let id  = match.match.params.databaseId;
-            setDatabaseAsActiveBrowser({name: 'database', id});
+            const setBrowserToDisplay = setDatabaseAsActiveBrowser.bind(null, {name: 'database', id});
             return (
               <DataPrepBrowser
                 match={match}
                 location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
+                setActiveBrowser={setBrowserToDisplay}
               />
             );
           }}
@@ -621,14 +623,14 @@ export default class DataPrepConnections extends Component {
           path={`${BASEPATH}/kafka/:kafkaId`}
           render={(match) => {
             let id  = match.match.params.kafkaId;
-            const setActiveBrowser = setKafkaAsActiveBrowser.bind(null, {name: 'kafka', id});
+            const setBrowserToDisplay = setKafkaAsActiveBrowser.bind(null, {name: 'kafka', id});
             return (
               <DataPrepBrowser
                 match={match}
                 location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
-                setActiveBrowser={setActiveBrowser}
+                setActiveBrowser={setBrowserToDisplay}
               />
             );
           }}
@@ -638,14 +640,14 @@ export default class DataPrepConnections extends Component {
           render={(match) => {
             let id  = match.match.params.s3Id;
             let {prefix = '/'} = queryString.parse(match.location.search);
-            const setActiveBrowser = setS3AsActiveBrowser.bind(null, {name: 's3', id, path: prefix});
+            const setBrowserToDisplay = setS3AsActiveBrowser.bind(null, {name: 's3', id, path: prefix});
             return (
               <DataPrepBrowser
                 match={match}
                 location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
-                setActiveBrowser={setActiveBrowser}
+                setActiveBrowser={setBrowserToDisplay}
               />
             );
           }}
@@ -655,14 +657,14 @@ export default class DataPrepConnections extends Component {
           render={(match) => {
             let id  = match.match.params.gcsId;
             let {prefix = '/'} = queryString.parse(match.location.search);
-            const setActiveBrowser = setGCSAsActiveBrowser.bind(null, {name: 'gcs', id, path: prefix});
+            const setBrowserToDisplay = setGCSAsActiveBrowser.bind(null, {name: 'gcs', id, path: prefix});
             return (
               <DataPrepBrowser
                 match={match}
                 location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
-                setActiveBrowser={setActiveBrowser}
+                setActiveBrowser={setBrowserToDisplay}
               />
             );
           }}
@@ -671,14 +673,14 @@ export default class DataPrepConnections extends Component {
           path={`${BASEPATH}/bigquery/:bigQueryId`}
           render={(match) => {
             let id  = match.match.params.bigQueryId;
-            const setActiveBrowser = setBigQueryAsActiveBrowser.bind(null, {name: 'bigquery', id});
+            const setBrowserToDisplay = setBigQueryAsActiveBrowser.bind(null, {name: 'bigquery', id});
             return (
               <DataPrepBrowser
                 match={match}
                 location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
-                setActiveBrowser={setActiveBrowser}
+                setActiveBrowser={setBrowserToDisplay}
               />
             );
           }}
