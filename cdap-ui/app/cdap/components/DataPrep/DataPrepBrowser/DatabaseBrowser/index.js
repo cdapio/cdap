@@ -40,11 +40,9 @@ export default class DatabaseBrowser extends Component {
     onWorkspaceCreate: PropTypes.func
   };
 
-  store = DataPrepBrowserStore.getState();
-
   state = {
-    info: this.store.database.info,
-    connectionId: this.store.database.connectionId,
+    info: DataPrepBrowserStore.getState().database.info,
+    connectionId: DataPrepBrowserStore.getState().database.connectionId,
     connectionName: '',
     tables: [],
     loading: true,

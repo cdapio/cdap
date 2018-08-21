@@ -44,12 +44,10 @@ export default class KafkaBrowser extends Component {
     enableRouting: true
   };
 
-  store = DataPrepBrowserStore.getState();
-
   state = {
-    connectionId: this.store.kafka.connectionId,
-    info: this.store.kafka.info,
-    loading: this.store.kafka.loading,
+    connectionId: DataPrepBrowserStore.getState().kafka.connectionId,
+    info: DataPrepBrowserStore.getState().kafka.info,
+    loading: DataPrepBrowserStore.getState().kafka.loading,
     search: '',
     searchFocus: true,
     error: null,

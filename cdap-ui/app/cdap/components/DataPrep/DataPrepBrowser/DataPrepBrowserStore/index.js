@@ -128,7 +128,6 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
     case Actions.SET_ERROR:
       return {
         ...state,
-        info: objectQuery(action, 'payload', 'info') || state.info,
         loading: false
       };
     case Actions.RESET:
@@ -156,7 +155,6 @@ const kafka = (state = defaultKafkaValue, action = defaultAction) => {
     case Actions.SET_ERROR:
       return {
         ...state,
-        info: objectQuery(action, 'payload', 'info') || state.info,
         loading: false
       };
     case Actions.RESET:
@@ -204,7 +202,6 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
     case Actions.SET_ERROR:
       return {
         ...state,
-        info: objectQuery(action, 'payload', 'info') || state.info,
         loading: false
       };
     case Actions.RESET:
@@ -252,7 +249,6 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
     case Actions.SET_ERROR:
       return {
         ...state,
-        info: objectQuery(action, 'payload', 'info') || state.info,
         loading: false
       };
     case Actions.RESET:
@@ -298,7 +294,6 @@ const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
     case Actions.SET_ERROR:
       return {
         ...state,
-        info: objectQuery(action, 'payload', 'info') || state.info,
         loading: false
       };
     case Actions.RESET:
