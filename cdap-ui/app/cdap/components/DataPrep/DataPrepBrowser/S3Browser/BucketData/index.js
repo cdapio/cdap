@@ -110,7 +110,7 @@ const TableContents = ({enableRouting, search, filteredData, onWorkspaceCreate, 
                   >
                     {T.translate(`features.EmptyMessageContainer.clearLabel`)}
                   </span>
-                  <span>{T.translate(`${PREFIX}.Content.EmptymessageContainer.suggestion1`)} </span>
+                  <span>{T.translate(`${PREFIX}.Content.EmptymessageContainer.suggestion1`)}</span>
                 </li>
               </ul>
             </EmptyMessageContainer>

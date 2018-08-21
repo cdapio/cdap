@@ -391,7 +391,7 @@ export default class FileBrowser extends Component {
               >
                 {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
               </span>
-              <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
+              <span>{T.translate(`${PREFIX}.EmptyMessage.suggestion1`)}</span>
             </li>
           </ul>
         </div>

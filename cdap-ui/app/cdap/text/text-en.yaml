@@ -444,7 +444,7 @@ features:
             directory: Directory
             emptyBucket: No files or directories found in this bucket
             EmptymessageContainer:
-              suggestion1: ' your search'
+              suggestion1: your search
           Headers:
             LastModified: Last modified
             Name: Name
@@ -479,7 +479,7 @@ features:
           Content:
             emptyBucket: No files or directories found in this bucket
             EmptymessageContainer:
-              suggestion1: ' your search'
+              suggestion1: your search
           Headers:
             LastModified: Last modified
             Name: Name
