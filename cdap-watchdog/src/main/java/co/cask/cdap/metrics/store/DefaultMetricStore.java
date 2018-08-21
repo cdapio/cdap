@@ -68,6 +68,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -95,11 +96,11 @@ public class DefaultMetricStore implements MetricStore {
                     new AggregationAlias(ImmutableMap.of(Constants.Metrics.Tag.RUN_ID,
                                                          Constants.Metrics.Tag.WORKFLOW_RUN_ID)));
 
-  private final int resolutions[];
   private final Supplier<Cube> cube;
   private final Supplier<MetricsConsumerMetaTable> metaTableSupplier;
   private MetricsContext metricsContext;
   private final List<TopicId> metricsTopics;
+  private final Map<Integer, Long> resolutionTTLMap;
 
 
   static {
@@ -231,7 +232,13 @@ public class DefaultMetricStore implements MetricStore {
 
   // NOTE: should never be used apart from data migration during cdap upgrade
   private DefaultMetricStore(MetricDatasetFactory dsFactory, int resolutions[], CConfiguration cConf) {
-    this.resolutions = resolutions;
+    long secRetentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.SECOND_RESOLUTION +
+                                            Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+    long minRetentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.MINUTE_RESOLUTION +
+                                            Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+    long hourRetentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.HOUR_RESOLUTION +
+                                             Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+    this.resolutionTTLMap = ImmutableMap.of(1, secRetentionSecs, 60, minRetentionSecs, 3600, hourRetentionSecs);
     FactTableSupplier factTableSupplier = new FactTableSupplier() {
       @Override
       public FactTable get(int resolution, int ignoredRollTime) {
@@ -331,14 +338,17 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public void deleteBefore(long timestamp) throws Exception {
-    // Delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
-    for (int resolution : resolutions) {
-      // NOTE: we do not purge on TTL the "totals" currently, as there might be system components dependent on it
-      if (TOTALS_RESOLUTION == resolution) {
-        continue;
-      }
-      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap());
-      cube.get().delete(query);
+    for (int resolution : resolutionTTLMap.keySet()) {
+      // Delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
+      deleteMetricsBeforeTimestamp(timestamp, resolution);
+    }
+  }
+
+  @Override
+  public void deleteTTLExpired() throws Exception {
+    long currentTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    for (Map.Entry<Integer, Long> resolutionTTL : resolutionTTLMap.entrySet()) {
+      deleteMetricsBeforeTimestamp(currentTime - resolutionTTL.getValue(), resolutionTTL.getKey());
     }
   }
 
@@ -350,7 +360,7 @@ public class DefaultMetricStore implements MetricStore {
   @Override
   public void deleteAll() throws Exception {
     // this will delete all aggregates metrics data
-    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, Maps.<String, String>newHashMap()));
+    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, Collections.emptyMap()));
     // this will delete all timeseries data
     deleteBefore(System.currentTimeMillis() / 1000);
   }
@@ -408,6 +418,11 @@ public class DefaultMetricStore implements MetricStore {
       }
     }
     return processMap;
+  }
+
+  private void deleteMetricsBeforeTimestamp(long timestamp, int resolution) {
+    CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Collections.emptyMap());
+    cube.get().delete(query);
   }
 
   private List<DimensionValue> toTagValues(List<co.cask.cdap.api.metrics.TagValue> input) {

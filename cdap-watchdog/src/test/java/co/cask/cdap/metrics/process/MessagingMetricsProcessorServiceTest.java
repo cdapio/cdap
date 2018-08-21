@@ -138,12 +138,12 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
 
     @Override
     public void setMetricsContext(MetricsContext metricsContext) {
-
+      // no-op
     }
 
     @Override
     public void add(MetricValues metricValues) throws Exception {
-
+      // no-op
     }
 
     @Override
@@ -201,12 +201,17 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
 
     @Override
     public void deleteBefore(long timestamp) throws Exception {
+      // no-op
+    }
 
+    @Override
+    public void deleteTTLExpired() throws Exception {
+      // no-op
     }
 
     @Override
     public void delete(MetricDeleteQuery query) throws Exception {
-
+      // no-op
     }
 
     @Override
