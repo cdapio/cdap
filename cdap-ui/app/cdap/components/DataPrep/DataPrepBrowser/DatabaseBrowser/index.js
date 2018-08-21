@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import DataPrepApi from 'api/dataprep';
-import isNil from 'lodash/isNil';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
@@ -27,7 +26,7 @@ import {Input} from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import ee from 'event-emitter';
 import {objectQuery} from 'services/helpers';
-import {setDatabaseAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {setDatabaseAsActiveBrowser, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 
 require('./DatabaseBrowser.scss');
@@ -47,8 +46,7 @@ export default class DatabaseBrowser extends Component {
     tables: [],
     loading: true,
     search: '',
-    searchFocus: true,
-    error: null
+    searchFocus: true
   };
 
   eventEmitter = ee(ee);
@@ -65,8 +63,7 @@ export default class DatabaseBrowser extends Component {
         info: database.info,
         connectionId: database.connectionId,
         loading: database.loading,
-        tables: database.tables,
-        error: database.error
+        tables: database.tables
       });
     });
   }
@@ -111,7 +108,7 @@ export default class DatabaseBrowser extends Component {
           window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         },
         (err) => {
-          console.log('ERROR: ', err);
+          setError(err);
         }
       );
   }
