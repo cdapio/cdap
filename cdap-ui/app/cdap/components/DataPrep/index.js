@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,30 +70,11 @@ export default class DataPrep extends Component {
 
     this.eventEmitter.on('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
     this.eventEmitter.on('DATAPREP_CLOSE_SIDEPANEL', this.closeSidePanel);
-
-    this.eventEmitter.on('REFRESH_DATAPREP', () => {
-      this.setState({
-        loading: true
-      });
-      /*
-        Not sure if this is necessary but added it is safer when doing an upgrade.
-        - Modified directives?
-        - Modified API calls that are not compatible with earlier version?
-      */
-      DataPrepStore.dispatch({
-        type: DataPrepActions.reset
-      });
-      let workspaceId = this.props.workspaceId;
-      this.setCurrentWorkspace(workspaceId);
-      setTimeout(() => {
-        this.setState({
-          loading: false
-        });
-      });
-    });
+    this.eventEmitter.on('REFRESH_DATAPREP', this.refreshDataPrep);
   }
 
-  componentWillMount() {
+  componentDidMount() {
+    this._isMounted = true;
     this.checkBackendUp(this.props);
     checkDataPrepHigherVersion();
   }
@@ -105,6 +86,7 @@ export default class DataPrep extends Component {
   }
 
   componentWillUnmount() {
+    this._isMounted = false;
     if (this.props.onSubmit) {
       let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
       this.props.onSubmit({workspaceId});
@@ -114,10 +96,32 @@ export default class DataPrep extends Component {
     });
     this.eventEmitter.off('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
     this.eventEmitter.off('DATAPREP_CLOSE_SIDEPANEL', this.closeSidePanel);
+    this.eventEmitter.off('REFRESH_DATAPREP', this.refreshDataPrep);
     if (this.dataprepStoreSubscription) {
       this.dataprepStoreSubscription();
     }
   }
+
+  refreshDataPrep = () => {
+    this.setState({
+      loading: true
+    });
+    /*
+      Not sure if this is necessary but added it is safer when doing an upgrade.
+      - Modified directives?
+      - Modified API calls that are not compatible with earlier version?
+    */
+    DataPrepStore.dispatch({
+      type: DataPrepActions.reset
+    });
+    let workspaceId = this.props.workspaceId;
+    this.setCurrentWorkspace(workspaceId);
+    setTimeout(() => {
+      this.setState({
+        loading: false
+      });
+    });
+  };
 
   checkBackendUp() {
     // On single workspace mode (within pipeline), the service management is
@@ -163,18 +167,22 @@ export default class DataPrep extends Component {
       .subscribe(() => {
         let {properties} = DataPrepStore.getState().dataprep;
         let workspaceName = properties.name;
-        this.setState({
-          loading: false,
-          currentWorkspace: workspaceId,
-          workspaceName
-        });
-      }, () => {
-        this.setState({loading: false});
+        if (this._isMounted) {
+          this.setState({
+            loading: false,
+            currentWorkspace: workspaceId,
+            workspaceName
+          });
+        }
 
-        DataPrepStore.dispatch({
-          type: DataPrepActions.setInitialized
-        });
-        this.eventEmitter.emit('DATAPREP_NO_WORKSPACE_ID');
+      }, () => {
+        if (this._isMounted) {
+          this.setState({loading: false});
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setInitialized
+          });
+          this.eventEmitter.emit('DATAPREP_NO_WORKSPACE_ID');
+        }
       });
   }
 
