@@ -633,6 +633,14 @@
                         <include>*.sdk.jar</include>
                       </includes>
                     </resource>
+                    <!-- copy bootstrap file -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-common/src/main/resources/bootstrap</directory>
+                      <targetPath>bootstrap</targetPath>
+                      <includes>
+                        <include>sandbox.json</include>
+                      </includes>
+                    </resource>
                     <!-- copy runtime provider extensions -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-runtime-ext-dataproc/target/libexec</directory>

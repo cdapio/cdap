@@ -65,6 +65,8 @@ public final class Constants {
   public static final String SPARK_COMPAT_ENV = "SPARK_COMPAT";
   // Environment variable for TEZ home
   public static final String TEZ_HOME = "TEZ_HOME";
+  // File specifying bootstrap steps
+  public static final String BOOTSTRAP_FILE = "bootstrap.file";
 
   public static final String CLUSTER_NAME = "cluster.name";
   /* Used by the user to specify what part of a path should be replaced by the current user's name. */

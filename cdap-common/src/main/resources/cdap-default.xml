@@ -293,6 +293,17 @@
   <!-- Global Configuration -->
 
   <property>
+    <name>bootstrap.file</name>
+    <value>/opt/cdap/master/bootstrap/distributed.json</value>
+    <description>
+      File that contains bootstrap steps that should be executed on a new CDAP instance as well
+      as steps that should be executed on every restart of CDAP. Bootstrap steps include operations
+      like loading system artifacts, creating the native profile, and creating the data prep
+      application.
+    </description>
+  </property>
+
+  <property>
     <name>dataset.unchecked.upgrade</name>
     <value>false</value>
     <description>

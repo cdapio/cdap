@@ -230,7 +230,7 @@ public class ProfileService {
    * Delete all profiles. This method can only be used at unit tests
    */
   @VisibleForTesting
-  void clear() {
+  public void clear() {
     Transactionals.execute(transactional, context -> {
       getProfileDataset(context).deleteAllProfiles();
     });

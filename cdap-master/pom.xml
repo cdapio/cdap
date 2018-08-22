@@ -224,6 +224,7 @@
         <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>
         <stage.operations.ext.dir>${stage.opt.dir}/ext/operations</stage.operations.ext.dir>
         <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
+        <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
@@ -526,6 +527,28 @@
                       </directory>
                       <includes>
                         <include>co.cask.cdap.cdap-operational-stats-core-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy bootstrap file -->
+              <execution>
+                <id>copy-bootstrap-file</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.bootstrap.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-common/src/main/resources/bootstrap/
+                      </directory>
+                      <includes>
+                        <include>distributed.json</include>
                       </includes>
                     </resource>
                   </resources>

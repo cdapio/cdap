@@ -27,12 +27,9 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.internal.app.namespace.DefaultEntityEnsurer;
-import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
-import co.cask.cdap.internal.profile.ProfileService;
+import co.cask.cdap.internal.bootstrap.BootstrapService;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -79,16 +76,15 @@ public class AppFabricServer extends AbstractIdleService {
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
-  private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
   private final CoreSchedulerService coreSchedulerService;
   private final ProvisioningService provisioningService;
+  private final BootstrapService bootstrapService;
   private final RouteStore routeStore;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
 
-  private DefaultEntityEnsurer defaultEntityEnsurer;
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
@@ -110,13 +106,11 @@ public class AppFabricServer extends AbstractIdleService {
                          StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-                         NamespaceAdmin namespaceAdmin,
-                         SystemArtifactLoader systemArtifactLoader,
                          PluginService pluginService,
                          RouteStore routeStore,
                          CoreSchedulerService coreSchedulerService,
-                         ProfileService profileService,
-                         ProvisioningService provisioningService) {
+                         ProvisioningService provisioningService,
+                         BootstrapService bootstrapService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -131,13 +125,12 @@ public class AppFabricServer extends AbstractIdleService {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
-    this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
     this.routeStore = routeStore;
-    this.defaultEntityEnsurer = new DefaultEntityEnsurer(namespaceAdmin, profileService);
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
     this.provisioningService = provisioningService;
+    this.bootstrapService = bootstrapService;
   }
 
   /**
@@ -153,7 +146,7 @@ public class AppFabricServer extends AbstractIdleService {
         notificationService.start(),
         provisioningService.start(),
         applicationLifecycleService.start(),
-        systemArtifactLoader.start(),
+        bootstrapService.start(),
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programNotificationSubscriberService.start(),
@@ -194,18 +187,16 @@ public class AppFabricServer extends AbstractIdleService {
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
-    defaultEntityEnsurer.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
     coreSchedulerService.stopAndWait();
     routeStore.close();
-    defaultEntityEnsurer.stopAndWait();
+    bootstrapService.stopAndWait();
     cancelHttpService.cancel();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
-    systemArtifactLoader.stopAndWait();
     notificationService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();

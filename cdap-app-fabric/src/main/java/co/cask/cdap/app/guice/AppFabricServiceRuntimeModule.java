@@ -93,6 +93,7 @@ import co.cask.cdap.internal.app.services.RunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.bootstrap.guice.BootstrapModules;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisionerModule;
@@ -169,6 +170,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule().getInMemoryModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
+                           BootstrapModules.getInMemoryModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -214,6 +216,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
                            new ProvisionerModule(),
+                           BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -296,6 +299,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new AuthenticationContextModules().getMasterModule(),
                            new MetadataServiceModule(),
                            new ProvisionerModule(),
+                           BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
