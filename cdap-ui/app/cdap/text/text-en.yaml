@@ -966,6 +966,7 @@ features:
           Step2Error: 'Unable to submit copy task.'
         createBtnLabel: Ingest Data
         description: You are creating a new dataset, select a type and enter information about this new entity
+        disabledTooltip: The Ingest Data option is unavailable for uploaded files.
         Form:
           datasetNameLabel: Dataset name
           datasetTooltip: Name of the dataset to copy to
