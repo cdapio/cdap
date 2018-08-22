@@ -3,6 +3,9 @@
     "version": "{{VERSION}}",
     "sdk": {
       "url": "{{URI}}"
+    },
+    "cdap_site": {
+      "dashboard.bind.address": "0.0.0.0"
     }
   },
   "nodejs": {

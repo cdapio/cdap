@@ -7,7 +7,9 @@
     "azure_client_secret": "{{env `ARM_CLIENT_SECRET`}}",
     "azure_resource_group": "{{env `ARM_RESOURCE_GROUP`}}",
     "azure_storage_account": "{{env `ARM_STORAGE_ACCOUNT`}}",
-    "azure_subscription_id": "{{env `ARM_SUBSCRIPTION_ID`}}"
+    "azure_subscription_id": "{{env `ARM_SUBSCRIPTION_ID`}}",
+    "gcp_account_file": "{{env `GCP_ACCOUNT_FILE`}}",
+    "gcp_project_id": "{{env `GCP_PROJECT_ID`}}"
   },
   "builders": [
     {
@@ -98,6 +100,18 @@
       "location": "West US",
       "vm_size": "Standard_DS1_v2",
       "name": "cdap-cloud-sandbox-azure"
+    },
+    {
+      "type": "googlecompute",
+      "account_file": "{{user `gcp_account_file`}}",
+      "project_id": "{{user `gcp_project_id`}}",
+      "source_image": "ubuntu-1604-xenial-v20180814",
+      "source_image_family": "ubuntu-1604-lts",
+      "source_image_project_id": "ubuntu-os-cloud",
+      "ssh_username": "packer",
+      "zone": "us-central1-a",
+      "name": "cdap-cloud-sandbox-gcp",
+      "use_internal_ip": "true"
     }
   ],
   "provisioners": [
