@@ -82,7 +82,7 @@ export default class NodesRecordsGraph extends Component {
         x = x + (id + 1);
       }
       if (xDomainType === 'time') {
-        x = run.start || run.starting;
+        x = run.starting;
       }
       return {
         x,
@@ -181,7 +181,7 @@ export default class NodesRecordsGraph extends Component {
                   }
                   <div>
                     <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
-                    <span>{ moment(popOverData.start * 1000).format('llll')}</span>
+                    <span>{ moment(popOverData.starting * 1000).format('llll')}</span>
                   </div>
                 </Hint>
               )

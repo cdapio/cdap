@@ -94,7 +94,7 @@ $min_height_of_graph: 340px;
     border: 1px solid $summary_border_color;
     > div {
       &:nth-child(1) {
-        flex: 0.2;
+        flex: 1;
         font-size: 16px;
         font-weight: 500;
       }

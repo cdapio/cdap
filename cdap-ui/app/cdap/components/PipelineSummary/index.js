@@ -184,18 +184,20 @@ export default class PipelineSummary extends Component {
       let {runs, loading, nodesMap, nodeMetricsLoading} = PipelineSummaryStore.getState().pipelinerunssummary;
       runs = runs.map(run => ({
         ...run,
-        start: run.start || run.starting
+        starting: run.starting,
       }));
       let logsMetrics = runs.map(run => ({
         runid: run.runid,
         logsMetrics: run.logsMetrics || {},
         start: run.start,
+        starting: run.starting,
         end: run.end
       }));
       runs = runs.map(run => ({
         runid: run.runid,
         duration: run.duration,
         start: run.start,
+        starting: run.starting,
         end: run.end,
         status: run.status
       }));
@@ -211,8 +213,8 @@ export default class PipelineSummary extends Component {
           let start, end;
           // Will happen if chosen 'Since Inception' as UI doesn't know a start and end beforehand.
           if (isNil(this.state.start) || isNil(this.state.end)) {
-            end = runs[0].start;
-            start = runs[runs.length - 1].start;
+            end = runs[0].starting;
+            start = runs[runs.length - 1].starting;
           }
           return !isNil(start) && !isNil(end) ? {start, end} : {};
         };

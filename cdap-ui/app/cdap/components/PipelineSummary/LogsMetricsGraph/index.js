@@ -114,7 +114,7 @@ export default class LogsMetricsGraph extends Component {
         x = x + (i + 1);
       }
       if (xDomainType === 'time') {
-        x = run.start;
+        x = run.starting;
       }
       warnings.push({
         x,
@@ -269,7 +269,7 @@ export default class LogsMetricsGraph extends Component {
                   }
                   <div>
                     <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
-                    <span>{ moment(popOverData.start * 1000).format('llll')}</span>
+                    <span>{ moment(popOverData.starting * 1000).format('llll')}</span>
                   </div>
                 </Hint>
               )
@@ -316,7 +316,7 @@ export default class LogsMetricsGraph extends Component {
                   <td>
                     <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.table.body.viewLog`)} </a>
                   </td>
-                  <td> {moment(run.start * 1000).format('llll')}</td>
+                  <td> {moment(run.starting * 1000).format('llll')}</td>
                 </tr>
               );
             })
@@ -331,7 +331,7 @@ export default class LogsMetricsGraph extends Component {
         index: i + 1,
         warnings: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0,
         errors: objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0,
-        start: run.start
+        start: run.starting
       });
     });
     return (

@@ -41,11 +41,11 @@ const GRID_HEADERS = [
     label: T.translate(`${PREFIX}.type`)
   },
   {
-    property: 'start',
+    property: 'starting',
     label: T.translate(`${PREFIX}.start`)
   },
   {
-    property: (run) => run.end ? run.end - run.start : 0,
+    property: (run) => run.end ? run.end - run.starting : 0,
     label: T.translate(`${PREFIX}.duration`)
   },
   {
@@ -74,7 +74,7 @@ function renderBody(data) {
 
           const displayStatus = StatusMapper.lookupDisplayStatus(run.status) || '';
 
-          let startTime = run.running || run.start;
+          let startTime = run.running || run.starting;
           startTime = humanReadableDate(startTime, false);
 
           const user = run.user || '--';
@@ -89,7 +89,7 @@ function renderBody(data) {
           return (
             <div
               className="grid-row"
-              key={`${run.application.name}${run.program}${run.start}${i}`}
+              key={`${run.application.name}${run.program}${run.starting}${i}`}
             >
               <div title={run.namespace}>
                 {run.namespace}

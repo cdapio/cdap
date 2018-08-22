@@ -36,7 +36,6 @@ import SortableStickyTable from 'components/SortableStickyTable';
 import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
 import isEqual from 'lodash/isEqual';
-import isNil from 'lodash/isNil';
 import StatusMapper from 'services/StatusMapper';
 
 require('./RunsHistoryGraph.scss');
@@ -128,7 +127,7 @@ export default class RunsHistoryGraph extends Component {
         x = x + (id + 1);
       }
       if (xDomainType === 'time') {
-        x = isNil(run.start) ? 0 : run.start;
+        x = run.starting;
       }
       return {
         x,
@@ -280,7 +279,7 @@ export default class RunsHistoryGraph extends Component {
                   }
                   <div>
                     <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
-                    <span>{moment(popOverData.start * 1000).format('llll')}</span>
+                    <span>{moment(popOverData.starting * 1000).format('llll')}</span>
                   </div>
                 </Hint>
               )
@@ -312,7 +311,7 @@ export default class RunsHistoryGraph extends Component {
         <tbody>
           {
             runs.map(run => {
-              let startTime = run.start ? moment(run.start * 1000).format('llll') : '--';
+              let startTime = moment(run.starting * 1000).format('llll');
               let duration = humanReadableDuration(run.duration || 0);
 
               return (

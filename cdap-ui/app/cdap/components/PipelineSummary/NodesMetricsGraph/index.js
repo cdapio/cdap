@@ -80,7 +80,6 @@ export default class NodesMetricsGraph extends Component {
     let activeNode = Object.keys(this.props.nodesMap).pop();
     let activeNodeRuns = this.props.nodesMap[activeNode].map((run, i) => ({
       ...run,
-      start: run.start || run.starting,
       index: i + 1
     }));
     this.setState({
@@ -92,7 +91,6 @@ export default class NodesMetricsGraph extends Component {
     let activeNodeRuns = objectQuery(this.state.nodesMap, activeNode).map((run, i) => ({
       ...run,
       index: i + 1,
-      start: run.start || run.starting
     }));
     this.setState({
       activeNode,
@@ -158,7 +156,7 @@ export default class NodesMetricsGraph extends Component {
                   <td>
                     <span>{record.numberOfRecords}</span>
                   </td>
-                  <td> {moment(record.start * 1000).format('llll')}</td>
+                  <td> {moment(record.starting * 1000).format('llll')}</td>
                 </tr>
               );
             })

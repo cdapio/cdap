@@ -1953,7 +1953,7 @@ features:
     statsContainer:
       avgRunTime: Average duration
       totalRuns: Total runs
-    title: 'Summary'
+    title: 'Summary (Max: 100 runs)'
 
   PipelineTriggers:
     collapsedTabLabel: "Show inbound triggers ({count})"

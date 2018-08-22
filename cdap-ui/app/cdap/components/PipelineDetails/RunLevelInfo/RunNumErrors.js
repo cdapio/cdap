@@ -37,7 +37,7 @@ const RunNumErrorsComp = ({logsMetrics, currentRun}) => {
       </div>
       <span>
         {
-          currentRun && currentRun.start ?
+          currentRun && currentRun.starting ?
             `${logsMetrics['system.app.log.error'] || 0}`
           :
             '--'

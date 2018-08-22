@@ -32,7 +32,7 @@ function setRuns(runs) {
         starting: run.starting,
         end: run.end,
         // If the pipeline is starting there is either start nor end times.
-        duration: isNil(run.start) ? 0 : isNil(run.end) ? (Math.ceil(Date.now()/1000) - run.start) : (run.end - run.start),
+        duration: isNil(run.end) ? (Math.ceil(Date.now()/1000) - run.starting) : (run.end - run.starting),
         status: run.status
       }))
     }

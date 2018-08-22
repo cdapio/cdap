@@ -126,7 +126,7 @@ export default class HistoryTab extends Component {
               return (
                 <tr key={history.runid}>
                   <td>{history.programName}</td>
-                  <td>{history.start ? humanReadableDate(history.start) : '--'}</td>
+                  <td>{history.starting ? humanReadableDate(history.starting) : '--'}</td>
                   <td>{history.runid}</td>
                   <td>{StatusMapper.lookupDisplayStatus(history.status)}</td>
                   <td>
