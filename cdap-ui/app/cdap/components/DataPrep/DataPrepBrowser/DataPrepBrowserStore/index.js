@@ -64,7 +64,6 @@ const defaultDatabaseValue = {
   info: {},
   tables: [],
   loading: false,
-  error: null,
   connectionId: ''
 };
 
@@ -72,14 +71,12 @@ const defaultKafkaValue = {
   info: {},
   topics: [],
   loading: false,
-  error: null,
   connectionId: ''
 };
 
 const defaultS3Value = {
   info: {},
   loading: false,
-  error: null,
   activeBucketDetails: [],
   prefix: '',
   connectionId: '',
@@ -89,7 +86,6 @@ const defaultS3Value = {
 const defaultGCSValue = {
   info: {},
   loading: false,
-  error: null,
   activeBucketDetails: [],
   prefix: '',
   connectionId: '',
@@ -99,7 +95,6 @@ const defaultGCSValue = {
 const defaultBigQueryValue = {
   info: {},
   loading: false,
-  error: null,
   connectionId: '',
   datasetId: null,
   datasetList: [],
