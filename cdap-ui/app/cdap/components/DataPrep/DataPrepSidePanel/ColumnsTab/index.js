@@ -58,24 +58,28 @@ export default class ColumnsTab extends Component {
   }
 
   componentDidMount() {
+    this._isMounted = true;
     this.sub = DataPrepStore.subscribe(() => {
-      let {dataprep: dataprepstate, columnsInformation: columnInfo} = DataPrepStore.getState();
-      this.setState({
-        selectedHeaders: dataprepstate.selectedHeaders,
-        columns: columnInfo.columns,
-        headers: dataprepstate.headers.map((res) => {
-          let obj = {
-            name: res,
-            uniqueId: uuidV4()
-          };
-          return obj;
-        }),
-        loading: dataprepstate.loading
-      });
+      if (this._isMounted) {
+        let {dataprep: dataprepstate, columnsInformation: columnInfo} = DataPrepStore.getState();
+        this.setState({
+          selectedHeaders: dataprepstate.selectedHeaders,
+          columns: columnInfo.columns,
+          headers: dataprepstate.headers.map((res) => {
+            let obj = {
+              name: res,
+              uniqueId: uuidV4()
+            };
+            return obj;
+          }),
+          loading: dataprepstate.loading
+        });
+      }
     });
   }
 
   componentWillUnmount() {
+    this._isMounted = false;
     if (this.sub && typeof this.sub === 'function') {
       this.sub();
     }

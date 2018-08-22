@@ -90,9 +90,15 @@ export default class FileBrowser extends Component {
   }
 
   componentWillUnmount() {
-    if (this.dataprepSubscription) {
+    if (typeof this.dataprepSubscription === 'function') {
       this.dataprepSubscription();
     }
+    if (
+      objectQuery(this.explorePathObservable, 'unsubscribe') &&
+      typeof this.explorePathObservable.unsubscribe === 'function'
+    ) {
+       this.explorePathObservable.unsubscribe();
+      }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -150,7 +156,7 @@ export default class FileBrowser extends Component {
 
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyDataPrepApi.explorer({
+    this.explorePathObservable = MyDataPrepApi.explorer({
       namespace,
       path,
       hidden: true

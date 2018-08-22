@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,7 +49,6 @@ import queryString from 'query-string';
 import Version from 'services/VersionRange/Version';
 import { MIN_DATAPREP_VERSION } from 'components/DataPrep';
 import NavLinkWrapper from 'components/NavLinkWrapper';
-import S3Browser from 'components/DataPrep/DataPrepBrowser/S3Browser';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -64,32 +63,22 @@ const RouteToHDFS = () => {
 };
 
 export default class DataPrepConnections extends Component {
-  constructor(props) {
-    super(props);
+  state = {
+    sidePanelExpanded: this.props.sidePanelExpanded || (this.props.enableRouting ? true : false),
+    backendChecking: true,
+    backendDown: false,
+    loading: this.props.enableRouting ? true : false,
+    databaseList: [],
+    kafkaList: [],
+    s3List: [],
+    gcsList: [],
+    bigQueryList: [],
+    activeConnectionid: objectQuery(DataPrepStore.getState().dataprep, 'workspaceInfo', 'properties', 'connectionid'),
+    activeConnectionType: objectQuery(DataPrepStore.getState().dataprep, 'workspaceInfo', 'properties', 'connection'),
+    showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
+  };
 
-    let {workspaceInfo} = DataPrepStore.getState().dataprep;
-    this.state = {
-      sidePanelExpanded: this.props.sidePanelExpanded || (this.props.enableRouting ? true : false),
-      backendChecking: true,
-      backendDown: false,
-      loading: this.props.enableRouting ? true : false,
-      databaseList: [],
-      kafkaList: [],
-      s3List: [],
-      gcsList: [],
-      bigQueryList: [],
-      activeConnectionid: objectQuery(workspaceInfo, 'properties', 'connectionid'),
-      activeConnectionType: objectQuery(workspaceInfo, 'properties', 'connection'),
-      showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
-    };
-
-    this.toggleSidePanel = this.toggleSidePanel.bind(this);
-    this.onServiceStart = this.onServiceStart.bind(this);
-    this.fetchConnectionsList = this.fetchConnectionsList.bind(this);
-    this.onUploadSuccess = this.onUploadSuccess.bind(this);
-  }
-
-  componentWillMount() {
+  componentDidMount() {
     this.checkBackendUp();
     if (isNil(this.props.match) || this.props.match.path.indexOf('connections') === -1) {
       setActiveBrowser({name: 'file'});
@@ -112,7 +101,7 @@ export default class DataPrepConnections extends Component {
   }
 
   componentWillUnmount() {
-    if (this.dataprepSubscription) {
+    if (typeof this.dataprepSubscription === 'function') {
       resetDataPrepBrowserStore();
       this.dataprepSubscription();
     }
@@ -204,11 +193,11 @@ export default class DataPrepConnections extends Component {
     });
   }
 
-  onServiceStart() {
+  onServiceStart = () => {
     this.checkBackendUp();
-  }
+  };
 
-  fetchConnectionsList(action, targetId) {
+  fetchConnectionsList = (action, targetId) => {
     let namespace = getCurrentNamespace();
 
     MyDataPrepApi.listConnections({
@@ -258,14 +247,14 @@ export default class DataPrepConnections extends Component {
     });
   }
 
-  toggleSidePanel() {
+  toggleSidePanel = () => {
     if (!this.props.allowSidePanelToggle) {
       return;
     }
     this.setState({sidePanelExpanded: !this.state.sidePanelExpanded});
-  }
+  };
 
-  onUploadSuccess(workspaceId) {
+  onUploadSuccess = (workspaceId) => {
     if (this.props.enableRouting) {
       let namespace = getCurrentNamespace();
 
@@ -276,7 +265,8 @@ export default class DataPrepConnections extends Component {
     if (this.props.onWorkspaceCreate) {
       this.props.onWorkspaceCreate(workspaceId);
     }
-  }
+  };
+
   renderDatabaseDetail() {
     let namespace = getCurrentNamespace();
     const baseLinkPath = `/ns/${namespace}/connections`;
@@ -700,12 +690,13 @@ export default class DataPrepConnections extends Component {
     }
     let {enableRouting, ...attributes} = this.props;
     enableRouting = this.props.singleWorkspaceMode ? false : this.props.enableRouting;
+    let setBrowserToDisplay;
     if (this.state.activeConnectionType === 'database') {
-      setDatabaseAsActiveBrowser({name: 'database', id: this.state.activeConnectionid});
+      setBrowserToDisplay = setDatabaseAsActiveBrowser.bind(null, {name: 'database', id: this.state.activeConnectionid});
     } else if (this.state.activeConnectionType === 'kafka') {
-      setKafkaAsActiveBrowser({name: 'kafka', id: this.state.activeConnectionid});
+      setBrowserToDisplay = setKafkaAsActiveBrowser.bind(null, {name: 'kafka', id: this.state.activeConnectionid});
     } else if (this.state.activeConnectionType === 'file') {
-      setActiveBrowser({name: 'file'});
+      setBrowserToDisplay = setActiveBrowser.bind(null, {name: 'file'});
     } else if (this.state.activeConnectionType === 's3') {
       let {workspaceInfo} = DataPrepStore.getState().dataprep;
       let {key} = workspaceInfo.properties;
@@ -714,7 +705,7 @@ export default class DataPrepConnections extends Component {
       if (bucketName) {
         path = `/${bucketName}/${key}`;
       }
-      setS3AsActiveBrowser({name: 's3', id: this.state.activeConnectionid, path});
+      setBrowserToDisplay = setS3AsActiveBrowser.bind(null, {name: 's3', id: this.state.activeConnectionid, path});
     } else if (this.state.activeConnectionType === 'gcs') {
       let {workspaceInfo} = DataPrepStore.getState().dataprep;
       let {path} = workspaceInfo.properties;
@@ -724,11 +715,13 @@ export default class DataPrepConnections extends Component {
       if (bucketName) {
         path = `/${bucketName}/${path}/`;
       }
-      setGCSAsActiveBrowser({name: 'gcs', id: this.state.activeConnectionid, path});
+      setBrowserToDisplay = setGCSAsActiveBrowser.bind(null, {name: 'gcs', id: this.state.activeConnectionid, path});
     } else if (this.state.activeConnectionType === 'bigquery') {
       let {workspaceInfo} = DataPrepStore.getState().dataprep;
-      setBigQueryAsActiveBrowser({name: 'bigquery', id: this.state.activeConnectionid});
-      listBigQueryTables(workspaceInfo.properties.connectionid, workspaceInfo.properties.datasetId);
+      setBrowserToDisplay = () => {
+        setBigQueryAsActiveBrowser({name: 'bigquery', id: this.state.activeConnectionid});
+        listBigQueryTables(workspaceInfo.properties.connectionid, workspaceInfo.properties.datasetId);
+      };
     }
     return (
       <DataPrepBrowser
@@ -737,10 +730,12 @@ export default class DataPrepConnections extends Component {
         toggle={this.toggleSidePanel}
         onWorkspaceCreate={!this.props.singleWorkspaceMode ? null : this.props.onWorkspaceCreate}
         enableRouting={enableRouting}
+        setActiveBrowser={setBrowserToDisplay}
         {...attributes}
       />
     );
   }
+
   render() {
     let pageTitle = (
       <Helmet
