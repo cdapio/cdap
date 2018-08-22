@@ -90,9 +90,7 @@ import javax.annotation.Nullable;
  * This class is mostly responsible for reading and storing run records. Each program run will have several run
  * records corresponding to state changes that occur during the program run. The rowkeys are of the form:
  *
- * runRecordStarting|namespace|app|version|programtype|program|runid
- * runRecordStarted|namespace|app|version|programtype|program|runid
- * runRecordSuspended|namespace|app|version|programtype|program|runid
+ * runRecordActive|namespace|app|version|programtype|program|inverted start time|runid
  * runRecordCompleted|namespace|app|version|programtype|program|inverted start time|runid
  *
  * These rows get deleted whenever state changes, with a new record written on top. In addition, workflow node state
@@ -115,6 +113,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   private static final String TYPE_APP_META = "appMeta";
   private static final String TYPE_STREAM = "stream";
+
+  private static final String TYPE_RUN_RECORD_ACTIVE = "runRecordActive";
+
+  // we will keep these since these will be needed during upgrade
   private static final String TYPE_RUN_RECORD_STARTING = "runRecordStarting";
   private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   private static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
@@ -124,10 +126,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_MESSAGE = "msg";
   private static final Map<ProgramRunStatus, String> STATUS_TYPE_MAP = ImmutableMap.<ProgramRunStatus, String>builder()
-    .put(ProgramRunStatus.PENDING, TYPE_RUN_RECORD_STARTING)
-    .put(ProgramRunStatus.STARTING, TYPE_RUN_RECORD_STARTING)
-    .put(ProgramRunStatus.RUNNING, TYPE_RUN_RECORD_STARTED)
-    .put(ProgramRunStatus.SUSPENDED, TYPE_RUN_RECORD_SUSPENDED)
+    .put(ProgramRunStatus.PENDING, TYPE_RUN_RECORD_ACTIVE)
+    .put(ProgramRunStatus.STARTING, TYPE_RUN_RECORD_ACTIVE)
+    .put(ProgramRunStatus.RUNNING, TYPE_RUN_RECORD_ACTIVE)
+    .put(ProgramRunStatus.SUSPENDED, TYPE_RUN_RECORD_ACTIVE)
     .put(ProgramRunStatus.COMPLETED, TYPE_RUN_RECORD_COMPLETED)
     .put(ProgramRunStatus.KILLED, TYPE_RUN_RECORD_COMPLETED)
     .put(ProgramRunStatus.FAILED, TYPE_RUN_RECORD_COMPLETED)
@@ -293,7 +295,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, nodeStateDetail);
 
     // Get the run record of the Workflow which started this program
-    key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, workflowRunId).build();
+    key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, workflowRunId,
+                                       RunIds.getTime(workflowRun, TimeUnit.SECONDS));
 
     RunRecordMeta record = get(key, RunRecordMeta.class);
     if (record != null) {
@@ -323,8 +326,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public RunRecordMeta recordProgramProvisioning(ProgramRunId programRunId, Map<String, String> runtimeArgs,
                                                  Map<String, String> systemArgs, byte[] sourceId,
                                                  @Nullable ArtifactId artifactId) {
-    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build();
     long startTs = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+    MDSKey key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, startTs);
     if (startTs == -1L) {
       LOG.error("Ignoring unexpected request to record provisioning state for program run {} that does not have " +
                   "a timestamp in the run id.");
@@ -394,8 +397,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
    */
   @Nullable
   public RunRecordMeta recordProgramProvisioned(ProgramRunId programRunId, int numNodes, byte[] sourceId) {
-    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build();
-
     RunRecordMeta existing = getRun(programRunId);
 
     if (existing == null) {
@@ -407,6 +408,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       return null;
     }
 
+    MDSKey key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, numNodes);
     RunRecordMeta meta = RunRecordMeta.builder(existing)
       .setCluster(cluster)
@@ -430,7 +432,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
    */
   @Nullable
   public RunRecordMeta recordProgramDeprovisioning(ProgramRunId programRunId, byte[] sourceId) {
-    MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
 
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
@@ -443,7 +444,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
 
     delete(existing);
-    key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
+
+    MDSKey key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONING, null,
                                                       existing.getCluster().getNumNodes());
@@ -451,7 +453,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
-    write(key.build(), meta);
+    write(key, meta);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONING, programRunId);
     return meta;
   }
@@ -471,8 +473,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
    */
   @Nullable
   public RunRecordMeta recordProgramDeprovisioned(ProgramRunId programRunId, @Nullable Long endTs, byte[] sourceId) {
-    MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
-
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
@@ -484,7 +484,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
 
     delete(existing);
-    key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
+    MDSKey key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED, endTs,
                                                       existing.getCluster().getNumNodes());
@@ -492,7 +492,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
-    write(key.build(), meta);
+    write(key, meta);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONED, programRunId);
     return meta;
   }
@@ -511,8 +511,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
    */
   @Nullable
   public RunRecordMeta recordProgramOrphaned(ProgramRunId programRunId, long endTs, byte[] sourceId) {
-    MDSKey.Builder key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
-
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
@@ -524,7 +522,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
 
     delete(existing);
-    key.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
+    MDSKey key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.ORPHANED, endTs,
                                                       existing.getCluster().getNumNodes());
@@ -532,7 +530,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
-    write(key.build(), meta);
+    write(key, meta);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.ORPHANED, programRunId);
     return meta;
   }
@@ -551,7 +549,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   @Nullable
   public RunRecordMeta recordProgramStart(ProgramRunId programRunId, @Nullable String twillRunId,
                                           Map<String, String> systemArgs, byte[] sourceId) {
-    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programRunId).build();
     RunRecordMeta existing = getRun(programRunId);
     RunRecordMeta meta;
 
@@ -570,6 +567,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     // Delete the old run record
     delete(existing);
+    MDSKey key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
     meta = RunRecordMeta.builder(existing)
       .setStatus(ProgramRunStatus.STARTING)
       .setTwillRunId(twillRunId)
@@ -591,15 +589,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
    *                 program run status will be ignored
    * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
    */
+  @Nullable
   public RunRecordMeta recordProgramRunning(ProgramRunId programRunId, long stateChangeTime, String twillRunId,
                                             byte[] sourceId) {
-    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programRunId).build();
-    return recordProgramRunning(programRunId, stateChangeTime, twillRunId, key, sourceId);
-  }
-
-  @Nullable
-  private RunRecordMeta recordProgramRunning(ProgramRunId programRunId, long runTs, String twillRunId,
-                                             MDSKey key, byte[] sourceId) {
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
@@ -618,10 +610,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     // Delete the old run record
     delete(existing);
+    MDSKey key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
 
     // The existing record's properties already contains the workflowRunId
     RunRecordMeta meta = RunRecordMeta.builder(existing)
-      .setRunTime(runTs)
+      .setRunTime(stateChangeTime)
       .setStatus(ProgramRunStatus.RUNNING)
       .setTwillRunId(twillRunId)
       .setSourceId(sourceId)
@@ -681,16 +674,14 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   private RunRecordMeta recordProgramSuspendResume(ProgramRunId programRunId, byte[] sourceId,
                                                    RunRecordMeta existing, String action, long timestamp) {
-    String toType = TYPE_RUN_RECORD_SUSPENDED;
     ProgramRunStatus toStatus = ProgramRunStatus.SUSPENDED;
 
     if (action.equals("resume")) {
-      toType = TYPE_RUN_RECORD_STARTED;
       toStatus = ProgramRunStatus.RUNNING;
     }
     // Delete the old run record
     delete(existing);
-    MDSKey key = getProgramKeyBuilder(toType, programRunId).build();
+    MDSKey key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
     RunRecordMeta.Builder builder = RunRecordMeta.builder(existing).setStatus(toStatus).setSourceId(sourceId);
     if (timestamp != -1) {
       if (action.equals("resume")) {
@@ -720,14 +711,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   @Nullable
   public RunRecordMeta recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
                                          @Nullable BasicThrowable failureCause, byte[] sourceId) {
-    MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
-    return recordProgramStop(programRunId, stopTs, runStatus, failureCause, builder, sourceId);
-  }
-
-  @Nullable
-  private RunRecordMeta recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
-                                          @Nullable BasicThrowable failureCause, MDSKey.Builder builder,
-                                          byte[] sourceId) {
     RunRecordMeta existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
@@ -747,7 +730,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       addWorkflowNodeState(programRunId, systemArgs, runStatus, failureCause, sourceId);
     }
 
-    MDSKey key = builder.add(getInvertedTsKeyPart(existing.getStartTs())).add(programRunId.getRun()).build();
+    MDSKey key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
     RunRecordMeta meta = RunRecordMeta.builder(existing)
       .setStopTime(stopTs)
       .setStatus(runStatus)
@@ -817,14 +800,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces, Predicate<RunRecordMeta> filter) {
     return namespaces.stream().flatMap(namespaceId -> {
-      MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTING, namespaceId).build();
+      MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_ACTIVE, namespaceId).build();
       Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
                                                                               Integer.MAX_VALUE, filter));
-
-      key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTED, namespaceId).build();
-      activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, filter)));
-      key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, namespaceId).build();
-      activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, filter)));
       return activeRuns.entrySet().stream();
     }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
@@ -837,14 +815,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
    * @return map of run id to run record meta
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Predicate<RunRecordMeta> filter) {
-    MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTING, null).build();
-    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
-                                                                            Integer.MAX_VALUE, filter));
-    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTED, null).build();
-    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, filter)));
-    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, null).build();
-    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, filter)));
-    return activeRuns;
+    MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_ACTIVE, null).build();
+    return getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, filter));
   }
 
   /**
@@ -857,15 +829,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId) {
     // TODO CDAP-12361 should consolidate these methods and get rid of duplicate / unnecessary methods.
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
-    MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTING, namespaceId).build();
-    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
-                                                                            Integer.MAX_VALUE, timePredicate));
-
-    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTED, namespaceId).build();
-    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
-    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, namespaceId).build();
-    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
-    return activeRuns;
+    MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_ACTIVE, namespaceId).build();
+    return getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate));
   }
 
   /**
@@ -877,15 +842,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId) {
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
-    MDSKey key = getApplicationKeyBuilder(TYPE_RUN_RECORD_STARTING, applicationId).build();
-    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
-                                                                            Integer.MAX_VALUE, timePredicate));
-
-    key = getApplicationKeyBuilder(TYPE_RUN_RECORD_STARTED, applicationId).build();
-    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
-    key = getApplicationKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, applicationId).build();
-    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
-    return activeRuns;
+    MDSKey key = getApplicationKeyBuilder(TYPE_RUN_RECORD_ACTIVE, applicationId).build();
+    return getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate));
   }
 
   /**
@@ -897,21 +855,14 @@ public class AppMetadataStore extends MetadataStoreDataset {
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) {
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
-    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId).build();
-    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
-                                                                            Integer.MAX_VALUE, timePredicate));
+    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_ACTIVE, programId).build();
 
-    key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId).build();
-    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
-    key = getProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, programId).build();
-    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
-    return activeRuns;
+    return getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate));
   }
 
   private Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds, int limit) {
     Map<ProgramRunId, RunRecordMeta> resultMap = new LinkedHashMap<>();
-    for (String type : Arrays.asList(TYPE_RUN_RECORD_STARTING, TYPE_RUN_RECORD_STARTED,
-                                     TYPE_RUN_RECORD_SUSPENDED, TYPE_RUN_RECORD_COMPLETED)) {
+    for (String type : Arrays.asList(TYPE_RUN_RECORD_ACTIVE, TYPE_RUN_RECORD_COMPLETED)) {
       resultMap.putAll(getRunsForRunIds(programRunIds, type, limit - resultMap.size()));
     }
     return resultMap;
@@ -923,23 +874,19 @@ public class AppMetadataStore extends MetadataStoreDataset {
     switch (status) {
       case ALL:
         Map<ProgramRunId, RunRecordMeta> runRecords = new LinkedHashMap<>();
-        for (String type : Arrays.asList(TYPE_RUN_RECORD_STARTING,
-                                         TYPE_RUN_RECORD_STARTED, TYPE_RUN_RECORD_SUSPENDED)) {
-          runRecords.putAll(getNonCompleteRuns(programId, type, startTime, endTime, limit - runRecords.size(), filter));
-        }
+        runRecords.putAll(getNonCompleteRuns(programId, TYPE_RUN_RECORD_ACTIVE, startTime, endTime,
+                                             limit - runRecords.size(), filter));
         runRecords.putAll(getHistoricalRuns(programId, status, startTime, endTime, limit - runRecords.size(), filter));
         return runRecords;
       case PENDING:
       case STARTING:
+      case RUNNING:
+      case SUSPENDED:
         Predicate<RunRecordMeta> stateFilter = record -> record.getStatus() == status;
         if (filter != null) {
           stateFilter = stateFilter.and(filter);
         }
-        return getNonCompleteRuns(programId, TYPE_RUN_RECORD_STARTING, startTime, endTime, limit, stateFilter);
-      case RUNNING:
-        return getNonCompleteRuns(programId, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, filter);
-      case SUSPENDED:
-        return getNonCompleteRuns(programId, TYPE_RUN_RECORD_SUSPENDED, startTime, endTime, limit, filter);
+        return getNonCompleteRuns(programId, TYPE_RUN_RECORD_ACTIVE, startTime, endTime, limit, stateFilter);
       default:
         return getHistoricalRuns(programId, status, startTime, endTime, limit, filter);
     }
@@ -948,47 +895,31 @@ public class AppMetadataStore extends MetadataStoreDataset {
   // TODO: getRun is duplicated in cdap-watchdog AppMetadataStore class.
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
+  @Nullable
   public RunRecordMeta getRun(ProgramRunId programRun) {
     // Query active run record first
-    RunRecordMeta running = getUnfinishedRun(programRun, TYPE_RUN_RECORD_STARTED);
+    RunRecordMeta running = getUnfinishedRun(programRun);
     // If program is running, this will be non-null
     if (running != null) {
       return running;
     }
-
-    // Then query for starting run record
-    RunRecordMeta starting = getUnfinishedRun(programRun, TYPE_RUN_RECORD_STARTING);
-    if (starting != null) {
-      return starting;
-    }
-
     // If program is not running, query completed run records
-    RunRecordMeta complete = getCompletedRun(programRun);
-    if (complete != null) {
-      return complete;
-    }
-
-    // Else query suspended run records
-    return getUnfinishedRun(programRun, TYPE_RUN_RECORD_SUSPENDED);
+    return getCompletedRun(programRun);
   }
 
   private void delete(RunRecordMeta record) {
     ProgramRunId programRunId = record.getProgramRunId();
-    MDSKey.Builder key = getProgramKeyBuilder(STATUS_TYPE_MAP.get(record.getStatus()), programRunId.getParent());
-    if (record.getStatus().isEndState()) {
-      key.add(getInvertedTsKeyPart(record.getStartTs()));
-    }
-    key.add(programRunId.getRun());
-    deleteAll(key.build());
+    MDSKey key = getProgramRunInvertedTimeKey(STATUS_TYPE_MAP.get(record.getStatus()), programRunId,
+                                              record.getStartTs());
+    deleteAll(key);
   }
 
   /**
-   * @return run records for runs that do not have start time in mds key for the run record.
+   * @return run records for unfinished run
    */
-  private RunRecordMeta getUnfinishedRun(ProgramRunId programRunId, String recordType) {
-    MDSKey runningKey = getProgramKeyBuilder(recordType, programRunId.getParent())
-      .add(programRunId.getRun())
-      .build();
+  private RunRecordMeta getUnfinishedRun(ProgramRunId programRunId) {
+    MDSKey runningKey = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId,
+                                                     RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS));
     return get(runningKey, RunRecordMeta.class);
   }
 
@@ -1179,17 +1110,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void deleteProgramHistory(String namespaceId, String appId, String versionId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTING, namespaceId, appId, versionId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, versionId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_ACTIVE, namespaceId, appId, versionId).build());
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, versionId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_SUSPENDED, namespaceId, appId, versionId).build());
   }
 
   public void deleteProgramHistory(String namespaceId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTING, namespaceId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_ACTIVE, namespaceId).build());
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_SUSPENDED, namespaceId).build());
   }
 
   public void createNamespace(NamespaceMeta metadata) {
@@ -1250,11 +1177,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     Set<RunId> runIds = new HashSet<>();
     Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_COMPLETED, startTimeInSecs, endTimeInSecs,
                                                         scanTimeoutMills));
-    Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_SUSPENDED, startTimeInSecs, endTimeInSecs,
-                                                        scanTimeoutMills));
-    Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_STARTED, startTimeInSecs, endTimeInSecs,
-                                                        scanTimeoutMills));
-    Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_STARTING, startTimeInSecs, endTimeInSecs,
+    Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_ACTIVE, startTimeInSecs, endTimeInSecs,
                                                         scanTimeoutMills));
     return runIds;
   }
@@ -1406,40 +1329,24 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static ProgramId getProgramID(MDSKey key) {
     MDSKey.Splitter splitter = key.split();
 
-    // Format : recordType, ns, app, <version>, type, program, <ts>, runid
-    // <version> -> might or might not be present based on whether the upgrade thread has changed the record
-    // <ts> -> will be present if the record type is runRecordComplete
+    // Format : recordType, ns, app, version, type, program, ts, runid
 
-    String recordType = splitter.getString();
+    // record type
+    splitter.getString();
     String namespace = splitter.getString();
     String application = splitter.getString();
-    String appVersion = ApplicationId.DEFAULT_VERSION;
-    String type;
-    String program;
+    String appVersion = splitter.getString();
+    String type = splitter.getString();
+    String program = splitter.getString();
 
-    List<String> splits = new ArrayList<>();
-    while (true) {
-      try {
-        splits.add(splitter.getString());
-      } catch (BufferUnderflowException ex) {
-        break;
-      }
-    }
-
-    // If the record type is runRecordCompleted, then it will have a <ts> field between program and runid fields.
-    // So trying to split
-    int versionLessSplitsSize = recordType.equals(TYPE_RUN_RECORD_COMPLETED) ? 2 : 3;
-    if (splits.size() == versionLessSplitsSize) {
-      // old format: [recordType, ns, app] type, program, <ts, runid>
-      type = splits.get(0);
-      program = splits.get(1);
-    } else {
-      // new format: [recordType, ns, app] version, type, program, <ts, runid>
-      appVersion = splits.get(0);
-      type = splits.get(1);
-      program = splits.get(2);
-    }
     return (new ApplicationId(namespace, application, appVersion).program(ProgramType.valueOf(type), program));
+  }
+
+  private MDSKey getProgramRunInvertedTimeKey(String recordType, ProgramRunId runId, long startTs) {
+    return getProgramKeyBuilder(recordType, runId.getParent())
+      .add(getInvertedTsKeyPart(startTs))
+      .add(runId.getRun())
+      .build();
   }
 
   private static class AppVersionPredicate implements Predicate<MDSKey> {

@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
  * JIRA https://issues.cask.co/browse/CDAP-2172
  */
 public class AppMetadataStore extends MetadataStoreDataset {
+  private static final String TYPE_RUN_RECORD_ACTIVE = "runRecordActive";
   public static final String TYPE_RUN_RECORD_STARTING = "runRecordStarting";
   public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   public static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
@@ -46,33 +47,21 @@ public class AppMetadataStore extends MetadataStoreDataset {
   // JIRA https://issues.cask.co/browse/CDAP-2172
   public RunRecordMeta getRun(ProgramId program, final String runid) {
     // Query active run record first
-    RunRecordMeta running = getUnfinishedRun(program, TYPE_RUN_RECORD_STARTED, runid);
+    RunRecordMeta running = getUnfinishedRun(program, runid);
     // If program is running, this will be non-null
     if (running != null) {
       return running;
     }
-
-    // Then query for started run record
-    running = getUnfinishedRun(program, TYPE_RUN_RECORD_STARTING, runid);
-    if (running != null) {
-      return running;
-    }
-
     // If program is not running, query completed run records
-    RunRecordMeta complete = getCompletedRun(program, runid);
-    if (complete != null) {
-      return complete;
-    }
-
-    // Else query suspended run records
-    return getUnfinishedRun(program, TYPE_RUN_RECORD_SUSPENDED, runid);
+    return getCompletedRun(program, runid);
   }
 
   /**
    * @return run records for runs that do not have start time in mds key for the run record.
    */
-  private RunRecordMeta getUnfinishedRun(ProgramId programId, String recordType, String runid) {
-    MDSKey runningKey = getProgramKeyBuilder(recordType, programId)
+  private RunRecordMeta getUnfinishedRun(ProgramId programId, String runid) {
+    MDSKey runningKey = getProgramKeyBuilder(TYPE_RUN_RECORD_ACTIVE, programId)
+      .add(getInvertedTsKeyPart(RunIds.getTime(runid, TimeUnit.SECONDS)))
       .add(runid)
       .build();
     return get(runningKey, RunRecordMeta.class);

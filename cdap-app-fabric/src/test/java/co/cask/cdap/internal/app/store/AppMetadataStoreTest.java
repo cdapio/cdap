@@ -37,6 +37,7 @@ import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
@@ -46,6 +47,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -642,7 +644,9 @@ public class AppMetadataStoreTest {
                                       Collections.singletonMap(SystemArguments.PROFILE_NAME, profileId.getScopedName()),
                                       AppFabricTestHelper.createSourceId(startSourceId), ARTIFACT_ID);
       // the profile id should be there after the provisioning stage
-      Assert.assertEquals(profileId, store.getRun(runId).getProfileId());
+      RunRecordMeta run = store.getRun(runId);
+      Assert.assertNotNull(run);
+      Assert.assertEquals(profileId, run.getProfileId());
 
       store.recordProgramProvisioned(runId, 0, AppFabricTestHelper.createSourceId(startSourceId + 1));
       store.recordProgramStart(runId, null, ImmutableMap.of(),
@@ -652,9 +656,32 @@ public class AppMetadataStoreTest {
       store.recordProgramStop(runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS),
                               ProgramRunStatus.KILLED,
                               null, AppFabricTestHelper.createSourceId(startSourceId + 4));
-
-      Assert.assertEquals(profileId, store.getRun(runId).getProfileId());
+      run = store.getRun(runId);
+      Assert.assertNotNull(run);
+      Assert.assertEquals(profileId, run.getProfileId());
     });
+  }
+
+  @Test
+  public void testOrderedActiveRuns() throws Exception {
+    AppMetadataStore store = getMetadataStore("testOrderedActiveRuns");
+    ProgramId programId = NamespaceId.DEFAULT.app("test").workflow("test");
+    TransactionExecutor txnl = getTxExecutor(store);
+    List<ProgramRunId> expectedRuns = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      RunId runId = RunIds.generate(i * 1000);
+      ProgramRunId run = programId.run(runId);
+      expectedRuns.add(run);
+      txnl.execute(() -> {
+        recordProvisionAndStart(run, store);
+      });
+    }
+    txnl.execute(() -> {
+      Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(programId);
+      // the result should be sorted with larger time stamp come first
+      Assert.assertEquals(Lists.reverse(expectedRuns), new ArrayList<>(activeRuns.keySet()));
+    });
+
   }
 
   private static class CountingTicker extends Ticker {
