@@ -46,6 +46,7 @@ $empty-message-link-color: var(--brand-primary-color);
       list-style: none;
       font-size: 14px;
       .link-text {
+        margin-right: 4px;
         cursor: pointer;
         color: $empty-message-link-color;
         margin-right: 0.25em;

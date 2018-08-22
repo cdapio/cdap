@@ -17,7 +17,6 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import {setS3Loading, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
@@ -32,6 +31,7 @@ import ListingInfo from 'components/DataPrep/DataPrepBrowser/S3Browser/ListingIn
 import S3Search from 'components/DataPrep/DataPrepBrowser/S3Browser/S3Search';
 import classnames from 'classnames';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
+import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
 
 require('./S3Browser.scss');
 
@@ -116,22 +116,11 @@ export default class S3Browser extends Component {
           :
             null
           }
-          <div className="top-panel">
-            <div className="title">
-              <h5>
-                <span
-                  className="fa fa-fw"
-                  onClick={this.props.toggle}
-                >
-                  <IconSVG name="icon-bars" />
-                </span>
-
-                <span>
-                  {T.translate(`${PREFIX}.TopPanel.selectData`)}
-                </span>
-              </h5>
-            </div>
-          </div>
+          <DataprepBrowserTopPanel
+            allowSidePanelToggle={true}
+            toggle={this.props.toggle}
+            browserTitle={T.translate(`${PREFIX}.TopPanel.selectData`)}
+          />
           <div className={classnames("sub-panel", {'routing-disabled': !this.props.enableRouting})}>
             <div className="path-container">
               <S3Path

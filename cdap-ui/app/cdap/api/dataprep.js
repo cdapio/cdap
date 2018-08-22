@@ -23,6 +23,7 @@ const appPath = '/namespaces/:namespace/apps/dataprep';
 const baseServicePath = `${appPath}/services/service`;
 const basepath = `${baseServicePath}/methods/workspaces/:workspaceId`;
 const connectionsPath = `${baseServicePath}/methods/connections`;
+const connectionTypesPath = `${baseServicePath}/methods/connectionTypes`;
 
 const MyDataPrepApi = {
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
@@ -37,7 +38,7 @@ const MyDataPrepApi = {
   getWorkspaceList: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/workspaces`),
 
   // WRANGLER SERVICE MANAGEMENT
-  getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),
+  getApp: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/start`),
   stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/stop`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${baseServicePath}/status`),
@@ -92,8 +93,10 @@ const MyDataPrepApi = {
   updateConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/:connectionId/update`),
   deleteConnection: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${connectionsPath}/:connectionId`),
   getConnection: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId`),
-  listDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/list/drivers`)
+  listDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/list/drivers`),
 
+  // Connection types
+  listConnectionTypes: apiCreator(dataSrc, 'GET', 'REQUEST', connectionTypesPath)
 };
 
 export default MyDataPrepApi;

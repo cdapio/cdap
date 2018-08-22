@@ -16,7 +16,6 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import {Provider} from 'react-redux';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
@@ -26,6 +25,7 @@ import TableList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/Table
 import {Route, Switch} from 'react-router-dom';
 import Page404 from 'components/404';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
+import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
 
 require('./BigQueryBrowser.scss');
 
@@ -56,23 +56,12 @@ export default class BiqQueryBrowser extends Component {
             :
               null
           }
-          <div className="top-panel">
-            <div className="title">
-              <h5>
-                <span
-                  className="fa fa-fw"
-                  onClick={this.props.toggle}
-                >
-                  <IconSVG name="icon-bars" />
-                </span>
 
-                <span>
-                  {T.translate(`${PREFIX}.title`)}
-                </span>
-              </h5>
-            </div>
-          </div>
-
+          <DataprepBrowserTopPanel
+            allowSidePanelToggle={true}
+            toggle={this.props.toggle}
+            browserTitle={T.translate(`${PREFIX}.title`)}
+          />
           {
             this.props.enableRouting ?
               (

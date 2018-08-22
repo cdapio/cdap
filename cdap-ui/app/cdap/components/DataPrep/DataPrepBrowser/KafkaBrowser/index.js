@@ -22,12 +22,14 @@ import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {Input} from 'reactstrap';
-import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import {setKafkaAsActiveBrowser, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import ee from 'event-emitter';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 import {Provider} from 'react-redux';
+import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import If from 'components/If';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.KafkaBrowser`;
 
@@ -60,7 +62,7 @@ export default class KafkaBrowser extends Component {
     this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_KAFKA', this.eventBasedFetchTopics);
     this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
       let {kafka, activeBrowser} = DataPrepBrowserStore.getState();
-      if (activeBrowser.name !== 'kafka') {
+      if (activeBrowser.name !== ConnectionType.KAFKA) {
         return;
       }
 
@@ -82,7 +84,7 @@ export default class KafkaBrowser extends Component {
 
   eventBasedFetchTopics = (connectionId) => {
     if (this.state.connectionId === connectionId) {
-      setKafkaAsActiveBrowser({name: 'database', id: connectionId});
+      setKafkaAsActiveBrowser({name: ConnectionType.KAFKA, id: connectionId});
     }
   };
 
@@ -207,11 +209,12 @@ export default class KafkaBrowser extends Component {
     if (this.state.search) {
       filteredTopics = this.state.topics.filter(topic => topic.toLowerCase().indexOf(this.state.search.toLowerCase()) !== -1);
     }
-    const PageTitle = () => (
+    const PageTitle = (...props) => (
       this.props.enableRouting ?
         <DataPrepBrowserPageTitle
           browserI18NName="KafkaBrowser"
           browserStateName="kafka"
+          {...props}
         />
       :
         null
@@ -221,44 +224,35 @@ export default class KafkaBrowser extends Component {
         <Provider store={DataPrepBrowserStore}>
           <PageTitle />
         </Provider>
-        <div className="top-panel">
-          <div className="title">
-            <h5>
-              <span
-                className="fa fa-fw"
-                onClick={this.props.toggle}
-              >
-                <IconSVG name="icon-bars" />
-              </span>
-
-              <span>
-                {T.translate(`${PREFIX}.title`)}
-              </span>
-            </h5>
-          </div>
-        </div>
-        <div>
-          <div className="kafka-browser-header">
-            <div className="kafka-metadata">
-              <h5>{this.state.info.name}</h5>
-              <span className="tables-count">
-                {
-                  T.translate(`${PREFIX}.topicCount`, {
-                    count: this.state.topics.length
-                  })
-                }
-              </span>
-            </div>
-            <div className="table-name-search">
-              <Input
-                placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
-                value={this.state.search}
-                onChange={this.handleSearch}
-                autoFocus={this.state.searchFocus}
-              />
+        <DataprepBrowserTopPanel
+          allowSidePanelToggle={true}
+          toggle={this.props.toggle}
+          browserTitle={T.translate(`${PREFIX}.title`)}
+        />
+        <If condition={this.state.error}>
+          <div>
+            <div className="kafka-browser-header">
+              <div className="kafka-metadata">
+                <h5>{this.state.info.name}</h5>
+                <span className="tables-count">
+                  {
+                    T.translate(`${PREFIX}.topicCount`, {
+                      count: this.state.topics.length
+                    })
+                  }
+                </span>
+              </div>
+              <div className="table-name-search">
+                <Input
+                  placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
+                  value={this.state.search}
+                  onChange={this.handleSearch}
+                  autoFocus={this.state.searchFocus}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </If>
         <div className="kafka-browser-content">
           { this.renderContents(filteredTopics) }
         </div>

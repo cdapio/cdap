@@ -301,7 +301,7 @@ export default class DataPrepHome extends Component {
 
     if (!this.props.singleWorkspaceMode && this.state.isEmpty) {
       return (
-        <Redirect to={`/ns/${this.namespace}/connections/browser`} />
+        <Redirect to={`/ns/${this.namespace}/connections`} />
       );
     }
 
