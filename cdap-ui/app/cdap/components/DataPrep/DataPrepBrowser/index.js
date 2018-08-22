@@ -50,14 +50,14 @@ export default class DataPrepBrowser extends Component {
         });
       }
     });
-    if (typeof this.props.setActiveBrowser === 'function') {
-      this.props.setActiveBrowser();
+    if (typeof this.props.setActiveConnection === 'function') {
+      this.props.setActiveConnection();
     }
   }
 
   componentDidUpdate() {
-    if (typeof this.props.setActiveBrowser === 'function') {
-      this.props.setActiveBrowser();
+    if (typeof this.props.setActiveConnection === 'function') {
+      this.props.setActiveConnection();
     }
   }
 
@@ -89,5 +89,5 @@ export default class DataPrepBrowser extends Component {
 DataPrepBrowser.propTypes = {
   location: PropTypes.object,
   match: PropTypes.object,
-  setActiveBrowser: PropTypes.func
+  setActiveConnection: PropTypes.func
 };
