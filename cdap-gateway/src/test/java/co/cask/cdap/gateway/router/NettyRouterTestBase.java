@@ -206,8 +206,9 @@ public abstract class NettyRouterTestBase {
         public void onThrowable(Throwable t) {
           LOG.error("Got exception while posting {}", elem, t);
           latch.countDown();
+
         }
-     });
+      });
 
       // Sleep so as not to overrun the server.
       TimeUnit.MILLISECONDS.sleep(1);

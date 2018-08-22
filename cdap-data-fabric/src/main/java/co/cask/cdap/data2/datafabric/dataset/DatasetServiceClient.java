@@ -54,8 +54,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.LockInfo;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MonitorInfo;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Type;
-import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +71,7 @@ import javax.annotation.Nullable;
  * Provides programmatic APIs to access {@link co.cask.cdap.data2.datafabric.dataset.service.DatasetService}.
  * Just a java wrapper for accessing service's REST API.
  */
-class DatasetServiceClient {
+public class DatasetServiceClient {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceClient.class);
   private static final Gson GSON = new Gson();
   private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
@@ -290,17 +295,7 @@ class DatasetServiceClient {
   }
 
   private HttpResponse doPut(String resource, String body) throws DatasetManagementException {
-    HttpRequest request = addUserIdHeader(remoteClient.requestBuilder(HttpMethod.PUT, resource)
-      .withBody(body))
-      .build();
-    try {
-      LOG.trace("executing {} {}", request.getMethod(), request.getURL().getPath());
-      HttpResponse response = remoteClient.execute(request);
-      LOG.trace("executed {} {}", request.getMethod(), request.getURL().getPath());
-      return response;
-    } catch (IOException e) {
-      throw new DatasetManagementException(remoteClient.createErrorMessage(request, body), e);
-    }
+    return doRequest(remoteClient.requestBuilder(HttpMethod.PUT, resource).withBody(body));
   }
 
   private HttpResponse doPost(String resource) throws DatasetManagementException {
@@ -318,19 +313,32 @@ class DatasetServiceClient {
       HttpResponse response = remoteClient.execute(request);
       LOG.trace("Executed {} {}", request.getMethod(), request.getURL().getPath());
       return response;
-    } catch (ConnectException e) {
+    } catch (ServiceUnavailableException e) { // thrown by RemoteClient in case of ConnectException
+      logThreadDump();
       LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().getPath(), e);
-      throw new ServiceUnavailableException(Constants.Service.DATASET_MANAGER, e);
-    } catch (IOException e) {
+      throw e;
+    } catch (SocketTimeoutException e) { // passed through by RemoteClient
+      logThreadDump();
       LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().getPath(), e);
       throw new DatasetManagementException(remoteClient.createErrorMessage(request, null), e);
-    } catch (Throwable e) {
+    } catch (IOException e) { // other network exceptions
+      LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().getPath(), e);
+      throw new DatasetManagementException(remoteClient.createErrorMessage(request, null), e);
+    } catch (Throwable e) { // anything unexpected
       LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().getPath(), e);
       throw e;
     }
   }
 
+  public static String getCallerId(io.netty.handler.codec.http.HttpRequest request) {
+    String callerId = request.headers().get("callerId");
+    return callerId != null ? callerId : "unknown http client";
+  }
+
   private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder) throws DatasetManagementException {
+    if (LOG.isTraceEnabled()) {
+      builder = builder.addHeader("callerId", Thread.currentThread().getName());
+    }
     if (!securityEnabled || !authorizationEnabled) {
       return builder;
     }
@@ -366,5 +374,85 @@ class DatasetServiceClient {
       }
     }
     return builder.addHeader(Constants.Security.Headers.USER_ID, userId);
+  }
+
+  private static void logThreadDump() {
+    if (LOG.isTraceEnabled()) {
+      StringBuilder sb = new StringBuilder("Timeout while making request to dataset service. Thread dump follows:\n");
+      ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+      for (ThreadInfo threadInfo : bean.dumpAllThreads(true, true)) {
+        append(sb, threadInfo);
+        sb.append("\n");
+      }
+      LOG.trace(sb.toString());
+    }
+  }
+
+  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
+  private static void append(StringBuilder sb, ThreadInfo threadInfo) {
+    sb.append("\"" + threadInfo.getThreadName() + "\"" +
+                " Id=" + threadInfo.getThreadId() + " " +
+                threadInfo.getThreadState());
+    if (threadInfo.getLockName() != null) {
+      sb.append(" on " + threadInfo.getLockName());
+    }
+    if (threadInfo.getLockOwnerName() != null) {
+      sb.append(" owned by \"" + threadInfo.getLockOwnerName() +
+                  "\" Id=" + threadInfo.getLockOwnerId());
+    }
+    if (threadInfo.isSuspended()) {
+      sb.append(" (suspended)");
+    }
+    if (threadInfo.isInNative()) {
+      sb.append(" (in native)");
+    }
+    sb.append('\n');
+    int i = 0;
+    StackTraceElement[] stackTrace = threadInfo.getStackTrace();
+    for (; i < stackTrace.length && i < 1000; i++) {
+      StackTraceElement ste = stackTrace[i];
+      sb.append("\tat " + ste.toString());
+      sb.append('\n');
+      if (i == 0 && threadInfo.getLockInfo() != null) {
+        Thread.State ts = threadInfo.getThreadState();
+        switch (ts) {
+          case BLOCKED:
+            sb.append("\t-  blocked on " + threadInfo.getLockInfo());
+            sb.append('\n');
+            break;
+          case WAITING:
+            sb.append("\t-  waiting on " + threadInfo.getLockInfo());
+            sb.append('\n');
+            break;
+          case TIMED_WAITING:
+            sb.append("\t-  waiting on " + threadInfo.getLockInfo());
+            sb.append('\n');
+            break;
+          default:
+        }
+      }
+
+      for (MonitorInfo mi : threadInfo.getLockedMonitors()) {
+        if (mi.getLockedStackDepth() == i) {
+          sb.append("\t-  locked " + mi);
+          sb.append('\n');
+        }
+      }
+    }
+    if (i < stackTrace.length) {
+      sb.append("\t...");
+      sb.append('\n');
+    }
+
+    LockInfo[] locks = threadInfo.getLockedSynchronizers();
+    if (locks.length > 0) {
+      sb.append("\n\tNumber of locked synchronizers = " + locks.length);
+      sb.append('\n');
+      for (LockInfo li : locks) {
+        sb.append("\t- " + li);
+        sb.append('\n');
+      }
+    }
+    sb.append('\n');
   }
 }
