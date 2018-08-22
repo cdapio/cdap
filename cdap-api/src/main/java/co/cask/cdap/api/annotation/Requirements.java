@@ -45,7 +45,7 @@ import java.lang.annotation.Target;
  * <pre>
  *     {@literal @}Plugin(type = BatchSource.PLUGIN_TYPE)
  *     {@literal @}Name("Table")
- *     {@literal @}Requirements(Capabilities.TRANSACTIONS)
+ *     {@literal @}Requirements(Requirements.TEPHRA_TX)
  *      public class Table extends{@code BatchSource<byte[], Row, StructuredRecord>} {
  *       ...
  *       ...
@@ -70,7 +70,7 @@ public @interface Requirements {
   /**
    * Defines transactional requirements
    */
-  String TRANSACTIONS = "transactions";
+  String TEPHRA_TX = "tephratx";
 
   String[] value() default {};
 }

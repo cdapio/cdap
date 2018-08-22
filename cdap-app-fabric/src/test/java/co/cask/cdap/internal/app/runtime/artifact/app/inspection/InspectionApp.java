@@ -64,7 +64,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name("SingleRequirementPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements(Requirements.TRANSACTIONS)
+  @Requirements(Requirements.TEPHRA_TX)
   public static class SingleRequirementPlugin {
     private PConfig pluginConf;
 
@@ -76,7 +76,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name(MULTIPLE_REQUIREMENTS_PLUGIN)
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements({Requirements.TRANSACTIONS, "secondRequirement"})
+  @Requirements({Requirements.TEPHRA_TX, "secondRequirement"})
   public static class MultipleRequirementsPlugin {
     private PConfig pluginConf;
 
@@ -112,7 +112,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name("ValidAndEmptyRequirementsPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements({Requirements.TRANSACTIONS, ""})
+  @Requirements({Requirements.TEPHRA_TX, ""})
   public static class ValidAndEmptyRequirementsPlugin {
     private PConfig pluginConf;
 
@@ -124,8 +124,20 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name("DuplicateRequirementsPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements({Requirements.TRANSACTIONS, "   DupliCate    ", "    duplicate    "})
+  @Requirements({Requirements.TEPHRA_TX, "   DupliCate    ", "    duplicate    "})
   public static class DuplicateRequirementsPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name("NonTransactionalPlugin")
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements({"req1", "req2"})
+  public static class NonTransactionalPlugin {
     private PConfig pluginConf;
 
     public double doSomething() {

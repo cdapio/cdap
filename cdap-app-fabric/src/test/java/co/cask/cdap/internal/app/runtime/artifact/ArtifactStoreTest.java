@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactRange;
@@ -30,6 +31,7 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
@@ -44,6 +46,7 @@ import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -62,6 +65,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,7 +88,10 @@ public class ArtifactStoreTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    artifactStore = AppFabricTestHelper.getInjector().getInstance(ArtifactStore.class);
+    CConfiguration cConf = CConfiguration.create();
+    // any plugin which requires transaction will be excluded
+    cConf.set(Constants.REQUIREMENTS_BLACKLIST, Joiner.on(",").join(Requirements.TEPHRA_TX, "spark2"));
+    artifactStore = AppFabricTestHelper.getInjector(cConf).getInstance(ArtifactStore.class);
   }
 
   @After
@@ -599,6 +606,106 @@ public class ArtifactStoreTest {
     Assert.assertEquals(expectedAppArtifacts, appArtifacts);
 
     Assert.assertTrue(artifactStore.getApplicationClasses(Ids.namespace("ghost")).isEmpty());
+  }
+
+  @Test
+  public void testExcludedPlugins() throws Exception {
+    ArtifactRange parentArtifacts = new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "parent",
+                                                      new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
+
+    // does not have any requirement
+    PluginClass includedPlugin1 = new PluginClass(
+      "A", "includedPlugin1", "desc", "c.p2", "conf",
+      ImmutableMap.of(
+        "stream", new PluginPropertyField("stream", "description", "string", true, false)
+      )
+    );
+
+    // requires transaction
+    PluginClass excludedPlugin1 = new PluginClass(
+      "A", "excludedPlugin1", "desc", "c.p1", "cfg",
+      ImmutableMap.of(
+        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+        "retry", new PluginPropertyField("retries", "description", "int", false, false)
+      ), new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX)
+    );
+
+    // requires spark2
+    PluginClass excludedPlugin2 = new PluginClass(
+      "A", "excludedPlugin2", "desc", "c.p1", "cfg",
+      ImmutableMap.of(
+        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+        "retry", new PluginPropertyField("retries", "description", "int", false, false)
+      ), new HashSet<>(), ImmutableSet.of("spark2")
+    );
+
+    // requires transaction and spark2
+    PluginClass excludedPlugin3 = new PluginClass(
+      "A", "excludedPlugin3", "desc", "c.p1", "cfg",
+      ImmutableMap.of(
+        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+        "retry", new PluginPropertyField("retries", "description", "int", false, false)
+      ), new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX, "spark2")
+    );
+
+    // required transaction, spark2 and some other requirement
+    PluginClass excludedPlugin4 = new PluginClass(
+      "A", "excludedPlugin4", "desc", "c.p1", "cfg",
+      ImmutableMap.of(
+        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+        "retry", new PluginPropertyField("retries", "description", "int", false, false)
+      ), new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX, "spark2", "satisfied")
+    );
+
+    // required transaction and some other requirement
+    PluginClass excludedPlugin5 = new PluginClass(
+      "A", "excludedPlugin5", "desc", "c.p1", "cfg",
+      ImmutableMap.of(
+        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+        "retry", new PluginPropertyField("retries", "description", "int", false, false)
+      ), new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX, "satisfied")
+    );
+
+    // requires some other requirement than transaction
+    PluginClass includedPlugin2 = new PluginClass(
+      "A", "includedPlugin2", "desc", "c.p1", "cfg",
+      ImmutableMap.of(
+        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+        "retry", new PluginPropertyField("retries", "description", "int", false, false)
+      ), new HashSet<>(), ImmutableSet.of("noTransactionNeeded")
+    );
+
+    // requires multiple requirements other than the ones excluded
+    PluginClass includedPlugin3 = new PluginClass(
+      "A", "includedPlugin3", "desc", "c.p1", "cfg",
+      ImmutableMap.of(
+        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+        "retry", new PluginPropertyField("retries", "description", "int", false, false)
+      ), new HashSet<>(), ImmutableSet.of("noTransactionNeeded", "spark1")
+    );
+
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "ArtifactWithTransactionalPlugins", "1.0.0");
+    ArtifactMeta artifactMeta = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugins(includedPlugin1, includedPlugin2, includedPlugin3, excludedPlugin1,
+                                           excludedPlugin2, excludedPlugin3, excludedPlugin4, excludedPlugin5).build(),
+      ImmutableSet.of(parentArtifacts));
+    writeArtifact(artifactId, artifactMeta, "no-content");
+    ArtifactDescriptor artifactInfo = artifactStore.getArtifact(artifactId).getDescriptor();
+
+    // plugins which have transaction or spark as requirement should be excluded from plugins listed for the artifact
+    Map<ArtifactDescriptor, Set<PluginClass>> actual = artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId);
+    Set<PluginClass> expectedPlugins = ImmutableSet.of(includedPlugin1, includedPlugin2, includedPlugin3);
+    Assert.assertEquals(ImmutableMap.of(artifactInfo,
+                                        expectedPlugins), actual);
+
+    // excluded plugins should also not be in the plugins listed for the namespace
+    List<ArtifactDetail> actualArtifacts = artifactStore.getArtifacts(NamespaceId.DEFAULT);
+    Assert.assertEquals(1, actualArtifacts.size());
+    Assert.assertEquals(expectedPlugins, actualArtifacts.get(0).getMeta().getClasses().getPlugins());
+
+    // excluded plugins should also not be in the plugins listed for the artifact id
+    ArtifactDetail actualArtifact = artifactStore.getArtifact(artifactId);
+    Assert.assertEquals(expectedPlugins, actualArtifact.getMeta().getClasses().getPlugins());
   }
 
   @Test

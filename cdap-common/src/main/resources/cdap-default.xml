@@ -625,6 +625,17 @@
     </description>
   </property>
 
+  <property>
+    <name>requirements.blacklist</name>
+    <value></value>
+    <description>
+      Comma separated list of plugin requirements that cannot be met in the instance.
+      Plugins that require any of these will be treated as if they don't exist.
+      For example, if 'tephraTx' is given, any plugin that requires 'tephraTx' will be treated as
+      if they don't exist.
+    </description>
+  </property>
+
 
   <!-- Audit configuration -->
 

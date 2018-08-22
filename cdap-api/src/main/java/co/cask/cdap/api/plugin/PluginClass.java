@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -74,7 +75,9 @@ public class PluginClass {
     this.configFieldName = configfieldName;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.endpoints = Collections.unmodifiableSet(new HashSet<>(endpoints));
-    this.requirements = Collections.unmodifiableSet(new HashSet<>(requirements));
+    // requirements are case insensitive
+    this.requirements = Collections.unmodifiableSet(requirements.stream()
+                                                      .map(String::toLowerCase).collect(Collectors.toSet()));
   }
 
   public PluginClass(String type, String name, String description, String className, @Nullable String configfieldName,
@@ -142,7 +145,7 @@ public class PluginClass {
   }
 
   /**
-   * @return the requirements of the plugin
+   * @return the requirements of the plugin (case insensitive: represented in lowercase)
    */
   public Set<String> getRequirements() {
     return requirements;

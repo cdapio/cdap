@@ -299,6 +299,11 @@ public abstract class AppFabricTestBase {
     if (updateSchedules != null) {
       cConf.set(Constants.AppFabric.APP_UPDATE_SCHEDULES, updateSchedules);
     }
+    // add the plugin exclusion if one has been set by the test class
+    String excludedRequirements = System.getProperty(Constants.REQUIREMENTS_BLACKLIST);
+    if (excludedRequirements != null) {
+      cConf.set(Constants.REQUIREMENTS_BLACKLIST, excludedRequirements);
+    }
     // Use a shorter delay to speedup tests
     cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
     cConf.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);

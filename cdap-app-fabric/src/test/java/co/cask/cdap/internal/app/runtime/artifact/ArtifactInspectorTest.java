@@ -94,14 +94,14 @@ public class ArtifactInspectorTest {
     Assert.assertTrue(artifactInspector.getPluginRequirements(InspectionApp.AppPlugin.class).isEmpty());
 
     // check that if a plugin specify a requirement it is captured
-    Assert.assertEquals(ImmutableSet.of(Requirements.TRANSACTIONS),
+    Assert.assertEquals(ImmutableSet.of(Requirements.TEPHRA_TX),
                         artifactInspector.getPluginRequirements(InspectionApp.SingleRequirementPlugin.class));
 
     // check if a plugin specify a requirement annotation but it is empty the requirement captured is no requirement
     Assert.assertTrue(artifactInspector.getPluginRequirements(InspectionApp.EmptyRequirementPlugin.class).isEmpty());
 
     // check if a plugin specify multiple requirement all of them are captured
-    Assert.assertEquals(ImmutableSet.of(Requirements.TRANSACTIONS, "secondrequirement"),
+    Assert.assertEquals(ImmutableSet.of(Requirements.TEPHRA_TX, "secondrequirement"),
                         artifactInspector.getPluginRequirements(InspectionApp.MultipleRequirementsPlugin.class));
 
     // check if a plugin has specified empty string as requirement is captured as no requirements
@@ -109,11 +109,11 @@ public class ArtifactInspectorTest {
                         .getPluginRequirements(InspectionApp.SingleEmptyRequirementPlugin.class).isEmpty());
 
     // check if a plugin has specified empty string with a valid requirement only the valid requirement is captured
-    Assert.assertEquals(ImmutableSet.of(Requirements.TRANSACTIONS),
+    Assert.assertEquals(ImmutableSet.of(Requirements.TEPHRA_TX),
                         artifactInspector.getPluginRequirements(InspectionApp.ValidAndEmptyRequirementsPlugin.class));
 
     // test that duplicate requirements are only stored once and the beginning and ending white spaces are trimmed
-    Assert.assertEquals(ImmutableSet.of(Requirements.TRANSACTIONS, "duplicate"),
+    Assert.assertEquals(ImmutableSet.of(Requirements.TEPHRA_TX, "duplicate"),
                         artifactInspector.getPluginRequirements(InspectionApp.DuplicateRequirementsPlugin.class));
   }
 
@@ -147,7 +147,7 @@ public class ArtifactInspectorTest {
         ImmutableMap.of(
           "y", new PluginPropertyField("y", "", "double", true, true),
           "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)),
-        new HashSet<>(), ImmutableSet.of(Requirements.TRANSACTIONS, "secondrequirement"));
+        new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX.toLowerCase(), "secondrequirement"));
       Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
     }
   }

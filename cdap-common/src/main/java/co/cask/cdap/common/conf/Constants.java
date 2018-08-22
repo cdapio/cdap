@@ -70,6 +70,12 @@ public final class Constants {
   /* Used by the user to specify what part of a path should be replaced by the current user's name. */
   public static final String USER_NAME_SPECIFIER = "${name}";
 
+  /* Used to specify a comma separated list of plugin requirements that cannot be met in the instance.
+  Plugins that require any of these will be treated as if they don't exist.
+  For example, if 'tephraTx' is given, any plugin that requires 'tephraTx' will be treated as
+  if they don't exist. */
+  public static final String REQUIREMENTS_BLACKLIST = "requirements.blacklist";
+
 
   /**
    * Configuration for Master startup.

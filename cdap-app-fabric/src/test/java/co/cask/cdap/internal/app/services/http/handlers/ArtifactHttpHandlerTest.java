@@ -28,22 +28,14 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
@@ -55,7 +47,6 @@ import co.cask.cdap.internal.app.runtime.artifact.plugin.p3.CallablePlugin;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.p4.CallingPlugin;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.p5.PluginWithPojo;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.p5.TestData;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.artifact.ArtifactPropertiesRequest;
@@ -66,30 +57,22 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
@@ -97,15 +80,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
-import javax.ws.rs.HttpMethod;
 
 /**
  * Tests for {@link ArtifactHttpHandler}
  */
-public class ArtifactHttpHandlerTest extends AppFabricTestBase {
+public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   private static final ReflectionSchemaGenerator schemaGenerator = new ReflectionSchemaGenerator(false);
   private static final Type ARTIFACTS_TYPE = new TypeToken<Set<ArtifactSummary>>() { }.getType();
   private static final Type PLUGIN_SUMMARIES_TYPE = new TypeToken<Set<PluginSummary>>() { }.getType();
@@ -114,32 +95,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private static ArtifactRepository artifactRepository;
-  private static MetadataClient metadataClient;
-  private static String systemArtifactsDir;
   protected static ClientConfig clientConfig;
-
-  @BeforeClass
-  public static void setup() throws IOException {
-    artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    systemArtifactsDir = getInjector().getInstance(CConfiguration.class).get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
-    DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
-    ServiceDiscovered metadataHttpDiscovered = discoveryClient.discover(Constants.Service.METADATA_SERVICE);
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(metadataHttpDiscovered);
-    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
-    Assert.assertNotNull(discoverable);
-    String host = "127.0.0.1";
-    int port = discoverable.getSocketAddress().getPort();
-    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
-    clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
-    metadataClient = new MetadataClient(clientConfig);
-  }
-  @After
-  public void wipeData() throws Exception {
-    artifactRepository.clear(NamespaceId.DEFAULT);
-    artifactRepository.clear(NamespaceId.SYSTEM);
-
-  }
 
   // test deploying an application artifact that has a non-application as its main class
   @Test
@@ -161,7 +117,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   public void testPluginRequirements() throws Exception {
     // add a system artifact
     ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
-    addSystemArtifacts();
+    addWordCountAppAsSystemArtifacts();
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       systemId.getNamespace(), systemId.getArtifact(),
@@ -174,9 +130,11 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                         addPluginArtifact(Id.Artifact.fromEntityId(artifactId), InspectionApp.class, manifest, parents)
                           .getStatusLine().getStatusCode());
     Set<PluginClass> plugins = getArtifact(artifactId).getClasses().getPlugins();
+    // check that no plugin is being excluded since the no exclusion is configured in cdap-site.xml
+    Assert.assertEquals(8, plugins.size());
     // check that requirement is being stored
     validateRequirement(plugins, InspectionApp.SingleRequirementPlugin.class.getName(),
-                        ImmutableSet.of(Requirements.TRANSACTIONS));
+                        ImmutableSet.of(Requirements.TEPHRA_TX.toLowerCase()));
   }
 
   @Test
@@ -358,7 +316,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                           .getStatusLine().getStatusCode());
 
     // add system artifact
-    addSystemArtifacts();
+    addWordCountAppAsSystemArtifacts();
 
     // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
@@ -416,19 +374,6 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     cleanupSystemArtifactsDirectory();
   }
 
-  private void addSystemArtifacts() throws Exception {
-    File destination = new File(systemArtifactsDir + "/wordcount-1.0.0.jar");
-    buildAppArtifact(WordCountApp.class, new Manifest(), destination);
-    artifactRepository.addSystemArtifacts();
-  }
-
-  private void cleanupSystemArtifactsDirectory() throws Exception {
-    File dir = new File(systemArtifactsDir);
-    for (File jarFile : DirUtils.listFiles(dir, "jar")) {
-      jarFile.delete();
-    }
-  }
-
   /**
    * Tests that system artifacts can be accessed in a user namespace only if appropriately scoped.
    */
@@ -438,7 +383,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     ArtifactId defaultId = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
 
     // add system artifact wordcount
-    addSystemArtifacts();
+    addWordCountAppAsSystemArtifacts();
 
     // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
@@ -488,7 +433,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   public void testPluginNamespaceIsolation() throws Exception {
     // add a system artifact
     ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
-    addSystemArtifacts();
+    addWordCountAppAsSystemArtifacts();
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       systemId.getNamespace(), systemId.getArtifact(),
@@ -902,22 +847,6 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     return getResults(endpoint, ARTIFACTS_TYPE);
   }
 
-  // get /artifacts/{name}/versions/{version}
-  private ArtifactInfo getArtifact(ArtifactId artifactId) throws URISyntaxException, IOException {
-    return getArtifact(artifactId, null);
-  }
-
-  // get /artifacts/{name}/versions/{version}?scope={scope}
-  private ArtifactInfo getArtifact(ArtifactId artifactId, ArtifactScope scope) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s%s",
-                                             Constants.Gateway.API_VERSION_3, artifactId.getNamespace(),
-                                             artifactId.getArtifact(), artifactId.getVersion(),
-                                             getScopeQuery(scope)))
-      .toURL();
-
-    return getResults(endpoint, ArtifactInfo.class);
-  }
-
   // get /artifacts/{name}/versions/{version}/extensions
   private Set<String> getPluginTypes(ArtifactId artifactId) throws URISyntaxException, IOException {
     return getPluginTypes(artifactId, null);
@@ -984,10 +913,6 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     return getResults(endpoint, PLUGIN_INFOS_TYPE);
   }
 
-  private String getScopeQuery(ArtifactScope scope) {
-    return (scope == null) ? ("") : ("?scope=" + scope.name());
-  }
-
   private co.cask.common.http.HttpResponse callPluginMethod(
     ArtifactId plugins3Id, String pluginType, String pluginName, String pluginMethod,
     String body, ArtifactScope scope, int expectedResponseCode) throws URISyntaxException, IOException {
@@ -1008,28 +933,14 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     return response;
   }
 
-  // gets the contents from doing a get on the given url as the given type, or null if a 404 is returned
-  private <T> T getResults(URL endpoint, Type type) throws IOException {
-    HttpURLConnection urlConn = (HttpURLConnection) endpoint.openConnection();
-    urlConn.setRequestMethod(HttpMethod.GET);
-
-    int responseCode = urlConn.getResponseCode();
-    if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
-      return null;
-    }
-    Assert.assertEquals(HttpResponseStatus.OK.code(), responseCode);
-
-    String responseStr = new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8);
-    urlConn.disconnect();
-    return GSON.fromJson(responseStr, type);
-  }
-
   private void validateRequirement(Set<PluginClass> plugins, String pluginClassName,
                                    ImmutableSet<String> expectedRequirements) {
     for (PluginClass plugin : plugins) {
       if (plugin.getClassName().equals(pluginClassName)) {
         Assert.assertEquals(expectedRequirements, plugin.getRequirements());
+        return;
       }
     }
+    Assert.fail(String.format("Plugin %s was not found in %s", pluginClassName, plugins));
   }
 }
