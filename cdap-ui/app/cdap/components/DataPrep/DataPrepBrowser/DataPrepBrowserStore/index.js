@@ -107,6 +107,11 @@ const defaultActiveBrowser = {
 
 const defaultError = null;
 
+// TODO: Right now each connection type maintains its own `loading` state. However,
+// we can just have one loading state for all connection types, similar to how
+// we implement `error` state here.
+// JIRA: CDAP-14173
+
 const database = (state = defaultDatabaseValue, action = defaultAction) => {
   switch (action.type) {
     case Actions.SET_DATABASE_CONNECTION_ID:

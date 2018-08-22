@@ -56,6 +56,15 @@ export default class DataPrepBrowser extends Component {
   }
 
   componentDidUpdate() {
+    // TODO: Right now the burden of checking whether the connection id is actually
+    // changed falls into the implementation of the various 'setActiveConnection'
+    // functions for each connection type (e.g. setS3AsActiveBrowser). If the connection
+    // changes, we dispatch an API call to get the connection details, then fetch the current
+    // bucket details. If the connection ID didn't change i.e. user clicks on a bucket
+    // in the same connection, then we just fetch the bucket details directly.
+    // Ideally, these two calls should be in separate functions, and the checking
+    // of whether the connection ID changed or not should happen here.
+    // JIRA: CDAP-14173
     if (typeof this.props.setActiveConnection === 'function') {
       this.props.setActiveConnection();
     }
