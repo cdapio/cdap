@@ -67,7 +67,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -92,6 +91,9 @@ import javax.annotation.Nullable;
  *
  * runRecordActive|namespace|app|version|programtype|program|inverted start time|runid
  * runRecordCompleted|namespace|app|version|programtype|program|inverted start time|runid
+ *
+ * The run count will have the row key of format:
+ * runRecordCount|namespace|app|version|programtype|program
  *
  * These rows get deleted whenever state changes, with a new record written on top. In addition, workflow node state
  * is stored as:
@@ -125,6 +127,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_WORKFLOW_TOKEN = "wft";
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_MESSAGE = "msg";
+  private static final String TYPE_COUNT = "runRecordCount";
   private static final Map<ProgramRunStatus, String> STATUS_TYPE_MAP = ImmutableMap.<ProgramRunStatus, String>builder()
     .put(ProgramRunStatus.PENDING, TYPE_RUN_RECORD_ACTIVE)
     .put(ProgramRunStatus.STARTING, TYPE_RUN_RECORD_ACTIVE)
@@ -364,6 +367,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
       .build();
     write(key, meta);
+    MDSKey countKey = getProgramKeyBuilder(TYPE_COUNT, programRunId.getParent()).build();
+    increment(countKey, 1L);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONING, programRunId);
     return meta;
   }
@@ -1112,11 +1117,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public void deleteProgramHistory(String namespaceId, String appId, String versionId) {
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_ACTIVE, namespaceId, appId, versionId).build());
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, versionId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_COUNT, namespaceId, appId, versionId).build());
   }
 
   public void deleteProgramHistory(String namespaceId) {
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_ACTIVE, namespaceId).build());
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_COUNT, namespaceId).build());
   }
 
   public void createNamespace(NamespaceMeta metadata) {
@@ -1180,6 +1187,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
     Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_ACTIVE, startTimeInSecs, endTimeInSecs,
                                                         scanTimeoutMills));
     return runIds;
+  }
+
+  /**
+   * Get the run count of the given program.
+   *
+   * @param programId the program to get the count
+   * @return the number of run count
+   */
+  public int getProgramRuncount(ProgramId programId) {
+    MDSKey key = getProgramKeyBuilder(TYPE_COUNT, programId).build();
+    byte[] count = getValue(key);
+    return count == null ? 0 : (int) Bytes.toLong(count);
   }
 
   /**

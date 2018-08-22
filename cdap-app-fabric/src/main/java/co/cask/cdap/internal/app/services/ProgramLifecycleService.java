@@ -161,6 +161,31 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Returns the program run count of the given program.
+   *
+   * @param programId the id of the program for which the count call is made
+   * @return the run count of the program
+   * @throws NotFoundException if the application to which this program belongs was not found or the program is not
+   *                           found in the app
+   */
+  public int getProgramRuncount(ProgramId programId) throws Exception {
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    // check that app exists
+    ApplicationId appId = programId.getParent();
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    if (appSpec == null) {
+      // app doesn't exist
+      throw new NotFoundException(appId);
+    }
+    ProgramSpecification spec = getExistingAppProgramSpecification(appSpec, programId);
+    if (spec == null) {
+      // program doesn't exist
+      throw new NotFoundException(programId);
+    }
+    return store.getProgramRuncount(programId);
+  }
+
+  /**
    * Returns the program status with no need of application existence check.
    * @param appSpec the ApplicationSpecification of the existing application
    * @param programId the id of the program for which the status call is made

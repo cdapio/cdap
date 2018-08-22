@@ -44,7 +44,6 @@ import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -681,7 +680,66 @@ public class AppMetadataStoreTest {
       // the result should be sorted with larger time stamp come first
       Assert.assertEquals(Lists.reverse(expectedRuns), new ArrayList<>(activeRuns.keySet()));
     });
+  }
 
+  @Test
+  public void testProgramRuncount() throws Exception {
+    AppMetadataStore store = getMetadataStore("testProgramRuncount");
+    ProgramId programId = NamespaceId.DEFAULT.app("test").workflow("test");
+    TransactionExecutor txnl = getTxExecutor(store);
+    List<ProgramRunId> runIds = new ArrayList<>();
+    // add some run record
+    for (int i = 0; i < 5; i++) {
+      RunId runId = RunIds.generate(i * 1000);
+      ProgramRunId run = programId.run(runId);
+      runIds.add(run);
+      txnl.execute(() -> {
+        recordProvisionAndStart(run, store);
+      });
+    }
+
+    // should have 5 runs
+    txnl.execute(() -> {
+      Assert.assertEquals(5, store.getProgramRuncount(programId));
+    });
+
+    // stop all the program runs
+    for (ProgramRunId runId : runIds) {
+      txnl.execute(() -> {
+        store.recordProgramRunning(
+          runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 10, null,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramStop(runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 20,
+                                ProgramRunStatus.COMPLETED, null,
+                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      });
+    }
+
+    // should still have 5 runs even we record stop of the program run
+    txnl.execute(() -> {
+      Assert.assertEquals(5, store.getProgramRuncount(programId));
+    });
+
+    // add some more run record
+    for (int i = 0; i < 3; i++) {
+      RunId runId = RunIds.generate(i * 1000);
+      ProgramRunId run = programId.run(runId);
+      runIds.add(run);
+      txnl.execute(() -> {
+        recordProvisionAndStart(run, store);
+      });
+    }
+
+    // should have 8 runs
+    txnl.execute(() -> {
+      Assert.assertEquals(8, store.getProgramRuncount(programId));
+    });
+
+    // after cleanup we should only have 0 runs
+    txnl.execute(() -> {
+      store.deleteProgramHistory(programId.getNamespace(), programId.getApplication(), programId.getVersion());
+      Assert.assertEquals(0, store.getProgramRuncount(programId));
+    });
   }
 
   private static class CountingTicker extends Ticker {

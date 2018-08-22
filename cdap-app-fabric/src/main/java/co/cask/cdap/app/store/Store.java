@@ -493,4 +493,12 @@ public interface Store {
    * @return programs that were running between given start and end time.
    */
   Set<RunId> getRunningInRange(long startTimeInSecs, long endTimeInSecs);
+
+  /**
+   * Get the run count of the given program.
+   *
+   * @param programId the program to get the count
+   * @return the number of run count
+   */
+  int getProgramRuncount(ProgramId programId);
 }

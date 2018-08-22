@@ -858,4 +858,11 @@ public class DefaultStore implements Store {
       return getAppMetadataStore(context).getRunningInRange(startTimeInSecs, endTimeInSecs);
     });
   }
+
+  @Override
+  public int getProgramRuncount(ProgramId programId) {
+    return Transactionals.execute(transactional, context -> {
+      return getAppMetadataStore(context).getProgramRuncount(programId);
+    });
+  }
 }

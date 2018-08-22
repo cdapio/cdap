@@ -153,6 +153,18 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Get the value at the row and default COLUMN, of type T
+   *
+   * @param id the mds key for the row
+   * @return the actual value at the row and column
+   */
+  @Nullable
+  public byte[] getValue(MDSKey id) {
+    Row row = table.get(id.getKey());
+   return row.isEmpty() ? null : row.get(COLUMN);
+  }
+
+  /**
    * Get all non-null values with the given ids for default COLUMN
    *
    * @param ids set of the mds keys
@@ -413,6 +425,20 @@ public class MetadataStoreDataset extends AbstractDataset {
   public <T> void write(MDSKey id, T value) {
     try {
       table.put(new Put(id.getKey()).add(COLUMN, serialize(value)));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Increment the value in the row key and default COLUMN by the specified amount
+   *
+   * @param id row key
+   * @param amount amount to increment
+   */
+  public <T> void increment(MDSKey id, long amount) {
+    try {
+      table.increment(id.getKey(), COLUMN, amount);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
