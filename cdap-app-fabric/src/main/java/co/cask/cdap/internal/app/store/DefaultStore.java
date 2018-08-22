@@ -860,9 +860,9 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getProgramRuncount(ProgramId programId) {
+  public int getProgramRunCount(ProgramId programId) {
     return Transactionals.execute(transactional, context -> {
-      return getAppMetadataStore(context).getProgramRuncount(programId);
+      return getAppMetadataStore(context).getProgramRunCount(programId);
     });
   }
 }

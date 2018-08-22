@@ -168,7 +168,7 @@ public class ProgramLifecycleService {
    * @throws NotFoundException if the application to which this program belongs was not found or the program is not
    *                           found in the app
    */
-  public int getProgramRuncount(ProgramId programId) throws Exception {
+  public int getProgramRunCount(ProgramId programId) throws Exception {
     AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
     // check that app exists
     ApplicationId appId = programId.getParent();
@@ -182,7 +182,7 @@ public class ProgramLifecycleService {
       // program doesn't exist
       throw new NotFoundException(programId);
     }
-    return store.getProgramRuncount(programId);
+    return store.getProgramRunCount(programId);
   }
 
   /**

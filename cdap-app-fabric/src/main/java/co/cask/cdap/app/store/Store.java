@@ -500,5 +500,5 @@ public interface Store {
    * @param programId the program to get the count
    * @return the number of run count
    */
-  int getProgramRuncount(ProgramId programId);
+  int getProgramRunCount(ProgramId programId);
 }

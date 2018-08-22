@@ -23,18 +23,19 @@ import javax.annotation.Nullable;
  * Result for the program count
  */
 public class BatchProgramCount extends BatchProgramResult {
-  private final int count;
+  private final Integer runCount;
 
-  public BatchProgramCount(BatchProgram program, int statusCode, @Nullable String error, int count) {
+  public BatchProgramCount(BatchProgram program, int statusCode, @Nullable String error, @Nullable Integer runCount) {
     super(program, statusCode, error);
-    this.count = count;
+    this.runCount = runCount;
   }
 
   /**
-   * @return the count of the program. -1 if there is an error
+   * @return count of the program run. null if there is an error
    */
-  public int getCount() {
-    return count;
+  @Nullable
+  public Integer getRunCount() {
+    return runCount;
   }
 
   @Override
@@ -51,11 +52,11 @@ public class BatchProgramCount extends BatchProgramResult {
 
     BatchProgramCount that = (BatchProgramCount) o;
 
-    return Objects.equals(count, that.count);
+    return Objects.equals(runCount, that.runCount);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), count);
+    return Objects.hash(super.hashCode(), runCount);
   }
 }

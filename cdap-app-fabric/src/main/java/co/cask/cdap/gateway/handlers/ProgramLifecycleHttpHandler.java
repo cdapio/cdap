@@ -1251,16 +1251,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * </p>
    * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1",
-   * "statusCode": 200, "count": 20},
+   * "statusCode": 200, "runCount": 20},
    * {"appId": "App1", "programType": "Workflow", "programId": "testWorkflow", "statusCode": 404,
    * "error": "Program 'testWorkflow' is not found"},
    *  {"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow", "runnableId": "Flowlet1",
-   *  "statusCode": 200, "count": 300}]
+   *  "statusCode": 200, "runCount": 300}]
    * </code></pre>
    */
   @POST
   @Path("/runcount")
-  public void getRuncounts(FullHttpRequest request, HttpResponder responder,
+  public void getRunCounts(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
 
@@ -1269,32 +1269,38 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
                                           program.getProgramId());
       try {
-        int count = lifecycleService.getProgramRuncount(programId);
+        int count = lifecycleService.getProgramRunCount(programId);
         counts.add(new BatchProgramCount(program, HttpResponseStatus.OK.code(), null, count));
       } catch (NotFoundException e) {
-        counts.add(new BatchProgramCount(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage(), -1));
+        counts.add(new BatchProgramCount(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage(), null));
       } catch (UnauthorizedException e) {
-        counts.add(new BatchProgramCount(program, HttpResponseStatus.FORBIDDEN.code(), e.getMessage(), -1));
+        counts.add(new BatchProgramCount(program, HttpResponseStatus.FORBIDDEN.code(), e.getMessage(), null));
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(counts));
   }
 
+  /**
+   * Returns the count of the given program runs
+   */
   @GET
   @Path("/apps/{app-name}/{program-type}/{program-name}/runcount")
-  public void getProgramRuncount(HttpRequest request, HttpResponder responder,
+  public void getProgramRunCount(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-name") String appName,
                                  @PathParam("program-type") String type,
                                  @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(lifecycleService.getProgramRuncount(programId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(lifecycleService.getProgramRunCount(programId)));
   }
 
+  /**
+   * Returns the count of the given program runs
+   */
   @GET
-  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs")
-  public void getProgramRuncount(HttpRequest request, HttpResponder responder,
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runcount")
+  public void getProgramRunCount(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-name") String appName,
                                  @PathParam("app-version") String appVersion,
@@ -1302,7 +1308,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(lifecycleService.getProgramRuncount(programId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(lifecycleService.getProgramRunCount(programId)));
   }
 
   /*

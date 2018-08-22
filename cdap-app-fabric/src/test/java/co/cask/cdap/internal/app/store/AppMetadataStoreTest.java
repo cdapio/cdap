@@ -700,7 +700,7 @@ public class AppMetadataStoreTest {
 
     // should have 5 runs
     txnl.execute(() -> {
-      Assert.assertEquals(5, store.getProgramRuncount(programId));
+      Assert.assertEquals(5, store.getProgramRunCount(programId));
     });
 
     // stop all the program runs
@@ -717,7 +717,7 @@ public class AppMetadataStoreTest {
 
     // should still have 5 runs even we record stop of the program run
     txnl.execute(() -> {
-      Assert.assertEquals(5, store.getProgramRuncount(programId));
+      Assert.assertEquals(5, store.getProgramRunCount(programId));
     });
 
     // add some more run record
@@ -732,13 +732,13 @@ public class AppMetadataStoreTest {
 
     // should have 8 runs
     txnl.execute(() -> {
-      Assert.assertEquals(8, store.getProgramRuncount(programId));
+      Assert.assertEquals(8, store.getProgramRunCount(programId));
     });
 
     // after cleanup we should only have 0 runs
     txnl.execute(() -> {
       store.deleteProgramHistory(programId.getNamespace(), programId.getApplication(), programId.getVersion());
-      Assert.assertEquals(0, store.getProgramRuncount(programId));
+      Assert.assertEquals(0, store.getProgramRunCount(programId));
     });
   }
 

@@ -1195,7 +1195,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
    * @param programId the program to get the count
    * @return the number of run count
    */
-  public int getProgramRuncount(ProgramId programId) {
+  public int getProgramRunCount(ProgramId programId) {
     MDSKey key = getProgramKeyBuilder(TYPE_COUNT, programId).build();
     byte[] count = getValue(key);
     return count == null ? 0 : (int) Bytes.toLong(count);
