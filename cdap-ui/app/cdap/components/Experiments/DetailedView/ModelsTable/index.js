@@ -205,7 +205,6 @@ const renderDirectivesTables = (directives) => {
 
 const constructModelTrainingLogs = (model, experimentId) => {
   let splitId = objectQuery(model, 'splitDetails', 'id');
-  let nowInSeconds = Math.floor(Date.now() / 1000);
   let startTime = Math.floor(model.createtime / 1000);
   let endTime = model.trainedtime === -1 ? model.trainingtime : model.trainedtime;
   endTime = Math.floor( endTime / 1000);

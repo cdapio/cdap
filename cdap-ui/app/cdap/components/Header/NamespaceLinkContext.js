@@ -28,5 +28,5 @@ export function withContext(Component) {
         {context => <Component {...props} context={context} />}
       </NamespaceLinkContext.Consumer>
     );
-  }
+  };
 }
