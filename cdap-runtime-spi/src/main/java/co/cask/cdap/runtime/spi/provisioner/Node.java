@@ -25,17 +25,29 @@ import java.util.Objects;
  */
 public class Node {
   private final String id;
+  private final Type type;
+  private final String ipAddress;
   private final long createTime;
   private final Map<String, String> properties;
 
-  public Node(String id, long createTime, Map<String, String> properties) {
+  public Node(String id, Type type, String ipAddress, long createTime, Map<String, String> properties) {
     this.id = id;
+    this.type = type;
+    this.ipAddress = ipAddress;
     this.createTime = createTime;
     this.properties = Collections.unmodifiableMap(properties);
   }
 
   public String getId() {
     return id;
+  }
+
+  public Type getType() {
+    return type;
+  }
+
+  public String getIpAddress() {
+    return ipAddress;
   }
 
   public long getCreateTime() {
@@ -54,23 +66,36 @@ public class Node {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    Node that = (Node) o;
-
-    return Objects.equals(id, that.id) && createTime == that.createTime && Objects.equals(properties, that.properties);
+    Node node = (Node) o;
+    return createTime == node.createTime &&
+      Objects.equals(id, node.id) &&
+      type == node.type &&
+      Objects.equals(ipAddress, node.ipAddress) &&
+      Objects.equals(properties, node.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, createTime, properties);
+    return Objects.hash(id, type, ipAddress, createTime, properties);
   }
 
   @Override
   public String toString() {
     return "Node{" +
       "id='" + id + '\'' +
+      ", type='" + type + '\'' +
+      ", ipAddress='" + ipAddress + '\'' +
       ", createTime=" + createTime +
       ", properties=" + properties +
       '}';
+  }
+
+  /**
+   * Node type.
+   */
+  public enum Type {
+    MASTER,
+    WORKER,
+    UNKNOWN
   }
 }

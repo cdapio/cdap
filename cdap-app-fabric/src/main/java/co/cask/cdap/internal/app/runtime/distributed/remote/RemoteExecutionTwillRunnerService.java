@@ -544,13 +544,12 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       SSHKeyPair sshKeyPair = createSSHKeyPair(keysDir, cluster);
 
       Node masterNode = cluster.getNodes().stream()
-        .filter(node -> co.cask.cdap.runtime.spi.Constants.Node.MASTER_TYPE.equals(
-          node.getProperties().get(co.cask.cdap.runtime.spi.Constants.Node.TYPE)))
+        .filter(node -> node.getType() == Node.Type.MASTER)
         .findFirst().orElseThrow(
           () -> new IllegalArgumentException("Missing master node information for the cluster " + cluster.getName()));
 
       // Creates and return the twill preparer
-      return SSHConfig.builder(masterNode.getProperties().get(co.cask.cdap.runtime.spi.Constants.Node.EXTERNAL_IP))
+      return SSHConfig.builder(masterNode.getIpAddress())
         .setUser(sshKeyPair.getPublicKey().getUser())
         .setPrivateKeySupplier(sshKeyPair.getPrivateKeySupplier())
         .build();
