@@ -216,7 +216,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .attr('class', 'legend axis-y-right-legend')
     .append('text')
       .attr('transform', `translate(${width + legendOffset + ticksFontSize}, ${height/2}) rotate(-90)`)
-      .text('Delay time');
+      .text('Delay (seconds)');
 
 
   // BUCKETS STYLING LAYER

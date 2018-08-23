@@ -199,7 +199,7 @@ const GLOBALS = {
           'PREVIEW': {
             'NO-SOURCE-SINK': 'Please add a source and sink to the pipeline'
           },
-          'MISSING-SYSTEM-ARTIFACTS': 'Missing system artifacts. Please load system artifacts to use pipeline studio.'
+          'MISSING-SYSTEM-ARTIFACTS': 'The artifacts required for this data pipeline are still being loaded. Please try again in a few minutes'
         },
         pluginDoesNotExist: 'This plugin does not exist: '
       },
