@@ -88,6 +88,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
@@ -104,6 +105,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
@@ -113,7 +116,8 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.tephra.TransactionManager;
@@ -124,6 +128,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -138,6 +143,7 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -208,6 +214,9 @@ public abstract class AppFabricTestBase {
   private static DatasetClient datasetClient;
   private static MetadataClient metadataClient;
 
+  private static RequestConfig httpRequestConfig;
+  private static List<CloseableHttpClient> httpClients = new ArrayList<>();
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -226,6 +235,14 @@ public abstract class AppFabricTestBase {
           bind(UGIProvider.class).to(CurrentUGIProvider.class);
         }
       }));
+
+    int connectionTimeout = cConf.getInt(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
+    int readTimeout = cConf.getInt(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
+    httpRequestConfig = RequestConfig.custom()
+      .setConnectionRequestTimeout(connectionTimeout)
+      .setConnectTimeout(connectionTimeout)
+      .setSocketTimeout(readTimeout)
+      .build();
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
@@ -286,6 +303,25 @@ public abstract class AppFabricTestBase {
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
+    closeHttpClients();
+  }
+
+  @After
+  public void closeHttpClientAfterEachTest() throws IOException {
+    closeHttpClients();
+  }
+
+  private static HttpClient newHttpClient() {
+    CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig(httpRequestConfig).build();
+    httpClients.add(httpClient);
+    return httpClient;
+  }
+
+  private static void closeHttpClients() {
+    for (CloseableHttpClient client : httpClients) {
+      Closeables.closeQuietly(client);
+    }
+    httpClients.clear();
   }
 
   protected static CConfiguration createBasicCConf() throws IOException {
@@ -335,7 +371,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doGet(String resource, Header[] headers) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
+    HttpClient client = newHttpClient();
     HttpGet get = new HttpGet(getEndPoint(resource));
 
     if (headers != null) {
@@ -347,7 +383,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse execute(HttpUriRequest request) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
+    HttpClient client = newHttpClient();
     request.setHeader(AUTH_HEADER);
     return client.execute(request);
   }
@@ -373,7 +409,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doPost(String resource, String body, Header[] headers) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
+    HttpClient client = newHttpClient();
     HttpPost post = new HttpPost(getEndPoint(resource));
 
     if (body != null) {
@@ -389,7 +425,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doPost(HttpPost post) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
+    HttpClient client = newHttpClient();
     post.setHeader(AUTH_HEADER);
     return client.execute(post);
   }
@@ -401,7 +437,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doPut(String resource, String body) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
+    HttpClient client = newHttpClient();
     HttpPut put = new HttpPut(getEndPoint(resource));
     if (body != null) {
       put.setEntity(new StringEntity(body));
@@ -411,7 +447,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doDelete(String resource) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
+    HttpClient client = newHttpClient();
     HttpDelete delete = new HttpDelete(getEndPoint(resource));
     delete.setHeader(AUTH_HEADER);
     return client.execute(delete);

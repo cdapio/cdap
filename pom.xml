@@ -125,7 +125,7 @@
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
     <hive.version>1.2.1</hive.version>
     <hsql.version>2.2.4</hsql.version>
-    <http.component.version>4.2.5</http.component.version>
+    <http.component.version>4.3.2</http.component.version>
     <javamail.version>1.4.1</javamail.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty.version>6.1.22</jetty.version>
