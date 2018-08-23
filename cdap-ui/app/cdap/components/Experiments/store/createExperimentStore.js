@@ -409,6 +409,6 @@ const SPLIT_STATUS = {
   COMPLETE: 'Complete',
   FAILED: 'Failed',
   CREATING: 'CREATING' // Purely UI state. Used when UI calls backend to create a split.
-}
+};
 export {ACTIONS, POPOVER_TYPES, SPLIT_STATUS};
 export default createExperimentStore;

@@ -8,7 +8,7 @@
     "jsx": "react",
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "importHelpers": true,
+    "importHelpers": false,
     "lib": [
       "es2015",
       "dom"

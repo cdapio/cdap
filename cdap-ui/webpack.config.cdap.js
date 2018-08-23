@@ -125,6 +125,21 @@ var rules = [
     ]
   },
   {
+    enforce: 'pre',
+    test: /\.js$/,
+    use: 'eslint-loader',
+    exclude: [
+      /node_modules/,
+      /bower_components/,
+      /dist/,
+      /old_dist/,
+      /cdap_dist/,
+      /common_dist/,
+      /lib/,
+      /wrangler_dist/
+    ]
+  },
+  {
     test: /\.js$/,
     use: ['babel-loader'],
     exclude: [

@@ -18,7 +18,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
 import { UncontrolledDropdown } from 'components/UncontrolledComponents';
-import { DropdownToggle, DropdownItem } from 'reactstrap';
+import { DropdownToggle } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import classnames from 'classnames';
 import DashboardLink from 'components/Header/DashboardLink';

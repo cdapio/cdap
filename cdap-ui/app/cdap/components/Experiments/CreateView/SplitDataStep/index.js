@@ -131,7 +131,6 @@ class SplitDataStep extends Component {
   }
 
   renderSplitInfo() {
-    const splitStatus = this.props.splitInfo.status || SPLIT_STATUS.COMPLETE;
     const isSplitFailed = this.props.splitInfo.status === SPLIT_STATUS.FAILED;
     if (isEmpty(this.props.splitInfo) || !this.props.splitInfo.id || isSplitFailed) {
       return null;

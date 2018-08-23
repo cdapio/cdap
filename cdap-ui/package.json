@@ -90,11 +90,16 @@
     "stylelint-webpack-plugin": "0.10.5",
     "svg-sprite-loader": "3.9.0",
     "ts-loader": "4.4.2",
-    "tslint": "^5.10.0",
+    "tslint": "5.10.0",
     "uglifyjs-webpack-plugin": "1.2.7",
     "url-loader": "0.6.2",
     "webpack": "4.16.0",
-    "webpack-livereload-plugin": "2.1.1"
+    "webpack-livereload-plugin": "2.1.1",
+    "babel-eslint": "7.2.3",
+    "eslint": "4.6.1",
+    "eslint-loader": "2.0.0",
+    "eslint-plugin-babel": "4.1.2",
+    "eslint-plugin-react": "7.3.0"
   },
   "dependencies": {
     "@babel/polyfill": "^7.0.0-beta.53",
@@ -162,7 +167,7 @@
     "sockjs": "0.3.19",
     "sockjs-client": "1.1.4",
     "svg4everybody": "2.1.7",
-    "typescript": "^2.9.2",
+    "typescript": "2.9.2",
     "uuid": "3.2.1",
     "vega": "3.0.2",
     "vega-lite": "2.0.0-beta.16",

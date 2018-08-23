@@ -44,7 +44,12 @@
   "rulesDirectory": [],
   "linterOptions": {
     "exclude": [
-      "node_modules"
+      "node_modules",
+      "bower_components",
+      "dist",
+      "cdap_dist",
+      "login_dist",
+      "common_dist"
     ]
   }
 }
