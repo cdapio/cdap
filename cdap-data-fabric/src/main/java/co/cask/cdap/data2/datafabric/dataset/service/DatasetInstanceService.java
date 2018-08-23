@@ -45,7 +45,6 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -187,7 +186,7 @@ public class DatasetInstanceService {
    * @throws UnauthorizedException if perimeter security and authorization are enabled, and the current user does not
    *  have any privileges on the #instance
    */
-  DatasetMeta get(final DatasetId instance, List<? extends EntityId> owners) throws Exception {
+  DatasetMeta get(final DatasetId instance) throws Exception {
     // ensure user has correct privileges before getting the meta if the dataset is not a system dataset
     if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
       LOG.trace("Authorizing GET for dataset {}", instance.getDataset());

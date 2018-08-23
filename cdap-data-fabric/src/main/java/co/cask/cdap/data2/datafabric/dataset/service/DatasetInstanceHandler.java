@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
@@ -44,7 +45,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -52,7 +52,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * Handles dataset instance management calls.
@@ -81,7 +80,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     logCallResponded(request);
   }
 
-  @PUT
+  @POST
   @Path("/data/datasets/")
   public void listWithSpecifiedProperties(FullHttpRequest request, HttpResponder responder,
                                           @PathParam("namespace-id") String namespaceId) throws Exception {
@@ -96,20 +95,16 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    *
    * @param namespaceId namespace of the dataset instance
    * @param name name of the dataset instance
-   * @param owners a list of owners of the dataset instance, in the form @{code <type>::<id>}
-   *               (e.g. "program::namespace:default/application:PurchaseHistory/program:flow:PurchaseFlow")
-   * @throws Exception if the dataset instance was not found
+   * @throws NotFoundException if the dataset instance was not found
    */
   @GET
   @Path("/data/datasets/{name}")
   public void get(HttpRequest request, HttpResponder responder,
                   @PathParam("namespace-id") String namespaceId,
-                  @PathParam("name") String name,
-                  @QueryParam("owner") List<String> owners) throws Exception {
+                  @PathParam("name") String name) throws Exception {
     logCallReceived(request);
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(instanceService.get(ConversionHelpers.toDatasetInstanceId(namespaceId, name),
-                                                       ConversionHelpers.strings2ProgramIds(owners)),
+                       GSON.toJson(instanceService.get(ConversionHelpers.toDatasetInstanceId(namespaceId, name)),
                                    DatasetMeta.class));
     logCallResponded(request);
   }

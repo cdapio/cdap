@@ -19,11 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -46,14 +42,8 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
                            new DatasetInstanceConfiguration("table", new HashMap<String, String>()));
 
     // get the dataset meta for two different owners, assert it is the same
-    DatasetMeta meta = instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
-                                           ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(),
-                                                                                    "app1", ProgramType.FLOW,
-                                                                                    "flow1")));
-    DatasetMeta met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
-                                           ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(),
-                                                                                    "app2", ProgramType.FLOW,
-                                                                                    "flow2")));
+    DatasetMeta meta = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
+    DatasetMeta met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
     Assert.assertSame(meta, met2);
 
     // update the dataset
@@ -61,9 +51,7 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
                            ImmutableMap.of("ttl", "12345678"));
 
     // get the dataset meta, validate it changed
-    met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
-                               ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(),
-                                                                        "app2", ProgramType.FLOW, "flow2")));
+    met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
     Assert.assertNotSame(meta, met2);
     Assert.assertEquals("12345678", met2.getSpec().getProperty("ttl"));
 
@@ -72,9 +60,7 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
 
     // get the dataset meta, validate not found
     try {
-      instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
-                          ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(), "app1",
-                                                                   ProgramType.FLOW, "flow2")));
+      instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
       Assert.fail("get() should have thrown NotFoundException");
     } catch (NotFoundException e) {
       // expected
@@ -85,9 +71,7 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
                            new DatasetInstanceConfiguration("table", new HashMap<String, String>()));
 
     // get the dataset meta, validate it is up to date
-    met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
-                               ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(), "app2",
-                                                                        ProgramType.FLOW, "flow2")));
+    met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
     Assert.assertEquals(meta.getSpec(), met2.getSpec());
   }
 
