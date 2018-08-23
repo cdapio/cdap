@@ -69,6 +69,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -190,12 +191,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   @Nullable
   public ApplicationMeta getApplication(ApplicationId appId) {
-    ApplicationMeta appMeta = getFirst(new MDSKey.Builder().add(TYPE_APP_META,
-                                                                appId.getNamespace(),
-                                                                appId.getApplication(),
-                                                                appId.getVersion()).build(),
-                                       ApplicationMeta.class);
-    return appMeta;
+    return getFirst(new MDSKey.Builder().add(TYPE_APP_META,
+                                             appId.getNamespace(),
+                                             appId.getApplication(),
+                                             appId.getVersion()).build(),
+                    ApplicationMeta.class);
   }
 
   @Nullable
@@ -223,6 +223,20 @@ public class AppMetadataStore extends MetadataStoreDataset {
       appIds.add(new NamespaceId(namespaceId).app(appId, versionId));
     }
     return appIds;
+  }
+
+  public Map<ApplicationId, ApplicationMeta> getApplicationsForAppIds(Collection<ApplicationId> appIds) {
+    Map<MDSKey, ApplicationId> keysAppMap = new HashMap<>();
+    for (ApplicationId appId: appIds) {
+      keysAppMap.put(getApplicationKeyBuilder(TYPE_APP_META, appId).build(), appId);
+    }
+
+    Map<MDSKey, ApplicationMeta> metas = getKV(keysAppMap.keySet(), ApplicationMeta.class);
+    Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
+    for (MDSKey key : metas.keySet()) {
+      result.put(keysAppMap.get(key), metas.get(key));
+    }
+    return result;
   }
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
@@ -1199,6 +1213,27 @@ public class AppMetadataStore extends MetadataStoreDataset {
     MDSKey key = getProgramKeyBuilder(TYPE_COUNT, programId).build();
     byte[] count = getValue(key);
     return count == null ? 0 : (int) Bytes.toLong(count);
+  }
+
+  /**
+   * Get the run counts of the given program collections.
+   *
+   * @param programIds the collection of program ids to get the program
+   * @return the map of the program id to its run count
+   */
+  public Map<ProgramId, Integer> getProgramRunCounts(Collection<ProgramId> programIds) {
+    Map<MDSKey, ProgramId> mdsKeyProgramIdMap = new HashMap<>();
+    for (ProgramId programId : programIds) {
+      MDSKey key = getProgramKeyBuilder(TYPE_COUNT, programId).build();
+      mdsKeyProgramIdMap.put(key, programId);
+    }
+    Map<MDSKey, byte[]> counts = getKV(mdsKeyProgramIdMap.keySet());
+    Map<ProgramId, Integer> result = new LinkedHashMap<>();
+    for (MDSKey mdsKey : mdsKeyProgramIdMap.keySet()) {
+      byte[] count = counts.getOrDefault(mdsKey, Bytes.toBytes(0L));
+      result.put(mdsKeyProgramIdMap.get(mdsKey), (int) Bytes.toLong(count));
+    }
+    return result;
   }
 
   /**

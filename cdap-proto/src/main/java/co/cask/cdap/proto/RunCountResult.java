@@ -22,27 +22,32 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Result for the program count for http response
+ * Result for the program count, if there is an exception about the run count, the count will be null, and the exception
+ * is contained
  */
-public class BatchProgramCount extends BatchProgramResult {
-  private final Integer runCount;
+public class RunCountResult {
+  private final ProgramId programId;
+  private final Integer count;
+  private final Exception exception;
 
-  public BatchProgramCount(BatchProgram program, int statusCode, @Nullable String error, @Nullable Integer runCount) {
-    super(program, statusCode, error);
-    this.runCount = runCount;
+  public RunCountResult(ProgramId programId, @Nullable Integer count, @Nullable Exception exception) {
+    this.programId = programId;
+    this.count = count;
+    this.exception = exception;
   }
 
-  public BatchProgramCount(ProgramId programId, int statusCode, @Nullable String error, @Nullable Integer runCount) {
-    this(new BatchProgram(programId.getApplication(), programId.getType(), programId.getProgram()),
-         statusCode, error, runCount);
+  public ProgramId getProgramId() {
+    return programId;
   }
 
-  /**
-   * @return count of the program run. null if there is an error
-   */
   @Nullable
-  public Integer getRunCount() {
-    return runCount;
+  public Integer getCount() {
+    return count;
+  }
+
+  @Nullable
+  public Exception getException() {
+    return exception;
   }
 
   @Override
@@ -53,17 +58,15 @@ public class BatchProgramCount extends BatchProgramResult {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
-      return false;
-    }
 
-    BatchProgramCount that = (BatchProgramCount) o;
-
-    return Objects.equals(runCount, that.runCount);
+    RunCountResult that = (RunCountResult) o;
+    return Objects.equals(programId, that.programId) &&
+      Objects.equals(count, that.count) &&
+      Objects.equals(exception, that.exception);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), runCount);
+    return Objects.hash(programId, count, exception);
   }
 }

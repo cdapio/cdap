@@ -45,6 +45,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -58,6 +59,7 @@ import co.cask.cdap.proto.ProgramRunCluster;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunCountResult;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
@@ -66,6 +68,7 @@ import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -80,6 +83,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -727,6 +731,49 @@ public class DefaultStoreTest {
     store.removeApplication(appId);
 
     Assert.assertNull(store.getApplication(appId));
+  }
+
+  @Test
+  public void testProgramRunCount() throws Exception {
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
+    ArtifactId testArtifact = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    ProgramId workflowId = appId.workflow(AllProgramsApp.NoOpWorkflow.NAME);
+    ProgramId serviceId = appId.service(AllProgramsApp.NoOpService.NAME);
+    ProgramId nonExistingAppProgramId = NamespaceId.DEFAULT.app("nonExisting").workflow("test");
+    ProgramId nonExistingProgramId = appId.workflow("nonExisting");
+
+    // add the application
+    store.addApplication(appId, spec);
+
+    // add some run records to workflow and service
+    for (int i = 0; i < 5; i++) {
+      setStart(workflowId.run(RunIds.generate()), Collections.emptyMap(), Collections.emptyMap(), testArtifact);
+      setStart(serviceId.run(RunIds.generate()), Collections.emptyMap(), Collections.emptyMap(), testArtifact);
+    }
+
+    List<RunCountResult> result = store.getProgramRunCounts(ImmutableList.of(workflowId, serviceId,
+                                                                             nonExistingAppProgramId,
+                                                                             nonExistingProgramId));
+
+    // compare the result
+    Assert.assertEquals(4, result.size());
+    for (RunCountResult runCountResult : result) {
+      ProgramId programId = runCountResult.getProgramId();
+      if (programId.equals(nonExistingAppProgramId) || programId.equals(nonExistingProgramId)) {
+        Assert.assertNull(runCountResult.getCount());
+        Assert.assertTrue(runCountResult.getException() instanceof NotFoundException);
+      } else {
+        Assert.assertEquals(5, (int) runCountResult.getCount());
+      }
+    }
+
+    // remove the app should remove all run count
+    store.removeApplication(appId);
+    for (RunCountResult runCountResult : store.getProgramRunCounts(ImmutableList.of(workflowId, serviceId))) {
+      Assert.assertNull(runCountResult.getCount());
+      Assert.assertTrue(runCountResult.getException() instanceof NotFoundException);
+    }
   }
 
   @Test

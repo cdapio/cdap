@@ -39,6 +39,7 @@ import com.google.gson.Gson;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -153,7 +154,7 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   /**
-   * Get the value at the row and default COLUMN, of type T
+   * Get the value at the row and default COLUMN
    *
    * @param id the mds key for the row
    * @return the actual value at the row and column
@@ -165,21 +166,20 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   /**
-   * Get all non-null values with the given ids for default COLUMN
+   * Get all non-null values of type T with the given ids for default COLUMN in a map
    *
    * @param ids set of the mds keys
    * @param typeOfT the type of the result
-   * @return a list of the deserialized value of the result
+   * @return a map of the deserialized value of the result
    */
-  public <T> List<T> get(Set<MDSKey> ids, Type typeOfT) {
-    List<T> resultList = new ArrayList<>();
+  protected <T> Map<MDSKey, T> getKV(Set<MDSKey> ids, Type typeOfT) {
+    Map<MDSKey, T> resultMap = new HashMap<>();
     List<Get> getList = new ArrayList<>();
     for (MDSKey id : ids) {
       getList.add(new Get(id.getKey()));
     }
     List<Row> rowList = table.get(getList);
     for (Row row : rowList) {
-      // This shouldn't fail, otherwise table is breaking contract.
       if (row.isEmpty()) {
         continue;
       }
@@ -188,10 +188,39 @@ public class MetadataStoreDataset extends AbstractDataset {
       if (value == null) {
         continue;
       }
-      T result = deserialize(new MDSKey(row.getRow()), value, typeOfT);
-      resultList.add(result);
+      MDSKey key = new MDSKey(row.getRow());
+      T result = deserialize(key, value, typeOfT);
+      resultMap.put(key, result);
     }
-    return resultList;
+    return resultMap;
+  }
+
+  /**
+   * Get all non-null values with the given ids for default COLUMN in a map
+   *
+   * @param ids set of the mds keys
+   * @return a map of the deserialized value of the result
+   */
+  protected Map<MDSKey, byte[]> getKV(Set<MDSKey> ids) {
+    Map<MDSKey, byte[]> resultMap = new HashMap<>();
+    List<Get> getList = new ArrayList<>();
+    for (MDSKey id : ids) {
+      getList.add(new Get(id.getKey()));
+    }
+    List<Row> rowList = table.get(getList);
+    for (Row row : rowList) {
+      if (row.isEmpty()) {
+        continue;
+      }
+
+      byte[] value = row.get(COLUMN);
+      if (value == null) {
+        continue;
+      }
+      MDSKey key = new MDSKey(row.getRow());
+      resultMap.put(key, value);
+    }
+    return resultMap;
   }
 
   /**

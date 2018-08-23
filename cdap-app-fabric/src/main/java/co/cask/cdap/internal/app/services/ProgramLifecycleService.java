@@ -55,7 +55,9 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunCountResult;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -92,12 +94,16 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -170,19 +176,30 @@ public class ProgramLifecycleService {
    */
   public int getProgramRunCount(ProgramId programId) throws Exception {
     AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
-    // check that app exists
-    ApplicationId appId = programId.getParent();
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null) {
-      // app doesn't exist
-      throw new NotFoundException(appId);
-    }
-    ProgramSpecification spec = getExistingAppProgramSpecification(appSpec, programId);
-    if (spec == null) {
-      // program doesn't exist
-      throw new NotFoundException(programId);
-    }
     return store.getProgramRunCount(programId);
+  }
+
+  /**
+   * Returns the program run count of the given program id list.
+   *
+   * @param programIds the list of program ids to get the count
+   * @return the counts of given program ids
+   */
+  public List<RunCountResult> getProgramRunCounts(List<ProgramId> programIds) throws Exception {
+    List<RunCountResult> result = store.getProgramRunCounts(programIds);
+
+    // filter the result
+    Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programIds),
+                                                                              authenticationContext.getPrincipal());
+    for (int i = 0; i < result.size(); i++) {
+      RunCountResult runCountResult = result.get(i);
+      ProgramId programId = runCountResult.getProgramId();
+      if (!visibleEntities.contains(programId)) {
+        result.set(i, new RunCountResult(programId, null,
+                                         new UnauthorizedException(authenticationContext.getPrincipal(), programId)));
+      }
+    }
+    return result;
   }
 
   /**

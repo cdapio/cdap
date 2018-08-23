@@ -72,6 +72,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.RunCountResult;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ServiceInstances;
@@ -1229,6 +1230,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Returns the run counts for all program runnables that are passed into the data. The data is an array of
    * Json objects where each object must contain the following three elements: appId, programType, and programId.
+   * The max number of programs in the request is 100.
    * <p>
    * Example input:
    * <pre><code>
@@ -1263,18 +1265,25 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getRunCounts(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    if (programs.size() > 100) {
+      throw new BadRequestException(String.format("%s programs found in the request, the maximum number " +
+                                                    "supported is 100", programs.size()));
+    }
 
+    List<ProgramId> programIds =
+      programs.stream().map(batchProgram -> new ProgramId(namespaceId, batchProgram.getAppId(),
+                                                          batchProgram.getProgramType(),
+                                                          batchProgram.getProgramId())).collect(Collectors.toList());
     List<BatchProgramCount> counts = new ArrayList<>(programs.size());
-    for (BatchProgram program : programs) {
-      ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
-                                          program.getProgramId());
-      try {
-        int count = lifecycleService.getProgramRunCount(programId);
-        counts.add(new BatchProgramCount(program, HttpResponseStatus.OK.code(), null, count));
-      } catch (NotFoundException e) {
-        counts.add(new BatchProgramCount(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage(), null));
-      } catch (UnauthorizedException e) {
-        counts.add(new BatchProgramCount(program, HttpResponseStatus.FORBIDDEN.code(), e.getMessage(), null));
+    for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programIds)) {
+      ProgramId programId = runCountResult.getProgramId();
+      Exception exception = runCountResult.getException();
+      if (exception == null) {
+        counts.add(new BatchProgramCount(programId, 200, null, runCountResult.getCount()));
+      } else if (exception instanceof NotFoundException) {
+        counts.add(new BatchProgramCount(programId, 404, exception.getMessage(), null));
+      } else if (exception instanceof UnauthorizedException) {
+        counts.add(new BatchProgramCount(programId, 403, exception.getMessage(), null));
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(counts));

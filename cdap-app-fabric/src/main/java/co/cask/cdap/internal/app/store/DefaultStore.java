@@ -38,6 +38,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -51,6 +52,7 @@ import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunCountResult;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -78,6 +80,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -860,9 +863,85 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getProgramRunCount(ProgramId programId) {
+  public int getProgramRunCount(ProgramId programId) throws NotFoundException {
     return Transactionals.execute(transactional, context -> {
-      return getAppMetadataStore(context).getProgramRunCount(programId);
+      AppMetadataStore appMetadataStore = getAppMetadataStore(context);
+      ApplicationSpecification appSpec = getApplicationSpec(appMetadataStore, programId.getParent());
+      // app not found
+      if (appSpec == null) {
+        throw new NotFoundException(programId.getParent());
+      }
+      ProgramSpecification programSpec = getExistingAppProgramSpecification(appSpec, programId);
+      // program not found
+      if (programSpec == null) {
+        throw new NotFoundException(programId);
+      }
+      return appMetadataStore.getProgramRunCount(programId);
+    }, NotFoundException.class);
+  }
+
+  @Override
+  public List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds) {
+    return Transactionals.execute(transactional, context -> {
+      List<RunCountResult> result = new ArrayList<>();
+      AppMetadataStore appMetadataStore = getAppMetadataStore(context);
+      Map<ApplicationId, ApplicationMeta> metas =
+        appMetadataStore.getApplicationsForAppIds(
+          programIds.stream().map(ProgramId::getParent).collect(Collectors.toList()));
+
+      Set<ProgramId> existingPrograms = new HashSet<>();
+      for (ProgramId programId : programIds) {
+        ApplicationId appId = programId.getParent();
+        if (metas.containsKey(appId)) {
+          ProgramSpecification programSpec = getExistingAppProgramSpecification(metas.get(appId).getSpec(),
+                                                                                programId);
+          // program not found
+          if (programSpec == null) {
+            result.add(new RunCountResult(programId, null, new NotFoundException(programId)));
+          } else {
+            existingPrograms.add(programId);
+          }
+          // app not found
+        } else {
+          result.add(new RunCountResult(programId, null, new NotFoundException(appId)));
+        }
+      }
+
+      Map<ProgramId, Integer> runCounts = appMetadataStore.getProgramRunCounts(existingPrograms);
+      for (Map.Entry<ProgramId, Integer> entry : runCounts.entrySet()) {
+        result.add(new RunCountResult(entry.getKey(), entry.getValue(), null));
+      }
+      return result;
     });
+  }
+
+  /**
+   * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
+   * @param appSpec the {@link ApplicationSpecification} of the existing application
+   * @param programId the {@link ProgramId program} for which the {@link ProgramSpecification} is requested
+   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
+   */
+  @Nullable
+  private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec,
+                                                                  ProgramId programId) {
+    String programName = programId.getProgram();
+    ProgramType type = programId.getType();
+    ProgramSpecification programSpec;
+    if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programName)) {
+      programSpec = appSpec.getFlows().get(programName);
+    } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
+      programSpec = appSpec.getMapReduce().get(programName);
+    } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
+      programSpec = appSpec.getSpark().get(programName);
+    } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(programName)) {
+      programSpec = appSpec.getWorkflows().get(programName);
+    } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(programName)) {
+      programSpec = appSpec.getServices().get(programName);
+    } else if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(programName)) {
+      programSpec = appSpec.getWorkers().get(programName);
+    } else {
+      programSpec = null;
+    }
+    return programSpec;
   }
 }
