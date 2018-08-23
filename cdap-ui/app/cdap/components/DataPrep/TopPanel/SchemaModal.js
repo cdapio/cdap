@@ -96,9 +96,8 @@ export default class SchemaModal extends Component {
           fields: res
         };
 
-        let fields;
         try {
-          fields = getParsedSchemaForDataPrep(tempSchema);
+          getParsedSchemaForDataPrep(tempSchema);
         } catch (e) {
           let {message, remedies = null} = mapErrorToMessage(e);
           this.setState({
@@ -106,10 +105,11 @@ export default class SchemaModal extends Component {
             loading: false
           });
         }
+
         SchemaStore.dispatch({
           type: 'FIELD_UPDATE',
           payload: {
-            schema: { fields }
+            schema: tempSchema
           }
         });
 
