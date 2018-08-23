@@ -1,6 +1,9 @@
 {
   "cdap": {
-    "version": "5.1.0-1"
+    "version": "5.1.0-1",
+    "cdap_site": {
+      "dashboard.bind.address": "0.0.0.0"
+    }
   },
   "nodejs": {
     "install_method": "binary",
