@@ -98,7 +98,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Serv
 
   public ServiceSpecification createSpecification() {
     Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances);
+    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances, getPlugins());
   }
 
   /**

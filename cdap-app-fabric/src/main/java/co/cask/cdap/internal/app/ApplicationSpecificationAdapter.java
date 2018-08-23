@@ -24,6 +24,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -31,6 +32,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ConditionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.common.conf.PluginClassDeserializer;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
@@ -103,6 +105,7 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(Trigger.class, new TriggerCodec())
       .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
       .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+      .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 

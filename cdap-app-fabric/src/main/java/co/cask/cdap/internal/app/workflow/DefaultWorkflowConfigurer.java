@@ -163,7 +163,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
 
   public WorkflowSpecification createSpecification() {
     return new WorkflowSpecification(className, name, description, properties, createNodesWithId(nodes),
-                                     localDatasetSpecs);
+                                     localDatasetSpecs, getPlugins());
   }
 
   private List<WorkflowNode> createNodesWithId(List<WorkflowNode> nodes) {

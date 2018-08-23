@@ -103,7 +103,7 @@ public class DefaultSparkConfigurer extends AbstractConfigurer implements SparkC
                       new DataSetFieldExtractor(datasets));
     return new SparkSpecification(spark.getClass().getName(), name, description,
                                   mainClassName, datasets, properties,
-                                  clientResources, driverResources, executorResources, getHandlers());
+                                  clientResources, driverResources, executorResources, getHandlers(), getPlugins());
   }
 
   /**

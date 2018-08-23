@@ -90,6 +90,6 @@ public class DefaultWorkerConfigurer extends AbstractConfigurer implements Worke
     // Grab all @Property fields
     Reflections.visit(worker, worker.getClass(), new PropertyFieldExtractor(properties));
     return new WorkerSpecification(worker.getClass().getName(), name, description,
-                                   properties, datasets, resource, instances);
+                                   properties, datasets, resource, instances, getPlugins());
   }
 }

@@ -16,9 +16,10 @@
 
 package co.cask.cdap.api.mapreduce;
 
-import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.AbstractProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.plugin.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,11 +31,7 @@ import javax.annotation.Nullable;
 /**
  * This class provides the specification for a MapReduce job.
  */
-public class MapReduceSpecification implements ProgramSpecification, PropertyProvider {
-
-  private final String className;
-  private final String name;
-  private final String description;
+public class MapReduceSpecification extends AbstractProgramSpecification implements PropertyProvider {
   private final Set<String> dataSets;
   private final Map<String, String> properties;
   private final String inputDataSet;
@@ -46,10 +43,9 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
   public MapReduceSpecification(String className, String name, String description, String inputDataSet,
                                 String outputDataSet, Set<String> dataSets, Map<String, String> properties,
                                 @Nullable Resources driverResources,
-                                @Nullable Resources mapperResources, @Nullable Resources reducerResources) {
-    this.className = className;
-    this.name = name;
-    this.description = description;
+                                @Nullable Resources mapperResources, @Nullable Resources reducerResources,
+                                Map<String, Plugin> plugins) {
+    super(className, name, description, plugins);
     this.inputDataSet = inputDataSet;
     this.outputDataSet = outputDataSet;
     this.properties = Collections.unmodifiableMap(properties == null ? Collections.<String, String>emptyMap()
@@ -58,21 +54,6 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
     this.mapperResources = mapperResources;
     this.reducerResources = reducerResources;
     this.dataSets = getAllDatasets(dataSets, inputDataSet, outputDataSet);
-  }
-
-  @Override
-  public String getClassName() {
-    return className;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public String getDescription() {
-    return description;
   }
 
   @Override

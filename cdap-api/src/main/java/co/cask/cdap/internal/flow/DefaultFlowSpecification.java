@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.flow;
 
+import co.cask.cdap.api.AbstractProgramSpecification;
+import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -27,13 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * {@link ProgramSpecification} for {@link Flow}.
  */
-public final class DefaultFlowSpecification implements FlowSpecification {
-
-  private final String className;
-  private final String name;
-  private final String description;
+public final class DefaultFlowSpecification extends AbstractProgramSpecification implements FlowSpecification {
   private final Map<String, FlowletDefinition> flowlets;
   private final List<FlowletConnection> connections;
 
@@ -48,26 +47,10 @@ public final class DefaultFlowSpecification implements FlowSpecification {
 
   public DefaultFlowSpecification(String className, String name, String description,
                                   Map<String, FlowletDefinition> flowlets, List<FlowletConnection> connections) {
-    this.className = className;
-    this.name = name;
-    this.description = description;
+    // Flows as of now don't support plugin and is deprecated hence just pass empty map as plugins
+    super(className, name, description, Collections.emptyMap());
     this.flowlets = Collections.unmodifiableMap(new HashMap<>(flowlets));
     this.connections = Collections.unmodifiableList(new ArrayList<>(connections));
-  }
-
-  @Override
-  public String getClassName() {
-    return className;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public String getDescription() {
-    return description;
   }
 
   @Override

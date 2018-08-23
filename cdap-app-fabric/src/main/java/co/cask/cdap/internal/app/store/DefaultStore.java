@@ -501,7 +501,7 @@ public class DefaultStore implements Store {
                                                                      workerSpec.getProperties(),
                                                                      workerSpec.getDatasets(),
                                                                      workerSpec.getResources(),
-                                                                     instances);
+                                                                     instances, workerSpec.getPlugins());
       ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
       metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), id.getVersion(), newAppSpec);
 
@@ -522,7 +522,7 @@ public class DefaultStore implements Store {
       // Create a new spec copy from the old one, except with updated instances number
       serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
                                              serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                             serviceSpec.getResources(), instances);
+                                             serviceSpec.getResources(), instances, serviceSpec.getPlugins());
 
       ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getProgram(), serviceSpec);
       metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), id.getVersion(), newAppSpec);

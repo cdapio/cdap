@@ -94,6 +94,6 @@ public final class DefaultMapReduceConfigurer extends AbstractConfigurer impleme
                       new DataSetFieldExtractor(datasets));
     return new MapReduceSpecification(mapReduce.getClass().getName(), name, description,
                                       inputDataset, outputDataset, datasets,
-                                      properties, driverResources, mapperResources, reducerResources);
+                                      properties, driverResources, mapperResources, reducerResources, getPlugins());
   }
 }

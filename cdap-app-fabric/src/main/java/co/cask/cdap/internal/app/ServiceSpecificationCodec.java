@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
@@ -37,6 +38,7 @@ import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -68,12 +70,13 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
+    Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
     Map<String, HttpServiceHandlerSpecification> handlers = deserializeMap(jsonObj.get("handlers"), context,
                                                                     HttpServiceHandlerSpecification.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     int instances = jsonObj.get("instances").getAsInt();
 
-    return new ServiceSpecification(className, name, description, handlers, resources, instances);
+    return new ServiceSpecification(className, name, description, handlers, resources, instances, plugins);
   }
 
   @Override
@@ -119,13 +122,13 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
                    new HttpServiceHandlerSpecification(handlerClass,
                                                        spec.get("name").getAsString(),
                                                        spec.get("description").getAsString(),
-                                                       properties, ImmutableSet.<String>of(),
-                                                       ImmutableList.<ServiceHttpEndpoint>of()));
+                                                       properties, ImmutableSet.of(),
+                                                       ImmutableList.of(), Collections.emptyMap()));
     }
 
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();
     return new ServiceSpecification(className, twillSpec.getName(), twillSpec.getName(), handlers,
                                     new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
-                                    resourceSpec.getInstances());
+                                    resourceSpec.getInstances(), Collections.emptyMap());
   }
 }

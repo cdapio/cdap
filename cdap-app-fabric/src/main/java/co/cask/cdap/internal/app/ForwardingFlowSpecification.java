@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.plugin.Plugin;
 
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,11 @@ public abstract class ForwardingFlowSpecification implements FlowSpecification {
   @Override
   public String getDescription() {
     return delegate.getDescription();
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return delegate.getPlugins();
   }
 
   @Override

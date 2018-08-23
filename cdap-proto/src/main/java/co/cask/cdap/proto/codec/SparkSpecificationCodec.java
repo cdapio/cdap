@@ -17,6 +17,7 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import com.google.gson.JsonDeserializationContext;
@@ -44,6 +45,7 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
+    jsonObj.add("plugins", serializeMap(src.getPlugins(), context, Plugin.class));
     if (src.getMainClassName() != null) {
       jsonObj.add("mainClassName", new JsonPrimitive(src.getMainClassName()));
     }
@@ -67,6 +69,7 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
+    Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
     String mainClassName = jsonObj.has("mainClassName") ? jsonObj.get("mainClassName").getAsString() : null;
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
@@ -79,7 +82,7 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
                                                                           SparkHttpServiceHandlerSpecification.class);
 
     return new SparkSpecification(className, name, description, mainClassName, datasets,
-                                  properties, clientResources, driverResources, executorResources, handlers);
+                                  properties, clientResources, driverResources, executorResources, handlers, plugins);
   }
 
   /**

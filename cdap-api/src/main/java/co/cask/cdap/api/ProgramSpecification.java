@@ -15,6 +15,10 @@
  */
 package co.cask.cdap.api;
 
+import co.cask.cdap.api.plugin.Plugin;
+
+import java.util.Map;
+
 /**
  * This interface provides for getting the name, class name, and description specifications of any type of program.
  */
@@ -34,4 +38,6 @@ public interface ProgramSpecification {
    * @return Description of the program.
    */
   String getDescription();
+
+  Map<String, Plugin> getPlugins();
 }

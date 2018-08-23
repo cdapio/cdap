@@ -16,8 +16,9 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.AbstractProgramSpecification;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 
 import java.util.Collections;
@@ -27,38 +28,18 @@ import java.util.Map;
 /**
  * Specification for a {@link Service}.
  */
-public final class ServiceSpecification implements ProgramSpecification {
-  private final String className;
-  private final String name;
-  private final String description;
+public final class ServiceSpecification extends AbstractProgramSpecification {
   private final Map<String, HttpServiceHandlerSpecification> handlers;
   private final Resources resources;
   private final int instances;
 
   public ServiceSpecification(String className, String name, String description,
                               Map<String, HttpServiceHandlerSpecification> handlers,
-                              Resources resources, int instances) {
-    this.className = className;
-    this.name = name;
-    this.description = description;
+                              Resources resources, int instances, Map<String, Plugin> plugins) {
+    super(className, name, description, plugins);
     this.handlers = Collections.unmodifiableMap(new HashMap<>(handlers));
     this.resources = resources;
     this.instances = instances;
-  }
-
-  @Override
-  public String getClassName() {
-    return className;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public String getDescription() {
-    return description;
   }
 
   /**

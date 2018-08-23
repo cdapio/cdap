@@ -15,8 +15,10 @@
  */
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.AbstractProgramSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.ArrayList;
@@ -30,10 +32,7 @@ import java.util.Queue;
 /**
  * Specification for a {@link Workflow}
  */
-public final class WorkflowSpecification implements ProgramSpecification, PropertyProvider {
-  private final String className;
-  private final String name;
-  private final String description;
+public final class WorkflowSpecification extends AbstractProgramSpecification implements PropertyProvider {
   private final Map<String, String> properties;
   private final List<WorkflowNode> nodes;
   private final Map<String, WorkflowNode> nodeIdMap;
@@ -41,10 +40,8 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
 
   public WorkflowSpecification(String className, String name, String description,
                                Map<String, String> properties, List<WorkflowNode> nodes,
-                               Map<String, DatasetCreationSpec> localDatasetSpecs) {
-    this.className = className;
-    this.name = name;
-    this.description = description;
+                               Map<String, DatasetCreationSpec> localDatasetSpecs, Map<String, Plugin> plugins) {
+    super(className, name, description, plugins);
     this.properties = properties == null ? Collections.<String, String>emptyMap() :
                                            Collections.unmodifiableMap(new HashMap<>(properties));
     this.nodes = Collections.unmodifiableList(new ArrayList<>(nodes));
@@ -85,21 +82,6 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   }
 
   @Override
-  public String getClassName() {
-    return className;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public String getDescription() {
-    return description;
-  }
-
-  @Override
   public Map<String, String> getProperties() {
     return properties;
   }
@@ -132,14 +114,15 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("WorkflowSpecification{");
-    sb.append("className='").append(className).append('\'');
-    sb.append(", name='").append(name).append('\'');
-    sb.append(", description='").append(description).append('\'');
-    sb.append(", properties=").append(properties);
-    sb.append(", nodes=").append(nodes);
-    sb.append(", localDatasetSpecs=").append(localDatasetSpecs);
-    sb.append('}');
-    return sb.toString();
+    return "WorkflowSpecification{" +
+      "className='" + getClassName() + '\'' +
+      ", name='" + getName() + '\'' +
+      ", description='" + getDescription() + '\'' +
+      ", plugins=" + getPlugins() +
+      ", properties=" + properties +
+      ", nodes=" + nodes +
+      ", nodeIdMap=" + nodeIdMap +
+      ", localDatasetSpecs=" + localDatasetSpecs +
+      '}';
   }
 }

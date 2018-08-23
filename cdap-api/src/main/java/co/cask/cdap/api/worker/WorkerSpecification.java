@@ -16,10 +16,12 @@
 
 package co.cask.cdap.api.worker;
 
+import co.cask.cdap.api.AbstractProgramSpecification;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.plugin.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,39 +32,19 @@ import java.util.Set;
 /**
  * Specification for {@link Worker}s.
  */
-public final class WorkerSpecification implements ProgramSpecification, PropertyProvider {
-  private final String className;
-  private final String name;
-  private final String description;
+public final class WorkerSpecification extends AbstractProgramSpecification implements PropertyProvider {
   private final Map<String, String> properties;
   private final Set<String> datasets;
   private final Resources resources;
   private final int instances;
 
   public WorkerSpecification(String className, String name, String description, Map<String, String> properties,
-                             Set<String> datasets, Resources resources, int instances) {
-    this.className = className;
-    this.name = name;
-    this.description = description;
+                             Set<String> datasets, Resources resources, int instances, Map<String, Plugin> plugins) {
+    super(className, name, description, plugins);
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.resources = resources;
     this.instances = instances;
-  }
-
-  @Override
-  public String getClassName() {
-    return className;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public String getDescription() {
-    return description;
   }
 
   @Override
