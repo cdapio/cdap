@@ -373,26 +373,26 @@ public class ConcurrentMessageWriterTest {
    */
   private static final class TestStoreRequest extends StoreRequest {
 
-    private final Iterator<String> payloads;
+    private final List<String> payloads;
 
     protected TestStoreRequest(TopicId topicId, List<String> payloads) {
-      this(topicId, payloads.iterator());
-    }
-
-    protected TestStoreRequest(TopicId topicId, Iterator<String> payloads) {
       this(topicId, false, -1L, payloads);
     }
 
     protected TestStoreRequest(TopicId topicId, boolean transactional,
-                               long transactionWritePointer, Iterator<String> payloads) {
+                               long transactionWritePointer, List<String> payloads) {
       super(topicId, transactional, transactionWritePointer);
       this.payloads = payloads;
     }
 
-    @Nullable
     @Override
-    protected byte[] doComputeNext() {
-      return payloads.hasNext() ? Bytes.toBytes(payloads.next()) : null;
+    public boolean hasPayload() {
+      return !payloads.isEmpty();
+    }
+
+    @Override
+    public Iterator<byte[]> iterator() {
+      return payloads.stream().map(Bytes::toBytes).iterator();
     }
   }
 }

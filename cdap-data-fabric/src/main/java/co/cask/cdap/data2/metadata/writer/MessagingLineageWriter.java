@@ -88,7 +88,7 @@ public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter
   }
 
   private void publish(MetadataMessage message) {
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {

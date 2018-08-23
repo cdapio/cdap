@@ -104,7 +104,7 @@ public class MessagingNotificationService extends AbstractNotificationService {
       public N call() throws Exception {
         try {
           NotificationMessage message = new NotificationMessage(feed, GSON.toJsonTree(notification, notificationType));
-          messagingService.publish(StoreRequestBuilder.of(notificationTopic).addPayloads(GSON.toJson(message)).build());
+          messagingService.publish(StoreRequestBuilder.of(notificationTopic).addPayload(GSON.toJson(message)).build());
           return notification;
         } catch (Exception e) {
           throw new NotificationException(e);

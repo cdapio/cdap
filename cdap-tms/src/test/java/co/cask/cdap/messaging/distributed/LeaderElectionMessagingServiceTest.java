@@ -121,7 +121,7 @@ public class LeaderElectionMessagingServiceTest {
     }
 
     // Publish a message with the leader
-    firstService.publish(StoreRequestBuilder.of(topicId).addPayloads("Testing1").build());
+    firstService.publish(StoreRequestBuilder.of(topicId).addPayload("Testing1").build());
 
     // Start another messaging service, this one would be follower
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
@@ -147,7 +147,7 @@ public class LeaderElectionMessagingServiceTest {
     List<String> messages = Retries.callWithRetries(new Retries.Callable<List<String>, Throwable>() {
       @Override
       public List<String> call() throws Throwable {
-        secondService.publish(StoreRequestBuilder.of(topicId).addPayloads("Testing2").build());
+        secondService.publish(StoreRequestBuilder.of(topicId).addPayload("Testing2").build());
 
         List<String> messages = new ArrayList<>();
         try (CloseableIterator<RawMessage> iterator = secondService.prepareFetch(topicId).fetch()) {

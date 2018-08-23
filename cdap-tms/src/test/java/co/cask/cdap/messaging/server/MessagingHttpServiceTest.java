@@ -28,6 +28,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.RollbackDetail;
+import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.client.ClientMessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
@@ -57,6 +58,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Tests for {@link MessagingHttpService}.
@@ -109,9 +111,10 @@ public class MessagingHttpServiceTest {
     // Create a topic
     client.createTopic(new TopicMetadata(topic1));
     final RollbackDetail rollbackDetail = client.publish(StoreRequestBuilder.of(topic1).setTransaction(1L)
-                                                     .addPayloads("a", "b").build());
+                                                     .addPayload("a").addPayload("b").build());
     try {
-      client.publish(StoreRequestBuilder.of(topic1).setTransaction(-Long.MAX_VALUE).addPayloads("c", "d").build());
+      client.publish(StoreRequestBuilder.of(topic1)
+                       .setTransaction(-Long.MAX_VALUE).addPayload("c").addPayload("d").build());
       Assert.fail("Expected IOException");
     } catch (IOException ex) {
       // expected
@@ -230,7 +233,7 @@ public class MessagingHttpServiceTest {
       client.createTopic(metadata);
       String m1 = String.format("m%d", j);
       String m2 = String.format("m%d", j + 1);
-      Assert.assertNull(client.publish(StoreRequestBuilder.of(topicId).addPayloads(m1, m2).build()));
+      Assert.assertNull(client.publish(StoreRequestBuilder.of(topicId).addPayload(m1).addPayload(m2).build()));
 
       // Fetch messages non-transactionally
       List<RawMessage> messages = new ArrayList<>();
@@ -255,7 +258,7 @@ public class MessagingHttpServiceTest {
 
     // Publish to a non-existing topic should get not found exception
     try {
-      client.publish(StoreRequestBuilder.of(topicId).addPayloads("a").build());
+      client.publish(StoreRequestBuilder.of(topicId).addPayload("a").build());
       Assert.fail("Expected TopicNotFoundException");
     } catch (TopicNotFoundException e) {
       // Expected
@@ -280,11 +283,11 @@ public class MessagingHttpServiceTest {
     }
 
     // Publish a non-tx message, no RollbackDetail is returned
-    Assert.assertNull(client.publish(StoreRequestBuilder.of(topicId).addPayloads("m0", "m1").build()));
+    Assert.assertNull(client.publish(StoreRequestBuilder.of(topicId).addPayload("m0").addPayload("m1").build()));
 
     // Publish a transactional message, a RollbackDetail should be returned
     RollbackDetail rollbackDetail = client.publish(StoreRequestBuilder.of(topicId)
-                                                     .addPayloads("m2").setTransaction(1L).build());
+                                                     .addPayload("m2").setTransaction(1L).build());
     Assert.assertNotNull(rollbackDetail);
 
     // Rollback the published message
@@ -353,8 +356,8 @@ public class MessagingHttpServiceTest {
     }
 
     // Publish 2 messages, one transactionally, one without transaction
-    client.publish(StoreRequestBuilder.of(topicId).addPayloads("m3").setTransaction(2L).build());
-    client.publish(StoreRequestBuilder.of(topicId).addPayloads("m4").build());
+    client.publish(StoreRequestBuilder.of(topicId).addPayload("m3").setTransaction(2L).build());
+    client.publish(StoreRequestBuilder.of(topicId).addPayload("m4").build());
 
     // Consume without transactional, it should see m2, m3 and m4
     startMessageId = messages.get(1).getId();
@@ -418,7 +421,7 @@ public class MessagingHttpServiceTest {
     int payloadSize = cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_CONSUME_CHUNK_SIZE) / 2;
     for (int i = 0; i < 10; i++) {
       String payload = Strings.repeat(Integer.toString(i), payloadSize);
-      client.publish(StoreRequestBuilder.of(topicId).addPayloads(payload).build());
+      client.publish(StoreRequestBuilder.of(topicId).addPayload(payload).build());
     }
 
     // Fetch messages. All of them should be fetched correctly
@@ -455,7 +458,8 @@ public class MessagingHttpServiceTest {
     // Store 20 payloads to the payload table, with 2 payloads per request
     for (int i = 0; i < 10; i++) {
       String payload = Integer.toString(i);
-      client.storePayload(StoreRequestBuilder.of(topicId).addPayloads(payload, payload).setTransaction(1L).build());
+      client.storePayload(StoreRequestBuilder.of(topicId)
+                            .addPayload(payload).addPayload(payload).setTransaction(1L).build());
     }
 
     // Try to consume and there should be no messages
@@ -530,7 +534,8 @@ public class MessagingHttpServiceTest {
 
     // Store and publish two more payloads
     String payload = Integer.toString(10);
-    client.storePayload(StoreRequestBuilder.of(topicId).addPayloads(payload, payload).setTransaction(2L).build());
+    client.storePayload(StoreRequestBuilder.of(topicId)
+                          .addPayload(payload).addPayload(payload).setTransaction(2L).build());
     client.publish(StoreRequestBuilder.of(topicId).setTransaction(2L).build());
 
     // Should get 22 messages
@@ -560,5 +565,33 @@ public class MessagingHttpServiceTest {
     Assert.assertEquals(Integer.toString(10), payload1);
 
     client.deleteTopic(topicId);
+  }
+
+  @Test
+  public void testReuseRequest() throws IOException, TopicAlreadyExistsException, TopicNotFoundException {
+    // This test a StoreRequest object can be reused.
+    // This test is to verify storing transaction messages to the payload table
+    TopicId topicId = new NamespaceId("ns1").topic("testReuseRequest");
+
+    client.createTopic(new TopicMetadata(topicId));
+
+    StoreRequest request = StoreRequestBuilder.of(topicId).addPayload("m1").addPayload("m2").build();
+
+    // Publish the request twice
+    client.publish(request);
+    client.publish(request);
+
+    // Expects four messages
+    List<RawMessage> messages = new ArrayList<>();
+    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).setLimit(10).fetch()) {
+      Iterators.addAll(messages, iterator);
+    }
+
+    Assert.assertEquals(4, messages.size());
+    List<String> expected = Arrays.asList("m1", "m2", "m1", "m2");
+    Assert.assertEquals(expected,
+                        messages.stream()
+                          .map(RawMessage::getPayload)
+                          .map(Bytes::toString).collect(Collectors.toList()));
   }
 }

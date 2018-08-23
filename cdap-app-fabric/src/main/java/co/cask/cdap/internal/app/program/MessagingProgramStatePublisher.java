@@ -69,7 +69,7 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
     while (!done) {
       try {
         messagingService.publish(StoreRequestBuilder.of(topicId)
-                                   .addPayloads(GSON.toJson(programStatusNotification))
+                                   .addPayload(GSON.toJson(programStatusNotification))
                                    .build());
         LOG.trace("Published program status notification: {}", programStatusNotification);
         done = true;

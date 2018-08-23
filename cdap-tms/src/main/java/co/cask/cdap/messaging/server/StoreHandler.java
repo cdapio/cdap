@@ -52,7 +52,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -80,7 +79,7 @@ public final class StoreHandler extends AbstractHttpHandler {
     StoreRequest storeRequest = createStoreRequest(topicId, request);
 
     // Empty payload is only allowed for transactional publish
-    if (!storeRequest.isTransactional() && !storeRequest.hasNext()) {
+    if (!storeRequest.isTransactional() && !storeRequest.hasPayload()) {
       throw new BadRequestException("Empty payload is only allowed for publishing transactional message. Topic: "
                                       + topicId);
     }
@@ -107,7 +106,7 @@ public final class StoreHandler extends AbstractHttpHandler {
     StoreRequest storeRequest = createStoreRequest(topicId, request);
 
     // It must be transactional with payload for store request
-    if (!storeRequest.isTransactional() || !storeRequest.hasNext()) {
+    if (!storeRequest.isTransactional() || !storeRequest.hasPayload()) {
       throw new BadRequestException("Store request must be transactional with payload. Topic: " + topicId);
     }
 
@@ -175,25 +174,27 @@ public final class StoreHandler extends AbstractHttpHandler {
    */
   private static final class GenericRecordStoreRequest extends StoreRequest {
 
-    private final Iterator<ByteBuffer> payloadIterator;
+    private final List<ByteBuffer> payloads;
 
     @SuppressWarnings("unchecked")
-    GenericRecordStoreRequest(TopicId topicId, GenericRecord genericRecord) {
-      super(topicId, genericRecord.get("transactionWritePointer") != null,
-            genericRecord.get("transactionWritePointer") == null
+    GenericRecordStoreRequest(TopicId topicId, GenericRecord record) {
+      super(topicId,
+            record.get("transactionWritePointer") != null,
+            record.get("transactionWritePointer") == null
               ? -1L
-              : Long.parseLong(genericRecord.get("transactionWritePointer").toString()));
+              : Long.parseLong(record.get("transactionWritePointer").toString()));
 
-      this.payloadIterator = ((List<ByteBuffer>) genericRecord.get("messages")).iterator();
+      this.payloads = ((List<ByteBuffer>) record.get("messages"));
     }
 
-    @Nullable
     @Override
-    protected byte[] doComputeNext() {
-      if (!payloadIterator.hasNext()) {
-        return null;
-      }
-      return ByteBuffers.getByteArray(payloadIterator.next());
+    public boolean hasPayload() {
+      return !payloads.isEmpty();
+    }
+
+    @Override
+    public Iterator<byte[]> iterator() {
+      return payloads.stream().map(ByteBuffers::getByteArray).iterator();
     }
   }
 

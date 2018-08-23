@@ -150,7 +150,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
           // Clear the thread interrupt flag when doing the actual publish.
           // Otherwise publish might get interrupted during shutdown, which has the thread interrupted
           interrupted = Thread.interrupted();
-          messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(payloads.iterator()).build());
+          messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(payloads).build());
           reset();
           done = true;
         } catch (TopicNotFoundException | ServiceUnavailableException e) {

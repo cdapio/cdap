@@ -86,7 +86,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
       int numOfTopics = cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
       messagingService.publish(
         StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (metricIndex % numOfTopics)))
-          .addPayloads(encoderOutputStream.toByteArray()).build());
+          .addPayload(encoderOutputStream.toByteArray()).build());
     } catch (Exception e) {
       LOG.error("Failed to publish metric with index {} to messaging service", metricIndex, e);
     } finally {

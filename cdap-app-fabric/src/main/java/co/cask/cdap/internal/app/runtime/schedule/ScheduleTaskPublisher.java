@@ -59,6 +59,6 @@ public final class ScheduleTaskPublisher {
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userOverrides));
 
     Notification notification = new Notification(notificationType, properties);
-    messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(GSON.toJson(notification)).build());
+    messagingService.publish(StoreRequestBuilder.of(topicId).addPayload(GSON.toJson(notification)).build());
   }
 }

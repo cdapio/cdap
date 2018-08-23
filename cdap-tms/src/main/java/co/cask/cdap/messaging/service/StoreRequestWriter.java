@@ -151,6 +151,7 @@ abstract class StoreRequestWriter<T> implements Closeable {
 
     private final boolean generateNullPayloadEntry;
     private PendingStoreRequest storeRequest;
+    private Iterator<byte[]> payloadIterator;
     private boolean computedFirst;
     private T nextEntry;
     private boolean completed = true;   // Initially, it is an empty iterator
@@ -170,8 +171,8 @@ abstract class StoreRequestWriter<T> implements Closeable {
 
       // If the request has next payload
       // or if the iterator is empty but we wanted to generate an entry with null payload
-      if (storeRequest.hasNext() || (generateNullPayloadEntry && !computedFirst)) {
-        byte[] payload = storeRequest.hasNext() ? storeRequest.next() : null;
+      if (payloadIterator.hasNext() || (generateNullPayloadEntry && !computedFirst)) {
+        byte[] payload = payloadIterator.hasNext() ? payloadIterator.next() : null;
         nextEntry = getEntry(storeRequest.getTopicMetadata(), storeRequest.isTransactional(),
                              storeRequest.getTransactionWritePointer(), writeTimestamp, (short) seqId, payload);
       }
@@ -202,6 +203,7 @@ abstract class StoreRequestWriter<T> implements Closeable {
       this.storeRequest = storeRequest;
       this.storeRequest.setStartTimestamp(writeTimestamp);
       this.storeRequest.setStartSequenceId(seqId);
+      this.payloadIterator = storeRequest.iterator();
       this.nextEntry = null;
       this.computedFirst = false;
       this.completed = false;

@@ -610,7 +610,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     DatasetId datasetId = namespaceId.dataset(dataset);
     PartitionKey partitionKey = PartitionKey.builder().addIntField("part1", 1).build();
     Notification notification = Notification.forPartitions(datasetId, ImmutableList.of(partitionKey));
-    messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(GSON.toJson(notification)).build());
+    messagingService.publish(StoreRequestBuilder.of(topicId).addPayload(GSON.toJson(notification)).build());
   }
 
   @Nullable

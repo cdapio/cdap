@@ -55,7 +55,7 @@ public class MessagingWorkflowStateWriter implements WorkflowStateWriter {
   public void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
     MetadataMessage message = new MetadataMessage(MetadataMessage.Type.WORKFLOW_TOKEN,
                                                   workflowRunId, GSON.toJsonTree(token));
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {
@@ -68,7 +68,7 @@ public class MessagingWorkflowStateWriter implements WorkflowStateWriter {
   public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail state) {
     MetadataMessage message = new MetadataMessage(MetadataMessage.Type.WORKFLOW_STATE,
                                                   workflowRunId, GSON.toJsonTree(state));
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {

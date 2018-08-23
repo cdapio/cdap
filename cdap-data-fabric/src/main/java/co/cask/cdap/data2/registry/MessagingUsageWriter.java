@@ -96,7 +96,7 @@ public class MessagingUsageWriter implements UsageWriter {
   public void register(ProgramId programId, DatasetId datasetId) {
     MetadataMessage message = new MetadataMessage(MetadataMessage.Type.USAGE, programId,
                                                   GSON.toJsonTree(new DatasetUsage(datasetId)));
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
 
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
@@ -109,7 +109,7 @@ public class MessagingUsageWriter implements UsageWriter {
   public void register(ProgramId programId, StreamId streamId) {
     MetadataMessage message = new MetadataMessage(MetadataMessage.Type.USAGE, programId,
                                                   GSON.toJsonTree(new DatasetUsage(streamId)));
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
 
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
