@@ -454,8 +454,6 @@ public class StandaloneMain {
     cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
     // configure all services except for router and auth to bind to 127.0.0.1
-    // For details see: https://issues.cask.co/browse/CDAP-7992. Router and auth bind addresses are configured by
-    // cdap-site.xml and are not overridden here.
     String localhost = InetAddress.getLoopbackAddress().getHostAddress();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, localhost);
     cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
@@ -467,7 +465,6 @@ public class StandaloneMain {
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
-    cConf.set(Constants.RemoteSystemOpService.SERVICE_BIND_ADDRESS, localhost);
 
     return ImmutableList.of(
       new ConfigModule(cConf, hConf),
