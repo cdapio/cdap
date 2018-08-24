@@ -41,6 +41,7 @@
     <logger name="co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceService" level="TRACE"/>
     <logger name="co.cask.cdap.data2.datafabric.dataset.service.executor.RemoteDatasetOpExecutor" level="TRACE"/>
     <logger name="co.cask.cdap.internal.app.runtime.AbstractProgramController" level="TRACE"/>
+    <logger name="co.cask.cdap.internal.provision.ProvisioningService" level="TRACE"/>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
