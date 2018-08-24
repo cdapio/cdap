@@ -57,7 +57,7 @@ public class MessagingMetadataPublisher implements MetadataPublisher {
   @Override
   public void publish(ProgramRunId programRunId, MetadataOperation operation) {
     MetadataMessage message = new MetadataMessage(Type.METADATA_OPERATION, programRunId, GSON.toJsonTree(operation));
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
     LOG.trace("Publishing message {} to topic {}", message, topic);
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
@@ -70,7 +70,7 @@ public class MessagingMetadataPublisher implements MetadataPublisher {
   public void publish(EntityId entityId, DatasetInstanceOperation datasetInstanceOperation) {
     MetadataMessage message = new MetadataMessage(Type.DATASET_OPERATION, entityId,
                                                   GSON.toJsonTree(datasetInstanceOperation));
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(GSON.toJson(message)).build();
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
     LOG.trace("Publishing message {} to topic {}", message, topic);
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);

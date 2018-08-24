@@ -39,7 +39,6 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpResponse;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
@@ -75,6 +74,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
@@ -172,7 +174,7 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   @Override
-  public MessageFetcher prepareFetch(TopicId topicId) throws TopicNotFoundException, IOException {
+  public MessageFetcher prepareFetch(TopicId topicId) {
     return new ClientMessageFetcher(topicId);
   }
 
@@ -268,12 +270,7 @@ public final class ClientMessagingService implements MessagingService {
    * Handles error response from the given {@link HttpResponse}.
    */
   private void handleError(final HttpResponse response, String errorPrefix) throws IOException {
-    handleError(response.getResponseCode(), new Supplier<String>() {
-      @Override
-      public String get() {
-        return response.getResponseBodyAsString();
-      }
-    }, errorPrefix);
+    handleError(response.getResponseCode(), response::getResponseBodyAsString, errorPrefix);
   }
 
   /**
@@ -298,11 +295,7 @@ public final class ClientMessagingService implements MessagingService {
    * which is needed by the avro record.
    */
   private List<ByteBuffer> convertPayloads(StoreRequest request) {
-    List<ByteBuffer> payloads = new ArrayList<>();
-    while (request.hasNext()) {
-      payloads.add(ByteBuffer.wrap(request.next()));
-    }
-    return payloads;
+    return StreamSupport.stream(request.spliterator(), false).map(ByteBuffer::wrap).collect(Collectors.toList());
   }
 
   /**
@@ -424,18 +417,15 @@ public final class ClientMessagingService implements MessagingService {
         throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
       }
 
-      handleError(responseCode, new Supplier<String>() {
-        @Override
-        public String get() {
-          // If there is any error, read the response body from the error stream
-          try (InputStream errorStream = urlConn.getErrorStream()) {
-            return errorStream == null ? "" : new String(ByteStreams.toByteArray(errorStream),
-                                                         StandardCharsets.UTF_8);
-          } catch (IOException e) {
-            return "";
-          } finally {
-            urlConn.disconnect();
-          }
+      handleError(responseCode, () -> {
+        // If there is any error, read the response body from the error stream
+        try (InputStream errorStream = urlConn.getErrorStream()) {
+          return errorStream == null ? "" : new String(ByteStreams.toByteArray(errorStream),
+                                                       StandardCharsets.UTF_8);
+        } catch (IOException e) {
+          return "";
+        } finally {
+          urlConn.disconnect();
         }
       }, "Failed to update topic " + topicId);
       verifyContentType(urlConn.getHeaderFields(), "avro/binary");

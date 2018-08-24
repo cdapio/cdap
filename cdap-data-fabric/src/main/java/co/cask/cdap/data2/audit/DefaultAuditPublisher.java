@@ -74,7 +74,7 @@ public final class DefaultAuditPublisher implements AuditPublisher {
                                                  auditType, auditPayload);
     LOG.trace("Publishing audit message {}", auditMessage);
 
-    StoreRequest storeRequest = StoreRequestBuilder.of(auditTopic).addPayloads(GSON.toJson(auditMessage)).build();
+    StoreRequest storeRequest = StoreRequestBuilder.of(auditTopic).addPayload(GSON.toJson(auditMessage)).build();
     try {
       Retries.callWithRetries(() -> messagingService.publish(storeRequest), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (TopicNotFoundException e) {

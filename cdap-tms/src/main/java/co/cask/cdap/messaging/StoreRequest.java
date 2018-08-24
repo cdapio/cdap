@@ -17,21 +17,18 @@
 package co.cask.cdap.messaging;
 
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.collect.AbstractIterator;
 
 import java.util.Iterator;
-import javax.annotation.Nullable;
 
 /**
  * This class represents messages to be store to the messaging system.
  * The message payloads are provide through the {@link Iterator}.
  */
-public abstract class StoreRequest extends AbstractIterator<byte[]> {
+public abstract class StoreRequest implements Iterable<byte[]> {
 
   private final TopicId topicId;
   private final boolean transactional;
   private final long transactionWritePointer;
-  private boolean computedFirst;
 
   protected StoreRequest(TopicId topicId, boolean transactional, long transactionWritePointer) {
     this.topicId = topicId;
@@ -58,23 +55,8 @@ public abstract class StoreRequest extends AbstractIterator<byte[]> {
     return transactionWritePointer;
   }
 
-  @Override
-  protected final byte[] computeNext() {
-    byte[] next = doComputeNext();
-    if (!computedFirst && next == null && !isTransactional()) {
-      throw new IllegalStateException("Invalid payload. Empty message is only allowed for transactional message");
-    }
-    computedFirst = true;
-    return next == null ? endOfData() : next;
-  }
-
   /**
-   * Returns the next message payloads or return {@code null} to signal the end of payload messages. If this
-   * method returns {@code null} on the first time being called, it means this {@link StoreRequest} represents
-   * a message table entry that reference to payload table. It requires {@link #isTransactional()} returns
-   * {@code true} and {@link #getTransactionWritePointer()} should return the transaction write pointer for
-   * messages stored in the Payload Table prior to this call.
+   * Returns {@code true} if there is payload in this request.
    */
-  @Nullable
-  protected abstract byte[] doComputeNext();
+  public abstract boolean hasPayload();
 }

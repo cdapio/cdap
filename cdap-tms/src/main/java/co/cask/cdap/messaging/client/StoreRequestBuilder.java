@@ -18,11 +18,15 @@ package co.cask.cdap.messaging.client;
 
 import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -30,15 +34,10 @@ import javax.annotation.Nullable;
  */
 public final class StoreRequestBuilder {
 
-  private static final Function<String, byte[]> STRING_TO_BYTES = new Function<String, byte[]>() {
-    @Override
-    public byte[] apply(String input) {
-      return input.getBytes(StandardCharsets.UTF_8);
-    }
-  };
+  private static final Function<String, byte[]> STRING_TO_BYTES = input -> input.getBytes(StandardCharsets.UTF_8);
 
   private final TopicId topicId;
-  private Iterator<byte[]> payloads;
+  private List<byte[]> payloads;
   private Long txWritePointer;
 
   /**
@@ -58,25 +57,33 @@ public final class StoreRequestBuilder {
   }
 
   /**
-   * Adds a list of byte arrays as the payloads of the request.
+   * Adds a single payload string to the request. The string will be converted to byte arrays using UTF-8 encoding.
    */
-  public StoreRequestBuilder addPayloads(byte[]...payloads) {
-    return addPayloads(Iterators.forArray(payloads));
+  public StoreRequestBuilder addPayload(String payload) {
+    return addPayload(STRING_TO_BYTES.apply(payload));
   }
 
   /**
-   * Adds a list of Strings as the payloads of the request. The Strings will be converted to byte arrays using
-   * UTF-8 encoding.
+   * Adds a single byte array to the payload of the request.
    */
-  public StoreRequestBuilder addPayloads(String...payloads) {
-    return addPayloads(Iterators.transform(Iterators.forArray(payloads), STRING_TO_BYTES));
+  public StoreRequestBuilder addPayload(byte[] payload) {
+    getPayloads().add(payload);
+    return this;
   }
 
   /**
    * Adds a list of byte arrays as the payloads of the request.
    */
   public StoreRequestBuilder addPayloads(Iterator<byte[]> payloads) {
-    this.payloads = (this.payloads == null) ? payloads : Iterators.concat(this.payloads, payloads);
+    Iterators.addAll(getPayloads(), payloads);
+    return this;
+  }
+  
+  /**
+   * Adds a list of byte arrays as the payloads of the request.
+   */
+  public StoreRequestBuilder addPayloads(Iterable<byte[]> payloads) {
+    Iterables.addAll(getPayloads(), payloads);
     return this;
   }
 
@@ -95,14 +102,14 @@ public final class StoreRequestBuilder {
    * Returns {@code true} if there is some payload in this builder.
    */
   public boolean hasPayload() {
-    return payloads != null && payloads.hasNext();
+    return payloads != null && !payloads.isEmpty();
   }
 
   /**
    * Creates a {@link StoreRequest} based on the settings in this builder.
    */
   public StoreRequest build() {
-    if (txWritePointer == null && payloads == null) {
+    if (txWritePointer == null && (payloads == null || payloads.isEmpty())) {
       throw new IllegalArgumentException("Payload cannot be empty for non-transactional publish");
     }
     return new SimpleStoreRequest(topicId, txWritePointer != null, txWritePointer == null ? -1L : txWritePointer,
@@ -110,25 +117,37 @@ public final class StoreRequestBuilder {
   }
 
   /**
+   * Returns the payloads {@link List} used by this builder.
+   */
+  private List<byte[]> getPayloads() {
+    if (payloads != null) {
+      return payloads;
+    }
+    payloads = new LinkedList<>();
+    return payloads;
+  }
+
+  /**
    * A straightforward implementation of {@link StoreRequest}.
    */
   private static final class SimpleStoreRequest extends StoreRequest {
 
-    private final Iterator<byte[]> payloads;
+    private final List<byte[]> payloads;
 
-    SimpleStoreRequest(TopicId topicId, boolean transactional,
-                       long transactionWritePointer, Iterator<byte[]> payloads) {
+    SimpleStoreRequest(TopicId topicId, boolean transactional, long transactionWritePointer,
+                       @Nullable List<byte[]> payloads) {
       super(topicId, transactional, transactionWritePointer);
-      this.payloads = payloads;
+      this.payloads = payloads == null ? Collections.emptyList() : payloads;
     }
 
-    @Nullable
     @Override
-    protected byte[] doComputeNext() {
-      if (payloads == null) {
-        return null;
-      }
-      return payloads.hasNext() ? payloads.next() : null;
+    public boolean hasPayload() {
+      return !payloads.isEmpty();
+    }
+
+    @Override
+    public Iterator<byte[]> iterator() {
+      return payloads.iterator();
     }
   }
 }

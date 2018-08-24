@@ -125,7 +125,7 @@ public class ProvisionerNotifier {
 
   private void publish(Map<String, String> properties) {
     final StoreRequest storeRequest = StoreRequestBuilder.of(topic)
-      .addPayloads(GSON.toJson(new Notification(Notification.Type.PROGRAM_STATUS, properties)))
+      .addPayload(GSON.toJson(new Notification(Notification.Type.PROGRAM_STATUS, properties)))
       .build();
     Retries.supplyWithRetries(
       () -> {

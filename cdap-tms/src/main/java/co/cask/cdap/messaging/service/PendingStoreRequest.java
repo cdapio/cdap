@@ -19,6 +19,7 @@ package co.cask.cdap.messaging.service;
 import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.TopicMetadata;
 
+import java.util.Iterator;
 import javax.annotation.Nullable;
 
 /**
@@ -100,10 +101,14 @@ final class PendingStoreRequest extends StoreRequest {
     return endSequenceId;
   }
 
-  @Nullable
   @Override
-  protected byte[] doComputeNext() {
-    return originalRequest.hasNext() ? originalRequest.next() : null;
+  public boolean hasPayload() {
+    return originalRequest.hasPayload();
+  }
+
+  @Override
+  public Iterator<byte[]> iterator() {
+    return originalRequest.iterator();
   }
 
   @Override
