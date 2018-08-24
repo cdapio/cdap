@@ -20,6 +20,8 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
+import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
@@ -27,6 +29,8 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.Transform;
@@ -46,6 +50,7 @@ import co.cask.cdap.etl.batch.StageFailureException;
 import co.cask.cdap.etl.batch.connector.MultiConnectorFactory;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
+import co.cask.cdap.etl.common.ArtifactSelector;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.FieldOperationTypeAdapter;
@@ -61,6 +66,7 @@ import co.cask.cdap.etl.common.submit.Finisher;
 import co.cask.cdap.etl.common.submit.JoinerContextProvider;
 import co.cask.cdap.etl.common.submit.SubmitterPlugin;
 import co.cask.cdap.etl.log.LogStageInjector;
+import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
@@ -133,6 +139,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
   @Override
   public void configure() {
+    registerPlugins();
     setName(phaseSpec.getPhaseName());
     setDescription("MapReduce phase executor. " + phaseSpec.getDescription());
 
@@ -406,6 +413,24 @@ public class ETLMapReduce extends AbstractMapReduce {
     boolean isSuccessful = getContext().getState().getStatus() == ProgramStatus.COMPLETED;
     finisher.onFinish(isSuccessful);
     LOG.info("Batch Run finished : status = {}", getContext().getState());
+  }
+
+  /**
+   * Gets all the plugins used in the program through the {@link BatchPhaseSpec} and calls
+   * {@link #usePluginClass(String, String, String, PluginProperties, PluginSelector)} explicitly to register their
+   * usage so that they are accessible in the current configurer obtained through {@link #getConfigurer()}
+   */
+  private void registerPlugins() {
+    for (StageSpec stageSpec : phaseSpec.getPhase()) {
+      PluginSpec pluginSpec = stageSpec.getPlugin();
+      ArtifactVersion version = pluginSpec.getArtifact().getVersion();
+      ArtifactSelector artifactSelector = new ArtifactSelector(pluginSpec.getType(), pluginSpec.getName(),
+                                                               pluginSpec.getArtifact().getScope(),
+                                                               pluginSpec.getArtifact().getName(),
+                                                               new ArtifactVersionRange(version, true, version, true));
+      usePlugin(pluginSpec.getType(), pluginSpec.getName(), stageSpec.getName(),
+                     PluginProperties.builder().addAll(pluginSpec.getProperties()).build(), artifactSelector);
+    }
   }
 
   /**

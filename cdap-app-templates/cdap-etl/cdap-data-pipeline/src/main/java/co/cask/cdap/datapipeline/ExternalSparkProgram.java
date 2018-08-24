@@ -16,13 +16,17 @@
 
 package co.cask.cdap.datapipeline;
 
+import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkMain;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.common.ArtifactSelector;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
@@ -54,6 +58,7 @@ public class ExternalSparkProgram extends AbstractSpark {
 
   @Override
   protected void configure() {
+    registerPlugins();
     PluginSpec pluginSpec = stageSpec.getPlugin();
     PluginProperties pluginProperties = PluginProperties.builder().addAll(pluginSpec.getProperties()).build();
     // use a UUID as plugin ID so that it doesn't clash with anything. Only using the class here to
@@ -111,6 +116,24 @@ public class ExternalSparkProgram extends AbstractSpark {
       if (delegateSpark instanceof AbstractSpark) {
         ((AbstractSpark) delegateSpark).destroy();
       }
+    }
+  }
+
+  /**
+   * Gets all the plugins used in the program through the {@link BatchPhaseSpec} and calls
+   * {@link #usePluginClass(String, String, String, PluginProperties, PluginSelector)} explicitly to register their
+   * usage so that they are accessible in the current configurer obtained through {@link #getConfigurer()}
+   */
+  private void registerPlugins() {
+    for (StageSpec stageSpec : phaseSpec.getPhase()) {
+      PluginSpec pluginSpec = stageSpec.getPlugin();
+      ArtifactVersion version = pluginSpec.getArtifact().getVersion();
+      ArtifactSelector artifactSelector = new ArtifactSelector(pluginSpec.getType(), pluginSpec.getName(),
+                                                               pluginSpec.getArtifact().getScope(),
+                                                               pluginSpec.getArtifact().getName(),
+                                                               new ArtifactVersionRange(version, true, version, true));
+      usePluginClass(pluginSpec.getType(), pluginSpec.getName(), stageSpec.getName(),
+                     PluginProperties.builder().addAll(pluginSpec.getProperties()).build(), artifactSelector);
     }
   }
 }

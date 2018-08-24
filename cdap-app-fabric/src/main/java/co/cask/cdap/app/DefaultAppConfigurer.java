@@ -277,7 +277,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
   private void addDatasetsAndPlugins(AbstractConfigurer configurer) {
     addDatasets(configurer);
-    addPlugins(configurer.getPlugins());
+//    addPlugins(configurer.getPlugins());
   }
 
   private void addDatasets(DefaultDatasetConfigurer configurer) {

@@ -20,12 +20,16 @@ import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
+import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -46,6 +50,7 @@ import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.connector.SingleConnectorFactory;
+import co.cask.cdap.etl.common.ArtifactSelector;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
@@ -60,6 +65,7 @@ import co.cask.cdap.etl.common.submit.Finisher;
 import co.cask.cdap.etl.common.submit.JoinerContextProvider;
 import co.cask.cdap.etl.common.submit.SubmitterPlugin;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
@@ -102,6 +108,7 @@ public class ETLSpark extends AbstractSpark {
 
   @Override
   protected void configure() {
+    registerPlugins();
     setName(phaseSpec.getPhaseName());
     setDescription(phaseSpec.getDescription());
 
@@ -295,4 +302,21 @@ public class ETLSpark extends AbstractSpark {
     }
   }
 
+  /**
+   * Gets all the plugins used in the program through the {@link BatchPhaseSpec} and calls
+   * {@link #usePluginClass(String, String, String, PluginProperties, PluginSelector)} explicitly to register their
+   * usage so that they are accessible in the current configurer obtained through {@link #getConfigurer()}
+   */
+  private void registerPlugins() {
+    for (StageSpec stageSpec : phaseSpec.getPhase()) {
+      PluginSpec pluginSpec = stageSpec.getPlugin();
+      ArtifactVersion version = pluginSpec.getArtifact().getVersion();
+      ArtifactSelector artifactSelector = new ArtifactSelector(pluginSpec.getType(), pluginSpec.getName(),
+                                                               pluginSpec.getArtifact().getScope(),
+                                                               pluginSpec.getArtifact().getName(),
+                                                               new ArtifactVersionRange(version, true, version, true));
+      usePluginClass(pluginSpec.getType(), pluginSpec.getName(), stageSpec.getName(),
+                     PluginProperties.builder().addAll(pluginSpec.getProperties()).build(), artifactSelector);
+    }
+  }
 }
