@@ -57,15 +57,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     ETLBatchConfig config = getConfig();
     setDescription(Objects.firstNonNull(config.getDescription(), DEFAULT_DESCRIPTION));
 
-    BatchPipelineSpec spec = new BatchPipelineSpecGenerator<>(getConfigurer(),
-                                                              ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                                              ImmutableSet.of(BatchSink.PLUGIN_TYPE,
-                                                                              SparkSink.PLUGIN_TYPE,
-                                                                              AlertPublisher.PLUGIN_TYPE),
-                                                              config.getEngine())
-      .generateSpec(config);
-
-    addWorkflow(new SmartWorkflow(spec, supportedPluginTypes, getConfigurer(), config.getEngine()));
+    addWorkflow(new SmartWorkflow(config, supportedPluginTypes, getConfigurer(), config.getEngine()));
 
     String timeSchedule = config.getSchedule();
     if (timeSchedule != null) {
