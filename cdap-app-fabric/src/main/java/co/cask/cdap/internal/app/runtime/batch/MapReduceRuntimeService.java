@@ -30,6 +30,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -172,6 +173,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final ProgramLifecycle<MapReduceContext> programLifecycle;
   private final FieldLineageWriter fieldLineageWriter;
   private final ProgramRunId mapReduceRunId;
+  private final ClusterMode clusterMode;
 
   private Job job;
   private Runnable cleanupTask;
@@ -183,7 +185,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           final BasicMapReduceContext context, Location programJarLocation,
                           NamespacedLocationFactory locationFactory, StreamAdmin streamAdmin,
                           AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                          FieldLineageWriter fieldLineageWriter) {
+                          FieldLineageWriter fieldLineageWriter, ClusterMode clusterMode) {
     this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
@@ -214,6 +216,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     };
     this.fieldLineageWriter = fieldLineageWriter;
     this.mapReduceRunId = context.getProgram().getId().run(context.getRunId().getId());
+    this.clusterMode = clusterMode;
   }
 
   @Override
@@ -951,11 +954,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       classes.add(SecureStoreUtils.getKMSSecureStore());
     }
 
-    try {
-      Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass(cConf);
-      classes.add(hbaseTableUtilClass);
-    } catch (ProvisionException e) {
-      LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
+    if (clusterMode == ClusterMode.ON_PREMISE) {
+      try {
+        Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass(cConf);
+        classes.add(hbaseTableUtilClass);
+      } catch (ProvisionException e) {
+        LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
+      }
     }
 
     ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
