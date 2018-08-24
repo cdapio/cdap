@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import Loadable from 'react-loadable';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepStore from 'components/DataPrep/store';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, preventPropagation} from 'services/helpers';
 import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import NamespaceStore from 'services/NamespaceStore';
@@ -32,6 +32,7 @@ import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
 import DataPrepPlusButton from 'components/DataPrep/TopPanel/PlusButton';
 import { Theme } from 'services/ThemeHelper';
+import classnames from 'classnames';
 
 const SchemaModal = Loadable({
   loader: () => import(/* webpackChunkName: "SchemaModal"*/ 'components/DataPrep/TopPanel/SchemaModal'),
@@ -178,7 +179,8 @@ export default class DataPrepTopPanel extends Component {
       component: IngestDataFromDataPrep,
       iconName: 'icon-upload',
       shouldRender: () => !this.props.singleWorkspaceMode && Theme.showIngestData,
-      disabled: () => isNil(this.state.workspaceInfo) || objectQuery(this.state, 'workspaceInfo', 'properties', 'connection') === 'upload'
+      disabled: () => isNil(this.state.workspaceInfo) || objectQuery(this.state, 'workspaceInfo', 'properties', 'connection') === 'upload',
+      disabledTooltip: T.translate(`${PREFIX}.copyToCDAPDatasetBtn.disabledTooltip`)
     },
     {
       label: T.translate(`${PREFIX}.viewSchemaBtnLabel`),
@@ -270,9 +272,10 @@ export default class DataPrepTopPanel extends Component {
     if (menuItem.label === 'divider') {
       return (<hr />);
     }
+    const isDisabled = menuItem.disabled && menuItem.disabled();
+
     const getMenuItem = (menuItem) => {
       let {label, component: Component} = menuItem;
-      let isDisabled = menuItem.disabled && menuItem.disabled();
       return (
         <div key={index}>
           {
@@ -290,17 +293,34 @@ export default class DataPrepTopPanel extends Component {
         </div>
       );
     };
-    return (
-      <li
-        className={`popover-menu-item ${menuItem.className}`}
-        title={menuItem.label}
-        onClick={menuItem.disabled && menuItem.disabled() ? () => {} : menuItem.onClick}
-        disabled={menuItem.disabled ? menuItem.disabled() : false}
-        key={index}
-      >
-        {getMenuItem(menuItem)}
-      </li>
-    );
+
+    const MenuItem = () => {
+      return (
+        <li
+          className={classnames(`popover-menu-item ${menuItem.className}`, {
+            "disabled": isDisabled
+          })}
+          title={menuItem.label}
+          onClick={isDisabled ? preventPropagation : menuItem.onClick}
+          key={index}
+        >
+          {getMenuItem(menuItem)}
+        </li>
+      );
+    };
+
+    if (isDisabled && menuItem.disabledTooltip) {
+      return (
+        <Popover
+          target={MenuItem}
+          placement="top"
+          showOn="Hover"
+        >
+          {menuItem.disabledTooltip}
+        </Popover>
+      );
+    }
+    return <MenuItem />;
   };
   renderMenu() {
     return (

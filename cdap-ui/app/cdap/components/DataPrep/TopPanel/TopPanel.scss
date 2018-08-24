@@ -151,6 +151,10 @@ $success_alert_bg_color: $brand-success;
                 margin-left: 5px;
               }
             }
+            &.disabled {
+              cursor: not-allowed;
+              opacity: 0.5;
+            }
           }
         }
       }
