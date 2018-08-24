@@ -472,7 +472,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private ObjectResponse<List<DatasetSpecificationSummary>> getInstancesWithProperties(String namespace,
                                                                                        Map<String, String> properties)
     throws IOException {
-    HttpRequest request = HttpRequest.put(getUrl(namespace, "/data/datasets"))
+    HttpRequest request = HttpRequest.post(getUrl(namespace, "/data/datasets"))
       .withBody(GSON.toJson(properties)).build();
     return ObjectResponse.fromJsonBody(HttpRequests.execute(request),
                                        new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
@@ -548,8 +548,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       validateGet(getUrl("/data/datasets"), 200);
       validateGet(getUrl("nosuchnamespace", "/data/datasets"), 404);
       validateGet(getUrl("inval+d", "/data/datasets"), 400);
-      validatePut(getUrl("/data/datasets"), "", 200);
-      validatePost(getUrl("/data/datasets"), "", 405);
+      validatePost(getUrl("/data/datasets"), "", 200);
+      validatePut(getUrl("/data/datasets"), "", 405);
 
       validateGet(getUrl("/data/datasets/nusuch"), 404);
       validateGet(getUrl("/data/datasets/nusüch"), 400);

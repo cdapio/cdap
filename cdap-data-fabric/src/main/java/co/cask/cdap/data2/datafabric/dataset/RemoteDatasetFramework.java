@@ -235,7 +235,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                           @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
     throws DatasetManagementException, IOException {
 
-    DatasetMeta datasetMeta = clientCache.getUnchecked(id.getParent()).getInstance(id.getEntityName(), owners);
+    DatasetMeta datasetMeta = clientCache.getUnchecked(id.getParent()).getInstance(id.getEntityName());
     if (datasetMeta == null) {
       return null;
     }

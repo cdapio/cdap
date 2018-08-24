@@ -30,7 +30,6 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
@@ -41,8 +40,6 @@ import co.cask.common.ContentProvider;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -64,7 +61,6 @@ import java.net.SocketTimeoutException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -98,19 +94,10 @@ public class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetMeta getInstance(String instanceName, @Nullable Iterable<? extends EntityId> owners)
+  public DatasetMeta getInstance(String instanceName)
     throws DatasetManagementException {
 
-    String query = "";
-    if (owners != null) {
-      Set<String> ownerParams = Sets.newHashSet();
-      for (EntityId owner : owners) {
-        ownerParams.add("owner=" + owner.toString());
-      }
-      query = ownerParams.isEmpty() ? "" : "?" + Joiner.on("&").join(ownerParams);
-    }
-
-    HttpResponse response = doGet("datasets/" + instanceName + query);
+    HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       return null;
     }
@@ -125,11 +112,6 @@ public class DatasetServiceClient {
     }
 
     return GSON.fromJson(response.getResponseBodyAsString(), DatasetMeta.class);
-  }
-
-  @Nullable
-  public DatasetMeta getInstance(String instanceName) throws DatasetManagementException {
-    return getInstance(instanceName, null);
   }
 
   Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException {
@@ -147,7 +129,7 @@ public class DatasetServiceClient {
    */
   Collection<DatasetSpecificationSummary> getInstances(Map<String, String> properties)
     throws DatasetManagementException {
-    HttpResponse response = doPut("datasets", GSON.toJson(properties));
+    HttpResponse response = doPost("datasets", GSON.toJson(properties));
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
                                                          response));
@@ -300,6 +282,10 @@ public class DatasetServiceClient {
 
   private HttpResponse doPost(String resource) throws DatasetManagementException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.POST, resource));
+  }
+
+  private HttpResponse doPost(String resource, String body) throws DatasetManagementException {
+    return doRequest(remoteClient.requestBuilder(HttpMethod.POST, resource).withBody(body));
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
