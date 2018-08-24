@@ -110,6 +110,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import org.apache.commons.collections.CollectionUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -327,7 +328,8 @@ public class DataPipelineTest extends HydratorTestBase {
         }
       }
     }
-    Assert.assertEquals(expectedLines, actualLines);
+    Assert.assertEquals(expectedLines.size(), actualLines.size());
+    CollectionUtils.isEqualCollection(expectedLines, actualLines);
   }
 
   @Test
