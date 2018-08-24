@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -462,6 +462,40 @@ public class SchemaTest {
     // Serialize and deserialize it back and validate again
     union = Schema.parseJson(union.toString());
     Assert.assertEquals(first, union.getUnionSchemas().get(1).getField("firsts").getSchema().getComponentSchema());
+  }
+
+  @Test
+  public void testLogicalTypes() throws Exception {
+    Schema dateType = Schema.nullableOf(Schema.of(Schema.LogicalType.DATE));
+    Schema timeMicrosType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIME_MICROS));
+    Schema timeMillisType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIME_MILLIS));
+    Schema timestampMicrosType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS));
+    Schema timestampMillisType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS));
+
+    Assert.assertEquals(dateType, Schema.parseJson(dateType.toString()));
+    Assert.assertEquals(timeMicrosType, Schema.parseJson(timeMicrosType.toString()));
+    Assert.assertEquals(timeMillisType, Schema.parseJson(timeMillisType.toString()));
+    Assert.assertEquals(timestampMicrosType, Schema.parseJson(timestampMicrosType.toString()));
+    Assert.assertEquals(timestampMillisType, Schema.parseJson(timestampMillisType.toString()));
+
+    Schema complexSchema = Schema.recordOf(
+      "union",
+      Schema.Field.of("a", Schema.unionOf(Schema.of(Schema.Type.NULL),
+                                          Schema.arrayOf(Schema.of(Schema.Type.STRING)))),
+      Schema.Field.of("b", Schema.unionOf(Schema.of(Schema.Type.NULL),
+                                          Schema.arrayOf(Schema.of(Schema.LogicalType.DATE)))),
+      Schema.Field.of("c", Schema.unionOf(Schema.of(Schema.Type.NULL),
+                                          Schema.enumWith("something"))),
+      Schema.Field.of("d", Schema.unionOf(Schema.of(Schema.Type.NULL),
+                                          Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING)))),
+      Schema.Field.of("e", Schema.unionOf(Schema.of(Schema.Type.NULL),
+                                          Schema.mapOf(Schema.of(Schema.LogicalType.DATE),
+                                                       Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)))),
+      Schema.Field.of("f", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("g", Schema.nullableOf(Schema.of(Schema.LogicalType.DATE))),
+      Schema.Field.of("h", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))));
+
+    Assert.assertEquals(complexSchema, Schema.parseJson(complexSchema.toString()));
   }
 
 

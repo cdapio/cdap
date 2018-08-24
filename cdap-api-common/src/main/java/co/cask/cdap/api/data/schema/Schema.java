@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,6 +78,42 @@ public final class Schema implements Serializable {
      */
     public boolean isSimpleType() {
       return simpleType;
+    }
+  }
+
+  /**
+   * Logical type to represent date and time using {@link Schema}. Schema of logical types is the schema of primitive
+   * types with an extra attribute `logicalType`.
+   *
+   * Logical type DATE relies on INT as underlying primitive type
+   * Logical type TIMESTAMP_MILLIS relies on LONG as underlying primitive type
+   * Logical type TIMESTAMP_MICROS relies on LONG as underlying primitive type
+   * Logical type TIME_MILLIS relies on INT as underlying primitive type
+   * Logical type TIME_MICROS relies on LONG as underlying primitive type
+   *
+   * For example, the json schema for logicaltype date will be as below:
+   * {
+   *   "type" : "int",
+   *   "logicalType" : "date"
+   * }
+   *
+   */
+  public enum LogicalType {
+    DATE(Type.INT),
+    TIMESTAMP_MILLIS(Type.LONG),
+    TIMESTAMP_MICROS(Type.LONG),
+    TIME_MILLIS(Type.INT),
+    TIME_MICROS(Type.LONG);
+
+    private final Type type;
+
+    /**
+     * Creates {@link LogicalType} with underlying primitive type.
+     *
+     * @param type primitive type on which this {@link LogicalType} relies on
+     */
+    LogicalType(Type type) {
+      this.type = type;
     }
   }
 
@@ -204,7 +240,17 @@ public final class Schema implements Serializable {
     if (!type.isSimpleType()) {
       throw new IllegalArgumentException("Type " + type + " is not a simple type.");
     }
-    return new Schema(type, null, null, null, null, null, null, null);
+    return new Schema(type, null, null, null, null, null, null, null, null);
+  }
+
+  /**
+   * Creates a {@link Schema} for the given logical type. The logical type given must be a
+   * {@link Schema.LogicalType}.
+   * @param logicalType LogicalType of the schema to create.
+   * @return A {@link Schema} with the given logical type.
+   */
+  public static Schema of(LogicalType logicalType) {
+    return new Schema(logicalType.type, logicalType, null, null, null, null, null, null, null);
   }
 
   /**
@@ -251,7 +297,7 @@ public final class Schema implements Serializable {
     if (uniqueValues.isEmpty()) {
       throw new IllegalArgumentException("No enum value provided.");
     }
-    return new Schema(Type.ENUM, uniqueValues, null, null, null, null, null, null);
+    return new Schema(Type.ENUM, null, uniqueValues, null, null, null, null, null, null);
   }
 
   /**
@@ -276,7 +322,7 @@ public final class Schema implements Serializable {
    * @return A {@link Schema} of {@link Type#ARRAY ARRAY} type.
    */
   public static Schema arrayOf(Schema componentSchema) {
-    return new Schema(Type.ARRAY, null, componentSchema, null, null, null, null, null);
+    return new Schema(Type.ARRAY, null, null, componentSchema, null, null, null, null, null);
   }
 
   /**
@@ -286,7 +332,7 @@ public final class Schema implements Serializable {
    * @return A {@link Schema} of {@link Type#MAP MAP} type.
    */
   public static Schema mapOf(Schema keySchema, Schema valueSchema) {
-    return new Schema(Type.MAP, null, null, keySchema, valueSchema, null, null, null);
+    return new Schema(Type.MAP, null, null, null, keySchema, valueSchema, null, null, null);
   }
 
   /**
@@ -301,7 +347,7 @@ public final class Schema implements Serializable {
     if (name == null) {
       throw new IllegalArgumentException("Record name cannot be null.");
     }
-    return new Schema(Type.RECORD, null, null, null, null, name, null, null);
+    return new Schema(Type.RECORD, null, null, null, null, null, name, null, null);
   }
 
   /**
@@ -335,7 +381,7 @@ public final class Schema implements Serializable {
     if (fieldMap.isEmpty()) {
       throw new IllegalArgumentException("No record field provided for " + name);
     }
-    return new Schema(Type.RECORD, null, null, null, null, name, fieldMap, null);
+    return new Schema(Type.RECORD, null, null, null, null, null, name, fieldMap, null);
   }
 
   /**
@@ -364,10 +410,11 @@ public final class Schema implements Serializable {
     if (schemaList.isEmpty()) {
       throw new IllegalArgumentException("No union schema provided.");
     }
-    return new Schema(Type.UNION, null, null, null, null, null, null, schemaList);
+    return new Schema(Type.UNION, null, null, null, null, null, null, null, schemaList);
   }
 
   private final Type type;
+  private final LogicalType logicalType;
 
   private final Map<String, Integer> enumValues;
   private final Map<Integer, String> enumIndexes;
@@ -393,12 +440,14 @@ public final class Schema implements Serializable {
   private transient Map<String, Field> ignoreCaseFieldMap;
 
   private Schema(Type type,
+                 @Nullable LogicalType logicalType,                                   // Not null for logical type
                  @Nullable Set<String> enumValues,                                    // Not null for enum type
                  @Nullable Schema componentSchema,                                    // Not null for array type
                  @Nullable Schema keySchema, @Nullable Schema valueSchema,            // Not null for map type
                  @Nullable String recordName, @Nullable Map<String, Field> fieldMap,  // Not null for record type
                  @Nullable List<Schema> unionSchemas) {                               // Not null for union type
     this.type = type;
+    this.logicalType = logicalType;
     Map.Entry<Map<String, Integer>, Map<Integer, String>> enumValuesIndexes = createIndex(enumValues);
     this.enumValues = enumValuesIndexes.getKey();
     this.enumIndexes = enumValuesIndexes.getValue();
@@ -414,7 +463,7 @@ public final class Schema implements Serializable {
     // Resolve name only records. Only need this step for RECORD or UNION type schemas
     // For array and map schema types, they should already get resolved when the component type is being constructed.
     if (type == Type.RECORD || type == Type.UNION) {
-      resolveSchema(this, new HashMap<String, Schema>());
+      resolveSchema(this, new HashMap<>());
     }
   }
 
@@ -423,6 +472,14 @@ public final class Schema implements Serializable {
    */
   public Type getType() {
     return type;
+  }
+
+  /**
+   * @return the {@link LogicalType} that this schema represents.
+   */
+  @Nullable
+  public LogicalType getLogicalType() {
+    return logicalType;
   }
 
   /**
@@ -779,7 +836,9 @@ public final class Schema implements Serializable {
    * @return A json string representing this schema.
    */
   private String buildString() {
-    if (type.isSimpleType()) {
+    // Return type only if this type does not represent logical type, otherwise use jsonwriter to convert logical type
+    // to correct schema.
+    if (type.isSimpleType() && logicalType == null) {
       return '"' + type.name().toLowerCase() + '"';
     }
 
@@ -787,7 +846,7 @@ public final class Schema implements Serializable {
     try (JsonWriter jsonWriter = new JsonWriter(writer)) {
       SCHEMA_TYPE_ADAPTER.write(jsonWriter, this);
     } catch (IOException e) {
-      // It should never throw IOException on the StringWriter, if it does, something very wrong.
+      // It should never throw IOException on the StringWriter, if it does, something is very wrong.
       throw new RuntimeException(e);
     }
     return writer.toString();

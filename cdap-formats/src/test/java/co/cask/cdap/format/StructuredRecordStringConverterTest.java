@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,9 +26,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Test for {@link StructuredRecordStringConverter} class from {@link StructuredRecord} to json string
@@ -78,6 +80,60 @@ public class StructuredRecordStringConverterTest {
       StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, schema);
       assertRecordsEqual(initial, recordOfJson);
     }
+  }
+
+  @Test
+  public void testDateLogicalTypeConversion() throws Exception {
+    Schema dateSchema = Schema.recordOf(
+      "date",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("date", Schema.nullableOf(Schema.of(Schema.LogicalType.DATE))));
+
+    StructuredRecord record = StructuredRecord.builder(dateSchema).set("id", 1)
+      .set("name", "alice")
+      .setDate("date", LocalDate.now()).build();
+
+    String jsonOfRecord = StructuredRecordStringConverter.toJsonString(record);
+    StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, dateSchema);
+
+    assertRecordsEqual(record, recordOfJson);
+  }
+
+  @Test
+  public void testTimeLogicalTypeConversion() throws Exception {
+    Schema dateSchema = Schema.recordOf(
+      "date",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("time", Schema.nullableOf(Schema.of(Schema.LogicalType.TIME_MILLIS))));
+
+    StructuredRecord record = StructuredRecord.builder(dateSchema).set("id", 1)
+      .set("name", "alice")
+      .setTime("time", LocalTime.now()).build();
+
+    String jsonOfRecord = StructuredRecordStringConverter.toJsonString(record);
+    StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, dateSchema);
+
+    assertRecordsEqual(record, recordOfJson);
+  }
+
+  @Test
+  public void testTimestampLogicalTypeConversion() throws Exception {
+    Schema dateSchema = Schema.recordOf(
+      "date",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("timestamp", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))));
+
+    StructuredRecord record = StructuredRecord.builder(dateSchema).set("id", 1)
+      .set("name", "alice")
+      .setTimestamp("timestamp", ZonedDateTime.now()).build();
+
+    String jsonOfRecord = StructuredRecordStringConverter.toJsonString(record);
+    StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, dateSchema);
+
+    assertRecordsEqual(record, recordOfJson);
   }
 
   private StructuredRecord getStructuredRecord(boolean withNullValue) {

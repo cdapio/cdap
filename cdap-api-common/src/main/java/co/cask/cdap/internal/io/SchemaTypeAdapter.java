@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,6 +49,7 @@ import java.util.Set;
 public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
   private static final String TYPE = "type";
+  private static final String LOGICAL_TYPE = "logicalType";
   private static final String NAME = "name";
   private static final String SYMBOLS = "symbols";
   private static final String ITEMS = "items";
@@ -131,6 +132,8 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
     reader.beginObject();
     // Type of the schema
     Schema.Type schemaType = null;
+    // Logical Type of the schema
+    Schema.LogicalType logicalType = null;
     // Name of the element
     String elementName = null;
     // Store enum values for ENUM type
@@ -146,10 +149,13 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
     // For ENUM type List of enumValues will be populated
     // For ARRAY type items will be populated
     // For MAP type keys and values will be populated
-    // For RECORD type fields will be popuated
+    // For RECORD type fields will be populated
     while (reader.hasNext()) {
       String name = reader.nextName();
       switch (name) {
+        case LOGICAL_TYPE:
+          logicalType = Schema.LogicalType.valueOf(reader.nextString().toUpperCase());
+          break;
         case TYPE:
           schemaType = Schema.Type.valueOf(reader.nextString().toUpperCase());
           break;
@@ -207,6 +213,11 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
     if (schemaType == null) {
       throw new IllegalStateException("Schema type cannot be null.");
     }
+
+    if (logicalType != null) {
+      return Schema.of(logicalType);
+    }
+
     Schema schema;
     switch (schemaType) {
       case ARRAY:
@@ -310,6 +321,13 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * @throws IOException When fails to encode the schema into json.
    */
   private JsonWriter write(JsonWriter writer, Schema schema, Set<String> knownRecords) throws IOException {
+    if (schema.getLogicalType() != null) {
+      writer.beginObject().name(LOGICAL_TYPE).value(schema.getLogicalType().name().toLowerCase());
+      writer.name(TYPE).value(schema.getType().name().toLowerCase());
+      writer.endObject();
+      return writer;
+    }
+
     // Simple type, just emit the type name as a string
     if (schema.getType().isSimpleType()) {
       return writer.value(schema.getType().name().toLowerCase());
