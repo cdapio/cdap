@@ -101,11 +101,10 @@ public class DefaultSparkConfigurer extends AbstractConfigurer implements SparkC
     // Grab all @Property and @Dataset fields
     Reflections.visit(spark, spark.getClass(), new PropertyFieldExtractor(properties),
                       new DataSetFieldExtractor(datasets));
-    // TODO (Rohit) Pass in plugin information
+
     return new SparkSpecification(spark.getClass().getName(), name, description,
                                   mainClassName, datasets, properties,
-                                  clientResources, driverResources, executorResources, getHandlers(),
-                                  Collections.emptyMap());
+                                  clientResources, driverResources, executorResources, getHandlers(), getPlugins());
   }
 
   /**

@@ -26,11 +26,11 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -62,12 +62,16 @@ public abstract class AbstractConfigurer extends DefaultDatasetConfigurer implem
     return plugins;
   }
 
-  protected void addPlugins(Map<String, Plugin> plugins) {
-    Set<String> duplicatePlugins = Sets.intersection(plugins.keySet(), getPlugins().keySet());
-    Preconditions.checkArgument(duplicatePlugins.isEmpty(),
+  protected void addPlugins(Map<String, Plugin> pluginsToAdd) {
+    Map<String, Plugin> existingPlugins = getPlugins();
+    // We don't allow adding different plugin with same id. Adding same plugin to an id is allowed as it just
+    // means that the plugin is being registered again.
+    Map<String, MapDifference.ValueDifference<Plugin>> differentPlugins =
+      Maps.difference(existingPlugins, pluginsToAdd).entriesDiffering();
+    Preconditions.checkArgument(differentPlugins.isEmpty(),
                                 "Plugins %s have been used already. Use different ids or remove duplicates",
-                                duplicatePlugins);
-    extraPlugins.putAll(plugins);
+                                differentPlugins.entrySet());
+    extraPlugins.putAll(pluginsToAdd);
   }
 
   @Nullable

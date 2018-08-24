@@ -33,7 +33,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -98,10 +97,8 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Serv
   }
 
   public ServiceSpecification createSpecification() {
-    // TODO (Rohit) Pass in plugin information
     Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances,
-                                    Collections.emptyMap());
+    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances, getPlugins());
   }
 
   /**

@@ -42,6 +42,8 @@ import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
+import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
@@ -50,6 +52,7 @@ import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.batch.ActionSpec;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
+import co.cask.cdap.etl.batch.BatchPipelineSpecGenerator;
 import co.cask.cdap.etl.batch.WorkflowBackedActionContext;
 import co.cask.cdap.etl.batch.condition.PipelineCondition;
 import co.cask.cdap.etl.batch.connector.AlertPublisherSink;
@@ -77,6 +80,7 @@ import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.v2.ArgumentMapping;
+import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.PluginPropertyMapping;
 import co.cask.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
@@ -103,7 +107,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -111,7 +114,7 @@ import java.util.stream.Collectors;
  */
 public class SmartWorkflow extends AbstractWorkflow {
   public static final String NAME = "DataPipelineWorkflow";
-  public static final String TRIGGERING_PROPERTIES_MAPPING = "triggering.properties.mapping";
+  static final String TRIGGERING_PROPERTIES_MAPPING = "triggering.properties.mapping";
 
   private static final String RESOLVED_PLUGIN_PROPERTIES_MAP = "resolved.plugin.properties.map";
 
@@ -128,7 +131,6 @@ public class SmartWorkflow extends AbstractWorkflow {
   private final Set<String> supportedPluginTypes;
   // connector stage -> local dataset name
   private final Map<String, String> connectorDatasets;
-  private final Engine engine;
   private boolean useSpark;
   private PipelinePlan plan;
   private ControlDag dag;
@@ -140,20 +142,17 @@ public class SmartWorkflow extends AbstractWorkflow {
   // injected by cdap
   @SuppressWarnings("unused")
   private Metrics workflowMetrics;
-
+  private ETLBatchConfig config;
   private BatchPipelineSpec spec;
   private int connectorNum = 0;
 
-  public SmartWorkflow(BatchPipelineSpec spec,
-                       Set<String> supportedPluginTypes,
-                       ApplicationConfigurer applicationConfigurer,
-                       Engine engine) {
-    this.spec = spec;
+  public SmartWorkflow(ETLBatchConfig config, Set<String> supportedPluginTypes,
+                       ApplicationConfigurer applicationConfigurer) {
+    this.config = config;
     this.supportedPluginTypes = supportedPluginTypes;
     this.applicationConfigurer = applicationConfigurer;
     this.phaseNum = 1;
     this.connectorDatasets = new HashMap<>();
-    this.engine = engine;
   }
 
   @Override
@@ -163,11 +162,20 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     // set the pipeline spec as a property in case somebody like the UI wants to read it
     Map<String, String> properties = new HashMap<>();
+    // This will also register all the plugin in the workflow so that CDAP knows what plugins the
+    // workflow needs to run. If a plugin has a requirement that will not be available during that run, CDAP can fail
+    // the run early, before provisioning is performed.
+    // If plugins were registered only at the application level, CDAP would not be able to fail the run early.
+    spec = new BatchPipelineSpecGenerator<>(getConfigurer(),
+                                            ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                            ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
+                                                            AlertPublisher.PLUGIN_TYPE),
+                                            config.getEngine()).generateSpec(config);
     properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     setProperties(properties);
 
     stageSpecs = new HashMap<>();
-    useSpark = engine == Engine.SPARK;
+    useSpark = config.getEngine() == Engine.SPARK;
     for (StageSpec stageSpec : spec.getStages()) {
       stageSpecs.put(stageSpec.getName(), stageSpec);
       String pluginType = stageSpec.getPlugin().getType();
@@ -176,21 +184,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       }
     }
 
-    PipelinePlanner planner;
-    Set<String> actionTypes = ImmutableSet.of(Action.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE);
-    Set<String> multiPortTypes = ImmutableSet.of(SplitterTransform.PLUGIN_TYPE);
-    if (useSpark) {
-      // if the pipeline uses spark, we don't need to break the pipeline up into phases, we can just have
-      // a single phase.
-      planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.<String>of(), ImmutableSet.<String>of(),
-                                    actionTypes, multiPortTypes);
-    } else {
-      planner = new PipelinePlanner(supportedPluginTypes,
-                                    ImmutableSet.of(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE),
-                                    ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
-                                    actionTypes, multiPortTypes);
-    }
-    plan = planner.plan(spec);
+    plan = createPlan();
 
     WorkflowProgramAdder programAdder = new TrunkProgramAdder(getConfigurer());
     // single phase, just add the program directly
@@ -350,6 +344,24 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
   }
 
+  private PipelinePlan createPlan() {
+    PipelinePlanner planner;
+    Set<String> actionTypes = ImmutableSet.of(Action.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE);
+    Set<String> multiPortTypes = ImmutableSet.of(SplitterTransform.PLUGIN_TYPE);
+    if (useSpark) {
+      // if the pipeline uses spark, we don't need to break the pipeline up into phases, we can just have
+      // a single phase.
+      planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.of(), ImmutableSet.of(),
+                                    actionTypes, multiPortTypes);
+    } else {
+      planner = new PipelinePlanner(supportedPluginTypes,
+                                    ImmutableSet.of(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE),
+                                    ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
+                                    actionTypes, multiPortTypes);
+    }
+    return planner.plan(spec);
+  }
+
   private void updateTokenWithTriggeringProperties(TriggeringScheduleInfo scheduleInfo,
                                                    TriggeringPropertyMapping propertiesMapping,
                                                    WorkflowToken token) {
@@ -455,7 +467,7 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                             spec.isProcessTimingEnabled());
     for (ActionSpec actionSpec : spec.getEndingActions()) {
       String stageName = actionSpec.getName();
-      postActions.put(stageName, (PostAction) pluginContext.newPluginInstance(stageName, macroEvaluator));
+      postActions.put(stageName, pluginContext.newPluginInstance(stageName, macroEvaluator));
       stageSpecs.put(stageName, StageSpec.builder(stageName, actionSpec.getPluginSpec())
         .setStageLoggingEnabled(spec.isStageLoggingEnabled())
         .setProcessTimingEnabled(spec.isProcessTimingEnabled())
@@ -477,7 +489,6 @@ public class SmartWorkflow extends AbstractWorkflow {
   @Override
   public void destroy() {
     WorkflowContext workflowContext = getContext();
-
     PipelineRuntime pipelineRuntime = new PipelineRuntime(workflowContext, workflowMetrics);
     // Execute the post actions only if pipeline is not running in preview mode.
     if (!workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {

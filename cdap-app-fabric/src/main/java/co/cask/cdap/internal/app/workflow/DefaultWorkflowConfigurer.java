@@ -44,7 +44,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -163,9 +162,8 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   }
 
   public WorkflowSpecification createSpecification() {
-    // TODO (Rohit) Pass in plugin information
     return new WorkflowSpecification(className, name, description, properties, createNodesWithId(nodes),
-                                     localDatasetSpecs, Collections.emptyMap());
+                                     localDatasetSpecs, getPlugins());
   }
 
   private List<WorkflowNode> createNodesWithId(List<WorkflowNode> nodes) {

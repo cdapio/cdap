@@ -18,6 +18,7 @@ package co.cask.cdap.api.macro;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -44,5 +45,33 @@ public class Macros implements Serializable {
 
   public Set<MacroFunction> getMacroFunctions() {
     return macroFunctions;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Macros macros = (Macros) o;
+
+    return Objects.equals(lookupProperties, macros.lookupProperties) &&
+      Objects.equals(macroFunctions, macros.macroFunctions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(lookupProperties, macroFunctions);
+  }
+
+  @Override
+  public String toString() {
+    return "Macros{" +
+      "lookupProperties=" + lookupProperties +
+      ", macroFunctions=" + macroFunctions +
+      '}';
   }
 }

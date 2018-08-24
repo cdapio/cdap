@@ -17,6 +17,7 @@
 package co.cask.cdap.api.macro;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Class representing a macro function
@@ -44,5 +45,32 @@ public class MacroFunction {
    */
   public List<String> getArguments() {
     return arguments;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroFunction that = (MacroFunction) o;
+
+    return Objects.equals(functionName, that.functionName) && Objects.equals(arguments, that.arguments);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(functionName, arguments);
+  }
+
+  @Override
+  public String toString() {
+    return "MacroFunction{" +
+      "functionName='" + functionName + '\'' +
+      ", arguments=" + arguments +
+      '}';
   }
 }

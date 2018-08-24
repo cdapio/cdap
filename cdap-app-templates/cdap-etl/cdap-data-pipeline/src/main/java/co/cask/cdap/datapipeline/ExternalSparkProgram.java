@@ -54,6 +54,9 @@ public class ExternalSparkProgram extends AbstractSpark {
 
   @Override
   protected void configure() {
+    // register the plugins at program level so that the program can be failed by the platform early in case of
+    // plugin requirements not being meet
+    phaseSpec.getPhase().registerPlugins(getConfigurer());
     PluginSpec pluginSpec = stageSpec.getPlugin();
     PluginProperties pluginProperties = PluginProperties.builder().addAll(pluginSpec.getProperties()).build();
     // use a UUID as plugin ID so that it doesn't clash with anything. Only using the class here to

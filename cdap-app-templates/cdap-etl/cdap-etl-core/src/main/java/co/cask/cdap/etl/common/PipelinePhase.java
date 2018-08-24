@@ -16,7 +16,13 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.etl.planner.Dag;
+import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Joiner;
 
@@ -172,6 +178,31 @@ public class PipelinePhase implements Iterable<StageSpec> {
       ", stagesByName=" + stagesByName +
       ", dag=" + dag +
       '}';
+  }
+
+  /**
+   * Registers all the plugin to the given pluginConfigurer by calling {@link PluginConfigurer#usePluginClass(String,
+   * String, String, PluginProperties, PluginSelector)}
+   *
+   * @param pluginConfigurer the {@link PluginConfigurer} to which the plugins in this {@link PipelinePhase} needs to be
+   * registered
+   */
+  public void registerPlugins(PluginConfigurer pluginConfigurer) {
+    for (StageSpec stageSpec : stagesByName.values()) {
+      // we don't need to register connectors only source, sink and transform plugins
+      if (stageSpec.getPluginType().equals(Constants.Connector.PLUGIN_TYPE)) {
+        continue;
+      }
+      PluginSpec pluginSpec = stageSpec.getPlugin();
+      ArtifactVersion version = pluginSpec.getArtifact().getVersion();
+      ArtifactSelector artifactSelector = new ArtifactSelector(pluginSpec.getType(), pluginSpec.getName(),
+                                                               pluginSpec.getArtifact().getScope(),
+                                                               pluginSpec.getArtifact().getName(),
+                                                               new ArtifactVersionRange(version, true, version, true));
+      pluginConfigurer.usePluginClass(pluginSpec.getType(), pluginSpec.getName(), stageSpec.getName(),
+                                      PluginProperties.builder().addAll(pluginSpec.getProperties()).build(),
+                                      artifactSelector);
+    }
   }
 
   /**
