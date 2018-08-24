@@ -21,9 +21,10 @@ import co.cask.cdap.api.annotation.Beta;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.function.Predicate;
 
 /**
  * Defines a query for deleting data in {@link Cube}.
@@ -35,6 +36,7 @@ public class CubeDeleteQuery {
   private final int resolution;
   private final Collection<String> measureNames;
   private final Map<String, String> dimensionValues;
+  private final Predicate<List<String>> tagPredicate;
 
   /**
    * Creates instance of {@link CubeDeleteQuery} that defines selection of data to delete from {@link Cube}.
@@ -43,42 +45,17 @@ public class CubeDeleteQuery {
    * @param resolution resolution of the aggregations to delete from
    * @param dimensionValues dimension name, dimension value pairs that define the data selection
    * @param measureNames name of the measures to delete, {@code null} means delete all
+   * @param tagPredicate predicate to decide how to match the aggregation group to the given tags
    */
   public CubeDeleteQuery(long startTs, long endTs, int resolution,
-                         Map<String, String> dimensionValues, Collection<String> measureNames) {
+                         Map<String, String> dimensionValues, Collection<String> measureNames,
+                         Predicate<List<String>> tagPredicate) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
     this.measureNames = Collections.unmodifiableCollection(new ArrayList<>(measureNames));
-    this.dimensionValues = Collections.unmodifiableMap(new HashMap<>(dimensionValues));
-  }
-
-
-  /**
-   * Creates instance of {@link CubeDeleteQuery} that defines selection of data to delete from {@link Cube}.
-   * @param startTs start time of the data selection, in seconds since epoch
-   * @param endTs end time of the data selection, in seconds since epoch
-   * @param resolution resolution of the aggregations to delete from
-   * @param dimensionValues dimension name, dimension value pairs that define the data selection
-   * @param measureName name of the measure to delete, {@code null} means delete all
-   */
-  public CubeDeleteQuery(long startTs, long endTs, int resolution,
-                         Map<String, String> dimensionValues, @Nullable String measureName) {
-
-    this(startTs, endTs, resolution, dimensionValues,
-         measureName == null ? Collections.<String>emptyList() : Collections.singletonList(measureName));
-  }
-
-  /**
-   * Creates instance of {@link CubeDeleteQuery} that defines selection of data to delete from {@link Cube}.
-   * @param startTs start time of the data selection, in seconds since epoch
-   * @param endTs end time of the data selection, in seconds since epoch
-   * @param resolution resolution of the aggregations to delete from
-   * @param dimensionValues dimension name, dimension value pairs that define the data selection
-   */
-  public CubeDeleteQuery(long startTs, long endTs, int resolution,
-                         Map<String, String> dimensionValues) {
-    this(startTs, endTs, resolution, dimensionValues, (String) null);
+    this.dimensionValues = Collections.unmodifiableMap(new LinkedHashMap<>(dimensionValues));
+    this.tagPredicate = tagPredicate;
   }
 
   public long getStartTs() {
@@ -99,6 +76,10 @@ public class CubeDeleteQuery {
 
   public Map<String, String> getDimensionValues() {
     return dimensionValues;
+  }
+
+  public Predicate<List<String>> getTagPredicate() {
+    return tagPredicate;
   }
 
   @Override

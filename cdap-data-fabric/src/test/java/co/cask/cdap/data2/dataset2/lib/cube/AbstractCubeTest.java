@@ -35,10 +35,13 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 /**
  *
@@ -139,22 +142,27 @@ public abstract class AbstractCubeTest {
 
     // delete cube data for "metric1" for dim->1,dim2->1,dim3->1 for timestamp 1 - 8 and
     // check data for other timestamp is available
+    Map<String, String> deleteTags = new LinkedHashMap<>();
+    deleteTags.put("dim1", "1");
+    deleteTags.put("dim2", "1");
+    deleteTags.put("dim3", "1");
 
-    CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution,
-                                                ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
-                                                "metric1");
+    Predicate<List<String>> predicate =
+      aggregates -> Collections.indexOfSubList(aggregates, new ArrayList<>(deleteTags.keySet())) == 0;
+    CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution, deleteTags,
+                                                Collections.singletonList("metric1"), predicate);
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
                      ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                      ImmutableList.<String>of(),
                      ImmutableList.of(
-                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(10, 2, 11, 3))));
+                       new TimeSeries("metric1", new HashMap<>(), timeValues(10, 2, 11, 3))));
 
     // delete cube data for "metric1" for dim1->1 and dim2->1  and check by scanning dim1->1 and dim2->1 is empty,
-
-    query = new CubeDeleteQuery(0, 15, resolution, ImmutableMap.of("dim1", "1", "dim2", "1"),
-                                "metric1");
+    deleteTags.remove("dim3");
+    query = new CubeDeleteQuery(0, 15, resolution, deleteTags, Collections.singletonList("metric1"),
+                                predicate);
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
@@ -271,9 +279,15 @@ public abstract class AbstractCubeTest {
                        new TimeSeries("metric1", new HashMap<String, String>(), expectedTimeValues)),
                      new Interpolators.Step());
 
-    CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution,
-                                                ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
-                                                "metric1");
+    Map<String, String> deleteTags = new LinkedHashMap<>();
+    deleteTags.put("dim1", "1");
+    deleteTags.put("dim2", "1");
+    deleteTags.put("dim3", "1");
+    Predicate<List<String>> predicate =
+      aggregates -> Collections.indexOfSubList(aggregates, new ArrayList<>(deleteTags.keySet())) == 0;
+
+    CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution, deleteTags,
+                                                Collections.singletonList("metric1"), predicate);
     cube.delete(query);
     //test small-slope linear interpolation
     startTs = 1;
@@ -288,9 +302,8 @@ public abstract class AbstractCubeTest {
                                                                                            4, 4, 5, 3))),
                      new Interpolators.Linear());
 
-    query = new CubeDeleteQuery(startTs, endTs, resolution,
-                                ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
-                                "metric1");
+    query = new CubeDeleteQuery(startTs, endTs, resolution, deleteTags, Collections.singletonList("metric1"),
+                                predicate);
     cube.delete(query);
 
     //test big-slope linear interpolation
@@ -325,9 +338,74 @@ public abstract class AbstractCubeTest {
 
   }
 
+  @Test
+  public void testMetricDeletion() throws Exception {
+    // two aggregation groups with different orders
+    Aggregation agg1 = new DefaultAggregation(ImmutableList.of("dim1", "dim2", "dim3"),
+                                              ImmutableList.of("dim1"));
+    Aggregation agg2 = new DefaultAggregation(ImmutableList.of("dim1", "dim3"),
+                                              ImmutableList.of("dim3"));
+
+    int resolution = 1;
+    Cube cube = getCube("testDeletion", new int[] {resolution},
+                        ImmutableMap.of("agg1", agg1, "agg2", agg2));
+
+    Map<String, String> agg1Dims = new LinkedHashMap<>();
+    agg1Dims.put("dim1", "1");
+    agg1Dims.put("dim2", "1");
+    agg1Dims.put("dim3", "1");
+
+    Map<String, String> agg2Dims = new LinkedHashMap<>();
+    agg2Dims.put("dim1", "1");
+    agg2Dims.put("dim3", "1");
+
+
+    // write some data
+    writeInc(cube, "metric1",  1,  1,  agg1Dims);
+    writeInc(cube, "metric2",  3,  3,  agg2Dims);
+
+    // verify data is there
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     agg1Dims, ImmutableList.of(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<>(), timeValues(1, 1))));
+    verifyCountQuery(cube, 0, 15, resolution, "metric2",  AggregationFunction.SUM,
+                     agg2Dims, ImmutableList.of(),
+                     ImmutableList.of(
+                       new TimeSeries("metric2", new HashMap<>(), timeValues(3, 3))));
+
+    // delete metrics from agg2
+    Predicate<List<String>> predicate =
+      aggregates -> Collections.indexOfSubList(aggregates, new ArrayList<>(agg2Dims.keySet())) == 0;
+    CubeDeleteQuery query =
+      new CubeDeleteQuery(0, 15, resolution, agg2Dims, Collections.emptySet(), predicate);
+    cube.delete(query);
+
+    // agg1 data should still be there
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     agg1Dims, ImmutableList.of(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<>(), timeValues(1, 1))));
+    // agg2 data should get deleted
+    verifyCountQuery(cube, 0, 15, resolution, "metric2",  AggregationFunction.SUM,
+                     agg2Dims, ImmutableList.of(), ImmutableList.of());
+
+    // delete metrics remain for agg1
+    predicate = aggregates -> Collections.indexOfSubList(aggregates, new ArrayList<>(agg1Dims.keySet())) == 0;
+    query = new CubeDeleteQuery(0, 15, resolution, agg1Dims, Collections.emptySet(), predicate);
+    cube.delete(query);
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     agg1Dims, ImmutableList.of(), ImmutableList.of());
+  }
+
 
   protected void writeInc(Cube cube, String measureName, long ts, long value, String... dims) throws Exception {
     cube.add(getFact(measureName, ts, value, MeasureType.COUNTER, dims));
+  }
+
+  protected void writeInc(Cube cube, String mearsureName, long ts, long value,
+                          Map<String, String> dims) throws Exception {
+    cube.add(getFact(mearsureName, ts, value, MeasureType.COUNTER, dims));
   }
 
   protected void writeGauge(Cube cube, String measureName, long ts, long value, String... dims) throws Exception {
@@ -341,8 +419,12 @@ public abstract class AbstractCubeTest {
   }
 
   private CubeFact getFact(String measureName, long ts, long value, MeasureType measureType, String... dims) {
+    return getFact(measureName, ts, value, measureType, dimValuesByValues(dims));
+  }
+
+  private CubeFact getFact(String measureName, long ts, long value, MeasureType measureType, Map<String, String> dims) {
     return new CubeFact(ts)
-      .addDimensionValues(dimValuesByValues(dims))
+      .addDimensionValues(dims)
       .addMeasurement(measureName, measureType, value);
   }
 

@@ -360,7 +360,8 @@ public class DefaultMetricStore implements MetricStore {
   @Override
   public void deleteAll() throws Exception {
     // this will delete all aggregates metrics data
-    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, Collections.emptyMap()));
+    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, Collections.emptySet(),
+                                 Collections.emptyMap(), Collections.emptyList()));
     // this will delete all timeseries data
     deleteBefore(System.currentTimeMillis() / 1000);
   }
@@ -369,7 +370,7 @@ public class DefaultMetricStore implements MetricStore {
     // note: delete query currently usually executed synchronously,
     //       so we only attempt to delete totals, to avoid timeout
     return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
-                               query.getSliceByTags(), query.getMetricNames());
+                               query.getSliceByTags(), query.getMetricNames(), query.getTagPredicate());
   }
 
   @Override
@@ -421,7 +422,8 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private void deleteMetricsBeforeTimestamp(long timestamp, int resolution) {
-    CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Collections.emptyMap());
+    CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Collections.emptyMap(),
+                                                Collections.emptySet(), strings -> true);
     cube.get().delete(query);
   }
 
