@@ -116,7 +116,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
                                                                 workerSpec.getDatasets(), workerSpec.getResources(),
-                                                                Integer.valueOf(instances));
+                                                                Integer.valueOf(instances), workerSpec.getPlugins());
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {

@@ -301,29 +301,30 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   private void addAppSpecs() {
     WorkflowSpecification scheduledWorfklow1 =
       new WorkflowSpecification("DummyClass", SCHEDULED_PROG1_ID.getProgram(), "scheduled workflow",
-                                Collections.EMPTY_MAP, Collections.EMPTY_LIST, Collections.EMPTY_MAP);
+                                Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap(),
+                                Collections.emptyMap());
     ApplicationSpecification dummyAppSpec1 =
       new DefaultApplicationSpecification(APP1_ID.getApplication(), "dummy app", null,
-                                          ARTIFACT_ID1.toApiArtifactId(), Collections.EMPTY_MAP,
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP,
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                          ARTIFACT_ID1.toApiArtifactId(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG1_ID.getProgram(), scheduledWorfklow1),
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP,
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap());
 
     store.addApplication(APP1_ID, dummyAppSpec1);
     WorkflowSpecification scheduledWorfklow2 =
       new WorkflowSpecification("DummyClass", SCHEDULED_PROG2_ID.getProgram(), "scheduled workflow",
-                                Collections.EMPTY_MAP, Collections.EMPTY_LIST, Collections.EMPTY_MAP);
+                                Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap(),
+                                Collections.emptyMap());
     ApplicationSpecification dummyAppSpec2 =
       new DefaultApplicationSpecification(APP2_ID.getApplication(), "dummy app", null,
-
-                                          ARTIFACT_ID2.toApiArtifactId(), Collections.EMPTY_MAP, Collections.EMPTY_MAP,
-                                          Collections.EMPTY_MAP,
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP,
+                                          ARTIFACT_ID2.toApiArtifactId(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG2_ID.getProgram(), scheduledWorfklow2),
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP,
-                                          Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap());
     store.addApplication(APP2_ID, dummyAppSpec2);
   }
 

@@ -17,6 +17,7 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -35,15 +36,16 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
 
   @Override
   public JsonElement serialize(WorkerSpecification spec, Type typeOfSrc, JsonSerializationContext context) {
-    JsonObject object = new JsonObject();
-    object.addProperty("className", spec.getClassName());
-    object.addProperty("name", spec.getName());
-    object.addProperty("description", spec.getDescription());
-    object.add("properties", serializeMap(spec.getProperties(), context, String.class));
-    object.add("resources", context.serialize(spec.getResources(), Resources.class));
-    object.add("datasets", serializeSet(spec.getDatasets(), context, String.class));
-    object.addProperty("instances", spec.getInstances());
-    return object;
+    JsonObject jsonObj = new JsonObject();
+    jsonObj.addProperty("className", spec.getClassName());
+    jsonObj.addProperty("name", spec.getName());
+    jsonObj.addProperty("description", spec.getDescription());
+    jsonObj.add("plugins", serializeMap(spec.getPlugins(), context, Plugin.class));
+    jsonObj.add("properties", serializeMap(spec.getProperties(), context, String.class));
+    jsonObj.add("resources", context.serialize(spec.getResources(), Resources.class));
+    jsonObj.add("datasets", serializeSet(spec.getDatasets(), context, String.class));
+    jsonObj.addProperty("instances", spec.getInstances());
+    return jsonObj;
   }
 
   @Override
@@ -54,11 +56,12 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
+    Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     int instances = jsonObj.get("instances").getAsInt();
 
-    return new WorkerSpecification(className, name, description, properties, datasets, resources, instances);
+    return new WorkerSpecification(className, name, description, properties, datasets, resources, instances, plugins);
   }
 }

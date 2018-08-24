@@ -16,10 +16,11 @@
 
 package co.cask.cdap.api.spark;
 
-import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.AbstractProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,11 +35,8 @@ import javax.annotation.Nullable;
  * A default specification for {@link Spark} programs
  */
 @Beta
-public final class SparkSpecification implements ProgramSpecification, PropertyProvider {
+public final class SparkSpecification extends AbstractProgramSpecification implements PropertyProvider {
 
-  private final String className;
-  private final String name;
-  private final String description;
   private final String mainClassName;
   private final Set<String> datasets;
   private final Map<String, String> properties;
@@ -54,10 +52,8 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
                             @Nullable Resources clientResources,
                             @Nullable Resources driverResources,
                             @Nullable Resources executorResources,
-                            List<SparkHttpServiceHandlerSpecification> handlers) {
-    this.className = className;
-    this.name = name;
-    this.description = description;
+                            List<SparkHttpServiceHandlerSpecification> handlers, Map<String, Plugin> plugins) {
+    super(className, name, description, plugins);
     this.mainClassName = mainClassName;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
@@ -65,21 +61,6 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
     this.driverResources = driverResources;
     this.executorResources = executorResources;
     this.handlers = Collections.unmodifiableList(new ArrayList<>(handlers));
-  }
-
-  @Override
-  public String getClassName() {
-    return className;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public String getDescription() {
-    return description;
   }
 
   /**

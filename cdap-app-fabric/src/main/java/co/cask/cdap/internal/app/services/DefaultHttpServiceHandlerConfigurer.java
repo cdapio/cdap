@@ -85,7 +85,6 @@ public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer impl
                       new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(properties),
                       new ServiceEndpointExtractor(endpoints));
-
     return new HttpServiceHandlerSpecification(handler.getClass().getName(), name, "", properties, datasets, endpoints);
   }
 }
