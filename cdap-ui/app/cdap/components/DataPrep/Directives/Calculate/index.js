@@ -223,7 +223,15 @@ export default class Calculate extends Component {
     }
     if (this.props.isOpen && !this.state.isDisabled && this.calculateOffset) {
       if (this.state.operationPopoverOpen) {
-        setPopoverOffset(document.querySelector('#calculate-directive > .second-level-popover .scrollable-list .option.active'), 'third-level-popover');
+        let parentPopoverSelector = '#calculate-directive > .second-level-popover .option.active';
+        let parentPopover = document.querySelector(parentPopover);
+        if (!parentPopover) {
+          parentPopoverSelector = '#calculate-directive > .second-level-popover .scrollable-list .option.active';
+          parentPopover = document.querySelector(parentPopoverSelector);
+        }
+        if (parentPopover) {
+          setPopoverOffset(parentPopover, 'third-level-popover');
+        }
       } else {
         this.calculateOffset();
       }

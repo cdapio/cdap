@@ -629,13 +629,6 @@ export default class DatabaseDetail extends Component {
         <div className="database-detail-content">
           {this.renderDriverInfo()}
 
-          <div className="row">
-            <div className="col-xs-12 text-xs-right">
-              <span className="asterisk">*</span>
-              <em>{T.translate(`${PREFIX}.required`)}</em>
-            </div>
-          </div>
-
           <form onSubmit={this.preventDefault}>
             <div className="form-group row">
               <label className={LABEL_COL_CLASS}>

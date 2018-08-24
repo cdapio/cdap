@@ -20,25 +20,9 @@ $modal-header-bg-color: #efefef;
 $close-button-color: #333333;
 
 .kafka-connection-modal.modal-dialog {
-  .modal-content { border-radius: 0; }
-
-  .modal-header {
-    border-bottom: none;
-    background-color: $modal-header-bg-color;
-
-    .modal-title { font-size: 16px; }
-
-    .close {
-      color: $close-button-color;
-      font-size: 23px;
-      opacity: 1;
-    }
-  }
-
-  .modal-footer {
-    padding: 0;
-    text-align: left;
-    border-top: 0;
+  .modal-body {
+    max-height: 50vh;
+    overflow-y: auto;
   }
 
   .kafka-detail {

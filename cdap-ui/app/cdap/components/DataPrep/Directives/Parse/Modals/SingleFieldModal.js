@@ -101,7 +101,7 @@ export default class SingleFieldModal extends Component {
         size="md"
         backdrop="static"
         zIndex="1061"
-        className="dataprep-parse-modal"
+        className="dataprep-parse-modal cdap-modal"
       >
         <ModalHeader>
           <span>

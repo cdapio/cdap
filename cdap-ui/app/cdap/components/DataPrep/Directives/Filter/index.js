@@ -23,7 +23,7 @@ import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MouseTrap from 'mousetrap';
-import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
+import { Popover, PopoverHeader, PopoverBody } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import {setPopoverOffset} from 'components/DataPrep/helper';
 
@@ -236,13 +236,15 @@ export default class FilterDirective extends Component {
           </div>
           <Popover
             placement="right"
-            tether={{classPrefix: 'filter-popover'}}
+            className="filter-popover-element"
             isOpen={this.state.customConditionTooltip}
             target="customConditionTooltip"
             toggle={this.toggleCustomTooltip.bind(this)}
           >
-            <PopoverTitle>{T.translate(`${PREFIX}.customconditiontooltiptitle`)}</PopoverTitle>
-            <PopoverContent>
+            <PopoverHeader className="popover-title">
+              {T.translate(`${PREFIX}.customconditiontooltiptitle`)}
+            </PopoverHeader>
+            <PopoverBody className="popover-content">
               <span>{T.translate(`${PREFIX}.customconditiontooltip`)}</span>
               <a
                 href="http://commons.apache.org/proper/commons-jexl/"
@@ -251,7 +253,7 @@ export default class FilterDirective extends Component {
               >
                 {T.translate(`${PREFIX}.customconditiontooltiplink`)}
               </a>
-            </PopoverContent>
+            </PopoverBody>
           </Popover>
         </div>
 

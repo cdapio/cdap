@@ -17,10 +17,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import LoadingSVG from 'components/LoadingSVG';
+import classnames from 'classnames';
 require('./BtnWithLoading.scss');
 
 export default function BtnWithLoading({
   className,
+  darker = false,
   label,
   loading,
   disabled,
@@ -28,7 +30,9 @@ export default function BtnWithLoading({
 }) {
   return (
     <button
-      className={`btn btn-with-loading ${className}`}
+      className={classnames(`btn btn-with-loading`, className, {
+        'darker-loading-bars': darker
+      })}
       onClick={onClick}
       disabled={disabled || loading}
     >

@@ -24,9 +24,13 @@ import DataPrepStore from 'components/DataPrep/store';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import {preventPropagation} from 'services/helpers';
+import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
+import If from 'components/If';
+
 require('./Bulkset.scss');
 
 const PREFIX = 'features.DataPrep.Directives.ColumnActions.Bulkset';
+const DATAPREP_PREFIX = 'features.DataPrep.Directives';
 const TEXTAREA_ROWS = 10;
 
 export default class Bulkset extends Component {
@@ -35,6 +39,7 @@ export default class Bulkset extends Component {
     this.state = {
       columnNames: '',
       error: null,
+      backendError: null,
       loading: false
     };
     this.applyDirective = this.applyDirective.bind(this);
@@ -50,7 +55,8 @@ export default class Bulkset extends Component {
     let columns = this.state.columnNames.toString();
     let directive = `set columns ${columns}`;
     this.setState({
-      loading: true
+      loading: true,
+      backendError: null
     });
     execute([directive], null, true)
       .subscribe(
@@ -60,7 +66,7 @@ export default class Bulkset extends Component {
         (err) => {
           this.setState({
             loading: false,
-            error: err.message || err.response.message
+            backendError: err.message || err.response.message || T.translate(`${DATAPREP_PREFIX}.failedApplyDirectiveMessage`)
           });
         }
       );
@@ -121,7 +127,7 @@ export default class Bulkset extends Component {
         size="md"
         backdrop="static"
         zIndex="1061"
-        className="dataprep-parse-modal bulkset-columnactions-modal"
+        className="bulkset-columnactions-modal cdap-modal"
       >
         <ModalHeader>
 
@@ -178,6 +184,12 @@ export default class Bulkset extends Component {
             </button>
           </fieldset>
         </ModalFooter>
+        <If condition={this.state.backendError}>
+          <CardActionFeedback
+            type={CARD_ACTION_TYPES.DANGER}
+            message={this.state.backendError}
+          />
+        </If>
       </Modal>
     );
   }

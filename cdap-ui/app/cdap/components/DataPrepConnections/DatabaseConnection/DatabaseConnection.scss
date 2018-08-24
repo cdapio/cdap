@@ -25,23 +25,6 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
   background-position: 0 $index*-100px;
 }
 
-.modal-dialog.database-connection-modal {
-  .modal-content { border-radius: 0; }
-
-  .modal-header {
-    border-bottom: none;
-    background-color: $modal-header-bg-color;
-
-    .modal-title { font-size: 16px; }
-
-    .close {
-      color: $close-button-color;
-      font-size: 23px;
-      opacity: 1;
-    }
-  }
-}
-
 .database-options {
   .db-image-container,
   .db-info {

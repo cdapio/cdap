@@ -26,7 +26,8 @@ import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import {Link} from 'react-router-dom';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
-import {Modal, ModalHeader, ModalBody} from 'reactstrap';
+import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import ConfirmationModal from 'components/ConfirmationModal';
 import T from 'i18n-react';
 import findIndex from 'lodash/findIndex';
 import debounce from 'lodash/debounce';
@@ -164,7 +165,7 @@ export default class WorkspaceTabs extends Component {
     });
   }
 
-  toggleDeleteWorkspace(workspace) {
+  toggleDeleteWorkspace = (workspace) => {
     this.setState({deleteWorkspace: workspace});
   }
 
@@ -236,39 +237,25 @@ export default class WorkspaceTabs extends Component {
 
   renderWorkspaceDeleteConfirmation() {
     if (!this.state.deleteWorkspace) { return null; }
+    const ConfirmationElement = (
+      <>
+        <h5>{T.translate(`${PREFIX}.DeleteModal.mainMessage`, {workspace: this.state.deleteWorkspace.name})}</h5>
+        <div>{T.translate(`${PREFIX}.DeleteModal.helperMessage`)}</div>
+      </>
+    );
 
     return (
-      <Modal
-        backdrop="static"
+      <ConfirmationModal
+        confirmationElem={ConfirmationElement}
+        confirmButtonText={T.translate(`${PREFIX}.DeleteModal.confirmButton`)}
+        cancelButtonText={T.translate(`${PREFIX}.DeleteModal.cancelButton`)}
+        confirmFn={this.handleDeleteWorkspace.bind(this, this.state.deleteWorkspace.id)}
+        cancelFn={this.toggleDeleteWorkspace.bind(this, null)}
         isOpen={true}
-        toggle={this.toggleDeleteWorkspace.bind(this, null)}
-        className="workspace-delete-confirmation"
-      >
-        <ModalHeader toggle={this.toggleDeleteWorkspace.bind(this, null)}>
-          {T.translate(`${PREFIX}.DeleteModal.header`)}
-        </ModalHeader>
-
-        <ModalBody>
-          <h5>{T.translate(`${PREFIX}.DeleteModal.mainMessage`, {workspace: this.state.deleteWorkspace.name})}</h5>
-          <p>{T.translate(`${PREFIX}.DeleteModal.helperMessage`)}</p>
-
-          <div className="action-buttons">
-            <button
-              className="btn btn-primary"
-              onClick={this.handleDeleteWorkspace.bind(this, this.state.deleteWorkspace.id)}
-            >
-              {T.translate(`${PREFIX}.DeleteModal.confirmButton`)}
-            </button>
-
-            <button
-              className="btn btn-link"
-              onClick={this.toggleDeleteWorkspace.bind(this, null)}
-            >
-              {T.translate(`${PREFIX}.DeleteModal.cancelButton`)}
-            </button>
-          </div>
-        </ModalBody>
-      </Modal>
+        headerTitle={T.translate(`${PREFIX}.DeleteModal.header`)}
+        closeable={true}
+        toggleModal={this.toggleDeleteWorkspace.bind(this, null)}
+      />
     );
   }
 

@@ -39,21 +39,6 @@
         }
       }
     }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      clear: both;
-      width: 100%;
-      h5 {
-        width: 100%;
-      }
-      button.close {
-        float: right;
-        padding: 1rem;
-        margin: -1rem -1rem -1rem auto;
-      }
-    }
   }
   .modal-backdrop.fade.show {
     opacity: 0.5;

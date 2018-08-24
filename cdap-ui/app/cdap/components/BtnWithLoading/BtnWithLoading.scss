@@ -29,5 +29,11 @@
       fill: $blue-06;
     }
   }
-
+  &.darker-loading-bars {
+    svg.loading-bar {
+      rect {
+        fill: $blue-01;
+      }
+    }
+  }
 }

@@ -114,7 +114,7 @@ export default class ExcelModal extends Component {
         size="md"
         backdrop="static"
         zIndex="1061"
-        className="dataprep-parse-modal parse-as-excel"
+        className="dataprep-parse-modal parse-as-excel cdap-modal"
       >
         <ModalHeader>
           <span>
