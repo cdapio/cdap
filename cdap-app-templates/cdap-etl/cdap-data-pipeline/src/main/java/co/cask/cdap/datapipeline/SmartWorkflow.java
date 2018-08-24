@@ -139,6 +139,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   private Map<String, PostAction> postActions;
   private Map<String, AlertPublisher> alertPublishers;
   private Map<String, StageSpec> stageSpecs;
+  private BatchPipelineSpec spec;
 
   // injected by cdap
   @SuppressWarnings("unused")
@@ -165,13 +166,17 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     // set the pipeline spec as a property in case somebody like the UI wants to read it
     Map<String, String> properties = new HashMap<>();
-    BatchPipelineSpec pipelineSpec = getPipelineSpec();
-    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(pipelineSpec));
+    spec = new BatchPipelineSpecGenerator<>(getConfigurer(),
+                                            ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                            ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
+                                                            AlertPublisher.PLUGIN_TYPE),
+                                            config.getEngine()).generateSpec(config);
+    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     setProperties(properties);
 
     stageSpecs = new HashMap<>();
     useSpark = engine == Engine.SPARK;
-    for (StageSpec stageSpec : pipelineSpec.getStages()) {
+    for (StageSpec stageSpec : spec.getStages()) {
       stageSpecs.put(stageSpec.getName(), stageSpec);
       String pluginType = stageSpec.getPlugin().getType();
       if (SparkCompute.PLUGIN_TYPE.equals(pluginType) || SparkSink.PLUGIN_TYPE.equals(pluginType)) {
@@ -179,12 +184,12 @@ public class SmartWorkflow extends AbstractWorkflow {
       }
     }
 
-    plan = createPlan(pipelineSpec);
+    plan = createPlan(spec);
 
     WorkflowProgramAdder programAdder = new TrunkProgramAdder(getConfigurer());
     // single phase, just add the program directly
     if (plan.getPhases().size() == 1) {
-      addProgram(plan.getPhases().keySet().iterator().next(), programAdder, pipelineSpec);
+      addProgram(plan.getPhases().keySet().iterator().next(), programAdder, spec);
       return;
     }
 
@@ -193,7 +198,7 @@ public class SmartWorkflow extends AbstractWorkflow {
 
       WorkflowProgramAdder fork = programAdder.fork();
       for (String phaseName : plan.getPhases().keySet()) {
-        addProgram(phaseName, fork, pipelineSpec);
+        addProgram(phaseName, fork, spec);
       }
       fork.join();
       return;
@@ -328,14 +333,14 @@ public class SmartWorkflow extends AbstractWorkflow {
       String dummyNode = dag.getSources().iterator().next();
       // need to make sure we don't call also() if this is the final branch
       Iterator<String> outputIter = dag.getNodeOutputs(dummyNode).iterator();
-      addBranchPrograms(outputIter.next(), fork, pipelineSpec, false);
+      addBranchPrograms(outputIter.next(), fork, spec, false);
       while (outputIter.hasNext()) {
         fork = fork.also();
-        addBranchPrograms(outputIter.next(), fork, pipelineSpec, !outputIter.hasNext());
+        addBranchPrograms(outputIter.next(), fork, spec, !outputIter.hasNext());
       }
     } else {
       String start = dag.getSources().iterator().next();
-      addPrograms(start, programAdder, pipelineSpec);
+      addPrograms(start, programAdder, spec);
     }
   }
 
@@ -451,25 +456,25 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     alertPublishers = new HashMap<>();
     postActions = new LinkedHashMap<>();
-    BatchPipelineSpec pipelineSpec = GSON.fromJson(context.getWorkflowSpecification()
+    spec = GSON.fromJson(context.getWorkflowSpecification()
                                               .getProperty(Constants.PIPELINE_SPEC_KEY), BatchPipelineSpec.class);
     stageSpecs = new HashMap<>();
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
     PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics,
-                                                            pipelineSpec.isStageLoggingEnabled(),
-                                                            pipelineSpec.isProcessTimingEnabled());
-    for (ActionSpec actionSpec : pipelineSpec.getEndingActions()) {
+                                                            spec.isStageLoggingEnabled(),
+                                                            spec.isProcessTimingEnabled());
+    for (ActionSpec actionSpec : spec.getEndingActions()) {
       String stageName = actionSpec.getName();
       postActions.put(stageName, pluginContext.newPluginInstance(stageName, macroEvaluator));
       stageSpecs.put(stageName, StageSpec.builder(stageName, actionSpec.getPluginSpec())
-        .setStageLoggingEnabled(pipelineSpec.isStageLoggingEnabled())
-        .setProcessTimingEnabled(pipelineSpec.isProcessTimingEnabled())
+        .setStageLoggingEnabled(spec.isStageLoggingEnabled())
+        .setProcessTimingEnabled(spec.isProcessTimingEnabled())
         .build());
     }
 
-    for (StageSpec stageSpec : pipelineSpec.getStages()) {
+    for (StageSpec stageSpec : spec.getStages()) {
       String stageName = stageSpec.getName();
       stageSpecs.put(stageName, stageSpec);
       if (AlertPublisher.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
@@ -795,13 +800,5 @@ public class SmartWorkflow extends AbstractWorkflow {
       addPrograms(falseOutput, conditionAdder, pipelineSpec);
     }
     return conditionAdder.end();
-  }
-
-  private BatchPipelineSpec getPipelineSpec() {
-    return new BatchPipelineSpecGenerator<>(getConfigurer(),
-                                            ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                            ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
-                                                            AlertPublisher.PLUGIN_TYPE),
-                                            config.getEngine()).generateSpec(config);
   }
 }
