@@ -31,9 +31,9 @@ public class ProvisionerConfig {
   @SerializedName("icon")
   private final Object icon;
   @SerializedName("beta")
-  private final Boolean beta;
+  private final boolean beta;
 
-  public ProvisionerConfig(List<Object> configurationGroups, @Nullable Object icon, @Nullable Boolean beta) {
+  public ProvisionerConfig(List<Object> configurationGroups, @Nullable Object icon, boolean beta) {
     this.configurationGroups = configurationGroups;
     this.icon = icon;
     this.beta = beta;
@@ -48,8 +48,7 @@ public class ProvisionerConfig {
     return icon;
   }
 
-  @Nullable
-  public Boolean isBeta() {
+  public boolean isBeta() {
     return beta;
   }
 

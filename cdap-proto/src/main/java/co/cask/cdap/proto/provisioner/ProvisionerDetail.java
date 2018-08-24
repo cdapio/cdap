@@ -34,10 +34,10 @@ public class ProvisionerDetail {
   @SerializedName("icon")
   private final Object icon;
   @SerializedName("beta")
-  private final Boolean beta;
+  private final boolean beta;
 
   public ProvisionerDetail(String name, String label, String description, List<Object> configurationGroups,
-                           @Nullable Object icon, @Nullable Boolean beta) {
+                           @Nullable Object icon, boolean beta) {
     this.name = name;
     this.label = label;
     this.description = description;
