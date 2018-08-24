@@ -327,7 +327,8 @@ public class DataPipelineTest extends HydratorTestBase {
         }
       }
     }
-    Assert.assertEquals(expectedLines, actualLines);
+    Assert.assertEquals(expectedLines.size(), actualLines.size());
+    Assert.assertTrue(expectedLines.containsAll(actualLines) && actualLines.containsAll(expectedLines));
   }
 
   @Test
