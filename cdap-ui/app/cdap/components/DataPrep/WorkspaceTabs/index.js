@@ -26,7 +26,6 @@ import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import {Link} from 'react-router-dom';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
 import ConfirmationModal from 'components/ConfirmationModal';
 import T from 'i18n-react';
 import findIndex from 'lodash/findIndex';
@@ -238,10 +237,10 @@ export default class WorkspaceTabs extends Component {
   renderWorkspaceDeleteConfirmation() {
     if (!this.state.deleteWorkspace) { return null; }
     const ConfirmationElement = (
-      <>
+      <React.Fragment>
         <h5>{T.translate(`${PREFIX}.DeleteModal.mainMessage`, {workspace: this.state.deleteWorkspace.name})}</h5>
         <div>{T.translate(`${PREFIX}.DeleteModal.helperMessage`)}</div>
-      </>
+      </React.Fragment>
     );
 
     return (

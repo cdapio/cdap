@@ -27,7 +27,7 @@ import HostPortEditor from 'components/DataPrepConnections/KafkaConnection/HostP
 import uuidV4 from 'uuid/v4';
 import ee from 'event-emitter';
 import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
-import BtnWithLoading from 'components/BtnWithLoading'
+import BtnWithLoading from 'components/BtnWithLoading';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Kafka';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';

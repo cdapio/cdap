@@ -46,11 +46,11 @@ interface IStatefulComponentProps {
 class StatefullComponent extends React.PureComponent<IStatefulComponentProps, {}> {
   public render() {
     return (
-      <>
+      <React.Fragment>
         <h4> Stateful component </h4>
         <span> Props: </span>
         <pre>{this.props.prop3}</pre>
-      </>
+      </React.Fragment>
     );
   }
 }
