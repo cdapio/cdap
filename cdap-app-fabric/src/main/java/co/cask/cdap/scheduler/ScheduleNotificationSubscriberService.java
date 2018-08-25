@@ -131,18 +131,18 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
     @Nullable
     @Override
-    protected String loadMessageId(DatasetContext datasetContext) throws Exception {
+    protected String loadMessageId(DatasetContext datasetContext) {
       return getJobQueue(datasetContext).retrieveSubscriberState(getTopicId().getTopic());
     }
 
     @Override
-    protected void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception {
+    protected void storeMessageId(DatasetContext datasetContext, String messageId) {
       getJobQueue(datasetContext).persistSubscriberState(getTopicId().getTopic(), messageId);
     }
 
     @Override
     protected void processMessages(DatasetContext datasetContext,
-                                   Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
+                                   Iterator<ImmutablePair<String, Notification>> messages) {
       ProgramScheduleStoreDataset scheduleStore = getScheduleStore(datasetContext);
       JobQueueDataset jobQueue = getJobQueue(datasetContext);
 
@@ -163,7 +163,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
                                                 JobQueueDataset jobQueue, Notification notification);
 
     private JobQueueDataset getJobQueue(DatasetContext datasetContext) {
-      return Schedulers.getJobQueue(datasetContext, datasetFramework);
+      return Schedulers.getJobQueue(datasetContext, datasetFramework, cConf);
     }
 
     private ProgramScheduleStoreDataset getScheduleStore(DatasetContext datasetContext) {

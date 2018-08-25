@@ -141,19 +141,19 @@ public class JobQueueDebugger extends AbstractIdleService {
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void startUp() {
     zkClientService.startAndWait();
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected void shutDown() {
     zkClientService.stopAndWait();
   }
 
   private JobQueueScanner getJobQueueScanner() {
     if (jobQueueScanner == null) {
       jobQueueScanner = new JobQueueScanner(cConf, transactional,
-                                            Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework));
+                                            Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework, cConf));
     }
     return jobQueueScanner;
   }
@@ -162,12 +162,12 @@ public class JobQueueDebugger extends AbstractIdleService {
     getJobQueueScanner().printTopicMessageIds();
   }
 
-  private void scanPartitions(boolean trace) throws Exception {
+  private void scanPartitions(boolean trace) {
     getJobQueueScanner().scanPartitions(trace);
   }
 
-  private JobStatistics scanPartition(int partition, boolean trace) {
-    return getJobQueueScanner().scanPartition(partition, trace);
+  private void scanPartition(int partition, boolean trace) {
+    getJobQueueScanner().scanPartition(partition, trace);
   }
 
   /**
@@ -190,7 +190,7 @@ public class JobQueueDebugger extends AbstractIdleService {
 
     private void printTopicMessageIds() throws TransactionFailureException {
       transactional.execute(context -> {
-        System.out.printf("Getting notification subscriber messageIds.\n");
+        System.out.println("Getting notification subscriber messageIds.");
         List<String> topics = ImmutableList.of(cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
                                                cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
         for (String topic : topics) {
@@ -202,7 +202,7 @@ public class JobQueueDebugger extends AbstractIdleService {
       });
     }
 
-    private void scanPartitions(boolean trace) throws Exception {
+    private void scanPartitions(boolean trace) {
       final JobStatistics totalStats = new JobStatistics();
 
       System.out.println("\nScanning JobQueue.");

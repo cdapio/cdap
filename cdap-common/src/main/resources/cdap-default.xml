@@ -531,6 +531,15 @@
   </property>
 
   <property>
+    <name>scheduler.job.queue.num.partitions</name>
+    <value>16</value>
+    <description>
+      Number of partitions in the scheduler's job queue. This is the same
+      as the number of constraint checker threads started by the scheduler.
+    </description>
+  </property>
+
+  <property>
     <name>scheduler.max.thread.pool.size</name>
     <value>100</value>
     <description>

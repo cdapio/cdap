@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.lib.CompositeDatasetDefinition;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
+import co.cask.cdap.common.conf.Constants;
+import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -43,6 +45,9 @@ public class JobQueueDatasetDefinition extends CompositeDatasetDefinition<JobQue
     TableProperties.Builder tableProps = TableProperties.builder();
     tableProps.addAll(properties.getProperties());
     tableProps.setConflictDetection(ConflictDetection.COLUMN);
+    Preconditions.checkNotNull(properties.getProperties().get(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS),
+                               "Property '{}' must be given when creating job queue dataset",
+                               Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS);
     DatasetSpecification tableSpec = super.getDelegate(JobQueueDataset.EMBEDDED_TABLE_NAME).configure(
       JobQueueDataset.EMBEDDED_TABLE_NAME, tableProps.build());
     return DatasetSpecification.builder(instanceName, getName())
@@ -57,6 +62,6 @@ public class JobQueueDatasetDefinition extends CompositeDatasetDefinition<JobQue
     throws IOException {
     Table table = getDataset(
       datasetContext, JobQueueDataset.EMBEDDED_TABLE_NAME, spec, arguments, classLoader);
-    return new JobQueueDataset(spec.getName(), table);
+    return new JobQueueDataset(spec, table);
   }
 }
