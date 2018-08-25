@@ -26,7 +26,6 @@ import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import {Link} from 'react-router-dom';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
 import ConfirmationModal from 'components/ConfirmationModal';
 import T from 'i18n-react';
 import findIndex from 'lodash/findIndex';

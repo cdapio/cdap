@@ -240,7 +240,7 @@ export default class SchemaModal extends Component {
           <CardActionFeedback
             type="DANGER"
             message={!isNilOrEmpty(this.state.error) ? this.state.error.message : this.state.error}
-            extendedMessage={this.props.extendedMessage}
+            extendedMessage={this.state.remedies}
           />
         </If>
       </Modal>
