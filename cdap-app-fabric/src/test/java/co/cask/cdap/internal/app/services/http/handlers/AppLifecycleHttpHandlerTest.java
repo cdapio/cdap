@@ -40,7 +40,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
@@ -51,6 +50,7 @@ import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -306,7 +306,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployInvalid() throws Exception {
     HttpResponse response = deploy(String.class, 400, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertNotNull(response.getEntity());
-    Assert.assertTrue(response.getEntity().getContentLength() > 0);
+    try (InputStream responseContent = response.getEntity().getContent()) {
+      Assert.assertNotEquals(-1, responseContent.read());
+    }
   }
 
   /**

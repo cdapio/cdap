@@ -155,7 +155,8 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting RunRecordCorrectorService");
 
-    localDatasetDeleterService = Executors.newScheduledThreadPool(1);
+    localDatasetDeleterService = Executors
+      .newSingleThreadScheduledExecutor(r -> new Thread(r, "local dataset deleter"));
     long interval = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INTERVAL_SECONDS);
     if (interval <= 0) {
       LOG.warn("Invalid interval specified for the local dataset deleter {}. Setting it to 3600 seconds.", interval);
