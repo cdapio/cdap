@@ -69,7 +69,10 @@ export default class ControlCenterDropdown extends Component {
 
   render() {
     return (
-      <li className={classnames({ 'active': this.isCDAPActive() })}>
+      <li
+        id="navbar-control-center"
+        className={classnames({ 'active': this.isCDAPActive() })}
+      >
         <UncontrolledDropdown
           className="header-dropdown control-center"
         >

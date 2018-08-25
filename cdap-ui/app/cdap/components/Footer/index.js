@@ -28,7 +28,7 @@ export default function Footer() {
   const footerText = Theme.footerText || T.translate('features.licenseText');
   const footerUrl = Theme.footerLink || 'https://www.apache.org/licenses/LICENSE-2.0';
   return (
-    <footer>
+    <footer className="app-footer">
       <div className="container">
         <div className="row text-muted">
           <div>

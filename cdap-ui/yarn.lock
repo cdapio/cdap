@@ -8311,6 +8311,10 @@ popper.js@^1.14.1:
   version "1.14.3"
   resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.14.3.tgz#1438f98d046acf7b4d78cd502bf418ac64d4f095"
 
+popper.js@^1.14.3:
+  version "1.14.4"
+  resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.14.4.tgz#8eec1d8ff02a5a3a152dd43414a15c7b79fd69b6"
+
 posix-character-classes@^0.1.0:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/posix-character-classes/-/posix-character-classes-0.1.1.tgz#01eac0fe3b5af71a2a6c02feabb8c1fef7e00eab"
@@ -10008,6 +10012,12 @@ shelljs@0.3.x:
 shellwords@^0.1.0:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/shellwords/-/shellwords-0.1.1.tgz#d6b9181c1a48d397324c84871efbcfc73fc0654b"
+
+shepherd.js@2.0.0-beta.17:
+  version "2.0.0-beta.17"
+  resolved "https://registry.yarnpkg.com/shepherd.js/-/shepherd.js-2.0.0-beta.17.tgz#c0437675a9050dbbcfbad0f1cfa785eb30dbc09f"
+  dependencies:
+    popper.js "^1.14.3"
 
 sigmund@~1.0.0:
   version "1.0.1"

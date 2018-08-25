@@ -40,9 +40,12 @@ class DataPrepLink extends React.PureComponent<IDataPrepLinkProps> {
     const dataPrepUrl = `/ns/${namespace}/dataprep`;
 
     return (
-      <li className={classnames({
-        active: this.isDataPrepActive(),
-      })}>
+      <li
+        id="navbar-preparation"
+        className={classnames({
+          active: this.isDataPrepActive(),
+        })}
+      >
         <NavLinkWrapper
           isNativeLink={isNativeLink}
           to={isNativeLink ? `/cdap${dataPrepUrl}` : dataPrepUrl}

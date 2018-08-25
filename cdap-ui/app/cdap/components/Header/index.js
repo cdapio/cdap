@@ -38,6 +38,8 @@ import MetadataLink from 'components/Header/MetadataLink';
 import HubButton from 'components/Header/HubButton';
 import {NamespaceLinkContext} from 'components/Header/NamespaceLinkContext';
 
+import Tour from 'components/Header/Tour';
+
 require('./Header.scss');
 
 export default class Header extends Component {
@@ -82,6 +84,16 @@ export default class Header extends Component {
         });
       }
     });
+  }
+  componentDidMount() {
+    // TODO: setting this to false right now, because there is no mechanism
+    // to not show again yet
+    const condition = false;
+    if (condition) {
+      setTimeout(() => {
+        Tour.start();
+      }, 500);
+    }
   }
   componentWillUnmount() {
     this.nsSubscription();
