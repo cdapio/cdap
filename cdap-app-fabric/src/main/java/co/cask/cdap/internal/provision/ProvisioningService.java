@@ -692,7 +692,9 @@ public class ProvisioningService extends AbstractIdleService {
       return Optional.empty();
     }
 
+    LOG.trace("Cancelling {} task for program run {}.", taskKey.getType(), taskKey.getProgramRunId());
     if (future.cancel(true)) {
+      LOG.debug("Cancelled {} task for program run {}.", taskKey.getType(), taskKey.getProgramRunId());
       // this is the task state after it has been cancelled
       ProvisioningTaskInfo currentTaskInfo = Transactionals.execute(transactional, dsContext -> {
         ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
@@ -709,6 +711,8 @@ public class ProvisioningService extends AbstractIdleService {
           new ProvisioningOp(currentInfo.getProvisioningOp().getType(), ProvisioningOp.Status.CANCELLED);
         ProvisioningTaskInfo newTaskInfo = new ProvisioningTaskInfo(currentInfo, newOp, currentInfo.getCluster());
         provisionerDataset.putTaskInfo(newTaskInfo);
+        LOG.trace("Recorded cancelled state for {} task for program run {}.",
+                  taskKey.getType(), taskKey.getProgramRunId());
 
         return currentInfo;
       });
