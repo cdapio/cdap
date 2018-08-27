@@ -21,6 +21,10 @@ import MyDataPrepApi from 'api/dataprep';
 import {objectQuery} from 'services/helpers';
 
 const setKafkaAsActiveBrowser = (payload) => {
+  let {kafka} = DataPrepBrowserStore.getState();
+
+  if (kafka.loading) { return; }
+
   let {id: connectionId} = payload;
 
   DataPrepBrowserStore.dispatch({

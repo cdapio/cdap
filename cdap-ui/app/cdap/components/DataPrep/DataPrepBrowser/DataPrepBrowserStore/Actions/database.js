@@ -30,6 +30,10 @@ const setDatabaseInfoLoading = () => {
 };
 
 const setDatabaseAsActiveBrowser = (payload) => {
+  let {database} = DataPrepBrowserStore.getState();
+
+  if (database.loading) { return; }
+
   let {id: connectionId} = payload;
 
   DataPrepBrowserStore.dispatch({
