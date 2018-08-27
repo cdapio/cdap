@@ -29,6 +29,7 @@ import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -89,7 +90,8 @@ public class DefaultWorkerConfigurer extends AbstractConfigurer implements Worke
   public WorkerSpecification createSpecification() {
     // Grab all @Property fields
     Reflections.visit(worker, worker.getClass(), new PropertyFieldExtractor(properties));
+    // TODO (Rohit) Pass in plugin information
     return new WorkerSpecification(worker.getClass().getName(), name, description,
-                                   properties, datasets, resource, instances);
+                                   properties, datasets, resource, instances, Collections.emptyMap());
   }
 }

@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.codec;
 
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
@@ -40,6 +41,7 @@ public final class WorkflowSpecificationCodec extends AbstractSpecificationCodec
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
+    jsonObj.add("plugins", serializeMap(src.getPlugins(), context, Plugin.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("nodes", serializeList(src.getNodes(), context, WorkflowNode.class));
     jsonObj.add("localDatasetSpecs", serializeMap(src.getLocalDatasetSpecs(), context, DatasetCreationSpec.class));
@@ -54,11 +56,12 @@ public final class WorkflowSpecificationCodec extends AbstractSpecificationCodec
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
+    Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     List<WorkflowNode> nodes = deserializeList(jsonObj.get("nodes"), context, WorkflowNode.class);
     Map<String, DatasetCreationSpec> localDatasetSpec = deserializeMap(jsonObj.get("localDatasetSpecs"), context,
                                                                        DatasetCreationSpec.class);
 
-    return new WorkflowSpecification(className, name, description, properties, nodes, localDatasetSpec);
+    return new WorkflowSpecification(className, name, description, properties, nodes, localDatasetSpec, plugins);
   }
 }

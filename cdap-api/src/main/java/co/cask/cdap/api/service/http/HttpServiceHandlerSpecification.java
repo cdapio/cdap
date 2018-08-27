@@ -16,7 +16,7 @@
 
 package co.cask.cdap.api.service.http;
 
-import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.AbstractProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
 
@@ -31,11 +31,7 @@ import java.util.Set;
 /**
  * Specification for a {@link HttpServiceHandler}.
  */
-public final class HttpServiceHandlerSpecification implements PropertyProvider, ProgramSpecification {
-
-  private final String className;
-  private final String name;
-  private final String description;
+public final class HttpServiceHandlerSpecification extends AbstractProgramSpecification implements PropertyProvider {
   private final Map<String, String> properties;
   private final Set<String> datasets;
   private final List<ServiceHttpEndpoint> endpoints;
@@ -46,36 +42,10 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
   public HttpServiceHandlerSpecification(String className, String name,
                                          String description, Map<String, String> properties,
                                          Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
-    this.className = className;
-    this.name = name;
-    this.description = description;
+    super(className, name, description, Collections.emptyMap());
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.endpoints = Collections.unmodifiableList(new ArrayList<>(endpoints));
-  }
-
-  /**
-   * @return the class name
-   */
-  @Override
-  public String getClassName() {
-    return className;
-  }
-
-  /**
-   * @return the name
-   */
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  /**
-   * @return the description
-   */
-  @Override
-  public String getDescription() {
-    return description;
   }
 
   /**

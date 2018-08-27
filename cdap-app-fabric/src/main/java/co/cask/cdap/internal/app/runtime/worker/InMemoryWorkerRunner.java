@@ -63,7 +63,7 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
     WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
                                                                 workerSpec.getDatasets(), workerSpec.getResources(),
-                                                                Integer.valueOf(instances));
+                                                                Integer.valueOf(instances), workerSpec.getPlugins());
     return startAll(program, options, newWorkerSpec.getInstances());
   }
 
