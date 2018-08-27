@@ -23,6 +23,7 @@ import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -197,10 +198,12 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         hConf.set(JobContext.QUEUE_NAME, schedulerQueue);
       }
 
+      ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
       Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
                                                                     context, program.getJarLocation(), locationFactory,
                                                                     streamAdmin, authorizationEnforcer,
-                                                                    authenticationContext, fieldLineageWriter);
+                                                                    authenticationContext, fieldLineageWriter,
+                                                                    clusterMode);
       mapReduceRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
 
       ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
