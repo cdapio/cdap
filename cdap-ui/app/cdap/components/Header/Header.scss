@@ -97,6 +97,9 @@
 
       li {
         vertical-align: top;
+
+        &:first-child { padding-left: 0; }
+
         .namespace-dropdown {
           border: 0;
           .dropdown {

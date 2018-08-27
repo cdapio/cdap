@@ -1577,6 +1577,24 @@ features:
         distributed: Distributed
         localSandbox: Local Sandbox
     rulesmgmt: Rules
+
+  NUX:
+    ControlCenter:
+      text: Control Center allows you to create, manage, operate, and monitor datasets and applications.
+      title: Control Center
+    Hub:
+      text: The Hub allows administrators to distribute re-usable pipelines, applications, plugins, and solutions to all CDAP users in their organizations.
+      title: Hub
+    Metadata:
+      text: Metadata enables data discovery through search, and data governance through lineage.
+      title: Metadata
+    Pipelines:
+      text: Pipelines enable you to create, schedule, and manage complex data processing workflows (both batch and realtime) using an intuitive UI.
+      title: Pipelines
+    Preparation:
+      text: Preparation allows you to easily connect to a variety of data sources and cleanse data using point and click interactions. Once you are satisfied, you can operationalize your transformations in a pipeline.
+      title: Preparation
+
   OpsDashboard:
     header: Dashboard
     pageTitle: CDAP | Dashboard

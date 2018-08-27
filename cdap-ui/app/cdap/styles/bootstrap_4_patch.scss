@@ -160,4 +160,9 @@
     border-width: 0.4rem 0 0.4rem 0.4rem;
     border-left-color: black;
   }
+
+  .img-fluid {
+    max-width: 100%;
+    height: auto;
+  }
 }

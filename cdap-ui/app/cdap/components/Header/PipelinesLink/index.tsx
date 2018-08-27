@@ -49,9 +49,12 @@ const PipelinesLink: React.SFC<IPipelinesLinkProps> = ({ context }) => {
   const isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
 
   return (
-    <li className={classnames({
-      active: isPipelinesViewActive,
-    })}>
+    <li
+      id='navbar-pipelines'
+      className={classnames({
+        active: isPipelinesViewActive,
+      })}
+    >
       <a href={pipelinesListUrl}>
         {T.translate('features.Navbar.pipelinesLabel')}
       </a>

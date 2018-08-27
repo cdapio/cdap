@@ -25,7 +25,10 @@ export default function HubButton() {
   }
 
   return (
-    <li className="with-pointer">
+    <li
+      id='navbar-hub'
+      className="with-pointer"
+    >
       <CaskMarketButton>
         <span className="hub-text-wrapper">{T.translate('commons.market')}</span>
       </CaskMarketButton>
