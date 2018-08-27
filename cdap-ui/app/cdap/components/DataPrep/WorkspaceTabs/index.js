@@ -117,7 +117,14 @@ export default class WorkspaceTabs extends Component {
       let lastWorkspaceFromDisplayedTabs = displayTabs.pop();
 
       displayTabs.push(activeWorkspace[0]);
-      dropdownTabs.unshift(lastWorkspaceFromDisplayedTabs);
+      // If the workspace screen is small enough, it's possible that maxTabs will
+      // be 0, causing displayTabs to be an empty list. In that case,
+      // lastWorkspaceFromDisplayedTabs will be undefined. Therefore we need
+      // to check here if the variable is not undefined, otherwise the UI
+      // will break
+      if (lastWorkspaceFromDisplayedTabs) {
+        dropdownTabs.unshift(lastWorkspaceFromDisplayedTabs);
+      }
     }
 
     return {

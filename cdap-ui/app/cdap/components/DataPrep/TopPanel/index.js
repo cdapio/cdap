@@ -263,7 +263,7 @@ export default class DataPrepTopPanel extends Component {
     );
   }
 
-  renderMenuItem = (menuItem, index) => {
+  renderMenuItem = (menuItem) => {
     // This is to prevent items in the menu that doesn't make sense when rendered in pipeline view.
     if (menuItem.shouldRender && !menuItem.shouldRender()) {
       return null;
@@ -277,7 +277,7 @@ export default class DataPrepTopPanel extends Component {
     const getMenuItem = (menuItem) => {
       let {label, component: Component} = menuItem;
       return (
-        <div key={index}>
+        <div>
           {
             Component && !isDisabled ?
               <span>
@@ -302,7 +302,6 @@ export default class DataPrepTopPanel extends Component {
           })}
           title={menuItem.label}
           onClick={isDisabled ? preventPropagation : menuItem.onClick}
-          key={index}
         >
           {getMenuItem(menuItem)}
         </li>
@@ -332,7 +331,13 @@ export default class DataPrepTopPanel extends Component {
       >
         <ul>
           {
-            this.menu.map((menu, i) => this.renderMenuItem(menu, i))
+            this.menu.map((menu, i) => {
+              return (
+                <React.Fragment key={i}>
+                  {this.renderMenuItem(menu)}
+                </React.Fragment>
+              );
+            })
           }
         </ul>
       </Popover>
