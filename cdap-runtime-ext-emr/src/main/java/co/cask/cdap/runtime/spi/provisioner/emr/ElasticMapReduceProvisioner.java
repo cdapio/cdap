@@ -39,6 +39,7 @@ import java.net.ConnectException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -167,5 +168,10 @@ public class ElasticMapReduceProvisioner implements Provisioner {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRun.getRun();
+  }
+
+  @Override
+  public Set<String> getCapabilities() {
+    return Collections.singleton("emr");
   }
 }

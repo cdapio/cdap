@@ -38,6 +38,7 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -185,6 +186,11 @@ public class DataProcProvisioner implements Provisioner {
     }
     LOG.warn("Received a request to get the polling strategy for unexpected cluster status {}", cluster.getStatus());
     return strategy;
+  }
+
+  @Override
+  public Set<String> getCapabilities() {
+    return Collections.singleton("gcp");
   }
 
   // Name must start with a lowercase letter followed by up to 51 lowercase letters,

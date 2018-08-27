@@ -39,9 +39,11 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.plugin.MacroParser;
 import co.cask.cdap.internal.app.spark.SparkCompatReader;
+import co.cask.cdap.internal.pipeline.PluginRequirement;
 import co.cask.cdap.internal.provision.task.DeprovisionTask;
 import co.cask.cdap.internal.provision.task.ProvisionTask;
 import co.cask.cdap.internal.provision.task.ProvisioningTask;
@@ -61,7 +63,10 @@ import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
@@ -72,21 +77,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -96,6 +105,8 @@ public class ProvisioningService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProvisioningService.class);
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(20));
+  private static final Gson GSON = new Gson();
+  private static final Type PLUGIN_REQUIREMENT_SET_TYPE = new TypeToken<Set<PluginRequirement>>() { }.getType();
 
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
@@ -288,7 +299,7 @@ public class ProvisioningService extends AbstractIdleService {
    * @param programRunId the program run
    * @return the state of the task if it was cancelled
    */
-  public Optional<ProvisioningTaskInfo> cancelDeprovisionTask(ProgramRunId programRunId) {
+  Optional<ProvisioningTaskInfo> cancelDeprovisionTask(ProgramRunId programRunId) {
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION);
     return cancelTask(taskKey, provisionerNotifier::orphaned);
   }
@@ -319,6 +330,25 @@ public class ProvisioningService extends AbstractIdleService {
       programStateWriter.error(programRunId, new IllegalStateException("Provisioner does not exist."));
       provisionerNotifier.deprovisioned(programRunId);
       return () -> { };
+    }
+
+    // get plugin requirement information and check for capability to run on the provisioner
+    Set<PluginRequirement> requirements = GSON.fromJson(args.get(ProgramOptionConstants.PLUGIN_REQUIREMENTS),
+                                                        PLUGIN_REQUIREMENT_SET_TYPE);
+    if (requirements != null) {
+      Set<PluginRequirement> unfulfilledRequirements = getUnfulfilledRequirements(provisioner.getCapabilities(),
+                                                                                  requirements);
+      if (!unfulfilledRequirements.isEmpty()) {
+        runWithProgramLogging(programRunId, args, () ->
+          LOG.error(String.format("'%s' cannot be run using profile '%s' because the profile does not met all " +
+                                    "plugin requirements. Following requirements were not meet by the listed " +
+                                    "plugins: '%s'", programRunId.getProgram(), name,
+                                  groupByRequirement(unfulfilledRequirements))));
+        programStateWriter.error(programRunId, new IllegalArgumentException("Provisioner does not meet all the " +
+                                                                           "requirements for the program to run."));
+        provisionerNotifier.deprovisioned(programRunId);
+        return () -> { };
+      }
     }
 
     Map<String, String> properties = SystemArguments.getProfileProperties(args);
@@ -394,6 +424,52 @@ public class ProvisioningService extends AbstractIdleService {
     provisionerDataset.putTaskInfo(provisioningTaskInfo);
 
     return createDeprovisionTask(provisioningTaskInfo, provisioner, taskCleanup);
+  }
+
+  /**
+   * Checks if the given provisioner capabilities satisfies all requirement of a program.
+   *
+   * @param provisionerCapabilities provisioner capabilities
+   * @param requirements a {@link Set} of {@link PluginRequirement}
+   *
+   * @return {@link Set} {@link PluginRequirement} which consists of plugin identifier and the requirements which
+   * are not meet
+   */
+  @VisibleForTesting
+  Set<PluginRequirement> getUnfulfilledRequirements(Set<String> provisionerCapabilities,
+                                                    Set<PluginRequirement> requirements) {
+    // create a map of plugin name to unfulfilled requirement if there are any
+    Set<PluginRequirement> unfulfilledRequirements = new HashSet<>();
+    Set<String> capabilities = provisionerCapabilities.stream().map(String::toLowerCase).collect(Collectors.toSet());
+    for (PluginRequirement pluginRequirement : requirements) {
+      Sets.SetView<String> unfulfilledRequirement = Sets.difference(pluginRequirement.getRequirements(), capabilities);
+      if (!unfulfilledRequirement.isEmpty()) {
+        unfulfilledRequirements.add(new PluginRequirement(pluginRequirement.getName(), pluginRequirement.getType(),
+                                                          unfulfilledRequirement.immutableCopy()));
+      }
+    }
+    return unfulfilledRequirements;
+  }
+
+  /**
+   * Aggregates the given {@link Set} of {@link PluginRequirement} on requirements.
+   *
+   * @param requirements the {@link PluginRequirement} which needs to be aggregated.
+   *
+   * @return a {@link Map} of requirement to {@link Set} of pluginType:pluginName
+   */
+  @VisibleForTesting
+  Map<String, Set<String>> groupByRequirement(Set<PluginRequirement> requirements) {
+    Map<String, Set<String>> pluginsGroupedByRequirements = new HashMap<>();
+    for (PluginRequirement pluginRequirement : requirements) {
+      Set<String> reqs = pluginRequirement.getRequirements();
+      for (String req : reqs) {
+        Set<String> currentRequirementPlugins = pluginsGroupedByRequirements.getOrDefault(req, new HashSet<>());
+        currentRequirementPlugins.add(pluginRequirement.getType() + ":" + pluginRequirement.getName());
+        pluginsGroupedByRequirements.put(req, currentRequirementPlugins);
+      }
+    }
+    return pluginsGroupedByRequirements;
   }
 
   /**

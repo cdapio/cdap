@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.provision;
 
+import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -26,8 +27,8 @@ import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -74,5 +75,10 @@ public class NativeProvisioner implements Provisioner {
   public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
     // shouldn't matter, as we won't ever poll
     return PollingStrategies.fixedInterval(2, TimeUnit.SECONDS);
+  }
+
+  @Override
+  public Set<String> getCapabilities() {
+    return Collections.singleton(Requirements.TEPHRA_TX);
   }
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -39,6 +40,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.internal.pipeline.PluginRequirement;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
@@ -51,6 +53,7 @@ import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.security.FakeSecureStore;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -70,6 +73,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -374,6 +378,91 @@ public class ProvisioningServiceTest {
     Map<String, String> evaluated = ProvisioningService.evaluateMacros(secureStore, "Bob",
                                                                        NamespaceId.DEFAULT.getNamespace(), properties);
     Assert.assertEquals(keycontent, evaluated.get("x"));
+  }
+
+  @Test
+  public void testUnfulfilledRequirements() {
+    Set<String> provisionerCapabilities = ImmutableSet.of(Requirements.TEPHRA_TX);
+    Set<PluginRequirement> requirements =
+      ImmutableSet.of(new PluginRequirement("source1", "batchsource",
+                                            ImmutableSet.of(Requirements.TEPHRA_TX, "unicorn")),
+                      new PluginRequirement("sink1", "batchsink", ImmutableSet.of(Requirements.TEPHRA_TX, "dragon")));
+
+    Set<PluginRequirement> expectedUnfulfilledRequirements = ImmutableSet.of(
+      new PluginRequirement("source1", "batchsource", ImmutableSet.of("unicorn")),
+      new PluginRequirement("sink1", "batchsink", ImmutableSet.of("dragon"))
+    );
+
+    assertRequirementFulfillment(provisionerCapabilities, requirements, expectedUnfulfilledRequirements);
+
+    // check when there are multiple plugins with same name but different type
+    requirements = ImmutableSet.of(new PluginRequirement("source1", "batchsource",
+                                                         ImmutableSet.of(Requirements.TEPHRA_TX, "unicorn")),
+                                   new PluginRequirement("sink1", "batchsink",
+                                                               ImmutableSet.of(Requirements.TEPHRA_TX, "dragon")),
+                                   new PluginRequirement("sink1", "anothersink",
+                                                         ImmutableSet.of(Requirements.TEPHRA_TX, "narwhal")));
+
+    expectedUnfulfilledRequirements = ImmutableSet.of(
+      new PluginRequirement("source1", "batchsource", ImmutableSet.of("unicorn")),
+      new PluginRequirement("sink1", "batchsink", ImmutableSet.of("dragon")),
+      new PluginRequirement("sink1", "anothersink", ImmutableSet.of("narwhal"))
+    );
+    assertRequirementFulfillment(provisionerCapabilities, requirements, expectedUnfulfilledRequirements);
+
+    // check when provisioner does not have any specified capability
+    provisionerCapabilities = Collections.emptySet();
+    assertRequirementFulfillment(provisionerCapabilities, requirements, requirements);
+  }
+
+  @Test
+  public void testFulfilledRequirements() {
+    Set<String> provisionerCapabilities = ImmutableSet.of(Requirements.TEPHRA_TX);
+    Set<PluginRequirement> requirements =
+      ImmutableSet.of(new PluginRequirement("source1", "batchsource", Collections.emptySet()),
+                      new PluginRequirement("sink1", "batchsink", ImmutableSet.of(Requirements.TEPHRA_TX)));
+
+    // there should not be any incapability
+    assertRequirementFulfillment(provisionerCapabilities, requirements, Collections.emptySet());
+
+    provisionerCapabilities = ImmutableSet.of(Requirements.TEPHRA_TX);
+    requirements = ImmutableSet.of(new PluginRequirement("source1", "batchsource",
+                                                         ImmutableSet.of(Requirements.TEPHRA_TX)),
+                                   new PluginRequirement("sink1", "batchsink",
+                                                         ImmutableSet.of(Requirements.TEPHRA_TX)));
+    // there should not be any incapability
+    assertRequirementFulfillment(provisionerCapabilities, requirements, Collections.emptySet());
+  }
+
+  private void assertRequirementFulfillment(Set<String> provisionerCapabilities,
+                                            Set<PluginRequirement> pluginRequirements,
+                                            Set<PluginRequirement> expectedUnfulfilledRequirements) {
+    Set<PluginRequirement> unfulfilledRequirements =
+      provisioningService.getUnfulfilledRequirements(provisionerCapabilities, pluginRequirements);
+    Assert.assertEquals(expectedUnfulfilledRequirements, unfulfilledRequirements);
+  }
+
+  @Test
+  public void testGroupByRequirement() {
+    Set<PluginRequirement> requirements =
+      ImmutableSet.of(new PluginRequirement("source1", "batchsource",
+                                            ImmutableSet.of(Requirements.TEPHRA_TX, "unicorn")),
+                      new PluginRequirement("sink1", "batchsink", ImmutableSet.of(Requirements.TEPHRA_TX, "dragon")),
+                      new PluginRequirement("sink1", "anothersink",
+                                            ImmutableSet.of(Requirements.TEPHRA_TX, "narwhal"))
+      );
+    Map<String, Set<String>> pluginGroupedByRequirement = provisioningService.groupByRequirement(requirements);
+
+    Assert.assertEquals(4, pluginGroupedByRequirement.size());
+    Assert.assertEquals(ImmutableSet.of("batchsource:source1", "batchsink:sink1", "anothersink:sink1"),
+                        pluginGroupedByRequirement.get(Requirements.TEPHRA_TX));
+    Assert.assertEquals(ImmutableSet.of("batchsource:source1"), pluginGroupedByRequirement.get("unicorn"));
+    Assert.assertEquals(ImmutableSet.of("batchsink:sink1"), pluginGroupedByRequirement.get("dragon"));
+    Assert.assertEquals(ImmutableSet.of("anothersink:sink1"), pluginGroupedByRequirement.get("narwhal"));
+
+    // test empty
+    pluginGroupedByRequirement = provisioningService.groupByRequirement(Collections.emptySet());
+    Assert.assertTrue(pluginGroupedByRequirement.isEmpty());
   }
 
   /**

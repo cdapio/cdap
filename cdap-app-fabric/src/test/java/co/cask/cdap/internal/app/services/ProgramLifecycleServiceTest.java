@@ -16,17 +16,12 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.MethodNotAllowedException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -39,14 +34,9 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -57,8 +47,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
 /**
  * ProgramLifecycleService tests.
@@ -70,7 +59,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
 
   @BeforeClass
   public static void setup() {
-    Injector injector = AppFabricTestHelper.getInjector();
+    Injector injector = getInjector();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     profileService = injector.getInstance(ProfileService.class);
     provisioningService = injector.getInstance(ProvisioningService.class);
@@ -166,8 +155,8 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testProfileProgramTypeRestrictions()
-    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
+  public void testProfileProgramTypeRestrictions() throws Exception {
+    deploy(AllProgramsApp.class, 200);
     ProfileId profileId = NamespaceId.DEFAULT.profile("profABC");
     ProvisionerInfo provisionerInfo = new ProvisionerInfo(MockProvisioner.NAME, Collections.emptyList());
     Profile profile = new Profile("profABC", "label", "desc", provisionerInfo);
@@ -178,9 +167,15 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
       userArgs.put(SystemArguments.PROFILE_NAME, profileId.getProfile());
       Map<String, String> systemArgs = new HashMap<>();
 
-      for (ProgramType programType : Arrays.asList(ProgramType.SERVICE, ProgramType.WORKER, ProgramType.MAPREDUCE,
-                                                   ProgramType.SPARK, ProgramType.FLOW)) {
-        ProgramId programId = NamespaceId.DEFAULT.app("app").program(programType, "p");
+      Set<ProgramId> programIds = ImmutableSet.of(
+        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME),
+        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME),
+        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME),
+        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME),
+        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME)
+      );
+
+      for (ProgramId programId : programIds) {
         ProgramOptions options = programLifecycleService.createProgramOptions(programId, userArgs,
                                                                               systemArgs, false);
         Optional<ProfileId> opt = SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT,
