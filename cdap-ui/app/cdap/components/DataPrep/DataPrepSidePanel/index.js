@@ -37,7 +37,9 @@ export default class DataPrepSidePanel extends Component {
       directives: storeState.directives,
       summary: {}
     };
+  }
 
+  componentDidMount() {
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState().dataprep;
 
@@ -49,7 +51,9 @@ export default class DataPrepSidePanel extends Component {
   }
 
   componentWillUnmount() {
-    this.sub();
+    if (this.sub && typeof this.sub === 'function') {
+      this.sub();
+    }
   }
 
   setActiveTab(tab) {

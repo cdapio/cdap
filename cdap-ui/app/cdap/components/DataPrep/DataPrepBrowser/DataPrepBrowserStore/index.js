@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,16 +18,22 @@ import {createStore, combineReducers} from 'redux';
 import {defaultAction, composeEnhancers, objectQuery} from 'services/helpers';
 
 const Actions = {
+  // File
+  SET_FILE_SYSTEM_CONTENTS: 'SET_FILE_SYSTEM_CONTENTS',
+  SET_FILE_SYSTEM_PATH: 'SET_FILE_SYSTEM_PATH',
+  SET_FILE_SYSTEM_LOADING: 'SET_FILE_SYSTEM_LOADING',
+  SET_FILE_SYSTEM_SEARCH: 'SET_FILE_SYSTEM_SEARCH',
+
   // Database
   SET_DATABASE_PROPERTIES: 'SET_DATABASE_PROPERTIES',
+  SET_DATABASE_CONNECTION_ID: 'SET_DATABASE_CONNECTION_ID',
   SET_DATABASE_LOADING: 'SET_DATABASE_LOADING',
   SET_ACTIVEBROWSER: 'SET_ACTIVE_BROWSER',
-  SET_DATABASE_ERROR: 'SET_DATABASE_ERROR',
 
   // Kafka
   SET_KAFKA_PROPERTIES: 'SET_KAFKA_PROPERTIES',
+  SET_KAFKA_CONNECTION_ID: 'SET_KAFKA_CONNECTION_ID',
   SET_KAFKA_LOADING: 'SET_KAFKA_LOADING',
-  SET_KAFKA_ERROR: 'SET_KAFKA_ERROR',
 
   // S3
   SET_S3_LOADING: 'SET_S3_LOADING',
@@ -54,16 +60,23 @@ const Actions = {
   SET_BIGQUERY_DATASET_LIST: 'SET_BIGQUERY_DATASET_LIST',
   SET_BIGQUERY_TABLE_LIST: 'SET_BIGQUERY_TABLE_LIST',
 
+  SET_ERROR: 'SET_ERROR',
   RESET: 'RESET'
 };
 
 export {Actions};
 
+const defaultFileSystemValue = {
+  contents: [],
+  loading: false,
+  path: '',
+  search: ''
+};
+
 const defaultDatabaseValue = {
   info: {},
   tables: [],
   loading: false,
-  error: null,
   connectionId: ''
 };
 
@@ -71,32 +84,30 @@ const defaultKafkaValue = {
   info: {},
   topics: [],
   loading: false,
-  error: null,
   connectionId: ''
 };
 
 const defaultS3Value = {
   info: {},
   loading: false,
-  error: null,
   activeBucketDetails: [],
   prefix: '',
-  connectionId: ''
+  connectionId: '',
+  search: ''
 };
 
 const defaultGCSValue = {
   info: {},
   loading: false,
-  error: null,
   activeBucketDetails: [],
   prefix: '',
-  connectionId: ''
+  connectionId: '',
+  search: ''
 };
 
 const defaultBigQueryValue = {
   info: {},
   loading: false,
-  error: null,
   connectionId: '',
   datasetId: null,
   datasetList: [],
@@ -107,8 +118,54 @@ const defaultActiveBrowser = {
   name: 'database'
 };
 
+const defaultError = null;
+
+// TODO: Right now each connection type maintains its own `loading` state. However,
+// we can just have one loading state for all connection types, similar to how
+// we implement `error` state here.
+// JIRA: CDAP-14173
+
+const file = (state = defaultFileSystemValue, action = defaultAction) => {
+  switch (action.type) {
+    case Actions.SET_FILE_SYSTEM_CONTENTS:
+      return {
+        ...state,
+        loading: false,
+        contents: action.payload.contents,
+        search: ''
+      };
+    case Actions.SET_FILE_SYSTEM_PATH:
+      return {
+        ...state,
+        path: action.payload.path,
+        search: ''
+      };
+    case Actions.SET_FILE_SYSTEM_LOADING:
+      return {
+        ...state,
+        loading: action.payload.loading
+      };
+    case Actions.SET_ERROR:
+      return {
+        ...state,
+        loading: false,
+        search: ''
+      };
+    case Actions.RESET:
+      return defaultFileSystemValue;
+    default:
+      return state;
+  }
+};
+
 const database = (state = defaultDatabaseValue, action = defaultAction) => {
   switch (action.type) {
+    case Actions.SET_DATABASE_CONNECTION_ID:
+      // This means the user is starting afresh. Reset everything to default and set the connectionID
+      return {
+        ...defaultDatabaseValue,
+        connectionId: action.payload.connectionId
+      };
     case Actions.SET_DATABASE_PROPERTIES:
       return Object.assign({}, state, {
         info: objectQuery(action, 'payload', 'info') || state.info,
@@ -122,12 +179,11 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
         loading: action.payload.loading,
         error: null
       });
-    case Actions.SET_DATABASE_ERROR:
-      return Object.assign({}, state, {
-        error: action.payload.error,
-        info: objectQuery(action, 'payload', 'info') || state.info,
+    case Actions.SET_ERROR:
+      return {
+        ...state,
         loading: false
-      });
+      };
     case Actions.RESET:
       return defaultDatabaseValue;
     default:
@@ -137,6 +193,12 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
 
 const kafka = (state = defaultKafkaValue, action = defaultAction) => {
   switch (action.type) {
+    case Actions.SET_KAFKA_CONNECTION_ID:
+      // This means the user is starting afresh. Reset everything to default and set the connectionID
+      return {
+        ...defaultKafkaValue,
+        connectionId: action.payload.connectionId
+      };
     case Actions.SET_KAFKA_PROPERTIES:
       return Object.assign({}, state, {
         info: objectQuery(action, 'payload', 'info') || state.info,
@@ -150,12 +212,11 @@ const kafka = (state = defaultKafkaValue, action = defaultAction) => {
         loading: action.payload.loading,
         error: null
       });
-    case Actions.SET_KAFKA_ERROR:
-      return Object.assign({}, state, {
-        error: action.payload.error,
-        info: objectQuery(action, 'payload', 'info') || state.info,
+    case Actions.SET_ERROR:
+      return {
+        ...state,
         loading: false
-      });
+      };
     case Actions.RESET:
       return defaultKafkaValue;
     default:
@@ -197,6 +258,11 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
       return {
         ...state,
         search: action.payload.search
+      };
+    case Actions.SET_ERROR:
+      return {
+        ...state,
+        loading: false
       };
     case Actions.RESET:
       return defaultS3Value;
@@ -240,6 +306,11 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
         ...state,
         search: action.payload.search
       };
+    case Actions.SET_ERROR:
+      return {
+        ...state,
+        loading: false
+      };
     case Actions.RESET:
       return defaultGCSValue;
     default:
@@ -249,9 +320,10 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
 
 const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
   switch (action.type) {
+    // This means the user is starting afresh. Reset everything to default and set the connectionID
     case Actions.SET_BIGQUERY_CONNECTION_ID:
       return {
-        ...state,
+        ...defaultBigQueryValue,
         connectionId: action.payload.connectionId
       };
     case Actions.SET_BIGQUERY_CONNECTION_DETAILS:
@@ -280,6 +352,11 @@ const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
         datasetId: action.payload.datasetId,
         tableList: action.payload.tableList
       };
+    case Actions.SET_ERROR:
+      return {
+        ...state,
+        loading: false
+      };
     case Actions.RESET:
       return defaultBigQueryValue;
     default:
@@ -298,20 +375,35 @@ const activeBrowser = (state = defaultActiveBrowser, action = defaultAction) => 
   }
 };
 
+const error = (state = defaultError, action = defaultAction) => {
+  switch (action.type) {
+    case Actions.SET_ERROR:
+      return action.payload.error;
+    default:
+      return state;
+  }
+};
+
 const DataPrepBrowserStore = createStore(
   combineReducers({
+    file,
     database,
     kafka,
     activeBrowser,
     s3,
     gcs,
-    bigquery
+    bigquery,
+    error
   }),
   {
+    file: defaultFileSystemValue,
     database: defaultDatabaseValue,
     kafka: defaultKafkaValue,
     activeBrowser: defaultActiveBrowser,
-    bigquery: defaultBigQueryValue
+    s3: defaultS3Value,
+    gcs: defaultGCSValue,
+    bigquery: defaultBigQueryValue,
+    error: defaultError
   },
   composeEnhancers('DataPrepBrowserStore')()
 );

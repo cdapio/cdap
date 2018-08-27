@@ -48,12 +48,28 @@ class DatasetListView extends Component {
       return <LoadingSVGCentered />;
     }
 
+    const datasetList = this.props.datasetList;
+
+    if (!datasetList.length) {
+      return (
+        <div className="empty-search-container">
+          <div className="empty-search text-xs-center">
+            <strong>
+              {T.translate(`${PREFIX}.EmptyMessage.emptyDatasetList`, {
+                connectionName: this.props.connectionId
+              })}
+            </strong>
+          </div>
+        </div>
+      );
+    }
+
     let namespace = getCurrentNamespace();
 
     return (
       <div className="list-view-container">
         <div className="sub-panel">
-          {T.translate(`${PREFIX}.datasetCount`, {context: this.props.datasetList.length})}
+          {T.translate(`${PREFIX}.datasetCount`, {context: datasetList.length})}
         </div>
 
         <div className="list-table">
@@ -67,12 +83,13 @@ class DatasetListView extends Component {
 
           <div className="table-body">
             {
-              this.props.datasetList.map((dataset) => {
+              datasetList.map((dataset) => {
                 let Tag = this.props.enableRouting ? Link : 'div';
                 let path = `/ns/${namespace}/connections/bigquery/${this.props.connectionId}/datasets/${dataset.name}`;
 
                 return (
                   <Tag
+                    key={dataset.name}
                     to={path}
                     onClick={this.clickHandler.bind(null, dataset.name)}
                   >

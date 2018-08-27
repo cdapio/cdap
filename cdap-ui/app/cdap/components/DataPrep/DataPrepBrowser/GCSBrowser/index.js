@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import {setGCSLoading} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {setGCSLoading, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, Switch} from 'react-router-dom';
 import Page404 from 'components/404';
 import {Provider} from 'react-redux';
@@ -69,7 +69,7 @@ export default class GCSBrowser extends Component {
 
     MyDataPrepApi.readGCSFile(params, null, headers)
       .subscribe(
-        res => {
+        (res) => {
           let {id: workspaceId} = res.values[0];
           if (this.props.enableRouting) {
             window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
@@ -77,6 +77,8 @@ export default class GCSBrowser extends Component {
           if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
             this.props.onWorkspaceCreate(workspaceId);
           }
+        }, (err) => {
+          setError(err);
         }
       );
   };
