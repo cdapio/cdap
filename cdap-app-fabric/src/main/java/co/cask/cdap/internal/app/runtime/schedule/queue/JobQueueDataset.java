@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.schedule.queue;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -28,6 +29,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
@@ -84,15 +86,19 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
   private static final byte[] ROW_KEY_SEPARATOR = new byte[] {':'};
   private static final byte[] MESSAGE_ID_ROW_PREFIX = new byte[] {'M'};
 
-  private static final int NUM_PARTITIONS = 16;
+  private static final int DEFAULT_NUM_PARTITIONS = 16;
+  private final int numPartitions;
 
   private final Table table;
   private final Collection<byte[]> scheduleIds;
 
-  JobQueueDataset(String instanceName, @EmbeddedDataset(EMBEDDED_TABLE_NAME) Table table) {
-    super(instanceName, table);
+  JobQueueDataset(DatasetSpecification spec, @EmbeddedDataset(EMBEDDED_TABLE_NAME) Table table) {
+    super(spec.getName(), table);
     this.table = table;
     this.scheduleIds = new ArrayList<>();
+    // for backwards compat. use the old (pre-5.1) hard-coded value as default;
+    // job queue datasets created with 5.1 or later will have this as a property
+    this.numPartitions = spec.getIntProperty(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS, DEFAULT_NUM_PARTITIONS);
   }
 
   @Override
@@ -239,7 +245,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
 
   @Override
   public int getNumPartitions() {
-    return NUM_PARTITIONS;
+    return numPartitions;
   }
 
   @Override
@@ -321,7 +327,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
       .putString(scheduleId.getVersion())
       .putString(scheduleId.getSchedule())
       .hash().asInt();
-    return Math.abs(hash) % NUM_PARTITIONS;
+    return Math.abs(hash) % numPartitions;
   }
 
   private byte[] getRowKey(ScheduleId scheduleId, long timestamp) {

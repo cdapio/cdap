@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -58,7 +59,7 @@ public final class DatasetsUtil {
 
   /**
    * Gets instance of {@link Dataset}, while add instance to
-   * {@link co.cask.cdap.data2.dataset2.DatasetFramework} and creating the physical data set
+   * {@link DatasetFramework} and creating the physical data set
    * if that one doesn't exist.
    */
   public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
@@ -88,6 +89,25 @@ public final class DatasetsUtil {
       return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
     } catch (DatasetInstantiationException e) {
       createIfNotExists(datasetFramework, datasetId, datasetTypename, datasetProperties);
+      return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
+    }
+  }
+
+  /**
+   * Gets a {@link Dataset} instance through the given {@link DatasetContext}. If the dataset doesn't exist,
+   * it will be created using the given {@link DatasetFramework}.
+   */
+  public static <T extends Dataset> T getOrCreateDataset(DatasetContext datasetContext,
+                                                         DatasetFramework datasetFramework,
+                                                         DatasetId datasetId,
+                                                         String datasetTypename,
+                                                         Supplier<DatasetProperties> datasetPropertiesSupplier)
+    throws DatasetManagementException, IOException {
+
+    try {
+      return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
+    } catch (DatasetInstantiationException e) {
+      createIfNotExists(datasetFramework, datasetId, datasetTypename, datasetPropertiesSupplier.get());
       return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
     }
   }

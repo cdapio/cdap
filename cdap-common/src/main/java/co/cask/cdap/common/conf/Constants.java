@@ -341,6 +341,8 @@ public final class Constants {
     public static final String TIME_EVENT_FETCH_SIZE = "scheduler.time.event.fetch.size";
     public static final String DATA_EVENT_FETCH_SIZE = "scheduler.data.event.fetch.size";
     public static final String PROGRAM_STATUS_EVENT_FETCH_SIZE = "scheduler.program.status.event.fetch.size";
+
+    public static final String JOB_QUEUE_NUM_PARTITIONS = "scheduler.job.queue.num.partitions";
   }
 
   /**

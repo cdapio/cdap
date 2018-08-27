@@ -101,6 +101,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private final AdminEventPublisher adminEventPublisher;
   private final Store appMetaStore;
   private final Impersonator impersonator;
+  private final CConfiguration cConf;
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
@@ -109,6 +110,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
                        ConstraintCheckerService constraintCheckerService,
                        MessagingService messagingService,
                        CConfiguration cConf, Store store, Impersonator impersonator) {
+    this.cConf = cConf;
     this.startedLatch = new CountDownLatch(1);
     this.datasetFramework = datasetFramework;
     MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
@@ -144,7 +146,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       }
 
       @Override
-      protected void shutDown() throws Exception {
+      protected void shutDown() {
         scheduleNotificationSubscriberService.stopAndWait();
         constraintCheckerService.stopAndWait();
         timeSchedulerService.stopAndWait();
@@ -161,7 +163,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private void cleanupJobs() {
     try {
       transactional.execute(context -> {
-        JobQueueDataset jobQueue = Schedulers.getJobQueue(context, datasetFramework);
+        JobQueueDataset jobQueue = Schedulers.getJobQueue(context, datasetFramework, cConf);
         try (CloseableIterator<Job> jobIter = jobQueue.fullScan()) {
           LOG.info("Cleaning up jobs in state {}.", Job.State.PENDING_LAUNCH);
           while (jobIter.hasNext()) {
@@ -482,12 +484,9 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Override
   public void modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
     checkStarted();
-    execute(new StoreAndQueueTxRunnable<Void, RuntimeException>() {
-      @Override
-      public Void run(ProgramScheduleStoreDataset store, JobQueueDataset queue) {
-        store.modifySchedulesTriggeredByDeletedProgram(programId);
-        return null;
-      }
+    execute((StoreAndQueueTxRunnable<Void, RuntimeException>) (store, queue) -> {
+      store.modifySchedulesTriggeredByDeletedProgram(programId);
+      return null;
     }, RuntimeException.class);
   }
 
@@ -604,15 +603,17 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     }, tClass);
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   private <V, T extends Exception> V execute(StoreAndQueueTxRunnable<V, T> runnable,
                                              Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
       ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
-      JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework);
+      JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
       return runnable.run(store, queue);
     }, tClass);
   }
 
+  @SuppressWarnings({"UnusedReturnValue", "SameParameterValue"})
   private <V, T extends Exception> V execute(StoreAndProfileTxRunnable<V, T> runnable,
                                              Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
@@ -622,12 +623,13 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     }, tClass);
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   private <V, T extends Exception> V execute(StoreQueueAndProfileTxRunnable<V, T> runnable,
                                              Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
       ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
       ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
-      JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework);
+      JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
       return runnable.run(store, queue, profileDataset);
     }, tClass);
   }

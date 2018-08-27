@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -33,7 +32,6 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.internal.app.AppFabricDatasetModule;
@@ -60,7 +58,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionAware;
@@ -147,7 +144,10 @@ public class JobQueueDatasetTest {
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     DatasetsUtil.createIfNotExists(datasetFramework, Schedulers.JOB_QUEUE_DATASET_ID,
-                                   JobQueueDataset.class.getName(), DatasetProperties.EMPTY);
+                                   JobQueueDataset.class.getName(),
+                                   DatasetProperties.builder().
+                                     add(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS, 5)
+                                     .build());
 
     jobQueue = datasetFramework.getDataset(Schedulers.JOB_QUEUE_DATASET_ID, new HashMap<>(), null);
     txExecutor = new DynamicTransactionExecutorFactory(new InMemoryTxSystemClient(txManager))

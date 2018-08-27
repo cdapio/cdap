@@ -347,6 +347,9 @@ public abstract class AppFabricTestBase {
 
     cConf.setBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE, true);
     cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, tmpFolder.newFolder("system-artifacts").getAbsolutePath());
+
+    // reduce the number of constraint checker threads
+    cConf.setInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS, 2);
     return cConf;
   }
 

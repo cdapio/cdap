@@ -20,9 +20,6 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.ApplicationNotFoundException;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.RetryStrategy;
@@ -31,7 +28,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
-import co.cask.cdap.internal.app.runtime.schedule.TaskExecutionException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
@@ -108,7 +104,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("constraint-checker-task-%d").build()));
     taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver, namespaceQueryAdmin, cConf);
 
-    int numPartitions = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework).getNumPartitions();
+    int numPartitions = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework, cConf).getNumPartitions();
     for (int partition = 0; partition < numPartitions; partition++) {
       taskExecutorService.submit(new ConstraintCheckerThread(partition));
     }
@@ -151,7 +147,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     @Override
     public void run() {
       // TODO: how to retry the same jobs upon txConflict?
-      jobQueue = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework);
+      jobQueue = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework, cConf);
 
       while (!stopping) {
         try {
@@ -196,7 +192,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       return emptyFetch && readyJobs.isEmpty() ? 2000L : 0L;
     }
 
-    private boolean checkJobConstraints() throws Exception {
+    private boolean checkJobConstraints() {
       boolean emptyScan = true;
 
       try (CloseableIterator<Job> jobQueueIter = jobQueue.getJobs(partition, lastConsumed)) {
