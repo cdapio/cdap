@@ -36,8 +36,8 @@ const RunStartTime = ({currentRun}) => {
       </div>
       <span>
         {
-          currentRun && currentRun.start ?
-            `${humanReadableDate(currentRun.start)}`
+          currentRun ?
+            `${humanReadableDate(currentRun.starting)}`
           :
             '--'
         }

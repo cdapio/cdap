@@ -94,10 +94,10 @@ export default function RunningRunsPopover({runs, currentRunId, pipelineId}) {
                         null
                     }
                   </td>
-                  <td>{moment.unix(run.start).calendar()}</td>
+                  <td>{moment.unix(run.starting).calendar()}</td>
                   <td>
                     <Duration
-                      targetTime={run.start}
+                      targetTime={run.starting}
                       isMillisecond={false}
                       showFullDuration={true}
                     />

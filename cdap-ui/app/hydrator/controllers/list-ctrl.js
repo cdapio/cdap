@@ -183,7 +183,7 @@ angular.module(PKG.name + '.feature.hydrator')
         .then(function (runs) {
           if (runs.length) {
             app._stats.numRuns = runs.length;
-            app._stats.lastStartTime = runs.length > 0 ? runs[0].start : 'N/A';
+            app._stats.lastStartTime = runs.length > 0 ? runs[0].starting : 'N/A';
             var currentRun = runs[0];
             setDuration(app, currentRun);
             app._latest = currentRun;

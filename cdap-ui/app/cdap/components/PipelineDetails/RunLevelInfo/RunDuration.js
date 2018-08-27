@@ -35,13 +35,13 @@ const RunDuration = ({currentRun}) => {
     if (currentRun.end) {
       DurationComp = (
         <span>
-          {`${humanReadableDuration(currentRun.end - currentRun.start)}`}
+          {`${humanReadableDuration(currentRun.end - currentRun.starting)}`}
         </span>
       );
     } else {
       DurationComp = (
         <Duration
-          targetTime={currentRun.start}
+          targetTime={currentRun.starting}
           isMillisecond={false}
           showFullDuration={true}
         />
@@ -55,7 +55,7 @@ const RunDuration = ({currentRun}) => {
       </div>
       <span>
         {
-          currentRun && currentRun.start ?
+          currentRun && currentRun.starting ?
             DurationComp
           :
             '--'

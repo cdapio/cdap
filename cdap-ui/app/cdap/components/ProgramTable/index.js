@@ -42,7 +42,7 @@ const tableHeaders = [
   {
     property: 'latestRun',
     label: T.translate('features.ViewSwitch.ProgramTable.lastStartedLabel'),
-    sortFunc: (entity) => { return moment(entity.latestRun.start).valueOf(); }
+    sortFunc: (entity) => { return moment(entity.latestRun.starting).valueOf(); }
   },
   {
     property: 'status',
@@ -114,7 +114,7 @@ export default class ProgramTable extends Component {
                 </td>
                 <td>
                   {
-                    !isEmpty(program.latestRun) ? humanReadableDate(program.latestRun.start) : 'n/a'
+                    !isEmpty(program.latestRun) ? humanReadableDate(program.latestRun.starting) : 'n/a'
                   }
                 </td>
                 <td className={statusClass}>
