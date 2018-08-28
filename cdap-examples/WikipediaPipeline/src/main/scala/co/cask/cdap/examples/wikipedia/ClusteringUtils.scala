@@ -24,14 +24,15 @@ import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.dataset.table.{Put, Table}
 import co.cask.cdap.api.spark.SparkExecutionContext
 import co.cask.cdap.api.workflow.Value
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{Accumulator, AccumulatorParam, SparkContext}
+import org.apache.spark.util.AccumulatorV2
 
 import scala.collection.mutable
 
 /**
- * Utilities for Clustering algorithms used in {@link WikipediaPipelineApp}.
+ * Utilities for Clustering algorithms used in [[co.cask.cdap.examples.wikipedia.WikipediaPipelineApp]].
  */
 object ClusteringUtils {
 
@@ -47,8 +48,8 @@ object ClusteringUtils {
 
     val tokenizer = new SimpleTokenizer(normalizedWikiDataset.sparkContext, stopwordFile)
 
-    val tokenized: RDD[(Long, IndexedSeq[String])] = normalizedWikiDataset.zipWithIndex().map {
-      case (text, id) => id -> tokenizer.getWords(Bytes.toString(text._2))
+    val tokenized: RDD[(Long, IndexedSeq[String])] = normalizedWikiDataset.values.zipWithIndex().map {
+      case (text, id) => id -> tokenizer.getWords(Bytes.toString(text))
     }
     tokenized.cache()
 
@@ -98,10 +99,10 @@ object ClusteringUtils {
    * Store the clustering results in the specified dataset and update accumulators and workflow token.
    */
   def storeResults(sc: SparkContext, sec: SparkExecutionContext,
-                   results: Array[Array[(String, Double)]], namespace: String, tableName: String) = {
-    val numRecords: Accumulator[Int] = sc.accumulator(0, "num.records")
-    val initial= new Term("", 0.0)
-    val highestScore: Accumulator[Term] = sc.accumulator(initial, "highest.score")(HighestAccumulatorParam)
+                   results: Array[Array[(String, Double)]], namespace: String, tableName: String): Unit = {
+    val numRecords = sc.longAccumulator("num.records")
+    val highestScore = new HighestAccumulator(new Term("", 0.0))
+    sc.register(highestScore, "highest.score")
 
     sec.execute(new TxRunnable {
       override def run(context: DatasetContext) = {
@@ -110,10 +111,10 @@ object ClusteringUtils {
           val put: Put = new Put(Bytes.toBytes(i))
           topic.foreach { case (term, weight) =>
             put.add(term, weight)
-            highestScore += new Term(term, weight)
+            highestScore.add(new Term(term, weight))
           }
           table.put(put)
-          numRecords += 1
+          numRecords.add(1)
         }
       }
     })
@@ -183,12 +184,20 @@ class Term(termName: String, termWeight: Double) {
   val weight: Double = termWeight
 }
 
-object HighestAccumulatorParam extends AccumulatorParam[Term] {
-  def zero(initialValue: Term): Term = {
-    initialValue
-  }
+class HighestAccumulator(initialValue: Term) extends AccumulatorV2[Term, Term] {
 
-  def addInPlace(v1: Term, v2: Term): Term = {
-    if (v1.weight >= v2.weight) v1 else v2
-  }
+  private var _value = initialValue
+
+  override def isZero: Boolean = _value == initialValue
+
+  override def copy(): AccumulatorV2[Term, Term] = new HighestAccumulator(_value)
+
+  override def reset(): Unit = _value = initialValue
+
+  override def add(v: Term): Unit = _value = if (v.weight > _value.weight) v else _value
+
+  override def merge(other: AccumulatorV2[Term, Term]): Unit =
+    _value = if (other.value.weight > _value.weight) other.value else _value
+
+  override def value: Term = _value
 }

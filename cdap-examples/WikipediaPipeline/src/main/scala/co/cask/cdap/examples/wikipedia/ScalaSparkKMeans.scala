@@ -52,15 +52,7 @@ class ScalaSparkKMeans extends SparkMain {
     corpus.cache()
 
     // Cluster the data into two classes using KMeans
-    val vectors = corpus.map {
-      case (id, vector) => vector
-    }
-
-    val kMeans = new KMeans()
-    kMeans.setK(k)
-    kMeans.setMaxIterations(maxIterations)
-
-    val kMeansModel = kMeans.run(vectors)
+    val kMeansModel = KMeans.train(corpus.values, k, maxIterations)
 
     val topTenWeightsWithIndex: Array[Array[(Double, Int)]] = kMeansModel.clusterCenters.map {
       case vector: Vector => vector.toArray.zipWithIndex.sorted.reverse.take(10)
@@ -68,7 +60,7 @@ class ScalaSparkKMeans extends SparkMain {
 
     val topTenTermsWithWeights: Array[Array[(String, Double)]] = topTenWeightsWithIndex.map {
       case clusterCenter: Array[(Double, Int)] => clusterCenter.map {
-        case element: ((Double, Int)) => (vocabArray(element._2), element._1)
+        case element: (Double, Int) => (vocabArray(element._2), element._1)
       }
     }
 

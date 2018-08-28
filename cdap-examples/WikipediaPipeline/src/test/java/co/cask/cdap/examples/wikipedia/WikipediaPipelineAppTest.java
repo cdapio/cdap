@@ -34,7 +34,7 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.StreamManager;
-import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
 /**
  * Test for {@link WikipediaPipelineApp}
  */
-public class WikipediaPipelineAppTest extends TestBase {
+public class WikipediaPipelineAppTest extends TestBaseWithSpark2 {
   private static final Gson GSON = new Gson();
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
@@ -80,17 +80,17 @@ public class WikipediaPipelineAppTest extends TestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(WikipediaPipelineWorkflow.NAME);
     // Test with default threshold. Workflow should not proceed beyond first condition.
-    testWorkflow(workflowManager, appConfig, 1);
+    testWorkflow(workflowManager, appConfig, 1, 10);
 
     // Test with a reduced threshold, so the workflow proceeds beyond the first predicate
-    testWorkflow(workflowManager, appConfig, 2, 1);
+    testWorkflow(workflowManager, appConfig, 2, 10, 1);
 
     // Test K-Means
     appConfig = new WikipediaPipelineApp.WikipediaAppConfig("kmeans");
     appRequest = new AppRequest<>(ARTIFACT_SUMMARY, appConfig);
     appManager = deployApplication(APP_ID, appRequest);
     workflowManager = appManager.getWorkflowManager(WikipediaPipelineWorkflow.NAME);
-    testWorkflow(workflowManager, appConfig, 3, 1);
+    testWorkflow(workflowManager, appConfig, 3, 2, 1);
 
     // verify the clusteringAlgorithm metadata written to the dataset
     Tasks.waitFor(true, () -> {
@@ -163,12 +163,12 @@ public class WikipediaPipelineAppTest extends TestBase {
   }
 
   private void testWorkflow(WorkflowManager workflowManager, WikipediaPipelineApp.WikipediaAppConfig config,
-                            int expectedRuns) throws Exception {
-    testWorkflow(workflowManager, config, expectedRuns, null);
+                            int expectedRuns, int expectedRecords) throws Exception {
+    testWorkflow(workflowManager, config, expectedRuns, expectedRecords, null);
   }
 
   private void testWorkflow(WorkflowManager workflowManager, WikipediaPipelineApp.WikipediaAppConfig config,
-                            int expectedRuns, @Nullable Integer threshold) throws Exception {
+                            int expectedRuns, int expectedRecords, @Nullable Integer threshold) throws Exception {
     if (threshold == null) {
       workflowManager.start();
     } else {
@@ -185,10 +185,10 @@ public class WikipediaPipelineAppTest extends TestBase {
     boolean conditionResult = Boolean.parseBoolean(tokenAtCondition.getTokenDataAtNode().get("result"));
     if (threshold == null) {
       Assert.assertFalse(conditionResult);
-      assertWorkflowToken(workflowManager, config, pid, false);
+      assertWorkflowToken(workflowManager, config, pid, expectedRecords, false);
     } else {
       Assert.assertTrue(conditionResult);
-      assertWorkflowToken(workflowManager, config, pid, true);
+      assertWorkflowToken(workflowManager, config, pid, expectedRecords, true);
     }
   }
 
@@ -207,11 +207,12 @@ public class WikipediaPipelineAppTest extends TestBase {
   }
 
   private void assertWorkflowToken(WorkflowManager workflowManager, WikipediaPipelineApp.WikipediaAppConfig config,
-                                   String pid, boolean continueConditionSucceeded) throws NotFoundException {
+                                   String pid, int expectedRecords,
+                                   boolean continueConditionSucceeded) throws NotFoundException {
     assertTokenAtPageTitlesMRNode(workflowManager, pid);
     assertTokenAtRawDataMRNode(workflowManager, pid, continueConditionSucceeded);
     assertTokenAtNormalizationMRNode(workflowManager, pid, continueConditionSucceeded);
-    assertTokenAtSparkClusteringNode(workflowManager, config, pid, continueConditionSucceeded);
+    assertTokenAtSparkClusteringNode(workflowManager, config, pid, expectedRecords, continueConditionSucceeded);
     assertTokenAtTopNMRNode(workflowManager, pid, continueConditionSucceeded);
   }
 
@@ -254,6 +255,7 @@ public class WikipediaPipelineAppTest extends TestBase {
 
   private void assertTokenAtSparkClusteringNode(WorkflowManager workflowManager,
                                                 WikipediaPipelineApp.WikipediaAppConfig config, String pid,
+                                                int expectedRecords,
                                                 boolean continueConditionSucceeded) throws NotFoundException {
     if (!continueConditionSucceeded) {
       return;
@@ -262,7 +264,8 @@ public class WikipediaPipelineAppTest extends TestBase {
     String sparkProgramName = SparkWikipediaClustering.NAME + "-" + config.clusteringAlgorithm.toUpperCase();
     WorkflowTokenNodeDetail clusteringUserTokens =
       workflowManager.getTokenAtNode(pid, sparkProgramName, null, null);
-    Assert.assertEquals(10, Integer.parseInt(clusteringUserTokens.getTokenDataAtNode().get("num.records")));
+    Assert.assertEquals(expectedRecords,
+                        Integer.parseInt(clusteringUserTokens.getTokenDataAtNode().get("num.records")));
     Assert.assertTrue(clusteringUserTokens.getTokenDataAtNode().containsKey("highest.score.term"));
     Assert.assertTrue(clusteringUserTokens.getTokenDataAtNode().containsKey("highest.score.value"));
     WorkflowTokenNodeDetail ldaSystemTokens =

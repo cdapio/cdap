@@ -16,12 +16,20 @@
 
 package $package;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -33,9 +41,10 @@ import org.junit.Test;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public class SparkPageRankAppTest extends TestBase {
+public class SparkPageRankAppTest extends TestBaseWithSpark2 {
 
   private static final String URL_1 = "http://example.com/page1";
   private static final String URL_2 = "http://example.com/page2";
@@ -45,7 +54,7 @@ public class SparkPageRankAppTest extends TestBase {
   private static final String TOTAL_PAGES = "1";
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
   public void test() throws Exception {
@@ -64,17 +73,17 @@ public class SparkPageRankAppTest extends TestBase {
       .start();
 
     // Wait for service to start since the Spark program needs it
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Start the SparkPageRankProgram
     SparkManager sparkManager = appManager.getSparkManager(SparkPageRankApp.PageRankSpark.class.getSimpleName())
       .start();
-    sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
 
     // Run RanksCounter which will count the number of pages for a pr
     MapReduceManager mapReduceManager = appManager.getMapReduceManager(SparkPageRankApp.RanksCounter.class
                                                                          .getSimpleName()).start();
-    mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
+    mapReduceManager.waitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
     //Query for rank
     URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),
@@ -93,5 +102,22 @@ public class SparkPageRankAppTest extends TestBase {
                   SparkPageRankApp.SparkPageRankServiceHandler.TOTAL_PAGES_PATH + "/" + RANK);
     response = HttpRequests.execute(HttpRequest.get(url).build());
     Assert.assertEquals(TOTAL_PAGES, response.getResponseBodyAsString());
+
+    // verify that the tag written by the program is accessible
+    Tasks.waitFor(true, () -> {
+      Set<MetadataRecordV2> metadataRecordV2s =
+        getMetadataAdmin().getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "ranks"));
+      for (MetadataRecordV2 actualRecord : metadataRecordV2s) {
+        if (actualRecord.getScope() == MetadataScope.USER) {
+          if (actualRecord.getTags().size() == 1) {
+            String tag = actualRecord.getTags().iterator().next();
+            Assert.assertEquals(SparkPageRankProgram.ITERATIONS_COUNT + SparkPageRankProgram.ITERATIONS_COUNT_VALUE,
+                                tag);
+            return true;
+          }
+        }
+      }
+      return false;
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 }

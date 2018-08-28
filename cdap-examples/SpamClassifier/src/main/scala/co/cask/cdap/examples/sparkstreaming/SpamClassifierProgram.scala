@@ -43,12 +43,12 @@ class SpamClassifierProgram(name: String) extends AbstractSpark with SparkMain {
   override protected def configure(): Unit = {
     setName(name)
     setMainClass(classOf[SpamClassifierProgram])
-    setDescription("Spark Streaming Based Kaka Message Classifier");
+    setDescription("Spark Streaming Based Kaka Message Classifier")
     setDriverResources(new Resources(2048))
     setExecutorResources(new Resources(1024))
   }
 
-  override def run(implicit sec: SparkExecutionContext) {
+  override def run(implicit sec: SparkExecutionContext): Unit = {
 
     val sparkContext = new SparkContext
 

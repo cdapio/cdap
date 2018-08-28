@@ -46,5 +46,9 @@
       <groupId>co.cask.common</groupId>
       <artifactId>common-http</artifactId>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-unit-test</artifactId>
+    </dependency>
   </dependencies>
 </project>
