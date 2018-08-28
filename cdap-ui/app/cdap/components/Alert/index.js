@@ -103,7 +103,9 @@ export default class Alert extends Component {
         toggle={() => {}}
         backdrop={false}
         keyboard={true}
-        className="global-alert">
+        className="global-alert"
+        zIndex={1061/* This is required for showing error in angular side*/}
+      >
         <div className={this.state.type}>
           {msgElem}
           <IconSVG

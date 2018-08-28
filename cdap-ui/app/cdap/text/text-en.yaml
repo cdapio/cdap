@@ -1174,6 +1174,8 @@ features:
     gcs: Google Cloud Storage ({count})
     hdfs: File System
     kafka: Kafka ({count})
+    NoDefaultConnection:
+      title: No default connection available
     pageTitle: CDAP | Connections
     s3: S3 ({count})
     title: "Connections in \"{namespace}\""

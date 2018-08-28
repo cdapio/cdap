@@ -26,14 +26,15 @@ import GCSBrowser from 'components/DataPrep/DataPrepBrowser/GCSBrowser';
 import BigQueryBrowser from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser';
 import DataPrepErrorBanner from 'components/DataPrep/DataPrepBrowser/ErrorBanner';
 import {Provider} from 'react-redux';
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
 
 const browserMap = {
-  database: DatabaseBrowser,
-  file: FileBrowser,
-  kafka: KafkaBrowser,
-  s3: S3Browser,
-  gcs: GCSBrowser,
-  bigquery: BigQueryBrowser
+  [ConnectionType.DATABASE]: DatabaseBrowser,
+  [ConnectionType.FILE]: FileBrowser,
+  [ConnectionType.KAFKA]: KafkaBrowser,
+  [ConnectionType.S3]: S3Browser,
+  [ConnectionType.GCS]: GCSBrowser,
+  [ConnectionType.BIGQUERY]: BigQueryBrowser
 };
 
 export default class DataPrepBrowser extends Component {
@@ -77,7 +78,7 @@ export default class DataPrepBrowser extends Component {
   }
 
   render() {
-    let activeBrowser = this.state.activeBrowser.name.toLowerCase();
+    let activeBrowser = this.state.activeBrowser.name;
     if (browserMap.hasOwnProperty(activeBrowser)) {
       let Tag = browserMap[activeBrowser];
       return (

@@ -14,7 +14,6 @@
  * the License.
  */
 
-
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Loadable from 'react-loadable';
@@ -294,7 +293,7 @@ export default class DataPrepTopPanel extends Component {
       );
     };
 
-    const MenuItem = () => {
+    const MenuItem = (props) => {
       return (
         <li
           className={classnames(`popover-menu-item ${menuItem.className}`, {
@@ -302,6 +301,7 @@ export default class DataPrepTopPanel extends Component {
           })}
           title={menuItem.label}
           onClick={isDisabled ? preventPropagation : menuItem.onClick}
+          {...props}
         >
           {getMenuItem(menuItem)}
         </li>

@@ -23,11 +23,14 @@ import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {Input} from 'reactstrap';
-import IconSVG from 'components/IconSVG';
 import ee from 'event-emitter';
 import {objectQuery} from 'services/helpers';
 import {setDatabaseAsActiveBrowser, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
+import {Provider} from 'react-redux';
+import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
+import If from 'components/If';
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
 
 require('./DatabaseBrowser.scss');
 
@@ -55,7 +58,7 @@ export default class DatabaseBrowser extends Component {
     this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_DATABASE', this.eventBasedFetchTable);
     this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
       let {database, activeBrowser} = DataPrepBrowserStore.getState();
-      if (activeBrowser.name !== 'database') {
+      if (activeBrowser.name !== ConnectionType.DATABASE) {
         return;
       }
 
@@ -78,7 +81,7 @@ export default class DatabaseBrowser extends Component {
 
   eventBasedFetchTable = (connectionId) => {
     if (this.state.connectionId === connectionId) {
-      setDatabaseAsActiveBrowser({name: 'database', id: connectionId});
+      setDatabaseAsActiveBrowser({name: ConnectionType.DATABASE, id: connectionId});
     }
   }
 
@@ -202,46 +205,42 @@ export default class DatabaseBrowser extends Component {
 
     return (
       <div className="database-browser">
-        <DataPrepBrowserPageTitle
-          browserI18NName="DatabaseBrowser"
-          browserStateName="database"
+        <Provider store={DataPrepBrowserStore}>
+          <DataPrepBrowserPageTitle
+            browserI18NName="DatabaseBrowser"
+            browserStateName="database"
+          />
+        </Provider>
+        <DataprepBrowserTopPanel
+          allowSidePanelToggle={true}
+          toggle={this.props.toggle}
+          browserTitle={T.translate(`${PREFIX}.title`)}
         />
-        <div className="top-panel">
-          <div className="title">
-            <h5>
-              <span
-                className="fa fa-fw"
-                onClick={this.props.toggle}
-              >
-                <IconSVG name="icon-bars" />
-              </span>
+        <If condition={this.state.error}>
+          <div>
+            <div className="database-browser-header">
+              <div className="database-metadata">
+                <h5>{objectQuery(this.state.info, 'info', 'name')}</h5>
+                <span className="tables-count">
+                  {
+                    T.translate(`${PREFIX}.tableCount`, {
+                      context: this.state.tables.length
+                    })
+                  }
+                </span>
+              </div>
+              <div className="table-name-search">
+                <Input
+                  placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
+                  value={this.state.search}
+                  onChange={this.handleSearch}
+                  autoFocus={this.state.searchFocus}
+                />
+              </div>
+            </div>
+          </div>
+        </If>
 
-              <span>
-                {T.translate(`${PREFIX}.title`)}
-              </span>
-            </h5>
-          </div>
-        </div>
-        <div className="database-browser-header">
-          <div className="database-metadata">
-            <h5>{objectQuery(this.state.info, 'info', 'name')}</h5>
-            <span className="tables-count">
-              {
-                T.translate(`${PREFIX}.tableCount`, {
-                  context: this.state.tables.length
-                })
-              }
-            </span>
-          </div>
-          <div className="table-name-search">
-            <Input
-              placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
-              value={this.state.search}
-              onChange={this.handleSearch}
-              autoFocus={this.state.searchFocus}
-            />
-          </div>
-        </div>
         <div className="database-browser-content">
           { renderContents(filteredTables) }
         </div>

@@ -15,7 +15,6 @@
  */
 
 import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
@@ -27,12 +26,13 @@ import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBr
 import {setError, goToPath, trimSuffixSlash} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
-import IconSVG from 'components/IconSVG';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import isEmpty from 'lodash/isEmpty';
 import DataPrepStore from 'components/DataPrep/store';
 import lastIndexOf from 'lodash/lastIndexOf';
 import isNil from 'lodash/isNil';
+import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
 
 require('./FileBrowser.scss');
 
@@ -90,7 +90,7 @@ export default class FileBrowser extends Component {
 
     this.browserStoreSubscription = DataPrepBrowserStore.subscribe(() => {
       let {file, activeBrowser} = DataPrepBrowserStore.getState();
-      if (activeBrowser.name !== 'file') {
+      if (activeBrowser.name !== ConnectionType.FILE) {
         return;
       }
 
@@ -492,24 +492,11 @@ export default class FileBrowser extends Component {
   render() {
     return (
       <div className="file-browser-container">
-        <div className="top-panel">
-          <div className="title">
-            <h5>
-              <span
-                className={classnames("fa fa-fw", {
-                  'disabled': !this.props.allowSidePanelToggle
-                })}
-                onClick={this.props.toggle}
-              >
-                <IconSVG name="icon-bars" />
-              </span>
-
-              <span>
-                {this.props.browserTitle}
-              </span>
-            </h5>
-          </div>
-        </div>
+        <DataprepBrowserTopPanel
+          allowSidePanelToggle={this.props.allowSidePanelToggle}
+          toggle={this.props.toggle}
+          browserTitle={this.props.browserTitle}
+        />
 
         <div className="sub-panel">
           <div className="path-container">

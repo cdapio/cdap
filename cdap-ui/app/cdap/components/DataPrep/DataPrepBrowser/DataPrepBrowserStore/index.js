@@ -115,7 +115,7 @@ const defaultBigQueryValue = {
 };
 
 const defaultActiveBrowser = {
-  name: 'database'
+  name: ''
 };
 
 const defaultError = null;
