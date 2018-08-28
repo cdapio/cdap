@@ -365,6 +365,12 @@ public class ProvisioningService extends AbstractIdleService {
       return () -> { };
     }
 
+    // cluster can be null if the provisioner was not able to create a cluster. In that case, there is nothing
+    // to deprovision, but task state still needs to be cleaned up.
+    if (existing.getCluster() == null) {
+      return () -> taskCleanup.accept(existing.getProgramRunId());
+    }
+
     Provisioner provisioner = provisionerInfo.get().provisioners.get(existing.getProvisionerName());
     if (provisioner == null) {
       runWithProgramLogging(programRunId, existing.getProgramOptions().getArguments().asMap(),
@@ -372,7 +378,7 @@ public class ProvisioningService extends AbstractIdleService {
                                               + "The cluster will be marked as orphaned.",
                                             existing.getProvisionerName()));
       provisionerNotifier.orphaned(programRunId);
-      return () -> { };
+      return () -> taskCleanup.accept(existing.getProgramRunId());
     }
 
     ProvisioningOp provisioningOp = new ProvisioningOp(ProvisioningOp.Type.DEPROVISION,
