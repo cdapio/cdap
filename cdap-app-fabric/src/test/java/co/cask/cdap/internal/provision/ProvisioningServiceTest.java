@@ -214,6 +214,29 @@ public class ProvisioningServiceTest {
                              .build());
   }
 
+  // should be able to 'deprovision' a cluster that couldn't be created
+  @Test
+  public void testClusterCreateFailure() throws Exception {
+    ProgramRunId programRunId = testProvision(ProvisioningOp.Status.FAILED,
+                                              new MockProvisioner.PropertyBuilder().failCreate().build()).programRunId;
+
+    Runnable task = Transactionals.execute(transactional, dsContext -> {
+      return provisioningService.deprovision(programRunId, dsContext);
+    });
+    task.run();
+    // task state should have been cleaned up
+    ProvisioningTaskInfo taskInfo = Transactionals.execute(transactional, dsContext -> {
+      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
+      return provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
+    });
+    Assert.assertNull("provision task info was not cleaned up", taskInfo);
+    taskInfo = Transactionals.execute(transactional, dsContext -> {
+      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
+      return provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION));
+    });
+    Assert.assertNull("deprovision task info was not cleaned up", taskInfo);
+  }
+
   @Test
   public void testDeprovisionFailure() throws Exception {
     TaskFields taskFields = testProvision(ProvisioningOp.Status.CREATED,
