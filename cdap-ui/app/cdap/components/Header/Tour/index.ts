@@ -15,6 +15,9 @@
  */
 
 import GuidedTour, { ITourStep } from 'services/GuidedTour';
+import T from 'i18n-react';
+
+const PREFIX = 'features.NUX';
 
 const tour = new GuidedTour();
 
@@ -23,28 +26,56 @@ const steps: ITourStep[] = [
     id: 'welcome',
     title: 'Welcome to CDAP',
     text: [
-      'CDAP is an open source framework that simplifies data application development,' +
-      ' data integration and data management.',
+      'CDAP is an open source framework that simplifies data application development, data integration,' +
+      ' and data management.',
       'Take a short tour to discover all that you can do.',
     ],
     attachTo: '.brand-section bottom',
-    shouldFocus: true,
   },
   {
     id: 'control-center',
-    title: 'Control Center',
-    text: 'Control Center allows you to create, manage, operate and monitor datasets and applications. ',
+    title: T.translate(`${PREFIX}.ControlCenter.title`).toString(),
+    text: [
+      T.translate(`${PREFIX}.ControlCenter.text`).toString(),
+      '<img class="img-fluid" src="/cdap_assets/img/nux/Control_Center_NUX.png" />',
+    ],
     attachTo: '#navbar-control-center bottom',
-    shouldFocus: true,
   },
   {
     id: 'preparation',
-    title: 'Preparation',
-    text: 'Preparation allows you to easily connect to a variety of data sources and cleanse data' +
-      ' using point and click interactions. Once you are satisfied, you can operationalize your' +
-      ' transformations in a pipeline. ',
+    title: T.translate(`${PREFIX}.Preparation.title`).toString(),
+    text: [
+      T.translate(`${PREFIX}.Preparation.text`).toString(),
+      '<img class="img-fluid" src="/cdap_assets/img/nux/Dataprep_NUX.png" />',
+    ],
     attachTo: '#navbar-preparation bottom',
-    shouldFocus: true,
+  },
+  {
+    id: 'pipelines',
+    title: T.translate(`${PREFIX}.Pipelines.title`).toString(),
+    text: [
+      T.translate(`${PREFIX}.Pipelines.text`).toString(),
+      '<img class="img-fluid" src="/cdap_assets/img/nux/Pipeline_NUX.png" />',
+    ],
+    attachTo: '#navbar-pipelines bottom',
+  },
+  {
+    id: 'metadata',
+    title: T.translate(`${PREFIX}.Metadata.title`).toString(),
+    text: [
+      T.translate(`${PREFIX}.Metadata.text`).toString(),
+      '<img class="img-fluid" src="/cdap_assets/img/nux/Metadata_NUX.png" />',
+    ],
+    attachTo: '#navbar-metadata bottom',
+  },
+  {
+    id: 'hub',
+    title: T.translate(`${PREFIX}.Hub.title`).toString(),
+    text: [
+      T.translate(`${PREFIX}.Hub.text`).toString(),
+      '<img class="img-fluid" src="/cdap_assets/img/nux/Hub_NUX.png" />',
+    ],
+    attachTo: '#navbar-hub bottom',
   },
 ];
 

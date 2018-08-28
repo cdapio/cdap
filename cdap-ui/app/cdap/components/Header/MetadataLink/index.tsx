@@ -46,9 +46,12 @@ const MetadataLink: React.SFC<IMetadataLinkProps> = ({ context }) => {
   });
 
   return (
-    <li className={classnames({
-      active: isMetadataActive,
-    })}>
+    <li
+      id='navbar-metadata'
+      className={classnames({
+        active: isMetadataActive,
+      })}
+    >
       <a href={metadataHomeUrl}>
         {T.translate('features.Navbar.metadataLabel')}
       </a>

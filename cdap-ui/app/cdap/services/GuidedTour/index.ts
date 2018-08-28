@@ -27,7 +27,7 @@ interface IStepButton {
 export interface ITourStep {
   id: string;
   title?: string;
-  text: string | string[] | HTMLElement;
+  text: string | string[];
   buttons?: IStepButton[];
   shouldFocus?: boolean;
   classes?: string;
@@ -43,7 +43,7 @@ const GuidedTour = function() {
     stepsArray.forEach((step, index) => {
       const stepId: string = step.id;
 
-      const stepObj = {
+      const stepObj: ITourStep = {
         ...step,
       };
 
