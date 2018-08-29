@@ -493,6 +493,28 @@ features:
           ListingInfo:
             label: "{dirsCount} directories and {filesCount} files"
           selectData: Select data
+      SpannerBrowser:
+        databaseCount:
+          0: No databases
+          1: "{context} database"
+          _: "{context} databases"
+        databases: Databases
+        EmptyMessage:
+          emptyDatabaseList: 'No databases in instance _{instanceName}_ of connection _{connectionName}_'
+          emptyInstanceList: 'No instances in connection _{connectionName}_'
+          emptyTableList: 'No tables in database _{databaseName}_ of instance _{instanceName}_ of connection _{connectionName}_'
+        instanceCount:
+          0: No instances
+          1: "{context} instance"
+          _: "{context} instances"
+        instances: Instances
+        name: Name
+        pageTitle: CDAP | Connections | Google Cloud Spanner | {connectionId}
+        tableCount:
+          0: No tables
+          1: "{context} table"
+          _: "{context} tables"
+        title: Select data
     Directives:
       apply: Apply
       cancel: Cancel
@@ -951,6 +973,7 @@ features:
       gcs: Unable find Google Cloud Storage plugin. Please install Google Cloud Plugins from Hub.
       kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Hub.
       s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Hub.
+      spanner: Unable find Google Cloud Spanner plugin. Please install Google Cloud Plugins from Hub.
       missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Hub
     sidePanelTooltip:
       collapse: Collapse the side panel
@@ -1009,6 +1032,7 @@ features:
         successMessage: You successfully added a custom directive. Apply that directive by typing it into the power mode input area.
       realtimeDisabledTooltip: "Importing data from {type} in realtime is currently not supported."
       s3: S3
+      spanner: Google Cloud Spanner
       SchemaModal:
         defaultErrorMessage: Error generating schema.
       Tabs:
@@ -1155,6 +1179,24 @@ features:
         region: Region
         required: Required
         testConnection: Test Connection
+      Spanner:
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        defaultTestErrorMessage: Cannot connect to Google Cloud Spanner
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
+        ModalHeader:
+          ADD: "Add connection: Google Cloud Spanner"
+          DUPLICATE: "Duplicate connection: {connection}"
+          EDIT: "Edit connection: {connection}"
+        name: Name
+        projectId: Project ID
+        serviceAccountKeyfile: Service account key file location
+        testConnection: Test Connection
       TestConnectionLabels:
         danger: Test connection failed
         success: Test connection succcessful
@@ -1180,6 +1222,7 @@ features:
       title: No default connection available
     pageTitle: '{productName} | Connections'
     s3: S3 ({count})
+    spanner: Google Cloud Spanner ({count})
     title: "Connections in \"{namespace}\""
     upload: Upload
     UploadComponent:
