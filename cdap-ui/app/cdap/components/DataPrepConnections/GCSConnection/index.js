@@ -26,6 +26,7 @@ import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedba
 import {objectQuery} from 'services/helpers';
 import ee from 'event-emitter';
 import BtnWithLoading from 'components/BtnWithLoading';
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.GCS';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -97,7 +98,7 @@ export default class GCSConnection extends Component {
 
     let requestBody = {
       name: this.state.name,
-      type: 'GCS',
+      type: ConnectionType.GCS,
       properties: {
         projectId: this.state.projectId,
         'service-account-keyfile': this.state.serviceAccountKeyfile
@@ -128,7 +129,7 @@ export default class GCSConnection extends Component {
     let requestBody = {
       name: this.state.name,
       id: this.props.connectionId,
-      type: 'GCS',
+      type: ConnectionType.GCS,
       properties: {
         projectId: this.state.projectId,
         'service-account-keyfile': this.state.serviceAccountKeyfile
@@ -163,7 +164,7 @@ export default class GCSConnection extends Component {
 
     let requestBody = {
       name: this.state.name,
-      type: 'GCS',
+      type: ConnectionType.GCS,
       properties: {
         projectId: this.state.projectId,
         'service-account-keyfile': this.state.serviceAccountKeyfile

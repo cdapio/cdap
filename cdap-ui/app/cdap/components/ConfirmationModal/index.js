@@ -84,7 +84,7 @@ export default class ConfirmationModal extends Component {
     if (this.props.disableAction) {
       actionBtn = (
         <button
-          className="btn disabled-btn"
+          className="btn btn-primary disabled-btn"
           disabled
         >
           {this.props.confirmButtonText}
@@ -93,29 +93,33 @@ export default class ConfirmationModal extends Component {
     } else {
       actionBtn = (
         <button
-          className="btn"
+          className="btn btn-primary"
           onClick={this.props.confirmFn}
         >
           {this.props.confirmButtonText}
         </button>
       );
     }
-
     return (
-      <ModalBody>
-        <div className="confirmation truncate">
-          {confirmation}
-        </div>
-        <div className="confirmation-button-options">
-          {actionBtn}
-          <button
-            className="btn"
-            onClick={this.props.cancelFn}
-          >
-            {this.props.cancelButtonText}
-          </button>
-        </div>
-      </ModalBody>
+      <React.Fragment>
+        <ModalBody>
+          <div className="confirmation truncate">
+            {confirmation}
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <div className="confirmation-button-options">
+            {actionBtn}
+            <button
+              className="btn btn-secondary"
+              onClick={this.props.cancelFn}
+            >
+              {this.props.cancelButtonText}
+            </button>
+          </div>
+        </ModalFooter>
+      </React.Fragment>
+
     );
   }
 
@@ -123,13 +127,11 @@ export default class ConfirmationModal extends Component {
     let footer;
     if (this.props.errorMessage) {
       footer = (
-        <ModalFooter>
-          <CardActionFeedback
-            type="DANGER"
-            message={this.props.errorMessage}
-            extendedMessage={this.props.extendedMessage}
-          />
-        </ModalFooter>
+        <CardActionFeedback
+          type="DANGER"
+          message={this.props.errorMessage}
+          extendedMessage={this.props.extendedMessage}
+        />
       );
     }
 

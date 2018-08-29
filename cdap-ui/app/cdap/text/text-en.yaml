@@ -1162,6 +1162,7 @@ features:
     ConnectionManagement:
       Confirmations:
         DatabaseDelete:
+          cancel: Cancel
           deleteButton: Delete Connection
           header: "Delete connection: {connection}"
           helper1: You will no longer able to access data from this source.

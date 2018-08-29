@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
-import {Modal, ModalHeader, ModalBody} from 'reactstrap';
+import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
 import LoadingSVG from 'components/LoadingSVG';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
 import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
@@ -29,17 +29,17 @@ import GCSConnection from 'components/DataPrepConnections/GCSConnection';
 import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnection';
 import T from 'i18n-react';
 import {objectQuery} from 'services/helpers';
-
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
 require('./ConnectionPopover.scss');
 
 const PREFIX = 'features.DataPrepConnections.ConnectionManagement';
 
 const COMPONENT_MAP = {
-  'DATABASE': DatabaseConnection,
-  'KAFKA': KafkaConnection,
-  'S3': S3Connection,
-  'GCS': GCSConnection,
-  'BIGQUERY': BigQueryConnection
+  [ConnectionType.DATABASE]: DatabaseConnection,
+  [ConnectionType.KAFKA]: KafkaConnection,
+  [ConnectionType.S3]: S3Connection,
+  [ConnectionType.GCS]: GCSConnection,
+  [ConnectionType.BIGQUERY]: BigQueryConnection
 };
 
 export default class ConnectionPopover extends Component {
@@ -133,15 +133,6 @@ export default class ConnectionPopover extends Component {
 
           <br />
 
-          <div>
-            <button
-              className="btn btn-primary"
-              onClick={this.delete}
-            >
-              {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.deleteButton`)}
-            </button>
-          </div>
-
         </ModalBody>
       );
     }
@@ -151,7 +142,7 @@ export default class ConnectionPopover extends Component {
         backdrop="static"
         isOpen={true}
         toggle={this.toggleDeleteConfirmation}
-        className="connection-delete-confirmation-modal"
+        className="connection-delete-confirmation-modal cdap-modal"
         zIndex="1061"
       >
         <ModalHeader toggle={this.toggleDeleteConfirmation}>
@@ -163,6 +154,20 @@ export default class ConnectionPopover extends Component {
         </ModalHeader>
 
         {content}
+        <ModalFooter>
+          <button
+            className="btn btn-primary"
+            onClick={this.delete}
+          >
+            {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.deleteButton`)}
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={this.toggleDeleteConfirmation}
+          >
+            {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.cancel`)}
+          </button>
+        </ModalFooter>
       </Modal>
     );
   }

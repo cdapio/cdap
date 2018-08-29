@@ -26,7 +26,7 @@ import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedba
 import {objectQuery} from 'services/helpers';
 import BtnWithLoading from 'components/BtnWithLoading';
 import ee from 'event-emitter';
-
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
 const PREFIX = 'features.DataPrepConnections.AddConnections.S3';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
 
@@ -163,7 +163,7 @@ export default class S3Connection extends Component {
 
     let requestBody = {
       name: this.state.name,
-      type: 'S3',
+      type: ConnectionType.S3,
       properties: {
         accessKeyId: this.state.accessKeyId,
         accessSecretKey: this.state.accessSecretKey,
@@ -195,7 +195,7 @@ export default class S3Connection extends Component {
     let requestBody = {
       name: this.state.name,
       id: this.props.connectionId,
-      type: 'S3',
+      type: ConnectionType.S3,
       properties: {
         accessKeyId: this.state.accessKeyId,
         accessSecretKey: this.state.accessSecretKey,
@@ -231,7 +231,7 @@ export default class S3Connection extends Component {
 
     let requestBody = {
       name: this.state.name,
-      type: 'S3',
+      type: ConnectionType.S3,
       properties: {
         accessKeyId: this.state.accessKeyId,
         accessSecretKey: this.state.accessSecretKey,
