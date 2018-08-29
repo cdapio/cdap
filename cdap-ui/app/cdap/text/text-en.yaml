@@ -1596,6 +1596,13 @@ features:
     Preparation:
       text: Preparation allows you to easily connect to a variety of data sources and cleanse data using point and click interactions. Once you are satisfied, you can operationalize your transformations in a pipeline.
       title: Preparation
+    Welcome:
+      bodyText: CDAP is an open source framework that simplifies data application development, data integration, and data management.
+      close: No, Thanks
+      header: Welcome to CDAP
+      showAgainToggle: Don't show tour again.
+      startTour: Start Tour
+      takeTour: Take a short tour to discover all that you can do.
 
   OpsDashboard:
     header: Dashboard

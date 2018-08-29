@@ -37,8 +37,7 @@ import RulesEngineLink from 'components/Header/RulesEngineLink';
 import MetadataLink from 'components/Header/MetadataLink';
 import HubButton from 'components/Header/HubButton';
 import {NamespaceLinkContext} from 'components/Header/NamespaceLinkContext';
-
-import Tour from 'components/Header/Tour';
+import Welcome from 'components/Header/Welcome';
 
 require('./Header.scss');
 
@@ -84,16 +83,6 @@ export default class Header extends Component {
         });
       }
     });
-  }
-  componentDidMount() {
-    // TODO: setting this to false right now, because there is no mechanism
-    // to not show again yet
-    const condition = false;
-    if (condition) {
-      setTimeout(() => {
-        Tour.start();
-      }, 500);
-    }
   }
   componentWillUnmount() {
     this.nsSubscription();
@@ -166,6 +155,7 @@ export default class Header extends Component {
             </ul>
           </div>
         </div>
+        <Welcome />
       </div>
     );
   }
