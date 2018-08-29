@@ -103,7 +103,7 @@ export default class ConfirmationModal extends Component {
     return (
       <React.Fragment>
         <ModalBody>
-          <div className="confirmation truncate">
+          <div className="confirmation">
             {confirmation}
           </div>
         </ModalBody>
