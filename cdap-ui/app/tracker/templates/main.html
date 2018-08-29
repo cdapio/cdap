@@ -18,9 +18,44 @@
   <div class="form-group has-feedback tracker-search" ng-keypress="MainController.search($event)">
     <input type="text"
            class="form-control"
-           placeholder="Search datasets"
+           placeholder="Search"
            ng-model="MainController.searchQuery"
-           pattern="^(?![*]).*$">
+           pattern="^(?![*]).*$"
+           cask-focus="searchField">
     <span class="fa fa-search form-control-feedback"></span>
+  </div>
+
+  <div class="search-tips">
+    <div class="title">
+      Search Tips
+    </div>
+    <div class="subtitle">
+      Search by keyword: a property, tag, and dataset name
+    </div>
+
+    <div class="tips-table grid-wrapper">
+      <div class="grid grid-container">
+        <div class="grid-header">
+          <div class="grid-row">
+            <strong>Search by</strong>
+            <strong>Pattern</strong>
+            <strong>Examples</strong>
+          </div>
+        </div>
+
+        <div class="grid-body">
+          <div class="grid-row" ng-repeat="tips in MainController.searchTips">
+            <div>{{ ::tips.search }}</div>
+            <div>{{ ::tips.pattern }}</div>
+            <div>
+              <span ng-repeat="example in tips.examples track by $index">
+                {{ example }}
+                <span class="separator" ng-if="$index !== tips.examples.length - 1">or</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
