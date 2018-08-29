@@ -23,16 +23,6 @@ const tour = new GuidedTour();
 
 const steps: ITourStep[] = [
   {
-    id: 'welcome',
-    title: 'Welcome to CDAP',
-    text: [
-      'CDAP is an open source framework that simplifies data application development, data integration,' +
-      ' and data management.',
-      'Take a short tour to discover all that you can do.',
-    ],
-    attachTo: '.brand-section bottom',
-  },
-  {
     id: 'control-center',
     title: T.translate(`${PREFIX}.ControlCenter.title`).toString(),
     text: [
