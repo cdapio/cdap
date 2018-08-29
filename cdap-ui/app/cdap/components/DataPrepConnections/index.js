@@ -98,6 +98,7 @@ export default class DataPrepConnections extends Component {
       s3List: [],
       gcsList: [],
       bigQueryList: [],
+      spannerList: [],
       activeConnectionid,
       activeConnectionType,
       showAddConnectionPopover: false,
@@ -317,7 +318,8 @@ export default class DataPrepConnections extends Component {
           kafkaList = [],
           s3List = [],
           gcsList = [],
-          bigQueryList = [];
+          bigQueryList = [],
+          spannerList = [];
 
 
       if (action === 'delete' && this.state.activeConnectionid === targetId) {
@@ -335,6 +337,8 @@ export default class DataPrepConnections extends Component {
           gcsList.push(connection);
         } else if (connection.type === ConnectionType.BIGQUERY) {
           bigQueryList.push(connection);
+        } else if (connection.type === ConnectionType.SPANNER) {
+          spannerList.push(connection);
         }
       });
 
@@ -345,6 +349,7 @@ export default class DataPrepConnections extends Component {
         s3List,
         gcsList,
         bigQueryList,
+        spannerList,
         loading: false
       };
 
@@ -555,6 +560,40 @@ export default class DataPrepConnections extends Component {
     );
   }
 
+  renderSpannerDetail() {
+    let namespace = getCurrentNamespace();
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.spannerList.map((spanner) => {
+          return (
+            <div
+              key={spanner.id}
+              title={spanner.name}
+              className="clearfix"
+            >
+              <NavLinkWrapper
+                to={`${baseLinkPath}/spanner/${spanner.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, {...spanner, name: ConnectionType.SPANNER})}
+                isNativeLink={this.props.singleWorkspaceMode}
+              >
+                {spanner.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={spanner}
+                onAction={this.fetchConnectionsList}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   renderPanel() {
     if (!this.state.sidePanelExpanded) { return null; }
 
@@ -684,6 +723,20 @@ export default class DataPrepConnections extends Component {
                 </span>
               </div>
               {this.renderBigQueryDetail()}
+            </ExpandableMenu>
+          </If>
+
+           <If condition={find(this.state.connectionTypes, {type: ConnectionType.SPANNER})}>
+            <ExpandableMenu>
+              <div>
+                <span className="fa fa-fw">
+                  <IconSVG name="icon-bigquery" /> {/* TODO: Change this when icon is available */}
+                </span>
+                <span>
+                {T.translate(`${PREFIX}.spanner`, {count: this.state.spannerList.length})}
+                </span>
+              </div>
+              {this.renderSpannerDetail()}
             </ExpandableMenu>
           </If>
         </div>

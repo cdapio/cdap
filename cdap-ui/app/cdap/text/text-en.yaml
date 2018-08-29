@@ -1181,6 +1181,7 @@ features:
       title: No default connection available
     pageTitle: CDAP | Connections
     s3: S3 ({count})
+    spanner: Google Cloud Spanner ({count})
     title: "Connections in \"{namespace}\""
     upload: Upload
     UploadComponent:
