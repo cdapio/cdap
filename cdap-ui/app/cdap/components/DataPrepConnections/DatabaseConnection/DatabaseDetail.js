@@ -28,6 +28,7 @@ import {objectQuery} from 'services/helpers';
 import CardActionFeedback from 'components/CardActionFeedback';
 import uuidV4 from 'uuid/v4';
 import LoadingSVG from 'components/LoadingSVG';
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
 
 const CONN_TYPE = {
   basic: 'BASIC',
@@ -77,7 +78,7 @@ export default class DatabaseDetail extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let requestBody = {
       name: this.state.name,
-      type: 'DATABASE',
+      type: ConnectionType.DATABASE,
       properties: this.constructProperties()
     };
 
@@ -218,7 +219,7 @@ export default class DatabaseDetail extends Component {
 
     let requestBody = {
       name: this.state.name,
-      type: 'DATABASE',
+      type: ConnectionType.DATABASE,
       properties: this.constructProperties()
     };
 
@@ -245,7 +246,7 @@ export default class DatabaseDetail extends Component {
     let requestBody = {
       name: this.state.name,
       id: this.props.connectionId,
-      type: 'DATABASE',
+      type: ConnectionType.DATABASE,
       properties: this.constructProperties()
     };
 
@@ -269,7 +270,7 @@ export default class DatabaseDetail extends Component {
 
     let requestBody = {
       name: this.state.name,
-      type: 'DATABASE',
+      type: ConnectionType.DATABASE,
       properties: this.constructProperties()
     };
 

@@ -312,6 +312,9 @@ export default class DataPrepConnections extends Component {
   }
 
   toggleAddConnectionPopover = (showPopover = false) => {
+    if (this.state.showAddConnectionPopover === showPopover) {
+      return;
+    }
     this.setState({
       showAddConnectionPopover: showPopover
     });

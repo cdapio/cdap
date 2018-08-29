@@ -28,6 +28,7 @@ import uuidV4 from 'uuid/v4';
 import ee from 'event-emitter';
 import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
 import BtnWithLoading from 'components/BtnWithLoading';
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Kafka';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -139,7 +140,7 @@ export default class KafkaConnection extends Component {
 
     let requestBody = {
       name: this.state.name,
-      type: 'KAFKA',
+      type: ConnectionType.KAFKA,
       properties: {
         brokers: this.convertBrokersList()
       }
@@ -169,7 +170,7 @@ export default class KafkaConnection extends Component {
     let requestBody = {
       name: this.state.name,
       id: this.props.connectionId,
-      type: 'KAFKA',
+      type: ConnectionType.KAFKA,
       properties: {
         brokers: this.convertBrokersList()
       }
@@ -203,7 +204,7 @@ export default class KafkaConnection extends Component {
 
     let requestBody = {
       name: this.state.name,
-      type: 'KAFKA',
+      type: ConnectionType.KAFKA,
       properties: {
         brokers: this.convertBrokersList()
       }

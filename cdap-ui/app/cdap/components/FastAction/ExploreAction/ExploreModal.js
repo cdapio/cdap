@@ -393,7 +393,7 @@ export default class ExploreModal extends Component {
     };
     return (
       <Modal
-        className="explore-modal confirmation-modal"
+        className="explore-modal confirmation-modal cdap-modal"
         toggle={this.onModalToggle.bind(this)}
         isOpen={this.props.isOpen}
         backdrop='static'
