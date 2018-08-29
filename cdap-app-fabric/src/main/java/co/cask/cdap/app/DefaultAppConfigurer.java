@@ -275,6 +275,11 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
                                                builtScheduleSpecs, workers, getPlugins());
   }
 
+  /**
+   * Adds the dataset and plugins at the application level so that they can be used by any program in the application.
+   *
+   * @param configurer the program's configurer
+   */
   private void addDatasetsAndPlugins(AbstractConfigurer configurer) {
     addDatasets(configurer);
     addPlugins(configurer.getPlugins());

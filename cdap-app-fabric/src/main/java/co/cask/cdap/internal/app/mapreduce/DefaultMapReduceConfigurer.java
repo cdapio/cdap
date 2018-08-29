@@ -28,7 +28,6 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -93,10 +92,8 @@ public final class DefaultMapReduceConfigurer extends AbstractConfigurer impleme
     Set<String> datasets = new HashSet<>();
     Reflections.visit(mapReduce, mapReduce.getClass(), new PropertyFieldExtractor(properties),
                       new DataSetFieldExtractor(datasets));
-    // TODO (Rohit) Pass in plugin information
     return new MapReduceSpecification(mapReduce.getClass().getName(), name, description,
                                       inputDataset, outputDataset, datasets,
-                                      properties, driverResources, mapperResources, reducerResources,
-                                      Collections.emptyMap());
+                                      properties, driverResources, mapperResources, reducerResources, getPlugins());
   }
 }

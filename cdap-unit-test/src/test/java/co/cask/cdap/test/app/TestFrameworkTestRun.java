@@ -162,31 +162,45 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testInvalidAppWithDuplicateDatasets() throws Exception {
+  public void testInvalidAppWithData() throws Exception {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("invalid-app", "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, AppWithDuplicateData.class);
-
     ArtifactId pluginArtifactId = NamespaceId.DEFAULT.artifact("test-plugin", "1.0.0-SNAPSHOT");
     addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
 
     ApplicationId appId = NamespaceId.DEFAULT.app("InvalidApp");
 
-    for (int choice = 4; choice > 0; choice /= 2) {
-      try {
-        AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
-          new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
-          new AppWithDuplicateData.ConfigClass((choice == 4), (choice == 2), (choice == 1)));
-        deployApplication(appId, createRequest);
-        // fail if we succeed with application deployment
-        Assert.fail();
-      } catch (Exception e) {
-        // expected
-      }
+    // test with duplicate dataset should fail as we don't allow multiple deployment of dataset
+    try {
+      AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
+        new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
+        new AppWithDuplicateData.ConfigClass(true, false, false));
+      deployApplication(appId, createRequest);
+      Assert.fail();
+    } catch (Exception e) {
+      // expected
     }
 
+    // test with duplicate module should fail as we don't allow multiple deployment of modules
+    try {
+      AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
+        new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
+        new AppWithDuplicateData.ConfigClass(false, false, true));
+      deployApplication(appId, createRequest);
+      Assert.fail();
+    } catch (Exception e) {
+      // expected
+    }
+
+    // test with duplicate plugin should pass as we allow multiple deployment of same plugin
     AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
-      new AppWithDuplicateData.ConfigClass(false, false, false));
+      new AppWithDuplicateData.ConfigClass(false, true, false));
+    deployApplication(appId, createRequest);
+
+    // test with no duplicates should pass
+    createRequest = new AppRequest<>(new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
+                                     new AppWithDuplicateData.ConfigClass(false, false, false));
     deployApplication(appId, createRequest);
   }
 

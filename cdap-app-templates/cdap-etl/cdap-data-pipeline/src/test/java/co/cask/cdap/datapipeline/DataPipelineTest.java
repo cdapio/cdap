@@ -313,8 +313,10 @@ public class DataPipelineTest extends HydratorTestBase {
     // check filter output
     files = filterOutput.listFiles();
     Assert.assertNotNull("No output files for filter program found.", files);
-    List<String> expectedLines = ImmutableList.of("this", "is", "a", "poem", "it", "is", "a", "poem");
-    List<String> actualLines = new ArrayList<>();
+    // Note: we are only interested in the word "bad" being filtered out for the assertion hence it is okay to use a
+    // set here even though it will not assert for the cardinality.
+    Set<String> expectedLines = ImmutableSet.of("this", "is", "a", "poem", "it", "is", "a", "poem");
+    Set<String> actualLines = new HashSet<>();
     for (File file : files) {
       String fileName = file.getName();
       if (fileName.startsWith(".") || fileName.equals("_SUCCESS")) {
