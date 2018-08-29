@@ -15,37 +15,97 @@
  */
 
 import React, { Component } from 'react';
-import Wrangler from 'components/Wrangler';
-import {Prompt} from 'react-router-rom';
+
+import SchemaStore from 'components/SchemaEditor/SchemaStore';
+import SchemaEditor from 'components/SchemaEditor';
 
 export default class Experimental extends Component {
   constructor(props) {
     super(props);
 
-    window.onbeforeunload = function() {
-      return "Are you sure you want to leave this page?";
+    SchemaStore.subscribe(() => {
+      const state = SchemaStore.getState();
+      const schema = state.schema;
+
+      this.setState({parsed: schema});
+    });
+  }
+
+  state = {
+    parsed: ''
+  }
+
+  componentWillMount() {
+    const schema = {
+      name: 'schema',
+      type: 'record',
+      fields: [
+        {
+          name: 'timestamp',
+          type: [
+            {
+              type: 'long',
+              logicalType: 'timestamp-micros'
+            },
+            'null'
+          ]
+        },
+        {
+          name: 'time',
+          type: {
+            type: 'long',
+            logicalType: 'time-micros'
+          }
+        },
+        {
+          name: 'date',
+          type: {
+            type: 'int',
+            logicalType: 'date'
+          }
+        },
+        {
+          name: 'haha',
+          type: [
+            {
+              type: 'int',
+              logicalType: 'date'
+            },
+            {
+              type: 'long',
+              logicalType: 'time-micros'
+            }
+          ]
+        }
+      ]
     };
-  }
 
-  componentDidMount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'none';
-  }
 
-  componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
-    window.onbeforeunload = null;
+    SchemaStore.dispatch({
+      type: 'FIELD_UPDATE',
+      payload: {
+        schema
+      }
+    });
   }
 
   render() {
     return (
       <div>
-        <Wrangler />
-
-        <Prompt
-          when={true}
-          message="Are you sure you want to leave this page?"
-        />
-
+        <br />
+        <br />
+        <div className="row">
+          <div className="offset-xs-3 col-xs-6">
+            <SchemaEditor />
+          </div>
+        </div>
+        <br />
+        <br />
+        <div className="row">
+          <div className="offset-xs-3 col-xs-6">
+            <pre>{JSON.stringify(this.state.parsed, null, 2)}</pre>
+          </div>
+        </div>
       </div>
     );
   }

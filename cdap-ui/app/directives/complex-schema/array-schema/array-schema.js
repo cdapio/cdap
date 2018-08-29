@@ -37,9 +37,11 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope, SchemaHelp
   vm.formatOutput = () => {
     vm.error = '';
 
+    const type = avsc.formatType(vm.items.type);
+
     let obj = {
       type: 'array',
-      items: vm.items.nullable ? [vm.items.type, 'null'] : vm.items.type
+      items: vm.items.nullable ? [type, 'null'] : type
     };
 
     // Validate

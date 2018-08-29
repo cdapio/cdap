@@ -33,8 +33,8 @@ angular.module(`${PKG.name}.commons`)
   .factory('esprima', function ($window) {
     return $window.esprima;
   })
-  .factory('avsc', function ($window) {
-    return $window.cdapavsc;
+  .factory('avsc', function () {
+    return window.CaskCommon.cdapavscwrapper;
   })
   .factory('moment', function($window) {
     return $window.moment;

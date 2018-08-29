@@ -18,8 +18,9 @@
 @import '../../styles/variables.less';
 @import '../../styles/themes/cdap/mixins.less';
 
-@type-column-width: 80px;
+@type-column-width: 105px;
 @fields-right-offset: 70px;
+@checkbox-column-width: 75px;
 @disabled-input-bg-color: #eeeeee;
 
 my-complex-schema {
@@ -72,19 +73,10 @@ my-complex-schema {
 
     .input-column {
       float: left;
-
-      /**
-       * 75px is the width of the checkbox, trash, and add button
-       * 80px is the width of the type dropdown
-       **/
-      width: ~"-moz-calc(100% - 75px - 80px)";
-      width: ~"-webkit-calc(100% - 75px - 80px)";
-      width: ~"calc(100% - 75px - 80px)";
+      width: ~"calc(100% - @{checkbox-column-width} - @{type-column-width})";
 
       &.no-type {
-        width: ~"-moz-calc(100% - 75px - 80px)";
-        width: ~"-webkit-calc(100% - 75px - 80px)";
-        width: ~"calc(100% - 75px - 80px)";
+        width: ~"calc(100% - @{checkbox-column-width} - @{type-column-width})";
       }
 
       .form-control {
@@ -168,9 +160,7 @@ my-complex-schema {
          * On disabled mode, there is not trash or plus button. Therefore only need to
          * substract 50px for the Null checkbox
          **/
-        width: ~"-moz-calc(100% - 50px - 80px)";
-        width: ~"-webkit-calc(100% - 50px - 80px)";
-        width: ~"calc(100% - 50px - 80px)";
+        width: ~"calc(100% - 50px - @{type-column-width})";
       }
 
       .fields-actions {
@@ -219,9 +209,7 @@ my-complex-schema {
         left: 0;
         height: 3px;
         z-index: 100;
-        width: ~"-moz-calc(100% - 75px - 80px)";
-        width: ~"-webkit-calc(100% - 75px - 80px)";
-        width: ~"calc(100% - 75px - 80px)";
+        width: ~"calc(100% - @{checkbox-column-width} - @{type-column-width})";
       }
     }
     span.fa {

@@ -89,7 +89,8 @@ function UnionSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeo
     vm.error = '';
 
     let outputArr = vm.types.map((item) => {
-      return item.nullable ? [item.type, 'null'] : item.type;
+      const type = avsc.formatType(item.type);
+      return item.nullable ? [type, 'null'] : type;
     });
 
     if (outputArr.length === 0) {
