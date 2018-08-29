@@ -70,10 +70,10 @@ import javax.annotation.Nullable;
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
-public class DataProcClient implements AutoCloseable {
+public class DataprocClient implements AutoCloseable {
   // something like 2018-04-16T12:09:03.943-07:00
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
-  private final DataProcConf conf;
+  private final DataprocConf conf;
   private final ClusterControllerClient client;
   private final Compute compute;
   private final String projectId;
@@ -81,10 +81,10 @@ public class DataProcClient implements AutoCloseable {
   private final String zone;
   private final String systemNetwork;
 
-  public static DataProcClient fromConf(DataProcConf conf) throws IOException, GeneralSecurityException {
+  public static DataprocClient fromConf(DataprocConf conf) throws IOException, GeneralSecurityException {
     String systemNetwork = null;
     try {
-      systemNetwork = DataProcConf.getSystemNetwork();
+      systemNetwork = DataprocConf.getSystemNetwork();
     } catch (IllegalArgumentException e) {
       // expected when not running on GCP
     }
@@ -92,10 +92,10 @@ public class DataProcClient implements AutoCloseable {
     ClusterControllerClient client = getClusterControllerClient(conf);
     Compute compute = getCompute(conf);
 
-    return new DataProcClient(conf, client, compute, systemNetwork);
+    return new DataprocClient(conf, client, compute, systemNetwork);
   }
 
-  private static ClusterControllerClient getClusterControllerClient(DataProcConf conf) throws IOException {
+  private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
 
     ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
@@ -104,14 +104,14 @@ public class DataProcClient implements AutoCloseable {
     return ClusterControllerClient.create(controllerSettings);
   }
 
-  private static Compute getCompute(DataProcConf conf) throws GeneralSecurityException, IOException {
+  private static Compute getCompute(DataprocConf conf) throws GeneralSecurityException, IOException {
     HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
     return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), conf.getComputeCredential())
       .setApplicationName("cdap")
       .build();
   }
 
-  private DataProcClient(DataProcConf conf, ClusterControllerClient client, Compute compute,
+  private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute,
                          @Nullable String systemNetwork) {
     this.projectId = conf.getProjectId();
     this.network = conf.getNetwork();

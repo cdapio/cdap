@@ -43,11 +43,11 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Provisions a cluster using GCE DataProc.
+ * Provisions a cluster using GCP Dataproc.
  */
-public class DataProcProvisioner implements Provisioner {
+public class DataprocProvisioner implements Provisioner {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataProcProvisioner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocProvisioner.class);
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "gcp-dataproc", "Google Cloud Dataproc",
     "Google Cloud Dataproc is a fast, easy-to-use, fully-managed cloud service for running Apache Spark and Apache " +
@@ -61,7 +61,7 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public void validateProperties(Map<String, String> properties) {
-    DataProcConf.fromProperties(properties);
+    DataprocConf.fromProperties(properties);
   }
 
   @Override
@@ -70,10 +70,10 @@ public class DataProcProvisioner implements Provisioner {
     SSHKeyPair sshKeyPair = context.getSSHContext().generate("cdap");
     context.getSSHContext().setSSHKeyPair(sshKeyPair);
 
-    DataProcConf conf = DataProcConf.fromProvisionerContext(context);
+    DataprocConf conf = DataprocConf.fromProvisionerContext(context);
     String clusterName = getClusterName(context.getProgramRun());
 
-    try (DataProcClient client = DataProcClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf)) {
       // if it already exists, it means this is a retry. We can skip actually making the request
       Optional<Cluster> existing = client.getCluster(clusterName);
       if (existing.isPresent()) {
@@ -102,10 +102,10 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
     String clusterName = getClusterName(context.getProgramRun());
 
-    try (DataProcClient client = DataProcClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf)) {
       return client.getClusterStatus(clusterName);
     }
   }
@@ -113,10 +113,10 @@ public class DataProcProvisioner implements Provisioner {
   @Override
   public Cluster getClusterDetail(ProvisionerContext context,
                                   Cluster cluster) throws Exception {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
     String clusterName = getClusterName(context.getProgramRun());
 
-    try (DataProcClient client = DataProcClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf)) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
     }
@@ -148,10 +148,10 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
     String clusterName = getClusterName(context.getProgramRun());
 
-    try (DataProcClient client = DataProcClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf)) {
       client.deleteCluster(clusterName);
     }
   }
@@ -171,7 +171,7 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
-    DataProcConf conf = DataProcConf.fromProperties(context.getProperties());
+    DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
     PollingStrategy strategy = PollingStrategies.fixedInterval(conf.getPollInterval(), TimeUnit.SECONDS);
     switch (cluster.getStatus()) {
       case CREATING:
