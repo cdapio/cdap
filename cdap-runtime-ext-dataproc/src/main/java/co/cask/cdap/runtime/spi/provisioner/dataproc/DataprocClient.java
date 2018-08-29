@@ -81,10 +81,10 @@ import javax.annotation.Nullable;
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
-public class DataProcClient implements AutoCloseable {
+public class DataprocClient implements AutoCloseable {
   // something like 2018-04-16T12:09:03.943-07:00
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
-  private final DataProcConf conf;
+  private final DataprocConf conf;
   private final ClusterControllerClient client;
   private final Compute compute;
   private final String projectId;
@@ -92,7 +92,7 @@ public class DataProcClient implements AutoCloseable {
   private final String zone;
   private final String systemNetwork;
 
-  public static DataProcClient fromConf(DataProcConf conf) throws IOException, GeneralSecurityException {
+  public static DataprocClient fromConf(DataprocConf conf) throws IOException, GeneralSecurityException {
     String projectId = conf.getProjectId();
     if (projectId == null) {
       projectId = getProjectId();
@@ -117,7 +117,7 @@ public class DataProcClient implements AutoCloseable {
     ClusterControllerClient client = getClusterControllerClient(accountKey);
     Compute compute = getCompute(accountKey);
 
-    return new DataProcClient(projectId, systemNetwork, network, zone, conf, client, compute);
+    return new DataprocClient(projectId, systemNetwork, network, zone, conf, client, compute);
   }
 
   /**
@@ -219,8 +219,8 @@ public class DataProcClient implements AutoCloseable {
       .build();
   }
 
-  private DataProcClient(String projectId, @Nullable String systemNetwork, String network, String zone,
-                         DataProcConf conf, ClusterControllerClient client, Compute compute) {
+  private DataprocClient(String projectId, @Nullable String systemNetwork, String network, String zone,
+                         DataprocConf conf, ClusterControllerClient client, Compute compute) {
     this.projectId = projectId;
     this.systemNetwork = systemNetwork;
     this.network = network;

@@ -14,4 +14,4 @@
 # the License.
 #
 
-co.cask.cdap.runtime.spi.provisioner.dataproc.DataProcProvisioner
+co.cask.cdap.runtime.spi.provisioner.dataproc.DataprocProvisioner

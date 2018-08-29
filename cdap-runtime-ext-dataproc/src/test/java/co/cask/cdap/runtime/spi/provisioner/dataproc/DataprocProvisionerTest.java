@@ -23,18 +23,18 @@ import org.junit.Test;
 import java.util.UUID;
 
 /**
- * Tests for DataProc provisioner
+ * Tests for Dataproc provisioner
  */
-public class DataProcProvisionerTest {
+public class DataprocProvisionerTest {
 
   @Test
   public void testClusterName() {
     // test basic
     ProgramRun programRun = new ProgramRun("ns", "app", "program", UUID.randomUUID().toString());
-    Assert.assertEquals("cdap-app-" + programRun.getRun(), DataProcProvisioner.getClusterName(programRun));
+    Assert.assertEquals("cdap-app-" + programRun.getRun(), DataprocProvisioner.getClusterName(programRun));
 
     // test lowercasing, stripping of invalid characters, and truncation
     programRun = new ProgramRun("ns", "My@Appl!cation", "program", UUID.randomUUID().toString());
-    Assert.assertEquals("cdap-myapplcat-" + programRun.getRun(), DataProcProvisioner.getClusterName(programRun));
+    Assert.assertEquals("cdap-myapplcat-" + programRun.getRun(), DataprocProvisioner.getClusterName(programRun));
   }
 }

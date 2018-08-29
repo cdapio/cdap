@@ -24,9 +24,9 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Configuration for DataProc.
+ * Configuration for Dataproc.
  */
-public class DataProcConf {
+public class DataprocConf {
   private final String accountKey;
   private final String region;
   private final String zone;
@@ -51,7 +51,7 @@ public class DataProcConf {
   private final boolean preferExternalIP;
   private final SSHPublicKey publicKey;
 
-  private DataProcConf(@Nullable String accountKey, String region, String zone, @Nullable String projectId,
+  private DataprocConf(@Nullable String accountKey, String region, String zone, @Nullable String projectId,
                        String network, int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
                        int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
@@ -156,7 +156,7 @@ public class DataProcConf {
     return String.format("custom-%d-%d", cpus, memoryGB);
   }
 
-  public static DataProcConf fromProvisionerContext(ProvisionerContext context) {
+  public static DataprocConf fromProvisionerContext(ProvisionerContext context) {
     return create(context.getProperties(),
                   context.getSSHContext().getSSHKeyPair().map(SSHKeyPair::getPublicKey).orElse(null));
   }
@@ -164,11 +164,11 @@ public class DataProcConf {
   /**
    * Create the conf from a property map while also performing validation.
    */
-  public static DataProcConf fromProperties(Map<String, String> properties) {
+  public static DataprocConf fromProperties(Map<String, String> properties) {
     return create(properties, null);
   }
 
-  private static DataProcConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
+  private static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
     String projectId = getString(properties, "projectId");
 
@@ -219,7 +219,7 @@ public class DataProcConf {
 
     boolean preferExternalIP = Boolean.parseBoolean(properties.get("preferExternalIP"));
 
-    return new DataProcConf(accountKey, region, zone, projectId, network,
+    return new DataprocConf(accountKey, region, zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
