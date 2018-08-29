@@ -1,0 +1,19 @@
+{
+  "steps": [
+    {
+      "label": "Create Native profile",
+      "type": "CREATE_NATIVE_PROFILE",
+      "runCondition": "ONCE"
+    },
+    {
+      "label": "Create default namespace",
+      "type": "CREATE_DEFAULT_NAMESPACE",
+      "runCondition": "ONCE"
+    },
+    {
+      "label": "Load system artifacts",
+      "type": "LOAD_SYSTEM_ARTIFACTS",
+      "runCondition": "ALWAYS"
+    }
+  ]
+}

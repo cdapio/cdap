@@ -22,12 +22,10 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
-import co.cask.cdap.internal.profile.ProfileService;
+import co.cask.cdap.internal.bootstrap.BootstrapService;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.route.store.RouteStore;
@@ -62,24 +60,21 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    ProgramRuntimeService programRuntimeService,
                                    ApplicationLifecycleService applicationLifecycleService,
                                    ProgramNotificationSubscriberService programNotificationSubscriberService,
-                                   ProgramLifecycleService programLifecycleService,
                                    RunRecordCorrectorService runRecordCorrectorService,
                                    StreamCoordinatorClient streamCoordinatorClient,
                                    @Named("appfabric.services.names") Set<String> servicesNames,
                                    @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-                                   NamespaceAdmin namespaceAdmin,
                                    MetricStore metricStore,
-                                   SystemArtifactLoader systemArtifactLoader,
                                    PluginService pluginService,
                                    RouteStore routeStore,
                                    CoreSchedulerService coreSchedulerService,
-                                   ProfileService profileService,
-                                   ProvisioningService provisioningService) {
+                                   ProvisioningService provisioningService,
+                                   BootstrapService bootstrapService) {
     super(cConf, sConf, discoveryService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, runRecordCorrectorService, applicationLifecycleService,
           programNotificationSubscriberService, streamCoordinatorClient, servicesNames,
-          handlerHookNames, namespaceAdmin, systemArtifactLoader, pluginService, routeStore, coreSchedulerService,
-          profileService, provisioningService);
+          handlerHookNames, pluginService, routeStore, coreSchedulerService,
+          provisioningService, bootstrapService);
     this.metricStore = metricStore;
   }
 

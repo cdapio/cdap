@@ -20,7 +20,6 @@ import co.cask.cdap.api.retry.RetriesExhaustedException;
 import co.cask.cdap.api.retry.RetryableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Int;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -204,6 +203,28 @@ public final class Retries {
         }
       }
     }
+  }
+
+  /**
+   * Executes a {@link Runnable}, retrying if it throws something retryable.
+   *
+   * @param runnable the runnable to run
+   * @param retryStrategy the retry strategy to use if the callable fails in a retryable way
+   * @param isRetryable predicate to determine whether the callable failure is retryable or not
+   * @param <T> the type of throwable
+   * @throws InterruptedException if the call was interrupted between retries. The last Throwable that triggered the
+   *   retry will be added as a suppressed exception.
+   * @throws T if the callable failed in a way that is not retryable, or the retries were exhausted.
+   *   If retries were exhausted, a {@link RetriesExhaustedException} will be added as a suppressed exception.
+   */
+  public static <T extends Throwable> void runWithInterruptibleRetries(Runnable<T> runnable,
+                                                                       RetryStrategy retryStrategy,
+                                                                       Predicate<Throwable> isRetryable)
+    throws T, InterruptedException {
+    callWithInterruptibleRetries((Callable<Void, T>) () -> {
+      runnable.run();
+      return null;
+    }, retryStrategy, isRetryable);
   }
 
   /**
