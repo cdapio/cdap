@@ -38,7 +38,8 @@
           "name": "network",
           "description": "Select a VPC network in the specified project to use for creating clusters with this profile. If the system is running on Google Cloud Platform, this can be left blank and the system's network will be used.",
           "widget-attributes": {
-            "default": "default"
+            "default": "default",
+            "size": "medium"
           }
         },
         {
@@ -136,7 +137,8 @@
               "false",
               "true"
             ],
-            "default": "false"
+            "default": "false",
+            "size": "medium"
           }
         }
       ]
@@ -160,7 +162,7 @@
         },
         {
           "widget-type": "select",
-          "label": "Master cores",
+          "label": "Master Cores",
           "name": "masterCPUs",
           "description": "The number of virtual cores to allocate to a master node",
           "widget-attributes": {
@@ -180,12 +182,22 @@
         },
         {
           "widget-type": "memory-textbox",
-          "label": "Master memory (GB)",
+          "label": "Master Memory (GB)",
           "name": "masterMemoryMB",
           "description": "The amount of memory in GB to allocate for a master node",
           "widget-attributes": {
             "default": 4096,
-            "min": 256,
+            "min": 1024,
+            "size": "small"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Master Disk Size (GB)",
+          "name": "masterDiskGB",
+          "description": "The disk size in GB to allocate for a master node",
+          "widget-attributes": {
+            "default": 500,
             "size": "small"
           }
         }
@@ -196,7 +208,7 @@
       "properties": [
         {
           "widget-type": "number",
-          "label": "Number of workers",
+          "label": "Number of Workers",
           "name": "workerNumNodes",
           "description": "Worker nodes contain a YARN NodeManager and a HDFS DataNode.",
           "widget-attributes": {
@@ -207,7 +219,7 @@
         },
         {
           "widget-type": "select",
-          "label": "Worker cores",
+          "label": "Worker Cores",
           "name": "workerCPUs",
           "description": "The number of virtual cores to allocate for worker nodes",
           "widget-attributes": {
@@ -227,12 +239,22 @@
         },
         {
           "widget-type": "memory-textbox",
-          "label": "Worker memory (GB)",
+          "label": "Worker Memory (GB)",
           "name": "workerMemoryMB",
           "description": "The amount of memory in GB to allocate for a worker node",
           "widget-attributes": {
             "default": 8192,
-            "min": 256,
+            "min": 1024,
+            "size": "small"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Worker Disk Size (GB)",
+          "name": "workerDiskGB",
+          "description": "The disk size in GB to allocate for a worker node",
+          "widget-attributes": {
+            "default": 500,
             "size": "small"
           }
         }
@@ -247,7 +269,8 @@
           "name": "pollCreateDelay",
           "description": "The number of seconds to wait after creating a cluster to begin polling to see if it has been created",
           "widget-attributes": {
-            "default": "60"
+            "default": "60",
+            "size": "small"
           }
         },
         {
@@ -256,7 +279,8 @@
           "name": "pollCreateJitter",
           "description": "Maximum amount of jitter in seconds to add to the delay for polling for cluster creation",
           "widget-attributes": {
-            "default": "20"
+            "default": "20",
+            "size": "small"
           }
         },
         {
@@ -265,7 +289,8 @@
           "name": "pollDeleteDelay",
           "description": "The number of seconds to wait after deleting a cluster to begin polling to see if it has been deleted",
           "widget-attributes": {
-            "default": "30"
+            "default": "30",
+            "size": "small"
           }
         },
         {
@@ -274,7 +299,8 @@
           "name": "pollInterval",
           "description": "The number of seconds to wait in between polls for cluster status during create and delete operations",
           "widget-attributes": {
-            "default": "2"
+            "default": "2",
+            "size": "small"
           }
         }
       ]
