@@ -69,6 +69,9 @@ public class SSHRemoteProcessController implements RemoteProcessController {
       ByteStreams.toByteArray(process.getErrorStream());
 
       int exitCode = process.waitFor();
+      if (exitCode != 0) {
+        LOG.info("Received exit code {} when checking for remote process for program run {}.", exitCode, programRunId);
+      }
       return exitCode == 0;
     } catch (IOException e) {
       // If there is error performing SSH, check if the cluster still exist and running
