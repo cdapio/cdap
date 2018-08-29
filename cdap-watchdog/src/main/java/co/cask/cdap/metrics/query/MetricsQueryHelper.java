@@ -115,7 +115,7 @@ public class MetricsQueryHelper {
       .put(Constants.Metrics.Tag.PROGRAM, "program")
       .put(Constants.Metrics.Tag.PROGRAM_TYPE, "programtype")
 
-      // put profiel related tag
+      // put profile related tag
       .put(Constants.Metrics.Tag.PROFILE, "profile")
       .put(Constants.Metrics.Tag.PROFILE_SCOPE, "profilescope")
       .build();

@@ -18,6 +18,7 @@
 package co.cask.cdap.internal.provision.task;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningOp;
@@ -33,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Performs steps to provision a cluster for a program run. Before any operation is performed, state is persisted
@@ -66,15 +68,18 @@ public class ProvisionTask extends ProvisioningTask {
   private final Provisioner provisioner;
   private final ProvisionerContext provisionerContext;
   private final ProvisionerNotifier provisionerNotifier;
+  private final ProgramStateWriter programStateWriter;
 
   public ProvisionTask(ProvisioningTaskInfo initialTaskInfo, Transactional transactional,
                        DatasetFramework datasetFramework,
                        Provisioner provisioner, ProvisionerContext provisionerContext,
-                       ProvisionerNotifier provisionerNotifier, int retryTimeLimitSecs) {
+                       ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
+                       int retryTimeLimitSecs) {
     super(initialTaskInfo, transactional, datasetFramework, retryTimeLimitSecs);
     this.provisioner = provisioner;
     this.provisionerContext = provisionerContext;
     this.provisionerNotifier = provisionerNotifier;
+    this.programStateWriter = programStateWriter;
   }
 
   @Override
@@ -97,13 +102,12 @@ public class ProvisionTask extends ProvisioningTask {
 
   @Override
   protected void handleSubtaskFailure(ProvisioningTaskInfo taskInfo, Exception e) {
-    provisionerNotifier.deprovisioning(programRunId);
+    notifyFailed(e);
   }
 
   @Override
   protected void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, TransactionFailureException e) {
-    // try deprovisioning the cluster
-    provisionerNotifier.deprovisioning(programRunId);
+    notifyFailed(e);
   }
 
   private ProvisioningSubtask createClusterCreateSubtask() {
@@ -113,7 +117,7 @@ public class ProvisionTask extends ProvisioningTask {
         // returns a null cluster.
         LOG.warn("Provisioner {} returned an invalid null cluster. " +
                     "Sending notification to de-provision it.", provisioner.getSpec().getName());
-        provisionerNotifier.deprovisioning(programRunId);
+        notifyFailed(new IllegalStateException("Provisioner returned an invalid null cluster."));
         // RequestingCreate --> Failed
         return Optional.of(ProvisioningOp.Status.FAILED);
       }
@@ -140,7 +144,7 @@ public class ProvisionTask extends ProvisioningTask {
           return Optional.of(ProvisioningOp.Status.POLLING_DELETE);
         case ORPHANED:
           // something went wrong, try to deprovision
-          provisionerNotifier.deprovisioning(programRunId);
+          notifyFailed(new IllegalStateException("Cluster got into an orphaned state."));
           return Optional.of(ProvisioningOp.Status.FAILED);
       }
       // should never get here
@@ -164,7 +168,7 @@ public class ProvisionTask extends ProvisioningTask {
           if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartTime) > retryTimeLimitSecs) {
             // over the time out. Give up and transition to deprovisioning to clean up task state
             // and ensure the cluster is gone
-            provisionerNotifier.deprovisioning(programRunId);
+            notifyFailed(new TimeoutException("Timed out trying to create the cluster."));
             return Optional.of(ProvisioningOp.Status.FAILED);
           } else {
             return Optional.of(ProvisioningOp.Status.REQUESTING_CREATE);
@@ -175,7 +179,7 @@ public class ProvisionTask extends ProvisioningTask {
         case DELETING:
         case ORPHANED:
           // delete failed or something went wrong, try to deprovision
-          provisionerNotifier.deprovisioning(programRunId);
+          notifyFailed(new IllegalStateException("Cluster got into an orphaned state."));
           return Optional.of(ProvisioningOp.Status.FAILED);
       }
       // should never get here
@@ -191,5 +195,10 @@ public class ProvisionTask extends ProvisioningTask {
                                       cluster, initialTaskInfo.getSecureKeysDir());
       return Optional.of(ProvisioningOp.Status.CREATED);
     });
+  }
+
+  private void notifyFailed(Throwable cause) {
+    programStateWriter.error(programRunId, cause);
+    provisionerNotifier.deprovisioning(programRunId);
   }
 }

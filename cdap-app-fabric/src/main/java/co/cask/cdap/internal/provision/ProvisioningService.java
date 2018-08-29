@@ -316,6 +316,7 @@ public class ProvisioningService extends AbstractIdleService {
       runWithProgramLogging(
         programRunId, args,
         () -> LOG.error("Could not provision cluster for the run because provisioner {} does not exist.", name));
+      programStateWriter.error(programRunId, new IllegalStateException("Provisioner does not exist."));
       provisionerNotifier.deprovisioned(programRunId);
       return () -> { };
     }
@@ -361,6 +362,8 @@ public class ProvisioningService extends AbstractIdleService {
       runWithProgramLogging(programRunId, Collections.emptyMap(),
                             () -> LOG.error("No task state found while deprovisioning the cluster. "
                                               + "The cluster will be marked as orphaned."));
+      programStateWriter.error(programRunId,
+                               new IllegalStateException("No task state found while deprovisioning the cluster."));
       provisionerNotifier.orphaned(programRunId);
       return () -> { };
     }
@@ -368,7 +371,8 @@ public class ProvisioningService extends AbstractIdleService {
     // cluster can be null if the provisioner was not able to create a cluster. In that case, there is nothing
     // to deprovision, but task state still needs to be cleaned up.
     if (existing.getCluster() == null) {
-      return () -> taskCleanup.accept(existing.getProgramRunId());
+      provisionerNotifier.deprovisioned(programRunId);
+      return () -> taskCleanup.accept(programRunId);
     }
 
     Provisioner provisioner = provisionerInfo.get().provisioners.get(existing.getProvisionerName());
@@ -377,6 +381,8 @@ public class ProvisioningService extends AbstractIdleService {
                             () -> LOG.error("Could not deprovision the cluster because provisioner {} does not exist. "
                                               + "The cluster will be marked as orphaned.",
                                             existing.getProvisionerName()));
+      programStateWriter.error(programRunId,
+                               new IllegalStateException("Provisioner not found while deprovisioning the cluster."));
       provisionerNotifier.orphaned(programRunId);
       return () -> taskCleanup.accept(existing.getProgramRunId());
     }
@@ -469,7 +475,7 @@ public class ProvisioningService extends AbstractIdleService {
 
     // TODO: (CDAP-13246) pick up timeout from profile instead of hardcoding
     ProvisioningTask task = new ProvisionTask(taskInfo, transactional, datasetFramework, provisioner, context,
-                                              provisionerNotifier, 300);
+                                              provisionerNotifier, programStateWriter, 300);
 
     Runnable runnable = () -> runWithProgramLogging(
       programRunId, taskInfo.getProgramOptions().getArguments().asMap(),
