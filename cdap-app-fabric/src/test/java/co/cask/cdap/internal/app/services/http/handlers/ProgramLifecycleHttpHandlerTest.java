@@ -58,6 +58,7 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoConstraint;
@@ -520,6 +521,40 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     } finally {
       Assert.assertEquals(200, doDelete(getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway
         .API_VERSION_3_TOKEN, TEST_NAMESPACE1)).getStatusLine().getStatusCode());
+    }
+  }
+
+  @Test
+  public void testProvisionerFailureStateAndMetrics() throws Exception {
+    // test that metrics and program state are correct after a program run fails due to provisioning failures
+    try {
+      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+      Id.Program workflowId =
+        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+
+      // get number of failed runs and metrics
+      long failMetricCount = getProfileTotalMetric(Constants.Metrics.Program.PROGRAM_FAILED_RUNS);
+      int numFailedRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED).size();
+
+      // this tells the provisioner to fail the create call
+      Map<String, String> args = new HashMap<>();
+      args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.FAIL_CREATE, Boolean.TRUE.toString());
+      startProgram(workflowId, args);
+
+      Tasks.waitFor(numFailedRuns + 1, () -> getProgramRuns(workflowId, ProgramRunStatus.FAILED).size(),
+                    5, TimeUnit.MINUTES);
+
+      // check program state and cluster state
+      RunRecord runRecord = getProgramRuns(workflowId, ProgramRunStatus.FAILED).iterator().next();
+      Assert.assertEquals(ProgramRunClusterStatus.DEPROVISIONED, runRecord.getCluster().getStatus());
+
+      // check profile metrics. Though not guaranteed to be set when the program is done, it should be set soon after.
+      Tasks.waitFor(failMetricCount + 1, () -> getProfileTotalMetric(Constants.Metrics.Program.PROGRAM_FAILED_RUNS),
+                    60, TimeUnit.SECONDS);
+    } finally {
+      HttpResponse deleteResponse = doDelete(
+        getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+      Assert.assertEquals(200, deleteResponse.getStatusLine().getStatusCode());
     }
   }
 

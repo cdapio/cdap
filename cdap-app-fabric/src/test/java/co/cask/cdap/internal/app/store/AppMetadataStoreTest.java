@@ -25,7 +25,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -190,45 +189,6 @@ public class AppMetadataStoreTest {
 
       RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId);
       Assert.assertEquals(ProgramRunStatus.PENDING, runRecordMeta.getStatus());
-    });
-  }
-
-  @Test
-  public void testProvisioningFailure() throws Exception {
-    AppMetadataStore metadataStoreDataset = getMetadataStore("testProvisioningFailure");
-
-    TransactionExecutor txnl = getTxExecutor(metadataStoreDataset);
-    ApplicationId application = NamespaceId.DEFAULT.app("app");
-    ProgramId program = application.program(ProgramType.WORKFLOW, "program");
-    RunId runId1 = RunIds.generate();
-    ProgramRunId programRunId1 = program.run(runId1);
-
-    // test state transition from provisioning -> deprovisioning. This can happen if there is a provisioning failure
-    txnl.execute(() -> {
-      metadataStoreDataset.recordProgramProvisioning(programRunId1, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
-                                                     AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
-                                                     ARTIFACT_ID);
-      metadataStoreDataset.recordProgramDeprovisioning(programRunId1,
-                                                       AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId1);
-      Assert.assertEquals(ProgramRunStatus.FAILED, runRecordMeta.getStatus());
-      Assert.assertEquals(ProgramRunClusterStatus.DEPROVISIONING, runRecordMeta.getCluster().getStatus());
-    });
-
-    RunId runId2 = RunIds.generate();
-    ProgramRunId programRunId2 = program.run(runId2);
-    // test state transition from provisioning -> deprovisioned. This can happen if there is a provisioning failure
-    txnl.execute(() -> {
-      metadataStoreDataset.recordProgramProvisioning(programRunId2, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
-                                                     AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
-                                                     ARTIFACT_ID);
-      metadataStoreDataset.recordProgramDeprovisioned(programRunId2, System.currentTimeMillis(),
-                                                      AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId2);
-      Assert.assertEquals(ProgramRunStatus.FAILED, runRecordMeta.getStatus());
-      Assert.assertEquals(ProgramRunClusterStatus.DEPROVISIONED, runRecordMeta.getCluster().getStatus());
     });
   }
 

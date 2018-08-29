@@ -19,6 +19,11 @@ package co.cask.cdap.internal.app.services.http;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.artifact.ArtifactRange;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.program.ManifestFields;
@@ -58,6 +63,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.DatasetMeta;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProtoConstraintCodec;
@@ -145,7 +151,9 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -213,6 +221,7 @@ public abstract class AppFabricTestBase {
   private static StreamClient streamClient;
   private static DatasetClient datasetClient;
   private static MetadataClient metadataClient;
+  private static MetricStore metricStore;
 
   private static RequestConfig httpRequestConfig;
   private static List<CloseableHttpClient> httpClients = new ArrayList<>();
@@ -275,6 +284,7 @@ public abstract class AppFabricTestBase {
     streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
+    metricStore = injector.getInstance(MetricStore.class);
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
     // Wait for the scheduler to be functional.
@@ -1325,7 +1335,7 @@ public abstract class AppFabricTestBase {
     return destination;
   }
 
-  protected DatasetMeta getDatasetMeta (DatasetId datasetId)
+  protected DatasetMeta getDatasetMeta(DatasetId datasetId)
     throws UnauthorizedException, UnauthenticatedException, NotFoundException, IOException {
     return datasetClient.get(datasetId);
   }
@@ -1333,6 +1343,27 @@ public abstract class AppFabricTestBase {
   protected StreamProperties getStreamConfig(StreamId streamId)
     throws StreamNotFoundException, UnauthenticatedException, UnauthorizedException, IOException {
     return streamClient.getConfig(streamId);
+  }
+
+  protected long getProfileTotalMetric(String metricName) {
+    Map<String, String> tags = new HashMap<>();
+    tags.put(Constants.Metrics.Tag.PROFILE, Profile.NATIVE_NAME);
+    tags.put(Constants.Metrics.Tag.PROFILE_SCOPE, EntityScope.SYSTEM.name());
+    MetricDataQuery query =
+      new MetricDataQuery(0, 0, Integer.MAX_VALUE, "system." + metricName,
+                          AggregationFunction.SUM, tags, Collections.emptyList());
+    Collection<MetricTimeSeries> results = metricStore.query(query);
+    if (results.isEmpty()) {
+      return 0;
+    }
+    // since it is totals query and not groupBy specified, we know there's one time series
+    List<TimeValue> timeValues = results.iterator().next().getTimeValues();
+    if (timeValues.isEmpty()) {
+      return 0;
+    }
+
+    // since it is totals, we know there's one value only
+    return timeValues.get(0).getValue();
   }
 
   private String getResponseBody(HttpResponse response) throws IOException {
