@@ -17,7 +17,6 @@
 import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 
 const setActiveBrowser = (payload) => {
-  reset();
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_ACTIVEBROWSER,
     payload
