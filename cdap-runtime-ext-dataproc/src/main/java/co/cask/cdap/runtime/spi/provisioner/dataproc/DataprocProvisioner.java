@@ -60,10 +60,12 @@ public class DataprocProvisioner implements Provisioner {
   @Override
   public void validateProperties(Map<String, String> properties) {
     DataprocConf conf = DataprocConf.fromProperties(properties);
-    try {
-      DataprocClient.fromConf(conf);
+    try (DataprocClient ignored = DataprocClient.fromConf(conf)) {
+      // simply creating the client to validate that we can create it
     } catch (IOException | GeneralSecurityException e) {
       throw new IllegalArgumentException(e.getMessage(), e);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
