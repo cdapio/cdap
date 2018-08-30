@@ -113,6 +113,7 @@
   }
 
   .tooltip {
+    pointer-events: none;
 
     /*
       The way tooltip is structured in bootstrap 4 is
