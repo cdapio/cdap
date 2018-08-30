@@ -863,7 +863,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getProgramRunCount(ProgramId programId) throws NotFoundException {
+  public long getProgramRunCount(ProgramId programId) throws NotFoundException {
     return Transactionals.execute(transactional, context -> {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
       ApplicationSpecification appSpec = getApplicationSpec(appMetadataStore, programId.getParent());
@@ -907,8 +907,8 @@ public class DefaultStore implements Store {
         }
       }
 
-      Map<ProgramId, Integer> runCounts = appMetadataStore.getProgramRunCounts(existingPrograms);
-      for (Map.Entry<ProgramId, Integer> entry : runCounts.entrySet()) {
+      Map<ProgramId, Long> runCounts = appMetadataStore.getProgramRunCounts(existingPrograms);
+      for (Map.Entry<ProgramId, Long> entry : runCounts.entrySet()) {
         result.add(new RunCountResult(entry.getKey(), entry.getValue(), null));
       }
       return result;
@@ -926,22 +926,21 @@ public class DefaultStore implements Store {
                                                                   ProgramId programId) {
     String programName = programId.getProgram();
     ProgramType type = programId.getType();
-    ProgramSpecification programSpec;
-    if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programName)) {
-      programSpec = appSpec.getFlows().get(programName);
-    } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
-      programSpec = appSpec.getMapReduce().get(programName);
-    } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
-      programSpec = appSpec.getSpark().get(programName);
-    } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(programName)) {
-      programSpec = appSpec.getWorkflows().get(programName);
-    } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(programName)) {
-      programSpec = appSpec.getServices().get(programName);
-    } else if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(programName)) {
-      programSpec = appSpec.getWorkers().get(programName);
-    } else {
-      programSpec = null;
+    switch (type) {
+      case FLOW:
+        return appSpec.getFlows().get(programName);
+      case MAPREDUCE:
+        return appSpec.getMapReduce().get(programName);
+      case SPARK:
+        return appSpec.getSpark().get(programName);
+      case WORKFLOW:
+        return appSpec.getWorkflows().get(programName);
+      case SERVICE:
+        return appSpec.getServices().get(programName);
+      case WORKER:
+        return appSpec.getWorkers().get(programName);
+      default:
+        return null;
     }
-    return programSpec;
   }
 }

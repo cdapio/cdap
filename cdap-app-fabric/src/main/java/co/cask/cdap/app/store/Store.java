@@ -503,7 +503,7 @@ public interface Store {
    * @return the number of run count
    * @throws NotFoundException if the app or the program does not exist
    */
-  int getProgramRunCount(ProgramId programId) throws NotFoundException;
+  long getProgramRunCount(ProgramId programId) throws NotFoundException;
 
   /**
    * Get the run count of the given program collection

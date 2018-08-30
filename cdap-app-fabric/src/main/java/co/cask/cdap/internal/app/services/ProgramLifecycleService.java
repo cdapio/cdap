@@ -174,7 +174,7 @@ public class ProgramLifecycleService {
    * @throws NotFoundException if the application to which this program belongs was not found or the program is not
    *                           found in the app
    */
-  public int getProgramRunCount(ProgramId programId) throws Exception {
+  public long getProgramRunCount(ProgramId programId) throws Exception {
     AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
     return store.getProgramRunCount(programId);
   }
@@ -191,15 +191,16 @@ public class ProgramLifecycleService {
     // filter the result
     Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programIds),
                                                                               authenticationContext.getPrincipal());
-    for (int i = 0; i < result.size(); i++) {
-      RunCountResult runCountResult = result.get(i);
-      ProgramId programId = runCountResult.getProgramId();
-      if (!visibleEntities.contains(programId)) {
-        result.set(i, new RunCountResult(programId, null,
-                                         new UnauthorizedException(authenticationContext.getPrincipal(), programId)));
-      }
-    }
-    return result;
+    return result.stream()
+      .map(runCount -> {
+        if (!visibleEntities.contains(runCount.getProgramId())) {
+          return new RunCountResult(runCount.getProgramId(), null,
+                                    new UnauthorizedException(authenticationContext.getPrincipal(),
+                                                              runCount.getProgramId()));
+        }
+        return runCount;
+      })
+      .collect(Collectors.toList());
   }
 
   /**

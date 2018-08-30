@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -1209,10 +1210,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
    * @param programId the program to get the count
    * @return the number of run count
    */
-  public int getProgramRunCount(ProgramId programId) {
+  public long getProgramRunCount(ProgramId programId) {
     MDSKey key = getProgramKeyBuilder(TYPE_COUNT, programId).build();
     byte[] count = getValue(key);
-    return count == null ? 0 : (int) Bytes.toLong(count);
+    return count == null ? 0 : Bytes.toLong(count);
   }
 
   /**
@@ -1221,17 +1222,20 @@ public class AppMetadataStore extends MetadataStoreDataset {
    * @param programIds the collection of program ids to get the program
    * @return the map of the program id to its run count
    */
-  public Map<ProgramId, Integer> getProgramRunCounts(Collection<ProgramId> programIds) {
+  public Map<ProgramId, Long> getProgramRunCounts(Collection<ProgramId> programIds) throws BadRequestException {
     Map<MDSKey, ProgramId> mdsKeyProgramIdMap = new HashMap<>();
+    if (programIds.size() > 100) {
+      throw new BadRequestException(String.format("%d programs found, the maximum number supported is 100",
+                                                  programIds.size()));
+    }
     for (ProgramId programId : programIds) {
       MDSKey key = getProgramKeyBuilder(TYPE_COUNT, programId).build();
       mdsKeyProgramIdMap.put(key, programId);
     }
     Map<MDSKey, byte[]> counts = getKV(mdsKeyProgramIdMap.keySet());
-    Map<ProgramId, Integer> result = new LinkedHashMap<>();
+    Map<ProgramId, Long> result = new LinkedHashMap<>();
     for (MDSKey mdsKey : mdsKeyProgramIdMap.keySet()) {
-      byte[] count = counts.getOrDefault(mdsKey, Bytes.toBytes(0L));
-      result.put(mdsKeyProgramIdMap.get(mdsKey), (int) Bytes.toLong(count));
+      result.put(mdsKeyProgramIdMap.get(mdsKey), counts.containsKey(mdsKey) ? Bytes.toLong(counts.get(mdsKey)) : 0L);
     }
     return result;
   }

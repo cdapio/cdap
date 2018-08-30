@@ -738,10 +738,10 @@ public class AppMetadataStoreTest {
     addProgramCount(txnl, store, programId2, 3);
 
     txnl.execute(() -> {
-      Map<ProgramId, Integer> counts = store.getProgramRunCounts(ImmutableList.of(programId1, programId2, programId3));
-      Assert.assertEquals(5, (int) counts.get(programId1));
-      Assert.assertEquals(3, (int) counts.get(programId2));
-      Assert.assertEquals(0, (int) counts.get(programId3));
+      Map<ProgramId, Long> counts = store.getProgramRunCounts(ImmutableList.of(programId1, programId2, programId3));
+      Assert.assertEquals(5, (long) counts.get(programId1));
+      Assert.assertEquals(3, (long) counts.get(programId2));
+      Assert.assertEquals(0, (long) counts.get(programId3));
     });
 
     // after cleanup we should only have 0 runs for all programs
@@ -752,10 +752,10 @@ public class AppMetadataStoreTest {
     });
 
     txnl.execute(() -> {
-      Map<ProgramId, Integer> counts = store.getProgramRunCounts(ImmutableList.of(programId1, programId2, programId3));
-      Assert.assertEquals(0, (int) counts.get(programId1));
-      Assert.assertEquals(0, (int) counts.get(programId2));
-      Assert.assertEquals(0, (int) counts.get(programId3));
+      Map<ProgramId, Long> counts = store.getProgramRunCounts(ImmutableList.of(programId1, programId2, programId3));
+      Assert.assertEquals(0, (long) counts.get(programId1));
+      Assert.assertEquals(0, (long) counts.get(programId2));
+      Assert.assertEquals(0, (long) counts.get(programId3));
     });
   }
 

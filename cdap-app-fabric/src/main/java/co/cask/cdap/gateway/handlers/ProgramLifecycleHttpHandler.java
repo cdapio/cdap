@@ -1266,7 +1266,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     if (programs.size() > 100) {
-      throw new BadRequestException(String.format("%s programs found in the request, the maximum number " +
+      throw new BadRequestException(String.format("%d programs found in the request, the maximum number " +
                                                     "supported is 100", programs.size()));
     }
 
@@ -1279,11 +1279,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramId programId = runCountResult.getProgramId();
       Exception exception = runCountResult.getException();
       if (exception == null) {
-        counts.add(new BatchProgramCount(programId, 200, null, runCountResult.getCount()));
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.OK.code(), null, runCountResult.getCount()));
       } else if (exception instanceof NotFoundException) {
-        counts.add(new BatchProgramCount(programId, 404, exception.getMessage(), null));
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.BAD_REQUEST.code(),
+                                         exception.getMessage(), null));
       } else if (exception instanceof UnauthorizedException) {
-        counts.add(new BatchProgramCount(programId, 403, exception.getMessage(), null));
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.FORBIDDEN.code(),
+                                         exception.getMessage(), null));
+      } else {
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                         exception.getMessage(), null));
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(counts));
@@ -1299,9 +1304,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-name") String appName,
                                  @PathParam("program-type") String type,
                                  @PathParam("program-name") String programName) throws Exception {
-    ProgramType programType = getProgramType(type);
-    ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(lifecycleService.getProgramRunCount(programId)));
+    getProgramRunCount(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
   }
 
   /**

@@ -764,7 +764,7 @@ public class DefaultStoreTest {
         Assert.assertNull(runCountResult.getCount());
         Assert.assertTrue(runCountResult.getException() instanceof NotFoundException);
       } else {
-        Assert.assertEquals(5, (int) runCountResult.getCount());
+        Assert.assertEquals(5, (long) runCountResult.getCount());
       }
     }
 

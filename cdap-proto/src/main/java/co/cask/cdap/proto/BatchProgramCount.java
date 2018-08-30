@@ -25,14 +25,14 @@ import javax.annotation.Nullable;
  * Result for the program count for http response
  */
 public class BatchProgramCount extends BatchProgramResult {
-  private final Integer runCount;
+  private final Long runCount;
 
-  public BatchProgramCount(BatchProgram program, int statusCode, @Nullable String error, @Nullable Integer runCount) {
+  public BatchProgramCount(BatchProgram program, int statusCode, @Nullable String error, @Nullable Long runCount) {
     super(program, statusCode, error);
     this.runCount = runCount;
   }
 
-  public BatchProgramCount(ProgramId programId, int statusCode, @Nullable String error, @Nullable Integer runCount) {
+  public BatchProgramCount(ProgramId programId, int statusCode, @Nullable String error, @Nullable Long runCount) {
     this(new BatchProgram(programId.getApplication(), programId.getType(), programId.getProgram()),
          statusCode, error, runCount);
   }
@@ -41,7 +41,7 @@ public class BatchProgramCount extends BatchProgramResult {
    * @return count of the program run. null if there is an error
    */
   @Nullable
-  public Integer getRunCount() {
+  public Long getRunCount() {
     return runCount;
   }
 

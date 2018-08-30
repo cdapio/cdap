@@ -27,10 +27,10 @@ import javax.annotation.Nullable;
  */
 public class RunCountResult {
   private final ProgramId programId;
-  private final Integer count;
+  private final Long count;
   private final Exception exception;
 
-  public RunCountResult(ProgramId programId, @Nullable Integer count, @Nullable Exception exception) {
+  public RunCountResult(ProgramId programId, @Nullable Long count, @Nullable Exception exception) {
     this.programId = programId;
     this.count = count;
     this.exception = exception;
@@ -41,7 +41,7 @@ public class RunCountResult {
   }
 
   @Nullable
-  public Integer getCount() {
+  public Long getCount() {
     return count;
   }
 
