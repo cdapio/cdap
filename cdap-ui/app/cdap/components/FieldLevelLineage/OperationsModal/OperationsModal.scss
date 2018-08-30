@@ -25,16 +25,6 @@ $table-border-color: $grey-04;
   max-width: 85vw;
   max-height: 80vh;
 
-  .modal-content { border-radius: 0; }
-
-  .modal-header,
-  .modal-body {
-    padding-left: 25px;
-    padding-right: 25px;
-  }
-
-  .close-section { cursor: pointer; }
-
   .operations-container {
     .navigation {
       user-select: none;
