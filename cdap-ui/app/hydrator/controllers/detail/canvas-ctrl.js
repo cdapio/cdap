@@ -157,17 +157,17 @@ angular.module(PKG.name + '.feature.hydrator')
         this.$interval.cancel(this.currentRunTimeCounter);
         if (status === 'Running') {
           this.currentRunTimeCounter = this.$interval(() => {
-            let duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.floor(Date.now() / 1000) - this.currentRun.start);
+            let duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.floor(Date.now() / 1000) - this.currentRun.starting);
             this.currentRun = Object.assign({}, this.currentRun, {
               duration
             });
           }, 1000);
         }
-        let timeDifference = this.currentRun.end ? this.currentRun.end - this.currentRun.start : Math.floor(Date.now() / 1000) - this.currentRun.start;
+        let timeDifference = this.currentRun.end ? this.currentRun.end - this.currentRun.starting : Math.floor(Date.now() / 1000) - this.currentRun.starting;
         this.currentRun = Object.assign({}, this.currentRun, {
           duration: window.CaskCommon.CDAPHelpers.humanReadableDuration(timeDifference),
           startTime: this.currentRun.start ? this.moment(this.currentRun.start * 1000).format('hh:mm:ss a') : null,
-          starting: !this.currentRun.start ? this.currentRun.starting : null,
+          starting: !this.currentRun.starting ? this.moment(this.currentRun.starting * 1000).format('hh:mm:ss a') : null,
           statusCssClass: this.MyPipelineStatusMapper.getStatusIndicatorClass(status),
           status
         });
