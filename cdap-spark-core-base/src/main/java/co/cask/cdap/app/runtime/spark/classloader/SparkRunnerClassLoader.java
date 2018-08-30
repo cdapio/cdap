@@ -19,8 +19,6 @@ package co.cask.cdap.app.runtime.spark.classloader;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassPathResources;
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +27,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -40,6 +38,14 @@ import javax.annotation.Nullable;
  * instead.
  *
  * IMPORTANT: Due to discovery in CDAP-5822, don't use getResourceAsStream in this class.
+ * IMPORTANT 2: Due to failure observed in CDAP-14062, use getResource() instead of findResource().
+ * The difference is that getResource() will search from the parent ClassLoader first and return if found,
+ * while findResource() will always look for it from the current ClassLoader.
+ * In unit-test and SDK, spark classes are available from the runtime extension system, hence are available from the
+ * parent of this ClassLoader. By using URL returned from the parent, which will never get closed, it eliminates the
+ * potential issue of the input stream getting closed when a different instance of this class is being closed.
+ * Underneath Java has a cache for JarFile opened from URL that represents an entry inside a jar file,
+ * which apparently closing one InputStream could affect another InputStream opened for the same jar file entry.
  */
 public final class SparkRunnerClassLoader extends URLClassLoader {
 
@@ -51,15 +57,13 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
   private final SparkClassRewriter rewriter;
 
   static {
-    Set<String> apiClasses = new HashSet<>();
+    Set<String> apiClasses = Collections.emptySet();
     try {
-      Iterables.addAll(
-        apiClasses, Iterables.transform(
-          Iterables.filter(ClassPathResources.getClassPathResources(Spark.class.getClassLoader(), Spark.class),
-                           ClassPath.ClassInfo.class),
-          ClassPathResources.CLASS_INFO_TO_CLASS_NAME
-        )
-      );
+      apiClasses = ClassPathResources.getClassPathResources(Spark.class.getClassLoader(), Spark.class).stream()
+        .filter(ClassPath.ClassInfo.class::isInstance)
+        .map(ClassPath.ClassInfo.class::cast)
+        .map(ClassPath.ClassInfo::getName)
+        .collect(Collectors.toSet());
     } catch (IOException e) {
       // Shouldn't happen, because Spark.class is in cdap-api and it should always be there.
       LOG.error("Unable to find cdap-api classes.", e);
@@ -70,13 +74,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
 
   public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient) {
     super(urls, parent);
-    this.rewriter = new SparkClassRewriter(new Function<String, URL>() {
-      @Nullable
-      @Override
-      public URL apply(String resourceName) {
-        return findResource(resourceName);
-      }
-    }, rewriteYarnClient);
+    this.rewriter = new SparkClassRewriter(this::getResource, rewriteYarnClient);
   }
 
   @Override
@@ -145,7 +143,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
    */
   @Nullable
   private InputStream openResource(String resourceName) throws IOException {
-    URL resource = findResource(resourceName);
+    URL resource = getResource(resourceName);
     return resource == null ? null : resource.openStream();
   }
 }
