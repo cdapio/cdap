@@ -239,6 +239,7 @@ features:
         deleteConfirmation: Are you sure you want to delete the profile *_{profile}_*?
         deleteError: There was a problem deleting the profile
         deleteTitle: Delete profile
+        disabledDeleteProfile: Profile needs to be disabled to delete
         disabled: Disabled
         enabled: Enabled
         export: Export
