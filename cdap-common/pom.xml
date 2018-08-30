@@ -201,6 +201,12 @@
       <groupId>org.apache.sshd</groupId>
       <artifactId>sshd-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>1.8.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
