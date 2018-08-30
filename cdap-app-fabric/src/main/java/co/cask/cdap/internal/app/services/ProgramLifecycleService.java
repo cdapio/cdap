@@ -45,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.pipeline.PluginRequirement;
 import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningOp;
@@ -210,12 +211,7 @@ public class ProgramLifecycleService {
   public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
     AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.allOf(Action.class), authorizationEnforcer,
                                          authenticationContext.getPrincipal());
-    ApplicationSpecification appSpec;
-    appSpec = store.getApplication(programId.getParent());
-    if (appSpec == null) {
-      return null;
-    }
-    return getExistingAppProgramSpecification(appSpec, programId);
+    return getProgramSpecificationWithoutAuthz(programId);
   }
 
   /**
@@ -337,7 +333,13 @@ public class ProgramLifecycleService {
     // provisioner to actually pick what launching mechanism it wants to use.
     systemArgs.put(ProgramOptionConstants.CLUSTER_MODE,
                    (ProfileId.NATIVE.equals(profileId) ? ClusterMode.ON_PREMISE : ClusterMode.ISOLATED).name());
-
+    ProgramSpecification programSpecification = getProgramSpecificationWithoutAuthz(programId);
+    if (programSpecification == null) {
+      throw new NotFoundException(programId);
+    }
+    // put all the plugin requirements if any involved in the run
+    systemArgs.put(ProgramOptionConstants.PLUGIN_REQUIREMENTS,
+                   GSON.toJson(getPluginRequirements(programSpecification)));
     return new SimpleProgramOptions(programId, new BasicArguments(systemArgs), new BasicArguments(userArgs), debug);
   }
 
@@ -936,5 +938,29 @@ public class ProgramLifecycleService {
     return runRecord == null || !activeStates.contains(runRecord.getStatus())
       ? Collections.emptyMap()
       : Collections.singletonMap(programId.run(runId), runRecord);
+  }
+
+  /**
+   * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program} without performing
+   * authorization enforcement.
+   *
+   * @param programId the {@link ProgramId program} for which the {@link ProgramSpecification} is requested
+   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
+   */
+  @Nullable
+  private ProgramSpecification getProgramSpecificationWithoutAuthz(ProgramId programId) {
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
+    if (appSpec == null) {
+      return null;
+    }
+    return getExistingAppProgramSpecification(appSpec, programId);
+  }
+
+  private Set<PluginRequirement> getPluginRequirements(ProgramSpecification programSpecification) {
+    return programSpecification.getPlugins().values()
+      .stream().map(plugin -> new PluginRequirement(plugin.getPluginClass().getName(),
+                                                    plugin.getPluginClass().getType(),
+                                                    plugin.getPluginClass().getRequirements()))
+      .collect(Collectors.toSet());
   }
 }

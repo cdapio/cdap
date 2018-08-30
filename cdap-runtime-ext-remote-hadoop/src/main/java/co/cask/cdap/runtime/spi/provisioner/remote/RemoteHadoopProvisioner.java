@@ -29,6 +29,7 @@ import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -79,5 +80,10 @@ public class RemoteHadoopProvisioner implements Provisioner {
   public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
     // shouldn't matter, as we won't ever poll.
     return PollingStrategies.fixedInterval(0, TimeUnit.SECONDS);
+  }
+
+  @Override
+  public Set<String> getCapabilities() {
+    return Collections.emptySet();
   }
 }

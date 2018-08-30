@@ -53,6 +53,8 @@ import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.alert.NullAlertTransform;
 import co.cask.cdap.etl.mock.alert.TMSAlertPublisher;
 import co.cask.cdap.etl.mock.batch.FilterTransform;
+import co.cask.cdap.etl.mock.batch.IncapableSink;
+import co.cask.cdap.etl.mock.batch.IncapableSource;
 import co.cask.cdap.etl.mock.batch.LookupTransform;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
 import co.cask.cdap.etl.mock.batch.MockExternalSource;
@@ -1549,6 +1551,25 @@ public class DataPipelineTest extends HydratorTestBase {
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testFailureToStartIncapableProgram() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .addStage(new ETLStage("source", IncapableSource.getPlugin()))
+      .addStage(new ETLStage("sink", IncapableSink.getPlugin()))
+      .addConnection("source", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("IncapableApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    // starting the workflow should throw incapable exception as the pipeline contains incapable plugins
+    workflowManager.start();
+    // the program should fail as it has incapable plugins
+    workflowManager.waitForRun(ProgramRunStatus.FAILED, 5, TimeUnit.MINUTES);
   }
 
   @Test

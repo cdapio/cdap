@@ -132,4 +132,9 @@ public final class ProgramOptionConstants {
    * Option for the program runtime {@link ClusterMode}.
    */
   public static final String CLUSTER_MODE = "clusterMode";
+
+  /**
+   * Option for requirements of various plugins present in the program
+   */
+  public static final String PLUGIN_REQUIREMENTS = "pluginRequirements";
 }

@@ -28,6 +28,8 @@ import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.alert.NullAlertTransform;
 import co.cask.cdap.etl.mock.alert.TMSAlertPublisher;
 import co.cask.cdap.etl.mock.batch.FilterTransform;
+import co.cask.cdap.etl.mock.batch.IncapableSink;
+import co.cask.cdap.etl.mock.batch.IncapableSource;
 import co.cask.cdap.etl.mock.batch.LookupTransform;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
 import co.cask.cdap.etl.mock.batch.MockExternalSource;
@@ -71,7 +73,6 @@ public class HydratorTestBase extends TestBase {
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, GroupFilterAggregator.PLUGIN_CLASS,
     MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
-    co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS, co.cask.cdap.etl.mock.batch.MockSource.PLUGIN_CLASS,
     MockRuntimeDatasetSink.PLUGIN_CLASS, MockRuntimeDatasetSource.PLUGIN_CLASS,
     MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
@@ -119,7 +120,8 @@ public class HydratorTestBase extends TestBase {
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       FieldCountAggregator.class, IdentityAggregator.class, FieldsPrefixTransform.class,
                       StringValueFilterCompute.class, NodeStatesAction.class, LookupTransform.class,
-                      NullFieldSplitterTransform.class, NullAlertTransform.class);
+                      NullFieldSplitterTransform.class, NullAlertTransform.class,
+                      IncapableSource.class, IncapableSink.class);
   }
 
   protected static void setupStreamingArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {

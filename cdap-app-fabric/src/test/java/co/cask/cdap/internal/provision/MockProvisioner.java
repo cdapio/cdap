@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.provision;
 
+import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
@@ -32,7 +33,6 @@ import com.google.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +131,11 @@ public class MockProvisioner implements Provisioner {
   public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
     // retry immediately in unit tests
     return PollingStrategies.fixedInterval(0, TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public Set<String> getCapabilities() {
+    return Collections.singleton(Requirements.TEPHRA_TX);
   }
 
   // throws a RetryableProvisionException every other time this is called
