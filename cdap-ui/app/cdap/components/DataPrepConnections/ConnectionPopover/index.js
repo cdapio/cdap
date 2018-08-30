@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
 import S3Connection from 'components/DataPrepConnections/S3Connection';
 import GCSConnection from 'components/DataPrepConnections/GCSConnection';
 import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnection';
+import SpannerConnection from 'components/DataPrepConnections/SpannerConnection';
 import T from 'i18n-react';
 import {objectQuery} from 'services/helpers';
 import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
@@ -39,7 +40,8 @@ const COMPONENT_MAP = {
   [ConnectionType.KAFKA]: KafkaConnection,
   [ConnectionType.S3]: S3Connection,
   [ConnectionType.GCS]: GCSConnection,
-  [ConnectionType.BIGQUERY]: BigQueryConnection
+  [ConnectionType.BIGQUERY]: BigQueryConnection,
+  [ConnectionType.SPANNER]: SpannerConnection,
 };
 
 export default class ConnectionPopover extends Component {

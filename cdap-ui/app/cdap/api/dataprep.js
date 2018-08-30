@@ -87,6 +87,14 @@ const MyDataPrepApi = {
   readBigQueryTable: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery/:datasetId/tables/:tableId/read`),
   getBigQuerySpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery/specification`),
 
+  // Spanner
+  spannerTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/spanner/test`),
+  spannerGetInstances: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances`),
+  spannerGetDatabases: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases`),
+  spannerGetTables: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases/:databaseId/tables`),
+  readSpannerTable: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases/:databaseId/tables/:tableId/read`),
+  getSpannerSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/specification`),
+
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),
   createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),

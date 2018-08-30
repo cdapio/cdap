@@ -1156,6 +1156,24 @@ features:
         region: Region
         required: Required
         testConnection: Test Connection
+      Spanner:
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        defaultTestErrorMessage: Cannot connect to Google Cloud Spanner
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
+        ModalHeader:
+          ADD: "Add connection: Google Cloud Spanner"
+          DUPLICATE: "Duplicate connection: {connection}"
+          EDIT: "Edit connection: {connection}"
+        name: Name
+        projectId: Project ID
+        serviceAccountKeyfile: Service account key file location
+        testConnection: Test Connection
       TestConnectionLabels:
         danger: Test connection failed
         success: Test connection succcessful
