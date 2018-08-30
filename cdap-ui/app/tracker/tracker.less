@@ -30,6 +30,7 @@
 @navbar-size: 50px;
 @entity-detail-top-bar-size: 50px;
 @tracker-blue: #0077dc;
+@tips-highlight-color: @green-02;
 
 body { background-color: #e5e5e5; }
 
@@ -81,31 +82,60 @@ body.state-tracker-home.state-tracker {
   background-color: white;
 
   .tracker-content {
-    width: 100%;
+    width: 60%;
+    margin-left: auto;
+    margin-right: auto;
   }
-
-  main.container {
-    margin-top: 0;
-  }
-
 
   div.tracker-search.form-group {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    top: 50vh;
-    left: 50vw;
-    width: 500px;
-    margin-bottom: 0;
+    margin-top: 150px;
 
     .form-control {
-      height: 40px;
+      height: 50px;
+      border-radius: 0;
+
+      &:focus {
+        border-width: 2px;
+        box-shadow: none;
+      }
     }
 
     span {
-      line-height: 40px;
+      line-height: 50px;
       font-size: 18px;
-      color: @tracker-grey;
+      color: @title-font-color;
       margin-right: 8px;
+    }
+  }
+
+  .search-tips {
+    .title {
+      color: @tips-highlight-color;
+      font-size: 18px;
+      margin-top: 45px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle { font-size: 14px; }
+
+    .tips-table.grid-wrapper {
+      margin-top: 15px;
+
+      .grid.grid-container { max-height: 300px; }
+
+      .grid-row {
+        padding: 0;
+        grid-template-columns: 1fr 1fr 2fr;
+
+        &:hover { background-color: white; }
+
+        > div,
+        > strong {
+          padding: 10px 20px;
+        }
+      }
+
+      .separator { color: @tracker-grey; }
     }
   }
 }
