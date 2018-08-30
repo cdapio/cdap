@@ -31,7 +31,7 @@ const mapStateToProps = (state) => {
 
 const RunDuration = ({currentRun}) => {
   let DurationComp;
-  if (currentRun && currentRun.start) {
+  if (currentRun && currentRun.starting) {
     if (currentRun.end) {
       DurationComp = (
         <span>

@@ -243,8 +243,8 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function setDuration(app, run) {
-      if (run.start) {
-        let lastRunDuration = run.end ? (run.end - run.start) : (new Date().getTime() / 1000) - run.start;
+      if (run.starting) {
+        let lastRunDuration = run.end ? (run.end - run.starting) : (new Date().getTime() / 1000) - run.starting;
         app.duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(lastRunDuration);
       }
     }
