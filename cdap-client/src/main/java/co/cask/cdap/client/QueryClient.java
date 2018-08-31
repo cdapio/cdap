@@ -18,11 +18,11 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.common.http.HttpRequestConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 

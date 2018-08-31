@@ -18,13 +18,13 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.common.metadata.AbstractMetadataClient;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;

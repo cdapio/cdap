@@ -20,10 +20,10 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
 
 import java.io.IOException;

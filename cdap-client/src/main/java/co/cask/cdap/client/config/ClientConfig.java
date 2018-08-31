@@ -18,9 +18,9 @@ package co.cask.cdap.client.config;
 
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.HttpRequestConfig;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authentication.client.AccessToken;
-import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 

@@ -21,13 +21,13 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.common.http.HttpMethod;
+import co.cask.cdap.common.http.HttpResponse;
+import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpResponse;
-import co.cask.common.http.ObjectResponse;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
