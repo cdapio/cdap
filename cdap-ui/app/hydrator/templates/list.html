@@ -47,12 +47,12 @@
           <tr ng-class="{'sort-enabled': ListController.pipelineList.length>0}">
             <th data-predicate="name">Pipeline name</th>
             <th data-predicate="artifact.name">Type</th>
-            <th data-predicate="displayStatus">Status</th>
-            <th data-predicate="_stats.numRuns">Total runs</th>
-            <th data-predicate="_stats.lastStartTime"
-                  data-predicate-default>Last start time</th>
-            <th data-predicate="duration">Duration</th>
-            <th data-predicate="_stats.nextRun">Next run</th>
+            <th data-predicate="latestRun.status">Status</th>
+            <th skip-sort>Total runs</th>
+            <th data-predicate="latestRun.starting"
+                  data-predicate-default="reverse">Last start time</th>
+            <th data-predicate="latestRun.duration">Duration</th>
+            <th data-predicate="nextRun">Next run</th>
             <th skip-sort></th>
           </tr>
         </thead>
@@ -79,22 +79,21 @@
               <span>{{ pipeline.displayStatus }}</span>
             </td>
             <td>
-              <span ng-if="pipeline._stats.numRuns !== 'N/A'">{{ pipeline._stats.numRuns }}</span>
-              <span ng-if="pipeline._stats.numRuns === 'N/A'"> &mdash; </span>
+              <span>{{ pipeline.numRuns }}</span>
             </td>
             <td>
-              <span ng-if="pipeline._stats.lastStartTime === 'N/A' || !pipeline._stats.lastStartTime"> &mdash; </span>
-              <span ng-if="pipeline._stats.lastStartTime !== 'N/A'">{{ pipeline._stats.lastStartTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
-            </td>
-
-            <td>
-              <span class="metric-value" ng-if="!pipeline.duration"> &mdash; </span>
-              <span class="metric-value" ng-if="pipeline.duration" ng-bind="pipeline.duration"></span>
+              <span ng-if="!pipeline.latestRun.starting"> &mdash; </span>
+              <span ng-if="pipeline.latestRun.starting">{{ pipeline.latestRun.starting * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
 
             <td>
-              <span ng-if="!pipeline._stats.nextRun"> &mdash; </span>
-              <span ng-if="pipeline._stats.nextRun !== 'N/A'">{{ pipeline._stats.nextRun | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
+              <span class="metric-value" ng-if="!pipeline.latestRun.duration"> &mdash; </span>
+              <span class="metric-value" ng-if="pipeline.latestRun.duration" ng-bind="pipeline.latestRun.duration"></span>
+            </td>
+
+            <td>
+              <span ng-if="!pipeline.nextRun"> &mdash; </span>
+              <span ng-if="pipeline.nextRun !== 'N/A'">{{ pipeline.nextRun | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
 
             <td>
@@ -118,7 +117,7 @@
       </table>
     </div>
 
-    <div class="text-center" ng-if="ListController.pipelineList.length > 10">
+    <div class="text-center" ng-if="ListController.pipelineList.length > ListController.PAGE_SIZE">
       <uib-pagination
         total-items="ListController.pipelineList.length"
         ng-change="ListController.goToPage()"

@@ -33,7 +33,9 @@ angular.module(PKG.name + '.services')
         postActionDetailFetch = pluginFetchBase + '/plugins/:pluginName',
         artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties',
         pluginMethodsPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:version/plugintypes/:pluginType/plugins/:pluginName/methods/:methodName',
-        previewPath = '/namespaces/:namespace/previews';
+        previewPath = '/namespaces/:namespace/previews',
+        runsCountPath = '/namespaces/:namespace/runcount',
+        latestRuns = '/namespaces/:namespace/runs';
 
 
     return $resource(
@@ -80,6 +82,11 @@ angular.module(PKG.name + '.services')
         datasets: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/datasets', true),
         streams: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/streams', true),
         action: myHelpers.getConfig('POST', 'REQUEST', pipelinePath + '/:action'),
+
+        // Batch runs count for pipelines
+
+        getRunsCount: myHelpers.getConfig('POST', 'REQUEST', runsCountPath, true),
+        getLatestRuns: myHelpers.getConfig('POST', 'REQUEST', latestRuns, true),
 
         postPluginMethod: myHelpers.getConfig('POST', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),
         getPluginMethod: myHelpers.getConfig('GET', 'REQUEST', pluginMethodsPath, false, { suppressErrors: true }),

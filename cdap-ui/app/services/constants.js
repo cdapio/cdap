@@ -15,4 +15,5 @@
  */
 
 angular.module(PKG.name + '.services')
-  .constant('GLOBALS', window.CaskCommon.GLOBALS);
+  .constant('GLOBALS', window.CaskCommon.GLOBALS)
+  .constant('PROGRAM_STATUSES', window.CaskCommon.PROGRAM_STATUSES);
