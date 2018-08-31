@@ -14,7 +14,7 @@
  * the License.
  */
 
-/*global require, module, process, __dirname */
+/* global require, module, process, __dirname */
 
 module.exports = {
   getApp: function () {
@@ -48,6 +48,18 @@ var express = require('express'),
 
 var log = log4js.getLogger('default');
 
+const isModeDevelopment = () => process.env.NODE_ENV === 'development';
+const isModeProduction = () => process.env.NODE_ENV === 'production';
+
+const getExpressStaticConfig = () => {
+  if (isModeDevelopment()) {
+    return {};
+  }
+  return {
+    index: false,
+    maxAge: '1y'
+  };
+};
 function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
 
   var app = express();
@@ -89,7 +101,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
       marketUrl: cdapConfig['market.base.url'],
       sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
-      isEnterprise: process.env.NODE_ENV === 'production',
+      isEnterprise: isModeProduction(),
       sandboxMode: process.env.NODE_ENV
     });
 
@@ -233,7 +245,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
         .on('error', function (e) {
           log.error('Error downloading logs: ', e);
         });
-    } catch(e) {
+    } catch (e) {
       log.error('Downloading logs failed, ', e);
     }
   });
@@ -305,10 +317,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
   });
 
   app.use('/old_assets', [
-    express.static(OLD_DIST_PATH + '/assets', {
-      index: false,
-      maxAge: '1y'
-    }),
+    express.static(OLD_DIST_PATH + '/assets', getExpressStaticConfig()),
     function(req, res) {
       finalhandler(req, res)(false); // 404
     }
@@ -321,28 +330,19 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
     }
   ]);
   app.use('/cdap_assets', [
-    express.static(CDAP_DIST_PATH + '/cdap_assets', {
-      index: false,
-      maxAge: '1y'
-    }),
+    express.static(CDAP_DIST_PATH + '/cdap_assets', getExpressStaticConfig()),
     function(req, res) {
       finalhandler(req, res)(false); // 404
     }
   ]);
   app.use('/dll_assets', [
-    express.static(DLL_PATH, {
-      index: false,
-      maxAge: '1y'
-    }),
+    express.static(DLL_PATH, getExpressStaticConfig()),
     function(req, res) {
       finalhandler(req, res)(false);
     }
   ]);
   app.use('/login_assets', [
-    express.static(LOGIN_DIST_PATH + '/login_assets', {
-      index: false,
-      maxAge: '1y'
-    }),
+    express.static(LOGIN_DIST_PATH + '/login_assets', getExpressStaticConfig()),
     function(req, res) {
       finalhandler(req, res)(false); // 404
     }
@@ -395,7 +395,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
 
   app.get('/login', [
     function(req, res) {
-      if(!authAddress.get() || req.cookies.CDAP_Auth_Token) {
+      if (!authAddress.get() || req.cookies.CDAP_Auth_Token) {
         res.redirect('/');
         return;
       }
@@ -458,7 +458,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
       }).on('error', function (err) {
         try {
           res.status(500).send(err);
-        } catch(e) {
+        } catch (e) {
           log.error('Failed sending exception to client', e);
         }
         log.error(err);
@@ -486,9 +486,9 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
             };
           });
           res.send(filesToMetadataMap);
-        } catch(e) {
+        } catch (e) {
           config.error = e.code;
-          config.message = 'Error reading template - '+ apptype ;
+          config.message = 'Error reading template - '+ apptype;
           log.debug(config.message);
           res.status(404).send(config);
         }
@@ -521,9 +521,9 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
           fs.readFileSync(dirPath + '/' + filesToMetadataMap[0].file)
         );
         res.send(appConfig);
-      } catch(e) {
+      } catch (e) {
         config.error = e.code;
-        config.message = 'Error reading template - ' + appname + ' of type - ' + apptype ;
+        config.message = 'Error reading template - ' + appname + ' of type - ' + apptype;
         log.debug(config.message);
         res.status(404).send(config);
       }
@@ -539,7 +539,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
       try {
         validators = JSON.parse(fs.readFileSync(filePath));
         res.send(validators);
-      } catch(e) {
+      } catch (e) {
         config.error = e.code;
         config.message = 'Error reading validators.json';
         log.debug(config.message);
@@ -556,7 +556,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
       // is being used to interact with the CDAP backend.
       var date = new Date();
       date.setDate(date.getDate() + 365); // Expires after a year.
-      if(!req.cookies.bcookie) {
+      if (!req.cookies.bcookie) {
         res.cookie('bcookie', uuidV4(), { expires: date });
       } else {
         res.cookie('bcookie', req.cookies.bcookie, { expires: date });
@@ -571,7 +571,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
       // is being used to interact with the CDAP backend.
       var date = new Date();
       date.setDate(date.getDate() + 365); // Expires after a year.
-      if(!req.cookies.bcookie) {
+      if (!req.cookies.bcookie) {
         res.cookie('bcookie', uuidV4(), { expires: date });
       } else {
         res.cookie('bcookie', req.cookies.bcookie, { expires: date });
@@ -587,7 +587,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
       // is being used to interact with the CDAP backend.
       var date = new Date();
       date.setDate(date.getDate() + 365); // Expires after a year.
-      if(!req.cookies.bcookie) {
+      if (!req.cookies.bcookie) {
         res.cookie('bcookie', uuidV4(), { expires: date });
       } else {
         res.cookie('bcookie', req.cookies.bcookie, { expires: date });
@@ -631,7 +631,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
       },
       sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
-      isEnterprise: process.env.NODE_ENV === 'production'
+      isEnterprise: isModeProduction()
     });
 
     res.header({
