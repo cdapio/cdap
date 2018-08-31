@@ -187,6 +187,7 @@ export default class IngestDataFromDataPrep extends Component {
     let s3Stage = pipelineConfig.config.stages.find(stage => stage.name === 'S3');
     let gcsStage = pipelineConfig.config.stages.find(stage => stage.name === 'GCS');
     let bigqueryStage = pipelineConfig.config.stages.find(stage => stage.name === 'BigQueryTable');
+    let spannerStage = pipelineConfig.config.stages.find(stage => stage.name === 'SpannerTable');
 
     let macroMap = {};
     if (databaseConfig) {
@@ -220,7 +221,13 @@ export default class IngestDataFromDataPrep extends Component {
       bqProject: objectQuery(bigqueryStage, 'plugin', 'properties', 'project') || '',
       bqDataset: objectQuery(bigqueryStage, 'plugin', 'properties', 'dataset') || '',
       bqTable: objectQuery(bigqueryStage, 'plugin', 'properties', 'table') || '',
-      bqSchema: objectQuery(bigqueryStage, 'plugin', 'properties', 'schema') || ''
+      bqSchema: objectQuery(bigqueryStage, 'plugin', 'properties', 'schema') || '',
+      spannerServiceFilePath: objectQuery(spannerStage, 'plugin', 'properties', 'serviceFilePath') || '',
+      spannerProject: objectQuery(spannerStage, 'plugin', 'properties', 'project') || '',
+      spannerInstance: objectQuery(spannerStage, 'plugin', 'properties', 'instance') || '',
+      spannerDatabase: objectQuery(spannerStage, 'plugin', 'properties', 'database') || '',
+      spannerTable: objectQuery(spannerStage, 'plugin', 'properties', 'table') || '',
+      spannerSchema: objectQuery(spannerStage, 'plugin', 'properties', 'schema') || ''
     });
     var newMacorMap = {};
     // This is to prevent from passing all the empty properties as payload while starting the pipeline.
@@ -294,6 +301,15 @@ export default class IngestDataFromDataPrep extends Component {
         dataset: '${bqDataset}',
         table: '${bqTable}',
         schema: '${bqSchema}'
+      },
+      'SpannerTable': {
+        project: '${spannerProject}',
+        serviceFilePath: '${spannerServiceFilePath}',
+        bucket: '${spannerBucket}',
+        instance: '${spannerInstance}',
+        database: '${spannerDatabase}',
+        table: '${spannerTable}',
+        schema: '${spannerSchema}'
       }
     };
     pipelineConfig.config.stages = pipelineConfig.config.stages.map(stage => {
@@ -363,6 +379,8 @@ export default class IngestDataFromDataPrep extends Component {
         pipelineName = 'one_time_copy_to_fs_from_gcs';
       } else if (workspaceProps.connection === 'bigquery') {
         pipelineName = 'one_time_copy_to_fs_from_bigquery';
+      } else if (workspaceProps.connection === 'spanner') {
+        pipelineName = 'one_time_copy_to_fs_from_spanner';
       }
     } else {
       pipelineName = `one_time_copy_to_table`;
@@ -376,6 +394,8 @@ export default class IngestDataFromDataPrep extends Component {
         pipelineName = 'one_time_copy_to_table_from_gcs';
       } else if (workspaceProps.connection === 'bigquery') {
         pipelineName = 'one_time_copy_to_table_from_bigquery';
+      } else if (workspaceProps.connection === 'bigquery') {
+        pipelineName = 'one_time_copy_to_table_from_spanner';
       }
     }
 

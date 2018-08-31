@@ -47,7 +47,7 @@ interface ISpannerDatabaseListViewProps {
 }
 
 interface ISpannerDatabaseObject {
-  databaseName: string;
+  name: string;
 }
 
 class SpannerDatabaseListView extends React.PureComponent<ISpannerDatabaseListViewProps> {
@@ -132,18 +132,18 @@ class SpannerDatabaseListView extends React.PureComponent<ISpannerDatabaseListVi
               databaseList.map((database: ISpannerDatabaseObject) => {
                 const ElemTag = this.props.enableRouting ? Link : 'div';
                 const instanceUrl = `/ns/${namespace}/connections/spanner/${connectionId}/instances/${instanceId}`;
-                const databaseUrl = `${instanceUrl}/databases/${database.databaseName}`;
+                const databaseUrl = `${instanceUrl}/databases/${database.name}`;
 
                 return (
                   <ElemTag
-                    key={database.databaseName}
+                    key={database.name}
                     to={databaseUrl}
-                    onClick={this.clickHandler.bind(null, database.databaseName)}
+                    onClick={this.clickHandler.bind(null, database.name)}
                   >
                     <div className="row content-row">
                       <div className="col-xs-12">
                         <IconSVG name="icon-database" />
-                        {database.databaseName}
+                        {database.name}
                       </div>
                     </div>
                   </ElemTag>

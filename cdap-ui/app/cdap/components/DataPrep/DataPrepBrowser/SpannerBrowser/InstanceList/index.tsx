@@ -43,7 +43,7 @@ interface ISpannerInstanceListViewProps {
 }
 
 interface ISpannerInstanceObject {
-  instanceName: string;
+  name: string;
 }
 
 class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListViewProps> {
@@ -106,13 +106,13 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
             {
               instanceList.map((instance: ISpannerInstanceObject) => {
                 const Tag = this.props.enableRouting ? Link : 'div';
-                const path = `/ns/${namespace}/connections/spanner/${connectionId}/instances/${instance.instanceName}`;
+                const path = `/ns/${namespace}/connections/spanner/${connectionId}/instances/${instance.name}`;
 
                 return (
                   <Tag
-                    key={instance.instanceName}
+                    key={instance.name}
                     to={path}
-                    onClick={this.clickHandler.bind(null, instance.instanceName)}
+                    onClick={this.clickHandler.bind(null, instance.name)}
                   >
                     <div className="row content-row">
                       <div className="col-xs-12">
@@ -120,7 +120,7 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
                           name="icon-database"
                           className="instance-icon"
                         />
-                        {instance.instanceName}
+                        {instance.name}
                       </div>
                     </div>
                   </Tag>

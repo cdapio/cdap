@@ -20,6 +20,8 @@ import {
   listSpannerTables,
   listSpannerInstances,
   listSpannerDatabases,
+  setSpannerLoading,
+  setError,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import {Link} from 'react-router-dom';
@@ -27,6 +29,7 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
+import MyDataPrepApi from 'api/dataprep';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.SpannerBrowser`;
 
@@ -46,21 +49,17 @@ interface ISpannerTableListViewProps {
   enableRouting: boolean;
   loading: boolean;
   match: IReactRouterMatch;
+  onWorkspaceCreate: (workspaceId: string) => void;
 }
 
 interface ISpannerTableObject {
-  tableName: string;
+  name: string;
 }
 
 class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProps> {
   public static defaultProps: Partial<ISpannerTableListViewProps> = {
     enableRouting: true,
   };
-
-  private clickHandler = (databaseId: string) => {
-    if (this.props.enableRouting) { return; }
-    // TODO: Read table to dataprep
-  }
 
   public componentDidMount() {
     if (!this.props.enableRouting) { return; }
@@ -72,6 +71,35 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
     } = this.props.match.params;
 
     listSpannerTables(connectionId, instanceId, databaseId);
+  }
+
+  private createWorkspace(tableId) {
+    setSpannerLoading();
+
+    const namespace = getCurrentNamespace();
+    const {connectionId, instanceId, databaseId} = this.props;
+    const params = {
+      namespace,
+      connectionId,
+      instanceId,
+      databaseId,
+      tableId,
+    };
+
+    MyDataPrepApi.readSpannerTable(params)
+      .subscribe(
+        (res) => {
+          const workspaceId = objectQuery(res, 'values', 0, 'id');
+          if (typeof this.props.onWorkspaceCreate === 'function') {
+            this.props.onWorkspaceCreate(workspaceId);
+            return;
+          }
+          window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+        },
+        (err) => {
+          setError(err);
+        },
+      );
   }
 
   public render() {
@@ -91,7 +119,7 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
               {T.translate(`${PREFIX}.EmptyMessage.emptyTableList`, {
                 connectionName: connectionId,
                 instanceName: instanceId,
-                tableName: databaseId,
+                name: databaseId,
               })}
             </strong>
           </div>
@@ -145,24 +173,18 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
           <div className="table-body">
             {
               tableList.map((table: ISpannerTableObject) => {
-                const ElemTag = this.props.enableRouting ? Link : 'div';
-                const instanceUrl = `/ns/${namespace}/connections/spanner/${connectionId}/instances/${instanceId}`;
-                const databaseUrl = `${instanceUrl}/databases/${databaseId}`;
-                const tableUrl = `${databaseUrl}/tables/${table.tableName}`;
-
                 return (
-                  <ElemTag
-                    key={table.tableName}
-                    to={tableUrl}
-                    onClick={this.clickHandler.bind(null, table.tableName)}
+                  <div
+                    key={table.name}
+                    onClick={this.createWorkspace.bind(this, table.name)}
                   >
                     <div className="row content-row">
                       <div className="col-xs-12">
                         <IconSVG name="icon-table" />
-                        {table.tableName}
+                        {table.name}
                       </div>
                     </div>
-                  </ElemTag>
+                  </div>
                 );
               })
             }

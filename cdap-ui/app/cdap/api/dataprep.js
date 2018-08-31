@@ -93,7 +93,7 @@ const MyDataPrepApi = {
   spannerGetDatabases: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases`),
   spannerGetTables: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases/:databaseId/tables`),
   readSpannerTable: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases/:databaseId/tables/:tableId/read`),
-  getSpannerSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/specification`),
+  getSpannerSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/spanner/workspaces/:workspaceId/specification`),
 
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),

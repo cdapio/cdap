@@ -336,6 +336,43 @@ function constructBigQuerySource(artifactsList, bigqueryInfo) {
   };
 }
 
+function constructSpannerSource(artifactsList, spannerInfo) {
+  if (!spannerInfo) { return null; }
+
+  let batchArtifact = find(artifactsList, {name: 'google-cloud'});
+  if (!batchArtifact) {
+    return T.translate(`${PREFIX}.spanner`);
+  }
+
+  batchArtifact.version = '[0.9.2, 3.0.0)';
+  let plugin = objectQuery(spannerInfo, 'values', 0);
+
+  let pluginName = Object.keys(plugin)[0];
+
+  plugin = plugin[pluginName];
+
+  let batchPluginInfo = {
+    name: plugin.name,
+    label: plugin.name,
+    type: 'batchsource',
+    artifact: batchArtifact,
+    properties: plugin.properties
+  };
+
+  let batchStage = {
+    name: 'SpannerTable',
+    plugin: batchPluginInfo
+  };
+
+  return {
+    batchSource: batchStage,
+    connections: [{
+      from: 'SpannerTable',
+      to: 'Wrangler'
+    }]
+  };
+}
+
 function constructProperties(workspaceInfo, pluginVersion) {
   let observable = new Subject();
   let namespace = NamespaceStore.getState().selectedNamespace;
@@ -404,6 +441,12 @@ function constructProperties(workspaceInfo, pluginVersion) {
       wid: workspaceId
     };
     rxArray.push(MyDataPrepApi.getBigQuerySpecification(specParams));
+  } else if (state.workspaceInfo.properties.connection === 'spanner') {
+    let specParams = {
+      namespace,
+      workspaceId
+    };
+    rxArray.push(MyDataPrepApi.getSpannerSpecification(specParams));
   }
 
   try {
@@ -494,6 +537,8 @@ function constructProperties(workspaceInfo, pluginVersion) {
         sourceConfigs = constructGCSSource(res[0], res[2]);
       } else if (connectionType === 'bigquery') {
         sourceConfigs = constructBigQuerySource(res[0], res[2]);
+      } else if (state.workspaceInfo.properties.connection === 'spanner') {
+        sourceConfigs = constructSpannerSource(res[0], res[2]);
       }
 
       if (typeof sourceConfigs === 'string') {
