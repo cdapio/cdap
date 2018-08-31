@@ -64,6 +64,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
@@ -133,7 +135,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
   @Nullable
   private String getSparkVersion() {
     ClassLoader classLoader = org.apache.spark.SparkContext.class.getClassLoader();
-    try (InputStream inputStream = classLoader.getResourceAsStream("spark-version-info.properties")) {
+    try (InputStream inputStream = openResource(classLoader, "spark-version-info.properties")) {
       if (inputStream == null) {
         return null;
       }
@@ -171,6 +173,25 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Returns an {@link InputStream} to the given resource by looking it up from the given {@link ClassLoader}
+   * or {@code null} if the given resource is not found.
+   */
+  @Nullable
+  private InputStream openResource(ClassLoader classLoader, String resourceName) throws IOException {
+    URL resource = classLoader.getResource(resourceName);
+    if (resource == null) {
+      return null;
+    }
+
+    // (CDAP-14062) Need to disable connection cache to workaround a Java bug.
+    // When multithreads are opening JarURLConnections pointing to the same jar file,
+    // closing one might affect the other.
+    URLConnection urlConn = resource.openConnection();
+    urlConn.setUseCaches(false);
+    return urlConn.getInputStream();
   }
 
   /**
