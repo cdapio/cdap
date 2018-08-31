@@ -60,6 +60,14 @@ const Actions = {
   SET_BIGQUERY_DATASET_LIST: 'SET_BIGQUERY_DATASET_LIST',
   SET_BIGQUERY_TABLE_LIST: 'SET_BIGQUERY_TABLE_LIST',
 
+  // Spanner
+  SET_SPANNER_CONNECTION_ID: 'SET_SPANNER_CONNECTION_ID',
+  SET_SPANNER_CONNECTION_DETAILS: 'SET_SPANNER_CONNECTION_DETAILS',
+  SET_SPANNER_LOADING: 'SET_SPANNER_LOADING',
+  SET_SPANNER_INSTANCE_LIST: 'SET_SPANNER_INSTANCE_LIST',
+  SET_SPANNER_DATABASE_LIST: 'SET_SPANNER_DATABASE_LIST',
+  SET_SPANNER_TABLE_LIST: 'SET_SPANNER_TABLE_LIST',
+
   SET_ERROR: 'SET_ERROR',
   RESET: 'RESET'
 };
@@ -111,6 +119,17 @@ const defaultBigQueryValue = {
   connectionId: '',
   datasetId: null,
   datasetList: [],
+  tableList: []
+};
+
+const defaultSpannerValue = {
+  info: {},
+  loading: false,
+  connectionId: '',
+  instanceId: null,
+  dabaseId: null,
+  instanceList: [],
+  databaseList: [],
   tableList: []
 };
 
@@ -384,6 +403,61 @@ const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
   }
 };
 
+const spanner = (state = defaultSpannerValue, action = defaultAction) => {
+  switch (action.type) {
+    // This means the user is starting afresh. Reset everything to default and set the connectionID
+    case Actions.SET_SPANNER_CONNECTION_ID:
+      return {
+        ...defaultSpannerValue,
+        connectionId: action.payload.connectionId
+      };
+    case Actions.SET_SPANNER_CONNECTION_DETAILS:
+      return {
+        ...state,
+        info: action.payload.info,
+        error: null
+      };
+    case Actions.SET_SPANNER_LOADING:
+      return {
+        ...state,
+        loading: true
+      };
+      case Actions.SET_SPANNER_INSTANCE_LIST:
+      return {
+        ...state,
+        loading: false,
+        instanceList: action.payload.instanceList,
+        instanceId: null
+      };
+    case Actions.SET_SPANNER_DATABASE_LIST:
+      return {
+        ...state,
+        loading: false,
+        instanceList: [],
+        instanceId: action.payload.instanceId,
+        databaseList: action.payload.databaseList,
+        databaseId: null
+      };
+    case Actions.SET_SPANNER_TABLE_LIST:
+      return {
+        ...state,
+        loading: false,
+        databaseList: [],
+        databaseId: action.payload.databaseId,
+        tableList: action.payload.tableList
+      };
+    case Actions.SET_ERROR:
+      return {
+        ...state,
+        loading: false
+      };
+    case Actions.RESET:
+      return defaultSpannerValue;
+    default:
+      return state;
+  }
+};
+
 const activeBrowser = (state = defaultActiveBrowser, action = defaultAction) => {
   switch (action.type) {
     case Actions.SET_ACTIVEBROWSER:
@@ -413,6 +487,7 @@ const DataPrepBrowserStore = createStore(
     s3,
     gcs,
     bigquery,
+    spanner,
     error
   }),
   {
@@ -423,6 +498,7 @@ const DataPrepBrowserStore = createStore(
     s3: defaultS3Value,
     gcs: defaultGCSValue,
     bigquery: defaultBigQueryValue,
+    spanner: defaultSpannerValue,
     error: defaultError
   },
   composeEnhancers('DataPrepBrowserStore')()

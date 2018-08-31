@@ -494,6 +494,28 @@ features:
           ListingInfo:
             label: "{dirsCount} directories and {filesCount} files"
           selectData: Select data
+      SpannerBrowser:
+        databaseCount:
+          0: No databases
+          1: "{context} database"
+          _: "{context} databases"
+        databases: Databases
+        EmptyMessage:
+          emptyDatabaseList: 'No databases in instance _{instanceName}_ of connection _{connectionName}_'
+          emptyInstanceList: 'No instances in connection _{connectionName}_'
+          emptyTableList: 'No tables in database _{databaseName}_ of instance _{instanceName}_ of connection _{connectionName}_'
+        instanceCount:
+          0: No instances
+          1: "{context} instance"
+          _: "{context} instances"
+        instances: Instances
+        name: Name
+        pageTitle: CDAP | Connections | Google Cloud Spanner | {connectionId}
+        tableCount:
+          0: No tables
+          1: "{context} table"
+          _: "{context} tables"
+        title: Select data
     Directives:
       apply: Apply
       cancel: Cancel

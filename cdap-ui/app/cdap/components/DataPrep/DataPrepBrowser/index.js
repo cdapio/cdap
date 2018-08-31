@@ -24,6 +24,7 @@ import S3Browser from 'components/DataPrep/DataPrepBrowser/S3Browser';
 import KafkaBrowser from 'components/DataPrep/DataPrepBrowser/KafkaBrowser';
 import GCSBrowser from 'components/DataPrep/DataPrepBrowser/GCSBrowser';
 import BigQueryBrowser from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser';
+import SpannerBrowser from 'components/DataPrep/DataPrepBrowser/SpannerBrowser';
 import DataPrepErrorBanner from 'components/DataPrep/DataPrepBrowser/ErrorBanner';
 import {Provider} from 'react-redux';
 import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
@@ -34,7 +35,8 @@ const browserMap = {
   [ConnectionType.KAFKA]: KafkaBrowser,
   [ConnectionType.S3]: S3Browser,
   [ConnectionType.GCS]: GCSBrowser,
-  [ConnectionType.BIGQUERY]: BigQueryBrowser
+  [ConnectionType.BIGQUERY]: BigQueryBrowser,
+  [ConnectionType.SPANNER]: SpannerBrowser,
 };
 
 export default class DataPrepBrowser extends Component {

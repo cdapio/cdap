@@ -75,7 +75,7 @@ export default class AddConnection extends Component {
       {
         type: ConnectionType.SPANNER,
         label: 'Google Cloud Spanner',
-        icon: 'icon-bigquery', // TODO: Need to change this when icon is available
+        icon: 'icon-spanner',
         component: SpannerConnection
       },
     ];
