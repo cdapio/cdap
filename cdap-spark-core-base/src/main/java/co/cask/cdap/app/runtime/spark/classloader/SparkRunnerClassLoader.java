@@ -18,6 +18,7 @@ package co.cask.cdap.app.runtime.spark.classloader;
 
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.common.internal.guava.ClassPath;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ClassPathResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +75,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
 
   public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient) {
     super(urls, parent);
-    this.rewriter = new SparkClassRewriter(this::getResource, rewriteYarnClient);
+    this.rewriter = new SparkClassRewriter(name -> ClassLoaders.openResource(this, name), rewriteYarnClient);
   }
 
   @Override
@@ -113,7 +114,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
       }
 
       // Define the class with this ClassLoader
-      try (InputStream is = openResource(name.replace('.', '/') + ".class")) {
+      try (InputStream is = ClassLoaders.openResource(this, name.replace('.', '/') + ".class")) {
         if (is == null) {
           throw new ClassNotFoundException("Failed to find resource for class " + name);
         }
@@ -135,15 +136,5 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
         throw new ClassNotFoundException("Failed to read class definition for class " + name, e);
       }
     }
-  }
-
-  /**
-   * Returns an {@link InputStream} to the given resource or {@code null} if cannot find the given resource
-   * with this {@link ClassLoader}.
-   */
-  @Nullable
-  private InputStream openResource(String resourceName) throws IOException {
-    URL resource = getResource(resourceName);
-    return resource == null ? null : resource.openStream();
   }
 }

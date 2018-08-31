@@ -20,12 +20,17 @@ import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLConnection;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
@@ -42,6 +47,8 @@ import javax.annotation.Nullable;
  * Utility class for collection of methods for dealing with ClassLoader and loading class.
  */
 public final class ClassLoaders {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ClassLoaders.class);
 
   // Class-Path attributed in JAR are " " separated
   private static final Splitter CLASS_PATH_ATTR_SPLITTER = Splitter.on(" ").omitEmptyStrings();
@@ -280,6 +287,31 @@ public final class ClassLoaders {
       throw Throwables.propagate(e);
     }
     throw new IllegalStateException("Unsupported class URL: " + classUrl);
+  }
+
+  /**
+   * Returns an {@link InputStream} to the given resource by looking it up from the given {@link ClassLoader}
+   * or {@code null} if the given resource is not found.
+   */
+  @Nullable
+  public static InputStream openResource(ClassLoader classLoader, String resourceName) {
+    URL resource = classLoader.getResource(resourceName);
+    if (resource == null) {
+      return null;
+    }
+
+    try {
+      // (CDAP-14062) Need to disable connection cache to workaround a Java bug.
+      // When multithreads are opening JarURLConnections pointing to the same jar file,
+      // closing one might affect the other.
+      URLConnection urlConn = resource.openConnection();
+      urlConn.setUseCaches(false);
+      return urlConn.getInputStream();
+    } catch (IOException e) {
+      LOG.debug("Failed to open resource {} for reading from ClassLoader {}", resourceName, classLoader);
+      // If cannot read the resource, treat it as if not exist.
+      return null;
+    }
   }
 
   /**
