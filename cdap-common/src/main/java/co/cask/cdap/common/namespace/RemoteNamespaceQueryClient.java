@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,10 @@ package co.cask.cdap.common.namespace;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
 import co.cask.http.HttpHandler;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;

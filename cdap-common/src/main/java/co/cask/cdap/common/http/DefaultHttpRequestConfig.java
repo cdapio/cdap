@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.common.http;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.common.http.HttpRequestConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

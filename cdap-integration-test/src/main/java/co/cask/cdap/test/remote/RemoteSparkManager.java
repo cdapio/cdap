@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,14 +22,14 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.common.http.HttpMethod;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

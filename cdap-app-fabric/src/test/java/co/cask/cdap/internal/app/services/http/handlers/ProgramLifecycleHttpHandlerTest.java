@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.Tasks;
@@ -74,7 +75,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.common.http.HttpMethod;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;

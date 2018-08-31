@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,6 +46,9 @@ import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpRequests;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
@@ -76,9 +79,6 @@ import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.artifacts.AppWithPlugin;
 import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
