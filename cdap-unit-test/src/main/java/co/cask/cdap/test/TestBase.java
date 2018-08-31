@@ -45,6 +45,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.common.utils.OSDetector;
@@ -225,6 +226,7 @@ public class TestBase {
     if (nestedStartCount++ > 0) {
       return;
     }
+    URLConnections.setDefaultUseCaches(false);
     File localDataDir = TMP_FOLDER.newFolder();
 
     cConf = createCConf(localDataDir);
