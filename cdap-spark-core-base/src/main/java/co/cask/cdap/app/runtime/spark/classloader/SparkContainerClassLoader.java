@@ -17,6 +17,7 @@
 package co.cask.cdap.app.runtime.spark.classloader;
 
 import co.cask.cdap.common.app.MainClassLoader;
+import co.cask.cdap.common.lang.ClassLoaders;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class SparkContainerClassLoader extends MainClassLoader {
    */
   public SparkContainerClassLoader(URL[] urls, ClassLoader parent) {
     super(urls, parent);
-    this.sparkClassRewriter = new SparkClassRewriter(this::getResource, false);
+    this.sparkClassRewriter = new SparkClassRewriter(name -> ClassLoaders.openResource(this, name), false);
   }
 
   @Override

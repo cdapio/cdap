@@ -128,11 +128,11 @@ public class SparkClassRewriter implements ClassRewriter {
   // File entry name of the SparkConf properties file inside the Spark conf zip
   private static final String SPARK_CONF_FILE = "__spark_conf__.properties";
 
-  private final Function<String, URL> resourceLookup;
+  private final Function<String, InputStream> resourceLookup;
   private final boolean rewriteYarnClient;
   private final boolean distributed;
 
-  public SparkClassRewriter(Function<String, URL> resourceLookup, boolean rewriteYarnClient) {
+  public SparkClassRewriter(Function<String, InputStream> resourceLookup, boolean rewriteYarnClient) {
     this.resourceLookup = resourceLookup;
     this.rewriteYarnClient = rewriteYarnClient;
     this.distributed = Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE"));
@@ -974,12 +974,11 @@ public class SparkClassRewriter implements ClassRewriter {
    */
   @Nullable
   private Type determineAkkaDispatcherReturnType() {
-    URL resource = resourceLookup.apply("akka/actor/ActorSystem.class");
-    if (resource == null) {
-      return null;
-    }
+    try (InputStream is = resourceLookup.apply("akka/actor/ActorSystem.class")) {
+      if (is == null) {
+        return null;
+      }
 
-    try (InputStream is = resource.openStream()) {
       final AtomicReference<Type> result = new AtomicReference<>();
       ClassReader cr = new ClassReader(is);
       cr.accept(new ClassVisitor(Opcodes.ASM5) {
