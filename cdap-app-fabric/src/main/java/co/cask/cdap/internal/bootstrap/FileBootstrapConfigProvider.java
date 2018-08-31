@@ -52,7 +52,8 @@ public class FileBootstrapConfigProvider implements BootstrapConfigProvider {
         return GSON.fromJson(reader, BootstrapConfig.class);
       }
     } catch (FileNotFoundException e) {
-      LOG.info("Bootstrap file {} does not exist. Default bootstrapping will be done.");
+      LOG.info("Bootstrap file {} does not exist. Default bootstrapping will be done.",
+               bootstrapFile.getAbsolutePath());
       return BootstrapConfig.DEFAULT;
     } catch (JsonParseException e) {
       LOG.warn("Could not parse bootstrap file {}. No bootstrapping will be done.", e);

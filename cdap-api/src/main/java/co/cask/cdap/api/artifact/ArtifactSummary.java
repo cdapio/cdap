@@ -67,6 +67,24 @@ public class ArtifactSummary {
     return scope;
   }
 
+  /**
+   * Validate that the artifact fields are valid. Should be called when this object is created through deserializing
+   * user input.
+   *
+   * @throws IllegalArgumentException if the artifact summary is invalid
+   */
+  public void validate() {
+    if (name == null) {
+      throw new IllegalArgumentException("Artifact name must be specified.");
+    }
+    if (version == null) {
+      throw new IllegalArgumentException(String.format("Artifact version for %s must be specified.", name));
+    }
+    if (scope == null) {
+      throw new IllegalArgumentException(String.format("Artifact scope for %s must be specified.", name));
+    }
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

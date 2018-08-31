@@ -43,6 +43,18 @@ public class ProvisionerInfo {
     return properties;
   }
 
+  /**
+   * Validate this is a valid object. Should be called when this is created through deserialization of user input.
+   *
+   * @throws IllegalArgumentException if the object is invalid
+   */
+  public void validate() {
+    if (name == null || name.isEmpty()) {
+      throw new IllegalArgumentException("Provisioner name must be specified.");
+    }
+    properties.forEach(ProvisionerPropertyValue::validate);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

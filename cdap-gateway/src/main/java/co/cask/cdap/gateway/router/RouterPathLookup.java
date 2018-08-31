@@ -89,6 +89,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // TODO(Rohit) find a better way to handle that - this looks hackish
       // This needs to now changed especially metadata since now it can have custom parts
       return null;
+    } else if ("bootstrap".equals(uriParts[1])) {
+      return APP_FABRIC_HTTP;
     } else if ("dashboard".equals(uriParts[1])) {
       return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && isUserServiceType(uriParts[7])

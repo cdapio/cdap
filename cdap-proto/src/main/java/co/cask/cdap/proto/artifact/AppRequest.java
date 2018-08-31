@@ -85,4 +85,17 @@ public class AppRequest<T> {
   public Boolean canUpdateSchedules() {
     return updateSchedules;
   }
+
+  /**
+   * Validate the app request contains all required information. Should be called when this object is created through
+   * deserializing user input.
+   *
+   * @throws IllegalArgumentException if the request is invalid
+   */
+  public void validate() {
+    if (artifact == null) {
+      throw new IllegalArgumentException("An artifact must be specified to create an application.");
+    }
+    artifact.validate();
+  }
 }

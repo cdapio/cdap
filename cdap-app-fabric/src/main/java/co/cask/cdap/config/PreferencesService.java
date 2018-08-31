@@ -41,13 +41,18 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * This class is to manage preference related functions. It will wrap the {@link PreferencesDataset} operation
@@ -90,59 +95,84 @@ public class PreferencesService {
    * Validate the profile status is enabled and set the preferences in same transaction
    */
   private void setConfig(EntityId entityId,
-                         Map<String, String> propertyMap) throws NotFoundException, ProfileConflictException {
-    Transactionals.execute(transactional, context -> {
-      ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
-      PreferencesDataset preferencesDataset = PreferencesDataset.get(context, datasetFramework);
-
-      boolean isInstanceLevel = entityId.getEntityType().equals(EntityType.INSTANCE);
-      NamespaceId namespaceId = isInstanceLevel ?
-        NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-
-      // validate the profile and publish the necessary metadata change if the profile exists in the property
-      Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(namespaceId, propertyMap);
-      if (profile.isPresent()) {
-        ProfileId profileId = profile.get();
-        // if it is instance level set, the profile has to be in SYSTEM scope, so throw BadRequestException when
-        // setting a USER scoped profile
-        if (isInstanceLevel && !propertyMap.get(SystemArguments.PROFILE_NAME).startsWith(EntityScope.SYSTEM.name())) {
-          throw new BadRequestException(String.format("Cannot set profile %s at the instance level. " +
-                                                        "Only system profiles can be set at the instance level. " +
-                                                        "The profile property must look like SYSTEM:[profile-name]",
-                                                      propertyMap.get(SystemArguments.PROFILE_NAME)));
-        }
-
-        if (profileDataset.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
-          throw new ProfileConflictException(String.format("Profile %s in namespace %s is disabled. It cannot be " +
-                                                             "assigned to any programs or schedules",
-                                                           profileId.getProfile(), profileId.getNamespace()),
-                                             profileId);
-        }
+                         Map<String, String> propertyMap)
+    throws NotFoundException, ProfileConflictException, BadRequestException {
+    try {
+      transactional.execute(context -> {
+        ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
+        PreferencesDataset preferencesDataset = PreferencesDataset.get(context, datasetFramework);
+        setConfig(profileDataset, preferencesDataset, entityId, propertyMap);
+      });
+    } catch (TransactionFailureException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof NotFoundException) {
+        throw (NotFoundException) cause;
       }
-
-      // need to get old property and check if it contains profile information
-      Map<String, String> oldProperties = preferencesDataset.getPreferences(entityId);
-      // get the old profile information from the previous properties
-      Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProperties);
-      preferencesDataset.setPreferences(entityId, propertyMap);
-
-      // After everything is set, publish the update message and add the association if profile is present
-      if (profile.isPresent()) {
-        profileDataset.addProfileAssignment(profile.get(), entityId);
-        adminEventPublisher.publishProfileAssignment(entityId, profile.get());
+      if (cause instanceof ProfileConflictException) {
+        throw (ProfileConflictException) cause;
       }
-
-      // if old properties has the profile, remove the association
-      if (oldProfile.isPresent()) {
-        profileDataset.removeProfileAssignment(oldProfile.get(), entityId);
+      if (cause instanceof BadRequestException) {
+        throw (BadRequestException) cause;
       }
-
-      // if new profiles do not have profile information but old profiles have, it is same as deletion of the profile
-      if (!profile.isPresent() && oldProfile.isPresent()) {
-        adminEventPublisher.publishProfileUnAssignment(entityId);
-      }
-    }, NotFoundException.class, ProfileConflictException.class);
+    }
   }
+
+  /**
+   * Validate the profile status is enabled and set the preferences
+   */
+  private void setConfig(ProfileDataset profileDataset, PreferencesDataset preferencesDataset, EntityId entityId,
+                         Map<String, String> propertyMap)
+    throws NotFoundException, ProfileConflictException, BadRequestException {
+
+    boolean isInstanceLevel = entityId.getEntityType().equals(EntityType.INSTANCE);
+    NamespaceId namespaceId = isInstanceLevel ?
+      NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+
+    // validate the profile and publish the necessary metadata change if the profile exists in the property
+    Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(namespaceId, propertyMap);
+    if (profile.isPresent()) {
+      ProfileId profileId = profile.get();
+      // if it is instance level set, the profile has to be in SYSTEM scope, so throw BadRequestException when
+      // setting a USER scoped profile
+      if (isInstanceLevel && !propertyMap.get(SystemArguments.PROFILE_NAME).startsWith(EntityScope.SYSTEM.name())) {
+        throw new BadRequestException(String.format("Cannot set profile %s at the instance level. " +
+                                                      "Only system profiles can be set at the instance level. " +
+                                                      "The profile property must look like SYSTEM:[profile-name]",
+                                                    propertyMap.get(SystemArguments.PROFILE_NAME)));
+      }
+
+      if (profileDataset.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
+        throw new ProfileConflictException(String.format("Profile %s in namespace %s is disabled. It cannot be " +
+                                                           "assigned to any programs or schedules",
+                                                         profileId.getProfile(), profileId.getNamespace()),
+                                           profileId);
+      }
+
+    }
+
+    // need to get old property and check if it contains profile information
+    Map<String, String> oldProperties = preferencesDataset.getPreferences(entityId);
+    // get the old profile information from the previous properties
+    Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProperties);
+    preferencesDataset.setPreferences(entityId, propertyMap);
+
+    // After everything is set, publish the update message and add the association if profile is present
+    if (profile.isPresent()) {
+      profileDataset.addProfileAssignment(profile.get(), entityId);
+      adminEventPublisher.publishProfileAssignment(entityId, profile.get());
+    }
+
+    // if old properties has the profile, remove the association
+    if (oldProfile.isPresent()) {
+      profileDataset.removeProfileAssignment(oldProfile.get(), entityId);
+    }
+
+    // if new profiles do not have profile information but old profiles have, it is same as deletion of the profile
+    if (!profile.isPresent() && oldProfile.isPresent()) {
+      adminEventPublisher.publishProfileUnAssignment(entityId);
+    }
+  }
+
 
   private void deleteConfig(EntityId entityId) {
     Transactionals.execute(transactional, context -> {
@@ -220,15 +250,54 @@ public class PreferencesService {
   /**
    * Set instance level preferences
    */
-  public void setProperties(Map<String, String> propMap) throws NotFoundException, ProfileConflictException {
+  public void setProperties(Map<String, String> propMap)
+    throws NotFoundException, ProfileConflictException, BadRequestException {
     setConfig(new InstanceId(""), propMap);
+  }
+
+  /**
+   * Set instance level preferences if they are not already set. Only adds the properties that don't already exist.
+   *
+   * @param properties the preferences to add
+   * @return the preference keys that were added
+   */
+  public Set<String> addProperties(Map<String, String> properties)
+    throws NotFoundException, ProfileConflictException, BadRequestException {
+    InstanceId instanceId = new InstanceId("");
+
+    Set<String> added = new HashSet<>();
+    try {
+      transactional.execute(context -> {
+        ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
+        PreferencesDataset preferencesDataset = PreferencesDataset.get(context, datasetFramework);
+        Map<String, String> oldProperties = preferencesDataset.getPreferences(instanceId);
+        Map<String, String> newProperties = new HashMap<>(properties);
+
+        added.addAll(Sets.difference(newProperties.keySet(), oldProperties.keySet()));
+        newProperties.putAll(oldProperties);
+
+        setConfig(profileDataset, preferencesDataset, instanceId, newProperties);
+      });
+    } catch (TransactionFailureException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof NotFoundException) {
+        throw (NotFoundException) cause;
+      }
+      if (cause instanceof ProfileConflictException) {
+        throw (ProfileConflictException) cause;
+      }
+      if (cause instanceof BadRequestException) {
+        throw (BadRequestException) cause;
+      }
+    }
+    return added;
   }
 
   /**
    * Set namespace level preferences
    */
-  public void setProperties(NamespaceId namespaceId,
-                            Map<String, String> propMap) throws NotFoundException, ProfileConflictException {
+  public void setProperties(NamespaceId namespaceId, Map<String, String> propMap)
+    throws NotFoundException, ProfileConflictException, BadRequestException {
     setConfig(namespaceId, propMap);
   }
 
@@ -236,15 +305,15 @@ public class PreferencesService {
    * Set app level preferences
    */
   public void setProperties(ApplicationId appId, Map<String, String> propMap)
-    throws NotFoundException, ProfileConflictException {
+    throws NotFoundException, ProfileConflictException, BadRequestException {
     setConfig(appId, propMap);
   }
 
   /**
    * Set program level preferences
    */
-  public void setProperties(ProgramId programId,
-                            Map<String, String> propMap) throws NotFoundException, ProfileConflictException {
+  public void setProperties(ProgramId programId, Map<String, String> propMap)
+    throws NotFoundException, ProfileConflictException, BadRequestException {
     setConfig(programId, propMap);
   }
 

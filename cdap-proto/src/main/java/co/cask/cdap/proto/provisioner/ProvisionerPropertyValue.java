@@ -45,6 +45,17 @@ public class ProvisionerPropertyValue {
     return isEditable;
   }
 
+  /**
+   * Validate this is a valid object. Should be called when this is created through deserialization of user input.
+   *
+   * @throws IllegalArgumentException if the object is invalid
+   */
+  public void validate() {
+    if (name == null || name.isEmpty()) {
+      throw new IllegalArgumentException("Provisioner property name must be specified.");
+    }
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

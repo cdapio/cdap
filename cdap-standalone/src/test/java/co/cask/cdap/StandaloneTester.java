@@ -78,7 +78,6 @@ public class StandaloneTester extends ExternalResource {
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.setBoolean(Constants.Explore.START_ON_DEMAND, false);
     cConf.setBoolean(StandaloneMain.DISABLE_UI, true);
-    cConf.setBoolean(StandaloneMain.DISABLE_DATAPREP, true);
     cConf.setBoolean(Constants.Audit.ENABLED, false);
 
     for (int i = 0; i < configs.length; i += 2) {

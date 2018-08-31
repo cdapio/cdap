@@ -323,15 +323,15 @@ public class UserConfigStoreTest extends AppFabricTestBase {
     try {
       prefStore.setProperties(Collections.singletonMap(SystemArguments.PROFILE_NAME, "userProfile"));
       Assert.fail();
-    } catch (RuntimeException e) {
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    } catch (BadRequestException e) {
+      // expected
     }
 
     try {
       prefStore.setProperties(Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:userProfile"));
       Assert.fail();
-    } catch (RuntimeException e) {
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
+    } catch (BadRequestException e) {
+      // expected
     }
   }
 
