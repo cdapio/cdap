@@ -46,6 +46,11 @@ import java.util.List;
 public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, BatchWritable<byte[], T> {
 
   /**
+   * Type name
+   */
+  String TYPE = "objectStore";
+
+  /**
    * Write an object with a given key.
    *
    * @param key the key of the object

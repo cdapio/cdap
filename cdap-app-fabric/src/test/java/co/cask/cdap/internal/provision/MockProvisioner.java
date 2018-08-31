@@ -16,10 +16,10 @@
 
 package co.cask.cdap.internal.provision;
 
-import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
+import co.cask.cdap.runtime.spi.provisioner.Capabilities;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.PollingStrategies;
@@ -134,8 +134,8 @@ public class MockProvisioner implements Provisioner {
   }
 
   @Override
-  public Set<String> getCapabilities() {
-    return Collections.singleton(Requirements.TEPHRA_TX);
+  public Capabilities getCapabilities() {
+    return NativeProvisioner.SYSTEM_DATASETS;
   }
 
   // throws a RetryableProvisionException every other time this is called

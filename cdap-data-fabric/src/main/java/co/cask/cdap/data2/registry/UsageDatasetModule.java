@@ -40,7 +40,7 @@ public class UsageDatasetModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<Table, DatasetAdmin> tableDef = registry.get("table");
+    DatasetDefinition<Table, DatasetAdmin> tableDef = registry.get(Table.TYPE);
     registry.add(new UsageDatasetDefinition(UsageDataset.class.getSimpleName(), tableDef));
   }
 

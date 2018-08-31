@@ -28,6 +28,6 @@ public class FileSetModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
     // file dataset
     registry.add(new FileSetDefinition(FileSet.class.getName()));
-    registry.add(new FileSetDefinition("fileSet"));
+    registry.add(new FileSetDefinition(FileSet.TYPE));
   }
 }

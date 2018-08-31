@@ -38,6 +38,6 @@ public class PartitionedFileSetModule implements DatasetModule {
 
     // file dataset
     registry.add(new PartitionedFileSetDefinition(PartitionedFileSet.class.getName(), fileSetDef, indexedTableDef));
-    registry.add(new PartitionedFileSetDefinition("partitionedFileSet", fileSetDef, indexedTableDef));
+    registry.add(new PartitionedFileSetDefinition(PartitionedFileSet.TYPE, fileSetDef, indexedTableDef));
   }
 }

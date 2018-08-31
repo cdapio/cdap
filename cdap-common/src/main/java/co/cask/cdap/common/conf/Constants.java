@@ -72,11 +72,11 @@ public final class Constants {
   /* Used by the user to specify what part of a path should be replaced by the current user's name. */
   public static final String USER_NAME_SPECIFIER = "${name}";
 
-  /* Used to specify a comma separated list of plugin requirements that cannot be met in the instance.
+  /* Used to specify a comma separated list of plugin dataset type requirements that cannot be met in the instance.
   Plugins that require any of these will be treated as if they don't exist.
-  For example, if 'tephraTx' is given, any plugin that requires 'tephraTx' will be treated as
+  For example, if 'table' is given, any plugin that requires 'table' will be treated as
   if they don't exist. */
-  public static final String REQUIREMENTS_BLACKLIST = "requirements.blacklist";
+  public static final String REQUIREMENTS_DATASET_TYPE_EXCLUDE = "requirements.datasetTypes.exclude.list";
 
 
   /**

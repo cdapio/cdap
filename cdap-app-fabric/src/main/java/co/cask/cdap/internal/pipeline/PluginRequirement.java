@@ -16,34 +16,42 @@
 
 package co.cask.cdap.internal.pipeline;
 
-import java.util.Collections;
-import java.util.HashSet;
+import co.cask.cdap.api.plugin.Requirements;
+
 import java.util.Objects;
-import java.util.Set;
 
 /**
- * A wrapper class around plugin name, type and {@link Set} of requirements.
+ * A wrapper class around plugin name, type and it's requirements
  */
 public class PluginRequirement {
   private final String name;
   private final String type;
-  private final Set<String> requirements;
+  private final Requirements requirements;
 
-  public PluginRequirement(String name, String type, Set<String> requirements) {
+  public PluginRequirement(String name, String type, Requirements requirements) {
     this.name = name;
     this.type = type;
-    this.requirements = Collections.unmodifiableSet(new HashSet<>(requirements));
+    this.requirements = requirements;
   }
 
+  /**
+   * @return the name of the plugin
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * @return the type of the plugin
+   */
   public String getType() {
     return type;
   }
 
-  public Set<String> getRequirements() {
+  /**
+   * @return {@link Requirements} containing requirements of the plugin
+   */
+  public Requirements getRequirements() {
     return requirements;
   }
 

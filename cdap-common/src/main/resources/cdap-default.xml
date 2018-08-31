@@ -646,12 +646,12 @@
   </property>
 
   <property>
-    <name>requirements.blacklist</name>
+    <name>requirements.datasetTypes.exclude.list</name>
     <value></value>
     <description>
-      Comma separated list of plugin requirements that cannot be met in the instance.
+      Comma separated list of plugin datset type requirements that cannot be met in the instance.
       Plugins that require any of these will be treated as if they don't exist.
-      For example, if 'tephraTx' is given, any plugin that requires 'tephraTx' will be treated as
+      For example, if 'table' is given, any plugin that requires 'table' will be treated as
       if they don't exist.
     </description>
   </property>

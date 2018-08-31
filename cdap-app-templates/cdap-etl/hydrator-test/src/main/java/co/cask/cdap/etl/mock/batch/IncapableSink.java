@@ -20,7 +20,9 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -33,11 +35,10 @@ import java.util.Collections;
  */
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(IncapableSink.NAME)
-@Requirements({Requirements.TEPHRA_TX, IncapableSink.REQUIREMENT})
+@Requirements(datasetTypes = {Table.TYPE, KeyValueTable.TYPE})
 public class IncapableSink extends BatchSink<StructuredRecord, byte[], Put> {
 
   public static final String NAME = "IncapableSink";
-  public static final String REQUIREMENT = "unicorn";
 
   @Override
   public void prepareRun(BatchSinkContext context) throws Exception {

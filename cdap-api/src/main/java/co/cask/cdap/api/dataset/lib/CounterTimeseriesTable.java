@@ -38,6 +38,11 @@ import java.util.NoSuchElementException;
 public class CounterTimeseriesTable extends TimeseriesDataset {
 
   /**
+   * Type name
+   */
+  public static final String TYPE = "counterTimeseriesTable";
+
+  /**
    * Creates an instance of the DataSet.
    */
   public CounterTimeseriesTable(DatasetSpecification spec, Table table) {

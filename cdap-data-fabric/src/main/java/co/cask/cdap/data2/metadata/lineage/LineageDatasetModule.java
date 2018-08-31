@@ -29,7 +29,7 @@ public class LineageDatasetModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get(Table.class.getName());
-    registry.add(new LineageDatasetDefinition("lineageDataset", tableDef));
+    registry.add(new LineageDatasetDefinition(LineageDataset.TYPE, tableDef));
     registry.add(new LineageDatasetDefinition(LineageDataset.class.getName(), tableDef));
   }
 }

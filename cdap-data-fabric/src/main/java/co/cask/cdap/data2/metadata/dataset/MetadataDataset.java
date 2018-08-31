@@ -186,6 +186,10 @@ import javax.annotation.Nullable;
  * and the value written will contain all properties and tags for that mapreduce program at that time.
  */
 public class MetadataDataset extends AbstractDataset {
+  /**
+   * Type name
+   */
+  public static final String TYPE = "metadataDataset";
   private static final Logger LOG = LoggerFactory.getLogger(MetadataDataset.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())

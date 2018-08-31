@@ -346,9 +346,9 @@ public abstract class AppFabricTestBase {
       cConf.set(Constants.AppFabric.APP_UPDATE_SCHEDULES, updateSchedules);
     }
     // add the plugin exclusion if one has been set by the test class
-    String excludedRequirements = System.getProperty(Constants.REQUIREMENTS_BLACKLIST);
+    String excludedRequirements = System.getProperty(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE);
     if (excludedRequirements != null) {
-      cConf.set(Constants.REQUIREMENTS_BLACKLIST, excludedRequirements);
+      cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, excludedRequirements);
     }
     // Use a shorter delay to speedup tests
     cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);

@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -28,15 +29,14 @@ import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import java.util.Collections;
 
 /**
- * Source which has special requirement
+ * Source which has a requirement
  */
 @Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name(IncapableSource.NAME)
-@Requirements(IncapableSource.REQUIREMENT)
+@Requirements(datasetTypes = {Table.TYPE})
 public class IncapableSource extends BatchSource<byte[], Row, StructuredRecord> {
 
   public static final String NAME = "IncapableSource";
-  public static final String REQUIREMENT = "unicorn";
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {

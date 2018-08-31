@@ -30,6 +30,10 @@ import java.util.Map;
  */
 @Beta
 public class ExternalDataset implements Dataset, InputFormatProvider, OutputFormatProvider {
+  /**
+   * Type name
+   */
+  public static final String TYPE = "externalDataset";
   private final String inputFormatClassName;
   private final String outputFormatClassName;
   private final Map<String, String> inputFormatConfiguration;

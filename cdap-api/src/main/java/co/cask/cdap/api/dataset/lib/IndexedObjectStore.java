@@ -39,6 +39,12 @@ import java.util.stream.Collectors;
  * @param <T> the type of objects in the store
  */
 public class IndexedObjectStore<T> extends AbstractDataset {
+
+  /**
+   * Type name
+   */
+  public static final String TYPE = "indexedObjectStore";
+
   //NOTE: cannot use byte[0] as empty value because byte[0] is treated as null
   private static final byte[] EMPTY_VALUE = new byte[1];
   //KEY_PREFIX is used to prefix primary key when it stores PrimaryKey -> Categories mapping.

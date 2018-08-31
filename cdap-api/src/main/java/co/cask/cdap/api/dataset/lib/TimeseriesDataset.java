@@ -36,6 +36,11 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class TimeseriesDataset extends AbstractDataset {
 
+  /**
+   * Type name
+   */
+  public static final String TYPE = "timeseriesTable";
+
   public static final String ATTR_TIME_INTERVAL_TO_STORE_PER_ROW = "timeIntervalToStorePerRow";
 
   /**

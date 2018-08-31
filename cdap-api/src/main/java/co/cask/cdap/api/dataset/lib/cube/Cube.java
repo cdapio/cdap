@@ -30,6 +30,12 @@ import java.util.List;
  */
 @Beta
 public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
+
+  /**
+   * Type name
+   */
+  String TYPE = "cube";
+
   /**
    * Property set to configure resolutions to aggregate for. Value is a comma-separated list of resolutions in seconds.
    */

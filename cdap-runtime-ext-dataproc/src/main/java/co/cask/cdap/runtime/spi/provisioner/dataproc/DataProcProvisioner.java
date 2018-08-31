@@ -16,6 +16,7 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
+import co.cask.cdap.runtime.spi.provisioner.Capabilities;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
@@ -35,10 +36,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -189,8 +191,8 @@ public class DataProcProvisioner implements Provisioner {
   }
 
   @Override
-  public Set<String> getCapabilities() {
-    return Collections.singleton("gcp");
+  public Capabilities getCapabilities() {
+    return new Capabilities(Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
   }
 
   // Name must start with a lowercase letter followed by up to 51 lowercase letters,

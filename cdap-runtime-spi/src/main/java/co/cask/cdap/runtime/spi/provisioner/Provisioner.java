@@ -17,7 +17,6 @@
 package co.cask.cdap.runtime.spi.provisioner;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * A Provisioner is responsible for creating and deleting clusters for program runs. Each method may be retried
@@ -118,13 +117,12 @@ public interface Provisioner {
   PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster);
 
   /**
-   * Returns a {@link Set} of capabilities (lowercase) of this provisioner. Capabilities allow plugins requiring special
-   * Requirements to be run in the provisioner if all the requirements are met. If a program requires a
-   * capability that is not supported by the provisioner, the platform will fail the program run before provisioning
-   * begins.
+   * Returns {@link Capabilities} of this provisioner. Capabilities allow plugins requiring special Requirements
+   * to be run in the provisioner if all the requirements are met. If a program requires a requirement that is not
+   * supported by the provisioner, the platform will fail the program run before provisioning begins.
    *
-   * @return the capabilities
+   * @return {@link Capabilities} of this provisioner
    */
-  Set<String> getCapabilities();
+  Capabilities getCapabilities();
 
 }

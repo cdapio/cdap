@@ -40,6 +40,6 @@ public class TimePartitionedFileSetModule implements DatasetModule {
     // file dataset
     registry.add(new TimePartitionedFileSetDefinition(TimePartitionedFileSet.class.getName(), fileSetDef,
                                                       indexedTableDef));
-    registry.add(new TimePartitionedFileSetDefinition("timePartitionedFileSet", fileSetDef, indexedTableDef));
+    registry.add(new TimePartitionedFileSetDefinition(TimePartitionedFileSet.TYPE, fileSetDef, indexedTableDef));
   }
 }
