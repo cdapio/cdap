@@ -30,6 +30,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.metadata.lineage.DatasetField;
+import co.cask.cdap.proto.metadata.lineage.Field;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageDetails;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageSummary;
 import co.cask.cdap.proto.metadata.lineage.FieldOperationInfo;
@@ -48,6 +49,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Test for {@link FieldLineageAdmin}.
@@ -56,17 +58,18 @@ public class FieldLineageAdminTest {
 
   @Test
   public void testFields() {
-    FieldLineageAdmin fieldLineageAdmin = new FieldLineageAdmin(new FakeFieldLineageReader(fields(),
+    FieldLineageAdmin fieldLineageAdmin = new FieldLineageAdmin(new FakeFieldLineageReader(getFieldNames(),
                                                                                            Collections.emptySet(),
                                                                                            Collections.emptySet()));
     EndPoint endPoint = EndPoint.of("ns", "file");
 
     // test all fields
-    Assert.assertEquals(fields(), fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, null));
+    Assert.assertEquals(getFields(getFieldNames()), fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, null,
+                                                                                false));
 
     // test fields prefixed with string "add"
-    Assert.assertEquals(new HashSet<>(Arrays.asList("address", "address_original")),
-                        fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, "add"));
+    Assert.assertEquals(new HashSet<>(Arrays.asList(new Field("address", true), new Field("address_original", true))),
+                        fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, "add", false));
   }
 
   @Test
@@ -186,7 +189,11 @@ public class FieldLineageAdminTest {
     Assert.assertEquals(expectedInfos, new HashSet<>(incomings));
   }
 
-  private Set<String> fields() {
+  private Set<Field> getFields(Set<String> fieldNames) {
+    return fieldNames.stream().map(fieldName -> new Field(fieldName, true)).collect(Collectors.toSet());
+  }
+
+  private Set<String> getFieldNames() {
     return new HashSet<>(Arrays.asList("name", "address", "address_original", "offset", "body"));
   }
 

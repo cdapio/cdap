@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
+import co.cask.cdap.proto.metadata.lineage.Field;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageDetails;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageSummary;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
@@ -45,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -101,11 +103,22 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
                             @PathParam("dataset-id") String datasetId,
                             @QueryParam("start") String startStr,
                             @QueryParam("end") String endStr,
-                            @QueryParam("prefix") String prefix) throws BadRequestException {
+                            @QueryParam("prefix") String prefix,
+                            @QueryParam("includeCurrent") boolean includeCurrent)
+    throws BadRequestException {
     TimeRange range = parseRange(startStr, endStr);
-    Set<String> result = fieldLineageAdmin.getFields(EndPoint.of(namespaceId, datasetId), range.getStart(),
-                                                     range.getEnd(), prefix);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+    Set<Field> result = fieldLineageAdmin.getFields(EndPoint.of(namespaceId, datasetId), range.getStart(),
+                                                    range.getEnd(), prefix, includeCurrent);
+    // CDAP-14168: From 5.1 this endpoint supports returning a Set of Field object rather Set of String. For backward
+    // compatibility in 5.1 the default behavior is to return a Set of String (field names). This default behavior
+    // can be overridden by passing the query parameter 'includeCurrent' set to 'true' which will return set of
+    // Field object.
+    if (includeCurrent) {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK,
+                         GSON.toJson(result.stream().map(Field::getName).collect(Collectors.toSet())));
+    }
   }
 
   @GET

@@ -30,8 +30,8 @@ import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-
 import co.cask.cdap.proto.metadata.lineage.DatasetField;
+import co.cask.cdap.proto.metadata.lineage.Field;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageDetails;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageSummary;
 import co.cask.cdap.proto.metadata.lineage.FieldOperationInfo;
@@ -41,6 +41,7 @@ import co.cask.cdap.proto.metadata.lineage.ProgramFieldOperationInfo;
 import co.cask.cdap.proto.metadata.lineage.ProgramInfo;
 import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
@@ -69,28 +70,30 @@ public class FieldLineageAdmin {
   }
 
   /**
-   * Get the set of fields written to the EndPoint by field lineage {@link WriteOperation},
-   * over the given time range, optionally filtered to include only fields that have the given prefix.
+   * Get the set of fields written to the EndPoint by field lineage {@link WriteOperation}, over the given time range,
+   * optionally filtered to include only fields that have the given prefix. Additionally, can include fields from the
+   * dataset schema if those field are not present in lineage information for complete and coherent information
+   * about fields.
    *
    * @param endPoint the EndPoint for which the fields need to be returned
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
    * @param prefix prefix for the field name, if {@code null} then all fields are returned
+   * @param includeDatasetSchema determines whether to include dataset schema fields in the response. If true the result
+   * will be a union of all the fields present in lineage record with {@link Field#hasLineage} set to 'true' and fields
+   * present only in dataset schema will have {@link Field#hasLineage} set to 'false'.
+   *
    * @return set of fields written to a given EndPoint
    */
-  public Set<String> getFields(EndPoint endPoint, long start, long end, @Nullable String prefix) {
-    Set<String> fields = fieldLineageReader.getFields(endPoint, start, end);
-    if (prefix == null) {
-      return fields;
-    }
+  public Set<Field> getFields(EndPoint endPoint, long start, long end, @Nullable String prefix,
+                              boolean includeDatasetSchema) {
 
-    Set<String> prefixFields = new HashSet<>();
-    for (String field : fields) {
-      if (field.startsWith(prefix)) {
-        prefixFields.add(field);
-      }
+    Set<String> fields = fieldLineageReader.getFields(endPoint, start, end);
+    // TODO (Rohit CDAP-14168) Look up dataset schema here and union it with the above with lineage info as false
+    if (!Strings.isNullOrEmpty(prefix)) {
+      fields = filter(prefix, fields);
     }
-    return prefixFields;
+    return createFields(fields, true);
   }
 
   /**
@@ -249,5 +252,13 @@ public class FieldLineageAdmin {
         break;
     }
     return new FieldOperationInfo(operation.getName(), operation.getDescription(), inputs, outputs);
+  }
+
+  private Set<Field> createFields(Set<String> fields, boolean hasLineage) {
+    return fields.stream().map(field -> new Field(field, hasLineage)).collect(Collectors.toSet());
+  }
+
+  private Set<String> filter(String prefix, Set<String> fields) {
+    return fields.stream().filter(field -> field.startsWith(prefix)).collect(Collectors.toSet());
   }
 }
