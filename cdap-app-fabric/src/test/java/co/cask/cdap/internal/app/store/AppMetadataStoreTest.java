@@ -37,15 +37,16 @@ import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -97,51 +98,6 @@ public class AppMetadataStoreTest {
                                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
     metadataStoreDataset.recordProgramStart(programRunId, null, ImmutableMap.of(),
                                             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-  }
-
-  // TODO: [CDAP-12458] since recordProgramStart doesn't use version-less key builder, this test fails.
-  @Ignore
-  @Test
-  public void testOldRunRecordFormat() throws Exception {
-    DatasetId storeTable = NamespaceId.DEFAULT.dataset("testOldRunRecordFormat");
-    datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
-
-    Table table = datasetFramework.getDataset(storeTable, Collections.emptyMap(), null);
-    Assert.assertNotNull(table);
-    final AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf);
-    TransactionExecutor txnl = txExecutorFactory.createExecutor(
-      Collections.singleton(metadataStoreDataset));
-
-    ApplicationId application = NamespaceId.DEFAULT.app("app");
-    final ProgramId program = application.program(ProgramType.values()[ProgramType.values().length - 1],
-                                                  "program");
-    final RunId runId = RunIds.generate();
-    final ProgramRunId programRunId = program.run(runId);
-    txnl.execute(() -> {
-      recordProvisionAndStart(programRunId, metadataStoreDataset);
-      metadataStoreDataset.recordProgramRunningOldFormat(
-        programRunId, RunIds.getTime(runId, TimeUnit.SECONDS), null,
-        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-    });
-
-    txnl.execute(() -> {
-      Set<RunId> runIds = metadataStoreDataset.getRunningInRange(0, Long.MAX_VALUE);
-      Assert.assertEquals(1, runIds.size());
-      RunRecordMeta meta = metadataStoreDataset.getRun(program.run(runIds.iterator().next().getId()));
-      Assert.assertNotNull(meta);
-      Assert.assertEquals(runId.getId(), meta.getPid());
-    });
-
-    txnl.execute(() -> {
-      metadataStoreDataset.recordProgramStopOldFormat(
-        programRunId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-        ProgramRunStatus.COMPLETED, null, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      Map<ProgramRunId, RunRecordMeta> runRecordMap = metadataStoreDataset.getRuns(
-        program, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, Integer.MAX_VALUE, null);
-      Assert.assertEquals(1, runRecordMap.size());
-      ProgramRunId fetchedRunId = runRecordMap.keySet().iterator().next();
-      Assert.assertEquals(programRunId, fetchedRunId);
-    });
   }
 
   private AppMetadataStore getMetadataStore(String tableName) throws Exception {
@@ -687,7 +643,9 @@ public class AppMetadataStoreTest {
                                       Collections.singletonMap(SystemArguments.PROFILE_NAME, profileId.getScopedName()),
                                       AppFabricTestHelper.createSourceId(startSourceId), ARTIFACT_ID);
       // the profile id should be there after the provisioning stage
-      Assert.assertEquals(profileId, store.getRun(runId).getProfileId());
+      RunRecordMeta run = store.getRun(runId);
+      Assert.assertNotNull(run);
+      Assert.assertEquals(profileId, run.getProfileId());
 
       store.recordProgramProvisioned(runId, 0, AppFabricTestHelper.createSourceId(startSourceId + 1));
       store.recordProgramStart(runId, null, ImmutableMap.of(),
@@ -697,9 +655,122 @@ public class AppMetadataStoreTest {
       store.recordProgramStop(runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS),
                               ProgramRunStatus.KILLED,
                               null, AppFabricTestHelper.createSourceId(startSourceId + 4));
-
-      Assert.assertEquals(profileId, store.getRun(runId).getProfileId());
+      run = store.getRun(runId);
+      Assert.assertNotNull(run);
+      Assert.assertEquals(profileId, run.getProfileId());
     });
+  }
+
+  @Test
+  public void testOrderedActiveRuns() throws Exception {
+    AppMetadataStore store = getMetadataStore("testOrderedActiveRuns");
+    ProgramId programId = NamespaceId.DEFAULT.app("test").workflow("test");
+    TransactionExecutor txnl = getTxExecutor(store);
+    List<ProgramRunId> expectedRuns = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      RunId runId = RunIds.generate(i * 1000);
+      ProgramRunId run = programId.run(runId);
+      expectedRuns.add(run);
+      txnl.execute(() -> {
+        recordProvisionAndStart(run, store);
+      });
+    }
+    txnl.execute(() -> {
+      Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(programId);
+      // the result should be sorted with larger time stamp come first
+      Assert.assertEquals(Lists.reverse(expectedRuns), new ArrayList<>(activeRuns.keySet()));
+    });
+  }
+
+  @Test
+  public void testProgramRunCount() throws Exception {
+    AppMetadataStore store = getMetadataStore("testProgramRuncount");
+    ProgramId programId = NamespaceId.DEFAULT.app("test").workflow("test");
+    TransactionExecutor txnl = getTxExecutor(store);
+    List<ProgramRunId> runIds = addProgramCount(txnl, store, programId, 5);
+
+    // should have 5 runs
+    txnl.execute(() -> {
+      Assert.assertEquals(5, store.getProgramRunCount(programId));
+    });
+
+    // stop all the program runs
+    for (ProgramRunId runId : runIds) {
+      txnl.execute(() -> {
+        store.recordProgramRunning(
+          runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 10, null,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramStop(runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 20,
+                                ProgramRunStatus.COMPLETED, null,
+                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      });
+    }
+
+    // should still have 5 runs even we record stop of the program run
+    txnl.execute(() -> {
+      Assert.assertEquals(5, store.getProgramRunCount(programId));
+    });
+
+    addProgramCount(txnl, store, programId, 3);
+
+    // should have 8 runs
+    txnl.execute(() -> {
+      Assert.assertEquals(8, store.getProgramRunCount(programId));
+    });
+
+    // after cleanup we should only have 0 runs
+    txnl.execute(() -> {
+      store.deleteProgramHistory(programId.getNamespace(), programId.getApplication(), programId.getVersion());
+      Assert.assertEquals(0, store.getProgramRunCount(programId));
+    });
+  }
+
+  @Test
+  public void testBatchProgramRunCount() throws Exception {
+    AppMetadataStore store = getMetadataStore("testBatchProgramRunCount");
+    ProgramId programId1 = NamespaceId.DEFAULT.app("test").workflow("test1");
+    ProgramId programId2 = NamespaceId.DEFAULT.app("test").workflow("test2");
+    ProgramId programId3 = NamespaceId.DEFAULT.app("test").workflow("test3");
+
+    TransactionExecutor txnl = getTxExecutor(store);
+    // add some run records to program1 and 2
+    addProgramCount(txnl, store, programId1, 5);
+    addProgramCount(txnl, store, programId2, 3);
+
+    txnl.execute(() -> {
+      Map<ProgramId, Long> counts = store.getProgramRunCounts(ImmutableList.of(programId1, programId2, programId3));
+      Assert.assertEquals(5, (long) counts.get(programId1));
+      Assert.assertEquals(3, (long) counts.get(programId2));
+      Assert.assertEquals(0, (long) counts.get(programId3));
+    });
+
+    // after cleanup we should only have 0 runs for all programs
+    txnl.execute(() -> {
+      store.deleteProgramHistory(programId1.getNamespace(), programId1.getApplication(), programId1.getVersion());
+      store.deleteProgramHistory(programId2.getNamespace(), programId2.getApplication(), programId2.getVersion());
+      store.deleteProgramHistory(programId3.getNamespace(), programId3.getApplication(), programId3.getVersion());
+    });
+
+    txnl.execute(() -> {
+      Map<ProgramId, Long> counts = store.getProgramRunCounts(ImmutableList.of(programId1, programId2, programId3));
+      Assert.assertEquals(0, (long) counts.get(programId1));
+      Assert.assertEquals(0, (long) counts.get(programId2));
+      Assert.assertEquals(0, (long) counts.get(programId3));
+    });
+  }
+
+  private List<ProgramRunId> addProgramCount(TransactionExecutor txnl, AppMetadataStore store,
+                                             ProgramId programId, int count) throws Exception {
+    List<ProgramRunId> runIds = new ArrayList<>();
+    for (int i = 0; i < count; i++) {
+      RunId runId = RunIds.generate(i * 1000);
+      ProgramRunId run = programId.run(runId);
+      runIds.add(run);
+      txnl.execute(() -> {
+        recordProvisionAndStart(run, store);
+      });
+    }
+    return runIds;
   }
 
   private static class CountingTicker extends Ticker {
