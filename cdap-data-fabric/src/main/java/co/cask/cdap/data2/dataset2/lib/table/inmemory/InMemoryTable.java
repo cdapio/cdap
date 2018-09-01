@@ -47,6 +47,11 @@ import javax.annotation.Nullable;
 public class InMemoryTable extends BufferingTable {
 
   /**
+   * Type name
+   */
+  public static final String TYPE = "memoryTable";
+
+  /**
    * To be used in tests which do not need namespaces
    */
   @VisibleForTesting

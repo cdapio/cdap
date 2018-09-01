@@ -32,6 +32,7 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTableDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 
 /**
@@ -45,27 +46,29 @@ public class CoreDatasetsModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<Table, DatasetAdmin> tableDef = registry.get("table");
 
-    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = new KeyValueTableDefinition("keyValueTable", tableDef);
+    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = new KeyValueTableDefinition(KeyValueTable.TYPE,
+                                                                                            tableDef);
     registry.add(kvTableDef);
     registry.add(new KeyValueTableDefinition(KeyValueTable.class.getName(), tableDef));
 
-    DatasetDefinition<ObjectStore, DatasetAdmin> objectStoreDef = new ObjectStoreDefinition("objectStore", kvTableDef);
-    registry.add(new ObjectStoreDefinition("objectStore", kvTableDef));
+    DatasetDefinition<ObjectStore, DatasetAdmin> objectStoreDef = new ObjectStoreDefinition(ObjectStore.TYPE,
+                                                                                            kvTableDef);
+    registry.add(new ObjectStoreDefinition(ObjectStore.TYPE, kvTableDef));
     registry.add(new ObjectStoreDefinition(ObjectStore.class.getName(), kvTableDef));
 
-    registry.add(new IndexedObjectStoreDefinition("indexedObjectStore", tableDef, objectStoreDef));
+    registry.add(new IndexedObjectStoreDefinition(IndexedObjectStore.TYPE, tableDef, objectStoreDef));
     registry.add(new IndexedObjectStoreDefinition(IndexedObjectStore.class.getName(), tableDef, objectStoreDef));
 
-    registry.add(new IndexedTableDefinition("indexedTable", tableDef));
+    registry.add(new IndexedTableDefinition(IndexedTable.TYPE, tableDef));
     registry.add(new IndexedTableDefinition(IndexedTable.class.getName(), tableDef));
 
-    registry.add(new TimeseriesTableDefinition("timeseriesTable", tableDef));
+    registry.add(new TimeseriesTableDefinition(TimeseriesTable.TYPE, tableDef));
     registry.add(new TimeseriesTableDefinition(TimeseriesTable.class.getName(), tableDef));
 
-    registry.add(new CounterTimeseriesTableDefinition("counterTimeseriesTable", tableDef));
+    registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.TYPE, tableDef));
     registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));
 
     // in-memory table
-    registry.add(new InMemoryTableDefinition("memoryTable"));
+    registry.add(new InMemoryTableDefinition(InMemoryTable.TYPE));
   }
 }

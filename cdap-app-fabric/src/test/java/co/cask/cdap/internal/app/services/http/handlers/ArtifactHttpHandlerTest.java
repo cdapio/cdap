@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactRange;
@@ -27,9 +26,11 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.api.plugin.Requirements;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
@@ -134,7 +135,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     Assert.assertEquals(8, plugins.size());
     // check that requirement is being stored
     validateRequirement(plugins, InspectionApp.SingleRequirementPlugin.class.getName(),
-                        ImmutableSet.of(Requirements.TEPHRA_TX.toLowerCase()));
+                        new Requirements(ImmutableSet.of(Table.TYPE)));
   }
 
   @Test
@@ -934,7 +935,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   }
 
   private void validateRequirement(Set<PluginClass> plugins, String pluginClassName,
-                                   ImmutableSet<String> expectedRequirements) {
+                                   Requirements expectedRequirements) {
     for (PluginClass plugin : plugins) {
       if (plugin.getClassName().equals(pluginClassName)) {
         Assert.assertEquals(expectedRequirements, plugin.getRequirements());

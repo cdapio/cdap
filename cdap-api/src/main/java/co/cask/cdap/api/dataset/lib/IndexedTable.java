@@ -97,6 +97,12 @@ import javax.annotation.Nullable;
  * @see #INDEX_COLUMNS_CONF_KEY
  */
 public class IndexedTable extends AbstractDataset implements Table {
+
+  /**
+   * Type name
+   */
+  public static final String TYPE = "indexedTable";
+
   private static final Logger LOG = LoggerFactory.getLogger(IndexedTable.class);
 
   /**

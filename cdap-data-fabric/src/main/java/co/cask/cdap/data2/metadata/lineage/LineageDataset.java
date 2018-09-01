@@ -78,6 +78,10 @@ public class LineageDataset extends AbstractDataset {
   // | p | <id.run>     | <inverted-start-time> | s | <id.stream>  | <access-type> |
   // -------------------------------------------------------------------------------
 
+  /**
+   * Type name
+   */
+  public static final String TYPE = "lineageDataset";
   public static final DatasetId LINEAGE_DATASET_ID = NamespaceId.SYSTEM.dataset("lineage");
 
   private static final Logger LOG = LoggerFactory.getLogger(LineageDataset.class);

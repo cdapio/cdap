@@ -27,12 +27,12 @@ import co.cask.cdap.api.dataset.table.Table;
  * {@link DatasetModule} for {@link ObjectMappedTable}.
  */
 public class ObjectMappedTableModule implements DatasetModule {
-  public static final String SHORT_NAME = "objectMappedTable";
+  public static final String SHORT_NAME = ObjectMappedTable.TYPE;
   public static final String FULL_NAME = ObjectMappedTable.class.getName();
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get("table");
+    DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get(Table.TYPE);
     // object mapped table dataset
     registry.add(new ObjectMappedTableDefinition(FULL_NAME, tableDef));
     registry.add(new ObjectMappedTableDefinition(SHORT_NAME, tableDef));

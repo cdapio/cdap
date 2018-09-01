@@ -17,6 +17,7 @@
 package co.cask.cdap.runtime.spi.provisioner.emr;
 
 import co.cask.cdap.runtime.spi.SparkCompat;
+import co.cask.cdap.runtime.spi.provisioner.Capabilities;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
@@ -36,10 +37,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -171,7 +173,7 @@ public class ElasticMapReduceProvisioner implements Provisioner {
   }
 
   @Override
-  public Set<String> getCapabilities() {
-    return Collections.singleton("emr");
+  public Capabilities getCapabilities() {
+    return new Capabilities(Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
   }
 }

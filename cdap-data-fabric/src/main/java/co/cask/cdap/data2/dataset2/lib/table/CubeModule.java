@@ -28,12 +28,12 @@ import co.cask.cdap.data2.dataset2.lib.cube.CubeDatasetDefinition;
  * {@link co.cask.cdap.api.dataset.module.DatasetModule} for {@link co.cask.cdap.api.dataset.lib.cube.Cube}.
  */
 public class CubeModule implements DatasetModule {
-  public static final String SHORT_NAME = "cube";
+  public static final String SHORT_NAME = Cube.TYPE;
   public static final String FULL_NAME = Cube.class.getName();
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get("table");
+    DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get(Table.TYPE);
     DatasetDefinition<MetricsTable, ? extends DatasetAdmin> metricsTableDef =
       registry.get(MetricsTable.class.getName());
     registry.add(new CubeDatasetDefinition(FULL_NAME, tableDef, metricsTableDef));

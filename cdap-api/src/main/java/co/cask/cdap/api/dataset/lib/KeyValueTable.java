@@ -50,6 +50,11 @@ public class KeyValueTable extends AbstractDataset implements
   BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>,
   RecordScannable<KeyValue<byte[], byte[]>>, RecordWritable<KeyValue<byte[], byte[]>> {
 
+  /**
+   * Type name
+   */
+  public static final String TYPE = "keyValueTable";
+
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
 

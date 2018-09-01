@@ -18,9 +18,10 @@ package co.cask.cdap.internal.provision;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.plugin.Requirements;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -48,6 +49,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import co.cask.cdap.runtime.spi.provisioner.Capabilities;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
@@ -382,59 +384,60 @@ public class ProvisioningServiceTest {
 
   @Test
   public void testUnfulfilledRequirements() {
-    Set<String> provisionerCapabilities = ImmutableSet.of(Requirements.TEPHRA_TX);
+    Capabilities provisionerCapabilities = new Capabilities(ImmutableSet.of(Table.TYPE));
     Set<PluginRequirement> requirements =
       ImmutableSet.of(new PluginRequirement("source1", "batchsource",
-                                            ImmutableSet.of(Requirements.TEPHRA_TX, "unicorn")),
-                      new PluginRequirement("sink1", "batchsink", ImmutableSet.of(Requirements.TEPHRA_TX, "dragon")));
+                                            new Requirements(ImmutableSet.of(Table.TYPE, "unicorn"))),
+                      new PluginRequirement("sink1", "batchsink",
+                                            new Requirements(ImmutableSet.of(Table.TYPE, "dragon"))));
 
     Set<PluginRequirement> expectedUnfulfilledRequirements = ImmutableSet.of(
-      new PluginRequirement("source1", "batchsource", ImmutableSet.of("unicorn")),
-      new PluginRequirement("sink1", "batchsink", ImmutableSet.of("dragon"))
+      new PluginRequirement("source1", "batchsource", new Requirements(ImmutableSet.of("unicorn"))),
+      new PluginRequirement("sink1", "batchsink", new Requirements(ImmutableSet.of("dragon")))
     );
 
     assertRequirementFulfillment(provisionerCapabilities, requirements, expectedUnfulfilledRequirements);
 
     // check when there are multiple plugins with same name but different type
     requirements = ImmutableSet.of(new PluginRequirement("source1", "batchsource",
-                                                         ImmutableSet.of(Requirements.TEPHRA_TX, "unicorn")),
+                                                         new Requirements(ImmutableSet.of(Table.TYPE, "unicorn"))),
                                    new PluginRequirement("sink1", "batchsink",
-                                                               ImmutableSet.of(Requirements.TEPHRA_TX, "dragon")),
+                                                               new Requirements(ImmutableSet.of(Table.TYPE, "dragon"))),
                                    new PluginRequirement("sink1", "anothersink",
-                                                         ImmutableSet.of(Requirements.TEPHRA_TX, "narwhal")));
+                                                         new Requirements(ImmutableSet.of(Table.TYPE, "narwhal"))));
 
     expectedUnfulfilledRequirements = ImmutableSet.of(
-      new PluginRequirement("source1", "batchsource", ImmutableSet.of("unicorn")),
-      new PluginRequirement("sink1", "batchsink", ImmutableSet.of("dragon")),
-      new PluginRequirement("sink1", "anothersink", ImmutableSet.of("narwhal"))
-    );
+      new PluginRequirement("source1", "batchsource", new Requirements(ImmutableSet.of("unicorn"))),
+      new PluginRequirement("sink1", "batchsink", new Requirements(ImmutableSet.of("dragon"))),
+      new PluginRequirement("sink1", "anothersink", new Requirements(ImmutableSet.of("narwhal"))
+    ));
     assertRequirementFulfillment(provisionerCapabilities, requirements, expectedUnfulfilledRequirements);
 
     // check when provisioner does not have any specified capability
-    provisionerCapabilities = Collections.emptySet();
+    provisionerCapabilities = Capabilities.EMPTY;
     assertRequirementFulfillment(provisionerCapabilities, requirements, requirements);
   }
 
   @Test
   public void testFulfilledRequirements() {
-    Set<String> provisionerCapabilities = ImmutableSet.of(Requirements.TEPHRA_TX);
+    Capabilities provisionerCapabilities = new Capabilities(ImmutableSet.of(Table.TYPE));
     Set<PluginRequirement> requirements =
-      ImmutableSet.of(new PluginRequirement("source1", "batchsource", Collections.emptySet()),
-                      new PluginRequirement("sink1", "batchsink", ImmutableSet.of(Requirements.TEPHRA_TX)));
+      ImmutableSet.of(new PluginRequirement("source1", "batchsource", new Requirements(Collections.emptySet())),
+                      new PluginRequirement("sink1", "batchsink", new Requirements(ImmutableSet.of(Table.TYPE))));
 
     // there should not be any incapability
     assertRequirementFulfillment(provisionerCapabilities, requirements, Collections.emptySet());
 
-    provisionerCapabilities = ImmutableSet.of(Requirements.TEPHRA_TX);
+    provisionerCapabilities = new Capabilities(ImmutableSet.of(Table.TYPE));
     requirements = ImmutableSet.of(new PluginRequirement("source1", "batchsource",
-                                                         ImmutableSet.of(Requirements.TEPHRA_TX)),
+                                                         new Requirements(ImmutableSet.of(Table.TYPE))),
                                    new PluginRequirement("sink1", "batchsink",
-                                                         ImmutableSet.of(Requirements.TEPHRA_TX)));
+                                                         new Requirements(ImmutableSet.of(Table.TYPE))));
     // there should not be any incapability
     assertRequirementFulfillment(provisionerCapabilities, requirements, Collections.emptySet());
   }
 
-  private void assertRequirementFulfillment(Set<String> provisionerCapabilities,
+  private void assertRequirementFulfillment(Capabilities provisionerCapabilities,
                                             Set<PluginRequirement> pluginRequirements,
                                             Set<PluginRequirement> expectedUnfulfilledRequirements) {
     Set<PluginRequirement> unfulfilledRequirements =
@@ -446,16 +449,16 @@ public class ProvisioningServiceTest {
   public void testGroupByRequirement() {
     Set<PluginRequirement> requirements =
       ImmutableSet.of(new PluginRequirement("source1", "batchsource",
-                                            ImmutableSet.of(Requirements.TEPHRA_TX, "unicorn")),
-                      new PluginRequirement("sink1", "batchsink", ImmutableSet.of(Requirements.TEPHRA_TX, "dragon")),
+                                            new Requirements(ImmutableSet.of(Table.TYPE, "unicorn"))),
+                      new PluginRequirement("sink1", "batchsink", new Requirements(ImmutableSet.of(Table.TYPE,
+                                                                                                   "dragon"))),
                       new PluginRequirement("sink1", "anothersink",
-                                            ImmutableSet.of(Requirements.TEPHRA_TX, "narwhal"))
-      );
+                                            new Requirements(ImmutableSet.of(Table.TYPE, "narwhal"))));
     Map<String, Set<String>> pluginGroupedByRequirement = provisioningService.groupByRequirement(requirements);
 
     Assert.assertEquals(4, pluginGroupedByRequirement.size());
     Assert.assertEquals(ImmutableSet.of("batchsource:source1", "batchsink:sink1", "anothersink:sink1"),
-                        pluginGroupedByRequirement.get(Requirements.TEPHRA_TX));
+                        pluginGroupedByRequirement.get(Table.TYPE));
     Assert.assertEquals(ImmutableSet.of("batchsource:source1"), pluginGroupedByRequirement.get("unicorn"));
     Assert.assertEquals(ImmutableSet.of("batchsink:sink1"), pluginGroupedByRequirement.get("dragon"));
     Assert.assertEquals(ImmutableSet.of("anothersink:sink1"), pluginGroupedByRequirement.get("narwhal"));

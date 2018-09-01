@@ -23,6 +23,8 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.plugin.PluginConfig;
 
 /**
@@ -64,7 +66,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name("SingleRequirementPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements(Requirements.TEPHRA_TX)
+  @Requirements(datasetTypes = Table.TYPE)
   public static class SingleRequirementPlugin {
     private PConfig pluginConf;
 
@@ -76,7 +78,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name(MULTIPLE_REQUIREMENTS_PLUGIN)
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements({Requirements.TEPHRA_TX, "secondRequirement"})
+  @Requirements(datasetTypes = {Table.TYPE, KeyValueTable.TYPE})
   public static class MultipleRequirementsPlugin {
     private PConfig pluginConf;
 
@@ -88,7 +90,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name("EmptyRequirementPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements({})
+  @Requirements(datasetTypes = {})
   public static class EmptyRequirementPlugin {
     private PConfig pluginConf;
 
@@ -100,7 +102,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name("SingleEmptyRequirementPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements("")
+  @Requirements(datasetTypes = "")
   public static class SingleEmptyRequirementPlugin {
     private PConfig pluginConf;
 
@@ -112,7 +114,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name("ValidAndEmptyRequirementsPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements({Requirements.TEPHRA_TX, ""})
+  @Requirements(datasetTypes = {Table.TYPE, ""})
   public static class ValidAndEmptyRequirementsPlugin {
     private PConfig pluginConf;
 
@@ -124,7 +126,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name("DuplicateRequirementsPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements({Requirements.TEPHRA_TX, "   DupliCate    ", "    duplicate    "})
+  @Requirements(datasetTypes = {Table.TYPE, "   DupliCate    ", "    duplicate    "})
   public static class DuplicateRequirementsPlugin {
     private PConfig pluginConf;
 
@@ -136,7 +138,7 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Plugin(type = PLUGIN_TYPE)
   @Name("NonTransactionalPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements({"req1", "req2"})
+  @Requirements(datasetTypes = {"req1", "req2"})
   public static class NonTransactionalPlugin {
     private PConfig pluginConf;
 

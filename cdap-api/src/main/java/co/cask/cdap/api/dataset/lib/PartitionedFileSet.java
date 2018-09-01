@@ -45,6 +45,11 @@ import javax.annotation.Nullable;
 public interface PartitionedFileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
 
   /**
+   * Type name
+   */
+  String TYPE = "partitionedFileSet";
+
+  /**
    * Get the partitioning declared for the file set.
    */
   Partitioning getPartitioning();

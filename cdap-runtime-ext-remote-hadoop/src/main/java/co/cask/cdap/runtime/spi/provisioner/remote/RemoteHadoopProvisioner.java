@@ -17,6 +17,7 @@
 
 package co.cask.cdap.runtime.spi.provisioner.remote;
 
+import co.cask.cdap.runtime.spi.provisioner.Capabilities;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Node;
@@ -26,10 +27,11 @@ import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -83,7 +85,7 @@ public class RemoteHadoopProvisioner implements Provisioner {
   }
 
   @Override
-  public Set<String> getCapabilities() {
-    return Collections.emptySet();
+  public Capabilities getCapabilities() {
+    return new Capabilities(Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
   }
 }

@@ -21,7 +21,6 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
@@ -33,6 +32,7 @@ import co.cask.cdap.api.plugin.EndpointPluginContext;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.api.plugin.Requirements;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -357,21 +357,23 @@ final class ArtifactInspector {
   }
 
   /**
-   * Get all the {@link Requirements} specified by a plugin. The requirements are case insensitive and always
-   * represented in lowercase
+   * Get all the {@link co.cask.cdap.api.annotation.Requirements} specified by a plugin as {@link Requirements}.
+   * The requirements are case insensitive and always represented in lowercase.
    *
    * @param cls the plugin class whose requirement needs to be found
-   * @return requirements specified by the plugin (in lowercase) or an empty set if the plugin does not specify any
-   * {@link Requirements}
+   *
+   * @return {@link Requirements} containing the requirements specified by the plugin (in lowercase). If the plugin does
+   * not specify any {@link co.cask.cdap.api.annotation.Requirements} then the {@link Requirements} will be empty.
    */
   @VisibleForTesting
-  Set<String> getPluginRequirements(Class<?> cls) {
-    Requirements annotation = cls.getAnnotation(Requirements.class);
+  Requirements getPluginRequirements(Class<?> cls) {
+    co.cask.cdap.api.annotation.Requirements annotation =
+      cls.getAnnotation(co.cask.cdap.api.annotation.Requirements.class);
     if (annotation == null) {
-      return Collections.emptySet();
+      return Requirements.EMPTY;
     }
-    return Arrays.stream(annotation.value()).map(s -> s.trim().toLowerCase())
-      .filter(s -> !Strings.isNullOrEmpty(s)).collect(Collectors.toSet());
+    return new Requirements(Arrays.stream(annotation.datasetTypes()).map(s -> s.trim().toLowerCase())
+                              .filter(s -> !Strings.isNullOrEmpty(s)).collect(Collectors.toSet()));
   }
 
   /**

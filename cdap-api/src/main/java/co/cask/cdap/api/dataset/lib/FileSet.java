@@ -38,6 +38,11 @@ import java.util.Map;
 public interface FileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
 
   /**
+   * Type name
+   */
+  String TYPE = "fileSet";
+
+  /**
    * Allows to interact directly with the location of this dataset in the underlying file system.
    *
    * @return the location of the base directory

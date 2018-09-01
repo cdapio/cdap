@@ -212,7 +212,7 @@ public class ArtifactStore {
     );
     this.impersonator = impersonator;
     this.requirementBlacklist =
-      new HashSet<>(cConf.getTrimmedStringCollection(Constants.REQUIREMENTS_BLACKLIST))
+      new HashSet<>(cConf.getTrimmedStringCollection(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE))
         .stream().map(String::toLowerCase).collect(Collectors.toSet());
   }
 
@@ -1080,14 +1080,15 @@ public class ArtifactStore {
   /**
    * Checks whether the plugin is excluded from being displayed/used and should be filtered out. The exclusion is
    * determined by the requirements of the plugin and the configuration for
-   * {@link Constants#REQUIREMENTS_BLACKLIST}
+   * {@link Constants#REQUIREMENTS_DATASET_TYPE_EXCLUDE}
    *
    * @param pluginClass the plugins class to check
    * @return true if the plugin should not be excluded and is allowed else false
    */
   private boolean isAllowed(PluginClass pluginClass) {
-    // if a plugin has any requirement which is marked excluded in the config then the plugin should not be allowed
-    return pluginClass.getRequirements().stream().noneMatch(requirementBlacklist::contains);
+    // if a plugin has any requirement which is marked excluded in the config then the plugin should not be allowed.
+    // currently we only allow dataset type requirements
+    return pluginClass.getRequirements().getDatasetTypes().stream().noneMatch(requirementBlacklist::contains);
   }
 
   private static class AppClassKey {

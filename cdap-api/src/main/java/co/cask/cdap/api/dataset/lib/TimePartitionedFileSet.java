@@ -47,6 +47,11 @@ import javax.annotation.Nullable;
 public interface TimePartitionedFileSet extends PartitionedFileSet {
 
   /**
+   * Type name
+   */
+  String TYPE = "timePartitionedFileSet";
+
+  /**
    * Add a partition for a given time, stored at a given path (relative to the file set's base path).
    *
    * @param time the partition time in milliseconds since the Epoch

@@ -19,6 +19,7 @@ package co.cask.cdap.common.conf;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.api.plugin.Requirements;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
@@ -67,12 +68,14 @@ public class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
       ? context.<Map<String, PluginPropertyField>>deserialize(jsonObj.get("properties"), PROPERTIES_TYPE)
       : ImmutableMap.<String, PluginPropertyField>of();
 
-    Set<String> requirements = Collections.emptySet();
+    Set<String> datasetTypes = Collections.emptySet();
     if (jsonObj.has("requirements")) {
-      requirements = context.deserialize(jsonObj.get("requirements"), SET_OF_STRING_TYPE);
+      datasetTypes = context.deserialize(jsonObj.getAsJsonObject("requirements").get("datasetTypes"),
+                                         SET_OF_STRING_TYPE);
     }
 
-    return new PluginClass(type, name, description, className, null, properties, endpointsSet, requirements);
+    return new PluginClass(type, name, description, className, null, properties, endpointsSet,
+                           new Requirements(datasetTypes));
   }
 
   private JsonElement getRequired(JsonObject jsonObj, String name) {

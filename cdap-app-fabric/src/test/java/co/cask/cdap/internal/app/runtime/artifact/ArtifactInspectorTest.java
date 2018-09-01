@@ -16,12 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.api.plugin.Requirements;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.runtime.DummyProgramRunnerFactory;
 import co.cask.cdap.common.InvalidArtifactException;
@@ -94,14 +96,14 @@ public class ArtifactInspectorTest {
     Assert.assertTrue(artifactInspector.getPluginRequirements(InspectionApp.AppPlugin.class).isEmpty());
 
     // check that if a plugin specify a requirement it is captured
-    Assert.assertEquals(ImmutableSet.of(Requirements.TEPHRA_TX),
+    Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE)),
                         artifactInspector.getPluginRequirements(InspectionApp.SingleRequirementPlugin.class));
 
     // check if a plugin specify a requirement annotation but it is empty the requirement captured is no requirement
     Assert.assertTrue(artifactInspector.getPluginRequirements(InspectionApp.EmptyRequirementPlugin.class).isEmpty());
 
     // check if a plugin specify multiple requirement all of them are captured
-    Assert.assertEquals(ImmutableSet.of(Requirements.TEPHRA_TX, "secondrequirement"),
+    Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)),
                         artifactInspector.getPluginRequirements(InspectionApp.MultipleRequirementsPlugin.class));
 
     // check if a plugin has specified empty string as requirement is captured as no requirements
@@ -109,11 +111,11 @@ public class ArtifactInspectorTest {
                         .getPluginRequirements(InspectionApp.SingleEmptyRequirementPlugin.class).isEmpty());
 
     // check if a plugin has specified empty string with a valid requirement only the valid requirement is captured
-    Assert.assertEquals(ImmutableSet.of(Requirements.TEPHRA_TX),
+    Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE)),
                         artifactInspector.getPluginRequirements(InspectionApp.ValidAndEmptyRequirementsPlugin.class));
 
     // test that duplicate requirements are only stored once and the beginning and ending white spaces are trimmed
-    Assert.assertEquals(ImmutableSet.of(Requirements.TEPHRA_TX, "duplicate"),
+    Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE, "duplicate")),
                         artifactInspector.getPluginRequirements(InspectionApp.DuplicateRequirementsPlugin.class));
   }
 
@@ -147,7 +149,7 @@ public class ArtifactInspectorTest {
         ImmutableMap.of(
           "y", new PluginPropertyField("y", "", "double", true, true),
           "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)),
-        new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX.toLowerCase(), "secondrequirement"));
+        new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)));
       Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
     }
   }

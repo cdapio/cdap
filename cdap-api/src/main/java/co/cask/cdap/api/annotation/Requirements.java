@@ -25,8 +25,8 @@ import java.lang.annotation.Target;
  *
  * <p>Requirements are case insensitive.</p>
  *
- * <p>If a plugin is not annotated with {@link Requirements} or the annotation {@link #value()} is empty, then it
- * is assumed that the plugin does not have any specific requirements and can run everywhere.</p>
+ * <p>If a plugin is not annotated with {@link Requirements} or the annotation {@link #datasetTypes()} is empty,
+ * then it is assumed that the plugin does not have any specific requirements and can run everywhere.</p>
  *
  * <p>Usage Examples:</p>
  * <ul>
@@ -40,24 +40,24 @@ import java.lang.annotation.Target;
  *       ...
  *      }
  *   </pre>
- * <li><b>Specifying a particular requirement:</b> If a plugin is capable to run only when 'transactions' are
- * available then this can be specified as below.</li>
+ * <li><b>Specifying a particular requirement:</b> If a plugin requires CDAP 'table' dataset then this can be specified
+ * as below.</li>
  * <pre>
  *     {@literal @}Plugin(type = BatchSource.PLUGIN_TYPE)
  *     {@literal @}Name("Table")
- *     {@literal @}Requirements(Requirements.TEPHRA_TX)
+ *     {@literal @}Requirements(datasetTypes = {"table"})
  *      public class Table extends{@code BatchSource<byte[], Row, StructuredRecord>} {
  *       ...
  *       ...
  *      }
  *   </pre>
  * <li><b>Specifying multiple requirements:</b> A plugin can also specify multiple requirements. For example if a
- * plugin needs 'spark' and 'kafka' to run this can specified as below.</li>
+ * plugin needs 'table' and 'keyValueTable' to run this can specified as below.</li>
  * <pre>
  *     {@literal @}Plugin(type = BatchSource.PLUGIN_TYPE)
- *     {@literal @}Name("KafkaStreaming")
- *     {@literal @}Requirements({"spark", "kafka"})
- *      public class KafkaStreamingSource extends{@code BatchSource<byte[], Row, StructuredRecord>} {
+ *     {@literal @}Name("MultiTable")
+ *     {@literal @}Requirements(datasetTypes = {"table", "keyValueTable"})
+ *      public class MultiTableSource extends{@code BatchSource<byte[], Row, StructuredRecord>} {
  *       ...
  *       ...
  *      }
@@ -67,10 +67,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Requirements {
-  /**
-   * Defines transactional requirements
-   */
-  String TEPHRA_TX = "tephratx";
 
-  String[] value() default {};
+  String[] datasetTypes() default {};
 }

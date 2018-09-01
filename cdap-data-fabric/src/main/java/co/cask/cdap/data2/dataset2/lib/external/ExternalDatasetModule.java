@@ -25,6 +25,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 public class ExternalDatasetModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new ExternalDatasetDefinition("externalDataset"));
+    registry.add(new ExternalDatasetDefinition(ExternalDataset.TYPE));
   }
 }

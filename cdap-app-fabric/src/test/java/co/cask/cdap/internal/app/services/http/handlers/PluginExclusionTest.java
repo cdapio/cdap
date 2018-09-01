@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
@@ -47,18 +47,18 @@ public class PluginExclusionTest extends ArtifactHttpHandlerTestBase {
     @Override
     protected void before() {
       // store the previous value
-      previousRequirementBlacklist = System.getProperty(Constants.REQUIREMENTS_BLACKLIST);
+      previousRequirementBlacklist = System.getProperty(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE);
       // Set the system property to the excluded requirement value which will be set in cdap-site through the test base
-      System.setProperty(Constants.REQUIREMENTS_BLACKLIST, Requirements.TEPHRA_TX);
+      System.setProperty(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Table.TYPE);
     }
 
     @Override
     protected void after() {
       // clear the system property
       if (previousRequirementBlacklist == null) {
-        System.clearProperty(Constants.REQUIREMENTS_BLACKLIST);
+        System.clearProperty(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE);
       } else {
-        System.setProperty(Constants.REQUIREMENTS_BLACKLIST, previousRequirementBlacklist);
+        System.setProperty(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, previousRequirementBlacklist);
       }
     }
   };

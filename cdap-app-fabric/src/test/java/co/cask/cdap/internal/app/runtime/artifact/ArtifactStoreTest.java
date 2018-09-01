@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.api.annotation.Requirements;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactRange;
@@ -26,8 +25,12 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.cube.Cube;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.api.plugin.Requirements;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -90,7 +93,7 @@ public class ArtifactStoreTest {
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
-    cConf.set(Constants.REQUIREMENTS_BLACKLIST, Joiner.on(",").join(Requirements.TEPHRA_TX, "spark2"));
+    cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
     artifactStore = AppFabricTestHelper.getInjector(cConf).getInstance(ArtifactStore.class);
   }
 
@@ -621,67 +624,64 @@ public class ArtifactStoreTest {
       )
     );
 
-    // requires transaction
     PluginClass excludedPlugin1 = new PluginClass(
       "A", "excludedPlugin1", "desc", "c.p1", "cfg",
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX)
+      ), new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE))
     );
 
-    // requires spark2
     PluginClass excludedPlugin2 = new PluginClass(
       "A", "excludedPlugin2", "desc", "c.p1", "cfg",
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), ImmutableSet.of("spark2")
+      ), new HashSet<>(), new Requirements(ImmutableSet.of(KeyValueTable.TYPE))
     );
 
-    // requires transaction and spark2
     PluginClass excludedPlugin3 = new PluginClass(
       "A", "excludedPlugin3", "desc", "c.p1", "cfg",
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX, "spark2")
+      ), new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE))
     );
 
-    // required transaction, spark2 and some other requirement
+
     PluginClass excludedPlugin4 = new PluginClass(
       "A", "excludedPlugin4", "desc", "c.p1", "cfg",
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX, "spark2", "satisfied")
+      ), new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE, Cube.TYPE))
     );
 
-    // required transaction and some other requirement
+
     PluginClass excludedPlugin5 = new PluginClass(
       "A", "excludedPlugin5", "desc", "c.p1", "cfg",
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), ImmutableSet.of(Requirements.TEPHRA_TX, "satisfied")
+      ), new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE, Cube.TYPE))
     );
 
-    // requires some other requirement than transaction
+
     PluginClass includedPlugin2 = new PluginClass(
       "A", "includedPlugin2", "desc", "c.p1", "cfg",
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), ImmutableSet.of("noTransactionNeeded")
+      ), new HashSet<>(), new Requirements(ImmutableSet.of("noTransactionNeeded"))
     );
 
-    // requires multiple requirements other than the ones excluded
+
     PluginClass includedPlugin3 = new PluginClass(
       "A", "includedPlugin3", "desc", "c.p1", "cfg",
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), ImmutableSet.of("noTransactionNeeded", "spark1")
+      ), new HashSet<>(), new Requirements(ImmutableSet.of("noTransactionNeeded", "tpfs"))
     );
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "ArtifactWithTransactionalPlugins", "1.0.0");

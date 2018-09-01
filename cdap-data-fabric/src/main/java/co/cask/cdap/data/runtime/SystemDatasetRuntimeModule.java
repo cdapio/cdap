@@ -16,12 +16,18 @@
 
 package co.cask.cdap.data.runtime;
 
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.external.ExternalDataset;
 import co.cask.cdap.data2.dataset2.lib.external.ExternalDatasetModule;
+import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
@@ -132,15 +138,15 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
    */
   private void bindDefaultModules(MapBinder<String, DatasetModule> mapBinder) {
     mapBinder.addBinding("core").toInstance(new CoreDatasetsModule());
-    mapBinder.addBinding("fileSet").toInstance(new FileSetModule());
-    mapBinder.addBinding("timePartitionedFileSet").toInstance(new TimePartitionedFileSetModule());
-    mapBinder.addBinding("partitionedFileSet").toInstance(new PartitionedFileSetModule());
-    mapBinder.addBinding("objectMappedTable").toInstance(new ObjectMappedTableModule());
-    mapBinder.addBinding("cube").toInstance(new CubeModule());
+    mapBinder.addBinding(FileSetDataset.TYPE).toInstance(new FileSetModule());
+    mapBinder.addBinding(TimePartitionedFileSet.TYPE).toInstance(new TimePartitionedFileSetModule());
+    mapBinder.addBinding(PartitionedFileSet.TYPE).toInstance(new PartitionedFileSetModule());
+    mapBinder.addBinding(ObjectMappedTable.TYPE).toInstance(new ObjectMappedTableModule());
+    mapBinder.addBinding(Cube.TYPE).toInstance(new CubeModule());
     mapBinder.addBinding("usage").toInstance(new UsageDatasetModule());
     mapBinder.addBinding("metadata").toInstance(new MetadataDatasetModule());
     mapBinder.addBinding("lineage").toInstance(new LineageDatasetModule());
     mapBinder.addBinding("fieldLineage").toInstance(new FieldLineageDatasetModule());
-    mapBinder.addBinding("externalDataset").toInstance(new ExternalDatasetModule());
+    mapBinder.addBinding(ExternalDataset.TYPE).toInstance(new ExternalDatasetModule());
   }
 }

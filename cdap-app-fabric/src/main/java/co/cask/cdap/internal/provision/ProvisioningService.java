@@ -21,6 +21,7 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.plugin.Requirements;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
@@ -52,6 +53,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.runtime.spi.SparkCompat;
+import co.cask.cdap.runtime.spi.provisioner.Capabilities;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
@@ -336,8 +338,8 @@ public class ProvisioningService extends AbstractIdleService {
     Set<PluginRequirement> requirements = GSON.fromJson(args.get(ProgramOptionConstants.PLUGIN_REQUIREMENTS),
                                                         PLUGIN_REQUIREMENT_SET_TYPE);
     if (requirements != null) {
-      Set<PluginRequirement> unfulfilledRequirements = getUnfulfilledRequirements(provisioner.getCapabilities(),
-                                                                                  requirements);
+      Set<PluginRequirement> unfulfilledRequirements =
+        getUnfulfilledRequirements(provisioner.getCapabilities(), requirements);
       if (!unfulfilledRequirements.isEmpty()) {
         runWithProgramLogging(programRunId, args, () ->
           LOG.error(String.format("'%s' cannot be run using profile '%s' because the profile does not met all " +
@@ -427,25 +429,27 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   /**
-   * Checks if the given provisioner capabilities satisfies all requirement of a program.
+   * Checks if the given provisioner fulfills all the requirements of a program.
    *
-   * @param provisionerCapabilities provisioner capabilities
+   * @param provisionerFulfilledRequirements {@link Requirements} containing requirements fulfilled by the provisioner
    * @param requirements a {@link Set} of {@link PluginRequirement}
    *
    * @return {@link Set} {@link PluginRequirement} which consists of plugin identifier and the requirements which
    * are not meet
    */
   @VisibleForTesting
-  Set<PluginRequirement> getUnfulfilledRequirements(Set<String> provisionerCapabilities,
+  Set<PluginRequirement> getUnfulfilledRequirements(Capabilities provisionerFulfilledRequirements,
                                                     Set<PluginRequirement> requirements) {
     // create a map of plugin name to unfulfilled requirement if there are any
     Set<PluginRequirement> unfulfilledRequirements = new HashSet<>();
-    Set<String> capabilities = provisionerCapabilities.stream().map(String::toLowerCase).collect(Collectors.toSet());
+    Set<String> capabilities =
+      provisionerFulfilledRequirements.getDatasetTypes().stream().map(String::toLowerCase).collect(Collectors.toSet());
     for (PluginRequirement pluginRequirement : requirements) {
-      Sets.SetView<String> unfulfilledRequirement = Sets.difference(pluginRequirement.getRequirements(), capabilities);
+      Requirements requisites = pluginRequirement.getRequirements();
+      Sets.SetView<String> unfulfilledRequirement = Sets.difference(requisites.getDatasetTypes(), capabilities);
       if (!unfulfilledRequirement.isEmpty()) {
         unfulfilledRequirements.add(new PluginRequirement(pluginRequirement.getName(), pluginRequirement.getType(),
-                                                          unfulfilledRequirement.immutableCopy()));
+                                                          new Requirements(unfulfilledRequirement.immutableCopy())));
       }
     }
     return unfulfilledRequirements;
@@ -462,7 +466,7 @@ public class ProvisioningService extends AbstractIdleService {
   Map<String, Set<String>> groupByRequirement(Set<PluginRequirement> requirements) {
     Map<String, Set<String>> pluginsGroupedByRequirements = new HashMap<>();
     for (PluginRequirement pluginRequirement : requirements) {
-      Set<String> reqs = pluginRequirement.getRequirements();
+      Set<String> reqs = pluginRequirement.getRequirements().getDatasetTypes();
       for (String req : reqs) {
         Set<String> currentRequirementPlugins = pluginsGroupedByRequirements.getOrDefault(req, new HashSet<>());
         currentRequirementPlugins.add(pluginRequirement.getType() + ":" + pluginRequirement.getName());

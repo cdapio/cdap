@@ -49,6 +49,11 @@ public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
   BatchWritable<byte[], T>, RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
 
   /**
+   * Type name
+   */
+  String TYPE = "objectMappedTable";
+
+  /**
    * Write an object with a given key.
    *
    * @param key the key of the object

@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -39,11 +38,11 @@ public class PluginClass {
   private final String configFieldName;
   private final Map<String, PluginPropertyField> properties;
   private final Set<String> endpoints;
-  private final Set<String> requirements;
+  private final Requirements requirements;
 
   public PluginClass(String type, String name, String description, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
-                     Set<String> endpoints, Set<String> requirements) {
+                     Set<String> endpoints, Requirements requirements) {
     if (type == null) {
       throw new IllegalArgumentException("Plugin class type cannot be null");
     }
@@ -75,21 +74,20 @@ public class PluginClass {
     this.configFieldName = configfieldName;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.endpoints = Collections.unmodifiableSet(new HashSet<>(endpoints));
-    // requirements are case insensitive
-    this.requirements = Collections.unmodifiableSet(requirements.stream()
-                                                      .map(String::toLowerCase).collect(Collectors.toSet()));
+    this.requirements = requirements;
   }
 
   public PluginClass(String type, String name, String description, String className, @Nullable String configfieldName,
                      Map<String, PluginPropertyField> properties) {
     this(type, name, description, className, configfieldName, properties, Collections.emptySet(),
-         Collections.emptySet());
+         Requirements.EMPTY);
   }
 
   public PluginClass(String type, String name, String description, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
                      Set<String> endpoints) {
-    this(type, name, description, className, configfieldName, properties, endpoints, Collections.emptySet());
+    this(type, name, description, className, configfieldName, properties, endpoints,
+         Requirements.EMPTY);
   }
 
   /**
@@ -145,9 +143,9 @@ public class PluginClass {
   }
 
   /**
-   * @return the requirements of the plugin (case insensitive: represented in lowercase)
+   * @return the {@link Requirements} which represents the requirements of the plugin
    */
-  public Set<String> getRequirements() {
+  public Requirements getRequirements() {
     return requirements;
   }
 

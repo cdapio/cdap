@@ -30,7 +30,7 @@ public class MetadataDatasetModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
       registry.get(IndexedTable.class.getName());
-    registry.add(new MetadataDatasetDefinition("metadataDataset", indexedTableDef));
+    registry.add(new MetadataDatasetDefinition(MetadataDataset.TYPE, indexedTableDef));
     registry.add(new MetadataDatasetDefinition(MetadataDataset.class.getName(), indexedTableDef));
   }
 }
