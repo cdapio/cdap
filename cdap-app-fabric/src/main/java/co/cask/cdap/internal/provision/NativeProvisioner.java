@@ -55,7 +55,7 @@ public class NativeProvisioner implements Provisioner {
     new Capabilities(Stream.of(Table.TYPE, KeyValueTable.TYPE, ObjectMappedTable.TYPE, ObjectStore.TYPE,
                                IndexedObjectStore.TYPE, IndexedTable.TYPE, TimeseriesTable.TYPE,
                                CounterTimeseriesTable.TYPE, TimePartitionedFileSet.TYPE, PartitionedFileSet.TYPE,
-                               ExternalDataset.TYPE, Cube.TYPE)
+                               ExternalDataset.TYPE, Cube.TYPE, "stream")
                        .collect(Collectors.toSet()));
 
   @Override
