@@ -58,17 +58,19 @@ public class LevelDBQueueEvictor implements QueueEvictor {
   @Override
   public ListenableFuture<Integer> evict(final Transaction transaction) {
     final SettableFuture<Integer> result = SettableFuture.create();
-    executor.execute(new Runnable() {
-
-      @Override
-      public void run() {
+    // call this in the same thread to get a stacktrace of who is calling evict and what else is happening at
+    // the same time
+//    executor.execute(new Runnable() {
+//
+//      @Override
+//      public void run() {
         try {
           result.set(doEvict(transaction));
         } catch (Throwable t) {
           result.setException(t);
         }
-      }
-    });
+//      }
+//    });
     return result;
   }
 

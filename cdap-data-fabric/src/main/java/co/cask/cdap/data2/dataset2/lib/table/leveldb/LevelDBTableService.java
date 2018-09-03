@@ -97,6 +97,7 @@ public class LevelDBTableService implements AutoCloseable {
    * only use in unit test since the singleton may be reused for multiple tests.
    */
   public void clearTables() {
+    // synchronize on tables first?
     for (DB entries : tables.values()) {
       Closeables.closeQuietly(entries);
     }

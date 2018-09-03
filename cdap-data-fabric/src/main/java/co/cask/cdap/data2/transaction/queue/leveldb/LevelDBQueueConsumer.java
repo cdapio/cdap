@@ -77,6 +77,8 @@ public final class LevelDBQueueConsumer extends AbstractQueueConsumer {
     if (commitCount > EVICTION_LIMIT && transaction != null) {
       // Fire and forget eviction.
       queueEvictor.evict(transaction);
+      // see if this is ever being called in the flaky test case.
+      System.exit(1);
       commitCount = 0;
     }
   }
@@ -89,6 +91,7 @@ public final class LevelDBQueueConsumer extends AbstractQueueConsumer {
         // Has to block until eviction is completed
         Uninterruptibles.getUninterruptibly(queueEvictor.evict(transaction),
                                             EVICTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+//        queueEvictor.close();
       }
     } catch (ExecutionException e) {
       LOG.warn("Failed to perform queue eviction.", e.getCause());
