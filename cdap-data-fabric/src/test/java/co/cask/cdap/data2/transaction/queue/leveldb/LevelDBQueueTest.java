@@ -46,6 +46,8 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * LevelDB queue tests.
@@ -54,7 +56,7 @@ public class LevelDBQueueTest extends QueueTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
+  private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueTest.class);
   private static LevelDBTableService levelDBTableService;
 
   @BeforeClass
@@ -84,7 +86,9 @@ public class LevelDBQueueTest extends QueueTest {
 
   @After
   public void clear() {
+    LOG.error("Clearing tables");
     levelDBTableService.clearTables();
+    LOG.error("Done tables");
   }
 
   // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class

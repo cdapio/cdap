@@ -822,6 +822,7 @@ public abstract class QueueTest {
               LOG.info("Dequeue avg {} entries per seconds for {}",
                        (double) dequeueCount * 1000 / elapsed, queueName.getSimpleName());
               consumer.close();
+              LOG.error("Closing consumer", new Exception());
 
               completeLatch.countDown();
             }
