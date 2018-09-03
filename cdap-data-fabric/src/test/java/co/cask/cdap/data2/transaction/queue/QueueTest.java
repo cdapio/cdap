@@ -778,6 +778,7 @@ public abstract class QueueTest {
     final AtomicLong valueSum = new AtomicLong();
     final CountDownLatch completeLatch = new CountDownLatch(consumerSize);
 
+    LOG.info("[alianwar] consumerSize={}", consumerSize);
     for (int i = 0; i < consumerSize; i++) {
       final int instanceId = i;
       executor.submit(new Runnable() {
@@ -821,8 +822,9 @@ public abstract class QueueTest {
               LOG.info("Dequeue {} entries in {} ms for {}", dequeueCount, elapsed, queueName.getSimpleName());
               LOG.info("Dequeue avg {} entries per seconds for {}",
                        (double) dequeueCount * 1000 / elapsed, queueName.getSimpleName());
+              LOG.error("[alianwar] Closing consumer");
               consumer.close();
-              LOG.error("Closing consumer", new Exception());
+              LOG.error("[alianwar] Closed consumer");
 
               completeLatch.countDown();
             }
@@ -843,6 +845,7 @@ public abstract class QueueTest {
       verifyQueueIsEmpty(queueName, consumerConfigs);
     }
     executor.shutdownNow(); // make blocking?
+    LOG.info("[alianwar] Returning from QueueTest.");
   }
 
   protected Runnable createEnqueueRunnable(final QueueName queueName, final int count,

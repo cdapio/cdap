@@ -86,9 +86,9 @@ public class LevelDBQueueTest extends QueueTest {
 
   @After
   public void clear() {
-    LOG.error("Clearing tables");
+    LOG.error("[alianwar] Clearing tables");
     levelDBTableService.clearTables();
-    LOG.error("Done tables");
+    LOG.error("[alianwar] Cleared tables");
   }
 
   // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
