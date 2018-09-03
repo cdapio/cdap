@@ -841,7 +841,7 @@ public abstract class QueueTest {
     if (!queueName.isStream()) {
       verifyQueueIsEmpty(queueName, consumerConfigs);
     }
-    executor.shutdownNow();
+    executor.shutdownNow(); // make blocking?
   }
 
   protected Runnable createEnqueueRunnable(final QueueName queueName, final int count,
