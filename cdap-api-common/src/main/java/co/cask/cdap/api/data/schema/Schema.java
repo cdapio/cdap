@@ -99,21 +99,54 @@ public final class Schema implements Serializable {
    *
    */
   public enum LogicalType {
-    DATE(Type.INT),
-    TIMESTAMP_MILLIS(Type.LONG),
-    TIMESTAMP_MICROS(Type.LONG),
-    TIME_MILLIS(Type.INT),
-    TIME_MICROS(Type.LONG);
+    DATE(Type.INT, "date"),
+    TIMESTAMP_MILLIS(Type.LONG, "timestamp-millis"),
+    TIMESTAMP_MICROS(Type.LONG, "timestamp-micros"),
+    TIME_MILLIS(Type.INT, "time-millis"),
+    TIME_MICROS(Type.LONG, "time-micros");
 
     private final Type type;
+    private final String token;
+
+    private static final Map<String, LogicalType> LOOKUP_BY_TOKEN;
+    static {
+      Map<String, LogicalType> map = new HashMap<>();
+      for (LogicalType logicalType : values()) {
+        map.put(logicalType.token, logicalType);
+      }
+      LOOKUP_BY_TOKEN = Collections.unmodifiableMap(map);
+    }
 
     /**
      * Creates {@link LogicalType} with underlying primitive type.
      *
      * @param type primitive type on which this {@link LogicalType} relies on
+     * @param token token string associated with {@link LogicalType}
      */
-    LogicalType(Type type) {
+    LogicalType(Type type, String token) {
       this.type = type;
+      this.token = token;
+    }
+
+    /**
+     * @return returns the token string associated with logical type.
+     */
+    public String getToken() {
+      return token;
+    }
+
+    /**
+     * Returns {@link LogicalType} associated with the token string provided.
+     *
+     * @param token token string for the logical type
+     * @return logical type associated with the token string
+     */
+    public static LogicalType fromToken(String token) {
+      LogicalType logicalType = LOOKUP_BY_TOKEN.get(token);
+      if (logicalType != null) {
+        return logicalType;
+      }
+      throw new IllegalArgumentException("Unknown logical type for token: " + token);
     }
   }
 

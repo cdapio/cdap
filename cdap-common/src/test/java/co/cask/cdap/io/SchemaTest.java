@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.avro.LogicalTypes;
 import org.codehaus.jackson.node.IntNode;
 import org.codehaus.jackson.node.TextNode;
 import org.junit.Assert;
@@ -469,14 +470,15 @@ public class SchemaTest {
     Schema dateType = Schema.nullableOf(Schema.of(Schema.LogicalType.DATE));
     Schema timeMicrosType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIME_MICROS));
     Schema timeMillisType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIME_MILLIS));
-    Schema timestampMicrosType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS));
-    Schema timestampMillisType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS));
+    Schema tsMicrosType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS));
+    Schema tsMillisType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS));
 
     Assert.assertEquals(dateType, Schema.parseJson(dateType.toString()));
     Assert.assertEquals(timeMicrosType, Schema.parseJson(timeMicrosType.toString()));
     Assert.assertEquals(timeMillisType, Schema.parseJson(timeMillisType.toString()));
-    Assert.assertEquals(timestampMicrosType, Schema.parseJson(timestampMicrosType.toString()));
-    Assert.assertEquals(timestampMillisType, Schema.parseJson(timestampMillisType.toString()));
+    Assert.assertEquals(tsMicrosType, Schema.parseJson(tsMicrosType.toString()));
+    Assert.assertEquals(tsMillisType, Schema.parseJson(tsMillisType.toString()));
+    Assert.assertEquals(convertSchema(dateType).toString(), dateType.toString());
 
     Schema complexSchema = Schema.recordOf(
       "union",
@@ -498,6 +500,86 @@ public class SchemaTest {
     Assert.assertEquals(complexSchema, Schema.parseJson(complexSchema.toString()));
   }
 
+  @Test
+  public void testAvroLogicalTypeSchema() throws IOException {
+    Schema schema = Schema.recordOf("Record",
+                                    Schema.Field.of("id", Schema.unionOf(Schema.of(Schema.Type.NULL),
+                                                                         Schema.of(Schema.Type.INT))),
+                                    Schema.Field.of("name", Schema.unionOf(Schema.of(Schema.Type.NULL),
+                                                                           Schema.of(Schema.Type.STRING))),
+                                    Schema.Field.of("date", Schema.unionOf(Schema.of(Schema.Type.NULL),
+                                                                           Schema.of(Schema.LogicalType.DATE))),
+                                    Schema.Field.of("time_millis", Schema.unionOf(
+                                      Schema.of(Schema.Type.NULL), Schema.of(Schema.LogicalType.TIME_MILLIS))),
+                                    Schema.Field.of("time_micros", Schema.unionOf(
+                                      Schema.of(Schema.Type.NULL), Schema.of(Schema.LogicalType.TIME_MICROS))),
+                                    Schema.Field.of("timestamp_millis", Schema.unionOf(
+                                      Schema.of(Schema.Type.NULL), Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))),
+                                    Schema.Field.of("timestamp_micros", Schema.unionOf(
+                                      Schema.of(Schema.Type.NULL), Schema.of(Schema.LogicalType.TIMESTAMP_MICROS))),
+                                    Schema.Field.of("union",
+                                                    Schema.unionOf(Schema.of(Schema.Type.STRING),
+                                                                   Schema.of(Schema.LogicalType.TIMESTAMP_MICROS))));
+
+    org.apache.avro.Schema avroSchema = convertSchema(schema);
+    org.apache.avro.Schema expectedAvroSchema = org.apache.avro.Schema.createRecord("Record", null, null, false);
+
+    ImmutableList<org.apache.avro.Schema.Field> fields = ImmutableList.of(
+      new org.apache.avro.Schema.Field("id",
+                                       org.apache.avro.Schema.createUnion(ImmutableList.of(
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.NULL),
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.INT))), null, null),
+      new org.apache.avro.Schema.Field("name",
+                                       org.apache.avro.Schema.createUnion(ImmutableList.of(
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.NULL),
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.STRING))),
+                                       null, null),
+      new org.apache.avro.Schema.Field("date",
+                                       org.apache.avro.Schema.createUnion(ImmutableList.of(
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.NULL),
+                                         LogicalTypes.date().addToSchema(
+                                           org.apache.avro.Schema.create(org.apache.avro.Schema.Type.INT)))),
+                                       null, null),
+      new org.apache.avro.Schema.Field("time_millis",
+                                       org.apache.avro.Schema.createUnion(ImmutableList.of(
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.NULL),
+                                         LogicalTypes.timeMillis().addToSchema(
+                                           org.apache.avro.Schema.create(org.apache.avro.Schema.Type.INT)))),
+                                       null, null),
+      new org.apache.avro.Schema.Field("time_micros",
+                                       org.apache.avro.Schema.createUnion(ImmutableList.of(
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.NULL),
+                                         LogicalTypes.timeMicros().addToSchema(
+                                           org.apache.avro.Schema.create(org.apache.avro.Schema.Type.LONG)))),
+                                       null, null),
+      new org.apache.avro.Schema.Field("timestamp_millis",
+                                       org.apache.avro.Schema.createUnion(ImmutableList.of(
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.NULL),
+                                         LogicalTypes.timestampMillis().addToSchema(
+                                           org.apache.avro.Schema.create(org.apache.avro.Schema.Type.LONG)))),
+                                       null, null),
+      new org.apache.avro.Schema.Field("timestamp_micros",
+                                       org.apache.avro.Schema.createUnion(ImmutableList.of(
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.NULL),
+                                         LogicalTypes.timestampMicros().addToSchema(
+                                           org.apache.avro.Schema.create(org.apache.avro.Schema.Type.LONG)))),
+                                       null, null),
+      new org.apache.avro.Schema.Field("union",
+                                       org.apache.avro.Schema.createUnion(ImmutableList.of(
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.STRING),
+                                         LogicalTypes.timestampMicros().addToSchema(
+                                           org.apache.avro.Schema.create(org.apache.avro.Schema.Type.LONG)))),
+                                       null, null));
+
+    expectedAvroSchema.setFields(fields);
+
+    Assert.assertEquals(expectedAvroSchema, avroSchema);
+    Assert.assertEquals(schema, Schema.parseJson(avroSchema.toString()));
+  }
+
+  private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
+    return new org.apache.avro.Schema.Parser().parse(cdapSchema.toString());
+  }
 
   private void verifyThrowsException(String toParse) {
     try {

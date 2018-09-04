@@ -154,7 +154,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
       String name = reader.nextName();
       switch (name) {
         case LOGICAL_TYPE:
-          logicalType = Schema.LogicalType.valueOf(reader.nextString().toUpperCase());
+          logicalType = Schema.LogicalType.fromToken(reader.nextString());
           break;
         case TYPE:
           schemaType = Schema.Type.valueOf(reader.nextString().toUpperCase());
@@ -322,8 +322,8 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    */
   private JsonWriter write(JsonWriter writer, Schema schema, Set<String> knownRecords) throws IOException {
     if (schema.getLogicalType() != null) {
-      writer.beginObject().name(LOGICAL_TYPE).value(schema.getLogicalType().name().toLowerCase());
-      writer.name(TYPE).value(schema.getType().name().toLowerCase());
+      writer.beginObject().name(TYPE).value(schema.getType().name().toLowerCase());
+      writer.name(LOGICAL_TYPE).value(schema.getLogicalType().getToken());
       writer.endObject();
       return writer;
     }
