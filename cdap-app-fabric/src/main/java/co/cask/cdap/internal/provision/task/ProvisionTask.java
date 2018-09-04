@@ -106,7 +106,7 @@ public class ProvisionTask extends ProvisioningTask {
   }
 
   @Override
-  protected void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, TransactionFailureException e) {
+  protected void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, Exception e) {
     notifyFailed(e);
   }
 

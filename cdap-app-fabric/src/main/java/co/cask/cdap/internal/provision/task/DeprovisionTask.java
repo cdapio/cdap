@@ -121,7 +121,7 @@ public class DeprovisionTask extends ProvisioningTask {
   }
 
   @Override
-  protected void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, TransactionFailureException e) {
+  protected void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, Exception e) {
     provisionerNotifier.orphaned(programRunId);
   }
 }

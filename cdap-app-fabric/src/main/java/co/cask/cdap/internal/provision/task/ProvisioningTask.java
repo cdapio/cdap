@@ -18,6 +18,7 @@
 package co.cask.cdap.internal.provision.task;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
@@ -25,6 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.provision.ProvisionerDataset;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
+import co.cask.cdap.internal.provision.ProvisioningTaskKey;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import org.apache.tephra.TransactionFailureException;
@@ -46,12 +48,15 @@ public abstract class ProvisioningTask {
   private static final Logger LOG = LoggerFactory.getLogger(ProvisioningTask.class);
   private final Transactional transactional;
   private final DatasetFramework datasetFramework;
+  private final ProvisioningTaskKey taskKey;
   protected final ProvisioningTaskInfo initialTaskInfo;
   protected final ProgramRunId programRunId;
   protected final int retryTimeLimitSecs;
 
   public ProvisioningTask(ProvisioningTaskInfo initialTaskInfo, Transactional transactional,
                           DatasetFramework datasetFramework, int retryTimeLimitSecs) {
+    this.taskKey = new ProvisioningTaskKey(initialTaskInfo.getProgramRunId(),
+                                           initialTaskInfo.getProvisioningOp().getType());
     this.programRunId = initialTaskInfo.getProgramRunId();
     this.initialTaskInfo = initialTaskInfo;
     this.transactional = transactional;
@@ -76,10 +81,14 @@ public abstract class ProvisioningTask {
 
     Optional<ProvisioningTaskInfo> taskInfoOptional = Optional.of(initialTaskInfo);
     while (taskInfoOptional.isPresent()) {
-      ProvisioningTaskInfo taskInfo = taskInfoOptional.get();
-      persistTaskInfo(taskInfo, retryStrategy);
+      ProvisioningTaskInfo nextTaskInfo = taskInfoOptional.get();
+      ProvisioningTaskInfo taskInfo = persistTaskInfo(nextTaskInfo, retryStrategy);
 
       ProvisioningOp.Status state = taskInfo.getProvisioningOp().getStatus();
+      if (state == ProvisioningOp.Status.CANCELLED) {
+        return;
+      }
+
       ProvisioningSubtask subtask = subtasks.get(state);
       if (subtask == null) {
         // should never happen
@@ -88,6 +97,9 @@ public abstract class ProvisioningTask {
                           + "This means there is a bug in provisioning state machine. "
                           + "Please reach out to the development team.",
                         state, programRunId));
+      }
+      if (subtask == EndSubtask.INSTANCE) {
+        break;
       }
 
       try {
@@ -114,25 +126,31 @@ public abstract class ProvisioningTask {
   }
 
   /**
-   * Write the task state to the {@link ProvisionerDataset}, retrying if any exception is caught.
+   * Write the task state to the {@link ProvisionerDataset}, retrying if any exception is caught. Before persisting
+   * the state, the current state will be checked. If the current state is cancelled, it will not be overwritten.
    *
    * @param taskInfo the task state to save
    * @param retryStrategy the retry strategy to use on errors
-   * @throws TransactionFailureException if there was an error and the retry limit was hit
+   * @return the task info that is stored. This will be the taskInfo that was given to this method unless the existing
+   *   task info was in the cancelled state, in which case the cancelled info will be returned.
    * @throws InterruptedException if we were interrupted while waiting between retries
+   * @throws RuntimeException if there was an error and the retry limit was hit
    */
-  protected void persistTaskInfo(ProvisioningTaskInfo taskInfo,
-                                 RetryStrategy retryStrategy) throws TransactionFailureException, InterruptedException {
+  protected ProvisioningTaskInfo persistTaskInfo(ProvisioningTaskInfo taskInfo, RetryStrategy retryStrategy)
+    throws InterruptedException {
     try {
       // Stop retrying if we are interrupted. Otherwise, retry on every exception, up to the retry limit
-      Retries.callWithInterruptibleRetries(() -> {
-        transactional.execute(dsContext -> {
-          ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
-          dataset.putTaskInfo(taskInfo);
-        });
-        return null;
-      }, retryStrategy, t -> true);
-    } catch (TransactionFailureException e) {
+      return Retries.callWithInterruptibleRetries(() -> Transactionals.execute(transactional, dsContext -> {
+        ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+        ProvisioningTaskInfo currentState = dataset.getTaskInfo(taskKey);
+        // if the state is cancelled, don't write anything and transition to the end subtask.
+        if (currentState != null && currentState.getProvisioningOp().getStatus() == ProvisioningOp.Status.CANCELLED) {
+          return currentState;
+        }
+        dataset.putTaskInfo(taskInfo);
+        return taskInfo;
+      }), retryStrategy, t -> true);
+    } catch (RuntimeException e) {
       LOG.error("{} task failed in to save state for {} subtask. The task will be failed.",
                 taskInfo.getProvisioningOp().getType(), taskInfo.getProvisioningOp().getStatus(), e);
       // this is thrown if we ran out of retries
@@ -166,5 +184,5 @@ public abstract class ProvisioningTask {
    * @param taskInfo task info that could not be saved
    * @param e the non-retryable exception
    */
-  protected abstract void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, TransactionFailureException e);
+  protected abstract void handleStateSaveFailure(ProvisioningTaskInfo taskInfo, Exception e);
 }

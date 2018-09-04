@@ -63,6 +63,7 @@ public class BootstrapStep {
     if (label == null || label.isEmpty()) {
       throw new IllegalArgumentException("A bootstrap step must contain a label.");
     }
+
     if (type == null) {
       throw new IllegalArgumentException("A bootstrap step must contain a type.");
     }
