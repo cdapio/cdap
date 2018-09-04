@@ -41,6 +41,7 @@ import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -105,7 +106,7 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
                             @QueryParam("end") String endStr,
                             @QueryParam("prefix") String prefix,
                             @QueryParam("includeCurrent") boolean includeCurrent)
-    throws BadRequestException {
+    throws BadRequestException, IOException {
     TimeRange range = parseRange(startStr, endStr);
     Set<Field> result = fieldLineageAdmin.getFields(EndPoint.of(namespaceId, datasetId), range.getStart(),
                                                     range.getEnd(), prefix, includeCurrent);
