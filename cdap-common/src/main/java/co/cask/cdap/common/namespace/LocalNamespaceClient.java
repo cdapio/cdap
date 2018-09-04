@@ -17,10 +17,10 @@
 package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpResponse;
 import com.google.inject.Inject;
 
 import java.io.IOException;
