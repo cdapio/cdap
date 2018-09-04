@@ -114,6 +114,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type BYTE_TYPE = new TypeToken<byte[]>() { }.getType();
   private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
+  private static final byte[] RUN_COUNT_FIRST_UPGRADE_TIME = Bytes.toBytes("run.count.first.upgrade.time");
+  // this row key will be used to record the progress of upgrade run count since for completed run records we do not
+  // modify the row key, so we do not know which row has been counted.
+  private static final byte[] RUN_COUNT_PROGRESS = Bytes.toBytes("run.count.progress");
 
   private static final String TYPE_APP_META = "appMeta";
   private static final String TYPE_STREAM = "stream";
@@ -129,7 +133,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_WORKFLOW_TOKEN = "wft";
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_MESSAGE = "msg";
+
   private static final String TYPE_COUNT = "runRecordCount";
+  private static final String TYPE_RUN_RECORD_UPGRADE_COUNT = "runRecordUpgradeCount";
+
   private static final Map<ProgramRunStatus, String> STATUS_TYPE_MAP = ImmutableMap.<ProgramRunStatus, String>builder()
     .put(ProgramRunStatus.PENDING, TYPE_RUN_RECORD_ACTIVE)
     .put(ProgramRunStatus.STARTING, TYPE_RUN_RECORD_ACTIVE)
@@ -1133,12 +1140,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_ACTIVE, namespaceId, appId, versionId).build());
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, versionId).build());
     deleteAll(new MDSKey.Builder().add(TYPE_COUNT, namespaceId, appId, versionId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_UPGRADE_COUNT, namespaceId, appId, versionId).build());
   }
 
   public void deleteProgramHistory(String namespaceId) {
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_ACTIVE, namespaceId).build());
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId).build());
     deleteAll(new MDSKey.Builder().add(TYPE_COUNT, namespaceId).build());
+    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_UPGRADE_COUNT, namespaceId).build());
+
   }
 
   public void createNamespace(NamespaceMeta metadata) {
@@ -1241,10 +1251,147 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   /**
-   * @return true if the upgrade of the app meta store is complete
-   * TODO: CDAP-14114 change the logic to run count upgrade
+   * Write the start time for the upgrade if it does not exist.
    */
-  private boolean hasUpgraded() {
+  void writeUpgradeStartTimeIfNotExist() {
+    MDSKey mdsKey = new MDSKey(RUN_COUNT_FIRST_UPGRADE_TIME);
+    if (get(mdsKey, Long.TYPE) == null) {
+      LOG.info("Start to upgrade the run count");
+      write(mdsKey, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
+    }
+  }
+
+  /**
+   * Upgrade the active run records.
+   *
+   * @param maxRows maximum number of rows to be upgraded in this call.
+   * @return a boolean indicating whether the upgrade of active run records is complete.
+   */
+  boolean upgradeActiveRunRecords(int maxRows) {
+    int remainingRows = maxRows - upgradeActiveRowkey(TYPE_RUN_RECORD_STARTING, maxRows);
+    if (remainingRows > 0) {
+      remainingRows -= upgradeActiveRowkey(TYPE_RUN_RECORD_STARTED, remainingRows);
+    }
+    if (remainingRows > 0) {
+      remainingRows -= upgradeActiveRowkey(TYPE_RUN_RECORD_SUSPENDED, remainingRows);
+    }
+
+    // If we are not able to scan to the max number of rows, that means we reach the end of the active run records
+    return remainingRows > 0;
+  }
+
+  /**
+   * Upgrades the rowkeys for the active run record. Note that we do not count the run record of the old active runs
+   * since it is hard to deal with the races and we expect user to stop all the programs before they do the upgrade.
+   *
+   * @param recordType type of the record.
+   * @param maxRows maximum number of rows to be upgraded in this call.
+   * @return the number of rows it updates
+   */
+  private int upgradeActiveRowkey(String recordType, int maxRows) {
+    MDSKey startKey = new MDSKey.Builder().add(recordType).build();
+    Map<MDSKey, RunRecordMeta> oldMap = listKV(startKey, RunRecordMeta.class, maxRows);
+
+    for (Map.Entry<MDSKey, RunRecordMeta> oldEntry : oldMap.entrySet()) {
+      MDSKey oldKey = oldEntry.getKey();
+      RunRecordMeta runRecord = oldEntry.getValue();
+      // extract the program id from the old key, the format will be same after the program name is reached, so the
+      // method can be used directly.
+      MDSKey newKey = getProgramKeyBuilder(TYPE_RUN_RECORD_ACTIVE, getProgramID(oldKey))
+        .add(getInvertedTsKeyPart(runRecord.getStartTs()))
+        .add(runRecord.getPid())
+        .build();
+
+      delete(oldKey);
+      write(newKey, runRecord);
+    }
+
+    LOG.info("Upgrading {} active run records of {}", oldMap.size(), recordType);
+
+    return oldMap.size();
+  }
+
+  /**
+   * Upgrades the rowkeys for the completed run record which is older than the time at row key
+   * RUN_COUNT_FIRST_UPGRADE_TIME.
+   *
+   * @param maxRows maximum number of rows to be upgraded in this call.
+   * @return true if all old completed run records has been scanned.
+   */
+  boolean computeOldCompletedRunCount(int maxRows) {
+    Long upgradeStart = get(new MDSKey(RUN_COUNT_FIRST_UPGRADE_TIME), Long.TYPE);
+    if (upgradeStart == null) {
+      // this should not happen since we will write the upgrade start time before the upgrade start
+      LOG.warn("Unable to get the first upgrade start time, will use the current timestamp to distinguish the old " +
+                 "run records");
+    }
+
+    long upgradeStartTime =
+      upgradeStart == null ? TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) : upgradeStart;
+
+    // get the progress we have, if no entry, scan from the beginning
+    MDSKey progress = get(new MDSKey(RUN_COUNT_PROGRESS), MDSKey.class);
+    MDSKey prefix = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED).build();
+    MDSKey startKey = progress == null ? prefix : progress;
+    // scan to the end
+    MDSKey stopKey = new MDSKey(Bytes.stopKeyForPrefix(prefix.getKey()));
+
+    Map<MDSKey, RunRecordMeta> runRecords = listKV(startKey, stopKey, RunRecordMeta.class, maxRows, x -> true);
+    Map<ProgramId, Long> counts = new HashMap<>();
+
+    // remember the progress
+    MDSKey lastRowKey = null;
+    for (Map.Entry<MDSKey, RunRecordMeta> entry : runRecords.entrySet()) {
+      lastRowKey = entry.getKey();
+      // skip if the key is equal to the progress key, since this key has already been counted in previous scan
+      if (lastRowKey.equals(progress)) {
+        continue;
+      }
+      ProgramId programId = getProgramID(lastRowKey);
+      RunRecordMeta runRecord = entry.getValue();
+      if (runRecord.getStartTs() < upgradeStartTime) {
+        counts.compute(programId, (programId1, count) -> count == null ? 1L : count + 1L);
+      }
+    }
+
+    for (Map.Entry<ProgramId, Long> entry : counts.entrySet()) {
+      increment(getProgramKeyBuilder(TYPE_RUN_RECORD_UPGRADE_COUNT, entry.getKey()).build(), entry.getValue());
+    }
+
+    // record the progress
+    if (lastRowKey != null) {
+      write(new MDSKey(RUN_COUNT_PROGRESS), lastRowKey);
+    }
+
+    // If we are not able to get the max number of rows, that means we reach the end of this record type
+    return runRecords.size() < maxRows;
+  }
+
+  /**
+   * Merge the old count result to the new count cell.
+   *
+   * @param maxRows maximum number of rows to be upgraded in this call.
+   * @return true if all the old result has been merged.
+   */
+  boolean mergeCountResult(int maxRows) {
+    MDSKey startKey = new MDSKey.Builder().add(TYPE_RUN_RECORD_UPGRADE_COUNT).build();
+    Map<MDSKey, byte[]> oldCounts = listKV(startKey, maxRows);
+    for (Map.Entry<MDSKey, byte[]> entry : oldCounts.entrySet()) {
+      // increment and delete the old key
+      increment(getProgramKeyBuilder(TYPE_COUNT, getProgramID(entry.getKey())).build(), Bytes.toLong(entry.getValue()));
+      delete(entry.getKey());
+    }
+    return oldCounts.size() < maxRows;
+  }
+
+  void deleteStartUpTimeRow() {
+    delete(new MDSKey(RUN_COUNT_FIRST_UPGRADE_TIME));
+  }
+
+  /**
+   * @return true if the upgrade of the app meta store is complete
+   */
+  boolean hasUpgraded() {
     boolean upgraded = upgradeCompleted;
     if (upgraded) {
       return true;

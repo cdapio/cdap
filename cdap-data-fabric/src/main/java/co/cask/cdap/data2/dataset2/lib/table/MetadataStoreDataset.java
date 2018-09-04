@@ -40,6 +40,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -259,6 +260,35 @@ public class MetadataStoreDataset extends AbstractDataset {
   public <T> List<T> list(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
                           Predicate<T> filter) {
     return Lists.newArrayList(listKV(startId, stopId, typeOfT, limit, filter).values());
+  }
+
+  /**
+   * Return mapping of all that has the prefix of the given mds key and the value with it.
+   *
+   * @param startId prefix row key.
+   * @param limit limit number of result.
+   * @return map of row key to result.
+   */
+  public Map<MDSKey, byte[]> listKV(MDSKey startId, int limit) {
+    byte[] startKey = startId.getKey();
+    byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+
+    Scan scan = new Scan(startKey, stopKey);
+    Map<MDSKey, byte[]> map = new LinkedHashMap<>();
+    try (Scanner scanner = table.scan(scan)) {
+      Row next;
+      while ((limit > 0) && (next = scanner.next()) != null) {
+        MDSKey key = new MDSKey(next.getRow());
+        byte[] value = next.get(COLUMN);
+        if (value == null) {
+          continue;
+        }
+
+        map.put(key, value);
+        limit--;
+      }
+    }
+    return map;
   }
 
   /**
