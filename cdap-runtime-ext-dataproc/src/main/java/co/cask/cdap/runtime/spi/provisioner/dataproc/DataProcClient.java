@@ -19,7 +19,6 @@ package co.cask.cdap.runtime.spi.provisioner.dataproc;
 import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -37,8 +36,6 @@ import com.google.api.services.compute.model.Firewall;
 import com.google.api.services.compute.model.FirewallList;
 import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.NetworkInterface;
-import com.google.auth.oauth2.ComputeEngineCredentials;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
@@ -50,16 +47,8 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
-import com.google.common.io.CharStreams;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -93,108 +82,21 @@ public class DataProcClient implements AutoCloseable {
   private final String systemNetwork;
 
   public static DataProcClient fromConf(DataProcConf conf) throws IOException, GeneralSecurityException {
-    String projectId = conf.getProjectId();
-    if (projectId == null) {
-      projectId = getProjectId();
-    }
-    String network = conf.getNetwork();
-    if (network == null) {
-      network = getNetwork();
-    }
-    String zone = conf.getZone();
-    if (zone == null) {
-      zone = getZone();
-    }
-
     String systemNetwork = null;
     try {
-      systemNetwork = getNetwork();
-    } catch (IOException e) {
+      systemNetwork = DataProcConf.getSystemNetwork();
+    } catch (IllegalArgumentException e) {
       // expected when not running on GCP
     }
 
-    String accountKey = conf.getAccountKey();
-    ClusterControllerClient client = getClusterControllerClient(accountKey);
-    Compute compute = getCompute(accountKey);
+    ClusterControllerClient client = getClusterControllerClient(conf);
+    Compute compute = getCompute(conf);
 
-    return new DataProcClient(projectId, systemNetwork, network, zone, conf, client, compute);
+    return new DataProcClient(conf, client, compute, systemNetwork);
   }
 
-  /**
-   * Get network from the metadata server.
-   */
-  private static String getNetwork() throws IOException {
-    try {
-      String network = getMetadata("instance/network-interfaces/0/network");
-      // will be something like projects/<project-number>/networks/default
-      return network.substring(network.lastIndexOf('/') + 1);
-    } catch (IOException e) {
-      throw new IOException("Unable to get the network from the environment. Please explicitly set the network.", e);
-    }
-  }
-
-  /**
-   * Get zone from the metadata server.
-   */
-  private static String getZone() throws IOException {
-    try {
-      String zone = getMetadata("instance/zone");
-      // will be something like projects/<project-number>/zones/us-east1-b
-      return zone.substring(zone.lastIndexOf('/') + 1);
-    } catch (IOException e) {
-      throw new IOException("Unable to get the zone from the environment. Please explicitly set the zone.", e);
-    }
-  }
-
-  /**
-   * Get project id from the metadata server.
-   */
-  private static String getProjectId() throws IOException {
-    try {
-      return getMetadata("project/project-id");
-    } catch (IOException e) {
-      throw new IOException("Unable to get project id from the environment. "
-                              + "Please explicitly set the project id and account key.", e);
-    }
-  }
-
-  /**
-   * Makes a request to the metadata server that lives on the VM, as described at
-   * https://cloud.google.com/compute/docs/storing-retrieving-metadata.
-   */
-  private static String getMetadata(String resource) throws IOException {
-    URL url = new URL("http://metadata.google.internal/computeMetadata/v1/" + resource);
-    HttpURLConnection connection = null;
-    try {
-      connection = (HttpURLConnection) url.openConnection();
-      connection.setRequestProperty("Metadata-Flavor", "Google");
-      connection.connect();
-      try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
-        return CharStreams.toString(reader);
-      }
-    } finally {
-      if (connection != null) {
-        connection.disconnect();
-      }
-    }
-  }
-
-  private static ClusterControllerClient getClusterControllerClient(@Nullable String accountKey) throws IOException {
-    GoogleCredentials credentials;
-    if (accountKey != null) {
-      try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
-        credentials = GoogleCredentials.fromStream(is);
-      }
-    } else {
-      try {
-        credentials = ComputeEngineCredentials.create();
-        credentials.refreshAccessToken();
-      } catch (IOException e) {
-        throw new IOException("Unable to get credentials from the environment. "
-                                + "Please explicitly set the account key.", e);
-      }
-    }
-    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
+  private static ClusterControllerClient getClusterControllerClient(DataProcConf conf) throws IOException {
+    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
 
     ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
       .setCredentialsProvider(credentialsProvider)
@@ -202,29 +104,19 @@ public class DataProcClient implements AutoCloseable {
     return ClusterControllerClient.create(controllerSettings);
   }
 
-  private static Compute getCompute(@Nullable String accountKey) throws GeneralSecurityException, IOException {
+  private static Compute getCompute(DataProcConf conf) throws GeneralSecurityException, IOException {
     HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-
-    GoogleCredential credential;
-    if (accountKey == null) {
-      credential = GoogleCredential.getApplicationDefault();
-    } else {
-      try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
-        credential = GoogleCredential.fromStream(is)
-          .createScoped(Collections.singleton("https://www.googleapis.com/auth/cloud-platform"));
-      }
-    }
-    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), credential)
+    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), conf.getComputeCredential())
       .setApplicationName("cdap")
       .build();
   }
 
-  private DataProcClient(String projectId, @Nullable String systemNetwork, String network, String zone,
-                         DataProcConf conf, ClusterControllerClient client, Compute compute) {
-    this.projectId = projectId;
+  private DataProcClient(DataProcConf conf, ClusterControllerClient client, Compute compute,
+                         @Nullable String systemNetwork) {
+    this.projectId = conf.getProjectId();
+    this.network = conf.getNetwork();
+    this.zone = conf.getZone();
     this.systemNetwork = systemNetwork;
-    this.network = network;
-    this.zone = zone;
     this.conf = conf;
     this.client = client;
     this.compute = compute;
@@ -255,8 +147,8 @@ public class DataProcClient implements AutoCloseable {
       }
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
-        .setNetworkUri(network)
-        .setZoneUri(zone)
+        .setNetworkUri(conf.getNetwork())
+        .setZoneUri(conf.getZone())
         .putAllMetadata(metadata);
       for (String targetTag : getFirewallTargetTags()) {
         clusterConfig.addTags(targetTag);

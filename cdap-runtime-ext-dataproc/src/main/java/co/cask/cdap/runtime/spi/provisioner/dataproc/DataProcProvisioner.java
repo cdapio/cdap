@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -62,12 +61,7 @@ public class DataProcProvisioner implements Provisioner {
 
   @Override
   public void validateProperties(Map<String, String> properties) {
-    DataProcConf conf = DataProcConf.fromProperties(properties);
-    try {
-      DataProcClient.fromConf(conf);
-    } catch (IOException | GeneralSecurityException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
-    }
+    DataProcConf.fromProperties(properties);
   }
 
   @Override
