@@ -424,6 +424,7 @@ features:
         pageTitle: CDAP | Connections | Google BigQuery | {connectionId}
         title: Select table
       DatabaseBrowser:
+        defaultErrorMessage: Reading {tableId} failed. Please try again.
         EmptyMessage:
           clearLabel: Clear
           emptyDatabase: 'No tables in connection _{connectionName}_'
