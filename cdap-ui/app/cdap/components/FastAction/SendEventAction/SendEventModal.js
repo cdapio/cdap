@@ -17,18 +17,19 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Modal, ModalHeader, ModalBody} from 'reactstrap';
+import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
 import FileDataUpload from 'components/FileDataUpload';
-import classnames from 'classnames';
+import BtnWithLoading from 'components/BtnWithLoading';
 import {MyStreamApi} from 'api/stream';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
 import {Observable} from 'rxjs/Observable';
 import cookie from 'react-cookie';
 import NamespaceStore from 'services/NamespaceStore';
 import isEmpty from 'lodash/isEmpty';
-
+import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
 import T from 'i18n-react';
-
+import isNil from 'lodash/isNil';
+import If from 'components/If';
 export default class SendEventModal extends Component {
   constructor(props) {
     super(props);
@@ -48,7 +49,7 @@ export default class SendEventModal extends Component {
       textInput: '',
       droppedFile: {},
       tooltipOpen: false,
-      responseStatus: '',
+      responseStatus: null,
       reset: 0
     };
   }
@@ -155,6 +156,45 @@ export default class SendEventModal extends Component {
     });
   }
 
+  renderFooter = () => {
+    let feedbackType;
+    if (!isNil(this.state.responseStatus)) {
+      feedbackType = this.state.responseStatus !== 200 ?
+      CARD_ACTION_TYPES.DANGER
+    :
+      CARD_ACTION_TYPES.SUCCESS;
+    }
+    return (
+      <React.Fragment>
+        <ModalFooter>
+          <div className="send-event-button">
+            <BtnWithLoading
+              className="btn btn-primary"
+              onClick={this.sendEvents}
+              disabled={(this.noInputYet() || this.state.loading) ? 'disabled' : null}
+              loading={this.state.loading}
+              label={T.translate('features.FastAction.sendEventsButtonLabel')}
+            />
+            <button
+              className="btn btn-secondary"
+              onClick={this.clearEvents}
+              disabled={(this.noInputYet() || this.state.loading) ? 'disabled' : null}
+            >
+              <span>{T.translate('features.FastAction.clearEventsButtonLabel')}</span>
+            </button>
+          </div>
+        </ModalFooter>
+        <If condition={!isNil(this.state.responseStatus)}>
+          <CardActionFeedback
+            type={feedbackType}
+            message={this.state.statusMessage}
+            extendedMessage={this.state.extendedMessage}
+          />
+        </If>
+      </React.Fragment>
+    );
+  };
+
   render() {
     const actionLabel = T.translate('features.FastAction.sendEventsLabel');
     const headerTitle = `${actionLabel} to ${this.props.entity.id}`;
@@ -162,7 +202,7 @@ export default class SendEventModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.props.onClose}
-        className="confirmation-modal stream-send-events"
+        className="confirmation-modal stream-send-events cdap-modal"
         size="lg"
         backdrop='static'
       >
@@ -186,47 +226,9 @@ export default class SendEventModal extends Component {
               onTextInput={this.handleTextInput}
               reset={this.state.reset}
             />
-            <div className="send-event-button">
-              <span>
-                {
-                  this.state.responseStatus ?
-                    <span className={classnames({
-                        'text-danger': this.state.responseStatus !== 200,
-                        'text-success': this.state.responseStatus === 200
-                      })}
-                    >
-                    {this.state.statusMessage}
-                    </span>
-                  :
-                    null
-                }
-              </span>
-
-              <div>
-                <button
-                  className="btn btn-default"
-                  onClick={this.clearEvents}
-                  disabled={(this.noInputYet() || this.state.loading) ? 'disabled' : null}
-                >
-                  <span>{T.translate('features.FastAction.clearEventsButtonLabel')}</span>
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={this.sendEvents}
-                  disabled={(this.noInputYet() || this.state.loading) ? 'disabled' : null}
-                >
-                  {
-                    this.state.loading ?
-                      <span className="fa fa-spinner fa-spin"></span>
-                    :
-                      null
-                  }
-                  <span>{T.translate('features.FastAction.sendEventsButtonLabel')}</span>
-                </button>
-              </div>
-            </div>
           </div>
         </ModalBody>
+        {this.renderFooter()}
       </Modal>
     );
   }

@@ -181,7 +181,7 @@ export default class ViewEventsModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.props.onClose}
-        className="confirmation-modal view-events-modal"
+        className="confirmation-modal view-events-modal cdap-modal"
         size="lg"
         backdrop='static'
       >
