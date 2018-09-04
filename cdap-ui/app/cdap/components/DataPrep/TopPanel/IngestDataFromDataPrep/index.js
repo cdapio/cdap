@@ -187,7 +187,7 @@ export default class IngestDataFromDataPrep extends Component {
     let s3Stage = pipelineConfig.config.stages.find(stage => stage.name === 'S3');
     let gcsStage = pipelineConfig.config.stages.find(stage => stage.name === 'GCS');
     let bigqueryStage = pipelineConfig.config.stages.find(stage => stage.name === 'BigQueryTable');
-    let spannerStage = pipelineConfig.config.stages.find(stage => stage.name === 'SpannerTable');
+    let spannerStage = pipelineConfig.config.stages.find(stage => stage.name === 'Spanner');
 
     let macroMap = {};
     if (databaseConfig) {
@@ -302,10 +302,9 @@ export default class IngestDataFromDataPrep extends Component {
         table: '${bqTable}',
         schema: '${bqSchema}'
       },
-      'SpannerTable': {
+      'Spanner': {
         project: '${spannerProject}',
         serviceFilePath: '${spannerServiceFilePath}',
-        bucket: '${spannerBucket}',
         instance: '${spannerInstance}',
         database: '${spannerDatabase}',
         table: '${spannerTable}',
