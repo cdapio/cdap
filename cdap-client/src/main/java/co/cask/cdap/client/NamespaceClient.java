@@ -20,10 +20,10 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpResponse;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
