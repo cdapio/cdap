@@ -107,7 +107,8 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
       return <LoadingSVGCentered />;
     }
 
-    const {connectionId, tableList} = this.props;
+    const {tableList} = this.props;
+    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
     const instanceId = this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
     const databaseId = this.props.databaseId || objectQuery(this.props, 'match', 'params', 'databaseId');
 

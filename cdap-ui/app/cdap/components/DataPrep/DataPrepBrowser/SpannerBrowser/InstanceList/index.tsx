@@ -24,6 +24,7 @@ import IconSVG from 'components/IconSVG';
 import {Link} from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.SpannerBrowser`;
@@ -69,7 +70,8 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
       return <LoadingSVGCentered />;
     }
 
-    const {connectionId, instanceList} = this.props;
+    const {instanceList} = this.props;
+    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
 
     if (!instanceList.length) {
       return (
@@ -77,7 +79,7 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
           <div className="empty-search text-xs-center">
             <strong>
               {T.translate(`${PREFIX}.EmptyMessage.emptyInstanceList`, {
-                connectionName: this.props.connectionId,
+                connectionName: connectionId,
               })}
             </strong>
           </div>

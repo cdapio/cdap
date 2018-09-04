@@ -77,7 +77,8 @@ class SpannerDatabaseListView extends React.PureComponent<ISpannerDatabaseListVi
       return <LoadingSVGCentered />;
     }
 
-    const {connectionId, databaseList} = this.props;
+    const {databaseList} = this.props;
+    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
     const instanceId = this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
 
     if (!databaseList.length) {

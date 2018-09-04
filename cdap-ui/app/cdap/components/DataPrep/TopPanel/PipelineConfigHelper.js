@@ -344,7 +344,7 @@ function constructSpannerSource(artifactsList, spannerInfo) {
     return T.translate(`${PREFIX}.spanner`);
   }
 
-  batchArtifact.version = '[0.9.2, 3.0.0)';
+  batchArtifact.version = '[0.11.0-SNAPSHOT, 3.0.0)';
   let plugin = objectQuery(spannerInfo, 'values', 0);
 
   let pluginName = Object.keys(plugin)[0];
