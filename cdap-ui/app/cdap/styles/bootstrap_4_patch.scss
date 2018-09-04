@@ -113,6 +113,26 @@
   }
 
   .tooltip {
+    pointer-events: none;
+
+    /*
+      The way tooltip is structured in bootstrap 4 is
+      .tooltip-inner
+      .arrow
+
+      On a tooltip that appears on top of the element no styling is
+      required as the .arrow is already at the bottom
+      But for a tooltip that appears in the bottom the .arrow
+      has to be at the top center and the .tooltipinner needs
+      to have some space to show the arrow.
+    */
+    &[data-placement="bottom"] {
+      margin-top: 3px;
+      padding: 5px 0;
+      .arrow {
+        top: 0;
+      }
+    }
     &.show {
       opacity: 0.9;
     }
@@ -130,6 +150,9 @@
         border-color: transparent;
         border-style: solid;
       }
+    }
+    .tooltip-inner {
+      text-align: left;
     }
   }
 

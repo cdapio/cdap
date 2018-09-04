@@ -87,6 +87,7 @@ export default class SchemaTab extends Component {
               isOpen={this.state.tooltipOpen}
               target={infoIconId}
               toggle={this.toggleTooltip}
+              placement="bottom"
             >
               {T.translate('features.Overview.SchemaTab.tooltip')}
             </Tooltip>
