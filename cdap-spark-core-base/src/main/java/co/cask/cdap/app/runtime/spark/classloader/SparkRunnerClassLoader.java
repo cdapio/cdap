@@ -23,12 +23,18 @@ import co.cask.cdap.common.lang.ClassPathResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLConnection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -55,6 +61,9 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
   // Set of resources that are in cdap-api. They should be loaded by the parent ClassLoader
   private static final Set<String> API_CLASSES;
 
+  // A closeables for keeping track of streams opened via getResourceAsStream
+  private final Map<Closeable, Void> closeables;
+  private final Lock closeablesLock;
   private final SparkClassRewriter rewriter;
 
   static {
@@ -75,7 +84,68 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
 
   public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient) {
     super(urls, parent);
+    // Copy from URLClassLoader, which also uses WeakHashMap
+    this.closeables = new WeakHashMap<>();
+    this.closeablesLock = new ReentrantLock();
     this.rewriter = new SparkClassRewriter(name -> ClassLoaders.openResource(this, name), rewriteYarnClient);
+  }
+
+  @Override
+  public InputStream getResourceAsStream(String name) {
+    URL url = getResource(name);
+    if (url == null) {
+      return null;
+    }
+
+    try {
+      URLConnection urlConn = url.openConnection();
+      urlConn.setUseCaches(false);
+      InputStream is = urlConn.getInputStream();
+      closeablesLock.lock();
+      try {
+        closeables.putIfAbsent(is, null);
+      } finally {
+        closeablesLock.unlock();
+      }
+
+      return is;
+
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    IOException ex = null;
+    try {
+      super.close();
+    } catch (IOException e) {
+      ex = e;
+    }
+
+    // Close all the InputStreams acquired via getResourceAsStream
+    closeablesLock.lock();
+    try {
+      for (Closeable c : closeables.keySet()) {
+        try {
+          c.close();
+        } catch (IOException e) {
+          if (ex == null) {
+            ex = e;
+          } else {
+            ex.addSuppressed(e);
+          }
+        }
+      }
+      closeables.clear();
+    } finally {
+      closeablesLock.unlock();
+    }
+
+    if (ex != null) {
+      throw ex;
+    }
   }
 
   @Override
