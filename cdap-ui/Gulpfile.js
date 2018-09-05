@@ -437,13 +437,32 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
   }
   return out.pipe(gulp.dest('./dist'));
 });
-gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html']);
+
+gulp.task('rev:manifest:dev', ['tpl'], function() {
+  return gulp.src(['./dist/assets/bundle/*'])
+    .pipe(plug.rev())
+    .pipe(gulp.dest('./dist/assets/bundle'))  // write rev'd assets to build dir
+
+    .pipe(plug.rev.manifest({path:'manifest.json'}))
+    .pipe(gulp.dest('./dist/assets/bundle')); // write manifest
+
+});
+gulp.task('rev:replace:dev', ['html:main', 'rev:manifest:dev'], function() {
+  var rev = require('./dist/assets/bundle/manifest.json'),
+      out = gulp.src('./dist/*.html'),
+      p = '/assets/bundle/';
+  for (var f in rev) {
+    out = out.pipe(plug.replace(p+f, p+rev[f]));
+  }
+  return out.pipe(gulp.dest('./dist'));
+});
+
 gulp.task('distribute', ['clean', 'build', 'rev:replace']);
-gulp.task('default', ['lint', 'build']);
+gulp.task('default', ['lint', 'build', 'rev:replace:dev']);
 /*
   watch
  */
-gulp.task('watch', ['jshint', 'build'], function() {
+gulp.task('watch', ['jshint', 'build', 'rev:replace:dev'], function() {
   plug.livereload.listen({ port: 35728 });
 
   var jsAppSource = [
@@ -470,5 +489,5 @@ gulp.task('watch', ['jshint', 'build'], function() {
     './app/hydrator/**/*.html',
     './app/tracker/**/*.html',
     './app/logviewer/**/*.html'
-  ], ['html:partials', 'html:main']);
+  ], ['html:partials']);
 });

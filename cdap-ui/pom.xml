@@ -316,7 +316,9 @@
                       <fileset dir = "cdap_dist" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/dll">
-                      <fileset dir = "dll" />
+                      <fileset dir = "dll">
+                        <exclude name="*development*" />
+                      </fileset>
                     </copy>
                     <copy todir = "${stage.opt.dir}/login_dist">
                       <fileset dir = "login_dist" />
