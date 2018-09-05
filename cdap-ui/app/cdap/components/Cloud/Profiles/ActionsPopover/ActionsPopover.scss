@@ -43,6 +43,7 @@
       }
       li.disabled {
         cursor: not-allowed;
+        color: $grey-01;
         opacity: 0.5;
       }
     }
