@@ -246,6 +246,13 @@ export default class DataPrepConnections extends Component {
           // TODO get default connection from backend and integrate.
         },
         err => {
+          // If the user happens to use older dataprep artifact `/connectionTypes` won't exist.
+          // So just query connections list instead of showing a spinner.
+          if (err && err.statusCode === 404) {
+            this.setState({
+              connectionTypes: Object.keys(ConnectionType).map((conn) => ({ type: conn }))
+            }, this.fetchConnectionsList);
+          }
           console.log(err);
           // Will rebase with error handling PR to actually surface the error.
         }

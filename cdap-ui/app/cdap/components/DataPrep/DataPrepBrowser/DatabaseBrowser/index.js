@@ -29,8 +29,8 @@ import {setDatabaseAsActiveBrowser, setError} from 'components/DataPrep/DataPrep
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 import {Provider} from 'react-redux';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
-import If from 'components/If';
 import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import isNil from 'lodash/isNil';
 
 require('./DatabaseBrowser.scss');
 
@@ -111,7 +111,19 @@ export default class DatabaseBrowser extends Component {
           window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         },
         (err) => {
-          setError(err);
+          let error = err;
+          let errorMessage = T.translate(`${PREFIX}.defaultErrorMessage`, {tableId});
+          if (isNil(objectQuery(err, 'response', 'message'))) {
+            err = err || {};
+            error = {
+              ...err,
+              response: {
+                ...(err.response || {}),
+                message: errorMessage
+              }
+            };
+          }
+          setError(error);
         }
       );
   }
@@ -216,30 +228,28 @@ export default class DatabaseBrowser extends Component {
           toggle={this.props.toggle}
           browserTitle={T.translate(`${PREFIX}.title`)}
         />
-        <If condition={this.state.error}>
-          <div>
-            <div className="database-browser-header">
-              <div className="database-metadata">
-                <h5>{objectQuery(this.state.info, 'info', 'name')}</h5>
-                <span className="tables-count">
-                  {
-                    T.translate(`${PREFIX}.tableCount`, {
-                      context: this.state.tables.length
-                    })
-                  }
-                </span>
-              </div>
-              <div className="table-name-search">
-                <Input
-                  placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
-                  value={this.state.search}
-                  onChange={this.handleSearch}
-                  autoFocus={this.state.searchFocus}
-                />
-              </div>
+        <div>
+          <div className="database-browser-header">
+            <div className="database-metadata">
+              <h5>{objectQuery(this.state.info, 'info', 'name')}</h5>
+              <span className="tables-count">
+                {
+                  T.translate(`${PREFIX}.tableCount`, {
+                    context: this.state.tables.length
+                  })
+                }
+              </span>
+            </div>
+            <div className="table-name-search">
+              <Input
+                placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
+                value={this.state.search}
+                onChange={this.handleSearch}
+                autoFocus={this.state.searchFocus}
+              />
             </div>
           </div>
-        </If>
+        </div>
 
         <div className="database-browser-content">
           { renderContents(filteredTables) }
