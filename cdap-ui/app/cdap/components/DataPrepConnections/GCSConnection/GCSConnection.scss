@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,12 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-$asterisk-color: #d50000;
-$success-color: #00c853;
-$modal-header-bg-color: #efefef;
-$close-button-color: #333333;
+@import '~styles/variables.scss';
+
+$asterisk-color: $red-02;
+$success-color: $green-02;
 
 .modal-dialog.gcs-connection-modal {
 

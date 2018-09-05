@@ -23,7 +23,7 @@ require('./DataPrepBrowserTopPanel.scss');
 interface IDataprepBrowserTopPanel {
   allowSidePanelToggle: boolean;
   toggle: (e: React.MouseEvent<HTMLElement>) => void;
-  browserTitle: React.ReactNode | string;
+  browserTitle: React.ReactNode;
 }
 export default class DataprepBrowserTopPanel extends React.PureComponent<IDataprepBrowserTopPanel> {
   public render() {

@@ -25,6 +25,7 @@ import {
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import {Link} from 'react-router-dom';
+import {match} from 'react-router';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
@@ -33,22 +34,20 @@ import MyDataPrepApi from 'api/dataprep';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.SpannerBrowser`;
 
-interface IReactRouterMatch {
-  params: {
-    connectionId: string;
-    instanceId: string;
-    databaseId: string;
-  };
+interface IMatchParams {
+  connectionId: string;
+  instanceId: string;
+  databaseId: string;
 }
 
 interface ISpannerTableListViewProps {
-  tableList: object[];
+  tableList: ISpannerTableObject[];
   connectionId: string;
   instanceId: string;
   databaseId: string;
   enableRouting: boolean;
   loading: boolean;
-  match: IReactRouterMatch;
+  match: match<IMatchParams>;
   onWorkspaceCreate: (workspaceId: string) => void;
 }
 
@@ -77,7 +76,9 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
     setSpannerLoading();
 
     const namespace = getCurrentNamespace();
-    const {connectionId, instanceId, databaseId} = this.props;
+    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
+    const instanceId = this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
+    const databaseId = this.props.databaseId || objectQuery(this.props, 'match', 'params', 'databaseId');
     const params = {
       namespace,
       connectionId,
@@ -196,7 +197,7 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
   }
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state): Partial<ISpannerTableListViewProps> => {
   return {
     instanceId: state.spanner.instanceId,
     tableList: state.spanner.tableList,

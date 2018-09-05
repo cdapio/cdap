@@ -23,6 +23,7 @@ import MyDataPrepApi from 'api/dataprep';
 import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
 import {objectQuery} from 'services/helpers';
 import BtnWithLoading from 'components/BtnWithLoading';
+import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Spanner';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -32,27 +33,33 @@ const INPUT_COL_CLASS = 'col-xs-8';
 
 require('./SpannerConnection.scss');
 
+enum ConnectionMode {
+  Add = 'ADD',
+  Edit = 'EDIT',
+  Duplicate = 'DUPLICATE',
+}
+
 interface ISpannerConnectionProps {
   close: () => void;
   onAdd: () => void;
-  mode: 'ADD' | 'EDIT' | 'DUPLICATE';
+  mode: ConnectionMode;
   connectionId: string;
 }
 
 interface ISpannerConnectionState {
-  error: string | object | null;
-  name: string;
-  projectId: string;
-  serviceAccountKeyfile: string;
-  testConnectionLoading: boolean;
-  connectionResult: {
-    message: string;
-    type: string
+  error?: string | object | null;
+  name?: string;
+  projectId?: string;
+  serviceAccountKeyfile?: string;
+  testConnectionLoading?: boolean;
+  connectionResult?: {
+    message?: string;
+    type?: string
   };
-  loading: boolean;
+  loading?: boolean;
 }
 
-export default class SpannerConnection extends React.PureComponent<ISpannerConnectionProps> {
+export default class SpannerConnection extends React.PureComponent<ISpannerConnectionProps, ISpannerConnectionState> {
   public state: ISpannerConnectionState = {
     error: null,
     name: '',
@@ -67,7 +74,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
   };
 
   public componentDidMount() {
-    if (this.props.mode === 'ADD') {
+    if (this.props.mode === ConnectionMode.Add) {
       return;
     }
 
@@ -86,7 +93,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
         const projectId = objectQuery(info, 'properties', 'projectId');
         const serviceAccountKeyfile = objectQuery(info, 'properties', 'service-account-keyfile');
 
-        const name = this.props.mode === 'EDIT' ? info.name : '';
+        const name = this.props.mode === ConnectionMode.Edit ? info.name : '';
 
         this.setState({
           name,
@@ -109,7 +116,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
 
     const requestBody = {
       name: this.state.name,
-      type: 'SPANNER',
+      type: ConnectionType.SPANNER,
       properties: {
         'projectId': this.state.projectId,
         'service-account-keyfile': this.state.serviceAccountKeyfile,
@@ -138,7 +145,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
     const requestBody = {
       name: this.state.name,
       id: this.props.connectionId,
-      type: 'SPANNER',
+      type: ConnectionType.SPANNER,
       properties: {
         'projectId': this.state.projectId,
         'service-account-keyfile': this.state.serviceAccountKeyfile,
@@ -170,7 +177,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
 
     const requestBody = {
       name: this.state.name,
-      type: 'SPANNER',
+      type: ConnectionType.SPANNER,
       properties: {
         'projectId': this.state.projectId,
         'service-account-keyfile': this.state.serviceAccountKeyfile,
@@ -234,7 +241,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
 
     let onClickFn = this.addConnection;
 
-    if (this.props.mode === 'EDIT') {
+    if (this.props.mode === ConnectionMode.Edit) {
       onClickFn = this.editConnection;
     }
 
@@ -279,7 +286,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
                   className="form-control"
                   value={this.state.name}
                   onChange={this.handleChange.bind(this, 'name')}
-                  disabled={this.props.mode === 'EDIT'}
+                  disabled={this.props.mode === ConnectionMode.Edit}
                 />
               </div>
             </div>
@@ -325,19 +332,20 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
   }
 
   private renderMessage() {
-    if (!this.state.error && !this.state.connectionResult.message) { return null; }
+    const connectionResult = this.state.connectionResult;
+
+    if (!this.state.error && !connectionResult.message) { return null; }
 
     if (this.state.error) {
       return (
         <CardActionFeedback
-          type={this.state.connectionResult.type}
+          type={connectionResult.type}
           message={T.translate(`${PREFIX}.ErrorMessages.${this.props.mode}`)}
           extendedMessage={this.state.error}
         />
       );
     }
 
-    const connectionResult = this.state.connectionResult;
     const connectionResultType = connectionResult.type;
     const extendedMessage = connectionResultType === CARD_ACTION_TYPES.SUCCESS ? null : connectionResult.message;
 

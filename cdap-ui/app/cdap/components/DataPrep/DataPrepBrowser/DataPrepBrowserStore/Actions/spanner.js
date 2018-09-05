@@ -34,28 +34,32 @@ const setSpannerAsActiveBrowser = (payload) => {
   });
 
   setActiveBrowser(payload);
-  setSpannerLoading();
-  listSpannerInstances(connectionId);
 
-  let namespace = getCurrentNamespace();
-  let params = {
-    namespace,
-    connectionId
-  };
+  if (spanner.connectionId !== connectionId) {
+    setSpannerLoading();
+    let namespace = getCurrentNamespace();
+    let params = {
+      namespace,
+      connectionId
+    };
 
-  MyDataPrepApi.getConnection(params)
-    .subscribe((res) => {
-      let info = objectQuery(res, 'values', 0);
-      DataPrepBrowserStore.dispatch({
-        type: BrowserStoreActions.SET_SPANNER_CONNECTION_DETAILS,
-        payload: {
-          info,
-          connectionId
-        }
+    MyDataPrepApi.getConnection(params)
+      .subscribe((res) => {
+        let info = objectQuery(res, 'values', 0);
+        DataPrepBrowserStore.dispatch({
+          type: BrowserStoreActions.SET_SPANNER_CONNECTION_DETAILS,
+          payload: {
+            info,
+            connectionId
+          }
+        });
+        listSpannerInstances(connectionId);
+      }, (err) => {
+        setError(err);
       });
-    }, (err) => {
-      setError(err);
-    });
+    } else {
+      listSpannerInstances(connectionId);
+    }
 };
 
 const listSpannerInstances = (connectionId) => {

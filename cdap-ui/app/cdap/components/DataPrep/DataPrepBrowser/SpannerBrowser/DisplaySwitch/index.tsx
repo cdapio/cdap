@@ -42,7 +42,7 @@ const SpannerDisplaySwitchView: React.SFC<ISpannerDisplaySwitchProps> = (props) 
   return <SpannerInstanceList enableRouting={false} />;
 };
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state): Partial<ISpannerDisplaySwitchProps> => {
   return {
     instanceId: state.spanner.instanceId,
     databaseId: state.spanner.databaseId,

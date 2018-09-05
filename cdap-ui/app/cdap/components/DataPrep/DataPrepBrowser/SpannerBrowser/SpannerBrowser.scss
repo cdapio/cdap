@@ -14,10 +14,10 @@
  * the License.
  */
 
-@import '../../../../styles/variables.scss';
+@import '~styles/variables.scss';
 
-$header-border: #cccccc;
-$header-bg: #eeeeee;
+$header-border: $grey-05;
+$header-bg: $grey-07;
 $content-font-color: $grey-01;
 
 .spanner-browser {

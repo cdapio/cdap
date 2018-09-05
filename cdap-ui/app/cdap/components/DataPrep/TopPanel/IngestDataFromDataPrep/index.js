@@ -227,7 +227,7 @@ export default class IngestDataFromDataPrep extends Component {
       spannerInstance: objectQuery(spannerStage, 'plugin', 'properties', 'instance') || '',
       spannerDatabase: objectQuery(spannerStage, 'plugin', 'properties', 'database') || '',
       spannerTable: objectQuery(spannerStage, 'plugin', 'properties', 'table') || '',
-      spannerSchema: objectQuery(spannerStage, 'plugin', 'properties', 'schema') || ''
+      spannerSchema: objectQuery(spannerStage, 'plugin', 'properties', 'schema') || '',
     });
     var newMacorMap = {};
     // This is to prevent from passing all the empty properties as payload while starting the pipeline.
@@ -308,7 +308,7 @@ export default class IngestDataFromDataPrep extends Component {
         instance: '${spannerInstance}',
         database: '${spannerDatabase}',
         table: '${spannerTable}',
-        schema: '${spannerSchema}'
+        schema: '${spannerSchema}',
       }
     };
     pipelineConfig.config.stages = pipelineConfig.config.stages.map(stage => {

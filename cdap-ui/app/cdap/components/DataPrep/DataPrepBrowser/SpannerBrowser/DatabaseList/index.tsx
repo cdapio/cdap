@@ -23,6 +23,7 @@ import {
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import {Link} from 'react-router-dom';
+import {match} from 'react-router';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
@@ -30,20 +31,18 @@ import T from 'i18n-react';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.SpannerBrowser`;
 
-interface IReactRouterMatch {
-  params: {
-    connectionId: string;
-    instanceId: string;
-  };
+interface IMatchParams {
+  connectionId: string;
+  instanceId: string;
 }
 
 interface ISpannerDatabaseListViewProps {
-  databaseList: object[];
+  databaseList: ISpannerDatabaseObject[];
   connectionId: string;
   instanceId: string;
   enableRouting: boolean;
   loading: boolean;
-  match: IReactRouterMatch;
+  match: match<IMatchParams>;
 }
 
 interface ISpannerDatabaseObject {
@@ -158,7 +157,7 @@ class SpannerDatabaseListView extends React.PureComponent<ISpannerDatabaseListVi
   }
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state): Partial<ISpannerDatabaseListViewProps> => {
   return {
     instanceId: state.spanner.instanceId,
     databaseList: state.spanner.databaseList,
