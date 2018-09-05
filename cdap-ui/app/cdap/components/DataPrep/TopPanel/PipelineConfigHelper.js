@@ -339,12 +339,12 @@ function constructBigQuerySource(artifactsList, bigqueryInfo) {
 function constructSpannerSource(artifactsList, spannerInfo) {
   if (!spannerInfo) { return null; }
 
-  let batchArtifact = find(artifactsList, {name: 'google-cloud'});
-  if (!batchArtifact) {
+  let googeCloudArtifact = find(artifactsList, {name: 'google-cloud'});
+  if (!googeCloudArtifact) {
     return T.translate(`${PREFIX}.spanner`);
   }
 
-  batchArtifact.version = '[0.11.0-SNAPSHOT, 3.0.0)';
+  googeCloudArtifact.version = '[0.11.0-SNAPSHOT, 3.0.0)';
   let plugin = objectQuery(spannerInfo, 'values', 0);
 
   let pluginName = Object.keys(plugin)[0];
@@ -355,7 +355,7 @@ function constructSpannerSource(artifactsList, spannerInfo) {
     name: plugin.name,
     label: plugin.name,
     type: 'batchsource',
-    artifact: batchArtifact,
+    artifact: googeCloudArtifact,
     properties: plugin.properties
   };
 
