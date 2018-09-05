@@ -233,14 +233,24 @@ object ReportGenerationHelper {
 
   private def writeSummaryToFile(summary : ReportSummary, reportIdDir: Location): Unit = {
     // Save the report summary request in the _SUMMARY file in the given directory
-    var writer: PrintWriter = null
+    val summaryLocation = reportIdDir.append(Constants.LocationName.SUMMARY)
+    val tmpLocation = summaryLocation.getTempFile(Constants.LocationName.SUMMARY)
     try {
-      writer = new PrintWriter(
-        new OutputStreamWriter(reportIdDir.append(Constants.LocationName.SUMMARY).getOutputStream,
-          StandardCharsets.UTF_8), true)
-      writer.write(GSON.toJson(summary))
+      val writer = new PrintWriter(new OutputStreamWriter(tmpLocation.getOutputStream, StandardCharsets.UTF_8))
+      try {
+        GSON.toJson(summary, writer)
+      } finally {
+        writer.close()
+      }
+
+      tmpLocation.renameTo(summaryLocation)
     } finally {
-      if (writer != null) writer.close()
+      try {
+        tmpLocation.delete()
+      } catch {
+        // Location.delete() won't throw exception if the location does not exist
+        case e => LOG.warn("Failed to delete temporary summary location {}", tmpLocation)
+      }
     }
   }
 
