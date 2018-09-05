@@ -18,8 +18,11 @@ package co.cask.cdap.app.runtime.spark.classloader;
 
 import co.cask.cdap.common.lang.ClassLoaders;
 import com.google.common.io.Closeables;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,5 +122,20 @@ public class SparkRunnerClassLoaderTest {
     } finally {
       executor.shutdownNow();
     }
+  }
+
+  @Test(expected = IOException.class)
+  public void testCloseResourceStream() throws IOException {
+    List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<URL>());
+    URL[] urlArray = urls.toArray(new URL[urls.size()]);
+
+    SparkRunnerClassLoader cl = new SparkRunnerClassLoader(urlArray, getClass().getClassLoader(), false);
+    InputStream is = cl.getResourceAsStream("org/apache/spark/SparkContext.class");
+    Assert.assertNotNull(is);
+
+    // After closing the ClassLoader,
+    // reading from stream acquired through getResourceAsStream() should fail with an exception.
+    Closeables.closeQuietly(cl);
+    is.read();
   }
 }

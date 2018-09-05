@@ -58,6 +58,7 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -445,15 +446,16 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * Read report summary for the report if it exists, return null otherwise
      * @param reportIdDir
      * @return {@link ReportSummary}
-     * @throws Exception
+     * @throws IOException if failed to read the summary content
      */
     @Nullable
-    private ReportSummary getReportSummaryIfExists(Location reportIdDir) throws Exception {
+    private ReportSummary getReportSummaryIfExists(Location reportIdDir) throws IOException {
       Location summaryFileLocation = reportIdDir.append(LocationName.SUMMARY);
-      if (!summaryFileLocation.exists()) {
+      try {
+        return GSON.fromJson(readStringFromFile(summaryFileLocation), ReportSummary.class);
+      } catch (FileNotFoundException e) {
         return null;
       }
-      return GSON.fromJson(readStringFromFile(summaryFileLocation), ReportSummary.class);
     }
 
     /**
@@ -461,12 +463,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      *
      * @param fileLocation file location
      * @return the String content of the file
-     * @throws Exception if the file does not exist or fails to read the content of the file
+     * @throws IOException if the file does not exist or fails to read the content of the file
      */
-    private String readStringFromFile(Location fileLocation) throws Exception {
-      if (!fileLocation.exists()) {
-        throw new Exception(String.format("File %s does not exist.", fileLocation.toURI().toString()));
-      }
+    private String readStringFromFile(Location fileLocation) throws IOException {
       return new String(ByteStreams.toByteArray(fileLocation.getInputStream()), StandardCharsets.UTF_8);
     }
 
@@ -975,8 +974,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      */
     private ExtendedReportStatus getReportStatus(Location reportIdDir) throws Exception {
       // if the report is completed but has expired, return EXPIRED as its status too
-      if (reportIdDir.append(LocationName.SUMMARY).exists()) {
-        ReportSummary reportSummary = getReportSummaryIfExists(reportIdDir);
+      ReportSummary reportSummary = getReportSummaryIfExists(reportIdDir);
+      if (reportSummary != null) {
         return reportSummary.isExpired() ? new ExtendedReportStatus(ReportStatus.EXPIRED) :
           new ExtendedReportStatus(ReportStatus.COMPLETED, reportSummary.getyExpirationTimeMillis());
       }
