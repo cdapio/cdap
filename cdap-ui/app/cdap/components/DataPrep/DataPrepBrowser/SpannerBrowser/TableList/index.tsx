@@ -146,14 +146,12 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
               {T.translate(`${PREFIX}.instances`)}
             </Tag>
             <span> / </span>
-            <span>{instanceId}</span>
-            <span> / </span>
             <Tag
               to={databasePath}
               className="database-path"
               onClick={listSpannerDatabases.bind(null, connectionId, instanceId)}
             >
-              {T.translate(`${PREFIX}.databases`)}
+              {instanceId}
             </Tag>
             <span> / </span>
             <span>{databaseId}</span>
