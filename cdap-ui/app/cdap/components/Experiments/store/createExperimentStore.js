@@ -310,6 +310,23 @@ const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
     return state.active_step;
   };
   switch (action.type) {
+    case ACTIONS.SET_WORKSPACE_ID: {
+      const newState = {
+        ...state,
+        experiments_create: {
+          ...state.experiments_create,
+          workspaceId: action.payload.workspaceId
+        },
+        active_step: {
+          ...state.active_step,
+          step_name: state.active_step.step_name
+        }
+      };
+      return {
+        ...state.active_step,
+        step_name: getActiveStep(newState).step_name
+      };
+    }
     case ACTIONS.MODEL_UPDATE: {
       const newState = {
         ...state,

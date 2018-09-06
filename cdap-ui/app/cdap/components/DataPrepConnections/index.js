@@ -116,7 +116,9 @@ export default class DataPrepConnections extends Component {
         ) {
           let activeConnectionid = objectQuery(workspaceInfo, 'properties', 'connectionid') || objectQuery(workspaceInfo, 'properties', 'id');
           let activeConnectionType = objectQuery(workspaceInfo, 'properties', 'connection');
-          activeConnectionType = ConnectionType[activeConnectionType.toUpperCase()];
+          if (activeConnectionType) {
+            activeConnectionType = ConnectionType[activeConnectionType.toUpperCase()];
+          }
           this.setState({
             activeConnectionid,
             activeConnectionType,
@@ -310,7 +312,7 @@ export default class DataPrepConnections extends Component {
         loading: false
       };
 
-      if (!state.defaultConnection && this.props.singleWorkspaceMode) {
+      if (!state.defaultConnection && this.props.singleWorkspaceMode && this.props.sidePanelExpanded) {
         state.sidePanelExpanded = true;
       }
 
