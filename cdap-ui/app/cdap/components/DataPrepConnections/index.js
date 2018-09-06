@@ -52,6 +52,7 @@ import find from 'lodash/find';
 import If from 'components/If';
 import NoDefaultConnection from 'components/DataPrepConnections/NoDefaultConnection';
 import isObject from 'lodash/isObject';
+import {Theme} from 'services/ThemeHelper';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -894,7 +895,9 @@ export default class DataPrepConnections extends Component {
   render() {
     let pageTitle = (
       <Helmet
-        title={T.translate(DATAPREP_I18N_PREFIX)}
+        title={T.translate(DATAPREP_I18N_PREFIX, {
+          productName: Theme.productName,
+        })}
       />
     );
     if (this.state.backendChecking) {
@@ -925,7 +928,9 @@ export default class DataPrepConnections extends Component {
       <div className="dataprep-connections-container">
         {
           this.props.enableRouting ?
-            <Helmet title={T.translate(`${PREFIX}.pageTitle`)} />
+            <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
+              productName: Theme.productName,
+            })} />
           :
             null
         }

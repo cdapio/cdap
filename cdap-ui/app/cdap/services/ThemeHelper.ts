@@ -30,6 +30,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "font-family"?: string;
   };
   "content"?: {
+    "product-name"?: string;
     "logo"?: {
       "type"?: string;
       "arguments"?: {
@@ -104,6 +105,7 @@ export function applyTheme() {
 }
 
 interface IThemeObj {
+  productName?: string;
   footerText?: string;
   footerLink?: string;
   logo?: string;
@@ -140,9 +142,14 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
 
   function getContent(): IThemeObj {
     const contentJson = themeJSON.content;
-    const content: IThemeObj = {};
+    const content: IThemeObj = {
+      productName: 'CDAP',
+    };
     if (isNilOrEmpty(contentJson)) {
       return content;
+    }
+    if ('product-name' in contentJson) {
+      content.productName = contentJson['product-name'];
     }
     if ('footer-text' in contentJson) {
       content.footerText = contentJson['footer-text'];

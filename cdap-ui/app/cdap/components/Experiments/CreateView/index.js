@@ -51,6 +51,7 @@ import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import MyDataPrepApi from 'api/dataprep';
 import Alert from 'components/Alert';
 import T from 'i18n-react';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.Experiments.CreateView';
 
@@ -304,10 +305,12 @@ export default class ExperimentCreateView extends Component {
     const {experimentId, addModel} = queryString.parse(this.props.location.search);
     let expId = experimentId ? `${experimentId} | ` : '';
     let labelSuffix = addModel ? 'Add model' : 'Create Experiment';
-    let pageTitle = `CDAP | Analytics | ${expId} ${labelSuffix}`;
     return (
       <div className="experiments-create-view">
-        <Helmet title={pageTitle} />
+        <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
+          productName: Theme.productName,
+          experimentIdWithSuffix: `${expId} ${labelSuffix}`
+        })} />
         {this.renderSteps()}
         {this.renderError()}
         <Prompt

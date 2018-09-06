@@ -19,12 +19,16 @@ import PropTypes from 'prop-types';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import {connect} from 'react-redux';
+import {Theme} from 'services/ThemeHelper';
 const EXPERIMENTS_I18N_PREFIX = 'features.Experiments.DetailedView';
 
 function ExperimentDetailPageTitle ({experiment_name}) {
   return (
     <Helmet
-      title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`, {experiment_name})}
+      title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`, {
+        experiment_name,
+        productName: Theme.productName,
+      })}
     />
   );
 }

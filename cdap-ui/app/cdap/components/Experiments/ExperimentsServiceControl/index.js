@@ -24,6 +24,7 @@ import isObject from 'lodash/isObject';
 import {myExperimentsApi} from 'api/experiments';
 import {isSpark2Available} from 'services/CDAPComponentsVersions';
 import Helmet from 'react-helmet';
+import {Theme} from 'services/ThemeHelper';
 
 require('./ExperimentsServiceControl.scss');
 
@@ -140,7 +141,9 @@ export default class ExperimentsServiceControl extends Component {
   render() {
     return (
       <div className="experiments-service-control">
-        <Helmet title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`)} />
+        <Helmet title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`, {
+          productName: Theme.productName,
+        })} />
         <div className="image-containers">
           <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview1.png" />
           <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview2.png" />

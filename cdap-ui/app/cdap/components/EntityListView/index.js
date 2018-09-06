@@ -41,6 +41,7 @@ import classnames from 'classnames';
 import T from 'i18n-react';
 import queryString from 'query-string';
 import Helmet from 'react-helmet';
+import {Theme} from 'services/ThemeHelper';
 
 import {
   DEFAULT_SEARCH_FILTERS, DEFAULT_SEARCH_SORT,
@@ -346,7 +347,9 @@ export default class EntityListView extends Component {
 
     return (
       <div>
-        <Helmet title={T.translate('features.EntityListView.Title')} />
+        <Helmet title={T.translate('features.EntityListView.Title', {
+          productName: Theme.productName,
+        })} />
         <EntityListHeader />
         <div className="entity-list-view">
           {

@@ -43,6 +43,7 @@ import {highlightNewProfile} from 'components/Cloud/Profiles/Store/ActionCreator
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import {SCOPES, SYSTEM_NAMESPACE} from 'services/global-constants';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.Cloud.Profiles.CreateView';
 
@@ -305,7 +306,10 @@ class ProfileCreateView extends Component {
     return (
       <Provider store={CreateProfileStore}>
         <div className="profile-create-view">
-          <Helmet title={T.translate(`${PREFIX}.pageTitle`, {provisioner_name: this.getProvisionerLabel()})} />
+          <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
+            provisioner_name: this.getProvisionerLabel(),
+            productName: Theme.productName,
+          })} />
           <EntityTopPanel
             title={`Create a profile for ${this.getProvisionerLabel()}`}
             closeBtnAnchorLink={linkObj}

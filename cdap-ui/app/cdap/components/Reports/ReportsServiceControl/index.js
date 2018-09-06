@@ -24,6 +24,7 @@ import T from 'i18n-react';
 import {isSpark2Available} from 'services/CDAPComponentsVersions';
 import isObject from 'lodash/isObject';
 import Helmet from 'react-helmet';
+import {Theme} from 'services/ThemeHelper';
 
 require('./ReportsServiceControl.scss');
 
@@ -133,7 +134,9 @@ export default class ReportsServiceControl extends Component {
   render() {
     return (
       <div className="reports-service-control">
-        <Helmet title={T.translate('features.Reports.pageTitle')} />
+        <Helmet title={T.translate('features.Reports.pageTitle', {
+          productName: Theme.productName,
+        })} />
         <div className="image-containers">
           <img className="img-thumbnail" src="/cdap_assets/img/Reports_preview1.png" />
           <img className="img-thumbnail" src="/cdap_assets/img/Reports_preview2.png" />

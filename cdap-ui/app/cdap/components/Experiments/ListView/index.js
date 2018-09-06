@@ -23,7 +23,10 @@ import { getExperimentsList, setAlgorithmsListForListView, updateQueryParameters
 import queryString from 'query-string';
 import isNil from 'lodash/isNil';
 import Mousetrap from 'mousetrap';
+import T from 'i18n-react';
+import {Theme} from 'services/ThemeHelper';
 
+const PREFIX = 'features.Experiments.ListView';
 export default class ExperimentsList extends Component {
   componentWillMount() {
     setAlgorithmsListForListView();
@@ -98,7 +101,9 @@ export default class ExperimentsList extends Component {
     return (
       <Provider store={experimentsStore}>
         <div className="experiments-list-container">
-          <Helmet title="CDAP | All Experiments" />
+          <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
+            productName: Theme.productName,
+          })} />
           <ExperimentsListViewWrapper />
         </div>
       </Provider>

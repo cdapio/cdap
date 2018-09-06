@@ -168,10 +168,9 @@ features:
           confirmationText: "Are you sure you want to reload all system artifacts?"
           errorMessage: Failed to load system artifacts
           label: Reload System Artifacts
-      pageTitle: CDAP | Administration | Configuration
+      pageTitle: '{productName} | Administration | Configuration'
     Management:
-      pageTitle: CDAP | Administration | Management
-    PageTitle: CDAP | Management
+      pageTitle: '{productName} | Administration | Management'
     Services:
       title: Services
       headers:
@@ -222,7 +221,7 @@ features:
       historyLabel: Program runs
       programsLabel: Programs
       propertiesLabel: Properties
-    Title: CDAP | Applications | {appId}
+    Title: '{productName} | Applications | {appId}'
   AuthorizationMessage:
     callToAction1: Please contact your system administrator to request access to a namespace
     callToAction2:
@@ -250,8 +249,8 @@ features:
         totalRuns: Total runs
       CreateView:
         ProvisionerSelection:
-          pageTitle: CDAP | Profiles | Create
-        pageTitle: CDAP | Profiles | Create | {provisioner_name}
+          pageTitle: '{productName} | Profiles | Create'
+        pageTitle: '{productName} | Profiles | Create | {provisioner_name}'
         profileName: Profile name
         profileLabel: Profile label
       DetailView:
@@ -277,7 +276,7 @@ features:
         enableError: "There was a problem enabling the profile: {message}"
         hideDetails: Hide Details
         noProperties: No properties available for this profile
-        pageTitle: CDAP | Profiles | {profile_name}
+        pageTitle: '{productName} | Profiles | {profile_name}'
         profileDetails: Profile details
         profileUsage: "{profile} usage"
         secureKeyPopover: Service account is stored using a secure key
@@ -358,7 +357,7 @@ features:
       errorMessage: Page {pageNum} not found
       suggestionMessage1: "Go back to:"
       suggestionMessage2: Page 1
-    Title: CDAP | Control Center
+    Title: '{productName} | Control Center'
   DataPrepServiceControl:
     btnLabel: Enable Data Preparation
     btnLoadingLabel: "Enabling..."
@@ -421,7 +420,7 @@ features:
           emptyDatasetList: 'No datasets in connection _{connectionName}_'
           emptyTableList: 'No tables in dataset _{datasetName}_'
         name: Name
-        pageTitle: CDAP | Connections | Google BigQuery | {connectionId}
+        pageTitle: '{productName} | Connections | Google BigQuery | {connectionId}'
         title: Select table
       DatabaseBrowser:
         defaultErrorMessage: Reading {tableId} failed. Please try again.
@@ -431,7 +430,7 @@ features:
           suggestionTitle: "You can try to:"
           suggestion1: your search
           title: 'No match found for "{searchText}"'
-        pageTitle: CDAP | Connections | Database | {connectionId}
+        pageTitle: '{productName} | Connections | Database | {connectionId}'
         searchPlaceholder: Search table name
         table:
           namecollabel: NAME
@@ -452,7 +451,7 @@ features:
             Name: Name
             Size: Size
             Type: Type
-        pageTitle: CDAP | Connections | Google Cloud Storage | {connectionId}
+        pageTitle: '{productName} | Connections | Google Cloud Storage | {connectionId}'
         Search:
           placeholder: Search this directory
         TopPanel:
@@ -466,7 +465,7 @@ features:
           suggestionTitle: "You can try to:"
           suggestion1: your search
           title: 'No match found for "{searchText}"'
-        pageTitle: CDAP | Connections | Kafka | {connectionId}
+        pageTitle: '{productName} | Connections | Kafka | {connectionId}'
         searchPlaceholder: Search topic
         table:
           topics: Topics
@@ -487,7 +486,7 @@ features:
             Name: Name
             Owner: Owner
             Size: Size
-        pageTitle: CDAP | Connections | S3 | {connectionId}
+        pageTitle: '{productName} | Connections | S3 | {connectionId}'
         Search:
           placeholder: Search this directory
         TopPanel:
@@ -942,7 +941,7 @@ features:
         variableNamePlaceholder: Enter counter name
       Swap:
         title: Swap two column names
-    pageTitle: CDAP | Data Preparation {workspaceUri}
+    pageTitle: '{productName} | Data Preparation {workspaceUri}'
     PipelineError:
       bigquery: Unable to find Google BigQuery plugin. Please install Google Cloud Plugins from Hub.
       database: Unable to find Database Plugins. Please make sure Database Plugins are available.
@@ -1179,7 +1178,7 @@ features:
     kafka: Kafka ({count})
     NoDefaultConnection:
       title: No default connection available
-    pageTitle: CDAP | Connections
+    pageTitle: '{productName} | Connections'
     s3: S3 ({count})
     title: "Connections in \"{namespace}\""
     upload: Upload
@@ -1196,7 +1195,7 @@ features:
       programsWithCount: Programs ({count})
       properties: Properties
       schema: Schema
-    Title: CDAP | Dataset | {datasetId}
+    Title: '{productName} | Dataset | {datasetId}'
   Dashboard:
     Title: Dashboard
   Description:
@@ -1230,6 +1229,7 @@ features:
       moreInfo: for more info
       nextSelect: Next, select a machine learning algorithm
       numDirectives: "No of directives: "
+      pageTitle: '{productName} | Analytics | {experimentIdWithSuffix}'
       random: Random
       selectMLAlgorithm: Select a machine learning algorithm
       selectOutcome: Select an outcome
@@ -1272,7 +1272,7 @@ features:
       modelTrainingLogs: Model training logs
       numModels: No of models
       outcome: Outcome
-      pageTitle: CDAP | Analytics | {experiment_name}
+      pageTitle: '{productName} | Analytics | {experiment_name}'
       precision: Precision
       r2: R2
       recall: Recall
@@ -1287,7 +1287,8 @@ features:
         1: "{context} experiment"
         _: "{context} experiments"
       numModels: No of models
-    pageTitle: CDAP | Analytics
+      pageTitle: '{productName} | Analytics | All Experiments'
+    pageTitle: '{productName} | Analytics'
     ServiceControl:
       Benefits:
         b1: Intuitive Web UI for building, training, testing and evaluating machine learning models.
@@ -1532,7 +1533,7 @@ features:
       schedulerQueueName: 'Scheduler queue name: '
     namespace: Namespace
     namespaceName: Namespace '{namespace}'
-    pageTitle: CDAP | Namespace | {namespace_name}
+    pageTitle: '{productName} | Namespace | {namespace_name}'
     pipelines: Pipelines
     preferences:
       label: Preferences
@@ -1572,7 +1573,7 @@ features:
       streams: Streams
     pipelinesLabel: Pipelines
     ProductDropdown:
-      aboutLabel: About CDAP
+      aboutLabel: About {productName}
       accessToken: Access Token
       dataPrep: Data Preparation
       documentationLabel: Documentation
@@ -1609,7 +1610,7 @@ features:
 
   OpsDashboard:
     header: Dashboard
-    pageTitle: CDAP | Dashboard
+    pageTitle: '{productName} | Dashboard'
     RunsGraph:
       chart: Chart
       disabledArrowTooltip: The runs timelime is only available for the past 7 days
@@ -2112,7 +2113,7 @@ features:
         select: Select time
         timeRange: "{startTime} to {endTime}"
     header: Reports
-    pageTitle: CDAP | Reports
+    pageTitle: '{productName} | Reports'
     reportName: Report name
     reports:
       1: "{context} report"
@@ -2242,7 +2243,7 @@ features:
       owner: Owner
       version: Version {version}
     Home:
-      pageTitle: CDAP | Rules Engine
+      pageTitle: '{productName} | Rules Engine'
       Tabs:
         rbTitle: RuleBooks
         rulesTitle: Rules
@@ -2320,7 +2321,7 @@ features:
   StatusAlertMessage:
     message: 'Services are back online'
   StreamDetailedView:
-    Title: CDAP | Stream | {streamId}
+    Title: '{productName} | Stream | {streamId}'
 
   Tags:
     allTags: All Tags
