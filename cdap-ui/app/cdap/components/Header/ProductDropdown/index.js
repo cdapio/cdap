@@ -31,6 +31,7 @@ import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import T from 'i18n-react';
 import {getMode} from 'components/Header/ProductDropdown/helper';
 import classnames from 'classnames';
+import {Theme} from 'services/ThemeHelper';
 
 require('./ProductDropdown.scss');
 
@@ -156,7 +157,9 @@ export default class ProductDropdown extends Component {
               tag="li"
               onClick={this.toggleAboutPage}
             >
-              <a>{T.translate('features.Navbar.ProductDropdown.aboutLabel')}</a>
+              <a>{T.translate('features.Navbar.ProductDropdown.aboutLabel', {
+                productName: Theme.productName,
+              })}</a>
             </DropdownItem>
             <DropdownItem tag="li">
               {

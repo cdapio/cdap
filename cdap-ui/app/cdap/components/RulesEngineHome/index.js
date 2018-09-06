@@ -28,6 +28,7 @@ import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import RulesEngineWrapper from 'components/RulesEngineHome/RulesEngineWrapper';
 import isNil from 'lodash/isNil';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.RulesEngine.Home';
 
@@ -122,7 +123,9 @@ export default class RulesEngineHome extends Component {
   render() {
     let pageTitle = (
       <Helmet
-        title={T.translate(`${PREFIX}.pageTitle`)}
+        title={T.translate(`${PREFIX}.pageTitle`, {
+          productName: Theme.productName,
+        })}
       />
     );
     const renderPageTitle = () => !this.props.embedded ? pageTitle : null;

@@ -23,6 +23,7 @@ import SystemPrefsAccordion from 'components/Administration/AdminConfigTabConten
 import {MyNamespaceApi} from 'api/namespace';
 import {Link} from 'react-router-dom';
 import Helmet from 'react-helmet';
+import {Theme} from 'services/ThemeHelper';
 import T from 'i18n-react';
 
 require('./AdminConfigTabContent.scss');
@@ -83,7 +84,9 @@ export default class AdminConfigTabContent extends Component {
   render() {
     return (
       <div className="admin-config-tab-content">
-        <Helmet title={T.translate(`${I18N_PREFIX}.pageTitle`)} />
+        <Helmet title={T.translate(`${I18N_PREFIX}.pageTitle`, {
+          productName: Theme.productName,
+        })} />
         <div className="action-buttons">
           <ReloadSystemArtifacts />
           <Link

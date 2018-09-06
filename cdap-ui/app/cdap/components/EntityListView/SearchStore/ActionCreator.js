@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import {DEFAULT_SEARCH_QUERY} from 'components/EntityListView/SearchStore/SearchConstants';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import isNil from 'lodash/isNil';
+import {Theme} from 'services/ThemeHelper';
 
 const search = () => {
   let namespace = NamespaceStore.getState().selectedNamespace;
@@ -152,7 +153,7 @@ const updateQueryString = () => {
   }
 
   let obj = {
-    title: 'CDAP',
+    title: Theme.productName,
     url: location.pathname + queryString
   };
 

@@ -6,10 +6,17 @@
     "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
   },
   "content": {
-    "logo": {
+    "product-name": "CDAP",
+    "product-logo-navbar": {
       "type": "link",
       "arguments": {
          "url": "/cdap_assets/img/company_logo.png"
+      }
+    },
+    "product-logo-about": {
+      "type": "link",
+      "arguments": {
+         "url": "/cdap_assets/img/CDAP_darkgray.png"
       }
     },
     "footer-text": "Licensed under the Apache License, Version 2.0",

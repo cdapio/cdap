@@ -30,7 +30,15 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "font-family"?: string;
   };
   "content"?: {
-    "logo"?: {
+    "product-name"?: string;
+    "product-logo-navbar"?: {
+      "type"?: string;
+      "arguments"?: {
+         "url"?: string;
+         "data"?: string;
+      }
+    },
+    "product-logo-about"?: {
       "type"?: string;
       "arguments"?: {
          "url"?: string;
@@ -104,9 +112,11 @@ export function applyTheme() {
 }
 
 interface IThemeObj {
+  productName?: string;
   footerText?: string;
   footerLink?: string;
-  logo?: string;
+  productLogoNavbar?: string;
+  productLogoAbout?: string;
   showDashboard?: boolean;
   showReports?: boolean;
   showDataPrep?: boolean;
@@ -125,13 +135,22 @@ function getTheme(): IThemeObj {
     return {};
   }
 
-  let theme: IThemeObj = {};
+  let theme: IThemeObj = {
+    productName: 'CDAP',
+  };
   const themeJSON = window.CDAP_UI_THEME;
   const specVersion = themeJSON['spec-version'];
 
   if (specVersion === '1.0') {
-    theme = parse1Point0Spec(themeJSON);
+    theme = {
+      ...theme,
+      ...parse1Point0Spec(themeJSON),
+    };
   }
+  // Need to specify this here to show default/customized title when a CDAP page
+  // is not active in the browser, since the <Helmet> titles of the pages won't
+  // take effect until the page is active/rendered
+  document.title = theme.productName;
   return theme;
 }
 
@@ -144,20 +163,34 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     if (isNilOrEmpty(contentJson)) {
       return content;
     }
+    if ('product-name' in contentJson) {
+      content.productName = contentJson['product-name'] || 'CDAP';
+    }
     if ('footer-text' in contentJson) {
       content.footerText = contentJson['footer-text'];
     }
     if ('footer-link' in contentJson) {
       content.footerLink = contentJson['footer-link'];
     }
-    if ('logo' in contentJson) {
-      const logo = window.CDAP_UI_THEME.content.logo;
-      if (logo.type) {
-        const logoType = logo.type;
-        if (logoType === 'inline') {
-          content.logo = objectQuery(logo, 'arguments', 'data');
-        } else if (logoType === 'link') {
-          content.logo = objectQuery(logo, 'arguments', 'url');
+    if ('product-logo-navbar' in contentJson) {
+      const productLogoNavbar = window.CDAP_UI_THEME.content['product-logo-navbar'];
+      if (productLogoNavbar.type) {
+        const productLogoNavbarType = productLogoNavbar.type;
+        if (productLogoNavbarType === 'inline') {
+          content.productLogoNavbar = objectQuery(productLogoNavbar, 'arguments', 'data');
+        } else if (productLogoNavbarType === 'link') {
+          content.productLogoNavbar = objectQuery(productLogoNavbar, 'arguments', 'url');
+        }
+      }
+    }
+    if ('product-logo-about' in contentJson) {
+      const productLogoAbout = window.CDAP_UI_THEME.content['product-logo-about'];
+      if (productLogoAbout.type) {
+        const productLogoAboutType = productLogoAbout.type;
+        if (productLogoAboutType === 'inline') {
+          content.productLogoAbout = objectQuery(productLogoAbout, 'arguments', 'data');
+        } else if (productLogoAboutType === 'link') {
+          content.productLogoAbout = objectQuery(productLogoAbout, 'arguments', 'url');
         }
       }
     }

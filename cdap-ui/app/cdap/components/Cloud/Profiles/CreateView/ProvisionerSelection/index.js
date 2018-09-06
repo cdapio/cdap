@@ -29,6 +29,7 @@ import ExperimentalBanner from 'components/ExperimentalBanner';
 import IconSVG from 'components/IconSVG';
 import {SYSTEM_NAMESPACE} from 'services/global-constants';
 import Helmet from 'react-helmet';
+import {Theme} from 'services/ThemeHelper';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Cloud.Profiles.CreateView';
@@ -179,7 +180,9 @@ export default function ProfileCreateProvisionerSelectionFn({...props}) {
   return (
     <Provider store={ProvisionerInfoStore}>
       <div>
-        <Helmet title={T.translate(`${PREFIX}.ProvisionerSelection.pageTitle`)} />
+        <Helmet title={T.translate(`${PREFIX}.ProvisionerSelection.pageTitle`, {
+          productName: Theme.productName,
+        })} />
         <ConnectedProfileCreateProvisionerSelection {...props} />
       </div>
     </Provider>

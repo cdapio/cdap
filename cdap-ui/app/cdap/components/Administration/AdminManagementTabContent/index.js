@@ -20,6 +20,7 @@ import T from 'i18n-react';
 import PlatformsDetails from 'components/Administration/AdminManagementTabContent/PlatformsDetails';
 import ServicesTable from 'components/Administration/AdminManagementTabContent/ServicesTable';
 import Helmet from 'react-helmet';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.Administration';
 const I18NPREFIX = `${PREFIX}.Management`;
@@ -28,7 +29,9 @@ require('./AdminManagementTabContent.scss');
 export default function AdminManagementTabContent(props) {
   return (
     <div className="admin-management-tab-content">
-    <Helmet title={T.translate(`${I18NPREFIX}.pageTitle`)} />
+      <Helmet title={T.translate(`${I18NPREFIX}.pageTitle`, {
+        productName: Theme.productName,
+      })} />
       <div className="services-details">
         <div className="services-table-section">
           <strong> {T.translate(`${PREFIX}.Services.title`)} </strong>

@@ -12,13 +12,14 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 import {MyMetadataApi} from 'api/metadata';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import Store, {Actions, TIME_OPTIONS} from 'components/FieldLevelLineage/store/Store';
 import debounce from 'lodash/debounce';
 import {parseQueryString} from 'services/helpers';
+import {Theme} from 'services/ThemeHelper';
 
 const TIME_OPTIONS_MAP = {
   [TIME_OPTIONS[1]]: {
@@ -278,7 +279,7 @@ export function replaceHistory() {
   if (url === currentLocation) { return; }
 
   const stateObj = {
-    title: 'CDAP',
+    title: Theme.productName,
     url
   };
 

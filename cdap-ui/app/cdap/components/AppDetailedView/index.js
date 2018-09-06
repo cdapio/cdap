@@ -39,6 +39,7 @@ import OverviewHeader from 'components/Overview/OverviewHeader';
 import {MyMetadataApi} from 'api/metadata';
 import EntityType from 'services/metadata-parser/EntityType';
 import {SCOPES} from 'services/global-constants';
+import {Theme} from 'services/ThemeHelper';
 require('./AppDetailedView.scss');
 
 export default class AppDetailedView extends Component {
@@ -194,7 +195,10 @@ export default class AppDetailedView extends Component {
     return (
       <div className="app-detailed-view">
         <Helmet
-          title={T.translate('features.AppDetailedView.Title', {appId: this.props.match.params.appId})}
+          title={T.translate('features.AppDetailedView.Title', {
+            appId: this.props.match.params.appId,
+            productName: Theme.productName,
+          })}
         />
         <div className="bread-crumb-wrapper">
           <BreadCrumb

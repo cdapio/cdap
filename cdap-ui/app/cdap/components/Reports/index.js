@@ -26,6 +26,7 @@ import ReportsServiceControl from 'components/Reports/ReportsServiceControl';
 import ReportsAppDelete from 'components/Reports/ReportsAppDelete';
 import T from 'i18n-react';
 import Helmet from 'react-helmet';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.Reports';
 
@@ -79,7 +80,9 @@ export default class Reports extends Component {
     return (
       <Provider store={ReportsStore}>
         <div>
-          <Helmet title={T.translate(`${PREFIX}.pageTitle`)} />
+          <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
+            productName: Theme.productName,
+          })} />
           <Switch>
             <Route exact path="/ns/:namespace/reports" component={ReportsList} />
             <Route exact path="/ns/:namespace/reports/details/:reportId" component={ReportsDetail} />

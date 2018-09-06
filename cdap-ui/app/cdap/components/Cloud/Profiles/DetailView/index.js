@@ -28,6 +28,7 @@ import {ONEDAYMETRICKEY, OVERALLMETRICKEY, fetchAggregateProfileMetrics} from 'c
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import {SYSTEM_NAMESPACE} from 'services/global-constants';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
 require('./DetailView.scss');
@@ -141,7 +142,10 @@ export default class ProfileDetailView extends Component {
     }
     return (
       <div className="profile-detail-view">
-        <Helmet title={T.translate(`${PREFIX}.pageTitle`, {profile_name: this.state.profile.label || this.state.profile.name})} />
+        <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
+          profile_name: this.state.profile.label || this.state.profile.name,
+          productName: Theme.productName,
+        })} />
         <EntityTopPanel
           breadCrumbAnchorLink={breadCrumbAnchorLink}
           breadCrumbAnchorLabel={breadCrumbLabel}
