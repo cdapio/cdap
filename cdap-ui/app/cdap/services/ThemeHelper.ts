@@ -127,13 +127,22 @@ function getTheme(): IThemeObj {
     return {};
   }
 
-  let theme: IThemeObj = {};
+  let theme: IThemeObj = {
+    productName: 'CDAP',
+  };
   const themeJSON = window.CDAP_UI_THEME;
   const specVersion = themeJSON['spec-version'];
 
   if (specVersion === '1.0') {
-    theme = parse1Point0Spec(themeJSON);
+    theme = {
+      ...theme,
+      ...parse1Point0Spec(themeJSON),
+    };
   }
+  // Need to specify this here to show default/customized title when a CDAP page
+  // is not active in the browser, since the <Helmet> titles of the pages won't
+  // take effect until the page is active/rendered
+  document.title = theme.productName;
   return theme;
 }
 
@@ -142,9 +151,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
 
   function getContent(): IThemeObj {
     const contentJson = themeJSON.content;
-    const content: IThemeObj = {
-      productName: 'CDAP',
-    };
+    const content: IThemeObj = {};
     if (isNilOrEmpty(contentJson)) {
       return content;
     }

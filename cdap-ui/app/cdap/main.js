@@ -33,7 +33,6 @@ import Footer from 'components/Footer';
 import ConnectionExample from 'components/ConnectionExample';
 import cookie from 'react-cookie';
 import {BrowserRouter, Route, Switch} from 'react-router-dom';
-import T from 'i18n-react';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
