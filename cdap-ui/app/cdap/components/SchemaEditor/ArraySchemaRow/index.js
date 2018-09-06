@@ -20,9 +20,9 @@ import React, { Component } from 'react';
 import {parseType, SCHEMA_TYPES, checkComplexType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
 import SelectWithOptions from 'components/SelectWithOptions';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
-// import {Input} from 'reactstrap';
 import classnames from 'classnames';
 import cloneDeep from 'lodash/cloneDeep';
+import cdapavsc from 'services/cdapavscwrapper';
 
 require('./ArraySchemaRow.scss');
 
@@ -58,6 +58,8 @@ export default class ArraySchemaRow extends Component {
   }
   onTypeChange(e) {
     let selectedType = e.target.value;
+    selectedType = cdapavsc.formatType(selectedType);
+
     if (this.state.displayType.nullable) {
       this.parsedType = [selectedType, 'null'];
     } else {
@@ -77,6 +79,7 @@ export default class ArraySchemaRow extends Component {
   }
   onNullableChange(e) {
     let parsedType = cloneDeep(this.parsedType);
+    parsedType = cdapavsc.formatType(parsedType);
     if (!e.target.checked) {
       this.parsedType = parsedType[0];
     } else {
@@ -91,15 +94,17 @@ export default class ArraySchemaRow extends Component {
     }, this.updateParent.bind(this));
   }
   onChildrenChange(itemsState) {
+    let updatedItemState = cdapavsc.formatType(itemsState);
+
     let error = checkParsedTypeForError({
       type: 'array',
-      items: this.state.displayType.nullable ? [itemsState, 'null'] : itemsState
+      items: this.state.displayType.nullable ? [updatedItemState, 'null'] : updatedItemState
     });
     if (error) {
       this.setState({error});
       return;
     }
-    this.parsedType = this.state.displayType.nullable ? [cloneDeep(itemsState), 'null'] : cloneDeep(itemsState);
+    this.parsedType = this.state.displayType.nullable ? [cloneDeep(updatedItemState), 'null'] : cloneDeep(updatedItemState);
     this.updateParent();
   }
   updateParent() {

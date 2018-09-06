@@ -19,13 +19,12 @@ import {Provider} from 'react-redux';
 require('./SchemaEditor.scss');
 import RecordSchemaRow from 'components/SchemaEditor/RecordSchemaRow';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
-import cdapavsc from 'cdap-avsc';
+import cdapavsc from 'services/cdapavscwrapper';
 
 export default class SchemaEditor extends Component {
   constructor(props) {
     super(props);
     let state = SchemaStore.getState();
-
     let rows;
     try {
       rows = cdapavsc.parse(state.schema, { wrapUnions: true });

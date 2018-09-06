@@ -16,18 +16,23 @@
 
 @import '../../styles/mixins.scss';
 
+$type-column-width: 105px;
+$null-column-width: 75px;
+
 .schema-editor {
   .schema-header {
     padding: 5px 0;
+
+    $header-left-padding: 5px;
     .field-name {
-      width: calc(100% - 80px - 75px);
+      width: calc(100% - #{$type-column-width} - #{$null-column-width});
     }
     .field-isnull {
-      width: 70px;
+      width: calc(#{$null-column-width - #{$header-left-padding}});
       margin-left: 5px;
     }
     .field-type {
-      width: 75px;
+      width: calc(#{$type-column-width - #{$header-left-padding}});
       margin-left: 5px;
     }
     .field-name,
@@ -54,10 +59,10 @@
         box-shadow: 1px -2px 1px rgba(0, 0, 0, 0.25);
       }
       > .field-name {
-        width: calc(100% - 80px - 75px);
+        width: calc(100% - #{$type-column-width} - #{$null-column-width});
       }
       > .field-type {
-        width: 80px;
+        width: $type-column-width;
         padding: 0 5px;
         vertical-align: top;
         position: relative;
@@ -73,7 +78,7 @@
         }
       }
       > .field-isnull {
-        width: 75px;
+        width: $null-column-width;
         .btn.btn-link {
           display: inline-block;
           padding: 0;

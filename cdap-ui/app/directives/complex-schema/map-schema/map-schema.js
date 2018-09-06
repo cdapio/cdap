@@ -68,10 +68,13 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeout
   vm.formatOutput = () => {
     vm.error = '';
 
+    const keysType = avsc.formatType(vm.fields.keys.type);
+    const valuesType = avsc.formatType(vm.fields.values.type);
+
     let obj = {
       type: 'map',
-      keys: vm.fields.keys.nullable ? [vm.fields.keys.type, 'null'] : vm.fields.keys.type,
-      values: vm.fields.values.nullable ? [vm.fields.values.type, 'null'] : vm.fields.values.type
+      keys: vm.fields.keys.nullable ? [keysType, 'null'] : keysType,
+      values: vm.fields.values.nullable ? [valuesType, 'null'] : valuesType
     };
 
     // Validate
@@ -89,7 +92,6 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeout
     if (typeof vm.parentFormatOutput === 'function') {
       timeout = $timeout(vm.parentFormatOutput);
     }
-
   };
 
   init(vm.model);

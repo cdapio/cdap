@@ -74,7 +74,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     let pastedData = event.clipboardData.getData('text/plain');
     let pastedDataArr = pastedData.replace(/[\n\r\t,| ]/g, '$').split('$');
     pastedDataArr.filter((name) => {
-      if (name){
+      if (name) {
         data.push({
           'name': name,
           'type': 'string',
@@ -136,7 +136,6 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
 
     vm.parsedSchema = parsed.getFields().map((field) => {
       let type = field.getType();
-
       let partialObj = SchemaHelper.parseType(type);
 
       return Object.assign({}, partialObj, {
@@ -163,9 +162,11 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     let outputFields = vm.parsedSchema.filter((field) => {
       return field.name && field.type ? true : false;
     }).map( (field) => {
+      const type = avsc.formatType(field.type);
+
       let obj = {
         name: field.name,
-        type: field.nullable ? [field.type, 'null'] : field.type
+        type: field.nullable ? [type, 'null'] : type
       };
       return obj;
     });

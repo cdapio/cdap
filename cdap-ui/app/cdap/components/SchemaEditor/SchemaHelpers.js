@@ -15,32 +15,38 @@
 */
 
 import uuidV4 from 'uuid/v4';
-import cdapavsc from 'cdap-avsc';
+import cdapavsc from 'services/cdapavscwrapper';
 import {GLOBALS} from 'services/global-constants';
 
 const SCHEMA_TYPES = {
   'types': [
     'boolean',
     'bytes',
+    'date',
     'double',
     'float',
     'int',
     'long',
     'string',
+    'time',
+    'timestamp',
     'array',
     'enum',
     'map',
     'union',
-    'record'
+    'record',
   ],
   'simpleTypes': [
     'boolean',
     'bytes',
+    'date',
     'double',
     'float',
     'int',
     'long',
     'string',
+    'time',
+    'timestamp',
   ]
 };
 
@@ -70,6 +76,8 @@ function parseType(type) {
   } else {
     type = type.getTypeName();
   }
+
+  type = cdapavsc.getDisplayType(type);
 
   return {
     displayType: type,

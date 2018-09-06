@@ -19,11 +19,14 @@ angular.module(PKG.name+'.commons')
   'types': [
     'boolean',
     'bytes',
+    'date',
     'double',
     'float',
     'int',
     'long',
     'string',
+    'time',
+    'timestamp',
     'array',
     'enum',
     'map',
@@ -33,14 +36,17 @@ angular.module(PKG.name+'.commons')
   'simpleTypes': [
     'boolean',
     'bytes',
+    'date',
     'double',
     'float',
     'int',
     'long',
     'string',
+    'time',
+    'timestamp'
   ]
 })
-.factory('SchemaHelper', () => {
+.factory('SchemaHelper', (avsc) => {
   function parseType(type) {
     let storedType = type;
     let nullable = false;
@@ -58,6 +64,8 @@ angular.module(PKG.name+'.commons')
     } else {
       type = type.getTypeName();
     }
+
+    type = avsc.getDisplayType(type);
 
     return {
       displayType: type,

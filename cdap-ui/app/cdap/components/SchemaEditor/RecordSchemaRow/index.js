@@ -26,6 +26,7 @@ import {insertAt, removeAt} from 'services/helpers';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import cloneDeep from 'lodash/cloneDeep';
+import cdapavsc from 'services/cdapavscwrapper';
 
 export default class RecordSchemaRow extends Component {
   constructor(props) {
@@ -144,15 +145,18 @@ export default class RecordSchemaRow extends Component {
     let selectType = e.target.value;
     let displayFields = this.state.displayFields;
     let parsedFields = cloneDeep(this.parsedFields);
+
+    const formattedType = cdapavsc.formatType(selectType);
+
     displayFields[index].displayType = selectType;
-    displayFields[index].type = selectType;
+    displayFields[index].type = formattedType;
     if (displayFields[index].nullable) {
       parsedFields[index].type = [
-        selectType,
+        formattedType,
         'null'
       ];
     } else {
-      parsedFields[index].type = selectType;
+      parsedFields[index].type = formattedType;
     }
     this.parsedFields = parsedFields;
     this.setState({
