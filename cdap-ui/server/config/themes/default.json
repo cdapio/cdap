@@ -7,13 +7,13 @@
   },
   "content": {
     "product-name": "CDAP",
-    "product-logo": {
+    "product-logo-navbar": {
       "type": "link",
       "arguments": {
          "url": "/cdap_assets/img/company_logo.png"
       }
     },
-    "product-logo-large": {
+    "product-logo-about": {
       "type": "link",
       "arguments": {
          "url": "/cdap_assets/img/CDAP_darkgray.png"

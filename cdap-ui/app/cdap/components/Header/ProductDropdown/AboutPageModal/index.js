@@ -27,7 +27,7 @@ require('./AboutPageModal.scss');
 
 export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
   let mode = getModeWithCloudProvider();
-  const productLogoSrc = Theme.productLogoLarge || '/cdap_assets/img/CDAP_darkgray.png';
+  const productLogoSrc = Theme.productLogoAbout || '/cdap_assets/img/CDAP_darkgray.png';
   return (
     <Modal
       isOpen={isOpen}

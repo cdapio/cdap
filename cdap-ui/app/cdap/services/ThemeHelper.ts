@@ -31,14 +31,14 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
   };
   "content"?: {
     "product-name"?: string;
-    "product-logo"?: {
+    "product-logo-navbar"?: {
       "type"?: string;
       "arguments"?: {
          "url"?: string;
          "data"?: string;
       }
     },
-    "product-logo-large"?: {
+    "product-logo-about"?: {
       "type"?: string;
       "arguments"?: {
          "url"?: string;
@@ -115,8 +115,8 @@ interface IThemeObj {
   productName?: string;
   footerText?: string;
   footerLink?: string;
-  productLogo?: string;
-  productLogoLarge?: string;
+  productLogoNavbar?: string;
+  productLogoAbout?: string;
   showDashboard?: boolean;
   showReports?: boolean;
   showDataPrep?: boolean;
@@ -172,25 +172,25 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     if ('footer-link' in contentJson) {
       content.footerLink = contentJson['footer-link'];
     }
-    if ('product-logo' in contentJson) {
-      const productLogo = window.CDAP_UI_THEME.content['product-logo'];
-      if (productLogo.type) {
-        const productLogoType = productLogo.type;
-        if (productLogoType === 'inline') {
-          content.productLogo = objectQuery(productLogo, 'arguments', 'data');
-        } else if (productLogoType === 'link') {
-          content.productLogo = objectQuery(productLogo, 'arguments', 'url');
+    if ('product-logo-navbar' in contentJson) {
+      const productLogoNavbar = window.CDAP_UI_THEME.content['product-logo-navbar'];
+      if (productLogoNavbar.type) {
+        const productLogoNavbarType = productLogoNavbar.type;
+        if (productLogoNavbarType === 'inline') {
+          content.productLogoNavbar = objectQuery(productLogoNavbar, 'arguments', 'data');
+        } else if (productLogoNavbarType === 'link') {
+          content.productLogoNavbar = objectQuery(productLogoNavbar, 'arguments', 'url');
         }
       }
     }
-    if ('product-logo-large' in contentJson) {
-      const productLogoLarge = window.CDAP_UI_THEME.content['product-logo-large'];
-      if (productLogoLarge.type) {
-        const productLogoLargeType = productLogoLarge.type;
-        if (productLogoLargeType === 'inline') {
-          content.productLogoLarge = objectQuery(productLogoLarge, 'arguments', 'data');
-        } else if (productLogoLargeType === 'link') {
-          content.productLogoLarge = objectQuery(productLogoLarge, 'arguments', 'url');
+    if ('product-logo-about' in contentJson) {
+      const productLogoAbout = window.CDAP_UI_THEME.content['product-logo-about'];
+      if (productLogoAbout.type) {
+        const productLogoAboutType = productLogoAbout.type;
+        if (productLogoAboutType === 'inline') {
+          content.productLogoAbout = objectQuery(productLogoAbout, 'arguments', 'data');
+        } else if (productLogoAboutType === 'link') {
+          content.productLogoAbout = objectQuery(productLogoAbout, 'arguments', 'url');
         }
       }
     }
