@@ -230,7 +230,7 @@ features:
       message2: as another user
     callToAction3:
       message1: "Create a new namespace "
-      message2: "(Note: You will require ADMIN privileges on CDAP for creating a namespace)"
+      message2: "(Note: You will require ADMIN privileges for creating a namespace)"
     mainMessage: " You are not authorized to access any existing namespace"
   Cloud:
     Profiles:
@@ -320,8 +320,8 @@ features:
       retryNow: Retry now
       retrying: Retrying...
       secondsLabel: seconds.
-      tryAgain: Unable to communicate with CDAP services. Retrying in
-      timeOut: Timed out while attempting to communicate with CDAP services. Please contact your system administrator.
+      tryAgain: Unable to communicate with system services. Retrying in
+      timeOut: Timed out while attempting to communicate with system services. Please contact your system administrator.
     Header:
       filterBy: Filter by
       search-placeholder: Search
@@ -361,7 +361,7 @@ features:
   DataPrepServiceControl:
     btnLabel: Enable Data Preparation
     btnLoadingLabel: "Enabling..."
-    description: CDAP Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
+    description: Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
     list:
       1: Easy and interactive way to work with messy data
       2: Apply transformations using a variety of operations on various data types
@@ -1006,7 +1006,7 @@ features:
       more: More
       PlusButton:
         addDirective: Add directive
-        successMessage: You successfully added a custom directive to CDAP. Apply that directive by typing it into the power mode input area.
+        successMessage: You successfully added a custom directive. Apply that directive by typing it into the power mode input area.
       realtimeDisabledTooltip: "Importing data from {type} in realtime is currently not supported."
       s3: S3
       SchemaModal:
@@ -1298,7 +1298,7 @@ features:
         b5: Support for tuning custom hyperparameters for algorithms.
         b6: Integrated metrics and visualization providing rich summaries and graphs for model evaluation.
         title: "Some key benefits of MMDS are:"
-      description: "Data scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models using CDAP."
+      description: "Data scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models."
       enableBtnLabel: Enable MMDS
       environmentCheckMessage: Checking for environment before enabling Analytics
       errorCommunicating: Error while communicating with MMDS service
@@ -2393,8 +2393,8 @@ features:
         keytab-uri-label: "Keytab URI"
         keytab-uri-placeholder: "Location of keytab file associated with the principal"
         principal-label: "Principal"
-        principal-placeholder: "Kerberos principal of the user to run CDAP programs as"
-        sld-label: "Specify credentials for securely impersonating CDAP programs in this namespace."
+        principal-placeholder: "Kerberos principal of the user to run programs as"
+        sld-label: "Specify credentials for securely impersonating programs in this namespace."
         ssd-label: "Security"
       Step4:
         name-label: "Name"
@@ -2651,7 +2651,7 @@ features:
         shorttitle: Setup format and schema
         title: Set format and schema
       Step3:
-        description: Setting up a trigger configures CDAP to notify systems observing to start processing.
+        description: Setting up a trigger notifies systems observing to start processing.
         mblabel: Megabytes (MB)
         shorttitle: Trigger setup
         thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing the data in this stream.
