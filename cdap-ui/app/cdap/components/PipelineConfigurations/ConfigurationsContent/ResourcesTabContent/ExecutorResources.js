@@ -21,7 +21,8 @@ import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
-import {ENGINE_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {ENGINE_OPTIONS} from 'components/PipelineConfigurations/PipelineConfigConstants';
+import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.Resources';
