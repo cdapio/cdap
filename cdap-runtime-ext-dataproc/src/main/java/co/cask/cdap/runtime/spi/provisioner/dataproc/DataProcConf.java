@@ -235,7 +235,7 @@ public class DataProcConf {
     }
     String zone = getString(properties, "zone");
     if (zone == null) {
-      getSystemZone();
+      zone = getSystemZone();
     }
     String network = getString(properties, "network");
     if (network == null) {
@@ -243,7 +243,7 @@ public class DataProcConf {
     }
 
     // a zone is always <region>-<letter>
-    if (!"global".equals(region) && zone != null) {
+    if (!"global".equals(region)) {
       if (!zone.startsWith(region + "-")) {
         throw new IllegalArgumentException(
           String.format("Invalid zone '%s' for region '%s'. Unless the region is 'global', "
