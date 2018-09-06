@@ -33,6 +33,7 @@ import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import ee from 'event-emitter';
 import Version from 'services/VersionRange/Version';
+import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
 
 require('./DataPrepHome.scss');
 /**
@@ -150,13 +151,27 @@ export default class DataPrepHome extends Component {
             DataPrepStore.dispatch({
               type: DataPrepActions.disableLoading
             });
+            DataPrepStore.dispatch({
+              type: DataPrepActions.setWorkspaceList,
+              payload: {
+                list: []
+              }
+            });
             return;
           }
           let sortedWorkspace = orderBy(res.values, [(workspace) => workspace.name.toLowerCase()], ['asc']);
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setWorkspaceList,
+            payload: {
+              list: sortedWorkspace
+            }
+          });
           let isCurrentWorkspaceIdValid = sortedWorkspace.find(ws => ws.id === this.props.match.params.workspaceId);
           if (this.props.match.params.workspaceId && !isCurrentWorkspaceIdValid) {
             let url = this.props.match.url.slice(0, this.props.match.url.indexOf(this.props.match.params.workspaceId));
             this.props.history.replace(url);
+          } else {
+            setWorkspace(sortedWorkspace[0].id).subscribe();
           }
           this.setState({
             rerouteTo: sortedWorkspace[0].id,
