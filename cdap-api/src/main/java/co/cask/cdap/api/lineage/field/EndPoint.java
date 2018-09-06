@@ -95,4 +95,12 @@ public class EndPoint {
   public int hashCode() {
     return Objects.hash(namespace, name);
   }
+
+  @Override
+  public String toString() {
+    return "EndPoint{" +
+      "namespace='" + namespace + '\'' +
+      ", name='" + name + '\'' +
+      '}';
+  }
 }

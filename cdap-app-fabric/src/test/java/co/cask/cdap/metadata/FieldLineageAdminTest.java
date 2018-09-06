@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.api.lineage.field.InputField;
 import co.cask.cdap.api.lineage.field.Operation;
@@ -24,9 +26,12 @@ import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
+import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.metadata.lineage.DatasetField;
@@ -40,6 +45,7 @@ import co.cask.cdap.proto.metadata.lineage.ProgramFieldOperationInfo;
 import co.cask.cdap.proto.metadata.lineage.ProgramInfo;
 import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -54,13 +60,24 @@ import java.util.stream.Collectors;
 /**
  * Test for {@link FieldLineageAdmin}.
  */
-public class FieldLineageAdminTest {
+public class FieldLineageAdminTest extends AppFabricTestBase {
+
+  private static MetadataAdmin metadataAdmin;
+
+  private static DatasetFramework datasetFramework;
+
+  @Before
+  public void setUp() {
+    metadataAdmin = getInjector().getInstance(MetadataAdmin.class);
+    datasetFramework = getInjector().getInstance(DatasetFramework.class);
+  }
 
   @Test
-  public void testFields() {
+  public void testFields() throws Exception {
     FieldLineageAdmin fieldLineageAdmin = new FieldLineageAdmin(new FakeFieldLineageReader(getFieldNames(),
                                                                                            Collections.emptySet(),
-                                                                                           Collections.emptySet()));
+                                                                                           Collections.emptySet()),
+                                                                metadataAdmin);
     EndPoint endPoint = EndPoint.of("ns", "file");
 
     // test all fields
@@ -73,10 +90,69 @@ public class FieldLineageAdminTest {
   }
 
   @Test
+  public void testFieldsWithDsSchema() throws Exception {
+    FieldLineageAdmin fieldLineageAdmin = new FieldLineageAdmin(new FakeFieldLineageReader(getFieldNames(),
+                                                                                           Collections.emptySet(),
+                                                                                           Collections.emptySet()),
+                                                                metadataAdmin);
+    EndPoint endPoint = EndPoint.of(NamespaceId.DEFAULT.getNamespace(), "file");
+
+    // test that when there is no schema information present for the dataset and the we request for lineage with
+    // includeCurrent set to true we get lineage fields correctly.
+    Set<Field> expected = getFields(getFieldNames());
+    // includeCurrent set to true
+    Set<Field> actual = fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, null, true);
+    Assert.assertEquals(expected, actual);
+
+    // schema with fields which are different than known to lineage store
+    Schema schema =
+      Schema.recordOf("record",
+                      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of("address", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of("addiffField1", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of("diffField2", Schema.nullableOf(Schema.of(Schema.Type.INT)))
+      );
+
+    // add the the dataset with the schema with fields known in lineage store
+    TableProperties.Builder props = TableProperties.builder();
+    TableProperties.setSchema(props, schema);
+    TableProperties.setRowFieldName(props, "name");
+    datasetFramework.addInstance("table", new DatasetId(NamespaceId.DEFAULT.getNamespace(), "file"), props.build());
+
+    // test all fields expected should have all the fields which was known the lineage store but should not contains
+    // any dataset schema field since the includeCurrent is set to false
+    expected = getFields(getFieldNames());
+    actual = fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, null, false);
+    Assert.assertEquals(expected, actual);
+
+    // test all fields expected should have all the fields which was known the lineage store and also the fields
+    // which were only present in the dataset schema since includeCurrent is set to true.
+    // this also test that for the fields which are common in lineage store and dataset schema for example address in
+    // this case has their lineage info field set to true as we do have lineage for this field
+    expected = getFields(getFieldNames());
+    expected.addAll(new HashSet<>(Arrays.asList(new Field("addiffField1", false),
+                                                new Field("diffField2", false))));
+    actual = fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, null, true);
+    Assert.assertEquals(expected, actual);
+
+    // test fields prefixed with string "add" when includeCurrent not set then the ds field show not show up
+    Assert.assertEquals(new HashSet<>(Arrays.asList(new Field("address", true),
+                                                    new Field("address_original", true))),
+                        fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, "add", false));
+
+    // test fields prefixed with string "add" when includeCurrent is set the ds field should also show up
+    Assert.assertEquals(new HashSet<>(Arrays.asList(new Field("address", true),
+                                                    new Field("address_original", true),
+                                                    new Field("addiffField1", false))),
+                        fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, "add", true));
+  }
+
+  @Test
   public void testSummary() {
     FieldLineageAdmin fieldLineageAdmin = new FieldLineageAdmin(new FakeFieldLineageReader(Collections.emptySet(),
                                                                                            summary(),
-                                                                                           Collections.emptySet()));
+                                                                                           Collections.emptySet()),
+                                                                metadataAdmin);
     EndPoint endPoint = EndPoint.of("ns", "file");
 
     DatasetField datasetField = new DatasetField(new DatasetId("ns", "file"),
@@ -114,7 +190,8 @@ public class FieldLineageAdminTest {
   public void testOperations() {
     FieldLineageAdmin fieldLineageAdmin = new FieldLineageAdmin(new FakeFieldLineageReader(Collections.emptySet(),
                                                                                            Collections.emptySet(),
-                                                                                           operations()));
+                                                                                           operations()),
+                                                                metadataAdmin);
     EndPoint endPoint = EndPoint.of("ns", "file");
 
     // input args to the getOperationDetails below does not matter since data returned is mocked

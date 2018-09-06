@@ -16,17 +16,21 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
 import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
+import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -42,8 +46,13 @@ import co.cask.cdap.proto.metadata.lineage.ProgramInfo;
 import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -61,12 +70,16 @@ import javax.annotation.Nullable;
  */
 public class FieldLineageAdmin {
 
+  private static final Logger LOG = LoggerFactory.getLogger(FieldLineageAdmin.class);
+
   private final FieldLineageReader fieldLineageReader;
+  private final MetadataAdmin metadataAdmin;
 
   @Inject
   @VisibleForTesting
-  public FieldLineageAdmin(FieldLineageReader fieldLineageReader) {
+  public FieldLineageAdmin(FieldLineageReader fieldLineageReader, MetadataAdmin metadataAdmin) {
     this.fieldLineageReader = fieldLineageReader;
+    this.metadataAdmin = metadataAdmin;
   }
 
   /**
@@ -79,21 +92,43 @@ public class FieldLineageAdmin {
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
    * @param prefix prefix for the field name, if {@code null} then all fields are returned
-   * @param includeDatasetSchema determines whether to include dataset schema fields in the response. If true the result
-   * will be a union of all the fields present in lineage record with {@link Field#hasLineage} set to 'true' and fields
-   * present only in dataset schema will have {@link Field#hasLineage} set to 'false'.
+   * @param includeCurrent determines whether to include dataset's current schema fields in the response. If true the
+   * result will be a union of all the fields present in lineage record with {@link Field#hasLineage} set to 'true'
+   * and fields present only in dataset schema will have {@link Field#hasLineage} set to 'false'.
    *
-   * @return set of fields written to a given EndPoint
+   * @return set of fields written to a given EndPoint and any unique fields present only in the schema of the
+   * dataset of includeCurrent is set to true
    */
   public Set<Field> getFields(EndPoint endPoint, long start, long end, @Nullable String prefix,
-                              boolean includeDatasetSchema) {
+                              boolean includeCurrent) throws IOException {
 
-    Set<String> fields = fieldLineageReader.getFields(endPoint, start, end);
-    // TODO (Rohit CDAP-14168) Look up dataset schema here and union it with the above with lineage info as false
-    if (!Strings.isNullOrEmpty(prefix)) {
-      fields = filter(prefix, fields);
+    Set<String> lineageFields = fieldLineageReader.getFields(endPoint, start, end);
+
+    Set<Field> result = createFields(lineageFields, true);
+    if (includeCurrent) {
+      // get the system properties of this dataset
+      Map<String, String> properties = metadataAdmin.getProperties(MetadataScope.SYSTEM,
+                                                                   MetadataEntity.ofDataset(endPoint.getNamespace(),
+                                                                                            endPoint.getName()));
+      // the system metadata contains the schema of the dataset which is written by the DatasetSystemMetadataWriter
+      if (properties.containsKey(AbstractSystemMetadataWriter.SCHEMA_KEY)) {
+        String schema = properties.get(AbstractSystemMetadataWriter.SCHEMA_KEY);
+        Schema sc = Schema.parseJson(schema);
+        if (sc.getFields() != null) {
+          Set<String> schemaFields = sc.getFields().stream().map(Schema.Field::getName).collect(Collectors.toSet());
+          // Sets.difference will return all the fields which are present in schemaFields and not present in lineage
+          // fields. If there are common fields then they will not be present in the difference and will be treated
+          // as lineage fields containing lineage information.
+          ImmutableSet<String> dsOnlyFields = Sets.difference(schemaFields, lineageFields).immutableCopy();
+          result.addAll(createFields(dsOnlyFields, false));
+        }
+      } else {
+        LOG.trace("Received request to include schema fields for {} but no schema was found. Only fields present in " +
+                    "the lineage store will be returned.", endPoint);
+      }
     }
-    return createFields(fields, true);
+    return Strings.isNullOrEmpty(prefix) ? Collections.unmodifiableSet(result) :
+      Collections.unmodifiableSet(filter(prefix, result));
   }
 
   /**
@@ -258,7 +293,7 @@ public class FieldLineageAdmin {
     return fields.stream().map(field -> new Field(field, hasLineage)).collect(Collectors.toSet());
   }
 
-  private Set<String> filter(String prefix, Set<String> fields) {
-    return fields.stream().filter(field -> field.startsWith(prefix)).collect(Collectors.toSet());
+  private Set<Field> filter(String prefix, Set<Field> fields) {
+    return fields.stream().filter(field -> field.getName().startsWith(prefix)).collect(Collectors.toSet());
   }
 }
