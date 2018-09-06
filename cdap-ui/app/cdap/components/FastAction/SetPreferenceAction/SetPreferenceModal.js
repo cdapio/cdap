@@ -279,7 +279,7 @@ export default class SetPreferenceModal extends Component {
     const actionLabel = T.translate(`${PREFIX}.actionLabel`);
     let entity, entityWithType, description, tooltipID;
     if (this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM) {
-      entityWithType = 'CDAP';
+      entityWithType = 'system';
       description = T.translate(`${PREFIX}.DescriptionLabel.system`);
       tooltipID = `${entityWithType}-title`;
     } else {

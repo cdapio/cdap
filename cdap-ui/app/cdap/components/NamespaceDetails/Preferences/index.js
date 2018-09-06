@@ -117,7 +117,7 @@ class NamespaceDetailsPreferences extends Component {
     return sortedPrefObjectKeys.map(prefKey => {
       return {
         key: prefKey,
-        scope: prefKey in namespacePrefs ? T.translate('features.NamespaceDetails.namespace') : T.translate('commons.cdap'),
+        scope: prefKey in namespacePrefs ? T.translate('features.NamespaceDetails.namespace') : 'System',
         value: prefs[prefKey],
       };
     });
