@@ -52,6 +52,7 @@ import HttpExecutor from 'components/HttpExecutor';
 import {applyTheme} from 'services/ThemeHelper';
 import ErrorBoundary from 'components/ErrorBoundary';
 import OverlayFocus from 'components/OverlayFocus';
+import {Theme} from 'services/ThemeHelper';
 const SampleTSXComponent = Loadable({
   loader: () => import (/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
   loading: LoadingSVGCentered
@@ -106,11 +107,10 @@ class CDAP extends Component {
   }
 
   render() {
-
     return (
       <BrowserRouter basename="/cdap">
         <div className="cdap-container">
-          <Helmet title={T.translate('commons.cdap')} />
+          <Helmet title={Theme.productName} />
           <Header />
           <LoadingIndicator />
           <StatusAlertMessage />

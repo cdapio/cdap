@@ -16,13 +16,13 @@
 
 angular.module(PKG.name + '.feature.logviewer')
   .config(function($stateProvider) {
-
+    const productName = window.CaskCommon.ThemeHelper.Theme.productName || 'CDAP';
     $stateProvider
       .state('logviewerhome', {
         url: '/view?namespace&appId&programType&programId&runId&filter&startTime&endTime',
         templateUrl: '/assets/features/logviewer/templates/home.html',
         onEnter: function($stateParams) {
-          document.title = 'CDAP | Logs | ' + $stateParams.programId;
+          document.title = `${productName} | Logs | ${$stateParams.programId}`;
         },
         controller: 'LogsAppHomeController',
         controllerAs: 'Home'

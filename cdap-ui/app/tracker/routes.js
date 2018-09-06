@@ -16,7 +16,7 @@
 
 angular.module(PKG.name + '.feature.tracker')
   .config(function($stateProvider, MYAUTH_ROLE) {
-
+    const productName = window.CaskCommon.ThemeHelper.Theme.productName || 'CDAP';
     $stateProvider
       .state('home', {
         url: '/',
@@ -53,7 +53,7 @@ angular.module(PKG.name + '.feature.tracker')
         templateUrl: '/assets/features/tracker/templates/main.html',
         controller: 'TrackerMainController',
         onEnter: function() {
-          document.title = 'CDAP | Search';
+          document.title = `${productName} | Search`;
         },
         controllerAs: 'MainController'
       })
@@ -75,7 +75,7 @@ angular.module(PKG.name + '.feature.tracker')
           controller: 'TrackerResultsController',
           controllerAs: 'ResultsController',
           onEnter: function() {
-            document.title = 'CDAP | Search Results';
+            document.title = `${productName} | Search Results`;
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
@@ -89,7 +89,7 @@ angular.module(PKG.name + '.feature.tracker')
           controller: 'TrackerEntityController',
           controllerAs: 'EntityController',
           onEnter: function($stateParams) {
-            document.title = 'CDAP | Search | ' + $stateParams.entityId;
+            document.title = `${productName} | Search | ${$stateParams.entityId}`;
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
@@ -102,7 +102,7 @@ angular.module(PKG.name + '.feature.tracker')
             controller: 'TrackerMetadataController',
             controllerAs: 'MetadataController',
             onEnter: function($stateParams) {
-              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Summary';
+              document.title = `${productName} | Search | ${$stateParams.entityId} | Summary`;
             },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
@@ -114,7 +114,7 @@ angular.module(PKG.name + '.feature.tracker')
             templateUrl: '/assets/features/tracker/templates/lineage.html',
             controller: 'TrackerLineageController',
             onEnter: function($stateParams) {
-              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Lineage';
+              document.title = `${productName} | Search | ${$stateParams.entityId} | Lineage`;
             },
             controllerAs: 'LineageController',
             data: {

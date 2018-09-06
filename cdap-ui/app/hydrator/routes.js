@@ -16,6 +16,7 @@
 
 angular.module(PKG.name + '.feature.hydrator')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
+    const productName = window.CaskCommon.ThemeHelper.Theme.productName || 'CDAP';
     $stateProvider
       .state('home', {
         url: '/',
@@ -51,7 +52,7 @@ angular.module(PKG.name + '.feature.hydrator')
         .state('hydrator.create', {
           url: '/studio?artifactType&draftId&workspaceId&configParams&rulesengineid&resourceCenterId&cloneId',
           onEnter: function() {
-            document.title = 'CDAP | Studio';
+            document.title = `${productName} | Studio`;
           },
           params: {
             data: null,
@@ -271,7 +272,7 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorList'
           },
           onEnter: function($stateParams) {
-            document.title = 'CDAP | Pipelines | ' + $stateParams.pipelineId;
+            document.title = `${productName} | Pipelines | ${$stateParams.pipelineId}`;
           },
           resolve : {
             rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state) {
@@ -343,7 +344,7 @@ angular.module(PKG.name + '.feature.hydrator')
           url: '?page&sortBy&reverse',
           title: 'Published Pipelines',
           onEnter: function() {
-            document.title = 'CDAP | Pipelines';
+            document.title = `${productName} | Pipelines`;
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
