@@ -129,7 +129,7 @@ function humanReadableDuration(timeInSeconds, shortForm = false) {
     let hours = Math.floor(timeInSeconds / ONE_HOUR_SECONDS);
     return (
       shortForm ?
-        `${hours} ${pluralize(hours, 'hour')} ago`
+        `${hours} ${pluralize(hours, 'hour')}`
       :
         `${hours} ${pluralize(hours, 'hour')} ${humanReadableDuration(timeInSeconds - (ONE_HOUR_SECONDS * hours))}`
     );
@@ -148,7 +148,7 @@ function humanReadableDuration(timeInSeconds, shortForm = false) {
     let weeks = Math.floor(timeInSeconds / ONE_WEEK_SECONDS);
     return (
       shortForm ?
-        `${weeks} ${pluralize(weeks, 'week')} ago`
+        `${weeks} ${pluralize(weeks, 'week')}`
       :
         `${weeks} ${pluralize(weeks, 'week')} ${humanReadableDuration(timeInSeconds - (ONE_WEEK_SECONDS * weeks))}`
     );
@@ -157,11 +157,15 @@ function humanReadableDuration(timeInSeconds, shortForm = false) {
     let months = Math.floor(timeInSeconds / ONE_MONTH_SECONDS);
     return (
       shortForm ?
-        `${months} ${pluralize(months, 'month')} ago`
+        `${months} ${pluralize(months, 'month')}`
       :
         `${months} ${pluralize(months, 'month')} ${humanReadableDuration(timeInSeconds - (ONE_MONTH_SECONDS * months))}`
     );
   }
+}
+
+function timeSinceCreated(timeInSeconds, shortForm) {
+  return `${humanReadableDuration(timeInSeconds, shortForm)} ago`;
 }
 
 function contructUrl ({path}) {
@@ -409,6 +413,7 @@ export {
   convertBytesToHumanReadable,
   humanReadableNumber,
   humanReadableDuration,
+  timeSinceCreated,
   isDescendant,
   getArtifactNameAndVersion,
   insertAt,

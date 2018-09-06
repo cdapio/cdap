@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import {MySearchApi} from 'api/search';
-import {isNilOrEmpty, humanReadableDuration, objectQuery} from 'services/helpers';
+  import {isNilOrEmpty, objectQuery, timeSinceCreated} from 'services/helpers';
 import {GLOBALS, SYSTEM_NAMESPACE} from 'services/global-constants';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
@@ -250,7 +250,7 @@ export default class ProfileAssociations extends Component {
               >
                 <div>{appObj.name}</div>
                 <div>{appObj.namespace}</div>
-                <div>{humanReadableDuration((Date.now() - parseInt(appObj.created, 10)) / 1000, true) || '--'}</div>
+                <div>{timeSinceCreated((Date.now() - parseInt(appObj.created, 10)) / 1000, true) || '--'}</div>
                 {/*
                   We should set the defaults in the metrics call but since it is not certain that we get metrics
                   for all the profiles all the time I have added the defaults here in the view
