@@ -310,7 +310,7 @@ export default class DataPrepConnections extends Component {
         loading: false
       };
 
-      if (!state.defaultConnection && this.props.singleWorkspaceMode) {
+      if (!state.defaultConnection && this.props.singleWorkspaceMode && this.props.sidePanelExpanded) {
         state.sidePanelExpanded = true;
       }
 
