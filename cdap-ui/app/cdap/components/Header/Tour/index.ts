@@ -16,6 +16,7 @@
 
 import GuidedTour, { ITourStep } from 'services/GuidedTour';
 import T from 'i18n-react';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.NUX';
 
@@ -62,7 +63,9 @@ const steps: ITourStep[] = [
     id: 'hub',
     title: T.translate(`${PREFIX}.Hub.title`).toString(),
     text: [
-      T.translate(`${PREFIX}.Hub.text`).toString(),
+      T.translate(`${PREFIX}.Hub.text`, {
+        productName: Theme.productName,
+      }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Hub_NUX.png" />',
     ],
     attachTo: '#navbar-hub bottom',

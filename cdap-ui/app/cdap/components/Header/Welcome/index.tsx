@@ -22,6 +22,7 @@ import IconSVG from 'components/IconSVG';
 import Tour from 'components/Header/Tour';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
+import {Theme} from 'services/ThemeHelper';
 
 import './Welcome.scss';
 
@@ -109,7 +110,9 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
         >
           <ModalHeader>
             <span className="header-text">
-              {T.translate(`${PREFIX}.header`)}
+              {T.translate(`${PREFIX}.header`, {
+                productName: Theme.productName,
+              })}
             </span>
 
             <div className="close-section float-xs-right" >
@@ -122,7 +125,9 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
 
           <ModalBody>
             <p>
-              {T.translate(`${PREFIX}.bodyText`)}
+              {T.translate(`${PREFIX}.bodyText`, {
+                productName: Theme.productName,
+              })}
             </p>
             <p>
               {T.translate(`${PREFIX}.takeTour`)}
