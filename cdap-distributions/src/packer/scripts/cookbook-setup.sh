@@ -57,6 +57,7 @@ knife cookbook site download --force yum 5.1.0 || die "Cannot download cookbook 
 # extract to /var/chef/cookbooks
 for cb in `ls *.tar.gz`; do
   tar xf $cb -C /var/chef/cookbooks
+  rm $cb
 done
 
 # Do not change HOME for cdap user
