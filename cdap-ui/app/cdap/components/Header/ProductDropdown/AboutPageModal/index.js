@@ -21,11 +21,13 @@ import {Modal, ModalBody} from 'reactstrap';
 import T from 'i18n-react';
 import {getModeWithCloudProvider} from 'components/Header/ProductDropdown/helper';
 import Footer from 'components/Footer';
+import { Theme } from 'services/ThemeHelper';
 
 require('./AboutPageModal.scss');
 
 export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
   let mode = getModeWithCloudProvider();
+  const productLogoSrc = Theme.productLogoLarge || '/cdap_assets/img/CDAP_darkgray.png';
   return (
     <Modal
       isOpen={isOpen}
@@ -44,7 +46,7 @@ export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
         <div className="about-title">
           <div className="cdap-logo-with-version">
             <div className="logo-container">
-              <img src='/cdap_assets/img/CDAP_darkgray.png' />
+              <img src={productLogoSrc} />
             </div>
             <span className="cdap-version">
               {T.translate('features.AboutPage.version', {version: cdapVersion})}

@@ -7,10 +7,16 @@
   },
   "content": {
     "product-name": "CDAP",
-    "logo": {
+    "product-logo": {
       "type": "link",
       "arguments": {
          "url": "/cdap_assets/img/company_logo.png"
+      }
+    },
+    "product-logo-large": {
+      "type": "link",
+      "arguments": {
+         "url": "/cdap_assets/img/CDAP_darkgray.png"
       }
     },
     "footer-text": "Licensed under the Apache License, Version 2.0",

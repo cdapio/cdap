@@ -29,7 +29,7 @@ interface IBrandSectionProps {
 const BrandSection: React.SFC<IBrandSectionProps> = ({ context }) => {
   const {namespace, isNativeLink } = context;
   const baseCDAPUrl = `/ns/${namespace}`;
-  const brandLogoSrc = Theme.logo || '/cdap_assets/img/company_logo.png';
+  const brandLogoSrc = Theme.productLogo || '/cdap_assets/img/company_logo.png';
   return (
     <div className="brand-section">
         <NavLinkWrapper

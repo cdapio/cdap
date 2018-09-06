@@ -31,7 +31,14 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
   };
   "content"?: {
     "product-name"?: string;
-    "logo"?: {
+    "product-logo"?: {
+      "type"?: string;
+      "arguments"?: {
+         "url"?: string;
+         "data"?: string;
+      }
+    },
+    "product-logo-large"?: {
       "type"?: string;
       "arguments"?: {
          "url"?: string;
@@ -108,7 +115,8 @@ interface IThemeObj {
   productName?: string;
   footerText?: string;
   footerLink?: string;
-  logo?: string;
+  productLogo?: string;
+  productLogoLarge?: string;
   showDashboard?: boolean;
   showReports?: boolean;
   showDataPrep?: boolean;
@@ -164,14 +172,25 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     if ('footer-link' in contentJson) {
       content.footerLink = contentJson['footer-link'];
     }
-    if ('logo' in contentJson) {
-      const logo = window.CDAP_UI_THEME.content.logo;
-      if (logo.type) {
-        const logoType = logo.type;
-        if (logoType === 'inline') {
-          content.logo = objectQuery(logo, 'arguments', 'data');
-        } else if (logoType === 'link') {
-          content.logo = objectQuery(logo, 'arguments', 'url');
+    if ('product-logo' in contentJson) {
+      const productLogo = window.CDAP_UI_THEME.content['product-logo'];
+      if (productLogo.type) {
+        const productLogoType = productLogo.type;
+        if (productLogoType === 'inline') {
+          content.productLogo = objectQuery(productLogo, 'arguments', 'data');
+        } else if (productLogoType === 'link') {
+          content.productLogo = objectQuery(productLogo, 'arguments', 'url');
+        }
+      }
+    }
+    if ('product-logo-large' in contentJson) {
+      const productLogoLarge = window.CDAP_UI_THEME.content['product-logo-large'];
+      if (productLogoLarge.type) {
+        const productLogoLargeType = productLogoLarge.type;
+        if (productLogoLargeType === 'inline') {
+          content.productLogoLarge = objectQuery(productLogoLarge, 'arguments', 'data');
+        } else if (productLogoLargeType === 'link') {
+          content.productLogoLarge = objectQuery(productLogoLarge, 'arguments', 'url');
         }
       }
     }
