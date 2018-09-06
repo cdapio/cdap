@@ -37,6 +37,14 @@
     .file-browser-container {
       height: 100%;
     }
+    // This is to hide the hamburger menu in the top panel
+    // Even though clicking on it doesn't toggle the sidepanel
+    // showing it is still giving a wrong impression to the user.
+    .dataprep-browser-top-panel {
+      .title h5 .fa.fa-fw.disabled {
+        display: none;
+      }
+    }
   }
   .dataprephome-wrapper {
     height: calc(100vh - 154px); // header + footer + workspace tab
@@ -93,5 +101,18 @@
   }
   > :not([class*="experiments-"]) {
     height: calc(100% - 50px);
+  }
+
+  // This is to hide the side toggle while adding a model under an experiment
+  // The user should not be able to change the file once an experiment is created
+  &.add-model {
+    .top-section {
+      .panel-toggle {
+        display: none;
+      }
+      .top-section-content {
+        width: 100%;
+      }
+    }
   }
 }

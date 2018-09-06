@@ -51,6 +51,8 @@ import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import MyDataPrepApi from 'api/dataprep';
 import Alert from 'components/Alert';
 import T from 'i18n-react';
+import classnames from 'classnames';
+import {isNilOrEmpty} from 'services/helpers';
 
 const PREFIX = 'features.Experiments.CreateView';
 
@@ -306,7 +308,9 @@ export default class ExperimentCreateView extends Component {
     let labelSuffix = addModel ? 'Add model' : 'Create Experiment';
     let pageTitle = `CDAP | Analytics | ${expId} ${labelSuffix}`;
     return (
-      <div className="experiments-create-view">
+      <div className={classnames("experiments-create-view", {
+        'add-model': !isNilOrEmpty(this.state.experimentId)
+      })}>
         <Helmet title={pageTitle} />
         {this.renderSteps()}
         {this.renderError()}
