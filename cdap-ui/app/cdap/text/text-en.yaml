@@ -1447,12 +1447,10 @@ features:
     viewTracker: View in Tracker
 
   LoadingIndicator:
-    backendDown: 'Unable to connect to CDAP'
-    backendDownSubtitle: 'Attempting to connect...'
     contactadmin: Contact system administrator
     defaultMessage: 'Loading...'
     nodeserverDown: 'User interface service is down'
-    restartCDAP: Restart CDAP
+    restartCDAP: Restart {productName}
     restartUI: Restart the UI; or
     servicesDown: A few system services are down
     serviceDown: The system service {serviceName} is down
