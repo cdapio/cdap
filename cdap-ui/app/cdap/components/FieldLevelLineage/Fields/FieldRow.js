@@ -20,24 +20,35 @@ import {getLineageSummary} from 'components/FieldLevelLineage/store/ActionCreato
 import classnames from 'classnames';
 import {connect} from 'react-redux';
 
-require('./FieldRow.scss');
+const onClickHandler = (field) => {
+  if (!field.lineage) { return; }
 
-function FieldRowView({fieldName, activeField}) {
-  const isActive = fieldName === activeField;
+  getLineageSummary(field.name);
+};
+
+function FieldRowView({field, activeField}) {
+  const isActive = field.name === activeField;
+  const isDisabled = !field.lineage;
 
   return (
     <div
-      className={classnames('field-row truncate', { 'active': isActive})}
-      onClick={getLineageSummary.bind(null, fieldName)}
-      title={fieldName}
+      className={classnames('field-row truncate', {
+        'active': isActive,
+        'disabled': isDisabled
+      })}
+      onClick={onClickHandler.bind(null, field)}
+      title={field.name}
     >
-      {fieldName}
+      {field.name}
     </div>
   );
 }
 
 FieldRowView.propTypes = {
-  fieldName: PropTypes.string,
+  field: PropTypes.shape({
+    name: PropTypes.string,
+    lineage: PropTypes.bool
+  }),
   activeField: PropTypes.string
 };
 

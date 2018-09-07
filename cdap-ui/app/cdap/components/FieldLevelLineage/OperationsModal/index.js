@@ -28,7 +28,7 @@ const PREFIX = 'features.FieldLevelLineage.OperationsModal';
 
 require('./OperationsModal.scss');
 
-function OperationsModalView({showOperations, loading, closeModal, fieldName}) {
+function OperationsModalView({showOperations, loading, closeModal, fieldName, direction}) {
   if (!showOperations) { return null; }
 
   const loadingIndicator = (
@@ -48,7 +48,7 @@ function OperationsModalView({showOperations, loading, closeModal, fieldName}) {
     >
       <ModalHeader>
         <span>
-          {T.translate(`${PREFIX}.title`, { fieldName })}
+          {T.translate(`${PREFIX}.Title.${direction}`, { fieldName })}
         </span>
 
         <div
@@ -71,13 +71,15 @@ OperationsModalView.propTypes = {
   loading: PropTypes.bool,
   closeModal: PropTypes.func,
   fieldName: PropTypes.string,
+  direction: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {
   return {
     showOperations: state.operations.showOperations,
     loading: state.operations.loading,
-    fieldName: state.lineage.activeField
+    fieldName: state.lineage.activeField,
+    direction: state.operations.direction,
   };
 };
 

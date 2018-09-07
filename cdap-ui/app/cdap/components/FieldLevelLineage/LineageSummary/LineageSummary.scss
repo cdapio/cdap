@@ -14,100 +14,109 @@
  * the License.
  */
 
-@import '../../../styles/variables.scss';
-$box-border-color: var(--brand-primary-color);
-$box-bg-color: $cdap-white;
-$secondary-color: $grey-04;
-$section-border-color: $grey-03;
-$field-row-border-color: $grey-05;
-$field-row-hover-bg: $grey-08;
-$view-operation-color: $blue-03;
+@import '~styles/variables.scss';
 
-.field-level-lineage-container {
-  .lineage-summary-container {
-    width: 250px;
-    border: 2px solid $box-border-color;
-    background-color: $box-bg-color;
-    position: absolute;
-    transform: translateX(-100%);
+$index-column-width: 30px;
+$dataset-name-column-width: 60%;
+$field-name-bg-color: $grey-07;
+$outside-border: 2px solid $grey-03;
+$border-size: 1px;
+$border: $border-size solid $grey-03;
+$text-color: $grey-01;
+$grid-padding: 0 10px;
+$view-operations-color: $blue-03;
+$row-height: 32px;
+$number-of-rows: 10;
+$lineage-count-color: $grey-04;
+$disabled-color: $grey-04;
+$dataset-hover-bg-color: $grey-07;
+$field-hover-bg-color: white;
+$header-height: 38px;
 
-    /*
-     * Left offset calculation
-     * 50% (middle of screen) - half of the field list box - margin
-     */
-    left: calc(50% - (250px / 2) - 15px);
+.field-level-lineage-container .lineage-summary-empty-container {
+  margin-top: $header-height;
+  display: flex;
+  border: $outside-border;
+  height: calc(#{$header-height} + (#{$row-height} * (#{$number-of-rows} + 1)) + 7px); // 7px to offset different borders
+  background-color: $field-name-bg-color;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+}
 
-    .field-link {
-      text-decoration: none;
-      color: inherit;
-    }
+.field-level-lineage-container .lineage-summary-container {
+  .field-lineage-info {
+    .title > strong { margin-right: 5px; }
+    .lineage-count { color: $lineage-count-color; }
+  }
 
-    > div {
-      padding-left: 15px;
-      padding-right: 15px;
-    }
+  .lineage-fields {
+    .lineage-column {
+      display: flex;
 
-    .field-lineage-info,
-    .summary-row {
-      border-bottom: 2px solid $section-border-color;
-      padding-bottom: 3px;
-    }
-
-    .field-lineage-info {
-      padding-top: 15px;
-
-      .title,
-      .dataset-field {
-        font-weight: 600;
+      > div {
+        padding: $grid-padding;
+        line-height: $row-height;
       }
 
-      .dataset-field { font-size: 14px; }
-      .lineage-count { color: $secondary-color; }
-
-      .close-button {
-        cursor: pointer;
-        position: absolute;
-        top: 10px;
-        right: 10px;
-      }
-    }
-
-    .summary-row {
-      padding-top: 3px;
-
-      .namespace { color: $secondary-color; }
+      .index { width: $index-column-width; }
       .dataset-name {
-        font-weight: 600;
-        font-size: 14px;
+        width: $dataset-name-column-width;
       }
 
-      .fields-list {
-        margin-top: 5px;
-
-        .field-row {
-          $padding-border-offset: 10px;
-
-          border-top: 1px solid $field-row-border-color;
-          margin-left: -$padding-border-offset;
-          margin-right: -$padding-border-offset;
-          padding: 3px $padding-border-offset;
-
-          &:hover { background-color: $field-row-hover-bg; }
-        }
+      .field-name {
+        width: calc(100% - #{$index-column-width} - #{$dataset-name-column-width});
+        background-color: $field-name-bg-color;
       }
     }
 
-    .view-operations {
-      padding-top: 15px;
-      padding-bottom: 15px;
+    .lineage-fields-header { font-weight: bold; }
 
-      span {
-        cursor: pointer;
-        color: $view-operation-color;
+    .lineage-fields-body {
+      border: $outside-border;
+      border-bottom: 0;
+      height: calc((#{$row-height + #{$border-size}}) * #{$number-of-rows});
+      overflow-y: auto;
 
-        &:hover {
-          text-decoration: underline;
+      .lineage-column {
+        border-bottom: $border;
+
+        > div:not(:last-child) { border-right: $border; }
+      }
+
+      .summary-row:hover { background-color: $dataset-hover-bg-color; }
+
+      .field-name {
+        padding: 0;
+        .field-row {
+          padding: $grid-padding;
+
+          &:not(:last-child) { border-bottom: $border; }
+          &:hover { background-color: $field-hover-bg-color; }
         }
+      }
+
+      .field-link {
+        color: $text-color;
+        &:hover { text-decoration: none; }
+      }
+    }
+  }
+
+  .view-operations {
+    padding: $grid-padding;
+    line-height: $row-height;
+    border: $outside-border;
+    border-top: $border;
+
+    > span {
+      color: $view-operations-color;
+      cursor: pointer;
+      &:hover:not(.disabled) { text-decoration: underline; }
+
+      &.disabled {
+        color: $disabled-color;
+        cursor: not-allowed;
       }
     }
   }

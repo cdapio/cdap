@@ -14,10 +14,38 @@
  * the License.
  */
 
-.field-level-lineage-container {
+@import '~styles/variables.scss';
+$border-color: $grey-04;
+
+.field-level-lineage .top-panel {
+  padding: 25px 50px;
+
+  .title,
   .time-picker-dropdown {
-    margin-left: 15px;
-    margin-top: 15px;
+    display: inline-block;
+  }
+
+  .title {
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .time-picker-dropdown {
+    margin-left: 50px;
+    vertical-align: top;
+
+    .dropdown-toggle {
+      padding: 0;
+      border-radius: 0;
+      border: 0;
+      border-bottom: 2px solid $border-color;
+
+      &:hover,
+      &:active,
+      &:focus {
+        background-color: transparent;
+      }
+    }
   }
 
   .custom-time-range-container {

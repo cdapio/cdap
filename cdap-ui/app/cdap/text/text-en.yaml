@@ -1309,8 +1309,11 @@ features:
 
   FieldLevelLineage:
     fieldsCount:
-      1: "{context} field"
-      _: "{context} fields"
+      1: "{context} Field"
+      _: "{context} Fields"
+    Headers:
+      datasetName: Dataset name
+      fieldName: Field name
     noFields: "Field level lineage is not available for the dataset '{datasetId}' in the selected time interval"
     OperationsModal:
       lastExecution: "Last executed by '{app}' on {time}"
@@ -1322,13 +1325,21 @@ features:
         operation: Operation
         outputFields: Output fields
         output: Output
-      title: "Operations for field '{fieldName}'"
+      Title:
+        incoming: "Cause operations for field '{fieldName}'"
+        outgoing: "Impact operations for field '{fieldName}'"
     searchPlaceholder: Search by field name
     Summary:
       datasetCount:
-        1: "{context} dataset"
-        _: "{context} datasets"
-      title: "Sources for:"
+        1: "{context} Dataset"
+        _: "{context} Datasets"
+      Empty:
+        incoming: "There is no cause for __'{fieldId}'__"
+        outgoing: "There is no impact for __'{fieldId}'__"
+      noFieldSelected: No field selected
+      Title:
+        incoming: "Cause for:"
+        outgoing: "Impact for:"
       viewOperations: View operations
     TimeRangeOptions:
       CUSTOM: Custom

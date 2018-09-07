@@ -19,17 +19,15 @@ import PropTypes from 'prop-types';
 import {Link} from 'react-router-dom';
 import {getTimeQueryParams} from 'components/FieldLevelLineage/store/ActionCreator';
 
-export default function SummaryRow({entity}) {
+export default function SummaryRow({entity, index}) {
   const linkPath = `/ns/${entity.dataset.namespace}/datasets/${entity.dataset.dataset}/fields?${getTimeQueryParams()}`;
 
   return (
-    <div className="summary-row">
-      <div
-        className="namespace truncate"
-        title={entity.dataset.namespace}
-      >
-        {`'${entity.dataset.namespace}'`}
+    <div className="summary-row lineage-column">
+      <div className="index">
+        {index + 1}
       </div>
+
       <div className="dataset-name truncate">
         <Link
           to={linkPath}
@@ -39,7 +37,8 @@ export default function SummaryRow({entity}) {
           {entity.dataset.dataset}
         </Link>
       </div>
-      <div className="fields-list">
+
+      <div className="field-name">
         {
           entity.fields.map((field, i) => {
             return (
@@ -61,5 +60,6 @@ export default function SummaryRow({entity}) {
 }
 
 SummaryRow.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
+  index: PropTypes.number
 };

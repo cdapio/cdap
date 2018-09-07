@@ -56,7 +56,7 @@ NavigationView.propTypes = {
 const mapStateToProps = (state) => {
   return {
     activeIndex: state.operations.activeIndex,
-    limit: state.operations.incomingOperations.length
+    limit: state.operations.operations.length
   };
 };
 

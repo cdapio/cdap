@@ -83,6 +83,10 @@ const OpsDashboard = Loadable({
   loader: () => import(/* webpackChunkName: "OpsDashboard" */ 'components/OpsDashboard'),
   loading: LoadingSVGCentered
 });
+const FieldLevelLineage = Loadable({
+  loader: () => import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage'),
+  loading: LoadingSVGCentered
+});
 
 export default class Home extends Component {
   componentWillMount() {
@@ -99,6 +103,7 @@ export default class Home extends Component {
         <Switch>
           <Route exact path="/ns/:namespace" component={EntityListView} />
           <Route path="/ns/:namespace/apps/:appId" component={AppDetailedView} />
+          <Route exact path="/ns/:namespace/datasets/:datasetId/fields" component={FieldLevelLineage} />
           <Route path="/ns/:namespace/datasets/:datasetId" component={DatasetDetailedView} />
           <Route path="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
           <Route exact path="/ns/:namespace/rulesengine" component={RulesEngineHome} />

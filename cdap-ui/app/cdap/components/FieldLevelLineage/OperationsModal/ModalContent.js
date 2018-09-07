@@ -72,7 +72,7 @@ ModalContentView.propTypes = {
 
 const mapStateToProps = (state) => {
   return {
-    operations: state.operations.incomingOperations,
+    operations: state.operations.operations,
     activeIndex: state.operations.activeIndex,
     datasetId: state.lineage.datasetId
   };
