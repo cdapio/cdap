@@ -14,6 +14,9 @@
  * the License.
 */
 
+@import '~styles/variables.scss';
+@import '~styles/mixins.scss';
+
 .page-500 {
   display: flex;
   height: calc(100vh - 104px);
@@ -22,12 +25,6 @@
   flex-direction: column;
   overflow-y: auto;
   padding: 20px 0;
-  h4 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    strong {
-      display: block;
-    }
-  }
+
+  @include error-page-styles();
 }

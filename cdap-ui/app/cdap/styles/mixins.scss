@@ -72,3 +72,24 @@
     }
   }
 }
+
+@mixin error-page-styles() {
+   h1.error-main-title {
+    color: var(--brand-primary-color);
+    border-bottom: 3px solid var(--brand-primary-color);
+    padding-bottom: 10px;
+    font-weight: 600;
+  }
+  h1 {
+    margin-bottom: 40px;
+    font-size: 3.5rem;
+    text-align: center;
+  }
+  .navigation-section {
+    font-size: 14px;
+  }
+  a {
+    margin: 0 5px;
+    color: var(--brand-primary-color);
+  }
+}

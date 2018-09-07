@@ -23,20 +23,23 @@ import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 require('./404.scss');
 
+const I18N_PREFIX = 'features.Page404';
 export default function Page404({entityName, entityType, children}) {
   let namespace = NamespaceStore.getState().selectedNamespace;
   return (
     <div className="page-not-found">
-      <img src="/cdap_assets/img/404.png" />
+      <h1 className="error-main-title">
+        {T.translate(`${I18N_PREFIX}.mainTitle`)}
+      </h1>
       <h1>
         <strong>
           {
             isEmpty(entityType) || isEmpty(entityName) ?
-              T.translate('features.Page404.genericMessage')
+              T.translate(`${I18N_PREFIX}.genericMessage`)
             :
               (
                 <span>
-                  {T.translate('features.Page404.entityMessage', {entityType, entityName})}
+                  {T.translate(`${I18N_PREFIX}.entityMessage`, {entityType, entityName})}
                 </span>
               )
           }
@@ -49,18 +52,18 @@ export default function Page404({entityName, entityType, children}) {
           <div className="message-section">
             <h4>
               <strong>
-                {T.translate('features.Page404.subtitleMessage1')}
+                {T.translate(`${I18N_PREFIX}.subtitleMessage1`)}
               </strong>
             </h4>
             <div className="navigation-section">
               <div>
-                {T.translate('features.Page404.subtitleMessage2')}
+                {T.translate(`${I18N_PREFIX}.subtitleMessage2`)}
                 <Link to={`/ns/${namespace}/`}>
-                  {T.translate('features.Page404.overviewLabel')}
+                  {T.translate(`${I18N_PREFIX}.overviewLabel`)}
                 </Link>
               </div>
               <div>
-                {T.translate('features.Page404.manageLabel')}
+                {T.translate(`${I18N_PREFIX}.manageLabel`)}
                 <a
                   href={
                     window.getHydratorUrl({
@@ -71,7 +74,7 @@ export default function Page404({entityName, entityType, children}) {
                     })
                   }
                 >
-                  {T.translate('features.Page404.pipelinesMessage')}
+                  {T.translate(`${I18N_PREFIX}.pipelinesMessage`)}
                 </a>
               </div>
             </div>
