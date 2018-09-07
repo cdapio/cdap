@@ -36,7 +36,7 @@ import java.util.Optional;
 /**
  * Manual tool for testing out dataproc provisioning and deprovisioning.
  */
-public class DataProcTool {
+public class DataprocTool {
   private static final Gson GSON = new Gson();
 
   public static void main(String[] args) throws Exception {
@@ -68,7 +68,7 @@ public class DataProcTool {
       System.exit(-1);
     }
 
-    DataProcConf conf;
+    DataprocConf conf;
     if (commandLine.hasOption('c')) {
       String configFilePath = commandLine.getOptionValue('c');
       File configFile = new File(configFilePath);
@@ -77,7 +77,7 @@ public class DataProcTool {
         System.exit(-1);
       }
       try (Reader reader = new FileReader(configFile)) {
-        conf = GSON.fromJson(reader, DataProcConf.class);
+        conf = GSON.fromJson(reader, DataprocConf.class);
       }
     } else {
       if (!commandLine.hasOption('k')) {
@@ -93,13 +93,13 @@ public class DataProcTool {
       Map<String, String> properties = new HashMap<>();
       properties.put("accountKey", commandLine.getOptionValue('k'));
       properties.put("projectId", commandLine.getOptionValue('p'));
-      conf = DataProcConf.fromProperties(properties);
+      conf = DataprocConf.fromProperties(properties);
     }
 
     String imageVersion = commandLine.hasOption('i') ? commandLine.getOptionValue('i') : "1.2";
 
     String name = commandLine.getOptionValue('n');
-    try (DataProcClient client = DataProcClient.fromConf(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf)) {
       if ("provision".equals(command)) {
         client.createCluster(name, imageVersion, Collections.emptyMap());
       } else if ("details".equals(command)) {
@@ -116,7 +116,7 @@ public class DataProcTool {
   private static void printUsage(Options options) {
     HelpFormatter helpFormatter = new HelpFormatter();
     helpFormatter.printHelp(
-      DataProcTool.class.getSimpleName() + " provision|details|deprovision",
+      DataprocTool.class.getSimpleName() + " provision|details|deprovision",
       "Provisions, deprovisions, or gets the status of a cluster. Basic provisioner settings can be passed in as " +
         "options. Advanced provisioner settings can be specified in a file, in which case every setting must be " +
         "given.",
