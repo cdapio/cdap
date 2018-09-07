@@ -52,6 +52,7 @@ import find from 'lodash/find';
 import If from 'components/If';
 import NoDefaultConnection from 'components/DataPrepConnections/NoDefaultConnection';
 import isObject from 'lodash/isObject';
+import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -100,7 +101,8 @@ export default class DataPrepConnections extends Component {
       activeConnectionid,
       activeConnectionType,
       showAddConnectionPopover: false,
-      showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
+      showUpload: false, // FIXME: This is used only when showing with no routing. We can do better.,
+      redirectToDefaultConnectionOnDelete: false
     };
   }
 
@@ -128,6 +130,22 @@ export default class DataPrepConnections extends Component {
           this.fetchConnectionTypes();
         }
       });
+    }
+  }
+
+  componentDidUpdate() {
+    if (this.state.redirectToDefaultConnectionOnDelete) {
+      let newState = {
+        redirectToDefaultConnectionOnDelete: false
+      };
+      if (!this.props.enableRouting) {
+        newState = {
+          ...newState,
+          activeConnectionid: null,
+          activeConnectionType: null
+        };
+      }
+      this.setState(newState, this.fetchConnectionTypes);
     }
   }
 
@@ -261,6 +279,24 @@ export default class DataPrepConnections extends Component {
       );
   }
 
+  onActionFromConnectionsPopover = (action, connectionid) => {
+    let state = DataPrepBrowserStore.getState();
+    let activeBrowser;
+    let activeConnectionId;
+    if (state.activeBrowser.name) {
+      activeBrowser = state.activeBrowser.name.toLowerCase();
+      activeConnectionId = state[activeBrowser].connectionId;
+    }
+    // Check if the deleted connection is the active connection
+    // If yes then redirect to default connection otherwise just reload connections.
+    if (action === 'delete' && activeConnectionId === connectionid) {
+      return this.setState({
+        redirectToDefaultConnectionOnDelete: true
+      });
+    }
+    this.fetchConnectionsList();
+  }
+
   fetchConnectionsList = (action, targetId) => {
     let namespace = getCurrentNamespace();
 
@@ -374,7 +410,7 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={database}
-                onAction={this.fetchConnectionsList}
+                onAction={this.onActionFromConnectionsPopover}
               />
             </div>
           );
@@ -408,7 +444,7 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={kafka}
-                onAction={this.fetchConnectionsList}
+                onAction={this.onActionFromConnectionsPopover}
               />
             </div>
           );
@@ -442,7 +478,7 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={s3}
-                onAction={this.fetchConnectionsList}
+                onAction={this.onActionFromConnectionsPopover}
               />
             </div>
           );
@@ -476,7 +512,7 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={gcs}
-                onAction={this.fetchConnectionsList}
+                onAction={this.onActionFromConnectionsPopover}
               />
             </div>
           );
@@ -510,7 +546,7 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={bq}
-                onAction={this.fetchConnectionsList}
+                onAction={this.onActionFromConnectionsPopover}
               />
             </div>
           );
@@ -664,6 +700,11 @@ export default class DataPrepConnections extends Component {
 
   renderRoutes() {
     const BASEPATH = '/ns/:namespace/connections';
+    if (this.state.redirectToDefaultConnectionOnDelete) {
+      return (
+        <Redirect to={`/ns/${getCurrentNamespace()}/connections`} />
+      );
+    }
     return (
       <Switch>
         <Route
@@ -802,6 +843,9 @@ export default class DataPrepConnections extends Component {
   }
 
   showNonRoutableContents() {
+    if (this.state.redirectToDefaultConnectionOnDelete) {
+      return null;
+    }
     if (this.state.showUpload) {
       return (
         <ConnectionsUpload
@@ -827,6 +871,9 @@ export default class DataPrepConnections extends Component {
         let bucketName = workspaceInfo.properties['bucket-name'];
         if (bucketName) {
           path = `/${bucketName}/${key}`;
+        } else {
+          let state = DataPrepBrowserStore.getState();
+          path = state.s3.prefix;
         }
       }
       setActiveConnection = setS3AsActiveBrowser.bind(null, {name: ConnectionType.S3, id: this.state.activeConnectionid, path});
@@ -840,6 +887,9 @@ export default class DataPrepConnections extends Component {
         let bucketName = workspaceInfo.properties.bucket;
         if (bucketName) {
           path = `/${bucketName}/${path}/`;
+        } else {
+          let state = DataPrepBrowserStore.getState();
+          path = state.gcs.prefix;
         }
       }
       setActiveConnection = setGCSAsActiveBrowser.bind(null, {name: ConnectionType.GCS, id: this.state.activeConnectionid, path});
