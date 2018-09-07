@@ -71,8 +71,11 @@
               <span>{{ ::ListController.GLOBALS.artifactConvert[pipeline.artifact.name] }}</span>
             </td>
             <td>
-              <span class="status-bubble"
-                ng-class="ListController.MyPipelineStatusMapper.getStatusIndicatorClass(pipeline.displayStatus)"></span>
+                <span class="status-bubble"
+                  ng-class="ListController.MyPipelineStatusMapper.getStatusIndicatorClass(pipeline.displayStatus)">
+                  <icon-svg name="ListController.MyPipelineStatusMapper.getStatusIndicatorIcon(pipeline.displayStatus)"></icon-svg>
+                </span>
+
               <span>{{ pipeline.displayStatus }}</span>
             </td>
             <td>

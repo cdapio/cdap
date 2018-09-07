@@ -47,21 +47,38 @@ function lookupDisplayStatus (systemStatus) {
 }
 
 function getStatusIndicatorClass (displayStatus) {
-  if (displayStatus === 'Running' || displayStatus === 'Starting') {
+  if (
+    displayStatus === statusMap[PROGRAM_STATUSES.RUNNING] ||
+    displayStatus === statusMap[PROGRAM_STATUSES.STARTING] ||
+    displayStatus === statusMap[PROGRAM_STATUSES.PENDING]
+  ) {
     return 'status-blue';
-  } else if (displayStatus === 'Succeeded' || displayStatus === 'Starting' || displayStatus === 'Scheduling' || displayStatus === 'Stopping') {
+  } else if (
+    displayStatus === statusMap[PROGRAM_STATUSES.SUCCEEDED] ||
+    displayStatus === statusMap[PROGRAM_STATUSES.SCHEDULING] ||
+    displayStatus === statusMap[PROGRAM_STATUSES.STOPPING]
+  ) {
     return 'status-light-green';
-  } else if (displayStatus === 'Failed') {
+  } else if (displayStatus === statusMap[PROGRAM_STATUSES.FAILED]) {
     return 'status-light-red';
-  } else if (displayStatus === 'Draft') {
-    return 'status-outline-grey status-thin';
   } else {
     return 'status-light-grey';
   }
 }
 
+function getStatusIndicatorIcon (displayStatus) {
+  if (
+    displayStatus === statusMap[PROGRAM_STATUSES.PENDING] ||
+    displayStatus === statusMap[PROGRAM_STATUSES.DRAFT]
+  ) {
+    return 'icon-circle-o';
+  }
+  return 'icon-circle';
+}
+
 export default {
   statusMap,
   lookupDisplayStatus,
-  getStatusIndicatorClass
+  getStatusIndicatorClass,
+  getStatusIndicatorIcon,
 };

@@ -42,6 +42,7 @@ const RunStatus = ({runs, currentRun, pipelineId}) => {
   }
   let statusLabel = StatusMapper.lookupDisplayStatus(status);
   let statusCSSClass = StatusMapper.getStatusIndicatorClass(statusLabel);
+  let statusIcon = StatusMapper.getStatusIndicatorIcon(statusLabel);
 
   let runningRuns = runs.filter(run => run.status === PROGRAM_STATUSES.RUNNING);
 
@@ -51,7 +52,7 @@ const RunStatus = ({runs, currentRun, pipelineId}) => {
         <strong>{T.translate(`${PREFIX}.status`)}</strong>
       </div>
       <span className={`run-status-bubble ${statusCSSClass}`}>
-        <IconSVG name="icon-circle" />
+        <IconSVG name={statusIcon} />
       </span>
       <span>{statusLabel}</span>
       {

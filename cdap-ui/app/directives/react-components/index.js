@@ -56,4 +56,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('globalFooter', function(reactDirective) {
     return reactDirective(window.CaskCommon.Footer);
+  })
+  .directive('iconSvg', function(reactDirective) {
+    return reactDirective(window.CaskCommon.IconSVG);
   });
