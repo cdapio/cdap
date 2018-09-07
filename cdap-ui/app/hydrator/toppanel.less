@@ -400,12 +400,19 @@ body.theme-cdap {
               opacity: 1;
               transition: all 0.2s ease;
               visibility: visible;
-              &:first-child {
-                background-color: @body-bg;
-                &:hover,
-                &:focus { background-color: darken(@body-bg, 10%); }
+
+              &.save-button,
+              &.cancel-button {
+                font-weight: initial;
               }
-              &:last-child { margin-left: 5px; }
+
+              &.save-button {
+                margin-right: 10px;
+              }
+
+              &.cancel-button {
+                border-color: @grey-05;
+              }
             }
           }
         }
