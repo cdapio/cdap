@@ -1058,13 +1058,12 @@ cdap_sdk_start() {
   # Start SDK processes
   echo -n "$(date) Starting CDAP Sandbox ..."
   if ${__foreground}; then
-    echo
-    nice -1 "${JAVA}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
+    nice -1 "${JAVA}" "${KILL_ON_OOM_OPTS}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
       | tee -a "${LOG_DIR}"/cdap.log
     __ret=${?}
     return ${__ret}
   else
-    nohup nice -1 "${JAVA}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
+    nohup nice -1 "${JAVA}" "${KILL_ON_OOM_OPTS}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
       </dev/null >>"${LOG_DIR}"/cdap.log 2>&1 &
     __ret=${?}
     __pid=${!}
@@ -1474,3 +1473,7 @@ CDAP_SDK_OPTS="${OPTS} -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Dj
 export HEAPDUMP_ON_OOM=${HEAPDUMP_ON_OOM:-true}
 
 export NICENESS=${NICENESS:-0}
+
+# Default jvm option for the kill command, it cannot be combined with the SDK options because split_jvm_opts() method will
+# always split the "kill -9 %p" into three different commands 
+export KILL_ON_OOM_OPTS=${KILL_ON_OOM_OPTS:--XX:OnOutOfMemoryError="kill -9 %p"}
