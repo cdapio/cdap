@@ -110,7 +110,6 @@ public class StandaloneMain {
 
   // Special keys in the CConfiguration to disable stuff. It's mainly used for unit-tests that start Standalone.
   public static final String DISABLE_UI = "standalone.disable.ui";
-  public static final String DISABLE_DATAPREP = "standalone.disable.dataprep";
 
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
@@ -127,11 +126,9 @@ public class StandaloneMain {
   private final MetadataService metadataService;
   private final boolean securityEnabled;
   private final boolean sslEnabled;
-  private final boolean dataPrepEnabled;
   private final CConfiguration cConf;
   private final DatasetService datasetService;
   private final ExploreClient exploreClient;
-  private final WranglerAppCreationService wranglerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final MessagingService messagingService;
   private final OperationalStatsService operationalStatsService;
@@ -150,7 +147,6 @@ public class StandaloneMain {
     injector = Guice.createInjector(modules);
 
     levelDBTableService = injector.getInstance(LevelDBTableService.class);
-    wranglerAppCreationService = injector.getInstance(WranglerAppCreationService.class);
     messagingService = injector.getInstance(MessagingService.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     txService = injector.getInstance(InMemoryTransactionService.class);
@@ -187,8 +183,6 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
-
-    dataPrepEnabled = !cConf.getBoolean(DISABLE_DATAPREP, false);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -267,10 +261,6 @@ public class StandaloneMain {
     }
     metadataService.startAndWait();
 
-    if (dataPrepEnabled) {
-      wranglerAppCreationService.startAndWait();
-    }
-
     operationalStatsService.startAndWait();
 
     String protocol = sslEnabled ? "https" : "http";
@@ -291,10 +281,6 @@ public class StandaloneMain {
       // order matters: first shut down UI 'cause it will stop working after router is down
       if (userInterfaceService != null) {
         userInterfaceService.stopAndWait();
-      }
-
-      if (dataPrepEnabled) {
-        wranglerAppCreationService.stopAndWait();
       }
 
       //  shut down router to stop all incoming traffic

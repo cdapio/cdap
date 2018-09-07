@@ -45,6 +45,14 @@ public class RouterPathLookupTest {
   }
 
   @Test
+  public void testBootstrapPath() {
+    String path = "/v3/bootstrap";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), path);
+    RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
+  }
+
+  @Test
   public void testUserServicePath() {
     for (ProgramType programType : EnumSet.of(ProgramType.SERVICE, ProgramType.SPARK)) {
       String path = "/v3/namespaces/n1/apps/a1/" + programType.getCategoryName() + "/s1/methods/m1";

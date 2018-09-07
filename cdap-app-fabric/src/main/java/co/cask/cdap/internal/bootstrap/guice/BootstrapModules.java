@@ -23,10 +23,13 @@ import co.cask.cdap.internal.bootstrap.BootstrapService;
 import co.cask.cdap.internal.bootstrap.BootstrapStep;
 import co.cask.cdap.internal.bootstrap.FileBootstrapConfigProvider;
 import co.cask.cdap.internal.bootstrap.InMemoryBootstrapConfigProvider;
+import co.cask.cdap.internal.bootstrap.executor.AppCreator;
 import co.cask.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
 import co.cask.cdap.internal.bootstrap.executor.DefaultNamespaceCreator;
 import co.cask.cdap.internal.bootstrap.executor.NativeProfileCreator;
+import co.cask.cdap.internal.bootstrap.executor.ProgramStarter;
 import co.cask.cdap.internal.bootstrap.executor.SystemArtifactLoader;
+import co.cask.cdap.internal.bootstrap.executor.SystemPreferenceSetter;
 import co.cask.cdap.internal.bootstrap.executor.SystemProfileCreator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -78,10 +81,13 @@ public class BootstrapModules {
       bind(BootstrapService.class).in(Scopes.SINGLETON);
       MapBinder<BootstrapStep.Type, BootstrapStepExecutor> mapBinder = MapBinder.newMapBinder(
         binder(), BootstrapStep.Type.class, BootstrapStepExecutor.class);
+      mapBinder.addBinding(BootstrapStep.Type.CREATE_APPLICATION).to(AppCreator.class);
       mapBinder.addBinding(BootstrapStep.Type.CREATE_DEFAULT_NAMESPACE).to(DefaultNamespaceCreator.class);
       mapBinder.addBinding(BootstrapStep.Type.CREATE_NATIVE_PROFILE).to(NativeProfileCreator.class);
       mapBinder.addBinding(BootstrapStep.Type.CREATE_SYSTEM_PROFILE).to(SystemProfileCreator.class);
       mapBinder.addBinding(BootstrapStep.Type.LOAD_SYSTEM_ARTIFACTS).to(SystemArtifactLoader.class);
+      mapBinder.addBinding(BootstrapStep.Type.SET_SYSTEM_PROPERTIES).to(SystemPreferenceSetter.class);
+      mapBinder.addBinding(BootstrapStep.Type.START_PROGRAM).to(ProgramStarter.class);
     }
   }
 }

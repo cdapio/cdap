@@ -17,7 +17,6 @@
 
 package co.cask.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.profile.ProfileService;

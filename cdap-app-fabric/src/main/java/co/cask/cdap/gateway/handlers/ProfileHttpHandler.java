@@ -261,13 +261,12 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   }
 
   private void validateProvisionerProperties(ProfileCreateRequest request) throws BadRequestException {
-    ProvisionerInfo provisionerInfo = request.getProvisioner();
-    // this will only happen when the json file is valid, but contains no provisioner fields, GSON will serialize these
-    // fields with null, so accessing it will get a NullPointerException
-    if (provisionerInfo == null || provisionerInfo.getName() == null) {
-      throw new BadRequestException("Missing provisioner information in the json file. " +
-                                      "A profile must be associated with a provisioner.");
+    try {
+      request.validate();
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage());
     }
+    ProvisionerInfo provisionerInfo = request.getProvisioner();
     Map<String, String> properties = new HashMap<>();
     Collection<ProvisionerPropertyValue> provisionerProperties = provisionerInfo.getProperties();
     if (provisionerProperties != null) {

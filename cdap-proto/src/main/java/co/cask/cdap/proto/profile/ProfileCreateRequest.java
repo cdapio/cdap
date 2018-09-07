@@ -19,7 +19,6 @@ package co.cask.cdap.proto.profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Information about a profile.
@@ -35,12 +34,8 @@ public class ProfileCreateRequest {
     this.provisioner = provisioner;
   }
 
-  // this will only return null if there is no such field in json
-  @Nullable
   public ProvisionerInfo getProvisioner() {
-    // This is to make sure there is no null value in provisioner properties,
-    // since Gson will deserialize non-existing property to null value.
-    return provisioner == null ? null : new ProvisionerInfo(provisioner.getName(), provisioner.getProperties());
+    return provisioner;
   }
 
   public String getLabel() {
@@ -49,6 +44,18 @@ public class ProfileCreateRequest {
 
   public String getDescription() {
     return description;
+  }
+
+  /**
+   * Validate this is a valid object. Should be called when this is created through deserialization of user input.
+   *
+   * @throws IllegalArgumentException if the object is invalid
+   */
+  public void validate() {
+    if (provisioner == null) {
+      throw new IllegalArgumentException("Profile provisioner must be specified.");
+    }
+    provisioner.validate();
   }
 
   @Override

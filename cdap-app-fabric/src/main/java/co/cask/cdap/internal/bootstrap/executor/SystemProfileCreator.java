@@ -61,11 +61,9 @@ public class SystemProfileCreator extends BaseStepExecutor<SystemProfileCreator.
 
     @Override
     public void validate() {
+      super.validate();
       if (name == null || name.isEmpty()) {
         throw new IllegalArgumentException("Profile name must be specified");
-      }
-      if (getProvisioner() == null) {
-        throw new IllegalArgumentException("Profile provisioner must be specified.");
       }
       getId();
     }
