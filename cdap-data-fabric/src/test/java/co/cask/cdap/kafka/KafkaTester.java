@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,12 +23,12 @@ import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.Tasks;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
@@ -39,7 +39,6 @@ import kafka.utils.ZKStringSerializer$;
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
-import org.apache.twill.internal.utils.Networks;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.Compression;
@@ -59,13 +58,13 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -96,7 +95,7 @@ public class KafkaTester extends ExternalResource {
    * Kafka partition.
    */
   public KafkaTester() {
-    this(ImmutableMap.<String, String>of(), ImmutableList.<Module>of(), 1);
+    this(Collections.emptyMap(), Collections.emptyList(), 1);
   }
 
   /**
@@ -122,18 +121,14 @@ public class KafkaTester extends ExternalResource {
 
   @Override
   protected void before() throws Throwable {
-    int kafkaPort = Networks.getRandomPort();
-    Preconditions.checkState(kafkaPort > 0, "Failed to get random port.");
-    int zkServerPort = Networks.getRandomPort();
-    Preconditions.checkState(zkServerPort > 0, "Failed to get random port.");
     tmpFolder.create();
-    zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).setPort(zkServerPort).build();
+    zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
     zkServer.startAndWait();
     LOG.info("In memory ZK started on {}", zkServer.getConnectionStr());
 
-    kafkaServer = new EmbeddedKafkaServer(generateKafkaConfig(kafkaPort));
+    kafkaServer = new EmbeddedKafkaServer(generateKafkaConfig());
     kafkaServer.startAndWait();
-    initializeCConf(kafkaPort);
+    initializeCConf();
     injector = createInjector();
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
@@ -141,9 +136,11 @@ public class KafkaTester extends ExternalResource {
     kafkaClient.startAndWait();
     brokerService = injector.getInstance(BrokerService.class);
     brokerService.startAndWait();
+
+    String brokerList = updateKafkaBrokerList(injector.getInstance(CConfiguration.class), brokerService);
     LOG.info("Waiting for Kafka server to startup...");
     waitForKafkaStartup();
-    LOG.info("Started kafka server on port {}", kafkaPort);
+    LOG.info("Kafka server started with broker list {}", brokerList);
   }
 
   @Override
@@ -155,20 +152,30 @@ public class KafkaTester extends ExternalResource {
     zkServer.stopAndWait();
   }
 
-  private void initializeCConf(int kafkaPort) throws IOException {
+  private void initializeCConf() throws IOException {
     cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     for (Map.Entry<String, String> entry : extraConfigs.entrySet()) {
       cConf.set(entry.getKey(), entry.getValue());
     }
-    // Also set kafka broker list in the specified config parameters
-    for (String param : kafkaBrokerListParams) {
-      cConf.set(param, InetAddress.getLoopbackAddress().getHostAddress() + ":" + kafkaPort);
-    }
   }
 
-  private Injector createInjector() throws IOException {
+  private String updateKafkaBrokerList(CConfiguration cConf, BrokerService brokerService) {
+    String brokerList = Retries.callWithRetries(
+      brokerService::getBrokerList,
+      RetryStrategies.timeLimit(10, TimeUnit.SECONDS,
+                                RetryStrategies.exponentialDelay(100, 2000, TimeUnit.MILLISECONDS))
+    );
+
+    for (String param : kafkaBrokerListParams) {
+      cConf.set(param, brokerList);
+    }
+
+    return brokerList;
+  }
+
+  private Injector createInjector() {
     List<Module> modules = ImmutableList.<Module>builder()
       .add(new ConfigModule(cConf))
       .add(new ZKClientModule())
@@ -179,10 +186,11 @@ public class KafkaTester extends ExternalResource {
     return Guice.createInjector(modules);
   }
 
-  private Properties generateKafkaConfig(int port) throws IOException {
+  private Properties generateKafkaConfig() throws IOException {
     Properties properties = new Properties();
     properties.setProperty("broker.id", "1");
-    properties.setProperty("port", Integer.toString(port));
+    properties.setProperty("host.name", InetAddress.getLoopbackAddress().getHostAddress());
+    properties.setProperty("port", "0");
     properties.setProperty("num.network.threads", "2");
     properties.setProperty("num.io.threads", "2");
     properties.setProperty("socket.send.buffer.bytes", "1048576");
@@ -201,30 +209,28 @@ public class KafkaTester extends ExternalResource {
   }
 
   private void waitForKafkaStartup() throws Exception {
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      public Boolean call() throws Exception {
-        final AtomicBoolean isKafkaStarted = new AtomicBoolean(false);
-        try {
-          KafkaPublisher kafkaPublisher = kafkaClient.getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED,
-                                                                   Compression.NONE);
-          final String testTopic = "kafkatester.test.topic";
-          final String testMessage = "Test Message";
-          kafkaPublisher.prepare(testTopic).add(Charsets.UTF_8.encode(testMessage), 0).send().get();
-          getPublishedMessages(testTopic, ImmutableSet.of(0), 1, 0, new Function<FetchedMessage, String>() {
-            @Override
-            public String apply(FetchedMessage input) {
-              String fetchedMessage = Charsets.UTF_8.decode(input.getPayload()).toString();
-              if (fetchedMessage.equalsIgnoreCase(testMessage)) {
-                isKafkaStarted.set(true);
-              }
-              return "";
+    Tasks.waitFor(true, () -> {
+      final AtomicBoolean isKafkaStarted = new AtomicBoolean(false);
+      try {
+        KafkaPublisher kafkaPublisher = kafkaClient.getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED,
+                                                                 Compression.NONE);
+        final String testTopic = "kafkatester.test.topic";
+        final String testMessage = "Test Message";
+        kafkaPublisher.prepare(testTopic).add(Charsets.UTF_8.encode(testMessage), 0).send().get();
+        getPublishedMessages(testTopic, ImmutableSet.of(0), 1, 0, new Function<FetchedMessage, String>() {
+          @Override
+          public String apply(FetchedMessage input) {
+            String fetchedMessage = Charsets.UTF_8.decode(input.getPayload()).toString();
+            if (fetchedMessage.equalsIgnoreCase(testMessage)) {
+              isKafkaStarted.set(true);
             }
-          });
-        } catch (Exception e) {
-          // nothing to do as waiting for kafka startup
-        }
-        return isKafkaStarted.get();
+            return "";
+          }
+        });
+      } catch (Exception e) {
+        // nothing to do as waiting for kafka startup
       }
+      return isKafkaStarted.get();
     }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
