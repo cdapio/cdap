@@ -590,7 +590,7 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={spanner}
-                onAction={this.fetchConnectionsList}
+                onAction={this.onActionFromConnectionsPopover}
               />
             </div>
           );

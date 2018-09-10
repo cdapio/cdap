@@ -407,6 +407,9 @@ const spanner = (state = defaultSpannerValue, action = defaultAction) => {
   switch (action.type) {
     // This means the user is starting afresh. Reset everything to default and set the connectionID
     case Actions.SET_SPANNER_CONNECTION_ID:
+      if (action.payload.connectionId === state.connectionId) {
+        return state;
+      }
       return {
         ...state,
         connectionId: action.payload.connectionId
@@ -427,7 +430,8 @@ const spanner = (state = defaultSpannerValue, action = defaultAction) => {
         ...state,
         loading: false,
         instanceList: action.payload.instanceList,
-        instanceId: null
+        instanceId: null,
+        databaseId: null
       };
     case Actions.SET_SPANNER_DATABASE_LIST:
       return {

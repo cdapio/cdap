@@ -35,31 +35,27 @@ const setSpannerAsActiveBrowser = (payload) => {
 
   setActiveBrowser(payload);
 
-  if (spanner.connectionId !== connectionId) {
-    setSpannerLoading();
-    let namespace = getCurrentNamespace();
-    let params = {
-      namespace,
-      connectionId
-    };
+  setSpannerLoading();
+  let namespace = getCurrentNamespace();
+  let params = {
+    namespace,
+    connectionId
+  };
 
-    MyDataPrepApi.getConnection(params)
-      .subscribe((res) => {
-        let info = objectQuery(res, 'values', 0);
-        DataPrepBrowserStore.dispatch({
-          type: BrowserStoreActions.SET_SPANNER_CONNECTION_DETAILS,
-          payload: {
-            info,
-            connectionId
-          }
-        });
-        listSpannerInstances(connectionId);
-      }, (err) => {
-        setError(err);
+  MyDataPrepApi.getConnection(params)
+    .subscribe((res) => {
+      let info = objectQuery(res, 'values', 0);
+      DataPrepBrowserStore.dispatch({
+        type: BrowserStoreActions.SET_SPANNER_CONNECTION_DETAILS,
+        payload: {
+          info,
+          connectionId
+        }
       });
-    } else {
       listSpannerInstances(connectionId);
-    }
+    }, (err) => {
+      setError(err);
+    });
 };
 
 const listSpannerInstances = (connectionId) => {
