@@ -160,12 +160,16 @@ const file = (state = defaultFileSystemValue, action = defaultAction) => {
 
 const database = (state = defaultDatabaseValue, action = defaultAction) => {
   switch (action.type) {
-    case Actions.SET_DATABASE_CONNECTION_ID:
+    case Actions.SET_DATABASE_CONNECTION_ID: {
+      if (action.payload.connectionId === state.connectionId) {
+        return state;
+      }
       // This means the user is starting afresh. Reset everything to default and set the connectionID
       return {
         ...defaultDatabaseValue,
         connectionId: action.payload.connectionId
       };
+    }
     case Actions.SET_DATABASE_PROPERTIES:
       return Object.assign({}, state, {
         info: objectQuery(action, 'payload', 'info') || state.info,
@@ -193,12 +197,16 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
 
 const kafka = (state = defaultKafkaValue, action = defaultAction) => {
   switch (action.type) {
-    case Actions.SET_KAFKA_CONNECTION_ID:
+    case Actions.SET_KAFKA_CONNECTION_ID: {
+      if (action.payload.connectionId === state.connectionId) {
+        return state;
+      }
       // This means the user is starting afresh. Reset everything to default and set the connectionID
       return {
         ...defaultKafkaValue,
         connectionId: action.payload.connectionId
       };
+    }
     case Actions.SET_KAFKA_PROPERTIES:
       return Object.assign({}, state, {
         info: objectQuery(action, 'payload', 'info') || state.info,
@@ -226,12 +234,16 @@ const kafka = (state = defaultKafkaValue, action = defaultAction) => {
 
 const s3 = (state = defaultS3Value, action = defaultAction) => {
   switch (action.type) {
-    case Actions.SET_S3_CONNECTION_ID:
+    case Actions.SET_S3_CONNECTION_ID: {
+      if (action.payload.connectionId === state.connectionId) {
+        return state;
+      }
       // This means the user is starting afresh. Reset everything to default and set the connectionID
       return {
         ...defaultS3Value,
         connectionId: action.payload.connectionId
       };
+    }
     case Actions.SET_S3_CONNECTION_DETAILS:
       return {
         ...state,
@@ -273,12 +285,16 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
 
 const gcs = (state = defaultGCSValue, action = defaultAction) => {
   switch (action.type) {
-    case Actions.SET_GCS_CONNECTION_ID:
+    case Actions.SET_GCS_CONNECTION_ID: {
+      if (action.payload.connectionId === state.connectionId) {
+        return state;
+      }
       // This means the user is starting afresh. Reset everything to default and set the connectionID
       return {
         ...defaultGCSValue,
         connectionId: action.payload.connectionId
       };
+    }
     case Actions.SET_GCS_CONNECTION_DETAILS:
       return {
         ...state,
@@ -321,11 +337,15 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
 const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
   switch (action.type) {
     // This means the user is starting afresh. Reset everything to default and set the connectionID
-    case Actions.SET_BIGQUERY_CONNECTION_ID:
+    case Actions.SET_BIGQUERY_CONNECTION_ID: {
+      if (action.payload.connectionId === state.connectionId) {
+        return state;
+      }
       return {
         ...defaultBigQueryValue,
         connectionId: action.payload.connectionId
       };
+    }
     case Actions.SET_BIGQUERY_CONNECTION_DETAILS:
       return {
         ...state,

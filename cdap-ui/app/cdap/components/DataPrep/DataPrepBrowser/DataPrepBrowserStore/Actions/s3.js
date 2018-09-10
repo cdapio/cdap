@@ -26,7 +26,6 @@ const setS3AsActiveBrowser = (payload) => {
     return;
   }
   setActiveBrowser(payload);
-  setS3Loading();
   let namespace = NamespaceStore.getState().selectedNamespace;
   let {id, path} = payload;
   let params = {
@@ -39,28 +38,23 @@ const setS3AsActiveBrowser = (payload) => {
       connectionId: id
     }
   });
-  if (s3.connectionId !== payload.id) {
-    MyDataPrepApi.getConnection(params)
-      .subscribe((res) => {
-        let info = objectQuery(res, 'values', 0);
-        DataPrepBrowserStore.dispatch({
-          type: BrowserStoreActions.SET_S3_CONNECTION_DETAILS,
-          payload: {
-            info,
-            connectionId: id
-          }
-        });
-        if (path) {
-          setPrefix(path);
+  setS3Loading();
+  MyDataPrepApi.getConnection(params)
+    .subscribe((res) => {
+      let info = objectQuery(res, 'values', 0);
+      DataPrepBrowserStore.dispatch({
+        type: BrowserStoreActions.SET_S3_CONNECTION_DETAILS,
+        payload: {
+          info,
+          connectionId: id
         }
-      }, (err) => {
-        setError(err);
       });
-  } else {
-    if (path) {
-      setPrefix(path);
-    }
-  }
+      if (path) {
+        setPrefix(path);
+      }
+    }, (err) => {
+      setError(err);
+    });
 };
 
 const setPrefix = (prefix) => {
@@ -75,10 +69,9 @@ const setPrefix = (prefix) => {
 
 const fetchBucketDetails = (path = '') => {
   let { connectionId, loading} = DataPrepBrowserStore.getState().s3;
-  if (loading) {
-    return;
+  if (!loading) {
+    setS3Loading();
   }
-  setS3Loading();
   let {selectedNamespace: namespace} = NamespaceStore.getState();
   let params = {
     namespace,
