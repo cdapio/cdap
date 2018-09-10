@@ -16,11 +16,13 @@
 
 package co.cask.cdap.common.ssh;
 
+import co.cask.cdap.runtime.spi.ssh.PortForwarding;
 import co.cask.cdap.runtime.spi.ssh.SSHProcess;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelDirectTCPIP;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -30,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -211,6 +214,31 @@ public class DefaultSSHSession implements SSHSession {
         checkAck(in);
       } finally {
         channel.disconnect();
+      }
+    } catch (JSchException e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public PortForwarding createLocalPortForward(String targetHost, int targetPort, int originatePort,
+                                               PortForwarding.DataConsumer dataConsumer) throws IOException {
+    String originateIP = InetAddress.getLoopbackAddress().getHostAddress();
+
+    try {
+      ChannelDirectTCPIP sshChannel = (ChannelDirectTCPIP) session.openChannel("direct-tcpip");
+      sshChannel.setHost(targetHost);
+      sshChannel.setPort(targetPort);
+
+      sshChannel.setOrgIPAddress(originateIP);
+      sshChannel.setOrgPort(originatePort);
+      sshChannel.connect();
+
+      try {
+        return new DefaultPortForwarding(sshChannel, dataConsumer);
+      } catch (IOException e) {
+        sshChannel.disconnect();
+        throw e;
       }
     } catch (JSchException e) {
       throw new IOException(e);
