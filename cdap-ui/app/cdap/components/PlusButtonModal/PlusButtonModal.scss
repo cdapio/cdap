@@ -35,6 +35,7 @@ $sidepanel-width: 160px;
       // from there on.
       .cask-tab-headers {
         width: $sidepanel-width;
+        overflow-y: auto;
       }
       .tab-content {
         width: calc(100% - #{$sidepanel-width});
