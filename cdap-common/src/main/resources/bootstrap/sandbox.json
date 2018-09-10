@@ -35,6 +35,7 @@
       "runCondition": "ALWAYS",
       "arguments": {
         "namespace": "default",
+        "application": "dataprep",
         "type": "service",
         "name": "service"
       }

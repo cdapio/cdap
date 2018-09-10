@@ -106,7 +106,7 @@ public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
         throw new IllegalArgumentException("Namespace must be specified");
       }
       if (application == null || application.isEmpty()) {
-        throw new IllegalArgumentException("Application name must be specified");
+        throw new IllegalArgumentException("Application must be specified");
       }
       if (type == null || type.isEmpty()) {
         throw new IllegalArgumentException("Program type must be specified");
