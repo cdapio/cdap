@@ -478,19 +478,21 @@ function constructProperties(workspaceInfo, pluginVersion) {
       let realtimeStages = [wranglerStage];
       let batchStages = [wranglerStage];
 
-      let sourceConfigs;
-      if (state.workspaceInfo.properties.connection === 'file') {
+      let sourceConfigs, realtimeSource, batchSource;
+      let connections = [];
+      const connectionType = state.workspaceInfo.properties.connection;
+      if (connectionType === 'file') {
         sourceConfigs = constructFileSource(res[0], res[2]);
-      } else if (state.workspaceInfo.properties.connection === 'database') {
+      } else if (connectionType === 'database') {
         sourceConfigs = constructDatabaseSource(res[0], res[2]);
         delete sourceConfigs.batchSource.plugin.properties.schema;
-      } else if (state.workspaceInfo.properties.connection === 'kafka') {
+      } else if (connectionType === 'kafka') {
         sourceConfigs = constructKafkaSource(res[0], res[2]);
-      } else if (state.workspaceInfo.properties.connection === 's3') {
+      } else if (connectionType === 's3') {
         sourceConfigs = constructS3Source(res[0], res[2]);
-      } else if (state.workspaceInfo.properties.connection === 'gcs') {
+      } else if (connectionType === 'gcs') {
         sourceConfigs = constructGCSSource(res[0], res[2]);
-      } else if (state.workspaceInfo.properties.connection === 'bigquery') {
+      } else if (connectionType === 'bigquery') {
         sourceConfigs = constructBigQuerySource(res[0], res[2]);
       }
 
@@ -499,17 +501,21 @@ function constructProperties(workspaceInfo, pluginVersion) {
         return;
       }
 
-      let {
-        realtimeSource,
-        batchSource,
-        connections
-      } = sourceConfigs;
+      if (sourceConfigs) {
+        ({
+          realtimeSource,
+          batchSource,
+          connections
+        } = sourceConfigs);
+      }
 
       let realtimeConfig = null,
           batchConfig = null;
 
-      if (realtimeSource) {
-        realtimeStages.push(realtimeSource);
+      if (realtimeSource || connectionType === 'upload') {
+        if (realtimeSource) {
+          realtimeStages.push(realtimeSource);
+        }
         realtimeConfig = {
           artifact: realtimeArtifact,
           config: {
@@ -528,8 +534,10 @@ function constructProperties(workspaceInfo, pluginVersion) {
         };
       }
 
-      if (batchSource) {
-        batchStages.push(batchSource);
+      if (batchSource || connectionType === 'upload') {
+        if (batchSource) {
+          batchStages.push(batchSource);
+        }
         batchConfig = {
           artifact: batchArtifact,
           config: {
