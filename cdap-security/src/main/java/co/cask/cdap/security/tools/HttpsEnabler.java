@@ -31,11 +31,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
 /**
@@ -43,10 +43,9 @@ import javax.net.ssl.TrustManagerFactory;
  */
 public final class HttpsEnabler {
 
-
-  private KeyStore keyStore;
-  private Supplier<char[]> keystorePasswordSupplier;
-  private KeyStore trustStore;
+  private KeyManagerFactory keyManagerFactory;
+  private TrustManagerFactory trustManagerFactory;
+  private volatile SSLSocketFactory sslSocketFactory;
 
   /**
    * Sets the keystore to use for encryption.
@@ -57,10 +56,14 @@ public final class HttpsEnabler {
    * @param keystorePasswordSupplier a {@link Supplier} to provide the password for the keystore
    * @return this instance
    */
-  public HttpsEnabler setKeyStore(KeyStore keyStore, Supplier<char[]> keystorePasswordSupplier) {
-    this.keyStore = keyStore;
-    this.keystorePasswordSupplier = keystorePasswordSupplier;
-    return this;
+  public synchronized HttpsEnabler setKeyStore(KeyStore keyStore, Supplier<char[]> keystorePasswordSupplier) {
+    try {
+      keyManagerFactory = createKeyManagerFactory(keyStore, keystorePasswordSupplier);
+      sslSocketFactory = null;
+      return this;
+    } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
+      throw new RuntimeException("Failed to set key store", e);
+    }
   }
 
   /**
@@ -73,8 +76,29 @@ public final class HttpsEnabler {
    * @param trustStore the {@link KeyStore} containing certificates to be trusted.
    * @return this instance
    */
-  public HttpsEnabler setTrustStore(KeyStore trustStore) {
-    this.trustStore = trustStore;
+  public synchronized HttpsEnabler setTrustStore(KeyStore trustStore) {
+    try {
+      trustManagerFactory = createTrustManagerFactory(trustStore);
+      sslSocketFactory = null;
+      return this;
+    } catch (NoSuchAlgorithmException | KeyStoreException e) {
+      throw new RuntimeException("Failed to set trust store", e);
+    }
+  }
+
+  /**
+   * Sets to have the client trust all servers.
+   *
+   * @param trustAny if {@link true} it will trust any server;
+   *                 otherwise it will based on the trust store if it is set through {@link #setTrustStore(KeyStore)},
+   *                 or use the default trust chain.
+   * @return this instance
+   */
+  public synchronized HttpsEnabler setTrustAll(boolean trustAny) {
+    if (trustAny) {
+      trustManagerFactory = InsecureTrustManagerFactory.INSTANCE;
+      sslSocketFactory = null;
+    }
     return this;
   }
 
@@ -82,26 +106,15 @@ public final class HttpsEnabler {
    * Enables HTTPS for the given {@link HttpsURLConnection} based on the configuration in this class
    *
    * @param urlConn the {@link HttpsURLConnection} to update
-   * @param trustAny if {@link true} it will trust any server;
-   *                 otherwise it will based on the trust store if it is set, or use the default trust chain.
    * @return the urlConn from the parameter
    * @throws RuntimeException if failed to enable HTTPS
    */
-  public HttpsURLConnection enable(HttpsURLConnection urlConn, boolean trustAny) {
+  public HttpsURLConnection enable(HttpsURLConnection urlConn) {
     try {
-      KeyManagerFactory kmf = getKeyManagerFactory();
-      TrustManagerFactory tmf = getTrustManagerFactory(trustAny);
-
-      SSLContext sslContext = SSLContext.getInstance("SSL");
-      sslContext.init(kmf == null ? null : kmf.getKeyManagers(),
-                      tmf == null ? null : tmf.getTrustManagers(),
-                      new SecureRandom());
-
-      urlConn.setSSLSocketFactory(sslContext.getSocketFactory());
+      urlConn.setSSLSocketFactory(getSSLSocketFactory());
       urlConn.setHostnameVerifier((s, sslSession) -> true);
-
       return urlConn;
-    } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
+    } catch (NoSuchAlgorithmException | KeyManagementException e) {
       throw new RuntimeException("Failed to enable HTTPS for HttpsURLConnection", e);
     }
   }
@@ -117,63 +130,84 @@ public final class HttpsEnabler {
    */
   public <T extends NettyHttpService.Builder> T enable(T builder) {
     try {
-      KeyManagerFactory kmf = getKeyManagerFactory();
+      KeyManagerFactory kmf = keyManagerFactory;
       if (kmf == null) {
         throw new IllegalArgumentException("Missing keystore to enable HTTPS for NettyHttpService");
       }
 
       // Initialize the SslContext to work with our key managers.
       SslContextBuilder contextBuilder = SslContextBuilder.forServer(kmf);
-      TrustManagerFactory tmf = getTrustManagerFactory(false);
-      if (tmf != null) {
+      TrustManagerFactory tmf = this.trustManagerFactory;
+      boolean hasTrustManager = tmf != null && tmf != InsecureTrustManagerFactory.INSTANCE;
+      if (hasTrustManager) {
         contextBuilder = contextBuilder.trustManager(tmf);
       }
 
-      builder.enableSSL(new CustomSSLHandlerFactory(contextBuilder.build(), tmf != null));
+      builder.enableSSL(new CustomSSLHandlerFactory(contextBuilder.build(), hasTrustManager));
 
       return builder;
-    } catch (UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | SSLException e) {
+    } catch (SSLException e) {
       throw new RuntimeException("Failed to enable HTTPS for NettyHttpService", e);
     }
   }
 
   /**
-   * Returns a {@link KeyManagerFactory} based on the configuration in this class.
+   * Returns a {@link KeyManagerFactory} created from the given {@link KeyStore}.
    *
-   * @return a {@link KeyManagerFactory} or {@code null} if no key store is configured
+   * @param keyStore the {@link KeyStore} to use
+   * @param passwordSupplier a {@link Supplier} to provide password for the given {@link KeyStore}.
+   * @return a {@link KeyManagerFactory}
    */
-  @Nullable
-  private KeyManagerFactory getKeyManagerFactory() throws UnrecoverableKeyException,
+  private KeyManagerFactory createKeyManagerFactory(KeyStore keyStore,
+                                                    Supplier<char[]> passwordSupplier) throws UnrecoverableKeyException,
     NoSuchAlgorithmException, KeyStoreException {
-    if (keyStore == null) {
-      return null;
-    }
 
     KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    kmf.init(keyStore, keystorePasswordSupplier.get());
+    kmf.init(keyStore, passwordSupplier.get());
     return kmf;
   }
 
   /**
-   * Returns a {@link TrustManagerFactory} based on the configuration in this class.
+   * Returns a {@link TrustManagerFactory} created from the given {@link KeyStore}.
    *
-   * @param trustAny if {@code true} the {@link TrustManagerFactory} returned will trust any entity
-   * @return a {@link TrustManagerFactory} or {@code null} if no trust store is configured.
+   * @param trustStore the {@link KeyStore} to use
+   * @return a {@link TrustManagerFactory}
    */
-  @Nullable
-  private TrustManagerFactory getTrustManagerFactory(boolean trustAny) throws NoSuchAlgorithmException,
+  private TrustManagerFactory createTrustManagerFactory(KeyStore trustStore) throws NoSuchAlgorithmException,
     KeyStoreException {
-    if (trustAny) {
-      return InsecureTrustManagerFactory.INSTANCE;
-    }
-
-    if (trustStore == null) {
-      return null;
-    }
 
     TrustManagerFactory tmfFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
     tmfFactory.init(trustStore);
     return tmfFactory;
+  }
+
+  /**
+   * Returns the {@link SSLSocketFactory} based on the latest configuration of this class.
+   *
+   * @return a {@link SSLSocketFactory}
+   */
+  private SSLSocketFactory getSSLSocketFactory() throws NoSuchAlgorithmException, KeyManagementException {
+    SSLSocketFactory factory = sslSocketFactory;
+    if (factory != null) {
+      return factory;
+    }
+    synchronized (this) {
+      factory = sslSocketFactory;
+      if (factory != null) {
+        return factory;
+      }
+
+      SSLContext sslContext = SSLContext.getInstance("SSL");
+      KeyManagerFactory kmf = keyManagerFactory;
+      TrustManagerFactory tmf = trustManagerFactory;
+
+      sslContext.init(kmf == null ? null : kmf.getKeyManagers(),
+                      tmf == null ? null : tmf.getTrustManagers(),
+                      new SecureRandom());
+
+      sslSocketFactory = factory = sslContext.getSocketFactory();
+      return factory;
+    }
   }
 
   /**

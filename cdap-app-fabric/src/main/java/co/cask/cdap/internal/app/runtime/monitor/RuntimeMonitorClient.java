@@ -59,8 +59,7 @@ public final class RuntimeMonitorClient {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitorClient.class);
   private final URI baseURI;
   private final HttpRequestConfig requestConfig;
-  private final KeyStore keyStore;
-  private final KeyStore trustStore;
+  private final HttpsEnabler httpsEnabler;
   private final DatumReader<GenericRecord> responseDatumReader;
 
 
@@ -68,8 +67,7 @@ public final class RuntimeMonitorClient {
                               KeyStore keyStore, KeyStore trustStore) {
     this.baseURI = URI.create("https://" + hostname + ":" + port + "/v1/");
     this.requestConfig = requestConfig;
-    this.keyStore = keyStore;
-    this.trustStore = trustStore;
+    this.httpsEnabler = new HttpsEnabler().setKeyStore(keyStore, ""::toCharArray).setTrustStore(trustStore);
     this.responseDatumReader = new GenericDatumReader<>(
       MonitorSchemas.V1.MonitorResponse.SCHEMA.getValueType().getElementType());
   }
@@ -206,7 +204,7 @@ public final class RuntimeMonitorClient {
    * Decode monitor messages from decoder
    * @param decoder Decoder to decode messages
    * @return list of decoded monitor messages
-   * @throws IOException
+   * @throws IOException if failed to decode the message
    */
   private Deque<MonitorMessage> decodeMessages(Decoder decoder) throws IOException {
     Deque<MonitorMessage> decodedMessages = new LinkedList<>();
@@ -255,10 +253,7 @@ public final class RuntimeMonitorClient {
 
     urlConn.setConnectTimeout(requestConfig.getConnectTimeout());
     urlConn.setReadTimeout(requestConfig.getReadTimeout());
-    return new HttpsEnabler()
-      .setKeyStore(keyStore, ""::toCharArray)
-      .setTrustStore(trustStore)
-      .enable((HttpsURLConnection) urlConn, false);
+    return httpsEnabler.enable((HttpsURLConnection) urlConn);
   }
 
   /**

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.router.handlers;
 
+import co.cask.cdap.common.http.Channels;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;

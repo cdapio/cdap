@@ -29,7 +29,6 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.security.KeyStore;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -87,9 +86,9 @@ public class HttpsEnablerTest {
    * Private method to verify https connection.
    *
    * @param useTrustStore {@code true} to have the client use a trust store that contains the certificate of the server
-   * @param trustAny {@code true} to have the client trust any https server
+   * @param trustAll {@code true} to have the client trust any https server
    */
-  private void testServer(boolean useTrustStore, boolean trustAny) throws Exception {
+  private void testServer(boolean useTrustStore, boolean trustAll) throws Exception {
     String ksPass = "xyz";
     KeyStore keyStore = KeyStores.generatedCertKeyStore(1, ksPass);
 
@@ -108,14 +107,14 @@ public class HttpsEnablerTest {
       InetSocketAddress address = httpService.getBindAddress();
       URL url = new URL(String.format("https://%s:%d/ping", address.getHostName(), address.getPort()));
 
-      HttpsEnabler enabler = new HttpsEnabler();
+      HttpsEnabler enabler = new HttpsEnabler().setTrustAll(trustAll);
 
       // Optionally validates the server
       if (useTrustStore) {
         enabler = enabler.setTrustStore(KeyStores.createTrustStore(keyStore));
       }
 
-      HttpsURLConnection urlConn = enabler.enable((HttpsURLConnection) url.openConnection(), trustAny);
+      HttpsURLConnection urlConn = enabler.enable((HttpsURLConnection) url.openConnection());
       Assert.assertEquals(200, urlConn.getResponseCode());
     } finally {
       httpService.stop();
@@ -154,12 +153,12 @@ public class HttpsEnablerTest {
       InetSocketAddress address = httpService.getBindAddress();
       URL url = new URL(String.format("https://%s:%d/ping", address.getHostName(), address.getPort()));
 
-      HttpsEnabler clientEnabler = new HttpsEnabler();
+      HttpsEnabler clientEnabler = new HttpsEnabler().setTrustAll(true);
       if (useClientAuth) {
         clientEnabler.setKeyStore(clientKeyStore, ksPass::toCharArray);
       }
 
-      HttpsURLConnection urlConn = clientEnabler.enable((HttpsURLConnection) url.openConnection(), true);
+      HttpsURLConnection urlConn = clientEnabler.enable((HttpsURLConnection) url.openConnection());
       Assert.assertEquals(200, urlConn.getResponseCode());
     } finally {
       httpService.stop();
