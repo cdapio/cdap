@@ -19,6 +19,7 @@
 $header-border: $grey-05;
 $header-bg: $grey-07;
 $content-font-color: $grey-01;
+$instance-fill-color: $blue-02;
 
 .spanner-browser {
   // substract height of header and footer
@@ -71,7 +72,7 @@ $content-font-color: $grey-01;
         .icon-svg { margin-right: 5px; }
 
         .instance-icon {
-          fill: #3b78e7;
+          fill: $instance-fill-color;
         }
 
         &:hover {
