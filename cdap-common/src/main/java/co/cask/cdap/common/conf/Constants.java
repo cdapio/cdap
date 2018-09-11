@@ -1429,6 +1429,7 @@ public final class Constants {
    */
   public static final class Provisioner {
     public static final String EXTENSIONS_DIR = "runtime.extensions.dir";
+    public static final String SYSTEM_PROPERTY_PREFIX = "provisioner.system.properties.";
   }
 
   /**
