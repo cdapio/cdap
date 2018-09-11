@@ -19,6 +19,7 @@ import LoadingIndicatorStore, {BACKENDSTATUS, LOADINGSTATUS} from 'components/Lo
 import T from 'i18n-react';
 import {Modal} from 'reactstrap';
 import LoadingSVG from 'components/LoadingSVG';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.LoadingIndicator';
 
@@ -77,7 +78,9 @@ export default class LoadingIndicator extends Component {
         return (
           <div>
             <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
-            <div>{T.translate(`${PREFIX}.restartCDAP`)}</div>
+            <div>{T.translate(`${PREFIX}.restartCDAP`, {
+              productName: Theme.productName,
+            })}</div>
           </div>
         );
       }

@@ -19,13 +19,17 @@ import PropTypes from 'prop-types';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import {connect} from 'react-redux';
+import {Theme} from 'services/ThemeHelper';
 
 const NAMESPACE_I18N_PREFIX = 'features.NamespaceDetails';
 
 function NamespaceDetailsPageTitle({namespace_name}) {
   return (
     <Helmet
-      title={T.translate(`${NAMESPACE_I18N_PREFIX}.pageTitle`, {namespace_name})}
+      title={T.translate(`${NAMESPACE_I18N_PREFIX}.pageTitle`, {
+        namespace_name,
+        productName: Theme.productName,
+      })}
     />
   );
 }

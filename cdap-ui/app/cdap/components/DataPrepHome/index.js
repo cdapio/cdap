@@ -33,6 +33,7 @@ import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import ee from 'event-emitter';
 import Version from 'services/VersionRange/Version';
+import {Theme} from 'services/ThemeHelper';
 
 require('./DataPrepHome.scss');
 /**
@@ -272,7 +273,9 @@ export default class DataPrepHome extends Component {
   render() {
     let pageTitle = (
       <Helmet
-        title={T.translate('features.DataPrep.pageTitle')}
+        title={T.translate('features.DataPrep.pageTitle', {
+          productName: Theme.productName,
+        })}
       />
     );
     const renderPageTitle = () => {

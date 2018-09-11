@@ -33,7 +33,6 @@ import Footer from 'components/Footer';
 import ConnectionExample from 'components/ConnectionExample';
 import cookie from 'react-cookie';
 import {BrowserRouter, Route, Switch} from 'react-router-dom';
-import T from 'i18n-react';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
@@ -52,6 +51,7 @@ import HttpExecutor from 'components/HttpExecutor';
 import {applyTheme} from 'services/ThemeHelper';
 import ErrorBoundary from 'components/ErrorBoundary';
 import OverlayFocus from 'components/OverlayFocus';
+import {Theme} from 'services/ThemeHelper';
 const SampleTSXComponent = Loadable({
   loader: () => import (/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
   loading: LoadingSVGCentered
@@ -106,11 +106,10 @@ class CDAP extends Component {
   }
 
   render() {
-
     return (
       <BrowserRouter basename="/cdap">
         <div className="cdap-container">
-          <Helmet title={T.translate('commons.cdap')} />
+          <Helmet title={Theme.productName} />
           <Header />
           <LoadingIndicator />
           <StatusAlertMessage />

@@ -37,6 +37,7 @@ import queryString from 'query-string';
 import {Route, Switch} from 'react-router-dom';
 import FieldLevelLineage from 'components/FieldLevelLineage';
 import {SCOPES} from 'services/global-constants';
+import {Theme} from 'services/ThemeHelper';
 require('./DatasetDetailedView.scss');
 
 export default class DatasetDetailedView extends Component {
@@ -217,7 +218,10 @@ export default class DatasetDetailedView extends Component {
     return (
       <div className="app-detailed-view dataset-detailed-view">
         <Helmet
-          title={T.translate('features.DatasetDetailedView.Title', {datasetId: datasetId})}
+          title={T.translate('features.DatasetDetailedView.Title', {
+            datasetId: datasetId,
+            productName: Theme.productName,
+          })}
         />
         <div className="bread-crumb-wrapper">
           <BreadCrumb

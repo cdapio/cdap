@@ -37,6 +37,7 @@ import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import Helmet from 'react-helmet';
+import {Theme} from 'services/ThemeHelper';
 
 require('./DataPrep.scss');
 
@@ -289,7 +290,8 @@ export default class DataPrep extends Component {
             null
           :
             <Helmet title={T.translate(`${DATAPREP_I18N_PREFIX}.pageTitle`, {
-              workspaceUri: !isNilOrEmpty(this.state.workspaceName) ? `| ${this.state.workspaceName}` : ''
+              workspaceUri: !isNilOrEmpty(this.state.workspaceName) ? `| ${this.state.workspaceName}` : '',
+              productName: Theme.productName,
             })} />
         }
         <DataPrepErrorAlert />

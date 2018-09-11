@@ -20,10 +20,14 @@ import Helmet from 'react-helmet';
 import {connect} from 'react-redux';
 import T from 'i18n-react';
 import {isNilOrEmpty, objectQuery} from 'services/helpers';
+import {Theme} from 'services/ThemeHelper';
 const PREFIX = 'features.DataPrep.DataPrepBrowser';
 
 function DataPrepBrowserPageTitle({connectionId, browserI18NName, path}) {
-  let title = T.translate(`${PREFIX}.${browserI18NName}.pageTitle`, {connectionId });
+  let title = T.translate(`${PREFIX}.${browserI18NName}.pageTitle`, {
+    connectionId,
+    productName: Theme.productName,
+  });
   if (!isNilOrEmpty(path)) {
     title = `${title} - ${path}`;
   }

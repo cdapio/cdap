@@ -35,6 +35,7 @@ import PlusButton from 'components/PlusButton';
 import Helmet from 'react-helmet';
 import queryString from 'query-string';
 import {SCOPES} from 'services/global-constants';
+import {Theme} from 'services/ThemeHelper';
 
 require('./StreamDetailedView.scss');
 
@@ -213,7 +214,10 @@ export default class StreamDetailedView extends Component {
     return (
       <div className="app-detailed-view streams-detailed-view">
         <Helmet
-          title={T.translate('features.StreamDetailedView.Title', {streamId: this.props.match.params.streamId})}
+          title={T.translate('features.StreamDetailedView.Title', {
+            streamId: this.props.match.params.streamId,
+            productName: Theme.productName,
+          })}
         />
         <div className="bread-crumb-wrapper">
           <BreadCrumb

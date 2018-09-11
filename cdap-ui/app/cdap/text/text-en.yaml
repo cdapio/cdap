@@ -168,10 +168,9 @@ features:
           confirmationText: "Are you sure you want to reload all system artifacts?"
           errorMessage: Failed to load system artifacts
           label: Reload System Artifacts
-      pageTitle: CDAP | Administration | Configuration
+      pageTitle: '{productName} | Administration | Configuration'
     Management:
-      pageTitle: CDAP | Administration | Management
-    PageTitle: CDAP | Management
+      pageTitle: '{productName} | Administration | Management'
     Services:
       title: Services
       headers:
@@ -222,7 +221,7 @@ features:
       historyLabel: Program runs
       programsLabel: Programs
       propertiesLabel: Properties
-    Title: CDAP | Applications | {appId}
+    Title: '{productName} | Applications | {appId}'
   AuthorizationMessage:
     callToAction1: Please contact your system administrator to request access to a namespace
     callToAction2:
@@ -231,7 +230,7 @@ features:
       message2: as another user
     callToAction3:
       message1: "Create a new namespace "
-      message2: "(Note: You will require ADMIN privileges on CDAP for creating a namespace)"
+      message2: "(Note: You will require ADMIN privileges for creating a namespace)"
     mainMessage: " You are not authorized to access any existing namespace"
   Cloud:
     Profiles:
@@ -250,8 +249,8 @@ features:
         totalRuns: Total runs
       CreateView:
         ProvisionerSelection:
-          pageTitle: CDAP | Profiles | Create
-        pageTitle: CDAP | Profiles | Create | {provisioner_name}
+          pageTitle: '{productName} | Profiles | Create'
+        pageTitle: '{productName} | Profiles | Create | {provisioner_name}'
         profileName: Profile name
         profileLabel: Profile label
       DetailView:
@@ -277,7 +276,7 @@ features:
         enableError: "There was a problem enabling the profile: {message}"
         hideDetails: Hide Details
         noProperties: No properties available for this profile
-        pageTitle: CDAP | Profiles | {profile_name}
+        pageTitle: '{productName} | Profiles | {profile_name}'
         profileDetails: Profile details
         profileUsage: "{profile} usage"
         secureKeyPopover: Service account is stored using a secure key
@@ -321,8 +320,8 @@ features:
       retryNow: Retry now
       retrying: Retrying...
       secondsLabel: seconds.
-      tryAgain: Unable to communicate with CDAP services. Retrying in
-      timeOut: Timed out while attempting to communicate with CDAP services. Please contact your system administrator.
+      tryAgain: Unable to communicate with system services. Retrying in
+      timeOut: Timed out while attempting to communicate with system services. Please contact your system administrator.
     Header:
       filterBy: Filter by
       search-placeholder: Search
@@ -358,11 +357,11 @@ features:
       errorMessage: Page {pageNum} not found
       suggestionMessage1: "Go back to:"
       suggestionMessage2: Page 1
-    Title: CDAP | Control Center
+    Title: '{productName} | Control Center'
   DataPrepServiceControl:
     btnLabel: Enable Data Preparation
     btnLoadingLabel: "Enabling..."
-    description: CDAP Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
+    description: Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
     list:
       1: Easy and interactive way to work with messy data
       2: Apply transformations using a variety of operations on various data types
@@ -421,7 +420,7 @@ features:
           emptyDatasetList: 'No datasets in connection _{connectionName}_'
           emptyTableList: 'No tables in dataset _{datasetName}_'
         name: Name
-        pageTitle: CDAP | Connections | Google BigQuery | {connectionId}
+        pageTitle: '{productName} | Connections | Google BigQuery | {connectionId}'
         title: Select table
       DatabaseBrowser:
         defaultErrorMessage: Reading {tableId} failed. Please try again.
@@ -431,7 +430,7 @@ features:
           suggestionTitle: "You can try to:"
           suggestion1: your search
           title: 'No match found for "{searchText}"'
-        pageTitle: CDAP | Connections | Database | {connectionId}
+        pageTitle: '{productName} | Connections | Database | {connectionId}'
         searchPlaceholder: Search table name
         table:
           namecollabel: NAME
@@ -452,7 +451,7 @@ features:
             Name: Name
             Size: Size
             Type: Type
-        pageTitle: CDAP | Connections | Google Cloud Storage | {connectionId}
+        pageTitle: '{productName} | Connections | Google Cloud Storage | {connectionId}'
         Search:
           placeholder: Search this directory
         TopPanel:
@@ -466,7 +465,7 @@ features:
           suggestionTitle: "You can try to:"
           suggestion1: your search
           title: 'No match found for "{searchText}"'
-        pageTitle: CDAP | Connections | Kafka | {connectionId}
+        pageTitle: '{productName} | Connections | Kafka | {connectionId}'
         searchPlaceholder: Search topic
         table:
           topics: Topics
@@ -487,7 +486,7 @@ features:
             Name: Name
             Owner: Owner
             Size: Size
-        pageTitle: CDAP | Connections | S3 | {connectionId}
+        pageTitle: '{productName} | Connections | S3 | {connectionId}'
         Search:
           placeholder: Search this directory
         TopPanel:
@@ -942,7 +941,7 @@ features:
         variableNamePlaceholder: Enter counter name
       Swap:
         title: Swap two column names
-    pageTitle: CDAP | Data Preparation {workspaceUri}
+    pageTitle: '{productName} | Data Preparation {workspaceUri}'
     PipelineError:
       bigquery: Unable to find Google BigQuery plugin. Please install Google Cloud Plugins from Hub.
       database: Unable to find Database Plugins. Please make sure Database Plugins are available.
@@ -1007,7 +1006,7 @@ features:
       more: More
       PlusButton:
         addDirective: Add directive
-        successMessage: You successfully added a custom directive to CDAP. Apply that directive by typing it into the power mode input area.
+        successMessage: You successfully added a custom directive. Apply that directive by typing it into the power mode input area.
       realtimeDisabledTooltip: "Importing data from {type} in realtime is currently not supported."
       s3: S3
       SchemaModal:
@@ -1179,7 +1178,7 @@ features:
     kafka: Kafka ({count})
     NoDefaultConnection:
       title: No default connection available
-    pageTitle: CDAP | Connections
+    pageTitle: '{productName} | Connections'
     s3: S3 ({count})
     title: "Connections in \"{namespace}\""
     upload: Upload
@@ -1196,7 +1195,7 @@ features:
       programsWithCount: Programs ({count})
       properties: Properties
       schema: Schema
-    Title: CDAP | Dataset | {datasetId}
+    Title: '{productName} | Dataset | {datasetId}'
   Dashboard:
     Title: Dashboard
   Description:
@@ -1230,6 +1229,7 @@ features:
       moreInfo: for more info
       nextSelect: Next, select a machine learning algorithm
       numDirectives: "No of directives: "
+      pageTitle: '{productName} | Analytics | {experimentIdWithSuffix}'
       random: Random
       selectMLAlgorithm: Select a machine learning algorithm
       selectOutcome: Select an outcome
@@ -1272,7 +1272,7 @@ features:
       modelTrainingLogs: Model training logs
       numModels: No of models
       outcome: Outcome
-      pageTitle: CDAP | Analytics | {experiment_name}
+      pageTitle: '{productName} | Analytics | {experiment_name}'
       precision: Precision
       r2: R2
       recall: Recall
@@ -1287,7 +1287,8 @@ features:
         1: "{context} experiment"
         _: "{context} experiments"
       numModels: No of models
-    pageTitle: CDAP | Analytics
+      pageTitle: '{productName} | Analytics | All Experiments'
+    pageTitle: '{productName} | Analytics'
     ServiceControl:
       Benefits:
         b1: Intuitive Web UI for building, training, testing and evaluating machine learning models.
@@ -1297,7 +1298,7 @@ features:
         b5: Support for tuning custom hyperparameters for algorithms.
         b6: Integrated metrics and visualization providing rich summaries and graphs for model evaluation.
         title: "Some key benefits of MMDS are:"
-      description: "Data scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models using CDAP."
+      description: "Data scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models."
       enableBtnLabel: Enable MMDS
       environmentCheckMessage: Checking for environment before enabling Analytics
       errorCommunicating: Error while communicating with MMDS service
@@ -1446,12 +1447,10 @@ features:
     viewTracker: View in Tracker
 
   LoadingIndicator:
-    backendDown: 'Unable to connect to CDAP'
-    backendDownSubtitle: 'Attempting to connect...'
     contactadmin: Contact system administrator
     defaultMessage: 'Loading...'
     nodeserverDown: 'User interface service is down'
-    restartCDAP: Restart CDAP
+    restartCDAP: Restart {productName}
     restartUI: Restart the UI; or
     servicesDown: A few system services are down
     serviceDown: The system service {serviceName} is down
@@ -1532,7 +1531,7 @@ features:
       schedulerQueueName: 'Scheduler queue name: '
     namespace: Namespace
     namespaceName: Namespace '{namespace}'
-    pageTitle: CDAP | Namespace | {namespace_name}
+    pageTitle: '{productName} | Namespace | {namespace_name}'
     pipelines: Pipelines
     preferences:
       label: Preferences
@@ -1572,7 +1571,7 @@ features:
       streams: Streams
     pipelinesLabel: Pipelines
     ProductDropdown:
-      aboutLabel: About CDAP
+      aboutLabel: About {productName}
       accessToken: Access Token
       dataPrep: Data Preparation
       documentationLabel: Documentation
@@ -1588,7 +1587,7 @@ features:
       text: Control Center allows you to create, manage, operate, and monitor datasets and applications.
       title: Control Center
     Hub:
-      text: The Hub allows administrators to distribute re-usable pipelines, applications, plugins, and solutions to all CDAP users in their organizations.
+      text: The Hub allows administrators to distribute re-usable pipelines, applications, plugins, and solutions to all {productName} users in their organizations.
       title: Hub
     Metadata:
       text: Metadata enables data discovery through search, and data governance through lineage.
@@ -1600,16 +1599,16 @@ features:
       text: Preparation allows you to easily connect to a variety of data sources and cleanse data using point and click interactions. Once you are satisfied, you can operationalize your transformations in a pipeline.
       title: Preparation
     Welcome:
-      bodyText: CDAP is an open source framework that simplifies data application development, data integration, and data management.
+      bodyText: '{productName} is an open source framework that simplifies data application development, data integration, and data management.'
       close: No, Thanks
-      header: Welcome to CDAP
+      header: Welcome to {productName}
       showAgainToggle: Don't show tour again.
       startTour: Start Tour
       takeTour: Take a short tour to discover all that you can do.
 
   OpsDashboard:
     header: Dashboard
-    pageTitle: CDAP | Dashboard
+    pageTitle: '{productName} | Dashboard'
     RunsGraph:
       chart: Chart
       disabledArrowTooltip: The runs timelime is only available for the past 7 days
@@ -2112,7 +2111,7 @@ features:
         select: Select time
         timeRange: "{startTime} to {endTime}"
     header: Reports
-    pageTitle: CDAP | Reports
+    pageTitle: '{productName} | Reports'
     reportName: Report name
     reports:
       1: "{context} report"
@@ -2242,7 +2241,7 @@ features:
       owner: Owner
       version: Version {version}
     Home:
-      pageTitle: CDAP | Rules Engine
+      pageTitle: '{productName} | Rules Engine'
       Tabs:
         rbTitle: RuleBooks
         rulesTitle: Rules
@@ -2320,7 +2319,7 @@ features:
   StatusAlertMessage:
     message: 'Services are back online'
   StreamDetailedView:
-    Title: CDAP | Stream | {streamId}
+    Title: '{productName} | Stream | {streamId}'
 
   Tags:
     allTags: All Tags
@@ -2394,8 +2393,8 @@ features:
         keytab-uri-label: "Keytab URI"
         keytab-uri-placeholder: "Location of keytab file associated with the principal"
         principal-label: "Principal"
-        principal-placeholder: "Kerberos principal of the user to run CDAP programs as"
-        sld-label: "Specify credentials for securely impersonating CDAP programs in this namespace."
+        principal-placeholder: "Kerberos principal of the user to run programs as"
+        sld-label: "Specify credentials for securely impersonating programs in this namespace."
         ssd-label: "Security"
       Step4:
         name-label: "Name"
@@ -2652,7 +2651,7 @@ features:
         shorttitle: Setup format and schema
         title: Set format and schema
       Step3:
-        description: Setting up a trigger configures CDAP to notify systems observing to start processing.
+        description: Setting up a trigger notifies systems observing to start processing.
         mblabel: Megabytes (MB)
         shorttitle: Trigger setup
         thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing the data in this stream.
