@@ -1745,7 +1745,7 @@
                   <exclude>conf/**</exclude>
                   <exclude>data/**</exclude>
                   <exclude>plugins/**</exclude>
-                  <exclude>**/Apache-LICENSE-2.0</exclude>
+                  <exclude>**/LICENSES/**</exclude>
                   <exclude>**/VERSION</exclude>
                   <exlcude>**/*.patch</exlcude>
                   <exclude>**/logrotate.d/**</exclude>
@@ -2139,6 +2139,10 @@
                         <includes>
                           <include>LICENSE-2.0.txt</include>
                         </includes>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.basedir}/cdap-standalone/src/dist/LICENSES</directory>
+                        <targetPath>LICENSES</targetPath>
                       </resource>
                       <resource>
                         <directory>${project.parent.basedir}/cdap-common/bin</directory>
