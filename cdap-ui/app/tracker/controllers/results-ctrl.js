@@ -14,6 +14,16 @@
  * the License.
  */
 
+const METADATA_FILTERS = {
+  name: 'Name',
+  description: 'Description',
+  userTags: 'User tags',
+  systemTags: 'System tags',
+  userProperties: 'User properties',
+  systemProperties: 'System properties',
+  schema: 'Schema'
+};
+
 class TrackerResultsController {
   constructor($state, myTrackerApi, $scope, myHelpers) {
     this.$state = $state;
@@ -74,43 +84,43 @@ class TrackerResultsController {
 
     this.metadataFiltersList = [
       {
-        name: 'Name',
+        name: METADATA_FILTERS.name,
         isActive: true,
         isHover: false,
         count: 0
       },
       {
-        name: 'Description',
+        name: METADATA_FILTERS.description,
         isActive: true,
         isHover: false,
         count: 0
       },
       {
-        name: 'User tags',
+        name: METADATA_FILTERS.userTags,
         isActive: true,
         isHover: false,
         count: 0
       },
       {
-        name: 'System tags',
+        name: METADATA_FILTERS.systemTags,
         isActive: true,
         isHover: false,
         count: 0
       },
       {
-        name: 'User properties',
+        name: METADATA_FILTERS.userProperties,
         isActive: true,
         isHover: false,
         count: 0
       },
       {
-        name: 'System properties',
+        name: METADATA_FILTERS.systemProperties,
         isActive: true,
         isHover: false,
         count: 0
       },
       {
-        name: 'Schema',
+        name: METADATA_FILTERS.schema,
         isActive: true,
         isHover: false,
         count: 0
@@ -220,11 +230,11 @@ class TrackerResultsController {
     let foundIn = [];
 
     if (parsedEntity.name.search(regex) > -1) {
-      foundIn.push('Name');
+      foundIn.push(METADATA_FILTERS.name);
       this.metadataFiltersList[0].count++;
     }
     if (entity.metadata.SYSTEM && entity.metadata.SYSTEM.properties.description && entity.metadata.SYSTEM.properties.description.search(regex) > -1) {
-      foundIn.push('Description');
+      foundIn.push(METADATA_FILTERS.description);
       this.metadataFiltersList[1].count++;
     }
 
@@ -234,11 +244,11 @@ class TrackerResultsController {
     systemTags = systemTags.toString();
 
     if (userTags.search(regex) > -1) {
-      foundIn.push('User Tags');
+      foundIn.push(METADATA_FILTERS.userTags);
       this.metadataFiltersList[2].count++;
     }
     if (systemTags.search(regex) > -1) {
-      foundIn.push('System Tags');
+      foundIn.push(METADATA_FILTERS.systemTags);
       this.metadataFiltersList[3].count++;
     }
 
@@ -248,18 +258,18 @@ class TrackerResultsController {
     systemProperties = JSON.stringify(systemProperties);
 
     if (userProperties.search(regex) > -1) {
-      foundIn.push('User Properties');
+      foundIn.push(METADATA_FILTERS.userProperties);
       this.metadataFiltersList[4].count++;
     }
     if (systemProperties.search(regex) > -1) {
-      foundIn.push('System Properties');
+      foundIn.push(METADATA_FILTERS.systemProperties);
       this.metadataFiltersList[5].count++;
     }
 
     let schema = this.myHelpers.objectQuery(entity, 'metadata', 'SYSTEM', 'properties', 'schema') || '';
 
     if (schema.search(regex) > -1) {
-      foundIn.push('Schema');
+      foundIn.push(METADATA_FILTERS.schema);
       this.metadataFiltersList[6].count++;
     }
 
