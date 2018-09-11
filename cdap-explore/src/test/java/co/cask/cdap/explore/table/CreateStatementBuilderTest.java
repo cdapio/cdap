@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -117,9 +117,13 @@ public class CreateStatementBuilderTest {
       "record",
       Schema.Field.of("f1", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("f2", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("f3", Schema.of(Schema.Type.DOUBLE))
+      Schema.Field.of("f3", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("dt", Schema.nullableOf(Schema.of(Schema.LogicalType.DATE))),
+      Schema.Field.of("ts1", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))),
+      Schema.Field.of("ts2", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)))
     );
-    String expected = "CREATE EXTERNAL TABLE IF NOT EXISTS dataset_myfiles (f1 string, f2 int, f3 double) " +
+    String expected = "CREATE EXTERNAL TABLE IF NOT EXISTS dataset_myfiles (f1 string, f2 int, f3 double, " +
+      "dt date, ts1 timestamp, ts2 timestamp) " +
       "COMMENT 'CDAP Dataset' " +
       "PARTITIONED BY (f1 STRING, f2 INT) " +
       "ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe' " +

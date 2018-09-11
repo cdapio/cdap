@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,12 +37,16 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class for translating objects that fit a cdap {@link Schema} into objects
@@ -188,7 +192,7 @@ public class ObjectDeserializer {
 
     switch (typeInfo.getCategory()) {
       case PRIMITIVE:
-        return deserializePrimitive(field, (PrimitiveTypeInfo) typeInfo);
+        return deserializePrimitive(field, (PrimitiveTypeInfo) typeInfo, schema);
       case LIST:
         // HIVE!! some versions will turn bytes into array<tinyint> instead of binary... so special case it.
         // TODO: remove once CDAP-1556 is done
@@ -250,7 +254,7 @@ public class ObjectDeserializer {
    * See {@link co.cask.cdap.internal.io.AbstractSchemaGenerator} for the full mapping.
    * TODO: refactor so that changes don't have to be made both here and in AbstractSchemaGenerator
    */
-  private Object deserializePrimitive(Object primitive, PrimitiveTypeInfo typeInfo) {
+  private Object deserializePrimitive(Object primitive, PrimitiveTypeInfo typeInfo, Schema schema) {
     switch (typeInfo.getPrimitiveCategory()) {
       case STRING:
         // URI, URL, and String all get mapped to string
@@ -275,6 +279,15 @@ public class ObjectDeserializer {
         } else {
           return primitive;
         }
+      case DATE:
+        LocalDate localDate = LocalDate.ofEpochDay((Integer) primitive);
+        return Date.valueOf(localDate);
+      case TIMESTAMP:
+        TimeUnit unit = TimeUnit.MILLISECONDS;
+        if (schema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS) {
+          unit = TimeUnit.MICROSECONDS;
+        }
+        return getTimestamp((Long) primitive, unit);
     }
     return primitive;
   }
@@ -341,5 +354,19 @@ public class ObjectDeserializer {
       fieldInspectors.add(TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(typeInfo));
     }
     return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldInspectors);
+  }
+
+  private Timestamp getTimestamp(long ts, TimeUnit unit) {
+    Timestamp timestamp = new Timestamp(ts);
+
+    if (unit == TimeUnit.MICROSECONDS) {
+      long mod = TimeUnit.MICROSECONDS.convert(1, TimeUnit.SECONDS);
+      int fraction = (int) (ts % mod);
+
+      timestamp = new Timestamp(TimeUnit.MICROSECONDS.toMillis(ts));
+      timestamp.setNanos((int) unit.toNanos(fraction));
+    }
+
+    return timestamp;
   }
 }
