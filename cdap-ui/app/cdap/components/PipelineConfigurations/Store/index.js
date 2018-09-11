@@ -33,6 +33,7 @@ import {convertMapToKeyValuePairsObj, keyValuePairsHaveMissingValues} from 'comp
 import {getDefaultKeyValuePair} from 'components/KeyValuePairs/KeyValueStore';
 import uuidV4 from 'uuid/v4';
 import cloneDeep from 'lodash/cloneDeep';
+import {SPARK_EXECUTOR_INSTANCES, SPARK_BACKPRESSURE_ENABLED, ENGINE_OPTIONS} from 'components/PipelineConfigurations/PipelineConfigConstants';
 
 const ACTIONS = {
   INITIALIZE_CONFIG: 'INITIALIZE_CONFIG',
@@ -74,10 +75,6 @@ const BATCH_INTERVAL_UNITS = [
 ];
 
 const NUM_EXECUTORS_OPTIONS = range(1, 11);
-const ENGINE_OPTIONS = {
-  MAPREDUCE: 'mapreduce',
-  SPARK: 'spark'
-};
 
 const DEFAULT_RUNTIME_ARGS = {
   'pairs': [getDefaultKeyValuePair()]
@@ -118,8 +115,11 @@ const DEFAULT_CONFIGURE_OPTIONS = {
 
 };
 
-const getCustomConfigFromProperties = (properties = {}) => {
-  const backendProperties = ['system.spark.spark.streaming.backpressure.enabled', 'system.spark.spark.executor.instances', 'system.spark.spark.master'];
+const getCustomConfigFromProperties = (properties = {}, isBatch) => {
+  let backendProperties = [SPARK_BACKPRESSURE_ENABLED, SPARK_EXECUTOR_INSTANCES];
+  if (isBatch) {
+    backendProperties = [];
+  }
   let customConfig = {};
   Object.keys(properties).forEach(key => {
     if (backendProperties.indexOf(key) === -1) {
@@ -129,8 +129,8 @@ const getCustomConfigFromProperties = (properties = {}) => {
   return customConfig;
 };
 
-const getCustomConfigForDisplay = (properties, engine) => {
-  let currentCustomConfig = getCustomConfigFromProperties(properties);
+const getCustomConfigForDisplay = (properties, engine, isBatch) => {
+  let currentCustomConfig = getCustomConfigFromProperties(properties, isBatch);
   let customConfigForDisplay = {};
   for (let key in currentCustomConfig) {
     if (currentCustomConfig.hasOwnProperty(key)) {
@@ -222,7 +222,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       return {
         ...state,
         ...action.payload,
-        customConfigKeyValuePairs: getCustomConfigForDisplay(action.payload.properties, action.payload.engine)
+        customConfigKeyValuePairs: getCustomConfigForDisplay(action.payload.properties, action.payload.engine, state.pipelineVisualConfiguration.isBatch)
       };
     case ACTIONS.SET_RUNTIME_ARGS:
       return {
@@ -355,13 +355,12 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       };
     }
     case ACTIONS.SET_NUM_EXECUTORS: {
-      let numExecutorsKeyName = window.CDAP_CONFIG.isEnterprise ? 'system.spark.spark.executor.instances' : 'system.spark.spark.master';
-      let numExecutorsValue = window.CDAP_CONFIG.isEnterprise ? action.payload.numExecutors : `local[${action.payload.numExecutors}]`;
+      let numExecutorsValue = action.payload.numExecutors;
       return {
         ...state,
         properties: {
           ...state.properties,
-          [numExecutorsKeyName]: numExecutorsValue
+          [SPARK_EXECUTOR_INSTANCES]: numExecutorsValue
         }
       };
     }

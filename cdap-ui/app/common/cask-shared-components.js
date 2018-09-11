@@ -59,6 +59,7 @@ var ThemeHelper = require('../cdap/services/ThemeHelper');
 var Footer = require('../cdap/components/Footer').default;
 var cdapavscwrapper = require('../cdap/services/cdapavscwrapper').default;
 var IconSVG = require('../cdap/components/IconSVG').default;
+var PipelineConfigConstants = require('../cdap/components/PipelineConfigurations/PipelineConfigConstants');
 
 export {
   Store,
@@ -104,4 +105,5 @@ export {
   Footer,
   cdapavscwrapper,
   IconSVG,
+  PipelineConfigConstants,
 };
