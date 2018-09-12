@@ -113,7 +113,7 @@ export default class ProfileDetailViewDetailsInfo extends Component {
             .provisioner
             .properties
             .map(property => {
-              let propertyLabel = propertyToLabelMap[property.name];
+              let propertyLabel = propertyToLabelMap[property.name] || property.name;
               let value = property.value;
 
               if (property.name === 'accountKey') {
@@ -121,7 +121,10 @@ export default class ProfileDetailViewDetailsInfo extends Component {
               }
 
               return (
-                <div className="details-row">
+                <div
+                  className="details-row"
+                  key={property.name}
+                >
                   <strong
                     className="label-holder"
                     title={propertyLabel}
