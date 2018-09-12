@@ -20,6 +20,7 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.http.Channels;
 import co.cask.cdap.gateway.router.RouterServiceLookup;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;

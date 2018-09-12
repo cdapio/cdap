@@ -112,6 +112,19 @@ public interface SSHSession extends AutoCloseable {
             @Nullable Long lastAccessTime, @Nullable Long lastModifiedTime) throws IOException;
 
   /**
+   * Creates a local port forwarding channel from this SSH session.
+   *
+   * @param targetHost the target hostname to forward to
+   * @param targetPort the target port to forward to
+   * @param originatePort the original port that the client is connect to
+   * @param dataConsumer A {@link PortForwarding.DataConsumer} for consuming incoming data from the forwarding channel
+   * @return a {@link PortForwarding} for communicating with the forwarding channel
+   * @throws IOException if failed to open the port forwarding channel
+   */
+  PortForwarding createLocalPortForward(String targetHost, int targetPort, int originatePort,
+                                        PortForwarding.DataConsumer dataConsumer) throws IOException;
+
+  /**
    * Close this SSH session.
    */
   @Override
