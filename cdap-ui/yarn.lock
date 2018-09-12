@@ -1978,9 +1978,9 @@ caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
 
-cask-datavoyager@2.0.0-alpha.12.7:
-  version "2.0.0-alpha.12.7"
-  resolved "https://registry.yarnpkg.com/cask-datavoyager/-/cask-datavoyager-2.0.0-alpha.12.7.tgz#d0b14a0776cf8fe6b7e2d6f0208bc661a4eaa4fb"
+cask-datavoyager@2.0.0-alpha.12.8:
+  version "2.0.0-alpha.12.8"
+  resolved "https://registry.yarnpkg.com/cask-datavoyager/-/cask-datavoyager-2.0.0-alpha.12.8.tgz#a2fc9a43aa350a8b2a08b5be84f47f722a90aa89"
 
 cdap-avsc@4.1.12:
   version "4.1.12"
