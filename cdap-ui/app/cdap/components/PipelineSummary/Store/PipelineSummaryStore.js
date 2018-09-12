@@ -15,7 +15,7 @@
 */
 
 import {createStore, combineReducers} from 'redux';
-import {defaultAction} from 'services/helpers';
+import {defaultAction, composeEnhancers} from 'services/helpers';
 const PIPELINESSUMMARYACTIONS = {
   SETRUNS: 'SETRUNS',
   SETMETRICS: 'SETMETRICS',
@@ -63,7 +63,8 @@ const PipelineSummaryStore = createStore(
   }),
   {
     pipelinerunssummary: defaultRunsSummary
-  }
+  },
+  composeEnhancers('PipelineSummaryStore')()
 );
 
 export {PIPELINESSUMMARYACTIONS};
