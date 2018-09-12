@@ -91,7 +91,7 @@
       <div ng-if="!PluginTemplatesCtrl.noConfig">
         <div ng-repeat="group in PluginTemplatesCtrl.groupsConfig.groups">
           <div class="widget-group-container">
-            <h4>{{::group.display}}</h4>
+            <h5>{{::group.display}}</h5>
             <div ng-repeat="field in group.fields">
               <div ng-if="field.name !== PluginTemplatesCtrl.groupsConfig.outputSchema.schemaProperty">
 
@@ -150,7 +150,7 @@
 
       <div ng-if="!PluginTemplatesCtrl.noConfig">
         <div class="output-schema">
-          <h4>Output Schema</h4>
+          <h5>Output Schema</h5>
 
           <fieldset ng-disabled="PluginTemplatesCtrl.isDisabled">
             <my-output-schema
