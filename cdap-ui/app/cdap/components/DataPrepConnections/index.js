@@ -877,8 +877,7 @@ export default class DataPrepConnections extends Component {
           path={`${BASEPATH}/spanner/:spannerId`}
           render={({match}) => {
             let id  = match.params.spannerId;
-            const {enableRouting} = this.props;
-            const setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id}, enableRouting);
+            const setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id}, false);
             return (
               <DataPrepBrowser
                 match={match}

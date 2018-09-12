@@ -20,7 +20,7 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import {objectQuery} from 'services/helpers';
 
-const setSpannerAsActiveBrowser = (payload, enableRouting = false) => {
+const setSpannerAsActiveBrowser = (payload, isReset = true) => {
   let {spanner} = DataPrepBrowserStore.getState();
   if (spanner.loading) { return; }
 
@@ -52,7 +52,7 @@ const setSpannerAsActiveBrowser = (payload, enableRouting = false) => {
           connectionId
         }
       });
-      if (!enableRouting) {
+      if (isReset) {
         listSpannerInstances(connectionId);
       }
     }, (err) => {
