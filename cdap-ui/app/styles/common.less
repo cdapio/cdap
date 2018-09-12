@@ -301,6 +301,7 @@ footer.app-footer {
 @maxGridWidth: 1fr;
 @headerBgColor: white;
 @borderColor: @grey-04;
+@header-light-color: @grey-04;
 
 /* This is the fallback for browsers that doesn't support css grid */
 
@@ -351,6 +352,15 @@ footer.app-footer {
     overflow-y: auto;
     display: grid;
 
+    &.border-top-bottom {
+      border-top: 2px solid @borderColor;
+      border-bottom: 2px solid @borderColor;
+
+      .grid-body > .grid-row:last-child {
+        border-bottom: 0;
+      }
+    }
+
     &.disabled,
     &.disabled * {
       cursor: not-allowed !important;
@@ -382,6 +392,10 @@ footer.app-footer {
         border-left: 0;
         border-right: 0;
         border-top: 0;
+      }
+
+      &.header-light {
+        color: @header-light-color;
       }
     }
     .grid-body {
