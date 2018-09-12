@@ -20,6 +20,7 @@
       "type": "CREATE_APPLICATION",
       "runCondition": "ONCE",
       "arguments": {
+        "namespace": "default",
         "name": "dataprep",
         "artifact": {
           "name": "wrangler-service",
