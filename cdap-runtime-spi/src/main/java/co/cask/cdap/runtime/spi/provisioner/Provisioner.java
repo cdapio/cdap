@@ -32,6 +32,22 @@ public interface Provisioner {
   ProvisionerSpecification getSpec();
 
   /**
+   * Initialize the provisioner. This method is guaranteed to be called before any other method is called.
+   * It will only be called once for the lifetime of the provisioner.
+   *
+   * If this method throws a runtime exception, the provisioner will not be available for use.
+   * This can cause clusters that were created by the provisioner to be stranded in an orphaned state.
+   * As such, provisioners should be careful to only throw exceptions when there is absolutely nothing that can be done.
+   * For example, if an optional property is set to an invalid value, that property should be ignored.
+   * An exception should not be thrown in that case.
+   *
+   * @param systemContext the system context that can be used to initialize the provisioner
+   */
+  default void initialize(ProvisionerSystemContext systemContext) {
+    // no-op
+  }
+
+  /**
    * Check that the specified properties are valid. If they are not, an IllegalArgumentException should be thrown.
    *
    * @param properties properties to validate

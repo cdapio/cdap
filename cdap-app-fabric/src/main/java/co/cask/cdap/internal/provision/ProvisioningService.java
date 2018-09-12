@@ -59,6 +59,7 @@ import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
@@ -110,6 +111,7 @@ public class ProvisioningService extends AbstractIdleService {
   private static final Gson GSON = new Gson();
   private static final Type PLUGIN_REQUIREMENT_SET_TYPE = new TypeToken<Set<PluginRequirement>>() { }.getType();
 
+  private final CConfiguration cConf;
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
   private final ProvisionerConfigProvider provisionerConfigProvider;
@@ -129,6 +131,7 @@ public class ProvisioningService extends AbstractIdleService {
                       ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
                       DatasetFramework datasetFramework, TransactionSystemClient txClient,
                       SecureStore secureStore, ProgramStateWriter programStateWriter) {
+    this.cConf = cConf;
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
@@ -154,7 +157,7 @@ public class ProvisioningService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
-    reloadProvisioners();
+    initializeProvisioners();
     ExecutorService executorService = Executors.newCachedThreadPool(
       Threads.createDaemonThreadFactory("provisioning-service-%d"));
     this.taskExecutor = new KeyedExecutor<>(executorService);
@@ -478,17 +481,26 @@ public class ProvisioningService extends AbstractIdleService {
 
   /**
    * Reloads provisioners in the extension directory. Any new provisioners will be added and any deleted provisioners
-   * will be removed.
+   * will be removed. Loaded provisioners will be initialized.
    */
-  private void reloadProvisioners() {
+  private void initializeProvisioners() {
     Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
     Map<String, ProvisionerConfig> provisionerConfigs =
       provisionerConfigProvider.loadProvisionerConfigs(provisioners.keySet());
     LOG.debug("Provisioners = {}", provisioners);
     Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
     for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {
-      ProvisionerSpecification spec = provisionerEntry.getValue().getSpec();
       String provisionerName = provisionerEntry.getKey();
+      Provisioner provisioner = provisionerEntry.getValue();
+      ProvisionerSystemContext provisionerSystemContext = new DefaultSystemProvisionerContext(cConf, provisionerName);
+      try {
+        provisioner.initialize(provisionerSystemContext);
+      } catch (RuntimeException e) {
+        LOG.warn("Error initializing the {} provisioner. It will not be available for use.", provisionerName, e);
+        provisioners.remove(provisionerName);
+        continue;
+      }
+      ProvisionerSpecification spec = provisioner.getSpec();
       ProvisionerConfig config = provisionerConfigs.getOrDefault(provisionerName,
                                                                  new ProvisionerConfig(new ArrayList<>(), null, false));
       details.put(provisionerName, new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
