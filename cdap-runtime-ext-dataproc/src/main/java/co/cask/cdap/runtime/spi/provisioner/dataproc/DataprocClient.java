@@ -73,6 +73,7 @@ import javax.annotation.Nullable;
 public class DataprocClient implements AutoCloseable {
   // something like 2018-04-16T12:09:03.943-07:00
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
+
   private final DataprocConf conf;
   private final ClusterControllerClient client;
   private final Compute compute;
@@ -175,7 +176,14 @@ public class DataprocClient implements AutoCloseable {
                                                          .build())
                                         .build())
                      .setGceClusterConfig(clusterConfig.build())
-                     .setSoftwareConfig(SoftwareConfig.newBuilder().setImageVersion(imageVersion))
+                     // The additional property is needed to be able to provision a singlenode cluster on
+                     // dataproc. Dataproc has an issue that it will treat 0 number of worker
+                     // nodes as the default number, which means it will always provision a
+                     // cluster with 2 worker nodes if this property is not set. Refer to
+                     // https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters
+                     // for more information.
+                     .setSoftwareConfig(SoftwareConfig.newBuilder().setImageVersion(imageVersion)
+                                          .putProperties("dataproc:dataproc.allow.zero.workers", "true"))
                      .build())
         .build();
 
