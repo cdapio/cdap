@@ -56,6 +56,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunCountResult;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -201,6 +202,32 @@ public class ProgramLifecycleService {
         return runCount;
       })
       .collect(Collectors.toList());
+  }
+
+  /**
+   * Get the latest run within the specified start and end times for the specified program.
+   *
+   * @param programId the program to get runs for
+   * @param programRunStatus status of runs to return
+   * @param start earliest start time of runs to return
+   * @param end latest start time of runs to return
+   * @param limit the maximum number of runs to return
+   * @return the latest runs for the program sorted by start time, with the newest run as the first run
+   * @throws NotFoundException if the application to which this program belongs was not found or the program is not
+   *                           found in the app
+   * @throws UnauthorizedException if the principal does not have access to the program
+   * @throws Exception if there was some other exception performing authorization checks
+   */
+  public List<RunRecord> getRuns(ProgramId programId, ProgramRunStatus programRunStatus,
+                                 long start, long end, int limit) throws Exception {
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programId);
+    if (programSpec == null) {
+      throw new NotFoundException(programId);
+    }
+
+    return store.getRuns(programId, programRunStatus, start, end, limit).values().stream()
+      .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
   }
 
   /**

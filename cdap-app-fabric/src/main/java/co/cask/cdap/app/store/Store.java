@@ -161,7 +161,7 @@ public interface Store {
                                                           ProgramNotFoundException;
 
   /**
-   * Fetches run records for particular program. Returns only finished runs.
+   * Fetches run records for particular program.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
    * @param id        id of the program
@@ -175,7 +175,7 @@ public interface Store {
                                            long startTime, long endTime, int limit);
 
   /**
-   * Fetches run records for particular program. Returns only finished runs.
+   * Fetches run records for particular program.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
    * @param id        id of the program

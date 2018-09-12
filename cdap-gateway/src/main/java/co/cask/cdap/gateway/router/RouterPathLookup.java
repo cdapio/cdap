@@ -134,6 +134,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "profiles") ||
       beginsWith(uriParts, "v3", "profiles")) {
       return APP_FABRIC_HTTP;
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "runs")) {
+      return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "previews")) {
       return PREVIEW_HTTP;
     } else if (beginsWith(uriParts, "v3", "system", "serviceproviders")) {

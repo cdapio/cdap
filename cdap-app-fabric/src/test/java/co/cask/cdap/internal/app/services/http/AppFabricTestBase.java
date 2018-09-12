@@ -62,6 +62,8 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.proto.BatchProgram;
+import co.cask.cdap.proto.BatchProgramRuns;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -161,6 +163,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 
@@ -178,6 +181,7 @@ public abstract class AppFabricTestBase {
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
+  protected static final Type BATCH_PROGRAM_RUNS_TYPE = new TypeToken<List<BatchProgramRuns>>() { }.getType();
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   protected static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
@@ -1197,6 +1201,17 @@ public abstract class AppFabricTestBase {
         return getProgramRuns(program, status).size() > expected;
       }
     }, 60, TimeUnit.SECONDS);
+  }
+
+  protected List<BatchProgramRuns> getProgramRuns(NamespaceId namespace, List<ProgramId> programs) throws Exception {
+    List<BatchProgram> request = programs.stream()
+      .map(program -> new BatchProgram(program.getApplication(), program.getType(), program.getProgram()))
+      .collect(Collectors.toList());
+
+    HttpResponse response = doPost(getVersionedAPIPath("runs", namespace.getNamespace()), GSON.toJson(request));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String json = EntityUtils.toString(response.getEntity());
+    return GSON.fromJson(json, BATCH_PROGRAM_RUNS_TYPE);
   }
 
   protected List<RunRecord> getProgramRuns(Id.Program program, ProgramRunStatus status) throws Exception {
