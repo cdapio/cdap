@@ -12,9 +12,11 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-$asterisk-color: #d50000;
+@import '~styles/variables.scss';
+
+$asterisk-color: $red-02;
 
 .modal-dialog.bigquery-connection-modal {
 

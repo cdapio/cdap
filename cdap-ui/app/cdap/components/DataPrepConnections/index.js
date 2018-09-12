@@ -26,6 +26,7 @@ import {
   setKafkaAsActiveBrowser,
   setGCSAsActiveBrowser,
   setBigQueryAsActiveBrowser,
+  setSpannerAsActiveBrowser,
   reset as resetDataPrepBrowserStore
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, Switch, Redirect} from 'react-router-dom';
@@ -99,6 +100,7 @@ export default class DataPrepConnections extends Component {
       s3List: [],
       gcsList: [],
       bigQueryList: [],
+      spannerList: [],
       activeConnectionid,
       activeConnectionType,
       showAddConnectionPopover: false,
@@ -240,6 +242,10 @@ export default class DataPrepConnections extends Component {
       setBigQueryAsActiveBrowser({name: ConnectionType.BIGQUERY, id: browserName.id});
       activeConnectionid = browserName.id;
       activeConnectionType = ConnectionType.BIGQUERY;
+    } else if (typeof browserName === 'object' && browserName.type === ConnectionType.SPANNER) {
+      setSpannerAsActiveBrowser({name: ConnectionType.SPANNER, id: browserName.id});
+      activeConnectionid = browserName.id;
+      activeConnectionType = ConnectionType.SPANNER;
     }
 
     this.setState({
@@ -318,7 +324,8 @@ export default class DataPrepConnections extends Component {
           kafkaList = [],
           s3List = [],
           gcsList = [],
-          bigQueryList = [];
+          bigQueryList = [],
+          spannerList = [];
 
 
       if (action === 'delete' && this.state.activeConnectionid === targetId) {
@@ -336,6 +343,8 @@ export default class DataPrepConnections extends Component {
           gcsList.push(connection);
         } else if (connection.type === ConnectionType.BIGQUERY) {
           bigQueryList.push(connection);
+        } else if (connection.type === ConnectionType.SPANNER) {
+          spannerList.push(connection);
         }
       });
 
@@ -346,6 +355,7 @@ export default class DataPrepConnections extends Component {
         s3List,
         gcsList,
         bigQueryList,
+        spannerList,
         loading: false
       };
 
@@ -556,6 +566,40 @@ export default class DataPrepConnections extends Component {
     );
   }
 
+  renderSpannerDetail() {
+    let namespace = getCurrentNamespace();
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.spannerList.map((spanner) => {
+          return (
+            <div
+              key={spanner.id}
+              title={spanner.name}
+              className="clearfix"
+            >
+              <NavLinkWrapper
+                to={`${baseLinkPath}/spanner/${spanner.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, {...spanner, name: ConnectionType.SPANNER})}
+                isNativeLink={this.props.singleWorkspaceMode}
+              >
+                {spanner.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={spanner}
+                onAction={this.onActionFromConnectionsPopover}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   renderPanel() {
     if (!this.state.sidePanelExpanded) { return null; }
 
@@ -687,6 +731,20 @@ export default class DataPrepConnections extends Component {
               {this.renderBigQueryDetail()}
             </ExpandableMenu>
           </If>
+
+           <If condition={find(this.state.connectionTypes, {type: ConnectionType.SPANNER})}>
+            <ExpandableMenu>
+              <div>
+                <span className="fa fa-fw">
+                  <IconSVG name="icon-spanner" />
+                </span>
+                <span>
+                {T.translate(`${PREFIX}.spanner`, {count: this.state.spannerList.length})}
+                </span>
+              </div>
+              {this.renderSpannerDetail()}
+            </ExpandableMenu>
+          </If>
         </div>
 
         <AddConnection
@@ -816,6 +874,21 @@ export default class DataPrepConnections extends Component {
             );
           }}
         />
+        <Route
+          path={`${BASEPATH}/spanner/:spannerId`}
+          render={({match}) => {
+            let id  = match.params.spannerId;
+            const setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id});
+            return (
+              <DataPrepBrowser
+                match={match}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+                setActiveConnection={setActiveConnection}
+              />
+            );
+          }}
+        />
         <Route render={() => {
           let doesFileExists = find(this.state.connectionTypes, {type: ConnectionType.FILE});
           if (!this.state.defaultConnection && doesFileExists) {
@@ -895,9 +968,9 @@ export default class DataPrepConnections extends Component {
       }
       setActiveConnection = setGCSAsActiveBrowser.bind(null, {name: ConnectionType.GCS, id: this.state.activeConnectionid, path});
     } else if (this.state.activeConnectionType === ConnectionType.BIGQUERY) {
-      setActiveConnection = () => {
-        setBigQueryAsActiveBrowser({name: ConnectionType.BIGQUERY, id: this.state.activeConnectionid});
-      };
+      setActiveConnection = setBigQueryAsActiveBrowser.bind(null, {name: ConnectionType.BIGQUERY, id: this.state.activeConnectionid});
+    } else if (this.state.activeConnectionType === ConnectionType.SPANNER) {
+      setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id: this.state.activeConnectionid});
     }
 
     let {
