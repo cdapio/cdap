@@ -58,13 +58,24 @@ function getTimeRange() {
   return TIME_OPTIONS_MAP[selection];
 }
 
-export function init(datasetId) {
-  const queryParams = parseQueryString();
-
-  if (!queryParams) {
-    getFields(datasetId);
-    return;
+function getFirstFieldLineage(fields) {
+  let chosenField;
+  for (let i = 0; i < fields.length; i++) {
+    if (fields[i].lineage) {
+      chosenField = fields[i].name;
+      break;
+    }
   }
+
+  if (chosenField) {
+    getLineageSummary(chosenField);
+  } else {
+    replaceHistory();
+  }
+}
+
+export function init(datasetId) {
+  const queryParams = parseQueryString() || {};
 
   let timeObj = TIME_OPTIONS_MAP[TIME_OPTIONS[1]];
 
@@ -98,7 +109,8 @@ export function init(datasetId) {
     namespace: getCurrentNamespace(),
     entityId: datasetId,
     start: timeObj.start,
-    end: timeObj.end
+    end: timeObj.end,
+    includeCurrent: true
   };
 
   MyMetadataApi.getFields(params)
@@ -113,9 +125,11 @@ export function init(datasetId) {
 
       if (queryParams.field) {
         getLineageSummary(queryParams.field);
-      } else {
-        replaceHistory();
+        return;
       }
+
+      // If there is no query parameter for selected field, choose first field that have lineage
+      getFirstFieldLineage(fields);
     });
 }
 
@@ -130,7 +144,8 @@ export function getFields(datasetId, prefix, start = 'now-7d', end = 'now') {
     namespace,
     entityId: datasetId,
     start,
-    end
+    end,
+    includeCurrent: true
   };
 
   if (prefix && prefix.length > 0) {
@@ -146,6 +161,8 @@ export function getFields(datasetId, prefix, start = 'now-7d', end = 'now') {
           fields: res
         }
       });
+
+      getFirstFieldLineage(res);
     });
 }
 
@@ -158,7 +175,7 @@ export function getLineageSummary(fieldName) {
     namespace,
     entityId: datasetId,
     fieldName,
-    direction: 'incoming',
+    direction: 'both',
     start,
     end
   };
@@ -166,9 +183,10 @@ export function getLineageSummary(fieldName) {
   MyMetadataApi.getFieldLineage(params)
     .subscribe((res) => {
       Store.dispatch({
-        type: Actions.setIncomingLineage,
+        type: Actions.setLineageSummary,
         payload: {
           incoming: res.incoming,
+          outgoing: res.outgoing,
           activeField: fieldName
         }
       });
@@ -193,7 +211,7 @@ export function search(e) {
   debouncedGetFields(datasetId, searchText);
 }
 
-export function getOperations() {
+export function getOperations(direction) {
   Store.dispatch({
     type: Actions.operationsLoading
   });
@@ -210,15 +228,16 @@ export function getOperations() {
     fieldName,
     start,
     end,
-    direction: 'incoming'
+    direction
   };
 
   MyMetadataApi.getFieldOperations(params)
     .subscribe((res) => {
       Store.dispatch({
-        type: Actions.setIncomingOperations,
+        type: Actions.setOperations,
         payload: {
-          incomingOperations: res.incoming
+          operations: res[direction],
+          direction
         }
       });
     });

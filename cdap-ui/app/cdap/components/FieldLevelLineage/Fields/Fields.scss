@@ -14,70 +14,72 @@
  * the License.
  */
 
-@import '../../../styles/variables.scss';
+@import '~styles/variables.scss';
 
-$box-border-color: $green-01;
-$header-border-color: $grey-03;
-$count-font-color: $grey-04;
-$no-fields-color: $grey-02;
+$fields-count-color: $grey-04;
+$row-height: 32px;
+$bg-color: $grey-07;
+$outside-border: 2px solid $grey-03;
+$border-size: 1px;
+$border: $border-size solid $grey-03;
+$grid-padding: 0 10px;
+$number-of-rows: 11;
+$disabled-color: $grey-04;
+$active-bg-color: $yellow-02-lighter;
+$hover-bg-color: white;
+$border-offset: 2px;
 
-.fields-list-container {
-  position: relative;
+.field-level-lineage .fields-box {
+  .header {
+    display: flex;
 
-  &.no-fields {
-    font-size: 18px;
-    color: $no-fields-color;
-    padding-top: 150px;
+    > div { width: 50%; }
+    .fields-count { color: $fields-count-color; }
   }
 
-  .fields-box {
-    width: 250px;
-    border: 2px solid $box-border-color;
-    background-color: white;
-    position: absolute;
-    transform: translateX(-50%);
-    left: 50%;
+  .empty {
+    background-color: $bg-color;
+    height: calc((#{$row-height} + #{$border-size}) * (#{$number-of-rows + 1}) + #{$border-offset});
+    border: $outside-border;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    padding: 25px;
+  }
 
-    .header,
-    .search-container {
-      border-bottom: 2px solid $header-border-color;
+  .fields-list {
+    background-color: $bg-color;
+    line-height: $row-height;
+
+    .fields-list-header {
+      font-weight: bold;
+      padding: $grid-padding;
     }
 
-    .header {
-      padding: 15px 10px 5px;
+    .fields-list-body {
+      border: $outside-border;
+      height: calc((#{$row-height} + #{$border-size}) * #{$number-of-rows} + #{$border-offset});
+      overflow-y: auto;
 
-      .dataset-name { font-weight: 600; }
-      .fields-count {
-        color: $count-font-color;
+      .field-row {
+        padding: $grid-padding;
+        border-bottom: $border;
+        cursor: pointer;
+
+        &:hover {
+          background-color: $hover-bg-color;
+        }
+
+        &.disabled {
+          cursor: not-allowed;
+          color: $disabled-color;
+        }
+
+        &.active {
+          background-color: $active-bg-color;
+        }
       }
-    }
-
-    .search-container {
-      .form-control { border: 0; }
-
-      .input-group-append {
-        background-color: transparent;
-        border: 0;
-        font-size: 15px;
-
-        .icon-svg { vertical-align: top; }
-      }
-    }
-
-    .fields-list {
-      // FIXME: This max-height calculation is quite brittle. It will break if any of the height change.
-
-      $topnav: 50px;
-      $subnav: 50px;
-      $metadata-section: 180px;
-      $timepicker: 45px;
-      $fields-header: 60px;
-      $fields-search: 32px;
-      $footer: 54px;
-      $bottom-padding: 25px;
-
-      max-height: calc(100vh - #{$topnav} - #{$subnav} - #{$metadata-section} - #{$timepicker} - #{$fields-header} - #{$fields-search} - #{$footer} - #{$bottom-padding});
-      overflow: auto;
     }
   }
 }

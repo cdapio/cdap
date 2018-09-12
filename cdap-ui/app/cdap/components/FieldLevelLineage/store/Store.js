@@ -28,10 +28,10 @@ export const TIME_OPTIONS = [
 
 const Actions = {
   setFields: 'FLL_SET_FIELDS',
-  setIncomingLineage: 'FLL_SET_INCOMING_LINEAGE',
+  setLineageSummary: 'FLL_SET_LINEAGE_SUMMARY',
   closeSummary: 'FLL_CLOSE_SUMMARY',
   setSearch: 'FLL_SET_SEARCH',
-  setIncomingOperations: 'FLL_SET_INCOMING_OPERATIONS',
+  setOperations: 'FLL_SET_OPERATIONS',
   closeOperations: 'FLL_CLOSE_OPERATIONS',
   operationsLoading: 'FLL_OPERATIONS_LOADING',
   nextOperation: 'FLL_NEXT_OPERATION',
@@ -45,6 +45,7 @@ const defaultInitialState = {
   datasetId: '',
   fields: [],
   incoming: [],
+  outgoing: [],
   activeField: null,
   search: '',
   timeSelection: TIME_OPTIONS[1]
@@ -56,9 +57,10 @@ const customTimeInitialState = {
 };
 
 const operationsInitialState = {
-  incomingOperations: [],
+  operations: [],
   showOperations: false,
   activeIndex: 0,
+  direction: null,
   loading: false
 };
 
@@ -69,13 +71,15 @@ const lineage = (state = defaultInitialState, action = defaultAction) => {
         ...state,
         datasetId: action.payload.datasetId,
         fields: action.payload.fields,
-        incoming: [],
+        incoming: state.search.length === 0 ? [] : state.incoming,
+        outgoing: state.search.length === 0 ? [] : state.outgoing,
         activeField: null
       };
-    case Actions.setIncomingLineage:
+    case Actions.setLineageSummary:
       return {
         ...state,
         incoming: action.payload.incoming,
+        outgoing: action.payload.outgoing,
         activeField: action.payload.activeField
       };
     case Actions.closeSummary:
@@ -123,19 +127,21 @@ const operations = (state = operationsInitialState, action = defaultAction) => {
         loading: true,
         showOperations: true
       };
-    case Actions.setIncomingOperations:
+    case Actions.setOperations:
       return {
         ...state,
-        incomingOperations: action.payload.incomingOperations,
+        operations: action.payload.operations,
+        direction: action.payload.direction,
         activeIndex: 0,
         showOperations: true,
         loading: false
       };
-    case Actions.setIncomingLineage:
+    case Actions.setLineageSummary:
     case Actions.closeOperations:
       return {
         ...state,
-        incomingOperations: [],
+        operations: [],
+        direction: null,
         showOperations: false
       };
     case Actions.nextOperation:

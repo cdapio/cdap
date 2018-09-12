@@ -106,7 +106,7 @@ export default class OperationsTable extends Component {
     return (
       <div className="grid-header">
         <div className="grid-row">
-          <div></div>
+          <div />
           {
             headers.map((head) => {
               return (
@@ -128,7 +128,7 @@ export default class OperationsTable extends Component {
           this.props.operations.map((operation, i) => {
             return (
               <div
-                key={operation.id}
+                key={i}
                 className={classnames('grid-row', {'active': operation.name === this.state.activeOrigin})}
               >
                 <div>{ i + 1 }</div>

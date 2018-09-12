@@ -17,8 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import IconSVG from 'components/IconSVG';
-import {InputGroup, InputGroupAddon, Input} from 'reactstrap';
+import {Input} from 'reactstrap';
 import {search} from 'components/FieldLevelLineage/store/ActionCreator';
 import T from 'i18n-react';
 
@@ -27,18 +26,13 @@ const PREFIX = 'features.FieldLevelLineage';
 function FieldSearchView({searchValue}) {
   return (
     <div className="search-container">
-      <InputGroup>
-        <Input
-          type="text"
-          className="form-control"
-          placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
-          onChange={search}
-          value={searchValue}
-        />
-        <InputGroupAddon addonType="append">
-          <IconSVG name="icon-search" />
-        </InputGroupAddon>
-      </InputGroup>
+      <Input
+        type="text"
+        className="form-control"
+        placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
+        onChange={search}
+        value={searchValue}
+      />
     </div>
   );
 }

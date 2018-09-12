@@ -17,8 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import FieldRow from 'components/FieldLevelLineage/FieldRow';
-import LineageSummary from 'components/FieldLevelLineage/LineageSummary';
+import FieldRow from 'components/FieldLevelLineage/Fields/FieldRow';
 import FieldSearch from 'components/FieldLevelLineage/Fields/Search';
 import T from 'i18n-react';
 
@@ -27,45 +26,52 @@ require('./Fields.scss');
 const PREFIX = 'features.FieldLevelLineage';
 
 function FieldsView({datasetId, fields}) {
-  if (fields.length === 0) {
-    return (
-      <div className="fields-list-container text-xs-center no-fields">
-        {T.translate(`${PREFIX}.noFields`, { datasetId })}
+  const listContent = (
+    <div className="fields-list">
+      <div className="fields-list-header">
+        {T.translate(`${PREFIX}.Headers.fieldName`)}
       </div>
-    );
-  }
+
+      <div className="fields-list-body">
+        {
+          fields.map((field) => {
+            return (
+              <FieldRow
+                key={field.name}
+                field={field}
+              />
+            );
+          })
+        }
+      </div>
+    </div>
+  );
+
+  const emptyContent = (
+    <div className="empty">
+      {T.translate(`${PREFIX}.noFields`, { datasetId })}
+    </div>
+  );
 
   return (
-    <div className="fields-list-container">
-      <LineageSummary />
-      <div className="fields-box">
-        <div className="header">
-          <div
+    <div className="fields-box">
+      <div className="header">
+        <div>
+          <strong
             className="dataset-name truncate"
             title={datasetId}
           >
             {datasetId}
-          </div>
+          </strong>
           <div className="fields-count">
             {T.translate(`${PREFIX}.fieldsCount`, { context: fields.length })}
           </div>
         </div>
 
         <FieldSearch />
-
-        <div className="fields-list">
-          {
-            fields.map((field) => {
-              return (
-                <FieldRow
-                  key={field}
-                  fieldName={field}
-                />
-              );
-            })
-          }
-        </div>
       </div>
+
+      {fields.length > 0 ? listContent : emptyContent}
     </div>
   );
 }
@@ -78,7 +84,7 @@ FieldsView.propTypes = {
 const mapStateToProps = (state) => {
   return {
     datasetId: state.lineage.datasetId,
-    fields: state.lineage.fields
+    fields: state.lineage.fields,
   };
 };
 

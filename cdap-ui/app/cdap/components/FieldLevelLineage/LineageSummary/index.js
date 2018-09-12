@@ -16,98 +16,105 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import classnames from 'classnames';
 import SummaryRow from 'components/FieldLevelLineage/LineageSummary/SummaryRow';
-import IconSVG from 'components/IconSVG';
-import {Actions} from 'components/FieldLevelLineage/store/Store';
-import {getOperations, replaceHistory} from 'components/FieldLevelLineage/store/ActionCreator';
-import OperationsModal from 'components/FieldLevelLineage/OperationsModal';
+import {getOperations} from 'components/FieldLevelLineage/store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.FieldLevelLineage.Summary';
-
+const HEADERS_PREFIX = 'features.FieldLevelLineage.Headers';
 
 require('./LineageSummary.scss');
 
-function LineageSummaryView({activeField, datasetId, incomingLineage, close}) {
-  if (!activeField) { return null; }
+const handleViewOperationsClick = (direction, summary) => {
+  if (summary.length === 0) { return; }
 
-  const datasetFieldTitle = `${datasetId}:${activeField}`;
+  getOperations(direction);
+};
+
+export default function LineageSummary({activeField, datasetId, summary, direction}) {
+  const datasetFieldTitle = `${datasetId}: ${activeField}`;
+
+  if (activeField && summary.length === 0) {
+    return (
+      <div className="lineage-summary-empty-container">
+        <span>
+          {T.translate(`${PREFIX}.Empty.${direction}`, { fieldId: datasetFieldTitle })}
+        </span>
+      </div>
+    );
+  } else if (!activeField) {
+    return (
+      <div className="lineage-summary-empty-container">
+        <span>
+          {T.translate(`${PREFIX}.noFieldSelected`)}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="lineage-summary-container">
       <div className="field-lineage-info">
         <div className="title">
-          {T.translate(`${PREFIX}.title`)}
-        </div>
+          <strong>
+            {T.translate(`${PREFIX}.Title.${direction}`)}
+          </strong>
 
-        <div
-          className="dataset-field truncate"
-          title={datasetFieldTitle}
-        >
-          {datasetFieldTitle}
+          <span
+            className="dataset-field truncate"
+            title={datasetFieldTitle}
+          >
+            {datasetFieldTitle}
+          </span>
         </div>
 
         <div className="lineage-count">
-          {T.translate(`${PREFIX}.datasetCount`, { context: incomingLineage.length })}
+          {T.translate(`${PREFIX}.datasetCount`, { context: summary.length })}
         </div>
-
-        <IconSVG
-          name="icon-close"
-          className="close-button"
-          onClick={close}
-        />
       </div>
 
-      {
-        incomingLineage.map((entity, i) => {
-          return <SummaryRow key={i} entity={entity} />;
-        })
-      }
+      <div className="lineage-fields">
+        <div className="lineage-column lineage-fields-header">
+          <div className="index" />
+          <div className="dataset-name">
+            {T.translate(`${HEADERS_PREFIX}.datasetName`)}
+          </div>
+          <div className="field-name">
+            {T.translate(`${HEADERS_PREFIX}.fieldName`)}
+          </div>
+        </div>
+
+        <div className="lineage-fields-body">
+          {
+            summary.map((entity, i) => {
+              return (
+                <SummaryRow
+                  key={i}
+                  entity={entity}
+                  index={i}
+                />
+              );
+            })
+          }
+        </div>
+      </div>
 
       <div className="view-operations">
         <span
-          onClick={getOperations}
+          className={classnames({ disabled: summary.length === 0 })}
+          onClick={handleViewOperationsClick.bind(null, direction, summary)}
         >
           {T.translate(`${PREFIX}.viewOperations`)}
         </span>
-
-        <OperationsModal />
       </div>
     </div>
   );
 }
 
-LineageSummaryView.propTypes = {
+LineageSummary.propTypes = {
   activeField: PropTypes.string,
   datasetId: PropTypes.string,
-  incomingLineage: PropTypes.array,
-  close: PropTypes.func
+  summary: PropTypes.array,
+  direction: PropTypes.oneOf(['incoming', 'outgoing'])
 };
-
-const mapStateToProps = (state) => {
-  return {
-    activeField: state.lineage.activeField,
-    datasetId: state.lineage.datasetId,
-    incomingLineage: state.lineage.incoming
-  };
-};
-
-const mapDispatch = (dispatch) => {
-  return {
-    close: () => {
-      dispatch({
-        type: Actions.closeSummary
-      });
-
-      replaceHistory();
-    }
-  };
-};
-
-const LineageSummary = connect(
-  mapStateToProps,
-  mapDispatch
-)(LineageSummaryView);
-
-export default LineageSummary;
