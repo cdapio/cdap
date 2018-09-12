@@ -299,7 +299,7 @@ public class ProvisioningServiceTest {
     TaskFields taskFields = testProvision(ProvisioningOp.Status.CREATED, provisionerInfo);
 
     Runnable task = Transactionals.execute(transactional, dsContext -> {
-      return provisioningService.deprovision(taskFields.programRunId, dsContext);
+      return provisioningService.deprovision(taskFields.programRunId, dsContext, t -> { });
     });
 
     task.run();
