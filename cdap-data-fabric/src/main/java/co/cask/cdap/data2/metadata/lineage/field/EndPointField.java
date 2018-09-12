@@ -57,4 +57,12 @@ public class EndPointField {
   public int hashCode() {
     return Objects.hash(endPoint, field);
   }
+
+  @Override
+  public String toString() {
+    return "EndPointField{" +
+      "endPoint=" + endPoint +
+      ", field='" + field + '\'' +
+      '}';
+  }
 }
