@@ -179,7 +179,9 @@ final class SocksServerConnectHandler extends SimpleChannelInboundHandler<SocksM
                                                                       destPort, new PortForwarding.DataConsumer() {
       @Override
       public void received(ByteBuffer buffer) {
-        channel.write(Unpooled.wrappedBuffer(buffer));
+        // Copy and write the buffer to the channel.
+        // It needs to be copied because writing to channel is asynchronous
+        channel.write(Unpooled.wrappedBuffer(buffer).copy());
       }
 
       @Override
@@ -202,7 +204,11 @@ final class SocksServerConnectHandler extends SimpleChannelInboundHandler<SocksM
       @Override
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf buf = (ByteBuf) msg;
-        portForwarding.write(buf.nioBuffer());
+        try {
+          portForwarding.write(buf.nioBuffer());
+        } finally {
+          buf.release();
+        }
       }
 
       @Override
