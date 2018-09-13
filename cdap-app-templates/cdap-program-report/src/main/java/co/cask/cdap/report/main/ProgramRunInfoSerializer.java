@@ -18,7 +18,6 @@ package co.cask.cdap.report.main;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.report.util.Constants;
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.avro.generic.GenericData;
 
 /**

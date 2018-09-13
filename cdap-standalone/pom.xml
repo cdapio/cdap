@@ -746,27 +746,7 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-program-report-app-spark1_2.10</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/${spark1.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/cdap-program-report1_2.10/target
-                      </directory>
-                      <includes>
-                        <include>cdap-program-report1_2.10-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
-                <id>copy-program-report-app-spark2_2.11</id>
+                <id>copy-program-report-app</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
@@ -776,10 +756,10 @@
                   <resources>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/cdap-program-report2_2.11/target
+                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/target
                       </directory>
                       <includes>
-                        <include>cdap-program-report2_2.11-${project.version}.jar</include>
+                        <include>cdap-program-report-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
