@@ -37,7 +37,6 @@ import RulesEngineLink from 'components/Header/RulesEngineLink';
 import MetadataLink from 'components/Header/MetadataLink';
 import HubButton from 'components/Header/HubButton';
 import {NamespaceLinkContext} from 'components/Header/NamespaceLinkContext';
-import Welcome from 'components/Header/Welcome';
 
 require('./Header.scss');
 
@@ -155,7 +154,6 @@ export default class Header extends Component {
             </ul>
           </div>
         </div>
-        <Welcome />
       </div>
     );
   }

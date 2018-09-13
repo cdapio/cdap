@@ -56,6 +56,8 @@ body:not(.theme-cdap) .guided-tour-tooltip.shepherd-element {
     }
 
     .shepherd-text {
+      height: 310px;
+
       p:last-child:not(:only-child) {
         margin-top: 20px;
       }
