@@ -50,10 +50,10 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunCountResult;
-import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
@@ -925,8 +925,11 @@ public class DefaultStore implements Store {
       List<ProgramHistory> result = new ArrayList<>(programs.size());
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
 
+      Collection<ApplicationId> appIds = programs.stream().map(ProgramId::getParent).collect(Collectors.toList());
+      Map<ApplicationId, ApplicationMeta> apps = appMetadataStore.getApplicationsForAppIds(appIds);
+
       for (ProgramId program : programs) {
-        ApplicationMeta appMeta = appMetadataStore.getApplication(program.getParent());
+        ApplicationMeta appMeta = apps.get(program.getParent());
         if (appMeta == null) {
           result.add(new ProgramHistory(program, Collections.emptyList(),
                                         new ApplicationNotFoundException(program.getParent())));
@@ -934,30 +937,12 @@ public class DefaultStore implements Store {
         }
 
         ApplicationSpecification appSpec = appMeta.getSpec();
-        ProgramType type = program.getType();
-        String programName = program.getProgram();
-        ProgramSpecification programSpec;
-        if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programName)) {
-          programSpec = appSpec.getFlows().get(programName);
-        } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
-          programSpec = appSpec.getMapReduce().get(programName);
-        } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
-          programSpec = appSpec.getSpark().get(programName);
-        } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(programName)) {
-          programSpec = appSpec.getWorkflows().get(programName);
-        } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(programName)) {
-          programSpec = appSpec.getServices().get(programName);
-        } else if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(programName)) {
-          programSpec = appSpec.getWorkers().get(programName);
-        } else {
-          programSpec = null;
-        }
+        ProgramSpecification programSpec = getExistingAppProgramSpecification(appSpec, program);
 
         if (programSpec == null) {
           result.add(new ProgramHistory(program, Collections.emptyList(), new ProgramNotFoundException(program)));
           continue;
         }
-
 
         List<RunRecord> runs = appMetadataStore.getRuns(program, status, startTime, endTime, limit, filter).values()
           .stream()
