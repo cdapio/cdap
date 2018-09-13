@@ -102,9 +102,9 @@ public class MonitorSocksProxyTest {
     httpService.start();
 
     sshSession = new TestSSHSession(getSSHConfig());
-    proxyServer = new MonitorSocksProxy(CConfiguration.create(), (host, port) ->
+    proxyServer = new MonitorSocksProxy(CConfiguration.create(), host ->
       Optional.ofNullable(sshSession).orElseThrow(() -> new IllegalArgumentException("No SSH session available for "
-                                                                                       + host + ":" + port)));
+                                                                                       + host)));
     proxyServer.startAndWait();
 
     Proxy proxy = new Proxy(Proxy.Type.SOCKS, proxyServer.getBindAddress());

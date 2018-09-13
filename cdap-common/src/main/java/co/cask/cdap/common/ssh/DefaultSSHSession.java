@@ -85,6 +85,11 @@ public class DefaultSSHSession implements SSHSession {
   }
 
   @Override
+  public boolean isAlive() {
+    return session.isConnected();
+  }
+
+  @Override
   public InetSocketAddress getAddress() {
     return remoteAddress;
   }

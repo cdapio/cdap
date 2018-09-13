@@ -399,9 +399,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // Publish CUD (Create, Update, Delete) operations on dataset instance
       result.set(Constants.Dataset.Manager.PUBLISH_CUD, Boolean.TRUE.toString());
 
-      // Bind the runtime monitor server to all interfaces
-      result.set(Constants.RuntimeMonitor.SERVER_HOST, "::");
-
       // The following services will be running in the edge node host.
       // Set the bind addresses for all of them to "${master.services.bind.address}"
       // Which the value of `"master.services.bind.address" will be set in the AbstractProgramTwillRunnable when it

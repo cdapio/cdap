@@ -2433,11 +2433,13 @@
   </property>
 
   <property>
-    <name>app.program.runtime.monitor.server.port</name>
-    <value>443</value>
+    <name>app.program.runtime.monitor.server.info.file</name>
+    <value>runtime.monitor.server.info</value>
     <description>
-      CDAP Runtime monitor server port
+      File name for the runtime monitor to store the port number.
+      This configuration is for internal use only and should not be changed.
     </description>
+    <final>true</final>
   </property>
 
   <property>

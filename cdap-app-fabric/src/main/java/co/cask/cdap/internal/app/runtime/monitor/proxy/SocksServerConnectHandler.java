@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
@@ -174,7 +175,7 @@ final class SocksServerConnectHandler extends SimpleChannelInboundHandler<SocksM
    */
   private ChannelHandler createForwardingChannelHandler(Channel channel,
                                                         String destAddress, int destPort) throws IOException {
-    SSHSession sshSession = sshSessionProvider.getSession(destAddress, destPort);
+    SSHSession sshSession = sshSessionProvider.getSession(new InetSocketAddress(destAddress, destPort));
     PortForwarding portForwarding = sshSession.createLocalPortForward("localhost", destPort,
                                                                       destPort, new PortForwarding.DataConsumer() {
       @Override

@@ -23,6 +23,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -33,6 +35,7 @@ import co.cask.http.NettyHttpService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -52,9 +55,13 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -64,6 +71,7 @@ import javax.ws.rs.Path;
 public class RuntimeMonitorServer extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitorServer.class);
+  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final MultiThreadMessagingContext messagingContext;
@@ -91,14 +99,11 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.RUNTIME_HTTP));
-    InetSocketAddress address = getServerSocketAddress(cConf);
-
     // Enable SSL for communication.
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
       .setHttpHandlers(new RuntimeHandler(cConf, messagingContext))
       .setExceptionHandler(new HttpExceptionHandler())
-      .setHost(address.getHostName())
-      .setPort(address.getPort());
+      .setHost(InetAddress.getLoopbackAddress().getHostName());
 
     httpService = new HttpsEnabler()
       .setKeyStore(keyStore, ""::toCharArray)
@@ -107,6 +112,19 @@ public class RuntimeMonitorServer extends AbstractIdleService {
       .build();
 
     httpService.start();
+
+    // Writes the port to a local file
+    Retries.runWithRetries(
+      () -> {
+        String content = GSON.toJson(new RuntimeMonitorServerInfo(httpService.getBindAddress().getPort()));
+        java.nio.file.Path infoFile = Paths.get(cConf.get(Constants.RuntimeMonitor.SERVER_INFO_FILE));
+        Files.deleteIfExists(infoFile);
+        Files.move(Files.write(Files.createTempFile(infoFile.getFileName().toString(), ".tmp"),
+                               Collections.singletonList(content)),
+                   infoFile);
+      },
+      RetryStrategies.fixDelay(1, TimeUnit.SECONDS), IOException.class::isInstance);
+
     LOG.info("Runtime monitor server started on {}", httpService.getBindAddress());
   }
 
@@ -129,18 +147,6 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     Uninterruptibles.awaitUninterruptibly(shutdownLatch);
     httpService.stop();
     LOG.info("Runtime monitor server stopped");
-  }
-
-  /**
-   * Returns the {@link InetSocketAddress} for the http service to bind to.
-   */
-  private InetSocketAddress getServerSocketAddress(CConfiguration cConf) {
-    String host = cConf.get(Constants.RuntimeMonitor.SERVER_HOST);
-    if (host == null) {
-      host = InetAddress.getLoopbackAddress().getCanonicalHostName();
-    }
-    int port = cConf.getInt(Constants.RuntimeMonitor.SERVER_PORT);
-    return new InetSocketAddress(host, port);
   }
 
   /**

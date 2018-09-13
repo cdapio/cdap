@@ -40,6 +40,7 @@ import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteProcessControl
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
+import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServerInfo;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.profile.ProfileMetricService;
 import co.cask.cdap.messaging.MessagingService;
@@ -51,6 +52,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
@@ -60,12 +62,19 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
+import java.net.Proxy;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.Collections;
 import java.util.Optional;
@@ -109,9 +118,7 @@ public class RuntimeMonitorTest {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
-    // clear the host to make sure it binds to loopback address
-    cConf.unset(Constants.RuntimeMonitor.SERVER_HOST);
-    cConf.set(Constants.RuntimeMonitor.SERVER_PORT, "0");
+    cConf.set(Constants.RuntimeMonitor.SERVER_INFO_FILE, new File(TMP_FOLDER.newFolder(), "info").getAbsolutePath());
     cConf.set(Constants.RuntimeMonitor.BATCH_SIZE, "2");
     cConf.set(Constants.RuntimeMonitor.POLL_TIME_MS, "200");
     cConf.set(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, "1000");
@@ -163,6 +170,8 @@ public class RuntimeMonitorTest {
     runtimeServer = injector.getInstance(RuntimeMonitorServer.class);
     runtimeServer.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+
+    verifyServerPortWritten();
   }
 
   @After
@@ -176,9 +185,23 @@ public class RuntimeMonitorTest {
     }
   }
 
+  /**
+   * Verifies the {@link RuntimeMonitorServer} writes out its port to a file as specified by the
+   * {@link Constants.RuntimeMonitor#SERVER_INFO_FILE} config.
+   */
+  private void verifyServerPortWritten() throws IOException {
+    String file = cConf.get(Constants.RuntimeMonitor.SERVER_INFO_FILE);
+    try (Reader reader = Files.newBufferedReader(Paths.get(file), StandardCharsets.UTF_8)) {
+      RuntimeMonitorServerInfo info = new Gson().fromJson(reader, RuntimeMonitorServerInfo.class);
+      Assert.assertEquals(runtimeServer.getBindAddress().getPort(), info.getPort());
+    }
+  }
+
   @Test
   public void testRunTimeMonitor() throws Exception {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5, Threads.createDaemonThreadFactory("test"));
+
+    verifyServerPortWritten();
 
     RunId runId = RunIds.generate();
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("myworkflow").run(runId);
@@ -192,10 +215,9 @@ public class RuntimeMonitorTest {
     monitorCConf.set(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, "cdap-programStatus");
     messagingService.createTopic(new TopicMetadata(NamespaceId.SYSTEM.topic("cdap-programStatus")));
 
-    RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(runtimeServer.getBindAddress().getHostName(),
-                                                                  runtimeServer.getBindAddress().getPort(),
-                                                                  HttpRequestConfig.DEFAULT,
-                                                                  clientKeyStore, serverKeyStore);
+    RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(HttpRequestConfig.DEFAULT,
+                                                                  clientKeyStore, serverKeyStore,
+                                                                  runtimeServer::getBindAddress, Proxy.NO_PROXY);
     ProfileMetricService profileMetricService =
       new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
@@ -266,10 +288,9 @@ public class RuntimeMonitorTest {
     ProfileMetricService profileMetricService =
       new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
-    RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(runtimeServer.getBindAddress().getHostName(),
-                                                                  runtimeServer.getBindAddress().getPort(),
-                                                                  HttpRequestConfig.DEFAULT,
-                                                                  clientKeyStore, serverKeyStore);
+    RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(HttpRequestConfig.DEFAULT,
+                                                                  clientKeyStore, serverKeyStore,
+                                                                  runtimeServer::getBindAddress, Proxy.NO_PROXY);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
@@ -321,10 +342,9 @@ public class RuntimeMonitorTest {
     monitorCConf.set(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, "cdap-programStatus");
     messagingService.createTopic(new TopicMetadata(NamespaceId.SYSTEM.topic("cdap-programStatus")));
 
-    RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(runtimeServer.getBindAddress().getHostName(),
-                                                                  runtimeServer.getBindAddress().getPort(),
-                                                                  HttpRequestConfig.DEFAULT,
-                                                                  clientKeyStore, serverKeyStore);
+    RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(HttpRequestConfig.DEFAULT,
+                                                                  clientKeyStore, serverKeyStore,
+                                                                  runtimeServer::getBindAddress, Proxy.NO_PROXY);
 
     ProfileMetricService profileMetricService =
       new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
@@ -408,12 +428,12 @@ public class RuntimeMonitorTest {
     private boolean isRunning;
 
     @Override
-    public boolean isRunning() throws Exception {
+    public boolean isRunning() {
       return isRunning;
     }
 
     @Override
-    public void kill() throws Exception {
+    public void kill() {
 
     }
   }
