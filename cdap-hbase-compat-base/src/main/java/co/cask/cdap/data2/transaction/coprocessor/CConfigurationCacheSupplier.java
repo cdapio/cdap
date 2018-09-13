@@ -16,9 +16,9 @@
 
 package co.cask.cdap.data2.transaction.coprocessor;
 
-import co.cask.cdap.data2.util.ReferenceCountedSupplier;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
+import org.apache.tephra.coprocessor.ReferenceCountedSupplier;
 
 /**
  * Supplies instances of {@link CConfigurationCache} implementations.
