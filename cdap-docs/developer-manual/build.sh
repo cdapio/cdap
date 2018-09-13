@@ -90,7 +90,7 @@ function download_includes() {
   test_an_include 26486a370532d820bde854d42990a868 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
 
   test_an_include ce88887b4e60273e60deeb6d233be7ae ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
-  test_an_include 52f6fc93e4e96c0c1d208a335827e110 ../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
+  test_an_include 76f187d9ad8ea4d14bde0f2ef8617a97 ../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
 }
 
 function test_includes () {
