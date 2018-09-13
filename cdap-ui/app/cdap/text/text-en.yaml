@@ -554,6 +554,7 @@ features:
           TAN: Tan
         title: Calculate
       ChangeDataType:
+        disabledTooltip: "Change data type directive is not available on columns of data type 'LocalDate', 'LocalTime', or 'ZonedDateTime'"
         Options:
           boolean: Boolean
           bytes: Bytes
