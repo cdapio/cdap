@@ -212,8 +212,8 @@ public class DataprocProvisioner implements Provisioner {
     } catch (IOException ioe) {
       if (Throwables.getRootCause(ioe) instanceof ConnectException) {
         throw new IOException(String.format(
-                "Failed to connect to host %s. Ensure that GCP Firewall Ingress Rules exist that allow ssh and" +
-                        " https (ports 22 and 443).", host),
+                "Failed to connect to host %s. Ensure that GCP Firewall Ingress Rules exist that allow ssh " +
+                        "on port 22.", host),
                 ioe);
       }
       throw ioe;

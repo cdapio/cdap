@@ -290,10 +290,14 @@ public class DataprocClient implements AutoCloseable {
     }
   }
 
-  // finds ingress firewalls for the configured network that open ports 22 and 443,
-  // returning target tags for those rules
+  /**
+   * Finds ingress firewall rules for the configured network that matches the required firewall port as
+   * defined in {@link FirewallPort}.
+   *
+   * @return a {@link Collection} of tags that need to be added to the VM to have those firewall rules applies
+   * @throws IOException If failed to discover those firewall rules
+   */
   private Collection<String> getFirewallTargetTags() throws IOException {
-    // figure out the tag to open port 443
     FirewallList firewalls = compute.firewalls().list(projectId).execute();
     List<String> tags = new ArrayList<>();
     Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
@@ -318,10 +322,6 @@ public class DataprocClient implements AutoCloseable {
           requiredPorts.clear();
           addTag = true;
         } else if ("tcp".equals(protocol)) {
-          if (allowed.getPorts() == null || allowed.getPorts().contains(String.valueOf(FirewallPort.HTTPS.port))) {
-            requiredPorts.remove(FirewallPort.HTTPS);
-            addTag = true;
-          }
           if (allowed.getPorts() == null || allowed.getPorts().contains(String.valueOf(FirewallPort.SSH.port))) {
             requiredPorts.remove(FirewallPort.SSH);
             addTag = true;
@@ -417,8 +417,8 @@ public class DataprocClient implements AutoCloseable {
    * Firewall ports that we're concerned about.
    */
   private enum FirewallPort {
-    SSH(22),
-    HTTPS(443);
+    SSH(22);
+
     private final int port;
 
     FirewallPort(int port) {
