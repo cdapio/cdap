@@ -17,23 +17,37 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.id.ProgramId;
+
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Result for the batch program runs endpoint
+ * Result for getting run records for a program.
  */
-public class BatchProgramRuns extends BatchProgramResult {
+public class ProgramHistory {
+  private final ProgramId programId;
   private final List<RunRecord> runs;
+  private final Exception exception;
 
-  public BatchProgramRuns(BatchProgram program, int statusCode, @Nullable String error, List<RunRecord> runs) {
-    super(program, statusCode, error);
+  public ProgramHistory(ProgramId programId, List<RunRecord> runs, @Nullable Exception exception) {
+    this.programId = programId;
     this.runs = runs;
+    this.exception = exception;
+  }
+
+  public ProgramId getProgramId() {
+    return programId;
   }
 
   public List<RunRecord> getRuns() {
     return runs;
+  }
+
+  @Nullable
+  public Exception getException() {
+    return exception;
   }
 
   @Override
@@ -44,17 +58,15 @@ public class BatchProgramRuns extends BatchProgramResult {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
-      return false;
-    }
 
-    BatchProgramRuns that = (BatchProgramRuns) o;
-
-    return Objects.equals(runs, that.runs);
+    ProgramHistory that = (ProgramHistory) o;
+    return Objects.equals(programId, that.programId) &&
+      Objects.equals(runs, that.runs) &&
+      Objects.equals(exception, that.exception);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), runs);
+    return Objects.hash(programId, runs, exception);
   }
 }

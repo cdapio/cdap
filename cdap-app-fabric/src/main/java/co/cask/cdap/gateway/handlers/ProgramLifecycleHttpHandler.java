@@ -57,8 +57,8 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramCount;
+import co.cask.cdap.proto.BatchProgramHistory;
 import co.cask.cdap.proto.BatchProgramResult;
-import co.cask.cdap.proto.BatchProgramRuns;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.BatchRunnable;
@@ -67,6 +67,7 @@ import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
+import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -1288,7 +1289,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (exception == null) {
         counts.add(new BatchProgramCount(programId, HttpResponseStatus.OK.code(), null, runCountResult.getCount()));
       } else if (exception instanceof NotFoundException) {
-        counts.add(new BatchProgramCount(programId, HttpResponseStatus.BAD_REQUEST.code(),
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.NOT_FOUND.code(),
                                          exception.getMessage(), null));
       } else if (exception instanceof UnauthorizedException) {
         counts.add(new BatchProgramCount(programId, HttpResponseStatus.FORBIDDEN.code(),
@@ -1336,32 +1337,34 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/runs")
   public void getLatestRuns(FullHttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) throws BadRequestException, IOException {
+                            @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<ProgramId> programIds =
+      programs.stream().map(batchProgram -> new ProgramId(namespaceId, batchProgram.getAppId(),
+                                                          batchProgram.getProgramType(),
+                                                          batchProgram.getProgramId())).collect(Collectors.toList());
 
-    List<BatchProgramRuns> response = new ArrayList<>(programs.size());
-    for (BatchProgram program : programs) {
-      ProgramId programId;
-      try {
-        programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(), program.getProgramId());
-      } catch (IllegalArgumentException e) {
-        response.add(new BatchProgramRuns(program, 400, e.getMessage(), Collections.emptyList()));
-        continue;
-      }
-
-      // currently only supports getting the most recent run. May be extended in the future.
-      try {
-        List<RunRecord> programRuns = lifecycleService.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 1);
-        response.add(new BatchProgramRuns(program, 200, null, programRuns));
-      } catch (UnauthorizedException e) {
-        response.add(new BatchProgramRuns(program, 403, e.getMessage(), Collections.emptyList()));
-      } catch (NotFoundException e) {
-        response.add(new BatchProgramRuns(program, 404, e.getMessage(), Collections.emptyList()));
-      } catch (Exception e) {
-        response.add(new BatchProgramRuns(program, 500, e.getMessage(), Collections.emptyList()));
+    List<BatchProgramHistory> response = new ArrayList<>(programs.size());
+    List<ProgramHistory> result = lifecycleService.getRuns(programIds, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 1);
+    for (ProgramHistory programHistory : result) {
+      ProgramId programId = programHistory.getProgramId();
+      Exception exception = programHistory.getException();
+      BatchProgram batchProgram = new BatchProgram(programId.getApplication(), programId.getType(),
+                                                   programId.getProgram());
+      if (exception == null) {
+        response.add(new BatchProgramHistory(batchProgram, HttpResponseStatus.OK.code(), null,
+                                             programHistory.getRuns()));
+      } else if (exception instanceof NotFoundException) {
+        response.add(new BatchProgramHistory(batchProgram, HttpResponseStatus.NOT_FOUND.code(),
+                                             exception.getMessage(), Collections.emptyList()));
+      } else if (exception instanceof UnauthorizedException) {
+        response.add(new BatchProgramHistory(batchProgram, HttpResponseStatus.FORBIDDEN.code(),
+                                             exception.getMessage(), Collections.emptyList()));
+      } else {
+        response.add(new BatchProgramHistory(batchProgram, HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                             exception.getMessage(), Collections.emptyList()));
       }
     }
-
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 

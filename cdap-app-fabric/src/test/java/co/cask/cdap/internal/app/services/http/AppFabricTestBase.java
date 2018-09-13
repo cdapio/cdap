@@ -63,7 +63,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.BatchProgram;
-import co.cask.cdap.proto.BatchProgramRuns;
+import co.cask.cdap.proto.BatchProgramHistory;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -181,7 +181,7 @@ public abstract class AppFabricTestBase {
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
-  protected static final Type BATCH_PROGRAM_RUNS_TYPE = new TypeToken<List<BatchProgramRuns>>() { }.getType();
+  protected static final Type BATCH_PROGRAM_RUNS_TYPE = new TypeToken<List<BatchProgramHistory>>() { }.getType();
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   protected static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
@@ -1203,7 +1203,7 @@ public abstract class AppFabricTestBase {
     }, 60, TimeUnit.SECONDS);
   }
 
-  protected List<BatchProgramRuns> getProgramRuns(NamespaceId namespace, List<ProgramId> programs) throws Exception {
+  protected List<BatchProgramHistory> getProgramRuns(NamespaceId namespace, List<ProgramId> programs) throws Exception {
     List<BatchProgram> request = programs.stream()
       .map(program -> new BatchProgram(program.getApplication(), program.getType(), program.getProgram()))
       .collect(Collectors.toList());

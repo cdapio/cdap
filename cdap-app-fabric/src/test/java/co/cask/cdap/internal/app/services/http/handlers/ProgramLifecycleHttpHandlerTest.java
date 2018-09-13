@@ -56,7 +56,7 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.provision.MockProvisioner;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.BatchProgramRuns;
+import co.cask.cdap.proto.BatchProgramHistory;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
@@ -228,10 +228,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // verify batch runs endpoint
     List<ProgramId> programs = ImmutableList.of(sleepWorkflow2.toEntityId(), dummyMR2.toEntityId(),
                                                 wordcountFlow2.toEntityId());
-    List<BatchProgramRuns> batchRuns = getProgramRuns(new NamespaceId(TEST_NAMESPACE2), programs);
-    BatchProgramRuns sleepRun = batchRuns.get(0);
-    BatchProgramRuns dummyMR2Run = batchRuns.get(1);
-    BatchProgramRuns wordcountFlow2Run = batchRuns.get(2);
+    List<BatchProgramHistory> batchRuns = getProgramRuns(new NamespaceId(TEST_NAMESPACE2), programs);
+    BatchProgramHistory sleepRun = batchRuns.get(0);
+    BatchProgramHistory dummyMR2Run = batchRuns.get(1);
+    BatchProgramHistory wordcountFlow2Run = batchRuns.get(2);
 
     // verify results come back in order
     Assert.assertEquals(sleepWorkflow2.getId(), sleepRun.getProgramId());
