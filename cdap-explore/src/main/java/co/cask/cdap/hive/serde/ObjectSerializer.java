@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.hive.serde;
 
+import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -48,10 +49,14 @@ import org.apache.hadoop.io.ShortWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Used to serialize objects in a SerDe. Objects can come from native Hive tables or they can come from the
@@ -60,9 +65,11 @@ import java.util.Map;
 public class ObjectSerializer {
   private static final Gson GSON = new Gson();
   private final ArrayList<String> columnNames;
+  private final Schema schema;
 
-  public ObjectSerializer(ArrayList<String> columnNames) {
+  public ObjectSerializer(ArrayList<String> columnNames, Schema schema) {
     this.columnNames = columnNames;
+    this.schema = schema;
   }
 
   public Writable serialize(Object o, ObjectInspector objectInspector) {
@@ -76,18 +83,22 @@ public class ObjectSerializer {
     Map<String, Object> recordMap = new HashMap<>();
     List<Object> recordObjects = ((StructObjectInspector) objectInspector).getStructFieldsDataAsList(o);
 
+    List<Schema.Field> fields = schema.getFields();
+
     for (int structIndex = 0; structIndex < info.size(); structIndex++) {
       Object obj = recordObjects.get(structIndex);
       TypeInfo objType = info.get(structIndex);
+      Schema.Field field = fields.get(structIndex);
+      Schema fieldSchema = field.getSchema().isNullable() ? field.getSchema().getNonNullable() : field.getSchema();
       if (obj instanceof LazyNonPrimitive || obj instanceof LazyPrimitive) {
         // In case the SerDe that deserialized the object is the one of a native table
-        recordMap.put(names.get(structIndex), fromLazyObject(objType, obj));
+        recordMap.put(names.get(structIndex), fromLazyObject(objType, obj, fieldSchema));
       } else if (obj instanceof Writable) {
         // Native tables sometimes introduce primitive Writable objects at this point
-        recordMap.put(names.get(structIndex), fromWritable((Writable) obj));
+        recordMap.put(names.get(structIndex), fromWritable((Writable) obj, fieldSchema));
       } else {
         // In case the deserializer is the DatasetSerDe
-        recordMap.put(names.get(structIndex), serialize(obj, objType));
+        recordMap.put(names.get(structIndex), serialize(obj, objType, fieldSchema));
       }
     }
 
@@ -96,55 +107,69 @@ public class ObjectSerializer {
   }
 
   @SuppressWarnings("unchecked")
-  private Object serialize(Object obj, TypeInfo typeInfo) {
+  @Nullable
+  private Object serialize(@Nullable Object obj, TypeInfo typeInfo, Schema schema) {
+    if (obj == null) {
+      return null;
+    }
+
     switch (typeInfo.getCategory()) {
       case PRIMITIVE:
+        // Object can be of type Date or Timestamp if this object is passed from Deserializer.
+        if (obj instanceof Date) {
+          // convert java.sql.Date object to number of days so that OutputFormat stores logical type date as int
+          return ((Date) obj).toLocalDate().toEpochDay();
+        } else if (obj instanceof Timestamp) {
+          // convert java.sql.Timestamp object to timestamp since epoch so that OutputFormat stores
+          // logical type timestamp as long
+          return toEpochTimestamp((Timestamp) obj, schema);
+        }
         return obj;
       case LIST:
-        return serializeList((List<Object>) obj, (ListTypeInfo) typeInfo);
+        return serializeList((List<Object>) obj, (ListTypeInfo) typeInfo, schema);
       case MAP:
-        return serializeMap((Map<Object, Object>) obj, (MapTypeInfo) typeInfo);
+        return serializeMap((Map<Object, Object>) obj, (MapTypeInfo) typeInfo, schema);
       case STRUCT:
-        return serializeStruct((List<Object>) obj, (StructTypeInfo) typeInfo);
+        return serializeStruct((List<Object>) obj, (StructTypeInfo) typeInfo, schema);
       case UNION:
         throw new UnsupportedOperationException("union not yet supported");
     }
     throw new IllegalArgumentException("Unknown category " + typeInfo.getCategory());
   }
 
-  private Object serializeList(List<Object> list, ListTypeInfo typeInfo) {
+  private Object serializeList(List<Object> list, ListTypeInfo typeInfo, Schema schema) {
     // need to recurse since it may contain structs
     TypeInfo elementType = typeInfo.getListElementTypeInfo();
     List<Object> serialized = Lists.newArrayListWithCapacity(list.size());
     for (int i = 0; i < list.size(); i++) {
-      serialized.add(i, serialize(list.get(i), elementType));
+      serialized.add(i, serialize(list.get(i), elementType, schema));
     }
     return serialized;
   }
 
-  private Object serializeMap(Map<Object, Object> map, MapTypeInfo typeInfo) {
+  private Object serializeMap(Map<Object, Object> map, MapTypeInfo typeInfo, Schema schema) {
     // need to recurse since it may contain structs
     Map<Object, Object> serialized = Maps.newHashMapWithExpectedSize(map.size());
     TypeInfo keyType = typeInfo.getMapKeyTypeInfo();
     TypeInfo valType = typeInfo.getMapValueTypeInfo();
     for (Map.Entry<Object, Object> mapEntry : map.entrySet()) {
-      serialized.put(serialize(mapEntry.getKey(), keyType), serialize(mapEntry.getValue(), valType));
+      serialized.put(serialize(mapEntry.getKey(), keyType, schema), serialize(mapEntry.getValue(), valType, schema));
     }
     return serialized;
   }
 
   // a struct is represented as a list of objects
-  private Object serializeStruct(List<Object> struct, StructTypeInfo typeInfo) {
+  private Object serializeStruct(List<Object> struct, StructTypeInfo typeInfo, Schema schema) {
     Map<String, Object> serialized = Maps.newHashMapWithExpectedSize(struct.size());
     List<TypeInfo> types = typeInfo.getAllStructFieldTypeInfos();
     List<String> names = typeInfo.getAllStructFieldNames();
     for (int i = 0; i < struct.size(); i++) {
-      serialized.put(names.get(i), serialize(struct.get(i), types.get(i)));
+      serialized.put(names.get(i), serialize(struct.get(i), types.get(i), schema));
     }
     return serialized;
   }
 
-  private Object fromWritable(Writable writable) {
+  private Object fromWritable(Writable writable, Schema schema) {
     if (writable instanceof IntWritable) {
       return ((IntWritable) writable).get();
     } else if (writable instanceof LongWritable) {
@@ -164,13 +189,13 @@ public class ObjectSerializer {
     } else if (writable instanceof ByteWritable) {
       return ((ByteWritable) writable).get();
     } else if (writable instanceof DateWritable) {
-      return ((DateWritable) writable).get();
+      return ((DateWritable) writable).get().toLocalDate().toEpochDay();
     } else if (writable instanceof org.apache.hadoop.hive.serde2.io.ShortWritable) {
       return ((org.apache.hadoop.hive.serde2.io.ShortWritable) writable).get();
     } else if (writable instanceof HiveBaseCharWritable) {
       return ((HiveBaseCharWritable) writable).getTextValue().toString();
     } else if (writable instanceof TimestampWritable) {
-      return ((TimestampWritable) writable).getTimestamp();
+      return toEpochTimestamp(((TimestampWritable) writable).getTimestamp(), schema);
     } else if (writable instanceof org.apache.hadoop.hive.serde2.io.DoubleWritable) {
       return ((org.apache.hadoop.hive.serde2.io.DoubleWritable) writable).get();
     } else if (writable instanceof HiveDecimalWritable) {
@@ -181,7 +206,8 @@ public class ObjectSerializer {
     return writable.toString();
   }
 
-  private Object fromLazyObject(TypeInfo type, Object data) {
+  @Nullable
+  private Object fromLazyObject(TypeInfo type, @Nullable Object data, Schema schema) {
     if (data == null) {
       return null;
     }
@@ -189,7 +215,7 @@ public class ObjectSerializer {
     switch (type.getCategory()) {
       case PRIMITIVE:
         Writable writable = ((LazyPrimitive) data).getWritableObject();
-        return fromWritable(writable);
+        return fromWritable(writable, schema);
 
       case LIST:
         ListTypeInfo listType = (ListTypeInfo) type;
@@ -202,7 +228,7 @@ public class ObjectSerializer {
 
         Object[] arrayContent = new Object[list.size()];
         for (int i = 0; i < arrayContent.length; i++) {
-          arrayContent[i] = fromLazyObject(listElementType, list.get(i));
+          arrayContent[i] = fromLazyObject(listElementType, list.get(i), schema);
         }
         return arrayContent;
 
@@ -213,8 +239,8 @@ public class ObjectSerializer {
         Map<Object, Object> map = ((LazyMap) data).getMap();
 
         for (Map.Entry<Object, Object> entry : map.entrySet()) {
-          mapContent.put(fromLazyObject(mapType.getMapKeyTypeInfo(), entry.getKey()),
-                         fromLazyObject(mapType.getMapValueTypeInfo(), entry.getValue()));
+          mapContent.put(fromLazyObject(mapType.getMapKeyTypeInfo(), entry.getKey(), schema),
+                         fromLazyObject(mapType.getMapValueTypeInfo(), entry.getValue(), schema));
         }
         return mapContent;
 
@@ -228,7 +254,7 @@ public class ObjectSerializer {
 
         for (int structIndex = 0; structIndex < info.size(); structIndex++) {
           structMap.put(names.get(structIndex),
-                        fromLazyObject(info.get(structIndex), struct.get(structIndex)));
+                        fromLazyObject(info.get(structIndex), struct.get(structIndex), schema));
         }
         return structMap;
       case UNION:
@@ -237,5 +263,16 @@ public class ObjectSerializer {
       default:
         return data.toString();
     }
+  }
+
+  private Object toEpochTimestamp(Timestamp ts, Schema schema) {
+    if (schema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MILLIS) {
+      return ts.getTime();
+    } else if (schema.getLogicalType() == Schema.LogicalType.TIMESTAMP_MICROS) {
+      long timeInSeconds = TimeUnit.MILLISECONDS.toSeconds(ts.getTime());
+      long fraction = TimeUnit.NANOSECONDS.toMicros(ts.getNanos());
+      return TimeUnit.SECONDS.toMicros(timeInSeconds) + fraction;
+    }
+    return ts;
   }
 }

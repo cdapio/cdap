@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 import javax.annotation.Nullable;
 
 /**
@@ -514,6 +515,99 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
       Assert.assertEquals("ç", columns.get(1));
     } finally {
       datasetFramework.deleteInstance(ttId);
+    }
+  }
+
+  @Test
+  public void testTableWithDateTimestamp() throws Exception {
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    DatasetId dtTsTable = NAMESPACE_ID.dataset("dt_ts_table");
+    DatasetId otherDtTsTable = NAMESPACE_ID.dataset("other_dt_ts_table");
+    Schema schema = Schema.recordOf("recordWithDateTimestamp",
+                                    Schema.Field.of("int_field", Schema.of(Schema.Type.INT)),
+                                    Schema.Field.of("string_field", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                                    Schema.Field.of("date_field",
+                                                    Schema.nullableOf(Schema.of(Schema.LogicalType.DATE))),
+                                    Schema.Field.of("ts_millis_field",
+                                                    Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))),
+                                    Schema.Field.of("ts_micros_field",
+                                                    Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS))));
+    datasetFramework.addInstance(Table.class.getName(), dtTsTable,
+                                 TableProperties.builder()
+                                   .setSchema(schema)
+                                   .setRowFieldName("int_field")
+                                   .setExploreTableName("dt_ts_table")
+                                   .build());
+
+    datasetFramework.addInstance(Table.class.getName(), otherDtTsTable,
+                                 TableProperties.builder()
+                                   .setSchema(schema)
+                                   .setRowFieldName("int_field")
+                                   .setExploreTableName("other_dt_ts_table")
+                                   .build());
+    try {
+      // Accessing dataset instance to perform data operations
+      Table table = datasetFramework.getDataset(dtTsTable, DatasetDefinition.NO_ARGUMENTS, null);
+      Assert.assertNotNull(table);
+      Transaction tx = transactionManager.startShort(100);
+      ((TransactionAware) table).startTx(tx);
+
+
+      Put put = new Put(Bytes.toBytes("row1"));
+      put.add("int_field", 1);
+      put.add("string_field", "alice");
+      put.add("date_field", 0);
+      put.add("ts_millis_field", 1536336590595L);
+      put.add("ts_micros_field", 1536336590595123L);
+      table.put(put);
+
+      put = new Put(Bytes.toBytes("row2"));
+      put.add("int_field", 2);
+      put.add("string_field", "bob");
+      table.put(put);
+
+      ((TransactionAware) table).commitTx();
+      transactionManager.canCommit(tx.getTransactionId(), ((TransactionAware) table).getTxChanges());
+      transactionManager.commit(tx.getTransactionId(), tx.getWritePointer());
+      ((TransactionAware) table).postTxCommit();
+
+      ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from dt_ts_table").get();
+
+      List<Object> columns = results.next().getColumns();
+      Assert.assertEquals(5, columns.size());
+      Assert.assertEquals("alice", columns.get(1));
+      Assert.assertEquals("1970-01-01", columns.get(2));
+      Assert.assertEquals("2018-09-07 16:09:50.595", columns.get(3));
+      Assert.assertEquals("2018-09-07 16:09:50.595123", columns.get(4));
+      columns = results.next().getColumns();
+      Assert.assertEquals(5, columns.size());
+      Assert.assertEquals("bob", columns.get(1));
+      Assert.assertNull(columns.get(2));
+      Assert.assertNull(columns.get(3));
+      Assert.assertNull(columns.get(4));
+
+      String command = "insert into other_dt_ts_table select int_field, string_field, date_field, ts_millis_field, " +
+        "ts_micros_field from dt_ts_table";
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
+      Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
+
+      command = "select string_field, date_field, ts_millis_field, ts_micros_field from other_dt_ts_table";
+
+      runCommand(NAMESPACE_ID, command,
+                 true,
+                 Lists.newArrayList(new ColumnDesc("string_field", "STRING", 1, null),
+                                    new ColumnDesc("date_field", "DATE", 2, null),
+                                    new ColumnDesc("ts_millis_field", "TIMESTAMP", 3, null),
+                                    new ColumnDesc("ts_micros_field", "TIMESTAMP", 4, null)),
+                 Lists.newArrayList(new QueryResult(Lists.newArrayList("alice", "1970-01-01",
+                                                                       "2018-09-07 16:09:50.595",
+                                                                       "2018-09-07 16:09:50.595123")),
+                                    new QueryResult(Lists.newArrayList("bob", null, null, null)))
+      );
+
+    } finally {
+      datasetFramework.deleteInstance(dtTsTable);
+      datasetFramework.deleteInstance(otherDtTsTable);
     }
   }
 }

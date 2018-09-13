@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -244,6 +244,24 @@ public class SchemaConverterTest {
     // Should not throw an exception
     new SchemaConverter(false).toHiveSchema(NotRecursive.class);
     new SchemaConverter(true).toHiveSchema(NotRecursive.class);
+  }
+
+  @Test
+  public void testDateTimestampType() throws Exception {
+    Schema schema = Schema.recordOf(
+      "schema",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("record", Schema.recordOf(
+        "record",
+        Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("dt", Schema.of(Schema.LogicalType.DATE)),
+        Schema.Field.of("ts1", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
+        Schema.Field.of("ts2", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS))))
+    );
+
+    SchemaConverter schemaConverter = new SchemaConverter(false);
+    Assert.assertEquals("(id int, record struct<name:string,dt:date,ts1:timestamp,ts2:timestamp>)",
+                        schemaConverter.toHiveSchema(schema));
   }
 
   private void verifyUnsupportedSchema(Type type) {

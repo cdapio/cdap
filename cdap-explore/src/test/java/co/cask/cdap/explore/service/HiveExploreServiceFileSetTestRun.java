@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumWriter;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -54,6 +60,8 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,6 +69,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.TimeZone;
 import javax.annotation.Nullable;
 
 /**
@@ -901,6 +910,106 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     runCommand(NAMESPACE_ID, "show tables", true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
+  }
+
+  @Test
+  public void testTPFSWithDateTimestamp() throws Exception {
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    final DatasetId datasetInstanceId = NAMESPACE_ID.dataset("dtfs");
+    final String tableName = getDatasetHiveName(datasetInstanceId);
+    final Schema dtSchema = Schema.recordOf("dt",
+                                            Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                                            Schema.Field.of("dt", Schema.of(Schema.LogicalType.DATE)),
+                                            Schema.Field.of("ts", Schema.nullableOf(Schema.of(Schema.LogicalType
+                                                                                                .TIMESTAMP_MILLIS))));
+
+    // create a file set
+    datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
+      // properties for file set
+      .setBasePath("somePath")
+      // properties for partitioned hive table
+      .setEnableExploreOnCreate(true)
+      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+      .setTableProperty("avro.schema.literal", dtSchema.toString())
+      .build());
+
+    // verify that the hive table was created for this file set
+    runCommand(NAMESPACE_ID, "show tables", true,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.newArrayList(tableName))));
+
+    // Accessing dataset instance to perform data operations
+    TimePartitionedFileSet tpfs = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
+    Assert.assertNotNull(tpfs);
+
+    Location location1 = tpfs.getEmbeddedFileSet().getLocation("file1/nn");
+    generateAvroFile(location1.getOutputStream(), dtSchema);
+
+    // add some partitions. Beware that Hive expects a partition to be a directory, so we create dirs with one file
+    long time1 = DATE_FORMAT.parse("12/10/14 1:00 am").getTime();
+
+    addTimePartition(tpfs, time1, "file1");
+
+    // verify that we can query the date and timestamp in the file with Hive
+    runCommand(NAMESPACE_ID, "SELECT id, name, dt, ts FROM " + tableName + " LIMIT 50", true,
+               Lists.newArrayList(
+                 new ColumnDesc("id", "INT", 1, null),
+                 new ColumnDesc("name", "STRING", 2, null),
+                 new ColumnDesc("dt", "DATE", 3, null),
+                 new ColumnDesc("ts", "TIMESTAMP", 4, null)),
+               Lists.newArrayList(
+                 new QueryResult(Lists.newArrayList(1, "alice", "1970-01-01", "2018-09-07 16:09:50.595"))));
+
+    // drop the dataset
+    datasetFramework.deleteInstance(datasetInstanceId);
+
+    // verify the Hive table is gone
+    runCommand(NAMESPACE_ID, "show tables", false,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Collections.emptyList());
+
+    // create a file set
+    datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
+      // properties for file set
+      .setBasePath("somePath")
+      // properties for partitioned hive table
+      .setEnableExploreOnCreate(true)
+      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+      .setTableProperty("avro.schema.literal", dtSchema.toString())
+      .build());
+
+    // verify that the hive table was created for this file set
+    runCommand(NAMESPACE_ID, "show tables", true,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.newArrayList(tableName))));
+  }
+
+  private void generateAvroFile(OutputStream out, Schema cdapSchema) throws IOException {
+    org.apache.avro.Schema schema = convertSchema(cdapSchema);
+
+    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(schema);
+    DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
+    dataFileWriter.create(schema, out);
+    try {
+      GenericRecord kv = new GenericData.Record(schema);
+      kv.put("id", 1);
+      kv.put("name", "alice");
+      kv.put("dt", 0);
+      kv.put("ts", 1536336590595L);
+      dataFileWriter.append(kv);
+    } finally {
+      Closeables.closeQuietly(dataFileWriter);
+      Closeables.closeQuietly(out);
+    }
+  }
+
+  private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
+    return new org.apache.avro.Schema.Parser().parse(cdapSchema.toString());
   }
 
   private void addPartition(final PartitionedFileSet partitioned, final PartitionKey key, final String path)
