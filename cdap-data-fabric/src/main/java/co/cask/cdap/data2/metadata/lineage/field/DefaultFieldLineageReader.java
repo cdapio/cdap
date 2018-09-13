@@ -35,7 +35,6 @@ import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -119,8 +118,7 @@ public class DefaultFieldLineageReader implements FieldLineageReader {
         // No need to compute summaries here.
         FieldLineageInfo info = new FieldLineageInfo(programRunOperation.getOperations(), false);
         Set<Operation> fieldOperations = incoming ?
-          info.getIncomingOperationsForField(endPointField)
-          : Collections.EMPTY_SET;
+          info.getIncomingOperationsForField(endPointField) : info.getOutgoingOperationsForField(endPointField);
         ProgramRunOperations result = new ProgramRunOperations(programRunOperation.getProgramRunIds(), fieldOperations);
         endPointFieldOperations.add(result);
       } catch (Throwable e) {

@@ -37,7 +37,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,6 +72,8 @@ public class FieldLineageInfo {
 
   private transient Set<WriteOperation> writeOperations;
 
+  private transient Set<ReadOperation> readOperations;
+
   // Map of operation name to the operation
   private transient Map<String, Operation> operationsMap;
 
@@ -81,6 +82,9 @@ public class FieldLineageInfo {
 
   // Destination endpoints in the lineage info
   private transient Set<EndPoint> destinations;
+
+  // outgoing operation map. stores the operation name as key and set of operations which uses it as input
+  private transient Map<String, Set<Operation>> operationOutgoingConnections;
 
   private long checksum;
 
@@ -134,8 +138,8 @@ public class FieldLineageInfo {
 
     this.operationsMap = new HashMap<>();
     this.writeOperations = new HashSet<>();
-    Set<ReadOperation> readOperations = new HashSet<>();
-    Map<String, Set<String>> operationOutgoingConnections = new HashMap<>();
+    this.readOperations = new HashSet<>();
+    this.operationOutgoingConnections = new HashMap<>();
 
     for (Operation operation : operations) {
       if (operationsMap.containsKey(operation.getName())) {
@@ -162,8 +166,8 @@ public class FieldLineageInfo {
           Set<String> origins = transform.getInputs().stream().map(InputField::getOrigin).collect(Collectors.toSet());
           // for each origin corresponding to the input fields there is a connection from that origin to this operation
           for (String origin : origins) {
-            Set<String> connections = operationOutgoingConnections.computeIfAbsent(origin, k -> new HashSet<>());
-            connections.add(transform.getName());
+            Set<Operation> connections = operationOutgoingConnections.computeIfAbsent(origin, k -> new HashSet<>());
+            connections.add(transform);
           }
           allOrigins.addAll(origins);
           break;
@@ -178,8 +182,8 @@ public class FieldLineageInfo {
           origins = write.getInputs().stream().map(InputField::getOrigin).collect(Collectors.toSet());
           // for each origin corresponding to the input fields there is a connection from that origin to this operation
           for (String origin : origins) {
-            Set<String> connections = operationOutgoingConnections.computeIfAbsent(origin, k -> new HashSet<>());
-            connections.add(write.getName());
+            Set<Operation> connections = operationOutgoingConnections.computeIfAbsent(origin, k -> new HashSet<>());
+            connections.add(write);
           }
           allOrigins.addAll(origins);
           writeOperations.add(write);
@@ -209,8 +213,6 @@ public class FieldLineageInfo {
       throw new IllegalArgumentException(String.format("No operation is associated with the origins '%s'.",
               invalidOrigins));
     }
-
-    getTopologicallySortedOperations(this.operations);
   }
 
   /**
@@ -309,26 +311,32 @@ public class FieldLineageInfo {
       computeAndValidateFieldLineageInfo(this.operations);
     }
 
-    Map<EndPointField, Set<EndPointField>> result = new HashMap<>();
+    Map<EndPointField, Set<EndPointField>> summary = new HashMap<>();
     for (WriteOperation write : writeOperations) {
       List<InputField> inputs = write.getInputs();
       for (InputField input : inputs) {
-        Set<String> visitedOperationNames = new LinkedHashSet<>();
-        visitedOperationNames.add(write.getName());
         computeIncomingSummaryHelper(new EndPointField(write.getDestination(), input.getName()),
-                                     operationsMap.get(input.getOrigin()), write, visitedOperationNames, result);
+                                     operationsMap.get(input.getOrigin()), write, summary);
       }
     }
-    return result;
+    return summary;
   }
 
-  private void computeIncomingSummaryHelper(EndPointField destination, Operation currentOperation,
-                                            Operation previousOperation, Set<String> visitedOperationNames,
-                                            Map<EndPointField, Set<EndPointField>> result) {
-    if (!visitedOperationNames.add(currentOperation.getName())) {
-      return;
-    }
-
+  /**
+   * Helper method to compute the incoming summary
+   *
+   * @param field the {@link EndPointField} whose summary needs to be calculated
+   * @param currentOperation the operation being processed. Since we are processing incoming this operation is on the
+   * left side if graph is imagined in horizontal orientation or this operation is the input to the to
+   * previousOperation
+   * @param previousOperation the previous operation which is processed and reside on right to the current operation if
+   * the graph is imagined to be in horizontal orientation.
+   * @param summary a {@link Map} of {@link EndPointField} to {@link Set} of {@link EndPointField} which represents all
+   * the fields which have incoming connection the key field
+   */
+  private void computeIncomingSummaryHelper(EndPointField field, Operation currentOperation,
+                                            Operation previousOperation,
+                                            Map<EndPointField, Set<EndPointField>> summary) {
     if (currentOperation.getType() == OperationType.READ) {
       // if current operation is of type READ, previous operation must be of type TRANSFORM or WRITE
       // get only the input fields from the previous operations for which the origin is current READ operation
@@ -340,9 +348,10 @@ public class FieldLineageInfo {
         TransformOperation previousTransform = (TransformOperation) previousOperation;
         inputFields = new HashSet<>(previousTransform.getInputs());
       }
+      Set<EndPointField> sourceEndPointFields = summary.computeIfAbsent(field, k -> new HashSet<>());
 
-      Set<EndPointField> sourceEndPointFields = result.computeIfAbsent(destination, k -> new HashSet<>());
-
+      // for all the input fields of the previous operation if the origin was current operation (remember we are
+      // traversing backward)
       ReadOperation read = (ReadOperation) currentOperation;
       EndPoint source = read.getSource();
       for (InputField inputField : inputFields) {
@@ -350,18 +359,16 @@ public class FieldLineageInfo {
           sourceEndPointFields.add(new EndPointField(source, inputField.getName()));
         }
       }
-
+      // reached the end of graph unwind the recursive calls
       return;
     }
 
-    if (currentOperation.getType() != OperationType.TRANSFORM) {
-      return;
-    }
-
-    TransformOperation transform = (TransformOperation) currentOperation;
-    for (InputField field : transform.getInputs()) {
-      computeIncomingSummaryHelper(destination, operationsMap.get(field.getOrigin()), currentOperation,
-                                   visitedOperationNames, result);
+    // for transform we traverse backward in graph further through the inputs of the transform
+    if (currentOperation.getType() == OperationType.TRANSFORM) {
+      TransformOperation transform = (TransformOperation) currentOperation;
+      for (InputField inputField : transform.getInputs()) {
+        computeIncomingSummaryHelper(field, operationsMap.get(inputField.getOrigin()), currentOperation, summary);
+      }
     }
   }
 
@@ -382,41 +389,177 @@ public class FieldLineageInfo {
   }
 
   /**
-   * Get the subset of operations that were responsible for computing the specified field of
-   * a specified destination.
+   * <p>Get the subset of operations that were responsible for computing the specified field of
+   * a specified destination.</p>
+   * <p>For example if the operation are as follow</p>
+   * <pre>
+   * pRead: personFile -> (offset, body)
+   * parse: body -> (id, name, address)
+   * cRead: codeFile -> id
+   * codeGen: (parse.id, cRead.id) -> id
+   * sWrite: (codeGen.id, parse.name, parse.address) -> secureStore
+   * iWrite: (parse.id, parse.name, parse.address) -> insecureStore
+   * </pre>
+   * <p>If the destination field is 'id' field of insecureStore then the result set will contain the operations iWrite,
+   * parse, pRead.</p>
+   * <p>If the destination field is 'id' field of secureStore then the result set will contain the operations sWrite,
+   * codeGen, parse, pRead, cRead.</p>
    *
    * @param destinationField the EndPointField for which the operations need to find out
    * @return the subset of operations
    */
-  public Set<Operation> getIncomingOperationsForField(EndPointField destinationField) {
+  Set<Operation> getIncomingOperationsForField(EndPointField destinationField) {
     if (writeOperations == null) {
       computeAndValidateFieldLineageInfo(this.operations);
     }
 
-    Set<String> visitedOperationNames = new HashSet<>();
+    Set<Operation> visitedOperations = new HashSet<>();
     for (WriteOperation write : writeOperations) {
+      // if the write operation destination was not the dataset to which the destinationField belongs to
       if (!write.getDestination().equals(destinationField.getEndPoint())) {
         continue;
       }
 
-      List<InputField> inputs = write.getInputs();
-      for (InputField input : inputs) {
-        if (!input.getName().equals(destinationField.getField())) {
-          continue;
-        }
+      Set<InputField> filteredInputs =
+        write.getInputs().stream().filter(input -> input.getName().equals(destinationField.getField()))
+          .collect(Collectors.toSet());
 
-        visitedOperationNames.add(write.getName());
-        computeIncomingSummaryHelper(new EndPointField(write.getDestination(), input.getName()),
-                                     operationsMap.get(input.getOrigin()), write, visitedOperationNames,
-                                     new HashMap<>());
+      for (InputField input : filteredInputs) {
+        // mark this write operation as visited
+        visitedOperations.add(write);
+        // traverse backward in the graph by looking up the origin of this input field which is the operation
+        // which computed this destinationField
+        getIncomingOperationsForFieldHelper(operationsMap.get(input.getOrigin()), visitedOperations);
       }
     }
+    return visitedOperations;
+  }
 
-    Set<Operation> fieldOperations = new HashSet<>();
-    for (String operation : visitedOperationNames) {
-      fieldOperations.add(operationsMap.get(operation));
+  /**
+   * Recursively traverse the graph to calculate the incoming operation.
+   *
+   * @param currentOperation the current operation from which the graph needs to explored
+   * @param visitedOperations all the operations visited so far
+   */
+  private void getIncomingOperationsForFieldHelper(Operation currentOperation, Set<Operation> visitedOperations) {
+    if (!visitedOperations.add(currentOperation)) {
+      return;
     }
-    return fieldOperations;
+
+    // reached the end of backward traversal
+    if (currentOperation.getType() == OperationType.READ) {
+      return;
+    }
+
+    // for transform we traverse backward in graph further through the inputs of the transform
+    if (currentOperation.getType() == OperationType.TRANSFORM) {
+      TransformOperation transform = (TransformOperation) currentOperation;
+      for (InputField field : transform.getInputs()) {
+        getIncomingOperationsForFieldHelper(operationsMap.get(field.getOrigin()), visitedOperations);
+      }
+    }
+  }
+
+  /**
+   * <p>Get the subset of operations that used the specified field</p>
+   *
+   * <p>For example if the operation are as follow</p>
+   * <pre>
+   * pRead: personFile -> (offset, body)
+   * parse: body -> (id, name, address)
+   * cRead: codeFile -> id
+   * codeGen: (parse.id, cRead.id) -> id
+   * sWrite: (codeGen.id, parse.name, parse.address) -> secureStore
+   * iWrite: (parse.id, parse.name, parse.address) -> insecureStore
+   * </pre>
+   *
+   * <p>The sourceField is 'id' of codeFile then the returned operations set will contain cRead, codeGen, sWrite.</p>
+   * <p>If the sourceField is 'body' of personFile then the returned set of operations will contain pRead, parse,
+   * codeGen, sWrite, iWrite.</p>
+   *
+   * @param sourceField the {@link EndPointField} whose outgoing operations needs to be found
+   * @return {@link Set} of {@link Operation} which are outgoing from the given sourceField
+   */
+  Set<Operation> getOutgoingOperationsForField(EndPointField sourceField) {
+    if (readOperations == null) {
+      computeAndValidateFieldLineageInfo(this.operations);
+    }
+
+    Set<Operation> visitedOperations = new HashSet<>();
+    for (ReadOperation readOperation : readOperations) {
+      if (!(readOperation.getSource().equals(sourceField.getEndPoint()) &&
+        readOperation.getOutputs().contains(sourceField.getField()))) {
+        continue;
+      }
+      // the read operation is for the dataset to which the sourceField belong and it did read the sourceField for
+      // which outgoing operation is requested so process it
+      visitedOperations.add(readOperation);
+      for (Operation outgoingOperation : operationOutgoingConnections.get(readOperation.getName())) {
+        // Check that the source field is an input field for the outgoing operation.
+        // Consider the example in the method javadoc with:
+        //  sourceField = personFile.offset
+        //  readOperation = pRead: personFile -> (offset, body)
+        //  outgoingOperation = parse: body -> (id, name, address)
+        // In this scenario, 'offset' is not an input to the outgoingOperation so we do not need to go further
+        // down the graph.
+        // If the sourceField was personFile.body, we would need to continue as 'body' is an input to the
+        // outgoingOperation.
+        InputField inputField = InputField.of(readOperation.getName(), sourceField.getField());
+        if (containsInputField(outgoingOperation, inputField)) {
+          computeOutgoing(outgoingOperation, visitedOperations);
+        }
+      }
+    }
+    return visitedOperations;
+  }
+
+  /**
+   * Helper method to compute the outgoing connections
+   * @param currentOperation current operation which needs to evaluated
+   * @param visitedOperations a {@link Set} containing all the operations which has been processed so
+   * far.
+   */
+  private void computeOutgoing(Operation currentOperation, Set<Operation> visitedOperations) {
+    // mark this operation if not already done
+    if (!visitedOperations.add(currentOperation)) {
+      return;
+    }
+
+    // base condition: if the current operation is write we have reached the end
+    if (currentOperation.getType() == OperationType.WRITE) {
+      return;
+    }
+
+    // if this is a transform operation then traverse down to all the outgoing operation from this operation
+    // expanding further the traversal and exploring the operations
+    if (currentOperation.getType() == OperationType.TRANSFORM) {
+      TransformOperation transform = (TransformOperation) currentOperation;
+      Set<Operation> operations = operationOutgoingConnections.get(transform.getName());
+      for (Operation operation : operations) {
+        computeOutgoing(operation, visitedOperations);
+      }
+    }
+  }
+
+  /**
+   * Checks whether the given field is used in the next operations or not
+   *
+   * @param nextOperation the next operation which should either be a {@link TransformOperation} or {@link
+   * WriteOperation}
+   * @param inputField the field whose usage needs to be checked
+   * @return true if the field is used in the nextOperation
+   */
+  private boolean containsInputField(Operation nextOperation, InputField inputField) {
+    Set<InputField> inputFields = new HashSet<>();
+    if (OperationType.WRITE == nextOperation.getType()) {
+      WriteOperation nextWrite = (WriteOperation) nextOperation;
+      inputFields = new HashSet<>(nextWrite.getInputs());
+    } else if (OperationType.TRANSFORM == nextOperation.getType()) {
+      TransformOperation nextTransform = (TransformOperation) nextOperation;
+      inputFields = new HashSet<>(nextTransform.getInputs());
+    }
+    // if the next operation inputFields does contains the given fieldName return true
+    return inputFields.contains(inputField);
   }
 
   /**

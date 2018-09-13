@@ -217,38 +217,47 @@ public class FieldLineageInfoTest {
     EndPointField endPointField = new EndPointField(destination, "offset");
     Set<EndPointField> sourceEndPointFields = incomingSummary.get(endPointField);
     Assert.assertEquals(1, sourceEndPointFields.size());
-    EndPointField expectedEndPointField = new EndPointField(EndPoint.of("endpoint1"), "offset");
-    Assert.assertEquals(expectedEndPointField, sourceEndPointFields.iterator().next());
+    EndPointField sourceEndpoint = new EndPointField(EndPoint.of("endpoint1"), "offset");
+    Assert.assertEquals(sourceEndpoint, sourceEndPointFields.iterator().next());
 
-    Set<Operation> incomingOperationsForField = info.getIncomingOperationsForField(endPointField);
+    Set<Operation> operationsForField = info.getIncomingOperationsForField(endPointField);
     Set<Operation> expectedOperations = new HashSet<>();
     expectedOperations.add(write);
     expectedOperations.add(read);
-    Assert.assertEquals(expectedOperations, incomingOperationsForField);
+    Assert.assertEquals(expectedOperations, operationsForField);
+
+    // test outgoing operations for offset field
+    operationsForField = info.getOutgoingOperationsForField(sourceEndpoint);
+    Assert.assertEquals(expectedOperations, operationsForField);
 
     // name in the destination is generated from body field read from source
     endPointField = new EndPointField(destination, "name");
     sourceEndPointFields = incomingSummary.get(endPointField);
     Assert.assertEquals(1, sourceEndPointFields.size());
-    expectedEndPointField = new EndPointField(EndPoint.of("endpoint1"), "body");
-    Assert.assertEquals(expectedEndPointField, sourceEndPointFields.iterator().next());
+    sourceEndpoint = new EndPointField(EndPoint.of("endpoint1"), "body");
+    Assert.assertEquals(sourceEndpoint, sourceEndPointFields.iterator().next());
 
-    incomingOperationsForField = info.getIncomingOperationsForField(endPointField);
+    operationsForField = info.getIncomingOperationsForField(endPointField);
     expectedOperations = new HashSet<>();
     expectedOperations.add(write);
     expectedOperations.add(concat);
     expectedOperations.add(parse);
     expectedOperations.add(read);
-    Assert.assertEquals(expectedOperations, incomingOperationsForField);
+    Assert.assertEquals(expectedOperations, operationsForField);
 
     // offset in the source should only affect the field offset in the destination
     EndPoint source = EndPoint.of("endpoint1");
     endPointField = new EndPointField(source, "offset");
     Set<EndPointField> destinationEndPointFields = outgoingSummary.get(endPointField);
     Assert.assertEquals(1, destinationEndPointFields.size());
-    expectedEndPointField = new EndPointField(EndPoint.of("myns", "another_file"), "offset");
-    Assert.assertEquals(expectedEndPointField, destinationEndPointFields.iterator().next());
+    sourceEndpoint = new EndPointField(EndPoint.of("myns", "another_file"), "offset");
+    Assert.assertEquals(sourceEndpoint, destinationEndPointFields.iterator().next());
+
+    // test outgoing operations for body field
+    operationsForField = info.getOutgoingOperationsForField(new EndPointField(EndPoint.of("endpoint1"), "body"));
+    Assert.assertEquals(expectedOperations, operationsForField);
   }
+
 
   @Test
   public void testSourceToMultipleDestinations() {
@@ -309,6 +318,23 @@ public class FieldLineageInfoTest {
     expectedSet.add(new EndPointField(location, "zip"));
     Assert.assertEquals(4, outgoingSummary.get(new EndPointField(source, "body")).size());
     Assert.assertEquals(expectedSet, outgoingSummary.get(new EndPointField(source, "body")));
+
+    // test outgoing operations: offset field is read by the source but never processed by any operation
+    EndPointField endPointField = new EndPointField(source, "offset");
+    Set<Operation> operationsForField = fllInfo.getOutgoingOperationsForField(endPointField);
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(read);
+    Assert.assertEquals(expectedOperations, operationsForField);
+
+    // body is used by other operations hence they must be in outgoing operations
+    endPointField = new EndPointField(source, "body");
+    operationsForField = fllInfo.getOutgoingOperationsForField(endPointField);
+    expectedOperations = new HashSet<>();
+    expectedOperations.add(read);
+    expectedOperations.add(parse);
+    expectedOperations.add(infoWrite);
+    expectedOperations.add(locationWrite);
+    Assert.assertEquals(expectedOperations, operationsForField);
   }
 
   @Test
@@ -446,6 +472,28 @@ public class FieldLineageInfoTest {
     expectedOperations.add(parse);
     expectedOperations.add(pRead);
     Assert.assertEquals(expectedOperations, inComingOperations);
+
+    // test outgoing operations for all source fields
+    Set<Operation> outgoingOperations = fllInfo.getOutgoingOperationsForField(new EndPointField(pEndPoint, "offset"));
+    expectedOperations = new HashSet<>();
+    expectedOperations.add(pRead);
+    Assert.assertEquals(expectedOperations, outgoingOperations);
+
+    outgoingOperations = fllInfo.getOutgoingOperationsForField(new EndPointField(pEndPoint, "body"));
+    expectedOperations = new HashSet<>();
+    expectedOperations.add(sWrite);
+    expectedOperations.add(iWrite);
+    expectedOperations.add(codeGen);
+    expectedOperations.add(parse);
+    expectedOperations.add(pRead);
+    Assert.assertEquals(expectedOperations, outgoingOperations);
+
+    outgoingOperations = fllInfo.getOutgoingOperationsForField(new EndPointField(cEndPoint, "id"));
+    expectedOperations = new HashSet<>();
+    expectedOperations.add(sWrite);
+    expectedOperations.add(codeGen);
+    expectedOperations.add(cRead);
+    Assert.assertEquals(expectedOperations, outgoingOperations);
   }
 
   @Test
@@ -514,6 +562,30 @@ public class FieldLineageInfoTest {
     Assert.assertEquals(expectedSet, outgoingSummary.get(new EndPointField(read1EndPoint, "body")));
     Assert.assertEquals(expectedSet, outgoingSummary.get(new EndPointField(read2EndPoint, "offset")));
     Assert.assertEquals(expectedSet, outgoingSummary.get(new EndPointField(read2EndPoint, "body")));
+
+    // test outgoing operations of all source endoints
+    Set<Operation> outgoingOperations = fllInfo.getOutgoingOperationsForField(new EndPointField(read1EndPoint,
+                                                                                                "offset"));
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(read1);
+    expectedOperations.add(merge);
+    expectedOperations.add(parse);
+    expectedOperations.add(write);
+    Assert.assertEquals(expectedOperations, outgoingOperations);
+
+    outgoingOperations = fllInfo.getOutgoingOperationsForField(new EndPointField(read1EndPoint, "body"));
+    Assert.assertEquals(expectedOperations, outgoingOperations);
+
+    outgoingOperations = fllInfo.getOutgoingOperationsForField(new EndPointField(read2EndPoint, "offset"));
+    expectedOperations = new HashSet<>();
+    expectedOperations.add(read2);
+    expectedOperations.add(merge);
+    expectedOperations.add(parse);
+    expectedOperations.add(write);
+    Assert.assertEquals(expectedOperations, outgoingOperations);
+
+    outgoingOperations = fllInfo.getOutgoingOperationsForField(new EndPointField(read2EndPoint, "body"));
+    Assert.assertEquals(expectedOperations, outgoingOperations);
   }
 
   @Test(expected = IllegalArgumentException.class)
