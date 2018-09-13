@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -40,11 +39,39 @@ public interface ProgramManager<T extends ProgramManager> {
   T start();
 
   /**
+   * Starts the program and waits for one additional run of the specified status. This is essentially a
+   * call to {@link #start()} followed by a call to {@link #waitForRuns(ProgramRunStatus, int, long, TimeUnit)}.
+   * It should not be used if there is another run in progress.
+   *
+   * @param status the status of the run to wait for
+   * @param timeout amount of time units to wait
+   * @param timeoutUnit time unit type
+   * @return the program manager itself
+   */
+  T startAndWaitForRun(ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException;
+
+  /**
    * Starts the program with arguments
    * @param arguments the arguments to start the program with
    * @return T the ProgramManager, itself
    */
   T start(Map<String, String> arguments);
+
+  /**
+   * Starts the program with arguments and waits for one additional run of the specified status.
+   * This method assumes another run is not started by another thread. This is essentially a
+   * call to {@link #start(Map)} ()} followed by a call to {@link #waitForRuns(ProgramRunStatus, int, long, TimeUnit)}.
+   * It should not be used if there is another run in progress.
+   *
+   * @param arguments the arguments to start the program with
+   * @param status the status of the run to wait for
+   * @param timeout amount of time units to wait
+   * @param timeoutUnit time unit type
+   * @return the program manager itself
+   */
+  T startAndWaitForRun(Map<String, String> arguments, ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
+    throws InterruptedException, ExecutionException, TimeoutException;
 
   /**
    * Stops the program.

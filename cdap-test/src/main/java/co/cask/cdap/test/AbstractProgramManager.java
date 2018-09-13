@@ -60,6 +60,21 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   }
 
   @Override
+  public T startAndWaitForRun(ProgramRunStatus status, long timeout,
+                              TimeUnit timeoutUnit) throws InterruptedException, ExecutionException, TimeoutException {
+    return startAndWaitForRun(Collections.emptyMap(), status, timeout, timeoutUnit);
+  }
+
+  @Override
+  public T startAndWaitForRun(Map<String, String> arguments, ProgramRunStatus status, long timeout,
+                              TimeUnit timeoutUnit) throws InterruptedException, ExecutionException, TimeoutException {
+    int count = getHistory(status).size();
+    T manager = start(arguments);
+    waitForRuns(status, count + 1, timeout, timeoutUnit);
+    return manager;
+  }
+
+  @Override
   public void stop() {
     applicationManager.stopProgram(programId);
   }
