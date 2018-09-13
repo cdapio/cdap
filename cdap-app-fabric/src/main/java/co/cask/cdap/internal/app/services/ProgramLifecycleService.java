@@ -51,11 +51,13 @@ import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
+import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunCountResult;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -94,16 +96,12 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -201,6 +199,81 @@ public class ProgramLifecycleService {
         return runCount;
       })
       .collect(Collectors.toList());
+  }
+
+  /**
+   * Get the latest runs within the specified start and end times for the specified program.
+   *
+   * @param programId the program to get runs for
+   * @param programRunStatus status of runs to return
+   * @param start earliest start time of runs to return
+   * @param end latest start time of runs to return
+   * @param limit the maximum number of runs to return
+   * @return the latest runs for the program sorted by start time, with the newest run as the first run
+   * @throws NotFoundException if the application to which this program belongs was not found or the program is not
+   *                           found in the app
+   * @throws UnauthorizedException if the principal does not have access to the program
+   * @throws Exception if there was some other exception performing authorization checks
+   */
+  public List<RunRecord> getRuns(ProgramId programId, ProgramRunStatus programRunStatus,
+                                 long start, long end, int limit) throws Exception {
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programId);
+    if (programSpec == null) {
+      throw new NotFoundException(programId);
+    }
+    return store.getRuns(programId, programRunStatus, start, end, limit).values().stream()
+      .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
+  }
+
+  /**
+   * Get the latest runs within the specified start and end times for the specified programs.
+   *
+   * @param programs the programs to get runs for
+   * @param programRunStatus status of runs to return
+   * @param start earliest start time of runs to return
+   * @param end latest start time of runs to return
+   * @param limit the maximum number of runs to return
+   * @return the latest runs for the program sorted by start time, with the newest run as the first run
+   * @throws NotFoundException if the application to which this program belongs was not found or the program is not
+   *                           found in the app
+   * @throws UnauthorizedException if the principal does not have access to the program
+   * @throws Exception if there was some other exception performing authorization checks
+   */
+  public List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus programRunStatus,
+                                      long start, long end, int limit) throws Exception {
+    List<ProgramHistory> result = new ArrayList<>();
+
+    // do this in batches to avoid transaction timeouts.
+    List<ProgramId> batch = new ArrayList<>(20);
+
+    for (ProgramId program : programs) {
+      batch.add(program);
+
+      if (batch.size() >= 20) {
+        addProgramHistory(result, batch, programRunStatus, start, end, limit);
+        batch.clear();
+      }
+    }
+    if (!batch.isEmpty()) {
+      addProgramHistory(result, batch, programRunStatus, start, end, limit);
+    }
+    return result;
+  }
+
+  private void addProgramHistory(List<ProgramHistory> histories, List<ProgramId> programs,
+                                 ProgramRunStatus programRunStatus, long start, long end, int limit) throws Exception {
+    Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programs),
+                                                                              authenticationContext.getPrincipal());
+    for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end, limit, x -> true)) {
+      ProgramId programId = programHistory.getProgramId();
+      if (visibleEntities.contains(programId)) {
+        histories.add(programHistory);
+      } else {
+        histories.add(new ProgramHistory(programId, Collections.emptyList(),
+                                      new UnauthorizedException(authenticationContext.getPrincipal(), programId)));
+      }
+    }
   }
 
   /**

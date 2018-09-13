@@ -57,6 +57,7 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramCount;
+import co.cask.cdap.proto.BatchProgramHistory;
 import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
@@ -66,6 +67,7 @@ import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
+import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -425,7 +427,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (!lifecycleService.programExists(program)) {
       throw new NotFoundException(program);
     }
-    getRuns(responder, program, status, start, end, resultLimit);
+
+    ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
+      ProgramRunStatus.valueOf(status.toUpperCase());
+
+    List<RunRecord> records = lifecycleService.getRuns(program, runStatus, start, end, resultLimit);
+
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
   }
 
   /**
@@ -1281,7 +1289,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (exception == null) {
         counts.add(new BatchProgramCount(programId, HttpResponseStatus.OK.code(), null, runCountResult.getCount()));
       } else if (exception instanceof NotFoundException) {
-        counts.add(new BatchProgramCount(programId, HttpResponseStatus.BAD_REQUEST.code(),
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.NOT_FOUND.code(),
                                          exception.getMessage(), null));
       } else if (exception instanceof UnauthorizedException) {
         counts.add(new BatchProgramCount(programId, HttpResponseStatus.FORBIDDEN.code(),
@@ -1292,6 +1300,72 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(counts));
+  }
+
+  /**
+   * Returns the latest runs for all program runnables that are passed into the data. The data is an array of
+   * Json objects where each object must contain the following three elements: appId, programType, and programId.
+   * <p>
+   * Example input:
+   * <pre><code>
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
+   *  {"appId": "App1", "programType": "Workflow", "programId": "testWorkflow"},
+   *  {"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow"}]
+   * </code></pre>
+   * </p><p>
+   * </p><p>
+   * The response will be an array of JsonObjects each of which will contain the three input parameters
+   * as well as 2 fields, "runs" which is a list of the latest run records and "statusCode" which maps to the
+   * status code for the data in that JsonObjects.
+   * </p><p>
+   * If an error occurs in the input (for the example above, workflow in app1 does not exist),
+   * then all JsonObjects for which the parameters have a valid status will have the count field but all JsonObjects
+   * for which the parameters do not have a valid status will have an error message and statusCode.
+   * </p><p>
+   * For example, if there is no workflow in App1 in the data above, then the response would be 200 OK with following
+   * possible data:
+   * </p>
+   * <pre><code>
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1",
+   * "statusCode": 200, "runs": [...]},
+   * {"appId": "App1", "programType": "Workflow", "programId": "testWorkflow", "statusCode": 404,
+   * "error": "Program 'testWorkflow' is not found"},
+   *  {"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow", "runnableId": "Flowlet1",
+   *  "statusCode": 200, "runs": [...]}]
+   * </code></pre>
+   */
+  @POST
+  @Path("/runs")
+  public void getLatestRuns(FullHttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) throws Exception {
+    List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<ProgramId> programIds =
+      programs.stream().map(batchProgram -> new ProgramId(namespaceId, batchProgram.getAppId(),
+                                                          batchProgram.getProgramType(),
+                                                          batchProgram.getProgramId())).collect(Collectors.toList());
+
+    List<BatchProgramHistory> response = new ArrayList<>(programs.size());
+    List<ProgramHistory> result = lifecycleService.getRuns(programIds, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 1);
+    for (ProgramHistory programHistory : result) {
+      ProgramId programId = programHistory.getProgramId();
+      Exception exception = programHistory.getException();
+      BatchProgram batchProgram = new BatchProgram(programId.getApplication(), programId.getType(),
+                                                   programId.getProgram());
+      if (exception == null) {
+        response.add(new BatchProgramHistory(batchProgram, HttpResponseStatus.OK.code(), null,
+                                             programHistory.getRuns()));
+      } else if (exception instanceof NotFoundException) {
+        response.add(new BatchProgramHistory(batchProgram, HttpResponseStatus.NOT_FOUND.code(),
+                                             exception.getMessage(), Collections.emptyList()));
+      } else if (exception instanceof UnauthorizedException) {
+        response.add(new BatchProgramHistory(batchProgram, HttpResponseStatus.FORBIDDEN.code(),
+                                             exception.getMessage(), Collections.emptyList()));
+      } else {
+        response.add(new BatchProgramHistory(batchProgram, HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                             exception.getMessage(), Collections.emptyList()));
+      }
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 
   /**
@@ -1800,22 +1874,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     int provisioned = getInstanceCount(programId, runnableId);
     // use the pretty name of program types to be consistent
     return new BatchRunnableInstances(runnable, HttpResponseStatus.OK.code(), provisioned, requested);
-  }
-
-  private void getRuns(HttpResponder responder, ProgramId programId, String status,
-                       long start, long end, int limit) throws BadRequestException {
-    try {
-      ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
-        ProgramRunStatus.valueOf(status.toUpperCase());
-
-      List<RunRecord> records = store.getRuns(programId, runStatus, start, end, limit).values().stream()
-        .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
-
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(String.format("Invalid status %s. Supported options for status of runs are " +
-                                                    "running/completed/failed", status));
-    }
   }
 
   /**

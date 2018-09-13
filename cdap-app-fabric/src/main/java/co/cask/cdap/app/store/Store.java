@@ -33,6 +33,7 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunCountResult;
@@ -161,7 +162,7 @@ public interface Store {
                                                           ProgramNotFoundException;
 
   /**
-   * Fetches run records for particular program. Returns only finished runs.
+   * Fetches run records for particular program.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
    * @param id        id of the program
@@ -175,7 +176,7 @@ public interface Store {
                                            long startTime, long endTime, int limit);
 
   /**
-   * Fetches run records for particular program. Returns only finished runs.
+   * Fetches run records for particular program.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
    * @param id        id of the program
@@ -208,7 +209,6 @@ public interface Store {
    */
   Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, long startTime,
                                            long endTime, int limit, Predicate<RunRecordMeta> filter);
-
 
   /**
    * Fetches the run records for given ProgramRunIds.
@@ -512,4 +512,18 @@ public interface Store {
    * @return the run count result of each program in the collection
    */
   List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds);
+
+  /**
+   * Fetches run records for multiple programs.
+   *
+   * @param programs  the programs to get run records for
+   * @param status    status of the program running/completed/failed or all
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime   fetch run history that has started before the endTime in seconds
+   * @param limit     max number of runs to fetch for each program
+   * @param filter    predicate to be passed to filter the records
+   * @return          runs for each program
+   */
+  List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status, long startTime, long endTime,
+                               int limit, Predicate<RunRecordMeta> filter);
 }
