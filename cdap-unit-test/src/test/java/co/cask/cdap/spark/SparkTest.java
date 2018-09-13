@@ -157,9 +157,9 @@ public class SparkTest extends TestFrameworkTestBase {
     streamManager.send("Jane,Jenny,6");
 
     // Run the testing spark program
-    SparkManager sparkManager = appManager.getSparkManager(StreamSQLSpark.class.getSimpleName())
-      .start(Collections.singletonMap("input.stream", "sqlStream"));
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+    appManager.getSparkManager(StreamSQLSpark.class.getSimpleName())
+      .startAndWaitForRun(Collections.singletonMap("input.stream", "sqlStream"),
+                          ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
   }
 
   @Test
@@ -174,8 +174,8 @@ public class SparkTest extends TestFrameworkTestBase {
     table.write("3", new Person("Berry", 30));
     tableManager.flush();
 
-    SparkManager sparkManager = appManager.getSparkManager(DatasetSQLSpark.class.getSimpleName()).start();
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+    SparkManager sparkManager = appManager.getSparkManager(DatasetSQLSpark.class.getSimpleName());
+    sparkManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     // The program executes "SELECT * FROM Person WHERE age > 10", hence expected two new entries for Bill and Berry.
     tableManager.flush();
@@ -197,8 +197,8 @@ public class SparkTest extends TestFrameworkTestBase {
     ApplicationManager appManager = deploy(TestSparkApp.class);
 
     for (Class<?> sparkClass : Arrays.asList(TestSparkApp.ClassicSpark.class, TestSparkApp.ScalaClassicSpark.class)) {
-      final SparkManager sparkManager = appManager.getSparkManager(sparkClass.getSimpleName()).start();
-      sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+      final SparkManager sparkManager = appManager.getSparkManager(sparkClass.getSimpleName());
+      sparkManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     }
 
     KeyValueTable resultTable = this.<KeyValueTable>getDataset("ResultTable").get();
@@ -217,11 +217,10 @@ public class SparkTest extends TestFrameworkTestBase {
     }
 
     SparkManager sparkManager = appManager.getSparkManager(ScalaDynamicSpark.class.getSimpleName());
-    sparkManager.start(ImmutableMap.of("input", "SparkStream",
-                                       "output", "ResultTable",
-                                       "tmpdir", TMP_FOLDER.newFolder().getAbsolutePath()));
-
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    sparkManager.startAndWaitForRun(ImmutableMap.of("input", "SparkStream",
+                                                    "output", "ResultTable",
+                                                    "tmpdir", TMP_FOLDER.newFolder().getAbsolutePath()),
+                                    ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // Validate the result written to dataset
     KeyValueTable resultTable = this.<KeyValueTable>getDataset("ResultTable").get();
@@ -264,17 +263,10 @@ public class SparkTest extends TestFrameworkTestBase {
       outputDir.delete(true);
 
       SparkManager sparkManager = appManager.getSparkManager(sparkProgramName);
-      sparkManager.start(runtimeArgs);
-
-      sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
+      sparkManager.startAndWaitForRun(runtimeArgs, ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
       // Find the output part file. There is only one because the program repartition to 1
-      Location outputFile = Iterables.find(outputDir.list(), new Predicate<Location>() {
-        @Override
-        public boolean apply(Location input) {
-          return input.getName().startsWith("part-r-");
-        }
-      });
+      Location outputFile = Iterables.find(outputDir.list(), input -> input.getName().startsWith("part-r-"));
 
       // Verify the result
       List<String> lines = CharStreams.readLines(CharStreams.newReaderSupplier(Locations.newInputSupplier(outputFile),
@@ -299,17 +291,13 @@ public class SparkTest extends TestFrameworkTestBase {
     }
 
     File outputDir = new File(TMP_FOLDER.newFolder(), "output");
-    SparkManager sparkManager = appManager.getSparkManager(PythonSpark.class.getSimpleName())
-      .start(ImmutableMap.of("input.stream", "SparkStream", "output.path", outputDir.getAbsolutePath()));
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+    appManager.getSparkManager(PythonSpark.class.getSimpleName())
+      .startAndWaitForRun(ImmutableMap.of("input.stream", "SparkStream", "output.path", outputDir.getAbsolutePath()),
+                          ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     // Verify the result
-    File resultFile = Iterables.find(DirUtils.listFiles(outputDir), new Predicate<File>() {
-      @Override
-      public boolean apply(File input) {
-        return !input.getName().endsWith(".crc") && !input.getName().startsWith("_SUCCESS");
-      }
-    });
+    File resultFile = Iterables.find(DirUtils.listFiles(outputDir), input ->
+      !input.getName().endsWith(".crc") && !input.getName().startsWith("_SUCCESS"));
 
 
     List<String> lines = Files.readAllLines(resultFile.toPath(), StandardCharsets.UTF_8);
@@ -332,12 +320,8 @@ public class SparkTest extends TestFrameworkTestBase {
       Constants.Metrics.Tag.APP, TestSparkApp.class.getSimpleName(),
       Constants.Metrics.Tag.SPARK, PythonSpark.class.getSimpleName());
 
-    Tasks.waitFor(100L, new Callable<Long>() {
-      @Override
-      public Long call() throws Exception {
-        return getMetricsManager().getTotalMetric(tags, "user.body");
-      }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(100L, () ->  getMetricsManager().getTotalMetric(tags, "user.body"),
+                  5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
 
@@ -348,20 +332,22 @@ public class SparkTest extends TestFrameworkTestBase {
                                            "schedule");
     appManager.enableSchedule(scheduleId);
 
-    // Start the upstream program
-    appManager.getSparkManager(TestSparkApp.ScalaClassicSpark.class.getSimpleName()).start();
-
-    // Wait for the downstream to complete
     WorkflowManager workflowManager =
       appManager.getWorkflowManager(TestSparkApp.TriggeredWorkflow.class.getSimpleName());
+    int numRuns = workflowManager.getHistory(ProgramRunStatus.COMPLETED).size();
+
+    // Start the upstream program
+    SparkManager sparkManager = appManager.getSparkManager(TestSparkApp.ScalaClassicSpark.class.getSimpleName());
+    sparkManager.start();
+
+    // Wait for the downstream to complete
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // Run again with the kryo serializer
-    appManager.getSparkManager(TestSparkApp.ScalaClassicSpark.class.getSimpleName())
-      .start(Collections.singletonMap("spark.serializer", "org.apache.spark.serializer.KryoSerializer"));
+    sparkManager.start(Collections.singletonMap("spark.serializer", "org.apache.spark.serializer.KryoSerializer"));
 
     // Wait for the downstream to complete again
-    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
+    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, numRuns + 2, 5, TimeUnit.MINUTES);
 
   }
 
@@ -392,18 +378,15 @@ public class SparkTest extends TestFrameworkTestBase {
     final KeyValueTable resultTable = resultManager.get();
 
     // Expect the threshold result dataset, with threshold >=2, contains [brown, fox, bear]
-    Tasks.waitFor(ImmutableSet.of("brown", "fox", "bear"), new Callable<Set<String>>() {
-      @Override
-      public Set<String> call() throws Exception {
-        resultManager.flush();    // This is to start a new TX
-        LOG.info("Reading from threshold result");
-        try (CloseableIterator<KeyValue<byte[], byte[]>> itor = resultTable.scan(null, null)) {
-          return ImmutableSet.copyOf(Iterators.transform(itor, input -> {
-            String word = Bytes.toString(input.getKey());
-            LOG.info("{}, {}", word, Bytes.toInt(input.getValue()));
-            return word;
-          }));
-        }
+    Tasks.waitFor(ImmutableSet.of("brown", "fox", "bear"), () -> {
+      resultManager.flush();    // This is to start a new TX
+      LOG.info("Reading from threshold result");
+      try (CloseableIterator<KeyValue<byte[], byte[]>> itor = resultTable.scan(null, null)) {
+        return ImmutableSet.copyOf(Iterators.transform(itor, input -> {
+          String word = Bytes.toString(input.getKey());
+          LOG.info("{}, {}", word, Bytes.toInt(input.getValue()));
+          return word;
+        }));
       }
     }, 3, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
 
@@ -527,8 +510,8 @@ public class SparkTest extends TestFrameworkTestBase {
     args.put("input", "logs");
     args.put("output", "logStats");
 
-    SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram).start(args);
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+    SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram);
+    sparkManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> logStatsManager = getDataset("logStats");
     KeyValueTable logStatsTable = logStatsManager.get();
