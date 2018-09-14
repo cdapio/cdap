@@ -891,23 +891,6 @@
                   </target>
                 </configuration>
               </execution>
-              <!--
-                Rename cdap-program-report1_2.10 to cdap-program-report, cdap-program-report2_2.11 to cdap-program-report.
-                This is may be removed if the UI supports different artifacts for each pipeline type.
-              -->
-              <execution>
-                <id>rename-program-report-jars</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <move file="${stage.artifacts.dir}/${spark1.artifacts.dir}/cdap-program-report1_2.10-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark1.artifacts.dir}/cdap-program-report-${project.version}.jar" />
-                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-program-report-${project.version}.jar" />
-                  </target>
-                </configuration>
-              </execution>
               <!-- Skip the unrelated one when rpm/deb profiles are on -->
               <execution>
                 <id>rpm-bin-permission</id>
