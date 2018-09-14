@@ -993,7 +993,7 @@ cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Sandbox"; };
 #
 cdap_sdk_check_before_start() {
   cdap_check_pidfile ${__pidfile} Sandbox || return ${?}
-  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v4.5.0} || return ${?}
+  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v8.7.0} || return ${?}
   local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/server.js} | grep -v grep | awk '{ print $1 }')
   if [[ -z ${__node_pid} ]]; then
     : # continue
@@ -1280,7 +1280,7 @@ cdap_apply_pack() {
   local __ui_pack=${1}
   local __ext=${__ui_pack##*.}
 
-  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v4.5.0} || return ${?}
+  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v8.7.0} || return ${?}
 
   if [[ -f ${__ui_pack} ]] && [[ -r ${__ui_pack} ]] && [[ ${__ext} == zip ]]; then
     # ui upgrade script must be run from subdirectory
