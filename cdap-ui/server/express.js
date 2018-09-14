@@ -22,7 +22,8 @@ module.exports = {
         // router check also fetches the auth server address if security is enabled
         require('./config/router-check.js').ping(),
         require('./config/parser.js').extractConfig('cdap'),
-        require('./config/parser.js').extractUISettings()
+        require('./config/parser.js').extractUISettings(),
+        require('./config/parser.js').extractUITheme()
       ])
       .spread(makeApp);
   }
@@ -60,8 +61,7 @@ const getExpressStaticConfig = () => {
     maxAge: '1y'
   };
 };
-function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
-
+function makeApp (authAddress, cdapConfig, uiSettings, uiThemeConfig) {
   var app = express();
 
   // middleware
@@ -92,8 +92,7 @@ function makeApp (authAddress, cdapConfig, {uiSettings, uiThemeConfig}) {
         routerServerPort: cdapConfig['router.server.port'],
         routerSSLServerPort: cdapConfig['router.ssl.server.port'],
         standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] === 'true' || false,
-        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false,
-        uiTheme: uiSettings['ui.theme']
+        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.preview'] === 'true'

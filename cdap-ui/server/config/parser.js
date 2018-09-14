@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,8 @@
 
 module.exports = {
   extractConfig: extractConfig,
-  extractUISettings: extractUISettings
+  extractUISettings: extractUISettings,
+  extractUITheme: extractUITheme
 };
 
 var promise = require('q'),
@@ -28,32 +29,55 @@ var promise = require('q'),
     log4js = require('log4js'),
     cache = {},
     path,
-    buffer = '';
+    buffer = '',
+    request = require('request');
 
 var log = log4js.getLogger('default');
 
 function extractUISettings() {
   try {
     if (require.resolve('./ui-settings.json')) {
-      const uiSettings = require('./ui-settings.json') || {};
-      const uiThemeName = uiSettings['ui.theme'] || 'default';
-      const uiThemePath = `./themes/${uiThemeName}.json`;
-      let uiThemeConfig = {};
-      try {
-        if (require.resolve(uiThemePath)) {
-          uiThemeConfig = require(uiThemePath);
-          log.info(`UI using ${uiThemeName} theme`);
-        }
-      } catch (err) {
-        // The error can either be file doesn't exist, or file contains invalid json
-        log.info(err.toString());
-      }
-      return {uiSettings, uiThemeConfig};
+      return require('./ui-settings.json') || {};
     }
-  } catch(e) {
+  } catch (e) {
     log.info('Unable to find UI settings json file.');
     return {};
   }
+}
+
+/*
+ *  Extracts contents of theme object in the specified theme file
+ *  @returns {promise}
+ */
+
+async function extractUITheme() {
+  const uiThemePropertyName = 'ui.theme.file';
+  const DEFAULT_CONFIG = {};
+  const cdapConfig = await extractConfig('cdap');
+  let cdapSiteContents;
+  try {
+    cdapSiteContents = await getCdapSiteContents(cdapConfig);
+  } catch (e) {
+    log.info(e.toString());
+    return DEFAULT_CONFIG;
+  }
+
+  try {
+    cdapSiteContents = JSON.parse(cdapSiteContents);
+    const uiThemeProperty = cdapSiteContents.find(property => property.name === uiThemePropertyName);
+    if (!uiThemeProperty) {
+      log.info(`Unable to find ${uiThemePropertyName} property`);
+      return DEFAULT_CONFIG;
+    }
+    const uiThemeConfig = getUIThemeConfig(uiThemeProperty);
+    return uiThemeConfig;
+
+  } catch (error) {
+    log.info('Unable to parse CDAP config');
+    return DEFAULT_CONFIG;
+  }
+
+
 }
 
 /*
@@ -86,7 +110,7 @@ function extractConfig(param) {
       } else {
         throw 'No configuration JSON provided.(No "cConf" and "sConf" commandline arguments passed)';
       }
-    } catch(e) {
+    } catch (e) {
       log.warn(e);
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
@@ -138,4 +162,56 @@ function configReadFail (data) {
   if (textChunk) {
     log.error(textChunk);
   }
+}
+
+function getCdapSiteContents(cdapConfig) {
+  let url;
+  const deferred = promise.defer();
+  const routerServerAddress = cdapConfig['router.server.address'];
+
+  if (cdapConfig['ssl.external.enabled'] === 'true') {
+    url = `https://${routerServerAddress}:${cdapConfig['router.ssl.server.port']}`;
+  } else {
+    url = `http://${routerServerAddress}:${cdapConfig['router.server.port']}`;
+  }
+  url += '/v3/config/cdap';
+
+  const requestConfig = {
+    method: 'GET',
+    url,
+    rejectUnauthorized: false,
+    requestCert: true,
+    agent: false
+  };
+
+  request(requestConfig, function(err, response, body) {
+    if (err || response.statusCode >= 400) {
+      deferred.reject(new Error('Unable to get CDAP config'));
+      return;
+    }
+    deferred.resolve(body);
+  });
+
+  return deferred.promise;
+}
+
+function getUIThemeConfig(uiThemeProperty) {
+  let uiThemeConfig = {};
+  let uiThemePath = uiThemeProperty.value;
+  if (uiThemePath[0] !== '/') {
+    // if path doesn't start with /, then it's a relative path
+    // have to add the ellipses to navigate back to $CDAP_HOME, before
+    // going through the path
+    uiThemePath = `../../../${uiThemePath}`;
+  }
+  try {
+    if (require.resolve(uiThemePath)) {
+      uiThemeConfig = require(uiThemePath);
+      log.info(`UI using theme located at ${uiThemeProperty.value}`);
+    }
+  } catch (e) {
+    // The error can either be file doesn't exist, or file contains invalid json
+    log.info(e.toString());
+  }
+  return uiThemeConfig;
 }
