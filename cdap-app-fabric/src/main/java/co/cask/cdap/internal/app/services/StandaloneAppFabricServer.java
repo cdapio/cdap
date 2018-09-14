@@ -74,7 +74,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
           metricsCollectionService, programRuntimeService, runRecordCorrectorService, applicationLifecycleService,
           programNotificationSubscriberService, streamCoordinatorClient, servicesNames,
           handlerHookNames, pluginService, routeStore, coreSchedulerService,
-          provisioningService, bootstrapService);
+          provisioningService, bootstrapService, null);
     this.metricStore = metricStore;
   }
 
