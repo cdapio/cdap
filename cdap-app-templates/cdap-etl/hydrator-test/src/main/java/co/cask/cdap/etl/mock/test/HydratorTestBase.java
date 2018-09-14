@@ -35,6 +35,8 @@ import co.cask.cdap.etl.mock.batch.MockExternalSink;
 import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
+import co.cask.cdap.etl.mock.batch.MockSink;
+import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
@@ -81,7 +83,7 @@ public class HydratorTestBase extends TestBase {
     MockAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS,
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
-    MockCondition.PLUGIN_CLASS
+    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     co.cask.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
