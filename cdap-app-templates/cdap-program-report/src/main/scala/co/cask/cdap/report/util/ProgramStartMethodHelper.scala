@@ -28,7 +28,7 @@ object ProgramStartMethodHelper {
   /**
     * Returns how the program run was started
     *
-    * @param runtimeArgs the runtime arguments of the program run
+    * @param systemArgs the runtime arguments of the program run
     * @return one of the methods [[ProgramRunStartMethod.MANUAL]], [[ProgramRunStartMethod.SCHEDULED]]
     *         and [[ProgramRunStartMethod.TRIGGERED]] each indicating that the program run
     *         was started manually, scheduled by time, or triggered by certain condition such as new dataset partition
