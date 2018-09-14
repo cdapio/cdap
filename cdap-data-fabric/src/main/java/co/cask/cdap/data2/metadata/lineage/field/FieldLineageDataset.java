@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.api.lineage.field.Operation;
+import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -48,12 +49,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Dataset to store/retrieve field level lineage information.
@@ -217,16 +220,26 @@ public class FieldLineageDataset extends AbstractDataset {
   }
 
   /**
-   * Get the set of fields written to the EndPoint by field lineage {@link WriteOperation},
-   * over the given time range.
+   * Get the set of fields read and/or written to the EndPoint by field lineage {@link ReadOperation} and/or
+   * {@link WriteOperation}, over the given time range.
    *
    * @param endPoint the EndPoint for which the fields need to be returned
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
-   * @return set of fields written to a given EndPoint
+   * @return set of fields read and/or written to a given EndPoint
    */
   public Set<String> getFields(EndPoint endPoint, long start, long end) {
     // TODO: can this list be very large??
+    // A EndPoint can either have incoming lineage information (when it acts as a sink) or outgoing lineage
+    // information (when it act as a source). During the given time period it is possible that the EndPoint has been
+    // used a source only or sink only or both. So we combine all the field information which we have for the
+    // EndPoint.
+    Set<String> fields = getDestinationFields(endPoint, start, end);
+    fields.addAll(getSourceFields(endPoint, start, end));
+    return fields;
+  }
+
+  private Set<String> getDestinationFields(EndPoint endPoint, long start, long end) {
     Set<Long> checksums = getChecksumsWithProgramRunsInRange(INCOMING_DIRECTION_MARKER, endPoint, start, end).keySet();
     Set<String> result = new HashSet<>();
     byte[] columnKey = getFieldColumnKey(endPoint);
@@ -245,6 +258,19 @@ public class FieldLineageDataset extends AbstractDataset {
       }
     }
     return result;
+  }
+
+  private Set<String> getSourceFields(EndPoint endPoint, long start, long end) {
+    Set<Long> checksums = getChecksumsWithProgramRunsInRange(OUTGOING_DIRECTION_MARKER, endPoint, start, end).keySet();
+    Set<String> fields = new HashSet<>();
+    for (long checksum : checksums) {
+      byte[] rowKey = getChecksumRowKey(checksum);
+      fields.addAll(
+        table.get(rowKey).getColumns().keySet().stream().filter(column -> matchesEndpoint(column, endPoint))
+          .map(this::extractFieldName).collect(Collectors.toSet())
+      );
+    }
+    return fields;
   }
 
   /**
@@ -440,5 +466,30 @@ public class FieldLineageDataset extends AbstractDataset {
     addEndPoint(builder, endPointField.getEndPoint());
     builder.add(endPointField.getField());
     return builder.build().getKey();
+  }
+
+  private boolean matchesEndpoint(byte[] column, EndPoint endPoint) {
+    // RAW_OPERATION_MARKER key is not written as MDSKey with byte length encoding so don't try to create an object
+    // out of it
+    if (Arrays.equals(column, RAW_OPERATION_MARKER)) {
+      return false;
+    }
+    MDSKey.Splitter keySplitter = new MDSKey(column).split();
+    return Arrays.equals(OUTGOING_DIRECTION_MARKER, keySplitter.getBytes()) &&
+      keySplitter.getString().equals(endPoint.getNamespace()) && keySplitter.getString().equals(endPoint.getName());
+  }
+
+  private String extractFieldName(byte[] columnKey) {
+    MDSKey.Splitter keySplitter = new MDSKey(columnKey).split();
+    // The key is
+    // [outgoing prefix (o)][EndPoint:Namespace][EndPoint:Name][fieldName]
+    // skip prefix
+    keySplitter.skipBytes();
+    // Skip namespace
+    keySplitter.skipString();
+    // skip dataset name
+    keySplitter.skipString();
+
+    return keySplitter.getString();
   }
 }
