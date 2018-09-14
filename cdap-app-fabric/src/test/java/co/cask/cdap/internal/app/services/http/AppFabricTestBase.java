@@ -364,6 +364,15 @@ public abstract class AppFabricTestBase {
 
     // reduce the number of constraint checker threads
     cConf.setInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS, 2);
+    // reduce the number of app fabric threads
+    cConf.setInt(Constants.AppFabric.WORKER_THREADS, 2);
+    cConf.setInt(Constants.AppFabric.EXEC_THREADS, 5);
+    // reduce the number of dataset service threads
+    cConf.setInt(Constants.Dataset.Manager.WORKER_THREADS, 2);
+    cConf.setInt(Constants.Dataset.Manager.EXEC_THREADS, 5);
+    // reduce the number of dataset executor threads
+    cConf.setInt(Constants.Dataset.Executor.WORKER_THREADS, 2);
+    cConf.setInt(Constants.Dataset.Executor.EXEC_THREADS, 5);
     return cConf;
   }
 
