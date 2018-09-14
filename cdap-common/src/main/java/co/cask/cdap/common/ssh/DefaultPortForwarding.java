@@ -41,6 +41,13 @@ final class DefaultPortForwarding implements PortForwarding {
   private final OutputStream outputStream;
   private final byte[] transferBuf;
 
+  /**
+   * Creates a new instance of this class by connecting the direct TCPIP channel for port forwarding.
+   *
+   * @param sshChannel an unconnected {@link ChannelDirectTCPIP} created from a ssh session
+   * @param dataConsumer the {@link DataConsumer} for receiving incoming data
+   * @throws IOException if failed to connect to the channel
+   */
   DefaultPortForwarding(ChannelDirectTCPIP sshChannel, DataConsumer dataConsumer) throws IOException {
     sshChannel.setOutputStream(createIncomingOutputStream(dataConsumer));
 
@@ -49,11 +56,11 @@ final class DefaultPortForwarding implements PortForwarding {
     this.transferBuf = new byte[TRANSFER_SIZE];
 
     try {
+      sshChannel.connect();
       Session session = sshChannel.getSession();
       LOG.trace("Opened port forwarding channel {} through host {}:{}",
                 sshChannel.getId(), session.getHost(), session.getPort());
     } catch (JSchException e) {
-      // This shouldn't happen
       throw new IOException(e);
     }
   }
@@ -165,5 +172,4 @@ final class DefaultPortForwarding implements PortForwarding {
       }
     };
   }
-
 }

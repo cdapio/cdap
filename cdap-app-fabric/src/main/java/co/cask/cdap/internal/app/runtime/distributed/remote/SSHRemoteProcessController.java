@@ -39,7 +39,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Implementation of {@link RemoteProcessController} that SSH into the remote machine and look for the running process.
  */
-public class SSHRemoteProcessController implements RemoteProcessController {
+final class SSHRemoteProcessController implements RemoteProcessController {
 
   private static final Logger LOG = LoggerFactory.getLogger(SSHRemoteProcessController.class);
   private static final Gson GSON = new Gson();

@@ -30,6 +30,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -43,6 +44,8 @@ import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.distributed.TwillAppNames;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
+import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServerInfo;
+import co.cask.cdap.internal.app.runtime.monitor.proxy.MonitorSocksProxy;
 import co.cask.cdap.internal.profile.ProfileMetricService;
 import co.cask.cdap.internal.provision.LocationBasedSSHKeyPair;
 import co.cask.cdap.internal.provision.ProvisioningService;
@@ -56,6 +59,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
+import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Throwables;
@@ -89,6 +93,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -106,6 +113,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -133,11 +141,13 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final MetricsCollectionService metricsCollectionService;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
+  private final SSHSessionManager sshSessionManager;
+  private final MonitorSocksProxy monitorSocksProxy;
 
   private LocationCache locationCache;
   private Path cachePath;
   private ScheduledExecutorService monitorScheduler;
-
+  
   @Inject
   RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
                                     LocationFactory locationFactory, MessagingService messagingService,
@@ -162,6 +172,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     this.metricsCollectionService = metricsCollectionService;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
+    this.sshSessionManager = new SSHSessionManager();
+    this.monitorSocksProxy = new MonitorSocksProxy(cConf, sshSessionManager);
   }
 
   @Override
@@ -176,9 +188,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       throw new RuntimeException(e);
     }
 
+    monitorSocksProxy.startAndWait();
     monitorScheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
                                                         Threads.createDaemonThreadFactory("runtime-monitor-%d"));
-
     long startMillis = System.currentTimeMillis();
     Thread t = new Thread(() -> initializeRuntimeMonitors(startMillis), "runtime-monitor-initializer");
     t.setDaemon(true);
@@ -202,6 +214,13 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     }
 
     try {
+      try {
+        monitorSocksProxy.stopAndWait();
+      } catch (Exception e) {
+        LOG.warn("Exception raised when stopping runtime monitor socks proxy", e);
+      }
+      sshSessionManager.close();
+
       if (cachePath != null) {
         DirUtils.deleteDirectoryContents(cachePath.toFile());
       }
@@ -338,17 +357,19 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                                                         ProgramOptions programOptions,
                                                                         ClusterKeyInfo clusterKeyInfo) {
     return () -> controllers.computeIfAbsent(programRunId, key -> {
+      SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
+
+      MonitorServerAddressSupplier serverAddressSupplier = new MonitorServerAddressSupplier(programRunId, sshConfig);
+
       // Creates a runtime monitor and starts it
       RuntimeMonitorClient runtimeMonitorClient = new RuntimeMonitorClient(
-        clusterKeyInfo.getSSHConfig().getHost(),
-        cConf.getInt(Constants.RuntimeMonitor.SERVER_PORT),
         HttpRequestConfig.DEFAULT, clusterKeyInfo.getClientKeyStore(),
-        KeyStores.createTrustStore(clusterKeyInfo.getServerKeyStore())
+        KeyStores.createTrustStore(clusterKeyInfo.getServerKeyStore()),
+        serverAddressSupplier, new Proxy(Proxy.Type.SOCKS, monitorSocksProxy.getBindAddress())
       );
 
       RemoteProcessController remoteProcessController = new SSHRemoteProcessController(key, programOptions,
-                                                                                       clusterKeyInfo.getSSHConfig(),
-                                                                                       provisioningService);
+                                                                                       sshConfig, provisioningService);
       ProfileMetricService profileMetricsService = createProfileMetricsService(key, programOptions,
                                                                                clusterKeyInfo.getCluster());
       RuntimeMonitor runtimeMonitor = new RuntimeMonitor(key, cConf, runtimeMonitorClient,
@@ -361,8 +382,12 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
       runtimeMonitor.start();
 
-      // When the program completed, remove the controller from the map
-      controller.onTerminated(() -> controllers.remove(key, controller), Threads.SAME_THREAD_EXECUTOR);
+      // When the program completed, remove the controller from the map.
+      // Also remove the ssh config from the session manager so that it can't be used again.
+      controller.onTerminated(() -> {
+        controllers.remove(key, controller);
+        serverAddressSupplier.close();
+      }, Threads.SAME_THREAD_EXECUTOR);
 
       return controller;
     });
@@ -479,6 +504,77 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private static Location getKeysDirLocation(ProgramOptions programOptions, LocationFactory locationFactory) {
     return locationFactory.create(
       GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.SECURE_KEYS_DIR), URI.class));
+  }
+
+  /**
+   * Private class to implement a {@link Supplier} of {@link InetSocketAddress} to provide the runtime monitor server
+   * address to {@link RuntimeMonitorClient}. After it gets the address of the server, it register
+   * the address to {@link SSHSessionManager} to allow the {@link MonitorSocksProxy} using the {@link SSHSession}
+   * associated with it. When {@link #close()} is invoked, it remove the server address
+   * from the {@link SSHSessionManager} to prevent further usage.
+   */
+  private final class MonitorServerAddressSupplier implements Supplier<InetSocketAddress>, AutoCloseable {
+
+    private final ProgramRunId programRunId;
+    private final SSHConfig sshConfig;
+
+    private volatile InetSocketAddress address;
+    private boolean closed;
+  
+    private MonitorServerAddressSupplier(ProgramRunId programRunId, SSHConfig sshConfig) {
+      this.programRunId = programRunId;
+      this.sshConfig = sshConfig;
+    }
+
+    @Override
+    public InetSocketAddress get() {
+      InetSocketAddress address = this.address;
+      if (address != null) {
+        return address;
+      }
+      synchronized (this) {
+        if (closed) {
+          return null;
+        }
+
+        address = this.address;
+        if (address != null) {
+          return address;
+        }
+
+        try (SSHSession session = new DefaultSSHSession(sshConfig)) {
+          // Try to read the port file on the remote host, for up to 3 seconds.
+          RetryStrategy strategy = RetryStrategies.timeLimit(3, TimeUnit.SECONDS,
+                                                             RetryStrategies.fixDelay(200, TimeUnit.MILLISECONDS));
+          int port = Retries.callWithRetries(() -> {
+            String json = session.executeAndWait("cat " + programRunId.getRun() + "/"
+                                                   + cConf.get(Constants.RuntimeMonitor.SERVER_INFO_FILE));
+            RuntimeMonitorServerInfo info = GSON.fromJson(json, RuntimeMonitorServerInfo.class);
+            if (info == null) {
+              throw new IOException("Cannot find the port for the runtime monitor server");
+            }
+            return info.getPort();
+          }, strategy, IOException.class::isInstance);
+
+          this.address = address = new InetSocketAddress(InetAddress.getByName(sshConfig.getHost()), port);
+
+          // Once acquired the server address, add it to the SSHSessionManager so that the proxy server can use it
+          sshSessionManager.addSSHConfig(address, sshConfig);
+          return address;
+        } catch (Exception e) {
+          return null;
+        }
+      }
+    }
+
+    @Override
+    public synchronized void close() {
+      closed = true;
+      InetSocketAddress address = this.address;
+      if (address != null) {
+        sshSessionManager.removeSSHConfig(address);
+      }
+    }
   }
 
   /**

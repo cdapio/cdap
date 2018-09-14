@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.monitor;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.security.tools.HttpsEnabler;
 import co.cask.common.http.HttpRequestConfig;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;
 import org.apache.avro.generic.GenericData;
@@ -41,6 +42,8 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -50,6 +53,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.function.Supplier;
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -57,19 +61,22 @@ import javax.net.ssl.HttpsURLConnection;
  */
 public final class RuntimeMonitorClient {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitorClient.class);
-  private final URI baseURI;
+
   private final HttpRequestConfig requestConfig;
   private final HttpsEnabler httpsEnabler;
   private final DatumReader<GenericRecord> responseDatumReader;
+  private final Supplier<InetSocketAddress> serverAddressSupplier;
+  private final Proxy proxy;
+  private volatile URI baseURI;
 
-
-  public RuntimeMonitorClient(String hostname, int port, HttpRequestConfig requestConfig,
-                              KeyStore keyStore, KeyStore trustStore) {
-    this.baseURI = URI.create("https://" + hostname + ":" + port + "/v1/");
+  public RuntimeMonitorClient(HttpRequestConfig requestConfig, KeyStore keyStore, KeyStore trustStore,
+                              Supplier<InetSocketAddress> serverAddressSupplier, Proxy proxy) {
     this.requestConfig = requestConfig;
     this.httpsEnabler = new HttpsEnabler().setKeyStore(keyStore, ""::toCharArray).setTrustStore(trustStore);
     this.responseDatumReader = new GenericDatumReader<>(
       MonitorSchemas.V1.MonitorResponse.SCHEMA.getValueType().getElementType());
+    this.serverAddressSupplier = serverAddressSupplier;
+    this.proxy = proxy;
   }
 
   /**
@@ -83,7 +90,7 @@ public final class RuntimeMonitorClient {
    * @throws ServiceUnavailableException if the runtime monitor server is not available
    */
   Map<String, Deque<MonitorMessage>> fetchMessages(Map<String, MonitorConsumeRequest> request) throws IOException {
-    HttpsURLConnection urlConn = connect("runtime/metadata");
+    HttpURLConnection urlConn = connect("runtime/metadata");
     try {
       urlConn.setDoOutput(true);
       urlConn.setRequestMethod("POST");
@@ -94,10 +101,7 @@ public final class RuntimeMonitorClient {
       }
 
       throwIfNotOK(urlConn.getResponseCode(), urlConn);
-
-      try (InputStream is = urlConn.getInputStream()) {
-        return decodeResponse(is);
-      }
+      return decodeResponse(urlConn.getInputStream());
     } catch (ConnectException e) {
       throw new ServiceUnavailableException("runtime.monitor", e);
     } finally {
@@ -114,7 +118,7 @@ public final class RuntimeMonitorClient {
    * @throws ServiceUnavailableException if the runtime monitor server is not available
    */
   void requestShutdown() throws IOException {
-    HttpsURLConnection urlConn = connect("runtime/shutdown");
+    HttpURLConnection urlConn = connect("runtime/shutdown");
     try {
       urlConn.setRequestMethod("POST");
       throwIfNotOK(urlConn.getResponseCode(), urlConn);
@@ -133,7 +137,7 @@ public final class RuntimeMonitorClient {
    * @throws ServiceUnavailableException if the runtime monitor server is not available
    */
   void requestStop() throws IOException {
-    HttpsURLConnection urlConn = connect("runtime/kill");
+    HttpURLConnection urlConn = connect("runtime/kill");
     try {
       urlConn.setRequestMethod("POST");
       throwIfNotOK(urlConn.getResponseCode(), urlConn);
@@ -241,11 +245,25 @@ public final class RuntimeMonitorClient {
   }
 
   /**
+   * Resolves the URL to the runtime monitor server for the given path.
+   */
+  private URL resolveURL(String path) throws IOException {
+    if (baseURI == null) {
+      InetSocketAddress addr = serverAddressSupplier.get();
+      if (addr == null) {
+        throw new IOException("No runtime monitor server address");
+      }
+      baseURI = URI.create("https://" + addr.getHostString() + ":" + addr.getPort() + "/v1/");
+    }
+    return baseURI.resolve(path).toURL();
+  }
+
+  /**
    * Connects to the given relative path of the base URI.
    */
-  private HttpsURLConnection connect(String path) throws IOException {
-    URL url = baseURI.resolve(path).toURL();
-    URLConnection urlConn = url.openConnection();
+  private HttpURLConnection connect(String path) throws IOException {
+    URL url = resolveURL(path);
+    URLConnection urlConn = url.openConnection(proxy);
     if (!(urlConn instanceof HttpsURLConnection)) {
       // This should not happen since we always connect with https
       throw new IOException("Connection is not secure");
@@ -260,13 +278,17 @@ public final class RuntimeMonitorClient {
    * Releases the {@link HttpURLConnection} so that it can be reused.
    */
   private void releaseConnection(HttpURLConnection urlConn) {
-    try {
-      urlConn.getInputStream().close();
+    // Have to drain the InputStream before closing in order to have the connection reused
+    try (InputStream is = urlConn.getInputStream()) {
+      ByteStreams.toByteArray(is);
     } catch (Exception e) {
       // Ignore exception. We just want to release resources
     }
-    try {
-      urlConn.getErrorStream().close();
+    try (InputStream is = urlConn.getErrorStream()) {
+      // Error stream might be null if there is no error
+      if (is != null) {
+        ByteStreams.toByteArray(is);
+      }
     } catch (Exception e) {
       // Ignore exception. We just want to release resources
     }

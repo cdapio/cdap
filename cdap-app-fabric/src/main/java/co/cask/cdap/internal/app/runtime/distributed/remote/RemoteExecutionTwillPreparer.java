@@ -457,7 +457,7 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
 
           // Create the controller first. If the creation failed, the process won't get started.
           RemoteExecutionTwillController controller = controllerFactory.create();
-          session.executeAndWait("sudo " + targetPath + "/launcher.sh");
+          session.executeAndWait(targetPath + "/launcher.sh");
 
           return controller;
         }

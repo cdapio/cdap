@@ -85,6 +85,11 @@ public class DefaultSSHSession implements SSHSession {
   }
 
   @Override
+  public boolean isAlive() {
+    return session.isConnected();
+  }
+
+  @Override
   public InetSocketAddress getAddress() {
     return remoteAddress;
   }
@@ -232,14 +237,8 @@ public class DefaultSSHSession implements SSHSession {
 
       sshChannel.setOrgIPAddress(originateIP);
       sshChannel.setOrgPort(originatePort);
-      sshChannel.connect();
 
-      try {
-        return new DefaultPortForwarding(sshChannel, dataConsumer);
-      } catch (IOException e) {
-        sshChannel.disconnect();
-        throw e;
-      }
+      return new DefaultPortForwarding(sshChannel, dataConsumer);
     } catch (JSchException e) {
       throw new IOException(e);
     }

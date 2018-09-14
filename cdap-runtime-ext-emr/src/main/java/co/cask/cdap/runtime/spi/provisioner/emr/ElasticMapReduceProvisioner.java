@@ -125,7 +125,7 @@ public class ElasticMapReduceProvisioner implements Provisioner {
         throw new IOException(String.format(
                 "Failed to connect to host %s. Ensure that the the provisioner property for \"Additional Master" +
                         " Security Group\" has been configured with an EC2 Security Group that has inbound rules" +
-                        " allowing ssh and https (ports 22 and 443).", host),
+                        " allowing ssh on port 22.", host),
                 ioe);
       }
       throw ioe;

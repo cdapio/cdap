@@ -874,9 +874,8 @@ public final class Constants {
     public static final String INIT_BATCH_SIZE = "app.program.runtime.monitor.initialize.batch.size";
 
     // Configuration keys for the runtime monitor server
-    public static final String SERVER_HOST = "app.program.runtime.monitor.server.host";
-    public static final String SERVER_PORT = "app.program.runtime.monitor.server.port";
     public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
+    public static final String SERVER_INFO_FILE = "app.program.runtime.monitor.server.info.file";
 
     // Constants for secure connections
     public static final String SSH_USER = "ssh.user";

@@ -30,6 +30,11 @@ import javax.annotation.Nullable;
 public interface SSHSession extends AutoCloseable {
 
   /**
+   * Returns {@code true} if the session is alive; otherwise return {@code false}.
+   */
+  boolean isAlive();
+
+  /**
    * Returns the remote host and port that this session is connected to.
    *
    * @return a {@link InetSocketAddress} containing the target host and port of this session

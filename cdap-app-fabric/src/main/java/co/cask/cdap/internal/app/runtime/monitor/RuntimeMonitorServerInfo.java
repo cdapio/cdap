@@ -16,21 +16,21 @@
 
 package co.cask.cdap.internal.app.runtime.monitor;
 
-import co.cask.cdap.internal.app.runtime.monitor.proxy.MonitorSocksProxy;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
-
-import java.net.InetSocketAddress;
-
 /**
- * An interface for getting {@link SSHSession}. It is intended to be used by {@link MonitorSocksProxy} to get
- * registered {@link SSHSession} for tunneling.
+ * A class containing information about the {@link RuntimeMonitorServer} that are used by the client.
  */
-public interface SSHSessionProvider {
+public final class RuntimeMonitorServerInfo {
+
+  private final int port;
+
+  public RuntimeMonitorServerInfo(int port) {
+    this.port = port;
+  }
 
   /**
-   * Returns the {@link SSHSession} for the given server address.
-   *
-   * @param serverAddr the {@link InetSocketAddress} of where the runtime monitor server is running
+   * Returns the port that the {@link RuntimeMonitorServer} is listening on.
    */
-  SSHSession getSession(InetSocketAddress serverAddr);
+  public int getPort() {
+    return port;
+  }
 }

@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
@@ -174,12 +175,14 @@ final class SocksServerConnectHandler extends SimpleChannelInboundHandler<SocksM
    */
   private ChannelHandler createForwardingChannelHandler(Channel channel,
                                                         String destAddress, int destPort) throws IOException {
-    SSHSession sshSession = sshSessionProvider.getSession(destAddress, destPort);
+    SSHSession sshSession = sshSessionProvider.getSession(new InetSocketAddress(destAddress, destPort));
     PortForwarding portForwarding = sshSession.createLocalPortForward("localhost", destPort,
                                                                       destPort, new PortForwarding.DataConsumer() {
       @Override
       public void received(ByteBuffer buffer) {
-        channel.write(Unpooled.wrappedBuffer(buffer));
+        // Copy and write the buffer to the channel.
+        // It needs to be copied because writing to channel is asynchronous
+        channel.write(Unpooled.wrappedBuffer(buffer).copy());
       }
 
       @Override
@@ -202,7 +205,11 @@ final class SocksServerConnectHandler extends SimpleChannelInboundHandler<SocksM
       @Override
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf buf = (ByteBuf) msg;
-        portForwarding.write(buf.nioBuffer());
+        try {
+          portForwarding.write(buf.nioBuffer());
+        } finally {
+          buf.release();
+        }
       }
 
       @Override
