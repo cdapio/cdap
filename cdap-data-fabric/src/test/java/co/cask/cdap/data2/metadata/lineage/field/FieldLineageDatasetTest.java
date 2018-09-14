@@ -83,18 +83,24 @@ public class FieldLineageDatasetTest {
       EndPoint destination = EndPoint.of("myns", "another_file");
 
       // end time 10000 should return empty set since its exclusive and run was added at time 10000
+      Assert.assertEquals(Collections.EMPTY_SET, fieldLineageDataset.getFields(source, 0, 10000));
       Assert.assertEquals(Collections.EMPTY_SET, fieldLineageDataset.getFields(destination, 0, 10000));
 
-      Set<String> expectedFields = new HashSet<>(Arrays.asList("offset", "name"));
+      Set<String> expectedDestinationFields = new HashSet<>(Arrays.asList("offset", "name"));
+      Set<String> expectedSourceFields = new HashSet<>(Arrays.asList("offset", "body"));
       // end time 10001 should return the data for the run which was added at time 10000
-      Assert.assertEquals(expectedFields, fieldLineageDataset.getFields(destination, 0, 10001));
+      Assert.assertEquals(expectedDestinationFields, fieldLineageDataset.getFields(destination, 0, 10001));
+      Assert.assertEquals(expectedSourceFields, fieldLineageDataset.getFields(source, 0, 10001));
       // providing start time as 10000 and endtime as 11000 should still return the same set of fields
-      Assert.assertEquals(expectedFields, fieldLineageDataset.getFields(destination, 10000, 11000));
+      Assert.assertEquals(expectedDestinationFields, fieldLineageDataset.getFields(destination, 10000, 11000));
+      Assert.assertEquals(expectedSourceFields, fieldLineageDataset.getFields(source, 10000, 10001));
 
       // setting endtime to 11001 should include the information for from programRun2 as well, which added additional
       // field to the dataset.
-      expectedFields.add("file_name");
-      Assert.assertEquals(expectedFields, fieldLineageDataset.getFields(destination, 10000, 11001));
+      expectedDestinationFields.add("file_name");
+      expectedSourceFields.add("file_name");
+      Assert.assertEquals(expectedDestinationFields, fieldLineageDataset.getFields(destination, 10000, 11001));
+      Assert.assertEquals(expectedSourceFields, fieldLineageDataset.getFields(source, 10000, 11001));
 
       // end time 10000 should return empty set since its exclusive and run was added at time 10000
       Assert.assertEquals(Collections.EMPTY_SET,
