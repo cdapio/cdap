@@ -216,8 +216,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
 
   private renderTestButton = () => {
     const disabled = !this.state.name ||
-      !this.state.projectId ||
-      !this.state.serviceAccountKeyfile;
+      !this.state.projectId;
 
     return (
       <span className="test-connection-button">
@@ -236,7 +235,6 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
   private renderAddConnectionButton = () => {
     const disabled = !this.state.name ||
       !this.state.projectId ||
-      !this.state.serviceAccountKeyfile ||
       this.state.testConnectionLoading;
 
     let onClickFn = this.addConnection;
@@ -312,7 +310,6 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.serviceAccountKeyfile`)}
-              <span className="asterisk">*</span>
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">

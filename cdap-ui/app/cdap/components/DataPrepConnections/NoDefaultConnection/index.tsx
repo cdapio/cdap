@@ -25,24 +25,27 @@ import T from 'i18n-react';
 
 const PREFIX: string = 'features.DataPrepConnections.NoDefaultConnection';
 
-interface IDefaultConnection {
-  name: string;
-  type: ConnectionType;
+interface IPartialConnectionType {
+  id?: string;
+  name?: string;
+  type?: string;
+  properties?: object;
 }
+
 interface INoDefaultConnectionProps {
-  defaultConnection: IDefaultConnection;
+  defaultConnection: string;
   showAddConnectionPopover: () => void;
   toggleSidepanel: (e: React.MouseEvent<HTMLElement>) => void;
+  connectionsList: IPartialConnectionType[];
 }
 const NoDefaultConnection: React.SFC<INoDefaultConnectionProps> = ({
   defaultConnection,
   showAddConnectionPopover,
+  connectionsList = [],
   toggleSidepanel,
 }) => {
-  if (
-    isNilOrEmpty(defaultConnection) ||
-    (defaultConnection && isNilOrEmpty(defaultConnection.name))
-  ) {
+  const defaultConnectionObj = connectionsList.find((conn) => conn.id === defaultConnection);
+  if (isNilOrEmpty(defaultConnection) || !defaultConnectionObj) {
     return (
       <div>
         <DataprepBrowserTopPanel
@@ -71,7 +74,7 @@ const NoDefaultConnection: React.SFC<INoDefaultConnectionProps> = ({
       </div>
     );
   }
-  const { name: connectionId, type } = defaultConnection;
+  const { type, name: connectionId } = defaultConnectionObj;
   const connectionType = type.toLowerCase();
   const namespace = getCurrentNamespace();
   const BASEPATH = `/ns/${namespace}/connections`;

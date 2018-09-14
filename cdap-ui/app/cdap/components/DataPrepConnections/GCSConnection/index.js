@@ -204,7 +204,6 @@ export default class GCSConnection extends Component {
   renderTestButton() {
     let disabled = !this.state.name ||
       !this.state.projectId ||
-      !this.state.serviceAccountKeyfile ||
       this.state.testConnectionLoading;
 
     return (
@@ -221,8 +220,7 @@ export default class GCSConnection extends Component {
 
   renderAddConnectionButton() {
     let disabled = !this.state.name ||
-      !this.state.projectId ||
-      !this.state.serviceAccountKeyfile;
+      !this.state.projectId;
 
     let onClickFn = this.addConnection;
 
@@ -297,7 +295,6 @@ export default class GCSConnection extends Component {
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.serviceAccountKeyfile`)}
-              <span className="asterisk">*</span>
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
