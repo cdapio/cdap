@@ -29,7 +29,6 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -44,8 +43,9 @@ import javax.annotation.Nullable;
 /**
  * A {@link AbstractSystemMetadataWriter} for a {@link DatasetId dataset}.
  */
-public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetSystemMetadataWriter.class);
+public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetSystemMetadataProvider.class);
 
   public static final String BATCH_TAG = "batch";
   public static final String TYPE = "type";
@@ -63,19 +63,16 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final long createTime;
   private final String description;
 
-  public DatasetSystemMetadataWriter(MetadataStore metadataStore,
-                                     DatasetId dsInstance, DatasetProperties dsProperties,
-                                     @Nullable Dataset dataset, @Nullable String dsType,
-                                     @Nullable String description) {
-    this(metadataStore, dsInstance, dsProperties, -1, dataset, dsType, description);
+  public DatasetSystemMetadataProvider(DatasetId dsInstance, DatasetProperties dsProperties,
+                                       @Nullable Dataset dataset, @Nullable String dsType,
+                                       @Nullable String description) {
+    this(dsInstance, dsProperties, -1, dataset, dsType, description);
   }
 
-  public DatasetSystemMetadataWriter(MetadataStore metadataStore,
-                                     DatasetId dsInstance, DatasetProperties dsProperties,
-                                     long createTime,
-                                     @Nullable Dataset dataset, @Nullable String dsType,
-                                     @Nullable String description) {
-    super(metadataStore, dsInstance);
+  public DatasetSystemMetadataProvider(DatasetId dsInstance, DatasetProperties dsProperties,
+                                       long createTime,
+                                       @Nullable Dataset dataset, @Nullable String dsType,
+                                       @Nullable String description) {
     this.dsInstance = dsInstance;
     this.dsType = dsType;
     this.dsProperties = dsProperties;
@@ -88,7 +85,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Map<String, String> getSystemPropertiesToAdd() {
+  public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     properties.put(ENTITY_NAME_KEY, dsInstance.getDataset());
     Map<String, String> datasetProperties = dsProperties.getProperties();
@@ -110,7 +107,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Set<String> getSystemTagsToAdd() {
+  public Set<String> getSystemTagsToAdd() {
     Set<String> tags = new HashSet<>();
     if (dataset instanceof RecordScannable) {
       tags.add(EXPLORE_TAG);
@@ -136,7 +133,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   @Nullable
   @Override
-  protected String getSchemaToAdd() {
+  public String getSchemaToAdd() {
     // TODO: fix schema determination after CDAP-2790 is fixed (CDAP-5408)
     Map<String, String> datasetProperties = dsProperties.getProperties();
     String schemaStr = null;

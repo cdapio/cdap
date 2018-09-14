@@ -49,7 +49,6 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
-import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
@@ -146,10 +145,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
 
     DatasetAdminService datasetAdminService =
-      new DatasetAdminService(framework, cConf, locationFactory, datasetInstantiatorFactory, new NoOpMetadataStore(),
-                              impersonator);
+      new DatasetAdminService(framework, cConf, locationFactory, datasetInstantiatorFactory, impersonator);
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
+      ImmutableSet.of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
     opExecutorService.startAndWait();
 
@@ -181,12 +179,14 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService,
                                                               authenticationContext);
     DatasetInstanceService instanceService = new DatasetInstanceService(cConf,
-      typeService, noAuthTypeService, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, ownerAdmin,
-      authorizationEnforcer, authenticationContext);
+                                                                        typeService, noAuthTypeService, instanceManager,
+                                                                        new NoOpMetadataStore(), opExecutor,
+                                                                        exploreFacade, namespaceQueryAdmin, ownerAdmin,
+                                                                        authorizationEnforcer, authenticationContext);
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
-                                 new InMemoryDatasetOpExecutor(framework), new HashSet<DatasetMetricsReporter>(),
+                                 new InMemoryDatasetOpExecutor(framework), new HashSet<>(),
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();
@@ -204,7 +204,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   // DatasetMetaTable util to add modules to system namespace. However, we should definitely impose these restrictions
   // in RemoteDatasetFramework.
   @Test
-  public void testSystemNamespace() throws DatasetManagementException {
+  public void testSystemNamespace() {
     DatasetFramework framework = getFramework();
     try {
       framework.deleteModule(NamespaceId.SYSTEM.datasetModule("orderedTable-memory"));

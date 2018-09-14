@@ -44,7 +44,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
-import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataProvider;
 import co.cask.cdap.metadata.MetadataHttpHandler;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -702,7 +702,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
     Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
+      ImmutableSet.of(DatasetSystemMetadataProvider.BATCH_TAG,
                       AbstractSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags);
 
@@ -794,9 +794,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
       dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
       Assert.assertEquals(
-        ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
+        ImmutableSet.of(DatasetSystemMetadataProvider.BATCH_TAG,
                         AbstractSystemMetadataWriter.EXPLORE_TAG,
-                        DatasetSystemMetadataWriter.LOCAL_DATASET_TAG),
+                        DatasetSystemMetadataProvider.LOCAL_DATASET_TAG),
         dsSystemTags);
     } finally {
       // Always reset the property. Otherwise later test could fail due to bug in CDAP-8220
@@ -821,7 +821,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME4);
     Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
+      ImmutableSet.of(DatasetSystemMetadataProvider.BATCH_TAG,
                       AbstractSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags);
 
@@ -829,7 +829,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     DatasetId datasetInstance2 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME5);
     Set<String> dsSystemTags2 = getTags(datasetInstance2, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableSet.of(DatasetSystemMetadataWriter.BATCH_TAG,
+      ImmutableSet.of(DatasetSystemMetadataProvider.BATCH_TAG,
                       AbstractSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags2);
 
@@ -837,13 +837,13 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     DatasetId datasetInstance3 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME6);
     Set<String> dsSystemTags3 = getTags(datasetInstance3, MetadataScope.SYSTEM);
     Assert.assertFalse(dsSystemTags3.contains(AbstractSystemMetadataWriter.EXPLORE_TAG));
-    Assert.assertTrue(dsSystemTags3.contains(DatasetSystemMetadataWriter.BATCH_TAG));
+    Assert.assertTrue(dsSystemTags3.contains(DatasetSystemMetadataProvider.BATCH_TAG));
 
     //verify that partitioned fileSet that isn't set to explorable does not have explore tag
     DatasetId datasetInstance4 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME7);
     Set<String> dsSystemTags4 = getTags(datasetInstance4, MetadataScope.SYSTEM);
     Assert.assertFalse(dsSystemTags4.contains(AbstractSystemMetadataWriter.EXPLORE_TAG));
-    Assert.assertTrue(dsSystemTags4.contains(DatasetSystemMetadataWriter.BATCH_TAG));
+    Assert.assertTrue(dsSystemTags4.contains(DatasetSystemMetadataProvider.BATCH_TAG));
   }
 
   @Test

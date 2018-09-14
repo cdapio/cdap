@@ -50,7 +50,7 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Map<String, String> getSystemPropertiesToAdd() {
+  public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     properties.put(ENTITY_NAME_KEY, config.getStreamId().getEntityName());
     properties.put(TTL_KEY, String.valueOf(config.getTTL()));
@@ -64,13 +64,13 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Set<String> getSystemTagsToAdd() {
+  public Set<String> getSystemTagsToAdd() {
     return Collections.singleton(EXPLORE_TAG);
   }
 
   @Nullable
   @Override
-  protected String getSchemaToAdd() {
+  public String getSchemaToAdd() {
     Schema schema = config.getFormat().getSchema();
     return schema == null ? null : schema.toString();
   }

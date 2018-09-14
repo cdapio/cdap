@@ -107,19 +107,19 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   }
 
   @Override
-  public DatasetSpecification create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props) throws Exception {
+  public DatasetCreationResponse create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
+                                        DatasetProperties props) throws Exception {
     InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props);
     HttpResponse response = doRequest(datasetInstanceId, "create", GSON.toJson(creationParams));
-    return ObjectResponse.fromJsonBody(response, DatasetSpecification.class).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, DatasetCreationResponse.class).getResponseObject();
   }
 
   @Override
-  public DatasetSpecification update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props, DatasetSpecification existing) throws Exception {
+  public DatasetCreationResponse update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
+                                        DatasetProperties props, DatasetSpecification existing) throws Exception {
     InternalDatasetCreationParams updateParams = new InternalDatasetUpdateParams(typeMeta, existing, props);
     HttpResponse response = doRequest(datasetInstanceId, "update", GSON.toJson(updateParams));
-    return ObjectResponse.fromJsonBody(response, DatasetSpecification.class).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, DatasetCreationResponse.class).getResponseObject();
   }
 
   @Override

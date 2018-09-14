@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,8 +45,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-
 /**
  * Test AbstractSystemMetadataWriter.
  */
@@ -56,7 +54,7 @@ public class AbstractSystemMetadataWriterTest {
   private static MetadataStore store;
 
   @BeforeClass
-  public static void setup() throws IOException {
+  public static void setup() {
     CConfiguration cConf = CConfiguration.create();
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -87,13 +85,11 @@ public class AbstractSystemMetadataWriterTest {
   }
 
   @Test
-  public void testMetadataOverwrite() throws Exception {
+  public void testMetadataOverwrite() {
     DatasetId dsInstance = new DatasetId("ns1", "ds1");
-    DatasetSystemMetadataWriter datasetSystemMetadataWriter =
-      new DatasetSystemMetadataWriter(store, dsInstance,
-                                      TableProperties.builder().setTTL(100).build(),
-                                      123456L, null, null, "description1");
-    datasetSystemMetadataWriter.write();
+    DatasetSystemMetadataProvider metadaProvider = new DatasetSystemMetadataProvider(
+      dsInstance, TableProperties.builder().setTTL(100).build(), 123456L, null, null, "description1");
+    new DelegateSystemMetadataWriter(store, dsInstance, metadaProvider).write();
 
     MetadataRecordV2 expected =
       new MetadataRecordV2(dsInstance, MetadataScope.SYSTEM,
@@ -104,16 +100,16 @@ public class AbstractSystemMetadataWriterTest {
     Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance.toMetadataEntity()));
 
     // Now remove TTL, and add dsType
-    datasetSystemMetadataWriter =
-      new DatasetSystemMetadataWriter(store, dsInstance, DatasetProperties.EMPTY, null, "dsType", "description2");
-    datasetSystemMetadataWriter.write();
+    metadaProvider = new DatasetSystemMetadataProvider(
+        dsInstance, DatasetProperties.EMPTY, null, "dsType", "description2");
+    new DelegateSystemMetadataWriter(store, dsInstance, metadaProvider).write();
 
     expected =
       new MetadataRecordV2(dsInstance, MetadataScope.SYSTEM,
                            ImmutableMap.of(AppSystemMetadataWriter.ENTITY_NAME_KEY, dsInstance.getEntityName(),
                                          AbstractSystemMetadataWriter.DESCRIPTION_KEY, "description2",
                                          AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(123456L),
-                                         DatasetSystemMetadataWriter.TYPE, "dsType"), ImmutableSet.of());
+                                         DatasetSystemMetadataProvider.TYPE, "dsType"), ImmutableSet.of());
     Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance.toMetadataEntity()));
 
     store.removeMetadata(dsInstance.toMetadataEntity());

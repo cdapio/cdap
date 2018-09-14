@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -99,8 +99,8 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
     try {
       DatasetId instanceId = new DatasetId(namespaceId, name);
-      DatasetSpecification spec = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, null);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec));
+      DatasetCreationResponse response = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, null);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
     } catch (BadRequestException | IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
@@ -126,8 +126,8 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
     try {
       DatasetId instanceId = new DatasetId(namespaceId, name);
-      DatasetSpecification spec = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, existing);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec));
+      DatasetCreationResponse response = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, existing);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
     } catch (NotFoundException e) {
       LOG.debug("Got handler exception", e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));

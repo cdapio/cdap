@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,12 @@ import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetCreationResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.DelegateSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.SystemMetadata;
+import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.DatasetInstanceOperation;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -92,6 +97,7 @@ public class DatasetInstanceService {
   private final LoadingCache<DatasetId, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final MetadataStore metadataStore;
   private boolean publishCUD;
 
   private AuditPublisher auditPublisher;
@@ -104,6 +110,7 @@ public class DatasetInstanceService {
                                 @Named(DataSetServiceModules.NOAUTH_DATASET_TYPE_SERVICE)
                                   DatasetTypeService noAuthDatasetTypeService,
                                 DatasetInstanceManager instanceManager,
+                                MetadataStore metadataStore,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer,
@@ -113,6 +120,7 @@ public class DatasetInstanceService {
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
     this.noAuthDatasetTypeService = noAuthDatasetTypeService;
     this.instanceManager = instanceManager;
+    this.metadataStore = metadataStore;
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.ownerAdmin = ownerAdmin;
@@ -153,6 +161,7 @@ public class DatasetInstanceService {
     ensureNamespaceExists(namespace);
     List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.getAll(namespace));
 
+    //noinspection ConstantConditions
     return AuthorizationUtil.isVisible(datasets, authorizationEnforcer, authenticationContext.getPrincipal(),
                                        input -> namespace.dataset(input.getName()), null);
   }
@@ -172,6 +181,7 @@ public class DatasetInstanceService {
     ensureNamespaceExists(namespace);
     List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.get(namespace, properties));
 
+    //noinspection ConstantConditions
     return AuthorizationUtil.isVisible(datasets, authorizationEnforcer, authenticationContext.getPrincipal(),
                                        input -> namespace.dataset(input.getName()), null);
   }
@@ -337,10 +347,11 @@ public class DatasetInstanceService {
         .build();
 
       LOG.trace("Calling op executor service to configure dataset {}", name);
-      DatasetSpecification spec = opExecutorClient.create(datasetId, typeMeta, datasetProperties);
-      LOG.trace("Received spec from op executor service for dataset {}: ", name, spec);
+      DatasetCreationResponse response = opExecutorClient.create(datasetId, typeMeta, datasetProperties);
+      LOG.trace("Received spec and metadata from op executor service for dataset {}: {}", name, response);
 
       LOG.trace("Adding instance metadata for dataset {}", name);
+      DatasetSpecification spec = response.getSpec();
       instanceManager.add(namespace, spec);
       LOG.trace("Added instance metadata for dataset {}", name);
       metaCache.invalidate(datasetId);
@@ -354,6 +365,10 @@ public class DatasetInstanceService {
                                                                              props.getTypeName(), datasetProperties));
         LOG.trace("Published metadata for creation of dataset {}", name);
       }
+      SystemMetadata metadata = response.getMetadata();
+      LOG.trace("Publishing system metadata for creation of dataset {}: {}", name, metadata);
+      publishMetadata(datasetId, metadata);
+      LOG.trace("Published system metadata for creation of dataset {}", name);
 
       // Enable explore
       enableExplore(datasetId, spec, props);
@@ -399,7 +414,8 @@ public class DatasetInstanceService {
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetProperties datasetProperties = DatasetProperties.of(properties);
-    DatasetSpecification spec = opExecutorClient.update(instance, typeMeta, datasetProperties, existing);
+    DatasetCreationResponse response = opExecutorClient.update(instance, typeMeta, datasetProperties, existing);
+    DatasetSpecification spec = response.getSpec();
     instanceManager.add(instance.getParent(), spec);
     metaCache.invalidate(instance);
 
@@ -408,6 +424,7 @@ public class DatasetInstanceService {
     if (publishCUD && !isLocalDataset(datasetProperties.getProperties()) && !isLocalDataset(spec.getProperties())) {
       metadataPublisher.publish(instance, DatasetInstanceOperation.update(requestingUser, datasetProperties));
     }
+    publishMetadata(instance, response.getMetadata());
   }
 
   /**
@@ -585,6 +602,11 @@ public class DatasetInstanceService {
     }
     opExecutorClient.drop(instance, typeMeta, spec);
 
+    // Remove metadata for the dataset
+    LOG.trace("Removing metadata for dataset {}", instance);
+    metadataStore.removeMetadata(instance.toMetadataEntity());
+    LOG.trace("Removed metadata for dataset {}", instance);
+
     publishAudit(instance, AuditType.DELETE);
     // deletes the owner principal for the entity if one was stored during creation
     ownerAdmin.delete(instance);
@@ -652,6 +674,13 @@ public class DatasetInstanceService {
   private boolean isLocalDataset(@Nullable Map<String, String> properties) {
     return properties != null
       && Boolean.parseBoolean(properties.get(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
+  }
+
+  private void publishMetadata(DatasetId dataset, SystemMetadata metadata) {
+    if (metadata != null && !metadata.isEmpty()) {
+      SystemMetadataWriter metadataWriter = new DelegateSystemMetadataWriter(metadataStore, dataset, metadata);
+      metadataWriter.write();
+    }
   }
 }
 
