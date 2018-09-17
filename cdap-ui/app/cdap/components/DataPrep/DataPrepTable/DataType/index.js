@@ -19,7 +19,6 @@ import ee from 'event-emitter';
 import T from 'i18n-react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import capitalize from 'lodash/capitalize';
 import DataPrepStore from 'components/DataPrep/store';
 
 const PREFIX = 'features.DataPrep.DataPrepTable.DataType';
@@ -55,7 +54,7 @@ export default class DataType extends Component {
         'data-type-updated': this.state.highlightedDataType === this.props.columnName
         })}
       >
-        {capitalize(types[this.props.columnName] || T.translate(`${PREFIX}.unknown`))}
+        {types[this.props.columnName] || T.translate(`${PREFIX}.unknown`)}
       </div>
     );
   }

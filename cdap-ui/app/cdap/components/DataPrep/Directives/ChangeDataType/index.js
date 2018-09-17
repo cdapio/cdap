@@ -26,6 +26,8 @@ import debounce from 'lodash/debounce';
 import ee from 'event-emitter';
 import T from 'i18n-react';
 import {preventPropagation} from 'services/helpers';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
+import If from 'components/If';
 
 const PREFIX = 'features.DataPrep.Directives.ChangeDataType';
 
@@ -42,6 +44,12 @@ const DATATYPE_OPTIONS = [
   'bytes'
 ];
 
+const DISABLED_TYPE = [
+  'LocalDate',
+  'LocalTime',
+  'ZonedDateTime'
+];
+
 export default class ChangeDataTypeDirective extends Component {
   constructor(props) {
     super(props);
@@ -49,7 +57,8 @@ export default class ChangeDataTypeDirective extends Component {
     this.columnType = DataPrepStore.getState().dataprep.types[this.props.column];
 
     this.state = {
-      selectedChangeDataType: null
+      selectedChangeDataType: null,
+      isDisabled: DISABLED_TYPE.indexOf(this.columnType) !== -1
     };
 
     window.addEventListener('resize', this.offsetCalcDebounce);
@@ -58,7 +67,7 @@ export default class ChangeDataTypeDirective extends Component {
   }
 
   componentDidUpdate() {
-    if (this.props.isOpen && this.calculateOffset) {
+    if (this.props.isOpen && this.calculateOffset && !this.state.isDisabled) {
       this.calculateOffset();
     }
   }
@@ -98,8 +107,8 @@ export default class ChangeDataTypeDirective extends Component {
   }
 
   renderDetail() {
-    if (!this.props.isOpen || this.props.isDisabled) {
-      return;
+    if (!this.props.isOpen || this.props.isDisabled || this.state.isDisabled) {
+      return null;
     }
     return (
       <div
@@ -126,22 +135,35 @@ export default class ChangeDataTypeDirective extends Component {
   }
 
   render() {
+    const id = 'change-data-type-directive';
     return (
-      <div
-        id="change-data-type-directive"
-        className={classnames('change-data-type-directive clearfix action-item', {
-          'active': this.props.isOpen
-        })}
-      >
-        <span>
-          {T.translate(`${PREFIX}.title`)}
-        </span>
+      <div>
+        <div
+          id={id}
+          className={classnames('change-data-type-directive clearfix action-item', {
+            'active': this.props.isOpen && !this.state.isDisabled,
+            'disabled': this.state.isDisabled
+          })}
+        >
+          <span>
+            {T.translate(`${PREFIX}.title`)}
+          </span>
 
-        <span className="float-xs-right">
-          <span className="fa fa-caret-right" />
-        </span>
+          <span className="float-xs-right">
+            <span className="fa fa-caret-right" />
+          </span>
 
-        {this.renderDetail()}
+          {this.renderDetail()}
+        </div>
+
+        <If condition={this.state.isDisabled}>
+          <UncontrolledTooltip
+            target={id}
+            delay={{ show: 250, hide: 0 }}
+          >
+            {T.translate(`${PREFIX}.disabledTooltip`)}
+          </UncontrolledTooltip>
+        </If>
       </div>
     );
   }
