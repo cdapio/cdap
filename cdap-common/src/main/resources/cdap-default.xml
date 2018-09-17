@@ -658,7 +658,7 @@
 
   <property>
     <name>ui.theme.file</name>
-    <value>/opt/cdap/ui/server/config/themes/default.json</value>
+    <value>ui/server/config/themes/default.json</value>
     <description>
       File containing the theme to be used in UI
     </description>
