@@ -131,13 +131,14 @@ interface IThemeObj {
 }
 
 function getTheme(): IThemeObj {
-  if (isNilOrEmpty(window.CDAP_UI_THEME)) {
-    return {};
-  }
-
   let theme: IThemeObj = {
     productName: 'CDAP',
   };
+
+  if (isNilOrEmpty(window.CDAP_UI_THEME)) {
+    return theme;
+  }
+
   const themeJSON = window.CDAP_UI_THEME;
   const specVersion = themeJSON['spec-version'];
 
