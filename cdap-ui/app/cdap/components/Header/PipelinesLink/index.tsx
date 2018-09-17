@@ -18,6 +18,7 @@ import { Theme } from 'services/ThemeHelper';
 import {withContext} from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 import T from 'i18n-react';
+require('./PipelinesLink.scss');
 
 declare global {
   /* tslint:disable:interface-name */
