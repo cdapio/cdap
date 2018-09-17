@@ -15,7 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, myAppsApi, myAlertOnValium, myLoadingService, mySparkApi, $interval, moment, MyPipelineStatusMapper, myPipelineCommonApi) {
+  .controller('HydratorPlusPlusListController',
+  function(
+    $scope, myPipelineApi, $stateParams, GLOBALS,
+    mySettings, $state, myHelpers, myWorkFlowApi,
+    myWorkersApi, myAppsApi, myAlertOnValium, myLoadingService,
+    mySparkApi, $interval, moment, MyPipelineStatusMapper,
+    myPipelineCommonApi, PROGRAM_STATUSES) {
     var vm = this;
     vm.$interval = $interval;
     vm.moment = moment;
@@ -27,13 +33,10 @@ angular.module(PKG.name + '.feature.hydrator')
       running: 0,
       draft: 0
     };
+    vm.PAGE_SIZE = 10;
     vm.GLOBALS = GLOBALS;
-    var realtime = [],
-        batch = [];
-    var statusMap = {};
-    getPipelines();
 
-    const checkForValidPage = (pageNumber) => {
+    vm.checkForValidPage = (pageNumber) => {
       return (
         !Number.isNaN(pageNumber) &&
         Array.isArray(vm.pipelineList) &&
@@ -41,9 +44,9 @@ angular.module(PKG.name + '.feature.hydrator')
       );
     };
 
-    const setCurrentPage = () => {
+    vm.setCurrentPage = () => {
       let pageNumber = parseInt($stateParams.page, 10);
-      if (pageNumber&& checkForValidPage(pageNumber)) {
+      if (pageNumber && vm.checkForValidPage(pageNumber)) {
         vm.currentPage = pageNumber;
       } else {
         vm.currentPage = 1;
@@ -57,12 +60,10 @@ angular.module(PKG.name + '.feature.hydrator')
     eventEmitter.on(window.CaskCommon.globalEvents.PUBLISHPIPELINE, vm.reloadState);
 
     vm.goToPage = function () {
-      if (!vm.currentPage) {
-        return;
-      }
       $stateParams.page = vm.currentPage;
       vm.pipelineListLoaded = true;
       $state.go('hydrator.list', $stateParams, {notify: false});
+      vm.fetchRunsCount();
     };
 
     vm.deleteDraft = function(draftId) {
@@ -138,89 +139,139 @@ angular.module(PKG.name + '.feature.hydrator')
       eventEmitter.off(window.CaskCommon.globalEvents.PUBLISHPIPELINE, vm.reloadState);
     });
 
-    function fetchRunsInfo(app) {
-      var params = {
-        namespace: $state.params.namespace,
-        appId: app.name,
-        scope: $scope
-      };
-
-      var api;
-
-      if (app.artifact.name === GLOBALS.etlBatch || app.artifact.name === GLOBALS.etlDataPipeline) {
-        api = myWorkFlowApi;
-
-        var workflowId = app.artifact.name === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'ETLWorkflow';
-        params.workflowId = workflowId;
-
-        batch.push({
-          appId: app.name,
-          programType: 'Workflow',
-          programId: workflowId
-        });
-      } else if (app.artifact.name === GLOBALS.etlDataStreams) {
-        api = mySparkApi;
-        params.sparkId = 'DataStreamsSparkStreaming';
-        realtime.push({
-          appId: app.name,
-          programType: 'Spark',
-          programId: 'DataStreamsSparkStreaming'
-        });
-
-      } else {
-        api = myWorkersApi;
-        params.workerId = 'ETLWorker';
-
-        realtime.push({
-          appId: app.name,
-          programType: 'Worker',
-          programId: 'ETLWorker'
-        });
+    vm.getProgramId = (app) => {
+      if (app.artifact.name === GLOBALS.etlDataPipeline) {
+        return 'DataPipelineWorkflow';
       }
-
-      api.runs(params)
+      if (app.artifact.name === GLOBALS.etlDataStreams) {
+        return 'DataStreamsSparkStreaming';
+      }
+      return null;
+    };
+    vm.getProgramType = (artifactType) => {
+      if (artifactType === GLOBALS.etlDataPipeline) {
+        return 'Workflow';
+      }
+      if (artifactType === GLOBALS.etlDataStreams) {
+        return 'Spark';
+      }
+      return null;
+    };
+    vm.fetchPipelinesRunsInfo = () => {
+      let requestBody = [];
+      requestBody = vm.pipelineList.map(app => {
+        return {
+          appId: app.name,
+          programId: vm.getProgramId(app),
+          programType: vm.getProgramType(app.artifact.name),
+        };
+      });
+      myPipelineApi.getLatestRuns({
+        namespace: $stateParams.namespace
+      }, requestBody)
         .$promise
-        .then(function (runs) {
-          if (runs.length) {
-            app._stats.numRuns = runs.length;
-            app._stats.lastStartTime = runs.length > 0 ? runs[0].starting : 'N/A';
-            var currentRun = runs[0];
-            setDuration(app, currentRun);
-            app._latest = currentRun;
-            statusMap[app.name] = vm.MyPipelineStatusMapper.lookupDisplayStatus(app._latest.status);
-            if (currentRun.status === 'RUNNING') {
-              vm.statusCount.running += 1;
-            }
-          } else {
-            app._stats.numRuns = 0;
-            statusMap[app.name] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
-          }
-          updateStatusAppObject();
+        .then(res => {
+          res.forEach(resObj => {
+            vm.pipelineList = vm.pipelineList.map(app => {
+              // We need the default to be 0 for sorting
+              let latestRun = resObj.runs[0] || {
+                starting: 0,
+                duration: 0
+              };
+              if (app.name === resObj.appId) {
+                if (latestRun.starting !== 0) {
+                  latestRun.duration = latestRun.end ?
+                    latestRun.end - latestRun.starting
+                  :
+                    (new Date().getTime() / 1000) - latestRun.starting;
+                }
+                app = Object.assign({}, app, {
+                  latestRun: latestRun
+                });
+              }
+              return app;
+            });
+          });
+          // cask-sortable is used for updating the query params
+          // This internal sort is done so that we could request for run counts for pipelines
+          // that are currently visible.
+          const sortOrder = $stateParams.reverse === 'reverse' ? 'desc' : 'asc';
+          const sortByColumn = $stateParams.sortBy ? $stateParams.sortBy.split('.') : ['latestRun', 'starting'];
+          vm.pipelineList = _.sortByOrder(
+            vm.pipelineList,
+            (pipeline) =>  myHelpers.objectQuery.apply(null, [pipeline].concat(sortByColumn)),
+            [sortOrder]
+          );
+          vm.fetchRunsCount();
+          vm.fetchWorkflowNextRunTimes();
+          vm.updateStatusAppObject();
         });
-    }
+    };
 
-    function getPipelines() {
+    vm.getPipelines = () => {
       myPipelineApi.list({
         namespace: $stateParams.namespace
       })
         .$promise
         .then(function success(res) {
           vm.pipelineList = res;
-
-          fetchDrafts().then(setCurrentPage);
-
-          angular.forEach(vm.pipelineList, function (app) {
-            app._stats = {};
-            fetchRunsInfo(app);
-          });
-          fetchWorkflowNextRunTimes();
+          vm.fetchDrafts()
+            .then(() => {
+              vm.setCurrentPage();
+              vm.fetchPipelinesRunsInfo();
+            });
         });
-    }
+    };
 
+    vm.getCurrentVisiblePipelines = () => {
+      return vm.pipelineList.slice(
+        (vm.currentPage - 1) * vm.PAGE_SIZE,
+        ((vm.currentPage - 1) * vm.PAGE_SIZE) + 10
+      );
+    };
+
+    vm.fetchRunsCount = () => {
+      let runsRequestBody = vm
+        .getCurrentVisiblePipelines()
+        .map(pipeline => {
+          return {
+            appId: pipeline.name,
+            programType: vm.getProgramType(pipeline.artifact.name),
+            programId: vm.getProgramId(pipeline)
+          };
+        });
+      myPipelineApi.getRunsCount({
+        namespace: $stateParams.namespace
+      }, runsRequestBody)
+        .$promise
+        .then((runsCountList) => {
+          vm.pipelineList = vm.pipelineList.map(pipeline => {
+            let runsCountObj = _.find(runsCountList, { appId: pipeline.name});
+            let numRuns = 0;
+            if (typeof runsCountObj !== 'undefined') {
+              numRuns = runsCountObj.runCount;
+            }
+            let newPipelineObj = pipeline;
+            newPipelineObj.numRuns = numRuns;
+            return newPipelineObj;
+          });
+        });
+    };
     /**
      * Gets the next workflow run times. This must be called after batch objects have been created.
      */
-    function fetchWorkflowNextRunTimes() {
+    vm.fetchWorkflowNextRunTimes = () => {
+      let batch = [];
+      batch = vm.getCurrentVisiblePipelines()
+        .filter(pipeline => pipeline.artifact.name !== GLOBALS.etlDataStreams)
+        .map(pipeline => {
+          var workflowId = 'DataPipelineWorkflow';
+          return {
+            appId: pipeline.name,
+            programType: 'Workflow',
+            programId: workflowId
+          };
+        });
       batch.forEach(function (batchParams) {
         myPipelineCommonApi.nextRunTime({
           namespace: $stateParams.namespace,
@@ -232,31 +283,29 @@ angular.module(PKG.name + '.feature.hydrator')
           .$promise
           .then(function (res) {
           if (res && res.length) {
-            vm.pipelineList.forEach(function (app) {
+            vm.getcurrentVisiblePipelines().forEach(function (app) {
               if (app.name === batchParams.appId) {
-                app._stats.nextRun = res[0].time;
+                app.nextRun = res[0].time;
               }
             });
           }
         });
       });
-    }
+    };
 
-    function setDuration(app, run) {
-      if (run.starting) {
-        let lastRunDuration = run.end ? (run.end - run.starting) : (new Date().getTime() / 1000) - run.starting;
-        app.duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(lastRunDuration);
-      }
-    }
+    vm.latestRunExists = (app) => app.latestRun.starting !== 0;
 
-    function updateStatusAppObject() {
+    vm.updateStatusAppObject =() => {
       angular.forEach(vm.pipelineList, function (app) {
-        app._status = app._status || statusMap[app.name];
-        app.displayStatus = app._status;
+        if (!vm.latestRunExists(app)) {
+          app.displayStatus = vm.MyPipelineStatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.DEPLOYED);
+        } else {
+          app.displayStatus = vm.MyPipelineStatusMapper.lookupDisplayStatus(app.latestRun.status);
+        }
       });
-    }
+    };
 
-    function fetchDrafts() {
+    vm.fetchDrafts = () => {
       return mySettings.get('hydratorDrafts', true)
         .then(function(res) {
           let draftsList = myHelpers.objectQuery(res, $stateParams.namespace);
@@ -272,15 +321,15 @@ angular.module(PKG.name + '.feature.hydrator')
                 id: (value.__ui__  && value.__ui__.draftId) ? value.__ui__.draftId : key,
                 artifact: value.artifact,
                 description: myHelpers.objectQuery(value, 'description'),
-                _status: 'Draft',
                 displayStatus: vm.MyPipelineStatusMapper.lookupDisplayStatus('DRAFT'),
-                _stats: {
-                  numRuns: 'N/A',
-                  lastStartTime: 'N/A'
-                }
+                numRuns: 'N/A',
+                lastStartTime: 'N/A'
               });
             });
           }
         });
-    }
+    };
+
+
+    vm.getPipelines();
   });

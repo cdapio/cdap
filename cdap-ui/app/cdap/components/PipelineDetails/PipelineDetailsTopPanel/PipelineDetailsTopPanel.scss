@@ -94,6 +94,7 @@ $btn-border-color: transparent;
         background-color: $grey-08;
         color: $grey-01;
         border: 1px solid $grey-05;
+        border-top: 0;
 
         .pipeline-action-btn {
           &:not(.pipeline-stop-btn):not(.pipeline-run-btn) {
