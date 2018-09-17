@@ -15,24 +15,33 @@
 */
 
 @import '../StickyTableHeader.scss';
+@import '~styles/variables.scss';
 
 $legend_font_color: black;
 $container_border_color: lightgray;
 
 .runs-history-graph {
-  .rv-discrete-color-legend.horizontal {
-    .rv-discrete-color-legend-item {
-      display: inline-block;
-      margin: 0 20px;
-      .rv-discrete-color-legend-item__color {
+  .run-history-legend-container {
+    &.rv-discrete-color-legend.horizontal {
+      .rv-discrete-color-legend-item {
         display: inline-block;
-        width: 10px;
-        height: 10px;
-        margin: 0 5px;
-        border-radius: 50%;
-      }
-      .rv-discrete-color-legend-item__title {
-        color: $legend_font_color;
+        margin: 0 10px;
+        .rv-discrete-color-legend-item__color {
+          display: inline-block;
+          width: 10px;
+          height: 10px;
+          margin: 0 5px;
+          border-radius: 50%;
+        }
+        .rv-discrete-color-legend-item__title {
+          color: $legend_font_color;
+        }
+        &:nth-child(3) {
+          .rv-discrete-color-legend-item__color {
+            background: transparent;
+            border: 1px solid $blue-02;
+          }
+        }
       }
     }
   }
@@ -47,7 +56,7 @@ $container_border_color: lightgray;
   }
   .x-axis-title {
     position: absolute;
-    bottom: -20px;
+    bottom: -5px;
     right: 0;
   }
   .y-axis-title {
