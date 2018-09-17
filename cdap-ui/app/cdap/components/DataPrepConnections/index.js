@@ -314,10 +314,10 @@ export default class DataPrepConnections extends Component {
       // need to group by connection type
       let state = {};
 
-      if (res.defaultConnection) {
+      if (res.default) {
         // Once we get a default connection from backend
         // set appropriate browser as active
-        state.defaultConnection = res.defaultConnection;
+        state.defaultConnection = res.default;
       }
 
       let databaseList = [],
@@ -350,6 +350,7 @@ export default class DataPrepConnections extends Component {
 
       state = {
         ...state,
+        connectionsList: res.values,
         databaseList,
         kafkaList,
         s3List,
@@ -907,6 +908,7 @@ export default class DataPrepConnections extends Component {
           return (
             <NoDefaultConnection
               defaultConnection={this.state.defaultConnection}
+              connectionsList={this.state.connectionsList}
               showAddConnectionPopover={this.toggleAddConnectionPopover.bind(this, true)}
               toggleSidepanel={this.toggleSidePanel}
             />
@@ -991,6 +993,7 @@ export default class DataPrepConnections extends Component {
         return (
           <NoDefaultConnection
             defaultConnection={this.state.defaultConnection}
+            connectionsList={this.state.connectionsList}
             showAddConnectionPopover={this.toggleAddConnectionPopover.bind(this, true)}
             toggleSidepanel={this.toggleSidePanel}
           />
