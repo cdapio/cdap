@@ -770,7 +770,7 @@ features:
           ISCOUNTRYTLD: Is country TLD
           ISCREDITCARD: Is credit card
           ISDATE: Is date
-          ISDATEFORMAT: Is date dormat
+          ISDATEFORMAT: Is date format
           ISDINERCARD: Is Diner card
           ISDOMAINNAME: Is domain name
           ISDOMAINTLD: Is domain TLD
@@ -790,9 +790,9 @@ features:
           ISNOTCOUNTRYTLD: Is not country TLD
           ISNOTCREDITCARD: Is not credit card
           ISNOTDATE: Is not date
-          ISNOTDATEFORMAT: Is not date Format
+          ISNOTDATEFORMAT: Is not date format
           ISNOTDINERCARD: Is not Diner card
-          ISNOTDOMAINNAME: Is not domain Name
+          ISNOTDOMAINNAME: Is not domain name
           ISNOTDOMAINTLD: Is not domain TLD
           ISNOTDOUBLE: Is not double
           ISNOTEMAIL: Is not email
