@@ -23,6 +23,9 @@ import Lineage from 'components/FieldLevelLineage/Lineage';
 import {objectQuery} from 'services/helpers';
 import EntityTopPanel from 'components/EntityTopPanel';
 import TopPanel from 'components/FieldLevelLineage/TopPanel';
+import T from 'i18n-react';
+
+const PREFIX = 'commons';
 
 export default class FieldLevelLineage extends Component {
   static propTypes = {
@@ -53,9 +56,11 @@ export default class FieldLevelLineage extends Component {
       <Provider store={Store}>
         <div className="field-level-lineage">
           <EntityTopPanel
-            breadCrumbAnchorLink='/'
-            breadCrumbAnchorLabel="Back"
-            title="Field Level Lineage"
+            breadCrumbAnchorLabel={T.translate(`${PREFIX}.back`)}
+            title={this.props.match.params.datasetId}
+            entityType={T.translate(`${PREFIX}.entity.dataset.singular`)}
+            entityIcon="icon-datasets"
+            historyBack={true}
           />
 
           <TopPanel />
