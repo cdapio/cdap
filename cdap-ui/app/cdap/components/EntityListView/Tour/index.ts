@@ -31,6 +31,7 @@ const steps: ITourStep[] = [
       '<img class="img-fluid" src="/cdap_assets/img/nux/Control_Center_NUX.png" />',
     ],
     attachTo: '#navbar-control-center bottom',
+    shouldFocus: true,
   },
   {
     id: 'preparation',
@@ -40,6 +41,7 @@ const steps: ITourStep[] = [
       '<img class="img-fluid" src="/cdap_assets/img/nux/Dataprep_NUX.png" />',
     ],
     attachTo: '#navbar-preparation bottom',
+    shouldFocus: true,
   },
   {
     id: 'pipelines',
@@ -49,6 +51,7 @@ const steps: ITourStep[] = [
       '<img class="img-fluid" src="/cdap_assets/img/nux/Pipeline_NUX.png" />',
     ],
     attachTo: '#navbar-pipelines bottom',
+    shouldFocus: true,
   },
   {
     id: 'metadata',
@@ -58,6 +61,7 @@ const steps: ITourStep[] = [
       '<img class="img-fluid" src="/cdap_assets/img/nux/Metadata_NUX.png" />',
     ],
     attachTo: '#navbar-metadata bottom',
+    shouldFocus: true,
   },
   {
     id: 'hub',
@@ -69,6 +73,7 @@ const steps: ITourStep[] = [
       '<img class="img-fluid" src="/cdap_assets/img/nux/Hub_NUX.png" />',
     ],
     attachTo: '#navbar-hub bottom',
+    shouldFocus: true,
   },
 ];
 

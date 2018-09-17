@@ -42,6 +42,7 @@ import T from 'i18n-react';
 import queryString from 'query-string';
 import Helmet from 'react-helmet';
 import {Theme} from 'services/ThemeHelper';
+import Welcome from 'components/EntityListView/Welcome';
 
 import {
   DEFAULT_SEARCH_FILTERS, DEFAULT_SEARCH_SORT,
@@ -386,6 +387,7 @@ export default class EntityListView extends Component {
             />
           </div>
         </div>
+        <Welcome />
       </div>
     );
   }

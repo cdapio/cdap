@@ -19,7 +19,7 @@ import MyUserStoreApi from 'api/userstore';
 import If from 'components/If';
 import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import IconSVG from 'components/IconSVG';
-import Tour from 'components/Header/Tour';
+import Tour from 'components/EntityListView/Tour';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import {Theme} from 'services/ThemeHelper';
@@ -104,7 +104,6 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
         <Modal
           isOpen={true}
           size="md"
-          backdrop={false}
           zIndex="1061"
           className="welcome-modal"
         >
