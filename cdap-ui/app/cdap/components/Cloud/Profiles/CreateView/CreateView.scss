@@ -46,8 +46,12 @@
       }
       .fields-container {
         margin: 30px 0;
-        .profile-label-container {
-          width: 100%;
+        .property-description-container {
+          display: flex;
+          justify-content: flex-end;
+          .profile-label-container {
+            display: inline-block;
+          }
         }
       }
     }
