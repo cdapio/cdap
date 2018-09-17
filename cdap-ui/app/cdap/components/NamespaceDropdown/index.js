@@ -36,6 +36,7 @@ import EntityType from 'services/metadata-parser/EntityType';
 import {preventPropagation} from 'services/helpers';
 import { Theme } from 'services/ThemeHelper';
 import If from 'components/If';
+import classnames from 'classnames';
 require('./NamespaceDropdown.scss');
 
 export default class NamespaceDropdown extends Component {
@@ -239,7 +240,9 @@ export default class NamespaceDropdown extends Component {
       </div>
     );
     return (
-      <div className="namespace-dropdown">
+      <div className={classnames("namespace-dropdown", {
+        'opened': this.state.openDropdown
+      })}>
         <Dropdown
           isOpen={this.state.openDropdown}
           toggle={this.toggle}
