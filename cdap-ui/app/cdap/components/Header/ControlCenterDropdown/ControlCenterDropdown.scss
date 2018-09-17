@@ -14,9 +14,30 @@
  * the License.
  */
 
-.control-center.header-dropdown {
-  .dropdown-menu {
-    // offset to align the dropdown to the begining of the Control Center button
-    left: -16px;
+@import '~styles/variables.scss';
+
+#navbar-control-center {
+  &.active {
+    .control-center.header-dropdown {
+      background: $cdap-white-light;
+    }
   }
+  .control-center.header-dropdown {
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin: 0 5px;
+    &:hover {
+      &:not(.show) {
+        background: $cdap-white-light;
+      }
+    }
+    .dropdown-menu {
+      // offset to align the dropdown to the begining of the Control Center button
+      left: -16px;
+    }
+    &.show {
+      background: $cdap-white-light;
+    }
+  }
+
 }
