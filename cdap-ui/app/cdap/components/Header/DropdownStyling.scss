@@ -14,7 +14,7 @@
  * the License.
 */
 
-@import '../../styles/variables.scss';
+@import '~styles/variables.scss';
 
 $dropdown_divider_bg_color: $grey-06;
 
@@ -115,11 +115,12 @@ $dropdown_divider_bg_color: $grey-06;
       }
     }
     &.show {
+      background: $cdap-white-light;
       .dropdown-menu {
         display: flex;
         flex-direction: column;
-        top: 33px;
-        left: -10px;
+        top: 38px;
+        left: -1px;
       }
     }
   }

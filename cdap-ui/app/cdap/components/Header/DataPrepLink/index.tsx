@@ -19,6 +19,7 @@ import { Theme } from 'services/ThemeHelper';
 import {withContext} from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 import T from 'i18n-react';
+require('./DataPrepLink.scss');
 
 interface IDataPrepLinkProps {
   context: {

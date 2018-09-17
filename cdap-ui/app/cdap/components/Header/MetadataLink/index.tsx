@@ -18,6 +18,7 @@ import { Theme } from 'services/ThemeHelper';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import {withContext} from 'components/Header/NamespaceLinkContext';
+require('./MetadataLink.scss');
 
 declare global {
   /* tslint:disable:interface-name */

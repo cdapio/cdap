@@ -12,32 +12,15 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 @import '~styles/variables.scss';
 
-#navbar-control-center {
+#navbar-metadata {
+  &:hover,
+  &:active,
   &.active {
-    .control-center.header-dropdown {
-      background: $cdap-white-light;
-    }
+    color: white;
+    background: $cdap-white-light;
   }
-  .control-center.header-dropdown {
-    padding: 5px 10px;
-    border-radius: 4px;
-    margin: 0 5px;
-    &:hover {
-      &:not(.show) {
-        background: $cdap-white-light;
-      }
-    }
-    .dropdown-menu {
-      // offset to align the dropdown to the begining of the Control Center button
-      left: -16px;
-    }
-    &.show {
-      background: $cdap-white-light;
-    }
-  }
-
 }

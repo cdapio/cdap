@@ -14,10 +14,10 @@
 * the License.
 */
 
-@import "../../styles/variables.scss";
+@import "~styles/variables.scss";
 $namespace-action-bg: #d8d8d8;
 $namespace-dropdown-color: $grey-08;
-$current-namespace-hover-bg: #262933;
+$current-namespace-hover-bg: $cdap-white-light;
 $namespace-hover-bg: #9b9b9b;
 $current-namespace-metadata-hover-bg: $grey-08;
 $dark-font: #666666;
@@ -35,13 +35,11 @@ $star-color: #373a3c;
   line-height: 50px;
   cursor: initial;
 
-  .dropdown {
-    &.open {
-      .current-namespace {
-        background-color: $current-namespace-hover-bg;
-      }
-    }
+  &.opened,
+  &:hover {
+    background: $cdap-white-light;
   }
+
   div[disabled] { cursor: not-allowed; }
 
   .dropdown-toggle { height: 50px; }
@@ -69,9 +67,6 @@ $star-color: #373a3c;
     padding-left: 10px;
     color: inherit;
 
-    &:hover {
-      background-color: $current-namespace-hover-bg;
-    }
     &:hover,
     &:active,
     &:focus {

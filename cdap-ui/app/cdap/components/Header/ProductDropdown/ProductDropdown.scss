@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@import '../../../styles/variables.scss';
+@import '~styles/variables.scss';
 
 $dropdown_divider_bg_color: $grey-06;
 
@@ -21,6 +21,7 @@ $dropdown_divider_bg_color: $grey-06;
   @media (max-width: 580px) {
     &.dropdown {
       &.show {
+        background: $cdap-white-light;
         .dropdown-menu {
           &.dropdown-menu-right {
             left: 0;
@@ -56,9 +57,10 @@ $dropdown_divider_bg_color: $grey-06;
 
       &:focus {
         outline: none;
+        background: transparent;
       }
       &:hover {
-        background: rgba(255, 255, 255, 0.3);
+        background: transparent;
         outline: none;
         color: inherit;
         .cdap-secure-mode-icon,
@@ -166,6 +168,11 @@ $dropdown_divider_bg_color: $grey-06;
         }
       }
     }
+    &:not(.show) {
+      &:hover {
+        background: $cdap-white-light;
+      }
+    }
     &.show {
       // This is because we patch the bootstrap 4 dropdowns to have a display block
       // When we upgrade bootstrap to 4 we should be able to remove this.
@@ -174,7 +181,7 @@ $dropdown_divider_bg_color: $grey-06;
         flex-direction: column;
       }
       .dropdown-toggle {
-        background: rgba(255, 255, 255, 0.3);
+        background: $cdap-white-light;
       }
     }
   }

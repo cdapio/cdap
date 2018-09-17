@@ -20,6 +20,8 @@ import {withContext} from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 import T from 'i18n-react';
 
+require('./AnalyticsLink.scss');
+
 interface IAnalyticsLinkProps {
   context: {
     namespace: string;
@@ -39,9 +41,12 @@ class AnalyticsLink extends React.PureComponent<IAnalyticsLinkProps> {
     const { namespace, isNativeLink } = this.props.context;
     const analyticsUrl = `/ns/${namespace}/experiments`;
     return (
-      <li className={classnames({
-        active: this.isMMDSActive(),
-      })}>
+      <li
+        id="navbar-analytics"
+        className={classnames({
+          active: this.isMMDSActive(),
+        })}
+      >
         <NavLinkWrapper
           isNativeLink={isNativeLink}
           to={isNativeLink ? `/cdap${analyticsUrl}` : analyticsUrl}
