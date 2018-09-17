@@ -162,12 +162,6 @@ export default class AppDetailedView extends Component {
     }
     this.setState({
       successMessage
-    }, () => {
-      setTimeout(() => {
-        this.setState({
-          successMessage: null
-        });
-      }, 3000);
     });
   }
   render() {
@@ -208,13 +202,15 @@ export default class AppDetailedView extends Component {
           />
           <PlusButton mode={PlusButton.MODE.resourcecenter} />
         </div>
-        <OverviewHeader successMessage={this.state.successMessage} />
-        <OverviewMetaSection
-          entity={this.state.entityDetail}
-          onFastActionSuccess={this.goToHome.bind(this)}
-          onFastActionUpdate={this.goToHome.bind(this)}
-          showFullCreationTime={true}
-        />
+        <div>
+          <OverviewHeader successMessage={this.state.successMessage} />
+          <OverviewMetaSection
+            entity={this.state.entityDetail}
+            onFastActionSuccess={this.goToHome.bind(this)}
+            onFastActionUpdate={this.goToHome.bind(this)}
+            showFullCreationTime={true}
+          />
+        </div>
         <AppDetailedViewTab
           params={this.props.match.params}
           pathname={this.props.location.pathname}

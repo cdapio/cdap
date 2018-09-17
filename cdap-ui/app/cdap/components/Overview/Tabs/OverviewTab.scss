@@ -17,6 +17,9 @@
 @import '../../../styles/variables.scss';
 
 .overview-tab {
+  display: grid;
+  // tab header, tab content
+  grid-template-rows: auto 1fr;
   .nav-tabs {
     background: white;
     border: 0;
