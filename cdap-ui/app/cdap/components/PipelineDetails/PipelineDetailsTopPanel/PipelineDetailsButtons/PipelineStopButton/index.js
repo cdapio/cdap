@@ -109,6 +109,7 @@ export default class PipelineStopButton extends Component {
           runs={this.state.activeRuns}
           currentRunId={this.props.currentRun.runid}
           stopRun={this.stopRun}
+          pipelineId={this.props.pipelineName}
         />
       );
     }

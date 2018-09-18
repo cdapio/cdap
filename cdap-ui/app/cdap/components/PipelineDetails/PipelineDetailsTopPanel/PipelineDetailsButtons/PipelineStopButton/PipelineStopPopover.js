@@ -23,6 +23,7 @@ import moment from 'moment';
 import {Observable} from 'rxjs/Observable';
 import {setStopError} from 'components/PipelineDetails/store/ActionCreator';
 import classnames from 'classnames';
+import {getCurrentNamespace} from 'services/NamespaceStore';
 import T from 'i18n-react';
 require('./PipelineStopPopover.scss');
 
@@ -32,7 +33,8 @@ export default class PipelineStopPopover extends Component {
   static propTypes = {
     runs: PropTypes.array,
     currentRunId: PropTypes.string,
-    stopRun: PropTypes.func
+    stopRun: PropTypes.func,
+    pipelineId: PropTypes.string,
   };
 
   state = {
@@ -109,6 +111,18 @@ export default class PipelineStopPopover extends Component {
       });
   }
 
+  getRunIdUrl = (runId) => {
+    let runIdUrl = window.getHydratorUrl({
+      stateName: 'hydrator.detail',
+      stateParams: {
+        namespace: getCurrentNamespace(),
+        pipelineId: this.props.pipelineId
+      }
+    });
+    runIdUrl += `?runid=${runId}`;
+    return runIdUrl;
+  };
+
   render() {
     return (
       <Popover
@@ -165,20 +179,28 @@ export default class PipelineStopPopover extends Component {
                       className={classnames({"current-run-row": run.runid === this.props.currentRunId})}
                     >
                       <td>
-                        {
-                          run.runid === this.props.currentRunId ?
-                            <IconSVG name="icon-check" />
-                          :
-                            null
-                        }
+                        <a href={this.getRunIdUrl(run.runid)}>
+                          {
+                            run.runid === this.props.currentRunId ?
+                              <IconSVG name="icon-check" />
+                            :
+                              null
+                          }
+                        </a>
                       </td>
-                      <td>{runStartTime}</td>
                       <td>
-                        <Duration
-                          targetTime={run.starting}
-                          isMillisecond={false}
-                          showFullDuration={true}
-                        />
+                        <a href={this.getRunIdUrl(run.runid)}>
+                          {runStartTime}
+                        </a>
+                      </td>
+                      <td>
+                        <a href={this.getRunIdUrl(run.runid)}>
+                          <Duration
+                            targetTime={run.starting}
+                            isMillisecond={false}
+                            showFullDuration={true}
+                          />
+                        </a>
                       </td>
                       <td>
                         {
@@ -189,9 +211,12 @@ export default class PipelineStopPopover extends Component {
                             />
                           :
                             (
-                              <a onClick={this.stopSingleRun.bind(this, run.runid)}>
+                              <span
+                                className="stop-run"
+                                onClick={this.stopSingleRun.bind(this, run.runid)}
+                              >
                                 {T.translate(`${PREFIX}.stopRun`)}
-                              </a>
+                              </span>
                             )
                         }
                       </td>
