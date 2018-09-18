@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,14 +34,20 @@ public abstract class AbstractProgramDatasetConfigurable<T extends DatasetConfig
 
   /**
    * @see DatasetConfigurer#addStream(String)
+   *
+   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
    */
+  @Deprecated
   protected final void addStream(String stream) {
     getConfigurer().addStream(stream);
   }
 
   /**
    * @see DatasetConfigurer#addStream(Stream)
+   *
+   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
    */
+  @Deprecated
   protected final void addStream(Stream stream) {
     getConfigurer().addStream(stream);
   }
