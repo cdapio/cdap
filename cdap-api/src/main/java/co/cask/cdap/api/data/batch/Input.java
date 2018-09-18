@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -140,6 +140,8 @@ public abstract class Input {
    * Returns an Input defined with the given stream name with all time range.
    *
    * @param streamName Name of the stream.
+   *
+   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
    */
   @Deprecated
   public static Input ofStream(String streamName) {
@@ -152,6 +154,8 @@ public abstract class Input {
    * @param streamName Name of the stream.
    * @param startTime Start timestamp in milliseconds.
    * @param endTime End timestamp in milliseconds.
+   *
+   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
    */
   @Deprecated
   public static Input ofStream(String streamName, long startTime, long endTime) {
@@ -165,6 +169,8 @@ public abstract class Input {
    * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    * @param decoderType The {@link StreamEventDecoder} class for decoding {@link StreamEvent}
+   *
+   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
    */
   @Deprecated
   public static Input ofStream(String streamName, long startTime,
@@ -179,6 +185,8 @@ public abstract class Input {
    * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    * @param bodyFormatSpec The {@link FormatSpecification} class for decoding {@link StreamEvent}
+   *
+   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
    */
   @Deprecated
   public static Input ofStream(String streamName, long startTime,
