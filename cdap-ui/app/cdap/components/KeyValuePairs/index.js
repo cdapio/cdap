@@ -112,12 +112,6 @@ export default class KeyValuePairs extends Component {
     });
   }
   shouldComponentUpdate(nextProps) {
-    if (this.state.pairs.length !== nextProps.keyValues.pairs.length) {
-      KeyValueStore.dispatch({
-        type: KeyValueStoreActions.onUpdate,
-        payload: {pairs: nextProps.keyValues.pairs}
-      });
-    }
     return this.state.pairs.length !== nextProps.keyValues.pairs.length;
   }
 
