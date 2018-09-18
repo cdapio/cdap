@@ -49,7 +49,7 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Map<String, String> getSystemPropertiesToAdd() {
+  public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     properties.put(ENTITY_NAME_KEY, programId.getEntityName());
     properties.put(VERSION_KEY, programId.getVersion());
@@ -64,7 +64,7 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Set<String> getSystemTagsToAdd() {
+  public Set<String> getSystemTagsToAdd() {
     return ImmutableSet.<String>builder()
       .add(programId.getType().getPrettyName())
       .add(getMode())
