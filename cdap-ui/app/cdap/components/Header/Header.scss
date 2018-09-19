@@ -14,9 +14,9 @@
  * the License.
 */
 
-@import '../../styles/variables.scss';
+@import '~styles/variables.scss';
 @import './DropdownStyling.scss';
-@import "../../styles/bootstrap_4_patch.scss";
+@import "~styles/bootstrap_4_patch.scss";
 
 .global-navbar {
   height: 50px;
@@ -89,7 +89,7 @@
           border: 1px solid $grey-04;
           border-radius: 4px;
           &:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: $cdap-white-light;
             border-radius: 4px;
           }
         }
@@ -105,17 +105,6 @@
           .dropdown {
             .dropdown-menu {
               padding: 0;
-            }
-            .current-namespace {
-              background: transparent;
-              &:hover {
-                background: rgba(255, 255, 255, 0.3);
-              }
-            }
-            &.open {
-              .current-namespace {
-                background: rgba(255, 255, 255, 0.3);
-              }
             }
           }
         }
@@ -154,15 +143,18 @@
 
     &.control-center {
       > li {
-        padding: 5px 10px;
-        border-radius: 4px;
-        margin: 0 5px;
+        /*
+          This is because the first control center dropdown has a dropdown
+          toggle that needs to be highlighted and not the list element
 
-        &:hover,
-        &:active,
-        &.active {
-          color: white;
-          background: rgba(255, 255, 255, 0.3);
+          The reason for it being, when the dropdown is opened (.show)
+          we need to highlight the list element. This is right now done
+          in css (.dropdown.show change background).
+        */
+        &:not(:first-child) {
+          padding: 5px 10px;
+          border-radius: 4px;
+          margin: 0 5px;
         }
       }
     }
@@ -184,7 +176,7 @@
           &:focus,
           &:active {
             color: inherit;
-            background: rgba(255, 255, 255, 0.3);
+            background: $cdap-white-light;
           }
         }
       }
