@@ -31,6 +31,8 @@ import SpannerConnection from 'components/DataPrepConnections/SpannerConnection'
 import T from 'i18n-react';
 import {objectQuery} from 'services/helpers';
 import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import CardActionFeedback from 'components/CardActionFeedback';
+import If from 'components/If';
 require('./ConnectionPopover.scss');
 
 const PREFIX = 'features.DataPrepConnections.ConnectionManagement';
@@ -50,6 +52,8 @@ export default class ConnectionPopover extends Component {
 
     this.state = {
       deleteConfirmation: false,
+      extendedErrorMessage: null,
+      error: null,
       edit: false,
       duplicate: false,
       loading: false
@@ -94,11 +98,14 @@ export default class ConnectionPopover extends Component {
         this.props.onAction('delete', connectionId);
 
       }, (err) => {
-        let errMessage = objectQuery(err, 'message') || objectQuery(err, 'response', 'message');
+        let errMessage = objectQuery(err, 'message') ||
+          objectQuery(err, 'response', 'message') ||
+          objectQuery(err, 'response') || null;
 
         this.setState({
           loading: false,
-          error: errMessage || err
+          error: T.translate(`${PREFIX}.Confirmations.failedDeleteMessage`),
+          extendedErrorMessage: errMessage
         });
       });
   }
@@ -170,6 +177,13 @@ export default class ConnectionPopover extends Component {
             {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.cancel`)}
           </button>
         </ModalFooter>
+        <If condition={this.state.error}>
+          <CardActionFeedback
+            type="DANGER"
+            message={this.state.error}
+            extendedMessage={this.state.extendedErrorMessage}
+          />
+        </If>
       </Modal>
     );
   }

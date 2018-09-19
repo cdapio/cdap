@@ -165,7 +165,7 @@ export default class AccessTokenModal extends Component {
         isOpen={this.props.isOpen}
         toggle={this.toggleModal}
         size="md"
-        className="access-token-modal"
+        className="access-token-modal cdap-modal"
         backdrop='static'
       >
         <ModalHeader>
