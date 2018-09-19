@@ -95,7 +95,7 @@ export default class ProductDropdown extends Component {
   render() {
     let baseCDAPURL = window.getAbsUIUrl();
     let cdapVersion = VersionStore.getState().version;
-    let docsUrl = `http://docs.cask.co/cdap/${cdapVersion}/en/index.html`;
+    let docsUrl = `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
     let administrationURL = '/administration/configuration';
     let mode = getMode();
     let userSection;
