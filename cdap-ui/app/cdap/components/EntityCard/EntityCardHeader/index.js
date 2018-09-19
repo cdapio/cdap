@@ -40,13 +40,13 @@ export default class EntityCardHeader extends Component {
           !isEmpty(this.props.successMessage) ?
             (
               <div className="entity-card-header success-message">
-                <h4>
+                <div>
                   <span>
                     {
                       this.props.successMessage
                     }
                   </span>
-                </h4>
+                </div>
               </div>
             )
           :
@@ -55,7 +55,7 @@ export default class EntityCardHeader extends Component {
                 onClick={this.props.onClick}
                 className={classnames("entity-card-header", this.props.className)}
               >
-                <h4>
+                <div>
                   <IconSVG
                     name={this.props.entity.icon}
                     className="entity-icon"
@@ -63,7 +63,7 @@ export default class EntityCardHeader extends Component {
                   <span className="entity-type">
                     {T.translate(`commons.entity.${this.getEntityType()}.singular`)}
                   </span>
-                </h4>
+                </div>
               </div>
             )
         }
