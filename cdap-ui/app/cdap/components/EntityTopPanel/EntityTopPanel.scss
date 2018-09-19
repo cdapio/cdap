@@ -14,7 +14,9 @@
  * the License.
 */
 
-@import "../../styles/variables.scss";
+@import "~styles/variables.scss";
+$entity-type-color: $grey-03;
+$link-color: $blue-02;
 
 .entity-top-panel {
   height: 50px;
@@ -30,12 +32,34 @@
     margin-right: 5px;
   }
   .divider {
-    margin: 0 5px;
+    margin: 0 10px;
   }
   .toppanel-close-btn {
     cursor: pointer;
     a {
       color: black;
+    }
+  }
+  .link-section {
+    align-self: center;
+    span.link-container {
+      color: $link-color;
+      cursor: pointer;
+
+      &:hover { text-decoration: underline; }
+    }
+  }
+
+  .multiline-title {
+    .overview-heading {
+      margin-bottom: 0;
+      font-weight: bold;
+    }
+    .entity-type {
+      color: $entity-type-color;
+
+      .icon-svg { margin-right: 5px; }
+      .entity-type-text { vertical-align: middle; }
     }
   }
 }
