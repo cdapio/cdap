@@ -18,14 +18,13 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import ConfirmationModal from 'components/ConfirmationModal';
-import {MyCloudApi} from 'api/cloud';
 import {Redirect} from 'react-router-dom';
 import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
-import {getProvisionerLabel, extractProfileName, getNodeHours} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {getProvisionerLabel, extractProfileName, getNodeHours, deleteProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
 import ProfileStatusToggle from 'components/Cloud/Profiles/DetailView/Content/BasicInfo/ProfileStatusToggle';
 import {CLOUD, SYSTEM_NAMESPACE} from 'services/global-constants';
 import {humanReadableDate} from 'services/helpers';
@@ -94,18 +93,8 @@ export default class ProfileDetailViewBasicInfo extends Component {
       deleteLoading: true
     });
 
-    let apiObservable$;
-    if (this.props.isSystem) {
-      apiObservable$ = MyCloudApi.deleteSystemProfile({
-        profile: this.props.profile.name
-      });
-    } else {
-      apiObservable$ = MyCloudApi.delete({
-        namespace: getCurrentNamespace(),
-        profile: this.props.profile.name
-      });
-    }
-    apiObservable$
+    let namespace = this.props.isSystem ? SYSTEM_NAMESPACE : getCurrentNamespace();
+    deleteProfile(namespace, this.props.profile.name, getCurrentNamespace())
       .subscribe(
         () => {
           this.setState({
