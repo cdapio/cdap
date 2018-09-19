@@ -459,6 +459,9 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
           RemoteExecutionTwillController controller = controllerFactory.create();
           session.executeAndWait(targetPath + "/launcher.sh");
 
+          // Starts monitoring after launching the remote process.
+          controller.getRuntimeMonitor().start();
+
           return controller;
         }
       } finally {

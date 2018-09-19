@@ -361,7 +361,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
       MonitorServerAddressSupplier serverAddressSupplier = new MonitorServerAddressSupplier(programRunId, sshConfig);
 
-      // Creates a runtime monitor and starts it
+      // Creates a runtime monitor
       RuntimeMonitorClient runtimeMonitorClient = new RuntimeMonitorClient(
         HttpRequestConfig.DEFAULT, clusterKeyInfo.getClientKeyStore(),
         KeyStores.createTrustStore(clusterKeyInfo.getServerKeyStore()),
@@ -379,8 +379,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                                          remoteProcessController, programStateWriter);
       RemoteExecutionTwillController controller = new RemoteExecutionTwillController(
         RunIds.fromString(key.getRun()), runtimeMonitor);
-
-      runtimeMonitor.start();
 
       // When the program completed, remove the controller from the map.
       // Also remove the ssh config from the session manager so that it can't be used again.
@@ -455,7 +453,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
             }
 
             ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(programOptions, locationFactory);
-            createControllerFactory(programRunId, programOptions, clusterKeyInfo).create();
+            RemoteExecutionTwillController controller = createControllerFactory(programRunId, programOptions,
+                                                                                clusterKeyInfo).create();
+            controller.getRuntimeMonitor().start();
           }
 
           return scanResult.isEmpty();
