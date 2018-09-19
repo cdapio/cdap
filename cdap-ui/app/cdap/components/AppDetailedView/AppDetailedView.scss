@@ -23,6 +23,10 @@
   color: rgba(51, 51, 51, 1);
   overflow-y: auto;
   position: relative;
+  height: 100%;
+  display: grid;
+  // Top panel, metadata section and tab content
+  grid-template-rows: auto auto 1fr;
 
   @media (min-width: 1701px) {
     .entity-cards {
