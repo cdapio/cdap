@@ -1359,6 +1359,7 @@ features:
       datasetName: Dataset name
       fieldName: Field name
     noFields: "Field level lineage is not available for the dataset '{datasetId}' in the selected time interval"
+    noLineage: No field level lineage available for this field
     OperationsModal:
       lastExecution: "Last executed by '{app}' on {time}"
       summaryText: "Operations between {sources} and '{target}'"
@@ -1392,6 +1393,7 @@ features:
       last7d: Last 7 days
       lastMonth: Last month
       lastYear: Last 12 months
+    title: '{productName} | Field Level Lineage | {datasetId}'
 
   FileBrowser:
     directory: Directory
