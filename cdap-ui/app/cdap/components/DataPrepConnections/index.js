@@ -27,6 +27,7 @@ import {
   setGCSAsActiveBrowser,
   setBigQueryAsActiveBrowser,
   setSpannerAsActiveBrowser,
+  listSpannerInstances,
   reset as resetDataPrepBrowserStore
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, Switch, Redirect} from 'react-router-dom';
@@ -966,7 +967,14 @@ export default class DataPrepConnections extends Component {
     } else if (this.state.activeConnectionType === ConnectionType.BIGQUERY) {
       setActiveConnection = setBigQueryAsActiveBrowser.bind(null, {name: ConnectionType.BIGQUERY, id: this.state.activeConnectionid});
     } else if (this.state.activeConnectionType === ConnectionType.SPANNER) {
-      setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id: this.state.activeConnectionid});
+      setActiveConnection = () => {
+        const setSpannerObservable = setSpannerAsActiveBrowser({name: ConnectionType.SPANNER, id: this.state.activeConnectionid});
+        if (setSpannerObservable && typeof setSpannerObservable.subscribe === 'function') {
+          setSpannerObservable
+          .subscribe(listSpannerInstances.bind(null, this.state.activeConnectionid));
+        }
+
+      };
     }
 
     let {

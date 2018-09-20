@@ -42,7 +42,9 @@ const setSpannerAsActiveBrowser = (payload) => {
     connectionId
   };
 
-  MyDataPrepApi.getConnection(params)
+  const getConnectionObservable = MyDataPrepApi.getConnection(params);
+
+  getConnectionObservable
     .subscribe((res) => {
       let info = objectQuery(res, 'values', 0);
       DataPrepBrowserStore.dispatch({
@@ -52,10 +54,10 @@ const setSpannerAsActiveBrowser = (payload) => {
           connectionId
         }
       });
-      listSpannerInstances(connectionId);
     }, (err) => {
       setError(err);
     });
+  return getConnectionObservable;
 };
 
 const listSpannerInstances = (connectionId) => {
