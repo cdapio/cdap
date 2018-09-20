@@ -1565,6 +1565,7 @@ features:
       author: Author
       company: Company
       created: Created
+      licenseInfo: License
       version: Version
   MarketEntityModal:
     version: "Version :"
