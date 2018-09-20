@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,7 +53,6 @@ import com.google.common.base.Throwables;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -744,17 +743,10 @@ public class AppWithCustomTx extends AbstractApplication {
     @Override
     @TransactionPolicy(TransactionControl.EXPLICIT)
     protected void initialize() throws Exception {
-      // this job will fail because we don't configure the mapper etc. That is fine because destroy() still gets called
+      // this job will fail because we don't configure the inputs etc. That is fine because destroy() still gets called
       recordTransaction(getContext(), MAPREDUCE_NOTX, INITIALIZE);
       executeRecordTransaction(getContext(), MAPREDUCE_NOTX, INITIALIZE_TX, TIMEOUT_MAPREDUCE_INITIALIZE);
       executeAttemptNestedTransaction(getContext(), MAPREDUCE_NOTX, INITIALIZE_NEST);
-
-      // TODO (CDAP-7444): if destroy is called if the MR fails to start, we can remove all this to speed up the test
-      Job job = getContext().getHadoopJob();
-      job.setMapperClass(NoOpMapper.class);
-      job.setNumReduceTasks(0);
-      job.setInputFormatClass(SingleRecordInputFormat.class);
-      job.setOutputFormatClass(NoOpOutputFormat.class);
     }
 
     @Override
@@ -774,16 +766,9 @@ public class AppWithCustomTx extends AbstractApplication {
 
     @Override
     protected void initialize() throws Exception {
-      // this job will fail because we don't configure the mapper etc. That is fine because destroy() still gets called
+      // this job will fail because we don't configure the inputs etc. That is fine because destroy() still gets called
       recordTransaction(getContext(), MAPREDUCE_TX, INITIALIZE);
       attemptNestedTransaction(getContext(), MAPREDUCE_TX, INITIALIZE_NEST);
-
-      // TODO (CDAP-7444): if destroy is called if the MR fails to start, we can remove all this to speed up the test
-      Job job = getContext().getHadoopJob();
-      job.setMapperClass(NoOpMapper.class);
-      job.setNumReduceTasks(0);
-      job.setInputFormatClass(SingleRecordInputFormat.class);
-      job.setOutputFormatClass(NoOpOutputFormat.class);
     }
 
     @Override

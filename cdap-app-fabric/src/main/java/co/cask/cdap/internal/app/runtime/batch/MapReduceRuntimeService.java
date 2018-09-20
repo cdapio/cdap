@@ -238,12 +238,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                                                   context.getProgram().getClassLoader(),
                                                                   context.getApplicationSpecification().getPlugins(),
                                                                   context.getPluginInstantiator());
-      cleanupTask = createCleanupTask(cleanupTask, classLoader);
+      cleanupTask = createCleanupTask(classLoader, cleanupTask);
       context.setMapReduceClassLoader(classLoader);
       context.setJob(job);
 
       mapredConf.setClassLoader(context.getProgramInvocationClassLoader());
 
+      // we will now call initialize(), hence destroy() must be called on shutdown/cleanup
+      cleanupTask = createCleanupTask((Runnable) this::destroy, cleanupTask);
       beforeSubmit(job);
 
       // Localize additional resources that users have requested via BasicMapReduceContext.localize methods
@@ -259,7 +261,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
       // Create a temporary location for storing all generated files through the LocationFactory.
       Location tempLocation = createTempLocationDirectory();
-      cleanupTask = createCleanupTask(cleanupTask, tempLocation);
+      cleanupTask = createCleanupTask(tempLocation, cleanupTask);
 
       // For local mode, everything is in the configuration classloader already, hence no need to create new jar
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
@@ -439,12 +441,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected void shutDown() throws Exception {
-    try {
-      destroy();
-    } finally {
-      cleanupTask.run();
-    }
+  protected void shutDown() {
+    cleanupTask.run();
   }
 
   @Override
@@ -1172,32 +1170,28 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   private Runnable createCleanupTask(final Object...resources) {
-    return new Runnable() {
+    return () -> {
+      for (Object resource : resources) {
+        if (resource == null) {
+          continue;
+        }
 
-      @Override
-      public void run() {
-        for (Object resource : resources) {
-          if (resource == null) {
-            continue;
-          }
-
-          try {
-            if (resource instanceof File) {
-              if (((File) resource).isDirectory()) {
-                DirUtils.deleteDirectoryContents((File) resource);
-              } else {
-                ((File) resource).delete();
-              }
-            } else if (resource instanceof Location) {
-              Locations.deleteQuietly((Location) resource, true);
-            } else if (resource instanceof AutoCloseable) {
-              ((AutoCloseable) resource).close();
-            } else if (resource instanceof Runnable) {
-              ((Runnable) resource).run();
+        try {
+          if (resource instanceof File) {
+            if (((File) resource).isDirectory()) {
+              DirUtils.deleteDirectoryContents((File) resource);
+            } else {
+              ((File) resource).delete();
             }
-          } catch (Throwable t) {
-            LOG.warn("Exception when cleaning up resource {}", resource, t);
+          } else if (resource instanceof Location) {
+            Locations.deleteQuietly((Location) resource, true);
+          } else if (resource instanceof AutoCloseable) {
+            ((AutoCloseable) resource).close();
+          } else if (resource instanceof Runnable) {
+            ((Runnable) resource).run();
           }
+        } catch (Throwable t) {
+          LOG.warn("Exception when cleaning up resource {}", resource, t);
         }
       }
     };
