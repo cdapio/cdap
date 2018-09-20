@@ -765,56 +765,56 @@ features:
         Conditions:
           CUSTOMCONDITION: Custom condition
           EMPTY: value is empty
-          ISAMEXCARD: Is American Express card
-          ISBOOLEAN: Is boolean
-          ISCOUNTRYTLD: Is country TLD
-          ISCREDITCARD: Is credit card
-          ISDATE: Is date
-          ISDATEFORMAT: Is date format
-          ISDINERCARD: Is Diner card
-          ISDOMAINNAME: Is domain name
-          ISDOMAINTLD: Is domain TLD
-          ISDOUBLE: Is double
-          ISEMAIL: Is email
-          ISGENERICTLD: Is generic TLD
-          ISINTEGER: Is integer
-          ISIP: Is IP
-          ISIPV4: Is IPV4
-          ISIPV6: Is IPV6
-          ISISBN10: Is ISBN10
-          ISISBN13: Is ISBN13
-          ISISBN: Is ISBN
-          ISMASTERCARD: Is Master card
-          ISNOTAMEXCARD: Is not American Express card
-          ISNOTBOOLEAN: Is not boolean
-          ISNOTCOUNTRYTLD: Is not country TLD
-          ISNOTCREDITCARD: Is not credit card
-          ISNOTDATE: Is not date
-          ISNOTDATEFORMAT: Is not date format
-          ISNOTDINERCARD: Is not Diner card
-          ISNOTDOMAINNAME: Is not domain name
-          ISNOTDOMAINTLD: Is not domain TLD
-          ISNOTDOUBLE: Is not double
-          ISNOTEMAIL: Is not email
-          ISNOTGENERICTLD: Is not generic TLD
-          ISNOTINTEGER: Is not integer
-          ISNOTIP: Is not IP
-          ISNOTIPV4: Is not IPV4
-          ISNOTIPV6: Is not IPV6
-          ISNOTISBN10: Is not ISBN10
-          ISNOTISBN13: Is not ISBN13
-          ISNOTISBN: Is not ISBN
-          ISNOTMASTERCARD: Is not Master card
-          ISNOTNUMBER: Is not number
-          ISNOTTIME: Is not time
-          ISNOTURL: Is not URL
-          ISNOTVISACARD: Is not Visa card
-          ISNOTVPAYCARD: Is not VPay card
-          ISNUMBER: Is number
-          ISTIME: Is time
-          ISURL: Is URL
-          ISVISACARD: Is Visa card
-          ISVPAYCARD: Is VPay card
+          ISAMEXCARD: value is American Express card
+          ISBOOLEAN: value is boolean
+          ISCOUNTRYTLD: value is country TLD
+          ISCREDITCARD: value is credit card
+          ISDATE: value is date
+          ISDATEFORMAT: value is date format
+          ISDINERCARD: value is Diner card
+          ISDOMAINNAME: value is domain name
+          ISDOMAINTLD: value is domain TLD
+          ISDOUBLE: value is double
+          ISEMAIL: value is email
+          ISGENERICTLD: value is generic TLD
+          ISINTEGER: value is integer
+          ISIP: value is IP
+          ISIPV4: value is IPV4
+          ISIPV6: value is IPV6
+          ISISBN10: value is ISBN10
+          ISISBN13: value is ISBN13
+          ISISBN: value is ISBN
+          ISMASTERCARD: value is Master card
+          ISNOTAMEXCARD: value is not American Express card
+          ISNOTBOOLEAN: value is not boolean
+          ISNOTCOUNTRYTLD: value is not country TLD
+          ISNOTCREDITCARD: value is not credit card
+          ISNOTDATE: value is not date
+          ISNOTDATEFORMAT: value is not date format
+          ISNOTDINERCARD: value is not Diner card
+          ISNOTDOMAINNAME: value is not domain name
+          ISNOTDOMAINTLD: value is not domain TLD
+          ISNOTDOUBLE: value is not double
+          ISNOTEMAIL: value is not email
+          ISNOTGENERICTLD: value is not generic TLD
+          ISNOTINTEGER: value is not integer
+          ISNOTIP: value is not IP
+          ISNOTIPV4: value is not IPV4
+          ISNOTIPV6: value is not IPV6
+          ISNOTISBN10: value is not ISBN10
+          ISNOTISBN13: value is not ISBN13
+          ISNOTISBN: value is not ISBN
+          ISNOTMASTERCARD: value is not Master card
+          ISNOTNUMBER: value is not number
+          ISNOTTIME: value is not time
+          ISNOTURL: value is not URL
+          ISNOTVISACARD: value is not Visa card
+          ISNOTVPAYCARD: value is not VPay card
+          ISNUMBER: value is number
+          ISTIME: value is time
+          ISURL: value is URL
+          ISVISACARD: value is Visa card
+          ISVPAYCARD: value is VPay card
           TEXTCONTAINS: value contains
           TEXTENDSWITH: value ends with
           TEXTEXACTLY: value is
