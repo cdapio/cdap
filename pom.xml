@@ -178,7 +178,7 @@
     <spark1.version>1.6.1</spark1.version>
     <spark2.version>2.1.3</spark2.version>
     <sshd.version>1.7.0</sshd.version>
-    <tephra.version>0.13.0-incubating</tephra.version>
+    <tephra.version>0.15.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
     <twill.version>0.13.0</twill.version>
