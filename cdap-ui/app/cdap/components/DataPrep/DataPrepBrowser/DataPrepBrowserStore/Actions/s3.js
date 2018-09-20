@@ -21,21 +21,30 @@ import MyDataPrepApi from 'api/dataprep';
 import {objectQuery} from 'services/helpers';
 
 const setS3AsActiveBrowser = (payload) => {
-  let {s3} = DataPrepBrowserStore.getState();
-  if (s3.loading) {
+  let {s3, activeBrowser} = DataPrepBrowserStore.getState();
+
+  if (activeBrowser.name !== payload.name) {
+    setActiveBrowser(payload);
+  }
+
+  let {id: connectionId, path} = payload;
+
+  if (s3.connectionId === connectionId) {
+    if (path && path !== s3.prefix) {
+      setPrefix(path);
+    }
     return;
   }
-  setActiveBrowser(payload);
+
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let {id, path} = payload;
   let params = {
     namespace,
-    connectionId: id
+    connectionId
   };
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_S3_CONNECTION_ID,
     payload: {
-      connectionId: id
+      connectionId
     }
   });
   setS3Loading();
@@ -46,11 +55,13 @@ const setS3AsActiveBrowser = (payload) => {
         type: BrowserStoreActions.SET_S3_CONNECTION_DETAILS,
         payload: {
           info,
-          connectionId: id
+          connectionId
         }
       });
       if (path) {
         setPrefix(path);
+      } else {
+        fetchBucketDetails();
       }
     }, (err) => {
       setError(err);

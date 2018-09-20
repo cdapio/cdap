@@ -51,6 +51,10 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
     enableRouting: true,
   };
 
+  public state = {
+    connectionId: this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId'),
+  };
+
   private clickHandler = (instanceId: string) => {
     if (this.props.enableRouting) { return; }
     listSpannerDatabases(this.props.connectionId, instanceId);
@@ -62,6 +66,17 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
     const {connectionId} = this.props.match.params;
 
     listSpannerInstances(connectionId);
+  }
+
+  public componentDidUpdate() {
+    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
+
+    if (connectionId !== this.state.connectionId) {
+      listSpannerInstances(connectionId);
+      this.setState({
+        connectionId,
+      });
+    }
   }
 
   public render() {

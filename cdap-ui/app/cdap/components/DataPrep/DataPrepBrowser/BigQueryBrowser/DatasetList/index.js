@@ -17,12 +17,16 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import {listBigQueryTables} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {
+  listBigQueryTables,
+  listBiqQueryDatasets,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import {Link} from 'react-router-dom';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
+import {objectQuery} from 'services/helpers';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.BigQueryBrowser`;
 
@@ -31,12 +35,36 @@ class DatasetListView extends Component {
     datasetList: PropTypes.array,
     connectionId: PropTypes.string,
     enableRouting: PropTypes.bool,
-    loading: PropTypes.bool
+    loading: PropTypes.bool,
+    match: PropTypes.object
   };
 
   static defaultProps = {
     enableRouting: true
   };
+
+  state = {
+    connectionId: this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId'),
+  };
+
+  componentDidMount() {
+    if (!this.props.enableRouting) { return; }
+
+    const {connectionId} = this.props.match.params;
+
+    listBiqQueryDatasets(connectionId);
+  }
+
+  componentDidUpdate() {
+    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
+
+    if (connectionId !== this.state.connectionId) {
+      listBiqQueryDatasets(connectionId);
+      this.setState({
+        connectionId,
+      });
+    }
+  }
 
   clickHandler = (datasetId) => {
     if (this.props.enableRouting) { return; }
