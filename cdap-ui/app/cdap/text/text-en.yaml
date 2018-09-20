@@ -1212,6 +1212,7 @@ features:
           helper1: You will no longer able to access data from this source.
           helper2: "You can reconnect to this source at any time by clicking \"Add Connection\""
           mainMessage: "Are you sure you want to delete connection to {connection}?"
+        failedDeleteMessage: Deleting connection failed
       delete: Delete
       duplicate: Duplicate
       edit: Edit

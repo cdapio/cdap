@@ -41,7 +41,7 @@ import isNil from 'lodash/isNil';
 import ExpandableMenu from 'components/UncontrolledComponents/ExpandableMenu';
 import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover';
 import DataPrepStore from 'components/DataPrep/store';
-import {objectQuery, preventPropagation} from 'services/helpers';
+import {objectQuery, preventPropagation, isNilOrEmpty} from 'services/helpers';
 import Helmet from 'react-helmet';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import queryString from 'query-string';
@@ -186,17 +186,11 @@ export default class DataPrepConnections extends Component {
         });
 
         this.fetchConnectionTypes();
-      }, (err) => {
-        if (err.statusCode === 503) {
-          console.log('backend not started');
-
-          this.setState({
-            backendChecking: false,
-            backendDown: true
-          });
-
-          return;
-        }
+      }, () => {
+        this.setState({
+          backendChecking: false,
+          backendDown: true
+        });
       });
   }
 
@@ -979,8 +973,10 @@ export default class DataPrepConnections extends Component {
       activeConnectionType,
       activeConnectionid,
       defaultConnection,
-      connectionTypes
+      connectionTypes,
+      connectionsList
     } = this.state;
+    defaultConnection = isNilOrEmpty(find(connectionsList, { name: defaultConnection})) ? null : defaultConnection;
     const isFileConnectionValid = find(connectionTypes, {type: ConnectionType.FILE});
     if (
       !activeConnectionType &&
