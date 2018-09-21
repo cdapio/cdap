@@ -31,9 +31,12 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.profile.ProfileDataset;
+import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
@@ -323,13 +326,16 @@ public class ProfileService {
         profileId);
     }
 
-    // There must be no assigments to this profile
+    // There must be no assignments to this profile
     Set<EntityId> assignments = profileDataset.getProfileAssignments(profileId);
-    if (!assignments.isEmpty()) {
+    int numAssignments = assignments.size();
+    if (numAssignments > 0) {
+      String firstEntity = getUserFriendlyEntityStr(assignments.iterator().next());
+      String countStr = getCountStr(numAssignments, "entity", "entities");
       throw new ProfileConflictException(
-        String.format("This profile %s is still assigned to %d entities, like %s. " +
+        String.format("Profile '%s' is still assigned to %s%s. " +
                         "Please delete all assignments before deleting the profile.",
-                      profileId.toString(), assignments.size(), assignments.iterator().next()),
+                      profileId.getProfile(), firstEntity, countStr),
         profileId);
     }
 
@@ -346,15 +352,45 @@ public class ProfileService {
       activeRuns = appMetadataStore.getActiveRuns(Collections.singleton(profileId.getNamespaceId()),
                                                   runRecordMetaPredicate);
     }
-    if (!activeRuns.isEmpty()) {
+    int numRuns = activeRuns.size();
+    if (numRuns > 0) {
+      String firstRun = activeRuns.keySet().iterator().next().toString();
+      String countStr = getCountStr(numRuns, "run", "runs");
       throw new ProfileConflictException(
-        String.format("The profile %s is in use by %d active runs, like %s. Please stop all active runs " +
+        String.format("Profile '%s' is in use by run %s%s. Please stop all active runs " +
                         "before deleting the profile.",
-                      profileId.toString(), activeRuns.size(), activeRuns.keySet().iterator().next()),
+                      profileId.toString(), firstRun, countStr),
         profileId);
     }
 
     // delete the profile
     profileDataset.deleteProfile(profileId);
+  }
+
+  private String getUserFriendlyEntityStr(EntityId entityId) {
+    switch (entityId.getEntityType()) {
+      case INSTANCE:
+        return "the system instance";
+      case NAMESPACE:
+        return String.format("namespace '%s'", entityId.getEntityName());
+      case APPLICATION:
+        ApplicationId applicationId = (ApplicationId) entityId;
+        return String.format("application '%s' in namespace '%s'", applicationId.getApplication(),
+                             applicationId.getNamespace());
+      case PROGRAM:
+        ProgramId programId = (ProgramId) entityId;
+        return String.format("%s '%s' in namespace '%s'", programId.getType().name().toLowerCase(),
+                             programId.getProgram(), programId.getNamespace());
+    }
+    return entityId.toString();
+  }
+
+  private String getCountStr(int count, String singular, String plural) {
+    if (count == 1) {
+      return "";
+    } else if (count == 2) {
+      return String.format(" and 1 other %s", singular);
+    }
+    return String.format(" and %d other %s", count - 1, plural);
   }
 }
