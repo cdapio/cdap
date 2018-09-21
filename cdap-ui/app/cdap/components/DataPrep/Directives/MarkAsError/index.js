@@ -329,10 +329,12 @@ export default class MarkAsError extends Component {
                 onChange={this.setCondition}
               >
                 {
-                  markAsConditions.map(condition => {
+                  markAsConditions.map((condition, i) => {
+                    const key = `${condition.id}${i}`;
                     if (condition.id === 'divider') {
                       return (
                         <option
+                          key={key}
                           disabled="disabled"
                           role="separator"
                         >
@@ -343,7 +345,7 @@ export default class MarkAsError extends Component {
                     return (
                       <option
                         value={condition.id}
-                        key={condition.id}
+                        key={key}
                       >
                         {condition.displayText}
                       </option>

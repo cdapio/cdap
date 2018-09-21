@@ -51,8 +51,8 @@ const CHARENCODINGOPTIONS = [
 ];
 
 export default function Decode({onComplete, column, isOpen}) {
-  let {types} = DataPrepStore.getState().dataprep;
-  let disabled = types[column] !== 'byte[]';
+  let {typesCheck} = DataPrepStore.getState().dataprep;
+  let disabled = typesCheck[column] !== 'byte[]';
   let disabledTooltip = T.translate(`${PREFIX}.disabledTooltip`);
 
   return (

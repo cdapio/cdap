@@ -45,16 +45,16 @@ const DATATYPE_OPTIONS = [
 ];
 
 const DISABLED_TYPE = [
-  'LocalDate',
-  'LocalTime',
-  'ZonedDateTime'
+  'localdate',
+  'localtime',
+  'zoneddatetime'
 ];
 
 export default class ChangeDataTypeDirective extends Component {
   constructor(props) {
     super(props);
 
-    this.columnType = DataPrepStore.getState().dataprep.types[this.props.column];
+    this.columnType = DataPrepStore.getState().dataprep.typesCheck[this.props.column];
 
     this.state = {
       selectedChangeDataType: null,
