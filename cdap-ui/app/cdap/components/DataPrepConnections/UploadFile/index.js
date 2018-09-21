@@ -22,7 +22,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
 import UploadFile from 'services/upload-file';
-import IconSVG from 'components/IconSVG';
+import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
 import T from 'i18n-react';
 
 require('./UploadFile.scss');
@@ -125,22 +125,11 @@ export default class ConnectionsUpload extends Component {
 
     return (
       <div className="connections-upload-container">
-        <div className="top-panel">
-          <div className="title">
-            <h5>
-              <span
-                className="fa fa-fw"
-                onClick={this.props.toggle}
-              >
-                <IconSVG name="icon-bars" />
-              </span>
-
-              <span>
-                {T.translate(`${PREFIX}.title`)}
-              </span>
-            </h5>
-          </div>
-        </div>
+        <DataprepBrowserTopPanel
+          allowSidePanelToggle={true}
+          toggle={this.props.toggle}
+          browserTitle={T.translate(`${PREFIX}.title`)}
+        />
 
         <div className="upload-content-container">
           <div className="file-upload">
