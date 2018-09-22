@@ -531,6 +531,96 @@
                       <directory>${project.basedir}/src/dist/LICENSES</directory>
                       <targetPath>LICENSES</targetPath>
                     </resource>
+                    <!--copy third party artifacts-->
+                    <resource>
+                      <directory>${project.basedir}/src/dist/third_party</directory>
+                      <targetPath>third_party</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/javax/activation/activation</directory>
+                      <targetPath>third_party/activation</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/org/jboss/spec/javax/annotation</directory>
+                      <targetPath>third_party/annotation</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/javax/servlet/javax.servlet-api</directory>
+                      <targetPath>third_party/javax-servlet-api</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/javax/servlet/jsp/jsp-api</directory>
+                      <targetPath>third_party/javax-servlet-jsp-api</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/javax/ws/rs/javax.ws.rs-api</directory>
+                      <targetPath>third_party/javax-ws-rs-api</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/com/sun/xml/bind/jaxb-impl</directory>
+                      <targetPath>third_party/jaxb-api</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/javax/xml/bind/jaxb-api</directory>
+                      <targetPath>third_party/jaxb-impl</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/net/jcip/jcip-annotations</directory>
+                      <targetPath>third_party/jcip-annotations</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/com/sun/jersey</directory>
+                      <targetPath>third_party/jersey</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/javax/annotation/jsr250-api</directory>
+                      <targetPath>third_party/jsr250-api</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/javax/transaction/jta</directory>
+                      <targetPath>third_party/jta</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${user.home}/.m2/repository/javax/xml/stream/stax-api</directory>
+                      <targetPath>third_party/stax-api</targetPath>
+                      <includes>
+                        <include>**/*.jar</include>
+                      </includes>
+                    </resource>
+                    <!--end of artifact copy-->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-distributions</directory>
                       <includes>
