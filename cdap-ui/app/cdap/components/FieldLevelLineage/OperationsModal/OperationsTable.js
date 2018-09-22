@@ -162,12 +162,10 @@ export default class OperationsTable extends Component {
 
   render() {
     return (
-      <div className="operations-table-container">
-        <div className="grid-wrapper">
-          <div className="grid grid-container">
-            {this.renderHeader()}
-            {this.renderBody()}
-          </div>
+      <div className="grid-wrapper">
+        <div className="grid grid-container">
+          {this.renderHeader()}
+          {this.renderBody()}
         </div>
       </div>
     );
