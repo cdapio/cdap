@@ -185,6 +185,25 @@ const getRuns = (params) => {
   return runsFetch;
 };
 
+const pollRunsCount = ({appId, programType, programName: programId, namespace}) => {
+  let postBody = [{
+    appId,
+    programType,
+    programId
+  }];
+  return MyPipelineApi
+    .pollRunsCount({ namespace }, postBody)
+    .subscribe(runsCountArray => {
+      let runsCount = runsCountArray[0].runCount;
+      PipelineDetailStore.dispatch({
+        type: ACTIONS.SET_RUNS_COUNT,
+        payload: {
+          runsCount
+        }
+      });
+    });
+};
+
 const pollRuns = (params) => {
   return MyPipelineApi
     .pollRuns(params)
@@ -337,6 +356,7 @@ export {
   setCurrentRunId,
   getRuns,
   pollRuns,
+  pollRunsCount,
   getNextRunTime,
   getStatistics,
   setMacros,
