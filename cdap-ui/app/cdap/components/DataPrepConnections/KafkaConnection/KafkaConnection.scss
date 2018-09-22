@@ -26,6 +26,7 @@ $success-color: $green-02;
   }
 
   .kafka-detail {
+    overflow-x: hidden;
     .col-form-label {
       font-weight: 500;
       font-size: 14px;
