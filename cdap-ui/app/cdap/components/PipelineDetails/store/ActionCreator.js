@@ -191,8 +191,8 @@ const pollRunsCount = ({appId, programType, programName: programId, namespace}) 
     programType,
     programId
   }];
-  let runsCountFetch = MyPipelineApi.pollRunsCount({ namespace }, postBody);
-  runsCountFetch
+  return MyPipelineApi
+    .pollRunsCount({ namespace }, postBody)
     .subscribe(runsCountArray => {
       let runsCount = runsCountArray[0].runCount;
       PipelineDetailStore.dispatch({
@@ -202,7 +202,6 @@ const pollRunsCount = ({appId, programType, programName: programId, namespace}) 
         }
       });
     });
-  return runsCountFetch;
 };
 
 const pollRuns = (params) => {
