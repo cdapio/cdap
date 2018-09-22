@@ -27,12 +27,13 @@ const PREFIX = 'features.PipelineDetails.RunLevel';
 
 const mapStateToProps = (state) => {
   return {
+    runsCount: state.runsCount,
     runs: state.runs,
     currentRun: state.currentRun
   };
 };
 
-const CurrentRunIndex = ({runs, currentRun}) => {
+const CurrentRunIndex = ({runs, currentRun, runsCount}) => {
   let reversedRuns = reverseArrayWithoutMutating(runs);
   let currentRunIndex = findIndex(reversedRuns, {runid: objectQuery(currentRun, 'runid')});
 
@@ -65,7 +66,7 @@ const CurrentRunIndex = ({runs, currentRun}) => {
   return (
     <div className="run-number-container run-info-container">
       <h4 className="run-number">
-        {T.translate(`${PREFIX}.currentRunIndex`, {currentRunIndex: currentRunIndex + 1, numRuns: runs.length})}
+        {T.translate(`${PREFIX}.currentRunIndex`, {currentRunIndex: currentRunIndex + 1, numRuns: runsCount})}
       </h4>
       <div className="run-number-switches">
         <button
@@ -87,6 +88,7 @@ const CurrentRunIndex = ({runs, currentRun}) => {
 
 CurrentRunIndex.propTypes = {
   runs: PropTypes.array,
+  runsCount: PropTypes.number,
   currentRun: PropTypes.object
 };
 
