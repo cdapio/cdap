@@ -1299,6 +1299,10 @@
             <groupId>org.codehaus.janino</groupId>
             <artifactId>commons-compiler</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>stax</groupId>
+            <artifactId>stax-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -1761,6 +1765,7 @@
                   <exclude>**/*.json.template</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
                   <exclude>**/.rubocop*.yml</exclude>
+                  <exclude>third-party-licenses/**</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -2053,6 +2058,7 @@
         <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
         <stage.opt.dir>${stage.dir}/opt/cdap/${package.name}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+        <stage.third.party.dir>${stage.opt.dir}/third_party</stage.third.party.dir>
         <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
         <stage.coprocessor.dir>${stage.opt.dir}/coprocessor</stage.coprocessor.dir>
         <package.deb.depends>--depends cdap</package.deb.depends>
@@ -2088,6 +2094,7 @@
               <artifactId>maven-dependency-plugin</artifactId>
               <version>2.8</version>
               <executions>
+                <!-- Copy runtime dependencies -->
                 <execution>
                   <id>copy-dependencies</id>
                   <phase>prepare-package</phase>
@@ -2107,6 +2114,24 @@
                     <includeScope>runtime</includeScope>
                   </configuration>
                 </execution>
+
+                <!-- Copy source dependencies for licenses requirement -->
+                <execution>
+                  <id>src-dependencies</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                    <goal>copy-dependencies</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${stage.third.party.dir}</outputDirectory>
+                    <classifier>sources</classifier>
+                    <includeArtifactIds>jersey-client,jersey-core,jersey-server,activation,jsr250-api,servlet-api,jsp-api,jta,rs-api,jaxb-api,stax-api,jaxb-impl,jcip-annotations,jboss-annotations-api</includeArtifactIds>
+                    <failOnMissingClassifierArtifact>true</failOnMissingClassifierArtifact>
+                    <useSubDirectoryPerArtifact>true</useSubDirectoryPerArtifact>
+                    <silent>true</silent>
+                    <excludeScope>provided</excludeScope>
+                  </configuration>
+                </execution>
               </executions>
             </plugin>
             <plugin>
@@ -2114,6 +2139,24 @@
               <artifactId>maven-resources-plugin</artifactId>
               <version>2.6</version>
               <executions>
+                <execution>
+                  <id>copy-third-party-licenses</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${stage.third.party.dir}/licenses</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.parent.basedir}/cdap-distributions/src/third-party-licenses</directory>
+                        <includes>
+                          <include>*.license</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
                 <execution>
                   <id>copy-opt</id>
                   <phase>process-resources</phase>
