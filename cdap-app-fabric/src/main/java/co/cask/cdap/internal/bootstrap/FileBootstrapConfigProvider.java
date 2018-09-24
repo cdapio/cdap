@@ -56,10 +56,12 @@ public class FileBootstrapConfigProvider implements BootstrapConfigProvider {
                bootstrapFile.getAbsolutePath());
       return BootstrapConfig.DEFAULT;
     } catch (JsonParseException e) {
-      LOG.warn("Could not parse bootstrap file {}. No bootstrapping will be done.", e);
+      LOG.warn("Could not parse bootstrap file {}. No bootstrapping will be done.",
+               bootstrapFile.getAbsolutePath(), e);
       return BootstrapConfig.EMPTY;
     } catch (IOException e) {
-      LOG.warn("Could not read bootstrap file {}. No bootstrapping will be done.", e);
+      LOG.warn("Could not read bootstrap file {}. No bootstrapping will be done.",
+               bootstrapFile.getAbsolutePath(), e);
       return BootstrapConfig.EMPTY;
     }
   }
