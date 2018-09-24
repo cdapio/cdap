@@ -40,6 +40,7 @@ import javax.annotation.Nullable;
  * Configuration for Dataproc.
  */
 public class DataprocConf {
+  private static final String AUTO_DETECT = "auto-detect";
   private final String accountKey;
   private final String region;
   private final String zone;
@@ -217,7 +218,7 @@ public class DataprocConf {
 
   private static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
-    if (accountKey == null) {
+    if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
       try {
         getComputeEngineCredentials();
       } catch (IOException e) {
@@ -225,32 +226,17 @@ public class DataprocConf {
       }
     }
     String projectId = getString(properties, "projectId");
-    if (projectId == null) {
+    if (projectId == null || AUTO_DETECT.equals(projectId)) {
       projectId = getSystemProjectId();
     }
 
-    String region = getString(properties, "region");
-    if (region == null) {
-      region = "global";
-    }
     String zone = getString(properties, "zone");
-    if (zone == null) {
+    if (zone == null || AUTO_DETECT.equals(zone)) {
       zone = getSystemZone();
     }
     String network = getString(properties, "network");
-    if (network == null) {
+    if (network == null || AUTO_DETECT.equals(network)) {
       network = getSystemNetwork();
-    }
-
-    // a zone is always <region>-<letter>
-    if (!"global".equals(region)) {
-      if (!zone.startsWith(region + "-")) {
-        throw new IllegalArgumentException(
-          String.format("Invalid zone '%s' for region '%s'. Unless the region is 'global', "
-                          + "the zone must begin with the region. "
-                          + "For example, zone 'us-central1-a' belongs to region 'us-central1'.",
-                        zone, region));
-      }
     }
 
     int masterNumNodes = getInt(properties, "masterNumNodes", 1);
@@ -282,7 +268,8 @@ public class DataprocConf {
 
     boolean preferExternalIP = Boolean.parseBoolean(properties.get("preferExternalIP"));
 
-    return new DataprocConf(accountKey, region, zone, projectId, network,
+    // always use 'global' region until CDAP-14376 is fixed.
+    return new DataprocConf(accountKey, "global", zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
