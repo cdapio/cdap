@@ -44,7 +44,7 @@ export default class Calculate extends Component {
     super(props);
     this.VALID_TYPES = NUMBER_TYPES.concat(['string']);
 
-    this.columnType = DataPrepStore.getState().dataprep.types[this.props.column];
+    this.columnType = DataPrepStore.getState().dataprep.typesCheck[this.props.column];
 
     this.defaultState = {
       operationPopoverOpen: null,
@@ -332,10 +332,14 @@ export default class Calculate extends Component {
     return (
       this.CALCULATE_OPTIONS
         .filter(option => option.name === 'label' || option.validColTypes.indexOf(this.columnType) !== -1)
-        .map((option) => {
+        .map((option, i) => {
+          const key = `${option.name}${i}`;
           if (option.name === 'label') {
             return (
-              <div className="column-type-label">
+              <div
+                key={key}
+                className="column-type-label"
+              >
                 <span>
                   {
                     NUMBER_TYPES.indexOf(this.columnType) !== -1 ?
@@ -349,14 +353,17 @@ export default class Calculate extends Component {
           }
           if (option.name === 'divider') {
             return (
-              <div className="column-action-divider calculate-options-divider">
+              <div
+                key={key}
+                className="column-action-divider calculate-options-divider"
+              >
                 <hr />
               </div>
             );
           }
           return (
             <div
-              key={option.name}
+              key={key}
               className={classnames('option', {
                 'active': this.state.operationPopoverOpen === option.name
               })}

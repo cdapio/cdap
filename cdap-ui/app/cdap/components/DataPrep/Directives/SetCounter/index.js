@@ -129,7 +129,10 @@ export default class SetCounterDirective extends Component {
           {
             this.conditions.map((condition) => {
               return (
-                <option value={condition}>
+                <option
+                  key={condition}
+                  value={condition}
+                >
                   {T.translate(`${PREFIX}.Conditions.${condition}`)}
                 </option>
               );

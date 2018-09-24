@@ -41,7 +41,7 @@ export default class ExtractFields extends Component {
     this.preventPropagation = this.preventPropagation.bind(this);
     this.handleUsingDelimiters = this.handleUsingDelimiters.bind(this);
 
-    this.isUsingPatternsDisabled = DataPrepStore.getState().dataprep.types[this.props.column] !== 'string';
+    this.isUsingPatternsDisabled = DataPrepStore.getState().dataprep.typesCheck[this.props.column] !== 'string';
   }
 
   componentDidMount() {

@@ -43,7 +43,7 @@ export default class Format extends Component {
     column: PropTypes.oneOfType([PropTypes.array, PropTypes.string])
   };
 
-  columnType = DataPrepStore.getState().dataprep.types[this.props.column];
+  columnType = DataPrepStore.getState().dataprep.typesCheck[this.props.column];
 
   defaultFormatPopoverState = {
     formatPopoverOpen: null,
@@ -301,7 +301,10 @@ export default class Format extends Component {
           {
             this.CONCATENATE_OPTIONS.map(option => {
               return (
-                <option value={option.name}>
+                <option
+                  key={option.name}
+                  value={option.name}
+                >
                   {option.label}
                 </option>
               );

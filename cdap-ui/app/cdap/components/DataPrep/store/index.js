@@ -29,7 +29,8 @@ const defaultInitialState = {
   workspaceUri: '',
   data: [],
   headers: [],
-  types: {},
+  types: {}, // pure column types from backend. Used for display
+  typesCheck: {}, // case sensitive column types, Should be used when checking types of column
   selectedHeaders: [],
   highlightColumns: {
     directive: null,
@@ -58,6 +59,15 @@ const workspacesInitialState = {
   list: []
 };
 
+const getTypesCheck = (types = {}, headers = []) => {
+  const typesCheck = {};
+  headers.forEach((head) => {
+    const type = types[head] || '';
+    typesCheck[head] = type.toLowerCase();
+  });
+  return typesCheck;
+};
+
 const dataprep = (state = defaultInitialState, action = defaultAction) => {
   let stateCopy;
 
@@ -76,6 +86,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         directives: action.payload.directives,
         loading: false,
         types: action.payload.types || {},
+        typesCheck: getTypesCheck(action.payload.types, action.payload.headers),
         // after any directive, remove selected header(s) if they're no longer in
         // the list of headers
         selectedHeaders: state.selectedHeaders.filter((head) => {
@@ -107,6 +118,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         directives: action.payload.directives || [],
         data: action.payload.data || [],
         types: action.payload.types || {},
+        typesCheck: getTypesCheck(action.payload.types, action.payload.headers),
         properties: action.payload.properties || {},
         initialized: true,
         loading: false,

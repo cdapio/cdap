@@ -80,8 +80,8 @@ export default class MaskData extends Component {
       );
   }
   isDirectiveEnabled() {
-    let {types} = DataPrepStore.getState().dataprep;
-    return types[this.props.column] === 'string';
+    let {typesCheck} = DataPrepStore.getState().dataprep;
+    return typesCheck[this.props.column] === 'string';
   }
   maskLastNDigits(N) {
     let {data} = DataPrepStore.getState().dataprep;
