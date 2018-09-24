@@ -45,7 +45,8 @@ var express = require('express'),
     LOGIN_DIST_PATH= path.normalize(__dirname + '/../login_dist'),
     CDAP_DIST_PATH= path.normalize(__dirname + '/../cdap_dist'),
     MARKET_DIST_PATH= path.normalize(__dirname + '/../common_dist'),
-    fs = require('fs');
+    fs = require('fs'),
+    objectQuery = require('lodash/get');
 
 var log = log4js.getLogger('default');
 
@@ -61,11 +62,29 @@ const getExpressStaticConfig = () => {
     maxAge: '1y'
   };
 };
+
+function getFaviconPath(uiThemeConfig) {
+  let faviconPath = DIST_PATH + '/assets/img/favicon.png';
+  let themeFaviconPath = objectQuery(uiThemeConfig, ['content', 'favicon-path']);
+  if (themeFaviconPath) {
+    themeFaviconPath = CDAP_DIST_PATH + themeFaviconPath;
+    try {
+      if (require.resolve(themeFaviconPath)) {
+        faviconPath = themeFaviconPath;
+      }
+    } catch (e) {
+      log.info(`Unable to find favicon at path ${themeFaviconPath}`);
+    }
+  }
+  return faviconPath;
+}
+
 function makeApp (authAddress, cdapConfig, uiSettings, uiThemeConfig) {
   var app = express();
 
+  const faviconPath = getFaviconPath(uiThemeConfig);
   // middleware
-  try { app.use(serveFavicon(DIST_PATH + '/assets/img/favicon.png')); }
+  try { app.use(serveFavicon(faviconPath)); }
   catch (e) { log.error('Favicon missing! Please run `gulp build`'); }
 
   app.use(compression());

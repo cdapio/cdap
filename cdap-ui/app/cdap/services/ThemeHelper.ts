@@ -45,6 +45,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
          "data"?: string;
       }
     },
+    "favicon-path"?: string,
     "footer-text"?: string;
     "footer-link"?: string;
   };
@@ -117,6 +118,7 @@ interface IThemeObj {
   footerLink?: string;
   productLogoNavbar?: string;
   productLogoAbout?: string;
+  favicon?: string;
   showDashboard?: boolean;
   showReports?: boolean;
   showDataPrep?: boolean;
@@ -131,16 +133,13 @@ interface IThemeObj {
 }
 
 function getTheme(): IThemeObj {
-  let theme: IThemeObj = {
-    productName: 'CDAP',
+  let theme: IThemeObj = {};
+  const DEFAULT_THEME_JSON: IThemeJSON = {
+    'spec-version': '1.0',
   };
 
-  if (isNilOrEmpty(window.CDAP_UI_THEME)) {
-    return theme;
-  }
-
-  const themeJSON = window.CDAP_UI_THEME;
-  const specVersion = themeJSON['spec-version'];
+  const themeJSON = window.CDAP_UI_THEME || DEFAULT_THEME_JSON;
+  const specVersion = themeJSON['spec-version'] || '1.0';
 
   if (specVersion === '1.0') {
     theme = {
@@ -160,12 +159,19 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
 
   function getContent(): IThemeObj {
     const contentJson = themeJSON.content;
-    const content: IThemeObj = {};
+    const content: IThemeObj = {
+      productName: 'CDAP',
+      productLogoNavbar: '/cdap_assets/img/company_logo.png',
+      productLogoAbout: '/cdap_assets/img/CDAP_darkgray.png',
+      favicon: '/cdap_assets/img/favicon.png',
+      footerText: 'Licensed under the Apache License, Version 2.0',
+      footerLink: 'https://www.apache.org/licenses/LICENSE-2.0',
+    };
     if (isNilOrEmpty(contentJson)) {
       return content;
     }
     if ('product-name' in contentJson) {
-      content.productName = contentJson['product-name'] || 'CDAP';
+      content.productName = contentJson['product-name'];
     }
     if ('footer-text' in contentJson) {
       content.footerText = contentJson['footer-text'];
