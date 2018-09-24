@@ -22,8 +22,7 @@ module.exports = {
         // router check also fetches the auth server address if security is enabled
         require('./config/router-check.js').ping(),
         require('./config/parser.js').extractConfig('cdap'),
-        require('./config/parser.js').extractUISettings(),
-        require('./config/parser.js').extractUITheme()
+        require('./config/parser.js').extractUISettings()
       ])
       .spread(makeApp);
   }
@@ -73,15 +72,47 @@ function getFaviconPath(uiThemeConfig) {
         faviconPath = themeFaviconPath;
       }
     } catch (e) {
-      log.info(`Unable to find favicon at path ${themeFaviconPath}`);
+      log.warn(`Unable to find favicon at path ${themeFaviconPath}`);
     }
   }
   return faviconPath;
 }
 
-function makeApp (authAddress, cdapConfig, uiSettings, uiThemeConfig) {
+function extractUITheme(cdapConfig) {
+  const uiThemePropertyName = 'ui.theme.file';
+  const DEFAULT_CONFIG = {};
+
+  if (!(uiThemePropertyName in cdapConfig)) {
+    log.warn(`Unable to find ${uiThemePropertyName} property`);
+    log.warn(`UI using default theme`);
+    return DEFAULT_CONFIG;
+  }
+
+  let uiThemeConfig = DEFAULT_CONFIG;
+  let uiThemePath = cdapConfig[uiThemePropertyName];
+  if (uiThemePath[0] !== '/') {
+    // if path doesn't start with /, then it's a relative path
+    // have to add the ellipses to navigate back to $CDAP_HOME, before
+    // going through the path
+    uiThemePath = `../../${uiThemePath}`;
+  }
+  try {
+    if (require.resolve(uiThemePath)) {
+      uiThemeConfig = require(uiThemePath);
+      log.info(`UI using theme located at ${uiThemePath}`);
+    }
+  } catch (e) {
+    // The error can either be file doesn't exist, or file contains invalid json
+    log.error(e.toString());
+    log.warn(`UI using default theme`);
+  }
+  return uiThemeConfig;
+}
+
+function makeApp (authAddress, cdapConfig, uiSettings) {
   var app = express();
 
+  const uiThemeConfig = extractUITheme(cdapConfig);
   const faviconPath = getFaviconPath(uiThemeConfig);
   // middleware
   try { app.use(serveFavicon(faviconPath)); }
