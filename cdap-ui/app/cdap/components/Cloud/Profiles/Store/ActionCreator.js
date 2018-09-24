@@ -290,18 +290,25 @@ export const exportProfile = (namespace, profile) => {
 };
 
 export const deleteProfile = (namespace, profile, currentNamespace) => {
-  let deleteObservable = MyCloudApi.delete({
-    namespace,
-    profile
-  });
-  deleteObservable.subscribe(
+  let deleteObservable$;
+  if (namespace === SYSTEM_NAMESPACE) {
+    deleteObservable$ = MyCloudApi.deleteSystemProfile({
+      profile
+    });
+  } else {
+    deleteObservable$ = MyCloudApi.delete({
+      namespace,
+      profile
+    });
+  }
+  deleteObservable$.subscribe(
     () => {
       getProfiles(currentNamespace);
     },
     (err) => {
       Observable.throw(err);
     });
-  return deleteObservable;
+  return deleteObservable$;
 };
 
 export const importProfile = (namespace, e) => {

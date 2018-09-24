@@ -126,6 +126,20 @@ export default class OperationsTable extends Component {
       <div className="grid-body">
         {
           this.props.operations.map((operation, i) => {
+            let description = null;
+
+            if (operation.description) {
+              const descriptionSplit = operation.description.split('\n');
+              description = descriptionSplit.map((line, index) => {
+                return (
+                  <React.Fragment key={index}>
+                    <span>{line}</span>
+                    {descriptionSplit.length - 1 !== index ? <br /> : null}
+                  </React.Fragment>
+                );
+              });
+            }
+
             return (
               <div
                 key={i}
@@ -135,7 +149,7 @@ export default class OperationsTable extends Component {
                 <div>{ this.renderInput(operation) }</div>
                 <div>{ this.renderInputFields(operation) }</div>
                 <div title={operation.name}>{ operation.name }</div>
-                <div title={operation.description}>{ operation.description }</div>
+                <div title={operation.description}>{ description }</div>
                 <div>{ this.renderOutputFields(operation) }</div>
                 <div>{ this.renderOutput(operation) }</div>
               </div>
@@ -148,12 +162,10 @@ export default class OperationsTable extends Component {
 
   render() {
     return (
-      <div className="operations-table-container">
-        <div className="grid-wrapper">
-          <div className="grid grid-container">
-            {this.renderHeader()}
-            {this.renderBody()}
-          </div>
+      <div className="grid-wrapper">
+        <div className="grid grid-container">
+          {this.renderHeader()}
+          {this.renderBody()}
         </div>
       </div>
     );

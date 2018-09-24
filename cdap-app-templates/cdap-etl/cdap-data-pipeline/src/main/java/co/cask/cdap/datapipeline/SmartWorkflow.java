@@ -124,6 +124,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(FieldOperation.class, new FieldOperationTypeAdapter()).create();
+  private static final Type STAGE_DATASET_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type STAGE_PROPERTIES_MAP = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
   private static final Type STAGE_OPERATIONS_MAP = new TypeToken<Map<String, List<FieldOperation>>>() { }.getType();
 
@@ -145,6 +146,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   private ETLBatchConfig config;
   private BatchPipelineSpec spec;
   private int connectorNum = 0;
+  private int publisherNum = 0;
 
   public SmartWorkflow(ETLBatchConfig config, Set<String> supportedPluginTypes,
                        ApplicationConfigurer applicationConfigurer) {
@@ -160,8 +162,6 @@ public class SmartWorkflow extends AbstractWorkflow {
     setName(NAME);
     setDescription("Data Pipeline Workflow");
 
-    // set the pipeline spec as a property in case somebody like the UI wants to read it
-    Map<String, String> properties = new HashMap<>();
     // This will also register all the plugin in the workflow so that CDAP knows what plugins the
     // workflow needs to run. If a plugin has a requirement that will not be available during that run, CDAP can fail
     // the run early, before provisioning is performed.
@@ -171,8 +171,6 @@ public class SmartWorkflow extends AbstractWorkflow {
                                             ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
                                                             AlertPublisher.PLUGIN_TYPE),
                                             config.getEngine()).generateSpec(config);
-    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
-    setProperties(properties);
 
     stageSpecs = new HashMap<>();
     useSpark = config.getEngine() == Engine.SPARK;
@@ -190,6 +188,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     // single phase, just add the program directly
     if (plan.getPhases().size() == 1) {
       addProgram(plan.getPhases().keySet().iterator().next(), programAdder);
+      setWorkflowProperties();
       return;
     }
 
@@ -201,6 +200,7 @@ public class SmartWorkflow extends AbstractWorkflow {
         addProgram(phaseName, fork);
       }
       fork.join();
+      setWorkflowProperties();
       return;
     }
 
@@ -342,6 +342,8 @@ public class SmartWorkflow extends AbstractWorkflow {
       String start = dag.getSources().iterator().next();
       addPrograms(start, programAdder);
     }
+
+    setWorkflowProperties();
   }
 
   private PipelinePlan createPlan() {
@@ -505,18 +507,20 @@ public class SmartWorkflow extends AbstractWorkflow {
       }
     }
 
+    Map<String, String> connectorDatasets = GSON.fromJson(
+      workflowContext.getWorkflowSpecification().getProperty(Constants.CONNECTOR_DATASETS), STAGE_DATASET_MAP);
     // publish all alerts
     for (Map.Entry<String, AlertPublisher> alertPublisherEntry : alertPublishers.entrySet()) {
-      String name = alertPublisherEntry.getKey();
+      String stageName = alertPublisherEntry.getKey();
       AlertPublisher alertPublisher = alertPublisherEntry.getValue();
-      FileSet alertConnector = workflowContext.getDataset(name);
+      FileSet alertConnector = workflowContext.getDataset(connectorDatasets.get(stageName));
       try (CloseableIterator<Alert> alerts = new AlertReader(alertConnector)) {
         if (!alerts.hasNext()) {
           continue;
         }
 
-        StageMetrics stageMetrics = new DefaultStageMetrics(workflowMetrics, name);
-        StageSpec stageSpec = stageSpecs.get(name);
+        StageMetrics stageMetrics = new DefaultStageMetrics(workflowMetrics, stageName);
+        StageSpec stageSpec = stageSpecs.get(stageName);
         AlertPublisherContext alertContext =
           new DefaultAlertPublisherContext(pipelineRuntime, stageSpec, workflowContext, workflowContext.getAdmin());
         alertPublisher.initialize(alertContext);
@@ -525,12 +529,12 @@ public class SmartWorkflow extends AbstractWorkflow {
           new TrackedIterator<>(alerts, stageMetrics, Constants.Metrics.RECORDS_IN);
         alertPublisher.publish(trackedIterator);
       } catch (Exception e) {
-        LOG.warn("Stage {} had errors publishing alerts. Alerts may not have been published.", name, e);
+        LOG.warn("Stage {} had errors publishing alerts. Alerts may not have been published.", stageName, e);
       } finally {
         try {
           alertPublisher.destroy();
         } catch (Exception e) {
-          LOG.warn("Error destroying alert publisher for stage {}", name, e);
+          LOG.warn("Error destroying alert publisher for stage {}", stageName, e);
         }
       }
     }
@@ -711,29 +715,35 @@ public class SmartWorkflow extends AbstractWorkflow {
   }
 
   private BatchPhaseSpec getPhaseSpec(String programName, PipelinePhase phase) {
+    Map<String, String> phaseConnectorDatasets = new HashMap<>();
     // if this phase uses connectors, add the local dataset for that connector if we haven't already
     for (StageSpec connectorInfo : phase.getStagesOfType(Constants.Connector.PLUGIN_TYPE)) {
       String connectorName = connectorInfo.getName();
-      String datasetName = connectorDatasets.get(connectorName);
-      if (datasetName == null) {
-        datasetName = "conn-" + connectorNum++;
+      if (!connectorDatasets.containsKey(connectorName)) {
+        String datasetName = "conn-" + connectorNum++;
         connectorDatasets.put(connectorName, datasetName);
+        phaseConnectorDatasets.put(connectorName, datasetName);
         // add the local dataset
         ConnectorSource connectorSource = new MultiConnectorSource(datasetName, null);
         connectorSource.configure(getConfigurer());
+      } else {
+        phaseConnectorDatasets.put(connectorName, connectorDatasets.get(connectorName));
       }
     }
+
     // create a local dataset to store alerts. At the end of the phase, the dataset will be scanned and alerts
     // published.
     for (StageSpec alertPublisherInfo : phase.getStagesOfType(AlertPublisher.PLUGIN_TYPE)) {
       String stageName = alertPublisherInfo.getName();
-      AlertPublisherSink alertPublisherSink = new AlertPublisherSink(stageName, null);
-      alertPublisherSink.configure(getConfigurer());
-    }
-
-    Map<String, String> phaseConnectorDatasets = new HashMap<>();
-    for (StageSpec connectorStage : phase.getStagesOfType(Constants.Connector.PLUGIN_TYPE)) {
-      phaseConnectorDatasets.put(connectorStage.getName(), connectorDatasets.get(connectorStage.getName()));
+      if (!connectorDatasets.containsKey(stageName)) {
+        String datasetName = "alerts-" + publisherNum++;
+        connectorDatasets.put(alertPublisherInfo.getName(), datasetName);
+        phaseConnectorDatasets.put(alertPublisherInfo.getName(), datasetName);
+        AlertPublisherSink alertPublisherSink = new AlertPublisherSink(datasetName, null);
+        alertPublisherSink.configure(getConfigurer());
+      } else {
+        phaseConnectorDatasets.put(stageName, connectorDatasets.get(stageName));
+      }
     }
 
     return new BatchPhaseSpec(programName, phase, spec.getResources(), spec.getDriverResources(),
@@ -792,5 +802,15 @@ public class SmartWorkflow extends AbstractWorkflow {
       addPrograms(falseOutput, conditionAdder);
     }
     return conditionAdder.end();
+  }
+
+  private void setWorkflowProperties() {
+    Map<String, String> properties = new HashMap<>();
+    // set the pipeline spec as a property in case somebody like the UI wants to read it
+    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
+    // set the connector dataset as a property to be able to figure out the mapping of the stage name of the alert
+    // publisher to the local datasets for it, so that we can publish alerts in destroy()
+    properties.put(Constants.CONNECTOR_DATASETS, GSON.toJson(connectorDatasets));
+    setProperties(properties);
   }
 }

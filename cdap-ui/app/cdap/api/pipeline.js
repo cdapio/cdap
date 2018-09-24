@@ -23,6 +23,7 @@ let artifactBasePath = `/namespaces/:namespace/artifacts/:artifactName/versions/
 let statsPath = `${basepath}/workflows/:workflowId/statistics?start=0`;
 let schedulePath = `${basepath}/schedules/:scheduleId`;
 let programPath = `${basepath}/:programType/:programName`;
+let runsCountPath = '/namespaces/:namespace/runcount';
 
 export const MyPipelineApi = {
   publish: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
@@ -34,6 +35,8 @@ export const MyPipelineApi = {
   getStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', statsPath),
   getRuns: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/runs`),
   pollRuns: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/runs`),
+  getRunsCount: apiCreator(dataSrc, 'POST', 'REQUEST', `${runsCountPath}`),
+  pollRunsCount: apiCreator(dataSrc, 'POST', 'POLL', `${runsCountPath}`),
   getNextRunTime: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/nextruntime)`),
   fetchMacros: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/plugins`),
   fetchWidgetJson: apiCreator(dataSrc, 'GET', 'REQUEST', artifactBasePath)

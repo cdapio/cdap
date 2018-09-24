@@ -207,7 +207,6 @@ export default class BigQueryConnection extends Component {
   renderTestButton = () => {
     let disabled = !this.state.name ||
       !this.state.projectId ||
-      !this.state.serviceAccountKeyfile ||
       !this.state.bucket;
 
     return (
@@ -227,7 +226,6 @@ export default class BigQueryConnection extends Component {
   renderAddConnectionButton = () => {
     let disabled = !this.state.name ||
       !this.state.projectId ||
-      !this.state.serviceAccountKeyfile ||
       this.state.testConnectionLoading ||
       !this.state.bucket;
 
@@ -304,7 +302,6 @@ export default class BigQueryConnection extends Component {
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.serviceAccountKeyfile`)}
-              <span className="asterisk">*</span>
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">

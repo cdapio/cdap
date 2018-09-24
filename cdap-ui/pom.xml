@@ -192,6 +192,7 @@
         <package.rpm.depends>--depends cdap --replaces cdap-web-app --conflicts cdap-web-app --replaces 'cdap-ui &lt; 3.4.0'</package.rpm.depends>
         <package.deb.arch>amd64</package.deb.arch>
         <package.rpm.arch>x86_64</package.rpm.arch>
+        <ui.build.name>cdap-full-build</ui.build.name>
       </properties>
       <build>
         <plugins>
@@ -243,7 +244,7 @@
                   <goal>yarn</goal>
                 </goals>
                 <configuration>
-                  <arguments>run cdap-full-build</arguments>
+                  <arguments>run ${ui.build.name}</arguments>
                 </configuration>
               </execution>
               <execution>

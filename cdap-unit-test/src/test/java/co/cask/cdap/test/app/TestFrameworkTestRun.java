@@ -1357,8 +1357,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       serviceManager.stop();
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);
 
-      txMRManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
-      notxMRManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
+      txMRManager.waitForRun(ProgramRunStatus.FAILED, 10L, TimeUnit.SECONDS);
+      notxMRManager.waitForRun(ProgramRunStatus.FAILED, 10L, TimeUnit.SECONDS);
       txSparkManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
       notxSparkManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
       notxWorkerManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);

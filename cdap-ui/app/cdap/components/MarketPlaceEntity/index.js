@@ -24,6 +24,9 @@ import AbstractWizard from 'components/AbstractWizard';
 import MarketStore from 'components/Market/store/market-store';
 import ExperimentalBanner from 'components/ExperimentalBanner';
 import T from 'i18n-react';
+import If from 'components/If';
+import LicenseRow from 'components/MarketPlaceEntity/LicenseRow';
+
 
 require('./MarketPlaceEntity.scss');
 export default class MarketPlaceEntity extends Component {
@@ -193,7 +196,6 @@ export default class MarketPlaceEntity extends Component {
     };
 
     const getRightCard = () => {
-
       let beta = classnames('package-icon-container', {'beta' : this.props.entity.beta});
 
       return !this.state.expandedMode ?
@@ -257,24 +259,31 @@ export default class MarketPlaceEntity extends Component {
               <div className="package-metadata-container text-xs-left">
                 <strong className="package-label"> {this.props.entity.label} </strong>
                 <div className="package-metadata">
-                  <div>
-                    <span>
-                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.version')} </strong>
-                    </span>
-                    <span> {this.props.entity.version} </span>
-                  </div>
-                  <div>
-                    <span>
-                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.company')} </strong>
-                    </span>
-                    <span> {this.props.entity.org} </span>
-                  </div>
-                  <div>
-                    <span>
-                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.author')} </strong>
-                    </span>
-                    <span> {this.props.entity.author} </span>
-                  </div>
+                  <If condition={this.props.entity.version}>
+                    <div>
+                      <span>
+                        <strong> {T.translate('features.MarketPlaceEntity.Metadata.version')} </strong>
+                      </span>
+                      <span> {this.props.entity.version} </span>
+                    </div>
+                  </If>
+                  <If condition={this.props.entity.org}>
+                    <div>
+                      <span>
+                        <strong> {T.translate('features.MarketPlaceEntity.Metadata.company')} </strong>
+                      </span>
+                      <span> {this.props.entity.org} </span>
+                    </div>
+                  </If>
+                  <If condition={this.props.entity.author}>
+                    <div>
+                      <span>
+                        <strong> {T.translate('features.MarketPlaceEntity.Metadata.author')} </strong>
+                      </span>
+                      <span> {this.props.entity.author} </span>
+                    </div>
+                  </If>
+                  <LicenseRow licenseInfo={this.props.entity.licenseInfo} />
                 </div>
               </div>
             </div>
@@ -308,7 +317,11 @@ MarketPlaceEntity.childContextTypes = {
     description: PropTypes.string,
     org: PropTypes.string,
     created: PropTypes.number,
-    cdapVersion: PropTypes.string
+    cdapVersion: PropTypes.string,
+    licenseInfo: PropTypes.shape({
+      name: PropTypes.string,
+      url: PropTypes.string
+    })
   })
 };
 
@@ -325,6 +338,10 @@ MarketPlaceEntity.propTypes = {
     org: PropTypes.string,
     created: PropTypes.number,
     cdapVersion: PropTypes.string,
-    beta: PropTypes.bool
+    beta: PropTypes.bool,
+    licenseInfo: PropTypes.shape({
+      name: PropTypes.string,
+      url: PropTypes.string
+    })
   })
 };

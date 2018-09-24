@@ -193,7 +193,26 @@ const updatePipeline = () => {
     description,
     artifact,
     config,
-    principal
+    principal,
+    /*
+      Ref: CDAP-13853
+      TL;DR - This is here so that when we update the pipeline we don't delete
+      the existing schedules (like triggers).
+
+      Longer version:
+      The existing behavior was,
+      1. User creates a pipeline
+      2. Sets up a trigger
+      3. Modifies the pipeline engine config
+
+      After step 3 UI was updating the pipeline (PUT /apps/:appId)
+      This used to delete any existing schedule as we have deployed/updated
+      the app.
+
+      This config will prevent CDAP from deleting existing schedules(triggers)
+      when we update the pipeline
+    */
+    'app.deploy.update.schedules': false
   });
 
   publishObservable.subscribe(() => {

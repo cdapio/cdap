@@ -48,6 +48,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
@@ -197,8 +198,7 @@ public abstract class DatasetServiceTestBase {
     // ok to pass null, since the impersonator won't actually be called, if kerberos security is not enabled
     Impersonator impersonator = new DefaultImpersonator(cConf, null);
     DatasetAdminService datasetAdminService =
-      new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, new NoOpMetadataStore(),
-                              impersonator);
+      new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, impersonator);
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -236,9 +236,10 @@ public abstract class DatasetServiceTestBase {
       cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, defaultModules);
     DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authEnforcer,
                                                                          authenticationContext);
+    MetadataStore metadataStore = new NoOpMetadataStore();
 
     instanceService = new DatasetInstanceService(cConf, typeService, noAuthTypeService,
-                                                 instanceManager, opExecutor, exploreFacade,
+                                                 instanceManager, metadataStore, opExecutor, exploreFacade,
                                                  namespaceQueryAdmin, ownerAdmin, authEnforcer,
                                                  authenticationContext);
 

@@ -37,15 +37,12 @@ import javax.annotation.Nullable;
 @SuppressWarnings("unused")
 public class InvalidListPruningDebugTool implements InvalidListPruningDebug {
   private static final Comparator<RegionPruneInfo> PRUNE_INFO_COMPARATOR =
-    new Comparator<RegionPruneInfo>() {
-      @Override
-      public int compare(RegionPruneInfo o1, RegionPruneInfo o2) {
-        int result = Long.compare(o1.getPruneUpperBound(), o2.getPruneUpperBound());
-        if (result == 0) {
-          return o1.getRegionNameAsString().compareTo(o2.getRegionNameAsString());
-        }
-        return result;
+    (o1, o2) -> {
+      int result = Long.compare(o1.getPruneUpperBound(), o2.getPruneUpperBound());
+      if (result == 0) {
+        return o1.getRegionNameAsString().compareTo(o2.getRegionNameAsString());
       }
+      return result;
     };
 
   private static Map<String, SortedSet<String>> regionsToBeCompacted;

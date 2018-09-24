@@ -25,9 +25,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.collect.ImmutableMap;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Artifact artifact}.
@@ -45,7 +43,7 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Map<String, String> getSystemPropertiesToAdd() {
+  public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     properties.put(ENTITY_NAME_KEY, artifactInfo.getName());
     ArtifactClasses classes = artifactInfo.getClasses();
@@ -56,10 +54,5 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
       properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
     }
     return properties.build();
-  }
-
-  @Override
-  protected Set<String> getSystemTagsToAdd() {
-    return Collections.emptySet();
   }
 }

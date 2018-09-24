@@ -24,6 +24,9 @@ import MarketActionsContainer from 'components/MarketActionsContainer';
 import MarketStore from 'components/Market/store/market-store.js';
 import ExperimentalBanner from 'components/ExperimentalBanner';
 import classnames from 'classnames';
+import If from 'components/If';
+import LicenseRow from 'components/MarketPlaceUsecaseEntity/LicenseRow';
+import T from 'i18n-react';
 
 export default class MarketPlaceUsecaseEntity extends Component {
   constructor(props) {
@@ -122,19 +125,30 @@ export default class MarketPlaceUsecaseEntity extends Component {
               {this.props.entity.description}
             </div>
             <div className="entity-metadata">
-              <div>Author</div>
-              <span>
-                <strong>
-                  {this.props.entity.author}
-                </strong>
-              </span>
-              <div>Company</div>
-              <span>
-                <strong>
-                  {this.props.entity.org}
-                </strong>
-              </span>
-              <div>Created</div>
+              <If condition={this.props.entity.author}>
+                <div>
+                  {T.translate('features.MarketPlaceEntity.Metadata.author')}
+                </div>
+                <span>
+                  <strong>
+                    {this.props.entity.author}
+                  </strong>
+                </span>
+              </If>
+              <If condition={this.props.entity.org}>
+                <div>
+                  {T.translate('features.MarketPlaceEntity.Metadata.company')}
+                </div>
+                <span>
+                  <strong>
+                    {this.props.entity.org}
+                  </strong>
+                </span>
+              </If>
+              <LicenseRow licenseInfo={this.props.entity.licenseInfo} />
+              <div>
+                {T.translate('features.MarketPlaceEntity.Metadata.created')}
+              </div>
               <span>
                 <strong>
                   {(moment(this.props.entity.created * 1000)).format('MM-DD-YYYY HH:mm A')}
@@ -178,7 +192,11 @@ MarketPlaceUsecaseEntity.childContextTypes = {
     description: PropTypes.string,
     org: PropTypes.string,
     created: PropTypes.number,
-    cdapVersion: PropTypes.string
+    cdapVersion: PropTypes.string,
+    licenseInfo: PropTypes.shape({
+      name: PropTypes.string,
+      url: PropTypes.string
+    })
   })
 };
 
@@ -193,6 +211,10 @@ MarketPlaceUsecaseEntity.propTypes = {
     description: PropTypes.string,
     org: PropTypes.string,
     created: PropTypes.number,
-    beta: PropTypes.bool
+    beta: PropTypes.bool,
+    licenseInfo: PropTypes.shape({
+      name: PropTypes.string,
+      url: PropTypes.string
+    })
   })
 };

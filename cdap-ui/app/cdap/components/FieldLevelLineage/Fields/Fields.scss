@@ -28,6 +28,7 @@ $disabled-color: $grey-04;
 $active-bg-color: $yellow-02-lighter;
 $hover-bg-color: white;
 $border-offset: 2px;
+$no-lineage-indicator-color: $grey-01;
 
 .field-level-lineage .fields-box {
   .header {
@@ -74,10 +75,19 @@ $border-offset: 2px;
         &.disabled {
           cursor: not-allowed;
           color: $disabled-color;
+          position: relative;
         }
 
         &.active {
           background-color: $active-bg-color;
+        }
+
+        .no-lineage-text {
+          color: $no-lineage-indicator-color;
+          background-color: $hover-bg-color;
+          position: absolute;
+          right: 0;
+          padding: 0 15px;
         }
       }
     }

@@ -51,7 +51,7 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Map<String, String> getSystemPropertiesToAdd() {
+  public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     properties.put(ENTITY_NAME_KEY, viewId.getEntityName());
     if (!existing) {
@@ -61,13 +61,13 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Set<String> getSystemTagsToAdd() {
+  public Set<String> getSystemTagsToAdd() {
     return Collections.singleton(viewId.getStream());
   }
 
   @Nullable
   @Override
-  protected String getSchemaToAdd() {
+  public String getSchemaToAdd() {
     Schema schema = viewSpec.getFormat().getSchema();
     if (schema == null) {
       FormatSpecification format = viewSpec.getFormat();

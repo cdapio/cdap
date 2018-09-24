@@ -78,7 +78,8 @@ public class StreamFormatSpecSpark extends AbstractSpark implements JavaSparkMai
         public Tuple2<String, Integer> call(Row row) throws Exception {
           return new Tuple2<>(row.getString(0), row.getInt(1));
         }
-      });
+      })
+      .repartition(1);
 
     sec.saveAsDataset(resultRDD, sec.getRuntimeArguments().get("output.dataset"));
   }

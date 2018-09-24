@@ -14,7 +14,8 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
+@import '~styles/variables.scss';
+@import '../DataPrep/DataPrepBrowser/DataprepBrowserVariables.scss';
 
 $connections-panel-bg-color: $grey-07;
 $connections-panel-border-color: $grey-05;
@@ -124,7 +125,8 @@ $info-font-color: $grey-03;
     width: calc(100% - 250px);
 
     .sub-panel {
-      padding: 10px;
+      line-height: $browser-list-subpanel-line-height;
+      padding: 0 10px;
       display: flex;
       .path-container,
       .info-container {

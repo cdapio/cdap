@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,9 +34,8 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
-import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataProvider;
+import co.cask.cdap.data2.metadata.system.SystemMetadata;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -63,18 +62,15 @@ public class DatasetAdminService {
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
-  private final MetadataStore metadataStore;
   private final Impersonator impersonator;
 
   @Inject
   public DatasetAdminService(RemoteDatasetFramework dsFramework, CConfiguration cConf, LocationFactory locationFactory,
-                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory, MetadataStore metadataStore,
-                             Impersonator impersonator) {
+                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory, Impersonator impersonator) {
     this.dsFramework = dsFramework;
     this.cConf = cConf;
     this.locationFactory = locationFactory;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
-    this.metadataStore = metadataStore;
     this.impersonator = impersonator;
   }
 
@@ -87,9 +83,9 @@ public class DatasetAdminService {
    * @param existing if dataset already exists (in case of update), the existing properties
    * @return dataset specification
    */
-  public DatasetSpecification createOrUpdate(final DatasetId datasetInstanceId, final DatasetTypeMeta typeMeta,
-                                             final DatasetProperties props,
-                                             @Nullable final DatasetSpecification existing) throws Exception {
+  public DatasetCreationResponse createOrUpdate(final DatasetId datasetInstanceId, final DatasetTypeMeta typeMeta,
+                                                final DatasetProperties props,
+                                                @Nullable final DatasetSpecification existing) throws Exception {
 
     if (existing == null) {
       LOG.info("Creating dataset instance {}, type meta: {}", datasetInstanceId, typeMeta);
@@ -139,10 +135,11 @@ public class DatasetAdminService {
       });
 
       // Writing system metadata should be done without impersonation since user may not have access to system tables.
-      LOG.trace("Writing metadata for dataset {}", datasetInstanceId.getDataset());
-      writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null, ugi);
-      LOG.trace("Wrote metadata for dataset {}", datasetInstanceId.getDataset());
-      return spec;
+      LOG.trace("Computing metadata for dataset {}", datasetInstanceId.getDataset());
+      SystemMetadata metadata = computeSystemMetadata(
+        datasetInstanceId, spec, props, typeMeta, type, context, existing != null, ugi);
+      LOG.trace("Computed metadata for dataset {}", datasetInstanceId.getDataset());
+      return new DatasetCreationResponse(spec, metadata);
     } catch (Exception e) {
       if (e instanceof IncompatibleUpdateException) {
         // this is expected to happen if user provides bad update properties, so we log this as debug
@@ -155,9 +152,10 @@ public class DatasetAdminService {
     }
   }
 
-  private void writeSystemMetadata(DatasetId datasetInstanceId, final DatasetSpecification spec,
-                                   DatasetProperties props, final DatasetTypeMeta typeMeta, final DatasetType type,
-                                   final DatasetContext context, boolean existing, UserGroupInformation ugi)
+  private SystemMetadata computeSystemMetadata(DatasetId datasetInstanceId, final DatasetSpecification spec,
+                                             DatasetProperties props, final DatasetTypeMeta typeMeta,
+                                             final DatasetType type, final DatasetContext context,
+                                             boolean existing, UserGroupInformation ugi)
     throws IOException {
     // add system metadata for user datasets only
     if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
@@ -171,24 +169,27 @@ public class DatasetAdminService {
 
         // Make sure to write whatever system metadata that can be derived
         // even if the above instantiation throws exception
-        SystemMetadataWriter systemMetadataWriter;
+        DatasetSystemMetadataProvider metadataProvider;
         if (existing) {
-          systemMetadataWriter =
-            new DatasetSystemMetadataWriter(metadataStore, datasetInstanceId, props,
-                                            dataset, typeMeta.getName(), spec.getDescription());
+          metadataProvider =
+            new DatasetSystemMetadataProvider(datasetInstanceId, props,
+                                              dataset, typeMeta.getName(), spec.getDescription());
         } else {
           long createTime = System.currentTimeMillis();
-          systemMetadataWriter =
-            new DatasetSystemMetadataWriter(metadataStore, datasetInstanceId, props, createTime,
-                                            dataset, typeMeta.getName(), spec.getDescription());
+          metadataProvider =
+            new DatasetSystemMetadataProvider(datasetInstanceId, props, createTime,
+                                              dataset, typeMeta.getName(), spec.getDescription());
         }
-        systemMetadataWriter.write();
+        return new SystemMetadata(metadataProvider.getSystemPropertiesToAdd(),
+                                  metadataProvider.getSystemTagsToAdd(),
+                                  metadataProvider.getSchemaToAdd());
       } finally {
         if (dataset != null) {
           dataset.close();
         }
       }
     }
+    return SystemMetadata.EMPTY;
   }
 
   public void drop(final DatasetId datasetInstanceId, final DatasetTypeMeta typeMeta,
@@ -214,9 +215,6 @@ public class DatasetAdminService {
         return null;
       });
     }
-
-    // Remove metadata for the dataset
-    metadataStore.removeMetadata(datasetInstanceId.toMetadataEntity());
   }
 
   public boolean exists(DatasetId datasetInstanceId) throws Exception {

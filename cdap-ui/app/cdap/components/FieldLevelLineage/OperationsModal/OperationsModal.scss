@@ -21,7 +21,6 @@ $highlight-row-bg-color: $yellow-02-lighter;
 $table-border-color: $grey-04;
 
 .modal .field-level-lineage-modal.modal-dialog {
-  margin-top: 0;
   max-width: 85vw;
   max-height: 80vh;
 
@@ -50,49 +49,50 @@ $table-border-color: $grey-04;
       line-height: 2;
     }
 
-    .operations-table-container {
-      .grid-wrapper { max-height: 70vh; }
+    .grid-wrapper {
+      max-height: 60vh;
+      overflow: auto;
+    }
 
-      .grid.grid-container {
-        max-height: 100%;
+    .grid.grid-container {
+      max-height: 60vh;
 
-        .grid-header,
-        .grid-body {
-          .grid-row {
-            grid-template-columns: 1fr 2fr 2fr 2fr 40% 2fr 2fr;
+      .grid-header,
+      .grid-body {
+        .grid-row {
+          grid-template-columns: 1fr 2fr 2fr 2fr 40% 2fr 2fr;
+        }
+      }
+
+      .grid-header {
+        font-weight: 600;
+
+        .grid-row > div { padding-left: 7px; }
+      }
+
+      .grid-body .grid-row {
+        padding: 0;
+
+        > div {
+          padding: 7px;
+
+          &:first-child { text-align: right; }
+
+          &:not(:last-child) {
+            border-right: 1px solid $table-border-color;
+            min-height: 100%;
           }
         }
+      }
 
-        .grid-header {
-          font-weight: 600;
+      .active { background-color: $highlight-row-bg-color; }
 
-          .grid-row > div { padding-left: 7px; }
-        }
+      .input-field {
+        cursor: pointer;
 
-        .grid-body .grid-row {
-          padding: 0;
-
-          > div {
-            padding: 7px;
-
-            &:first-child { text-align: right; }
-
-            &:not(:last-child) {
-              border-right: 1px solid $table-border-color;
-              min-height: 100%;
-            }
-          }
-        }
-
-        .active { background-color: $highlight-row-bg-color; }
-
-        .input-field {
-          cursor: pointer;
-
-          &.selected {
-            color: $highlight-color;
-            font-style: italic;
-          }
+        &.selected {
+          color: $highlight-color;
+          font-style: italic;
         }
       }
     }

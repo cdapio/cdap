@@ -232,7 +232,7 @@ class ProfileCreateView extends Component {
               );
               return (
                 <FormGroup key={uniqueId} row>
-                  <Col xs="3">
+                  <Col xs="3" className="property-description-container">
                     {
                       property.description ?
                         <Popover

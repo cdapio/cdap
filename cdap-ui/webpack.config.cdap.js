@@ -37,6 +37,7 @@ let cleanOptions = {
 };
 
 var mode = process.env.NODE_ENV || 'production';
+const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
 const getWebpackDllPlugins = (mode) => {
   var sharedDllManifestFileName = 'shared-vendor-manifest.json';
   var cdapDllManifestFileName = 'cdap-vendor-manifest.json';
@@ -91,15 +92,19 @@ var plugins = [
     filename: 'cdap.html',
     hash: true,
     hashId: uuidV4(),
-    mode: mode === 'production' ? '' : 'development.'
-  }),
-  new ForkTsCheckerWebpackPlugin({
-    tsconfig: __dirname + '/tsconfig.json',
-    tslint: __dirname + '/tslint.json',
-    // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
-    memoryLimit: 4096
+    mode: isModeProduction(mode) ? '' : 'development.'
   }),
 ];
+if (!isModeProduction(mode)) {
+  plugins.push(
+    new ForkTsCheckerWebpackPlugin({
+      tsconfig: __dirname + '/tsconfig.json',
+      tslint: __dirname + '/tslint.json',
+      // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
+      memoryLimit: 4096
+    }),
+  );
+}
 
 var rules = [
   {
@@ -195,7 +200,7 @@ var rules = [
   }
 ];
 
-if (mode === 'production') {
+if (isModeProduction(mode)) {
   plugins.push(
     new webpack.DefinePlugin({
       'process.env':{
@@ -229,7 +234,7 @@ if (mode === 'development') {
 
 
 var webpackConfig = {
-  mode,
+  mode: isModeProduction(mode) ? 'production' : 'development',
   devtool: 'source-map',
   context: __dirname + '/app/cdap',
   entry: {

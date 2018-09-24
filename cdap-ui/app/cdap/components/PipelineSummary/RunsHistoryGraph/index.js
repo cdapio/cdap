@@ -37,25 +37,40 @@ import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
 import isEqual from 'lodash/isEqual';
 import StatusMapper from 'services/StatusMapper';
+import colorVariables from 'styles/variables.scss';
+import {PROGRAM_STATUSES} from 'services/global-constants';
 
 require('./RunsHistoryGraph.scss');
 require('react-vis/dist/styles/plot.scss');
 
-const MARKSERIESSTROKECOLOR = '#999999';
-const FAILEDRUNCOLOR = '#A40403';
-const SUCCESSRUNCOLOR = '#3cc801';
-const LINECOLOR = '#DBDBDB';
+const MARKSERIESSTROKECOLOR = colorVariables.grey03;
+const FAILEDRUNCOLOR = colorVariables.red01;
+const SUCCESSRUNCOLOR = colorVariables.green02;
+const PENDINGSTATUSFILLCOLOR = 'transparent';
+const PENDINGSTATUSSTROKECOLOR = colorVariables.blue02;
+const RUNNINGSTATUSCOLOR = colorVariables.blue02;
+const LINECOLOR = colorVariables.grey06;
 const PREFIX = `features.PipelineSummary.runsHistoryGraph`;
 const GRAPHPREFIX = `features.PipelineSummary.graphs`;
 const COLORLEGENDS = [
   {
-    title: T.translate(`${PREFIX}.legend1`),
+    title: StatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.FAILED),
     color: FAILEDRUNCOLOR
   },
   {
-    title: T.translate(`${PREFIX}.legend2`),
+    title: StatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.SUCCEEDED),
     color: SUCCESSRUNCOLOR
-  }
+  },
+  {
+    title: StatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.PENDING),
+    color: PENDINGSTATUSFILLCOLOR,
+  },
+  {
+    title: StatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.STARTING)
+    + '/'
+    + StatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.RUNNING),
+    color: RUNNINGSTATUSCOLOR,
+  },
 ];
 const tableHeaders = [
   {
@@ -132,12 +147,38 @@ export default class RunsHistoryGraph extends Component {
       return {
         x,
         y: !run.duration ? 0 : run.duration,
-        color: run.status === 'FAILED' ? FAILEDRUNCOLOR : SUCCESSRUNCOLOR,
+        color: this.getRunStatusFillColor(run.status),
+        stroke: this.getRunStatusStrokeColor(run.status),
+        fill: this.getRunStatusFillColor(run.status),
         runid: run.runid
       };
     });
     return data;
   }
+  getRunStatusStrokeColor = (status) => {
+    switch (status) {
+      case PROGRAM_STATUSES.PENDING:
+        return PENDINGSTATUSSTROKECOLOR;
+      default:
+        return MARKSERIESSTROKECOLOR;
+    }
+  };
+  getRunStatusFillColor = (status) => {
+    switch (status) {
+      case PROGRAM_STATUSES.FAILED:
+        return FAILEDRUNCOLOR;
+      case PROGRAM_STATUSES.SUCCEEDED:
+      case PROGRAM_STATUSES.COMPLETED:
+        return SUCCESSRUNCOLOR;
+      case PROGRAM_STATUSES.RUNNING:
+      case PROGRAM_STATUSES.STARTING:
+        return RUNNINGSTATUSCOLOR;
+      case PROGRAM_STATUSES.PENDING:
+        return PENDINGSTATUSFILLCOLOR;
+      default:
+        return MARKSERIESSTROKECOLOR;
+    }
+  };
   renderEmptyMessage() {
     return (
       <EmptyMessageContainer
@@ -193,9 +234,9 @@ export default class RunsHistoryGraph extends Component {
           className="run-history-fp-plot"
         >
           <DiscreteColorLegend
-            style={{position: 'absolute', left: '40px', top: '0px'}}
             orientation="horizontal"
             items={COLORLEGENDS}
+            className="run-history-legend-container"
           />
           <XAxis
             tickTotal={getTicksTotal(this.props)}
@@ -207,13 +248,14 @@ export default class RunsHistoryGraph extends Component {
           />
           <HorizontalGridLines />
           <LineSeries
-            color={LINECOLOR}
+            stroke={LINECOLOR}
             data={this.state.data}
           />
           <MarkSeries
+            colorType="literal"
+            strokeType="literal"
+            fillType="literal"
             data={this.state.data}
-            colorType={'literal'}
-            stroke={MARKSERIESSTROKECOLOR}
             onValueMouseOver={(d) => {
               if (isEqual(this.state.currentHoveredElement, d)) {
                 return;

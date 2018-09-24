@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,8 +52,8 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   }
 
   @Override
-  public DatasetSpecification create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props)
+  public DatasetCreationResponse create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
+                                        DatasetProperties props)
     throws Exception {
 
     DatasetType type = client.getDatasetType(typeMeta, null, new ConstantClassLoaderProvider());
@@ -66,12 +66,12 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
     DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), spec);
     admin.create();
 
-    return spec;
+    return new DatasetCreationResponse(spec, null);
   }
 
   @Override
-  public DatasetSpecification update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
-                                     DatasetProperties props, DatasetSpecification existing) throws Exception {
+  public DatasetCreationResponse update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
+                                        DatasetProperties props, DatasetSpecification existing) throws Exception {
     DatasetType type = client.getDatasetType(typeMeta, null, new ConstantClassLoaderProvider());
     if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
@@ -87,7 +87,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
       if (spec.getDescription() == null && existing.getDescription() != null) {
         spec.setDescription(existing.getDescription());
       }
-      return spec;
+      return new DatasetCreationResponse(spec, null);
     } catch (IncompatibleUpdateException e) {
       throw new ConflictException(e.getMessage());
     }

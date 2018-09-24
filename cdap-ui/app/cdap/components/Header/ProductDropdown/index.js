@@ -29,7 +29,6 @@ import AccessTokenModal from 'components/Header/ProductDropdown/AccessTokenModal
 import IconSVG from 'components/IconSVG';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import T from 'i18n-react';
-import {getMode} from 'components/Header/ProductDropdown/helper';
 import classnames from 'classnames';
 import {Theme} from 'services/ThemeHelper';
 
@@ -95,9 +94,8 @@ export default class ProductDropdown extends Component {
   render() {
     let baseCDAPURL = window.getAbsUIUrl();
     let cdapVersion = VersionStore.getState().version;
-    let docsUrl = `http://docs.cask.co/cdap/${cdapVersion}/en/index.html`;
+    let docsUrl = `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
     let administrationURL = '/administration/configuration';
-    let mode = getMode();
     let userSection;
     if (this.state.username && window.CDAP_CONFIG.securityEnabled) {
       userSection = (
@@ -143,13 +141,7 @@ export default class ProductDropdown extends Component {
           toggle={this.toggleCdapMenuDropdown.bind(this)}>
           <DropdownToggle caret>
             <div className="secure-mode-icon">
-              <IconSVG name={ window.CDAP_CONFIG.securityEnabled ? "icon-lock_close" : "" } />
-              <div className="cdap-mode">{mode}</div>
-            </div>
-            <div className="cdap-logo-container">
-              <div className="caret-down-container">
-                <IconSVG name="icon-caret-down" />
-              </div>
+              <IconSVG name="icon-cogs" />
             </div>
           </DropdownToggle>
           <CustomDropdownMenu right>

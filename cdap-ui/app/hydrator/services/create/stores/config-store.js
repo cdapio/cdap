@@ -702,8 +702,7 @@ class HydratorPlusPlusConfigStore {
     } catch (e) {
       console.log('Failed to parse output schema of plugin: ', pluginId);
     }
-
-    traverseMap(adjacencyMap[pluginId], outputSchema, inputSchema);
+    traverseMap(adjacencyMap[pluginId], JSON.stringify(schema), inputSchema);
   }
   getNodes() {
     return this.getState().__ui__.nodes;

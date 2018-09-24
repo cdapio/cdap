@@ -22,7 +22,6 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -36,26 +35,12 @@ import javax.annotation.Nullable;
 /**
  * A class to write {@link MetadataScope#SYSTEM} metadata for an {@link NamespacedEntityId entity}.
  */
-public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter {
-
-  @VisibleForTesting
-  public static final String SCHEMA_KEY = "schema";
-  @VisibleForTesting
-  public static final String TTL_KEY = "ttl";
-  @VisibleForTesting
-  public static final String DESCRIPTION_KEY = "description";
-  @VisibleForTesting
-  public static final String ENTITY_NAME_KEY = "entity-name";
-  @VisibleForTesting
-  public static final String CREATION_TIME_KEY = "creation-time";
-  @VisibleForTesting
-  public static final String VERSION_KEY = "version";
-  @VisibleForTesting
-  public static final String EXPLORE_TAG = "explore";
+public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter, SystemMetadataProvider {
 
   // The following system properties should not get removed on metadata update
   // since they are not part of entity properties
-  private static final Set<String> PRESERVE_PROPERTIES = ImmutableSet.of(CREATION_TIME_KEY, DESCRIPTION_KEY);
+  private static final Set<String> PRESERVE_PROPERTIES = ImmutableSet.of(SystemMetadataProvider.CREATION_TIME_KEY,
+                                                                         SystemMetadataProvider.DESCRIPTION_KEY);
   private static final String PLUGIN_KEY_PREFIX = "plugin";
   private static final String PLUGIN_VERSION_KEY_PREFIX = "plugin-version";
 
@@ -65,31 +50,6 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
   AbstractSystemMetadataWriter(MetadataStore metadataStore, NamespacedEntityId entityId) {
     this.metadataStore = metadataStore;
     this.metadataEntity = entityId.toMetadataEntity();
-  }
-
-  /**
-   * Define the {@link MetadataScope#SYSTEM system} metadata properties to add for this entity.
-   *
-   * @return A {@link Map} of properties to add to this {@link #metadataEntity} in
-   * {@link MetadataScope#SYSTEM}
-   */
-  protected abstract Map<String, String> getSystemPropertiesToAdd();
-
-  /**
-   * Define the {@link MetadataScope#SYSTEM system} tags to add for this entity.
-   *
-   * @return an array of tags to add to this {@link NamespacedEntityId entity} in {@link MetadataScope#SYSTEM}
-   */
-  protected abstract Set<String> getSystemTagsToAdd();
-
-  /**
-   * Define the {@link MetadataScope#SYSTEM system} schema to add for this entity.
-   *
-   * @return the schema as a {@link String}
-   */
-  @Nullable
-  protected String getSchemaToAdd() {
-    return null;
   }
 
   /**
@@ -123,7 +83,7 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
     // if there is schema property then set that while providing schema indexer
     String schema = getSchemaToAdd();
     if (!Strings.isNullOrEmpty(schema)) {
-      metadataStore.setProperty(MetadataScope.SYSTEM, metadataEntity, SCHEMA_KEY, schema);
+      metadataStore.setProperty(MetadataScope.SYSTEM, metadataEntity, SystemMetadataProvider.SCHEMA_KEY, schema);
     }
   }
 

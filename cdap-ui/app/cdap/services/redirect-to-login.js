@@ -17,7 +17,12 @@
 import cookie from 'react-cookie';
 export default function RedirectToLogin(data) {
   let {statusCode} = data;
-  if (statusCode === 401) {
+  let {url} = data.resource || {};
+  let namespaceAPIRegex = new RegExp(/\/v3\/namespaces$/g);
+  if (
+    (statusCode === 401 && namespaceAPIRegex.test(url)) ||
+    (statusCode === 401 && !url)
+  ) {
     cookie.remove('CDAP_Auth_Token', { path: '/' });
     cookie.remove('CDAP_Auth_User', { path: '/' });
     window.location.href = window.getAbsUIUrl({

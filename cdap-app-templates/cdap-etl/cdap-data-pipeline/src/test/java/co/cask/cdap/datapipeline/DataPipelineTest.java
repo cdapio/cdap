@@ -195,10 +195,10 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
       .addStage(new ETLStage("nullAlert", NullAlertTransform.getPlugin("id")))
       .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
-      .addStage(new ETLStage("tms", TMSAlertPublisher.getPlugin(topic, NamespaceId.DEFAULT.getNamespace())))
+      .addStage(new ETLStage("tms alert", TMSAlertPublisher.getPlugin(topic, NamespaceId.DEFAULT.getNamespace())))
       .addConnection("source", "nullAlert")
       .addConnection("nullAlert", "sink")
-      .addConnection("nullAlert", "tms")
+      .addConnection("nullAlert", "tms alert")
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
@@ -239,7 +239,7 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(2, appId, "nullAlert.records.out");
     validateMetric(1, appId, "nullAlert.records.alert");
     validateMetric(2, appId, "sink.records.in");
-    validateMetric(1, appId, "tms.records.in");
+    validateMetric(1, appId, "tms alert.records.in");
   }
 
   @Test

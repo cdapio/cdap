@@ -178,5 +178,5 @@ export default class ScrollableList extends Component {
 }
 ScrollableList.propTypes = {
   children: PropTypes.arrayOf(PropTypes.node).isRequired,
-  target: PropTypes.string.isRequired
+  target: PropTypes.string
 };

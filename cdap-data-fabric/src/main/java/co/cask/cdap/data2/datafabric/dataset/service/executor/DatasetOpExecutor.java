@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,7 +46,7 @@ public interface DatasetOpExecutor extends Service {
    * @param props Data set instance properties
    * @throws IOException
    */
-  DatasetSpecification create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta, DatasetProperties props)
+  DatasetCreationResponse create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception;
 
   /**
@@ -58,8 +58,8 @@ public interface DatasetOpExecutor extends Service {
    * @param existing the existing dataset spec
    * @throws IOException
    */
-  DatasetSpecification update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
-                              DatasetProperties props, DatasetSpecification existing) throws Exception;
+  DatasetCreationResponse update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
+                                 DatasetProperties props, DatasetSpecification existing) throws Exception;
 
   /**
    * Drops dataset.

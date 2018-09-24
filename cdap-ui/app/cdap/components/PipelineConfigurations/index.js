@@ -126,9 +126,16 @@ export default class PipelineConfigurations extends Component {
   }
 
   render() {
-    let tabConfig = TabConfig;
-    if (!this.props.isBatch) {
-      tabConfig.tabs = tabConfig.tabs.slice(0, -1);
+    let tabConfig;
+    if (this.props.isBatch) {
+      tabConfig = TabConfig;
+    } else {
+      tabConfig = {...TabConfig};
+      // Don't show Alerts tab for realtime pipelines
+      const alertsTabName = T.translate(`${PREFIX}.Alerts.title`);
+      tabConfig.tabs = TabConfig.tabs.filter(tab => {
+        return tab.name !== alertsTabName;
+      });
     }
     return (
       <Provider store={PipelineConfigurationsStore}>

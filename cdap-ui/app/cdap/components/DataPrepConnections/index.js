@@ -41,7 +41,7 @@ import isNil from 'lodash/isNil';
 import ExpandableMenu from 'components/UncontrolledComponents/ExpandableMenu';
 import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover';
 import DataPrepStore from 'components/DataPrep/store';
-import {objectQuery, preventPropagation} from 'services/helpers';
+import {objectQuery, preventPropagation, isNilOrEmpty} from 'services/helpers';
 import Helmet from 'react-helmet';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import queryString from 'query-string';
@@ -186,17 +186,11 @@ export default class DataPrepConnections extends Component {
         });
 
         this.fetchConnectionTypes();
-      }, (err) => {
-        if (err.statusCode === 503) {
-          console.log('backend not started');
-
-          this.setState({
-            backendChecking: false,
-            backendDown: true
-          });
-
-          return;
-        }
+      }, () => {
+        this.setState({
+          backendChecking: false,
+          backendDown: true
+        });
       });
   }
 
@@ -314,10 +308,10 @@ export default class DataPrepConnections extends Component {
       // need to group by connection type
       let state = {};
 
-      if (res.defaultConnection) {
+      if (res.default) {
         // Once we get a default connection from backend
         // set appropriate browser as active
-        state.defaultConnection = res.defaultConnection;
+        state.defaultConnection = res.default;
       }
 
       let databaseList = [],
@@ -350,6 +344,7 @@ export default class DataPrepConnections extends Component {
 
       state = {
         ...state,
+        connectionsList: res.values,
         databaseList,
         kafkaList,
         s3List,
@@ -907,6 +902,7 @@ export default class DataPrepConnections extends Component {
           return (
             <NoDefaultConnection
               defaultConnection={this.state.defaultConnection}
+              connectionsList={this.state.connectionsList}
               showAddConnectionPopover={this.toggleAddConnectionPopover.bind(this, true)}
               toggleSidepanel={this.toggleSidePanel}
             />
@@ -977,8 +973,10 @@ export default class DataPrepConnections extends Component {
       activeConnectionType,
       activeConnectionid,
       defaultConnection,
-      connectionTypes
+      connectionTypes,
+      connectionsList
     } = this.state;
+    defaultConnection = isNilOrEmpty(find(connectionsList, { name: defaultConnection})) ? null : defaultConnection;
     const isFileConnectionValid = find(connectionTypes, {type: ConnectionType.FILE});
     if (
       !activeConnectionType &&
@@ -991,6 +989,7 @@ export default class DataPrepConnections extends Component {
         return (
           <NoDefaultConnection
             defaultConnection={this.state.defaultConnection}
+            connectionsList={this.state.connectionsList}
             showAddConnectionPopover={this.toggleAddConnectionPopover.bind(this, true)}
             toggleSidepanel={this.toggleSidePanel}
           />

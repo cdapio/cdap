@@ -69,7 +69,7 @@ function caskSortableDirective ($log, $stateParams, $state) {
       $state.go($state.$current.name, {
         sortBy:  defaultPredicate.attr('data-predicate'),
         reverse: defaultReverse ? 'reverse' : ''
-      }, {notify: false});
+      });
 
       scope.sortable = {
         reverse: defaultReverse
@@ -87,12 +87,12 @@ function caskSortableDirective ($log, $stateParams, $state) {
         var th = angular.element(this),
             predicate = getPredicate(th);
 
-        if (th.attr('skip-sort')){
+        if (th.attr('skip-sort')) {
           return;
         }
 
         scope.$apply(function() {
-          if (scope.sortable.predicate === predicate){
+          if (scope.sortable.predicate === predicate) {
             scope.sortable.reverse = !scope.sortable.reverse;
             th.find('i').toggleClass('fa-flip-vertical');
           }
@@ -110,7 +110,7 @@ function caskSortableDirective ($log, $stateParams, $state) {
         $state.go($state.$current.name, {
           sortBy:  predicate,
           reverse: scope.sortable.reverse ? 'reverse' : ''
-        }, {notify: false});
+        });
       });
 
     }

@@ -56,7 +56,7 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Map<String, String> getSystemPropertiesToAdd() {
+  public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     properties.put(ENTITY_NAME_KEY, appSpec.getName());
     properties.put(VERSION_KEY, appId.getVersion());
@@ -82,7 +82,7 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   @Override
-  protected Set<String> getSystemTagsToAdd() {
+  public Set<String> getSystemTagsToAdd() {
     return Collections.singleton(appSpec.getArtifactId().getName());
   }
 
