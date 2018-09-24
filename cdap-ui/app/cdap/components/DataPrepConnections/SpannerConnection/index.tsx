@@ -285,6 +285,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
                   value={this.state.name}
                   onChange={this.handleChange.bind(this, 'name')}
                   disabled={this.props.mode === ConnectionMode.Edit}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.name`).toString()}
                 />
               </div>
             </div>
@@ -302,6 +303,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
                   className="form-control"
                   value={this.state.projectId}
                   onChange={this.handleChange.bind(this, 'projectId')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.projectId`).toString()}
                 />
               </div>
             </div>
@@ -318,6 +320,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
                   className="form-control"
                   value={this.state.serviceAccountKeyfile}
                   onChange={this.handleChange.bind(this, 'serviceAccountKeyfile')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.serviceAccountKeyfile`).toString()}
                 />
               </div>
             </div>

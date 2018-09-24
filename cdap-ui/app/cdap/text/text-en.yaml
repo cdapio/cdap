@@ -1075,7 +1075,12 @@ features:
           ADD: "Add connection: Google BigQuery"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
-        name: Name
+        name: Connection name
+        Placeholders:
+          bucket: Specify a GCS bucket used to store temporary data
+          name: Specify a name to identify this connection
+          projectId: Specify your GCP project ID
+          serviceAccountKeyfile: Specify the location of the file containing your GCP service account
         projectId: Project ID
         serviceAccountKeyfile: Service account key file location
         testConnection: Test Connection
@@ -1099,8 +1104,13 @@ features:
             DUPLICATE: Failed to duplicate connection
             EDIT: Failed to edit connection
           hostname: Host
-          name: Name
+          name: Connection name
           password: Password
+          Placeholders:
+            connectionString: "E.g. {connectionString}"
+            connectionStringDefault: Specify database connection string
+            name: Specify a name to identify this connection
+
           port: Port
           required: Required
           testConnection: Test Connection
@@ -1129,7 +1139,12 @@ features:
           ADD: "Add connection: Google Cloud Storage"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
-        name: Name
+        name: Connection name
+        Placeholders:
+          name: Specify a name to identify this connection
+          projectId: Specify your GCP project ID
+          serviceAccountKeyfile: Specify the location of the file containing your GCP service account
+
         projectId: Project ID
         required: Required
         serviceAccountKeyfile: Service account key file location
@@ -1151,7 +1166,9 @@ features:
           ADD: "Add connection: Kafka"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
-        name: Name
+        name: Connection name
+        Placeholders:
+          name: Specify a name to identify this connection
         port: Port
         required: Required
         testConnection: Test Connection
@@ -1161,8 +1178,8 @@ features:
       Popover:
         title: Select a source to connect
       S3:
-        accessKeyId: Access ID
-        accessSecretKey: Access key
+        accessKeyId: Access key ID
+        accessSecretKey: Secret access key
         Buttons:
           ADD: Add Connection
           DUPLICATE: Duplicate Connection
@@ -1176,7 +1193,11 @@ features:
           ADD: "Add connection: S3"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
-        name: Name
+        name: Connection name
+        Placeholders:
+          accessKeyId: Specify your AWS access key ID
+          accessSecretKey: Specify your AWS secret access key
+          name: Specify a name to identify this connection
         region: Region
         required: Required
         testConnection: Test Connection
@@ -1194,7 +1215,11 @@ features:
           ADD: "Add connection: Google Cloud Spanner"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
-        name: Name
+        name: Connection name
+        Placeholders:
+          name: Specify a name to identify this connection
+          projectId: Specify your GCP project ID
+          serviceAccountKeyfile: Specify the location of the file containing your GCP service account
         projectId: Project ID
         serviceAccountKeyfile: Service account key file location
         testConnection: Test Connection

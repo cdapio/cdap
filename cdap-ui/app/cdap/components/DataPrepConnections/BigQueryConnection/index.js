@@ -277,6 +277,7 @@ export default class BigQueryConnection extends Component {
                   value={this.state.name}
                   onChange={this.handleChange.bind(this, 'name')}
                   disabled={this.props.mode === 'EDIT'}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.name`)}
                 />
               </div>
             </div>
@@ -294,6 +295,7 @@ export default class BigQueryConnection extends Component {
                   className="form-control"
                   value={this.state.projectId}
                   onChange={this.handleChange.bind(this, 'projectId')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.projectId`)}
                 />
               </div>
             </div>
@@ -310,6 +312,7 @@ export default class BigQueryConnection extends Component {
                   className="form-control"
                   value={this.state.serviceAccountKeyfile}
                   onChange={this.handleChange.bind(this, 'serviceAccountKeyfile')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.serviceAccountKeyfile`)}
                 />
               </div>
             </div>
@@ -327,6 +330,7 @@ export default class BigQueryConnection extends Component {
                   className="form-control"
                   value={this.state.bucket}
                   onChange={this.handleChange.bind(this, 'bucket')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.bucket`)}
                 />
               </div>
             </div>
