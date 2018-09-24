@@ -9,6 +9,7 @@
     "cdap-dev-build": "NODE_ENV=development parallel-webpack --config=webpack.config.js -d",
     "cdap-dev-build-w": "NODE_ENV=development parallel-webpack --watch -d ",
     "cdap-full-build": "run-p cdap-prod-build distribute",
+    "cdap-non-optimized-full-build": "NODE_ENV=non-optimized-production webpack --config=webpack.config.js",
     "clean-node-modules": "modclean -P -r --patterns=\"default:safe\" --additional-patterns=\"*.xls?x,*.ppt?x,*.rtf,*.png,*.jpg,*.jpeg,*.txt\" --ignore=\"validate-npm-license,readme*\"",
     "distribute": "node ./node_modules/gulp/bin/gulp.js distribute",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
@@ -100,6 +101,8 @@
     "uglifyjs-webpack-plugin": "1.2.7",
     "url-loader": "0.6.2",
     "webpack": "4.16.0",
+    "webpack-cli": "3.1.1",
+    "parallel-webpack": "2.2.0",
     "webpack-livereload-plugin": "2.1.1"
   },
   "dependencies": {
@@ -133,7 +136,6 @@
     "ngreact": "0.3.0",
     "numeral": "1.5.3",
     "object-hash": "1.1.0",
-    "parallel-webpack": "^2.2.0",
     "prop-types": "15.5.10",
     "q": "1.4.1",
     "query-string": "4.3.2",
