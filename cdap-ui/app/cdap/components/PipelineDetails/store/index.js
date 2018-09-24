@@ -31,6 +31,7 @@ const ACTIONS = {
   SET_NEXT_RUN_TIME: 'SET_NEXT_RUN_TIME',
   SET_CURRENT_RUN_ID: 'SET_CURRENT_RUN_ID',
   SET_RUNS: 'SET_RUNS',
+  SET_RUNS_COUNT: 'SET_RUNS_COUNT',
   SET_STATISTICS: 'SET_STATISTICS',
   SET_USER_RUNTIME_ARGUMENTS: 'SET_USER_RUNTIME_ARGUMENTS',
   SET_MACROS_AND_USER_RUNTIME_ARGUMENTS: 'SET_MACROS_AND_USER_RUNTIME_ARGUMENTS',
@@ -62,6 +63,7 @@ const DEFAULT_PIPELINE_DETAILS = {
 
   // Run level info
   runs: [],
+  runsCount: null,
   currentRun: {},
   nextRunTime: null,
   statistics: '',
@@ -169,6 +171,11 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
         stopButtonLoading: false
       };
     }
+    case ACTIONS.SET_RUNS_COUNT:
+      return {
+        ...state,
+        runsCount: action.payload.runsCount
+      };
     case ACTIONS.SET_STATISTICS:
       return {
         ...state,

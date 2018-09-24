@@ -23,6 +23,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.pipelineType = rPipelineDetail.artifact.name;
     let programType = this.pipelineType === GLOBALS.etlDataPipeline ? 'workflows' : 'spark';
+    let programTypeForRunsCount = this.pipelineType === GLOBALS.etlDataPipeline ? 'Workflow' : 'Spark';
     let programName = this.pipelineType === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'DataStreamsSparkStreaming';
     let scheduleId = GLOBALS.defaultScheduleId;
 
@@ -49,6 +50,12 @@ angular.module(PKG.name + '.feature.hydrator')
         programType,
         programName
       });
+    });
+    let pollRunsCount = pipelineDetailsActionCreator.pollRunsCount({
+      namespace: $stateParams.namespace,
+      appId: rPipelineDetail.name,
+      programType: programTypeForRunsCount,
+      programName
     });
 
     pipelineDetailsActionCreator.fetchScheduleStatus({
@@ -107,6 +114,9 @@ angular.module(PKG.name + '.feature.hydrator')
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
       if (runsPoll) {
         runsPoll.unsubscribe();
+      }
+      if (pollRunsCount) {
+        pollRunsCount.unsubscribe();
       }
       if (metricsObservable) {
         metricsObservable.unsubscribe();

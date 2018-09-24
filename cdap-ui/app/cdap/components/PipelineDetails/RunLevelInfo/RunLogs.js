@@ -39,7 +39,7 @@ const RunLogs = ({currentRun, runs, appId, artifactName}) => {
       <Popover
         target={LogsBtnComp}
         showOn='Hover'
-        placement='bottom'
+        placement='bottom-end'
         className="run-info-container run-logs-container disabled"
       >
         {T.translate(`${PREFIX}.pipelineNeverRun`)}
