@@ -16,10 +16,12 @@
 
 var webpack = require('webpack');
 var path = require('path');
-var mode = process.env.NODE_ENV || 'production';
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+var mode = process.env.NODE_ENV || 'production';
+const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
+
 const processEnv = {
-  'NODE_ENV': JSON.stringify(mode),
+  'NODE_ENV': isModeProduction(mode) ? 'production' : 'development',
   '__DEVTOOLS__': false
 };
 
@@ -53,7 +55,7 @@ var plugins = [
   getWebpackDLLPlugin(mode)
 ];
 
-if (mode === 'production') {
+if (isModeProduction(mode)) {
   plugins.push(
     new UglifyJsPlugin({
       uglifyOptions: {

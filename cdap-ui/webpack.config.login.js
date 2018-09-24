@@ -34,6 +34,8 @@ let cleanOptions = {
   dry: false
 };
 var mode = process.env.NODE_ENV || 'production';
+const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
+
 const getWebpackDllPlugins = (mode) => {
   var sharedDllManifestFileName = 'shared-vendor-manifest.json';
   if (mode === 'development') {
@@ -71,19 +73,25 @@ var plugins = [
     filename: 'login.html',
     hash: true,
     hashId: uuidV4(),
-    mode: mode === 'production' ? '' : 'development.'
+    mode: isModeProduction(mode) ? '' : 'development.'
   }),
   new StyleLintPlugin({
     syntax: 'scss',
     files: ['**/*.scss']
   }),
-  new ForkTsCheckerWebpackPlugin({
-    tsconfig: __dirname + '/tsconfig.json',
-    tslint: __dirname + '/tslint.json',
-    // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
-    memoryLimit: 4096
-  }),
 ];
+
+if (!isModeProduction(mode)) {
+  plugins.push(
+    new ForkTsCheckerWebpackPlugin({
+      tsconfig: __dirname + '/tsconfig.json',
+      tslint: __dirname + '/tslint.json',
+      // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
+      memoryLimit: 4096
+    }),
+  );
+}
+
 var rules = [
   {
     test: /\.scss$/,
@@ -159,7 +167,7 @@ var rules = [
   }
 ];
 var webpackConfig = {
-  mode,
+  mode: isModeProduction(mode) ? 'production' : 'development',
   context: __dirname + '/app/login',
   entry: {
     'login': ['@babel/polyfill', './login.js']
@@ -189,7 +197,7 @@ var webpackConfig = {
   }
 };
 
-if (mode === 'production') {
+if (isModeProduction(mode)) {
   plugins.push(
     new webpack.DefinePlugin({
       'process.env':{
