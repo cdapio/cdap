@@ -44,7 +44,7 @@ var plugins = [
   // by default minify it.
   new webpack.DefinePlugin({
     'process.env':{
-      'NODE_ENV': isModeProduction(mode) ? 'production' : 'development'
+      'NODE_ENV': isModeProduction(mode) ? JSON.stringify('production') : JSON.stringify('development')
     },
   }),
 ];
