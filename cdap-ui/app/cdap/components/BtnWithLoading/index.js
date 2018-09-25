@@ -49,7 +49,7 @@ export default function BtnWithLoading({
 }
 
 BtnWithLoading.propTypes = {
-  darker: PropTypes.boolean,
+  darker: PropTypes.bool,
   className: PropTypes.string,
   label: PropTypes.string,
   loading: PropTypes.bool,
