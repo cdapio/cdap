@@ -58,7 +58,6 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "rules-engine"?: boolean;
     "metadata"?: boolean;
     "hub"?: boolean;
-    "footer"?: boolean;
     "ingest-data"?: boolean;
     "add-namespace"?: boolean;
   };
@@ -127,7 +126,6 @@ interface IThemeObj {
   showRulesEngine?: boolean;
   showMetadata?: boolean;
   showHub?: boolean;
-  showFooter?: boolean;
   showIngestData?: boolean;
   showAddNamespace?: boolean;
 }
@@ -215,7 +213,6 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showRulesEngine: true,
       showMetadata: true,
       showHub: true,
-      showFooter: true,
       showIngestData: true,
       showAddNamespace: true,
     };
@@ -245,9 +242,6 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('hub' in featuresJson && isBoolean(featuresJson.hub)) {
       features.showHub = featuresJson.hub;
-    }
-    if ('footer' in featuresJson && isBoolean(featuresJson.footer)) {
-      features.showFooter = featuresJson.footer;
     }
     if ('ingest-data' in featuresJson && isBoolean(featuresJson['ingest-data'])) {
       features.showIngestData = featuresJson['ingest-data'];
