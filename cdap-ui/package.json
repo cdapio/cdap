@@ -10,7 +10,7 @@
     "cdap-dev-build-w": "NODE_ENV=development parallel-webpack --watch -d ",
     "cdap-full-build": "run-p cdap-prod-build distribute",
     "cdap-non-optimized-prod-build": "NODE_ENV=non-optimized-production webpack --config=webpack.config.js",
-    "cdap-non-optimized-full-build": "NODE_ENV=non-optimized-production webpack --config=webpack.config.js && npm run distribute",
+    "cdap-non-optimized-full-build": "run-p cdap-non-optimized-prod-build distribute",
     "clean-node-modules": "modclean -P -r --patterns=\"default:safe\" --additional-patterns=\"*.xls?x,*.ppt?x,*.rtf,*.png,*.jpg,*.jpeg,*.txt\" --ignore=\"validate-npm-license,readme*\"",
     "distribute": "node ./node_modules/gulp/bin/gulp.js distribute",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
