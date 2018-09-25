@@ -142,6 +142,9 @@ export default class ProductDropdown extends Component {
           <DropdownToggle caret>
             <div className="secure-mode-icon">
               <IconSVG name="icon-cogs" />
+              <div className="caret-down-container">
+                <IconSVG name="icon-caret-down" />
+              </div>
             </div>
           </DropdownToggle>
           <CustomDropdownMenu right>

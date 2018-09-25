@@ -16,6 +16,7 @@
 
 @import "~styles/variables.scss";
 $namespace-action-bg: #d8d8d8;
+$dropdown-border-color: $grey-02;
 $namespace-dropdown-color: $grey-08;
 $current-namespace-hover-bg: $cdap-white-light;
 $namespace-hover-bg: #9b9b9b;
@@ -25,6 +26,12 @@ $grey-font: #bbbbbb;
 $success-color: #7ed321;
 $star-color: #373a3c;
 
+#header-namespace-dropdown {
+  margin-left: 10px;
+  padding-left: 0;
+  border-left: 1px solid $dropdown-border-color;
+  height: 100%;
+}
 .namespace-dropdown {
   width: 160px;
   border-left: 1px solid $dark-font;
