@@ -973,7 +973,6 @@ export default class DataPrepConnections extends Component {
           setSpannerObservable
           .subscribe(listSpannerInstances.bind(null, this.state.activeConnectionid));
         }
-
       };
     }
 

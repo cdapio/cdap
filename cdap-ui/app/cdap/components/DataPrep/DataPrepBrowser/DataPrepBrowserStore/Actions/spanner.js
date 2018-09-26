@@ -21,10 +21,17 @@ import MyDataPrepApi from 'api/dataprep';
 import {objectQuery} from 'services/helpers';
 
 const setSpannerAsActiveBrowser = (payload) => {
-  let {spanner} = DataPrepBrowserStore.getState();
-  if (spanner.loading) { return; }
+  let {spanner, activeBrowser} = DataPrepBrowserStore.getState();
+
+  if (activeBrowser.name !== payload.name) {
+    setActiveBrowser(payload);
+  }
 
   let {id: connectionId} = payload;
+
+  if (spanner.connectionId === connectionId) { return; }
+
+  setSpannerLoading();
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_SPANNER_CONNECTION_ID,
@@ -33,9 +40,6 @@ const setSpannerAsActiveBrowser = (payload) => {
     }
   });
 
-  setActiveBrowser(payload);
-
-  setSpannerLoading();
   let namespace = getCurrentNamespace();
   let params = {
     namespace,
