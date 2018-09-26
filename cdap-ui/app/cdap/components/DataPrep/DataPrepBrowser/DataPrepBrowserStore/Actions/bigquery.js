@@ -20,11 +20,18 @@ import {getCurrentNamespace} from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import {objectQuery} from 'services/helpers';
 
-const setBigQueryAsActiveBrowser = (payload) => {
-  let {bigquery} = DataPrepBrowserStore.getState();
-  if (bigquery.loading) { return; }
+const setBigQueryAsActiveBrowser = (payload, getDatasets = false) => {
+  let {bigquery, activeBrowser} = DataPrepBrowserStore.getState();
+
+  if (activeBrowser.name !== payload.name) {
+    setActiveBrowser(payload);
+  }
 
   let {id: connectionId} = payload;
+
+  if (bigquery.connectionId === connectionId) { return; }
+
+  setBigQueryLoading();
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_BIGQUERY_CONNECTION_ID,
@@ -32,10 +39,6 @@ const setBigQueryAsActiveBrowser = (payload) => {
       connectionId
     }
   });
-
-  setActiveBrowser(payload);
-  setBigQueryLoading();
-  listBiqQueryDatasets(connectionId);
 
   let namespace = getCurrentNamespace();
   let params = {
@@ -53,6 +56,9 @@ const setBigQueryAsActiveBrowser = (payload) => {
           connectionId
         }
       });
+      if (getDatasets) {
+        listBiqQueryDatasets(connectionId);
+      }
     }, (err) => {
       setError(err);
     });

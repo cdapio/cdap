@@ -27,7 +27,6 @@ import {
   setGCSAsActiveBrowser,
   setBigQueryAsActiveBrowser,
   setSpannerAsActiveBrowser,
-  listSpannerInstances,
   reset as resetDataPrepBrowserStore
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, Switch, Redirect} from 'react-router-dom';
@@ -234,7 +233,7 @@ export default class DataPrepConnections extends Component {
       activeConnectionid = browserName.id;
       activeConnectionType = ConnectionType.GCS;
     } else if (typeof browserName === 'object' && browserName.type === ConnectionType.BIGQUERY) {
-      setBigQueryAsActiveBrowser({name: ConnectionType.BIGQUERY, id: browserName.id});
+      setBigQueryAsActiveBrowser({name: ConnectionType.BIGQUERY, id: browserName.id}, true);
       activeConnectionid = browserName.id;
       activeConnectionType = ConnectionType.BIGQUERY;
     } else if (typeof browserName === 'object' && browserName.type === ConnectionType.SPANNER) {
@@ -965,7 +964,7 @@ export default class DataPrepConnections extends Component {
       }
       setActiveConnection = setGCSAsActiveBrowser.bind(null, {name: ConnectionType.GCS, id: this.state.activeConnectionid, path});
     } else if (this.state.activeConnectionType === ConnectionType.BIGQUERY) {
-      setActiveConnection = setBigQueryAsActiveBrowser.bind(null, {name: ConnectionType.BIGQUERY, id: this.state.activeConnectionid});
+      setActiveConnection = setBigQueryAsActiveBrowser.bind(null, {name: ConnectionType.BIGQUERY, id: this.state.activeConnectionid}, true);
     } else if (this.state.activeConnectionType === ConnectionType.SPANNER) {
       setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id: this.state.activeConnectionid}, true);
     }
