@@ -85,9 +85,12 @@ const dispatchNodeServerDown = () => {
 };
 
 const getRequestInfo = () => {
-  let headers = {};
+  let headers = {
+    'Access-Control-Allow-Origin': '*'
+  };
   let requestInfo = {
-    credentials: 'include'
+    credentials: 'include',
+    mode: 'no-cors'
   };
   if (window.CDAP_CONFIG.securityEnabled) {
     let token = cookie.load('CDAP_Auth_Token');
