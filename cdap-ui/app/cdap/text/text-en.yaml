@@ -1388,7 +1388,7 @@ features:
     noLineage: No field level lineage available for this field
     OperationsModal:
       lastExecution: "Last executed by '{app}' on {time}"
-      summaryText: "Operations between {sources} and '{target}'"
+      summaryText: "Operations between {sources} and {targets}"
       Table:
         description: Description
         input: Input
