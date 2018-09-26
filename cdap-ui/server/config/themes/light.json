@@ -13,7 +13,6 @@
     "rules-engine": true,
     "metadata": true,
     "hub": true,
-    "footer": false,
     "ingest-data": false,
     "add-namespace": false
   }
