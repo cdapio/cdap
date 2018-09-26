@@ -196,7 +196,6 @@ export default class DataPrepConnections extends Component {
 
   handlePropagation(browserName, e) {
     if (this.props.enableRouting && !this.props.singleWorkspaceMode) {
-      setActiveBrowser({name: typeof browserName === 'object' ? browserName.name : browserName});
       return;
     }
     preventPropagation(e);
@@ -935,34 +934,45 @@ export default class DataPrepConnections extends Component {
       setActiveConnection = setActiveBrowser.bind(null, {name: ConnectionType.FILE});
     } else if (this.state.activeConnectionType === ConnectionType.S3) {
       let {workspaceInfo} = DataPrepStore.getState().dataprep;
-      let path;
-      if (isObject(workspaceInfo)) {
-        let {key} = workspaceInfo.properties;
-        let bucketName = workspaceInfo.properties['bucket-name'];
-        if (bucketName) {
-          path = `/${bucketName}/${key}`;
-        } else {
-          let state = DataPrepBrowserStore.getState();
-          path = state.s3.prefix;
+      let {s3} = DataPrepBrowserStore.getState();
+      if (s3.loading) {
+        setActiveConnection = setS3AsActiveBrowser.bind(null, {name: ConnectionType.S3, id: this.state.activeConnectionid});
+      } else {
+        let path;
+        if (isObject(workspaceInfo)) {
+          let {key} = workspaceInfo.properties;
+          let bucketName = workspaceInfo.properties['bucket-name'];
+          if (bucketName) {
+            path = `/${bucketName}/${key}`;
+          } else {
+            let state = DataPrepBrowserStore.getState();
+            path = state.s3.prefix;
+          }
         }
+        setActiveConnection = setS3AsActiveBrowser.bind(null, {name: ConnectionType.S3, id: this.state.activeConnectionid, path});
       }
-      setActiveConnection = setS3AsActiveBrowser.bind(null, {name: ConnectionType.S3, id: this.state.activeConnectionid, path});
     } else if (this.state.activeConnectionType === ConnectionType.GCS) {
       let {workspaceInfo} = DataPrepStore.getState().dataprep;
-      let path;
-      if (isObject(workspaceInfo) && workspaceInfo.properties.path) {
-        path = workspaceInfo.properties.path;
-        path = path.split('/');
-        path = path.slice(0, path.length - 1).join('/');
-        let bucketName = workspaceInfo.properties.bucket;
-        if (bucketName) {
-          path = `/${bucketName}/${path}/`;
-        } else {
-          let state = DataPrepBrowserStore.getState();
-          path = state.gcs.prefix;
+      let {gcs} = DataPrepBrowserStore.getState();
+      if (gcs.loading) {
+        setActiveConnection = setGCSAsActiveBrowser.bind(null, {name: ConnectionType.GCS, id: this.state.activeConnectionid});
+      } else {
+        let path;
+        if (isObject(workspaceInfo) && workspaceInfo.properties.path) {
+          path = workspaceInfo.properties.path;
+          path = path.split('/');
+          path = path.slice(0, path.length - 1).join('/');
+          let bucketName = workspaceInfo.properties.bucket;
+          if (bucketName) {
+            path = `/${bucketName}/${path}/`;
+          } else {
+            let state = DataPrepBrowserStore.getState();
+            path = state.gcs.prefix;
+          }
         }
+        setActiveConnection = setGCSAsActiveBrowser.bind(null, {name: ConnectionType.GCS, id: this.state.activeConnectionid, path});
       }
-      setActiveConnection = setGCSAsActiveBrowser.bind(null, {name: ConnectionType.GCS, id: this.state.activeConnectionid, path});
+
     } else if (this.state.activeConnectionType === ConnectionType.BIGQUERY) {
       setActiveConnection = setBigQueryAsActiveBrowser.bind(null, {name: ConnectionType.BIGQUERY, id: this.state.activeConnectionid}, true);
     } else if (this.state.activeConnectionType === ConnectionType.SPANNER) {

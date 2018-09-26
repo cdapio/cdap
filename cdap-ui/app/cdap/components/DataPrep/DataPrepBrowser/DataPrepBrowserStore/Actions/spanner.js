@@ -31,14 +31,14 @@ const setSpannerAsActiveBrowser = (payload, getInstances = false) => {
 
   if (spanner.connectionId === connectionId) { return; }
 
-  setSpannerLoading();
-
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_SPANNER_CONNECTION_ID,
     payload: {
       connectionId
     }
   });
+
+  setSpannerLoading();
 
   let namespace = getCurrentNamespace();
   let params = {

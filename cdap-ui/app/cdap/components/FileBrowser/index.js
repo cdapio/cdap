@@ -158,13 +158,17 @@ export default class FileBrowser extends Component {
       hdfsPath = this.props.initialDirectoryPath;
       return;
     } else {
-      hdfsPath = props.location.pathname.slice(props.match.url.length);
-      hdfsPath = hdfsPath || this.props.initialDirectoryPath || BASEPATH;
+      if (objectQuery(props, 'match', 'url')) {
+        hdfsPath = props.location.pathname.slice(props.match.url.length);
+        hdfsPath = hdfsPath || this.props.initialDirectoryPath || BASEPATH;
+      }
     }
 
     if (hdfsPath === this.state.path) { return; }
 
-    goToPath(hdfsPath);
+    if (hdfsPath) {
+      goToPath(hdfsPath);
+    }
   }
 
   handleSearch = (e) => {
