@@ -31,7 +31,6 @@ let cleanOptions = {
 var mode = process.env.NODE_ENV || 'production';
 const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
 
-const COMMON_LIB_NAME = 'common-lib-new';
 
 var plugins = [
   new LodashModuleReplacementPlugin({
@@ -163,14 +162,12 @@ var webpackConfig = {
   context: __dirname + '/app/common',
   optimization: {
     splitChunks: {
-      name: COMMON_LIB_NAME,
-      filename: COMMON_LIB_NAME + '.js',
       minChunks: Infinity
     }
   },
   entry: {
     'common-new': ['./cask-shared-components.js'],
-    [COMMON_LIB_NAME]: [
+    'common-lib-new': [
       '@babel/polyfill',
       'classnames',
       'reactstrap',

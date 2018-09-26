@@ -396,7 +396,7 @@ export default class NamespaceDropdown extends Component {
           onClose={this.hideNamespaceWizard}
           wizardType='add_namespace'
         />
-    </div>
+      </div>
     );
   }
 }
