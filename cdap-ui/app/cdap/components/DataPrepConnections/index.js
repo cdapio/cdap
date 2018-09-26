@@ -238,7 +238,7 @@ export default class DataPrepConnections extends Component {
       activeConnectionid = browserName.id;
       activeConnectionType = ConnectionType.BIGQUERY;
     } else if (typeof browserName === 'object' && browserName.type === ConnectionType.SPANNER) {
-      setSpannerAsActiveBrowser({name: ConnectionType.SPANNER, id: browserName.id});
+      setSpannerAsActiveBrowser({name: ConnectionType.SPANNER, id: browserName.id}, true);
       activeConnectionid = browserName.id;
       activeConnectionType = ConnectionType.SPANNER;
     }
@@ -967,13 +967,7 @@ export default class DataPrepConnections extends Component {
     } else if (this.state.activeConnectionType === ConnectionType.BIGQUERY) {
       setActiveConnection = setBigQueryAsActiveBrowser.bind(null, {name: ConnectionType.BIGQUERY, id: this.state.activeConnectionid});
     } else if (this.state.activeConnectionType === ConnectionType.SPANNER) {
-      setActiveConnection = () => {
-        const setSpannerObservable = setSpannerAsActiveBrowser({name: ConnectionType.SPANNER, id: this.state.activeConnectionid});
-        if (setSpannerObservable && typeof setSpannerObservable.subscribe === 'function') {
-          setSpannerObservable
-          .subscribe(listSpannerInstances.bind(null, this.state.activeConnectionid));
-        }
-      };
+      setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id: this.state.activeConnectionid}, true);
     }
 
     let {
