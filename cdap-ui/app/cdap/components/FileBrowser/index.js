@@ -159,7 +159,8 @@ export default class FileBrowser extends Component {
       return;
     } else {
       if (objectQuery(props, 'match', 'url')) {
-        hdfsPath = props.location.pathname.slice(props.match.url.length);
+        let pathname = window.location.pathname.replace(/\/cdap/, '');
+        hdfsPath = pathname.slice(props.match.url.length);
         hdfsPath = hdfsPath || this.props.initialDirectoryPath || BASEPATH;
       }
     }

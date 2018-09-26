@@ -762,12 +762,11 @@ export default class DataPrepConnections extends Component {
       <Switch>
         <Route
           path={`${BASEPATH}/file`}
-          render={({match, location}) => {
+          render={({match}) => {
             const setActiveConnection = setActiveBrowser.bind(null, {name: ConnectionType.FILE});
             return (
               <DataPrepBrowser
                 match={match}
-                location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
@@ -794,7 +793,6 @@ export default class DataPrepConnections extends Component {
             return (
               <DataPrepBrowser
                 match={match}
-                location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
@@ -810,7 +808,6 @@ export default class DataPrepConnections extends Component {
             return (
               <DataPrepBrowser
                 match={match}
-                location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
@@ -827,7 +824,6 @@ export default class DataPrepConnections extends Component {
             return (
               <DataPrepBrowser
                 match={match}
-                location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
@@ -844,7 +840,6 @@ export default class DataPrepConnections extends Component {
             return (
               <DataPrepBrowser
                 match={match}
-                location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
@@ -860,7 +855,6 @@ export default class DataPrepConnections extends Component {
             return (
               <DataPrepBrowser
                 match={match}
-                location={location}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
