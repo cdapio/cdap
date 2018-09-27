@@ -16,6 +16,8 @@
 
 import {MyPipelineApi} from 'api/pipeline';
 import PipelineDetailStore, {ACTIONS} from 'components/PipelineDetails/store';
+import differenceBy from 'lodash/differenceBy';
+import find from 'lodash/find';
 
 const init = (pipeline) => {
   PipelineDetailStore.dispatch({
@@ -172,13 +174,28 @@ const setCurrentRunId = (runId) => {
   });
 };
 
+const setRuns = (runs) => {
+  PipelineDetailStore.dispatch({
+    type: ACTIONS.SET_RUNS,
+    payload: { runs }
+  });
+};
+
+const getRunDetails = ({namespace, appId, programType, programName, runid}) => {
+  return MyPipelineApi
+    .getRunDetails({
+      namespace,
+      appId,
+      programName,
+      programType,
+      runid
+    });
+};
+
 const getRuns = (params) => {
   let runsFetch = MyPipelineApi.getRuns(params);
   runsFetch.subscribe(runs => {
-    PipelineDetailStore.dispatch({
-      type: ACTIONS.SET_RUNS,
-      payload: { runs }
-    });
+    setRuns(runs);
   }, (err) => {
     console.log(err);
   });
@@ -209,19 +226,41 @@ const pollRuns = (params) => {
     .pollRuns(params)
     .subscribe(runs => {
       // When there are new runs, always set current run to most recent run
-      let currentRuns = PipelineDetailStore.getState().runs;
+      let {runs: currentRuns} = PipelineDetailStore.getState();
+      /**
+       *  If there is a run id in the url then stick to that runid.
+       *  Even if the user starts a new run.
+       */
+      let isRunIdAvailableInURLAsQueryParam = location.search.indexOf('runid') === -1;
 
-      if (runs.length && (runs.length > currentRuns.length || runs[0].runid !== currentRuns[0].runid || runs[0].status !== currentRuns[0].status)) {
+      // Oh my :|
+      if (
+        isRunIdAvailableInURLAsQueryParam &&
+        runs.length &&
+        (
+          runs.length > currentRuns.length ||
+          runs[0].runid !== currentRuns[0].runid ||
+          runs[0].status !== currentRuns[0].status
+        )
+      ) {
         PipelineDetailStore.dispatch({
           type: ACTIONS.SET_CURRENT_RUN_ID,
           payload: { runId: runs[0].runid }
         });
       }
 
-      PipelineDetailStore.dispatch({
-        type: ACTIONS.SET_RUNS,
-        payload: { runs }
+      // Find if there are any new runs started
+      let difference = differenceBy(runs, currentRuns, 'runid');
+      // Update any existing runs, say 'status', in UI
+      let newRuns = currentRuns.map(run => {
+        let updatedRun = find(runs, ['runid', run.runid]);
+        return !updatedRun ? run : updatedRun;
       });
+      // If there are any new runs add it to the existing runs we have
+      if (difference.length) {
+        newRuns = difference.concat(currentRuns);
+      }
+      setRuns(newRuns);
     }, (err) => {
       console.log(err);
     });
@@ -337,6 +376,7 @@ export {
   setOptionalProperty,
   setSchedule,
   fetchScheduleStatus,
+  setRuns,
   setEngine,
   setBatchInterval,
   setMemoryMB,
@@ -355,6 +395,7 @@ export {
   setMaxConcurrentRuns,
   setCurrentRunId,
   getRuns,
+  getRunDetails,
   pollRuns,
   pollRunsCount,
   getNextRunTime,
