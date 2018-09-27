@@ -93,16 +93,27 @@ export default class GCSConnection extends Component {
       });
   }
 
+  constructProperties = () => {
+    const properties = {};
+
+    if (this.state.projectId.length > 0) {
+      properties.projectId = this.state.projectId;
+    }
+
+    if (this.state.serviceAccountKeyfile.length > 0) {
+      properties['service-account-keyfile'] = this.state.serviceAccountKeyfile;
+    }
+
+    return properties;
+  }
+
   addConnection() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let requestBody = {
       name: this.state.name,
       type: ConnectionType.GCS,
-      properties: {
-        projectId: this.state.projectId,
-        'service-account-keyfile': this.state.serviceAccountKeyfile
-      }
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.createConnection({namespace}, requestBody)
@@ -130,10 +141,7 @@ export default class GCSConnection extends Component {
       name: this.state.name,
       id: this.props.connectionId,
       type: ConnectionType.GCS,
-      properties: {
-        projectId: this.state.projectId,
-        'service-account-keyfile': this.state.serviceAccountKeyfile
-      }
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.updateConnection(params, requestBody)
@@ -165,10 +173,7 @@ export default class GCSConnection extends Component {
     let requestBody = {
       name: this.state.name,
       type: ConnectionType.GCS,
-      properties: {
-        projectId: this.state.projectId,
-        'service-account-keyfile': this.state.serviceAccountKeyfile
-      }
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.gcsTestConnection({namespace}, requestBody)
@@ -202,9 +207,7 @@ export default class GCSConnection extends Component {
   }
 
   renderTestButton() {
-    let disabled = !this.state.name ||
-      !this.state.projectId ||
-      this.state.testConnectionLoading;
+    let disabled = !this.state.name || this.state.testConnectionLoading;
 
     return (
       <BtnWithLoading
@@ -219,8 +222,7 @@ export default class GCSConnection extends Component {
   }
 
   renderAddConnectionButton() {
-    let disabled = !this.state.name ||
-      !this.state.projectId;
+    let disabled = !this.state.name;
 
     let onClickFn = this.addConnection;
 
@@ -279,7 +281,6 @@ export default class GCSConnection extends Component {
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.projectId`)}
-              <span className="asterisk">*</span>
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
