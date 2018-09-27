@@ -16,4 +16,9 @@
 
 .cask-configurable-tab {
   height: 100%;
+
+  .tab-header-icon {
+    &.link > img { width: 18px; }
+    .icon-svg { margin-top: -3px; }
+  }
 }

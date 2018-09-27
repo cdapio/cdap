@@ -22,7 +22,11 @@ const basepath = `${window.CDAP_CONFIG.marketUrl}`;
 
 export const MyMarketApi = {
   list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
+  getCategories: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/categories.json`),
   get: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages/:packageName/:version/spec.json`),
+  getCategoryIcon: (category) => {
+    return `${basepath}/categories/${category}/icon.png`;
+  },
   getIcon: (entity) => {
     return `${basepath}/packages/${entity.name}/${entity.version}/icon.png`;
   },
