@@ -956,7 +956,7 @@ export default class DataPrepConnections extends Component {
         path = path.slice(0, path.length - 1).join('/');
         let bucketName = workspaceInfo.properties.bucket;
         if (bucketName) {
-          path = `/${bucketName}/${path}/`;
+          path = !isNilOrEmpty(path) ? `/${bucketName}/${path}/` : `/${bucketName}`;
         } else {
           let state = DataPrepBrowserStore.getState();
           path = state.gcs.prefix;
