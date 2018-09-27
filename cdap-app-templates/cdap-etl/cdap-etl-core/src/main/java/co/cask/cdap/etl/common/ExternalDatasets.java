@@ -79,6 +79,9 @@ public final class ExternalDatasets {
           throw new IllegalArgumentException(
             "An external source cannot have the same name as an existing CDAP Dataset instance " + inputName);
         }
+        // if the dataset already exists with the same type then it must have been created for tracking during the
+        // deploy stage. Just update the properties in this case.
+        admin.updateDataset(inputName, DatasetProperties.of(arguments));
       }
       return Input.ofDataset(inputName, Collections.unmodifiableMap(arguments)).alias(input.getAlias());
     } catch (DatasetManagementException e) {
@@ -129,6 +132,9 @@ public final class ExternalDatasets {
           throw new IllegalArgumentException(
             "An external sink cannot have the same name as an existing CDAP Dataset instance " + outputName);
         }
+        // if the dataset already exists with the same type then it must have been created for tracking during the
+        // deploy stage. Just update the properties in this case.
+        admin.updateDataset(outputName, DatasetProperties.of(arguments));
       }
       return Output.ofDataset(outputName, Collections.unmodifiableMap(arguments)).alias(output.getAlias());
     } catch (DatasetManagementException e) {
