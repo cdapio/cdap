@@ -73,7 +73,7 @@ export default class PlusButtonModal extends Component {
       <Modal
         isOpen={this.props.isOpen}
         toggle={this.closeHandler.bind(this)}
-        className={classnames("plus-button-modal", {
+        className={classnames("plus-button-modal cdap-modal", {
           "cask-market": this.state.viewMode === 'marketplace',
           "add-entity-modal": this.state.viewMode === 'resourcecenter'
         })}
