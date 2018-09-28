@@ -49,7 +49,7 @@ public class KafkaLogReader implements LogReader {
 
   private final BrokerService brokerService;
   private final String topic;
-  private final LoggingEventSerializer serializer;
+  private final ThreadLocal<LoggingEventSerializer> serializer;
   private final StringPartitioner partitioner;
 
   /**
@@ -63,7 +63,7 @@ public class KafkaLogReader implements LogReader {
     Preconditions.checkArgument(!this.topic.isEmpty(), "Kafka topic is empty!");
 
     this.partitioner = partitioner;
-    this.serializer = new LoggingEventSerializer();
+    this.serializer = ThreadLocal.withInitial(LoggingEventSerializer::new);
   }
 
   @Override
@@ -100,7 +100,7 @@ public class KafkaLogReader implements LogReader {
         return;
       }
 
-      KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, latestOffset, maxEvents, callback,
+      KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer.get(), latestOffset, maxEvents, callback,
                                                       readRange.getFromMillis());
 
       fetchLogEvents(kafkaConsumer, kafkaCallback, startOffset, latestOffset, maxEvents, readRange);
@@ -156,7 +156,7 @@ public class KafkaLogReader implements LogReader {
         return;
       }
 
-      KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, stopOffset, maxEvents, callback,
+      KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer.get(), stopOffset, maxEvents, callback,
                                                       readRange.getFromMillis());
 
       // Events between startOffset and stopOffset may not have the required logs we are looking for,
