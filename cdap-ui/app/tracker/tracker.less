@@ -110,28 +110,18 @@ body.state-tracker-home.state-tracker {
       font-size: 18px;
       margin-top: 45px;
       margin-bottom: 10px;
+      border-bottom: 1px solid @grey-03;
     }
 
-    .subtitle { font-size: 14px; }
+    .subtitle { font-size: 15px; }
 
-    .tips-table.grid-wrapper {
-      margin-top: 15px;
-
-      .grid.grid-container { max-height: 300px; }
-
-      .grid-row {
-        padding: 0;
-        grid-template-columns: 1fr 1fr 2fr;
-
-        &:hover { background-color: white; }
-
-        > div,
-        > strong {
-          padding: 10px 20px;
-        }
+    .search-tips-container {
+      > div {
+        margin: 20px 0;
       }
-
-      .separator { color: @tracker-grey; }
+      .search-tip-highlight {
+        color: @tips-highlight-color;
+      }
     }
   }
 }
