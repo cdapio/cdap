@@ -258,7 +258,6 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     for (Map.Entry<AccessAwareDatasetCacheKey, Dataset> entry : datasetCache.asMap().entrySet()) {
       if (dataset == entry.getValue()) {
         datasetCache.invalidate(entry.getKey());
-
         // Make sure all unique access type are removed from the cache before breaking
         // This will ensure all different cache entries that shares the same underlying dataset instance gets
         // invalidated
@@ -268,6 +267,13 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
         }
       }
     }
+
+    // CDAP-14326 check if at least one of the entries of the given dataset was invalidated from datasetCache. This
+    // means dataset provided was acquired through this context. Hence return without logging any warning.
+    if (accessTypes.size() < AccessType.values().length) {
+      return;
+    }
+
     // we can only hope that dataset.toString() is meaningful
     LOG.warn("Attempt to discard a dataset that was not acquired through this context: {}", dataset);
   }
