@@ -39,6 +39,7 @@ public class ProfileMetricService extends AbstractScheduledService {
   private final long intervalMinutes;
   private final int numNodes;
   private final ScheduledExecutorService executor;
+  private long startUpTime;
 
   public ProfileMetricService(MetricsCollectionService metricsCollectionService, ProgramRunId programRunId,
                               ProfileId profileId, int numNodes, ScheduledExecutorService executor) {
@@ -52,6 +53,23 @@ public class ProfileMetricService extends AbstractScheduledService {
     this.numNodes = numNodes;
     this.intervalMinutes = intervalMinutes;
     this.executor = executor;
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    setStartUpTime(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    long duration = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - startUpTime;
+    // if the duration is less than the interval time, we just emit a metric
+    if (duration < intervalMinutes * 60) {
+      emitMetric();
+      // else if the remainder seconds is greater or equal to half of the interval seconds, we emit a metric
+    } else if (duration % 60 >= intervalMinutes * 60 / 2) {
+      emitMetric();
+    }
   }
 
   @Override
@@ -72,6 +90,11 @@ public class ProfileMetricService extends AbstractScheduledService {
   @VisibleForTesting
   void emitMetric() {
     metricsContext.increment(Constants.Metrics.Program.PROGRAM_NODE_MINUTES, intervalMinutes * numNodes);
+  }
+
+  @VisibleForTesting
+  void setStartUpTime(long startUpTimeSecs) {
+    this.startUpTime = startUpTimeSecs;
   }
 
   /**
