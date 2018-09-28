@@ -21,11 +21,15 @@ import MyDataPrepApi from 'api/dataprep';
 import {objectQuery} from 'services/helpers';
 
 const setKafkaAsActiveBrowser = (payload) => {
-  let {kafka} = DataPrepBrowserStore.getState();
+  let {kafka, activeBrowser} = DataPrepBrowserStore.getState();
 
-  if (kafka.loading) { return; }
+  if (activeBrowser.name !== payload.name) {
+    setActiveBrowser(payload);
+  }
 
   let {id: connectionId} = payload;
+
+  if (kafka.connectionId === connectionId) { return; }
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_KAFKA_CONNECTION_ID,
@@ -33,7 +37,7 @@ const setKafkaAsActiveBrowser = (payload) => {
       connectionId
     }
   });
-  setActiveBrowser(payload);
+
   setKafkaInfoLoading();
 
   let namespace = NamespaceStore.getState().selectedNamespace;

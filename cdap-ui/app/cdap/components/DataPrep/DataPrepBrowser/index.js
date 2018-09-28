@@ -99,7 +99,6 @@ export default class DataPrepBrowser extends Component {
   }
 }
 DataPrepBrowser.propTypes = {
-  location: PropTypes.object,
   match: PropTypes.object,
   setActiveConnection: PropTypes.func
 };
