@@ -178,7 +178,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 starting: 0,
                 duration: 0
               };
-              if (app.name === resObj.appId) {
+              if (app.name === resObj.appId && !app.isDraft) {
                 if (latestRun.starting !== 0) {
                   latestRun.duration = latestRun.end ?
                     latestRun.end - latestRun.starting
@@ -247,6 +247,9 @@ angular.module(PKG.name + '.feature.hydrator')
         .$promise
         .then((runsCountList) => {
           vm.pipelineList = vm.pipelineList.map(pipeline => {
+            if (pipeline.isDraft) {
+              return pipeline;
+            }
             let runsCountObj = _.find(runsCountList, { appId: pipeline.name});
             let numRuns = 0;
             if (typeof runsCountObj !== 'undefined') {
@@ -284,11 +287,12 @@ angular.module(PKG.name + '.feature.hydrator')
           .$promise
           .then(function (res) {
           if (res && res.length) {
-            vm.getcurrentVisiblePipelines().forEach(function (app) {
-              if (app.name === batchParams.appId) {
-                app.nextRun = res[0].time;
-              }
-            });
+            vm.getCurrentVisiblePipelines()
+              .forEach(function (app) {
+                if (app.name === batchParams.appId) {
+                  app.nextRun = res[0].time;
+                }
+              });
           }
         });
       });
@@ -298,6 +302,10 @@ angular.module(PKG.name + '.feature.hydrator')
 
     vm.updateStatusAppObject =() => {
       angular.forEach(vm.pipelineList, function (app) {
+        if (app.isDraft) {
+          app.displayStatus = vm.MyPipelineStatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.DRAFT);
+          return;
+        }
         if (!vm.latestRunExists(app)) {
           app.displayStatus = vm.MyPipelineStatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.DEPLOYED);
         } else {
@@ -322,9 +330,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 id: (value.__ui__  && value.__ui__.draftId) ? value.__ui__.draftId : key,
                 artifact: value.artifact,
                 description: myHelpers.objectQuery(value, 'description'),
-                displayStatus: vm.MyPipelineStatusMapper.lookupDisplayStatus('DRAFT'),
-                numRuns: 'N/A',
-                lastStartTime: 'N/A'
+                displayStatus: vm.MyPipelineStatusMapper.lookupDisplayStatus('DRAFT')
               });
             });
           }
