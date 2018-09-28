@@ -19,8 +19,8 @@ import Tabs from '../Tabs';
 import TabHeaders from 'components/Tabs/TabHeaders';
 import TabHead from 'components/Tabs/TabHead';
 import TabGroup from 'components/Tabs/TabGroup';
-import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
+import TabIcon from 'components/ConfigurableTab/TabIcon';
 
 require('./ConfigurableTab.scss');
 const TabConfig = PropTypes.shape({
@@ -103,14 +103,7 @@ export default class ConfigurableTab extends Component {
                   onClick={() => this.setTab(tab.id)}
                   activeTab={this.isActiveTab(tab.id)}
                 >
-                {
-                  tab.icon ?
-                    <span className="fa-fw tab-header-icon">
-                      <IconSVG name={tab.icon} />
-                    </span>
-                  :
-                    null
-                }
+                  <TabIcon iconObj={tab.icon} />
                   <span title={tab.name}>{tab.name}</span>
                 </TabHead>
               );
