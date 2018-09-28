@@ -31,6 +31,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
   };
   "content"?: {
     "product-name"?: string;
+    "product-description"?: string;
     "product-logo-navbar"?: {
       "type"?: string;
       "arguments"?: {
@@ -113,6 +114,7 @@ export function applyTheme() {
 
 interface IThemeObj {
   productName?: string;
+  productDescription?: string;
   footerText?: string;
   footerLink?: string;
   productLogoNavbar?: string;
@@ -159,6 +161,8 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     const contentJson = themeJSON.content;
     const content: IThemeObj = {
       productName: 'CDAP',
+      productDescription: `CDAP is an open source framework that simplifies
+      data application development, data integration, and data management.`,
       productLogoNavbar: '/cdap_assets/img/company_logo.png',
       productLogoAbout: '/cdap_assets/img/CDAP_darkgray.png',
       favicon: '/cdap_assets/img/favicon.png',
@@ -170,6 +174,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('product-name' in contentJson) {
       content.productName = contentJson['product-name'];
+    }
+    if ('product-description' in contentJson) {
+      content.productDescription = contentJson['product-description'];
     }
     if ('footer-text' in contentJson) {
       content.footerText = contentJson['footer-text'];
