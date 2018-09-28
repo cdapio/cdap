@@ -36,6 +36,9 @@ const mapStateToProps = (state) => {
 const CurrentRunIndex = ({runs, currentRun, runsCount}) => {
   let reversedRuns = reverseArrayWithoutMutating(runs);
   let currentRunIndex = findIndex(reversedRuns, {runid: objectQuery(currentRun, 'runid')});
+  // The currentRunIndex is the index in latest 100 runs
+  // total runs count would be much higher for pipelines that ran more than 100 runs
+  let runIndexInTotalRunsCount = Math.max(currentRunIndex, runsCount - (runs.length - currentRunIndex));
 
   if (!reversedRuns || currentRunIndex === -1) {
     return (
@@ -66,7 +69,7 @@ const CurrentRunIndex = ({runs, currentRun, runsCount}) => {
   return (
     <div className="run-number-container run-info-container">
       <h4 className="run-number">
-        {T.translate(`${PREFIX}.currentRunIndex`, {currentRunIndex: currentRunIndex + 1, numRuns: runsCount})}
+        {T.translate(`${PREFIX}.currentRunIndex`, {currentRunIndex: runIndexInTotalRunsCount + 1, numRuns: runsCount})}
       </h4>
       <div className="run-number-switches">
         <button

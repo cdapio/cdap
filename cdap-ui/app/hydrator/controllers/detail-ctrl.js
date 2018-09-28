@@ -32,9 +32,6 @@ angular.module(PKG.name + '.feature.hydrator')
 
     pipelineDetailsActionCreator.init(rPipelineDetail);
     let runid = $stateParams.runid;
-    if (runid) {
-      pipelineDetailsActionCreator.setCurrentRunId(runid);
-    }
 
     let runsFetch = pipelineDetailsActionCreator.getRuns({
       namespace: $stateParams.namespace,
@@ -44,6 +41,40 @@ angular.module(PKG.name + '.feature.hydrator')
     });
 
     runsFetch.subscribe(() => {
+      let {runs} = window.CaskCommon.PipelineDetailStore.getState();
+      let doesCurrentRunExists = _.find(runs, (run) => run.runid === runid);
+      /**
+       * We do this here because of this usecase,
+       *
+       * 1. User goes to pipeline which has 130 runs
+       * 2. Opens up summary and clicks on the 30th run from the runs history graph
+       * 3. User is now at 30 of 130 runs
+       * 4. User starts more new runs
+       * 5. At later point when the user refreshes the UI, the current run id in the url won't be in the latest 100 runs
+       *
+       * So instead of having a runid in the url and showing the information of latest run (which is incorrect) we fetch
+       * the run detail and add it to the runs.
+       *
+       * This will render the run number incorrect but its ok compared to the whole run information being incorrect.
+       */
+      if (runid && !doesCurrentRunExists) {
+        pipelineDetailsActionCreator
+          .getRunDetails({
+            namespace: $stateParams.namespace,
+            appId: rPipelineDetail.name,
+            programType,
+            programName,
+            runid
+          })
+          .subscribe(runDetails => {
+            let {runs} = window.CaskCommon.PipelineDetailStore.getState();
+            runs.push(runDetails);
+            pipelineDetailsActionCreator.setCurrentRunId(runid);
+            pipelineDetailsActionCreator.setRuns(runs);
+          });
+      } else if (runid) {
+        pipelineDetailsActionCreator.setCurrentRunId(runid);
+      }
       runsPoll = pipelineDetailsActionCreator.pollRuns({
         namespace: $stateParams.namespace,
         appId: rPipelineDetail.name,
