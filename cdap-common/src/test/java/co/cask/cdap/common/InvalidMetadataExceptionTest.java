@@ -33,14 +33,14 @@ public class InvalidMetadataExceptionTest {
     InvalidMetadataException invalidMetadataException =
       new InvalidMetadataException(NamespaceId.DEFAULT.dataset("ds").toMetadataEntity(), "error");
     String expectedMessage = "Unable to set metadata for dataset: ds " +
-      "which exists in namespace: default failed due to error: error";
+      "which exists in namespace: default. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
 
     // test view
     invalidMetadataException =
       new InvalidMetadataException(NamespaceId.DEFAULT.stream("st").view("v").toMetadataEntity(), "error");
     expectedMessage =
-      "Unable to set metadata for view: v of stream: st which exists in namespace: default failed due to error: error";
+      "Unable to set metadata for view: v of stream: st which exists in namespace: default. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
 
     // test program
@@ -48,7 +48,7 @@ public class InvalidMetadataExceptionTest {
       new InvalidMetadataException(NamespaceId.DEFAULT.app("app").program(ProgramType.FLOW, "myflow")
                                      .toMetadataEntity(), "error");
     expectedMessage = "Unable to set metadata for flow: myflow in application: app of version: -SNAPSHOT deployed in " +
-      "namespace: default failed due to error: error";
+      "namespace: default. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
 
     // test flowlet
@@ -56,15 +56,14 @@ public class InvalidMetadataExceptionTest {
       new InvalidMetadataException(NamespaceId.DEFAULT.app("app").program(ProgramType.FLOW, "flow1")
                                      .flowlet("flowlet1").toMetadataEntity(), "error");
     expectedMessage = "Unable to set metadata for flowlet: flowlet1 of flow: flow1 in application: app of " +
-      "version: -SNAPSHOT deployed in namespace: default failed due to error: error";
+      "version: -SNAPSHOT deployed in namespace: default. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
 
     // test custom entity
     MetadataEntity customEntity = MetadataEntity.builder(NamespaceId.DEFAULT.dataset("ds").toMetadataEntity())
       .appendAsType("field", "empName").build();
     invalidMetadataException = new InvalidMetadataException(customEntity, "error");
-    expectedMessage = "Unable to set metadata for namespace=default,dataset=ds,field=empNam of type 'field' " +
-      "failed due to error: error";
+    expectedMessage = "Unable to set metadata for namespace=default,dataset=ds,field=empNam of type 'field'. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
   }
 }

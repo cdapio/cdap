@@ -203,7 +203,10 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   private void validateKeyAndTagsFormat(MetadataEntity metadataEntity, String keyword)
     throws InvalidMetadataException {
     if (!KEY_AND_TAG_MATCHER.matchesAllOf(keyword)) {
-      throw new InvalidMetadataException(metadataEntity, "Illegal format for the value : " + keyword);
+      throw new InvalidMetadataException(metadataEntity, String.format("Illegal format for '%s'. " +
+                                                                         "Should only contain alphanumeric characters" +
+                                                                         " (a-z, A-Z, 0-9), underscores and hyphens.",
+                                                                       keyword));
     }
   }
 
@@ -213,7 +216,10 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   private void validateValueFormat(MetadataEntity metadataEntity, String keyword)
     throws InvalidMetadataException {
     if (!VALUE_MATCHER.matchesAllOf(keyword)) {
-      throw new InvalidMetadataException(metadataEntity, "Illegal format for the value : " + keyword);
+      throw new InvalidMetadataException(metadataEntity, String.format("Illegal format for the value '%s'. Should " +
+                                                                         "only contain alphanumeric characters (a-z, " +
+                                                                         "A-Z, 0-9), underscores, hyphens and " +
+                                                                         "whitespaces.", keyword));
     }
   }
 
