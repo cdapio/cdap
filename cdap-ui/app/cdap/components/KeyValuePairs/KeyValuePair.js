@@ -138,6 +138,11 @@ class KeyValuePair extends Component {
     );
   }
 
+  getResettedKeyValue = (index, e) => {
+    this.props.getResettedKeyValue(index);
+    preventPropagation(e);
+  };
+
   renderProvidedCheckboxAndResetBtn() {
     if (typeof this.props.provided !== 'boolean') {
       return null;
@@ -152,7 +157,7 @@ class KeyValuePair extends Component {
         />
         <span
           className={classnames("reset-action", {"hidden": !this.props.showReset})}
-          onClick={this.props.getResettedKeyValue.bind(this, this.props.index)}
+          onClick={this.getResettedKeyValue.bind(this, this.props.index)}
         >
           {T.translate('commons.keyValPairs.reset')}
         </span>
