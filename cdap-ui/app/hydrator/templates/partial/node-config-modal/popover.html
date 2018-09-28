@@ -22,7 +22,7 @@
       <small>{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.artifact.version }}</small>
     </span>
     <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">({{HydratorPlusPlusNodeConfigCtrl.state.noConfigMessage}})</small>
-    <p>
+    <p title="{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}">
       <small>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</small>
     </p>
   </h5>
