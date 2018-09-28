@@ -297,14 +297,13 @@ export default class DataPrepConnections extends Component {
     this.fetchConnectionsList();
   }
 
-  fetchConnectionsList = (action, targetId) => {
+  fetchConnectionsList = () => {
     let namespace = getCurrentNamespace();
 
     MyDataPrepApi.listConnections({
       namespace,
-      type: '*' // currently only going to fetch database connection
+      type: '*'
     }).subscribe((res) => {
-      // need to group by connection type
       let state = {};
 
       if (res.default) {
@@ -320,9 +319,10 @@ export default class DataPrepConnections extends Component {
           bigQueryList = [],
           spannerList = [];
 
-
-      if (action === 'delete' && this.state.activeConnectionid === targetId) {
-        state.activeConnectionid = null;
+      if (!state.activeConnectionId && !state.activeConnectionType && state.defaultConnection) {
+        let defaultConnectionObj = find(res.values, {id: state.defaultConnection});
+        state.activeConnectionid = defaultConnectionObj.id;
+        state.activeConnectionType = defaultConnectionObj.type;
       }
 
       res.values.forEach((connection) => {
@@ -920,6 +920,15 @@ export default class DataPrepConnections extends Component {
     let {enableRouting, ...attributes} = this.props;
     enableRouting = this.props.singleWorkspaceMode ? false : this.props.enableRouting;
     let setActiveConnection;
+    let {
+      activeConnectionType,
+      activeConnectionid,
+      defaultConnection,
+      connectionTypes,
+      connectionsList
+    } = this.state;
+    let defaultConnectionObj = find(connectionsList, { id: defaultConnection});
+    defaultConnection = isNilOrEmpty(defaultConnectionObj) ? null : defaultConnection;
     if (this.state.activeConnectionType === ConnectionType.DATABASE) {
       setActiveConnection = setDatabaseAsActiveBrowser.bind(null, {name: ConnectionType.DATABASE, id: this.state.activeConnectionid});
     } else if (this.state.activeConnectionType === ConnectionType.KAFKA) {
@@ -936,7 +945,7 @@ export default class DataPrepConnections extends Component {
       // when the user is going back to connections view, not when they select another
       // S3 connection
       if (!s3.connectionId || s3.connectionId === objectQuery(workspaceInfo, 'properties', 'connectionId')) {
-        let path;
+        let path = '/';
         if (isObject(workspaceInfo)) {
           let {key} = workspaceInfo.properties;
           let bucketName = workspaceInfo.properties['bucket-name'];
@@ -954,7 +963,7 @@ export default class DataPrepConnections extends Component {
       let {gcs} = DataPrepBrowserStore.getState();
       // Same as S3 connection above
       if (!gcs.connectionId || gcs.connectionId === objectQuery(workspaceInfo, 'properties', 'connectionId')) {
-        let path;
+        let path = '/';
         if (isObject(workspaceInfo) && workspaceInfo.properties.path) {
           path = workspaceInfo.properties.path;
           path = path.split('/');
@@ -976,14 +985,6 @@ export default class DataPrepConnections extends Component {
       setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id: this.state.activeConnectionid}, true);
     }
 
-    let {
-      activeConnectionType,
-      activeConnectionid,
-      defaultConnection,
-      connectionTypes,
-      connectionsList
-    } = this.state;
-    defaultConnection = isNilOrEmpty(find(connectionsList, { name: defaultConnection})) ? null : defaultConnection;
     const isFileConnectionValid = find(connectionTypes, {type: ConnectionType.FILE});
     if (
       !activeConnectionType &&
