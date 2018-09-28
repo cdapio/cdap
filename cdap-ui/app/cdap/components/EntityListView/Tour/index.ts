@@ -34,16 +34,6 @@ const steps: ITourStep[] = [
     shouldFocus: true,
   },
   {
-    id: 'preparation',
-    title: T.translate(`${PREFIX}.Preparation.title`).toString(),
-    text: [
-      T.translate(`${PREFIX}.Preparation.text`).toString(),
-      '<img class="img-fluid" src="/cdap_assets/img/nux/Dataprep_NUX.png" />',
-    ],
-    attachTo: '#navbar-preparation bottom',
-    shouldFocus: true,
-  },
-  {
     id: 'pipelines',
     title: T.translate(`${PREFIX}.Pipelines.title`).toString(),
     text: [
@@ -51,6 +41,16 @@ const steps: ITourStep[] = [
       '<img class="img-fluid" src="/cdap_assets/img/nux/Pipeline_NUX.png" />',
     ],
     attachTo: '#navbar-pipelines bottom',
+    shouldFocus: true,
+  },
+  {
+    id: 'preparation',
+    title: T.translate(`${PREFIX}.Preparation.title`).toString(),
+    text: [
+      T.translate(`${PREFIX}.Preparation.text`).toString(),
+      '<img class="img-fluid" src="/cdap_assets/img/nux/Dataprep_NUX.png" />',
+    ],
+    attachTo: '#navbar-preparation bottom',
     shouldFocus: true,
   },
   {
