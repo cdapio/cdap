@@ -86,18 +86,23 @@ $header-height: 38px;
 
       .summary-row:hover { background-color: $dataset-hover-bg-color; }
 
-      .field-name {
+      .field-name,
+      .dataset-name {
         padding: 0;
-        .field-row {
-          padding: $grid-padding;
+      }
 
-          &:not(:last-child) { border-bottom: $border; }
-          &:hover { background-color: $field-hover-bg-color; }
-        }
+      .field-name .field-row {
+        &:not(:last-child) { border-bottom: $border; }
+        &:hover { background-color: $field-hover-bg-color; }
       }
 
       .field-link {
         color: $text-color;
+        padding: $grid-padding;
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+
         &:hover { text-decoration: none; }
       }
     }
