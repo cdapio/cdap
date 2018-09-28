@@ -14,53 +14,12 @@
  * the License.
  */
 
-class TrackerMainController{
+class TrackerMainController {
   constructor($state, $scope, myTrackerApi, caskFocusManager) {
     this.$state = $state;
     this.$scope = $scope;
     this.searchQuery = '';
     this.myTrackerApi = myTrackerApi;
-
-    this.searchTips = [
-      {
-        search: 'keyword',
-        pattern: '--',
-        examples: [
-          'finance'
-        ]
-      },
-      {
-        search: 'property',
-        pattern: 'key:value',
-        examples: [
-          'type:production',
-          'author:joe*'
-        ]
-      },
-      {
-        search: 'tags',
-        pattern: 'tags:',
-        examples: [
-          'tags:finance',
-          'tags:pii'
-        ]
-      },
-      {
-        search: 'field',
-        pattern: 'schema:',
-        examples: [
-          'schema:zipcode',
-          'schema:zipcode,int'
-        ]
-      },
-      {
-        search: 'dataset name',
-        pattern: 'entity-name:',
-        examples: [
-          'entity-name:Customer_complaints'
-        ]
-      }
-    ];
     caskFocusManager.focus('searchField');
   }
 

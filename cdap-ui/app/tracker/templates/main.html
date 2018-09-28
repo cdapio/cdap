@@ -15,7 +15,7 @@
 -->
 
 <div class="row tracker-content">
-  <div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
+  <div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-8 col-lg-offset-2">
     <div class="form-group has-feedback tracker-search" ng-keypress="MainController.search($event)">
       <input type="text" class="form-control" placeholder="Search" ng-model="MainController.searchQuery" pattern="^(?![*]).*$"
         cask-focus="searchField">
@@ -27,31 +27,40 @@
         Search Tips
       </div>
       <div class="subtitle">
-        Search by keyword: a property, tag, and dataset name
+        Search datasets by
       </div>
 
-      <div class="tips-table grid-wrapper">
-        <div class="grid grid-container border-top-bottom">
-          <div class="grid-header header-light">
-            <div class="grid-row">
-              <strong>Search by</strong>
-              <strong>Pattern</strong>
-              <strong>Examples</strong>
-            </div>
-          </div>
-
-          <div class="grid-body">
-            <div class="grid-row" ng-repeat="tips in MainController.searchTips">
-              <div>{{ ::tips.search }}</div>
-              <div>{{ ::tips.pattern }}</div>
-              <div>
-                <span ng-repeat="example in tips.examples track by $index">
-                  {{ example }}
-                  <span class="separator" ng-if="$index !== tips.examples.length - 1">or</span>
-                </span>
-              </div>
-            </div>
-          </div>
+      <div class="search-tips-container">
+        <div>
+          <strong>The name</strong>
+          <span>- Input the dataset name by using the format</span>
+          <span class="search-tip-highlight">entity-name:&lt;dataset-name&gt;</span>
+          <i>(example: entity-name:userprofiles)</i>
+        </div>
+        <div>
+          <strong>A field in the dataset schema</strong>
+          <span>- Input the field name of a schema using the format</span>
+          <span class="search-tip-highlight">schema:&lt;field-name&gt;</span>
+          <i>(example: schema:zipcode)</i>
+        </div>
+        <div>
+          <strong>A property annotated on the dataset</strong>
+          <span>- Input a property as a query, using the format</span>
+          <span class="search-tip-highlight">&lt;key&gt;:&lt;value&gt;</span>
+          <i>(example: env:production)</i>
+        </div>
+        <div>
+          <strong>A tag annotated on the dataset</strong>
+          <span>- Input a name of a tag as a query, using the format</span>
+          <span class="search-tip-highlight">tags:&lt;tag-name&gt;</span>
+          <i>(example: tags:batch)</i>
+        </div>
+        <div>
+          <strong>Wild card</strong>
+          <span>- Append</span>
+          <span class="search-tip-highlight">*</span>
+          <span> to the end of the search term</span>
+          <i>(example: user* or tags:b*)</i>
         </div>
       </div>
     </div>
