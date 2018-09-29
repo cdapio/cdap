@@ -132,7 +132,6 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   // serve the config file
   app.get('/config.js', function (req, res) {
-
     var data = JSON.stringify({
       // the following will be available in angular via the "MY_CONFIG" injectable
 
@@ -151,7 +150,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: isModeProduction(),
-      sandboxMode: process.env.NODE_ENV
+      sandboxMode: process.env.NODE_ENV,
+      authRefreshURL: cdapConfig['dashboard.auth.refresh.path'] || false
     });
 
     res.header({
