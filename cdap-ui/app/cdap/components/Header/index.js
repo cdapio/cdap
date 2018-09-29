@@ -121,8 +121,8 @@ export default class Header extends Component {
               nativeLink={this.props.nativeLink}
               namespace={this.state.currentNamespace}
             />
-            <DataPrepLink />
             <PipelinesLink />
+            <DataPrepLink />
             <AnalyticsLink />
             <RulesEngineLink />
             <MetadataLink />
