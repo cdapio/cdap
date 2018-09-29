@@ -1683,7 +1683,6 @@ features:
       text: Preparation allows you to easily connect to a variety of data sources and cleanse data using point and click interactions. Once you are satisfied, you can operationalize your transformations in a pipeline.
       title: Preparation
     Welcome:
-      bodyText: '{productName} is an open source framework that simplifies data application development, data integration, and data management.'
       close: No, Thanks
       header: Welcome to {productName}
       showAgainToggle: Don't show tour again.
