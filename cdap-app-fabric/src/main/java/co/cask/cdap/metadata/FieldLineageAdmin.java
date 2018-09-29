@@ -294,6 +294,8 @@ public class FieldLineageAdmin {
   }
 
   private Set<Field> filter(String prefix, Set<Field> fields) {
-    return fields.stream().filter(field -> field.getName().startsWith(prefix)).collect(Collectors.toSet());
+    return fields.stream().filter(field ->
+                                    field.getName().toLowerCase().startsWith(prefix.toLowerCase()))
+      .collect(Collectors.toSet());
   }
 }

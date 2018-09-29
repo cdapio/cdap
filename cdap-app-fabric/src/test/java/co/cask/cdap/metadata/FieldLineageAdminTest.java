@@ -145,6 +145,12 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
                                                     new Field("address_original", true),
                                                     new Field("addiffField1", false))),
                         fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, "add", true));
+
+    // test fields prefixed with string "ADD" (case insensitive)
+    Assert.assertEquals(new HashSet<>(Arrays.asList(new Field("address", true),
+                                                    new Field("address_original", true),
+                                                    new Field("addiffField1", false))),
+                        fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, "ADD", true));
   }
 
   @Test
