@@ -61,6 +61,7 @@ var Footer = require('../cdap/components/Footer').default;
 var cdapavscwrapper = require('../cdap/services/cdapavscwrapper').default;
 var IconSVG = require('../cdap/components/IconSVG').default;
 var PipelineConfigConstants = require('../cdap/components/PipelineConfigurations/PipelineConfigConstants');
+var AuthRefresher = require('../cdap/components/AuthRefresher').default;
 
 export {
   Store,
@@ -108,4 +109,5 @@ export {
   cdapavscwrapper,
   IconSVG,
   PipelineConfigConstants,
+  AuthRefresher,
 };
