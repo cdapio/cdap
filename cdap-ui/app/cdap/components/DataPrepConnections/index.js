@@ -321,8 +321,10 @@ export default class DataPrepConnections extends Component {
 
       if (!state.activeConnectionId && !state.activeConnectionType && state.defaultConnection) {
         let defaultConnectionObj = find(res.values, {id: state.defaultConnection});
-        state.activeConnectionid = defaultConnectionObj.id;
-        state.activeConnectionType = defaultConnectionObj.type;
+        if (defaultConnectionObj) {
+          state.activeConnectionid = objectQuery(defaultConnectionObj, 'id');
+          state.activeConnectionType = objectQuery(defaultConnectionObj, 'type');
+        }
       }
 
       res.values.forEach((connection) => {
