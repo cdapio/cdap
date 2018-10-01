@@ -33,6 +33,7 @@ import MarketAction from 'components/Market/action/market-action.js';
 import MarketStore from 'components/Market/store/market-store.js';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Database.DatabaseOptions';
 
@@ -159,13 +160,15 @@ export default class DatabaseOptions extends Component {
 
     if (!jdbcConfig) { return null; }
 
+    const hub = Theme.featureNames.hub;
+
     return (
       <span className="market-option">
         <span
           className="upload"
           onClick={this.caskMarket.bind(this, db)}
         >
-          {T.translate(`${PREFIX}.market`)}
+          {hub}
         </span>
         <span> | </span>
       </span>

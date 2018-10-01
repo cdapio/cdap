@@ -16,7 +16,6 @@
 import * as React from 'react';
 import { Theme } from 'services/ThemeHelper';
 import classnames from 'classnames';
-import T from 'i18n-react';
 import {withContext} from 'components/Header/NamespaceLinkContext';
 require('./MetadataLink.scss');
 
@@ -36,7 +35,7 @@ const MetadataLink: React.SFC<IMetadataLinkProps> = ({ context }) => {
   if (Theme.showMetadata === false) {
     return null;
   }
-
+  const featureName = Theme.featureNames.metadata;
   const isMetadataActive = location.pathname.indexOf('metadata') !== -1;
   const {namespace} = context;
   const metadataHomeUrl = window.getTrackerUrl({
@@ -54,7 +53,7 @@ const MetadataLink: React.SFC<IMetadataLinkProps> = ({ context }) => {
       })}
     >
       <a href={metadataHomeUrl}>
-        {T.translate('features.Navbar.metadataLabel')}
+        {featureName}
       </a>
     </li>
   );

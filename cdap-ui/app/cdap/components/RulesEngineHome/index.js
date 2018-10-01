@@ -121,10 +121,12 @@ export default class RulesEngineHome extends Component {
   };
 
   render() {
+    const featureName = Theme.featureNames.rulesEngine;
     let pageTitle = (
       <Helmet
         title={T.translate(`${PREFIX}.pageTitle`, {
           productName: Theme.productName,
+          featureName
         })}
       />
     );

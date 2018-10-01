@@ -17,12 +17,13 @@ import * as React from 'react';
 import { Theme } from 'services/ThemeHelper';
 import classnames from 'classnames';
 import CaskMarketButton from 'components/Header/CaskMarketButton';
-import T from 'i18n-react';
 
 export default function HubButton() {
   if (Theme.showHub === false) {
     return null;
   }
+
+  const featureName = Theme.featureNames.hub;
 
   return (
     <li
@@ -30,7 +31,7 @@ export default function HubButton() {
       className="with-pointer"
     >
       <CaskMarketButton>
-        <span className="hub-text-wrapper">{T.translate('commons.market')}</span>
+        <span className="hub-text-wrapper">{featureName}</span>
       </CaskMarketButton>
     </li>
   );

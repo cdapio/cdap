@@ -18,7 +18,6 @@ import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
 import { withContext } from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
-import T from 'i18n-react';
 import { DropdownItem } from 'reactstrap';
 
 interface IEntitiesLinkProps {
@@ -33,6 +32,7 @@ interface IEntitiesLinkProps {
 
 class EntitiesLink extends React.PureComponent<IEntitiesLinkProps> {
   public render() {
+    const featureName = Theme.featureNames.entities;
     const { namespace, isNativeLink } = this.props.context;
     const baseCDAPUrl = `/ns/${namespace}`;
     return (
@@ -42,7 +42,7 @@ class EntitiesLink extends React.PureComponent<IEntitiesLinkProps> {
           to={isNativeLink ? `/cdap${baseCDAPUrl}` : baseCDAPUrl}
           isActive={this.isEntitiesActive}
         >
-          {T.translate('features.Navbar.ControlCenter.entities')}
+          {featureName}
         </NavLinkWrapper>
       </DropdownItem>
     );

@@ -18,9 +18,9 @@ angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusListController',
   function(
     $scope, myPipelineApi, $stateParams, GLOBALS,
-    mySettings, $state, myHelpers, myWorkFlowApi,
-    myWorkersApi, myAppsApi, myAlertOnValium, myLoadingService,
-    mySparkApi, $interval, moment, MyPipelineStatusMapper,
+    mySettings, $state, myHelpers,
+    myAppsApi, myAlertOnValium, myLoadingService,
+    $interval, moment, MyPipelineStatusMapper,
     myPipelineCommonApi, PROGRAM_STATUSES) {
     var vm = this;
     vm.$interval = $interval;
@@ -35,6 +35,8 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     vm.PAGE_SIZE = 10;
     vm.GLOBALS = GLOBALS;
+
+    vm.featureName = window.CaskCommon.ThemeHelper.Theme.featureNames.pipelines;
 
     vm.checkForValidPage = (pageNumber) => {
       return (

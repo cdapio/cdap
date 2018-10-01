@@ -99,7 +99,7 @@ function extractUITheme(cdapConfig) {
   try {
     if (require.resolve(uiThemePath)) {
       uiThemeConfig = require(uiThemePath);
-      log.info(`UI using theme located at ${uiThemePath}`);
+      log.info(`UI using theme located at ${cdapConfig[uiThemePropertyName]}`);
     }
   } catch (e) {
     // The error can either be file doesn't exist, or file contains invalid json

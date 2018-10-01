@@ -17,7 +17,6 @@ import * as React from 'react';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
 import { withContext } from 'components/Header/NamespaceLinkContext';
-import T from 'i18n-react';
 import { DropdownItem } from 'reactstrap';
 
 interface IReportsLinkProps {
@@ -36,6 +35,7 @@ class ReportsLink extends React.PureComponent<IReportsLinkProps> {
       return null;
     }
 
+    const featureName = Theme.featureNames.reports;
     const { namespace, isNativeLink } = this.props.context;
     const reportsUrl = `/ns/${namespace}/reports`;
     return (
@@ -45,7 +45,7 @@ class ReportsLink extends React.PureComponent<IReportsLinkProps> {
           to={isNativeLink ? `/cdap${reportsUrl}` : reportsUrl}
           isActive={this.isReportsActive}
         >
-          {T.translate('features.Navbar.ControlCenter.reports')}
+          {featureName}
         </NavLinkWrapper>
       </DropdownItem>
     );

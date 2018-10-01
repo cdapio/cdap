@@ -23,6 +23,7 @@ import classnames from 'classnames';
 import MyDataPrepApi from 'api/dataprep';
 import {i18nPrefix, MIN_DATAPREP_VERSION, artifactName} from 'components/DataPrep';
 import isObject from 'lodash/isObject';
+import {Theme} from 'services/ThemeHelper';
 
 require('./DataPrepServiceControl.scss');
 
@@ -48,13 +49,16 @@ export default class DataPrepServiceControl extends Component {
   }
 
   enableService() {
+    const featureName = Theme.featureNames.dataPrep;
+
     this.setState({loading: true});
     enableSystemApp({
       shouldStopService: false,
       artifactName,
       api: MyDataPrepApi,
       i18nPrefix,
-      MIN_VERSION: MIN_DATAPREP_VERSION
+      MIN_VERSION: MIN_DATAPREP_VERSION,
+      featureName
     })
       .subscribe(() => {
         this.props.onServiceStart();
@@ -87,6 +91,8 @@ export default class DataPrepServiceControl extends Component {
   }
 
   render() {
+    const featureName = Theme.featureNames.dataPrep;
+
     return (
       <div className={classnames("dataprep-container dataprep-service-control", {
         'error': this.state.error
@@ -99,7 +105,7 @@ export default class DataPrepServiceControl extends Component {
           <div className="text-container">
             <div className="description-container">
               <h2 className="text-xs-left">
-                {T.translate(`${PREFIX}.title`)}
+                {T.translate(`${PREFIX}.title`, { featureName })}
               </h2>
               <div className="text-xs-left action-container">
                 <button
@@ -108,7 +114,7 @@ export default class DataPrepServiceControl extends Component {
                   disabled={this.state.loading}
                 >
                   {
-                    !this.state.loading ? T.translate(`${PREFIX}.btnLabel`) : (
+                    !this.state.loading ? T.translate(`${PREFIX}.btnLabel`, { featureName }) : (
                       <span>
                         <span className="fa fa-spin fa-spinner" /> {T.translate(`${PREFIX}.btnLoadingLabel`)}
                       </span>
@@ -118,7 +124,7 @@ export default class DataPrepServiceControl extends Component {
               </div>
               {this.renderError()}
               <p>
-                {T.translate(`${PREFIX}.description`)}
+                {T.translate(`${PREFIX}.description`, { featureName })}
               </p>
               <ul className="dataprep-checklist">
                 <li>{T.translate(`${PREFIX}.list.1`)}</li>

@@ -280,7 +280,7 @@ export default class DataPrep extends Component {
         </div>
       );
     }
-
+    const featureName = Theme.featureNames.dataPrep;
     return (
       <div className={classnames('dataprep-container', {
         'single-workspace': this.props.singleWorkspaceMode
@@ -292,6 +292,7 @@ export default class DataPrep extends Component {
             <Helmet title={T.translate(`${DATAPREP_I18N_PREFIX}.pageTitle`, {
               workspaceUri: !isNilOrEmpty(this.state.workspaceName) ? `| ${this.state.workspaceName}` : '',
               productName: Theme.productName,
+              featureName,
             })} />
         }
         <DataPrepErrorAlert />

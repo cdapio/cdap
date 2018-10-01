@@ -17,7 +17,6 @@ import * as React from 'react';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
 import { withContext } from 'components/Header/NamespaceLinkContext';
-import T from 'i18n-react';
 import { DropdownItem } from 'reactstrap';
 
 interface IDashboardLinkProps {
@@ -36,6 +35,7 @@ class DashboardLink extends React.PureComponent<IDashboardLinkProps> {
       return null;
     }
 
+    const featureName = Theme.featureNames.dashboard;
     const { namespace, isNativeLink } = this.props.context;
     const dashboardUrl = `/ns/${namespace}/operations`;
     return (
@@ -45,7 +45,7 @@ class DashboardLink extends React.PureComponent<IDashboardLinkProps> {
           to={isNativeLink ? `/cdap${dashboardUrl}` : dashboardUrl}
           isActive={this.isDashboardActive}
         >
-          {T.translate('features.Navbar.ControlCenter.dashboard')}
+          {featureName}
         </NavLinkWrapper>
       </DropdownItem>
     );

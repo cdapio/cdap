@@ -345,11 +345,13 @@ export default class EntityListView extends Component {
       }
     }
 
+    const featureName = Theme.featureNames.controlCenter;
 
     return (
       <div>
         <Helmet title={T.translate('features.EntityListView.Title', {
           productName: Theme.productName,
+          featureName
         })} />
         <EntityListHeader />
         <div className="entity-list-view">

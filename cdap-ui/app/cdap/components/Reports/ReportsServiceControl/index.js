@@ -59,11 +59,14 @@ export default class ReportsServiceControl extends Component {
       loading: true
     });
 
+    const featureName = Theme.featureNames.reports;
+
     enableSystemApp({
       shouldStopService: false,
       artifactName: ReportsArtifact,
       api: MyReportsApi,
-      i18nPrefix: PREFIX
+      i18nPrefix: PREFIX,
+      featureName
     }).subscribe(
       this.props.onServiceStart,
       (err) => {
@@ -81,12 +84,13 @@ export default class ReportsServiceControl extends Component {
   };
 
   renderEnableBtn = () => {
+    const featureName = Theme.featureNames.reports;
     if (this.state.checkingForSpark2) {
       return (
         <div className="action-container service-disabled">
           <IconSVG name="icon-spinner" className="fa-spin" />
           <div className="text-primary">
-            {T.translate(`${PREFIX}.environmentCheckMessage`)}
+            {T.translate(`${PREFIX}.environmentCheckMessage`, { featureName })}
           </div>
         </div>
       );
@@ -97,7 +101,7 @@ export default class ReportsServiceControl extends Component {
         <div className="action-container service-disabled">
           <IconSVG name="icon-exclamation-triangle" className="text-danger" />
           <div className="text-danger">
-            {T.translate(`${PREFIX}.serviceDisabledMessage`)}
+            {T.translate(`${PREFIX}.serviceDisabledMessage`, { featureName })}
           </div>
         </div>
       );
@@ -106,7 +110,7 @@ export default class ReportsServiceControl extends Component {
       <div className="action-container">
         <BtnWithLoading
           className="btn-primary"
-          label={T.translate(`${PREFIX}.enable`)}
+          label={T.translate(`${PREFIX}.enable`, { featureName })}
           loading={this.state.loading}
           onClick={this.enableReports}
         />
@@ -132,24 +136,27 @@ export default class ReportsServiceControl extends Component {
   }
 
   render() {
+    const featureName = Theme.featureNames.reports;
+
     return (
       <div className="reports-service-control">
         <Helmet title={T.translate('features.Reports.pageTitle', {
           productName: Theme.productName,
+          featureName
         })} />
         <div className="image-containers">
           <img className="img-thumbnail" src="/cdap_assets/img/Reports_preview1.png" />
           <img className="img-thumbnail" src="/cdap_assets/img/Reports_preview2.png" />
         </div>
         <div className="text-container">
-          <h2> {T.translate(`${PREFIX}.title`)} </h2>
+          <h2> {T.translate(`${PREFIX}.title`, { featureName })} </h2>
           {this.renderEnableBtn()}
           {this.renderError()}
           <p>
-            {T.translate(`${PREFIX}.description`)}
+            {T.translate(`${PREFIX}.description`, { featureName })}
           </p>
           <div className="reports-benefit">
-            {T.translate(`${PREFIX}.Benefits.title`)}
+            {T.translate(`${PREFIX}.Benefits.title`, { featureName })}
 
             <ul>
               <li>

@@ -77,11 +77,14 @@ export default class Reports extends Component {
       );
     }
 
+    const featureName = Theme.featureNames.reports;
+
     return (
       <Provider store={ReportsStore}>
         <div>
           <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
             productName: Theme.productName,
+            featureName
           })} />
           <Switch>
             <Route exact path="/ns/:namespace/reports" component={ReportsList} />

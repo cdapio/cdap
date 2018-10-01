@@ -23,11 +23,13 @@ import {Theme} from 'services/ThemeHelper';
 const EXPERIMENTS_I18N_PREFIX = 'features.Experiments.DetailedView';
 
 function ExperimentDetailPageTitle ({experiment_name}) {
+  const featureName = Theme.featureNames.analytics;
   return (
     <Helmet
       title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`, {
         experiment_name,
         productName: Theme.productName,
+        featureName
       })}
     />
   );

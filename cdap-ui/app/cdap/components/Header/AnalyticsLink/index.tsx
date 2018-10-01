@@ -38,6 +38,7 @@ class AnalyticsLink extends React.PureComponent<IAnalyticsLinkProps> {
       return null;
     }
 
+    const featureName = Theme.featureNames.analytics;
     const { namespace, isNativeLink } = this.props.context;
     const analyticsUrl = `/ns/${namespace}/experiments`;
     return (
@@ -51,7 +52,7 @@ class AnalyticsLink extends React.PureComponent<IAnalyticsLinkProps> {
           isNativeLink={isNativeLink}
           to={isNativeLink ? `/cdap${analyticsUrl}` : analyticsUrl}
         >
-          {T.translate(`features.Navbar.MMDS`)}
+          {featureName}
         </NavLinkWrapper>
       </li>
     );
