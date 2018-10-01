@@ -33,16 +33,14 @@ public interface MetricStore {
   /**
    * Adds {@link MetricValues} to the store.
    * @param metricValues metric values to add.
-   * @throws Exception
    */
-  void add(MetricValues metricValues) throws Exception;
+  void add(MetricValues metricValues);
 
   /**
    * Adds {@link MetricValues}s to the store.
    * @param metricValues metric values to add.
-   * @throws Exception
    */
-  void add(Collection<? extends MetricValues> metricValues) throws Exception;
+  void add(Collection<? extends MetricValues> metricValues);
 
   /**
    * Queries metrics data.
@@ -56,38 +54,37 @@ public interface MetricStore {
    *
    * @param timestamp time up to which to delete metrics data, in ms since epoch
    */
-  void deleteBefore(long timestamp) throws Exception;
+  void deleteBefore(long timestamp);
 
   /**
    * Deletes all metric data in the resolution tables based on their ttl setting based on the current timestamp.
    */
-  void deleteTTLExpired() throws Exception;
+  void deleteTTLExpired();
 
   /**
    * Deletes all metric data specified by the {@link MetricDeleteQuery}
    * @param query specifies what to delete
    */
-  void delete(MetricDeleteQuery query) throws Exception;
+  void delete(MetricDeleteQuery query);
 
   /**
    * Deletes all metrics data. NOTE: dangerous, all data will be lost. Likely you only need to use it in tests.
-   * @throws Exception
    */
-  void deleteAll() throws Exception;
+  void deleteAll();
 
   /**
    * Given a list of tags in the {@link MetricSearchQuery}, returns the list of next available tags
    * @param query specifies where to search
    * @return collection of tag value pairs in no particular order
    */
-  Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception;
+  Collection<TagValue> findNextAvailableTags(MetricSearchQuery query);
 
   /**
    * Given a list of tags in the {@link MetricSearchQuery}, returns the list of measures available
    * @param query specifies where to search
    * @return collection of metric names in no particular order
    */
-  Collection<String> findMetricNames(MetricSearchQuery query) throws Exception;
+  Collection<String> findMetricNames(MetricSearchQuery query);
 
   /**
    * Get realtime metrics processor status, Returns the map of topic information to the metrics processing stats for

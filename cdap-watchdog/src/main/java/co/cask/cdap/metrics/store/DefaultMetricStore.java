@@ -255,12 +255,7 @@ public class DefaultMetricStore implements MetricStore {
       }
     });
 
-    this.metaTableSupplier = Suppliers.memoize(new Supplier<MetricsConsumerMetaTable>() {
-      @Override
-      public MetricsConsumerMetaTable get() {
-        return dsFactory.createConsumerMeta();
-      }
-    });
+    this.metaTableSupplier = Suppliers.memoize(dsFactory::createConsumerMeta);
     int topicNumbers = cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
     String topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
     metricsTopics = new ArrayList<>();
@@ -275,12 +270,12 @@ public class DefaultMetricStore implements MetricStore {
   }
   
   @Override
-  public void add(MetricValues metricValues) throws Exception {
+  public void add(MetricValues metricValues) {
     add(ImmutableList.of(metricValues));
   }
 
   @Override
-  public void add(Collection<? extends MetricValues> metricValues) throws Exception {
+  public void add(Collection<? extends MetricValues> metricValues) {
     List<CubeFact> facts = Lists.newArrayListWithCapacity(metricValues.size());
     for (MetricValues metricValue : metricValues) {
       String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
@@ -337,7 +332,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public void deleteBefore(long timestamp) throws Exception {
+  public void deleteBefore(long timestamp) {
     for (int resolution : resolutionTTLMap.keySet()) {
       // Delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
       deleteMetricsBeforeTimestamp(timestamp, resolution);
@@ -345,7 +340,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public void deleteTTLExpired() throws Exception {
+  public void deleteTTLExpired() {
     long currentTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     for (Map.Entry<Integer, Long> resolutionTTL : resolutionTTLMap.entrySet()) {
       deleteMetricsBeforeTimestamp(currentTime - resolutionTTL.getValue(), resolutionTTL.getKey());
@@ -353,12 +348,12 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public void delete(MetricDeleteQuery query) throws Exception {
+  public void delete(MetricDeleteQuery query) {
     cube.get().delete(buildCubeDeleteQuery(query));
   }
 
   @Override
-  public void deleteAll() throws Exception {
+  public void deleteAll() {
     // this will delete all aggregates metrics data
     delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, Collections.emptySet(),
                                  Collections.emptyMap(), Collections.emptyList()));
@@ -374,7 +369,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception {
+  public Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) {
     Collection<DimensionValue> tags = cube.get().findDimensionValues(buildCubeSearchQuery(query));
     Collection<TagValue> result = Lists.newArrayList();
     for (DimensionValue dimensionValue : tags) {
@@ -389,7 +384,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public Collection<String> findMetricNames(MetricSearchQuery query) throws Exception {
+  public Collection<String> findMetricNames(MetricSearchQuery query) {
     return cube.get().findMeasureNames(buildCubeSearchQuery(query));
   }
 
