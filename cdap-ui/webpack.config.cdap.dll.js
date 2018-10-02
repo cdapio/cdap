@@ -21,7 +21,7 @@ const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimi
 
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const processEnv = {
-  'NODE_ENV': isModeProduction(mode) ? 'production' : 'development',
+  'NODE_ENV': JSON.stringify(isModeProduction(mode) ? 'production' : 'development'),
   '__DEVTOOLS__': false
 };
 
@@ -51,7 +51,7 @@ const getWebpackDLLPlugin = (mode) => {
 
 var plugins = [
   new webpack.DefinePlugin({
-    'process.env':processEnv,
+    'process.env': processEnv,
   }),
   getWebpackDLLPlugin(mode)
 ];

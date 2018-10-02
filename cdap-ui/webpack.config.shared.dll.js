@@ -21,7 +21,7 @@ var mode = process.env.NODE_ENV || 'production';
 const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
 
 const processEnv = {
-  'NODE_ENV': isModeProduction(mode) ? 'production' : 'development',
+  'NODE_ENV': JSON.stringify(isModeProduction(mode) ? 'production' : 'development'),
   '__DEVTOOLS__': false
 };
 
