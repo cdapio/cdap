@@ -127,8 +127,12 @@ export default class FilePath extends Component {
   }
 
   renderBreadcrumb(links) {
+    let pathsTitle = links.map(path => path.name).join('/') || '';
     return (
-      <div className="paths">
+      <div
+        className="paths"
+        title={pathsTitle}
+      >
         {
           links.map((path, index) => {
             return (
