@@ -98,7 +98,8 @@ const fetchBucketDetails = (path = '') => {
         DataPrepBrowserStore.dispatch({
           type: BrowserStoreActions.SET_S3_ACTIVE_BUCKET_DETAILS,
           payload: {
-            activeBucketDetails: res.values
+            activeBucketDetails: res.values,
+            truncated: res.truncated === 'true' || false
           }
         });
       },

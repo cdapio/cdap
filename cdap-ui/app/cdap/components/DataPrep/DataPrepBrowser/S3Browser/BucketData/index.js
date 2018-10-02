@@ -15,18 +15,12 @@
 */
 
 import PropTypes from 'prop-types';
-
 import React from 'react';
 import {connect} from 'react-redux';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {Link} from 'react-router-dom';
-import {setPrefix, setS3Search} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
-import {preventPropagation} from 'services/helpers';
-import classnames from 'classnames';
-import EmptyMessageContainer from 'components/EmptyMessageContainer';
+import {setS3Search} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
-import IconSVG from 'components/IconSVG';
-import {humanReadableDate} from 'services/helpers';
+import TableContents from 'components/DataPrep/DataPrepBrowser/S3Browser/BucketData/TableContents';
 import If from 'components/If';
 
 const PREFIX = 'features.DataPrep.DataPrepBrowser.S3Browser.BucketData';
@@ -38,30 +32,6 @@ const props = {
   enableRouting: PropTypes.bool,
   prefix: PropTypes.string,
   onWorkspaceCreate: PropTypes.func
-};
-
-const getPrefix = (file, prefix) => {
-  const handleSlashAtEnd = (path) => path.length > 1 && path[path.length - 1] === '/' ? path.slice(0, path.length - 1) : path;
-  const addSuffixSlash = (path) => `${handleSlashAtEnd(path)}/`;
-  return file.type === 'bucket' ? `/${file.name}` : `${handleSlashAtEnd(prefix)}/${addSuffixSlash(file.name)}`;
-};
-
-const onClickHandler = (enableRouting, onWorkspaceCreate, file, prefix, e) => {
-  if (!file.directory) {
-    if (file.wrangle) {
-      onWorkspaceCreate(file);
-    }
-    preventPropagation(e);
-    return false;
-  }
-  if (enableRouting) {
-    return;
-  }
-  if (file.directory) {
-    setPrefix(getPrefix(file, prefix));
-  }
-  preventPropagation(e);
-  return false;
 };
 
 const TableHeader = ({enableRouting}) => {
@@ -93,120 +63,9 @@ const TableHeader = ({enableRouting}) => {
 };
 TableHeader.propTypes = props;
 
-const TableContents = ({enableRouting, search, filteredData, onWorkspaceCreate, prefix, clearSearch}) => {
-  let ContainerElement = enableRouting ? Link : 'div';
-  let pathname = window.location.pathname.replace(/\/cdap/, '');
-  if (!filteredData.length) {
-    return (
-      <div className="s3-buckets empty-message">
-        <div className="row">
-          <div className="col-xs-12">
-            <EmptyMessageContainer searchText={search}>
-              <ul>
-                <li>
-                  <span
-                    className="link-text"
-                    onClick={clearSearch}
-                  >
-                    {T.translate(`features.EmptyMessageContainer.clearLabel`)}
-                  </span>
-                  <span>{T.translate(`${PREFIX}.Content.EmptymessageContainer.suggestion1`)}</span>
-                </li>
-              </ul>
-            </EmptyMessageContainer>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  const renderIcon = (type) => {
-    switch (type) {
-      case 'bucket':
-        return <IconSVG name="icon-S3_bucket" />;
-      case 'directory':
-        return <IconSVG name="icon-folder-o" />;
-      default:
-        return <IconSVG name="icon-file-o" />;
-    }
-  };
-  if (enableRouting) {
-    return (
-      <div className="s3-buckets">
-        {
-          filteredData.map(file => {
-            let lastModified = humanReadableDate(file['last-modified'], true);
-
-            return (
-              <ContainerElement
-                className={classnames({'disabled': !file.directory && !file.wrangle})}
-                to={`${pathname}?prefix=${getPrefix(file, prefix)}`}
-                onClick={onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
-                key={file.name}
-              >
-                <div className="row">
-                  <div className="col-xs-3">
-                    {renderIcon(file.type)}
-                    {file.name}
-                  </div>
-                  <div className="col-xs-3">
-                    {file['owner']}
-                  </div>
-                  <div className="col-xs-3">
-                    {file['size']}
-                  </div>
-                  <div className="col-xs-3">
-                    {lastModified}
-                  </div>
-                </div>
-              </ContainerElement>
-            );
-          })
-        }
-      </div>
-    );
-  }
-  return (
-    <div className="s3-buckets">
-      {
-        filteredData.map(file => (
-          <ContainerElement
-            className={classnames({'disabled': !file.directory && !file.wrangle})}
-            to={`${pathname}?prefix=${getPrefix(file, prefix)}`}
-            onClick={onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
-            key={file.name}
-          >
-            <div className="row">
-              <div className="col-xs-12">
-                {renderIcon(file.type)}
-                {file.name}
-              </div>
-            </div>
-          </ContainerElement>
-        ))
-      }
-    </div>
-  );
-};
-TableContents.propTypes = {
-  ...props,
-  filteredData: PropTypes.array
-};
-
 const BucketData = ({data, search, clearSearch, loading, prefix, enableRouting, onWorkspaceCreate}) => {
   if (loading) {
     return <LoadingSVGCentered />;
-  }
-
-  if (!data.length && !search.length) {
-    return (
-      <div className="empty-search-container">
-        <div className="empty-search text-xs-center">
-          <strong>
-            {T.translate(`${PREFIX}.Content.emptyBucket`)}
-          </strong>
-        </div>
-      </div>
-    );
   }
 
   const filteredData = data.filter(d => {
@@ -227,16 +86,14 @@ const BucketData = ({data, search, clearSearch, loading, prefix, enableRouting, 
           <TableHeader enableRouting={enableRouting} />
         </div>
       </If>
-      <div className="s3-content-body">
-        <TableContents
-          search={search}
-          clearSearch={clearSearch}
-          filteredData={filteredData}
-          prefix={prefix}
-          enableRouting={enableRouting}
-          onWorkspaceCreate={onWorkspaceCreate}
-        />
-      </div>
+      <TableContents
+        search={search}
+        clearSearch={clearSearch}
+        data={filteredData}
+        prefix={prefix}
+        enableRouting={enableRouting}
+        onWorkspaceCreate={onWorkspaceCreate}
+      />
     </div>
   );
 };
