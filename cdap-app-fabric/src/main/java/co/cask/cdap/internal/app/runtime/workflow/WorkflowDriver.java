@@ -313,7 +313,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         fieldLineageWriter.write(workflowRunId, info);
       }
     } catch (Throwable t) {
-      LOG.error("Failed to emit the field lineage operations for Workflow {}", workflowRunId, t);
+      LOG.debug("Failed to emit the field lineage operations for Workflow {}", workflowRunId, t);
     }
   }
 
