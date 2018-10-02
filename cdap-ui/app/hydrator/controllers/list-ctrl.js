@@ -184,8 +184,8 @@ angular.module(PKG.name + '.feature.hydrator')
                     latestRun.end - latestRun.starting
                   :
                     (new Date().getTime() / 1000) - latestRun.starting;
+                  latestRun.duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.round(latestRun.duration));
                 }
-                latestRun.duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.round(latestRun.duration));
                 app = Object.assign({}, app, {
                   latestRun: latestRun
                 });

@@ -432,16 +432,20 @@ class HydratorPlusPlusConfigStore {
       this.getEngine() === window.CaskCommon.PipelineConfigConstants.ENGINE_OPTIONS.SPARK ||
       this.state.artifact.name === this.GLOBALS.etlDataStreams
     ) {
-      this.state.config.properties[numExecutorKey] = this.state.config.properties[numExecutorKey] || 1;
       if (this.state.config.properties.hasOwnProperty(numExecutorOldKey)) {
         // format on standalone is 'local[{number}] === local[2]'
         // So the magic number 6 here is for skipping 'local[' and get the number
         let numOfExecutors = this.state.config.properties[numExecutorOldKey];
-        numOfExecutors = typeof numOfExecutors === 'string' ? numOfExecutors.substring(6, numOfExecutors.length - 1) : numOfExecutors;
+        numOfExecutors = typeof numOfExecutors === 'string' ? numOfExecutors.substring(6, numOfExecutors.length - 1) : numOfExecutors.toString();
         this.state.config.properties[numExecutorKey] = numOfExecutors;
         delete this.state.config.properties[numExecutorOldKey];
       }
     }
+    this.state.config.properties = Object.keys(this.state.config.properties)
+      .reduce(
+        (obj, key) => (obj[key] = this.state.config.properties[key].toString(), obj),
+        {}
+      );
   }
   getCustomConfig() {
     let customConfig = {};

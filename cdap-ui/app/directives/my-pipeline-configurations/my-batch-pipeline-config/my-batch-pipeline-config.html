@@ -251,9 +251,9 @@
             </i>
             <span class="float-xs-right num-rows"
                   ng-if="BatchPipelineConfigCtrl.showCustomConfig">
-                {{ BatchPipelineConfigCtrl.customEngineConfig.pairs.length }}
+                {{ BatchPipelineConfigCtrl.numOfCustomEngineConfigFilled() }}
               <ng-pluralize
-                count="BatchPipelineConfigCtrl.customEngineConfig.pairs.length"
+                count="BatchPipelineConfigCtrl.numOfCustomEngineConfigFilled()"
                 when="{'one': 'custom config',
                       'other': 'custom configs'}">
               </ng-pluralize>

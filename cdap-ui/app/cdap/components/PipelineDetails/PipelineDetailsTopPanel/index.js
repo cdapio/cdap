@@ -48,13 +48,21 @@ const mapStateToButtonsProps = (state) => {
 const ConnectedPipelineDetailsButtons = connect(mapStateToButtonsProps)(PipelineDetailsButtons);
 
 export default class PipelineDetailsTopPanel extends Component {
-  componentWillMount() {
+  componentDidMount() {
+    const pipelineDetailStore = PipelineDetailStore.getState();
+    const pipelineDetailStoreConfig = pipelineDetailStore.config;
+    PipelineConfigurationsStore.dispatch({
+      type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
+      payload: {
+        pipelineVisualConfiguration: {
+          isBatch: pipelineDetailStore.artifact.name === GLOBALS.etlDataPipeline
+        }
+      }
+    });
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.INITIALIZE_CONFIG,
-      payload: {...PipelineDetailStore.getState().config}
+      payload: {...pipelineDetailStoreConfig}
     });
-  }
-  componentDidMount() {
     fetchAndUpdateRuntimeArgs();
   }
   render() {
