@@ -22,10 +22,7 @@ import co.cask.cdap.format.io.JsonDecoder;
 import co.cask.cdap.format.io.JsonEncoder;
 import co.cask.cdap.format.io.JsonStructuredRecordDatumReader;
 import co.cask.cdap.format.io.JsonStructuredRecordDatumWriter;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -33,6 +30,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Iterator;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for converting {@link StructuredRecord} to and from json.
@@ -66,13 +64,11 @@ public final class StructuredRecordStringConverter {
    * Converts a {@link StructuredRecord} to a delimited string.
    */
   public static String toDelimitedString(final StructuredRecord record, String delimiter) {
-    return Joiner.on(delimiter).join(
-      Iterables.transform(record.getSchema().getFields(), new Function<Schema.Field, String>() {
-        @Override
-        public String apply(Schema.Field field) {
-          return record.get(field.getName()).toString();
-        }
-      }));
+    return record.getSchema().getFields().stream()
+      .map(Schema.Field::getName)
+      .map(record::get)
+      .map(value -> value == null ? "" : value.toString())
+      .collect(Collectors.joining(delimiter));
   }
 
   /**
@@ -83,7 +79,9 @@ public final class StructuredRecordStringConverter {
     Iterator<Schema.Field> fields = schema.getFields().iterator();
 
     for (String part : Splitter.on(delimiter).split(delimitedString)) {
-      if (!part.isEmpty()) {
+      if (part.isEmpty()) {
+        builder.set(fields.next().getName(), null);
+      } else {
         builder.convertAndSet(fields.next().getName(), part);
       }
     }
