@@ -339,7 +339,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
    * @param metricValues a non-empty deque of {@link MetricValues}
    */
   private void persistMetrics(Deque<MetricValues> metricValues,
-                              Map<TopicIdMetaKey, TopicProcessMeta> topicProcessMetaMap) throws Exception {
+                              Map<TopicIdMetaKey, TopicProcessMeta> topicProcessMetaMap) {
     long now = System.currentTimeMillis();
     long lastMetricTime = metricValues.peekLast().getTimestamp();
     List<MetricValue> topicLevelDelays = new ArrayList<>();

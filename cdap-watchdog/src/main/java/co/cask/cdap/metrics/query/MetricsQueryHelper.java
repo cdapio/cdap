@@ -129,7 +129,7 @@ public class MetricsQueryHelper {
     this.metricStore = metricStore;
   }
 
-  public List<MetricTagValue> searchTags(List<String> tags) throws Exception {
+  public List<MetricTagValue> searchTags(List<String> tags) {
     // we want to search the entire range, so startTimestamp is '0' and end Timestamp is Integer.MAX_VALUE and
     // limit is -1 , to include the entire search result.
     MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE, -1,
@@ -137,7 +137,7 @@ public class MetricsQueryHelper {
     return tagValuesToHuman(metricStore.findNextAvailableTags(searchQuery));
   }
 
-  public Collection<String> searchMetric(List<String> tagValues) throws Exception {
+  public Collection<String> searchMetric(List<String> tagValues) {
     return getMetrics(humanToTagNames(parseTagValues(tagValues)));
   }
 
@@ -163,7 +163,7 @@ public class MetricsQueryHelper {
     return metricStore;
   }
 
-  private Collection<String> getMetrics(List<MetricTagValue> tagValues) throws Exception {
+  private Collection<String> getMetrics(List<MetricTagValue> tagValues) {
     // we want to search the entire range, so startTimestamp is '0' and end Timestamp is Integer.MAX_VALUE and
     // limit is -1 , to include the entire search result.
     MetricSearchQuery searchQuery =

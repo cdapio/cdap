@@ -68,7 +68,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(Iterator<MetricValues> metrics) throws Exception {
+  protected void publish(Iterator<MetricValues> metrics) {
     while (metrics.hasNext()) {
       metricStore.add(metrics.next());
     }
