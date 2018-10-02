@@ -183,7 +183,7 @@ public final class MapReduceContextConfig {
    * Returns the plugins being used in the MapReduce program.
    */
   public Map<String, Plugin> getPlugins() {
-    String spec = hConf.get(HCONF_ATTR_PLUGINS);
+    String spec = hConf.getRaw(HCONF_ATTR_PLUGINS);
     if (spec == null) {
       return ImmutableMap.of();
     }
