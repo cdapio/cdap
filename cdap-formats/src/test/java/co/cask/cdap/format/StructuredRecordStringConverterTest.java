@@ -136,6 +136,20 @@ public class StructuredRecordStringConverterTest {
     assertRecordsEqual(record, recordOfJson);
   }
 
+  @Test
+  public void testDelimitedWithNullsConversion() {
+    Schema schema = Schema.recordOf("x",
+                                    Schema.Field.of("x", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                                    Schema.Field.of("y", Schema.nullableOf(Schema.of(Schema.Type.INT))));
+    StructuredRecord record = StructuredRecord.builder(schema).set("x", "abc").build();
+    Assert.assertEquals("abc,", StructuredRecordStringConverter.toDelimitedString(record, ","));
+    Assert.assertEquals(record, StructuredRecordStringConverter.fromDelimitedString("abc,", ",", schema));
+
+    record = StructuredRecord.builder(schema).set("y", 5).build();
+    Assert.assertEquals(",5", StructuredRecordStringConverter.toDelimitedString(record, ","));
+    Assert.assertEquals(record, StructuredRecordStringConverter.fromDelimitedString(",5", ",", schema));
+  }
+
   private StructuredRecord getStructuredRecord(boolean withNullValue) {
     Schema.Field mapField = Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                                     Schema.of(Schema.Type.STRING)));
