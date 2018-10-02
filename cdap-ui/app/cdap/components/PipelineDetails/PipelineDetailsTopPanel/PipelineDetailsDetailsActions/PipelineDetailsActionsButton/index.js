@@ -64,6 +64,13 @@ export default class PipelineDetailsActionsButton extends Component {
     });
   };
 
+  componentWillReceiveProps(nextProps) {
+    this.pipelineConfig = {
+      ...this.pipelineConfig,
+      config: nextProps.config
+    };
+  }
+
   pipelineConfig = {
     name: this.props.pipelineName,
     description: this.props.description,
