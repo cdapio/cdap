@@ -496,7 +496,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   }
 
   private static final Pattern VAR_PAT = Pattern.compile("\\$\\{[^\\}\\$\u0020]+\\}");
-  private static final int MAX_SUBST = 20;
+  private static final int MAX_SUBST = 100;
 
   private String substituteVars(String expr) {
     if (expr == null) {

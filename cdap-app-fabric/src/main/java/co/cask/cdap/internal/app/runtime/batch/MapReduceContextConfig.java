@@ -80,6 +80,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_OUTPUTS = "cdap.mapreduce.outputs";
 
   private final Configuration hConf;
+  private CConfiguration cConf;
 
   public MapReduceContextConfig(Configuration hConf) {
     this.hConf = hConf;
@@ -99,6 +100,7 @@ public final class MapReduceContextConfig {
    */
   public void set(BasicMapReduceContext context, CConfiguration conf, URI programJarURI,
                   Map<String, String> localizedUserResources) {
+    this.cConf = conf;
     setProgramOptions(context.getProgramOptions());
     setProgramId(context.getProgram().getId());
     setApplicationSpecification(context.getApplicationSpecification());
@@ -177,13 +179,14 @@ public final class MapReduceContextConfig {
 
   private void setPlugins(Map<String, Plugin> plugins) {
     hConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(plugins, PLUGIN_MAP_TYPE));
+    cConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(plugins, PLUGIN_MAP_TYPE));
   }
 
   /**
    * Returns the plugins being used in the MapReduce program.
    */
   public Map<String, Plugin> getPlugins() {
-    String spec = hConf.get(HCONF_ATTR_PLUGINS);
+    String spec = cConf.getRaw(HCONF_ATTR_PLUGINS);
     if (spec == null) {
       return ImmutableMap.of();
     }
