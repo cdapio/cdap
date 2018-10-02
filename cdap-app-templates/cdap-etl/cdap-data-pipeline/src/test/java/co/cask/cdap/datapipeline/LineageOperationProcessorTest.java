@@ -269,7 +269,7 @@ public class LineageOperationProcessorTest {
     expectedOperations.add(hRead);
 
     // implicit merge should be added by app
-    TransformOperation merge = new TransformOperation("n1.n2.merge", "Merging stages: n1,n2",
+    TransformOperation merge = new TransformOperation("n1.n2.merge", "Merged stages: n1,n2",
                                                       Arrays.asList(InputField.of("n1.pRead", "offset"),
                                                                     InputField.of("n1.pRead", "body"),
                                                                     InputField.of("n2.hRead", "offset"),
@@ -397,7 +397,7 @@ public class LineageOperationProcessorTest {
     inputsToMerge.add(InputField.of("n4.parse", "address"));
     inputsToMerge.add(InputField.of("n4.parse", "zip"));
 
-    TransformOperation merge = new TransformOperation("n2.n4.merge", "Merging stages: n2,n4", inputsToMerge, "offset",
+    TransformOperation merge = new TransformOperation("n2.n4.merge", "Merged stages: n2,n4", inputsToMerge, "offset",
                                                       "body", "name", "address", "zip");
     expectedOperations.add(merge);
 
