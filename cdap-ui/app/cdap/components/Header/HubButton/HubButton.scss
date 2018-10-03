@@ -13,27 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-import * as React from 'react';
-import { Theme } from 'services/ThemeHelper';
-import classnames from 'classnames';
-import CaskMarketButton from 'components/Header/CaskMarketButton';
-require('./HubButton.scss');
 
-export default function HubButton() {
-  if (Theme.showHub === false) {
-    return null;
-  }
-
-  const featureName = Theme.featureNames.hub;
-
-  return (
-    <li
-      id='navbar-hub'
-      className="with-pointer"
-    >
-      <CaskMarketButton>
-        <span className="hub-text-wrapper">{featureName}</span>
-      </CaskMarketButton>
-    </li>
-  );
+#navbar-hub {
+  margin-right: 10px;
 }

@@ -30,6 +30,7 @@ import IconSVG from 'components/IconSVG';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import T from 'i18n-react';
 import classnames from 'classnames';
+import If from 'components/If';
 import {Theme} from 'services/ThemeHelper';
 
 require('./ProductDropdown.scss');
@@ -148,14 +149,16 @@ export default class ProductDropdown extends Component {
             </div>
           </DropdownToggle>
           <CustomDropdownMenu right>
-            <DropdownItem
-              tag="li"
-              onClick={this.toggleAboutPage}
-            >
-              <a>{T.translate('features.Navbar.ProductDropdown.aboutLabel', {
-                productName: Theme.productName,
-              })}</a>
-            </DropdownItem>
+            <If condition={Theme.showAboutProductModal === true}>
+              <DropdownItem
+                tag="li"
+                onClick={this.toggleAboutPage}
+              >
+                <a>{T.translate('features.Navbar.ProductDropdown.aboutLabel', {
+                  productName: Theme.productName,
+                })}</a>
+              </DropdownItem>
+            </If>
             <DropdownItem tag="li">
               {
                 !this.props.nativeLink ?
@@ -198,11 +201,13 @@ export default class ProductDropdown extends Component {
             }
           </CustomDropdownMenu>
         </Dropdown>
-        <AboutPageModal
-          cdapVersion={cdapVersion}
-          isOpen={this.state.aboutPageOpen}
-          toggle={this.toggleAboutPage}
-        />
+        <If condition={Theme.showAboutProductModal === true}>
+          <AboutPageModal
+            cdapVersion={cdapVersion}
+            isOpen={this.state.aboutPageOpen}
+            toggle={this.toggleAboutPage}
+          />
+        </If>
       </div>
     );
   }
