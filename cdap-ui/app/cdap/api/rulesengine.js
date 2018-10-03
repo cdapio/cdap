@@ -41,6 +41,7 @@ const  MyRulesEngineApi = {
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceBasepath}/start`),
   stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceBasepath}/stop`),
+  getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceBasepath}/status`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${serviceBasepath}/status`),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
   ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/rules`, { interval: 2000 }),

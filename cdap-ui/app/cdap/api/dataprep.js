@@ -41,6 +41,7 @@ const MyDataPrepApi = {
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/start`),
   stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/stop`),
+  getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/status`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${baseServicePath}/status`),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
   ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`, { interval: 2000 }),
