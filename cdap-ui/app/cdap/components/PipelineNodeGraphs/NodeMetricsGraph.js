@@ -179,7 +179,7 @@ export default class NodeMetricsGraph extends Component {
         .map(key => {
           let dataToPlot = data[key].data;
           if (!dataToPlot || !dataToPlot.length) {
-            dataToPlot = this.dummyData;
+            return null;
           }
           return (
             <AreaSeries
@@ -218,6 +218,9 @@ export default class NodeMetricsGraph extends Component {
         .keys(data)
         .filter(key => this.state.dataToShow.indexOf(data[key].label) !== -1)
         .map(key => {
+          if (Array.isArray(data[key].data) && !data[key].data.length) {
+            return null;
+          }
           return (
             <LineMarkSeries
               color={data[key].color || metricTypeToColorMap[metricType]}

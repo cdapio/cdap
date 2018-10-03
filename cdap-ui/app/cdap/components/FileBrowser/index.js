@@ -513,7 +513,10 @@ export default class FileBrowser extends Component {
             />
           </div>
 
-          <div className="info-container">
+          <div
+            className="info-container"
+            title={T.translate(`${PREFIX}.TopPanel.directoryMetrics`, {count: this.state.contents.length})}
+          >
             <div className="info">
               <span>
                 {T.translate(`${PREFIX}.TopPanel.directoryMetrics`, {count: this.state.contents.length})}

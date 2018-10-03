@@ -14,16 +14,9 @@
  * the License.
  */
 
-import * as React from 'react';
-require('./AuthRefresher.scss');
-
-const AuthRefresher: React.SFC = () => {
-  const url = (window as any).CDAP_CONFIG.authRefreshURL;
-  if (url === false) { return null; }
-
-  return (
-    <iframe src={url} className="auth-refresher" />
-  );
-};
-
-export default AuthRefresher;
+.auth-refresher {
+  width: 0;
+  height: 0;
+  border: 0;
+  position: absolute;
+}
