@@ -15,6 +15,7 @@
  */
 
 package co.cask.cdap.internal.app.runtime.batch;
+
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
@@ -39,12 +40,9 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
@@ -54,76 +52,77 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-
+import java.util.Set;
 
 
 /**
  */
 public class MapReduceContextConfigTest {
 
-    private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() { }.getType();
-    private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-            .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-            .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
-    private static final String HCONF_ATTR_PLUGINS = "cdap.mapreduce.plugins";
+  private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() {
+  }.getType();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
+  private static final String HCONF_ATTR_PLUGINS = "cdap.mapreduce.plugins";
 
-    @Test
-    public void testManyMacrosInAppSpec() {
-        Configuration hConf = new Configuration();
-        MapReduceContextConfig cfg = new MapReduceContextConfig(hConf);
-        StringBuilder appCfg = new StringBuilder();
-        for (int i = 0; i < 100; i++) {
-            appCfg.append("${").append(i).append("}");
-            hConf.setInt(String.valueOf(i), i);
-        }
-        ApplicationSpecification appSpec = 
-           new DefaultApplicationSpecification("name", "desc", appCfg.toString(),
-           new ArtifactId("artifact", 
-           new ArtifactVersion("1.0.0"), ArtifactScope.USER),
-           Collections.<String, StreamSpecification>emptyMap(), 
-           Collections.<String, String>emptyMap(),
-           Collections.<String, DatasetCreationSpec>emptyMap(), 
-           Collections.<String, FlowSpecification>emptyMap(),
-           Collections.<String, MapReduceSpecification>emptyMap(),
-           Collections.<String, SparkSpecification>emptyMap(),
-           Collections.<String, WorkflowSpecification>emptyMap(),
-           Collections.<String, ServiceSpecification>emptyMap(),
-           Collections.<String, ScheduleSpecification>emptyMap(),
-           Collections.<String, ScheduleCreationSpec>emptyMap(),
-           Collections.<String, WorkerSpecification>emptyMap(), 
-           Collections.<String, Plugin>emptyMap());
-           cfg.setApplicationSpecification(appSpec);
-           Assert.assertEquals(appSpec.getConfiguration(), 
-           cfg.getApplicationSpecification().getConfiguration());
-     }
-
-@Test
-public void testGetPluginsWithMacrosMoreThan20() {
-  Configuration hConf = new Configuration();
-  MapReduceContextConfig cfg = new MapReduceContextConfig(hConf);
-  Map<String, Plugin> mockPlugins = new HashMap<String, Plugin>();
-  ArtifactId artifactId = new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.SYSTEM);
-  Map<String, String> properties = new HashMap<String, String>();
-  properties.put("path",
-      "${input.directory}/${a}${b}${c}${d}${e}${f}${g}${h}${i}${j}"
-       + "${k}${l}${m}${n}${o}${p}${q}${r}${s}${t}${u}${v}${w}${x}${y}${z}.txt");
-  hConf.set("input.directory", "/dummy/path");
-  String[] alphabetsArr = { "a", "b", "c", "d", "e", "f", "g", "h",
-      "i", "j", "k", "l", "m", "n", "o", "p", "q",
-      "r", "s", "t", "u", "v", "w", "x", "y", "z" };
-  for (String alphabet : alphabetsArr) {
-     hConf.set(alphabet, alphabet);
+  @Test
+  public void testManyMacrosInAppSpec() {
+    Configuration hConf = new Configuration();
+    MapReduceContextConfig cfg = new MapReduceContextConfig(hConf);
+    StringBuilder appCfg = new StringBuilder();
+    for (int i = 0; i < 100; i++) {
+      appCfg.append("${").append(i).append("}");
+      hConf.setInt(String.valueOf(i), i);
+    }
+    ApplicationSpecification appSpec =
+      new DefaultApplicationSpecification("name", "desc", appCfg.toString(),
+                                          new ArtifactId("artifact",
+                                                         new ArtifactVersion("1.0.0"), ArtifactScope.USER),
+                                          Collections.<String, StreamSpecification>emptyMap(),
+                                          Collections.<String, String>emptyMap(),
+                                          Collections.<String, DatasetCreationSpec>emptyMap(),
+                                          Collections.<String, FlowSpecification>emptyMap(),
+                                          Collections.<String, MapReduceSpecification>emptyMap(),
+                                          Collections.<String, SparkSpecification>emptyMap(),
+                                          Collections.<String, WorkflowSpecification>emptyMap(),
+                                          Collections.<String, ServiceSpecification>emptyMap(),
+                                          Collections.<String, ScheduleSpecification>emptyMap(),
+                                          Collections.<String, ScheduleCreationSpec>emptyMap(),
+                                          Collections.<String, WorkerSpecification>emptyMap(),
+                                          Collections.<String, Plugin>emptyMap());
+    cfg.setApplicationSpecification(appSpec);
+    Assert.assertEquals(appSpec.getConfiguration(),
+                        cfg.getApplicationSpecification().getConfiguration());
   }
-  LinkedHashSet<ArtifactId> parents = new LinkedHashSet<>();
-  Plugin filePlugin1 = new Plugin(parents, artifactId,
-     new PluginClass("type", "name", "desc", "clsname", "cfgfield",
-  ImmutableMap.<String, PluginPropertyField>of()),
-     PluginProperties.builder().addAll(properties).build());
 
-  mockPlugins.put("File1", filePlugin1);
-  hConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(mockPlugins, PLUGIN_MAP_TYPE));
+  @Test
+  public void testGetPluginsWithMacrosMoreThan20() {
+    Configuration hConf = new Configuration();
+    MapReduceContextConfig cfg = new MapReduceContextConfig(hConf);
+    Map<String, Plugin> mockPlugins = new HashMap<String, Plugin>();
+    ArtifactId artifactId = new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.SYSTEM);
+    Map<String, String> properties = new HashMap<String, String>();
+    properties.put("path",
+                   "${input.directory}/${a}${b}${c}${d}${e}${f}${g}${h}${i}${j}"
+                     + "${k}${l}${m}${n}${o}${p}${q}${r}${s}${t}${u}${v}${w}${x}${y}${z}.txt");
+    hConf.set("input.directory", "/dummy/path");
+    String[] alphabetsArr = {"a", "b", "c", "d", "e", "f", "g", "h",
+      "i", "j", "k", "l", "m", "n", "o", "p", "q",
+      "r", "s", "t", "u", "v", "w", "x", "y", "z"};
+    for (String alphabet : alphabetsArr) {
+      hConf.set(alphabet, alphabet);
+    }
+    Set<ArtifactId> parents = new LinkedHashSet<>();
+    Plugin filePlugin1 = new Plugin(parents, artifactId,
+                                    new PluginClass("type", "name", "desc", "clsname", "cfgfield",
+                                                    Collections.<String, PluginPropertyField>emptyMap()),
+                                    PluginProperties.builder().addAll(properties).build());
 
-  Map<String, Plugin> plugins = cfg.getPlugins();
-  Assert.assertEquals(plugins.size(), 1);
- }
+    mockPlugins.put("File1", filePlugin1);
+    hConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(mockPlugins, PLUGIN_MAP_TYPE));
+
+    Map<String, Plugin> plugins = cfg.getPlugins();
+    Assert.assertEquals(plugins.size(), 1);
+  }
 }
