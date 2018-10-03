@@ -119,11 +119,11 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
   private constructProperties = (): IProperties => {
     const properties: IProperties = {};
 
-    if (this.state.projectId.length > 0) {
+    if (this.state.projectId && this.state.projectId.length > 0) {
       properties.projectId = this.state.projectId;
     }
 
-    if (this.state.serviceAccountKeyfile.length > 0) {
+    if (this.state.serviceAccountKeyfile && this.state.serviceAccountKeyfile.length > 0) {
       properties['service-account-keyfile'] = this.state.serviceAccountKeyfile;
     }
 
