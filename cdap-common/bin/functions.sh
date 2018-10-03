@@ -1437,11 +1437,17 @@ cdap_sdk() {
 #
 # User-definable variables
 
-# Default CDAP_CONF to /etc/cdap/conf (package default)
-export CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
-
 # Set CDAP_HOME
 export CDAP_HOME=$(cdap_home)
+
+# Default CDAP_CONF to either:
+# /etc/cdap/conf (package default), or
+# ${CDAP_HOME}/conf (sandbox default)
+if [[ $(cdap_context) == 'sdk' ]]; then
+  export CDAP_CONF=${CDAP_CONF:-${CDAP_HOME}/conf}
+else
+  export CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
+fi
 
 # Make sure HOSTNAME is in the environment
 export HOSTNAME=$(hostname -f)
