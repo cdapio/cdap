@@ -27,7 +27,8 @@ import ComputeProfiles from 'components/NamespaceDetails/ComputeProfiles';
 import Preferences from 'components/NamespaceDetails/Preferences';
 import Mapping from 'components/NamespaceDetails/Mapping';
 import Security from 'components/NamespaceDetails/Security';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import NamespaceStore, {getCurrentNamespace} from 'services/NamespaceStore';
+import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import {objectQuery} from 'services/helpers';
 import NamespaceDetailsPageTitle from 'components/NamespaceDetails/NamespaceDetailsPageTitle';
 require('./NamespaceDetails.scss');
@@ -73,7 +74,18 @@ NamespaceDetailsComp.propTypes = {
 const ConnectedNamespaceDetailsComp = connect(mapStateToProps)(NamespaceDetailsComp);
 
 export default class NamespaceDetails extends Component {
+
+  static propTypes = {
+    match: PropTypes.object
+  };
   componentWillMount() {
+    let namespace = objectQuery(this.props, 'match', 'params', 'namespace') || null;
+    NamespaceStore.dispatch({
+      type: NamespaceActions.selectNamespace,
+      payload: {
+        selectedNamespace: namespace
+      }
+    });
     getData();
   }
 
