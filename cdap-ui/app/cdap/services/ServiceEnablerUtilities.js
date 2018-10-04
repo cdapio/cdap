@@ -27,7 +27,8 @@ export default function enableSystemApp({
   artifactName,
   api,
   i18nPrefix,
-  MIN_VERSION
+  MIN_VERSION,
+  featureName
 }) {
   function enableService(observer) {
 
@@ -49,7 +50,10 @@ export default function enableSystemApp({
         if (appArtifact.length === 0) {
           observer.error({
             error: T.translate(`${i18nPrefix}.errorTitle`),
-            extendedMessage: T.translate('features.ServiceEnableUtility.serviceNotFound', {artifactName})
+            extendedMessage: T.translate('features.ServiceEnableUtility.serviceNotFound', {
+              artifactName,
+              featureName
+            })
           });
           return;
         }
@@ -67,7 +71,8 @@ export default function enableSystemApp({
             observer.error({
               error: T.translate(`${i18nPrefix}.minimumVersionError`, {
                 highestVersion,
-                minimumVersion: MIN_VERSION
+                minimumVersion: MIN_VERSION,
+                featureName
               })
             });
             return;
@@ -118,7 +123,7 @@ export default function enableSystemApp({
         startService(observer);
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.errorTitle`),
+          error: T.translate(`${i18nPrefix}.errorTitle`, { featureName }),
           extendedMessage: err.data || err
         });
       });
@@ -132,7 +137,7 @@ export default function enableSystemApp({
         pollServiceStatus(observer);
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.errorTitle`),
+          error: T.translate(`${i18nPrefix}.errorTitle`, { featureName }),
           extendedMessage: err.data || err
         });
       });
@@ -149,7 +154,7 @@ export default function enableSystemApp({
         }
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.errorTitle`),
+          error: T.translate(`${i18nPrefix}.errorTitle`, { featureName }),
           extendedMessage: err.data || err
         });
       });
@@ -171,7 +176,7 @@ export default function enableSystemApp({
           }
 
           observer.error({
-            error: T.translate(`${i18nPrefix}.errorCommunicating`),
+            error: T.translate(`${i18nPrefix}.errorCommunicating`, { featureName }),
             extendedMessage: err.data || err
           });
         });
@@ -188,7 +193,7 @@ export default function enableSystemApp({
         pollStopServiceStatus(observer);
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.failedToStop`),
+          error: T.translate(`${i18nPrefix}.failedToStop`, { featureName }),
           extendedMessage: err.data || err
         });
       });
@@ -207,7 +212,7 @@ export default function enableSystemApp({
         }
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.failedToStop`),
+          error: T.translate(`${i18nPrefix}.failedToStop`, { featureName }),
           extendedMessage: err.data || err
         });
       });

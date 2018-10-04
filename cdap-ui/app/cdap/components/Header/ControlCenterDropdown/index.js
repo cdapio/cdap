@@ -16,7 +16,6 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import T from 'i18n-react';
 import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
@@ -24,10 +23,9 @@ import classnames from 'classnames';
 import DashboardLink from 'components/Header/DashboardLink';
 import EntitiesLink from 'components/Header/EntitiesLink';
 import ReportsLink from 'components/Header/ReportsLink';
+import { Theme } from 'services/ThemeHelper';
 
 require('./ControlCenterDropdown.scss');
-
-const PREFIX = 'features.Navbar.ControlCenter';
 
 export default class ControlCenterDropdown extends Component {
   static propTypes = {
@@ -68,6 +66,8 @@ export default class ControlCenterDropdown extends Component {
   };
 
   render() {
+    const featureName = Theme.featureNames.controlCenter;
+
     return (
       <li
         id="navbar-control-center"
@@ -77,7 +77,7 @@ export default class ControlCenterDropdown extends Component {
           className="header-dropdown control-center"
         >
           <DropdownToggle caret>
-            {T.translate(`${PREFIX}.label`)}
+            {featureName}
           </DropdownToggle>
           <CustomDropdownMenu>
             <EntitiesLink />

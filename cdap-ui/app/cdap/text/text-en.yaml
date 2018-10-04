@@ -357,17 +357,17 @@ features:
       errorMessage: Page {pageNum} not found
       suggestionMessage1: "Go back to:"
       suggestionMessage2: Page 1
-    Title: '{productName} | Control Center'
+    Title: '{productName} | {featureName}'
   DataPrepServiceControl:
-    btnLabel: Enable Data Preparation
+    btnLabel: "Enable {featureName}"
     btnLoadingLabel: "Enabling..."
-    description: Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
+    description: "{featureName} provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks."
     list:
       1: Easy and interactive way to work with messy data
       2: Apply transformations using a variety of operations on various data types
       3: Quickly visualize results of transformations, and patterns both within and across columns
       4: Operationalize effortlessly into production pipeline
-    title: Welcome to Data Preparation
+    title: "Welcome to {featureName}"
   DataPrep:
     DataPrepSidePanel:
       columnsTabLabel: Columns ({columnsCount})
@@ -964,7 +964,7 @@ features:
         variableNamePlaceholder: Enter counter name
       Swap:
         title: Swap two column names
-    pageTitle: '{productName} | Data Preparation {workspaceUri}'
+    pageTitle: '{productName} | {featureName} {workspaceUri}'
     PipelineError:
       bigquery: Unable to find Google BigQuery plugin. Please install Google Cloud Plugins from Hub.
       database: Unable to find Database Plugins. Please make sure Database Plugins are available.
@@ -1047,10 +1047,10 @@ features:
       upload: Local File Upload
       viewSchemaBtnLabel: View Schema
     Upgrade:
-      errorCommunicating: Error while communicating with Data Preparation service
-      errorTitle: Enabling Data Preparation failed
-      failedToStop: Failed to stop Data Preparation service
-      minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Hub."
+      errorCommunicating: Error while communicating with {featureName} service
+      errorTitle: Enabling {featureName} failed
+      failedToStop: Failed to stop {featureName} service
+      minimumVersionError: "{featureName} requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Hub."
     WorkspaceTabs:
       DeleteModal:
         cancelButton: No, keep tab open
@@ -1299,7 +1299,7 @@ features:
       moreInfo: for more info
       nextSelect: Next, select a machine learning algorithm
       numDirectives: "No of directives: "
-      pageTitle: '{productName} | Analytics | {experimentIdWithSuffix}'
+      pageTitle: '{productName} | {featureName} | {experimentIdWithSuffix}'
       random: Random
       selectMLAlgorithm: Select a machine learning algorithm
       selectOutcome: Select an outcome
@@ -1342,7 +1342,7 @@ features:
       modelTrainingLogs: Model training logs
       numModels: No of models
       outcome: Outcome
-      pageTitle: '{productName} | Analytics | {experiment_name}'
+      pageTitle: '{productName} | {featureName} | {experiment_name}'
       precision: Precision
       r2: R2
       recall: Recall
@@ -1357,8 +1357,8 @@ features:
         1: "{context} experiment"
         _: "{context} experiments"
       numModels: No of models
-      pageTitle: '{productName} | Analytics | All Experiments'
-    pageTitle: '{productName} | Analytics'
+      pageTitle: '{productName} | {featureName} | All Experiments'
+    pageTitle: '{productName} | {featureName}'
     ServiceControl:
       Benefits:
         b1: Intuitive Web UI for building, training, testing and evaluating machine learning models.
@@ -1367,15 +1367,15 @@ features:
         b4: Out of the box support for common machine learning libraries like SparkML.
         b5: Support for tuning custom hyperparameters for algorithms.
         b6: Integrated metrics and visualization providing rich summaries and graphs for model evaluation.
-        title: "Some key benefits of MMDS are:"
-      description: "Data scientists typically build custom tooling for managing their machine learning models and deploying them. Model Management and Distribution Service (MMDS) provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models."
-      enableBtnLabel: Enable MMDS
-      environmentCheckMessage: Checking for environment before enabling Analytics
-      errorCommunicating: Error while communicating with MMDS service
-      errorTitle: Enabling MMDS failed
+        title: "Some key benefits of {featureName} are:"
+      description: "Data scientists typically build custom tooling for managing their machine learning models and deploying them. {featureName} provides a seamless, automated interface to help users develop, train, test, evaluate and deploy their machine learning models."
+      enableBtnLabel: Enable {featureName}
+      environmentCheckMessage: Checking for environment before enabling {featureName}
+      errorCommunicating: Error while communicating with {featureName} service
+      errorTitle: Enabling {featureName} failed
       errorMessage: Please check logs for more information
-      serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use Analytics
-      title: Welcome to Model Management and Distribution Service
+      serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use {featureName}
+      title: Welcome to {featureName}
 
   FieldLevelLineage:
     fieldsCount:
@@ -1668,20 +1668,15 @@ features:
 
   NUX:
     ControlCenter:
-      text: Control Center allows you to create, manage, operate, and monitor datasets and applications.
-      title: Control Center
+      text: "{featureName} allows you to create, manage, operate, and monitor datasets and applications."
     Hub:
-      text: The Hub allows administrators to distribute re-usable pipelines, applications, plugins, and solutions to all {productName} users in their organizations.
-      title: Hub
+      text: "The {featureName} allows administrators to distribute re-usable pipelines, applications, plugins, and solutions to all {productName} users in their organizations."
     Metadata:
-      text: Metadata enables data discovery through search, and data governance through lineage.
-      title: Metadata
+      text: "{featureName} enables data discovery through search, and data governance through lineage."
     Pipelines:
-      text: Pipelines enable you to create, schedule, and manage complex data processing workflows (both batch and realtime) using an intuitive UI.
-      title: Pipelines
+      text: "{featureName} enable you to create, schedule, and manage complex data processing workflows (both batch and realtime) using an intuitive UI."
     Preparation:
-      text: Preparation allows you to easily connect to a variety of data sources and cleanse data using point and click interactions. Once you are satisfied, you can operationalize your transformations in a pipeline.
-      title: Preparation
+      text: "{featureName} allows you to easily connect to a variety of data sources and cleanse data using point and click interactions. Once you are satisfied, you can operationalize your transformations in a pipeline."
     Welcome:
       close: No, Thanks
       header: Welcome to {productName}
@@ -1691,7 +1686,7 @@ features:
 
   OpsDashboard:
     header: Dashboard
-    pageTitle: '{productName} | Dashboard'
+    pageTitle: '{productName} | {featureName}'
     RunsGraph:
       chart: Chart
       disabledArrowTooltip: The runs timelime is only available for the past 7 days
@@ -2200,7 +2195,7 @@ features:
         select: Select time
         timeRange: "{startTime} to {endTime}"
     header: Reports
-    pageTitle: '{productName} | Reports'
+    pageTitle: '{productName} | {featureName}'
     reportName: Report name
     reports:
       1: "{context} report"
@@ -2244,20 +2239,20 @@ features:
       selectAReport: Select a report to view
     ReportsServiceControl:
       Benefits:
-        title: "Some of the key features of Reports are:"
+        title: "Some of the key features of {featureName} are:"
         b1: Intuitive web UI for generating, viewing and managing reports.
         b2: Support for filtering by process type (pipelines or custom apps) and status.
         b3: Historical reporting over extended time periods using Apache Spark for optimal performance.
         b4: Permanent retention for important, saved reports.
         b5: Automatic deletion of unsaved reports.
         b6: Use-case based customization of report contents (columns).
-      description: "Reports help users generate historical analysis of programs and pipelines running in their data infrastructure. The primary goal of these reports is to help decision makers and administrators make informed business decisions about resource utilization, capacity planning, and onboarding new processes."
-      enable: Enable Reports
-      environmentCheckMessage: Checking for environment before enabling Reports
-      errorCommunicating: Error while communicating with Reports service
-      errorTitle: Enabling Reports failed
-      serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use Reports
-      title: Welcome to Reports
+      description: "{featureName} help users generate historical analysis of programs and pipelines running in their data infrastructure. The primary goal of these reports is to help decision makers and administrators make informed business decisions about resource utilization, capacity planning, and onboarding new processes."
+      enable: Enable {featureName}
+      environmentCheckMessage: Checking for environment before enabling {featureName}
+      errorCommunicating: Error while communicating with {featureName} service
+      errorTitle: Enabling {featureName} failed
+      serviceDisabledMessage: Please upgrade to Spark 2.0 or later to use {featureName}
+      title: Welcome to {featureName}
 
   Resource-Center:
     Application:
@@ -2330,7 +2325,7 @@ features:
       owner: Owner
       version: Version {version}
     Home:
-      pageTitle: '{productName} | Rules Engine'
+      pageTitle: '{productName} | {featureName}'
       Tabs:
         rbTitle: RuleBooks
         rulesTitle: Rules
@@ -2365,16 +2360,16 @@ features:
       benefits:
         b1: "Intuitive UI: Business users can easily set up and govern data ingestion and data processing - no programming required"
         b2: "Flexible Management: Rules and Rulebooks can be easily added, updated and shared"
-        b3: "Fully integrated: The Rules Engine is available as a library to integrate with JBoss, WebLogic, Spring, and SQL tools"
-        b4: "Scalable: The Rules Engine is horizontally scalable, i.e. it scales out with your big data environment"
-        b5: "Easy governance: The Rules engine provides a centralized repository for policies and transformations"
-        title: "Benefits of the Rules Engine include:"
-      description: Business Rules Engine provides an easy way to create and manage a knowledge base that is executable in your big data environment.
+        b3: "Fully integrated: The {featureName} is available as a library to integrate with JBoss, WebLogic, Spring, and SQL tools"
+        b4: "Scalable: The {featureName} is horizontally scalable, i.e. it scales out with your big data environment"
+        b5: "Easy governance: The {featureName} provides a centralized repository for policies and transformations"
+        title: "Benefits of the {featureName} include:"
+      description: Business {featureName} provides an easy way to create and manage a knowledge base that is executable in your big data environment.
                   The intuitive UI allows business analysts to set up business rules and use them within a data pipeline.
-      enableBtnLabel: Enable Rules Engine
-      errorCommunicating: Error while communicating with Rules Engine service
-      errorTitle: Enabling Rules Engine failed
-      title: Welcome to Rules Engine Management
+      enableBtnLabel: Enable {featureName}
+      errorCommunicating: Error while communicating with {featureName} service
+      errorTitle: Enabling {featureName} failed
+      title: Welcome to {featureName}
     RulesList:
       dropContainerText: Add a rule by dragging and dropping from the Rules tab
       rulesLabel: Rules

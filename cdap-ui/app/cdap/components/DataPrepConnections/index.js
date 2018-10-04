@@ -1027,10 +1027,12 @@ export default class DataPrepConnections extends Component {
   };
 
   render() {
+    const featureName = Theme.featureNames.dataPrep;
     let pageTitle = (
       <Helmet
         title={T.translate(DATAPREP_I18N_PREFIX, {
           productName: Theme.productName,
+          featureName
         })}
       />
     );

@@ -23,6 +23,19 @@ interface IThemeJSON {
   "spec-version": string;
 }
 
+interface IJsonFeatureNames {
+  "analytics"?: string;
+  "control-center"?: string;
+  "dashboard"?: string;
+  "data-prep"?: string;
+  "entities"?: string;
+  "hub"?: string;
+  "metadata"?: string;
+  "pipelines"?: string;
+  "reports"?: string;
+  "rules-engine"?: string;
+}
+
 interface IOnePoint0SpecJSON extends IThemeJSON {
   "styles"?: {
     "brand-primary-color"?: string;
@@ -37,18 +50,19 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
       "arguments"?: {
          "url"?: string;
          "data"?: string;
-      }
-    },
+      };
+    };
     "product-logo-about"?: {
       "type"?: string;
       "arguments"?: {
          "url"?: string;
          "data"?: string;
-      }
-    },
-    "favicon-path"?: string,
+      };
+    };
+    "favicon-path"?: string;
     "footer-text"?: string;
     "footer-link"?: string;
+    "feature-names"?: IJsonFeatureNames;
   };
   "features"?: {
     "dashboard"?: boolean;
@@ -112,6 +126,19 @@ export function applyTheme() {
   return;
 }
 
+interface IFeatureNames {
+  analytics: string;
+  controlCenter: string;
+  dashboard: string;
+  dataPrep: string;
+  entities: string;
+  hub: string;
+  metadata: string;
+  pipelines: string;
+  reports: string;
+  rulesEngine: string;
+}
+
 interface IThemeObj {
   productName?: string;
   productDescription?: string;
@@ -130,6 +157,7 @@ interface IThemeObj {
   showHub?: boolean;
   showIngestData?: boolean;
   showAddNamespace?: boolean;
+  featureNames?: IFeatureNames;
 }
 
 function getTheme(): IThemeObj {
@@ -168,6 +196,18 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       favicon: '/cdap_assets/img/favicon.png',
       footerText: 'Licensed under the Apache License, Version 2.0',
       footerLink: 'https://www.apache.org/licenses/LICENSE-2.0',
+      featureNames: {
+        analytics: 'Analytics',
+        controlCenter: 'Control Center',
+        dashboard: 'Dasboard',
+        dataPrep: 'Preparation',
+        entities: 'Entities',
+        hub: 'Hub',
+        metadata: 'Metadata',
+        pipelines: 'Pipelines',
+        reports: 'Reports',
+        rulesEngine: 'Rules',
+      },
     };
     if (isNilOrEmpty(contentJson)) {
       return content;
@@ -206,6 +246,43 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         }
       }
     }
+    if ('feature-names' in contentJson) {
+      const featureNames = { ...content.featureNames };
+
+      if ('analytics' in contentJson['feature-names']) {
+        featureNames.analytics = objectQuery(contentJson, 'feature-names', 'analytics');
+      }
+      if ('control-center' in contentJson['feature-names']) {
+        featureNames.controlCenter = objectQuery(contentJson, 'feature-names', 'control-center');
+      }
+      if ('dashboard' in contentJson['feature-names']) {
+        featureNames.dashboard = objectQuery(contentJson, 'feature-names', 'dashboard');
+      }
+      if ('data-prep' in contentJson['feature-names']) {
+        featureNames.dataPrep = objectQuery(contentJson, 'feature-names', 'data-prep');
+      }
+      if ('entities' in contentJson['feature-names']) {
+        featureNames.entities = objectQuery(contentJson, 'feature-names', 'entities');
+      }
+      if ('hub' in contentJson['feature-names']) {
+        featureNames.hub = objectQuery(contentJson, 'feature-names', 'hub');
+      }
+      if ('metadata' in contentJson['feature-names']) {
+        featureNames.metadata = objectQuery(contentJson, 'feature-names', 'metadata');
+      }
+      if ('pipelines' in contentJson['feature-names']) {
+        featureNames.pipelines = objectQuery(contentJson, 'feature-names', 'pipelines');
+      }
+      if ('reports' in contentJson['feature-names']) {
+        featureNames.reports = objectQuery(contentJson, 'feature-names', 'reports');
+      }
+      if ('rules-engine' in contentJson['feature-names']) {
+        featureNames.rulesEngine = objectQuery(contentJson, 'feature-names', 'rules-engine');
+      }
+
+      content.featureNames = featureNames;
+    }
+
     return content;
   }
 

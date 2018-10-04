@@ -32,6 +32,7 @@ import {handlePageChange, handleExperimentsSort, setExperimentsListError} from '
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 import T from 'i18n-react';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.Experiments.ListView';
 
@@ -231,11 +232,13 @@ function ExperimentsListViewContent({
     return <LoadingSVGCentered />;
   }
   let {selectedNamespace: namespace} = NamespaceStore.getState();
+  const featureName = Theme.featureNames.analytics;
+
   if (!list.length) {
     return (
       <div className="experiments-listview">
         <TopPanel>
-          <h4>Analytics - All Experiments</h4>
+          <h4>{featureName} - All Experiments</h4>
           <PlusButton
             mode={PlusButton.MODE.resourcecenter}
             contextItems={PLUSBUTTONCONTEXTMENUITEMS}
@@ -251,7 +254,7 @@ function ExperimentsListViewContent({
   return (
     <div className="experiments-listview">
       <TopPanel>
-        <h4>Analytics - All Experiments</h4>
+        <h4>{featureName} - All Experiments</h4>
         <PlusButton
           mode={PlusButton.MODE.resourcecenter}
           contextItems={PLUSBUTTONCONTEXTMENUITEMS}

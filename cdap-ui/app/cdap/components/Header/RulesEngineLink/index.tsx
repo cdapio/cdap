@@ -18,7 +18,6 @@ import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
 import {withContext} from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
-import T from 'i18n-react';
 require('./RulesEngineLink.scss');
 
 interface IRulesEngineLinkProps {
@@ -36,7 +35,7 @@ class RulesEngineLink extends React.PureComponent<IRulesEngineLinkProps> {
     if (Theme.showRulesEngine === false) {
       return null;
     }
-
+    const featureName = Theme.featureNames.rulesEngine;
     const { namespace, isNativeLink } = this.props.context;
     const rulesEngineUrl = `/ns/${namespace}/rulesengine`;
     return (
@@ -50,7 +49,7 @@ class RulesEngineLink extends React.PureComponent<IRulesEngineLinkProps> {
             isNativeLink={isNativeLink}
             to={isNativeLink ? `/cdap${rulesEngineUrl}` : rulesEngineUrl}
           >
-            {T.translate(`features.Navbar.rulesmgmt`)}
+            {featureName}
           </NavLinkWrapper>
       </li>
     );

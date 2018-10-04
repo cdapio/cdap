@@ -31,6 +31,7 @@ import ReportsPagination from 'components/Reports/ReportsList/ReportsPagination'
 import NamespacesPicker from 'components/NamespacesPicker';
 import {setNamespacesPick} from 'components/Reports/store/ActionCreator';
 import T from 'i18n-react';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.Reports.ReportsList';
 
@@ -39,7 +40,10 @@ require('./ReportsList.scss');
 class ReportsListView extends Component {
   static propTypes = {
     reports: PropTypes.array,
-    activeId: PropTypes.string,
+    activeId: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ]),
     offset: PropTypes.number
   };
 
@@ -204,11 +208,12 @@ class ReportsListView extends Component {
   }
 
   render() {
+    const featureName = Theme.featureNames.reports;
     return (
       <div className="reports-container">
         <div className="header">
           <div className="reports-view-options float-xs-left">
-            <span>{T.translate('features.Reports.header')}</span>
+            <span>{featureName}</span>
           </div>
 
           <NamespacesPicker setNamespacesPick={setNamespacesPick} />

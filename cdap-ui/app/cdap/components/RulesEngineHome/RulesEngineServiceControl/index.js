@@ -22,6 +22,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
 import isObject from 'lodash/isObject';
+import {Theme} from 'services/ThemeHelper';
 
 require('./RulesEngineServiceControl.scss');
 const PREFIX = 'features.RulesEngine.RulesEngineServiceControl';
@@ -43,11 +44,14 @@ export default class RulesEngineServiceControl extends Component {
     this.setState({
       loading: true
     });
+
+    const featureName = Theme.featureNames.rulesEngine;
     enableSystemApp({
       shouldStopService: false,
       artifactName: RulesEngineArtifact,
       api: MyRuleEngineApi,
-      i18nPrefix: PREFIX
+      i18nPrefix: PREFIX,
+      featureName
     })
       .subscribe(
         this.props.onServiceStart,
@@ -83,6 +87,7 @@ export default class RulesEngineServiceControl extends Component {
   }
 
   renderEnableBtn = () => {
+    const featureName = Theme.featureNames.rulesEngine;
     return (
       <div className="action-container">
         <button
@@ -96,13 +101,14 @@ export default class RulesEngineServiceControl extends Component {
             :
               null
           }
-          <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`)}</span>
+          <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`, { featureName })}</span>
         </button>
       </div>
     );
   };
 
   render() {
+    const featureName = Theme.featureNames.rulesEngine;
     return (
       <div className="rules-engine-service-control">
         <div className="image-containers">
@@ -110,35 +116,35 @@ export default class RulesEngineServiceControl extends Component {
           <img className="img-thumbnail" src="/cdap_assets/img/RulesEngine_preview_2.png" />
         </div>
         <div className="text-container">
-          <h2> {T.translate(`${PREFIX}.title`)} </h2>
+          <h2> {T.translate(`${PREFIX}.title`, { featureName })} </h2>
           {this.renderEnableBtn()}
           {this.renderError()}
           <p>
-            {T.translate(`${PREFIX}.description`)}
+            {T.translate(`${PREFIX}.description`, { featureName })}
           </p>
           <div className="rules-engine-benefit">
-            {T.translate(`${PREFIX}.benefits.title`)}
+            {T.translate(`${PREFIX}.benefits.title`, { featureName })}
 
             <ul>
               <li>
                 <span className="fa fa-laptop" />
-                <span>{T.translate(`${PREFIX}.benefits.b1`)}</span>
+                <span>{T.translate(`${PREFIX}.benefits.b1`, { featureName })}</span>
               </li>
               <li>
                 <IconSVG name="icon-edit" />
-                <span>{T.translate(`${PREFIX}.benefits.b2`)}</span>
+                <span>{T.translate(`${PREFIX}.benefits.b2`, { featureName })}</span>
               </li>
               <li>
                 <IconSVG name="icon-cogs" />
-                <span>{T.translate(`${PREFIX}.benefits.b3`)}</span>
+                <span>{T.translate(`${PREFIX}.benefits.b3`, { featureName })}</span>
               </li>
               <li>
                 <IconSVG name="icon-arrows-alt" />
-                <span>{T.translate(`${PREFIX}.benefits.b4`)}</span>
+                <span>{T.translate(`${PREFIX}.benefits.b4`, { featureName })}</span>
               </li>
               <li>
                 <span className="fa fa-university" />
-                <span>{T.translate(`${PREFIX}.benefits.b5`)}</span>
+                <span>{T.translate(`${PREFIX}.benefits.b5`, { featureName })}</span>
               </li>
             </ul>
           </div>

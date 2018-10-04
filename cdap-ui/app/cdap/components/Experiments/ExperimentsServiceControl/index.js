@@ -59,11 +59,14 @@ export default class ExperimentsServiceControl extends Component {
     this.setState({
       loading: true
     });
+
+    const featureName = Theme.featureNames.analytics;
     enableSystemApp({
       shouldStopService: false,
       artifactName: MMDSArtifact,
       api: myExperimentsApi,
-      i18nPrefix: PREFIX
+      i18nPrefix: PREFIX,
+      featureName
     }).subscribe(
       this.props.onServiceStart,
       (err) => {
@@ -81,12 +84,14 @@ export default class ExperimentsServiceControl extends Component {
   };
 
   renderEnableBtn = () => {
+    const featureName = Theme.featureNames.analytics;
+
     if (this.state.checkingForSpark2) {
       return (
         <div className="action-container service-disabled">
           <IconSVG name="icon-spinner" className="fa-spin" />
           <div className="text-primary">
-            {T.translate(`${PREFIX}.environmentCheckMessage`)}
+            {T.translate(`${PREFIX}.environmentCheckMessage`, { featureName })}
           </div>
         </div>
       );
@@ -97,7 +102,7 @@ export default class ExperimentsServiceControl extends Component {
         <div className="action-container service-disabled">
           <IconSVG name="icon-exclamation-triangle" className="text-danger" />
           <div className="text-danger">
-            {T.translate(`${PREFIX}.serviceDisabledMessage`)}
+            {T.translate(`${PREFIX}.serviceDisabledMessage`, { featureName })}
           </div>
         </div>
       );
@@ -115,7 +120,7 @@ export default class ExperimentsServiceControl extends Component {
             :
               null
           }
-          <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`)}</span>
+          <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`, { featureName })}</span>
         </button>
       </div>
     );
@@ -139,24 +144,26 @@ export default class ExperimentsServiceControl extends Component {
   }
 
   render() {
+    const featureName = Theme.featureNames.analytics;
     return (
       <div className="experiments-service-control">
         <Helmet title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`, {
           productName: Theme.productName,
+          featureName
         })} />
         <div className="image-containers">
           <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview1.png" />
           <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview2.png" />
         </div>
         <div className="text-container">
-          <h2> {T.translate(`${PREFIX}.title`)} </h2>
+          <h2> {T.translate(`${PREFIX}.title`, { featureName })} </h2>
           {this.renderEnableBtn()}
           {this.renderError()}
           <p>
-            {T.translate(`${PREFIX}.description`)}
+            {T.translate(`${PREFIX}.description`, { featureName })}
           </p>
           <div className="experiments-benefit">
-            {T.translate(`${PREFIX}.Benefits.title`)}
+            {T.translate(`${PREFIX}.Benefits.title`, { featureName })}
 
             <ul>
               <li>
