@@ -25,7 +25,7 @@ CDAP Sandbox is installed):
     $ ./bin/cdap sandbox stop
 
 
-You can configure CDAP by editing the ``cdap-site.xml`` file under your ``conf`` directory.
+You can configure CDAP by editing the ``cdap-site.xml`` file under your ``./conf`` directory.
 CDAP must be restarted in order for changes in configuration to be picked up. 
 
 To run Spark2 programs with the CDAP Sandbox, edit the ``app.program.spark.compat`` setting
@@ -45,3 +45,13 @@ applications and interact with CDAP.
 Note that in the case of the Docker container running inside a Virtual Machine (as on
 either Mac OS X or Microsoft Windows), you will need to substitute the Docker VM's IP
 address for ``localhost`` in the web browser address bar.
+
+
+Customize JVM OPTS
+------------------
+On Linux, you can customize the JVM options for OutOfMemory error and whether to do a heap dump if an OutOfMemory error
+occurs. By default, if an OutOfMemory error occurs, the CDAP Sandbox will be killed and no heap dump will be performed.
+To customize these settings, edit the ``cdap-env.sh`` file under the ``./conf`` directory. To change
+the behavior, change the value of ``KILL_ON_OOM_OPTS`` in ``cdap-env.sh``. To enable the heap dump,
+ensure ``HEAPDUMP_ON_OOM`` is set to true in ``cdap-env.sh``.
+CDAP must be restarted in order for changes in configuration to be picked up.
