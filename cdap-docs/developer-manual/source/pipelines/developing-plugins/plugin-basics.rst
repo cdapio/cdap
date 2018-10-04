@@ -74,6 +74,8 @@ These annotations are used for plugin classes:
 
 - ``@Description``: Annotation used to add a description of the plugin.
 
+- ``@Requirements``: Annotation used to specify the `Requirements <../../../reference-manual/javadocs/co/cask/cdap/api/annotation/Requirements.html>`__ needed by a plugin to run successfully.
+
 Plugin Configuration
 ====================
 Each plugin can define a plugin config that specifies what properties the plugin requires.
