@@ -267,22 +267,6 @@ export default class MarketPlaceEntity extends Component {
                       <span> {this.props.entity.version} </span>
                     </div>
                   </If>
-                  <If condition={this.props.entity.org}>
-                    <div>
-                      <span>
-                        <strong> {T.translate('features.MarketPlaceEntity.Metadata.company')} </strong>
-                      </span>
-                      <span> {this.props.entity.org} </span>
-                    </div>
-                  </If>
-                  <If condition={this.props.entity.author}>
-                    <div>
-                      <span>
-                        <strong> {T.translate('features.MarketPlaceEntity.Metadata.author')} </strong>
-                      </span>
-                      <span> {this.props.entity.author} </span>
-                    </div>
-                  </If>
                   <LicenseRow licenseInfo={this.props.entity.licenseInfo} />
                 </div>
               </div>
