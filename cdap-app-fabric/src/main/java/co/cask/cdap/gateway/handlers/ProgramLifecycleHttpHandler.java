@@ -1249,7 +1249,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * </p><p>
    * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
-   * as well as 2 fields, "count" which maps to the count of the program and "statusCode" which maps to the
+   * as well as 2 fields, "runCount" which maps to the count of the program and "statusCode" which maps to the
    * status code for the data in that JsonObjects.
    * </p><p>
    * If an error occurs in the input (for the example above, workflow in app1 does not exist),
@@ -1264,7 +1264,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * "statusCode": 200, "runCount": 20},
    * {"appId": "App1", "programType": "Workflow", "programId": "testWorkflow", "statusCode": 404,
    * "error": "Program 'testWorkflow' is not found"},
-   *  {"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow", "runnableId": "Flowlet1",
+   *  {"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow",
    *  "statusCode": 200, "runCount": 300}]
    * </code></pre>
    */
