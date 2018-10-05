@@ -130,7 +130,7 @@ export default class UpgradeModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.attemptClose}
-        className="dataprep-upgrade-modal"
+        className="dataprep-upgrade-modal cdap-modal"
         zIndex="1061"
       >
         <ModalHeader>
