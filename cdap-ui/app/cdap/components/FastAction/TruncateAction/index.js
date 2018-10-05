@@ -111,9 +111,10 @@ export default class TruncateAction extends Component {
     return (
       <span className="btn btn-secondary btn-sm">
         <FastActionButton
-          icon={classnames(truncateActionClassNames, {'text-success': this.state.success})}
+          icon={truncateActionClassNames}
           action={this.toggleModal}
           id={tooltipID}
+          iconClasses={classnames({ 'text-success': this.state.success })}
         />
         <Tooltip
           placement="top"
