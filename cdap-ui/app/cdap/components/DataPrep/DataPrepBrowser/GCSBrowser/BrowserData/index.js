@@ -19,15 +19,10 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {Link} from 'react-router-dom';
-import {setGCSPrefix, setGCSSearch} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
-import {preventPropagation} from 'services/helpers';
-import classnames from 'classnames';
-import EmptyMessageContainer from 'components/EmptyMessageContainer';
+import { setGCSSearch} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
-import IconSVG from 'components/IconSVG';
-import {humanReadableDate, convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
 import If from 'components/If';
+import TableContents from 'components/DataPrep/DataPrepBrowser/GCSBrowser/BrowserData/TableContents';
 
 const PREFIX = 'features.DataPrep.DataPrepBrowser.GCSBrowser.BrowserData';
 const props = {
@@ -40,28 +35,6 @@ const props = {
   onWorkspaceCreate: PropTypes.func
 };
 
-const getPrefix = (file, prefix) => {
-
-  return file.path ? file.path : `${prefix}${file.name}/`;
-};
-
-const onClickHandler = (enableRouting, onWorkspaceCreate, file, prefix, e) => {
-  if (!file.directory) {
-    if (file.wrangle) {
-      onWorkspaceCreate(file);
-    }
-    preventPropagation(e);
-    return false;
-  }
-  if (enableRouting) {
-    return;
-  }
-  if (file.directory) {
-    setGCSPrefix(getPrefix(file, prefix));
-  }
-  preventPropagation(e);
-  return false;
-};
 
 const TableHeader = ({enableRouting}) => {
   if (enableRouting) {
@@ -91,102 +64,6 @@ const TableHeader = ({enableRouting}) => {
   );
 };
 TableHeader.propTypes = props;
-
-const TableContents = ({enableRouting, search, filteredData, onWorkspaceCreate, prefix, clearSearch}) => {
-  let ContainerElement = enableRouting ? Link : 'div';
-  let pathname = window.location.pathname.replace(/\/cdap/, '');
-  if (!filteredData.length) {
-    return (
-      <div className="gcs-buckets empty-message">
-        <div className="row">
-          <div className="col-xs-12">
-            <EmptyMessageContainer searchText={search}>
-              <ul>
-                <li>
-                  <span
-                    className="link-text"
-                    onClick={clearSearch}
-                  >
-                    {T.translate(`features.EmptyMessageContainer.clearLabel`)}
-                  </span>
-                  <span>{T.translate(`${PREFIX}.Content.EmptymessageContainer.suggestion1`)} </span>
-                </li>
-              </ul>
-            </EmptyMessageContainer>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (enableRouting) {
-    return (
-      <div className="gcs-buckets">
-        {
-          filteredData.map(file => {
-            let lastModified = humanReadableDate(file['updated'], true);
-            let size = convertBytesToHumanReadable(file['size'], HUMANREADABLESTORAGE_NODECIMAL, true);
-            let type = file.directory ? T.translate(`${PREFIX}.Content.directory`) : file.type;
-
-            if (file.type === 'UNKNOWN') {
-              type = '--';
-            }
-
-            return (
-              <ContainerElement
-                key={file.name}
-                className={classnames({'disabled': !file.directory && !file.wrangle})}
-                to={`${pathname}?prefix=${getPrefix(file, prefix)}`}
-                onClick={onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
-              >
-                <div className="row">
-                  <div className="col-xs-3">
-                    <IconSVG name={file.directory ? 'icon-folder-o' : 'icon-file-o'} />
-                    {file.name}
-                  </div>
-                  <div className="col-xs-3">
-                    {type}
-                  </div>
-                  <div className="col-xs-3">
-                    {size}
-                  </div>
-                  <div className="col-xs-3">
-                    {lastModified}
-                  </div>
-                </div>
-              </ContainerElement>
-            );
-          })
-        }
-      </div>
-    );
-  }
-  return (
-    <div className="gcs-buckets">
-      {
-        filteredData.map(file => (
-          <ContainerElement
-            key={file.name}
-            className={classnames({'disabled': !file.directory && !file.wrangle})}
-            to={`${pathname}?prefix=${getPrefix(file, prefix)}`}
-            onClick={onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
-          >
-            <div className="row">
-              <div className="col-xs-12">
-                <IconSVG name={file.directory ? 'icon-folder-o' : 'icon-file-o'} />
-                {file.name}
-              </div>
-            </div>
-          </ContainerElement>
-        ))
-      }
-    </div>
-  );
-};
-TableContents.propTypes = {
-  ...props,
-  filteredData: PropTypes.array
-};
 
 const BrowserData = ({data, search, clearSearch, loading, prefix, enableRouting, onWorkspaceCreate}) => {
   if (loading) {
@@ -223,16 +100,14 @@ const BrowserData = ({data, search, clearSearch, loading, prefix, enableRouting,
           <TableHeader enableRouting={enableRouting} />
         </div>
       </If>
-      <div className="gcs-content-body">
-        <TableContents
-          search={search}
-          clearSearch={clearSearch}
-          filteredData={filteredData}
-          prefix={prefix}
-          enableRouting={enableRouting}
-          onWorkspaceCreate={onWorkspaceCreate}
-        />
-      </div>
+      <TableContents
+        search={search}
+        clearSearch={clearSearch}
+        data={filteredData}
+        prefix={prefix}
+        enableRouting={enableRouting}
+        onWorkspaceCreate={onWorkspaceCreate}
+      />
     </div>
   );
 };

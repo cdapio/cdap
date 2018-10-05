@@ -46,7 +46,8 @@ export default class Popover extends PureComponent {
     injectOnToggle: PropTypes.bool,
     showPopover: PropTypes.bool,
     onTogglePopover: PropTypes.func,
-    modifiers: PropTypes.object
+    modifiers: PropTypes.object,
+    tag: PropTypes.string
   };
 
   eventEmitter = ee(ee);
@@ -61,7 +62,8 @@ export default class Popover extends PureComponent {
         enabled: true,
         boundariesElement: 'scrollParent'
       }
-    }
+    },
+    tag: 'div'
   };
 
   state = {
@@ -171,7 +173,10 @@ export default class Popover extends PureComponent {
     }
     const TargetElement = this.props.target;
     return (
-      <Manager className={this.props.className}>
+      <Manager
+        className={this.props.className}
+        tag={this.props.tag}
+      >
         <Target {...targetProps}>
           <TargetElement />
         </Target>

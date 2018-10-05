@@ -100,7 +100,8 @@ const fetchGCSDetails = (path = '') => {
         DataPrepBrowserStore.dispatch({
           type: BrowserStoreActions.SET_GCS_ACTIVE_BUCKET_DETAILS,
           payload: {
-            activeBucketDetails: res.values
+            activeBucketDetails: res.values,
+            truncated: res.truncated === 'true' || false
           }
         });
       }, (err) => {

@@ -457,6 +457,8 @@ features:
         TopPanel:
           ListingInfo:
             label: "{dirsCount} directories and {filesCount} files"
+            truncatedContentsTooltip: The GCS account you are viewing contains more directories and files we can currently display.
+            truncatedLabel: "{dirsCount} directories and {fileCount} files of many"
           selectData: Select data
       KafkaBrowser:
         EmptyMessage:
@@ -492,6 +494,8 @@ features:
         TopPanel:
           ListingInfo:
             label: "{dirsCount} directories and {filesCount} files"
+            truncatedContentsTooltip: The bucket you are viewing contains more directories and files we can currently display.
+            truncatedLabel: "{dirsCount} directories and {fileCount} files of many"
           selectData: Select data
       SpannerBrowser:
         databaseCount:
