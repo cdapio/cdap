@@ -34,7 +34,11 @@ const DEFAULT_SEARCH_FILTER_OPTIONS = [
   }
 ];
 
-const DEFAULT_SEARCH_FILTERS = DEFAULT_SEARCH_FILTER_OPTIONS.filter(f => f.id !== 'artifact').map(filter => filter.id);
+const DEFAULT_SEARCH_FILTERS = DEFAULT_SEARCH_FILTER_OPTIONS
+  .filter(f => {
+    return f.id !== 'artifact' && f.id !== 'stream';
+  })
+  .map(filter => filter.id);
 
 const DEFAULT_SEARCH_SORT_OPTIONS = [
   {
