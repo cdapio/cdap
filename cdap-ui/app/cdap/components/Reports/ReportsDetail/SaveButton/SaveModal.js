@@ -97,7 +97,7 @@ export default class SaveModal extends Component {
         size="md"
         backdrop="static"
         zIndex="1061"
-        className="report-save-button-modal"
+        className="report-save-button-modal cdap-modal"
       >
         <ModalHeader>
           <span>

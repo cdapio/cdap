@@ -123,7 +123,7 @@ export default class AddPropertyModal extends Component {
         toggle={this.toggleModal}
         backdrop='static'
         size="lg"
-        className="add-property-modal"
+        className="add-property-modal cdap-modal"
       >
         <ModalHeader>
           <span>
