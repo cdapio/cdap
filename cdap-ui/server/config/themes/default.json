@@ -25,7 +25,7 @@
     "footer-link": "https://www.apache.org/licenses/LICENSE-2.0"
   },
   "features": {
-    "about-product": false,
+    "about-product": true,
     "dashboard": true,
     "reports": true,
     "data-prep": true,
