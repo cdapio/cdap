@@ -65,6 +65,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "feature-names"?: IJsonFeatureNames;
   };
   "features"?: {
+    "about-product"?: boolean;
     "dashboard"?: boolean;
     "reports"?: boolean;
     "data-prep"?: boolean;
@@ -158,6 +159,7 @@ interface IThemeObj {
   showIngestData?: boolean;
   showAddNamespace?: boolean;
   featureNames?: IFeatureNames;
+  showAboutProductModal?: boolean;
 }
 
 function getTheme(): IThemeObj {
@@ -299,6 +301,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showHub: true,
       showIngestData: true,
       showAddNamespace: true,
+      showAboutProductModal: true,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -332,6 +335,10 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('add-namespace' in featuresJson && isBoolean(featuresJson['add-namespace'])) {
       features.showAddNamespace = featuresJson['add-namespace'];
+    }
+
+    if ('about-product' in featuresJson && isBoolean(featuresJson['about-product'])) {
+      features.showAboutProductModal = featuresJson['about-product'];
     }
     return features;
   }

@@ -5,6 +5,7 @@
     "navbar-color": "#3b78e7"
   },
   "features": {
+    "about-product": true,
     "dashboard": false,
     "reports": true,
     "data-prep": true,
