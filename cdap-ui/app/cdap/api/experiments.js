@@ -50,6 +50,7 @@ export const myExperimentsApi = {
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${servicePath}/start`),
   stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${servicePath}/stop`),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
+  getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${servicePath}/status`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${servicePath}/status`),
   ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments`)
 

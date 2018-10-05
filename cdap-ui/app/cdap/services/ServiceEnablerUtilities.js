@@ -20,7 +20,8 @@ import {MyArtifactApi} from 'api/artifact';
 import Version from 'services/VersionRange/Version';
 import T from 'i18n-react';
 import {Subject} from 'rxjs/Subject';
-import {SCOPES} from 'services/global-constants';
+import {SCOPES, PROGRAM_STATUSES} from 'services/global-constants';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 export default function enableSystemApp({
   shouldStopService,
@@ -218,13 +219,26 @@ export default function enableSystemApp({
       });
   }
 
+  function checkForServiceStatusBeforeStart(observer) {
+    api.getServiceStatus({ namespace: getCurrentNamespace() })
+      .subscribe(
+        (res) => {
+          if (res.status === PROGRAM_STATUSES.RUNNING) {
+            observer.next();
+          } else {
+           pingService(subject);
+          }
+        },
+        () => enableService(subject)
+      );
+  }
 
   let subject = new Subject();
 
   if (shouldStopService) {
     stopService(subject);
   } else {
-    enableService(subject);
+    checkForServiceStatusBeforeStart(subject);
   }
 
   return subject;
