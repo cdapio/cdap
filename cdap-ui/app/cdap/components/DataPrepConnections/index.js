@@ -104,7 +104,7 @@ export default class DataPrepConnections extends Component {
       activeConnectionid,
       activeConnectionType,
       showAddConnectionPopover: false,
-      showUpload: false, // FIXME: This is used only when showing with no routing. We can do better.,
+      showUpload: activeConnectionType === 'UPLOAD' || false, // FIXME: This is used only when showing with no routing. We can do better.,
       redirectToDefaultConnectionOnDelete: false
     };
   }
