@@ -273,7 +273,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
     return mrJobInfoFetcher.getMRJobInfo(Id.Run.fromEntityId(mapreduceProgram.run(runId))).getCounters();
   }
 
-  private Map<String, Long> getSparkDetails(ProgramId sparkProgram, String runId) throws Exception {
+  private Map<String, Long> getSparkDetails(ProgramId sparkProgram, String runId) {
     Map<String, String> context = new HashMap<>();
     context.put(Constants.Metrics.Tag.NAMESPACE, sparkProgram.getNamespace());
     context.put(Constants.Metrics.Tag.APP, sparkProgram.getApplication());

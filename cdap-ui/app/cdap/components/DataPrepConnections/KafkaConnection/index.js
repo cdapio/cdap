@@ -354,6 +354,7 @@ export default class KafkaConnection extends Component {
                   value={this.state.name}
                   onChange={this.handleChange.bind(this, 'name')}
                   disabled={this.props.mode === 'EDIT'}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.name`)}
                 />
               </div>
             </div>

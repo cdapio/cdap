@@ -30,6 +30,7 @@ import IconSVG from 'components/IconSVG';
 import {connect} from 'react-redux';
 import {humanReadableDate} from 'services/helpers';
 import T from 'i18n-react';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.Reports.ReportsDetail';
 
@@ -130,13 +131,14 @@ class ReportsDetailView extends Component {
   };
 
   render() {
+    const featureName = Theme.featureNames.reports;
     return (
       <div className="reports-container">
         <div className="header">
           <div className="reports-view-options">
             <Link to={`/ns/${getCurrentNamespace()}/reports`}>
               <IconSVG name="icon-angle-double-left" />
-              <span>{T.translate('features.Reports.header')}</span>
+              <span>{featureName}</span>
             </Link>
             <span className="separator">|</span>
             <span>

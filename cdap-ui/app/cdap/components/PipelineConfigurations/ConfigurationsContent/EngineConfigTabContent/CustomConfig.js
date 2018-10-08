@@ -23,6 +23,7 @@ import Popover from 'components/Popover';
 import {getEngineDisplayLabel, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
 import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
 import T from 'i18n-react';
+import isEmpty from 'lodash/isEmpty';
 
 const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 
@@ -69,6 +70,9 @@ const mapStateToCustomConfigProps = (state, ownProps) => {
 
 const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConfig, engine, customConfigKeyValuePairs}) => {
   let engineDisplayLabel = getEngineDisplayLabel(engine, isBatch);
+  let numberOfCustomConfigFilled = customConfigKeyValuePairs.pairs
+    .filter(pair => !isEmpty(pair.key) && !isEmpty(pair.value))
+    .length;
 
   const StudioViewCustomConfigLabel = () => {
     return (
@@ -92,8 +96,8 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
             (
               <span>
                 <span className="float-xs-right num-rows">
-                  {`${customConfigKeyValuePairs.pairs.length}`}
-                  {T.translate(`${PREFIX}.customConfigCount`, {context: customConfigKeyValuePairs.pairs.length})}
+                  {`${numberOfCustomConfigFilled}`}
+                  {T.translate(`${PREFIX}.customConfigCount`, {context: numberOfCustomConfigFilled})}
                 </span>
                 <hr />
               </span>
@@ -119,7 +123,7 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
             {T.translate(`${PREFIX}.customConfigTooltip`, {engineDisplayLabel})}
           </Popover>
           <span className="float-xs-right num-rows">
-            {T.translate(`${PREFIX}.customConfigCount`, {context: customConfigKeyValuePairs.pairs.length})}
+            {T.translate(`${PREFIX}.customConfigCount`, {context: numberOfCustomConfigFilled})}
           </span>
         </div>
       </div>

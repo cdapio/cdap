@@ -13,7 +13,7 @@
           "widget-type": "textbox",
           "label": "Project ID",
           "name": "projectId",
-          "description": "Google Cloud Project ID, which uniquely identifies your project. You can find it on the Dashboard in the Cloud Platform Console. If the system is running on Google Cloud Platform, this can be left blank and the system's project id will be used.",
+          "description": "Google Cloud Project ID, which uniquely identifies your project. You can find it on the Dashboard in the Cloud Platform Console. If the system is running on Google Cloud Platform, this can be left blank or set to 'auto-detect' and the system's project id will be used.",
           "widget-attributes": {
             "placeholder": "Specify your GCP Project ID"
           }
@@ -22,7 +22,7 @@
           "widget-type": "securekey-textarea",
           "label": "Service Account Key",
           "name": "accountKey",
-          "description": "A service account is a special type of Google account that belongs to your application or a virtual machine (VM), instead of to an individual end user. Paste the contents of the service account key JSON file that you can download from the service accounts section under IAM and admin on the Cloud Console. If the system is running on Google Cloud Platform, this can be left blank and the system's credentials will be used.",
+          "description": "A service account is a special type of Google account that belongs to your application or a virtual machine (VM), instead of to an individual end user. Paste the contents of the service account key JSON file that you can download from the service accounts section under IAM and admin on the Cloud Console. If the system is running on Google Cloud Platform, this can be left blank or set to 'auto-detect' and the system's credentials will be used.",
           "widget-attributes": {
             "placeholder": "Specify the GCP service account"
           }
@@ -36,7 +36,7 @@
           "widget-type": "textbox",
           "label": "Network",
           "name": "network",
-          "description": "Select a VPC network in the specified project to use for creating clusters with this profile. If the system is running on Google Cloud Platform, this can be left blank and the system's network will be used.",
+          "description": "Select a VPC network in the specified project to use for creating clusters with this profile. If the system is running on Google Cloud Platform, this can be left blank or set to 'auto-detect' and the system's network will be used.",
           "widget-attributes": {
             "default": "default",
             "size": "medium"
@@ -44,40 +44,12 @@
         },
         {
           "widget-type": "select",
-          "label": "Region",
-          "name": "region",
-          "description": "A region is a specific geographical location where you can host resources such as static IP addresses and subnets. E.g. us-west1, us-central1, europe-west1. For more information, refer to https://cloud.google.com/dataproc/docs/concepts/regional-endpoints.",
-          "widget-attributes": {
-            "values": [
-              "global",
-              "asia-east1",
-              "asia-northeast1",
-              "asia-south1",
-              "asia-southeast1",
-              "australia-southeast1",
-              "europe-west1",
-              "europe-west2",
-              "europe-west3",
-              "europe-west4",
-              "northamerica-northeast1",
-              "southamerica-east1",
-              "us-central1",
-              "us-east1",
-              "us-east4",
-              "us-west1"
-            ],
-            "default": "global",
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "select",
           "label": "Zone",
           "name": "zone",
-          "description": "A zone is an isolated location within a region. The fully-qualified name for a zone is made up of <region>-<zone>. For example, the fully-qualified name for zone a in region us-central1 is us-central1-a. For more information, refer to https://cloud.google.com/compute/docs/regions-zones/. If the system is running on Google Cloud Platform, this can be left blank and the system's zone will be used.",
+          "description": "A zone is an isolated location within a region. The fully-qualified name for a zone is made up of <region>-<zone>. For example, the fully-qualified name for zone a in region us-central1 is us-central1-a. For more information, refer to https://cloud.google.com/compute/docs/regions-zones/. If the system is running on Google Cloud Platform, this can be set to 'auto-detect' and the system's zone will be used.",
           "widget-attributes": {
             "values": [
-              "",
+              "auto-detect",
               "asia-east1-a",
               "asia-east1-b",
               "asia-east1-c",
@@ -124,6 +96,7 @@
               "us-west1-b",
               "us-west1-c"
             ],
+            "default": "us-east1-c",
             "size": "medium"
           }
         },

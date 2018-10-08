@@ -19,45 +19,46 @@ import T from 'i18n-react';
 import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = 'features.NUX';
+const featureNames = Theme.featureNames;
 
 const tour = new GuidedTour();
 
 const steps: ITourStep[] = [
   {
     id: 'control-center',
-    title: T.translate(`${PREFIX}.ControlCenter.title`).toString(),
+    title: featureNames.controlCenter,
     text: [
-      T.translate(`${PREFIX}.ControlCenter.text`).toString(),
+      T.translate(`${PREFIX}.ControlCenter.text`, {featureName: featureNames.controlCenter}).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Control_Center_NUX.png" />',
     ],
     attachTo: '#navbar-control-center bottom',
     shouldFocus: true,
   },
   {
-    id: 'preparation',
-    title: T.translate(`${PREFIX}.Preparation.title`).toString(),
-    text: [
-      T.translate(`${PREFIX}.Preparation.text`).toString(),
-      '<img class="img-fluid" src="/cdap_assets/img/nux/Dataprep_NUX.png" />',
-    ],
-    attachTo: '#navbar-preparation bottom',
-    shouldFocus: true,
-  },
-  {
     id: 'pipelines',
-    title: T.translate(`${PREFIX}.Pipelines.title`).toString(),
+    title: featureNames.pipelines,
     text: [
-      T.translate(`${PREFIX}.Pipelines.text`).toString(),
+      T.translate(`${PREFIX}.Pipelines.text`, {featureName: featureNames.pipelines}).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Pipeline_NUX.png" />',
     ],
     attachTo: '#navbar-pipelines bottom',
     shouldFocus: true,
   },
   {
-    id: 'metadata',
-    title: T.translate(`${PREFIX}.Metadata.title`).toString(),
+    id: 'preparation',
+    title: featureNames.dataPrep,
     text: [
-      T.translate(`${PREFIX}.Metadata.text`).toString(),
+      T.translate(`${PREFIX}.Preparation.text`, {featureName: featureNames.dataPrep}).toString(),
+      '<img class="img-fluid" src="/cdap_assets/img/nux/Dataprep_NUX.png" />',
+    ],
+    attachTo: '#navbar-preparation bottom',
+    shouldFocus: true,
+  },
+  {
+    id: 'metadata',
+    title: featureNames.metadata,
+    text: [
+      T.translate(`${PREFIX}.Metadata.text`, {featureName: featureNames.metadata}).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Metadata_NUX.png" />',
     ],
     attachTo: '#navbar-metadata bottom',
@@ -65,10 +66,11 @@ const steps: ITourStep[] = [
   },
   {
     id: 'hub',
-    title: T.translate(`${PREFIX}.Hub.title`).toString(),
+    title: featureNames.hub,
     text: [
       T.translate(`${PREFIX}.Hub.text`, {
         productName: Theme.productName,
+        featureName: featureNames.hub,
       }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Hub_NUX.png" />',
     ],

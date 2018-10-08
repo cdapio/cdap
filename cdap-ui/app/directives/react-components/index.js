@@ -59,4 +59,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('iconSvg', function(reactDirective) {
     return reactDirective(window.CaskCommon.IconSVG);
+  })
+  .directive('authRefresher', function (reactDirective) {
+    return reactDirective(window.CaskCommon.AuthRefresher);
   });

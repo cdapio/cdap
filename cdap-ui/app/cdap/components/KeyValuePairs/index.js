@@ -33,6 +33,7 @@ import KeyValueStore from './KeyValueStore';
 import KeyValueStoreActions from './KeyValueStoreActions';
 import KeyValuePair from './KeyValuePair';
 import {objectQuery} from 'services/helpers';
+import cloneDeep from 'lodash/cloneDeep';
 
 // Prop Name is used in place of the reserved prop 'key'
 const mapStateToFieldNameProps = (state, ownProps) => {
@@ -95,7 +96,7 @@ export default class KeyValuePairs extends Component {
     super(props);
     var { keyValues } = props;
     this.state = {
-      pairs: [...keyValues.pairs]
+      pairs: cloneDeep(keyValues.pairs)
     };
     KeyValueStore.dispatch({
       type: KeyValueStoreActions.onUpdate,
@@ -120,9 +121,11 @@ export default class KeyValuePairs extends Component {
     });
   }
   componentWillReceiveProps(nextProps) {
-    this.setState({
-      pairs: [...nextProps.keyValues.pairs]
-    });
+    if (nextProps.keyValues.pairs.length !== this.state.pairs.length) {
+      this.setState({
+        pairs: [...nextProps.keyValues.pairs]
+      });
+    }
   }
 
   render() {

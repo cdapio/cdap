@@ -79,6 +79,10 @@ class MyBatchPipelineConfigCtrl {
     this.updatePipelineEditStatus();
   }
 
+  numOfCustomEngineConfigFilled() {
+    return this.customEngineConfig.pairs.filter(pair => !_.isEmpty(pair.key) && !_.isEmpty(pair.value)).length;
+  }
+
   onEngineChange() {
     this.engineForDisplay = this.engine === 'mapreduce' ? 'MapReduce' : 'Apache Spark Streaming';
   }

@@ -25,6 +25,7 @@ import ee from 'event-emitter';
 import {i18nPrefix, MIN_DATAPREP_VERSION, artifactName} from 'components/DataPrep';
 import MyDataPrepApi from 'api/dataprep';
 import isObject from 'lodash/isObject';
+import {Theme} from 'services/ThemeHelper';
 
 const PREFIX = `features.DataPrep.TopPanel.UpgradeModal`;
 
@@ -52,12 +53,15 @@ export default class UpgradeModal extends Component {
   upgradeClick() {
     this.setState({loading: true});
 
+    const featureName = Theme.featureNames.dataPrep;
+
     enableSystemApp({
       shouldStopService: true,
       artifactName,
       api: MyDataPrepApi,
       i18nPrefix,
-      MIN_VERSION: MIN_DATAPREP_VERSION
+      MIN_VERSION: MIN_DATAPREP_VERSION,
+      featureName
     })
       .subscribe(() => {
         this.eventEmitter.emit('REFRESH_DATAPREP');
@@ -126,7 +130,7 @@ export default class UpgradeModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.attemptClose}
-        className="dataprep-upgrade-modal"
+        className="dataprep-upgrade-modal cdap-modal"
         zIndex="1061"
       >
         <ModalHeader>

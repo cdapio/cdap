@@ -124,9 +124,7 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
 
           <ModalBody>
             <p>
-              {T.translate(`${PREFIX}.bodyText`, {
-                productName: Theme.productName,
-              })}
+              {Theme.productDescription}
             </p>
             <p>
               {T.translate(`${PREFIX}.takeTour`)}

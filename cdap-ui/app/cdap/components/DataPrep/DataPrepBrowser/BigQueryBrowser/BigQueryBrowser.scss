@@ -28,12 +28,6 @@ $content-font-color: $grey-01;
 
   .row { margin: 0; }
 
-  .top-panel,
-  .list-view-container {
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-
   .list-view-container {
     display: grid;
     grid-template-rows: $browser-list-subpanel-line-height calc(100% - #{$browser-list-subpanel-line-height});

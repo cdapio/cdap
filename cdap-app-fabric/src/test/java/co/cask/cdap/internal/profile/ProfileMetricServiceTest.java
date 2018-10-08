@@ -73,6 +73,48 @@ public class ProfileMetricServiceTest {
                   10, TimeUnit.SECONDS);
   }
 
+  @Test
+  public void testRoundingLogic() throws Exception {
+    ProgramRunId runId = NamespaceId.DEFAULT.app("round").workflow("round").run(RunIds.generate());
+    ProfileId profileId = NamespaceId.DEFAULT.profile("roundProfile");
+    MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
+    MetricStore metricStore = injector.getInstance(MetricStore.class);
+
+    ProfileMetricService scheduledService = new ProfileMetricService(collectionService, runId, profileId, 1, 1, null);
+
+    // start and stop the service, the metric should still go up by 1
+    scheduledService.startUp();
+    scheduledService.shutDown();
+
+    Tasks.waitFor(1L, () -> getMetric(metricStore, runId, profileId,
+                                       "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
+                  10, TimeUnit.SECONDS);
+
+    scheduledService.startUp();
+    // set the start up time to 90 seconds before the current time
+    scheduledService.setStartUpTime(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - 90);
+    // 90 seconds should round up to 2 mins, so emit 1 min and test the rounding logic
+    scheduledService.emitMetric();
+    scheduledService.shutDown();
+
+    // the metric should go up by 2
+    Tasks.waitFor(3L, () -> getMetric(metricStore, runId, profileId,
+                                      "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
+                  10, TimeUnit.SECONDS);
+
+    scheduledService.startUp();
+    // set the start up time to 65 seconds before the current time
+    scheduledService.setStartUpTime(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - 65);
+    // 65 seconds should round down to 1 min, so emit 1 min and test the rest seconds are ignored
+    scheduledService.emitMetric();
+    scheduledService.shutDown();
+
+    // the metric should go up by 1
+    Tasks.waitFor(4L, () -> getMetric(metricStore, runId, profileId,
+                                      "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
+                  10, TimeUnit.SECONDS);
+  }
+
   private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId, String metricName) {
     Map<String, String> tags = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())

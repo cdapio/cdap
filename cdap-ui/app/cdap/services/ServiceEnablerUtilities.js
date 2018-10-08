@@ -20,14 +20,16 @@ import {MyArtifactApi} from 'api/artifact';
 import Version from 'services/VersionRange/Version';
 import T from 'i18n-react';
 import {Subject} from 'rxjs/Subject';
-import {SCOPES} from 'services/global-constants';
+import {SCOPES, PROGRAM_STATUSES} from 'services/global-constants';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 export default function enableSystemApp({
   shouldStopService,
   artifactName,
   api,
   i18nPrefix,
-  MIN_VERSION
+  MIN_VERSION,
+  featureName
 }) {
   function enableService(observer) {
 
@@ -49,7 +51,10 @@ export default function enableSystemApp({
         if (appArtifact.length === 0) {
           observer.error({
             error: T.translate(`${i18nPrefix}.errorTitle`),
-            extendedMessage: T.translate('features.ServiceEnableUtility.serviceNotFound', {artifactName})
+            extendedMessage: T.translate('features.ServiceEnableUtility.serviceNotFound', {
+              artifactName,
+              featureName
+            })
           });
           return;
         }
@@ -67,7 +72,8 @@ export default function enableSystemApp({
             observer.error({
               error: T.translate(`${i18nPrefix}.minimumVersionError`, {
                 highestVersion,
-                minimumVersion: MIN_VERSION
+                minimumVersion: MIN_VERSION,
+                featureName
               })
             });
             return;
@@ -118,7 +124,7 @@ export default function enableSystemApp({
         startService(observer);
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.errorTitle`),
+          error: T.translate(`${i18nPrefix}.errorTitle`, { featureName }),
           extendedMessage: err.data || err
         });
       });
@@ -132,7 +138,7 @@ export default function enableSystemApp({
         pollServiceStatus(observer);
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.errorTitle`),
+          error: T.translate(`${i18nPrefix}.errorTitle`, { featureName }),
           extendedMessage: err.data || err
         });
       });
@@ -149,7 +155,7 @@ export default function enableSystemApp({
         }
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.errorTitle`),
+          error: T.translate(`${i18nPrefix}.errorTitle`, { featureName }),
           extendedMessage: err.data || err
         });
       });
@@ -171,7 +177,7 @@ export default function enableSystemApp({
           }
 
           observer.error({
-            error: T.translate(`${i18nPrefix}.errorCommunicating`),
+            error: T.translate(`${i18nPrefix}.errorCommunicating`, { featureName }),
             extendedMessage: err.data || err
           });
         });
@@ -188,7 +194,7 @@ export default function enableSystemApp({
         pollStopServiceStatus(observer);
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.failedToStop`),
+          error: T.translate(`${i18nPrefix}.failedToStop`, { featureName }),
           extendedMessage: err.data || err
         });
       });
@@ -207,19 +213,32 @@ export default function enableSystemApp({
         }
       }, (err) => {
         observer.error({
-          error: T.translate(`${i18nPrefix}.failedToStop`),
+          error: T.translate(`${i18nPrefix}.failedToStop`, { featureName }),
           extendedMessage: err.data || err
         });
       });
   }
 
+  function checkForServiceStatusBeforeStart(observer) {
+    api.getServiceStatus({ namespace: getCurrentNamespace() })
+      .subscribe(
+        (res) => {
+          if (res.status === PROGRAM_STATUSES.RUNNING) {
+            observer.next();
+          } else {
+           pingService(subject);
+          }
+        },
+        () => enableService(subject)
+      );
+  }
 
   let subject = new Subject();
 
   if (shouldStopService) {
     stopService(subject);
   } else {
-    enableService(subject);
+    checkForServiceStatusBeforeStart(subject);
   }
 
   return subject;

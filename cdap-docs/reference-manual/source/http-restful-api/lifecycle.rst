@@ -1600,6 +1600,198 @@ More information about workflow endpoint can be found at :ref:`Workflows <http-r
        - | ``[{"runid":"cad83d45-ecfb-4bf8-8cdb-4928a5601b0e","start":1415051892,"end":1415057103,"status":"STOPPED"}]``
 
 
+Retrieving Run Records in Batch
+-------------------------------
+
+To retrieve the latest run records for run records for multiple programs, use::
+
+  POST /v3/namespaces/<namespace-id>/runs
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+
+The request body must be a JSON array of objects with the following parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``appId``
+     - Name of the application being called
+   * - ``programType``
+     - One of ``mapreduce``, ``spark``, ``workflow``, ``flow``, ``service``, or ``worker``
+   * - ``programId``
+     - Name of the program (*mapreduce*, *spark*, *workflow*, *flow*, *service*, or *worker*) being called
+
+The response will be an array of Json Objects, each of which will contain the three input parameters
+as well as two of three possible extra fields --
+"runs", which is a list of the latest run record for that program,
+"statusCode", which maps to the status code for retrieving the runs for that program,
+and "error" if there was an error retrieving runs for that program.
+The "statusCode" property will always be included, but "runs" and "error" are mutually exclusive.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``runs``
+     - The latest run records for the program defined by the individual JSON object's parameters
+   * - ``statusCode``
+     - The status code from retrieving the program runs
+   * - ``error``
+     - If an error, a description of why the status was not retrieved (for example, the
+       specified program was not found, or the requested JSON object was missing a parameter)
+
+.. rubric:: Example
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST /v3/namespaces/default/runs``
+   * - HTTP Body
+     - ``[{"appId": "App1", "programType": "Service", "programId": "Service1"},``
+       ``{"appId": "App1", "programType": "Workflow", "programId": "testWorkflow"},``
+       ``{"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow"}]``
+   * - HTTP Response
+     - ``[{"appId": "App1", "programType": "Service", "programId": "Service1",``
+       ``"statusCode": 200, "runs": [...]},``
+       ``{"appId": "App1", "programType": "Workflow", "programId": "testWorkflow", "statusCode": 404,``
+       ``"error": "Program 'testWorkflow' is not found"},``
+       ``{"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow",``
+       ``"statusCode": 200, "runs": [...]]``
+   * - Description
+     - Attempt to retrieve the latest run records of the service *Service1* in the application *App1*,
+       the workflow *testWorkflow* in the application *App1*
+       and the workflow *DataPipelineWorkflow* in the application *App2*, all in the namespace *default*
+
+
+Retrieving Run Counts in Batch
+------------------------------
+
+To retrieve the run counts for multiple programs, use::
+
+  POST /v3/namespaces/<namespace-id>/runcount
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+
+The request body must be a JSON array of objects with the following parameters:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``appId``
+     - Name of the application being called
+   * - ``programType``
+     - One of ``mapreduce``, ``spark``, ``workflow``, ``flow``, ``service``, or ``worker``
+   * - ``programId``
+     - Name of the program (*mapreduce*, *spark*, *workflow*, *flow*, *service*, or *worker*) being called
+
+The response will be an array of Json Objects, each of which will contain the three input parameters
+as well as two of three possible extra fields --
+"runCount", which is count for the program run,
+"statusCode", which maps to the status code for retrieving the run count for that program,
+and "error" if there was an error retrieving runs for that program.
+The "statusCode" property will always be included, but "runCount" and "error" are mutually exclusive.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``runCount``
+     - The number of program runs for the program defined by the individual JSON object's parameters
+   * - ``statusCode``
+     - The status code from retrieving the program run count
+   * - ``error``
+     - If an error, a description of why the status was not retrieved (for example, the
+       specified program was not found, or the requested JSON object was missing a parameter)
+
+.. rubric:: Example
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST /v3/namespaces/default/runcount``
+   * - HTTP Body
+     - ``[{"appId": "App1", "programType": "Service", "programId": "Service1"},``
+       ``{"appId": "App1", "programType": "Workflow", "programId": "testWorkflow"},``
+       ``{"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow"}]``
+   * - HTTP Response
+     - ``[{"appId": "App1", "programType": "Service", "programId": "Service1",``
+       ``"statusCode": 200, "runCount": 20},``
+       ``{"appId": "App1", "programType": "Workflow", "programId": "testWorkflow", "statusCode": 404,``
+       ``"error": "Program 'testWorkflow' is not found"},``
+       ``{"appId": "App2", "programType": "Workflow", "programId": "DataPipelineWorkflow",``
+       ``"statusCode": 200, "runCount": 300}]``
+   * - Description
+     - Attempt to retrieve the run count of the service *Service1* in the application *App1*,
+       the workflow *testWorkflow* in the application *App1*
+       and the workflow *DataPipelineWorkflow* in the application *App2*, all in the namespace *default*
+
+
+Retrieving Specific Run Count
+-----------------------------
+
+To fetch the run count for a particular program, use::
+
+  GET /v3/namespaces/<namespace-id>/apps/{app-id}/{program-type}/{program-id}/runcount
+
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``program-type``
+     - One of ``mapreduce``, ``spark``, ``workflow``, ``flow``, ``service``, or ``worker``
+   * - ``program-id``
+     - Name of the program (*mapreduce*, *spark*, *workflow*, *flow*, *service*, or *worker*) being called
+
+
+.. rubric:: Example
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET /v3/namespaces/default/apps/myApp/workflows/DataPipelineWorkflow/runcount``
+   * - HTTP Response
+     - ``[20]``
+   * - Description
+     -  Retrieve the run count of the workflow *DataPipelineWorkflow* of the application *myApp*
+
+
 .. _http-restful-api-lifecycle-workflow-runs-suspend-resume:
 
 Workflow Runs: Suspend and Resume

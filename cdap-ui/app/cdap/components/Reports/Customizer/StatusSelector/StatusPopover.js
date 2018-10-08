@@ -92,6 +92,7 @@ class StatusPopoverView extends Component {
             STATUS_OPTIONS.map((option) => {
               return (
                 <div
+                  key={option}
                   className="option"
                   onClick={this.toggleOption.bind(this, option)}
                 >

@@ -22,7 +22,7 @@ require('./EmptyMessageContainer.scss');
 
 const PREFIX = 'features.EmptyMessageContainer';
 
-export default function EmptyMessageContainer({title, searchText = '', children}) {
+export default function EmptyMessageContainer({title = null, searchText = '', children}) {
   return (
     <div className="empty-search-container">
       <div className="empty-search">

@@ -378,8 +378,7 @@ public final class FlowUtils {
   public static void deleteFlowPendingMetrics(MetricStore metricStore,
                                               @Nullable String namespace,
                                               @Nullable String appId,
-                                              @Nullable String flowId)
-    throws Exception {
+                                              @Nullable String flowId) {
     Preconditions.checkArgument(namespace != null || appId == null, "Namespace may only be null if AppId is null");
     Preconditions.checkArgument(appId != null || flowId == null, "AppId may only be null if FlowId is null");
     Collection<String> names = Collections.singleton("system.queue.pending");

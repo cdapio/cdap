@@ -99,6 +99,7 @@ const defaultS3Value = {
   info: {},
   loading: false,
   activeBucketDetails: [],
+  truncated: false,
   prefix: '',
   connectionId: '',
   search: ''
@@ -108,6 +109,7 @@ const defaultGCSValue = {
   info: {},
   loading: false,
   activeBucketDetails: [],
+  truncated: false,
   prefix: '',
   connectionId: '',
   search: ''
@@ -207,6 +209,8 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
         ...state,
         loading: false
       };
+    case Actions.SET_ACTIVEBROWSER:
+      return defaultDatabaseValue;
     case Actions.RESET:
       return defaultDatabaseValue;
     default:
@@ -244,6 +248,8 @@ const kafka = (state = defaultKafkaValue, action = defaultAction) => {
         ...state,
         loading: false
       };
+    case Actions.SET_ACTIVEBROWSER:
+      return defaultKafkaValue;
     case Actions.RESET:
       return defaultKafkaValue;
     default:
@@ -278,6 +284,7 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
       return {
         ...state,
         activeBucketDetails: action.payload.activeBucketDetails,
+        truncated: action.payload.truncated,
         loading: false
       };
     case Actions.SET_S3_PREFIX:
@@ -295,6 +302,8 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
         ...state,
         loading: false
       };
+    case Actions.SET_ACTIVEBROWSER:
+      return defaultS3Value;
     case Actions.RESET:
       return defaultS3Value;
     default:
@@ -329,6 +338,7 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
       return {
         ...state,
         activeBucketDetails: action.payload.activeBucketDetails,
+        truncated: action.payload.truncated,
         loading: false
       };
     case Actions.SET_GCS_PREFIX:
@@ -346,6 +356,8 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
         ...state,
         loading: false
       };
+    case Actions.SET_ACTIVEBROWSER:
+      return defaultGCSValue;
     case Actions.RESET:
       return defaultGCSValue;
     default:
@@ -396,6 +408,8 @@ const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
         ...state,
         loading: false
       };
+    case Actions.SET_ACTIVEBROWSER:
+      return defaultBigQueryValue;
     case Actions.RESET:
       return defaultBigQueryValue;
     default:
@@ -455,6 +469,8 @@ const spanner = (state = defaultSpannerValue, action = defaultAction) => {
         ...state,
         loading: false
       };
+    case Actions.SET_ACTIVEBROWSER:
+      return defaultSpannerValue;
     case Actions.RESET:
       return defaultSpannerValue;
     default:

@@ -284,9 +284,9 @@
             </i>
             <span class="float-xs-right num-rows"
                   ng-if="RealtimePipelineConfigCtrl.showCustomConfig">
-                {{ RealtimePipelineConfigCtrl.customEngineConfig.pairs.length }}
+                {{ RealtimePipelineConfigCtrl.numOfCustomEngineConfigFilled() }}
               <ng-pluralize
-                count="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length"
+                count="RealtimePipelineConfigCtrl.numOfCustomEngineConfigFilled()"
                 when="{'one': 'custom config',
                       'other': 'custom configs'}">
               </ng-pluralize>
@@ -301,9 +301,9 @@
                  tooltip-placement="right">
               </i>
               <span class="float-xs-right num-rows">
-                  {{ RealtimePipelineConfigCtrl.customEngineConfig.pairs.length }}
+                  {{ RealtimePipelineConfigCtrl.numOfCustomEngineConfigFilled() }}
                 <ng-pluralize
-                  count="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length"
+                  count="RealtimePipelineConfigCtrl.numOfCustomEngineConfigFilled()"
                   when="{'one': 'custom config',
                         'other': 'custom configs'}">
                 </ng-pluralize>

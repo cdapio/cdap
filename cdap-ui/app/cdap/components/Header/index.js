@@ -121,8 +121,8 @@ export default class Header extends Component {
               nativeLink={this.props.nativeLink}
               namespace={this.state.currentNamespace}
             />
-            <DataPrepLink />
             <PipelinesLink />
+            <DataPrepLink />
             <AnalyticsLink />
             <RulesEngineLink />
             <MetadataLink />
@@ -134,9 +134,17 @@ export default class Header extends Component {
           <div className="navbar-right-section">
             <ul>
               <HubButton />
+              {
+                /**
+                 * FIXME: Move this to the NamespaceDropdown. This is messing up isolation.
+                 * Some of the styles of namespace dropdown are here and some are
+                 * in the component which is hard to maintain.
+                 */
+              }
               <li
                 id="header-namespace-dropdown"
-                className="with-pointer namespace-dropdown-holder">
+                className="with-pointer namespace-dropdown-holder"
+              >
                 {
                   !this.props.nativeLink ?
                     <NamespaceDropdown />
@@ -144,9 +152,17 @@ export default class Header extends Component {
                     <NamespaceDropdown tag="a"/>
                 }
               </li>
-              <li className={classnames("with-pointer cdap-menu clearfix", {
-                'admin-view': administrationURL === location.pathname.replace(/\/cdap/, '')
-              })}>
+              {
+                /**
+                 * FIXME: Same here as well.
+                 */
+              }
+              <li
+                id="product-dropdown"
+                className={classnames("with-pointer cdap-menu clearfix", {
+                  'admin-view': administrationURL === location.pathname.replace(/\/cdap/, '')
+                })}
+              >
                 <ProductDropdown
                   nativeLink={this.props.nativeLink}
                 />

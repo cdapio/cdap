@@ -291,7 +291,9 @@ public class ETLSpark extends AbstractSpark {
   @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void destroy() {
-    finisher.onFinish(getContext().getState().getStatus() == ProgramStatus.COMPLETED);
+    if (finisher != null) {
+      finisher.onFinish(getContext().getState().getStatus() == ProgramStatus.COMPLETED);
+    }
     for (File file : cleanupFiles) {
       if (!file.delete()) {
         LOG.warn("Failed to clean up resource {} ", file);

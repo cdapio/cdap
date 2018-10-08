@@ -30,11 +30,15 @@ const setDatabaseInfoLoading = () => {
 };
 
 const setDatabaseAsActiveBrowser = (payload) => {
-  let {database} = DataPrepBrowserStore.getState();
+  let {database, activeBrowser} = DataPrepBrowserStore.getState();
 
-  if (database.loading) { return; }
+  if (activeBrowser.name !== payload.name) {
+    setActiveBrowser(payload);
+  }
 
   let {id: connectionId} = payload;
+
+  if (database.connectionId === connectionId) { return; }
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_DATABASE_CONNECTION_ID,
@@ -43,7 +47,6 @@ const setDatabaseAsActiveBrowser = (payload) => {
     }
   });
 
-  setActiveBrowser(payload);
   setDatabaseInfoLoading();
 
   let namespace = NamespaceStore.getState().selectedNamespace;

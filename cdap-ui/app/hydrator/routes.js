@@ -16,7 +16,9 @@
 
 angular.module(PKG.name + '.feature.hydrator')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
-    const productName = window.CaskCommon.ThemeHelper.Theme.productName;
+    const theme = window.CaskCommon.ThemeHelper.Theme;
+    const productName = theme.productName;
+    const featureName = theme.featureNames.pipelines;
     $stateProvider
       .state('home', {
         url: '/',
@@ -272,7 +274,7 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorList'
           },
           onEnter: function($stateParams) {
-            document.title = `${productName} | Pipelines | ${$stateParams.pipelineId}`;
+            document.title = `${productName} | ${featureName} | ${$stateParams.pipelineId}`;
           },
           resolve : {
             rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state) {
@@ -344,7 +346,7 @@ angular.module(PKG.name + '.feature.hydrator')
           url: '?page&sortBy&reverse',
           title: 'Published Pipelines',
           onEnter: function() {
-            document.title = `${productName} | Pipelines`;
+            document.title = `${productName} | ${featureName}`;
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,

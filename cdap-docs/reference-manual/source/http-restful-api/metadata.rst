@@ -1277,10 +1277,13 @@ where:
      - Ending time-stamp (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
    * - ``prefix``
      - Optional ``prefix``, when provided only fields that have given prefix will be returned
+   * - ``includeCurrent``
+     - Optional flag, when set to true the current fields of the dataset will be be included irrespective of whether they have any lineage information or not.
+
 
 Following is sample response::
 
-  ["firstName","lastName","item","id","customer_id"]
+  [{"name":"firstName","lineage":true},{"name":"lastName","lineage":true},{"name":"customer_id","lineage":false}]
 
 .. highlight:: console
 
@@ -1324,7 +1327,7 @@ where:
    * - ``end-ts``
      - Ending time-stamp (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
    * - ``direction``
-     - ``incoming``, to return the set of dataset and fields which participated in the computation of the given field
+     - ``incoming``, to return the set of dataset and fields which participated in the computation of the given field. ``outgoing``, to return the set of dataset and fields to whose computation the given field participated. ``both``, to return both incoming and outgoing.
 
 The returned response consists of the direction in which the summary is requested and the datasets and fields
 that were responsible for the computation of a specified field. Currently, the only supported direction is ``incoming``.
@@ -1397,7 +1400,7 @@ where:
    * - ``end-ts``
      - Ending time-stamp (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
    * - ``direction``
-     - ``incoming``, to return the operations which participated in the computation of the given field
+     - ``incoming``, to return the operations which participated in the computation of the given field. ``outgoing``, to return the operations in which this field participated. ``both``, to return both incoming and outgoing.
 
 The single field can be computed in multiple ways, where each unique way consists of a list of operations that
 participated in the computation and the list of programs that performed the computation. The returned response

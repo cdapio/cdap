@@ -5,6 +5,7 @@
     "navbar-color": "#3b78e7"
   },
   "features": {
+    "about-product": true,
     "dashboard": false,
     "reports": true,
     "data-prep": true,
@@ -13,7 +14,6 @@
     "rules-engine": true,
     "metadata": true,
     "hub": true,
-    "footer": false,
     "ingest-data": false,
     "add-namespace": false
   }

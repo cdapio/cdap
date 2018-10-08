@@ -52,6 +52,7 @@ import {applyTheme} from 'services/ThemeHelper';
 import ErrorBoundary from 'components/ErrorBoundary';
 import OverlayFocus from 'components/OverlayFocus';
 import {Theme} from 'services/ThemeHelper';
+import AuthRefresher from 'components/AuthRefresher';
 const SampleTSXComponent = Loadable({
   loader: () => import (/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
   loading: LoadingSVGCentered
@@ -174,6 +175,7 @@ class CDAP extends Component {
           }
           <Footer />
           <OverlayFocus />
+          <AuthRefresher />
         </div>
       </BrowserRouter>
     );

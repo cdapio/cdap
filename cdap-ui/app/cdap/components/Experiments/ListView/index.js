@@ -98,11 +98,13 @@ export default class ExperimentsList extends Component {
   };
 
   render() {
+    const featureName = Theme.featureNames.analytics;
     return (
       <Provider store={experimentsStore}>
         <div className="experiments-list-container">
           <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
             productName: Theme.productName,
+            featureName
           })} />
           <ExperimentsListViewWrapper />
         </div>

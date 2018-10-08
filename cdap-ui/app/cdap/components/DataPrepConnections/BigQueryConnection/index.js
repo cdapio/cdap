@@ -93,17 +93,31 @@ export default class BigQueryConnection extends Component {
       });
   }
 
+  constructProperties = () => {
+    const properties = {};
+
+    if (this.state.projectId && this.state.projectId.length > 0) {
+      properties.projectId = this.state.projectId;
+    }
+
+    if (this.state.serviceAccountKeyfile && this.state.serviceAccountKeyfile.length > 0) {
+      properties['service-account-keyfile'] = this.state.serviceAccountKeyfile;
+    }
+
+    if (this.state.bucket && this.state.bucket.length > 0) {
+      properties.bucket = this.state.bucket;
+    }
+
+    return properties;
+  }
+
   addConnection = () => {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let requestBody = {
       name: this.state.name,
       type: 'BIGQUERY',
-      properties: {
-        projectId: this.state.projectId,
-        'service-account-keyfile': this.state.serviceAccountKeyfile,
-        bucket: this.state.bucket
-      }
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.createConnection({namespace}, requestBody)
@@ -131,11 +145,7 @@ export default class BigQueryConnection extends Component {
       name: this.state.name,
       id: this.props.connectionId,
       type: 'BIGQUERY',
-      properties: {
-        projectId: this.state.projectId,
-        'service-account-keyfile': this.state.serviceAccountKeyfile,
-        bucket: this.state.bucket
-      }
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.updateConnection(params, requestBody)
@@ -167,11 +177,7 @@ export default class BigQueryConnection extends Component {
     let requestBody = {
       name: this.state.name,
       type: 'BIGQUERY',
-      properties: {
-        projectId: this.state.projectId,
-        'service-account-keyfile': this.state.serviceAccountKeyfile,
-        bucket: this.state.bucket
-      }
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.bigQueryTestConnection({namespace}, requestBody)
@@ -205,9 +211,7 @@ export default class BigQueryConnection extends Component {
   };
 
   renderTestButton = () => {
-    let disabled = !this.state.name ||
-      !this.state.projectId ||
-      !this.state.bucket;
+    let disabled = !this.state.name;
 
     return (
       <span className="test-connection-button">
@@ -224,10 +228,7 @@ export default class BigQueryConnection extends Component {
   };
 
   renderAddConnectionButton = () => {
-    let disabled = !this.state.name ||
-      !this.state.projectId ||
-      this.state.testConnectionLoading ||
-      !this.state.bucket;
+    let disabled = !this.state.name || this.state.testConnectionLoading;
 
     let onClickFn = this.addConnection;
 
@@ -277,6 +278,7 @@ export default class BigQueryConnection extends Component {
                   value={this.state.name}
                   onChange={this.handleChange.bind(this, 'name')}
                   disabled={this.props.mode === 'EDIT'}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.name`)}
                 />
               </div>
             </div>
@@ -285,7 +287,6 @@ export default class BigQueryConnection extends Component {
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.projectId`)}
-              <span className="asterisk">*</span>
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
@@ -294,6 +295,7 @@ export default class BigQueryConnection extends Component {
                   className="form-control"
                   value={this.state.projectId}
                   onChange={this.handleChange.bind(this, 'projectId')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.projectId`)}
                 />
               </div>
             </div>
@@ -310,6 +312,7 @@ export default class BigQueryConnection extends Component {
                   className="form-control"
                   value={this.state.serviceAccountKeyfile}
                   onChange={this.handleChange.bind(this, 'serviceAccountKeyfile')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.serviceAccountKeyfile`)}
                 />
               </div>
             </div>
@@ -318,7 +321,6 @@ export default class BigQueryConnection extends Component {
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.bucket`)}
-              <span className="asterisk">*</span>
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
@@ -327,6 +329,7 @@ export default class BigQueryConnection extends Component {
                   className="form-control"
                   value={this.state.bucket}
                   onChange={this.handleChange.bind(this, 'bucket')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.bucket`)}
                 />
               </div>
             </div>

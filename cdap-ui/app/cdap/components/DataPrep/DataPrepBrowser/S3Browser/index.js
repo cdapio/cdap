@@ -52,8 +52,13 @@ export default class S3Browser extends Component {
     const {selectedNamespace: namespace} = NamespaceStore.getState();
     const {connectionId, prefix} = DataPrepBrowserStore.getState().s3;
     let activeBucket = prefix;
-    if (prefix.length > 1 && prefix[prefix.length - 1] === '/') {
-      activeBucket = prefix.slice(0, prefix.length - 1);
+    /**
+     * This is to extract the bucket name from S3 for url param
+     * eg: /bucket-1/folder1/folder2/file.csv
+     * we need /bucket-1 alone for the api request
+     */
+    if (activeBucket.slice(1).split('/').length > 1) {
+      activeBucket = activeBucket.slice(0, activeBucket.slice(1).indexOf('/') + 1);
     }
     setS3Loading();
     let headers = {

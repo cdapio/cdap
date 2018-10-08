@@ -153,6 +153,11 @@ const updatePipeline = () => {
     maxConcurrentRuns,
   } = PipelineConfigurationsStore.getState();
 
+  properties = Object.keys(properties)
+    .reduce(
+      (obj, key) => (obj[key] = properties[key].toString(), obj),
+      {}
+    );
   let commonConfig = {
     stages,
     connections,

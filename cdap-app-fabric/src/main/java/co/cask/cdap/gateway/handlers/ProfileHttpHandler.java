@@ -119,7 +119,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void deleteSystemProfile(HttpRequest request, HttpResponder responder,
                                   @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
+    throws BadRequestException, ProfileConflictException, NotFoundException, MethodNotAllowedException {
     profileService.deleteProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -175,8 +175,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void deleteProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
-    // TODO: add the check if there is any program or schedule associated with the profile
+    throws BadRequestException, MethodNotAllowedException, NotFoundException, ProfileConflictException {
     profileService.deleteProfile(getValidatedProfile(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }

@@ -56,9 +56,8 @@ public class MetricsManager {
    * query the metric store and return the Collection<MetricTimeSeries>
    * @param query
    * @return Collection<MetricTimeSeries>
-   * @throws Exception
    */
-  public Collection<MetricTimeSeries> query(MetricDataQuery query) throws Exception {
+  public Collection<MetricTimeSeries> query(MetricDataQuery query) {
     return metricStore.query(query);
   }
 
@@ -66,9 +65,8 @@ public class MetricsManager {
    * Search the metric store and return the collection of metric names available for the tag-values in search query
    * @param query
    * @return Collection of metric names
-   * @throws Exception
    */
-  public Collection<String> searchMetricNames(MetricSearchQuery query) throws Exception {
+  public Collection<String> searchMetricNames(MetricSearchQuery query) {
     return metricStore.findMetricNames(query);
   }
 
@@ -76,9 +74,8 @@ public class MetricsManager {
    * Search the metric store and return the collection of next available tags for the search query
    * @param query
    * @return Collection of tag values
-   * @throws Exception
    */
-  public Collection<TagValue> searchTags(MetricSearchQuery query) throws Exception {
+  public Collection<TagValue> searchTags(MetricSearchQuery query) {
     return metricStore.findNextAvailableTags(query);
   }
 
@@ -173,9 +170,8 @@ public class MetricsManager {
 
   /**
    * deletes all metrics
-   * @throws Exception
    */
-  public void resetAll() throws Exception {
+  public void resetAll() {
     metricStore.deleteAll();
   }
 

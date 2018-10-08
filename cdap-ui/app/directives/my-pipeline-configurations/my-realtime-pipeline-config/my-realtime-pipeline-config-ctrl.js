@@ -107,6 +107,10 @@ class MyRealtimePipelineConfigCtrl {
     this.updatePipelineEditStatus();
   }
 
+  numOfCustomEngineConfigFilled() {
+    return this.customEngineConfig.pairs.filter(pair => !_.isEmpty(pair.key) && !_.isEmpty(pair.value)).length;
+  }
+
   applyConfig() {
     this.applyRuntimeArguments();
     this.store.setBackpressure(this.backpressure);

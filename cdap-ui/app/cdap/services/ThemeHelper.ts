@@ -23,6 +23,19 @@ interface IThemeJSON {
   "spec-version": string;
 }
 
+interface IJsonFeatureNames {
+  "analytics"?: string;
+  "control-center"?: string;
+  "dashboard"?: string;
+  "data-prep"?: string;
+  "entities"?: string;
+  "hub"?: string;
+  "metadata"?: string;
+  "pipelines"?: string;
+  "reports"?: string;
+  "rules-engine"?: string;
+}
+
 interface IOnePoint0SpecJSON extends IThemeJSON {
   "styles"?: {
     "brand-primary-color"?: string;
@@ -31,25 +44,28 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
   };
   "content"?: {
     "product-name"?: string;
+    "product-description"?: string;
     "product-logo-navbar"?: {
       "type"?: string;
       "arguments"?: {
          "url"?: string;
          "data"?: string;
-      }
-    },
+      };
+    };
     "product-logo-about"?: {
       "type"?: string;
       "arguments"?: {
          "url"?: string;
          "data"?: string;
-      }
-    },
-    "favicon-path"?: string,
+      };
+    };
+    "favicon-path"?: string;
     "footer-text"?: string;
     "footer-link"?: string;
+    "feature-names"?: IJsonFeatureNames;
   };
   "features"?: {
+    "about-product"?: boolean;
     "dashboard"?: boolean;
     "reports"?: boolean;
     "data-prep"?: boolean;
@@ -58,7 +74,6 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "rules-engine"?: boolean;
     "metadata"?: boolean;
     "hub"?: boolean;
-    "footer"?: boolean;
     "ingest-data"?: boolean;
     "add-namespace"?: boolean;
   };
@@ -112,8 +127,22 @@ export function applyTheme() {
   return;
 }
 
+interface IFeatureNames {
+  analytics: string;
+  controlCenter: string;
+  dashboard: string;
+  dataPrep: string;
+  entities: string;
+  hub: string;
+  metadata: string;
+  pipelines: string;
+  reports: string;
+  rulesEngine: string;
+}
+
 interface IThemeObj {
   productName?: string;
+  productDescription?: string;
   footerText?: string;
   footerLink?: string;
   productLogoNavbar?: string;
@@ -127,9 +156,10 @@ interface IThemeObj {
   showRulesEngine?: boolean;
   showMetadata?: boolean;
   showHub?: boolean;
-  showFooter?: boolean;
   showIngestData?: boolean;
   showAddNamespace?: boolean;
+  featureNames?: IFeatureNames;
+  showAboutProductModal?: boolean;
 }
 
 function getTheme(): IThemeObj {
@@ -161,17 +191,34 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     const contentJson = themeJSON.content;
     const content: IThemeObj = {
       productName: 'CDAP',
+      productDescription: `CDAP is an open source framework that simplifies
+      data application development, data integration, and data management.`,
       productLogoNavbar: '/cdap_assets/img/company_logo.png',
       productLogoAbout: '/cdap_assets/img/CDAP_darkgray.png',
       favicon: '/cdap_assets/img/favicon.png',
       footerText: 'Licensed under the Apache License, Version 2.0',
       footerLink: 'https://www.apache.org/licenses/LICENSE-2.0',
+      featureNames: {
+        analytics: 'Analytics',
+        controlCenter: 'Control Center',
+        dashboard: 'Dasboard',
+        dataPrep: 'Preparation',
+        entities: 'Entities',
+        hub: 'Hub',
+        metadata: 'Metadata',
+        pipelines: 'Pipelines',
+        reports: 'Reports',
+        rulesEngine: 'Rules',
+      },
     };
     if (isNilOrEmpty(contentJson)) {
       return content;
     }
     if ('product-name' in contentJson) {
       content.productName = contentJson['product-name'];
+    }
+    if ('product-description' in contentJson) {
+      content.productDescription = contentJson['product-description'];
     }
     if ('footer-text' in contentJson) {
       content.footerText = contentJson['footer-text'];
@@ -201,6 +248,43 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         }
       }
     }
+    if ('feature-names' in contentJson) {
+      const featureNames = { ...content.featureNames };
+
+      if ('analytics' in contentJson['feature-names']) {
+        featureNames.analytics = objectQuery(contentJson, 'feature-names', 'analytics');
+      }
+      if ('control-center' in contentJson['feature-names']) {
+        featureNames.controlCenter = objectQuery(contentJson, 'feature-names', 'control-center');
+      }
+      if ('dashboard' in contentJson['feature-names']) {
+        featureNames.dashboard = objectQuery(contentJson, 'feature-names', 'dashboard');
+      }
+      if ('data-prep' in contentJson['feature-names']) {
+        featureNames.dataPrep = objectQuery(contentJson, 'feature-names', 'data-prep');
+      }
+      if ('entities' in contentJson['feature-names']) {
+        featureNames.entities = objectQuery(contentJson, 'feature-names', 'entities');
+      }
+      if ('hub' in contentJson['feature-names']) {
+        featureNames.hub = objectQuery(contentJson, 'feature-names', 'hub');
+      }
+      if ('metadata' in contentJson['feature-names']) {
+        featureNames.metadata = objectQuery(contentJson, 'feature-names', 'metadata');
+      }
+      if ('pipelines' in contentJson['feature-names']) {
+        featureNames.pipelines = objectQuery(contentJson, 'feature-names', 'pipelines');
+      }
+      if ('reports' in contentJson['feature-names']) {
+        featureNames.reports = objectQuery(contentJson, 'feature-names', 'reports');
+      }
+      if ('rules-engine' in contentJson['feature-names']) {
+        featureNames.rulesEngine = objectQuery(contentJson, 'feature-names', 'rules-engine');
+      }
+
+      content.featureNames = featureNames;
+    }
+
     return content;
   }
 
@@ -215,9 +299,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showRulesEngine: true,
       showMetadata: true,
       showHub: true,
-      showFooter: true,
       showIngestData: true,
       showAddNamespace: true,
+      showAboutProductModal: true,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -246,14 +330,15 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     if ('hub' in featuresJson && isBoolean(featuresJson.hub)) {
       features.showHub = featuresJson.hub;
     }
-    if ('footer' in featuresJson && isBoolean(featuresJson.footer)) {
-      features.showFooter = featuresJson.footer;
-    }
     if ('ingest-data' in featuresJson && isBoolean(featuresJson['ingest-data'])) {
       features.showIngestData = featuresJson['ingest-data'];
     }
     if ('add-namespace' in featuresJson && isBoolean(featuresJson['add-namespace'])) {
       features.showAddNamespace = featuresJson['add-namespace'];
+    }
+
+    if ('about-product' in featuresJson && isBoolean(featuresJson['about-product'])) {
+      features.showAboutProductModal = featuresJson['about-product'];
     }
     return features;
   }

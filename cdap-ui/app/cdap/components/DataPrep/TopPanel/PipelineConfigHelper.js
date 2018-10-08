@@ -396,7 +396,8 @@ function constructProperties(workspaceInfo, pluginVersion) {
   if (state.workspaceInfo.properties.connection === 'file') {
     let specParams = {
       namespace,
-      path: state.workspaceUri
+      path: state.workspaceUri,
+      wid: workspaceId
     };
 
     rxArray.push(MyDataPrepApi.getSpecification(specParams));
@@ -424,7 +425,8 @@ function constructProperties(workspaceInfo, pluginVersion) {
       namespace,
       connectionId,
       activeBucket,
-      key
+      key,
+      wid: workspaceId
     };
     rxArray.push(MyDataPrepApi.getS3Specification(specParams));
   } else if (state.workspaceInfo.properties.connection === 'gcs') {

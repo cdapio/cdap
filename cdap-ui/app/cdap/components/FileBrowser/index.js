@@ -158,13 +158,18 @@ export default class FileBrowser extends Component {
       hdfsPath = this.props.initialDirectoryPath;
       return;
     } else {
-      hdfsPath = props.location.pathname.slice(props.match.url.length);
-      hdfsPath = hdfsPath || this.props.initialDirectoryPath || BASEPATH;
+      if (objectQuery(props, 'match', 'url')) {
+        let pathname = window.location.pathname.replace(/\/cdap/, '');
+        hdfsPath = pathname.slice(props.match.url.length);
+        hdfsPath = hdfsPath || this.props.initialDirectoryPath || BASEPATH;
+      }
     }
 
     if (hdfsPath === this.state.path) { return; }
 
-    goToPath(hdfsPath);
+    if (hdfsPath) {
+      goToPath(hdfsPath);
+    }
   }
 
   handleSearch = (e) => {
@@ -508,7 +513,10 @@ export default class FileBrowser extends Component {
             />
           </div>
 
-          <div className="info-container">
+          <div
+            className="info-container"
+            title={T.translate(`${PREFIX}.TopPanel.directoryMetrics`, {count: this.state.contents.length})}
+          >
             <div className="info">
               <span>
                 {T.translate(`${PREFIX}.TopPanel.directoryMetrics`, {count: this.state.contents.length})}

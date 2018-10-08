@@ -53,6 +53,7 @@ CDAP Tutorials
 	parse-as-log <parse-as-log>
 	parse-as-simple-date <parse-as-simple-date>
 	parse-as-xml <parse-as-xml>
+	parse-timestamp <parse-timestamp>
 	parse-xml-to-json <parse-xml-to-json>
 	quantize <quantize>
 	rename <rename>

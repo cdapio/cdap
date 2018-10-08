@@ -46,6 +46,7 @@
   <logger name="org.quartz.core" level="WARN"/>
   <logger name="org.eclipse.jetty" level="WARN"/>
   <logger name="io.netty.util.internal" level="WARN"/>
+  <logger name="co.cask" level="DEBUG"/>
   <logger name="co.cask.cdap.operations.OperationalStats" level="ERROR"/>
   <logger name="co.cask.cdap.extension.AbstractExtensionLoader" level="ERROR"/>
   <logger name="akka" level="WARN"/>
@@ -61,6 +62,7 @@
 
 
   <logger name="WriteAheadLogManager " level="WARN"/>
+  <logger name="org.apache.kafka" level="INFO"/>
   <logger name="org.apache.kafka.common.config.AbstractConfig" level="WARN"/>
 
   <!-- HttpRequestLog is not used and expects log4j logging or logs a WARN message -->
@@ -137,7 +139,7 @@
     <appender-ref ref="EXTERNAL_AUTH_AUDIT" />
   </logger>
 
-  <root level="DEBUG">
+  <root level="INFO">
     <appender-ref ref="Rolling"/>
     <appender-ref ref="Debug"/>
     <appender-ref ref="Error"/>

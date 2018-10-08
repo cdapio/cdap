@@ -80,6 +80,7 @@
       vertical-align: top;
       display: inline-flex;
       justify-content: flex-end;
+      height: 100%;
 
       .cask-market-button {
         display: block;
@@ -110,9 +111,6 @@
         }
         &.cdap-menu {
           padding: 0;
-          &.admin-view {
-            margin-left: 10px;
-          }
         }
       }
     }

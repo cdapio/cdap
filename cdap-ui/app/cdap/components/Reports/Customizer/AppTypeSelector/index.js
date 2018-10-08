@@ -46,7 +46,10 @@ function AppTypeSelectorView(props) {
       {
         OPTIONS.map((option) => {
           return (
-            <div className="option">
+            <div
+              className="option"
+              key={option}
+            >
               <span onClick={props.onClick.bind(this, option)}>
                 <IconSVG name={props[option] ? 'icon-check-square' : 'icon-square-o'} />
 

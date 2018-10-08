@@ -370,6 +370,8 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException,
     DatasetManagementException {
     datasetFramework.addInstance(JobQueueDataset.class.getName(), Schedulers.JOB_QUEUE_DATASET_ID,
-                                 DatasetProperties.EMPTY);
+                                 DatasetProperties.builder().
+                                   add(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS, DEFAULT_NUM_PARTITIONS)
+                                   .build());
   }
 }

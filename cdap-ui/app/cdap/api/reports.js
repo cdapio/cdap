@@ -37,6 +37,7 @@ export const MyReportsApi = {
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${programPath}/start`),
   stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${programPath}/stop`),
+  getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/status`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`, { interval: 2000 }),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', appPath),
   ping: apiCreator(dataSrc, 'GET', 'REQUEST', reportsPath),

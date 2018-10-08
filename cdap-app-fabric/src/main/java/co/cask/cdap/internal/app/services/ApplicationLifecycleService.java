@@ -617,7 +617,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param applicationId the application to delete metrics for.
    */
-  private void deleteMetrics(ApplicationId applicationId) throws Exception {
+  private void deleteMetrics(ApplicationId applicationId) {
     ApplicationSpecification spec = this.store.getApplication(applicationId);
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = new LinkedHashMap<>();

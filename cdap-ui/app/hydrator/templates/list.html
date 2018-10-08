@@ -15,7 +15,7 @@
 -->
 
 <div class="side-panel top clearfix">
-  <h1 class="pull-left">Pipelines</h1>
+  <h1 class="pull-left">{{ ListController.featureName }}</h1>
   <ul ng-if="ListController.pipelineList.length > 0" class="list-unstyled list-inline pull-left">
     <li>
       <span>{{ ListController.pipelineList.length }}</span>
@@ -79,7 +79,8 @@
               <span>{{ pipeline.displayStatus }}</span>
             </td>
             <td>
-              <span>{{ pipeline.numRuns }}</span>
+              <span ng-if="pipeline.isDraft"> &mdash; </span>
+              <span ng-if="!pipeline.isDraft">{{pipeline.numRuns}}</span>
             </td>
             <td>
               <span ng-if="!pipeline.latestRun.starting"> &mdash; </span>
@@ -93,7 +94,7 @@
 
             <td>
               <span ng-if="!pipeline.nextRun"> &mdash; </span>
-              <span ng-if="pipeline.nextRun !== 'N/A'">{{ pipeline.nextRun | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
+              <span ng-if="pipeline.nextRun">{{ pipeline.nextRun | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
 
             <td>

@@ -470,6 +470,9 @@ export default class DatabaseDetail extends Component {
   }
 
   renderAdvanced() {
+    const connStringUrl = objectQuery(this.props, 'db', 'pluginInfo', 'url');
+    const placeholder = connStringUrl ? T.translate(`${PREFIX}.Placeholders.connectionString`, { connectionString: connStringUrl }) : T.translate(`${PREFIX}.Placeholders.connectionStringDefault`);
+
     return (
       <div>
         <div className="form-group row">
@@ -483,6 +486,7 @@ export default class DatabaseDetail extends Component {
               className="form-control"
               value={this.state.connectionString}
               onChange={this.handleChange.bind(this, 'connectionString')}
+              placeholder={placeholder}
             />
           </div>
         </div>
@@ -643,6 +647,7 @@ export default class DatabaseDetail extends Component {
                   value={this.state.name}
                   onChange={this.handleChange.bind(this, 'name')}
                   disabled={this.props.mode === 'EDIT'}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.name`)}
                 />
               </div>
             </div>

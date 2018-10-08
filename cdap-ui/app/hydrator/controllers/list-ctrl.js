@@ -18,9 +18,9 @@ angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusListController',
   function(
     $scope, myPipelineApi, $stateParams, GLOBALS,
-    mySettings, $state, myHelpers, myWorkFlowApi,
-    myWorkersApi, myAppsApi, myAlertOnValium, myLoadingService,
-    mySparkApi, $interval, moment, MyPipelineStatusMapper,
+    mySettings, $state, myHelpers,
+    myAppsApi, myAlertOnValium, myLoadingService,
+    $interval, moment, MyPipelineStatusMapper,
     myPipelineCommonApi, PROGRAM_STATUSES) {
     var vm = this;
     vm.$interval = $interval;
@@ -35,6 +35,8 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     vm.PAGE_SIZE = 10;
     vm.GLOBALS = GLOBALS;
+
+    vm.featureName = window.CaskCommon.ThemeHelper.Theme.featureNames.pipelines;
 
     vm.checkForValidPage = (pageNumber) => {
       return (
@@ -178,12 +180,13 @@ angular.module(PKG.name + '.feature.hydrator')
                 starting: 0,
                 duration: 0
               };
-              if (app.name === resObj.appId) {
+              if (app.name === resObj.appId && !app.isDraft) {
                 if (latestRun.starting !== 0) {
                   latestRun.duration = latestRun.end ?
                     latestRun.end - latestRun.starting
                   :
                     (new Date().getTime() / 1000) - latestRun.starting;
+                  latestRun.duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.round(latestRun.duration));
                 }
                 app = Object.assign({}, app, {
                   latestRun: latestRun
@@ -246,6 +249,9 @@ angular.module(PKG.name + '.feature.hydrator')
         .$promise
         .then((runsCountList) => {
           vm.pipelineList = vm.pipelineList.map(pipeline => {
+            if (pipeline.isDraft) {
+              return pipeline;
+            }
             let runsCountObj = _.find(runsCountList, { appId: pipeline.name});
             let numRuns = 0;
             if (typeof runsCountObj !== 'undefined') {
@@ -283,11 +289,12 @@ angular.module(PKG.name + '.feature.hydrator')
           .$promise
           .then(function (res) {
           if (res && res.length) {
-            vm.getcurrentVisiblePipelines().forEach(function (app) {
-              if (app.name === batchParams.appId) {
-                app.nextRun = res[0].time;
-              }
-            });
+            vm.getCurrentVisiblePipelines()
+              .forEach(function (app) {
+                if (app.name === batchParams.appId) {
+                  app.nextRun = res[0].time;
+                }
+              });
           }
         });
       });
@@ -297,6 +304,10 @@ angular.module(PKG.name + '.feature.hydrator')
 
     vm.updateStatusAppObject =() => {
       angular.forEach(vm.pipelineList, function (app) {
+        if (app.isDraft) {
+          app.displayStatus = vm.MyPipelineStatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.DRAFT);
+          return;
+        }
         if (!vm.latestRunExists(app)) {
           app.displayStatus = vm.MyPipelineStatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.DEPLOYED);
         } else {
@@ -321,9 +332,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 id: (value.__ui__  && value.__ui__.draftId) ? value.__ui__.draftId : key,
                 artifact: value.artifact,
                 description: myHelpers.objectQuery(value, 'description'),
-                displayStatus: vm.MyPipelineStatusMapper.lookupDisplayStatus('DRAFT'),
-                numRuns: 'N/A',
-                lastStartTime: 'N/A'
+                displayStatus: vm.MyPipelineStatusMapper.lookupDisplayStatus('DRAFT')
               });
             });
           }

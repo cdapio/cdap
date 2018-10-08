@@ -133,7 +133,7 @@ public class LineageOperationsProcessor {
                                  Map<String, Operation> processedOperations) {
     Set<String> sortedInputs = new TreeSet<>(stageInputs);
     String mergeOperationName = prefixedOperationName(Joiner.on(SEPARATOR).join(sortedInputs), "merge");
-    String mergeDescription = "Merging stages: " + Joiner.on(",").join(sortedInputs);
+    String mergeDescription = "Merged stages: " + Joiner.on(",").join(sortedInputs);
     if (processedOperations.containsKey(mergeOperationName)) {
       // it is possible that same stages act as an input to multiple stages.
       // we should still only add single merge operation for them

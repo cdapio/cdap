@@ -149,6 +149,7 @@ public class DataprocClient implements AutoCloseable {
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .setNetworkUri(conf.getNetwork())
+        .addServiceAccountScopes("https://www.googleapis.com/auth/cloud-platform")
         .setZoneUri(conf.getZone())
         .putAllMetadata(metadata);
       for (String targetTag : getFirewallTargetTags()) {

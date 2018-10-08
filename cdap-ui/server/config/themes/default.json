@@ -7,6 +7,7 @@
   },
   "content": {
     "product-name": "CDAP",
+    "product-description": "CDAP is an open source framework that simplifies data application development, data integration, and data management.",
     "product-logo-navbar": {
       "type": "link",
       "arguments": {
@@ -24,6 +25,7 @@
     "footer-link": "https://www.apache.org/licenses/LICENSE-2.0"
   },
   "features": {
+    "about-product": true,
     "dashboard": true,
     "reports": true,
     "data-prep": true,
@@ -32,7 +34,6 @@
     "rules-engine": true,
     "metadata": true,
     "hub": true,
-    "footer": true,
     "ingest-data": true,
     "add-namespace": true
   }

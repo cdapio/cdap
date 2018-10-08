@@ -17,12 +17,21 @@
 package co.cask.cdap.internal.profile;
 
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -38,6 +47,7 @@ import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.twill.api.RunId;
 import org.junit.After;
@@ -46,6 +56,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -411,5 +422,61 @@ public class ProfileServiceTest {
                                   creationTime);
     profileService.saveProfile(myProfile, profile);
     Assert.assertEquals(creationTime, profileService.getProfile(myProfile).getCreatedTsSeconds());
+  }
+
+  @Test
+  public void testProfileMetricsDeletion() throws Exception {
+    ProfileId myProfile = NamespaceId.DEFAULT.profile("MyProfile");
+    Profile profile = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                  Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    ProgramRunId runId = NamespaceId.DEFAULT.app("myApp").workflow("myProgram").run(RunIds.generate());
+
+    // create and disable the profile
+    profileService.saveProfile(myProfile, profile);
+    profileService.disableProfile(myProfile);
+
+    // emit some metrics
+    MetricsCollectionService metricService = injector.getInstance(MetricsCollectionService.class);
+    MetricsContext metricsContext = metricService.getContext(getMetricsTags(runId, myProfile));
+    metricsContext.increment(Constants.Metrics.Program.PROGRAM_NODE_MINUTES, 30L);
+
+    MetricStore metricStore = injector.getInstance(MetricStore.class);
+    Tasks.waitFor(30L, () -> getMetric(metricStore, runId, myProfile,
+                                      "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
+                  10, TimeUnit.SECONDS);
+
+    // delete and verify the metrics are gone
+    profileService.deleteProfile(myProfile);
+    Tasks.waitFor(0L, () -> getMetric(metricStore, runId, myProfile,
+                                       "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
+                  10, TimeUnit.SECONDS);
+  }
+
+  private Map<String, String> getMetricsTags(ProgramRunId programRunId, ProfileId profileId) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
+      .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun())
+      .build();
+  }
+
+  private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId, String metricName) {
+    Map<String, String> tags = getMetricsTags(programRunId, profileId);
+
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                                                tags, new ArrayList<>());
+    Collection<MetricTimeSeries> result = metricStore.query(query);
+    if (result.isEmpty()) {
+      return 0;
+    }
+    List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+    if (timeValues.isEmpty()) {
+      return 0;
+    }
+    return timeValues.get(0).getValue();
   }
 }

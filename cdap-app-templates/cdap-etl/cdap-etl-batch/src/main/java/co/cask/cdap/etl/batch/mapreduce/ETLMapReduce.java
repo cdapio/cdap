@@ -408,7 +408,10 @@ public class ETLMapReduce extends AbstractMapReduce {
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void destroy() {
     boolean isSuccessful = getContext().getState().getStatus() == ProgramStatus.COMPLETED;
-    finisher.onFinish(isSuccessful);
+    if (finisher != null) {
+      // this can be null if the initialize() method failed.
+      finisher.onFinish(isSuccessful);
+    }
     LOG.info("Batch Run finished : status = {}", getContext().getState());
   }
 

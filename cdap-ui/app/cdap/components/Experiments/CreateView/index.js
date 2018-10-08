@@ -307,13 +307,15 @@ export default class ExperimentCreateView extends Component {
     const {experimentId, addModel} = queryString.parse(this.props.location.search);
     let expId = experimentId ? `${experimentId} | ` : '';
     let labelSuffix = addModel ? 'Add model' : 'Create Experiment';
+    const featureName = Theme.featureNames.analytics;
     return (
       <div className={classnames("experiments-create-view", {
         'add-model': !isNilOrEmpty(this.state.experimentId)
       })}>
         <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
           productName: Theme.productName,
-          experimentIdWithSuffix: `${expId} ${labelSuffix}`
+          experimentIdWithSuffix: `${expId} ${labelSuffix}`,
+          featureName
         })} />
         {this.renderSteps()}
         {this.renderError()}

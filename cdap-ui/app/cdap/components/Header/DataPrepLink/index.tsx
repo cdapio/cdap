@@ -18,7 +18,6 @@ import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
 import {withContext} from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
-import T from 'i18n-react';
 require('./DataPrepLink.scss');
 
 interface IDataPrepLinkProps {
@@ -37,6 +36,7 @@ class DataPrepLink extends React.PureComponent<IDataPrepLinkProps> {
       return null;
     }
 
+    const featureName = Theme.featureNames.dataPrep;
     const { namespace, isNativeLink } = this.props.context;
     const dataPrepUrl = `/ns/${namespace}/dataprep`;
 
@@ -51,7 +51,7 @@ class DataPrepLink extends React.PureComponent<IDataPrepLinkProps> {
           isNativeLink={isNativeLink}
           to={isNativeLink ? `/cdap${dataPrepUrl}` : dataPrepUrl}
         >
-          {T.translate(`features.Navbar.Dataprep`)}
+          {featureName}
         </NavLinkWrapper>
       </li>
     );

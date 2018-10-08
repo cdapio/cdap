@@ -110,7 +110,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     emit(appSpec);
   }
 
-  private void deleteMetrics(ApplicationId applicationId, Iterable<String> flows) throws Exception {
+  private void deleteMetrics(ApplicationId applicationId, Iterable<String> flows) {
     LOG.debug("Deleting metrics for application {}", applicationId);
     for (String flow : flows) {
       long endTs = System.currentTimeMillis() / 1000;

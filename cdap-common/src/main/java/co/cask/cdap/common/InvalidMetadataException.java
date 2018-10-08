@@ -25,7 +25,7 @@ public class InvalidMetadataException extends BadRequestException {
   private final MetadataEntity metadataEntity;
 
   public InvalidMetadataException(MetadataEntity metadataEntity, String message) {
-    super("Unable to set metadata for " + metadataEntity.getDescription() + " failed due to error: " + message);
+    super(String.format("Unable to set metadata for %s. %s", metadataEntity.getDescription(), message));
     this.metadataEntity = metadataEntity;
   }
 

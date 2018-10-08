@@ -104,7 +104,7 @@ export default class EditProperty extends Component {
         isOpen={this.state.isOpen}
         toggle={this.toggleModal}
         size="md"
-        className="add-property-modal"
+        className="add-property-modal cdap-modal"
       >
         <ModalHeader>
           <span>

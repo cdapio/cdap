@@ -15,18 +15,13 @@
  */
 
 import React from 'react';
-import T from 'i18n-react';
 import { Theme } from 'services/ThemeHelper';
 
 require('./Footer.scss');
 
 export default function Footer() {
-  if (Theme.showFooter === false) {
-    return null;
-  }
-
-  const footerText = Theme.footerText || T.translate('features.licenseText');
-  const footerUrl = Theme.footerLink || 'https://www.apache.org/licenses/LICENSE-2.0';
+  const footerText = Theme.footerText;
+  const footerUrl = Theme.footerLink;
   return (
     <footer className="app-footer">
       <div className="container">

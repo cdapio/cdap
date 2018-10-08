@@ -21,27 +21,35 @@ import MyDataPrepApi from 'api/dataprep';
 import {objectQuery} from 'services/helpers';
 
 const setGCSAsActiveBrowser = (payload) => {
-  let {gcs} = DataPrepBrowserStore.getState();
+  let {gcs, activeBrowser} = DataPrepBrowserStore.getState();
 
-  if (gcs.loading) { return; }
+  if (activeBrowser.name !== payload.name) {
+    setActiveBrowser(payload);
+  }
 
-  setActiveBrowser(payload);
+  let {id: connectionId, path} = payload;
 
-  let namespace = NamespaceStore.getState().selectedNamespace;
-  let {id, path} = payload;
-  let params = {
-    namespace,
-    connectionId: id
-  };
+  if (gcs.connectionId === connectionId) {
+    if (path && path !== gcs.prefix) {
+      setGCSPrefix(path);
+    }
+    return;
+  }
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_GCS_CONNECTION_ID,
     payload: {
-      connectionId: id
+      connectionId
     }
   });
 
   setGCSLoading();
+
+  let namespace = NamespaceStore.getState().selectedNamespace;
+  let params = {
+    namespace,
+    connectionId
+  };
 
   MyDataPrepApi.getConnection(params)
     .subscribe((res) => {
@@ -50,11 +58,13 @@ const setGCSAsActiveBrowser = (payload) => {
         type: BrowserStoreActions.SET_GCS_CONNECTION_DETAILS,
         payload: {
           info,
-          connectionId: id
+          connectionId
         }
       });
       if (path) {
         setGCSPrefix(path);
+      } else {
+        fetchGCSDetails();
       }
     }, (err) => {
       setError(err);
@@ -90,7 +100,8 @@ const fetchGCSDetails = (path = '') => {
         DataPrepBrowserStore.dispatch({
           type: BrowserStoreActions.SET_GCS_ACTIVE_BUCKET_DETAILS,
           payload: {
-            activeBucketDetails: res.values
+            activeBucketDetails: res.values,
+            truncated: res.truncated === 'true' || false
           }
         });
       }, (err) => {

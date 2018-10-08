@@ -136,7 +136,7 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     }
   }
 
-  private void deleteMetrics(NamespaceId namespaceId) throws Exception {
+  private void deleteMetrics(NamespaceId namespaceId) {
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = new LinkedHashMap<>();
     tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getNamespace());

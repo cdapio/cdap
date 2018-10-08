@@ -59,6 +59,11 @@ interface ISpannerConnectionState {
   loading?: boolean;
 }
 
+interface IProperties {
+  projectId?: string;
+  'service-account-keyfile'?: string;
+}
+
 export default class SpannerConnection extends React.PureComponent<ISpannerConnectionProps, ISpannerConnectionState> {
   public state: ISpannerConnectionState = {
     error: null,
@@ -111,16 +116,27 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
       });
   }
 
+  private constructProperties = (): IProperties => {
+    const properties: IProperties = {};
+
+    if (this.state.projectId && this.state.projectId.length > 0) {
+      properties.projectId = this.state.projectId;
+    }
+
+    if (this.state.serviceAccountKeyfile && this.state.serviceAccountKeyfile.length > 0) {
+      properties['service-account-keyfile'] = this.state.serviceAccountKeyfile;
+    }
+
+    return properties;
+  }
+
   private addConnection = () => {
     const namespace = getCurrentNamespace();
 
     const requestBody = {
       name: this.state.name,
       type: ConnectionType.SPANNER,
-      properties: {
-        'projectId': this.state.projectId,
-        'service-account-keyfile': this.state.serviceAccountKeyfile,
-      },
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.createConnection({namespace}, requestBody)
@@ -146,10 +162,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
       name: this.state.name,
       id: this.props.connectionId,
       type: ConnectionType.SPANNER,
-      properties: {
-        'projectId': this.state.projectId,
-        'service-account-keyfile': this.state.serviceAccountKeyfile,
-      },
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.updateConnection(params, requestBody)
@@ -178,10 +191,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
     const requestBody = {
       name: this.state.name,
       type: ConnectionType.SPANNER,
-      properties: {
-        'projectId': this.state.projectId,
-        'service-account-keyfile': this.state.serviceAccountKeyfile,
-      },
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.spannerTestConnection({namespace}, requestBody)
@@ -215,8 +225,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
   }
 
   private renderTestButton = () => {
-    const disabled = !this.state.name ||
-      !this.state.projectId;
+    const disabled = !this.state.name;
 
     return (
       <span className="test-connection-button">
@@ -233,9 +242,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
   }
 
   private renderAddConnectionButton = () => {
-    const disabled = !this.state.name ||
-      !this.state.projectId ||
-      this.state.testConnectionLoading;
+    const disabled = !this.state.name || this.state.testConnectionLoading;
 
     let onClickFn = this.addConnection;
 
@@ -270,7 +277,6 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
 
     return (
       <div className="spanner-detail">
-
         <div className="form">
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
@@ -285,6 +291,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
                   value={this.state.name}
                   onChange={this.handleChange.bind(this, 'name')}
                   disabled={this.props.mode === ConnectionMode.Edit}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.name`).toString()}
                 />
               </div>
             </div>
@@ -293,7 +300,6 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.projectId`)}
-              <span className="asterisk">*</span>
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
@@ -302,6 +308,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
                   className="form-control"
                   value={this.state.projectId}
                   onChange={this.handleChange.bind(this, 'projectId')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.projectId`).toString()}
                 />
               </div>
             </div>
@@ -318,6 +325,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
                   className="form-control"
                   value={this.state.serviceAccountKeyfile}
                   onChange={this.handleChange.bind(this, 'serviceAccountKeyfile')}
+                  placeholder={T.translate(`${PREFIX}.Placeholders.serviceAccountKeyfile`).toString()}
                 />
               </div>
             </div>

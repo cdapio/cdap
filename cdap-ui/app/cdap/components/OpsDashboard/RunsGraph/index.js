@@ -85,7 +85,6 @@ class RunsGraphView extends Component {
     setLast24Hours(true);
     setIs7DaysAgo(false);
     getData();
-
   };
 
   renderGraph(props = this.props) {
@@ -144,7 +143,7 @@ class RunsGraphView extends Component {
                 className={classnames({
                   "active": this.props.isLast24Hours
                 })}
-                onClick={!this.props.isLast24Hours && this.last24Hour}
+                onClick={!this.props.isLast24Hours ? this.last24Hour : undefined}
               >
                 {T.translate(`${PREFIX}.last24Hours`)}
               </div>

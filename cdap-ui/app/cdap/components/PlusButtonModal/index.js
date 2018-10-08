@@ -24,6 +24,7 @@ import CardActionFeedback from 'components/CardActionFeedback';
 import classnames from 'classnames';
 import { CSSTransition } from 'react-transition-group';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 
 require('./PlusButtonModal.scss');
 
@@ -66,14 +67,14 @@ export default class PlusButtonModal extends Component {
     );
   }
   render() {
-    const market = T.translate('commons.market');
+    const market = Theme.featureNames.hub;
     const resourceCenter = T.translate('commons.resource-center');
 
     return (
       <Modal
         isOpen={this.props.isOpen}
         toggle={this.closeHandler.bind(this)}
-        className={classnames("plus-button-modal", {
+        className={classnames("plus-button-modal cdap-modal", {
           "cask-market": this.state.viewMode === 'marketplace',
           "add-entity-modal": this.state.viewMode === 'resourcecenter'
         })}

@@ -74,7 +74,7 @@ const NoDefaultConnection: React.SFC<INoDefaultConnectionProps> = ({
       </div>
     );
   }
-  const { type, name: connectionId } = defaultConnectionObj;
+  const { type, id: connectionId } = defaultConnectionObj;
   const connectionType = type.toLowerCase();
   const namespace = getCurrentNamespace();
   const BASEPATH = `/ns/${namespace}/connections`;

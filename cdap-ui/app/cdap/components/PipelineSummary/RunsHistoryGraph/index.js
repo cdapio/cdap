@@ -46,7 +46,7 @@ require('react-vis/dist/styles/plot.scss');
 const MARKSERIESSTROKECOLOR = colorVariables.grey03;
 const FAILEDRUNCOLOR = colorVariables.red01;
 const SUCCESSRUNCOLOR = colorVariables.green02;
-const PENDINGSTATUSFILLCOLOR = 'transparent';
+const PENDINGSTATUSFILLCOLOR = colorVariables.white01;
 const PENDINGSTATUSSTROKECOLOR = colorVariables.blue02;
 const RUNNINGSTATUSCOLOR = colorVariables.blue02;
 const LINECOLOR = colorVariables.grey06;

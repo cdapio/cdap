@@ -125,9 +125,9 @@ $info-font-color: $grey-03;
     width: calc(100% - 250px);
 
     .sub-panel {
-      line-height: $browser-list-subpanel-line-height;
-      padding: 0 10px;
+      padding: 4px 10px;
       display: flex;
+      align-items: center;
       .path-container,
       .info-container {
         width: 50%;
@@ -167,6 +167,10 @@ $info-font-color: $grey-03;
           color: $info-font-color;
           text-align: right;
           padding-right: 5px;
+          overflow: hidden;
+          word-break: inherit;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
         .search-container {
           flex: 0.3;
