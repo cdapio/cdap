@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium) {
+function LogViewerController($scope, $window, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium, MyStatusMapper) {
   'ngInject';
 
   /**
@@ -26,6 +26,8 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   var columnsList = [];
   var collapseCount = 0;
   var vm = this;
+
+  vm.displayStatus = MyStatusMapper.lookupDisplayStatus;
 
   let showCondensedLogsQuery = ' AND .origin=plugin OR .origin=program';
   if (vm.isPipeline) {
