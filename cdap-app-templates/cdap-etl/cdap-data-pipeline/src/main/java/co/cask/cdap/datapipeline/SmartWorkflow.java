@@ -581,7 +581,13 @@ public class SmartWorkflow extends AbstractWorkflow {
       Map<String, List<FieldOperation>> stageOperations
         = GSON.fromJson(nodeValue.getValue().toString(), STAGE_OPERATIONS_MAP);
       for (Map.Entry<String, List<FieldOperation>> entry : stageOperations.entrySet()) {
-        allStageOperations.get(entry.getKey()).addAll(entry.getValue());
+        // allStageOperations only contains the stages from the stageSpecs, which does not include the connector stage,
+        // but the stageOperations might contain connector stage if the pipeline has multiple phases, so this check
+        // is needed to avoid an NPE, the connector stage always has an empty field level operations so we can just
+        // ignore them
+        if (allStageOperations.containsKey(entry.getKey())) {
+          allStageOperations.get(entry.getKey()).addAll(entry.getValue());
+        }
       }
     }
 
