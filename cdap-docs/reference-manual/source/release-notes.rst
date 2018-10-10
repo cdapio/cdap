@@ -30,6 +30,174 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 5.1.0 <http://docs.cask.co/cdap/5.1.0/index.html>`__
+=============================================================
+
+Summary
+-------
+
+This release introduces a number of new features, improvements and bug fixes to CDAP. Some of the main highlights of the release are:
+
+1. **Date and Time Support**
+    - Support for Date, Time and Timestamp data types in the CDAP schema. In addition, this support is also now available in pipeline plugins and Data Preparation directives.
+
+2. **Plugin Requirements**
+    - A way for plugins to specify certain runtime requirements, and the ability to filter available plugins based on those requirements.
+
+3. **Bootstrapping**
+    - A method to automatically bootstrap CDAP with a given state, such as a set of deployed apps, artifacts, namespaces, and preferences.
+
+4. **UI Customization**
+    - A way to customize the display of the CDAP UI by enabling or disabling certain features.
+
+
+New Features
+------------
+
+- :cask-issue:`CDAP-14244` - Added support for Date/Time in Preparation. Also, added a new directive parse-timestamp to convert unix timestamp in long or string to Timestamp object.
+
+- :cask-issue:`CDAP-14245` - Added Date, Time, and Timestamp support in plugins (Wrangler, Google Cloud BigQuery, Google Cloud Spanner, Database).
+
+- :cask-issue:`CDAP-14021` - Added Date, Time, and Timestamp support in CDAP Schema.
+
+- :cask-issue:`CDAP-14028` - Added Date, Time, and Timestamp support in UI.
+
+- :cask-issue:`CDAP-14053` - Added Google Cloud Spanner source and sink plugins in Pipeline and Google Cloud Spanner connection in Preparation.
+
+- :cask-issue:`CDAP-14185` - Added Google Cloud PubSub realtime source.
+
+- :cask-issue:`CDAP-14088` - Added a new user onboarding tour to CDAP.
+
+- :cask-issue:`CDAP-13990` - Added the ability to customize UI through theme.
+
+- :cask-issue:`CDAP-14022` - Added a framework that can be used to bootstrap a CDAP instance.
+
+- :cask-issue:`CDAP-13746` - Added the ability to configure system wide provisioner properties that can be set by admins but not by users.
+
+- :cask-issue:`CDAP-13924` - Added capability to allow specifying requirements by plugins and filter them on the basis of their requirements.
+
+- :cask-issue:`CDAP-13975` - Added REST endpoints to query the run counts of a program.
+
+- :cask-issue:`CDAP-14260` - Added a REST endpoint to get the latest run record of multiple programs in a single call.
+
+- :cask-issue:`CDAP-13653` - Added support for Apache Spark 2.3.
+
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-13566` - Improved runtime monitoring (which fetches program states, metadata and logs) of remotely launched programs from the CDAP Master by using dynamic port forwarding instead of HTTPS for communication.
+
+- :cask-issue:`CDAP-13977` - Removed duplicate classes to reduce the size of the sandbox by a couple hundred megabytes.
+
+- :cask-issue:`CDAP-14461` - Added cdap-env.sh to allow configuring jvm options while launching the Sandbox.
+
+- :cask-issue:`CDAP-14003` - Added support for bidirectional Field Level Lineage.
+
+- :cask-issue:`CDAP-14013` - Added capability for external dataset to record their schema.
+
+- :cask-issue:`CDAP-14091` - The Dataproc provisioner will try to pick up the project id and credentials from the environment if they are not specified.
+
+- :cask-issue:`CDAP-14104` - The Dataproc provisioner will use internal IP addresses when CDAP is in the same network as the Dataproc cluster.
+
+- :cask-issue:`CDAP-14168` - Added capability to always display current dataset schema in Field Level Lineage.
+
+- :cask-issue:`CDAP-13886` - Improved error handling in Preparation.
+
+- :cask-issue:`CDAP-14023` - Added a FileSink batch sink, FileMove action, and FileDelete action to replace their HDFS counterparts.
+
+- :cask-issue:`CDAP-14097` - Added a configurable jvm option to kill CDAP process immediately on sandbox when an OutOfMemory error occurs.
+
+- :cask-issue:`CDAP-14135` - Added better trace logging for dataset service.
+
+- :cask-issue:`CDAP-14386` - Make Google Cloud Storage, Google Cloud BigQuery, and Google Cloud Spanner connection properties optional (project id, service account keyfile path, temporary GCS bucket).
+
+- :cask-issue:`CDAP-14401` - Google Cloud PubSub sink will try to create the topic if it does not exist while preparing for the run.
+
+- :cask-issue:`CDAP-14475` - Added csv, tsv, delimited, json, and blob as formats to the S3 source and sink.
+
+- :cask-issue:`CDAP-14321` - Added csv, tsv, delimited, json, and blob as formats to the File source.
+
+- :cask-issue:`CDAP-9048` - Added a button on external sources and sinks to jump to the dataset detail page.
+
+- :cask-issue:`CDAP-14040` - Added format and suppress query params to the program logs endpoint to match the program run logs endpoint.
+
+- :cask-issue:`CDAP-14132` - Made all CDAP examples to be compatible with Spark 2.
+
+- :cask-issue:`CDAP-14220` - Added worker and master disk size properties to the Dataproc provisioner.
+
+- :cask-issue:`CDAP-14298` - Improved operational behavior of the dataset service.
+
+- :cask-issue:`CDAP-14372` - Fixed wrangler transform to make directives optional. If none are given, the transform is a no-op.
+
+- :cask-issue:`CDAP-14397` - Fixed Preparation to treat files wihtout extension as text files.
+
+- :cask-issue:`CDAP-14398` - Limited the number of files showed in S3 and Google Cloud Storage browser to 1000.
+
+- :cask-issue:`CDAP-14482` - Enhanced Google Cloud BigQuery sink to create dataset if the specified dataset does not exist.
+
+- :cask-issue:`CDAP-14489` - Increased log levels for the CDAP Sandbox so that only CDAP classes are at debug level.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-14468` - Fixed the 'distinct' plugin to use a drop down for the list of fields and to have a button to get the output schema.
+
+- :cask-issue:`CDAP-7444` - Ensured that destroy() is always called for MapReduce, even if initialize() fails.
+
+- :cask-issue:`CDAP-13008` - Fixed a bug where Alert Publisher will not work if there is a space in the label.
+
+- :cask-issue:`CDAP-13230` - Fixed a bug that caused Preparation to fail while parsing avro files.
+
+- :cask-issue:`CDAP-13878` - Fixed a misleading error message about hbase classes in cloud runtimes.
+
+- :cask-issue:`CDAP-13887` - Fixed a bug where the metric for failed profile program runs was not getting incremented when the run failed due to provisioning errors.
+
+- :cask-issue:`CDAP-13894` - Fixed a bug where querying metrics by time series will be incorrect after a certain amount of time.
+
+- :cask-issue:`CDAP-13959` - Fixed a bug where profile metrics is incorrect if an app is deleted.
+
+- :cask-issue:`CDAP-13965` - Fixed a deprovisioning bug when cluster creation would fail.
+
+- :cask-issue:`CDAP-13988` - Fixed an error where TMS publishing was retried indefinitely if the first attempt failed.
+
+- :cask-issue:`CDAP-14076` - Fixed a race condition in MapReduce that can cause a deadlock.
+
+- :cask-issue:`CDAP-14098` - Fixed a resource leak in preview feature.
+
+- :cask-issue:`CDAP-14107` - Fixed a bug that would cause RDD versions of the dynamic scala spark plugins to fail.
+
+- :cask-issue:`CDAP-14154` - Fixed a bug where profiles were getting applied to all program types instead of only workflows.
+
+- :cask-issue:`CDAP-14203` - Fixed a race condition by ensuring that a program is started before starting runtime monitoring for it.
+
+- :cask-issue:`CDAP-14211` - Fixed runs count for pipelines in UI to show correct number instead of limiting to 100.
+
+- :cask-issue:`CDAP-14223` - Fixed an issue where Dataproc client was not being closed, resulting in verbose error logs.
+
+- :cask-issue:`CDAP-14261` - Fixed a bug that could cause the provisioning state of stopped program runs to be corrupted.
+
+- :cask-issue:`CDAP-14271` - Fixed a bug that caused Preparation to be unable to list buckets in a Google Cloud Storage connection in certain environments.
+
+- :cask-issue:`CDAP-14303` - Fixed a bug where Dataproc provisioner is not able to provision a singlenode cluster.
+
+- :cask-issue:`CDAP-14390` - Fixed a bug where Preparation could not read json or xml files on Google Cloud Storage.
+
+- :cask-issue:`CDAP-14395` - Fixed dataproc provisioner to use full API access scopes so that Google Cloud Spanner and Google Cloud PubSub are accessible by default.
+
+- :cask-issue:`CDAP-14435` - Fixed a bug where profile metrics is not deleted when a profile is deleted.
+
+
+Deprecated and Removed Features
+-------------------------------
+
+- :cask-issue:`CDAP-14108` - Removed old and buggy dynamic spark plugins.
+
+- :cask-issue:`CDAP-14456` - Dropped support for MapR 4.1.
+
+
+
 `Release 5.0.0 <http://docs.cask.co/cdap/5.0.0/index.html>`__
 =============================================================
 
@@ -361,7 +529,7 @@ Improvements
 
 - :cask-issue:`CDAP-13116` - Macro enabled all fields in the HTTP Callback plugin
 
-- :cask-issue:`CDAP-13119` - Optimized the planner to reduce the amount of temporary data required in certain types of mapreduce pipelines. 
+- :cask-issue:`CDAP-13119` - Optimized the planner to reduce the amount of temporary data required in certain types of mapreduce pipelines.
 
 - :cask-issue:`CDAP-13122` - Minor optimization to reduce the number of mappers used to read intermediate data in mapreduce pipelines
 
@@ -396,7 +564,7 @@ Bug Fixes
 
 - :cask-issue:`CDAP-13218` - Fixed the state of Workflow, MapReduce, and Spark program to be reflected correctly as KILLED state when user explicitly terminated the running program
 
-- :cask-issue:`CDAP-13223` - Fixed directive syntaxes in point and click interactions for some date formats 
+- :cask-issue:`CDAP-13223` - Fixed directive syntaxes in point and click interactions for some date formats
 
 `Release 4.3.3 <http://docs.cask.co/cdap/4.3.3/index.html>`__
 =============================================================
