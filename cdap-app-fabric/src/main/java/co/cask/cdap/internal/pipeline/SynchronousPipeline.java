@@ -23,6 +23,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
+
 /**
  * Concrete implementation of synchronous {@link Pipeline}.
  * <p>
@@ -57,6 +59,8 @@ public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
         ctx = StageContext.next(ctx);
       }
       return Futures.immediateFuture((T) ctx.getUpStream());
+    } catch (ExecutionException e) {
+      return Futures.immediateFailedFuture(e.getCause());
     } catch (Throwable th) {
       return Futures.immediateFailedFuture(th);
     } finally {

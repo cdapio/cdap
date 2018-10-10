@@ -334,10 +334,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
         singlePlugin.configurePipeline(pipelineConfigurer);
       }
     } catch (Exception e) {
-      throw new RuntimeException(
-        String.format("Exception while configuring plugin of type %s and name %s for stage %s: %s",
-                      etlPlugin.getType(), etlPlugin.getName(), pluginId, e.getMessage()),
-        e);
+      throw new RuntimeException(String.format("Error configuring stage '%s': %s", pluginId, e.getMessage()), e);
     }
     return new PluginSpec(etlPlugin.getType(),
                           etlPlugin.getName(),
