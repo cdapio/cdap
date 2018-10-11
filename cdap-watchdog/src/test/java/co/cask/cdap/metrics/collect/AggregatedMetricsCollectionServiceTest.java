@@ -52,15 +52,13 @@ public class AggregatedMetricsCollectionServiceTest {
   private static final String METRIC = "metric";
   private static final String GAUGE_METRIC = "gaugeMetric";
 
-  private long getMetricValue(Collection<MetricValue> metrics, String metricName) {
-    Iterator<MetricValue> metricsItor = metrics.iterator();
-    while (metricsItor.hasNext()) {
-      MetricValue metricValue = metricsItor.next();
+  private Long getMetricValue(Collection<MetricValue> metrics, String metricName) {
+    for (MetricValue metricValue : metrics) {
       if (metricValue.getName().equals(metricName)) {
         return metricValue.getValue();
       }
     }
-    return 0;
+    return null;
   }
 
   @Category(SlowTests.class)
@@ -76,7 +74,7 @@ public class AggregatedMetricsCollectionServiceTest {
 
       @Override
       protected long getInitialDelayMillis() {
-        return 5000L;
+        return 1000L;
       }
 
       @Override
@@ -88,10 +86,10 @@ public class AggregatedMetricsCollectionServiceTest {
     service.startAndWait();
 
     // non-empty tags.
-    final Map baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
-                                         Constants.Metrics.Tag.APP, APP,
-                                         Constants.Metrics.Tag.FLOW, FLOW,
-                                         Constants.Metrics.Tag.RUN_ID, RUNID);
+    final Map<String, String> baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
+                                                         Constants.Metrics.Tag.APP, APP,
+                                                         Constants.Metrics.Tag.FLOW, FLOW,
+                                                         Constants.Metrics.Tag.RUN_ID, RUNID);
 
     try {
       // The first section tests with empty tags.
@@ -101,17 +99,10 @@ public class AggregatedMetricsCollectionServiceTest {
       service.getContext(EMPTY_TAGS).increment(METRIC, 3);
       service.getContext(EMPTY_TAGS).increment(METRIC, 4);
 
-      MetricValues record = published.poll(10, TimeUnit.SECONDS);
-      Assert.assertNotNull(record);
-
-      Assert.assertEquals(((long) Integer.MAX_VALUE) + 9L, getMetricValue(record.getMetrics(), METRIC));
+      verifyCounterMetricsValue(published, ImmutableMap.of(0, ImmutableMap.of(METRIC, 9L + Integer.MAX_VALUE)));
 
       // No publishing for 0 value metrics
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
-
-      // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getContext(EMPTY_TAGS).increment(METRIC, 1);
-      Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
       //update the metrics multiple times with gauge.
       service.getContext(EMPTY_TAGS).gauge(GAUGE_METRIC, 1);
@@ -119,9 +110,7 @@ public class AggregatedMetricsCollectionServiceTest {
       service.getContext(EMPTY_TAGS).gauge(GAUGE_METRIC, 3);
 
       // gauge just updates the value, so polling should return the most recent value written
-      record = published.poll(3, TimeUnit.SECONDS);
-      Assert.assertNotNull(record);
-      Assert.assertEquals(3, getMetricValue(record.getMetrics(), GAUGE_METRIC));
+      verifyGaugeMetricsValue(published, ImmutableMap.of(0, 3L));
 
       // define collectors for non-empty tags
       MetricsContext baseCollector = service.getContext(baseTags);
@@ -139,8 +128,8 @@ public class AggregatedMetricsCollectionServiceTest {
       flowletInstanceCollector.increment(METRIC, 1);
 
       // there are two collectors, verify their metrics values
-      verifyCounterMetricsValue(published.poll(10, TimeUnit.SECONDS));
-      verifyCounterMetricsValue(published.poll(10, TimeUnit.SECONDS));
+      verifyCounterMetricsValue(published, ImmutableMap.of(4, ImmutableMap.of(METRIC, 13L + Integer.MAX_VALUE),
+                                                           6, ImmutableMap.of(METRIC, 15L)));
 
       // No publishing for 0 value metrics
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
@@ -154,11 +143,10 @@ public class AggregatedMetricsCollectionServiceTest {
       flowletInstanceCollector.gauge(GAUGE_METRIC, Integer.MAX_VALUE);
 
       // gauge just updates the value, so polling should return the most recent value written
-      verifyGaugeMetricsValue(published.poll(10, TimeUnit.SECONDS));
-      verifyGaugeMetricsValue(published.poll(10, TimeUnit.SECONDS));
+      verifyGaugeMetricsValue(published, ImmutableMap.of(4, 1L, 6, (long) Integer.MAX_VALUE));
 
       flowletInstanceCollector.gauge(GAUGE_METRIC, 0);
-      verifyMetricsValue(published.poll(10, TimeUnit.SECONDS), 0L, GAUGE_METRIC);
+      verifyCounterMetricsValue(published, ImmutableMap.of(6, ImmutableMap.of(GAUGE_METRIC, 0L)));
     } finally {
       service.stopAndWait();
     }
@@ -195,36 +183,59 @@ public class AggregatedMetricsCollectionServiceTest {
     service.stop().get(5, TimeUnit.SECONDS);
   }
 
-  private void verifyCounterMetricsValue(MetricValues metricValues) {
-    Assert.assertNotNull(metricValues);
-    Map<String, String> tags = metricValues.getTags();
-    if (tags.size() == 4) {
-      // base collector
-      Assert.assertEquals(((long) Integer.MAX_VALUE) + 13L, getMetricValue(metricValues.getMetrics(), METRIC));
-    } else if (tags.size() == 6) {
-      // flowlet collector
-      Assert.assertEquals(15L, getMetricValue(metricValues.getMetrics(), METRIC));
-    } else {
-      Assert.fail("Unexpected number of tags while verifying counter metrics value - " + tags.size());
+  private void verifyCounterMetricsValue(BlockingQueue<MetricValues> published,
+                                         Map<Integer, Map<String, Long>> expected) throws InterruptedException {
+    Map<Integer, Map<String, Long>> received = new HashMap<>();
+    for (Integer key : expected.keySet()) {
+      received.put(key, new HashMap<>());
     }
+    long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10);
+    while (timeout > System.currentTimeMillis() && !expected.equals(received)) {
+      MetricValues metricValues = published.poll(100, TimeUnit.MILLISECONDS);
+      if (metricValues == null) {
+        continue;
+      }
+      int tags = metricValues.getTags().size();
+      Map<String, Long> map = expected.get(tags);
+      Collection<MetricValue> values = metricValues.getMetrics();
+      Assert.assertNotNull("Unexpected number of tags while verifying counter metrics value: " + tags, map);
+      for (String name : map.keySet()) {
+        Long receivedValue = getMetricValue(values, name);
+        if (receivedValue != null) {
+          Long existing = received.get(tags).get(name);
+          received.get(tags).put(name, existing == null ? receivedValue : existing + receivedValue);
+        }
+      }
+    }
+    // validate that all metrics have been received
+    Assert.assertEquals(expected, received);
+    // validate that no further aggregates are in the queue
+    Assert.assertNull(published.poll());
   }
 
-  private void verifyGaugeMetricsValue(MetricValues metricValues) {
-    Assert.assertNotNull(metricValues);
-    Map<String, String> tags = metricValues.getTags();
-    if (tags.size() == 4) {
-      // base collector
-      Assert.assertEquals(1L, getMetricValue(metricValues.getMetrics(), GAUGE_METRIC));
-    } else if (tags.size() == 6) {
-      // flowlet collector
-      Assert.assertEquals((long) Integer.MAX_VALUE, getMetricValue(metricValues.getMetrics(), GAUGE_METRIC));
-    } else {
-      Assert.fail("Unexpected number of tags while verifying gauge metrics value - " + tags.size());
-    }
-  }
+  private void verifyGaugeMetricsValue(BlockingQueue<MetricValues> published, Map<Integer, Long> expected)
+    throws InterruptedException {
 
-  private void verifyMetricsValue(MetricValues metricValues, long expected, String metricName) {
-    Assert.assertNotNull(metricValues);
-    Assert.assertEquals(expected, getMetricValue(metricValues.getMetrics(), metricName));
+    Map<Integer, Long> seen = new HashMap<>();
+    long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10);
+
+    while (timeout > System.currentTimeMillis() && !expected.equals(seen)) {
+
+      MetricValues metricValues = published.poll(100, TimeUnit.MILLISECONDS);
+      if (metricValues == null) {
+        continue;
+      }
+      int tags = metricValues.getTags().size();
+      Assert.assertNotNull("Unexpected number of tags while verifying gauge metrics value: " + tags,
+                           expected.get(tags));
+      Long receivedValue = getMetricValue(metricValues.getMetrics(), GAUGE_METRIC);
+      if (receivedValue != null) {
+        seen.put(tags, receivedValue);
+      }
+    }
+    // validate that both gauges have been received
+    Assert.assertEquals(expected, seen);
+    // validate that no further aggregates are in the queue
+    Assert.assertNull(published.poll());
   }
 }
