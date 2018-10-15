@@ -106,8 +106,13 @@ var webpackConfig = {
   output: getWebpackOutputObj(mode),
   plugins,
   stats: {
+    assets: false,
+    children: false,
+    chunkGroups: false,
+    chunkModules: false,
+    chunkOrigins: false,
     chunks: false,
-    chunkModules: false
+    modules: false
   },
   resolve: {
     modules: ['node_modules']

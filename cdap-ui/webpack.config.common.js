@@ -183,8 +183,13 @@ var webpackConfig = {
     rules
   },
   stats: {
+    assets: false,
+    children: false,
+    chunkGroups: false,
+    chunkModules: false,
+    chunkOrigins: false,
     chunks: false,
-    chunkModules: false
+    modules: false
   },
   output: {
     filename: '[name].js',
