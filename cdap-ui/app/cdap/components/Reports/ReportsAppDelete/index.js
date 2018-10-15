@@ -96,7 +96,7 @@ export default class ReportsAppDelete extends Component {
 
   render() {
     return (
-      <div className="text-xs-center">
+      <div className="text-center">
         <h3>Are you sure you want to delete Reports app?</h3>
 
         <div className="button">

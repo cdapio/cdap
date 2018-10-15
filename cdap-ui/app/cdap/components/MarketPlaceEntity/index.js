@@ -155,7 +155,7 @@ export default class MarketPlaceEntity extends Component {
                 actions={this.state.entityDetail.actions}
                 onActionsComplete={this.switchCloseBtn.bind(this)}
               />
-              <div className="text-xs-right">
+              <div className="text-right">
                 <button className="btn btn-secondary" onClick={this.toggleDetailedMode}>
                   {this.state.actionsComplete
                     ? T.translate('features.MarketPlaceEntity.doneLabel')
@@ -166,7 +166,7 @@ export default class MarketPlaceEntity extends Component {
           );
         } else if (this.state.entityDetail.actions.length === 1) {
           return (
-            <div className="text-xs-right">
+            <div className="text-right">
               <button
                 className="btn btn-primary"
                 onClick={() => this.setState({ performSingleAction: true })}
@@ -240,7 +240,7 @@ export default class MarketPlaceEntity extends Component {
               )}
             </div>
 
-            <div className="package-metadata-container text-xs-left">
+            <div className="package-metadata-container text-left">
               <strong className="package-label"> {this.props.entity.label} </strong>
               <div className="package-metadata">
                 <If condition={this.props.entity.version}>

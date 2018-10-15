@@ -140,7 +140,7 @@ export default class ChangeDataTypeDirective extends Component {
         >
           <span>{T.translate(`${PREFIX}.title`)}</span>
 
-          <span className="float-xs-right">
+          <span className="float-right">
             <span className="fa fa-caret-right" />
           </span>
 

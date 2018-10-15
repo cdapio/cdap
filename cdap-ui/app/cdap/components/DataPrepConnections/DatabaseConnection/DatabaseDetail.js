@@ -35,8 +35,8 @@ const CONN_TYPE = {
   advanced: 'ADVANCED',
 };
 
-const LABEL_COL_CLASS = 'col-xs-4 col-form-label text-xs-right';
-const INPUT_COL_CLASS = 'col-xs-8';
+const LABEL_COL_CLASS = 'col-4 col-form-label text-right';
+const INPUT_COL_CLASS = 'col-8';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Database.DatabaseDetail';
 
@@ -352,7 +352,7 @@ export default class DatabaseDetail extends Component {
 
     return (
       <div className="form-group row">
-        <div className="col-xs-8 offset-xs-4 col-xs-offset-4">
+        <div className="col-8 offset-4 col-offset-4">
           <button className="btn btn-secondary" onClick={this.testConnection} disabled={disabled}>
             {T.translate(`${PREFIX}.testConnection`)}
           </button>
@@ -491,7 +491,7 @@ export default class DatabaseDetail extends Component {
 
     return (
       <div className="row driver-info">
-        <div className="col-xs-4 text-xs-right">
+        <div className="col-4 text-right">
           <div className="image-container">
             <div className={`db-image db-${db.tag}`} />
           </div>
@@ -500,7 +500,7 @@ export default class DatabaseDetail extends Component {
           </div>
         </div>
 
-        <div className="col-xs-8 driver-detail">
+        <div className="col-8 driver-detail">
           <span>{db.pluginInfo.version}</span>
 
           <span>
@@ -540,7 +540,7 @@ export default class DatabaseDetail extends Component {
 
     return (
       <div className="row">
-        <div className="col-xs-8 offset-xs-4 col-xs-offset-4">
+        <div className="col-8 offset-4 col-offset-4">
           <button className="btn btn-primary" onClick={onClickFn} disabled={disabled}>
             {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
           </button>

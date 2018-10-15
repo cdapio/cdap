@@ -96,12 +96,12 @@ export default class MarketActionsContainer extends Component {
           let actionIcon = getIcon(action.type);
           return (
             <div
-              className="action-container text-xs-center"
+              className="action-container text-center"
               key={uuidV4()}
               onClick={this.openWizard.bind(this, index, action.type, action)}
             >
               <div className="action" key={index}>
-                <div className="step text-xs-center">
+                <div className="step text-center">
                   <span className={classnames('tag tag-pill', { completed: isCompletedAction })}>
                     {index + 1}
                   </span>

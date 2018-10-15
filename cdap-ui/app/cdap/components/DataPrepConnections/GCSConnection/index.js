@@ -31,8 +31,8 @@ import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 const PREFIX = 'features.DataPrepConnections.AddConnections.GCS';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
 
-const LABEL_COL_CLASS = 'col-xs-3 col-form-label text-xs-right';
-const INPUT_COL_CLASS = 'col-xs-8';
+const LABEL_COL_CLASS = 'col-3 col-form-label text-right';
+const INPUT_COL_CLASS = 'col-8';
 
 require('./GCSConnection.scss');
 
@@ -257,7 +257,7 @@ export default class GCSConnection extends Component {
   renderContent() {
     if (this.state.loading) {
       return (
-        <div className="gcs-detail text-xs-center">
+        <div className="gcs-detail text-center">
           <br />
           <LoadingSVG />
         </div>

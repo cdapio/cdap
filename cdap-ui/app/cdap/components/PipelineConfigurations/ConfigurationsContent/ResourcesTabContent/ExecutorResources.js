@@ -64,8 +64,8 @@ const ExecutorResources = ({
   return (
     <div
       className={classnames('executor', {
-        'col-xs-6': isBatch,
-        'col-xs-4': !isBatch,
+        'col-6': isBatch,
+        'col-4': !isBatch,
       })}
     >
       <div className="resource-title-icon">

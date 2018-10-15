@@ -79,7 +79,7 @@ export default class HomeListView extends Component {
     };
     if (this.state.loading) {
       content = (
-        <h3 className="text-xs-center">
+        <h3 className="text-center">
           <span className="fa fa-spinner fa-spin fa-2x loading-spinner" />
         </h3>
       );

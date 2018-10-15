@@ -170,17 +170,17 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
                       className="row"
                       id={`gcsconnection-${file.scrollId}`}
                     >
-                      <div className="col-xs-3">
+                      <div className="col-3">
                         <IconSVG name={file.directory ? 'icon-folder-o' : 'icon-file-o'} />
                         {file.name}
                       </div>
-                      <div className="col-xs-3">
+                      <div className="col-3">
                         {type}
                       </div>
-                      <div className="col-xs-3">
+                      <div className="col-3">
                         {size}
                       </div>
-                      <div className="col-xs-3">
+                      <div className="col-3">
                         {lastModified}
                       </div>
                     </div>
@@ -207,7 +207,7 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
                   className="row"
                   id={`s3connection-${file.scrollId}`}
                 >
-                  <div className="col-xs-12">
+                  <div className="col-12">
                     <IconSVG name={file.directory ? 'icon-folder-o' : 'icon-file-o'} />
                     {file.name}
                   </div>
@@ -229,7 +229,7 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
       return (
         <div className="gcs-buckets empty-message">
           <div className="row">
-            <div className="col-xs-12">
+            <div className="col-12">
               <EmptyMessageContainer searchText={search}>
                 <ul>
                   <li>

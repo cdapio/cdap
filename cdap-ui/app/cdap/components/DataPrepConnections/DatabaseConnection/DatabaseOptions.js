@@ -204,7 +204,7 @@ export default class DatabaseOptions extends Component {
 
   renderDBOption(db) {
     return (
-      <div key={db.uniqueId} className="col-xs-6">
+      <div key={db.uniqueId} className="col-6">
         <div
           className={classnames('database-option', { installed: db.installed })}
           onClick={this.onDBClick.bind(this, db)}
@@ -246,7 +246,7 @@ export default class DatabaseOptions extends Component {
   render() {
     if (this.state.loading) {
       return (
-        <div className="database-options text-xs-center">
+        <div className="database-options text-center">
           <LoadingSVG />
         </div>
       );

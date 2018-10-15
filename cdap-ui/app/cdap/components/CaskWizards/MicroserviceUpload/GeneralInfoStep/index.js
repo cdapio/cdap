@@ -246,7 +246,7 @@ export default function GeneralInfoStep() {
             <Col xs="7">
               <InputMicroserviceInstanceName />
             </Col>
-            <i className="fa fa-asterisk text-danger float-xs-left" />
+            <i className="fa fa-asterisk text-danger float-left" />
           </FormGroup>
           <FormGroup row>
             <Col xs="3">
@@ -263,7 +263,7 @@ export default function GeneralInfoStep() {
             <Col sm="7">
               <InputMicroserviceVersion />
             </Col>
-            <i className="fa fa-asterisk text-danger float-xs-left" />
+            <i className="fa fa-asterisk text-danger float-left" />
           </FormGroup>
           <FormGroup row>
             <Col xs="3">
@@ -273,7 +273,7 @@ export default function GeneralInfoStep() {
               <SelectMicroserviceOption />
               <NewMicroserviceTextbox />
             </Col>
-            <i className="fa fa-asterisk text-danger float-xs-left" />
+            <i className="fa fa-asterisk text-danger float-left" />
           </FormGroup>
           <div className="step-summary">
             <Label className="summary-label">{T.translate('features.Wizard.MicroserviceUpload.summaryLabel')}</Label>

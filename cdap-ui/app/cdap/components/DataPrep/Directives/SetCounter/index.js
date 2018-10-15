@@ -195,14 +195,14 @@ export default class SetCounterDirective extends Component {
 
         <div className="action-buttons">
           <button
-            className="btn btn-primary float-xs-left"
+            className="btn btn-primary float-left"
             onClick={this.applyDirective}
             disabled={disabled}
           >
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
-          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
+          <button className="btn btn-link float-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
@@ -220,7 +220,7 @@ export default class SetCounterDirective extends Component {
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
 
-        <span className="float-xs-right">
+        <span className="float-right">
           <span className="fa fa-caret-right" />
         </span>
 

@@ -47,7 +47,7 @@ export default class ViewSwitch extends Component {
     return (
       <div className="view-switch">
         <div className="clearfix">
-          <Nav className="float-xs-right" tabs>
+          <Nav className="float-right" tabs>
             <NavItem>
               <NavLink
                 className={classnames({ active: this.state.activeTab === 'card' })}

@@ -101,7 +101,7 @@ export default class DirectivesTab extends Component {
         <div className="directives-tab-header">
           <span>#</span>
           <span>{T.translate('features.DataPrep.DataPrepSidePanel.DirectivesTab.label')}</span>
-          <button className="btn btn-link float-xs-right" onClick={this.download}>
+          <button className="btn btn-link float-right" onClick={this.download}>
             <span className="fa fa-download" />
           </button>
         </div>

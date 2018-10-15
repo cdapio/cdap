@@ -125,7 +125,7 @@ function SummaryView({ summary }) {
   return (
     <div className="reports-summary-container">
       <div className="row summary-section">
-        <div className="col-xs-6">
+        <div className="col-6">
           <table className="table">
             <tbody>
               <tr className="no-border">
@@ -160,7 +160,7 @@ function SummaryView({ summary }) {
           </table>
         </div>
 
-        <div className="col-xs-6">
+        <div className="col-6">
           <table className="table">
             <tbody>
               <tr className="no-border">

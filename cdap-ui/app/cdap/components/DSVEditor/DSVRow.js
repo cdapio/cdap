@@ -41,7 +41,7 @@ export default class DSVRow extends Component {
     }
 
     return (
-      <div className="action-buttons-container text-xs-right">
+      <div className="action-buttons-container text-right">
         <button className="btn add-row-btn btn-link" onClick={this.props.addRow}>
           <i className="fa fa-plus" />
         </button>

@@ -40,13 +40,13 @@ let DataTextArea = ({ value, isLoading }) => {
   return (
     <div className="datapack-container">
       <div className="view-data-step">
-        <div className="download-section text-xs-right">
+        <div className="download-section text-right">
           <button className="btn btn-link" onClick={handleDownload}>
             <span className="fa fa-download" />
           </button>
         </div>
         {isLoading ? (
-          <div className="loading text-xs-center">
+          <div className="loading text-center">
             <i className="fa fa-spinner fa-spin" />
           </div>
         ) : (

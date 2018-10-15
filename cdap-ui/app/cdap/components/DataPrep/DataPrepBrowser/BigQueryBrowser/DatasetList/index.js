@@ -87,7 +87,7 @@ class DatasetListView extends Component {
     if (!datasetList.length) {
       return (
         <div className="empty-search-container">
-          <div className="empty-search text-xs-center">
+          <div className="empty-search text-center">
             <strong>
               {T.translate(`${PREFIX}.EmptyMessage.emptyDatasetList`, {
                 connectionName: this.props.connectionId,
@@ -109,7 +109,7 @@ class DatasetListView extends Component {
         <div className="list-table">
           <div className="table-header">
             <div className="row">
-              <div className="col-xs-12">{T.translate(`${PREFIX}.name`)}</div>
+              <div className="col-12">{T.translate(`${PREFIX}.name`)}</div>
             </div>
           </div>
 
@@ -127,7 +127,7 @@ class DatasetListView extends Component {
                   onClick={this.clickHandler.bind(null, dataset.name)}
                 >
                   <div className="row content-row">
-                    <div className="col-xs-12">
+                    <div className="col-12">
                       <IconSVG name="icon-database" />
                       {dataset.name}
                     </div>

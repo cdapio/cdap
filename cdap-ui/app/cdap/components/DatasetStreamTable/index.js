@@ -112,8 +112,8 @@ export default class DatasetStreamTable extends Component {
               </td>
               <td>
                 <Link to={link}>
-                  <div className="fast-actions-container text-xs-center">
-                    <FastActions className="text-xs-left btn-group" entity={dataEntity} />
+                  <div className="fast-actions-container text-center">
+                    <FastActions className="text-left btn-group" entity={dataEntity} />
                   </div>
                 </Link>
               </td>
@@ -139,7 +139,7 @@ export default class DatasetStreamTable extends Component {
     if (!isAllLoaded()) {
       return (
         <div className="dataentity-table">
-          <h3 className="text-xs-center">
+          <h3 className="text-center">
             <span className="fa fa-spinner fa-spin fa-2x loading-spinner" />
           </h3>
         </div>

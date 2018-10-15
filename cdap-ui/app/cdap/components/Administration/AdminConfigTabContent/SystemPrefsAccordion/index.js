@@ -162,7 +162,7 @@ export default class SystemPrefsAccordion extends Component {
 
   renderGrid() {
     if (!this.state.prefsForDisplay.length) {
-      return <div className="grid-wrapper text-xs-center">{T.translate(`${PREFIX}.noPrefs`)}</div>;
+      return <div className="grid-wrapper text-center">{T.translate(`${PREFIX}.noPrefs`)}</div>;
     }
 
     let prefs = [...this.state.prefsForDisplay];

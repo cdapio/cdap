@@ -259,7 +259,7 @@ export default class ExploreModal extends Component {
                   <i id={`download-${id}`} className="fa fa-download" />
                   {!query.is_active ? (
                     <UncontrolledTooltip target={`download-${id}`} placement="left" delay={300}>
-                      <div className="text-xs-left">
+                      <div className="text-left">
                         {T.translate('features.FastAction.downloadDisabledMessage')}
                       </div>
                     </UncontrolledTooltip>
@@ -282,7 +282,7 @@ export default class ExploreModal extends Component {
                 <i className="fa fa-eye" id={`explore-${id}`} delay={300} />
                 {!query.is_active ? (
                   <UncontrolledTooltip target={`explore-${id}`} placement="top">
-                    <div className="text-xs-left">
+                    <div className="text-left">
                       {T.translate('features.FastAction.previewDisabledMessage')}
                     </div>
                   </UncontrolledTooltip>
@@ -332,14 +332,14 @@ export default class ExploreModal extends Component {
             </table>
           </div>
         ) : (
-          <div className="text-xs-center">{T.translate(`${PREFIX}.noResults`)}</div>
+          <div className="text-center">{T.translate(`${PREFIX}.noResults`)}</div>
         );
       };
       return (
         <tr key={`A-${uuidV4()}`}>
           <td colSpan="4" className="preview-cell">
             {query.schema && !query.preview ? (
-              <div className="fa fa-spinner fa-spin text-xs-center" />
+              <div className="fa fa-spinner fa-spin text-center" />
             ) : (
               previewContent(query)
             )}
@@ -356,7 +356,7 @@ export default class ExploreModal extends Component {
       >
         <ModalHeader>
           {T.translate(`${PREFIX}.label`)}
-          <div onClick={this.onModalToggle.bind(this)} className="float-xs-right">
+          <div onClick={this.onModalToggle.bind(this)} className="float-right">
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
@@ -370,10 +370,10 @@ export default class ExploreModal extends Component {
             />
             <div className="clearfix">
               {this.state.error ? (
-                <span className="float-xs-left text-danger">{this.state.error}</span>
+                <span className="float-left text-danger">{this.state.error}</span>
               ) : null}
               <button
-                className="btn btn-primary float-xs-right"
+                className="btn btn-primary float-right"
                 onClick={this.submitQuery}
                 disabled={this.state.loading ? 'disabled' : null}
               >
@@ -394,7 +394,7 @@ export default class ExploreModal extends Component {
                 <tbody>
                   {!this.state.queries.length ? (
                     <tr>
-                      <td colSpan="4" className="text-xs-center">
+                      <td colSpan="4" className="text-center">
                         {T.translate(`${PREFIX}.noResults`)}
                       </td>
                     </tr>

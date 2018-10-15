@@ -81,7 +81,7 @@ class NamespacesPopoverView extends Component {
 
   render() {
     const targetElem = (
-      <div className="monitor-more text-xs-right">{T.translate(`${PREFIX}.monitorMore`)}</div>
+      <div className="monitor-more text-right">{T.translate(`${PREFIX}.monitorMore`)}</div>
     );
 
     return (

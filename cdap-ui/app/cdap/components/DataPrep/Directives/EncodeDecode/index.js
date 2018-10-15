@@ -114,7 +114,7 @@ export default class EncodeDecode extends Component {
         >
           <span>{this.props.mainMenuLabel}</span>
 
-          <span className="float-xs-right">
+          <span className="float-right">
             <span className="fa fa-caret-right" />
           </span>
 

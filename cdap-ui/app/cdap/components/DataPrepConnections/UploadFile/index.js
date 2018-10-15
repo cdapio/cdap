@@ -136,7 +136,7 @@ export default class ConnectionsUpload extends Component {
           </div>
 
           <div className="row upload-row">
-            <div className="col-xs-6">
+            <div className="col-6">
               <button className="btn btn-primary" onClick={this.upload} disabled={uploadDisabled}>
                 {T.translate(`${PREFIX}.uploadButton`)}
               </button>
@@ -144,8 +144,8 @@ export default class ConnectionsUpload extends Component {
               <span className="helper-text">{T.translate(`${PREFIX}.helperText`)}</span>
             </div>
 
-            <div className="col-xs-6 text-xs-right">
-              <form className="form-inline">
+            <div className="col-6">
+              <form className="form-inline float-right">
                 <div className="form-group">
                   <label className="control-label">
                     {T.translate(`${PREFIX}.recordDelimiter`)}

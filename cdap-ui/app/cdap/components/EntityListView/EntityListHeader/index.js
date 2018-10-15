@@ -177,7 +177,7 @@ export default class EntityListHeader extends Component {
       >
         <DropdownToggle tag="div" className="sort-toggle">
           <span>{this.state.activeSort.displayName}</span>
-          <span className="float-xs-right">
+          <span className="float-right">
             <IconSVG name="icon-angle-down" />
           </span>
         </DropdownToggle>
@@ -190,9 +190,9 @@ export default class EntityListHeader extends Component {
                 className="clearfix"
                 onClick={this.onSortClick.bind(this, option)}
               >
-                <span className="float-xs-left">{option.displayName}</span>
+                <span className="float-left">{option.displayName}</span>
                 {this.state.activeSort.fullSort === option.fullSort ? (
-                  <span className="float-xs-right">
+                  <span className="float-right">
                     <IconSVG name="icon-check" />
                   </span>
                 ) : null}
@@ -211,7 +211,7 @@ export default class EntityListHeader extends Component {
       >
         <DropdownToggle tag="div" className="filter-toggle">
           <span>{T.translate('features.EntityListView.Header.filterBy')}</span>
-          <span className="float-xs-right">
+          <span className="float-right">
             <IconSVG name="icon-angle-down" />
           </span>
         </DropdownToggle>
@@ -223,14 +223,14 @@ export default class EntityListHeader extends Component {
                 key={option.id}
                 onClick={this.onFilterClick.bind(this, option)}
               >
-                <div className="form-check">
+                <div className="form-group form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    checked={this.state.activeFilters.indexOf(option.id) !== -1}
+                    onChange={this.onFilterClick.bind(this, option)}
+                  />
                   <label className="form-check-label" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      checked={this.state.activeFilters.indexOf(option.id) !== -1}
-                      onChange={this.onFilterClick.bind(this, option)}
-                    />
                     {option.displayName}
                   </label>
                 </div>

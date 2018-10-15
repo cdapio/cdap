@@ -57,6 +57,8 @@ $empty-message-link-color: var(--brand-primary-color);
       max-height: calc(100% - 38px);
       overflow-y: auto;
 
+      a:hover { text-decoration: none; }
+
       .row-container { cursor: pointer; }
       .content-row {
         border-bottom: 1px solid $border-color;

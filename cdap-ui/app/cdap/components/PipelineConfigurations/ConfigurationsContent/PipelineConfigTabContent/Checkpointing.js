@@ -44,8 +44,8 @@ const mapDispatchToCheckpointingProps = (dispatch) => {
 const Checkpointing = ({ checkpointing, onToggle }) => {
   return (
     <div className="label-with-toggle checkpointing row">
-      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.checkpointing`)}</span>
-      <div className="col-xs-7 toggle-container">
+      <span className="toggle-label col-4">{T.translate(`${PREFIX}.checkpointing`)}</span>
+      <div className="col-7 toggle-container">
         <ToggleSwitch isOn={checkpointing} onToggle={onToggle.bind(null, !checkpointing)} />
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}

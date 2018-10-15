@@ -120,13 +120,13 @@ export default class EditProperty extends Component {
             })}
           </span>
 
-          <div className="close-section float-xs-right" onClick={this.toggleModal}>
+          <div className="close-section float-right" onClick={this.toggleModal}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
         <ModalBody>
           <div className="row input-properties">
-            <div className="col-xs-12">
+            <div className="col-12">
               <input
                 type="text"
                 id="edit-property-modal-value-input"
@@ -138,7 +138,7 @@ export default class EditProperty extends Component {
             </div>
           </div>
 
-          <div className="text-xs-right">
+          <div className="text-right">
             <button className="btn btn-primary" onClick={this.saveProperty} disabled={disabled}>
               {T.translate('features.PropertiesEditor.EditProperty.button')}
             </button>

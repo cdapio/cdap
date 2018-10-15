@@ -243,7 +243,7 @@ export default class FileBrowser extends Component {
           disabled: !row.directory && !row.wrangle,
         })}
       >
-        <div className="col-xs-8 name">
+        <div className="col-8 name">
           <span
             className={classnames('type-icon fa fa-fw', {
               'folder-icon fa-folder-o': row.directory,
@@ -252,7 +252,7 @@ export default class FileBrowser extends Component {
           />
           <span title={row.name}>{row.name}</span>
         </div>
-        <div className="col-xs-4">
+        <div className="col-4">
           <span title={row.type}>{row.type}</span>
         </div>
       </div>
@@ -271,7 +271,7 @@ export default class FileBrowser extends Component {
           disabled: !row.directory && !row.wrangle,
         })}
       >
-        <div className="col-xs-3 name">
+        <div className="col-3 name">
           <span
             className={classnames('type-icon fa fa-fw', {
               'folder-icon fa-folder-o': row.directory,
@@ -280,22 +280,22 @@ export default class FileBrowser extends Component {
           />
           <span title={row.name}>{row.name}</span>
         </div>
-        <div className="col-xs-2">
+        <div className="col-2">
           <span title={row.type}>{row.type}</span>
         </div>
-        <div className="col-xs-1">
+        <div className="col-1">
           <span title={row.displaySize}>{row.directory ? '--' : row.displaySize}</span>
         </div>
-        <div className="col-xs-2">
+        <div className="col-2">
           <span title={row['last-modified']}>{row['last-modified']}</span>
         </div>
-        <div className="col-xs-1">
+        <div className="col-1">
           <span title={row.owner}>{row.owner}</span>
         </div>
-        <div className="col-xs-1">
+        <div className="col-1">
           <span title={row.group}>{row.group}</span>
         </div>
-        <div className="col-xs-2">
+        <div className="col-2">
           <span title={row.permission}>{row.permission}</span>
         </div>
       </div>
@@ -383,7 +383,7 @@ export default class FileBrowser extends Component {
     if (this.state.contents.length === 0) {
       return (
         <div className="empty-search-container">
-          <div className="empty-search text-xs-center">
+          <div className="empty-search text-center">
             <strong>{T.translate(`${PREFIX}.EmptyMessage.noFilesOrDirectories`)}</strong>
           </div>
         </div>
@@ -420,21 +420,21 @@ export default class FileBrowser extends Component {
     );
 
     const TABLE_COLUMNS_PROPERTIES = {
-      name: 'col-xs-3',
-      type: 'col-xs-2',
-      size: 'col-xs-1',
-      'last-modified': 'col-xs-2',
-      owner: 'col-xs-1',
-      group: 'col-xs-1',
-      permission: 'col-xs-2',
+      name: 'col-3',
+      type: 'col-2',
+      size: 'col-1',
+      'last-modified': 'col-2',
+      owner: 'col-1',
+      group: 'col-1',
+      permission: 'col-2',
     };
 
     let columnProperties = TABLE_COLUMNS_PROPERTIES;
 
     if (this.props.noState || !this.props.enableRouting) {
       columnProperties = {
-        name: 'col-xs-8',
-        type: 'col-xs-4',
+        name: 'col-8',
+        type: 'col-4',
       };
     }
 

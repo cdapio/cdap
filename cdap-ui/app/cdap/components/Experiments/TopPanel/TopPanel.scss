@@ -14,11 +14,13 @@
  * the License.
 */
 
-@import "../../../styles/variables.scss";
+@import "~styles/variables.scss";
 @import "../ExperimentsVariables.scss";
 
+$bg-color: $grey-07;
+
 .experiments-toppanel {
-  background: $cdap-gray;
+  background: $bg-color;
   height: 50px;
   margin-left: -$listview-padding;
   margin-right: -$listview-padding;

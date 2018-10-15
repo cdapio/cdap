@@ -370,7 +370,7 @@ export default class UsingPatternsModal extends Component {
         <ModalHeader>
           <span>{T.translate(`${PREFIX}.modalTitle`, { parser: 'Log' })}</span>
 
-          <div className="close-section float-xs-right" onClick={this.props.onClose}>
+          <div className="close-section float-right" onClick={this.props.onClose}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>

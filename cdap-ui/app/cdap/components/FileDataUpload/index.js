@@ -72,7 +72,7 @@ export default class FileDataUpload extends Component {
 
   render() {
     return (
-      <div className="file-data-upload-container text-xs-center" onClick={this.onContainerClick}>
+      <div className="file-data-upload-container text-center" onClick={this.onContainerClick}>
         {!this.state.textarea || this.state.file.name ? (
           <div className="file-data-metadata-container">
             <div className="file-data-metadata">

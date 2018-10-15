@@ -50,7 +50,7 @@ const mapDispatchToCronInputProps = (dispatch, ownProps) => {
 
 const CronInput = ({ value, label, onChange, colWidth = 2 }) => {
   return (
-    <div className={`form-group col-xs-${colWidth} schedule-advanced-input`}>
+    <div className={`form-group col-${colWidth} schedule-advanced-input`}>
       <label>{label}</label>
       <input type="text" value={value} onChange={onChange} className="form-control" />
     </div>

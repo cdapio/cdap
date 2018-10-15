@@ -253,7 +253,7 @@ export default class DataPrep extends Component {
       : T.translate(`${prefix}.expand`);
     return (
       <div
-        className={classnames('panel-toggle float-xs-left text-xs-center', {
+        className={classnames('panel-toggle float-left text-center', {
           disabled: isEmpty(this.state.currentWorkspace),
         })}
         onClick={this.onSidePanelToggle}
@@ -276,7 +276,7 @@ export default class DataPrep extends Component {
 
     if (this.state.loading) {
       return (
-        <div className="dataprep-container text-xs-center">
+        <div className="dataprep-container text-center">
           <LoadingSVGCentered />
         </div>
       );
@@ -304,7 +304,7 @@ export default class DataPrep extends Component {
         <div className="top-section clearfix">
           {this.renderTogglePanel()}
 
-          <div className="top-section-content float-xs-left">
+          <div className="top-section-content float-left">
             {this.renderTabs()}
             <DataPrepTopPanel
               singleWorkspaceMode={this.props.singleWorkspaceMode}
@@ -314,7 +314,7 @@ export default class DataPrep extends Component {
         </div>
 
         <div className="row dataprep-body">
-          <div className="dataprep-main col-xs-12">
+          <div className="dataprep-main col-12">
             <DataPrepContentWrapper />
           </div>
         </div>

@@ -133,7 +133,7 @@ export default class SpotlightModal extends Component {
   renderBodyContent() {
     if (!this.state.searchResults.results.length) {
       return (
-        <div className="text-xs-center no-search-results">
+        <div className="text-center no-search-results">
           {T.translate(`${PREFIX}.noResults`, { tag: this.props.tag })}
         </div>
       );
@@ -170,7 +170,7 @@ export default class SpotlightModal extends Component {
               </Col>
 
               <Col xs="6">
-                <div className="entity-tags-container text-xs-right">
+                <div className="entity-tags-container text-right">
                   {entity.metadata.metadata.SYSTEM.tags.map((tag) => {
                     return <Badge key={uuidV4()}>{tag}</Badge>;
                   })}

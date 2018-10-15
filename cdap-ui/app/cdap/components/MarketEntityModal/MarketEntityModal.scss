@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@import '../../styles/variables.scss';
+@import '~styles/variables.scss';
+
+$success-bg-color: $green-02;
 
 .market-entity-modal.modal-dialog {
   width: 60vw;
@@ -104,7 +106,7 @@
             .tag {
               background: #777777;
               &.completed {
-                background-color: $state-success-text;
+                background-color: $success-bg-color;
               }
             }
           }

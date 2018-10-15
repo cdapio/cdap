@@ -47,10 +47,10 @@ export default function PipelineExportModal({ isOpen, onClose, pipelineConfig })
       modalClassName="pipeline-export-modal hydrator-modal"
     >
       <div className="modal-header">
-        <h3 className="modal-title float-xs-left">
+        <h3 className="modal-title float-left">
           <span>{T.translate(`${PREFIX}.exportModalTitle`)}</span>
         </h3>
-        <div className="btn-group float-xs-right">
+        <div className="btn-group float-right">
           <a className="btn" onClick={onClose}>
             <IconSVG name="icon-close" />
           </a>

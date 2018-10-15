@@ -47,7 +47,7 @@ export default class DataPrepLoading extends Component {
     // SVG loading will need to be extracted out
 
     return (
-      <div className="dataprep-loading text-xs-center">
+      <div className="dataprep-loading text-center">
         <LoadingSVG />
       </div>
     );

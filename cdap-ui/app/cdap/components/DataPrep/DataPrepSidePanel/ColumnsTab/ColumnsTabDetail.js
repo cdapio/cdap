@@ -33,7 +33,7 @@ export default function ColumnsTabDetail({ columnInfo }) {
           <thead>
             <tr>
               <th>{T.translate(`${PREFIX}.Header.inferredType`)}</th>
-              <th className="text-xs-right">{T.translate(`${PREFIX}.Header.percentageChange`)}</th>
+              <th className="text-right">{T.translate(`${PREFIX}.Header.percentageChange`)}</th>
             </tr>
           </thead>
 
@@ -44,7 +44,7 @@ export default function ColumnsTabDetail({ columnInfo }) {
               return (
                 <tr key={head}>
                   <td>{head}</td>
-                  <td className="text-xs-right">{chance}</td>
+                  <td className="text-right">{chance}</td>
                 </tr>
               );
             })}

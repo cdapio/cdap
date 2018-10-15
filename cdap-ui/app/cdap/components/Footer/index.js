@@ -24,17 +24,11 @@ export default function Footer() {
   const footerUrl = Theme.footerLink;
   return (
     <footer className="app-footer">
-      <div className="container">
-        <div className="row text-muted">
-          <div>
-            <p className="text-xs-center">
-              <a href={footerUrl} target="_blank" rel="noopener noreferrer">
-                {footerText}
-              </a>
-            </p>
-          </div>
-        </div>
-      </div>
+      <p className="text-center text-muted">
+        <a href={footerUrl} target="_blank" rel="noopener noreferrer">
+          {footerText}
+        </a>
+      </p>
     </footer>
   );
 }

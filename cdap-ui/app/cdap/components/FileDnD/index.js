@@ -28,7 +28,7 @@ export default function FileDnD({ file, onDropHandler, error, uploadLabel, click
       className="file-drop-container"
       onDrop={onDropHandler}
     >
-      <div className="file-metadata-container text-xs-center">
+      <div className="file-metadata-container text-center">
         <i className="fa fa-upload fa-3x" />
         {file.name && file.name.length ? (
           <span>{file.name}</span>

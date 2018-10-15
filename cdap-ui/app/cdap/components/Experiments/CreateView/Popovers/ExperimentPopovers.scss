@@ -14,9 +14,10 @@
  * the License.
 */
 
-@import "../../../../styles/variables.scss";
+@import "~styles/variables.scss";
 
 $popover_container_border_color: $grey-05;
+$popover-bg-color: $grey-07;
 
 .new-experiment-popover {
   padding: 0;
@@ -29,7 +30,7 @@ $popover_container_border_color: $grey-05;
       padding: 10px;
       display: block;
       margin: 0 -10px 10px -10px;
-      background: $cdap-gray;
+      background: $popover-bg-color;
       font-size: 14px;
     }
     .form-control {

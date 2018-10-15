@@ -44,8 +44,8 @@ const mapDispatchToInstrumentationProps = (dispatch) => {
 const Instrumentation = ({ instrumentation, onToggle }) => {
   return (
     <div className="label-with-toggle instrumentation row">
-      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.instrumentation`)}</span>
-      <div className="col-xs-7 toggle-container">
+      <span className="toggle-label col-4">{T.translate(`${PREFIX}.instrumentation`)}</span>
+      <div className="col-7 toggle-container">
         <ToggleSwitch isOn={instrumentation} onToggle={onToggle.bind(null, !instrumentation)} />
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}

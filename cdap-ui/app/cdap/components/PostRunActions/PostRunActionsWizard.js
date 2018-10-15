@@ -239,7 +239,7 @@ export default class PostRunActionsWizard extends Component {
       >
         {/* Not using <ModalHeader> here because it wraps the entire header in an h4 */}
         <div className="modal-header">
-          <h4 className="modal-title float-xs-left">
+          <h4 className="modal-title float-left">
             <span>{action.plugin.name || action.name}</span>
             <small className="plugin-version">
               {action.version || action.plugin.artifact.version}
@@ -248,7 +248,7 @@ export default class PostRunActionsWizard extends Component {
               <small>{action.description}</small>
             </p>
           </h4>
-          <div className="btn-group float-xs-right">
+          <div className="btn-group float-right">
             <a className="btn" onClick={this.toggleAndPreventPropagation}>
               <IconSVG name="icon-close" />
             </a>
@@ -257,7 +257,7 @@ export default class PostRunActionsWizard extends Component {
         <ModalBody>
           {this.renderBody()}
           <div
-            className="btn btn-blue float-xs-right close-button"
+            className="btn btn-blue float-right close-button"
             onClick={this.toggleAndPreventPropagation}
           >
             Close

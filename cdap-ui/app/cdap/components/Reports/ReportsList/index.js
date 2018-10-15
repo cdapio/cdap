@@ -162,8 +162,8 @@ class ReportsListView extends Component {
   renderEmpty() {
     return (
       <div className="list-container empty">
-        <div className="text-xs-center">{T.translate(`${PREFIX}.noReports`)}</div>
-        <div className="text-xs-center">{T.translate(`${PREFIX}.makeSelection`)}</div>
+        <div className="text-center">{T.translate(`${PREFIX}.noReports`)}</div>
+        <div className="text-center">{T.translate(`${PREFIX}.makeSelection`)}</div>
       </div>
     );
   }
@@ -191,7 +191,7 @@ class ReportsListView extends Component {
     return (
       <div className="reports-container">
         <div className="header">
-          <div className="reports-view-options float-xs-left">
+          <div className="reports-view-options float-left">
             <span>{featureName}</span>
           </div>
 

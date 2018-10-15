@@ -101,7 +101,7 @@ export default class UpgradeModal extends Component {
     if (this.state.loading) {
       content = (
         <div className="loading-container">
-          <h3 className="text-xs-center">
+          <h3 className="text-center">
             <span className="fa fa-spin fa-spinner" />
           </h3>
         </div>
@@ -133,7 +133,7 @@ export default class UpgradeModal extends Component {
         <ModalHeader>
           <span>{T.translate(`${PREFIX}.modalHeader`)}</span>
           {this.state.loading ? null : (
-            <div className="close-section float-xs-right">
+            <div className="close-section float-right">
               <span className="fa fa-times" onClick={this.attemptClose} />
             </div>
           )}

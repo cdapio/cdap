@@ -114,7 +114,7 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
               })}
             </span>
 
-            <div className="close-section float-xs-right" >
+            <div className="close-section float-right" >
               <IconSVG
                 name="icon-close"
                 onClick={this.close}

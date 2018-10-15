@@ -113,7 +113,7 @@ export default class DataPrepCLI extends Component {
       <div className="error-bar">
         <span className="content">{this.state.error}</span>
 
-        <span className="fa fa-times float-xs-right" onClick={this.dismissError} />
+        <span className="fa fa-times float-right" onClick={this.dismissError} />
       </div>
     );
   }
@@ -147,7 +147,7 @@ export default class DataPrepCLI extends Component {
         />
 
         <div className="input-container clearfix">
-          <strong className="float-xs-left">$</strong>
+          <strong className="float-left">$</strong>
           <div className="directive-input">
             <input
               type="text"

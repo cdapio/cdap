@@ -22,7 +22,7 @@ const PREFIX = 'features.HttpExecutor';
 
 export default function SendButton() {
   return (
-    <div className="send-button-container text-xs-right">
+    <div className="send-button-container text-right">
       <button className="btn btn-primary" onClick={execute}>
         {T.translate(`${PREFIX}.send`)}
       </button>

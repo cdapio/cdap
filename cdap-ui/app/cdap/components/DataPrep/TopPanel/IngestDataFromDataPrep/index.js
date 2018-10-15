@@ -549,7 +549,7 @@ export default class IngestDataFromDataPrep extends Component {
       let { headers } = DataPrepStore.getState().dataprep;
       return (
         <FormGroup row>
-          <Label xs="4" className="text-xs-right">
+          <Label xs="4" className="text-right">
             {T.translate(`${PREFIX}.Form.rowKeyLabel`)}
             <span className="text-danger">*</span>
           </Label>
@@ -574,7 +574,7 @@ export default class IngestDataFromDataPrep extends Component {
     if (this.state.inputType === 'fileset') {
       return (
         <FormGroup row>
-          <Label xs="4" className="text-xs-right">
+          <Label xs="4" className="text-right">
             {T.translate(`${PREFIX}.Form.formatLabel`)}
             <span className="text-danger">*</span>
           </Label>
@@ -617,7 +617,7 @@ export default class IngestDataFromDataPrep extends Component {
       return <IconSVG name={icon} className={className} />;
     };
     return (
-      <div className="text-xs-left steps-container">
+      <div className="text-left steps-container">
         {this.state.copyingSteps.map((step, index) => {
           return (
             <div
@@ -656,7 +656,7 @@ export default class IngestDataFromDataPrep extends Component {
         <p>{T.translate(`${PREFIX}.description`)}</p>
         <Form onSubmit={this.handleOnSubmit}>
           <FormGroup row>
-            <Label xs={4} className="text-xs-right">
+            <Label xs={4} className="text-right">
               {T.translate(`${PREFIX}.Form.typeLabel`)}
             </Label>
             <Col xs={8}>
@@ -684,7 +684,7 @@ export default class IngestDataFromDataPrep extends Component {
             <Col xs="8" />
           </FormGroup>
           <FormGroup row>
-            <Label xs="4" className="text-xs-right">
+            <Label xs="4" className="text-right">
               {T.translate(`${PREFIX}.Form.datasetNameLabel`)}
               <span className="text-danger">*</span>
             </Label>
@@ -756,7 +756,7 @@ export default class IngestDataFromDataPrep extends Component {
             <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
 
             <div
-              className={classnames('close-section float-xs-right', {
+              className={classnames('close-section float-right', {
                 disabled:
                   this.state.copyInProgress && !this.state.copyTaskStarted && !this.state.error,
               })}

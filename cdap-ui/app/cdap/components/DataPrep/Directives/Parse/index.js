@@ -246,7 +246,7 @@ export default class ParseDirective extends Component {
       >
         <span>{T.translate(`${SUFFIX}.title`)}</span>
 
-        <span className="float-xs-right">
+        <span className="float-right">
           <span className="fa fa-caret-right" />
         </span>
 

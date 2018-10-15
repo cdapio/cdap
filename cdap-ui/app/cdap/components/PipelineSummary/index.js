@@ -270,7 +270,7 @@ export default class PipelineSummary extends Component {
     return (
       <div className="top-title-bar">
         <div> {T.translate(`${PREFIX}.title`)}</div>
-        <div className="stats-container text-xs-right">
+        <div className="stats-container text-right">
           {isBatchPipeline(this.props.pipelineType) ? (
             <span>
               <strong>{T.translate(`${PREFIX}.statsContainer.avgRunTime`)}: </strong>

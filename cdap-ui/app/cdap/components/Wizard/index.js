@@ -356,7 +356,7 @@ export default class Wizard extends Component {
     let callToActionInfo = this.state.callToActionInfo;
     return (
       <div>
-        <div className="close-section float-xs-right" onClick={this.props.onClose.bind(null, true)}>
+        <div className="close-section float-right" onClick={this.props.onClose.bind(null, true)}>
           <IconSVG name="icon-close" />
         </div>
         <div className="result-container">

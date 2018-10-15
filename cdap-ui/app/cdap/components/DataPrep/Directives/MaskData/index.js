@@ -151,7 +151,7 @@ export default class MaskData extends Component {
       >
         <span className="option">{T.translate(`${PREFIX}.menuLabel`)}</span>
 
-        <span className="float-xs-right">
+        <span className="float-right">
           <span className="fa fa-caret-right" />
         </span>
         {this.renderSubMenu()}

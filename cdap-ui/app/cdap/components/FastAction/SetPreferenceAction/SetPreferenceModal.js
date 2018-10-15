@@ -407,7 +407,7 @@ export default class SetPreferenceModal extends Component {
               </table>
             </div>
           ) : (
-            <div className="text-xs-center">{T.translate(`${PREFIX}.noInheritedPrefs`)}</div>
+            <div className="text-center">{T.translate(`${PREFIX}.noInheritedPrefs`)}</div>
           )}
         </div>
       </div>
@@ -423,16 +423,16 @@ export default class SetPreferenceModal extends Component {
       <Modal
         isOpen={this.props.isOpen}
         toggle={this.props.toggleModal}
-        className="confirmation-modal set-preference-modal"
+        className="confirmation-modal set-preference-modal cdap-modal"
         size="lg"
         backdrop="static"
       >
         <ModalHeader className="modal-header">
-          <div className="float-xs-left">
+          <div className="float-left">
             <span className="button-icon fa fa-wrench" />
             <span className="button-icon title">{modalLabel}</span>
           </div>
-          <div className="float-xs-right">
+          <div className="float-right">
             <div className="close-modal-btn" onClick={this.props.toggleModal}>
               <span className="button-icon fa fa-times" />
             </div>
@@ -444,27 +444,27 @@ export default class SetPreferenceModal extends Component {
               {this.renderSpecifyPreferences()}
               <div className="clearfix">
                 {this.state.saving ? (
-                  <button className="btn btn-primary float-xs-left saving" disabled="disabled">
+                  <button className="btn btn-primary float-left saving" disabled="disabled">
                     <span className="fa fa-spinner fa-spin" />
                     <span>{savingLabel}</span>
                   </button>
                 ) : (
                   <button
-                    className="btn btn-primary float-xs-left not-saving"
+                    className="btn btn-primary float-left not-saving"
                     onClick={this.setPreferences}
                     disabled={this.oneFieldMissing() || this.state.error ? 'disabled' : null}
                   >
                     <span>{saveAndCloseLabel}</span>
                   </button>
                 )}
-                <span className="float-xs-left reset">
+                <span className="float-left reset">
                   <a onClick={this.resetFields}>{resetLink}</a>
                 </span>
                 {this.state.showResetMessage ? (
-                  <span className="float-xs-left text-success reset-success">Reset Successful</span>
+                  <span className="float-left text-success reset-success">Reset Successful</span>
                 ) : null}
                 {this.state.keyValues.pairs ? (
-                  <span className="float-xs-right num-rows">
+                  <span className="float-right num-rows">
                     {this.state.keyValues.pairs.length === 1 ? (
                       <span>{this.state.keyValues.pairs.length} row</span>
                     ) : (

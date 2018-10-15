@@ -165,7 +165,7 @@ export default function ConfigureStep() {
           <Col xs="7">
             <InputMicroserviceInstances />
           </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left" />
+          <i className="fa fa-asterisk text-danger float-left" />
         </FormGroup>
 
         <FormGroup row>
@@ -175,7 +175,7 @@ export default function ConfigureStep() {
           <Col xs="7">
             <InputMicroserviceVCores />
           </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left" />
+          <i className="fa fa-asterisk text-danger float-left" />
         </FormGroup>
 
         <FormGroup row>
@@ -185,7 +185,7 @@ export default function ConfigureStep() {
           <Col xs="7">
             <InputMicroserviceMemory />
           </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left" />
+          <i className="fa fa-asterisk text-danger float-left" />
         </FormGroup>
 
         <FormGroup row>
@@ -195,7 +195,7 @@ export default function ConfigureStep() {
           <Col xs="7">
             <InputMicroserviceThreshold />
           </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left" />
+          <i className="fa fa-asterisk text-danger float-left" />
         </FormGroup>
         <div className="step-summary">
           <Label className="summary-label">{T.translate('features.Wizard.MicroserviceUpload.summaryLabel')}</Label>

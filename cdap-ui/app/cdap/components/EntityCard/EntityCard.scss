@@ -68,7 +68,7 @@ $jump-button-container-size: 80px;
   &.active {
 
     &.datapipeline {
-      @include selected-card($hydrator-blue);
+      @include selected-card($datapipeline-entity-header-bg);
     }
     &.application {
       @include selected-card($application-entity-header-bg);

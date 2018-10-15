@@ -28,15 +28,22 @@ $header-height: 150px;
       padding-right: 30px;
     }
 
+    .modal-content,
+    .modal-header {
+      border-radius: 0;
+    }
+
     .modal-header {
       border-bottom: none;
       color: $title-color;
       background: no-repeat center/600px url('/cdap_assets/img/nux/welcome-header-background.png');
       height: $header-height;
+      padding-right: 15px;
 
       .modal-title {
         color: $title-color;
         line-height: $header-height;
+        width: 100%;
 
         .header-text { font-size: 35px; }
         .close-section > .icon-svg {

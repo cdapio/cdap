@@ -100,7 +100,7 @@ export default class CardActionFeedback extends Component {
       if (this.state.isExpanded) {
         angleIcon = (
           <span
-            className="expand-icon float-xs-right text-xs-center"
+            className="expand-icon float-right text-center"
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
             <span className="fa fa-angle-double-up" />
@@ -110,7 +110,7 @@ export default class CardActionFeedback extends Component {
       } else {
         angleIcon = (
           <span
-            className="expand-icon float-xs-right text-xs-center"
+            className="expand-icon float-right text-center"
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
             <span className="fa fa-angle-double-down" />

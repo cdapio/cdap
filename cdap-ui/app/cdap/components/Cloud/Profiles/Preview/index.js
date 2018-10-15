@@ -119,7 +119,7 @@ export default class ProfilePreview extends Component {
   render() {
     if (this.state.loading) {
       return (
-        <div className="profile-preview text-xs-center">
+        <div className="profile-preview text-center">
           <LoadingSVG />
         </div>
       );
@@ -137,7 +137,7 @@ export default class ProfilePreview extends Component {
     const profileLabel = this.props.profileLabel || this.props.profileName;
 
     return (
-      <div className="profile-preview text-xs-left">
+      <div className="profile-preview text-left">
         <div className="truncate">
           <strong title={profileLabel}>{profileLabel}</strong>
         </div>

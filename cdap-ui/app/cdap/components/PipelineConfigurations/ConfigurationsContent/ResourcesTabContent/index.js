@@ -60,8 +60,10 @@ function ResourcesTabContent({ isBatch }) {
     >
       <ConnectedStepContentHeading isBatch={isBatch} />
       {!isBatch ? <ClientResources /> : null}
-      <DriverResources isBatch={isBatch} />
-      <ExecutorResources isBatch={isBatch} />
+      <div className="row">
+        <DriverResources isBatch={isBatch} />
+        <ExecutorResources isBatch={isBatch} />
+      </div>
     </div>
   );
 }

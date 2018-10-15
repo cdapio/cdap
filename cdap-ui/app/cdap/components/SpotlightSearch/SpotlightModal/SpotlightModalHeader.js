@@ -41,12 +41,12 @@ export default class SpotlightModalHeader extends Component {
   render() {
     return (
       <ModalHeader>
-        <span className="float-xs-left">
+        <span className="float-left">
           {T.translate('features.SpotlightSearch.SpotlightModal.headerTagResults', {
             tag: this.props.tag,
           })}
         </span>
-        <div className="close-section float-xs-right text-xs-right">
+        <div className="close-section float-right text-right">
           <span className="search-results-total">
             {this.props.total === 1
               ? T.translate('features.SpotlightSearch.SpotlightModal.numResult', {

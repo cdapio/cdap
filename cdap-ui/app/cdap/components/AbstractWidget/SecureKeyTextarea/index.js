@@ -98,7 +98,7 @@ export default class SecureKeyTextarea extends Component {
 
   renderCustomEntry = () => {
     const helperText = (
-      <div className="helper-text text-xs-center" onClick={this.toggleCustomEntry}>
+      <div className="helper-text text-center" onClick={this.toggleCustomEntry}>
         {T.translate(`${PREFIX}.customEntryHelper`)}
       </div>
     );

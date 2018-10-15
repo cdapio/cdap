@@ -176,7 +176,7 @@ export default class AddToHydratorModal extends Component {
     if (this.state.loading) {
       content = (
         <div className="loading-container">
-          <h4 className="text-xs-center">
+          <h4 className="text-center">
             <span className="fa fa-spin fa-spinner" />
           </h4>
         </div>
@@ -249,7 +249,7 @@ export default class AddToHydratorModal extends Component {
         <ModalHeader>
           <span>{T.translate(`${PREFIX}.addToPipelineBtnLabel`)}</span>
 
-          <div className="close-section float-xs-right" onClick={this.props.toggle}>
+          <div className="close-section float-right" onClick={this.props.toggle}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>

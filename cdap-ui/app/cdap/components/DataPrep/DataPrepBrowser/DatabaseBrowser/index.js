@@ -165,7 +165,7 @@ export default class DatabaseBrowser extends Component {
 
     return (
       <div className="empty-search-container">
-        <div className="empty-search text-xs-center">
+        <div className="empty-search text-center">
           <strong>
             {T.translate(`${PREFIX}.EmptyMessage.emptyDatabase`, {
               connectionName: this.state.connectionName,
@@ -185,7 +185,7 @@ export default class DatabaseBrowser extends Component {
         <div className="database-content-table">
           <div className="database-content-header">
             <div className="row">
-              <div className="col-xs-12">
+              <div className="col-12">
                 <span>{T.translate(`${PREFIX}.table.namecollabel`)}</span>
               </div>
             </div>
@@ -198,7 +198,7 @@ export default class DatabaseBrowser extends Component {
                   className="row content-row"
                   onClick={this.prepTable.bind(this, table.name)}
                 >
-                  <div className="col-xs-12">
+                  <div className="col-12">
                     <span>{table.name}</span>
                   </div>
                 </div>

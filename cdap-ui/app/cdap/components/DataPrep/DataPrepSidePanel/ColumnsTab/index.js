@@ -179,7 +179,7 @@ export default class ColumnsTab extends Component {
   render() {
     if (this.state.loading) {
       return (
-        <div className="columns-tab text-xs-center">
+        <div className="columns-tab text-center">
           <span className="fa fa-spin fa-spinner" />
         </div>
       );

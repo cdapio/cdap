@@ -144,7 +144,7 @@ export default class LoadingIndicator extends Component {
         zIndex={2000}
         className="loading-indicator"
       >
-        <div className="text-xs-center">
+        <div className="text-center">
           <div className="icon-loading-bars">
             <LoadingSVG />
           </div>

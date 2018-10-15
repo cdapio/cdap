@@ -140,7 +140,7 @@ export default class DataPrepContentWrapper extends Component {
   render() {
     const dataPart = (
       <div className="row">
-        <div className="dataprep-main col-xs-9">
+        <div className="dataprep-main col-9">
           <DataPrepTable />
           <DataPrepCLI />
         </div>
@@ -149,7 +149,7 @@ export default class DataPrepContentWrapper extends Component {
     );
     const vizPart = (
       <div className="row">
-        <div className="col-xs-12">
+        <div className="col-12">
           <DataPrepVisualization />
         </div>
       </div>

@@ -22,10 +22,8 @@ $tooltip_bg_color: #000000;
   padding: 0 10px;
   cursor: pointer;
   &.hide {
-    .popper {
-      &.tooltip {
-        opacity: 0;
-      }
+    &.popper.tooltip {
+      opacity: 0;
     }
   }
   .popper {

@@ -95,14 +95,14 @@ export default class Experimental extends Component {
         <br />
         <br />
         <div className="row">
-          <div className="offset-xs-3 col-xs-6">
+          <div className="offset-3 col-6">
             <SchemaEditor />
           </div>
         </div>
         <br />
         <br />
         <div className="row">
-          <div className="offset-xs-3 col-xs-6">
+          <div className="offset-3 col-6">
             <pre>{JSON.stringify(this.state.parsed, null, 2)}</pre>
           </div>
         </div>

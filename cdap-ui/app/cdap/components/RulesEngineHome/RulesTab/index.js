@@ -96,7 +96,7 @@ export default class RulesTab extends Component {
     }
 
     if (!rules.length && !this.state.createRule) {
-      return <h4 className="text-xs-center"> {T.translate(`${PREFIX}.norules`)} </h4>;
+      return <h4 className="text-center"> {T.translate(`${PREFIX}.norules`)} </h4>;
     }
 
     return (

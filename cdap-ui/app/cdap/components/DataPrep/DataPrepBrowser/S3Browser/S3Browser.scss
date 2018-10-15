@@ -45,6 +45,9 @@ $s3_file_icon_color: $blue-03;
     .s3-content-body {
       height: calc(100% - 38px);
       overflow-y: auto;
+
+      a:hover { text-decoration: none; }
+
       .s3-buckets {
         height: 100%;
         .icon-svg {

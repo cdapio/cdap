@@ -314,7 +314,7 @@ export default class DataPrepHome extends Component {
 
     if (this.state.backendCheck) {
       return (
-        <div className="text-xs-center">
+        <div className="text-center">
           {renderPageTitle()}
           <LoadingSVG />
         </div>

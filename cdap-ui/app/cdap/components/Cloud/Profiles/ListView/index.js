@@ -219,7 +219,7 @@ class ProfilesListView extends Component {
   renderProfilesTable() {
     if (!this.state.profiles.length) {
       return (
-        <div className="text-xs-center">
+        <div className="text-center">
           {this.props.namespace === SYSTEM_NAMESPACE ? (
             <span>
               {T.translate(`${PREFIX}.ListView.noProfilesSystem`)}
@@ -432,7 +432,7 @@ class ProfilesListView extends Component {
   render() {
     if (this.props.loading) {
       return (
-        <div className="text-xs-center">
+        <div className="text-center">
           <LoadingSVG />
         </div>
       );

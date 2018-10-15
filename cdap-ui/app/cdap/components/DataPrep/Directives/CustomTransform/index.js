@@ -112,14 +112,14 @@ export default class CustomTransform extends Component {
 
         <div className="action-buttons">
           <button
-            className="btn btn-primary float-xs-left"
+            className="btn btn-primary float-left"
             onClick={this.applyDirective}
             disabled={this.state.input.length === 0}
           >
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
-          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
+          <button className="btn btn-link float-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
@@ -137,7 +137,7 @@ export default class CustomTransform extends Component {
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
 
-        <span className="float-xs-right">
+        <span className="float-right">
           <IconSVG name="icon-caret-right" />
         </span>
 
