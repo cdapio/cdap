@@ -146,7 +146,10 @@ public class PluginClass {
    * @return the {@link Requirements} which represents the requirements of the plugin
    */
   public Requirements getRequirements() {
-    return requirements;
+    // CDAP-14515 Requirements can be null in the case when the cluster is upgraded and the the Plugin class
+    // is being constructed from a deserialized form and the GSON used to deserialize does not uses
+    // PluginClassDeserializer responsible for handling the absence of requirements in old deserialized form.
+    return requirements == null ? Requirements.EMPTY : requirements;
   }
 
   @Override
