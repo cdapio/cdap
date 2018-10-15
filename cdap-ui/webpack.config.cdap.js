@@ -250,8 +250,13 @@ var webpackConfig = {
     publicPath: '/cdap_assets/'
   },
   stats: {
+    assets: false,
+    children: false,
+    chunkGroups: false,
+    chunkModules: false,
+    chunkOrigins: false,
     chunks: false,
-    chunkModules: false
+    modules: false
   },
   plugins: plugins,
   // TODO: Need to investigate this more.
