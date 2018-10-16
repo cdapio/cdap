@@ -40,14 +40,12 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -59,12 +57,9 @@ import java.util.Set;
  */
 public class MapReduceContextConfigTest {
 
-  private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() {
-  }.getType();
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
-  private static final String HCONF_ATTR_PLUGINS = "cdap.mapreduce.plugins";
 
   @Test
   public void testManyMacrosInAppSpec() {
@@ -75,25 +70,24 @@ public class MapReduceContextConfigTest {
       appCfg.append("${").append(i).append("}");
       hConf.setInt(String.valueOf(i), i);
     }
-    ApplicationSpecification appSpec =
-      new DefaultApplicationSpecification("name", "desc", appCfg.toString(),
-                                          new ArtifactId("artifact",
-                                                         new ArtifactVersion("1.0.0"), ArtifactScope.USER),
-                                          Collections.<String, StreamSpecification>emptyMap(),
-                                          Collections.<String, String>emptyMap(),
-                                          Collections.<String, DatasetCreationSpec>emptyMap(),
-                                          Collections.<String, FlowSpecification>emptyMap(),
-                                          Collections.<String, MapReduceSpecification>emptyMap(),
-                                          Collections.<String, SparkSpecification>emptyMap(),
-                                          Collections.<String, WorkflowSpecification>emptyMap(),
-                                          Collections.<String, ServiceSpecification>emptyMap(),
-                                          Collections.<String, ScheduleSpecification>emptyMap(),
-                                          Collections.<String, ScheduleCreationSpec>emptyMap(),
-                                          Collections.<String, WorkerSpecification>emptyMap(),
-                                          Collections.<String, Plugin>emptyMap());
+    ApplicationSpecification appSpec = new DefaultApplicationSpecification(
+      "name", "desc", appCfg.toString(),
+      new ArtifactId("artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER),
+      Collections.<String, StreamSpecification>emptyMap(),
+      Collections.<String, String>emptyMap(),
+      Collections.<String, DatasetCreationSpec>emptyMap(),
+      Collections.<String, FlowSpecification>emptyMap(),
+      Collections.<String, MapReduceSpecification>emptyMap(),
+      Collections.<String, SparkSpecification>emptyMap(),
+      Collections.<String, WorkflowSpecification>emptyMap(),
+      Collections.<String, ServiceSpecification>emptyMap(),
+      Collections.<String, ScheduleSpecification>emptyMap(),
+      Collections.<String, ScheduleCreationSpec>emptyMap(),
+      Collections.<String, WorkerSpecification>emptyMap(),
+      Collections.<String, Plugin>emptyMap()
+    );
     cfg.setApplicationSpecification(appSpec);
-    Assert.assertEquals(appSpec.getConfiguration(),
-                        cfg.getApplicationSpecification().getConfiguration());
+    Assert.assertEquals(appSpec.getConfiguration(), cfg.getApplicationSpecification().getConfiguration());
   }
 
   @Test
@@ -120,9 +114,9 @@ public class MapReduceContextConfigTest {
                                     PluginProperties.builder().addAll(properties).build());
 
     mockPlugins.put("File1", filePlugin1);
-    hConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(mockPlugins, PLUGIN_MAP_TYPE));
+    hConf.set(MapReduceContextConfig.HCONF_ATTR_PLUGINS, GSON.toJson(mockPlugins));
 
     Map<String, Plugin> plugins = cfg.getPlugins();
-    Assert.assertEquals(plugins.size(), 1);
+    Assert.assertEquals(plugins, mockPlugins);
   }
 }
