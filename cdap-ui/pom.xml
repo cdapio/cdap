@@ -207,8 +207,8 @@
                   <goal>install-node-and-yarn</goal>
                 </goals>
                 <configuration>
-                  <nodeVersion>v8.7.0</nodeVersion>
-                  <yarnVersion>v1.2.1</yarnVersion>
+                  <nodeVersion>v8.11.0</nodeVersion>
+                  <yarnVersion>v1.10.1</yarnVersion>
                 </configuration>
               </execution>
               <execution>
