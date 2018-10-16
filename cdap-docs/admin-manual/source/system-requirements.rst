@@ -99,7 +99,7 @@ You'll need this software installed:
 
 Java Runtime
 ------------
-The latest `JDK or JRE version 1.7.xx or 1.8.xx <http://www.java.com/en/download/manual.jsp>`__
+The latest `JDK or JRE version 1.8.xx <http://www.java.com/en/download/manual.jsp>`__
 for Linux, Windows, or Mac OS X must be installed in your environment; we recommend the Oracle JDK.
 
 .. highlight:: console
