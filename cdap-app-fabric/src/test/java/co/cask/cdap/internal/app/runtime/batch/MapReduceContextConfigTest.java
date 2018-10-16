@@ -32,16 +32,10 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
-import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
@@ -57,9 +51,7 @@ import java.util.Set;
  */
 public class MapReduceContextConfigTest {
 
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
+  private static final Gson GSON = new Gson();
 
   @Test
   public void testManyMacrosInAppSpec() {
