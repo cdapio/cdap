@@ -27,6 +27,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 require('./CardActionFeedback.scss');
 import isObject from 'lodash/isObject';
+import IconSVG from 'components/IconSVG';
 
 var classNames = require('classnames');
 export const CARD_ACTION_TYPES = {
@@ -58,21 +59,26 @@ export default class CardActionFeedback extends Component {
   };
 
   getIcon() {
-    let icon = classNames(
-      'fa',
-      { 'fa-check': this.props.type === CARD_ACTION_TYPES.SUCCESS },
-      { 'fa-exclamation': this.props.type === CARD_ACTION_TYPES.DANGER },
-      {
-        'fa-exclamation-triangle': this.props.type === CARD_ACTION_TYPES.WARNING,
-      },
-      { 'fa-spinner fa-spin': this.props.type === CARD_ACTION_TYPES.LOADING }
-    );
-
-    return (
-      <span className="feedback-icon">
-        <span className={icon} />
-      </span>
-    );
+    let iconName = '';
+    let className = 'feedback-icon';
+    switch (this.props.type) {
+      case CARD_ACTION_TYPES.SUCCESS:
+        iconName = 'icon-check';
+        break;
+      case CARD_ACTION_TYPES.DANGER:
+        iconName = 'icon-exclamation-triangle';
+        break;
+      case CARD_ACTION_TYPES.WARNING:
+        iconName = 'icon-exclamation-triangle';
+        break;
+      case CARD_ACTION_TYPES.LOADING:
+        iconName = 'icon-spinner';
+        className = 'fa-spin feedback-icon';
+        break;
+      default:
+        return null;
+    }
+    return <IconSVG name={iconName} className={className} />;
   }
 
   getExtendedMessage() {
@@ -103,7 +109,7 @@ export default class CardActionFeedback extends Component {
             className="expand-icon float-right text-center"
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
-            <span className="fa fa-angle-double-up" />
+            <IconSVG name="icon-angle-double-up" />
           </span>
         );
         extendedMessage = this.getExtendedMessage();
@@ -113,7 +119,7 @@ export default class CardActionFeedback extends Component {
             className="expand-icon float-right text-center"
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
-            <span className="fa fa-angle-double-down" />
+            <IconSVG name="icon-angle-double-down" />
           </span>
         );
       }
