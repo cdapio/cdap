@@ -14,26 +14,6 @@
  * the License.
 */
 
-@import '~styles/variables.scss';
-
-.btn-with-loading {
-  > div {
-    display: flex;
-    align-items: center;
-  }
-  svg.loading-bar {
-    // Standard bootstrap btn height is 31px
-    // padding top and bottom are 0.5rem each. Hence the calculation.
-    height: calc(31px - 1rem);
-    rect {
-      fill: $blue-06;
-    }
-  }
-  &.darker-loading-bars {
-    svg.loading-bar {
-      rect {
-        fill: $blue-01;
-      }
-    }
-  }
-}
+import '@storybook/addons';
+import '@storybook/addon-actions/register'
+import '@storybook/addon-knobs/register';

@@ -14,26 +14,18 @@
  * the License.
 */
 
-@import '~styles/variables.scss';
+const cdapconfig = require('../webpack.config.cdap');
+const path = require("path");
 
-.btn-with-loading {
-  > div {
-    display: flex;
-    align-items: center;
-  }
-  svg.loading-bar {
-    // Standard bootstrap btn height is 31px
-    // padding top and bottom are 0.5rem each. Hence the calculation.
-    height: calc(31px - 1rem);
-    rect {
-      fill: $blue-06;
-    }
-  }
-  &.darker-loading-bars {
-    svg.loading-bar {
-      rect {
-        fill: $blue-01;
-      }
-    }
-  }
-}
+module.exports = (baseConfig, env, defaultConfig) => {
+  const config = defaultConfig;
+  config.resolve.extensions.push(".ts", ".tsx", ".js");
+  config.resolve.alias = cdapconfig.resolve.alias;
+  config.module = cdapconfig.module;
+  config.module.rules.push({
+    test: /\.(png|jpg|jpeg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+    use: 'url-loader'
+  })
+
+  return config;
+};

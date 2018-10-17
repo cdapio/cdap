@@ -39,6 +39,9 @@ $close-btn-size: 13px;
       .error {
         background-color: $brand-danger;
       }
+      .info {
+        background-color: $brand-info;
+      }
       .message {
         max-width: calc(100% - #{$close-btn-size});
         padding-right: 5px;

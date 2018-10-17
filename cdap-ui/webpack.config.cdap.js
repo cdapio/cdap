@@ -65,7 +65,6 @@ var plugins = [
     collections: true,
     caching: true
   }),
-  new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
   ...getWebpackDllPlugins(mode),
   new CopyWebpackPlugin([
@@ -152,7 +151,8 @@ var rules = [
       /lib/
     ],
     include: [
-      path.join(__dirname, 'app')
+      path.join(__dirname, 'app'),
+      path.join(__dirname, '.storybook')
     ]
   },
   {
@@ -171,7 +171,8 @@ var rules = [
       /lib/
     ],
     include: [
-      path.join(__dirname, 'app')
+      path.join(__dirname, 'app'),
+      path.join(__dirname, '.storybook')
     ]
   },
   {
