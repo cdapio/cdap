@@ -21,6 +21,31 @@
     "@babel/preset-react",
     "@babel/preset-typescript"
   ],
+  "env": {
+    "test": {
+      "presets": [
+        [
+          "@babel/env",
+          {
+            "targets": {
+              "browsers": [
+                "last 10 versions",
+                "safari >= 7"
+              ]
+            }
+          }
+        ],
+        [
+          "@babel/preset-stage-2",
+          {
+            "decoratorsLegacy": true
+          }
+        ],
+        "@babel/preset-react",
+        "@babel/preset-typescript"
+      ]
+    }
+  },
   "comments": true,
   "plugins": [
     "lodash",

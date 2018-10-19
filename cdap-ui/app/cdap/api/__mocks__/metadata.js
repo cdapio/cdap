@@ -41,6 +41,15 @@ MyMetadataApi.__setTags = function(tags, isError) {
   this.__tags = tags;
 };
 
+MyMetadataApi.addTags = function(params, tag) {
+  let subject = new Subject();
+  setTimeout(() => {
+    this.__tags = this.__tags.concat(tag);
+    subject.next(this.__tags);
+  });
+  return subject;
+};
+
 
 MyMetadataApi.generalGetter = function(property) {
   return function() {
