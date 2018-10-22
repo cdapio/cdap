@@ -17,10 +17,10 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MyMetricApi} from 'api/metric';
-import {MyDatasetApi} from 'api/dataset';
+import { MyMetricApi } from 'api/metric';
+import { MyDatasetApi } from 'api/dataset';
 import NamespaceStore from 'services/NamespaceStore';
-import {humanReadableNumber} from 'services/helpers';
+import { humanReadableNumber } from 'services/helpers';
 import T from 'i18n-react';
 
 export default class DatasetMetrics extends Component {
@@ -31,7 +31,7 @@ export default class DatasetMetrics extends Component {
       programs: 0,
       ops: 0,
       writes: 0,
-      loading: true
+      loading: true,
     };
   }
 
@@ -39,19 +39,19 @@ export default class DatasetMetrics extends Component {
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     const datasetParams = {
       namespace: currentNamespace,
-      datasetId: this.props.entity.id
+      datasetId: this.props.entity.id,
     };
     const metricsParams = {
       tag: [`namespace:${currentNamespace}`, `dataset:${this.props.entity.id}`],
       metric: ['system.dataset.store.ops', 'system.dataset.store.writes'],
-      aggregate: true
+      aggregate: true,
     };
 
     MyMetricApi.query(metricsParams)
       .combineLatest(MyDatasetApi.getPrograms(datasetParams))
       .subscribe((res) => {
         let ops = 0,
-            writes = 0;
+          writes = 0;
         if (res[0].series.length > 0) {
           res[0].series.forEach((metric) => {
             if (metric.metricName === 'system.dataset.store.ops') {
@@ -66,13 +66,13 @@ export default class DatasetMetrics extends Component {
           ops,
           writes,
           programs: res[1].length,
-          loading: false
+          loading: false,
         });
       });
   }
 
-  render () {
-    const loading = <span className="fa fa-spin fa-spinner"></span>;
+  render() {
+    const loading = <span className="fa fa-spin fa-spinner" />;
 
     return (
       <div className="metrics-container">
@@ -94,5 +94,5 @@ export default class DatasetMetrics extends Component {
 }
 
 DatasetMetrics.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
 };

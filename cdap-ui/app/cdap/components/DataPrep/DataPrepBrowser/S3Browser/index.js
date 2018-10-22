@@ -19,11 +19,14 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import T from 'i18n-react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import {setS3Loading, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {
+  setS3Loading,
+  setError,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import BucketDataView from 'components/DataPrep/DataPrepBrowser/S3Browser/BucketData';
-import {Route, Switch} from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 import Page404 from 'components/404';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import S3Path from 'components/DataPrep/DataPrepBrowser/S3Browser/S3Path';
@@ -41,16 +44,16 @@ export default class S3Browser extends Component {
     toggle: PropTypes.func,
     match: PropTypes.object,
     enableRouting: PropTypes.bool,
-    onWorkspaceCreate: PropTypes.func
+    onWorkspaceCreate: PropTypes.func,
   };
 
   static defaultProps = {
-    enableRouting: true
+    enableRouting: true,
   };
 
   onWorkspaceCreate = (file) => {
-    const {selectedNamespace: namespace} = NamespaceStore.getState();
-    const {connectionId, prefix} = DataPrepBrowserStore.getState().s3;
+    const { selectedNamespace: namespace } = NamespaceStore.getState();
+    const { connectionId, prefix } = DataPrepBrowserStore.getState().s3;
     let activeBucket = prefix;
     /**
      * This is to extract the bucket name from S3 for url param
@@ -62,31 +65,35 @@ export default class S3Browser extends Component {
     }
     setS3Loading();
     let headers = {
-      'Content-Type': file.type
+      'Content-Type': file.type,
     };
-    MyDataPrepApi
-      .readS3File({
+    MyDataPrepApi.readS3File(
+      {
         namespace,
         connectionId,
         activeBucket,
         key: file.path,
         lines: 10000,
-        sampler: 'first'
-      }, null, headers)
-      .subscribe(
-        (res) => {
-          let {id: workspaceId} = res.values[0];
-          if (this.props.enableRouting) {
-            window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-          }
-          if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
-            this.props.onWorkspaceCreate(workspaceId);
-          }
-        },
-        (err) => {
-          setError(err);
+        sampler: 'first',
+      },
+      null,
+      headers
+    ).subscribe(
+      (res) => {
+        let { id: workspaceId } = res.values[0];
+        if (this.props.enableRouting) {
+          window.location.href = `${
+            window.location.origin
+          }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         }
-      );
+        if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
+          this.props.onWorkspaceCreate(workspaceId);
+        }
+      },
+      (err) => {
+        setError(err);
+      }
+    );
   };
 
   renderContentBody = () => {
@@ -111,22 +118,21 @@ export default class S3Browser extends Component {
     return (
       <Provider store={DataPrepBrowserStore}>
         <div className="s3-browser">
-          {
-            this.props.enableRouting ?
-              <DataPrepBrowserPageTitle
-                browserI18NName="S3Browser"
-                browserStateName="s3"
-                locationToPathInState={['prefix']}
-              />
-          :
-            null
-          }
+          {this.props.enableRouting ? (
+            <DataPrepBrowserPageTitle
+              browserI18NName="S3Browser"
+              browserStateName="s3"
+              locationToPathInState={['prefix']}
+            />
+          ) : null}
           <DataprepBrowserTopPanel
             allowSidePanelToggle={true}
             toggle={this.props.toggle}
             browserTitle={T.translate(`${PREFIX}.TopPanel.selectData`)}
           />
-          <div className={classnames("sub-panel", {'routing-disabled': !this.props.enableRouting})}>
+          <div
+            className={classnames('sub-panel', { 'routing-disabled': !this.props.enableRouting })}
+          >
             <div className="path-container">
               <S3Path
                 baseStatePath={this.props.enableRouting ? this.props.match.url : '/'}
@@ -142,9 +148,7 @@ export default class S3Browser extends Component {
               </div>
             </div>
           </div>
-          <div className="s3-content">
-            {this.renderContentBody()}
-          </div>
+          <div className="s3-content">{this.renderContentBody()}</div>
         </div>
       </Provider>
     );

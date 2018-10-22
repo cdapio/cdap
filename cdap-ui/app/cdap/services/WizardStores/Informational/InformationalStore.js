@@ -13,21 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import InformationalActions from 'services/WizardStores/Informational/InformationalActions';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 const defaultState = {
   steps: [],
   __complete: false,
   __skipped: false,
-  __error: false
+  __error: false,
 };
 const defaultInitialState = {
-  information: defaultState
+  information: defaultState,
 };
 
 const information = (state = defaultState, action = defaultAction) => {
@@ -36,7 +36,7 @@ const information = (state = defaultState, action = defaultAction) => {
   switch (action.type) {
     case InformationalActions.setSteps:
       stateCopy = Object.assign({}, state, {
-        steps: action.payload
+        steps: action.payload,
       });
       break;
     case InformationalActions.onReset:
@@ -45,7 +45,7 @@ const information = (state = defaultState, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: true
+    __complete: true,
   });
 };
 

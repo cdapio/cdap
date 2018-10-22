@@ -14,8 +14,8 @@
  * the License.
  */
 
-import React, {Component} from 'react';
-import {Provider} from 'react-redux';
+import React, { Component } from 'react';
+import { Provider } from 'react-redux';
 require('./SchemaEditor.scss');
 import RecordSchemaRow from 'components/SchemaEditor/RecordSchemaRow';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
@@ -33,7 +33,7 @@ export default class SchemaEditor extends Component {
     }
     this.state = {
       parsedRows: rows,
-      rawSchema: state.schema
+      rawSchema: state.schema,
     };
     const updateRowsAndDisplayFields = () => {
       let state = SchemaStore.getState();
@@ -45,13 +45,15 @@ export default class SchemaEditor extends Component {
       }
       this.setState({
         parsedRows: rows,
-        rawSchema: state.schema
+        rawSchema: state.schema,
       });
     };
     SchemaStore.subscribe(updateRowsAndDisplayFields.bind(this));
   }
   shouldComponentUpdate(nextProps, nextState) {
-    if (!nextState.rawSchema) { return true; }
+    if (!nextState.rawSchema) {
+      return true;
+    }
 
     return nextState.rawSchema.fields.length !== this.state.rawSchema.fields.length;
   }
@@ -59,8 +61,8 @@ export default class SchemaEditor extends Component {
     SchemaStore.dispatch({
       type: 'FIELD_UPDATE',
       payload: {
-        schema
-      }
+        schema,
+      },
     });
   }
   render() {
@@ -68,21 +70,12 @@ export default class SchemaEditor extends Component {
       <Provider store={SchemaStore}>
         <div className="schema-editor">
           <div className="schema-header">
-            <div className="field-name">
-              Name
-            </div>
-            <div className="field-type">
-              Type
-            </div>
-            <div className="field-isnull">
-              Null
-            </div>
+            <div className="field-name">Name</div>
+            <div className="field-type">Type</div>
+            <div className="field-isnull">Null</div>
           </div>
           <div className="schema-body">
-            <RecordSchemaRow
-              row={this.state.parsedRows}
-              onChange={this.onChange.bind(this)}
-            />
+            <RecordSchemaRow row={this.state.parsedRows} onChange={this.onChange.bind(this)} />
           </div>
         </div>
       </Provider>

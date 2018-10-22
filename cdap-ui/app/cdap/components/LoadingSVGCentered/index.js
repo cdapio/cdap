@@ -19,10 +19,10 @@ import LoadingSVG from 'components/LoadingSVG';
 
 require('./LoadingSVGCentered.scss');
 
-export default function LoadingSVGCentered () {
+export default function LoadingSVGCentered() {
   return (
     <div className="loading-svg-centered text-xs-center">
-        <LoadingSVG />
+      <LoadingSVG />
     </div>
   );
 }

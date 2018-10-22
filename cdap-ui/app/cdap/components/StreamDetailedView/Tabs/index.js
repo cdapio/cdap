@@ -17,9 +17,9 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Nav, NavItem, TabContent} from 'reactstrap';
+import { Nav, NavItem, TabContent } from 'reactstrap';
 import isNil from 'lodash/isNil';
-import {Route, NavLink as RouterNavLink} from 'react-router-dom';
+import { Route, NavLink as RouterNavLink } from 'react-router-dom';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import SchemaTab from 'components/Overview/Tabs/SchemaTab';
 import LineageTab from 'components/StreamDetailedView/Tabs/LineageTab';
@@ -32,14 +32,14 @@ export default class StreamDetailedViewTabs extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entity: this.props.entity
+      entity: this.props.entity,
     };
   }
 
   componentWillReceiveProps(nextProps) {
     if (!isNil(nextProps.entity)) {
       this.setState({
-        entity: nextProps.entity
+        entity: nextProps.entity,
       });
     }
   }
@@ -58,22 +58,19 @@ export default class StreamDetailedViewTabs extends Component {
                 activeClassName="active"
                 isActive={(match, location) => {
                   let basepath = `^${baseLinkPath}(/schema)?$`;
-                   return location.pathname.match(basepath);
+                  return location.pathname.match(basepath);
                 }}
               >
-              {T.translate(`${PREFIX}.schema`)}
+                {T.translate(`${PREFIX}.schema`)}
               </RouterNavLink>
             </div>
           </NavItem>
 
           <NavItem>
             <div className="nav-link">
-              <RouterNavLink
-                to={`${baseLinkPath}/programs`}
-                activeClassName="active"
-              >
+              <RouterNavLink to={`${baseLinkPath}/programs`} activeClassName="active">
                 {T.translate(`${PREFIX}.programsWithCount`, {
-                  count: this.state.entity.programs.length
+                  count: this.state.entity.programs.length,
                 })}
               </RouterNavLink>
             </div>
@@ -81,10 +78,7 @@ export default class StreamDetailedViewTabs extends Component {
 
           <NavItem>
             <div className="nav-link">
-              <RouterNavLink
-                to={`${baseLinkPath}/lineage`}
-                activeClassName="active"
-              >
+              <RouterNavLink to={`${baseLinkPath}/lineage`} activeClassName="active">
                 {T.translate(`${PREFIX}.lineage`)}
               </RouterNavLink>
             </div>
@@ -92,49 +86,45 @@ export default class StreamDetailedViewTabs extends Component {
 
           <NavItem>
             <div className="nav-link">
-              <RouterNavLink
-                to={`${baseLinkPath}/properties`}
-                activeClassName="active"
-              >
+              <RouterNavLink to={`${baseLinkPath}/properties`} activeClassName="active">
                 {T.translate(`${PREFIX}.properties`)}
               </RouterNavLink>
             </div>
           </NavItem>
         </Nav>
         <TabContent>
-          <Route exact path={`${baseMatchPath}/`} render={
-            () => {
-              return (
-                <SchemaTab entity={this.state.entity} />
-              );
+          <Route
+            exact
+            path={`${baseMatchPath}/`}
+            render={() => {
+              return <SchemaTab entity={this.state.entity} />;
             }}
           />
-          <Route path={`${baseMatchPath}/schema`} render={
-            () => {
-              return (
-                <SchemaTab entity={this.state.entity} />
-              );
+          <Route
+            path={`${baseMatchPath}/schema`}
+            render={() => {
+              return <SchemaTab entity={this.state.entity} />;
             }}
           />
-        <Route exact path={`${baseMatchPath}/programs`} render={
-            () => {
-              return (
-                <ProgramTab entity={this.state.entity} />
-              );
+          <Route
+            exact
+            path={`${baseMatchPath}/programs`}
+            render={() => {
+              return <ProgramTab entity={this.state.entity} />;
             }}
           />
-        <Route exact path={`${baseMatchPath}/lineage`} render={
-            () => {
-              return (
-                <LineageTab entity={this.state.entity} />
-              );
+          <Route
+            exact
+            path={`${baseMatchPath}/lineage`}
+            render={() => {
+              return <LineageTab entity={this.state.entity} />;
             }}
           />
-        <Route exact path={`${baseMatchPath}/properties`} render={
-            () => {
-              return (
-                <PropertiesTab entity={this.state.entity} />
-              );
+          <Route
+            exact
+            path={`${baseMatchPath}/properties`}
+            render={() => {
+              return <PropertiesTab entity={this.state.entity} />;
             }}
           />
         </TabContent>
@@ -147,5 +137,5 @@ StreamDetailedViewTabs.propTypes = {
   entity: PropTypes.object,
   location: PropTypes.string,
   pathname: PropTypes.string,
-  params: PropTypes.object
+  params: PropTypes.object,
 };

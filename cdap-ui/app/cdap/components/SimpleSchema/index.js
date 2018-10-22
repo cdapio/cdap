@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import { connect, Provider } from 'react-redux';
-import {createSchemaStore} from './SchemaStore';
+import { createSchemaStore } from './SchemaStore';
 import SchemaStoreActions from './SchemaStoreActions';
 
 import { Table } from 'reactstrap';
@@ -30,7 +30,7 @@ const mapStateToFieldNameProps = (state, ownProps) => {
   return {
     name: state.schema.fields[ownProps.index].name,
     type: state.schema.fields[ownProps.index].type,
-    isNullable: state.schema.fields[ownProps.index].isNullable
+    isNullable: state.schema.fields[ownProps.index].isNullable,
   };
 };
 const fieldToActionMap = {
@@ -45,8 +45,8 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
         type: fieldToActionMap[fieldProp],
         payload: {
           index: ownProps.index,
-          keyCode: e.keyCode
-        }
+          keyCode: e.keyCode,
+        },
       });
       e.preventDefault();
       e.stopPropagation();
@@ -55,7 +55,7 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
     onRemove: () => {
       dispatch({
         type: SchemaStoreActions.removeField,
-        payload: {index: ownProps.index}
+        payload: { index: ownProps.index },
       });
     },
     onChange: (fieldProp, e) => {
@@ -63,15 +63,15 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
         type: fieldToActionMap[fieldProp],
         payload: {
           index: ownProps.index,
-          [fieldProp]: (fieldProp === 'isNullable') ? e.target.checked : e.target.value
-        }
+          [fieldProp]: fieldProp === 'isNullable' ? e.target.checked : e.target.value,
+        },
       });
       if (fieldProp !== 'isNullable') {
         e.preventDefault();
         e.stopPropagation();
       }
       return false;
-    }
+    },
   };
 };
 
@@ -85,9 +85,9 @@ export default class SimpleSchema extends Component {
     super(props);
     var { schema, onSchemaChange } = props;
     this.state = {
-      fields: [...schema.fields]
+      fields: [...schema.fields],
     };
-    this.SchemaStore = createSchemaStore({schema});
+    this.SchemaStore = createSchemaStore({ schema });
     this.subscription = this.SchemaStore.subscribe(() => {
       onSchemaChange(this.SchemaStore.getState().schema);
       this.setState(this.SchemaStore.getState().schema);
@@ -101,7 +101,7 @@ export default class SimpleSchema extends Component {
   }
   componentWillReceiveProps(nextProps) {
     this.setState({
-      fields: [...nextProps.schema.fields]
+      fields: [...nextProps.schema.fields],
     });
   }
   componentDidUpdate() {
@@ -117,21 +117,18 @@ export default class SimpleSchema extends Component {
             <th>Null</th>
           </tr>
         </thead>
-        <tbody ref={ele => {
-          this.tBody = ele;
-        }}>
-          {
-            this.state.fields.map( (field, index) => {
-              return (
-                <Provider store={this.SchemaStore} key={uuidV4()}>
-                  <FieldRowCopy
-                    className="schema-field-row"
-                    index={index}
-                    />
-                </Provider>
-              );
-            })
-          }
+        <tbody
+          ref={(ele) => {
+            this.tBody = ele;
+          }}
+        >
+          {this.state.fields.map((field, index) => {
+            return (
+              <Provider store={this.SchemaStore} key={uuidV4()}>
+                <FieldRowCopy className="schema-field-row" index={index} />
+              </Provider>
+            );
+          })}
         </tbody>
       </Table>
     );
@@ -141,11 +138,13 @@ SimpleSchema.propTypes = {
   schema: PropTypes.shape({
     type: PropTypes.string,
     name: PropTypes.string,
-    fields: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string,
-      type: PropTypes.string,
-      isNullable: PropTypes.bool
-    }))
+    fields: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string,
+        type: PropTypes.string,
+        isNullable: PropTypes.bool,
+      })
+    ),
   }),
-  onSchemaChange: PropTypes.func
+  onSchemaChange: PropTypes.func,
 };

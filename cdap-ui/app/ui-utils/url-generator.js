@@ -34,7 +34,16 @@
     as a proper utility function in es6 module system.
 */
 window.getAbsUIUrl = function(navigationObj = {}) {
-  let {uiApp = 'cdap', redirectUrl, clientId, namespaceId, appId, entityType, entityId, runId} = navigationObj;
+  let {
+    uiApp = 'cdap',
+    redirectUrl,
+    clientId,
+    namespaceId,
+    appId,
+    entityType,
+    entityId,
+    runId,
+  } = navigationObj;
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}`;
   if (uiApp === 'login') {
     baseUrl += `?`;
@@ -96,13 +105,13 @@ function addCustomQueryParams(url, params = {}) {
   }
 
   function encodeUriQuery(val, pctEncodeSpaces) {
-    return encodeURIComponent(val).
-           replace(/%40/gi, '@').
-           replace(/%3A/gi, ':').
-           replace(/%24/g, '$').
-           replace(/%2C/gi, ',').
-           replace(/%3B/gi, ';').
-           replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+    return encodeURIComponent(val)
+      .replace(/%40/gi, '@')
+      .replace(/%3A/gi, ':')
+      .replace(/%24/g, '$')
+      .replace(/%2C/gi, ',')
+      .replace(/%3B/gi, ';')
+      .replace(/%20/g, pctEncodeSpaces ? '%20' : '+');
   }
 
   forEachSorted(params, function(value, key) {
@@ -125,20 +134,20 @@ function addCustomQueryParams(url, params = {}) {
     });
   });
   if (parts.length > 0) {
-    url += ((url.indexOf('?') === -1) ? '?' : '&') + parts.join('&');
+    url += (url.indexOf('?') === -1 ? '?' : '&') + parts.join('&');
   }
   return url;
 }
 
 window.getDataPrepUrl = function(navigationObj = {}) {
-  let {stateName, stateParams} = navigationObj;
+  let { stateName, stateParams } = navigationObj;
 
   let uiApp = 'cdap';
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
 
   let stateToUrlMap = {
-    'connections': '/connections',
-    'workspaces': '/dataprep'
+    connections: '/connections',
+    workspaces: '/dataprep',
   };
 
   let url = baseUrl + stateToUrlMap[stateName || 'workspaces'];
@@ -147,36 +156,36 @@ window.getDataPrepUrl = function(navigationObj = {}) {
 };
 
 window.getTrackerUrl = function(navigationObj = {}) {
-  let {stateName, stateParams} = navigationObj;
+  let { stateName, stateParams } = navigationObj;
   let uiApp = 'metadata';
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
-    'tracker': '',
+    tracker: '',
     'tracker.detail': '',
     'tracker.detail.entity': '/entity/:entityType/:entityId',
     'tracker.detail.entity.metadata': '/entity/:entityType/:entityId/metadata',
-    'tracker.detail.entity.lineage': '/entity/:entityType/:entityId/lineage'
+    'tracker.detail.entity.lineage': '/entity/:entityType/:entityId/lineage',
   };
   let url = baseUrl + stateToUrlMap[stateName || 'tracker'];
   url = buildCustomUrl(url, stateParams);
   return url;
 };
 window.getHydratorUrl = function(navigationObj = {}) {
-  let {stateName, stateParams} = navigationObj;
+  let { stateName, stateParams } = navigationObj;
   let uiApp = 'pipelines';
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
-    'hydrator': '',
+    hydrator: '',
     'hydrator.create': '/studio',
     'hydrator.detail': '/view/:pipelineId',
-    'hydrator.list': ''
+    'hydrator.list': '',
   };
   let url = baseUrl + stateToUrlMap[stateName || 'pipelines'];
   url = buildCustomUrl(url, stateParams);
   return url;
 };
 window.getOldCDAPUrl = function(navigationObj = {}) {
-  let {stateName, stateParams} = navigationObj;
+  let { stateName, stateParams } = navigationObj;
   let uiApp = 'oldcdap';
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
@@ -194,7 +203,7 @@ window.getOldCDAPUrl = function(navigationObj = {}) {
     'spark.detail': '/apps/:appId/programs/spark/:programId/runs',
     'spark.detail.run': '/apps/:appId/programs/spark/:programId/runs/:runId',
     'flows.detail': '/apps/:appId/programs/flows/:programId/runs',
-    'services.detail': '/apps/:appId/programs/services/:programId/runs'
+    'services.detail': '/apps/:appId/programs/services/:programId/runs',
   };
   let url = baseUrl + stateToUrlMap[stateName || 'pipelines'];
   url = buildCustomUrl(url, stateParams);

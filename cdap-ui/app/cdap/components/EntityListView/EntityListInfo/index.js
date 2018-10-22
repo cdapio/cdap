@@ -22,7 +22,7 @@ import ReactPaginate from 'react-paginate';
 import NamespaceStore from 'services/NamespaceStore';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
-import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
+import { search, updateQueryString } from 'components/EntityListView/SearchStore/ActionCreator';
 import Mousetrap from 'mousetrap';
 
 require('./EntityListInfo.scss');
@@ -40,7 +40,7 @@ export default class EntityListInfo extends Component {
     Mousetrap.unbind('right');
   }
   goToNextPage() {
-    let {currentPage, total, limit} = SearchStore.getState().search;
+    let { currentPage, total, limit } = SearchStore.getState().search;
     if (currentPage === Math.ceil(total / limit)) {
       return;
     }
@@ -48,14 +48,14 @@ export default class EntityListInfo extends Component {
       type: SearchStoreActions.SETCURRENTPAGE,
       payload: {
         currentPage: currentPage + 1,
-        offset: (currentPage) * limit
-      }
+        offset: currentPage * limit,
+      },
     });
     search();
     updateQueryString();
   }
   goToPreviousPage() {
-    let {currentPage, limit} = SearchStore.getState().search;
+    let { currentPage, limit } = SearchStore.getState().search;
     if (currentPage === 1) {
       return;
     }
@@ -63,8 +63,8 @@ export default class EntityListInfo extends Component {
       type: SearchStoreActions.SETCURRENTPAGE,
       payload: {
         currentPage: currentPage - 1,
-        offset: (currentPage - 2) * limit
-      }
+        offset: (currentPage - 2) * limit,
+      },
     });
     search();
     updateQueryString();
@@ -77,8 +77,8 @@ export default class EntityListInfo extends Component {
       type: SearchStoreActions.SETCURRENTPAGE,
       payload: {
         currentPage,
-        offset
-      }
+        offset,
+      },
     });
     search();
     updateQueryString();
@@ -90,59 +90,44 @@ export default class EntityListInfo extends Component {
     let entitiesLabel = T.translate('features.EntityListView.Info.entities');
     return (
       <span className="pagination">
-        {
-          searchLoading ?
-            null
-          :
-            /* have to wrap this in an ul to be consistent with ReactPaginate html */
-            <ul className="total-entities">
-              <span>
-                {this.props.numberOfEntities} {plus} {entitiesLabel}
-              </span>
-            </ul>
-        }
-        {
-          !searchLoading && this.props.numberOfPages > 1 ?
-            (
-              <ReactPaginate
-                pageCount={this.props.numberOfPages}
-                pageRangeDisplayed={3}
-                marginPagesDisplayed={1}
-                breakLabel={<span>...</span>}
-                breakClassName={"ellipsis"}
-                previousLabel={<span className="fa fa-angle-left"></span>}
-                nextLabel={<span className="fa fa-angle-right"></span>}
-                onPageChange={this.handlePageChange.bind(this)}
-                disableInitialCallback={true}
-                initialPage={this.props.currentPage-1}
-                forcePage={this.props.currentPage-1}
-                containerClassName={"page-list"}
-                activeClassName={"current-page"}
-              />
-            )
-          :
-            null
-        }
+        {searchLoading ? null : (
+          /* have to wrap this in an ul to be consistent with ReactPaginate html */
+          <ul className="total-entities">
+            <span>
+              {this.props.numberOfEntities} {plus} {entitiesLabel}
+            </span>
+          </ul>
+        )}
+        {!searchLoading && this.props.numberOfPages > 1 ? (
+          <ReactPaginate
+            pageCount={this.props.numberOfPages}
+            pageRangeDisplayed={3}
+            marginPagesDisplayed={1}
+            breakLabel={<span>...</span>}
+            breakClassName={'ellipsis'}
+            previousLabel={<span className="fa fa-angle-left" />}
+            nextLabel={<span className="fa fa-angle-right" />}
+            onPageChange={this.handlePageChange.bind(this)}
+            disableInitialCallback={true}
+            initialPage={this.props.currentPage - 1}
+            forcePage={this.props.currentPage - 1}
+            containerClassName={'page-list'}
+            activeClassName={'current-page'}
+          />
+        ) : null}
       </span>
     );
   }
   render() {
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let title = T.translate('features.EntityListView.Info.title', {namespace});
+    let title = T.translate('features.EntityListView.Info.title', { namespace });
 
     return (
       <div className={this.props.className}>
         <span className="title">
-          <h3 title={namespace}>
-            {title}
-          </h3>
+          <h3 title={namespace}>{title}</h3>
         </span>
-        {
-          this.props.numberOfEntities ?
-            this.showPagination()
-          :
-            null
-        }
+        {this.props.numberOfEntities ? this.showPagination() : null}
       </div>
     );
   }
@@ -153,7 +138,7 @@ EntityListInfo.propTypes = {
   numberOfPages: PropTypes.number,
   numberOfEntities: PropTypes.number,
   currentPage: PropTypes.number,
-  allEntitiesFetched: PropTypes.bool
+  allEntitiesFetched: PropTypes.bool,
 };
 
 EntityListInfo.defaultProps = {
@@ -161,5 +146,5 @@ EntityListInfo.defaultProps = {
   numberOfPages: 1,
   numberOfEntities: 0,
   currentPage: 1,
-  allEntitiesFetched: false
+  allEntitiesFetched: false,
 };

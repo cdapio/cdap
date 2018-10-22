@@ -14,9 +14,9 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import ConfigurableTab from '../ConfigurableTab';
-import {MyMarketApi} from 'api/market';
+import { MyMarketApi } from 'api/market';
 import MarketAction from './action/market-action.js';
 import find from 'lodash/find';
 import MarketStore from 'components/Market/store/market-store.js';
@@ -33,7 +33,7 @@ export default class Market extends Component {
     this.state = {
       tabsList: [],
       tabConfig: null,
-      activeTab: 1
+      activeTab: 1,
     };
   }
 
@@ -44,16 +44,15 @@ export default class Market extends Component {
 
       if (filter && filter.id !== this.state.activeTab) {
         this.setState({
-          activeTab: filter.id
+          activeTab: filter.id,
         });
       }
     });
 
-    MyMarketApi.list()
-      .subscribe(this.getCategories, (err) => {
-        console.log('Error', err);
-        MarketAction.setError();
-      });
+    MyMarketApi.list().subscribe(this.getCategories, (err) => {
+      console.log('Error', err);
+      MarketAction.setError();
+    });
   }
 
   componentWillUnmount() {
@@ -65,10 +64,11 @@ export default class Market extends Component {
   }
 
   getCategories = (packages) => {
-    MyMarketApi.getCategories()
-      .subscribe((categories) => {
+    MyMarketApi.getCategories().subscribe(
+      (categories) => {
         this.processPackagesAndCategories(packages, categories);
-      }, () => {
+      },
+      () => {
         // If categories do not come from backend, revert back to get categories from existing packages
         const categoriesMap = {};
         packages.forEach((pack) => {
@@ -88,22 +88,21 @@ export default class Market extends Component {
 
         const remainingCategories = Object.keys(categoriesMap);
 
-        aggregateCategories = aggregateCategories
-          .concat(remainingCategories)
-          .map((cat) => {
-            return {
-              name: cat,
-              hasIcon: false
-            };
-          });
+        aggregateCategories = aggregateCategories.concat(remainingCategories).map((cat) => {
+          return {
+            name: cat,
+            hasIcon: false,
+          };
+        });
 
         this.processPackagesAndCategories(packages, aggregateCategories);
-      });
-  }
+      }
+    );
+  };
 
   processPackagesAndCategories(packages, categories) {
     const newState = {
-      tabConfig: this.constructTabConfig(categories)
+      tabConfig: this.constructTabConfig(categories),
     };
     const searchFilter = find(newState.tabConfig.tabs, { filter: MarketStore.getState().filter });
 
@@ -129,12 +128,12 @@ export default class Market extends Component {
         icon: {
           type: 'font-icon',
           arguments: {
-            data: 'icon-all'
-          }
+            data: 'icon-all',
+          },
         },
         name: T.translate('features.Market.tabs.all'),
-        content: <AllTabContents />
-      }
+        content: <AllTabContents />,
+      },
     ];
 
     categories.forEach((category) => {
@@ -147,15 +146,15 @@ export default class Market extends Component {
         icon = {
           type: 'link',
           arguments: {
-            url: MyMarketApi.getCategoryIcon(category.name)
-          }
+            url: MyMarketApi.getCategoryIcon(category.name),
+          },
         };
       } else if (categoryContent.displayName) {
         icon = {
           type: 'font-icon',
           arguments: {
-            data: categoryContent.icon
-          }
+            data: categoryContent.icon,
+          },
         };
       } else {
         const name = objectQuery(category, 'name');
@@ -168,8 +167,8 @@ export default class Market extends Component {
         icon = {
           type: 'font-icon',
           arguments: {
-            data: charIcon
-          }
+            data: charIcon,
+          },
         };
       }
 
@@ -178,7 +177,7 @@ export default class Market extends Component {
         filter: category.name,
         name,
         icon,
-        content: category.name === 'usecase' ? <UsecaseTab /> : <AllTabContents />
+        content: category.name === 'usecase' ? <UsecaseTab /> : <AllTabContents />,
       };
 
       tabs.push(config);
@@ -196,7 +195,9 @@ export default class Market extends Component {
   }
 
   render() {
-    if (!this.state.tabConfig) { return null; }
+    if (!this.state.tabConfig) {
+      return null;
+    }
 
     return (
       <ConfigurableTab

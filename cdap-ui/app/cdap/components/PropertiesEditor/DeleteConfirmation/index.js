@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import ConfirmationModal from 'components/ConfirmationModal';
-import {MyMetadataApi} from 'api/metadata';
+import { MyMetadataApi } from 'api/metadata';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 
@@ -29,7 +29,7 @@ export default class DeleteConfirmation extends Component {
     this.state = {
       isOpen: false,
       error: null,
-      loading: false
+      loading: false,
     };
 
     this.toggleModal = this.toggleModal.bind(this);
@@ -37,11 +37,11 @@ export default class DeleteConfirmation extends Component {
   }
 
   toggleModal() {
-    this.setState({isOpen: !this.state.isOpen});
+    this.setState({ isOpen: !this.state.isOpen });
   }
 
   deleteProperty() {
-    this.setState({loading: true});
+    this.setState({ loading: true });
     let namespace = NamespaceStore.getState().selectedNamespace;
     const params = {
       namespace,
@@ -50,20 +50,22 @@ export default class DeleteConfirmation extends Component {
       entityId: this.props.entityId,
     };
 
-    MyMetadataApi.deleteProperty(params)
-      .subscribe(() => {
+    MyMetadataApi.deleteProperty(params).subscribe(
+      () => {
         this.setState({
           isOpen: false,
           error: null,
-          loading: false
+          loading: false,
         });
         this.props.onDelete();
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
           error: err,
-          loading: false
+          loading: false,
         });
-      });
+      }
+    );
   }
 
   render() {
@@ -74,16 +76,18 @@ export default class DeleteConfirmation extends Component {
 
     return (
       <span>
-        <span
-          className="fa fa-trash"
-          onClick={this.toggleModal}
-        />
+        <span className="fa fa-trash" onClick={this.toggleModal} />
 
         <ConfirmationModal
           headerTitle={T.translate('features.PropertiesEditor.DeleteConfirmation.headerTitle')}
           toggleModal={this.toggleModal}
-          confirmationText={T.translate('features.PropertiesEditor.DeleteConfirmation.confirmationText', {key: this.props.property.key})}
-          confirmButtonText={T.translate('features.PropertiesEditor.DeleteConfirmation.confirmButton')}
+          confirmationText={T.translate(
+            'features.PropertiesEditor.DeleteConfirmation.confirmationText',
+            { key: this.props.property.key }
+          )}
+          confirmButtonText={T.translate(
+            'features.PropertiesEditor.DeleteConfirmation.confirmButton'
+          )}
           confirmFn={this.deleteProperty}
           cancelFn={this.toggleModal}
           isOpen={this.state.isOpen}
@@ -100,5 +104,5 @@ DeleteConfirmation.propTypes = {
   property: PropTypes.object,
   onDelete: PropTypes.func,
   entityType: PropTypes.string,
-  entityId: PropTypes.string
+  entityId: PropTypes.string,
 };

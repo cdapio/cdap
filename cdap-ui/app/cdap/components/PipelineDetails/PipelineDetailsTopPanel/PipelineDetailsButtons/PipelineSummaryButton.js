@@ -19,9 +19,9 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import PipelineSummary from 'components/PipelineSummary';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import PipelineDetailStore from 'components/PipelineDetails/store';
-import {GLOBALS} from 'services/global-constants';
+import { GLOBALS } from 'services/global-constants';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
@@ -29,16 +29,16 @@ const PREFIX = 'features.PipelineDetails.TopPanel';
 export default class PipelineSummaryButton extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
-    pipelineName: PropTypes.string
+    pipelineName: PropTypes.string,
   };
 
   state = {
-    showSummary: false
+    showSummary: false,
   };
 
   toggleSummary = () => {
     this.setState({
-      showSummary: !this.state.showSummary
+      showSummary: !this.state.showSummary,
     });
   };
 
@@ -46,16 +46,13 @@ export default class PipelineSummaryButton extends Component {
     return (
       <div
         onClick={this.toggleSummary}
-        className={classnames("btn pipeline-action-btn pipeline-summary-btn", {"btn-select" : this.state.showSummary})}
+        className={classnames('btn pipeline-action-btn pipeline-summary-btn', {
+          'btn-select': this.state.showSummary,
+        })}
       >
         <div className="btn-container">
-          <IconSVG
-            name="icon-line-chart"
-            className="summary-icon"
-          />
-          <div className="button-label">
-            {T.translate(`${PREFIX}.summary`)}
-          </div>
+          <IconSVG name="icon-line-chart" className="summary-icon" />
+          <div className="button-label">{T.translate(`${PREFIX}.summary`)}</div>
         </div>
       </div>
     );
@@ -67,23 +64,24 @@ export default class PipelineSummaryButton extends Component {
     let programId = GLOBALS.programId[pipelineType];
 
     return (
-      <div className={classnames("pipeline-action-container pipeline-summary-container", {"active" : this.state.showSummary})}>
+      <div
+        className={classnames('pipeline-action-container pipeline-summary-container', {
+          active: this.state.showSummary,
+        })}
+      >
         {this.renderSummaryButton()}
-        {
-          this.state.showSummary ?
-            <PipelineSummary
-              pipelineType={pipelineType}
-              namespaceId={getCurrentNamespace()}
-              appId={this.props.pipelineName}
-              programType={programType}
-              programId={programId}
-              pipelineConfig={PipelineDetailStore.getState()}
-              totalRunsCount={PipelineDetailStore.getState().runs.length}
-              onClose={this.toggleSummary}
-            />
-          :
-            null
-        }
+        {this.state.showSummary ? (
+          <PipelineSummary
+            pipelineType={pipelineType}
+            namespaceId={getCurrentNamespace()}
+            appId={this.props.pipelineName}
+            programType={programType}
+            programId={programId}
+            pipelineConfig={PipelineDetailStore.getState()}
+            totalRunsCount={PipelineDetailStore.getState().runs.length}
+            onClose={this.toggleSummary}
+          />
+        ) : null}
       </div>
     );
   }

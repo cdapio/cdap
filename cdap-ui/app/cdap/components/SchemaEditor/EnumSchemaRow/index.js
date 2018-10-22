@@ -16,9 +16,9 @@
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import {parseType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
-import {Input} from 'reactstrap';
-import {insertAt, removeAt} from 'services/helpers';
+import { parseType, checkParsedTypeForError } from 'components/SchemaEditor/SchemaHelpers';
+import { Input } from 'reactstrap';
+import { insertAt, removeAt } from 'services/helpers';
 import uuidV4 from 'uuid/v4';
 import T from 'i18n-react';
 require('./EnumSchemaRow.scss');
@@ -28,23 +28,23 @@ export default class EnumSchemaRow extends Component {
     super(props);
     if (typeof props.row === 'object') {
       let rowType = parseType(props.row);
-      let symbols = rowType.type.getSymbols().map(symbol => ({symbol, id: uuidV4()}));
+      let symbols = rowType.type.getSymbols().map((symbol) => ({ symbol, id: uuidV4() }));
       this.state = {
         symbols,
         error: '',
-        refRequired: true
+        refRequired: true,
       };
     } else {
       this.state = {
-        symbols: [{symbol: '', id: uuidV4()}],
-        error: ''
+        symbols: [{ symbol: '', id: uuidV4() }],
+        error: '',
       };
     }
   }
   checkForErrors(symbols) {
     let parsedType = {
       type: 'enum',
-      symbols: symbols.map(sobj => sobj.symbol).filter(symbol => symbol.length)
+      symbols: symbols.map((sobj) => sobj.symbol).filter((symbol) => symbol.length),
     };
     return checkParsedTypeForError(parsedType);
   }
@@ -53,30 +53,33 @@ export default class EnumSchemaRow extends Component {
     symbols[index].symbol = e.target.value;
     let error = this.checkForErrors(symbols);
     if (error) {
-      this.setState({error});
+      this.setState({ error });
       return;
     }
-    this.setState({
-      symbols,
-      error: ''
-    }, () => {
-      this.props.onChange({
-        type: 'enum',
-        symbols: this.state.symbols.map(sobj => sobj.symbol).filter(symbol => symbol.length)
-      });
-    });
+    this.setState(
+      {
+        symbols,
+        error: '',
+      },
+      () => {
+        this.props.onChange({
+          type: 'enum',
+          symbols: this.state.symbols.map((sobj) => sobj.symbol).filter((symbol) => symbol.length),
+        });
+      }
+    );
   }
   onSymbolAdd(index) {
-    let symbols = this.state.symbols.map(sobj => {
+    let symbols = this.state.symbols.map((sobj) => {
       delete sobj.refRequired;
       return sobj;
     });
     symbols = insertAt(symbols, index, {
       symbol: '',
       id: uuidV4(),
-      refRequired: true
+      refRequired: true,
     });
-    this.setState({symbols}, () => {
+    this.setState({ symbols }, () => {
       if (this.inputToFocus) {
         this.inputToFocus.focus();
       }
@@ -86,27 +89,30 @@ export default class EnumSchemaRow extends Component {
       }
       this.props.onChange({
         type: 'enum',
-        symbols: this.state.symbols.map(sobj => sobj.symbol).filter(symbol => symbol.length)
+        symbols: this.state.symbols.map((sobj) => sobj.symbol).filter((symbol) => symbol.length),
       });
     });
   }
   onSymbolRemove(index) {
     let symbols = this.state.symbols;
     symbols = removeAt(symbols, index);
-    this.setState({
-      symbols,
-      error: ''
-    }, () => {
-      let error = this.checkForErrors(this.state.symbols);
-      if (error) {
-        this.setState({error});
-        return;
+    this.setState(
+      {
+        symbols,
+        error: '',
+      },
+      () => {
+        let error = this.checkForErrors(this.state.symbols);
+        if (error) {
+          this.setState({ error });
+          return;
+        }
+        this.props.onChange({
+          type: 'enum',
+          symbols: this.state.symbols.map((sobj) => sobj.symbol).filter((symbol) => symbol.length),
+        });
       }
-      this.props.onChange({
-        type: 'enum',
-        symbols: this.state.symbols.map(sobj => sobj.symbol).filter(symbol => symbol.length)
-      });
-    });
+    );
   }
   onKeyPress(index, e) {
     if (e.nativeEvent.keyCode === 13) {
@@ -117,62 +123,48 @@ export default class EnumSchemaRow extends Component {
   render() {
     return (
       <div className="enum-schema-row">
-        <div className="text-danger">
-          {this.state.error}
-        </div>
-        {
-          this.state.symbols.map((sobj, index) => {
-            return (
-              <div
-                className="schema-row"
-                key={sobj.id}
-              >
-                {
-                  sobj.refRequired ?
-                    <Input
-                      className="field-name"
-                      placeholder={T.translate('features.SchemaEditor.Labels.symbolName')}
-                      defaultValue={sobj.symbol}
-                      onFocus={() => sobj.symbol}
-                      onBlur={this.onSymbolChange.bind(this, index)}
-                      getRef={(ref) => this.inputToFocus = ref}
-                      onKeyPress={this.onKeyPress.bind(this, index)}
-                    />
-                  :
-                    <Input
-                      className="field-name"
-                      placeholder={T.translate('features.SchemaEditor.Labels.symbolName')}
-                      defaultValue={sobj.symbol}
-                      onFocus={() => sobj.symbol}
-                      onBlur={this.onSymbolChange.bind(this, index)}
-                      onKeyPress={this.onKeyPress.bind(this, index)}
-                    />
-                }
-                <div className="field-type"></div>
-                <div className="field-isnull">
-                  <div className="btn btn-link"></div>
-                  <div className="btn btn-link">
+        <div className="text-danger">{this.state.error}</div>
+        {this.state.symbols.map((sobj, index) => {
+          return (
+            <div className="schema-row" key={sobj.id}>
+              {sobj.refRequired ? (
+                <Input
+                  className="field-name"
+                  placeholder={T.translate('features.SchemaEditor.Labels.symbolName')}
+                  defaultValue={sobj.symbol}
+                  onFocus={() => sobj.symbol}
+                  onBlur={this.onSymbolChange.bind(this, index)}
+                  getRef={(ref) => (this.inputToFocus = ref)}
+                  onKeyPress={this.onKeyPress.bind(this, index)}
+                />
+              ) : (
+                <Input
+                  className="field-name"
+                  placeholder={T.translate('features.SchemaEditor.Labels.symbolName')}
+                  defaultValue={sobj.symbol}
+                  onFocus={() => sobj.symbol}
+                  onBlur={this.onSymbolChange.bind(this, index)}
+                  onKeyPress={this.onKeyPress.bind(this, index)}
+                />
+              )}
+              <div className="field-type" />
+              <div className="field-isnull">
+                <div className="btn btn-link" />
+                <div className="btn btn-link">
+                  <button className="fa fa-plus" onClick={this.onSymbolAdd.bind(this, index)} />
+                </div>
+                <div className="btn btn-link">
+                  {this.state.symbols.length !== 1 ? (
                     <button
-                      className="fa fa-plus"
-                      onClick={this.onSymbolAdd.bind(this, index)}
-                    ></button>
-                  </div>
-                  <div className="btn btn-link">
-                    {
-                      this.state.symbols.length !== 1 ?
-                        <button
-                          className="fa fa-trash text-danger"
-                          onClick={this.onSymbolRemove.bind(this, index)}
-                        ></button>
-                      :
-                        null
-                    }
-                  </div>
+                      className="fa fa-trash text-danger"
+                      onClick={this.onSymbolRemove.bind(this, index)}
+                    />
+                  ) : null}
                 </div>
               </div>
-            );
-          })
-        }
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -180,5 +172,5 @@ export default class EnumSchemaRow extends Component {
 
 EnumSchemaRow.propTypes = {
   row: PropTypes.any,
-  onChange: PropTypes.func.isRequired
+  onChange: PropTypes.func.isRequired,
 };

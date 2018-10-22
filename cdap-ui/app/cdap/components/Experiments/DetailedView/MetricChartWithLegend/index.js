@@ -20,64 +20,63 @@ import VegaLiteChart from 'components/VegaLiteChart';
 import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
 
 var chartSpec = {
-  "data": {
-    "values": []
+  data: {
+    values: [],
   },
-  "mark": "bar",
-  "encoding": {
-    "x": {
-      "field": "bin",
-      "type": "nominal",
-      "axis": {
-          "title": null,
-          "values": []
-      }
+  mark: 'bar',
+  encoding: {
+    x: {
+      field: 'bin',
+      type: 'nominal',
+      axis: {
+        title: null,
+        values: [],
+      },
     },
-    "y": {
-      "field": "count",
-      "type": "quantitative",
-      "axis": {
-        "title": "#Of Models"
-      }
+    y: {
+      field: 'count',
+      type: 'quantitative',
+      axis: {
+        title: '#Of Models',
+      },
     },
-    "color": {
-        "field": "bin",
-        "type": "ordinal",
-        "legend": {
-            "title": null
-        }
-    }
+    color: {
+      field: 'bin',
+      type: 'ordinal',
+      legend: {
+        title: null,
+      },
+    },
   },
-  "config": {
-    "legend": {
-      "labelFontSize": 13
-    }
-  }
+  config: {
+    legend: {
+      labelFontSize: 13,
+    },
+  },
 };
 
-export default function MetricChartWithLegend({xAxisTitle, values, height, width, colorRange}) {
+export default function MetricChartWithLegend({ xAxisTitle, values, height, width, colorRange }) {
   let newChartSpec = {};
   if (Array.isArray(colorRange) && colorRange.length) {
     newChartSpec = {
       ...chartSpec,
-      "config": {
+      config: {
         ...chartSpec.config,
-        "range": {
-          "ordinal": colorRange
-        }
-      }
+        range: {
+          ordinal: colorRange,
+        },
+      },
     };
   } else {
     newChartSpec = chartSpec;
   }
 
-
   let spec = {
     ...newChartSpec,
     height,
-    width
+    width,
   };
-  xAxisTitle ? spec.encoding.x.axis.title = xAxisTitle : delete spec.encoding.x.axis.title;
+  xAxisTitle ? (spec.encoding.x.axis.title = xAxisTitle) : delete spec.encoding.x.axis.title;
   if (!values.length) {
     return (
       <EmptyMetricMessage
@@ -102,5 +101,5 @@ MetricChartWithLegend.propTypes = {
   xAxisTitle: PropTypes.string,
   values: PropTypes.arrayOf(PropTypes.object),
   height: PropTypes.number,
-  width: PropTypes.number
+  width: PropTypes.number,
 };

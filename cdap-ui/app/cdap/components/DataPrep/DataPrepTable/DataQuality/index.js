@@ -21,23 +21,19 @@ import React from 'react';
 require('./DataQuality.scss');
 
 export default function DataQuality({ columnInfo }) {
-  if (!columnInfo || !columnInfo.general) { return null; }
+  if (!columnInfo || !columnInfo.general) {
+    return null;
+  }
 
   let nonNull = columnInfo.general['non-null'] || 0,
-      empty = columnInfo.general['empty'] || 0;
+    empty = columnInfo.general['empty'] || 0;
 
   let filled = Math.round(nonNull - empty);
 
   return (
     <div className="quality-bar">
-      <span
-        className="filled"
-        style={{width: `${filled}%`}}
-      />
-      <span
-        className="empty"
-        style={{width: `${100 - filled}%`}}
-      />
+      <span className="filled" style={{ width: `${filled}%` }} />
+      <span className="empty" style={{ width: `${100 - filled}%` }} />
     </div>
   );
 }
@@ -46,6 +42,6 @@ DataQuality.propTypes = {
   columnInfo: PropTypes.shape({
     general: PropTypes.object,
     types: PropTypes.object,
-    isValid: PropTypes.bool
-  })
+    isValid: PropTypes.bool,
+  }),
 };

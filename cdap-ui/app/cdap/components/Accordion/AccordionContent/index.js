@@ -15,24 +15,20 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {PureComponent} from 'react';
+import React, { PureComponent } from 'react';
 require('./AccordionContent.scss');
 
 export default class AccordionContent extends PureComponent {
   static propTypes = {
-    size: PropTypes.oneOf(["small", "medium", "large"]),
-    children: PropTypes.node
+    size: PropTypes.oneOf(['small', 'medium', 'large']),
+    children: PropTypes.node,
   };
 
   static defaultProps = {
-    size: "medium"
+    size: 'medium',
   };
 
   render() {
-    return (
-      <div className={`accordion-content ${this.props.size}`}>
-        {this.props.children}
-      </div>
-    );
+    return <div className={`accordion-content ${this.props.size}`}>{this.props.children}</div>;
   }
 }

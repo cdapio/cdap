@@ -15,18 +15,18 @@
 */
 
 import { connect } from 'react-redux';
-import {setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/Actions/commons';
+import { setError } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/Actions/commons';
 import ErrorBanner from 'components/ErrorBanner';
 
 const mapStateToProps = (state) => {
   return {
-    error: state.error
+    error: state.error,
   };
 };
 
 const mapDispatchToProps = () => {
   return {
-    onClose: setError
+    onClose: setError,
   };
 };
 

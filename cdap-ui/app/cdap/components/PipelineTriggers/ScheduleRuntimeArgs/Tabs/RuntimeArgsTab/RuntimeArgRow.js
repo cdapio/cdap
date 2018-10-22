@@ -17,33 +17,42 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import ScheduleRuntimeArgsStore, {DEFAULTRUNTIMEARGSMESSAGE, DEFAULTTRIGGEREDMACROMESSAGE} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
-import {setArgMapping} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
-import {Row, Col} from 'reactstrap';
+import ScheduleRuntimeArgsStore, {
+  DEFAULTRUNTIMEARGSMESSAGE,
+  DEFAULTTRIGGEREDMACROMESSAGE,
+} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
+import { setArgMapping } from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
+import { Row, Col } from 'reactstrap';
 import T from 'i18n-react';
 
 export default class RuntimeArgRow extends Component {
   static propTypes = {
     mkey: PropTypes.string,
-    mvalue: PropTypes.string
+    mvalue: PropTypes.string,
   };
 
   state = {
     key: this.props.mkey,
-    value: this.props.mvalue
+    value: this.props.mvalue,
   };
 
   onKeyChange = (e) => {
-    this.setState({
-      key: e.target.value
-    }, this.updateStore.bind(this, this.state.value));
+    this.setState(
+      {
+        key: e.target.value,
+      },
+      this.updateStore.bind(this, this.state.value)
+    );
   };
 
   onValueChange = (e) => {
     let oldValue = this.state.value;
-    this.setState({
-      value: e.target.value
-    }, this.updateStore.bind(this, oldValue));
+    this.setState(
+      {
+        value: e.target.value,
+      },
+      this.updateStore.bind(this, oldValue)
+    );
   };
 
   updateStore = (oldValue) => {
@@ -58,7 +67,11 @@ export default class RuntimeArgRow extends Component {
     return key ? [key, DEFAULTRUNTIMEARGSMESSAGE] : [DEFAULTRUNTIMEARGSMESSAGE];
   };
 
-  getDisplayValueForTriggeredPipelineMacro = (triggeredPipelineInfo, triggeringPipelineInfo, value = this.state.value) => {
+  getDisplayValueForTriggeredPipelineMacro = (
+    triggeredPipelineInfo,
+    triggeringPipelineInfo,
+    value = this.state.value
+  ) => {
     if (triggeredPipelineInfo.macros.indexOf(value) === -1) {
       return [DEFAULTTRIGGEREDMACROMESSAGE];
     }
@@ -66,30 +79,25 @@ export default class RuntimeArgRow extends Component {
   };
 
   render() {
-    let {triggeringPipelineInfo, triggeredPipelineInfo} = ScheduleRuntimeArgsStore.getState().args;
+    let {
+      triggeringPipelineInfo,
+      triggeredPipelineInfo,
+    } = ScheduleRuntimeArgsStore.getState().args;
 
     return (
       <Row>
         <Col xs={6}>
           <div className="select-dropdown">
-            <select
-              value={this.state.key}
-              onChange={this.onKeyChange}
-            >
-              {
-                this.getDisplayValueForTriggeringPipelineMacro(triggeringPipelineInfo)
-                  .concat(triggeringPipelineInfo.macros)
-                  .map((macro) => {
-                    return (
-                      <option
-                        key={macro}
-                        value={macro}
-                      >
-                        {macro}
-                      </option>
-                    );
-                  })
-              }
+            <select value={this.state.key} onChange={this.onKeyChange}>
+              {this.getDisplayValueForTriggeringPipelineMacro(triggeringPipelineInfo)
+                .concat(triggeringPipelineInfo.macros)
+                .map((macro) => {
+                  return (
+                    <option key={macro} value={macro}>
+                      {macro}
+                    </option>
+                  );
+                })}
             </select>
           </div>
         </Col>
@@ -98,23 +106,19 @@ export default class RuntimeArgRow extends Component {
         </Col>
         <Col xs={5}>
           <div className="select-dropdown">
-            <select
-              value={this.state.value}
-              onChange={this.onValueChange}
-            >
-              {
-                this.getDisplayValueForTriggeredPipelineMacro(triggeredPipelineInfo, triggeringPipelineInfo)
-                  .concat(triggeredPipelineInfo.unMappedMacros)
-                  .map((macro) => {
-                    return (
-                      <option
-                        key={macro}
-                        value={macro}
-                      >
-                        {macro}
-                      </option>);
-                  })
-              }
+            <select value={this.state.value} onChange={this.onValueChange}>
+              {this.getDisplayValueForTriggeredPipelineMacro(
+                triggeredPipelineInfo,
+                triggeringPipelineInfo
+              )
+                .concat(triggeredPipelineInfo.unMappedMacros)
+                .map((macro) => {
+                  return (
+                    <option key={macro} value={macro}>
+                      {macro}
+                    </option>
+                  );
+                })}
             </select>
           </div>
         </Col>

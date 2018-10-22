@@ -17,8 +17,8 @@
 import PipelineTriggersActions from 'components/PipelineTriggers/store/PipelineTriggersActions';
 import PipelineTriggersStore from 'components/PipelineTriggers/store/PipelineTriggersStore';
 import NamespaceStore from 'services/NamespaceStore';
-import {MyAppApi} from 'api/app';
-import {MyScheduleApi} from 'api/schedule';
+import { MyAppApi } from 'api/app';
+import { MyScheduleApi } from 'api/schedule';
 
 const DATA_PIPELINE_WORKFLOW = 'DataPipelineWorkflow';
 const DATA_PIPELINE_ARTIFACT = 'cdap-data-pipeline';
@@ -30,16 +30,22 @@ export function changeNamespace(namespace) {
   let existingTriggers = state.enabledTriggers;
 
   MyAppApi.list({
-    namespace: namespace
+    namespace: namespace,
   }).subscribe((res) => {
-    let pipelineList = _filterPipelineList(existingTriggers, res, currentNamespace, namespace, pipelineName);
+    let pipelineList = _filterPipelineList(
+      existingTriggers,
+      res,
+      currentNamespace,
+      namespace,
+      pipelineName
+    );
 
     PipelineTriggersStore.dispatch({
       type: PipelineTriggersActions.changeNamespace,
       payload: {
         pipelineList,
-        selectedNamespace: namespace
-      }
+        selectedNamespace: namespace,
+      },
     });
   });
 }
@@ -53,7 +59,7 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
     description: '',
     program: {
       programName: DATA_PIPELINE_WORKFLOW,
-      programType: 'WORKFLOW'
+      programType: 'WORKFLOW',
     },
     properties: Object.assign({}, config.properties),
     trigger: {
@@ -63,85 +69,102 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
         version: pipelineTrigger.version || '-SNAPSHOT', // FIXME: This is a temporary hack and is not required
         type: 'WORKFLOW',
         entity: 'PROGRAM',
-        program: DATA_PIPELINE_WORKFLOW
+        program: DATA_PIPELINE_WORKFLOW,
       },
       programStatuses: config.eventTriggers,
-      type: 'PROGRAM_STATUS'
+      type: 'PROGRAM_STATUS',
     },
-    constraints: [{
-      'maxConcurrency': 3,
-      'type': 'CONCURRENCY',
-      'waitUntilMet': false
-    }],
-    timeoutMillis: 86400000
+    constraints: [
+      {
+        maxConcurrency: 3,
+        type: 'CONCURRENCY',
+        waitUntilMet: false,
+      },
+    ],
+    timeoutMillis: 86400000,
   };
 
   // This API change will be replaced with a single API from Backend
   let scheduleParams = {
     namespace,
     appId: activePipeline,
-    scheduleName
+    scheduleName,
   };
 
-  MyScheduleApi.get(scheduleParams)
-    .subscribe(() => {
+  MyScheduleApi.get(scheduleParams).subscribe(
+    () => {
       // Schedule exist, update it
-      MyScheduleApi.update(scheduleParams, requestObj)
-        .subscribe(() => {
-          MyScheduleApi.enableTrigger(scheduleParams)
-            .subscribe(() => {
+      MyScheduleApi.update(scheduleParams, requestObj).subscribe(
+        () => {
+          MyScheduleApi.enableTrigger(scheduleParams).subscribe(
+            () => {
               // fetch list triggers
               fetchTriggersAndApps(activePipeline);
-            }, () => {
-            });
-        }, (err) => {
+            },
+            () => {}
+          );
+        },
+        (err) => {
           console.log('error update', err);
-        });
-
-    }, () => {
+        }
+      );
+    },
+    () => {
       // Schedule does not exist, create it
-      MyScheduleApi.create(scheduleParams, requestObj)
-        .subscribe(() => {
-          MyScheduleApi.enableTrigger(scheduleParams)
-            .subscribe(() => {
+      MyScheduleApi.create(scheduleParams, requestObj).subscribe(
+        () => {
+          MyScheduleApi.enableTrigger(scheduleParams).subscribe(
+            () => {
               // fetch list triggers
               fetchTriggersAndApps(activePipeline);
-            }, (err) => {
+            },
+            (err) => {
               console.log('error enable', err);
-            });
-        }, (err) => {
+            }
+          );
+        },
+        (err) => {
           console.log('error create', err);
-        });
-    });
+        }
+      );
+    }
+  );
 }
 
 export function fetchTriggersAndApps(pipeline, activeNamespace) {
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let activeNamespaceView = activeNamespace || PipelineTriggersStore.getState().triggers.selectedNamespace;
+  let activeNamespaceView =
+    activeNamespace || PipelineTriggersStore.getState().triggers.selectedNamespace;
 
   let params = {
     namespace,
     appId: pipeline,
     workflowId: DATA_PIPELINE_WORKFLOW,
     'trigger-type': 'program-status',
-    'schedule-status': 'SCHEDULED'
+    'schedule-status': 'SCHEDULED',
   };
 
   MyScheduleApi.getTriggers(params)
-    .combineLatest(MyAppApi.list({namespace: activeNamespaceView}))
+    .combineLatest(MyAppApi.list({ namespace: activeNamespaceView }))
     .subscribe((res) => {
       let existingTriggers = res[0];
       let appsList = res[1];
 
-      let pipelineList = _filterPipelineList(existingTriggers, appsList, namespace, activeNamespaceView, pipeline);
+      let pipelineList = _filterPipelineList(
+        existingTriggers,
+        appsList,
+        namespace,
+        activeNamespaceView,
+        pipeline
+      );
 
       PipelineTriggersStore.dispatch({
         type: PipelineTriggersActions.setTriggersAndPipelineList,
         payload: {
           pipelineList,
           enabledTriggers: existingTriggers,
-          selectedNamespace: activeNamespaceView
-        }
+          selectedNamespace: activeNamespaceView,
+        },
       });
     });
 }
@@ -152,44 +175,53 @@ export function disableSchedule(schedule, activePipeline) {
   let params = {
     namespace,
     appId: activePipeline,
-    scheduleName: schedule.name
+    scheduleName: schedule.name,
   };
 
-  MyScheduleApi.delete(params)
-    .subscribe(() => {
+  MyScheduleApi.delete(params).subscribe(
+    () => {
       fetchTriggersAndApps(activePipeline);
-    }, (err) => {
+    },
+    (err) => {
       console.log('Error deleting schedule', err);
-    });
+    }
+  );
 }
 
 export function getPipelineInfo(schedule) {
   PipelineTriggersStore.dispatch({
     type: PipelineTriggersActions.setExpandedTrigger,
     payload: {
-      expandedTrigger: schedule ? schedule.name : null
-    }
+      expandedTrigger: schedule ? schedule.name : null,
+    },
   });
 
-  if (!schedule) { return; }
+  if (!schedule) {
+    return;
+  }
 
   let params = {
     namespace: schedule.trigger.programId.namespace,
-    appId: schedule.trigger.programId.application
+    appId: schedule.trigger.programId.application,
   };
 
-  MyAppApi.get(params)
-    .subscribe((res) => {
-      PipelineTriggersStore.dispatch({
-        type: PipelineTriggersActions.setEnabledTriggerPipelineInfo,
-        payload: {
-          pipelineInfo: res
-        }
-      });
+  MyAppApi.get(params).subscribe((res) => {
+    PipelineTriggersStore.dispatch({
+      type: PipelineTriggersActions.setEnabledTriggerPipelineInfo,
+      payload: {
+        pipelineInfo: res,
+      },
     });
+  });
 }
 
-function _filterPipelineList(existingTriggers, appsList, namespace, activeNamespaceView, activePipeline) {
+function _filterPipelineList(
+  existingTriggers,
+  appsList,
+  namespace,
+  activeNamespaceView,
+  activePipeline
+) {
   let triggersPipelineName = existingTriggers
     .filter((schedule) => {
       return schedule.trigger.programId.namespace === activeNamespaceView;
@@ -198,16 +230,15 @@ function _filterPipelineList(existingTriggers, appsList, namespace, activeNamesp
       return schedule.trigger.programId.application;
     });
 
-  let pipelineList = appsList
-    .filter((app) => {
-      let isPipeline = app.artifact.name === DATA_PIPELINE_ARTIFACT;
+  let pipelineList = appsList.filter((app) => {
+    let isPipeline = app.artifact.name === DATA_PIPELINE_ARTIFACT;
 
-      let isCurrentNamespace = namespace === activeNamespaceView ? app.name !== activePipeline : true;
+    let isCurrentNamespace = namespace === activeNamespaceView ? app.name !== activePipeline : true;
 
-      let isExistingTrigger = triggersPipelineName.indexOf(app.name) === -1;
+    let isExistingTrigger = triggersPipelineName.indexOf(app.name) === -1;
 
-      return isPipeline && isCurrentNamespace && isExistingTrigger;
-    });
+    return isPipeline && isCurrentNamespace && isExistingTrigger;
+  });
 
   return pipelineList;
 }

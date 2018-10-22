@@ -14,11 +14,11 @@
  * the License.
  */
 
-import {MyOperationsApi} from 'api/operations';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { MyOperationsApi } from 'api/operations';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import moment from 'moment';
-import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
-import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import { parseDashboardData } from 'components/OpsDashboard/RunsGraph/DataParser';
+import DashboardStore, { DashboardActions } from 'components/OpsDashboard/store/DashboardStore';
 
 // We are subtracting 1 second, as we don't want to get the runs scheduled
 // for the bucket after the rightmost bucket we are showing
@@ -32,17 +32,24 @@ export const DAY_IN_SEC = 24 * 60 * 60 - 1;
 
 export function enableLoading() {
   DashboardStore.dispatch({
-    type: DashboardActions.enableLoading
+    type: DashboardActions.enableLoading,
   });
 }
 
-export function getData(start, duration = DAY_IN_SEC, namespaces = DashboardStore.getState().namespaces.namespacesPick) {
+export function getData(
+  start,
+  duration = DAY_IN_SEC,
+  namespaces = DashboardStore.getState().namespaces.namespacesPick
+) {
   enableLoading();
 
   let state = DashboardStore.getState().dashboard;
 
   if (!start) {
-    start = moment().startOf('hour').subtract(23, 'h').format('x');
+    start = moment()
+      .startOf('hour')
+      .subtract(23, 'h')
+      .format('x');
     start = Math.floor(parseInt(start, 10) / 1000);
   }
 
@@ -51,30 +58,31 @@ export function getData(start, duration = DAY_IN_SEC, namespaces = DashboardStor
   let params = {
     start,
     duration, // 24 hours in minutes
-    namespace: namespacesList
+    namespace: namespacesList,
   };
 
-  MyOperationsApi.getDashboard(params)
-    .subscribe((res) => {
-      let {
+  MyOperationsApi.getDashboard(params).subscribe((res) => {
+    let { pipelineCount, customAppCount, data } = parseDashboardData(
+      res,
+      start,
+      duration,
+      state.pipeline,
+      state.customApp
+    );
+
+    DashboardStore.dispatch({
+      type: DashboardActions.setData,
+      payload: {
+        rawData: res,
+        data,
         pipelineCount,
         customAppCount,
-        data
-      } = parseDashboardData(res, start, duration, state.pipeline, state.customApp);
-
-      DashboardStore.dispatch({
-        type: DashboardActions.setData,
-        payload: {
-          rawData: res,
-          data,
-          pipelineCount,
-          customAppCount,
-          startTime: start,
-          duration,
-          namespacesPick: namespaces
-        }
-      });
+        startTime: start,
+        duration,
+        namespacesPick: namespaces,
+      },
     });
+  });
 }
 
 export function next() {
@@ -129,8 +137,8 @@ export function setLast24Hours(value) {
   DashboardStore.dispatch({
     type: DashboardActions.setLast24Hours,
     payload: {
-      isLast24Hours: value
-    }
+      isLast24Hours: value,
+    },
   });
 }
 
@@ -138,12 +146,14 @@ export function setIs7DaysAgo(value) {
   DashboardStore.dispatch({
     type: DashboardActions.setIs7DaysAgo,
     payload: {
-      is7DaysAgo: value
-    }
+      is7DaysAgo: value,
+    },
   });
 }
 
 function get7DaysFromCurrentTime() {
-  const sevenDaysAgo = moment().subtract(7, 'day').format('x');
+  const sevenDaysAgo = moment()
+    .subtract(7, 'day')
+    .format('x');
   return Math.floor(parseInt(sevenDaysAgo, 10) / 1000);
 }

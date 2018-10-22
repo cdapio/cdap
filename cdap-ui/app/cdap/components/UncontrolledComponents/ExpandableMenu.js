@@ -31,13 +31,13 @@ export default class ExpandableMenu extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showMenuItems: true
+      showMenuItems: true,
     };
     this.toggle = this.toggle.bind(this);
   }
   toggle() {
     this.setState({
-      showMenuItems: !this.state.showMenuItems
+      showMenuItems: !this.state.showMenuItems,
     });
   }
   render() {
@@ -45,24 +45,14 @@ export default class ExpandableMenu extends Component {
       return null;
     }
     return (
-      <div className={classnames("expandable-menu menu-item expandable", this.props.className)}>
-        <div
-          onClick={this.toggle}
-          className="expandable-title"
-        >
+      <div className={classnames('expandable-menu menu-item expandable', this.props.className)}>
+        <div onClick={this.toggle} className="expandable-title">
           <span className="fa fa-fw">
-            <IconSVG
-              name={this.state.showMenuItems ? 'icon-caret-down' : 'icon-caret-right'}
-            />
+            <IconSVG name={this.state.showMenuItems ? 'icon-caret-down' : 'icon-caret-right'} />
           </span>
           {this.props.children[0]}
         </div>
-        {
-          this.state.showMenuItems ?
-            this.props.children[1]
-          :
-            null
-        }
+        {this.state.showMenuItems ? this.props.children[1] : null}
       </div>
     );
   }
@@ -70,5 +60,5 @@ export default class ExpandableMenu extends Component {
 ExpandableMenu.propTypes = {
   // Assumption: First child is the menu title and the Second child is the actual menu items.
   children: PropTypes.array,
-  className: PropTypes.string
+  className: PropTypes.string,
 };

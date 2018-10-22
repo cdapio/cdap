@@ -15,26 +15,22 @@
 */
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 require('./Description.scss');
 
 const mapStateToProps = (state) => {
   return {
-    description: state.description
+    description: state.description,
   };
 };
 
-const NamespaceDetailsDescription = ({description}) => {
-  return (
-    <div className="namespace-details-description">
-      {description}
-    </div>
-  );
+const NamespaceDetailsDescription = ({ description }) => {
+  return <div className="namespace-details-description">{description}</div>;
 };
 
 NamespaceDetailsDescription.propTypes = {
-  description: PropTypes.string
+  description: PropTypes.string,
 };
 
 const ConnectedNamespaceDetailsDescription = connect(mapStateToProps)(NamespaceDetailsDescription);

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /*
  * Copyright © 2015-2018 Cask Data, Inc.
  *
@@ -14,21 +15,21 @@
  * the License.
  */
 
-/*global require, module, process */
+/* global require, module, process */
 
 module.exports = {
   extractConfig: extractConfig,
-  extractUISettings: extractUISettings
+  extractUISettings: extractUISettings,
 };
 
 var promise = require('q'),
-    spawn = require('child_process').spawn,
-    StringDecoder = require('string_decoder').StringDecoder,
-    decoder = new StringDecoder('utf8'),
-    log4js = require('log4js'),
-    cache = {},
-    path,
-    buffer = '';
+  spawn = require('child_process').spawn,
+  StringDecoder = require('string_decoder').StringDecoder,
+  decoder = new StringDecoder('utf8'),
+  log4js = require('log4js'),
+  cache = {},
+  path,
+  buffer = '';
 
 var log = log4js.getLogger('default');
 
@@ -50,7 +51,7 @@ function extractUISettings() {
 
 function extractConfig(param) {
   var deferred = promise.defer(),
-      tool;
+    tool;
   param = param || 'cdap';
 
   if (cache[param]) {
@@ -60,7 +61,7 @@ function extractConfig(param) {
 
   if (process.env.NODE_ENV === 'production') {
     buffer = '';
-    tool = spawn(__dirname + '/../../bin/cdap', ['config-tool', '--'+param]);
+    tool = spawn(__dirname + '/../../bin/cdap', ['config-tool', '--' + param]);
     tool.stderr.on('data', configReadFail.bind(this));
     tool.stdout.on('data', configRead.bind(this));
     tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));
@@ -78,7 +79,7 @@ function extractConfig(param) {
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
       log.warn('Using development configuration for "' + param + '"');
-      cache[param] = require('./development/'+param+'.json');
+      cache[param] = require('./development/' + param + '.json');
     }
 
     deferred.resolve(cache[param]);
@@ -87,16 +88,16 @@ function extractConfig(param) {
 }
 
 function getConfigPath(param) {
-  var configName = (param ==='security'? 'sConf': 'cConf');
+  var configName = param === 'security' ? 'sConf' : 'cConf';
   // If cConf and sConf are not provided (Starting node server
   // from console) default to development config.
   if (process.argv.length < 3) {
     return null;
   }
   var args = process.argv.slice(2),
-      value = '',
-      i;
-  for (i=0; i<args.length; i++) {
+    value = '',
+    i;
+  for (i = 0; i < args.length; i++) {
     if (args[i].indexOf(configName) !== -1) {
       value = args[i].split('=');
       if (value.length > 1) {
@@ -108,19 +109,19 @@ function getConfigPath(param) {
   return value;
 }
 
-function onConfigReadEnd (deferred, param) {
-   cache[param] = JSON.parse(buffer);
-   deferred.resolve(cache[param]);
+function onConfigReadEnd(deferred, param) {
+  cache[param] = JSON.parse(buffer);
+  deferred.resolve(cache[param]);
 }
 
-function configRead (data) {
+function configRead(data) {
   var textChunk = decoder.write(data);
   if (textChunk) {
     buffer += textChunk;
   }
 }
 
-function configReadFail (data) {
+function configReadFail(data) {
   var textChunk = decoder.write(data);
   if (textChunk) {
     log.error(textChunk);

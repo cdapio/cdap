@@ -27,7 +27,7 @@ export default class DataPrepErrorAlert extends Component {
     let state = DataPrepStore.getState().error;
 
     this.state = {
-      showError: state.showError
+      showError: state.showError,
     };
 
     this.dismissError = this.dismissError.bind(this);
@@ -38,7 +38,7 @@ export default class DataPrepErrorAlert extends Component {
       let state = DataPrepStore.getState().error;
 
       this.setState({
-        showError: state.showError
+        showError: state.showError,
       });
     });
   }
@@ -51,23 +51,20 @@ export default class DataPrepErrorAlert extends Component {
 
   dismissError() {
     DataPrepStore.dispatch({
-      type: DataPrepActions.dismissError
+      type: DataPrepActions.dismissError,
     });
   }
 
   render() {
-    if (!this.state.showError) { return null; }
+    if (!this.state.showError) {
+      return null;
+    }
 
     return (
       <div className="dataprep-error-alert-container">
-        <div className="error-content">
-          {this.state.showError}
-        </div>
+        <div className="error-content">{this.state.showError}</div>
         <div className="close-icon">
-          <span
-            className="fa fa-times"
-            onClick={this.dismissError}
-          />
+          <span className="fa fa-times" onClick={this.dismissError} />
         </div>
       </div>
     );

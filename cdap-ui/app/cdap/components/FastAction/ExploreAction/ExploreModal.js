@@ -17,16 +17,16 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Modal, ModalHeader, ModalBody} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import myExploreApi from 'api/explore';
 import isObject from 'lodash/isObject';
 import uuidV4 from 'uuid/v4';
 import 'whatwg-fetch';
-import {contructUrl, insertAt, removeAt, humanReadableDate} from 'services/helpers';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import { contructUrl, insertAt, removeAt, humanReadableDate } from 'services/helpers';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
 require('./ExploreModal.scss');
 import NamespaceStore from 'services/NamespaceStore';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 import T from 'i18n-react';
 
 const PREFIX = 'features.FastAction.Explore';
@@ -36,10 +36,12 @@ export default class ExploreModal extends Component {
     super(props);
     this.type = this.props.entity.type;
     this.state = {
-      queryString: `SELECT * FROM ${this.props.entity.databaseName}.${this.props.entity.tableName} LIMIT 500`,
+      queryString: `SELECT * FROM ${this.props.entity.databaseName}.${
+        this.props.entity.tableName
+      } LIMIT 500`,
       queries: [],
       error: null,
-      loading: false
+      loading: false,
     };
     // Show any queries that were executed when the modal is open, like `show tables`.
     // This is maintained in the current session and when the modal is opened again it doesn't need to be surfaced.
@@ -51,14 +53,16 @@ export default class ExploreModal extends Component {
   }
   componentWillUnmount() {
     this._mounted = false;
-    this.subscriptions.map(subscriber => subscriber.unsubscribe());
+    this.subscriptions.map((subscriber) => subscriber.unsubscribe());
   }
   componentWillReceiveProps(nextProps) {
-    let {databaseName:existingDatabaseName, tableName:existingTableName} = this.props.entity;
-    let {databaseName:newDatabaseName, tableName:newTablename} = nextProps.entity;
+    let { databaseName: existingDatabaseName, tableName: existingTableName } = this.props.entity;
+    let { databaseName: newDatabaseName, tableName: newTablename } = nextProps.entity;
     if (existingDatabaseName !== newDatabaseName || existingTableName !== newTablename) {
       this.setState({
-        queryString: `SELECT * FROM ${nextProps.entity.databaseName}.${nextProps.entity.tableName} LIMIT 500`,
+        queryString: `SELECT * FROM ${nextProps.entity.databaseName}.${
+          nextProps.entity.tableName
+        } LIMIT 500`,
       });
     }
   }
@@ -70,67 +74,61 @@ export default class ExploreModal extends Component {
   }
   onQueryStringChange(e) {
     this.updateState({
-      queryString: e.target.value
+      queryString: e.target.value,
     });
   }
   setQueryString(query) {
     this.updateState({
-      queryString: query.statement
+      queryString: query.statement,
     });
   }
   getValidQueries(queries) {
-    let updatedQueries = queries
-      .filter(q => {
-        return (
-          q.statement.indexOf( `${this.props.entity.databaseName}.${this.props.entity.tableName}`) !== -1 ||
-          q.statement.indexOf( `${this.props.entity.id}`) !== -1 // For queries run before 4.1
-        );
-      });
+    let updatedQueries = queries.filter((q) => {
+      return (
+        q.statement.indexOf(`${this.props.entity.databaseName}.${this.props.entity.tableName}`) !==
+          -1 || q.statement.indexOf(`${this.props.entity.id}`) !== -1 // For queries run before 4.1
+      );
+    });
     let updatedStateQueries = [...updatedQueries];
     let intersectingQueries = [];
     if (this.state.queries.length) {
-      updatedStateQueries = this.state.queries.map(query => {
-        let matchedQuery = updatedQueries.find(q => q.query_handle === query.query_handle);
+      updatedStateQueries = this.state.queries.map((query) => {
+        let matchedQuery = updatedQueries.find((q) => q.query_handle === query.query_handle);
         if (matchedQuery) {
           return Object.assign(query, {}, matchedQuery);
         }
         return query;
       });
       intersectingQueries = updatedQueries.filter(
-        q => !this.state.queries.filter(
-          qq => qq.query_handle === q.query_handle
-        ).length
+        (q) => !this.state.queries.filter((qq) => qq.query_handle === q.query_handle).length
       );
     }
 
-    return [
-      ...intersectingQueries,
-      ...updatedStateQueries
-    ];
+    return [...intersectingQueries, ...updatedStateQueries];
   }
   submitQuery() {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
     this.setState({
-      loading: true
+      loading: true,
     });
     let queriesSubscription$ = myExploreApi
-      .submitQuery({namespace}, {query: this.state.queryString})
+      .submitQuery({ namespace }, { query: this.state.queryString })
       .mergeMap((res) => {
         this.sessionQueryHandles.push(res.handle);
-        return myExploreApi.fetchQueries({namespace});
+        return myExploreApi.fetchQueries({ namespace });
       })
       .subscribe(
         (res) => {
           this.updateState({
             queries: this.getValidQueries(res),
             loading: false,
-            error: null
+            error: null,
           });
         },
         (error) => {
           this.updateState({
             error: isObject(error) ? error.response : error,
-            loading: false
+            loading: false,
           });
         }
       );
@@ -141,25 +139,23 @@ export default class ExploreModal extends Component {
     if (!this._mounted) {
       return;
     }
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
-    let queriesSubscription$ = myExploreApi
-      .fetchQueries({ namespace })
-      .subscribe(
-        (res = []) => {
-          if (!res.length) {
-            return;
-          }
-          let queries = this.getValidQueries(res);
-          this.updateState({
-            queries
-          });
-        },
-        (error) => {
-          this.updateState({
-            error: isObject(error) ? error.response : error
-          });
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
+    let queriesSubscription$ = myExploreApi.fetchQueries({ namespace }).subscribe(
+      (res = []) => {
+        if (!res.length) {
+          return;
         }
-      );
+        let queries = this.getValidQueries(res);
+        this.updateState({
+          queries,
+        });
+      },
+      (error) => {
+        this.updateState({
+          error: isObject(error) ? error.response : error,
+        });
+      }
+    );
     this.subscriptions.push(queriesSubscription$);
   }
   componentWillMount() {
@@ -176,28 +172,28 @@ export default class ExploreModal extends Component {
       }
       return q;
     });
-    if (queries[matchIndex + 1 ] && queries[matchIndex + 1 ].preview) {
+    if (queries[matchIndex + 1] && queries[matchIndex + 1].preview) {
       queries = removeAt(queries, matchIndex + 1);
-      this.updateState({queries});
+      this.updateState({ queries });
       return;
     }
     let previewSubscription$ = myExploreApi
-      .getQuerySchema({queryHandle})
-      .mergeMap(res => {
+      .getQuerySchema({ queryHandle })
+      .mergeMap((res) => {
         queries = insertAt(queries, matchIndex, {
-          schema: res.map(s => {
+          schema: res.map((s) => {
             if (s.name.indexOf('.') !== -1) {
               s.name = s.name.split('.')[1];
             }
             return s;
-          })
+          }),
         });
         this.updateState({
-          queries
+          queries,
         });
-        return myExploreApi.getQueryPreview({queryHandle});
+        return myExploreApi.getQueryPreview({ queryHandle });
       })
-      .subscribe(res => {
+      .subscribe((res) => {
         let matchIndex;
         queries.forEach((q, index) => {
           if (q.query_handle === queryHandle) {
@@ -205,7 +201,7 @@ export default class ExploreModal extends Component {
           }
           return q;
         });
-        queries[matchIndex + 1] = Object.assign(queries[matchIndex + 1], {preview: res});
+        queries[matchIndex + 1] = Object.assign(queries[matchIndex + 1], { preview: res });
         this.updateState({ queries });
       });
     this.subscriptions.push(previewSubscription$);
@@ -213,8 +209,10 @@ export default class ExploreModal extends Component {
 
   getDownloadUrl(query) {
     let path = `/data/explore/queries/${query.query_handle}/download`;
-    path = encodeURIComponent(contructUrl({path}));
-    let url = `/downloadLogs?backendUrl=${path}&type=download&method=POST&filename=${query.query_handle}.csv`;
+    path = encodeURIComponent(contructUrl({ path }));
+    let url = `/downloadLogs?backendUrl=${path}&type=download&method=POST&filename=${
+      query.query_handle
+    }.csv`;
     return url;
   }
 
@@ -233,7 +231,7 @@ export default class ExploreModal extends Component {
     }
   }
   onModalToggle() {
-    let runningQueries = this.state.queries.filter(query => query.status === 'RUNNING');
+    let runningQueries = this.state.queries.filter((query) => query.status === 'RUNNING');
     this.props.onClose(runningQueries.length);
   }
 
@@ -245,78 +243,53 @@ export default class ExploreModal extends Component {
           <td> {humanReadableDate(query.timestamp, true)} </td>
           <td> {query.statement} </td>
           <td>
-            {
-              query.status === 'RUNNING' ?
-                <span>
-                  <span className="query-status-value">{query.status}</span>
-                  <i className="fa fa-spinner fa-spin"></i>
-                </span>
-              :
-                <span>{query.status}</span>
-            }
+            {query.status === 'RUNNING' ? (
+              <span>
+                <span className="query-status-value">{query.status}</span>
+                <i className="fa fa-spinner fa-spin" />
+              </span>
+            ) : (
+              <span>{query.status}</span>
+            )}
           </td>
           <td>
             <div className="btn-group">
-              {
-                !query.is_active || query.status !== 'FINISHED' ?
-                  <button
-                    className="btn btn-secondary"
-                    disabled="disabled"
-                    >
-                    <i
-                      id={`download-${id}`}
-                      className="fa fa-download"
-                    ></i>
-                    {
-                      !query.is_active ?
-                        <UncontrolledTooltip
-                          target={`download-${id}`}
-                          placement="left"
-                          delay={300}
-                        >
-                          <div className="text-xs-left">
-                            {T.translate('features.FastAction.downloadDisabledMessage')}
-                          </div>
-                        </UncontrolledTooltip>
-                      :
-                        null
-                    }
-                  </button>
-                :
-                  <a
-                    href={this.getDownloadUrl(query)}
-                    onClick={this.updateQueryState.bind(this, query)}
-                    className="btn btn-secondary"
-                  >
-                    <i className="fa fa-download"></i>
-                  </a>
-              }
+              {!query.is_active || query.status !== 'FINISHED' ? (
+                <button className="btn btn-secondary" disabled="disabled">
+                  <i id={`download-${id}`} className="fa fa-download" />
+                  {!query.is_active ? (
+                    <UncontrolledTooltip target={`download-${id}`} placement="left" delay={300}>
+                      <div className="text-xs-left">
+                        {T.translate('features.FastAction.downloadDisabledMessage')}
+                      </div>
+                    </UncontrolledTooltip>
+                  ) : null}
+                </button>
+              ) : (
+                <a
+                  href={this.getDownloadUrl(query)}
+                  onClick={this.updateQueryState.bind(this, query)}
+                  className="btn btn-secondary"
+                >
+                  <i className="fa fa-download" />
+                </a>
+              )}
               <button
                 className="btn btn-secondary"
                 onClick={this.showPreview.bind(this, query)}
                 disabled={!query.is_active || query.status !== 'FINISHED' ? 'disabled' : null}
               >
-                <i
-                  className="fa fa-eye"
-                  id={`explore-${id}`}
-                  delay={300}
-                ></i>
-              {
-                !query.is_active?
-                  <UncontrolledTooltip
-                      target={`explore-${id}`}
-                      placement="top"
-                    >
-                      <div className="text-xs-left">
-                        {T.translate('features.FastAction.previewDisabledMessage')}
-                      </div>
-                    </UncontrolledTooltip>
-                  :
-                    null
-              }
+                <i className="fa fa-eye" id={`explore-${id}`} delay={300} />
+                {!query.is_active ? (
+                  <UncontrolledTooltip target={`explore-${id}`} placement="top">
+                    <div className="text-xs-left">
+                      {T.translate('features.FastAction.previewDisabledMessage')}
+                    </div>
+                  </UncontrolledTooltip>
+                ) : null}
               </button>
               <button className="btn btn-secondary" onClick={this.setQueryString.bind(this, query)}>
-                <i className="fa fa-clone"></i>
+                <i className="fa fa-clone" />
               </button>
             </div>
           </td>
@@ -325,68 +298,51 @@ export default class ExploreModal extends Component {
     };
     const renderPreviewRow = (query) => {
       const previewContent = (query) => {
-        return (
-          query.preview.length ?
-            (
-              <div>
-                <table className="table table-bordered">
-                  <thead>
-                    <tr>
-                      {
-                        query.schema.map(s => (<th key={`A-${uuidV4()}`}>{s.name}</th>))
-                      }
+        return query.preview.length ? (
+          <div>
+            <table className="table table-bordered">
+              <thead>
+                <tr>
+                  {query.schema.map((s) => (
+                    <th key={`A-${uuidV4()}`}>{s.name}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {query.preview.map((row) => {
+                  return (
+                    <tr key={`A-${uuidV4()}`}>
+                      {!row.columns
+                        ? T.translate('features.FastAction.viewEvents.noResults')
+                        : row.columns.map((column) => {
+                            let content = column;
+
+                            if (content === null) {
+                              content = 'null';
+                            } else if (typeof content === 'boolean') {
+                              content = content === true ? 'true' : 'false';
+                            }
+
+                            return <td key={`A-${uuidV4()}`}>{content}</td>;
+                          })}
                     </tr>
-                  </thead>
-                  <tbody>
-                    {
-                      query
-                        .preview
-                        .map((row) => {
-                          return (
-                            <tr key={`A-${uuidV4()}`}>
-                              {
-                                !row.columns ?
-                                  T.translate('features.FastAction.viewEvents.noResults')
-                                :
-                                  row.columns.map(column => {
-                                    let content = column;
-
-                                    if (content === null) {
-                                      content = 'null';
-                                    } else if (typeof content === 'boolean') {
-                                      content = content === true ? 'true' : 'false';
-                                    }
-
-                                    return (
-                                      <td key={`A-${uuidV4()}`}>
-                                        {content}
-                                      </td>
-                                    );
-                                  })
-                              }
-                            </tr>
-                          );
-                        })
-                    }
-                  </tbody>
-                </table>
-              </div>
-            )
-          :
-            <div className="text-xs-center">
-              {T.translate(`${PREFIX}.noResults`)}
-            </div>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-xs-center">{T.translate(`${PREFIX}.noResults`)}</div>
         );
       };
       return (
         <tr key={`A-${uuidV4()}`}>
           <td colSpan="4" className="preview-cell">
-            {
-              query.schema && !query.preview ?
-                <div className="fa fa-spinner fa-spin text-xs-center"></div>
-              :
-                previewContent(query)
-            }
+            {query.schema && !query.preview ? (
+              <div className="fa fa-spinner fa-spin text-xs-center" />
+            ) : (
+              previewContent(query)
+            )}
           </td>
         </tr>
       );
@@ -396,14 +352,11 @@ export default class ExploreModal extends Component {
         className="explore-modal confirmation-modal cdap-modal"
         toggle={this.onModalToggle.bind(this)}
         isOpen={this.props.isOpen}
-        backdrop='static'
+        backdrop="static"
       >
         <ModalHeader>
           {T.translate(`${PREFIX}.label`)}
-          <div
-           onClick={this.onModalToggle.bind(this)}
-           className="float-xs-right"
-          >
+          <div onClick={this.onModalToggle.bind(this)} className="float-xs-right">
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
@@ -414,26 +367,17 @@ export default class ExploreModal extends Component {
               className="form-control"
               value={this.state.queryString}
               onChange={this.onQueryStringChange}
-            >
-            </textarea>
+            />
             <div className="clearfix">
-              {
-                this.state.error ?
-                  <span className="float-xs-left text-danger">{this.state.error}</span>
-                :
-                  null
-              }
+              {this.state.error ? (
+                <span className="float-xs-left text-danger">{this.state.error}</span>
+              ) : null}
               <button
                 className="btn btn-primary float-xs-right"
                 onClick={this.submitQuery}
-                disabled={this.state.loading ? 'disabled': null}
+                disabled={this.state.loading ? 'disabled' : null}
               >
-                {
-                  this.state.loading ?
-                    <span className="fa fa-spinner fa-spin"></span>
-                  :
-                    null
-                }
+                {this.state.loading ? <span className="fa fa-spinner fa-spin" /> : null}
                 <span>Execute</span>
               </button>
             </div>
@@ -441,39 +385,27 @@ export default class ExploreModal extends Component {
               <table className="table table-bordered queries-table">
                 <thead>
                   <tr>
-                    <th className="query-timestamp">
-                      {T.translate(`${PREFIX}.startTime`)}
-                    </th>
+                    <th className="query-timestamp">{T.translate(`${PREFIX}.startTime`)}</th>
                     <th>{T.translate(`${PREFIX}.SQLQuery`)}</th>
-                    <th className="query-status">
-                      {T.translate(`${PREFIX}.status`)}
-                    </th>
-                    <th className="query-actions">
-                      {T.translate(`${PREFIX}.actions`)}
-                    </th>
+                    <th className="query-status">{T.translate(`${PREFIX}.status`)}</th>
+                    <th className="query-actions">{T.translate(`${PREFIX}.actions`)}</th>
                   </tr>
                 </thead>
                 <tbody>
-                {
-                  !this.state.queries.length ?
+                  {!this.state.queries.length ? (
                     <tr>
-                      <td
-                        colSpan="4"
-                        className="text-xs-center"
-                      >
+                      <td colSpan="4" className="text-xs-center">
                         {T.translate(`${PREFIX}.noResults`)}
                       </td>
                     </tr>
-                  :
-                    this.state
-                      .queries
-                      .map((query) => {
-                        if (query.preview || query.schema) {
-                          return renderPreviewRow(query);
-                        }
-                        return renderQueryRow(query);
-                      })
-                }
+                  ) : (
+                    this.state.queries.map((query) => {
+                      if (query.preview || query.schema) {
+                        return renderPreviewRow(query);
+                      }
+                      return renderQueryRow(query);
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -485,8 +417,8 @@ export default class ExploreModal extends Component {
 }
 ExploreModal.contextTypes = {
   params: PropTypes.shape({
-    namespace: PropTypes.string
-  })
+    namespace: PropTypes.string,
+  }),
 };
 
 ExploreModal.propTypes = {
@@ -498,6 +430,6 @@ ExploreModal.propTypes = {
     scope: PropTypes.oneOf([SCOPES.SYSTEM, SCOPES.USER]),
     type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
     databaseName: PropTypes.string,
-    tableName: PropTypes.string
-  })
+    tableName: PropTypes.string,
+  }),
 };

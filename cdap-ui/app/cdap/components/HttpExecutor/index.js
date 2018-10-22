@@ -16,7 +16,7 @@
 
 import React, { Component } from 'react';
 import MethodSelector from 'components/HttpExecutor/MethodSelector';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import HttpExecutorStore from 'components/HttpExecutor/store/HttpExecutorStore';
 import InputPath from 'components/HttpExecutor/InputPath';
 import StatusCode from 'components/HttpExecutor/StatusCode';
@@ -31,7 +31,6 @@ require('./HttpExecutor.scss');
 export default class HttpExecutor extends Component {
   constructor(props) {
     super(props);
-
   }
 
   componentDidMount() {
@@ -57,9 +56,7 @@ export default class HttpExecutor extends Component {
 
           <div className="response-section">
             <div className="response-header">
-              <span className="title">
-                {T.translate(`${PREFIX}.responseTitle`)}
-              </span>
+              <span className="title">{T.translate(`${PREFIX}.responseTitle`)}</span>
               <span className="float-xs-right">
                 <StatusCode />
               </span>

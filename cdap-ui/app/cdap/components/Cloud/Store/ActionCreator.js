@@ -14,73 +14,66 @@
  * the License.
 */
 
-import ProvisionerInfoStore, {ACTIONS} from 'components/Cloud/Store';
-import {MyCloudApi} from 'api/cloud';
+import ProvisionerInfoStore, { ACTIONS } from 'components/Cloud/Store';
+import { MyCloudApi } from 'api/cloud';
 
 const fetchProvisionerSpec = (provisionerName) => {
   ProvisionerInfoStore.dispatch({
     type: ACTIONS.SET_LOADING,
     payload: {
-      loading: true
-    }
+      loading: true,
+    },
   });
 
-  MyCloudApi
-    .getProvisionerDetailSpec({
-      provisioner: provisionerName
-    })
-    .subscribe(
-      (provisionerSpec) => {
-        ProvisionerInfoStore.dispatch({
-          type: ACTIONS.SET_JSON_SPEC,
-          payload: {
-            provisionerName,
-            provisionerSpec
-          }
-        });
-      },
-      (error) => {
-        ProvisionerInfoStore.dispatch({
-          type: ACTIONS.SET_ERROR,
-          payload: {
-            error
-          }
-        });
-      }
-    );
+  MyCloudApi.getProvisionerDetailSpec({
+    provisioner: provisionerName,
+  }).subscribe(
+    (provisionerSpec) => {
+      ProvisionerInfoStore.dispatch({
+        type: ACTIONS.SET_JSON_SPEC,
+        payload: {
+          provisionerName,
+          provisionerSpec,
+        },
+      });
+    },
+    (error) => {
+      ProvisionerInfoStore.dispatch({
+        type: ACTIONS.SET_ERROR,
+        payload: {
+          error,
+        },
+      });
+    }
+  );
 };
 
 const fetchProvisioners = () => {
   ProvisionerInfoStore.dispatch({
     type: ACTIONS.SET_LOADING,
     payload: {
-      loading: true
-    }
+      loading: true,
+    },
   });
 
-  MyCloudApi
-    .getProvisioners()
-    .subscribe(
-      (provisioners) => {
-        ProvisionerInfoStore.dispatch({
-          type: ACTIONS.SET_JSON_SPECS,
-          payload: {
-            provisioners
-          }
-        });
-      },
-      (error) => {
-        ProvisionerInfoStore.dispatch({
-          type: ACTIONS.SET_ERROR,
-          payload: {
-            error
-          }
-        });
-      }
-    );
+  MyCloudApi.getProvisioners().subscribe(
+    (provisioners) => {
+      ProvisionerInfoStore.dispatch({
+        type: ACTIONS.SET_JSON_SPECS,
+        payload: {
+          provisioners,
+        },
+      });
+    },
+    (error) => {
+      ProvisionerInfoStore.dispatch({
+        type: ACTIONS.SET_ERROR,
+        payload: {
+          error,
+        },
+      });
+    }
+  );
 };
 
-export {
-  fetchProvisionerSpec,
-  fetchProvisioners
-};
+export { fetchProvisionerSpec, fetchProvisioners };

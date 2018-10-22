@@ -16,10 +16,10 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import { ButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
-import {setTimeRange, setCustomTimeRange} from 'components/FieldLevelLineage/store/ActionCreator';
-import {TIME_OPTIONS} from 'components/FieldLevelLineage/store/Store';
+import { setTimeRange, setCustomTimeRange } from 'components/FieldLevelLineage/store/ActionCreator';
+import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 import ExpandableTimeRange from 'components/TimeRangePicker/ExpandableTimeRange';
 import T from 'i18n-react';
 
@@ -29,28 +29,30 @@ class TimePickerView extends Component {
   static propTypes = {
     selections: PropTypes.string,
     start: PropTypes.number,
-    end: PropTypes.number
+    end: PropTypes.number,
   };
 
   state = {
-    dropdownOpen: false
+    dropdownOpen: false,
   };
 
   toggle = () => {
     this.setState({
-      dropdownOpen: !this.state.dropdownOpen
+      dropdownOpen: !this.state.dropdownOpen,
     });
   };
 
-  onDone = ({start, end}) => {
-    setCustomTimeRange({start, end});
+  onDone = ({ start, end }) => {
+    setCustomTimeRange({ start, end });
   };
 
   renderCustomTimeRange() {
-    if (this.props.selections !== TIME_OPTIONS[0]) { return null; }
+    if (this.props.selections !== TIME_OPTIONS[0]) {
+      return null;
+    }
 
     return (
-      <div  className="custom-time-range-container">
+      <div className="custom-time-range-container">
         <ExpandableTimeRange
           onDone={this.onDone}
           inSeconds={true}
@@ -64,31 +66,21 @@ class TimePickerView extends Component {
   render() {
     return (
       <div className="time-picker-dropdown">
-        <ButtonDropdown
-          isOpen={this.state.dropdownOpen}
-          toggle={this.toggle}
-        >
-          <DropdownToggle caret>
-            {T.translate(`${PREFIX}.${this.props.selections}`)}
-          </DropdownToggle>
+        <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle}>
+          <DropdownToggle caret>{T.translate(`${PREFIX}.${this.props.selections}`)}</DropdownToggle>
 
           <DropdownMenu>
-            {
-              TIME_OPTIONS.map((option) => {
-                return (
-                  <DropdownItem
-                    key={option}
-                    onClick={setTimeRange.bind(null, option)}
-                  >
-                    {T.translate(`${PREFIX}.${option}`)}
-                  </DropdownItem>
-                );
-              })
-            }
+            {TIME_OPTIONS.map((option) => {
+              return (
+                <DropdownItem key={option} onClick={setTimeRange.bind(null, option)}>
+                  {T.translate(`${PREFIX}.${option}`)}
+                </DropdownItem>
+              );
+            })}
           </DropdownMenu>
         </ButtonDropdown>
 
-        { this.renderCustomTimeRange() }
+        {this.renderCustomTimeRange()}
       </div>
     );
   }
@@ -98,12 +90,10 @@ const mapStateToProps = (state) => {
   return {
     selections: state.lineage.timeSelection,
     start: state.customTime.start,
-    end: state.customTime.end
+    end: state.customTime.end,
   };
 };
 
-const TimePicker = connect(
-  mapStateToProps
-)(TimePickerView);
+const TimePicker = connect(mapStateToProps)(TimePickerView);
 
 export default TimePicker;

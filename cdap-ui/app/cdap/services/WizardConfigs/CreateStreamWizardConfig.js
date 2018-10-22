@@ -26,28 +26,27 @@ let commonSteps = [
     shorttitle: T.translate('features.Wizard.StreamCreate.Step1.shorttitle'),
     title: T.translate('features.Wizard.StreamCreate.Step1.title'),
     description: T.translate('features.Wizard.StreamCreate.Step1.description'),
-    content: (<GeneralInfoStep />),
-    requiredFields: ['name']
+    content: <GeneralInfoStep />,
+    requiredFields: ['name'],
   },
   {
     id: 'schema',
     shorttitle: T.translate('features.Wizard.StreamCreate.Step2.shorttitle'),
     title: T.translate('features.Wizard.StreamCreate.Step2.title'),
     description: T.translate('features.Wizard.StreamCreate.Step2.description'),
-    content: (<SchemaStep />)
+    content: <SchemaStep />,
   },
   {
     id: 'threshold',
     shorttitle: T.translate('features.Wizard.StreamCreate.Step3.shorttitle'),
     title: T.translate('features.Wizard.StreamCreate.Step3.title'),
     description: T.translate('features.Wizard.StreamCreate.Step3.description'),
-    content: (<ThresholdStep />)
-  }
+    content: <ThresholdStep />,
+  },
 ];
 
 const CreateStreamWizardConfig = {
-  steps: commonSteps
+  steps: commonSteps,
 };
-
 
 export default CreateStreamWizardConfig;

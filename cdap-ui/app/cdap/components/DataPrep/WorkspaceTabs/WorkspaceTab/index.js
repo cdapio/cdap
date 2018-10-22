@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
 
@@ -30,7 +30,7 @@ export default class WorkspaceTab extends Component {
     super(props);
 
     this.state = {
-      overflow: false
+      overflow: false,
     };
 
     this.namespace = NamespaceStore.getState().selectedNamespace;
@@ -38,7 +38,9 @@ export default class WorkspaceTab extends Component {
 
   componentDidUpdate() {
     let workspaceElem = document.getElementById(this.props.workspace.id);
-    if (!workspaceElem) { return; }
+    if (!workspaceElem) {
+      return;
+    }
 
     let nameElem = workspaceElem.querySelector('span.original-name');
 
@@ -47,17 +49,13 @@ export default class WorkspaceTab extends Component {
       let newState = nameBBox.width > MAX_NAME_WIDTH;
 
       if (this.state.overflow !== newState) {
-        this.setState({overflow: newState});
+        this.setState({ overflow: newState });
       }
     }
   }
 
   renderName() {
-    return (
-      <span className="original-name">
-        {this.props.workspace.name}
-      </span>
-    );
+    return <span className="original-name">{this.props.workspace.name}</span>;
   }
 
   renderOverflow() {
@@ -65,13 +63,9 @@ export default class WorkspaceTab extends Component {
 
     return (
       <span className="display-name">
-        <span className="full-name">
-          {name}
-        </span>
+        <span className="full-name">{name}</span>
 
-        <span className="overflow-layer">
-          {name}
-        </span>
+        <span className="overflow-layer">{name}</span>
       </span>
     );
   }
@@ -80,22 +74,13 @@ export default class WorkspaceTab extends Component {
     let workspace = this.props.workspace;
 
     return (
-      <div
-        id={workspace.id}
-        className="workspace-tab active clearfix"
-        title={workspace.name}
-      >
+      <div id={workspace.id} className="workspace-tab active clearfix" title={workspace.name}>
         <span className="display-name-container float-xs-left">
           {this.state.overflow ? this.renderOverflow() : this.renderName()}
         </span>
 
-        <span
-          className="fa fa-fw delete-workspace float-xs-right"
-          onClick={this.props.onDelete}
-        >
-          <IconSVG
-            name="icon-close"
-          />
+        <span className="fa fa-fw delete-workspace float-xs-right" onClick={this.props.onDelete}>
+          <IconSVG name="icon-close" />
         </span>
       </div>
     );
@@ -105,26 +90,15 @@ export default class WorkspaceTab extends Component {
     let workspace = this.props.workspace;
 
     return (
-      <div
-        id={workspace.id}
-        className="workspace-tab clearfix"
-        title={workspace.name}
-      >
+      <div id={workspace.id} className="workspace-tab clearfix" title={workspace.name}>
         <span className="display-name-container float-xs-left">
-          <Link
-            to={`/ns/${this.namespace}/dataprep/${workspace.id}`}
-          >
+          <Link to={`/ns/${this.namespace}/dataprep/${workspace.id}`}>
             {this.state.overflow ? this.renderOverflow() : this.renderName()}
           </Link>
         </span>
 
-        <span
-          className="fa fa-fw delete-workspace float-xs-right"
-          onClick={this.props.onDelete}
-        >
-          <IconSVG
-            name="icon-close"
-          />
+        <span className="fa fa-fw delete-workspace float-xs-right" onClick={this.props.onDelete}>
+          <IconSVG name="icon-close" />
         </span>
       </div>
     );
@@ -138,5 +112,5 @@ export default class WorkspaceTab extends Component {
 WorkspaceTab.propTypes = {
   workspace: PropTypes.object,
   active: PropTypes.bool,
-  onDelete: PropTypes.func
+  onDelete: PropTypes.func,
 };

@@ -18,24 +18,24 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import IconSVG from 'components/IconSVG';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import {
   handleModelsPageChange,
   handleModelsSorting,
   setActiveModel,
   setExperimentDetailError,
-  getModelStatus
+  getModelStatus,
 } from 'components/Experiments/store/ExperimentDetailActionCreator';
-import {getAlgorithmLabel} from 'components/Experiments/store/SharedActionCreator';
-import {humanReadableDate, roundDecimalToNDigits} from 'services/helpers';
-import {NUMBER_TYPES} from 'services/global-constants';
+import { getAlgorithmLabel } from 'components/Experiments/store/SharedActionCreator';
+import { humanReadableDate, roundDecimalToNDigits } from 'services/helpers';
+import { NUMBER_TYPES } from 'services/global-constants';
 import classnames from 'classnames';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {objectQuery, humanReadableNumber, HUMANREADABLE_DECIMAL} from 'services/helpers';
+import { objectQuery, humanReadableNumber, HUMANREADABLE_DECIMAL } from 'services/helpers';
 import isEmpty from 'lodash/isEmpty';
 import ModelStatusIndicator from 'components/Experiments/DetailedView/ModelStatusIndicator';
-import {Link} from 'react-router-dom';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { Link } from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import DeleteModelBtn from 'components/Experiments/DetailedView/DeleteModelBtn';
 import DeleteExperimentBtn from 'components/Experiments/DetailedView/DeleteExperimentBtn';
 import HyperParamsPopover from 'components/Experiments/DetailedView/HyperParamsPopover';
@@ -46,7 +46,7 @@ import CopyableID from 'components/CopyableID';
 import CollapsibleWrapper from 'components/CollapsibleWrapper';
 import LoadingSVG from 'components/LoadingSVG';
 import Alert from 'components/Alert';
-import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
+import { MODEL_STATUS } from 'components/Experiments/store/ModelStatus';
 import PredictionDatasetExploreModal from 'components/Experiments/DetailedView/PredictionDatasetExploreModal';
 import AddModelToPipelineBtn from 'components/Experiments/DetailedView/AddModelToPipelineBtn';
 import T from 'i18n-react';
@@ -58,96 +58,91 @@ const MODELSTATES = [
   MODEL_STATUS.PREPARING,
   MODEL_STATUS.SPLITTING,
   MODEL_STATUS.DATA_READY,
-  MODEL_STATUS.SPLIT_FAILED
+  MODEL_STATUS.SPLIT_FAILED,
 ];
 let tableHeaders = [
   {
     label: T.translate(`${PREFIX}.modelName`),
-    property: 'name'
+    property: 'name',
   },
   {
     label: T.translate(`${PREFIX}.status`),
-    property: 'status'
+    property: 'status',
   },
   {
     label: T.translate(`${PREFIX}.algorithm`),
-    property: 'algorithm'
-  }
+    property: 'algorithm',
+  },
 ];
 
 const regressionMetrics = [
   {
     label: T.translate(`${PREFIX}.rmse`),
-    property: 'rmse'
+    property: 'rmse',
   },
   {
     label: T.translate(`${PREFIX}.r2`),
-    property: 'r2'
+    property: 'r2',
   },
   {
     label: T.translate(`${PREFIX}.evariance`),
-    property: 'evariance'
+    property: 'evariance',
   },
   {
     label: T.translate(`${PREFIX}.mae`),
-    property: 'mae'
+    property: 'mae',
   },
 ];
 
 const categoricalMetrics = [
   {
     label: T.translate(`${PREFIX}.precision`),
-    property: 'precision'
+    property: 'precision',
   },
   {
     label: T.translate(`${PREFIX}.recall`),
-    property: 'recall'
+    property: 'recall',
   },
   {
     label: T.translate(`${PREFIX}.f1`),
-    property: 'f1'
+    property: 'f1',
   },
 ];
 
-const addMetricsToHeaders = (tableHeaders, metrics) => ([
+const addMetricsToHeaders = (tableHeaders, metrics) => [
   ...tableHeaders.slice(0, tableHeaders.length),
   ...metrics,
-  ...tableHeaders.slice(tableHeaders.length)
-]);
+  ...tableHeaders.slice(tableHeaders.length),
+];
 
-const getNewHeadersBasedOnOutcome = (outcomeType) => (
-  NUMBER_TYPES.indexOf(outcomeType) !== -1 ?
-    addMetricsToHeaders(tableHeaders, regressionMetrics)
-  :
-    addMetricsToHeaders(tableHeaders, categoricalMetrics)
-);
+const getNewHeadersBasedOnOutcome = (outcomeType) =>
+  NUMBER_TYPES.indexOf(outcomeType) !== -1
+    ? addMetricsToHeaders(tableHeaders, regressionMetrics)
+    : addMetricsToHeaders(tableHeaders, categoricalMetrics);
 
 const addDetailedModelObject = (list) => {
-  let activeIndex = list.findIndex(model => model.active);
+  let activeIndex = list.findIndex((model) => model.active);
   if (activeIndex !== -1) {
     return [
       ...list.slice(0, activeIndex + 1),
       {
         ...list[activeIndex],
         detailedView: true,
-        active: false
+        active: false,
       },
-      ...list.slice(activeIndex + 1)
+      ...list.slice(activeIndex + 1),
     ];
   }
   return list;
 };
 
 const wrapContentWithTitleAttr = (content, key) => (
-  <div
-    title={isNumber(content) || isString(content) ? content : ''}
-    key={key}
-  >
+  <div title={isNumber(content) || isString(content) ? content : ''} key={key}>
     {content}
   </div>
 );
 const wrapMetricWithTitleAttr = (content, property) => {
-  const ROUNDABLE_METRIC = regressionMetrics.map(metric => metric.property);
+  const ROUNDABLE_METRIC = regressionMetrics.map((metric) => metric.property);
   if (ROUNDABLE_METRIC.indexOf(property) !== -1) {
     return wrapContentWithTitleAttr(
       humanReadableNumber(roundDecimalToNDigits(content, 4), HUMANREADABLE_DECIMAL),
@@ -160,7 +155,9 @@ const renderMetrics = (newHeaders, model) => {
   let commonHeadersLen = tableHeaders.length;
   let len = newHeaders.length;
   let metrics = newHeaders.slice(commonHeadersLen, len);
-  return metrics.map(t => wrapMetricWithTitleAttr(model.evaluationMetrics[t.property] || '--', t.property));
+  return metrics.map((t) =>
+    wrapMetricWithTitleAttr(model.evaluationMetrics[t.property] || '--', t.property)
+  );
 };
 
 const renderFeaturesTable = (features) => {
@@ -173,7 +170,12 @@ const renderFeaturesTable = (features) => {
           </div>
         </div>
         <div className="grid-body">
-          {features.map(feature => (<div key={feature} className="grid-row"> {feature}</div>))}
+          {features.map((feature) => (
+            <div key={feature} className="grid-row">
+              {' '}
+              {feature}
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -196,7 +198,12 @@ const renderDirectivesTables = (directives) => {
           </div>
         </div>
         <div className="grid-body">
-          {directives.map((directive, i) => (<div key={i} className="grid-row"> {directive}</div>))}
+          {directives.map((directive, i) => (
+            <div key={i} className="grid-row">
+              {' '}
+              {directive}
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -207,10 +214,12 @@ const constructModelTrainingLogs = (model, experimentId) => {
   let splitId = objectQuery(model, 'splitDetails', 'id');
   let startTime = Math.floor(model.createtime / 1000);
   let endTime = model.trainedtime === -1 ? model.trainingtime : model.trainedtime;
-  endTime = Math.floor( endTime / 1000);
+  endTime = Math.floor(endTime / 1000);
   if (splitId) {
     let baseUrl = `/logviewer/view?namespace=${getCurrentNamespace()}&appId=ModelManagementApp&programType=spark&programId=ModelManagerService`;
-    let queryParams = `&filter=${encodeURIComponent(`MDC:experiment="${experimentId}" AND MDC:model=${model.id}`)}&startTime=${startTime}&endTime=${endTime}`;
+    let queryParams = `&filter=${encodeURIComponent(
+      `MDC:experiment="${experimentId}" AND MDC:model=${model.id}`
+    )}&startTime=${startTime}&endTime=${endTime}`;
     return `${baseUrl}${queryParams}`;
   }
 };
@@ -218,13 +227,13 @@ const constructModelTrainingLogs = (model, experimentId) => {
 const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
   let newlyTrainingModelId = objectQuery(newlyTrainingModel, 'modelId');
   let props = {
-    className: classnames("grid-row", {
-      "opened": model.detailedView,
-      "active": model.active,
-      "highlight": model.id === newlyTrainingModelId,
-      "loading": !model.splitDetails
+    className: classnames('grid-row', {
+      opened: model.detailedView,
+      active: model.active,
+      highlight: model.id === newlyTrainingModelId,
+      loading: !model.splitDetails,
     }),
-    key: uuidV4()
+    key: uuidV4(),
   };
   if (!model.splitDetails) {
     return (
@@ -286,15 +295,15 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
               placement="left"
             />
           </div>
-          {
-            splitId ?
-              <div>
-                <strong>{T.translate(`${PREFIX}.modelTrainingLogs`)}</strong>
-                <a href={modelTrainingLogsUrl} target="_blank"> Logs </a>
-              </div>
-            :
-              null
-          }
+          {splitId ? (
+            <div>
+              <strong>{T.translate(`${PREFIX}.modelTrainingLogs`)}</strong>
+              <a href={modelTrainingLogsUrl} target="_blank">
+                {' '}
+                Logs{' '}
+              </a>
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="model-action-btns">
@@ -312,22 +321,31 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
   );
 };
 
-const renderModel = (model, outcomeType, experimentId, newlyTrainingModel, statusIsLoading, statusIsError) => {
+const renderModel = (
+  model,
+  outcomeType,
+  experimentId,
+  newlyTrainingModel,
+  statusIsLoading,
+  statusIsError
+) => {
   let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
   let newlyTrainingModelId = objectQuery(newlyTrainingModel, 'modelId');
   let Component = 'div';
   let props = {
-    className: classnames("grid-row grid-link", {
-      "opened": model.detailedView,
-      "active": model.active,
-      "highlight": model.id === newlyTrainingModelId
+    className: classnames('grid-row grid-link', {
+      opened: model.detailedView,
+      active: model.active,
+      highlight: model.id === newlyTrainingModelId,
     }),
-    key: uuidV4()
+    key: uuidV4(),
   };
-  let inSplitStep = (MODELSTATES.indexOf(model.status) !== -1);
+  let inSplitStep = MODELSTATES.indexOf(model.status) !== -1;
   if (inSplitStep) {
     Component = Link;
-    props.to = `/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}&modelId=${model.id}`;
+    props.to = `/ns/${getCurrentNamespace()}/experiments/create?experimentId=${experimentId}&modelId=${
+      model.id
+    }`;
   }
 
   const modelStatusComp = () => {
@@ -343,14 +361,13 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel, statu
   };
 
   return (
-    <Component
-      {...props}
-      onClick={setActiveModel.bind(null, model.id)}
-    >
-      {wrapContentWithTitleAttr(<IconSVG name={model.active ? "icon-caret-down" : "icon-caret-right"} />)}
+    <Component {...props} onClick={setActiveModel.bind(null, model.id)}>
+      {wrapContentWithTitleAttr(
+        <IconSVG name={model.active ? 'icon-caret-down' : 'icon-caret-right'} />
+      )}
       {wrapContentWithTitleAttr(model.name)}
       {wrapContentWithTitleAttr(modelStatusComp())}
-      {wrapContentWithTitleAttr((
+      {wrapContentWithTitleAttr(
         !inSplitStep ? (
           <span className="algorithm-cell" title={model.algorithmLabel}>
             <HyperParamsPopover
@@ -358,31 +375,37 @@ const renderModel = (model, outcomeType, experimentId, newlyTrainingModel, statu
               algorithm={model.algorithm}
             />
             <span>{model.algorithmLabel}</span>
-          </span>)
-        : '--'
-      ))}
+          </span>
+        ) : (
+          '--'
+        )
+      )}
       {renderMetrics(newHeaders, model, experimentId)}
       {
         <div className="grid-item-sm">
-          <DeleteModelBtn
-            experimentId={experimentId}
-            model={model}
-          />
+          <DeleteModelBtn experimentId={experimentId} model={model} />
         </div>
       }
     </Component>
   );
 };
 
-function renderGridBody(models, outcomeType, experimentId, newlyTrainingModel, modelsLoading, modelsWithError) {
+function renderGridBody(
+  models,
+  outcomeType,
+  experimentId,
+  newlyTrainingModel,
+  modelsLoading,
+  modelsWithError
+) {
   let list = addDetailedModelObject([...models]);
   return list.map((model) => {
-    let {name, algorithm, hyperparameters} = model;
+    let { name, algorithm, hyperparameters } = model;
     model = {
       ...model,
       name,
       algorithmLabel: getAlgorithmLabel(algorithm),
-      hyperparameters
+      hyperparameters,
     };
     let statusIsLoading = modelsLoading.indexOf(model.id) !== -1;
     let statusIsError = modelsWithError.indexOf(model.id) !== -1;
@@ -390,47 +413,70 @@ function renderGridBody(models, outcomeType, experimentId, newlyTrainingModel, m
     if (model.detailedView) {
       return renderModelDetails(model, newlyTrainingModel, experimentId);
     }
-    return renderModel(model, outcomeType, experimentId, newlyTrainingModel, statusIsLoading, statusIsError);
- });
+    return renderModel(
+      model,
+      outcomeType,
+      experimentId,
+      newlyTrainingModel,
+      statusIsLoading,
+      statusIsError
+    );
+  });
 }
 
-function renderGrid(models, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod, modelsLoading, modelsWithError) {
+function renderGrid(
+  models,
+  outcomeType,
+  experimentId,
+  newlyTrainingModel,
+  modelsSortColumn,
+  modelsSortMethod,
+  modelsLoading,
+  modelsWithError
+) {
   let newHeaders = getNewHeadersBasedOnOutcome(outcomeType);
   const renderSortIcon = (sortMethod) =>
     sortMethod === 'asc' ? <IconSVG name="icon-caret-down" /> : <IconSVG name="icon-caret-up" />;
   return (
-    <div className={classnames("grid grid-container", {
-      "classification": NUMBER_TYPES.indexOf(outcomeType) === -1
-    })}>
+    <div
+      className={classnames('grid grid-container', {
+        classification: NUMBER_TYPES.indexOf(outcomeType) === -1,
+      })}
+    >
       <div className="grid-header">
         <div className="grid-row">
-          <strong></strong>
-          {
-            newHeaders.map(header => {
-              if (modelsSortColumn === header.property) {
-                return (
-                  <strong
-                    onClick={handleModelsSorting.bind(null, header.property)}
-                    className='sortable-header'
-                    key={header.property}
-                  >
-                    <span>{header.label}</span>
-                    { renderSortIcon(modelsSortMethod) }
-                  </strong>
-                );
-              }
+          <strong />
+          {newHeaders.map((header) => {
+            if (modelsSortColumn === header.property) {
               return (
-                <strong key={header.property}>
+                <strong
+                  onClick={handleModelsSorting.bind(null, header.property)}
+                  className="sortable-header"
+                  key={header.property}
+                >
                   <span>{header.label}</span>
+                  {renderSortIcon(modelsSortMethod)}
                 </strong>
               );
-            })
-          }
-          <strong></strong>
+            }
+            return (
+              <strong key={header.property}>
+                <span>{header.label}</span>
+              </strong>
+            );
+          })}
+          <strong />
         </div>
       </div>
       <div className="grid-body">
-        {renderGridBody(models, outcomeType, experimentId, newlyTrainingModel, modelsLoading, modelsWithError)}
+        {renderGridBody(
+          models,
+          outcomeType,
+          experimentId,
+          newlyTrainingModel,
+          modelsLoading,
+          modelsWithError
+        )}
       </div>
     </div>
   );
@@ -448,12 +494,10 @@ function ModelsTableContent({
   modelsSortColumn,
   modelsSortMethod,
   modelsLoading,
-  modelsWithError
+  modelsWithError,
 }) {
   if (loading || isEmpty(experimentId)) {
-    return (
-      <LoadingSVGCentered />
-    );
+    return <LoadingSVGCentered />;
   }
   return (
     <div className="experiment-models-table">
@@ -471,11 +515,20 @@ function ModelsTableContent({
           handlePageChange={handleModelsPageChange}
           currentPage={modelsCurrentPage}
           totalPages={modelsTotalPages}
-          title={T.translate(`${PREFIX}.models`, {context: modelsTotalCount})}
+          title={T.translate(`${PREFIX}.models`, { context: modelsTotalCount })}
         />
       </div>
       <div className="grid-wrapper">
-        {renderGrid(modelsList, outcomeType, experimentId, newlyTrainingModel, modelsSortColumn, modelsSortMethod, modelsLoading, modelsWithError)}
+        {renderGrid(
+          modelsList,
+          outcomeType,
+          experimentId,
+          newlyTrainingModel,
+          modelsSortColumn,
+          modelsSortMethod,
+          modelsLoading,
+          modelsWithError
+        )}
       </div>
     </div>
   );
@@ -493,7 +546,7 @@ ModelsTableContent.propTypes = {
   modelsSortColumn: PropTypes.string,
   newlyTrainingModel: PropTypes.bool,
   modelsLoading: PropTypes.array,
-  modelsWithError: PropTypes.array
+  modelsWithError: PropTypes.array,
 };
 
 const mapStateToProps = (state) => {
@@ -503,38 +556,36 @@ const mapStateToProps = (state) => {
     loading: state.loading,
     outcomeType: state.outcomeType,
     modelsTotalPages: state.modelsTotalPages,
-    modelsCurrentPage: state.modelsOffset === 0 ? 1 : Math.ceil((state.modelsOffset + 1) / state.modelsLimit),
+    modelsCurrentPage:
+      state.modelsOffset === 0 ? 1 : Math.ceil((state.modelsOffset + 1) / state.modelsLimit),
     modelsTotalCount: state.modelsTotalCount,
     newlyTrainingModel: state.newlyTrainingModel,
     modelsSortMethod: state.modelsSortMethod,
     modelsSortColumn: state.modelsSortColumn,
     modelsLoading: state.modelsLoading,
     modelsWithError: state.modelsWithError,
-    error: state.error
+    error: state.error,
   };
 };
 
-function ModelsTable({...props}) {
+function ModelsTable({ ...props }) {
   return (
     <div>
       {ModelsTableContent(props)}
-      {
-        props.error ?
-          <Alert
-            message={props.error}
-            type='error'
-            showAlert={true}
-            onClose={setExperimentDetailError}
-          />
-        :
-          null
-      }
+      {props.error ? (
+        <Alert
+          message={props.error}
+          type="error"
+          showAlert={true}
+          onClose={setExperimentDetailError}
+        />
+      ) : null}
     </div>
   );
 }
 
 ModelsTable.propTypes = {
-  error: PropTypes.any
+  error: PropTypes.any,
 };
 
 const ModelsTableWrapper = connect(mapStateToProps)(ModelsTable);

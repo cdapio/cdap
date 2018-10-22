@@ -21,7 +21,7 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import DatabaseOptions from 'components/DataPrepConnections/DatabaseConnection/DatabaseOptions';
 import DatabaseDetail from 'components/DataPrepConnections/DatabaseConnection/DatabaseDetail';
 import NamespaceStore from 'services/NamespaceStore';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import MyDataPrepApi from 'api/dataprep';
 import find from 'lodash/find';
 import LoadingSVG from 'components/LoadingSVG';
@@ -39,7 +39,7 @@ export default class DatabaseConnection extends Component {
       activeDB: null,
       connInfo: null,
       error: null,
-      loading: false
+      loading: false,
     };
 
     this.add = this.add.bind(this);
@@ -47,70 +47,64 @@ export default class DatabaseConnection extends Component {
 
   componentWillMount() {
     if (this.props.mode !== 'ADD') {
-      this.setState({loading: true});
+      this.setState({ loading: true });
 
       let namespace = NamespaceStore.getState().selectedNamespace;
 
       let params = {
         namespace,
-        connectionId: this.props.connectionId
+        connectionId: this.props.connectionId,
       };
 
       MyDataPrepApi.getConnection(params)
-        .combineLatest(
-          MyDataPrepApi.jdbcDrivers({ namespace }),
-          MyDataPrepApi.jdbcAllowed(params)
-        )
-        .subscribe((res) => {
-          let connInfo = objectQuery(res, 0, 'values', 0);
-          let driverName = connInfo.properties.name;
+        .combineLatest(MyDataPrepApi.jdbcDrivers({ namespace }), MyDataPrepApi.jdbcAllowed(params))
+        .subscribe(
+          (res) => {
+            let connInfo = objectQuery(res, 0, 'values', 0);
+            let driverName = connInfo.properties.name;
 
-          let pluginsList = objectQuery(res, 1, 'values');
+            let pluginsList = objectQuery(res, 1, 'values');
 
-          let matchedPlugin = find(pluginsList, (o) => {
-            return o.properties.name === driverName;
-          });
-
-          if (!matchedPlugin) {
-            this.setState({
-              error: `Cannot find driver ${driverName}`,
-              loading: false
+            let matchedPlugin = find(pluginsList, (o) => {
+              return o.properties.name === driverName;
             });
 
-            return;
+            if (!matchedPlugin) {
+              this.setState({
+                error: `Cannot find driver ${driverName}`,
+                loading: false,
+              });
+
+              return;
+            }
+
+            let pluginAllowed = objectQuery(res, 2, 'values');
+            let matchedPluginAllowed = find(pluginAllowed, (o) => {
+              return o.label === matchedPlugin.label;
+            });
+
+            let dbInfo = matchedPluginAllowed;
+            dbInfo.pluginInfo = matchedPlugin;
+
+            this.setState({
+              connInfo,
+              activeDB: dbInfo,
+              loading: false,
+            });
+          },
+          (err) => {
+            console.log('err', err);
           }
-
-          let pluginAllowed = objectQuery(res, 2, 'values');
-          let matchedPluginAllowed = find(pluginAllowed, (o) => {
-            return o.label === matchedPlugin.label;
-          });
-
-          let dbInfo = matchedPluginAllowed;
-          dbInfo.pluginInfo = matchedPlugin;
-
-          this.setState({
-            connInfo,
-            activeDB: dbInfo,
-            loading: false
-          });
-
-        }, (err) => {
-          console.log('err', err);
-        });
+        );
     }
-
   }
 
   setActiveDB(db) {
-    this.setState({activeDB: db});
+    this.setState({ activeDB: db });
   }
 
   renderDatabaseSelection() {
-    return (
-      <DatabaseOptions
-        onDBSelect={this.setActiveDB.bind(this)}
-      />
-    );
+    return <DatabaseOptions onDBSelect={this.setActiveDB.bind(this)} />;
   }
 
   renderDatabaseDetail() {
@@ -132,7 +126,9 @@ export default class DatabaseConnection extends Component {
   }
 
   render() {
-    let content = this.state.activeDB ? this.renderDatabaseDetail() : this.renderDatabaseSelection();
+    let content = this.state.activeDB
+      ? this.renderDatabaseDetail()
+      : this.renderDatabaseSelection();
 
     if (this.state.loading) {
       content = (
@@ -153,12 +149,12 @@ export default class DatabaseConnection extends Component {
           zIndex="1061"
         >
           <ModalHeader toggle={this.props.close}>
-            {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {connection: this.props.connectionId})}
+            {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {
+              connection: this.props.connectionId,
+            })}
           </ModalHeader>
 
-          <ModalBody>
-            {content}
-          </ModalBody>
+          <ModalBody>{content}</ModalBody>
         </Modal>
       </div>
     );
@@ -169,5 +165,5 @@ DatabaseConnection.propTypes = {
   close: PropTypes.func,
   onAdd: PropTypes.func,
   mode: PropTypes.oneOf(['ADD', 'EDIT', 'DUPLICATE']).isRequired,
-  connectionId: PropTypes.string
+  connectionId: PropTypes.string,
 };

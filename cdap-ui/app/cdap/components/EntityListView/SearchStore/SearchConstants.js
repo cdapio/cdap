@@ -18,58 +18,64 @@ import T from 'i18n-react';
 const DEFAULT_SEARCH_FILTER_OPTIONS = [
   {
     displayName: T.translate('commons.entity.application.plural'),
-    id: 'app'
+    id: 'app',
   },
   {
     displayName: T.translate('commons.entity.artifact.plural'),
-    id: 'artifact'
+    id: 'artifact',
   },
   {
     displayName: T.translate('commons.entity.dataset.plural'),
-    id: 'dataset'
+    id: 'dataset',
   },
   {
     displayName: T.translate('commons.entity.stream.plural'),
-    id: 'stream'
-  }
+    id: 'stream',
+  },
 ];
 
-const DEFAULT_SEARCH_FILTERS = DEFAULT_SEARCH_FILTER_OPTIONS
-  .filter(f => {
-    return f.id !== 'artifact' && f.id !== 'stream';
-  })
-  .map(filter => filter.id);
+const DEFAULT_SEARCH_FILTERS = DEFAULT_SEARCH_FILTER_OPTIONS.filter((f) => {
+  return f.id !== 'artifact' && f.id !== 'stream';
+}).map((filter) => filter.id);
 
 const DEFAULT_SEARCH_SORT_OPTIONS = [
   {
     displayName: T.translate('features.EntityListView.Header.sortOptions.none'),
     sort: 'none',
-    fullSort: 'none'
+    fullSort: 'none',
   },
   {
-    displayName: T.translate('features.EntityListView.Header.sortOptions.entityNameAsc.displayName'),
+    displayName: T.translate(
+      'features.EntityListView.Header.sortOptions.entityNameAsc.displayName'
+    ),
     sort: 'name',
     order: 'asc',
-    fullSort: 'entity-name asc'
+    fullSort: 'entity-name asc',
   },
   {
-    displayName: T.translate('features.EntityListView.Header.sortOptions.entityNameDesc.displayName'),
+    displayName: T.translate(
+      'features.EntityListView.Header.sortOptions.entityNameDesc.displayName'
+    ),
     sort: 'name',
     order: 'desc',
-    fullSort: 'entity-name desc'
+    fullSort: 'entity-name desc',
   },
   {
-    displayName: T.translate('features.EntityListView.Header.sortOptions.creationTimeAsc.displayName'),
+    displayName: T.translate(
+      'features.EntityListView.Header.sortOptions.creationTimeAsc.displayName'
+    ),
     sort: 'creation-time',
     order: 'asc',
-    fullSort: 'creation-time asc'
+    fullSort: 'creation-time asc',
   },
   {
-    displayName: T.translate('features.EntityListView.Header.sortOptions.creationTimeDesc.displayName'),
+    displayName: T.translate(
+      'features.EntityListView.Header.sortOptions.creationTimeDesc.displayName'
+    ),
     sort: 'creation-time',
     order: 'desc',
-    fullSort: 'creation-time desc'
-  }
+    fullSort: 'creation-time desc',
+  },
 ];
 
 const DEFAULT_SEARCH_SORT = DEFAULT_SEARCH_SORT_OPTIONS[4];
@@ -86,5 +92,5 @@ export {
   DEFAULT_SEARCH_SORT,
   DEFAULT_SEARCH_SORT_OPTIONS,
   DEFAULT_SEARCH_QUERY,
-  JUSTADDED_THRESHOLD_TIME
+  JUSTADDED_THRESHOLD_TIME,
 };

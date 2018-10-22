@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import {execute} from 'components/HttpExecutor/store/HttpExecutorActionCreator';
+import { execute } from 'components/HttpExecutor/store/HttpExecutorActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.HttpExecutor';
@@ -23,10 +23,7 @@ const PREFIX = 'features.HttpExecutor';
 export default function SendButton() {
   return (
     <div className="send-button-container text-xs-right">
-      <button
-        className="btn btn-primary"
-        onClick={execute}
-      >
+      <button className="btn btn-primary" onClick={execute}>
         {T.translate(`${PREFIX}.send`)}
       </button>
     </div>

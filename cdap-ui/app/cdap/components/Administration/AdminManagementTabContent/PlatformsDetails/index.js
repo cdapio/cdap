@@ -25,20 +25,20 @@ require('./PlatformDetails.scss');
 
 export default class PlatformsDetails extends Component {
   static propTypes = {
-    platformDetails: PropTypes.object
+    platformDetails: PropTypes.object,
   };
 
   static defaultProps = {
-    platformDetails: {}
+    platformDetails: {},
   };
 
   state = {
-    platformDetails: this.props.platformDetails
+    platformDetails: this.props.platformDetails,
   };
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      platformDetails: nextProps.platformDetails
+      platformDetails: nextProps.platformDetails,
     });
   }
 
@@ -57,13 +57,9 @@ export default class PlatformsDetails extends Component {
           <strong>{T.translate('features.Administration.systemMetrics')}</strong>
         </div>
         <div className="platform-content">
-          <GenericDetails
-            details={this.state.platformDetails}
-          />
+          <GenericDetails details={this.state.platformDetails} />
         </div>
       </div>
-
     );
   }
 }
-

@@ -14,8 +14,8 @@
  * the License.
  */
 
-import {createStore, combineReducers} from 'redux';
-import {defaultAction, composeEnhancers, objectQuery} from 'services/helpers';
+import { createStore, combineReducers } from 'redux';
+import { defaultAction, composeEnhancers, objectQuery } from 'services/helpers';
 
 const Actions = {
   // File
@@ -69,30 +69,30 @@ const Actions = {
   SET_SPANNER_TABLE_LIST: 'SET_SPANNER_TABLE_LIST',
 
   SET_ERROR: 'SET_ERROR',
-  RESET: 'RESET'
+  RESET: 'RESET',
 };
 
-export {Actions};
+export { Actions };
 
 const defaultFileSystemValue = {
   contents: [],
   loading: false,
   path: '',
-  search: ''
+  search: '',
 };
 
 const defaultDatabaseValue = {
   info: {},
   tables: [],
   loading: false,
-  connectionId: ''
+  connectionId: '',
 };
 
 const defaultKafkaValue = {
   info: {},
   topics: [],
   loading: false,
-  connectionId: ''
+  connectionId: '',
 };
 
 const defaultS3Value = {
@@ -102,7 +102,7 @@ const defaultS3Value = {
   truncated: false,
   prefix: '',
   connectionId: '',
-  search: ''
+  search: '',
 };
 
 const defaultGCSValue = {
@@ -112,7 +112,7 @@ const defaultGCSValue = {
   truncated: false,
   prefix: '',
   connectionId: '',
-  search: ''
+  search: '',
 };
 
 const defaultBigQueryValue = {
@@ -121,7 +121,7 @@ const defaultBigQueryValue = {
   connectionId: '',
   datasetId: null,
   datasetList: [],
-  tableList: []
+  tableList: [],
 };
 
 const defaultSpannerValue = {
@@ -132,11 +132,11 @@ const defaultSpannerValue = {
   dabaseId: null,
   instanceList: [],
   databaseList: [],
-  tableList: []
+  tableList: [],
 };
 
 const defaultActiveBrowser = {
-  name: ''
+  name: '',
 };
 
 const defaultError = null;
@@ -153,24 +153,24 @@ const file = (state = defaultFileSystemValue, action = defaultAction) => {
         ...state,
         loading: false,
         contents: action.payload.contents,
-        search: ''
+        search: '',
       };
     case Actions.SET_FILE_SYSTEM_PATH:
       return {
         ...state,
         path: action.payload.path,
-        search: ''
+        search: '',
       };
     case Actions.SET_FILE_SYSTEM_LOADING:
       return {
         ...state,
-        loading: action.payload.loading
+        loading: action.payload.loading,
       };
     case Actions.SET_ERROR:
       return {
         ...state,
         loading: false,
-        search: ''
+        search: '',
       };
     case Actions.RESET:
       return defaultFileSystemValue;
@@ -188,7 +188,7 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
       // This means the user is starting afresh. Reset everything to default and set the connectionID
       return {
         ...defaultDatabaseValue,
-        connectionId: action.payload.connectionId
+        connectionId: action.payload.connectionId,
       };
     }
     case Actions.SET_DATABASE_PROPERTIES:
@@ -197,17 +197,17 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
         connectionId: objectQuery(action, 'payload', 'connectionId'),
         tables: objectQuery(action, 'payload', 'tables'),
         error: null,
-        loading: false
+        loading: false,
       });
     case Actions.SET_DATABASE_LOADING:
       return Object.assign({}, state, {
         loading: action.payload.loading,
-        error: null
+        error: null,
       });
     case Actions.SET_ERROR:
       return {
         ...state,
-        loading: false
+        loading: false,
       };
     case Actions.SET_ACTIVEBROWSER:
       return defaultDatabaseValue;
@@ -227,7 +227,7 @@ const kafka = (state = defaultKafkaValue, action = defaultAction) => {
       // This means the user is starting afresh. Reset everything to default and set the connectionID
       return {
         ...defaultKafkaValue,
-        connectionId: action.payload.connectionId
+        connectionId: action.payload.connectionId,
       };
     }
     case Actions.SET_KAFKA_PROPERTIES:
@@ -236,17 +236,17 @@ const kafka = (state = defaultKafkaValue, action = defaultAction) => {
         connectionId: objectQuery(action, 'payload', 'connectionId'),
         topics: objectQuery(action, 'payload', 'topics'),
         error: null,
-        loading: false
+        loading: false,
       });
     case Actions.SET_KAFKA_LOADING:
       return Object.assign({}, state, {
         loading: action.payload.loading,
-        error: null
+        error: null,
       });
     case Actions.SET_ERROR:
       return {
         ...state,
-        loading: false
+        loading: false,
       };
     case Actions.SET_ACTIVEBROWSER:
       return defaultKafkaValue;
@@ -266,41 +266,41 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
       // This means the user is starting afresh. Reset everything to default and set the connectionID
       return {
         ...defaultS3Value,
-        connectionId: action.payload.connectionId
+        connectionId: action.payload.connectionId,
       };
     }
     case Actions.SET_S3_CONNECTION_DETAILS:
       return {
         ...state,
         info: action.payload.info,
-        error: null
+        error: null,
       };
     case Actions.SET_S3_LOADING:
       return {
         ...state,
-        loading: true
+        loading: true,
       };
     case Actions.SET_S3_ACTIVE_BUCKET_DETAILS:
       return {
         ...state,
         activeBucketDetails: action.payload.activeBucketDetails,
         truncated: action.payload.truncated,
-        loading: false
+        loading: false,
       };
     case Actions.SET_S3_PREFIX:
       return {
         ...state,
-        prefix: action.payload.prefix
+        prefix: action.payload.prefix,
       };
     case Actions.SET_S3_SEARCH:
       return {
         ...state,
-        search: action.payload.search
+        search: action.payload.search,
       };
     case Actions.SET_ERROR:
       return {
         ...state,
-        loading: false
+        loading: false,
       };
     case Actions.SET_ACTIVEBROWSER:
       return defaultS3Value;
@@ -320,41 +320,41 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
       // This means the user is starting afresh. Reset everything to default and set the connectionID
       return {
         ...defaultGCSValue,
-        connectionId: action.payload.connectionId
+        connectionId: action.payload.connectionId,
       };
     }
     case Actions.SET_GCS_CONNECTION_DETAILS:
       return {
         ...state,
         info: action.payload.info,
-        error: null
+        error: null,
       };
     case Actions.SET_GCS_LOADING:
       return {
         ...state,
-        loading: true
+        loading: true,
       };
     case Actions.SET_GCS_ACTIVE_BUCKET_DETAILS:
       return {
         ...state,
         activeBucketDetails: action.payload.activeBucketDetails,
         truncated: action.payload.truncated,
-        loading: false
+        loading: false,
       };
     case Actions.SET_GCS_PREFIX:
       return {
         ...state,
-        prefix: action.payload.prefix
+        prefix: action.payload.prefix,
       };
     case Actions.SET_GCS_SEARCH:
       return {
         ...state,
-        search: action.payload.search
+        search: action.payload.search,
       };
     case Actions.SET_ERROR:
       return {
         ...state,
-        loading: false
+        loading: false,
       };
     case Actions.SET_ACTIVEBROWSER:
       return defaultGCSValue;
@@ -374,26 +374,26 @@ const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
       }
       return {
         ...defaultBigQueryValue,
-        connectionId: action.payload.connectionId
+        connectionId: action.payload.connectionId,
       };
     }
     case Actions.SET_BIGQUERY_CONNECTION_DETAILS:
       return {
         ...state,
         info: action.payload.info,
-        error: null
+        error: null,
       };
     case Actions.SET_BIGQUERY_LOADING:
       return {
         ...state,
-        loading: true
+        loading: true,
       };
     case Actions.SET_BIGQUERY_DATASET_LIST:
       return {
         ...state,
         loading: false,
         datasetList: action.payload.datasetList,
-        datasetId: null
+        datasetId: null,
       };
     case Actions.SET_BIGQUERY_TABLE_LIST:
       return {
@@ -401,12 +401,12 @@ const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
         loading: false,
         datasetList: [],
         datasetId: action.payload.datasetId,
-        tableList: action.payload.tableList
+        tableList: action.payload.tableList,
       };
     case Actions.SET_ERROR:
       return {
         ...state,
-        loading: false
+        loading: false,
       };
     case Actions.SET_ACTIVEBROWSER:
       return defaultBigQueryValue;
@@ -426,26 +426,26 @@ const spanner = (state = defaultSpannerValue, action = defaultAction) => {
       }
       return {
         ...state,
-        connectionId: action.payload.connectionId
+        connectionId: action.payload.connectionId,
       };
     case Actions.SET_SPANNER_CONNECTION_DETAILS:
       return {
         ...state,
         info: action.payload.info,
-        error: null
+        error: null,
       };
     case Actions.SET_SPANNER_LOADING:
       return {
         ...state,
-        loading: true
+        loading: true,
       };
-      case Actions.SET_SPANNER_INSTANCE_LIST:
+    case Actions.SET_SPANNER_INSTANCE_LIST:
       return {
         ...state,
         loading: false,
         instanceList: action.payload.instanceList,
         instanceId: null,
-        databaseId: null
+        databaseId: null,
       };
     case Actions.SET_SPANNER_DATABASE_LIST:
       return {
@@ -454,7 +454,7 @@ const spanner = (state = defaultSpannerValue, action = defaultAction) => {
         instanceList: [],
         instanceId: action.payload.instanceId,
         databaseList: action.payload.databaseList,
-        databaseId: null
+        databaseId: null,
       };
     case Actions.SET_SPANNER_TABLE_LIST:
       return {
@@ -462,12 +462,12 @@ const spanner = (state = defaultSpannerValue, action = defaultAction) => {
         loading: false,
         databaseList: [],
         databaseId: action.payload.databaseId,
-        tableList: action.payload.tableList
+        tableList: action.payload.tableList,
       };
     case Actions.SET_ERROR:
       return {
         ...state,
-        loading: false
+        loading: false,
       };
     case Actions.SET_ACTIVEBROWSER:
       return defaultSpannerValue;
@@ -482,7 +482,7 @@ const activeBrowser = (state = defaultActiveBrowser, action = defaultAction) => 
   switch (action.type) {
     case Actions.SET_ACTIVEBROWSER:
       return Object.assign({}, state, {
-        name: action.payload.name
+        name: action.payload.name,
       });
     default:
       return state;
@@ -508,7 +508,7 @@ const DataPrepBrowserStore = createStore(
     gcs,
     bigquery,
     spanner,
-    error
+    error,
   }),
   {
     file: defaultFileSystemValue,
@@ -519,7 +519,7 @@ const DataPrepBrowserStore = createStore(
     gcs: defaultGCSValue,
     bigquery: defaultBigQueryValue,
     spanner: defaultSpannerValue,
-    error: defaultError
+    error: defaultError,
   },
   composeEnhancers('DataPrepBrowserStore')()
 );

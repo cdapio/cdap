@@ -15,18 +15,18 @@
  */
 
 import React, { Component } from 'react';
-import {Provider} from 'react-redux';
-import {Route, Switch} from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { Route, Switch } from 'react-router-dom';
 import ReportsStore from 'components/Reports/store/ReportsStore';
 import ReportsList from 'components/Reports/ReportsList';
 import ReportsDetail from 'components/Reports/ReportsDetail';
-import {MyReportsApi} from 'api/reports';
+import { MyReportsApi } from 'api/reports';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ReportsServiceControl from 'components/Reports/ReportsServiceControl';
 import ReportsAppDelete from 'components/Reports/ReportsAppDelete';
 import T from 'i18n-react';
 import Helmet from 'react-helmet';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.Reports';
 
@@ -35,7 +35,7 @@ require('./Reports.scss');
 export default class Reports extends Component {
   state = {
     loading: true,
-    isRunning: false
+    isRunning: false,
   };
 
   componentWillMount() {
@@ -43,24 +43,26 @@ export default class Reports extends Component {
   }
 
   checkIfReportsRunning = () => {
-    MyReportsApi.ping()
-      .subscribe(() => {
+    MyReportsApi.ping().subscribe(
+      () => {
         this.setState({
           loading: false,
-          isRunning: true
+          isRunning: true,
         });
-      }, () => {
+      },
+      () => {
         this.setState({
           loading: false,
-          isRunning: false
+          isRunning: false,
         });
-      });
-  }
+      }
+    );
+  };
 
   onServiceStart = () => {
     this.setState({
       loading: false,
-      isRunning: true
+      isRunning: true,
     });
   };
 
@@ -70,11 +72,7 @@ export default class Reports extends Component {
     }
 
     if (!this.state.isRunning) {
-      return (
-        <ReportsServiceControl
-          onServiceStart={this.onServiceStart}
-        />
-      );
+      return <ReportsServiceControl onServiceStart={this.onServiceStart} />;
     }
 
     const featureName = Theme.featureNames.reports;
@@ -82,13 +80,19 @@ export default class Reports extends Component {
     return (
       <Provider store={ReportsStore}>
         <div>
-          <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
-            productName: Theme.productName,
-            featureName
-          })} />
+          <Helmet
+            title={T.translate(`${PREFIX}.pageTitle`, {
+              productName: Theme.productName,
+              featureName,
+            })}
+          />
           <Switch>
             <Route exact path="/ns/:namespace/reports" component={ReportsList} />
-            <Route exact path="/ns/:namespace/reports/details/:reportId" component={ReportsDetail} />
+            <Route
+              exact
+              path="/ns/:namespace/reports/details/:reportId"
+              component={ReportsDetail}
+            />
             <Route exact path="/ns/:namespace/reports/delete-app" component={ReportsAppDelete} />
           </Switch>
         </div>

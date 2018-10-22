@@ -17,8 +17,13 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {getRuleBooks, resetStore, getRules, setActiveRulebook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
-import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
+import {
+  getRuleBooks,
+  resetStore,
+  getRules,
+  setActiveRulebook,
+} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import RulesEngineStore, { RULESENGINEACTIONS } from 'components/RulesEngineHome/RulesEngineStore';
 import RulesEngineAlert from 'components/RulesEngineHome/RulesEngineAlert';
 import NamespaceStore from 'services/NamespaceStore';
 import MyRulesEngineApi from 'api/rulesengine';
@@ -28,27 +33,26 @@ import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import RulesEngineWrapper from 'components/RulesEngineHome/RulesEngineWrapper';
 import isNil from 'lodash/isNil';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.RulesEngine.Home';
 
 export default class RulesEngineHome extends Component {
-
   static propTypes = {
     embedded: PropTypes.bool,
     onApply: PropTypes.func,
-    rulebookid: PropTypes.string
+    rulebookid: PropTypes.string,
   };
 
   static defaultProps = {
-    onApply: () => {}
+    onApply: () => {},
   };
 
   constructor(props) {
     super(props);
     if (this.props.embedded) {
       RulesEngineStore.dispatch({
-        type: RULESENGINEACTIONS.SETINTEGRATIONEMBEDDED
+        type: RULESENGINEACTIONS.SETINTEGRATIONEMBEDDED,
       });
     }
   }
@@ -56,7 +60,7 @@ export default class RulesEngineHome extends Component {
   componentWillReceiveProps(nextProps) {
     if (nextProps.embedded) {
       RulesEngineStore.dispatch({
-        type: RULESENGINEACTIONS.SETINTEGRATIONEMBEDDED
+        type: RULESENGINEACTIONS.SETINTEGRATIONEMBEDDED,
       });
     }
   }
@@ -64,7 +68,7 @@ export default class RulesEngineHome extends Component {
   state = {
     loading: true,
     backendDown: false,
-    embedded: this.props.embedded || false
+    embedded: this.props.embedded || false,
   };
 
   componentDidMount() {
@@ -93,29 +97,27 @@ export default class RulesEngineHome extends Component {
   };
 
   checkIfBackendUp() {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
-    MyRulesEngineApi
-      .ping({namespace})
-      .subscribe(
-        () => {
-          this.setState({
-            loading: false
-          });
-          this.fetchRulesAndRulebooks();
-        },
-        () => {
-          this.setState({
-            backendDown: true,
-            loading: false
-          });
-        }
-      );
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
+    MyRulesEngineApi.ping({ namespace }).subscribe(
+      () => {
+        this.setState({
+          loading: false,
+        });
+        this.fetchRulesAndRulebooks();
+      },
+      () => {
+        this.setState({
+          backendDown: true,
+          loading: false,
+        });
+      }
+    );
   }
 
   onServiceStart = () => {
     this.setState({
       loading: false,
-      backendDown: false
+      backendDown: false,
     });
     this.fetchRulesAndRulebooks();
   };
@@ -126,11 +128,11 @@ export default class RulesEngineHome extends Component {
       <Helmet
         title={T.translate(`${PREFIX}.pageTitle`, {
           productName: Theme.productName,
-          featureName
+          featureName,
         })}
       />
     );
-    const renderPageTitle = () => !this.props.embedded ? pageTitle : null;
+    const renderPageTitle = () => (!this.props.embedded ? pageTitle : null);
     if (this.state.loading) {
       return (
         <div>
@@ -144,9 +146,7 @@ export default class RulesEngineHome extends Component {
       return (
         <div>
           {renderPageTitle()}
-          <RulesEngineServiceControl
-            onServiceStart={this.onServiceStart}
-          />
+          <RulesEngineServiceControl onServiceStart={this.onServiceStart} />
         </div>
       );
     }
@@ -154,7 +154,7 @@ export default class RulesEngineHome extends Component {
     return (
       <div className="rules-engine-home">
         {renderPageTitle()}
-          <RulesEngineWrapper onApply={this.props.onApply}/>
+        <RulesEngineWrapper onApply={this.props.onApply} />
         <RulesEngineAlert />
       </div>
     );

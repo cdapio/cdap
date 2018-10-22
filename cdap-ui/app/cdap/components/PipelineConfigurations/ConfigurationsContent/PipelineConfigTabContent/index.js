@@ -20,32 +20,22 @@ import Instrumentation from 'components/PipelineConfigurations/ConfigurationsCon
 import StageLogging from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/StageLogging';
 import Checkpointing from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/Checkpointing';
 import BatchInterval from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/BatchInterval';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import T from 'i18n-react';
 require('./PipelineConfigTabContent.scss');
 
 const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
-function PipelineConfigTabContent({isBatch}) {
+function PipelineConfigTabContent({ isBatch }) {
   return (
-    <div
-      id="pipeline-config-tab-content"
-      className="configuration-step-content"
-    >
-      <div className="step-content-heading">
-        {T.translate(`${PREFIX}.contentHeading`)}
-      </div>
-      {
-        !isBatch ?
-          (
-            <div>
-              <BatchInterval />
-              <Checkpointing />
-            </div>
-          )
-        :
-          null
-      }
+    <div id="pipeline-config-tab-content" className="configuration-step-content">
+      <div className="step-content-heading">{T.translate(`${PREFIX}.contentHeading`)}</div>
+      {!isBatch ? (
+        <div>
+          <BatchInterval />
+          <Checkpointing />
+        </div>
+      ) : null}
       <Instrumentation />
       <StageLogging />
     </div>
@@ -53,12 +43,12 @@ function PipelineConfigTabContent({isBatch}) {
 }
 
 PipelineConfigTabContent.propTypes = {
-  isBatch: PropTypes.bool
+  isBatch: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {
   return {
-    isBatch: state.pipelineVisualConfiguration.isBatch
+    isBatch: state.pipelineVisualConfiguration.isBatch,
   };
 };
 const ConnectedPipelineConfigTabContent = connect(mapStateToProps)(PipelineConfigTabContent);

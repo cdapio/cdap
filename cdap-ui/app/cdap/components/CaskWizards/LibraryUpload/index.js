@@ -34,7 +34,7 @@ export default class LibraryUploadWizard extends Component {
     super(props);
     this.state = {
       showWizard: this.props.isOpen,
-      successInfo: {}
+      successInfo: {},
     };
     this.eventEmitter = ee(ee);
   }
@@ -42,13 +42,13 @@ export default class LibraryUploadWizard extends Component {
     ArtifactUploadStore.dispatch({
       type: ArtifactUploadActions.setType,
       payload: {
-        type: 'sparkprogram'
-      }
+        type: 'sparkprogram',
+      },
     });
   }
   componentWillUnmount() {
     ArtifactUploadStore.dispatch({
-      type: ArtifactUploadActions.onReset
+      type: ArtifactUploadActions.onReset,
     });
   }
 
@@ -56,11 +56,9 @@ export default class LibraryUploadWizard extends Component {
     if (!this.props.buildSuccessInfo) {
       this.buildSuccessInfo();
     }
-    return ArtifactUploadActionCreator
-      .uploadArtifact()
-      .mergeMap((res) => {
-        this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
-        return res; // needs to return something
+    return ArtifactUploadActionCreator.uploadArtifact().mergeMap((res) => {
+      this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
+      return res; // needs to return something
     });
   }
 
@@ -69,7 +67,7 @@ export default class LibraryUploadWizard extends Component {
       this.props.onClose(returnResult);
     }
     this.setState({
-      showWizard: !this.state.showWizard
+      showWizard: !this.state.showWizard,
     });
   }
 
@@ -77,7 +75,7 @@ export default class LibraryUploadWizard extends Component {
     let state = ArtifactUploadStore.getState();
     let artifactName = state.configure.name;
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let message = T.translate('features.Wizard.LibraryUpload.success', {artifactName});
+    let message = T.translate('features.Wizard.LibraryUpload.success', { artifactName });
     let subtitle = T.translate('features.Wizard.LibraryUpload.subtitle');
     let buttonLabel = T.translate('features.Wizard.LibraryUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
@@ -89,14 +87,14 @@ export default class LibraryUploadWizard extends Component {
         buttonUrl: window.getHydratorUrl({
           stateName: 'hydrator.create',
           stateParams: {
-            namespace
-          }
+            namespace,
+          },
         }),
         linkLabel,
         linkUrl: window.getAbsUIUrl({
-          namespaceId: namespace
-        })
-      }
+          namespaceId: namespace,
+        }),
+      },
     });
   }
   render() {
@@ -104,7 +102,9 @@ export default class LibraryUploadWizard extends Component {
     let pkg = input.package || {};
     let headerLabel = input.headerLabel;
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + (headerLabel ? headerLabel : T.translate('features.Wizard.LibraryUpload.headerlabel'));
+    let wizardModalTitle =
+      (pkg.label ? pkg.label + ' | ' : '') +
+      (headerLabel ? headerLabel : T.translate('features.Wizard.LibraryUpload.headerlabel'));
     return (
       <WizardModal
         title={wizardModalTitle}
@@ -128,15 +128,15 @@ export default class LibraryUploadWizard extends Component {
 LibraryUploadWizard.defaultProps = {
   input: {
     action: {
-      arguments: {}
+      arguments: {},
     },
     package: {},
-  }
+  },
 };
 
 LibraryUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,
-  buildSuccessInfo: PropTypes.func
+  buildSuccessInfo: PropTypes.func,
 };

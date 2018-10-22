@@ -19,39 +19,48 @@ import React from 'react';
 import VegaLiteChart from 'components/VegaLiteChart';
 
 const chartSpec = {
-  "data": {
-    "values": []
+  data: {
+    values: [],
   },
-  "mark": "bar",
-  "encoding": {
-    "column": {
-      "field": "name", "type": "ordinal",
+  mark: 'bar',
+  encoding: {
+    column: {
+      field: 'name',
+      type: 'ordinal',
     },
-    "y": {
-      "field": "count", "type": "quantitative",
-      "axis": {"title": "Count", "grid": false}
+    y: {
+      field: 'count',
+      type: 'quantitative',
+      axis: { title: 'Count', grid: false },
     },
-    "x": {
-      "field": "type", "type": "nominal",
-      "axis": {"title": ""}
+    x: {
+      field: 'type',
+      type: 'nominal',
+      axis: { title: '' },
     },
-    "color": {
-      "field": "type",
-      "type": "nominal"
-    }
+    color: {
+      field: 'type',
+      type: 'nominal',
+    },
   },
-  "config": {
-    "view": {"stroke": "transparent"}
-  }
+  config: {
+    view: { stroke: 'transparent' },
+  },
 };
 
-export default function GroupedBarChart({data, customEncoding = {}, width, heightOffset, tooltipOptions}) {
+export default function GroupedBarChart({
+  data,
+  customEncoding = {},
+  width,
+  heightOffset,
+  tooltipOptions,
+}) {
   let newSpec = {
     ...chartSpec,
-    "encoding": {
+    encoding: {
       ...chartSpec.encoding,
-      ...customEncoding
-    }
+      ...customEncoding,
+    },
   };
   return (
     <VegaLiteChart
@@ -68,13 +77,15 @@ export default function GroupedBarChart({data, customEncoding = {}, width, heigh
 // TODO: Should have options to change axis style. Right now customEncoding has to provide everything.
 // Might be useful if we could identify just the props that we will be changing
 GroupedBarChart.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    type: PropTypes.string,
-    count: PropTypes.number
-  })).isRequired,
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      type: PropTypes.string,
+      count: PropTypes.number,
+    })
+  ).isRequired,
   customEncoding: PropTypes.object,
   width: PropTypes.oneOfType([PropTypes.number, PropTypes.func]),
   heightOffset: PropTypes.number,
-  tooltipOptions:  PropTypes.object
+  tooltipOptions: PropTypes.object,
 };

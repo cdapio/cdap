@@ -14,8 +14,8 @@
  * the License.
 */
 
-import {objectQuery} from 'services/helpers';
-import {GLOBALS} from 'services/global-constants';
+import { objectQuery } from 'services/helpers';
+import { GLOBALS } from 'services/global-constants';
 
 let countUnFilledRequiredFields = (node) => {
   var requiredFieldCount = 0;
@@ -35,7 +35,7 @@ let isRequiredFieldsFilled = (nodes, cb) => {
   if (!objectQuery(nodes, 'length')) {
     return;
   }
-  nodes.forEach( node => {
+  nodes.forEach((node) => {
     let unFilledRequiredFieldsCount = countUnFilledRequiredFields(node);
     let error = 'MISSING-REQUIRED-FIELDS';
     if (unFilledRequiredFieldsCount > 0) {
@@ -52,7 +52,7 @@ let isUniqueNodeNames = (nodes, cb) => {
     return isRuleValid;
   }
   let nodesIdMap = {};
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     let nodeName = node.plugin.label || node.name;
     if (!nodesIdMap[nodeName]) {
       nodesIdMap[nodeName] = [];
@@ -63,7 +63,7 @@ let isUniqueNodeNames = (nodes, cb) => {
     if (nodesIdMap.hasOwnProperty(nodeName)) {
       let nodeArray = nodesIdMap[nodeName];
       if (nodeArray.length > 1) {
-        nodeArray.forEach( function(n) {
+        nodeArray.forEach(function(n) {
           let error = 'DUPLICATE-NAME';
           cb(error, n);
         });
@@ -81,7 +81,7 @@ let hasAtleastOneSource = (nodes, cb) => {
   if (!objectQuery(nodes, 'length')) {
     cb(false);
   }
-  nodes.forEach( node => {
+  nodes.forEach((node) => {
     let type = node.type || node.plugin.type;
     if (GLOBALS.pluginConvert[type] === 'source') {
       countSource++;
@@ -91,8 +91,8 @@ let hasAtleastOneSource = (nodes, cb) => {
     error = 'NO-SOURCE-FOUND';
     cb(error);
     return;
-   }
-   cb(false);
+  }
+  cb(false);
 };
 
 let isNodeNameUnique = (nodeName, nodes, cb) => {
@@ -101,7 +101,7 @@ let isNodeNameUnique = (nodeName, nodes, cb) => {
     return;
   }
   let error;
-  let filteredNames = nodes.filter( node => {
+  let filteredNames = nodes.filter((node) => {
     let name = node.plugin.label || node.name;
     return name === nodeName;
   });
@@ -135,7 +135,7 @@ let hasAtLeastOneSink = (nodes, cb) => {
   if (!objectQuery(nodes, 'length')) {
     cb(false);
   }
-  nodes.forEach( node => {
+  nodes.forEach((node) => {
     let type = node.type || node.plugin.type;
     if (GLOBALS.pluginConvert[type] === 'sink') {
       countSink++;
@@ -160,12 +160,12 @@ let allNodesConnected = (nodes, connections, cb) => {
   let inputConnection = {};
   let outputConnection = {};
 
-  connections.forEach(connection => {
+  connections.forEach((connection) => {
     inputConnection[connection.to] = connection.from;
     outputConnection[connection.from] = connection.to;
   });
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     let type = node.type || node.plugin.type;
     switch (GLOBALS.pluginConvert[type]) {
       case 'source':
@@ -193,7 +193,6 @@ let allNodesConnected = (nodes, connections, cb) => {
 };
 
 let connectionIsValid = (fromNode, toNode, cb) => {
-
   /**
    * Rules:
    *    1. Source & Transform can only connect to Transform, Sink, or Condition
@@ -203,7 +202,7 @@ let connectionIsValid = (fromNode, toNode, cb) => {
    **/
 
   let fromType = GLOBALS.pluginConvert[fromNode.type],
-      toType = GLOBALS.pluginConvert[toNode.type];
+    toType = GLOBALS.pluginConvert[toNode.type];
 
   switch (fromType) {
     case 'source':
@@ -227,20 +226,25 @@ let connectionIsValid = (fromNode, toNode, cb) => {
 
 let allConnectionsValid = (nodes, connections, cb) => {
   let nodesMap = {};
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     nodesMap[node.name] = node;
   });
 
-  connections.forEach(conn => {
+  connections.forEach((conn) => {
     let from = nodesMap[conn.from],
-        to = nodesMap[conn.to];
+      to = nodesMap[conn.to];
 
     connectionIsValid(from, to, cb);
   });
 };
 
 let hasValidArtifact = (importConfig) => {
-  return importConfig.artifact && importConfig.artifact.name.length && importConfig.artifact.version.length && importConfig.artifact.scope.length;
+  return (
+    importConfig.artifact &&
+    importConfig.artifact.name.length &&
+    importConfig.artifact.version.length &&
+    importConfig.artifact.scope.length
+  );
 };
 let hasValidConfig = (importConfig) => {
   return importConfig.config;
@@ -248,14 +252,14 @@ let hasValidConfig = (importConfig) => {
 let hasValidSchedule = (importConfig) => {
   console.log(GLOBALS);
   let isBatchPipeline = GLOBALS.etlBatchPipelines.indexOf(importConfig.artifact.name) !== -1;
-  return !isBatchPipeline? true: importConfig.config.schedule;
+  return !isBatchPipeline ? true : importConfig.config.schedule;
 };
 let hasValidInstance = (importConfig) => {
   let isRealtimePipeline = importConfig.artifact.name === GLOBALS.etlRealtime;
-  return !isRealtimePipeline? true: importConfig.config.instances;
+  return !isRealtimePipeline ? true : importConfig.config.instances;
 };
 let hasValidConnections = (importConfig) => {
-  return importConfig.connections && !importConfig.config.connections? false: true;
+  return importConfig.connections && !importConfig.config.connections ? false : true;
 };
 let hasStages = (importConfig) => {
   return importConfig.config.stages;
@@ -278,25 +282,21 @@ let hasValidNodesConnections = (importConfig) => {
   } else {
     stages = [];
   }
-  stages.forEach( node => nodesMap[node.name] = node);
-  config.connections.forEach( conn => {
+  stages.forEach((node) => (nodesMap[node.name] = node));
+  config.connections.forEach((conn) => {
     isValid = isValid && (nodesMap[conn.from] && nodesMap[conn.to]);
   });
   return isValid;
 };
 let isPipelineResourcesPositive = (resources) => {
   let isPositive = (num) => num > 0;
-  return (isPositive(resources.virtualCores) && isPositive(resources.memoryMB));
+  return isPositive(resources.virtualCores) && isPositive(resources.memoryMB);
 };
 let isInvalidResource = (resources) => {
-  return (
-    !resources ||
-    !resources.virtualCores ||
-    !resources.memoryMB
-  );
+  return !resources || !resources.virtualCores || !resources.memoryMB;
 };
 let hasValidResources = (config, cb) => {
-  let {resources} = config;
+  let { resources } = config;
   if (isInvalidResource(resources)) {
     cb('MISSING-RESOURCES');
   } else if (!isPipelineResourcesPositive(resources)) {
@@ -304,7 +304,7 @@ let hasValidResources = (config, cb) => {
   }
 };
 let hasValidDriverResources = (config, cb) => {
-  let {driverResources} = config;
+  let { driverResources } = config;
   if (isInvalidResource(driverResources)) {
     cb('MISSING-DRIVERRESOURCES');
   } else if (!isPipelineResourcesPositive(driverResources)) {
@@ -312,7 +312,7 @@ let hasValidDriverResources = (config, cb) => {
   }
 };
 let hasValidClientResources = (config, cb) => {
-  let {clientResources} = config;
+  let { clientResources } = config;
   if (isInvalidResource(clientResources)) {
     cb('MISSING-CLIENTRESOURCES');
   } else if (!isPipelineResourcesPositive(clientResources)) {
@@ -337,7 +337,7 @@ let validateImportJSON = (configString) => {
     { fn: hasValidNodesConnections, messagePath: errorPath.concat(['INVALID-NODES-CONNECTIONS']) },
     { fn: hasValidConnections, messagePath: errorPath.concat(['INVALID-CONNECTIONS']) },
     { fn: hasStages, messagePath: errorPath.concat(['NO-STAGES']) },
-    { fn: hasValidStages, messagePath: errorPath.concat(['INVALID-STAGES']) }
+    { fn: hasValidStages, messagePath: errorPath.concat(['INVALID-STAGES']) },
   ];
   let i;
   for (i = 0; i < validations.length; i++) {
@@ -363,5 +363,5 @@ export {
   allNodesConnected,
   allConnectionsValid,
   connectionIsValid,
-  validateImportJSON
+  validateImportJSON,
 };

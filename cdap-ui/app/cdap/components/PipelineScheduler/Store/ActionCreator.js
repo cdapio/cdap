@@ -15,20 +15,20 @@
 */
 
 import moment from 'moment';
-import {isNumeric} from 'services/helpers';
-import {wholeArrayIsNumeric} from 'services/helpers';
+import { isNumeric } from 'services/helpers';
+import { wholeArrayIsNumeric } from 'services/helpers';
 import PipelineSchedulerStore, {
   INTERVAL_OPTIONS,
   SCHEDULE_VIEWS,
   DEFAULT_SCHEDULE_OPTIONS,
-  ACTIONS as PipelineSchedulerActions
+  ACTIONS as PipelineSchedulerActions,
 } from 'components/PipelineScheduler/Store';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import PipelineDetailStore from 'components/PipelineDetails/store';
-import {MyScheduleApi} from 'api/schedule';
-import {MyPreferenceApi} from 'api/preference';
-import {GLOBALS, CLOUD} from 'services/global-constants';
-import {Observable} from 'rxjs/Observable';
+import { MyScheduleApi } from 'api/schedule';
+import { MyPreferenceApi } from 'api/preference';
+import { GLOBALS, CLOUD } from 'services/global-constants';
+import { Observable } from 'rxjs/Observable';
 
 function setStateFromCron(cron = PipelineSchedulerStore.getState().cron) {
   let cronValues = cron.split(' ');
@@ -36,68 +36,106 @@ function setStateFromCron(cron = PipelineSchedulerStore.getState().cron) {
   let converted12HourFormat = moment().hour(parseInt(cronValues[1]), 10);
 
   // Every 5 min
-  if (cronValues[0] === '*/5' && cronValues[1] === '*' && cronValues[2] === '*' && cronValues[3] === '*' && cronValues[4] === '*') {
+  if (
+    cronValues[0] === '*/5' &&
+    cronValues[1] === '*' &&
+    cronValues[2] === '*' &&
+    cronValues[3] === '*' &&
+    cronValues[4] === '*'
+  ) {
     payload = {
       intervalOption: INTERVAL_OPTIONS['5MIN'],
-      minInterval: 5
+      minInterval: 5,
     };
   }
 
   // Every 10 min
-  else if (cronValues[0] === '*/10' && cronValues[1] === '*' && cronValues[2] === '*' && cronValues[3] === '*' && cronValues[4] === '*') {
+  else if (
+    cronValues[0] === '*/10' &&
+    cronValues[1] === '*' &&
+    cronValues[2] === '*' &&
+    cronValues[3] === '*' &&
+    cronValues[4] === '*'
+  ) {
     payload = {
       intervalOption: INTERVAL_OPTIONS['10MIN'],
-      minInterval: 10
+      minInterval: 10,
     };
   }
 
   // Every 30 min
-  else if (cronValues[0] === '*/30' && cronValues[1] === '*' && cronValues[2] === '*' && cronValues[3] === '*' && cronValues[4] === '*') {
+  else if (
+    cronValues[0] === '*/30' &&
+    cronValues[1] === '*' &&
+    cronValues[2] === '*' &&
+    cronValues[3] === '*' &&
+    cronValues[4] === '*'
+  ) {
     payload = {
       intervalOption: INTERVAL_OPTIONS['30MIN'],
-      minInterval: 30
+      minInterval: 30,
     };
   }
 
   // Hourly
-  else if (isNumeric(cronValues[0]) && cronValues[1].indexOf('/') !== -1 && cronValues[2] === '*' && cronValues[3] === '*' && cronValues[4] === '*') {
+  else if (
+    isNumeric(cronValues[0]) &&
+    cronValues[1].indexOf('/') !== -1 &&
+    cronValues[2] === '*' &&
+    cronValues[3] === '*' &&
+    cronValues[4] === '*'
+  ) {
     payload = {
       intervalOption: INTERVAL_OPTIONS.HOURLY,
       startingAtMinute: parseInt(cronValues[0], 10),
-      hourInterval: parseInt(cronValues[1].split('/')[1], 10)
+      hourInterval: parseInt(cronValues[1].split('/')[1], 10),
     };
   }
 
   // Daily
-  else if (wholeArrayIsNumeric(cronValues.slice(0, 2)) && cronValues[2].indexOf('/') !== -1 && cronValues[3] === '*' && cronValues[4] === '*') {
+  else if (
+    wholeArrayIsNumeric(cronValues.slice(0, 2)) &&
+    cronValues[2].indexOf('/') !== -1 &&
+    cronValues[3] === '*' &&
+    cronValues[4] === '*'
+  ) {
     payload = {
       intervalOption: INTERVAL_OPTIONS.DAILY,
       startingAtMinute: parseInt(cronValues[0], 10),
       startingAtHour: parseInt(converted12HourFormat.format('h'), 10),
       startingAtAMPM: converted12HourFormat.format('A'),
-      dayInterval: parseInt(cronValues[2].split('/')[1], 10)
+      dayInterval: parseInt(cronValues[2].split('/')[1], 10),
     };
   }
 
   // Weekly
-  else if (wholeArrayIsNumeric(cronValues.slice(0, 2)) && cronValues[2] === '*' && cronValues[3] === '*' && (cronValues[4].indexOf(',') !== -1 || isNumeric(cronValues[4]))) {
+  else if (
+    wholeArrayIsNumeric(cronValues.slice(0, 2)) &&
+    cronValues[2] === '*' &&
+    cronValues[3] === '*' &&
+    (cronValues[4].indexOf(',') !== -1 || isNumeric(cronValues[4]))
+  ) {
     payload = {
       intervalOption: INTERVAL_OPTIONS.WEEKLY,
       startingAtMinute: parseInt(cronValues[0], 10),
       startingAtHour: parseInt(converted12HourFormat.format('h'), 10),
       startingAtAMPM: converted12HourFormat.format('A'),
-      daysOfWeekInterval: cronValues[4].split(',').map(val => parseInt(val), 10)
+      daysOfWeekInterval: cronValues[4].split(',').map((val) => parseInt(val), 10),
     };
   }
 
   // Monthly
-  else if (wholeArrayIsNumeric(cronValues.slice(0, 3)) && cronValues[3] === '*' && cronValues[4] === '*') {
+  else if (
+    wholeArrayIsNumeric(cronValues.slice(0, 3)) &&
+    cronValues[3] === '*' &&
+    cronValues[4] === '*'
+  ) {
     payload = {
       intervalOption: INTERVAL_OPTIONS.MONTHLY,
       startingAtMinute: parseInt(cronValues[0], 10),
       startingAtHour: parseInt(converted12HourFormat.format('h'), 10),
       startingAtAMPM: converted12HourFormat.format('A'),
-      dateOfMonthInterval: parseInt(cronValues[2], 10)
+      dateOfMonthInterval: parseInt(cronValues[2], 10),
     };
   }
 
@@ -109,14 +147,14 @@ function setStateFromCron(cron = PipelineSchedulerStore.getState().cron) {
       startingAtHour: parseInt(converted12HourFormat.format('h'), 10),
       startingAtAMPM: converted12HourFormat.format('A'),
       dateOfMonthInterval: parseInt(cronValues[2], 10),
-      monthInterval: parseInt(cronValues[3], 10) - 1
+      monthInterval: parseInt(cronValues[3], 10) - 1,
     };
   }
 
   // Not handled in basic mode
   else if (cron !== DEFAULT_SCHEDULE_OPTIONS.cron) {
     payload = {
-      scheduleView: SCHEDULE_VIEWS.ADVANCED
+      scheduleView: SCHEDULE_VIEWS.ADVANCED,
     };
   }
 
@@ -124,14 +162,17 @@ function setStateFromCron(cron = PipelineSchedulerStore.getState().cron) {
     type: PipelineSchedulerActions.SET_STATE,
     payload: {
       ...payload,
-      cron
-    }
+      cron,
+    },
   });
 }
 
 function getCronFromState() {
   let state = PipelineSchedulerStore.getState();
-  let converted24HourFormat = moment(state.startingAtHour.toString() + state.startingAtAMPM, 'hA').format('H');
+  let converted24HourFormat = moment(
+    state.startingAtHour.toString() + state.startingAtAMPM,
+    'hA'
+  ).format('H');
   let cron;
   switch (state.intervalOption) {
     case INTERVAL_OPTIONS['5MIN']:
@@ -150,13 +191,19 @@ function getCronFromState() {
       cron = `${state.startingAtMinute} ${converted24HourFormat} */${state.dayInterval} * *`;
       break;
     case INTERVAL_OPTIONS.WEEKLY:
-      cron = `${state.startingAtMinute} ${converted24HourFormat} * * ${state.daysOfWeekInterval.toString()}`;
+      cron = `${
+        state.startingAtMinute
+      } ${converted24HourFormat} * * ${state.daysOfWeekInterval.toString()}`;
       break;
     case INTERVAL_OPTIONS.MONTHLY:
       cron = `${state.startingAtMinute} ${converted24HourFormat} ${state.dateOfMonthInterval} * *`;
       break;
     case INTERVAL_OPTIONS.YEARLY:
-      cron = `${state.startingAtMinute} ${converted24HourFormat} ${state.dateOfMonthInterval} ${moment().month(state.monthInterval).format('M')} *`;
+      cron = `${state.startingAtMinute} ${converted24HourFormat} ${
+        state.dateOfMonthInterval
+      } ${moment()
+        .month(state.monthInterval)
+        .format('M')} *`;
       break;
   }
 
@@ -168,8 +215,8 @@ function updateCron() {
   PipelineSchedulerStore.dispatch({
     type: PipelineSchedulerActions.SET_CRON,
     payload: {
-      cron
-    }
+      cron,
+    },
   });
 }
 
@@ -178,46 +225,44 @@ function setSelectedProfile(selectedProfile, profileCustomizations = {}) {
     type: PipelineSchedulerActions.SET_SELECTED_PROFILE,
     payload: {
       selectedProfile,
-      profileCustomizations
-    }
+      profileCustomizations,
+    },
   });
 }
 
 function getTimeBasedSchedule() {
-  let {name: appId} = PipelineDetailStore.getState();
+  let { name: appId } = PipelineDetailStore.getState();
   const namespace = getCurrentNamespace();
   const scheduleName = GLOBALS.defaultScheduleId;
 
-  Observable
-    .forkJoin(
-      MyScheduleApi.get({ namespace, appId, scheduleName }),
-      MyPreferenceApi.getAppPreferencesResolved({ namespace, appId })
-    )
-    .subscribe(
-      (res) => {
-        let [currentBackendSchedule, appPrefs] = res;
-        let profileFromPreferences = appPrefs[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY];
-        PipelineSchedulerStore.dispatch({
-          type: PipelineSchedulerActions.SET_CURRENT_BACKEND_SCHEDULE,
-          payload: {
-            currentBackendSchedule,
-            profileFromPreferences
-          }
-        });
-        setStateFromCron();
-      },
-      (err) => {
-        console.log('Failed to fetch dataPipelineSchedule Schedule from backend: ', err);
-      }
-    );
+  Observable.forkJoin(
+    MyScheduleApi.get({ namespace, appId, scheduleName }),
+    MyPreferenceApi.getAppPreferencesResolved({ namespace, appId })
+  ).subscribe(
+    (res) => {
+      let [currentBackendSchedule, appPrefs] = res;
+      let profileFromPreferences = appPrefs[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY];
+      PipelineSchedulerStore.dispatch({
+        type: PipelineSchedulerActions.SET_CURRENT_BACKEND_SCHEDULE,
+        payload: {
+          currentBackendSchedule,
+          profileFromPreferences,
+        },
+      });
+      setStateFromCron();
+    },
+    (err) => {
+      console.log('Failed to fetch dataPipelineSchedule Schedule from backend: ', err);
+    }
+  );
 }
 
 function setScheduleStatus(scheduleStatus) {
   PipelineSchedulerStore.dispatch({
     type: PipelineSchedulerActions.SET_SCHEDULE_STATUS,
     payload: {
-      scheduleStatus
-    }
+      scheduleStatus,
+    },
   });
 }
 
@@ -227,5 +272,5 @@ export {
   getTimeBasedSchedule,
   getCronFromState,
   updateCron,
-  setScheduleStatus
+  setScheduleStatus,
 };

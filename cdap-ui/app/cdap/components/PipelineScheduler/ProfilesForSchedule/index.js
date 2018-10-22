@@ -14,19 +14,19 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {Dropdown, DropdownToggle, DropdownMenu} from 'reactstrap';
-import {setSelectedProfile} from 'components/PipelineScheduler/Store/ActionCreator';
-import {connect} from 'react-redux';
+import { Dropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
+import { setSelectedProfile } from 'components/PipelineScheduler/Store/ActionCreator';
+import { connect } from 'react-redux';
 import StatusMapper from 'services/StatusMapper';
 import ProfilesListView from 'components/PipelineDetails/ProfilesListView';
-import {MyCloudApi} from 'api/cloud';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
-import {preventPropagation} from 'services/helpers';
-import {extractProfileName, isSystemProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
+import { MyCloudApi } from 'api/cloud';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { getProvisionersMap } from 'components/Cloud/Profiles/Store/Provisioners';
+import { preventPropagation } from 'services/helpers';
+import { extractProfileName, isSystemProfile } from 'components/Cloud/Profiles/Store/ActionCreator';
 import T from 'i18n-react';
 require('./ProfilesForSchedule.scss');
 
@@ -37,20 +37,20 @@ class ProfilesForSchedule extends Component {
   static propTypes = {
     selectedProfile: PropTypes.string,
     scheduleStatus: PropTypes.string,
-    profileCustomizations: PropTypes.object
+    profileCustomizations: PropTypes.object,
   };
 
   static defaultProps = {
     selectedProfile: null,
-    profileCustomizations: {}
-  }
+    profileCustomizations: {},
+  };
   state = {
     scheduleDetails: null,
     provisionersMap: {},
     profileDetails: {},
     selectedProfile: this.props.selectedProfile,
     profileCustomizations: this.props.profileCustomizations,
-    openProfilesDropdown: false
+    openProfilesDropdown: false,
   };
 
   componentDidMount() {
@@ -59,17 +59,20 @@ class ProfilesForSchedule extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState({
-      selectedProfile: nextProps.selectedProfile,
-      profileCustomizations: nextProps.profileCustomizations
-    }, () => {
-      this.setProfileDetails();
-    });
+    this.setState(
+      {
+        selectedProfile: nextProps.selectedProfile,
+        profileCustomizations: nextProps.profileCustomizations,
+      },
+      () => {
+        this.setProfileDetails();
+      }
+    );
   }
 
   toggleProfileDropdown = (e) => {
     this.setState({
-      openProfilesDropdown: !this.state.openProfilesDropdown
+      openProfilesDropdown: !this.state.openProfilesDropdown,
     });
     if (typeof e === 'object') {
       preventPropagation(e);
@@ -87,18 +90,17 @@ class ProfilesForSchedule extends Component {
     } else {
       apiObservable$ = MyCloudApi.get({ namespace: getCurrentNamespace(), profile: profileName });
     }
-    apiObservable$
-      .subscribe(profileDetails => {
-        this.setState({
-          profileDetails
-        });
+    apiObservable$.subscribe((profileDetails) => {
+      this.setState({
+        profileDetails,
       });
+    });
   }
 
   setProvisionersMap() {
     getProvisionersMap().subscribe((state) => {
       this.setState({
-        provisionersMap: state.nameToLabelMap
+        provisionersMap: state.nameToLabelMap,
       });
     });
   }
@@ -115,7 +117,7 @@ class ProfilesForSchedule extends Component {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     let selectedProfile = {
       name: this.state.selectedProfile,
-      profileCustomizations: this.state.profileCustomizations
+      profileCustomizations: this.state.profileCustomizations,
     };
     return (
       <ProfilesListView
@@ -125,33 +127,28 @@ class ProfilesForSchedule extends Component {
         selectedProfile={selectedProfile}
       />
     );
-  }
+  };
 
   renderProfilesDropdown = () => {
     let isScheduled = this.props.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     let provisionerLabel;
     if (this.state.selectedProfile) {
-      let {profileDetails = {}} = this.state;
-      let {provisioner = {}} = profileDetails;
-      let {name: provisionerName} = provisioner;
+      let { profileDetails = {} } = this.state;
+      let { provisioner = {} } = profileDetails;
+      let { name: provisionerName } = provisioner;
       provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
     }
 
     const getDropdownToggleLabel = () => {
       if (!this.state.selectedProfile) {
-        return (
-          <span>{T.translate(`${PREFIX}.selectAProfile`)}</span>
-        );
+        return <span>{T.translate(`${PREFIX}.selectAProfile`)}</span>;
       }
       let profileLabel = extractProfileName(this.state.selectedProfile);
       if (provisionerLabel) {
         profileLabel += ` (${provisionerLabel})`;
       }
       return (
-        <span
-          className="dropdown-toggle-label truncate"
-          title={profileLabel}
-        >
+        <span className="dropdown-toggle-label truncate" title={profileLabel}>
           {profileLabel}
         </span>
       );
@@ -164,16 +161,11 @@ class ProfilesForSchedule extends Component {
         isOpen={this.state.openProfilesDropdown}
         toggle={this.toggleProfileDropdown}
       >
-        <DropdownToggle
-          disabled={isScheduled}
-          caret
-        >
+        <DropdownToggle disabled={isScheduled} caret>
           {getDropdownToggleLabel()}
           <IconSVG name="icon-caret-down" />
         </DropdownToggle>
-        <DropdownMenu>
-          { this.renderProfilesTable() }
-        </DropdownMenu>
+        <DropdownMenu>{this.renderProfilesTable()}</DropdownMenu>
       </Dropdown>
     );
   };
@@ -181,12 +173,8 @@ class ProfilesForSchedule extends Component {
   render() {
     return (
       <div className="form-group row">
-        <label className="col-xs-3 control-label">
-          {T.translate(`${PREFIX}.computeProfiles`)}
-        </label>
-        <div className="col-xs-6 schedule-values-container">
-          {this.renderProfilesDropdown()}
-        </div>
+        <label className="col-xs-3 control-label">{T.translate(`${PREFIX}.computeProfiles`)}</label>
+        <div className="col-xs-6 schedule-values-container">{this.renderProfilesDropdown()}</div>
       </div>
     );
   }
@@ -196,7 +184,7 @@ const mapStateToProps = (state) => {
   return {
     selectedProfile: state.profiles.selectedProfile,
     profileCustomizations: state.profiles.profileCustomizations,
-    scheduleStatus: state.scheduleStatus
+    scheduleStatus: state.scheduleStatus,
   };
 };
 

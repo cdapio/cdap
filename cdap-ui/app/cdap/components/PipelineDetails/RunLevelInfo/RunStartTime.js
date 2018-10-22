@@ -16,38 +16,31 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {humanReadableDate} from 'services/helpers';
+import { connect } from 'react-redux';
+import { humanReadableDate } from 'services/helpers';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails';
 
 const mapStateToProps = (state) => {
   return {
-    currentRun: state.currentRun
+    currentRun: state.currentRun,
   };
 };
 
-const RunStartTime = ({currentRun}) => {
+const RunStartTime = ({ currentRun }) => {
   return (
     <div className="run-info-container">
       <div>
         <strong>{T.translate(`${PREFIX}.startTime`)}</strong>
       </div>
-      <span>
-        {
-          currentRun ?
-            `${humanReadableDate(currentRun.starting)}`
-          :
-            '--'
-        }
-      </span>
+      <span>{currentRun ? `${humanReadableDate(currentRun.starting)}` : '--'}</span>
     </div>
   );
 };
 
 RunStartTime.propTypes = {
-  currentRun: PropTypes.object
+  currentRun: PropTypes.object,
 };
 
 const ConnectedRunStartTime = connect(mapStateToProps)(RunStartTime);

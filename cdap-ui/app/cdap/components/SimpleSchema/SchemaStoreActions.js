@@ -17,6 +17,6 @@ const SchemaStoreActions = {
   setFieldName: 'SET-FIELD-NAME',
   setFieldType: 'SET-FIELD-TYPE',
   setFieldIsNullable: 'SET-FIELD-ISNULLABLE',
-  removeField: 'REMOVE-FIELD'
+  removeField: 'REMOVE-FIELD',
 };
 export default SchemaStoreActions;

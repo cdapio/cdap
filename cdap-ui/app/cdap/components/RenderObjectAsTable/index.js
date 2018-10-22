@@ -18,29 +18,25 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 
-const RenderObjectAsTable = ({obj}) => {
+const RenderObjectAsTable = ({ obj }) => {
   return (
     <table className="table-borderless">
       <tbody>
-        {
-          Object
-            .keys(obj)
-            .map((node, i) => {
-              return (
-                <tr key={i}>
-                  <td>{node}</td>
-                  <td>{obj[node]}</td>
-                </tr>
-              );
-            })
-        }
+        {Object.keys(obj).map((node, i) => {
+          return (
+            <tr key={i}>
+              <td>{node}</td>
+              <td>{obj[node]}</td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
 };
 
 RenderObjectAsTable.propTypes = {
-  obj: PropTypes.object
+  obj: PropTypes.object,
 };
 
 export default RenderObjectAsTable;

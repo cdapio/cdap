@@ -23,11 +23,11 @@ require('./ShowInfo.scss');
 
 const mapStateWithProps = (state) => {
   return {
-    steps: state.information.steps
+    steps: state.information.steps,
   };
 };
 
-let StepsList = ({steps}) => {
+let StepsList = ({ steps }) => {
   function createMarkup(content) {
     return { __html: content };
   }
@@ -37,27 +37,23 @@ let StepsList = ({steps}) => {
     return step.replace(regex, (url) => {
       let anchorLink = document.createElement('a');
       anchorLink.href = url;
-      return `<a href="${url}" title="${url}" target="_blank"> ${anchorLink.hostname.replace(/^www./g, '')} </a>`;
+      return `<a href="${url}" title="${url}" target="_blank"> ${anchorLink.hostname.replace(
+        /^www./g,
+        ''
+      )} </a>`;
     });
   });
 
   return (
     <ul className="list-unstyled info-list">
-      {
-        urlifiedSteps.map((step, index) => {
-          return (
-            <li key={index}>
-              <span className="step-number">
-                {index + 1}
-              </span>
-              <span
-                className="step-text"
-                dangerouslySetInnerHTML={createMarkup(step)}
-              />
-            </li>
-          );
-        })
-      }
+      {urlifiedSteps.map((step, index) => {
+        return (
+          <li key={index}>
+            <span className="step-number">{index + 1}</span>
+            <span className="step-text" dangerouslySetInnerHTML={createMarkup(step)} />
+          </li>
+        );
+      })}
     </ul>
   );
 };

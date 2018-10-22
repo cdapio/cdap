@@ -16,15 +16,15 @@
 import React from 'react';
 import PublishPipelineStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
 import PublishPipelineAction from 'services/WizardStores/PublishPipeline/PublishPipelineActions';
-import {connect, Provider} from 'react-redux';
-import {Input, Form, FormGroup, Col, Label} from 'reactstrap';
+import { connect, Provider } from 'react-redux';
+import { Input, Form, FormGroup, Col, Label } from 'reactstrap';
 import T from 'i18n-react';
 require('./MetadataStep.scss');
 
 const mapStateToPipelineNameProps = (state) => {
   return {
     value: state.pipelinemetadata.name,
-    placeholder: T.translate('features.Wizard.PublishPipeline.pipelinenameplaceholder')
+    placeholder: T.translate('features.Wizard.PublishPipeline.pipelinenameplaceholder'),
   };
 };
 const mapDispatchToPipelineProps = (dispatch) => {
@@ -33,10 +33,10 @@ const mapDispatchToPipelineProps = (dispatch) => {
       dispatch({
         type: PublishPipelineAction.setPipelineName,
         payload: {
-          name: e.target.value
-        }
+          name: e.target.value,
+        },
       });
-    }
+    },
   };
 };
 
@@ -50,7 +50,10 @@ export default function MetadataStep() {
     <Provider store={PublishPipelineStore}>
       <Form
         className="form-horizontal pipeline-publish-metadata-step"
-        onSubmit={(e) => {e.stopPropagation(); e.preventDefault();}}
+        onSubmit={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
       >
         <FormGroup row>
           <Col xs="3">

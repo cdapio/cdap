@@ -22,11 +22,11 @@ import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
-import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
-import {objectQuery} from 'services/helpers';
+import CardActionFeedback, { CARD_ACTION_TYPES } from 'components/CardActionFeedback';
+import { objectQuery } from 'services/helpers';
 import BtnWithLoading from 'components/BtnWithLoading';
 import ee from 'event-emitter';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 const PREFIX = 'features.DataPrepConnections.AddConnections.S3';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
 
@@ -36,64 +36,64 @@ const INPUT_COL_CLASS = 'col-xs-8';
 const REGIONS = [
   {
     name: '',
-    value: ''
+    value: '',
   },
   {
     name: 'US East (Ohio)',
-    value: 'us-east-2'
+    value: 'us-east-2',
   },
   {
     name: 'US East (N. Virginia)',
-    value: 'us-east-1'
+    value: 'us-east-1',
   },
   {
     name: 'US West (N. California)',
-    value: 'us-west-1'
+    value: 'us-west-1',
   },
   {
     name: 'US West (Oregon)',
-    value: 'us-west-2'
+    value: 'us-west-2',
   },
   {
     name: 'Asia Pacific (Mumbai)',
-    value: 'ap-south-1'
+    value: 'ap-south-1',
   },
   {
     name: 'Asia Pacific (Seoul)',
-    value: 'ap-northeast-2'
+    value: 'ap-northeast-2',
   },
   {
     name: 'Asia Pacific (Singapore)',
-    value: 'ap-southeast-1'
+    value: 'ap-southeast-1',
   },
   {
     name: 'Asia Pacific (Sydney)',
-    value: 'ap-southeast-2'
+    value: 'ap-southeast-2',
   },
   {
     name: 'Asia Pacific (Tokyo)',
-    value: 'ap-northeast-1'
+    value: 'ap-northeast-1',
   },
   {
     name: 'Canada (Central)',
-    value: 'ca-central-1'
+    value: 'ca-central-1',
   },
   {
     name: 'EU (Frankfurt)',
-    value: 'eu-central-1'
+    value: 'eu-central-1',
   },
   {
     name: 'EU (Ireland)',
-    value: 'eu-west-1'
+    value: 'eu-west-1',
   },
   {
     name: 'EU (London)',
-    value: 'eu-west-2'
+    value: 'eu-west-2',
   },
   {
     name: 'South America (São Paulo)',
-    value: 'sa-east-1'
-  }
+    value: 'sa-east-1',
+  },
 ];
 
 require('./S3Connection.scss');
@@ -111,8 +111,8 @@ export default class S3Connection extends Component {
       testConnectionLoading: false,
       connectionResult: {
         type: null,
-        message: null
-      }
+        message: null,
+      },
     };
 
     this.eventEmitter = ee(ee);
@@ -122,23 +122,25 @@ export default class S3Connection extends Component {
   }
 
   componentWillMount() {
-    if (this.props.mode === 'ADD') { return; }
+    if (this.props.mode === 'ADD') {
+      return;
+    }
 
-    this.setState({loading: true});
+    this.setState({ loading: true });
 
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
       namespace,
-      connectionId: this.props.connectionId
+      connectionId: this.props.connectionId,
     };
 
-    MyDataPrepApi.getConnection(params)
-      .subscribe((res) => {
+    MyDataPrepApi.getConnection(params).subscribe(
+      (res) => {
         let info = objectQuery(res, 'values', 0),
-            accessKeyId = objectQuery(info, 'properties', 'accessKeyId'),
-            accessSecretKey = objectQuery(info, 'properties', 'accessSecretKey'),
-            region = objectQuery(info, 'properties', 'region');
+          accessKeyId = objectQuery(info, 'properties', 'accessKeyId'),
+          accessSecretKey = objectQuery(info, 'properties', 'accessSecretKey'),
+          region = objectQuery(info, 'properties', 'region');
 
         let name = this.props.mode === 'EDIT' ? info.name : '';
 
@@ -147,15 +149,17 @@ export default class S3Connection extends Component {
           accessKeyId,
           accessSecretKey,
           region,
-          loading: false
+          loading: false,
         });
-      }, (err) => {
+      },
+      (err) => {
         console.log('failed to fetch connection detail', err);
 
         this.setState({
-          loading: false
+          loading: false,
         });
-      });
+      }
+    );
   }
 
   addConnection() {
@@ -167,21 +171,23 @@ export default class S3Connection extends Component {
       properties: {
         accessKeyId: this.state.accessKeyId,
         accessSecretKey: this.state.accessSecretKey,
-        region: this.state.region
-      }
+        region: this.state.region,
+      },
     };
 
-    MyDataPrepApi.createConnection({namespace}, requestBody)
-      .subscribe(() => {
-        this.setState({error: null});
+    MyDataPrepApi.createConnection({ namespace }, requestBody).subscribe(
+      () => {
+        this.setState({ error: null });
         this.props.onAdd();
         this.props.close();
-      }, (err) => {
+      },
+      (err) => {
         console.log('err', err);
 
         let error = objectQuery(err, 'response', 'message') || objectQuery(err, 'response');
         this.setState({ error });
-      });
+      }
+    );
   }
 
   editConnection() {
@@ -189,7 +195,7 @@ export default class S3Connection extends Component {
 
     let params = {
       namespace,
-      connectionId: this.props.connectionId
+      connectionId: this.props.connectionId,
     };
 
     let requestBody = {
@@ -199,22 +205,24 @@ export default class S3Connection extends Component {
       properties: {
         accessKeyId: this.state.accessKeyId,
         accessSecretKey: this.state.accessSecretKey,
-        region: this.state.region
-      }
+        region: this.state.region,
+      },
     };
 
-    MyDataPrepApi.updateConnection(params, requestBody)
-      .subscribe(() => {
-        this.setState({error: null});
+    MyDataPrepApi.updateConnection(params, requestBody).subscribe(
+      () => {
+        this.setState({ error: null });
         this.eventEmitter.emit('DATAPREP_CONNECTION_EDIT_S3', this.props.connectionId);
         this.props.onAdd();
         this.props.close();
-      }, (err) => {
+      },
+      (err) => {
         console.log('err', err);
 
         let error = objectQuery(err, 'response', 'message') || objectQuery(err, 'response');
         this.setState({ error });
-      });
+      }
+    );
   }
 
   testConnection() {
@@ -222,9 +230,9 @@ export default class S3Connection extends Component {
       testConnectionLoading: true,
       connectionResult: {
         type: null,
-        message: null
+        message: null,
       },
-      error: null
+      error: null,
     });
 
     let namespace = NamespaceStore.getState().selectedNamespace;
@@ -235,42 +243,48 @@ export default class S3Connection extends Component {
       properties: {
         accessKeyId: this.state.accessKeyId,
         accessSecretKey: this.state.accessSecretKey,
-        region: this.state.region
-      }
+        region: this.state.region,
+      },
     };
 
-    MyDataPrepApi.s3TestConnection({namespace}, requestBody)
-      .subscribe((res) => {
+    MyDataPrepApi.s3TestConnection({ namespace }, requestBody).subscribe(
+      (res) => {
         this.setState({
           connectionResult: {
             type: CARD_ACTION_TYPES.SUCCESS,
-            message: res.message
+            message: res.message,
           },
-          testConnectionLoading: false
+          testConnectionLoading: false,
         });
-      }, (err) => {
+      },
+      (err) => {
         console.log('Error testing kafka connection', err);
 
-        let errorMessage = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || T.translate(`${PREFIX}.defaultTestErrorMessage`);
+        let errorMessage =
+          objectQuery(err, 'response', 'message') ||
+          objectQuery(err, 'response') ||
+          T.translate(`${PREFIX}.defaultTestErrorMessage`);
 
         this.setState({
           connectionResult: {
             type: CARD_ACTION_TYPES.DANGER,
-            message: errorMessage
+            message: errorMessage,
           },
-          testConnectionLoading: false
+          testConnectionLoading: false,
         });
-      });
+      }
+    );
   }
 
   handleChange(key, e) {
     this.setState({
-      [key]: e.target.value
+      [key]: e.target.value,
     });
   }
 
   renderTestButton() {
-    let disabled = !this.state.name ||
+    let disabled =
+      !this.state.name ||
       !this.state.accessKeyId ||
       !this.state.accessSecretKey ||
       !this.state.region;
@@ -288,7 +302,8 @@ export default class S3Connection extends Component {
   }
 
   renderAddConnectionButton() {
-    let disabled = !this.state.name ||
+    let disabled =
+      !this.state.name ||
       !this.state.accessKeyId ||
       !this.state.accessSecretKey ||
       !this.state.region;
@@ -301,11 +316,7 @@ export default class S3Connection extends Component {
 
     return (
       <ModalFooter>
-        <button
-          className="btn btn-primary"
-          onClick={onClickFn}
-          disabled={disabled}
-        >
+        <button className="btn btn-primary" onClick={onClickFn} disabled={disabled}>
           {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
         </button>
 
@@ -326,7 +337,6 @@ export default class S3Connection extends Component {
 
     return (
       <div className="s3-detail">
-
         <div className="form">
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
@@ -395,30 +405,26 @@ export default class S3Connection extends Component {
                   value={this.state.region}
                   onChange={this.handleChange.bind(this, 'region')}
                 >
-                  {
-                    REGIONS.map((region) => {
-                      return (
-                        <option
-                          value={region.value}
-                          key={region.value}
-                        >
-                          {region.name} - {region.value}
-                        </option>
-                      );
-                    })
-                  }
+                  {REGIONS.map((region) => {
+                    return (
+                      <option value={region.value} key={region.value}>
+                        {region.name} - {region.value}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     );
   }
 
   renderError() {
-    if (!this.state.error && !this.state.connectionResult.message) { return null; }
+    if (!this.state.error && !this.state.connectionResult.message) {
+      return null;
+    }
 
     if (this.state.error) {
       return (
@@ -433,8 +439,14 @@ export default class S3Connection extends Component {
     const connectionResultType = this.state.connectionResult.type;
     return (
       <CardActionFeedback
-        message={T.translate(`${ADDCONN_PREFIX}.TestConnectionLabels.${connectionResultType.toLowerCase()}`)}
-        extendedMessage={connectionResultType === CARD_ACTION_TYPES.SUCCESS ? null : this.state.connectionResult.message}
+        message={T.translate(
+          `${ADDCONN_PREFIX}.TestConnectionLabels.${connectionResultType.toLowerCase()}`
+        )}
+        extendedMessage={
+          connectionResultType === CARD_ACTION_TYPES.SUCCESS
+            ? null
+            : this.state.connectionResult.message
+        }
         type={connectionResultType}
       />
     );
@@ -452,12 +464,12 @@ export default class S3Connection extends Component {
           zIndex="1061"
         >
           <ModalHeader toggle={this.props.close}>
-            {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {connection: this.props.connectionId})}
+            {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {
+              connection: this.props.connectionId,
+            })}
           </ModalHeader>
 
-          <ModalBody>
-            {this.renderContent()}
-          </ModalBody>
+          <ModalBody>{this.renderContent()}</ModalBody>
 
           {this.renderAddConnectionButton()}
           {this.renderError()}
@@ -471,5 +483,5 @@ S3Connection.propTypes = {
   close: PropTypes.func,
   onAdd: PropTypes.func,
   mode: PropTypes.oneOf(['ADD', 'EDIT', 'DUPLICATE']).isRequired,
-  connectionId: PropTypes.string
+  connectionId: PropTypes.string,
 };

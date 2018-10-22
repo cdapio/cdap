@@ -16,46 +16,37 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 
-const PREFIX = 'features.PipelineDetails.PipelineRuntimeArgsDropdownBtn.RuntimeArgsTabContent.ProvidedPopover';
+const PREFIX =
+  'features.PipelineDetails.PipelineRuntimeArgsDropdownBtn.RuntimeArgsTabContent.ProvidedPopover';
 
 const mapStateToProps = (state, ownProps) => {
   return {
     containsMacros: Object.keys(state.resolvedMacros).length > 0,
     toggleAllProvided: ownProps.toggleAllProvided,
-    disabled: ownProps.disabled
+    disabled: ownProps.disabled,
   };
 };
 
-const ProvidedPopover = ({containsMacros, toggleAllProvided, disabled}) => {
-  if (!containsMacros || disabled) { return null; }
+const ProvidedPopover = ({ containsMacros, toggleAllProvided, disabled }) => {
+  if (!containsMacros || disabled) {
+    return null;
+  }
 
-  const target = (
-    <IconSVG name="icon-caret-square-o-down" />
-  );
+  const target = <IconSVG name="icon-caret-square-o-down" />;
   return (
     <span>
-      <Popover
-        target={() => target}
-        placement="left"
-        className="provided-popover"
-      >
+      <Popover target={() => target} placement="left" className="provided-popover">
         <ul>
-          <li onClick={toggleAllProvided.bind(null, false)}>
-            {T.translate(`${PREFIX}.clearAll`)}
-          </li>
-          <li onClick={toggleAllProvided.bind(null, true)}>
-            {T.translate(`${PREFIX}.selectAll`)}
-          </li>
+          <li onClick={toggleAllProvided.bind(null, false)}>{T.translate(`${PREFIX}.clearAll`)}</li>
+          <li onClick={toggleAllProvided.bind(null, true)}>{T.translate(`${PREFIX}.selectAll`)}</li>
         </ul>
       </Popover>
-      <span className="provided-label">
-        {T.translate(`${PREFIX}.provided`)}
-      </span>
+      <span className="provided-label">{T.translate(`${PREFIX}.provided`)}</span>
     </span>
   );
 };
@@ -63,7 +54,7 @@ const ProvidedPopover = ({containsMacros, toggleAllProvided, disabled}) => {
 ProvidedPopover.propTypes = {
   containsMacros: PropTypes.bool,
   toggleAllProvided: PropTypes.func,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
 };
 
 const ConnectedProvidedPopover = connect(mapStateToProps)(ProvidedPopover);

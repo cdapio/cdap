@@ -18,12 +18,12 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
-import {MyProgramApi} from 'api/program';
+import { MyProgramApi } from 'api/program';
 import FastActionButton from '../FastActionButton';
-import {convertProgramToApi} from 'services/program-api-converter';
+import { convertProgramToApi } from 'services/program-api-converter';
 import ConfirmationModal from 'components/ConfirmationModal';
 import IconSVG from 'components/IconSVG';
-import {Tooltip} from 'reactstrap';
+import { Tooltip } from 'reactstrap';
 import T from 'i18n-react';
 
 export default class StartStopAction extends Component {
@@ -34,7 +34,7 @@ export default class StartStopAction extends Component {
       namespace: NamespaceStore.getState().selectedNamespace,
       appId: this.props.entity.applicationId,
       programType: convertProgramToApi(this.props.entity.programType),
-      programId: this.props.entity.id
+      programId: this.props.entity.id,
     };
 
     this.state = {
@@ -43,7 +43,7 @@ export default class StartStopAction extends Component {
       modal: false,
       tooltipOpen: false,
       errorMessage: '',
-      extendedMessage: ''
+      extendedMessage: '',
     };
 
     this.startStop;
@@ -55,32 +55,31 @@ export default class StartStopAction extends Component {
   tooltipID = `A-${this.props.entity.uniqueId}`;
 
   toggleTooltip() {
-    this.setState({ tooltipOpen : !this.state.tooltipOpen });
+    this.setState({ tooltipOpen: !this.state.tooltipOpen });
   }
   toggleModal() {
     this.setState({
       modal: !this.state.modal,
       errorMessage: '',
-      extendedMessage: ''
+      extendedMessage: '',
     });
   }
 
   componentWillMount() {
-    this.statusPoll$ = MyProgramApi.pollStatus(this.params)
-      .subscribe((res) => {
-        let programStatus = res.status;
-        if (!this.state.modal) {
-          if (programStatus === 'STOPPED') {
-            this.startStop = 'start';
-          } else {
-            this.startStop = 'stop';
-          }
+    this.statusPoll$ = MyProgramApi.pollStatus(this.params).subscribe((res) => {
+      let programStatus = res.status;
+      if (!this.state.modal) {
+        if (programStatus === 'STOPPED') {
+          this.startStop = 'start';
+        } else {
+          this.startStop = 'stop';
         }
-        this.setState({
-          programStatus,
-          actionStatus: ''
-        });
+      }
+      this.setState({
+        programStatus,
+        actionStatus: '',
       });
+    });
   }
 
   componentWillUpdate() {
@@ -103,26 +102,27 @@ export default class StartStopAction extends Component {
     params.action = this.startStop;
 
     this.setState({
-      actionStatus: 'loading'
+      actionStatus: 'loading',
     });
 
-    MyProgramApi.action(params)
-      .subscribe((res) => {
+    MyProgramApi.action(params).subscribe(
+      (res) => {
         this.setState({
-          errorMessage : '',
-          extendedMessage : '',
-          modal: false
+          errorMessage: '',
+          extendedMessage: '',
+          modal: false,
         });
         this.props.onSuccess(res);
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
-          errorMessage : `Program ${this.props.entity.id} failed to ${params.action}`,
-          extendedMessage : err.response,
-          actionStatus: ''
+          errorMessage: `Program ${this.props.entity.id} failed to ${params.action}`,
+          extendedMessage: err.response,
+          actionStatus: '',
         });
-      });
+      }
+    );
   }
-
 
   render() {
     let confirmBtnText;
@@ -134,11 +134,15 @@ export default class StartStopAction extends Component {
     if (this.startStop === 'start') {
       confirmBtnText = 'startConfirmLabel';
       headerText = T.translate('features.FastAction.startProgramHeader');
-      confirmationText = T.translate('features.FastAction.startConfirmation', {entityId: this.props.entity.id});
+      confirmationText = T.translate('features.FastAction.startConfirmation', {
+        entityId: this.props.entity.id,
+      });
     } else {
       confirmBtnText = 'stopConfirmLabel';
       headerText = T.translate('features.FastAction.stopProgramHeader');
-      confirmationText = T.translate('features.FastAction.stopConfirmation', {entityId: this.props.entity.id});
+      confirmationText = T.translate('features.FastAction.stopConfirmation', {
+        entityId: this.props.entity.id,
+      });
     }
     // icon can change in the background, so using state instead of this.startStop
     if (this.state.programStatus === '') {
@@ -156,52 +160,44 @@ export default class StartStopAction extends Component {
 
     return (
       <span className="btn btn-secondary btn-sm">
-        {
-          this.state.modal ? (
-            <ConfirmationModal
-              headerTitle={headerText}
-              toggleModal={this.toggleModal}
-              confirmationText={confirmationText}
-              confirmButtonText={T.translate('features.FastAction.' + confirmBtnText)}
-              confirmFn={this.doStartStop}
-              cancelFn={this.toggleModal}
-              isLoading={this.state.actionStatus === 'loading'}
-              isOpen={this.state.modal}
-              errorMessage={this.state.errorMessage}
-              disableAction={!!this.state.errorMessage}
-              extendedMessage={this.state.extendedMessage}
+        {this.state.modal ? (
+          <ConfirmationModal
+            headerTitle={headerText}
+            toggleModal={this.toggleModal}
+            confirmationText={confirmationText}
+            confirmButtonText={T.translate('features.FastAction.' + confirmBtnText)}
+            confirmFn={this.doStartStop}
+            cancelFn={this.toggleModal}
+            isLoading={this.state.actionStatus === 'loading'}
+            isOpen={this.state.modal}
+            errorMessage={this.state.errorMessage}
+            disableAction={!!this.state.errorMessage}
+            extendedMessage={this.state.extendedMessage}
+          />
+        ) : null}
+        {this.state.actionStatus === 'loading' ? (
+          <button className="btn btn-link" disabled>
+            <IconSVG name="icon-spinner" className="fa-spin" />
+          </button>
+        ) : (
+          <span>
+            <FastActionButton
+              icon={icon}
+              iconClasses={iconClass}
+              action={this.toggleModal}
+              id={this.tooltipID}
             />
-          ) : null
-        }
-        {
-          this.state.actionStatus === 'loading' ? (
-            <button className="btn btn-link" disabled>
-              <IconSVG
-                name="icon-spinner"
-                className="fa-spin"
-              />
-            </button>
-          ) :
-          (
-            <span>
-              <FastActionButton
-                icon={icon}
-                iconClasses={iconClass}
-                action={this.toggleModal}
-                id={this.tooltipID}
-              />
-              <Tooltip
-                placement="top"
-                isOpen={this.state.tooltipOpen}
-                target={this.tooltipID}
-                toggle={this.toggleTooltip}
-                delay={0}
-              >
-                {T.translate(`features.FastAction.${this.startStop}`)}
-              </Tooltip>
-            </span>
-          )
-        }
+            <Tooltip
+              placement="top"
+              isOpen={this.state.tooltipOpen}
+              target={this.tooltipID}
+              toggle={this.toggleTooltip}
+              delay={0}
+            >
+              {T.translate(`features.FastAction.${this.startStop}`)}
+            </Tooltip>
+          </span>
+        )}
       </span>
     );
   }
@@ -212,7 +208,7 @@ StartStopAction.propTypes = {
     id: PropTypes.string.isRequired,
     uniqueId: PropTypes.string,
     applicationId: PropTypes.string.isRequired,
-    programType: PropTypes.string.isRequired
+    programType: PropTypes.string.isRequired,
   }),
-  onSuccess: PropTypes.func
+  onSuccess: PropTypes.func,
 };

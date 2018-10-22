@@ -42,7 +42,17 @@
     "no-await-in-loop": 1,
     "react/no-deprecated": 0,
     "react/jsx-key": 0,
-    "no-useless-escape": 0
+    "no-useless-escape": 0,
+    "prettier/prettier": [
+      "error",
+      {
+        "singleQuote": true,
+        "trailingComma": "es5",
+        "arrowParens": "always",
+        "semi": true,
+        "printWidth": 100
+      }
+    ]
   },
   "env": {
     "browser": true,
@@ -67,7 +77,8 @@
   },
   "plugins": [
     "react",
-    "babel"
+    "babel",
+    "prettier"
   ],
   "extends": [
     "eslint:recommended",

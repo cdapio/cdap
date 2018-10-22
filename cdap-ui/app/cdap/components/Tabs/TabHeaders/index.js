@@ -19,13 +19,9 @@ import React from 'react';
 
 require('./TabHeaders.scss');
 
-export default function TabHeaders({children}) {
-  return (
-    <div className="cask-tab-headers">
-      {children}
-    </div>
-  );
+export default function TabHeaders({ children }) {
+  return <div className="cask-tab-headers">{children}</div>;
 }
 TabHeaders.propTypes = {
-  children: PropTypes.node.isRequired
+  children: PropTypes.node.isRequired,
 };

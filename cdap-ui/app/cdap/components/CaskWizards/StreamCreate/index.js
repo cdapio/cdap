@@ -34,7 +34,7 @@ export default class StreamCreateWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showWizard: this.props.isOpen
+      showWizard: this.props.isOpen,
     };
 
     this.setDefaultConfig();
@@ -47,13 +47,13 @@ export default class StreamCreateWizard extends Component {
         case 'name':
           CreateStreamStore.dispatch({
             type: CreateStreamActions.setName,
-            payload: {name: arg.value}
+            payload: { name: arg.value },
           });
           break;
         case 'description':
           CreateStreamStore.dispatch({
             type: CreateStreamActions.setDescription,
-            payload: {description: arg.value}
+            payload: { description: arg.value },
           });
           break;
       }
@@ -66,17 +66,17 @@ export default class StreamCreateWizard extends Component {
       this.props.onClose(returnResult);
     }
     this.setState({
-      showWizard: !this.state.showWizard
+      showWizard: !this.state.showWizard,
     });
   }
-  componentWillReceiveProps({isOpen}) {
+  componentWillReceiveProps({ isOpen }) {
     this.setState({
-      showWizard: isOpen
+      showWizard: isOpen,
     });
   }
   componentWillUnmount() {
     CreateStreamStore.dispatch({
-      type: CreateStreamActions.onReset
+      type: CreateStreamActions.onReset,
     });
   }
   createStream() {
@@ -85,28 +85,25 @@ export default class StreamCreateWizard extends Component {
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     // FIXME: How to handle empty error messages???
     return PublishStream()
-      .mergeMap(
-        () => {
-          if (this.props.withUploadStep) {
-            // FIXME: I think we can chain this to the next step. TL;DR - will do.
-            let url = `/namespaces/${currentNamespace}/streams/${state.general.name}/batch`;
-            let uploadDataState = UploadDataStore.getState();
-            let fileContents = uploadDataState.viewdata.data;
-            let filename = uploadDataState.viewdata.filename;
-            let filetype = 'text/' + filename.split('.').pop();
-            return UploadDataActionCreator
-              .uploadData({
-                url,
-                fileContents,
-                headers: {
-                  filename,
-                  filetype
-                }
-              });
-          }
-          return Promise.resolve(name);
+      .mergeMap(() => {
+        if (this.props.withUploadStep) {
+          // FIXME: I think we can chain this to the next step. TL;DR - will do.
+          let url = `/namespaces/${currentNamespace}/streams/${state.general.name}/batch`;
+          let uploadDataState = UploadDataStore.getState();
+          let fileContents = uploadDataState.viewdata.data;
+          let filename = uploadDataState.viewdata.filename;
+          let filetype = 'text/' + filename.split('.').pop();
+          return UploadDataActionCreator.uploadData({
+            url,
+            fileContents,
+            headers: {
+              filename,
+              filetype,
+            },
+          });
         }
-      )
+        return Promise.resolve(name);
+      })
       .map((res) => {
         this.eventEmitter.emit(globalEvents.STREAMCREATE);
         return res;
@@ -115,32 +112,32 @@ export default class StreamCreateWizard extends Component {
   render() {
     let input = this.props.input || {};
     let pkg = input.package || {};
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel');
+    let wizardModalTitle =
+      (pkg.label ? pkg.label + ' | ' : '') +
+      T.translate('features.Wizard.StreamCreate.headerlabel');
     return (
       <div>
-        {
-          this.state.showWizard ?
-            // eww..
-            <WizardModal
-              title={wizardModalTitle}
-              isOpen={this.state.showWizard}
-              toggle={this.toggleWizard.bind(this, false)}
-              className="create-stream-wizard"
-            >
-              <Wizard
-                wizardConfig={
-                  this.props.withUploadStep ?
-                    CreateStreamUploadWizardConfig
-                    : CreateStreamWizardConfig
-                  }
-                wizardType="StreamCreate"
-                onSubmit={this.createStream.bind(this)}
-                onClose={this.toggleWizard.bind(this)}
-                store={CreateStreamStore}/>
-            </WizardModal>
-          :
-            null
-        }
+        {this.state.showWizard ? (
+          // eww..
+          <WizardModal
+            title={wizardModalTitle}
+            isOpen={this.state.showWizard}
+            toggle={this.toggleWizard.bind(this, false)}
+            className="create-stream-wizard"
+          >
+            <Wizard
+              wizardConfig={
+                this.props.withUploadStep
+                  ? CreateStreamUploadWizardConfig
+                  : CreateStreamWizardConfig
+              }
+              wizardType="StreamCreate"
+              onSubmit={this.createStream.bind(this)}
+              onClose={this.toggleWizard.bind(this)}
+              store={CreateStreamStore}
+            />
+          </WizardModal>
+        ) : null}
       </div>
     );
   }
@@ -149,5 +146,5 @@ StreamCreateWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,
-  withUploadStep: PropTypes.bool
+  withUploadStep: PropTypes.bool,
 };

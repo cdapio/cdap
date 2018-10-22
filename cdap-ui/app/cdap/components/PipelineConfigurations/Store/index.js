@@ -25,15 +25,22 @@
   (in Studio view) or to PipelineDetailStore (in Detail view)
 */
 
-import {defaultAction, composeEnhancers} from 'services/helpers';
-import {createStore} from 'redux';
-import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
+import { defaultAction, composeEnhancers } from 'services/helpers';
+import { createStore } from 'redux';
+import { HYDRATOR_DEFAULT_VALUES } from 'services/global-constants';
 import range from 'lodash/range';
-import {convertMapToKeyValuePairsObj, keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
-import {getDefaultKeyValuePair} from 'components/KeyValuePairs/KeyValueStore';
+import {
+  convertMapToKeyValuePairsObj,
+  keyValuePairsHaveMissingValues,
+} from 'components/KeyValuePairs/KeyValueStoreActions';
+import { getDefaultKeyValuePair } from 'components/KeyValuePairs/KeyValueStore';
 import uuidV4 from 'uuid/v4';
 import cloneDeep from 'lodash/cloneDeep';
-import {SPARK_EXECUTOR_INSTANCES, SPARK_BACKPRESSURE_ENABLED, ENGINE_OPTIONS} from 'components/PipelineConfigurations/PipelineConfigConstants';
+import {
+  SPARK_EXECUTOR_INSTANCES,
+  SPARK_BACKPRESSURE_ENABLED,
+  ENGINE_OPTIONS,
+} from 'components/PipelineConfigurations/PipelineConfigConstants';
 
 const ACTIONS = {
   INITIALIZE_CONFIG: 'INITIALIZE_CONFIG',
@@ -59,38 +66,37 @@ const ACTIONS = {
   SET_NUM_RECORDS_PREVIEW: 'SET_NUM_RECORDS_PREVIEW',
   SET_MODELESS_OPEN_STATUS: 'SET_MODELESS_OPEN_STATUS',
   SET_PIPELINE_VISUAL_CONFIGURATION: 'SET_PIPELINE_VISUAL_CONFIGURATION',
-  RESET: 'RESET'
+  RESET: 'RESET',
 };
 
 const BATCH_INTERVAL_RANGE = range(1, 61);
 const BATCH_INTERVAL_UNITS = [
   {
     id: 's',
-    value: 'Seconds'
+    value: 'Seconds',
   },
   {
     id: 'm',
-    value: 'Minutes'
+    value: 'Minutes',
   },
 ];
 
 const NUM_EXECUTORS_OPTIONS = range(1, 11);
 
 const DEFAULT_RUNTIME_ARGS = {
-  'pairs': [getDefaultKeyValuePair()]
+  pairs: [getDefaultKeyValuePair()],
 };
 
 const DEFAULT_CONFIGURE_OPTIONS = {
-
   runtimeArgs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   resolvedMacros: {},
   customConfigKeyValuePairs: cloneDeep(DEFAULT_RUNTIME_ARGS),
   postRunActions: [],
   properties: {},
   engine: HYDRATOR_DEFAULT_VALUES.engine,
-  resources: {...HYDRATOR_DEFAULT_VALUES.resources},
-  driverResources: {...HYDRATOR_DEFAULT_VALUES.resources},
-  clientResources: {...HYDRATOR_DEFAULT_VALUES.resources},
+  resources: { ...HYDRATOR_DEFAULT_VALUES.resources },
+  driverResources: { ...HYDRATOR_DEFAULT_VALUES.resources },
+  clientResources: { ...HYDRATOR_DEFAULT_VALUES.resources },
   processTimingEnabled: HYDRATOR_DEFAULT_VALUES.processTimingEnabled,
   stageLoggingEnabled: HYDRATOR_DEFAULT_VALUES.stageLoggingEnabled,
   disableCheckpoints: HYDRATOR_DEFAULT_VALUES.disableCheckpoints,
@@ -110,9 +116,8 @@ const DEFAULT_CONFIGURE_OPTIONS = {
     isBatch: false,
     isHistoricalRun: false,
     isPreview: false,
-    isDetailView: false
-  }
-
+    isDetailView: false,
+  },
 };
 
 const getCustomConfigFromProperties = (properties = {}, isBatch) => {
@@ -121,7 +126,7 @@ const getCustomConfigFromProperties = (properties = {}, isBatch) => {
     backendProperties = [];
   }
   let customConfig = {};
-  Object.keys(properties).forEach(key => {
+  Object.keys(properties).forEach((key) => {
     if (backendProperties.indexOf(key) === -1) {
       customConfig[key] = properties[key];
     }
@@ -154,7 +159,7 @@ const getEngineDisplayLabel = (engine, isBatch) => {
 
 const checkForReset = (runtimeArgs, resolvedMacros) => {
   let runtimeArgsPairs = runtimeArgs.pairs;
-  runtimeArgsPairs.forEach(runtimeArg => {
+  runtimeArgsPairs.forEach((runtimeArg) => {
     if (!runtimeArg.notDeletable) {
       return;
     }
@@ -194,18 +199,18 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
         providedMacros[key] = currentPair.value;
       }
     });
-    currentRuntimeArgs.pairs = currentRuntimeArgs.pairs.filter(keyValuePair => {
+    currentRuntimeArgs.pairs = currentRuntimeArgs.pairs.filter((keyValuePair) => {
       return Object.keys(macrosMap).indexOf(keyValuePair.key) === -1;
     });
   }
-  let macros = Object.keys(macrosMap).map(macroKey => {
+  let macros = Object.keys(macrosMap).map((macroKey) => {
     return {
       key: macroKey,
       value: runtimeArgsMap[macroKey] || '',
       showReset: macrosMap[macroKey].showReset,
       uniqueId: 'id-' + uuidV4(),
       notDeletable: true,
-      provided: providedMacros.hasOwnProperty(macroKey)
+      provided: providedMacros.hasOwnProperty(macroKey),
     };
   });
   currentRuntimeArgs.pairs = macros.concat(currentRuntimeArgs.pairs);
@@ -213,7 +218,9 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
 };
 
 const checkIfMissingKeyValues = (runtimeArguments, customConfig) => {
-  return keyValuePairsHaveMissingValues(runtimeArguments) || keyValuePairsHaveMissingValues(customConfig);
+  return (
+    keyValuePairsHaveMissingValues(runtimeArguments) || keyValuePairsHaveMissingValues(customConfig)
+  );
 };
 
 const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) => {
@@ -222,113 +229,127 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       return {
         ...state,
         ...action.payload,
-        customConfigKeyValuePairs: getCustomConfigForDisplay(action.payload.properties, action.payload.engine, state.pipelineVisualConfiguration.isBatch)
+        customConfigKeyValuePairs: getCustomConfigForDisplay(
+          action.payload.properties,
+          action.payload.engine,
+          state.pipelineVisualConfiguration.isBatch
+        ),
       };
     case ACTIONS.SET_RUNTIME_ARGS:
       return {
         ...state,
         runtimeArgs: checkForReset(action.payload.runtimeArgs, state.resolvedMacros),
-        isMissingKeyValues: checkIfMissingKeyValues(action.payload.runtimeArgs, state.customConfigKeyValuePairs)
+        isMissingKeyValues: checkIfMissingKeyValues(
+          action.payload.runtimeArgs,
+          state.customConfigKeyValuePairs
+        ),
       };
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
       let runtimeArgs = getRuntimeArgsForDisplay(cloneDeep(state.runtimeArgs), resolvedMacros);
-      let isMissingKeyValues = checkIfMissingKeyValues(runtimeArgs, state.customConfigKeyValuePairs);
+      let isMissingKeyValues = checkIfMissingKeyValues(
+        runtimeArgs,
+        state.customConfigKeyValuePairs
+      );
 
       return {
         ...state,
         resolvedMacros,
         runtimeArgs,
-        isMissingKeyValues
+        isMissingKeyValues,
       };
     }
     case ACTIONS.RESET_RUNTIME_ARG_TO_RESOLVED_VALUE:
       return {
         ...state,
-        runtimeArgs: resetRuntimeArgToResolvedValue(action.payload.index, {...state.runtimeArgs}, state.resolvedMacros)
+        runtimeArgs: resetRuntimeArgToResolvedValue(
+          action.payload.index,
+          { ...state.runtimeArgs },
+          state.resolvedMacros
+        ),
       };
     case ACTIONS.SET_ENGINE:
       return {
         ...state,
-        engine: action.payload.engine
+        engine: action.payload.engine,
       };
     case ACTIONS.SET_BATCH_INTERVAL_RANGE:
       return {
         ...state,
-        batchInterval: action.payload.batchIntervalRange + state.batchInterval.slice(-1)
+        batchInterval: action.payload.batchIntervalRange + state.batchInterval.slice(-1),
       };
     case ACTIONS.SET_BATCH_INTERVAL_UNIT:
       return {
         ...state,
-        batchInterval: state.batchInterval.slice(0, -1) + action.payload.batchIntervalUnit
+        batchInterval: state.batchInterval.slice(0, -1) + action.payload.batchIntervalUnit,
       };
     case ACTIONS.SET_MEMORY_MB:
       return {
         ...state,
         resources: {
           ...state.resources,
-          memoryMB: action.payload.memoryMB
-        }
+          memoryMB: action.payload.memoryMB,
+        },
       };
     case ACTIONS.SET_MEMORY_VIRTUAL_CORES:
       return {
         ...state,
         resources: {
           ...state.resources,
-          virtualCores: action.payload.virtualCores
-        }
+          virtualCores: action.payload.virtualCores,
+        },
       };
     case ACTIONS.SET_DRIVER_MEMORY_MB:
       return {
         ...state,
         driverResources: {
           ...state.driverResources,
-          memoryMB: action.payload.memoryMB
-        }
+          memoryMB: action.payload.memoryMB,
+        },
       };
     case ACTIONS.SET_DRIVER_VIRTUAL_CORES:
       return {
         ...state,
         driverResources: {
           ...state.driverResources,
-          virtualCores: action.payload.virtualCores
-        }
+          virtualCores: action.payload.virtualCores,
+        },
       };
     case ACTIONS.SET_CLIENT_MEMORY_MB:
       return {
         ...state,
         clientResources: {
           ...state.clientResources,
-          memoryMB: action.payload.memoryMB
-        }
+          memoryMB: action.payload.memoryMB,
+        },
       };
     case ACTIONS.SET_CLIENT_VIRTUAL_CORES:
       return {
         ...state,
         clientResources: {
           ...state.clientResources,
-          virtualCores: action.payload.virtualCores
-        }
+          virtualCores: action.payload.virtualCores,
+        },
       };
     case ACTIONS.SET_BACKPRESSURE:
       return {
         ...state,
         properties: {
           ...state.properties,
-          'system.spark.spark.streaming.backpressure.enabled': action.payload.backpressure
-        }
+          'system.spark.spark.streaming.backpressure.enabled': action.payload.backpressure,
+        },
       };
     case ACTIONS.SET_CUSTOM_CONFIG_KEY_VALUE_PAIRS:
       return {
         ...state,
         customConfigKeyValuePairs: action.payload.keyValues,
-        isMissingKeyValues: checkIfMissingKeyValues(state.runtimeArgs, action.payload.keyValues)
+        isMissingKeyValues: checkIfMissingKeyValues(state.runtimeArgs, action.payload.keyValues),
       };
     case ACTIONS.SET_CUSTOM_CONFIG: {
       // Need to remove previous custom configs from config.properties before setting new ones
-      let currentProperties = {...state.properties};
+      let currentProperties = { ...state.properties };
       let currentCustomConfigs = getCustomConfigFromProperties(currentProperties);
-      Object.keys(currentCustomConfigs).forEach(customConfigKey => {
+      Object.keys(currentCustomConfigs).forEach((customConfigKey) => {
         if (currentProperties.hasOwnProperty(customConfigKey)) {
           delete currentProperties[customConfigKey];
         }
@@ -336,7 +357,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
 
       // Need to add system.mapreduce or system.spark to beginning of the keys that the user added
       let newCustomConfigs = {};
-      Object.keys(action.payload.customConfig).forEach(newCustomConfigKey => {
+      Object.keys(action.payload.customConfig).forEach((newCustomConfigKey) => {
         let newCustomConfigValue = action.payload.customConfig[newCustomConfigKey];
         if (action.payload.isBatch && state.engine === 'mapreduce') {
           newCustomConfigKey = 'system.mapreduce.' + newCustomConfigKey;
@@ -350,8 +371,8 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         properties: {
           ...currentProperties,
-          ...newCustomConfigs
-        }
+          ...newCustomConfigs,
+        },
       };
     }
     case ACTIONS.SET_NUM_EXECUTORS: {
@@ -360,34 +381,34 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         properties: {
           ...state.properties,
-          [SPARK_EXECUTOR_INSTANCES]: numExecutorsValue
-        }
+          [SPARK_EXECUTOR_INSTANCES]: numExecutorsValue,
+        },
       };
     }
     case ACTIONS.SET_INSTRUMENTATION:
       return {
         ...state,
-        processTimingEnabled: action.payload.instrumentation
+        processTimingEnabled: action.payload.instrumentation,
       };
     case ACTIONS.SET_STAGE_LOGGING:
       return {
         ...state,
-        stageLoggingEnabled: action.payload.stageLogging
+        stageLoggingEnabled: action.payload.stageLogging,
       };
     case ACTIONS.SET_CHECKPOINTING:
       return {
         ...state,
-        disableCheckpoints: action.payload.checkpointing
+        disableCheckpoints: action.payload.checkpointing,
       };
     case ACTIONS.SET_NUM_RECORDS_PREVIEW:
       return {
         ...state,
-        numOfRecordsPreview: action.payload.numRecordsPreview
+        numOfRecordsPreview: action.payload.numRecordsPreview,
       };
     case ACTIONS.SET_MODELESS_OPEN_STATUS:
       return {
         ...state,
-        modelessOpen: action.payload.open
+        modelessOpen: action.payload.open,
       };
     case ACTIONS.RESET:
       return cloneDeep(DEFAULT_CONFIGURE_OPTIONS);
@@ -396,8 +417,8 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         pipelineVisualConfiguration: {
           ...state.pipelineVisualConfiguration,
-          ...action.payload.pipelineVisualConfiguration
-        }
+          ...action.payload.pipelineVisualConfiguration,
+        },
       };
     default:
       return state;
@@ -419,5 +440,5 @@ export {
   ENGINE_OPTIONS,
   DEFAULT_RUNTIME_ARGS,
   getCustomConfigForDisplay,
-  getEngineDisplayLabel
+  getEngineDisplayLabel,
 };

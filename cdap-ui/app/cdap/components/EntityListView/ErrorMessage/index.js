@@ -27,7 +27,7 @@ export default class HomeErrorMessage extends Component {
       errorMessage: this.props.errorMessage || '',
       errorStatusCode: this.props.errorStatusCode || 200,
       retrying: false,
-      retryCounter: this.props.retryCounter
+      retryCounter: this.props.retryCounter,
     };
     this.resetRetryCounter = this.resetRetryCounter.bind(this);
   }
@@ -41,15 +41,18 @@ export default class HomeErrorMessage extends Component {
         errorMessage: nextProps.errorMessage || '',
         errorStatusCode: nextProps.errorStatusCode || 200,
         retrying: false,
-        retryCounter: nextProps.retryCounter
+        retryCounter: nextProps.retryCounter,
       });
     }
   }
   resetRetryCounter() {
-    this.setState({
-      retrying: true,
-      retryCounter: 0
-    }, this.props.onRetry);
+    this.setState(
+      {
+        retrying: true,
+        retryCounter: 0,
+      },
+      this.props.onRetry
+    );
   }
   render() {
     const retryMap = {
@@ -57,12 +60,12 @@ export default class HomeErrorMessage extends Component {
       2: 60,
       3: 120,
       4: 300,
-      5: 600
+      5: 600,
     };
 
     const normalError = (
       <h3 className="text-xs-center empty-message text-danger">
-        <span className="fa fa-exclamation-triangle"></span>
+        <span className="fa fa-exclamation-triangle" />
         <span>{this.state.errorMessage}</span>
       </h3>
     );
@@ -73,26 +76,20 @@ export default class HomeErrorMessage extends Component {
         onClick={this.resetRetryCounter}
         disabled={this.state.retrying ? 'disabled' : false}
       >
-        {
-          this.state.retrying ?
-            T.translate('features.EntityListView.Errors.retrying')
-          :
-            T.translate('features.EntityListView.Errors.retryNow')
-        }
+        {this.state.retrying
+          ? T.translate('features.EntityListView.Errors.retrying')
+          : T.translate('features.EntityListView.Errors.retryNow')}
       </button>
     );
 
     const tryAgainError = (
       <h3 className="text-xs-center empty-message text-danger">
-        <span className="fa fa-exclamation-triangle"></span>
+        <span className="fa fa-exclamation-triangle" />
         <span>
           {T.translate('features.EntityListView.Errors.tryAgain')}
-          <Timer
-            time={retryMap[this.state.retryCounter]}
-            onDone={this.resetRetryCounter}
-          />
+          <Timer time={retryMap[this.state.retryCounter]} onDone={this.resetRetryCounter} />
           {T.translate('features.EntityListView.Errors.secondsLabel')}
-          <br/>
+          <br />
           {retryNow}
         </span>
       </h3>
@@ -100,10 +97,8 @@ export default class HomeErrorMessage extends Component {
 
     const timeOut = (
       <h3 className="text-xs-center empty-message text-danger">
-        <span className="fa fa-exclamation-triangle"></span>
-        <span>
-          {T.translate('features.EntityListView.Errors.timeOut')}
-        </span>
+        <span className="fa fa-exclamation-triangle" />
+        <span>{T.translate('features.EntityListView.Errors.timeOut')}</span>
       </h3>
     );
 
@@ -123,5 +118,5 @@ HomeErrorMessage.propTypes = {
   errorMessage: PropTypes.string,
   errorStatusCode: PropTypes.number,
   onRetry: PropTypes.func,
-  retryCounter: PropTypes.number
+  retryCounter: PropTypes.number,
 };

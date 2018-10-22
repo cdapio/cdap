@@ -23,7 +23,7 @@ require('./UploadStep.scss');
 
 const mapStateToApplicationUploaderProps = (state) => {
   return {
-    file: state.uploadFile.file
+    file: state.uploadFile.file,
   };
 };
 const mapDispatchToApplicationUploadProps = (dispatch) => {
@@ -32,10 +32,10 @@ const mapDispatchToApplicationUploadProps = (dispatch) => {
       dispatch({
         type: ApplicationUploadActions.UPLOAD_JAR,
         payload: {
-          file: e[0]
-        }
+          file: e[0],
+        },
       });
-    }
+    },
   };
 };
 

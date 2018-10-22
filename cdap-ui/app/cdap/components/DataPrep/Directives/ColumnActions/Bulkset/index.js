@@ -17,14 +17,14 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import T from 'i18n-react';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
-import {preventPropagation} from 'services/helpers';
-import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
+import { preventPropagation } from 'services/helpers';
+import CardActionFeedback, { CARD_ACTION_TYPES } from 'components/CardActionFeedback';
 import If from 'components/If';
 
 require('./Bulkset.scss');
@@ -40,7 +40,7 @@ export default class Bulkset extends Component {
       columnNames: '',
       error: null,
       backendError: null,
-      loading: false
+      loading: false,
     };
     this.applyDirective = this.applyDirective.bind(this);
     this.onColumnNamesChange = this.onColumnNamesChange.bind(this);
@@ -56,42 +56,44 @@ export default class Bulkset extends Component {
     let directive = `set columns ${columns}`;
     this.setState({
       loading: true,
-      backendError: null
+      backendError: null,
     });
-    execute([directive], null, true)
-      .subscribe(
-        () => {
-          this.props.onClose();
-        },
-        (err) => {
-          this.setState({
-            loading: false,
-            backendError: err.message || err.response.message || T.translate(`${DATAPREP_PREFIX}.failedApplyDirectiveMessage`)
-          });
-        }
-      );
+    execute([directive], null, true).subscribe(
+      () => {
+        this.props.onClose();
+      },
+      (err) => {
+        this.setState({
+          loading: false,
+          backendError:
+            err.message ||
+            err.response.message ||
+            T.translate(`${DATAPREP_PREFIX}.failedApplyDirectiveMessage`),
+        });
+      }
+    );
   }
   validateSpecialChars(value) {
     let regex = /^[\w\d\\\n,]*$/;
     let obj = {
-      error: null
+      error: null,
     };
     if (!regex.test(value)) {
       obj = Object.assign({}, obj, {
-        error: 'No special characters allowed'
+        error: 'No special characters allowed',
       });
     }
     return obj;
   }
   validateColumnCount(value) {
     let obj = {
-      error: null
+      error: null,
     };
     let headers = DataPrepStore.getState().dataprep.headers;
     let columnNames = value.split(',');
     if (headers.length !== columnNames.length) {
       obj = Object.assign({}, obj, {
-        error: 'Number of columns has to be the same'
+        error: 'Number of columns has to be the same',
       });
     }
     return obj;
@@ -108,13 +110,19 @@ export default class Bulkset extends Component {
     let value = e.target.value;
     value = value.trim();
     let obj = {
-      columnNames: value
+      columnNames: value,
     };
     obj = Object.assign({}, obj, this.validateInput(value));
     this.setState(obj);
   }
   handleKeyPress(e) {
-    if (e.nativeEvent.keyCode !== 13 || !isNil(this.state.error) || isEmpty(this.state.columnNames)) { return; }
+    if (
+      e.nativeEvent.keyCode !== 13 ||
+      !isNil(this.state.error) ||
+      isEmpty(this.state.columnNames)
+    ) {
+      return;
+    }
 
     this.applyDirective();
     preventPropagation(e);
@@ -130,18 +138,11 @@ export default class Bulkset extends Component {
         className="bulkset-columnactions-modal cdap-modal"
       >
         <ModalHeader>
+          <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
 
-          <span>
-            {T.translate(`${PREFIX}.modalTitle`)}
-          </span>
-
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.onClose}
-          >
+          <div className="close-section float-xs-right" onClick={this.props.onClose}>
             <span className="fa fa-times" />
           </div>
-
         </ModalHeader>
         <ModalBody>
           <fieldset disabled={this.state.loading}>
@@ -153,12 +154,9 @@ export default class Bulkset extends Component {
               value={this.state.columnNames}
               onChange={this.onColumnNamesChange}
               onKeyPress={this.handleKeyPress}
-              ref={ref => this.textarea = ref}
-            >
-            </textarea>
-            <div className="text-danger">
-              {this.state.error}
-            </div>
+              ref={(ref) => (this.textarea = ref)}
+            />
+            <div className="text-danger">{this.state.error}</div>
           </fieldset>
         </ModalBody>
         <ModalFooter>
@@ -168,32 +166,23 @@ export default class Bulkset extends Component {
               onClick={this.applyDirective}
               disabled={!isNil(this.state.error) || isEmpty(this.state.columnNames)}
             >
-              {
-                this.state.loading ?
-                  <span className="fa fa-spin fa-spinner"></span>
-                :
-                  null
-              }
-              <span className="apply-label">{T.translate('features.DataPrep.Directives.apply')}</span>
+              {this.state.loading ? <span className="fa fa-spin fa-spinner" /> : null}
+              <span className="apply-label">
+                {T.translate('features.DataPrep.Directives.apply')}
+              </span>
             </button>
-            <button
-              className="btn btn-secondary"
-              onClick={this.props.onClose}
-            >
+            <button className="btn btn-secondary" onClick={this.props.onClose}>
               {T.translate('features.DataPrep.Directives.cancel')}
             </button>
           </fieldset>
         </ModalFooter>
         <If condition={this.state.backendError}>
-          <CardActionFeedback
-            type={CARD_ACTION_TYPES.DANGER}
-            message={this.state.backendError}
-          />
+          <CardActionFeedback type={CARD_ACTION_TYPES.DANGER} message={this.state.backendError} />
         </If>
       </Modal>
     );
   }
 }
 Bulkset.propTypes = {
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
 };

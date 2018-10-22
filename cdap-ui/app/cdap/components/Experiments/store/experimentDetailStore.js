@@ -14,10 +14,10 @@
  * the License.
 */
 
-import {createStore} from 'redux';
-import {composeEnhancers} from 'services/helpers';
-import {defaultAction} from 'services/helpers';
-import {MMDS_SORT_METHODS, MMDS_SORT_COLUMN} from 'components/Experiments/store';
+import { createStore } from 'redux';
+import { composeEnhancers } from 'services/helpers';
+import { defaultAction } from 'services/helpers';
+import { MMDS_SORT_METHODS, MMDS_SORT_COLUMN } from 'components/Experiments/store';
 
 const ACTIONS = {
   SET_EXPERIMENT_DETAILS: 'SET_EXPERIMENT_DETAILS',
@@ -35,7 +35,7 @@ const ACTIONS = {
   SET_ERROR: 'SET_ERROR',
   SET_MODELS_LOADING: 'SET_MODELS_LOADING',
   SET_MODELS_WITH_ERROR: 'SET_MODELS_WITH_ERROR',
-  RESET: 'RESET'
+  RESET: 'RESET',
 };
 
 export const DEFAULT_EXPERIMENT_DETAILS = {
@@ -58,7 +58,7 @@ export const DEFAULT_EXPERIMENT_DETAILS = {
   modelsLoading: [],
   modelsWithError: [],
   loading: false,
-  error: null
+  error: null,
 };
 
 const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultAction) => {
@@ -72,7 +72,7 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
         outcomeType = '',
         evaluationMetrics = {},
         algorithms = {},
-        statuses = {}
+        statuses = {},
       } = action.payload.experimentDetails;
       return {
         ...state,
@@ -83,27 +83,27 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
         outcomeType,
         evaluationMetrics,
         algorithms,
-        statuses
+        statuses,
       };
     }
     case ACTIONS.SET_NEWLY_TRAINING_MODEL:
       return {
         ...state,
-        newlyTrainingModel: action.payload.model
+        newlyTrainingModel: action.payload.model,
       };
     case ACTIONS.RESET_NEWLY_TRAINING_MODEL:
       return {
         ...state,
-        newlyTrainingModel: null
+        newlyTrainingModel: null,
       };
     case ACTIONS.SET_MODELS: {
-      let {models} = action.payload;
+      let { models } = action.payload;
       if (state.newlyTrainingModel) {
-        models = models.map(model => {
+        models = models.map((model) => {
           if (model.id === state.newlyTrainingModel.modelId) {
             return {
               ...model,
-              active: true
+              active: true,
             };
           }
           return model;
@@ -114,14 +114,14 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
         models,
         modelsTotalCount: action.payload.totalCount,
         modelsTotalPages: Math.ceil(action.payload.totalCount / state.modelsLimit),
-        loading: false
+        loading: false,
       };
     }
     case ACTIONS.SET_MODEL_PAGINATION:
       return {
         ...state,
         modelsOffset: action.payload.modelsOffset,
-        modelsLimit: action.payload.modelsLimit || state.modelsLimit
+        modelsLimit: action.payload.modelsLimit || state.modelsLimit,
       };
     case ACTIONS.SET_MODELS_QUERY_PARAMS:
       return {
@@ -129,35 +129,35 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
         modelsOffset: action.payload.modelsOffset,
         modelsLimit: action.payload.modelsLimit || state.modelsLimit,
         modelsSortMethod: action.payload.modelsSortMethod,
-        modelsSortColumn: action.payload.modelsSortColumn
+        modelsSortColumn: action.payload.modelsSortColumn,
       };
     case ACTIONS.SET_ACTIVE_MODEL:
       return {
         ...state,
-        models: state.models.map(model => ({
+        models: state.models.map((model) => ({
           ...model,
           active: !model.active ? model.id === action.payload.activeModelId : !model.active,
-          loading: false
-        }))
+          loading: false,
+        })),
       };
     case ACTIONS.SET_LOADING:
       return {
         ...state,
-        loading: true
+        loading: true,
       };
     case ACTIONS.SET_SPLITS:
       return {
         ...state,
-        models: state.models.map(model => {
-          let matchingSplit = action.payload.splits.find(split => split.id === model.split);
+        models: state.models.map((model) => {
+          let matchingSplit = action.payload.splits.find((split) => split.id === model.split);
           if (matchingSplit) {
             return {
               ...model,
-              splitDetails: matchingSplit
+              splitDetails: matchingSplit,
             };
           }
           return model;
-        })
+        }),
       };
     case ACTIONS.SET_MODEL_STATUS: {
       let modelsWithError = [...state.modelsWithError];
@@ -168,44 +168,43 @@ const experimentDetails = (state = DEFAULT_EXPERIMENT_DETAILS, action = defaultA
 
       return {
         ...state,
-        models: state.models.map(model => {
+        models: state.models.map((model) => {
           if (model.id === action.payload.modelId) {
             return {
               ...model,
-              status: action.payload.modelStatus
+              status: action.payload.modelStatus,
             };
           }
           return model;
         }),
-        modelsWithError
+        modelsWithError,
       };
     }
     case ACTIONS.SET_MODELS_SORT:
       return {
         ...state,
         modelsSortMethod: action.payload.modelsSortMethod,
-        modelsSortColumn: action.payload.modelsSortColumn
+        modelsSortColumn: action.payload.modelsSortColumn,
       };
     case ACTIONS.SET_ERROR:
       return {
         ...state,
-        error: action.payload.error
+        error: action.payload.error,
       };
     case ACTIONS.SET_MODELS_LOADING:
       return {
         ...state,
-        modelsLoading: action.payload.modelsLoading
+        modelsLoading: action.payload.modelsLoading,
       };
     case ACTIONS.SET_MODELS_WITH_ERROR:
       return {
         ...state,
-        modelsWithError: action.payload.modelsWithError
+        modelsWithError: action.payload.modelsWithError,
       };
     default:
       return state;
   }
 };
-
 
 const experimentDetailsStore = createStore(
   experimentDetails,
@@ -214,4 +213,4 @@ const experimentDetailsStore = createStore(
 );
 
 export default experimentDetailsStore;
-export {ACTIONS};
+export { ACTIONS };

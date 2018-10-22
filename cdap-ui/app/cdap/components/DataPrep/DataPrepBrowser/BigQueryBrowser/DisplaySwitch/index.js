@@ -18,33 +18,27 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import DatasetList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/DatasetList';
 import TableList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/TableList';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
-const DisplaySwitchView = ({datasetId, onWorkspaceCreate}) => {
-  return datasetId ?
-    (
-      <TableList
-        enableRouting={false}
-        onWorkspaceCreate={onWorkspaceCreate}
-      />
-    )
-  :
-    <DatasetList enableRouting={false} />;
+const DisplaySwitchView = ({ datasetId, onWorkspaceCreate }) => {
+  return datasetId ? (
+    <TableList enableRouting={false} onWorkspaceCreate={onWorkspaceCreate} />
+  ) : (
+    <DatasetList enableRouting={false} />
+  );
 };
 
 DisplaySwitchView.propTypes = {
   datasetId: PropTypes.string,
-  onWorkspaceCreate: PropTypes.func
+  onWorkspaceCreate: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {
   return {
-    datasetId: state.bigquery.datasetId
+    datasetId: state.bigquery.datasetId,
   };
 };
 
-const DisplaySwitch = connect(
-  mapStateToProps
-)(DisplaySwitchView);
+const DisplaySwitch = connect(mapStateToProps)(DisplaySwitchView);
 
 export default DisplaySwitch;

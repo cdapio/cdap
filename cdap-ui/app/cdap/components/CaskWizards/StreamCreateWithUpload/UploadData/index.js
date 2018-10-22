@@ -13,8 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {Component} from 'react';
-import {connect, Provider} from 'react-redux';
+import React, { Component } from 'react';
+import { connect, Provider } from 'react-redux';
 import FileDnD from 'components/FileDnD';
 import CreateStreamWithUploadActions from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
@@ -22,7 +22,7 @@ require('./UploadData.scss');
 
 const mapStateWithDNDFileProps = (state) => {
   return {
-    file: state.upload.data
+    file: state.upload.data,
   };
 };
 const mapDispatchWithDNDFileProps = (dispatch) => {
@@ -32,10 +32,10 @@ const mapDispatchWithDNDFileProps = (dispatch) => {
         type: CreateStreamWithUploadActions.setData,
         payload: {
           filename: e[0].name,
-          data: e[0]
-        }
+          data: e[0],
+        },
       });
-    }
+    },
   };
 };
 const StreamFileUploader = connect(
@@ -43,17 +43,16 @@ const StreamFileUploader = connect(
   mapDispatchWithDNDFileProps
 )(FileDnD);
 
-
 export default class UploadData extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      filename: ''
+      filename: '',
     };
   }
   onFileDrop(files) {
     this.setState({
-      filename: files[0].name
+      filename: files[0].name,
     });
   }
   render() {

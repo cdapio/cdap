@@ -15,14 +15,14 @@
  */
 
 import React, { Component } from 'react';
-import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
-import {MySecureKeyApi} from 'api/securekey';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
+import { MySecureKeyApi } from 'api/securekey';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import T from 'i18n-react';
-import {objectQuery} from 'services/helpers';
-import {SECURE_KEY_PREFIX, SECURE_KEY_SUFFIX, SYSTEM_NAMESPACE} from 'services/global-constants';
+import { objectQuery } from 'services/helpers';
+import { SECURE_KEY_PREFIX, SECURE_KEY_SUFFIX, SYSTEM_NAMESPACE } from 'services/global-constants';
 require('./SecureKeyTextarea.scss');
 
 const PREFIX = 'features.AbstractWidget.SecureKeyTextarea';
@@ -35,50 +35,53 @@ export default class SecureKeyTextarea extends Component {
     secureKeys: [],
     expanded: false,
     customEntry: false,
-    customEntryText: ''
+    customEntryText: '',
   };
 
   componentWillMount() {
     const namespace = objectQuery(this.props, 'extraConfig', 'namespace') || getCurrentNamespace();
 
-    if (namespace === SYSTEM_NAMESPACE) { return; }
+    if (namespace === SYSTEM_NAMESPACE) {
+      return;
+    }
 
     const params = {
-      namespace
+      namespace,
     };
 
-    MySecureKeyApi.list(params)
-      .subscribe((res) => {
-        const keys = Object.keys(res);
+    MySecureKeyApi.list(params).subscribe((res) => {
+      const keys = Object.keys(res);
 
-        this.setState({
-          secureKeys: keys
-        });
+      this.setState({
+        secureKeys: keys,
       });
+    });
   }
 
   toggleExpand = () => {
     this.setState({
       expanded: !this.state.expanded,
       customEntry: false,
-      customEntryText: ''
+      customEntryText: '',
     });
   };
 
   toggleCustomEntry = () => {
     this.setState({
       customEntry: !this.state.customEntry,
-      customEntryText: ''
+      customEntryText: '',
     });
   };
 
   handleKeyPress = (e) => {
     const keyText = this.state.customEntryText;
 
-    if (e.nativeEvent.keyCode !== 13 || keyText.length === 0) { return; }
+    if (e.nativeEvent.keyCode !== 13 || keyText.length === 0) {
+      return;
+    }
 
     this.onSecureKeySelect(keyText);
-  }
+  };
 
   onSecureKeySelect = (key) => {
     const secureKey = `${SECURE_KEY_PREFIX}${key}${SECURE_KEY_SUFFIX}`;
@@ -89,16 +92,13 @@ export default class SecureKeyTextarea extends Component {
 
   handleCustomEntryChange = (e) => {
     this.setState({
-      customEntryText: e.target.value
+      customEntryText: e.target.value,
     });
   };
 
   renderCustomEntry = () => {
     const helperText = (
-      <div
-        className="helper-text text-xs-center"
-        onClick={this.toggleCustomEntry}
-      >
+      <div className="helper-text text-xs-center" onClick={this.toggleCustomEntry}>
         {T.translate(`${PREFIX}.customEntryHelper`)}
       </div>
     );
@@ -115,57 +115,50 @@ export default class SecureKeyTextarea extends Component {
     );
 
     return (
-      <div className={classnames('custom-entry-row', { 'expanded': this.state.customEntry })}>
-        { this.state.customEntry ? textbox : helperText }
+      <div className={classnames('custom-entry-row', { expanded: this.state.customEntry })}>
+        {this.state.customEntry ? textbox : helperText}
       </div>
     );
   };
 
   renderSecureKeyContent = () => {
-    if (!this.state.expanded) { return null; }
+    if (!this.state.expanded) {
+      return null;
+    }
 
     return (
       <div className="secure-key-content">
         <div className="keys-list">
-          {
-            this.state.secureKeys.map((key) => {
-              return (
-                <div
-                  key={key}
-                  className="secure-key-row"
-                  onClick={this.onSecureKeySelect.bind(this, key)}
-                >
-                  {key}
-                </div>
-              );
-            })
-          }
+          {this.state.secureKeys.map((key) => {
+            return (
+              <div
+                key={key}
+                className="secure-key-row"
+                onClick={this.onSecureKeySelect.bind(this, key)}
+              >
+                {key}
+              </div>
+            );
+          })}
         </div>
 
-        { this.renderCustomEntry() }
+        {this.renderCustomEntry()}
       </div>
     );
   };
 
   renderSecureKey = () => {
-    const text = (
-      <span className="title">
-        {T.translate(`${PREFIX}.title`)}
-      </span>
-    );
+    const text = <span className="title">{T.translate(`${PREFIX}.title`)}</span>;
 
     return (
-      <div className={classnames('secure-key', { 'expanded': this.state.expanded })}>
+      <div className={classnames('secure-key', { expanded: this.state.expanded })}>
         <div className="top-part">
-          <IconSVG
-            name="icon-shield"
-            onClick={this.toggleExpand}
-          />
+          <IconSVG name="icon-shield" onClick={this.toggleExpand} />
 
-          { this.state.expanded ? text : null }
+          {this.state.expanded ? text : null}
         </div>
 
-        { this.renderSecureKeyContent() }
+        {this.renderSecureKeyContent()}
       </div>
     );
   };
@@ -180,7 +173,7 @@ export default class SecureKeyTextarea extends Component {
           {...this.props.widgetProps}
         />
 
-        { this.renderSecureKey() }
+        {this.renderSecureKey()}
       </div>
     );
   }

@@ -38,8 +38,8 @@ export default class FileDataUpload extends Component {
       textarea: false,
       textInput: '',
       file: {
-        name: ''
-      }
+        name: '',
+      },
     };
   }
 
@@ -49,91 +49,73 @@ export default class FileDataUpload extends Component {
     }
   }
 
-  preventPropagation (e) {
+  preventPropagation(e) {
     e.stopPropagation();
     e.nativeEvent.stopImmediatePropagation();
   }
 
   handleTextInput(e) {
     this.props.onTextInput(e.target.value);
-    this.setState({textInput: e.target.value});
+    this.setState({ textInput: e.target.value });
   }
 
   onContainerClick() {
-    this.setState({textarea: true});
+    this.setState({ textarea: true });
   }
 
   onTextInputBlur() {
-    if (this.state.textInput) { return; }
-    this.setState({textarea: false});
+    if (this.state.textInput) {
+      return;
+    }
+    this.setState({ textarea: false });
   }
 
   render() {
     return (
-      <div
-        className="file-data-upload-container text-xs-center"
-        onClick={this.onContainerClick}
-      >
-        {
-          (!this.state.textarea || this.state.file.name) ?
-            (
-              <div className="file-data-metadata-container">
-                <div className="file-data-metadata">
-                <div
-                  className="upload-data"
-                  onClick={(e) => this.preventPropagation(e)}
+      <div className="file-data-upload-container text-xs-center" onClick={this.onContainerClick}>
+        {!this.state.textarea || this.state.file.name ? (
+          <div className="file-data-metadata-container">
+            <div className="file-data-metadata">
+              <div className="upload-data" onClick={(e) => this.preventPropagation(e)}>
+                <Dropzone
+                  className="dropzone"
+                  onDrop={(e) => {
+                    this.setState({ file: e[0], textarea: false });
+                    this.props.onDataUpload(e[0]);
+                  }}
                 >
-                  <Dropzone
-                    className = 'dropzone'
-                    onDrop={(e) => {
-                        this.setState({file: e[0], textarea: false});
-                        this.props.onDataUpload(e[0]);
-                      }
-                    }
-                  >
-                    {
-                      this.state.file.name && this.state.file.name.length ?
-                        null
-                      :
-                        (
-                          <i className="plus-button fa fa-upload"></i>
-                        )
-                    }
-                  </Dropzone>
-                </div>
+                  {this.state.file.name && this.state.file.name.length ? null : (
+                    <i className="plus-button fa fa-upload" />
+                  )}
+                </Dropzone>
+              </div>
 
-                <div className="helper-text">
-                  {
-                    this.state.file.name && this.state.file.name.length ?
-                    (<h4 className="file-upload-name">{this.state.file.name}</h4>)
-                      :
-                    (
-                      <div>
-                        <h4>
-                          {T.translate('features.FileDataUpload.click')}
-                          <span className="fa fa-upload" />
-                          {T.translate('features.FileDataUpload.upload')}
-                        </h4>
-                        <h5>{T.translate('features.FileDataUpload.or')}</h5>
-                        <h4>{T.translate('features.FileDataUpload.paste')}</h4>
-                      </div>
-                    )
-                  }
-                </div>
+              <div className="helper-text">
+                {this.state.file.name && this.state.file.name.length ? (
+                  <h4 className="file-upload-name">{this.state.file.name}</h4>
+                ) : (
+                  <div>
+                    <h4>
+                      {T.translate('features.FileDataUpload.click')}
+                      <span className="fa fa-upload" />
+                      {T.translate('features.FileDataUpload.upload')}
+                    </h4>
+                    <h5>{T.translate('features.FileDataUpload.or')}</h5>
+                    <h4>{T.translate('features.FileDataUpload.paste')}</h4>
+                  </div>
+                )}
               </div>
-              </div>
-            )
-          :
-            (
-              <textarea
-                value={this.state.textInput}
-                className="form-control"
-                onChange={this.handleTextInput}
-                autoFocus={true}
-                onBlur={this.onTextInputBlur}
-              />
-            )
-        }
+            </div>
+          </div>
+        ) : (
+          <textarea
+            value={this.state.textInput}
+            className="form-control"
+            onChange={this.handleTextInput}
+            autoFocus={true}
+            onBlur={this.onTextInputBlur}
+          />
+        )}
       </div>
     );
   }
@@ -141,12 +123,12 @@ export default class FileDataUpload extends Component {
 
 FileDataUpload.defaultProps = {
   file: {
-    name: ''
-  }
+    name: '',
+  },
 };
 
 FileDataUpload.propTypes = {
   onDataUpload: PropTypes.func,
   onTextInput: PropTypes.func,
-  reset: PropTypes.number
+  reset: PropTypes.number,
 };

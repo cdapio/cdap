@@ -24,60 +24,28 @@ import EnumSchemaRow from 'components/SchemaEditor/EnumSchemaRow';
 import RecordSchemaRow from 'components/SchemaEditor/RecordSchemaRow';
 // import {parseType} from 'components/SchemaEditor/SchemaHelpers';
 
-
 require('./AbstractSchemaRow.scss');
 
-export default function AbstractSchemaRow({row, onChange}) {
+export default function AbstractSchemaRow({ row, onChange }) {
   const renderSchemaRow = (row) => {
     switch (row.displayType) {
       case 'array':
-        return (
-          <ArraySchemaRow
-            row={row.type}
-            onChange={onChange}
-          />
-        );
+        return <ArraySchemaRow row={row.type} onChange={onChange} />;
       case 'map':
-        return (
-          <MapSchemaRow
-            row={row.type}
-            onChange={onChange}
-          />
-        );
+        return <MapSchemaRow row={row.type} onChange={onChange} />;
       case 'union':
-        return (
-          <UnionSchemaRow
-            row={row.type}
-            onChange={onChange}
-          />
-        );
+        return <UnionSchemaRow row={row.type} onChange={onChange} />;
       case 'enum':
-        return (
-          <EnumSchemaRow
-            row={row.type}
-            onChange={onChange}
-          />
-        );
+        return <EnumSchemaRow row={row.type} onChange={onChange} />;
       case 'record':
-        return (
-          <RecordSchemaRow
-            row={row.type}
-            onChange={onChange}
-          />
-        );
+        return <RecordSchemaRow row={row.type} onChange={onChange} />;
       default:
         return null;
     }
   };
-  return (
-    <div className="abstract-schema-row">
-      {
-        renderSchemaRow(row)
-      }
-    </div>
-  );
+  return <div className="abstract-schema-row">{renderSchemaRow(row)}</div>;
 }
 AbstractSchemaRow.propTypes = {
   row: PropTypes.any,
-  onChange: PropTypes.func.isRequired
+  onChange: PropTypes.func.isRequired,
 };

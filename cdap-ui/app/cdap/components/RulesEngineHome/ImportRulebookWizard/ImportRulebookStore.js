@@ -14,23 +14,23 @@
  * the License.
 */
 
-import {createStore, combineReducers} from 'redux';
-import {defaultAction} from 'services/helpers';
+import { createStore, combineReducers } from 'redux';
+import { defaultAction } from 'services/helpers';
 
 const DEFAULTUPLOADSTEP = {
   file: {
     name: '',
-    contents: ''
+    contents: '',
   },
-  __complete: false
+  __complete: false,
 };
 
 const DEFAULTSTATE = {
-  upload: DEFAULTUPLOADSTEP
+  upload: DEFAULTUPLOADSTEP,
 };
 
 const IMPORTRULEBOOKACTIONS = {
-  UPLOADFILE: 'UPLOADFILE'
+  UPLOADFILE: 'UPLOADFILE',
 };
 
 const upload = (state = DEFAULTUPLOADSTEP, action = defaultAction) => {
@@ -38,7 +38,7 @@ const upload = (state = DEFAULTUPLOADSTEP, action = defaultAction) => {
     case IMPORTRULEBOOKACTIONS.UPLOADFILE:
       return Object.assign({}, state, {
         file: action.payload.file,
-        __complete: true
+        __complete: true,
       });
     default:
       return state;
@@ -47,12 +47,11 @@ const upload = (state = DEFAULTUPLOADSTEP, action = defaultAction) => {
 
 const ImportRulebookStore = createStore(
   combineReducers({
-    upload
+    upload,
   }),
   DEFAULTSTATE,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
 
-export {IMPORTRULEBOOKACTIONS};
+export { IMPORTRULEBOOKACTIONS };
 export default ImportRulebookStore;
-

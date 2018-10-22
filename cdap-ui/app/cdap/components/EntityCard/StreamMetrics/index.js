@@ -17,10 +17,10 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MyMetricApi} from 'api/metric';
-import {MyStreamApi} from 'api/stream';
+import { MyMetricApi } from 'api/metric';
+import { MyStreamApi } from 'api/stream';
 import NamespaceStore from 'services/NamespaceStore';
-import {humanReadableNumber, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
+import { humanReadableNumber, HUMANREADABLESTORAGE_NODECIMAL } from 'services/helpers';
 import T from 'i18n-react';
 
 export default class StreamMetrics extends Component {
@@ -31,7 +31,7 @@ export default class StreamMetrics extends Component {
       programs: 0,
       events: 0,
       bytes: 0,
-      loading: true
+      loading: true,
     };
   }
 
@@ -39,19 +39,19 @@ export default class StreamMetrics extends Component {
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     const streamParams = {
       namespace: currentNamespace,
-      streamId: this.props.entity.id
+      streamId: this.props.entity.id,
     };
     const metricsParams = {
       tag: [`namespace:${currentNamespace}`, `stream:${this.props.entity.id}`],
       metric: ['system.collect.events', 'system.collect.bytes'],
-      aggregate: true
+      aggregate: true,
     };
 
     MyMetricApi.query(metricsParams)
       .combineLatest(MyStreamApi.getPrograms(streamParams))
       .subscribe((res) => {
         let events = 0,
-            bytes = 0;
+          bytes = 0;
         if (res[0].series.length > 0) {
           res[0].series.forEach((metric) => {
             if (metric.metricName === 'system.collect.events') {
@@ -66,13 +66,13 @@ export default class StreamMetrics extends Component {
           events,
           bytes,
           programs: res[1].length,
-          loading: false
+          loading: false,
         });
       });
   }
 
-  render () {
-    const loading = <span className="fa fa-spin fa-spinner"></span>;
+  render() {
+    const loading = <span className="fa fa-spin fa-spinner" />;
 
     return (
       <div className="metrics-container">
@@ -94,5 +94,5 @@ export default class StreamMetrics extends Component {
 }
 
 StreamMetrics.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
 };

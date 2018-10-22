@@ -21,7 +21,7 @@ import ProfileAssociations from 'components/Cloud/Profiles/DetailView/Content/Pr
 
 require('./Content.scss');
 
-export default function ProfileDetailViewContent({...props}) {
+export default function ProfileDetailViewContent({ ...props }) {
   return (
     <div className="detail-view-content">
       <ProfileDetailViewBasicInfo {...props} />

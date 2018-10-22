@@ -19,17 +19,17 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import classnames from 'classnames';
 import T from 'i18n-react';
-import {Input} from 'reactstrap';
+import { Input } from 'reactstrap';
 import SimpleDateModal from 'components/DataPrep/Directives/Parse/Modals/SimpleDateModal';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 import IconSVG from 'components/IconSVG';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
 import WarningContainer from 'components/WarningContainer';
-import {preventPropagation} from 'services/helpers';
-import {columnNameAlreadyExists} from 'components/DataPrep/helper';
+import { preventPropagation } from 'services/helpers';
+import { columnNameAlreadyExists } from 'components/DataPrep/helper';
 import capitalize from 'lodash/capitalize';
 import Mousetrap from 'mousetrap';
 
@@ -40,7 +40,7 @@ const VALID_TYPES = ['string', 'date'];
 export default class Format extends Component {
   static propTypes = {
     isOpen: PropTypes.bool,
-    column: PropTypes.oneOfType([PropTypes.array, PropTypes.string])
+    column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   };
 
   columnType = DataPrepStore.getState().dataprep.typesCheck[this.props.column];
@@ -50,12 +50,12 @@ export default class Format extends Component {
     formatInput: '',
     createNewColumn: false,
     newColumnInput: this.props.column + T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputSuffix`),
-    concatOption: 'BEGINNING'
+    concatOption: 'BEGINNING',
   };
 
   state = Object.assign({}, this.defaultFormatPopoverState, {
     activeModal: null,
-    isDisabled: VALID_TYPES.indexOf(this.columnType) === -1
+    isDisabled: VALID_TYPES.indexOf(this.columnType) === -1,
   });
 
   applyDirective = (directive) => {
@@ -63,18 +63,14 @@ export default class Format extends Component {
       return;
     }
 
-    execute([directive])
-      .subscribe(
-        this.toggleModal,
-        (err) => {
-          DataPrepStore.dispatch({
-            type: DataPrepActions.setError,
-            payload: {
-              message: err.message || err.response.message
-            }
-          });
-        }
-      );
+    execute([directive]).subscribe(this.toggleModal, (err) => {
+      DataPrepStore.dispatch({
+        type: DataPrepActions.setError,
+        payload: {
+          message: err.message || err.response.message,
+        },
+      });
+    });
   };
 
   popoverOptionClick = (option) => {
@@ -86,12 +82,8 @@ export default class Format extends Component {
   formatToDateTime = () => {
     this.setState({
       activeModal: (
-        <SimpleDateModal
-          source="format"
-          toggle={this.toggleModal}
-          onApply={this.applyDateFormat}
-        />
-      )
+        <SimpleDateModal source="format" toggle={this.toggleModal} onApply={this.applyDateFormat} />
+      ),
     });
   };
 
@@ -99,54 +91,54 @@ export default class Format extends Component {
     {
       name: 'DATE_TIME',
       onClick: this.formatToDateTime,
-      validColTypes: ['date']
+      validColTypes: ['date'],
     },
     {
       name: 'UPPERCASE',
       onClick: this.applyDirective.bind(this, `uppercase ${this.props.column}`),
-      validColTypes: ['string']
+      validColTypes: ['string'],
     },
     {
       name: 'LOWERCASE',
       onClick: this.applyDirective.bind(this, `lowercase ${this.props.column}`),
-      validColTypes: ['string']
+      validColTypes: ['string'],
     },
     {
       name: 'TITLECASE',
       onClick: this.applyDirective.bind(this, `titlecase ${this.props.column}`),
-      validColTypes: ['string']
+      validColTypes: ['string'],
     },
     {
       name: 'CONCATENATE',
       onClick: this.popoverOptionClick.bind(this, 'CONCATENATE'),
-      validColTypes: ['string']
+      validColTypes: ['string'],
     },
     {
       name: 'TRIM_WHITESPACE',
       onClick: this.applyDirective.bind(this, `trim ${this.props.column}`),
-      validColTypes: ['string']
+      validColTypes: ['string'],
     },
     {
       name: 'TRIM_LEADING_WHITESPACE',
       onClick: this.applyDirective.bind(this, `ltrim ${this.props.column}`),
-      validColTypes: ['string']
+      validColTypes: ['string'],
     },
     {
       name: 'TRIM_TRAILING_WHITESPACE',
       onClick: this.applyDirective.bind(this, `rtrim ${this.props.column}`),
-      validColTypes: ['string']
-    }
+      validColTypes: ['string'],
+    },
   ];
 
   CONCATENATE_OPTIONS = [
     {
       name: 'BEGINNING',
-      label: T.translate(`${PREFIX}.Formats.CONCATENATE.addOptions.BEGINNING`)
+      label: T.translate(`${PREFIX}.Formats.CONCATENATE.addOptions.BEGINNING`),
     },
     {
       name: 'END',
-      label: T.translate(`${PREFIX}.Formats.CONCATENATE.addOptions.END`)
-    }
+      label: T.translate(`${PREFIX}.Formats.CONCATENATE.addOptions.END`),
+    },
   ];
 
   componentWillReceiveProps(nextProps) {
@@ -171,31 +163,31 @@ export default class Format extends Component {
 
   toggleModal = () => {
     this.setState({
-      activeModal: null
+      activeModal: null,
     });
   };
 
   toggleCreateNewColumn = () => {
     this.setState({
-      createNewColumn: !this.state.createNewColumn
+      createNewColumn: !this.state.createNewColumn,
     });
   };
 
   setConcatOption = (e) => {
     this.setState({
-      concatOption: e.target.value
+      concatOption: e.target.value,
     });
   };
 
   setFormatInput = (e) => {
     this.setState({
-      formatInput: e.target.value
+      formatInput: e.target.value,
     });
   };
 
   setNewColumnInput = (e) => {
     this.setState({
-      newColumnInput: e.target.value
+      newColumnInput: e.target.value,
     });
   };
 
@@ -225,8 +217,10 @@ export default class Format extends Component {
   };
 
   isApplyDisabled() {
-    return (this.state.formatPopoverOpen === 'CONCATENATE' && this.state.formatInput.length === 0) ||
-    (this.state.createNewColumn && this.state.newColumnInput.length === 0);
+    return (
+      (this.state.formatPopoverOpen === 'CONCATENATE' && this.state.formatInput.length === 0) ||
+      (this.state.createNewColumn && this.state.newColumnInput.length === 0)
+    );
   }
 
   renderActionButtons() {
@@ -240,10 +234,7 @@ export default class Format extends Component {
           {T.translate('features.DataPrep.Directives.apply')}
         </button>
 
-        <button
-          className="btn btn-link float-xs-right"
-          onClick={this.setDefaultFormatPopoverState}
-        >
+        <button className="btn btn-link float-xs-right" onClick={this.setDefaultFormatPopoverState}>
           {T.translate('features.DataPrep.Directives.cancel')}
         </button>
       </div>
@@ -251,7 +242,9 @@ export default class Format extends Component {
   }
 
   renderNewColumnNameInput() {
-    if (!this.state.createNewColumn) { return null; }
+    if (!this.state.createNewColumn) {
+      return null;
+    }
 
     return (
       <div>
@@ -263,28 +256,21 @@ export default class Format extends Component {
           placeholder={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputPlaceholder`)}
           autoFocus
         />
-        {
-          columnNameAlreadyExists(this.state.newColumnInput) ? (
-            <WarningContainer
-              message={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputDuplicate`)}
-            />
-          ) : null
-        }
+        {columnNameAlreadyExists(this.state.newColumnInput) ? (
+          <WarningContainer message={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputDuplicate`)} />
+        ) : null}
       </div>
     );
   }
 
   renderFormatPopover() {
-    if (!this.state.formatPopoverOpen) { return null; }
+    if (!this.state.formatPopoverOpen) {
+      return null;
+    }
 
     return (
-      <div
-        className="third-level-popover"
-        onClick={preventPropagation}
-      >
-        <div>
-          {T.translate(`${PREFIX}.Formats.CONCATENATE.addLabel`)}
-        </div>
+      <div className="third-level-popover" onClick={preventPropagation}>
+        <div>{T.translate(`${PREFIX}.Formats.CONCATENATE.addLabel`)}</div>
         <Input
           className="format-input mousetrap"
           value={this.state.formatInput}
@@ -298,36 +284,22 @@ export default class Format extends Component {
           onChange={this.setConcatOption}
           value={this.state.concatOption}
         >
-          {
-            this.CONCATENATE_OPTIONS.map(option => {
-              return (
-                <option
-                  key={option.name}
-                  value={option.name}
-                >
-                  {option.label}
-                </option>
-              );
-            })
-          }
+          {this.CONCATENATE_OPTIONS.map((option) => {
+            return (
+              <option key={option.name} value={option.name}>
+                {option.label}
+              </option>
+            );
+          })}
         </Input>
-        <div>
-          {T.translate(`${PREFIX}.Formats.CONCATENATE.addDescription`)}
-        </div>
+        <div>{T.translate(`${PREFIX}.Formats.CONCATENATE.addDescription`)}</div>
 
-        <div
-          className="create-new-column-line"
-          onClick={this.toggleCreateNewColumn}
-        >
+        <div className="create-new-column-line" onClick={this.toggleCreateNewColumn}>
           <span className="fa fa-fw">
-            <IconSVG
-              name={this.state.createNewColumn ? 'icon-check-square' : 'icon-square-o'}
-            />
+            <IconSVG name={this.state.createNewColumn ? 'icon-check-square' : 'icon-square-o'} />
           </span>
 
-          <span>
-            {T.translate(`${COPY_NEW_COLUMN_PREFIX}.label`)}
-          </span>
+          <span>{T.translate(`${COPY_NEW_COLUMN_PREFIX}.label`)}</span>
         </div>
 
         {this.renderNewColumnNameInput()}
@@ -343,54 +315,39 @@ export default class Format extends Component {
     return this.state.activeModal;
   }
   renderOptions() {
-    return (
-      this.FORMAT_OPTIONS
-        .filter(option => option.validColTypes.indexOf(this.columnType) !== -1)
-        .map((option) => {
-          return (
-            <div
-              key={option.name}
-              className={classnames('option', {
-                'active': this.state.formatPopoverOpen === option.name
-              })}
-              onClick={option.onClick}
-            >
-              {T.translate(`${PREFIX}.Formats.${option.name}.label`)}
-              {
-                option.name === 'CONCATENATE' ?
-                  (
-                    <span className="float-xs-right">
-                      <IconSVG name="icon-caret-right" />
-                    </span>
-                  )
-                : null
-              }
-              {
-                this.state.formatPopoverOpen === option.name ?
-                  this.renderFormatPopover()
-                : null
-              }
-            </div>
-          );
-        })
-    );
+    return this.FORMAT_OPTIONS.filter(
+      (option) => option.validColTypes.indexOf(this.columnType) !== -1
+    ).map((option) => {
+      return (
+        <div
+          key={option.name}
+          className={classnames('option', {
+            active: this.state.formatPopoverOpen === option.name,
+          })}
+          onClick={option.onClick}
+        >
+          {T.translate(`${PREFIX}.Formats.${option.name}.label`)}
+          {option.name === 'CONCATENATE' ? (
+            <span className="float-xs-right">
+              <IconSVG name="icon-caret-right" />
+            </span>
+          ) : null}
+          {this.state.formatPopoverOpen === option.name ? this.renderFormatPopover() : null}
+        </div>
+      );
+    });
   }
   renderDetail() {
-    if (!this.props.isOpen || this.state.isDisabled) { return null; }
+    if (!this.props.isOpen || this.state.isDisabled) {
+      return null;
+    }
 
     return (
-      <div
-        className="parse-detail second-level-popover"
-        onClick={preventPropagation}
-      >
+      <div className="parse-detail second-level-popover" onClick={preventPropagation}>
         <div className="column-type-label">
-          <span>
-            {capitalize(this.columnType)}
-          </span>
+          <span>{capitalize(this.columnType)}</span>
         </div>
-        <div className="parse-options">
-          {this.renderOptions()}
-        </div>
+        <div className="parse-options">{this.renderOptions()}</div>
       </div>
     );
   }
@@ -402,13 +359,11 @@ export default class Format extends Component {
         <div
           id={id}
           className={classnames('parse-directive clearfix action-item', {
-            'active': this.props.isOpen && !this.state.isDisabled,
-            'disabled': this.state.isDisabled
+            active: this.props.isOpen && !this.state.isDisabled,
+            disabled: this.state.isDisabled,
           })}
         >
-          <span>
-            {T.translate(`${PREFIX}.title`)}
-          </span>
+          <span>{T.translate(`${PREFIX}.title`)}</span>
 
           <span className="float-xs-right">
             <span className="fa fa-caret-right" />
@@ -417,16 +372,11 @@ export default class Format extends Component {
           {this.renderDetail()}
           {this.renderModal()}
         </div>
-        {
-          this.state.isDisabled ? (
-            <UncontrolledTooltip
-              target={id}
-              delay={{show: 250, hide: 0}}
-            >
-              {T.translate(`${PREFIX}.disabledTooltip`)}
-            </UncontrolledTooltip>
-          ) : null
-        }
+        {this.state.isDisabled ? (
+          <UncontrolledTooltip target={id} delay={{ show: 250, hide: 0 }}>
+            {T.translate(`${PREFIX}.disabledTooltip`)}
+          </UncontrolledTooltip>
+        ) : null}
       </div>
     );
   }

@@ -14,37 +14,41 @@
  * the License.
  */
 
-import {setActiveBrowser, setError} from './commons';
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import { setActiveBrowser, setError } from './commons';
+import DataPrepBrowserStore, {
+  Actions as BrowserStoreActions,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 const setDatabaseInfoLoading = () => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_DATABASE_LOADING,
     payload: {
-      loading: true
-    }
+      loading: true,
+    },
   });
 };
 
 const setDatabaseAsActiveBrowser = (payload) => {
-  let {database, activeBrowser} = DataPrepBrowserStore.getState();
+  let { database, activeBrowser } = DataPrepBrowserStore.getState();
 
   if (activeBrowser.name !== payload.name) {
     setActiveBrowser(payload);
   }
 
-  let {id: connectionId} = payload;
+  let { id: connectionId } = payload;
 
-  if (database.connectionId === connectionId) { return; }
+  if (database.connectionId === connectionId) {
+    return;
+  }
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_DATABASE_CONNECTION_ID,
     payload: {
-      connectionId
-    }
+      connectionId,
+    },
   });
 
   setDatabaseInfoLoading();
@@ -53,36 +57,36 @@ const setDatabaseAsActiveBrowser = (payload) => {
 
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
-  MyDataPrepApi.getConnection(params)
-    .subscribe((res) => {
+  MyDataPrepApi.getConnection(params).subscribe(
+    (res) => {
       let info = objectQuery(res, 'values', 0);
 
-      MyDataPrepApi.listTables(params)
-        .subscribe((tables) => {
+      MyDataPrepApi.listTables(params).subscribe(
+        (tables) => {
           setDatabaseProperties({
             info,
             tables: tables.values,
             connectionId: params.connectionId,
           });
-        }, (err) => {
+        },
+        (err) => {
           setError(err);
-        });
-    }, (err) => {
+        }
+      );
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const setDatabaseProperties = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_DATABASE_PROPERTIES,
-    payload
+    payload,
   });
 };
 
-export {
-  setDatabaseInfoLoading,
-  setDatabaseAsActiveBrowser,
-  setDatabaseProperties
-};
+export { setDatabaseInfoLoading, setDatabaseAsActiveBrowser, setDatabaseProperties };

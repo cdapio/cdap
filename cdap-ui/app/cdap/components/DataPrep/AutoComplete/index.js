@@ -37,7 +37,7 @@ export default class DataPrepAutoComplete extends Component {
       activeResults: [],
       input: '',
       matched: false,
-      activeSelectionIndex: null
+      activeSelectionIndex: null,
     };
 
     this.eventEmitter = ee(ee);
@@ -80,31 +80,30 @@ export default class DataPrepAutoComplete extends Component {
   getUsage() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyDataPrepApi.getUsage({ namespace })
-      .subscribe((res) => {
-        const fuseOptions = {
-          include: ['matches', 'score'],
-          caseSensitive: false,
-          threshold: 0,
-          shouldSort: true,
-          location: 0,
-          distance: 100,
-          minMatchCharLength: 1,
-          maxPatternLength: 32,
-          keys: [
-            "directive"
-          ]
-        };
+    MyDataPrepApi.getUsage({ namespace }).subscribe((res) => {
+      const fuseOptions = {
+        include: ['matches', 'score'],
+        caseSensitive: false,
+        threshold: 0,
+        shouldSort: true,
+        location: 0,
+        distance: 100,
+        minMatchCharLength: 1,
+        maxPatternLength: 32,
+        keys: ['directive'],
+      };
 
-        this.fuse = new Fuse(res.values, fuseOptions);
-      });
+      this.fuse = new Fuse(res.values, fuseOptions);
+    });
   }
 
   handleRowClick(row) {
-    if (typeof this.props.onRowClick !== 'function') { return; }
+    if (typeof this.props.onRowClick !== 'function') {
+      return;
+    }
 
     let eventObject = {
-      target: { value: `${row.item.directive} `}
+      target: { value: `${row.item.directive} ` },
     };
 
     this.props.onRowClick(eventObject);
@@ -117,9 +116,11 @@ export default class DataPrepAutoComplete extends Component {
     } else {
       e.returnValue = false;
     }
-    if (this.state.activeSelectionIndex === 0) { return; }
+    if (this.state.activeSelectionIndex === 0) {
+      return;
+    }
 
-    this.setState({activeSelectionIndex: this.state.activeSelectionIndex - 1});
+    this.setState({ activeSelectionIndex: this.state.activeSelectionIndex - 1 });
   }
 
   handleDownArrow(e) {
@@ -128,21 +129,26 @@ export default class DataPrepAutoComplete extends Component {
     } else {
       e.returnValue = false;
     }
-    if (this.state.activeSelectionIndex === this.state.activeResults.length - 1) { return; }
+    if (this.state.activeSelectionIndex === this.state.activeResults.length - 1) {
+      return;
+    }
 
-    this.setState({activeSelectionIndex: this.state.activeSelectionIndex + 1});
+    this.setState({ activeSelectionIndex: this.state.activeSelectionIndex + 1 });
   }
 
   handleEnterKey() {
-    if (this.state.input.length === 0) { return; }
+    if (this.state.input.length === 0) {
+      return;
+    }
 
     let selectedDirective = this.state.activeResults[this.state.activeSelectionIndex];
 
     let inputSplit = this.state.input.split(' '),
-        directiveSplit = selectedDirective ? selectedDirective.item.directive.split(' ') : [];
+      directiveSplit = selectedDirective ? selectedDirective.item.directive.split(' ') : [];
 
     let splitLengthCheck = inputSplit.length < directiveSplit.length,
-        stringLengthCheck = selectedDirective && this.state.input.length <= selectedDirective.item.directive.length;
+      stringLengthCheck =
+        selectedDirective && this.state.input.length <= selectedDirective.item.directive.length;
 
     if (selectedDirective && (splitLengthCheck || stringLengthCheck)) {
       this.handleRowClick(this.state.activeResults[this.state.activeSelectionIndex]);
@@ -152,7 +158,9 @@ export default class DataPrepAutoComplete extends Component {
   }
 
   handleTabKey(e) {
-    if (this.state.input.length === 0 || this.state.input.split(' ').length !== 1) { return; }
+    if (this.state.input.length === 0 || this.state.input.split(' ').length !== 1) {
+      return;
+    }
 
     if (e.preventDefault) {
       e.preventDefault();
@@ -174,7 +182,8 @@ export default class DataPrepAutoComplete extends Component {
     // Currently only showing 3 matches. Future improvement will be to allow
     // user to scroll through all the matches
     if (this.fuse && input.length > 0) {
-      results = this.fuse.search(input)
+      results = this.fuse
+        .search(input)
         .slice(0, 3)
         .filter((row, index) => {
           if (spaceIndex === -1) {
@@ -188,53 +197,51 @@ export default class DataPrepAutoComplete extends Component {
           return row;
         });
 
-        reverse(results);
+      reverse(results);
     }
 
     this.setState({
       activeResults: results,
       input: query,
       matched: spaceIndex !== -1,
-      activeSelectionIndex: results.length - 1
+      activeSelectionIndex: results.length - 1,
     });
   }
 
   render() {
-    if (!this.props.isOpen || this.state.activeResults.length === 0) { return null; }
+    if (!this.props.isOpen || this.state.activeResults.length === 0) {
+      return null;
+    }
 
     return (
-      <div className={classnames('dataprep-auto-complete-container', {
-        'has-error': this.props.hasError
-      })}>
-        {
-          this.state.activeResults.map((row, index) => {
-            return (
-              <div
-                className={classnames('result-row', { active: index === this.state.activeSelectionIndex})}
-                key={row.uniqueId}
-                onClick={this.handleRowClick.bind(this, row)}
-              >
-                <div className="directive-title">
-                  <strong>{row.item.directive}</strong>
-                </div>
-                <div className="directive-description">
-                  {row.item.description}
-                </div>
-
-                { this.state.matchedmatched || this.state.activeResults.length === 1  ?
-                    (
-                      <div className="directive-usage">
-                        <span>Usage: </span>
-                        <pre>{row.item.usage}</pre>
-                      </div>
-                    )
-                  :
-                    null
-                }
+      <div
+        className={classnames('dataprep-auto-complete-container', {
+          'has-error': this.props.hasError,
+        })}
+      >
+        {this.state.activeResults.map((row, index) => {
+          return (
+            <div
+              className={classnames('result-row', {
+                active: index === this.state.activeSelectionIndex,
+              })}
+              key={row.uniqueId}
+              onClick={this.handleRowClick.bind(this, row)}
+            >
+              <div className="directive-title">
+                <strong>{row.item.directive}</strong>
               </div>
-            );
-          })
-        }
+              <div className="directive-description">{row.item.description}</div>
+
+              {this.state.matchedmatched || this.state.activeResults.length === 1 ? (
+                <div className="directive-usage">
+                  <span>Usage: </span>
+                  <pre>{row.item.usage}</pre>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -247,6 +254,5 @@ DataPrepAutoComplete.propTypes = {
   onRowClick: PropTypes.func,
   inputRef: PropTypes.any,
   hasError: PropTypes.any,
-  execute: PropTypes.func
+  execute: PropTypes.func,
 };
-

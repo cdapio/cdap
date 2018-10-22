@@ -16,21 +16,21 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MyReportsApi} from 'api/reports';
+import { MyReportsApi } from 'api/reports';
 import Summary from 'components/Reports/ReportsDetail/Summary';
 import Runs from 'components/Reports/ReportsDetail/Runs';
 import RunsPagination from 'components/Reports/ReportsDetail/RunsPagination';
 import SaveButton from 'components/Reports/ReportsDetail/SaveButton';
 import Expiry from 'components/Reports/ReportsDetail/Expiry';
 import ReportsStore, { ReportsActions } from 'components/Reports/store/ReportsStore';
-import {fetchRuns} from 'components/Reports/store/ActionCreator';
+import { fetchRuns } from 'components/Reports/store/ActionCreator';
 import { Link } from 'react-router-dom';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
-import {connect} from 'react-redux';
-import {humanReadableDate} from 'services/helpers';
+import { connect } from 'react-redux';
+import { humanReadableDate } from 'services/helpers';
 import T from 'i18n-react';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.Reports.ReportsDetail';
 
@@ -43,7 +43,7 @@ class ReportsDetailView extends Component {
     reportName: PropTypes.string,
     error: PropTypes.string,
     status: PropTypes.string,
-    detailError: PropTypes.string
+    detailError: PropTypes.string,
   };
 
   componentWillMount() {
@@ -52,36 +52,38 @@ class ReportsDetailView extends Component {
 
   componentWillUnmount() {
     ReportsStore.dispatch({
-      type: ReportsActions.detailsReset
+      type: ReportsActions.detailsReset,
     });
   }
 
   fetchStatus = () => {
     let params = {
-      'report-id': this.props.match.params.reportId
+      'report-id': this.props.match.params.reportId,
     };
 
-    MyReportsApi.getReport(params)
-      .subscribe((res) => {
+    MyReportsApi.getReport(params).subscribe(
+      (res) => {
         ReportsStore.dispatch({
           type: ReportsActions.setInfoStatus,
           payload: {
             info: res,
-            reportId: this.props.match.params.reportId
-          }
+            reportId: this.props.match.params.reportId,
+          },
         });
 
         if (res.status === 'COMPLETED') {
           fetchRuns(this.props.match.params.reportId);
         }
-      }, (err) => {
+      },
+      (err) => {
         ReportsStore.dispatch({
           type: ReportsActions.setDetailsError,
           payload: {
-            error: err.response
-          }
+            error: err.response,
+          },
         });
-      });
+      }
+    );
   };
 
   renderError = (isDetail) => {
@@ -110,7 +112,7 @@ class ReportsDetailView extends Component {
         <div className="action-section clearfix">
           <div className="date-container float-xs-left">
             {T.translate(`${PREFIX}.generatedTime`, {
-              time: humanReadableDate(this.props.created)
+              time: humanReadableDate(this.props.created),
             })}
             <span className="separator">-</span>
             <Expiry />
@@ -141,9 +143,7 @@ class ReportsDetailView extends Component {
               <span>{featureName}</span>
             </Link>
             <span className="separator">|</span>
-            <span>
-              {this.props.reportName}
-            </span>
+            <span>{this.props.reportName}</span>
           </div>
         </div>
 
@@ -160,12 +160,10 @@ const mapStateToProps = (state, ownProps) => {
     reportName: state.details.name,
     error: state.details.error,
     status: state.details.status,
-    detailError: state.details.detailError
+    detailError: state.details.detailError,
   };
 };
 
-const ReportsDetail = connect(
-  mapStateToProps
-)(ReportsDetailView);
+const ReportsDetail = connect(mapStateToProps)(ReportsDetailView);
 
 export default ReportsDetail;

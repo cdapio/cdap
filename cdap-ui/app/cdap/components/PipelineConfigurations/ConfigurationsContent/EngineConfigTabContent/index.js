@@ -16,12 +16,12 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {ENGINE_OPTIONS} from 'components/PipelineConfigurations/PipelineConfigConstants';
+import { ENGINE_OPTIONS } from 'components/PipelineConfigurations/PipelineConfigConstants';
 import EngineRadioInput from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/EngineRadioInput';
 import Backpressure from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/Backpressure';
 import NumExecutors from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/NumExecutors';
 import CustomConfig from 'components/PipelineConfigurations/ConfigurationsContent/EngineConfigTabContent/CustomConfig';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import T from 'i18n-react';
 import classnames from 'classnames';
 require('./EngineConfigTabContent.scss');
@@ -31,16 +31,16 @@ const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 class EngineConfigTabContent extends Component {
   static propTypes = {
     isBatch: PropTypes.bool,
-    isDetailView: PropTypes.bool
+    isDetailView: PropTypes.bool,
   };
 
   state = {
-    showCustomConfig: false
+    showCustomConfig: false,
   };
 
   toggleCustomConfig = () => {
     this.setState({
-      showCustomConfig: !this.state.showCustomConfig
+      showCustomConfig: !this.state.showCustomConfig,
     });
   };
 
@@ -74,23 +74,18 @@ class EngineConfigTabContent extends Component {
     return (
       <div
         id="engine-config-tab-content"
-        className={classnames(
-          "configuration-step-content configuration-content-container", {
-            "batch-content": this.props.isBatch,
-            "realtime-content": !this.props.isBatch
-          }
-        )}
+        className={classnames('configuration-step-content configuration-content-container', {
+          'batch-content': this.props.isBatch,
+          'realtime-content': !this.props.isBatch,
+        })}
       >
         <fieldset disabled={this.props.isDetailView}>
           <div className="step-content-heading">
-            {T.translate(`${PREFIX}.contentHeading`, {pipelineTypeLabel})}
+            {T.translate(`${PREFIX}.contentHeading`, { pipelineTypeLabel })}
           </div>
-          {
-            this.props.isBatch ?
-              this.renderBatchEngineConfig()
-            :
-              this.renderRealtimeEngineConfig(this.props.isDetailView)
-          }
+          {this.props.isBatch
+            ? this.renderBatchEngineConfig()
+            : this.renderRealtimeEngineConfig(this.props.isDetailView)}
         </fieldset>
         <CustomConfig
           isDetailView={this.props.isDetailView}
@@ -106,7 +101,7 @@ class EngineConfigTabContent extends Component {
 const mapStateToProps = (state) => {
   return {
     isBatch: state.pipelineVisualConfiguration.isBatch,
-    isDetailView: state.pipelineVisualConfiguration.isDetailView
+    isDetailView: state.pipelineVisualConfiguration.isDetailView,
   };
 };
 

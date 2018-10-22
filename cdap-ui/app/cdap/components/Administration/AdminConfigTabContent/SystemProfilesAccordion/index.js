@@ -14,19 +14,19 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import ProfilesListView from 'components/Cloud/Profiles/ListView';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import ProfilesStore from 'components/Cloud/Profiles/Store';
-import {importProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
-import {connect, Provider} from 'react-redux';
-import {Label, Input} from 'reactstrap';
-import {getProfiles, resetProfiles} from 'components/Cloud/Profiles/Store/ActionCreator';
-import {SYSTEM_NAMESPACE} from 'services/global-constants';
+import { importProfile } from 'components/Cloud/Profiles/Store/ActionCreator';
+import { connect, Provider } from 'react-redux';
+import { Label, Input } from 'reactstrap';
+import { getProfiles, resetProfiles } from 'components/Cloud/Profiles/Store/ActionCreator';
+import { SYSTEM_NAMESPACE } from 'services/global-constants';
 require('./SystemProfilesAccordion.scss');
 
 const PREFIX = 'features.Administration.Accordions.SystemProfiles';
@@ -36,8 +36,8 @@ class SystemProfilesAccordion extends Component {
     profilesCount: PropTypes.number,
     loading: PropTypes.bool,
     expanded: PropTypes.bool,
-    onExpand: PropTypes.func
-  }
+    onExpand: PropTypes.func,
+  };
 
   componentDidMount() {
     getProfiles(SYSTEM_NAMESPACE);
@@ -49,23 +49,17 @@ class SystemProfilesAccordion extends Component {
 
   renderLabel() {
     return (
-      <div
-        className="admin-config-container-toggle"
-        onClick={this.props.onExpand}
-      >
+      <div className="admin-config-container-toggle" onClick={this.props.onExpand}>
         <span className="admin-config-container-label">
-          <IconSVG name={this.props.expanded ? "icon-caret-down" : "icon-caret-right"} />
-          {
-            this.props.loading ?
-              (
-                <h5>
-                  {T.translate(`${PREFIX}.label`)}
-                  <IconSVG name="icon-spinner" className="fa-spin" />
-                </h5>
-              )
-            :
-              <h5>{T.translate(`${PREFIX}.labelWithCount`, {count: this.props.profilesCount})}</h5>
-          }
+          <IconSVG name={this.props.expanded ? 'icon-caret-down' : 'icon-caret-right'} />
+          {this.props.loading ? (
+            <h5>
+              {T.translate(`${PREFIX}.label`)}
+              <IconSVG name="icon-spinner" className="fa-spin" />
+            </h5>
+          ) : (
+            <h5>{T.translate(`${PREFIX}.labelWithCount`, { count: this.props.profilesCount })}</h5>
+          )}
         </span>
         <span className="admin-config-container-description">
           {T.translate(`${PREFIX}.description`)}
@@ -82,23 +76,17 @@ class SystemProfilesAccordion extends Component {
     return (
       <div className="admin-config-container-content system-profiles-container-content">
         <div className="create-import-profile">
-          <Link
-            className="btn btn-secondary create-profile-button"
-            to='/ns/system/profiles/create'
-          >
+          <Link className="btn btn-secondary create-profile-button" to="/ns/system/profiles/create">
             {T.translate(`${PREFIX}.create`)}
           </Link>
-          <Label
-            className="import-profile-label"
-            for="import-profile"
-          >
+          <Label className="import-profile-label" for="import-profile">
             {T.translate(`${PREFIX}.import`)}
             <Input
               type="file"
-              accept='.json'
+              accept=".json"
               id="import-profile"
               onChange={importProfile.bind(this, SYSTEM_NAMESPACE)}
-              onClick={(e) => e.target.value = null}
+              onClick={(e) => (e.target.value = null)}
             />
           </Label>
         </div>
@@ -109,10 +97,11 @@ class SystemProfilesAccordion extends Component {
 
   render() {
     return (
-      <div className={classnames(
-        "admin-config-container system-profiles-container",
-        {"expanded": this.props.expanded}
-      )}>
+      <div
+        className={classnames('admin-config-container system-profiles-container', {
+          expanded: this.props.expanded,
+        })}
+      >
         {this.renderLabel()}
         {this.renderContent()}
       </div>
@@ -123,7 +112,7 @@ class SystemProfilesAccordion extends Component {
 const mapStateToProps = (state) => {
   return {
     profilesCount: state.profiles.length,
-    loading: state.loading
+    loading: state.loading,
   };
 };
 
@@ -132,7 +121,7 @@ const ConnectedSystemProfilesAccordion = connect(mapStateToProps)(SystemProfiles
 export default function SystemProfilesAccordionFn(props) {
   return (
     <Provider store={ProfilesStore}>
-      <ConnectedSystemProfilesAccordion {...props}/>
+      <ConnectedSystemProfilesAccordion {...props} />
     </Provider>
   );
 }

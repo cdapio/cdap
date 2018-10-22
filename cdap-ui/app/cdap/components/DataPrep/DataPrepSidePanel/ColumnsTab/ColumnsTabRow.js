@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 import isEqual from 'lodash/isEqual';
 import classnames from 'classnames';
 
@@ -29,7 +29,7 @@ export default class ColumnsTabRow extends Component {
       selected: props.selected,
       rowInfo: props.rowInfo,
       columnName: props.columnName,
-      showTypes: false
+      showTypes: false,
     };
 
     this.toggleRowSelect = this.toggleRowSelect.bind(this);
@@ -43,7 +43,7 @@ export default class ColumnsTabRow extends Component {
       this.setState({
         columnName: nextProps.columnName,
         rowInfo: nextProps.rowInfo,
-        selected: nextProps.selected
+        selected: nextProps.selected,
       });
     }
   }
@@ -55,7 +55,7 @@ export default class ColumnsTabRow extends Component {
       elem.scrollIntoView();
     }
 
-    this.setState({selected: newState});
+    this.setState({ selected: newState });
     preventPropagation(e);
     this.props.setSelect(this.props.columnName, newState);
   }
@@ -63,13 +63,13 @@ export default class ColumnsTabRow extends Component {
   render() {
     let rowInfo = this.props.rowInfo || {};
     let general = rowInfo.general || {};
-    let {empty: empty=0, 'non-null': nonEmpty=100} = general;
+    let { empty: empty = 0, 'non-null': nonEmpty = 100 } = general;
 
     let nonNull = Math.ceil(nonEmpty - empty);
     return (
       <tr
         className={classnames({
-          'selected': this.state.selected
+          selected: this.state.selected,
         })}
         onClick={this.props.onShowDetails}
       >
@@ -79,22 +79,16 @@ export default class ColumnsTabRow extends Component {
             onClick={this.toggleRowSelect}
             className={classnames('fa row-header-checkbox', {
               'fa-square-o': !this.state.selected,
-              'fa-check-square': this.state.selected
+              'fa-check-square': this.state.selected,
             })}
           />
         </td>
         <td>
-          <span>
-            {this.props.index + 1}
-          </span>
+          <span>{this.props.index + 1}</span>
         </td>
-        <td>
-          {this.props.columnName}
-        </td>
+        <td>{this.props.columnName}</td>
         <td className="text-xs-right">
-          <span>
-            {`${nonNull}%`}
-          </span>
+          <span>{`${nonNull}%`}</span>
         </td>
         <td />
       </tr>
@@ -107,5 +101,5 @@ ColumnsTabRow.propTypes = {
   index: PropTypes.number,
   columnName: PropTypes.string,
   selected: PropTypes.bool,
-  setSelect: PropTypes.func
+  setSelect: PropTypes.func,
 };

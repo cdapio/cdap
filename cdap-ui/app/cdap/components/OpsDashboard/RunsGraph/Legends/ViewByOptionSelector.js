@@ -16,21 +16,21 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {DashboardActions, ViewByOptions} from 'components/OpsDashboard/store/DashboardStore';
+import { DashboardActions, ViewByOptions } from 'components/OpsDashboard/store/DashboardStore';
 import T from 'i18n-react';
 
 const PREFIX = 'features.OpsDashboard.RunsGraph.Legends.ViewBy';
 
-const options = Object.keys(ViewByOptions).map(option => {
+const options = Object.keys(ViewByOptions).map((option) => {
   return {
     id: ViewByOptions[option],
-    value: T.translate(`${PREFIX}.${option}`)
+    value: T.translate(`${PREFIX}.${option}`),
   };
 });
 
-function ViewByOptionSelectorComp({viewByOption, changeViewByOption}) {
+function ViewByOptionSelectorComp({ viewByOption, changeViewByOption }) {
   return (
     <div className="reports-view-by-selector">
       <span>{T.translate(`${PREFIX}.label`)}</span>
@@ -49,12 +49,12 @@ function ViewByOptionSelectorComp({viewByOption, changeViewByOption}) {
 
 ViewByOptionSelectorComp.propTypes = {
   viewByOption: PropTypes.string,
-  changeViewByOption: PropTypes.func
+  changeViewByOption: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {
   return {
-    viewByOption: state.dashboard.viewByOption
+    viewByOption: state.dashboard.viewByOption,
   };
 };
 
@@ -63,9 +63,9 @@ const mapDispatch = (dispatch) => {
     changeViewByOption: (e) => {
       dispatch({
         type: DashboardActions.changeViewByOption,
-        payload: { viewByOption: e.target.value }
+        payload: { viewByOption: e.target.value },
       });
-    }
+    },
   };
 };
 

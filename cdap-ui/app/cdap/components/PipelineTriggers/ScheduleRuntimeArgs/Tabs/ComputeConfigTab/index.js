@@ -17,21 +17,16 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import T from 'i18n-react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import ProfilesListViewInPipeline from 'components/PipelineDetails/ProfilesListView';
-import {setSelectedProfile} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
+import { setSelectedProfile } from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
 
 const PREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs.Tabs.ComputeConfig';
 
-function ComputeConfigTab({triggeringPipelineId, selectedProfile, disabled}) {
+function ComputeConfigTab({ triggeringPipelineId, selectedProfile, disabled }) {
   return (
     <div className="compute-config-tab">
-      {
-        disabled ?
-          null
-        :
-          <h4>{T.translate(`${PREFIX}.title`, {triggeringPipelineId})} </h4>
-      }
+      {disabled ? null : <h4>{T.translate(`${PREFIX}.title`, { triggeringPipelineId })} </h4>}
       <ProfilesListViewInPipeline
         selectedProfile={selectedProfile}
         onProfileSelect={setSelectedProfile}
@@ -43,14 +38,14 @@ function ComputeConfigTab({triggeringPipelineId, selectedProfile, disabled}) {
 ComputeConfigTab.propTypes = {
   triggeringPipelineId: PropTypes.string,
   selectedProfile: PropTypes.object,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {
   return {
     triggeringPipelineId: state.args.triggeringPipelineInfo.id,
     selectedProfile: state.args.selectedProfile,
-    disabled: state.args.disabled
+    disabled: state.args.disabled,
   };
 };
 

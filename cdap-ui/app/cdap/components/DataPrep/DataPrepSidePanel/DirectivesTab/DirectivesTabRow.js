@@ -25,7 +25,7 @@ export default class DirectivesTabRow extends Component {
 
     this.state = {
       expandable: false,
-      isExpanded: false
+      isExpanded: false,
     };
 
     this.toggleExpand = this.toggleExpand.bind(this);
@@ -37,28 +37,28 @@ export default class DirectivesTabRow extends Component {
 
     if (content.offsetWidth > container.offsetWidth) {
       this.setState({
-        expandable: true
+        expandable: true,
       });
     }
   }
 
   toggleExpand() {
-    this.setState({isExpanded: !this.state.isExpanded});
+    this.setState({ isExpanded: !this.state.isExpanded });
   }
 
   render() {
     return (
       <div
         className={classnames('directives-row', {
-          'inactive': this.props.isInactive
+          inactive: this.props.isInactive,
         })}
       >
         <span>{this.props.rowIndex + 1}</span>
         <span
           id={`name-container-${this.props.rowInfo.uniqueId}`}
           className={classnames({
-            'truncate': !this.state.isExpanded,
-            'expandable': this.state.expandable
+            truncate: !this.state.isExpanded,
+            expandable: this.state.expandable,
           })}
           onClick={this.toggleExpand}
         >
@@ -83,5 +83,5 @@ DirectivesTabRow.propTypes = {
   isInactive: PropTypes.bool,
   handleDelete: PropTypes.func,
   handleMouseEnter: PropTypes.func,
-  handleMouseLeave: PropTypes.func
+  handleMouseLeave: PropTypes.func,
 };

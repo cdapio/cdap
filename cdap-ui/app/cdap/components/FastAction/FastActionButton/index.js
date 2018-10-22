@@ -18,10 +18,9 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import IconSVG from 'components/IconSVG';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 
-export default function FastActionButton({icon, action, disabled, id, iconClasses}) {
-
+export default function FastActionButton({ icon, action, disabled, id, iconClasses }) {
   let onButtonClick = (event) => {
     preventPropagation(event);
     action(event);
@@ -31,19 +30,9 @@ export default function FastActionButton({icon, action, disabled, id, iconClasse
   return (
     // have to create a wrapper, because disabled elements don't fire mouse events in Firefox
     // also set tooltip ID on this wrapper, so that the tooltip shows up even on a disabled button
-    <span
-      onClick={preventPropagation.bind(this)}
-      id={id}
-    >
-      <button
-        className="btn btn-link"
-        disabled={disabled}
-        onClick={onButtonClick.bind(this)}
-      >
-        <IconSVG
-          name={icon}
-          className={iconClasses}
-        />
+    <span onClick={preventPropagation.bind(this)} id={id}>
+      <button className="btn btn-link" disabled={disabled} onClick={onButtonClick.bind(this)}>
+        <IconSVG name={icon} className={iconClasses} />
       </button>
     </span>
   );
@@ -54,5 +43,5 @@ FastActionButton.propTypes = {
   action: PropTypes.func,
   disabled: PropTypes.bool,
   id: PropTypes.string,
-  iconClasses: PropTypes.string
+  iconClasses: PropTypes.string,
 };

@@ -26,8 +26,8 @@ import GCSBrowser from 'components/DataPrep/DataPrepBrowser/GCSBrowser';
 import BigQueryBrowser from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser';
 import SpannerBrowser from 'components/DataPrep/DataPrepBrowser/SpannerBrowser';
 import DataPrepErrorBanner from 'components/DataPrep/DataPrepBrowser/ErrorBanner';
-import {Provider} from 'react-redux';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { Provider } from 'react-redux';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 
 const browserMap = {
   [ConnectionType.DATABASE]: DatabaseBrowser,
@@ -41,15 +41,15 @@ const browserMap = {
 
 export default class DataPrepBrowser extends Component {
   state = {
-    activeBrowser: DataPrepBrowserStore.getState().activeBrowser
+    activeBrowser: DataPrepBrowserStore.getState().activeBrowser,
   };
 
   componentDidMount() {
     this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
-      let {activeBrowser} = DataPrepBrowserStore.getState();
+      let { activeBrowser } = DataPrepBrowserStore.getState();
       if (activeBrowser.name && this.state.activeBrowser.name !== activeBrowser.name) {
         this.setState({
-          activeBrowser
+          activeBrowser,
         });
       }
     });
@@ -87,9 +87,7 @@ export default class DataPrepBrowser extends Component {
         <Provider store={DataPrepBrowserStore}>
           <React.Fragment>
             <DataPrepErrorBanner />
-            <Tag
-              {...this.props}
-            />
+            <Tag {...this.props} />
           </React.Fragment>
         </Provider>
       );
@@ -100,5 +98,5 @@ export default class DataPrepBrowser extends Component {
 }
 DataPrepBrowser.propTypes = {
   match: PropTypes.object,
-  setActiveConnection: PropTypes.func
+  setActiveConnection: PropTypes.func,
 };

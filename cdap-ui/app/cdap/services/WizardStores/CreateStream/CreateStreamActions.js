@@ -26,6 +26,6 @@ const CreateStreamActions = {
   createStream: 'CREATE-STREAM',
   onError: 'FORM-SUBMIT-FAILURE',
   onSuccess: 'FORM-SUBMIT-SUCCESS',
-  onReset: 'FORM-RESET'
+  onReset: 'FORM-RESET',
 };
 export default CreateStreamActions;

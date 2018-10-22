@@ -47,106 +47,111 @@ import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/Appl
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
 
 const WizardTypesMap = {
-  'create_app': {
+  create_app: {
     tag: ApplicationUploadWizard,
-    store: ApplicationUploadStore
+    store: ApplicationUploadStore,
   },
-  'create_driver_artifact': {
+  create_driver_artifact: {
     tag: MarketArtifactUploadWizard,
-    store: ArtifactUploadStore
+    store: ArtifactUploadStore,
   },
-  'deploy_app': {
+  deploy_app: {
     tag: ApplicationUploadWizard,
-    store: ApplicationUploadStore
+    store: ApplicationUploadStore,
   },
-  'create_artifact_rc': {
+  create_artifact_rc: {
     tag: ArtifactUploadWizard,
-    store: ArtifactUploadStore
+    store: ArtifactUploadStore,
   },
-  'create_library_rc': {
+  create_library_rc: {
     tag: LibraryUploadWizard,
-    store: ArtifactUploadStore
+    store: ArtifactUploadStore,
   },
-  'create_plugin_artifact': {
+  create_plugin_artifact: {
     tag: MarketHydratorPluginUpload,
-    store: ArtifactUploadStore
+    store: ArtifactUploadStore,
   },
-  'create_plugin_artifact_rc': {
+  create_plugin_artifact_rc: {
     tag: PluginUploadWizard,
-    store: ArtifactUploadStore
+    store: ArtifactUploadStore,
   },
-  'create_app_rc': {
+  create_app_rc: {
     tag: ApplicationUploadWizard,
-    store: ArtifactUploadStore
+    store: ArtifactUploadStore,
   },
-  'informational': {
+  informational: {
     tag: InformationalWizard,
-    store: InformationalStore
+    store: InformationalStore,
   },
-  'load_datapack': {
+  load_datapack: {
     tag: UploadDataWizard,
-    store: UploadDataStore
+    store: UploadDataStore,
   },
-  'load_datapack_usecase': {
+  load_datapack_usecase: {
     tag: UploadDataUsecaseWizard,
-    store: UploadDataStore
+    store: UploadDataStore,
   },
-  'create_pipeline': {
+  create_pipeline: {
     tag: PublishPipelineUsecaseWizard,
-    store: PublishPipelineStore
+    store: PublishPipelineStore,
   },
-  'create_pipeline_draft': {
+  create_pipeline_draft: {
     tag: PublishPipelineWizard,
-    store: PublishPipelineStore
+    store: PublishPipelineStore,
   },
-  'add_namespace': {
+  add_namespace: {
     tag: AddNamespaceWizard,
-    store: AddNamespaceStore
+    store: AddNamespaceStore,
   },
-  'create_stream': {
+  create_stream: {
     tag: StreamCreateWizard,
-    store: CreateStreamStore
+    store: CreateStreamStore,
   },
-  'one_step_deploy_app': {
+  one_step_deploy_app: {
     tag: OneStepDeployApp,
-    store: OneStepDeployStore
+    store: OneStepDeployStore,
   },
-  'one_step_deploy_app_usecase': {
+  one_step_deploy_app_usecase: {
     tag: OneStepDeployAppUsecase,
-    store: OneStepDeployStore
+    store: OneStepDeployStore,
   },
-  'one_step_deploy_plugin': {
+  one_step_deploy_plugin: {
     tag: OneStepDeployPlugin,
-    store: OneStepDeployStore
+    store: OneStepDeployStore,
   },
-  'one_step_deploy_plugin_usecase': {
+  one_step_deploy_plugin_usecase: {
     tag: OneStepDeployPluginUsecase,
-    store: OneStepDeployStore
+    store: OneStepDeployStore,
   },
-  'create_directive_artifact_rc': {
+  create_directive_artifact_rc: {
     tag: DirectiveUploadWizard,
-    store: ArtifactUploadStore
-  }
+    store: ArtifactUploadStore,
+  },
 };
 
-export default function AbstractWizard({isOpen, onClose, wizardType, input, backdrop, displayCTA}) {
+export default function AbstractWizard({
+  isOpen,
+  onClose,
+  wizardType,
+  input,
+  backdrop,
+  displayCTA,
+}) {
   if (!isOpen) {
     return null;
   }
-  let {tag: Tag, store} = WizardTypesMap[wizardType];
+  let { tag: Tag, store } = WizardTypesMap[wizardType];
   if (!Tag) {
-    return (<h1> Wizard Type {wizardType} not found </h1>);
+    return <h1> Wizard Type {wizardType} not found </h1>;
   }
-  return (
-    React.createElement(Tag, {
-      isOpen,
-      onClose,
-      store,
-      input,
-      backdrop,
-      displayCTA
-    })
-  );
+  return React.createElement(Tag, {
+    isOpen,
+    onClose,
+    store,
+    input,
+    backdrop,
+    displayCTA,
+  });
 }
 AbstractWizard.propTypes = {
   isOpen: PropTypes.bool,
@@ -154,5 +159,5 @@ AbstractWizard.propTypes = {
   onClose: PropTypes.func,
   input: PropTypes.any,
   backdrop: PropTypes.bool,
-  displayCTA: PropTypes.bool
+  displayCTA: PropTypes.bool,
 };

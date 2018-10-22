@@ -20,13 +20,13 @@ import React, { Component } from 'react';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Loadable from 'react-loadable';
-import {Tooltip} from 'reactstrap';
+import { Tooltip } from 'reactstrap';
 import T from 'i18n-react';
 require('./SchemaTab.scss');
 
 var SchemaEditor = Loadable({
   loader: () => import(/* webpackChunkName: "SchemaEditor" */ 'components/SchemaEditor'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 
 export default class SchemaTab extends Component {
@@ -34,27 +34,29 @@ export default class SchemaTab extends Component {
     super(props);
     this.state = {
       entity: this.props.entity,
-      tooltipOpen: false
+      tooltipOpen: false,
     };
 
     this.toggleTooltip = this.toggleTooltip.bind(this);
   }
 
   componentWillMount() {
-    if (!this.props.entity.schema) { return; }
+    if (!this.props.entity.schema) {
+      return;
+    }
     let schema;
     try {
       schema = JSON.parse(this.props.entity.schema);
     } catch (e) {
       console.error('Error parsing schema: ', e);
-      schema = { fields: []};
+      schema = { fields: [] };
     }
-    this.setSchema({fields: schema.fields});
+    this.setSchema({ fields: schema.fields });
   }
 
   componentWillUnmount() {
     SchemaStore.dispatch({
-      type: 'RESET'
+      type: 'RESET',
     });
   }
 
@@ -62,13 +64,13 @@ export default class SchemaTab extends Component {
     SchemaStore.dispatch({
       type: 'FIELD_UPDATE',
       payload: {
-        schema
-      }
+        schema,
+      },
     });
   }
 
   toggleTooltip() {
-    this.setState({tooltipOpen: !this.state.tooltipOpen});
+    this.setState({ tooltipOpen: !this.state.tooltipOpen });
   }
 
   render() {
@@ -77,12 +79,15 @@ export default class SchemaTab extends Component {
     return (
       <div className="schema-tab">
         <div className="message-section">
-          <strong> {T.translate('features.Overview.SchemaTab.title', {entityType: this.state.entity.type, entityId: this.state.entity.id})} </strong>
+          <strong>
+            {' '}
+            {T.translate('features.Overview.SchemaTab.title', {
+              entityType: this.state.entity.type,
+              entityId: this.state.entity.id,
+            })}{' '}
+          </strong>
           <span className="message-section-tooltip">
-            <i
-              className="fa fa-info-circle"
-              id={infoIconId}
-            />
+            <i className="fa fa-info-circle" id={infoIconId} />
             <Tooltip
               isOpen={this.state.tooltipOpen}
               target={infoIconId}
@@ -93,18 +98,14 @@ export default class SchemaTab extends Component {
             </Tooltip>
           </span>
         </div>
-        <fieldset
-          className="disable-schema"
-          disabled
-        >
-          {
-            this.state.entity.schema ?
-              <SchemaEditor />
-            :
+        <fieldset className="disable-schema" disabled>
+          {this.state.entity.schema ? (
+            <SchemaEditor />
+          ) : (
             <div className="empty-schema">
               <i>{T.translate('features.Overview.SchemaTab.emptyMessage')}</i>
             </div>
-          }
+          )}
         </fieldset>
       </div>
     );
@@ -113,6 +114,6 @@ export default class SchemaTab extends Component {
 
 SchemaTab.propTypes = {
   entity: PropTypes.shape({
-    schema: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
-  })
+    schema: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  }),
 };

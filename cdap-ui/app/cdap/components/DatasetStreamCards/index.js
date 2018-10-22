@@ -18,20 +18,20 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import EntityCard from 'components/EntityCard';
 import NamespaceStore from 'services/NamespaceStore';
-import {parseMetadata} from 'services/metadata-parser';
-import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
-import {Link} from 'react-router-dom';
+import { parseMetadata } from 'services/metadata-parser';
+import { convertEntityTypeToApi } from 'services/entity-type-api-converter';
+import { Link } from 'react-router-dom';
 import uuidV4 from 'uuid/v4';
 require('./DataStreamCards.scss');
 
-export default function DatasetStreamCards({dataEntities}) {
+export default function DatasetStreamCards({ dataEntities }) {
   let currentNamespace = NamespaceStore.getState().selectedNamespace;
-  let data = dataEntities.map( dataEntity => {
+  let data = dataEntities.map((dataEntity) => {
     let entity = {
       entityId: dataEntity.entityId,
       metadata: {
-        SYSTEM: {}
-      }
+        SYSTEM: {},
+      },
     };
     entity = parseMetadata(entity);
     entity.uniqueId = uuidV4();
@@ -39,29 +39,29 @@ export default function DatasetStreamCards({dataEntities}) {
   });
   return (
     <div className="dataentity-cards">
-      {
-        data.map(dataEntity => (
-          <Link
-            key={dataEntity.id}
-            to={{
-              pathname: `/ns/${currentNamespace}/${convertEntityTypeToApi(dataEntity.type)}/${dataEntity.id}`,
-              state: {
-                previousPathname: (location.pathname + location.search).replace(/\/cdap\//g, '/')
-              }
-            }}
-          >
-            <EntityCard
-              className="entity-card-container"
-              entity={dataEntity}
-              key={dataEntity.uniqueId}
-            />
-          </Link>
-        ))
-      }
+      {data.map((dataEntity) => (
+        <Link
+          key={dataEntity.id}
+          to={{
+            pathname: `/ns/${currentNamespace}/${convertEntityTypeToApi(dataEntity.type)}/${
+              dataEntity.id
+            }`,
+            state: {
+              previousPathname: (location.pathname + location.search).replace(/\/cdap\//g, '/'),
+            },
+          }}
+        >
+          <EntityCard
+            className="entity-card-container"
+            entity={dataEntity}
+            key={dataEntity.uniqueId}
+          />
+        </Link>
+      ))}
     </div>
   );
 }
 
 DatasetStreamCards.propTypes = {
-  dataEntities: PropTypes.arrayOf(PropTypes.object)
+  dataEntities: PropTypes.arrayOf(PropTypes.object),
 };

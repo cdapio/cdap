@@ -26,24 +26,24 @@ export default function BtnWithLoading({
   label,
   loading,
   disabled,
-  onClick
+  onClick,
 }) {
   return (
     <button
       className={classnames(`btn btn-with-loading`, className, {
-        'darker-loading-bars': darker
+        'darker-loading-bars': darker,
       })}
       onClick={onClick}
       disabled={disabled || loading}
     >
-      {
-        !loading ? label : (
-          <div>
-            <LoadingSVG />
-            {label}
-          </div>
-        )
-      }
+      {!loading ? (
+        label
+      ) : (
+        <div>
+          <LoadingSVG />
+          {label}
+        </div>
+      )}
     </button>
   );
 }
@@ -54,5 +54,5 @@ BtnWithLoading.propTypes = {
   label: PropTypes.string,
   loading: PropTypes.bool,
   disabled: PropTypes.bool,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
 };

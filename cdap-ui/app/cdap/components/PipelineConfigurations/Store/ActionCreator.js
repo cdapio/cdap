@@ -14,22 +14,33 @@
  * the License.
 */
 
-import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import PipelineDetailStore, {ACTIONS as PipelineDetailActions} from 'components/PipelineDetails/store';
-import {setRunButtonLoading, setRunError, setScheduleButtonLoading, setScheduleError, fetchScheduleStatus} from 'components/PipelineDetails/store/ActionCreator';
-import KeyValueStore, {getDefaultKeyValuePair} from 'components/KeyValuePairs/KeyValueStore';
-import KeyValueStoreActions, {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
-import {GLOBALS} from 'services/global-constants';
-import {MyPipelineApi} from 'api/pipeline';
-import {MyProgramApi} from 'api/program';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {MyPreferenceApi} from 'api/preference';
-import {objectQuery} from 'services/helpers';
+import PipelineConfigurationsStore, {
+  ACTIONS as PipelineConfigurationsActions,
+} from 'components/PipelineConfigurations/Store';
+import PipelineDetailStore, {
+  ACTIONS as PipelineDetailActions,
+} from 'components/PipelineDetails/store';
+import {
+  setRunButtonLoading,
+  setRunError,
+  setScheduleButtonLoading,
+  setScheduleError,
+  fetchScheduleStatus,
+} from 'components/PipelineDetails/store/ActionCreator';
+import KeyValueStore, { getDefaultKeyValuePair } from 'components/KeyValuePairs/KeyValueStore';
+import KeyValueStoreActions, {
+  convertKeyValuePairsObjToMap,
+} from 'components/KeyValuePairs/KeyValueStoreActions';
+import { GLOBALS } from 'services/global-constants';
+import { MyPipelineApi } from 'api/pipeline';
+import { MyProgramApi } from 'api/program';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { MyPreferenceApi } from 'api/preference';
+import { objectQuery } from 'services/helpers';
 import uuidV4 from 'uuid/v4';
 import uniqBy from 'lodash/uniqBy';
 import cloneDeep from 'lodash/cloneDeep';
-import {CLOUD} from 'services/global-constants';
-
+import { CLOUD } from 'services/global-constants';
 
 // Filter certain preferences from being shown in the run time arguments
 // They are being represented in other places (like selected compute profile).
@@ -37,31 +48,31 @@ const getFilteredRuntimeArgs = (runtimeArgs) => {
   const RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY = [
     CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY,
     CLOUD.PROFILE_PROPERTIES_PREFERENCE,
-    'logical.start.time'
+    'logical.start.time',
   ];
-  let {resolvedMacros} = PipelineConfigurationsStore.getState();
+  let { resolvedMacros } = PipelineConfigurationsStore.getState();
   let modifiedRuntimeArgs = {};
   let pairs = [...runtimeArgs.pairs];
   const skipIfProfilePropMatch = (prop) => {
-    let isMatch = RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY.filter(skipProp => prop.indexOf(skipProp) !== -1);
+    let isMatch = RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY.filter(
+      (skipProp) => prop.indexOf(skipProp) !== -1
+    );
     return isMatch.length ? true : false;
   };
-  pairs = pairs
-    .filter(pair => !skipIfProfilePropMatch(pair.key))
-    .map(pair => {
-      if (pair.key in resolvedMacros) {
-        return {
-          notDeletable: true,
-          provided: pair.provided || false,
-          ...pair
-        };
-      }
+  pairs = pairs.filter((pair) => !skipIfProfilePropMatch(pair.key)).map((pair) => {
+    if (pair.key in resolvedMacros) {
       return {
+        notDeletable: true,
+        provided: pair.provided || false,
         ...pair,
-        // This is needed because KeyValuePair will render a checkbox only if the provided is a boolean.
-        provided: null
       };
-    });
+    }
+    return {
+      ...pair,
+      // This is needed because KeyValuePair will render a checkbox only if the provided is a boolean.
+      provided: null,
+    };
+  });
   if (!pairs.length) {
     pairs.push(getDefaultKeyValuePair());
   }
@@ -71,18 +82,22 @@ const getFilteredRuntimeArgs = (runtimeArgs) => {
 
 // While adding runtime argument make sure to include the excluded preferences
 const updateRunTimeArgs = (rtArgs) => {
-  let {runtimeArgs} = PipelineConfigurationsStore.getState();
+  let { runtimeArgs } = PipelineConfigurationsStore.getState();
   let modifiedRuntimeArgs = {};
   let excludedPairs = [...runtimeArgs.pairs];
-  const preferencesToFilter = [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY, CLOUD.PROFILE_PROPERTIES_PREFERENCE];
-  const shouldExcludeProperty = (property) => preferencesToFilter.filter(prefProp => property.indexOf(prefProp) !== -1).length;
-  excludedPairs = excludedPairs.filter(pair => shouldExcludeProperty(pair.key));
+  const preferencesToFilter = [
+    CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY,
+    CLOUD.PROFILE_PROPERTIES_PREFERENCE,
+  ];
+  const shouldExcludeProperty = (property) =>
+    preferencesToFilter.filter((prefProp) => property.indexOf(prefProp) !== -1).length;
+  excludedPairs = excludedPairs.filter((pair) => shouldExcludeProperty(pair.key));
   modifiedRuntimeArgs.pairs = rtArgs.pairs.concat(excludedPairs);
   PipelineConfigurationsStore.dispatch({
     type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
     payload: {
-      runtimeArgs: modifiedRuntimeArgs
-    }
+      runtimeArgs: modifiedRuntimeArgs,
+    },
   });
 };
 
@@ -105,12 +120,12 @@ const updateKeyValueStore = () => {
   let runtimeArgsPairs = PipelineConfigurationsStore.getState().runtimeArgs.pairs;
   KeyValueStore.dispatch({
     type: KeyValueStoreActions.onUpdate,
-    payload: getFilteredRuntimeArgs({ pairs: runtimeArgsPairs })
+    payload: getFilteredRuntimeArgs({ pairs: runtimeArgsPairs }),
   });
 };
 
 const getMacrosResolvedByPrefs = (resolvedPrefs = {}, macrosMap = {}) => {
-  let resolvedMacros = {...macrosMap};
+  let resolvedMacros = { ...macrosMap };
   for (let pref in resolvedPrefs) {
     if (resolvedPrefs.hasOwnProperty(pref) && resolvedMacros.hasOwnProperty(pref)) {
       resolvedMacros[pref] = resolvedPrefs[pref];
@@ -120,16 +135,21 @@ const getMacrosResolvedByPrefs = (resolvedPrefs = {}, macrosMap = {}) => {
 };
 
 const updatePreferences = () => {
-  let {runtimeArgs} = PipelineConfigurationsStore.getState();
+  let { runtimeArgs } = PipelineConfigurationsStore.getState();
   let filteredRuntimeArgs = cloneDeep(runtimeArgs);
-  filteredRuntimeArgs.pairs = filteredRuntimeArgs.pairs.filter(runtimeArg => !runtimeArg.provided);
+  filteredRuntimeArgs.pairs = filteredRuntimeArgs.pairs.filter(
+    (runtimeArg) => !runtimeArg.provided
+  );
   let appId = PipelineDetailStore.getState().name;
   let prefObj = convertKeyValuePairsObjToMap(runtimeArgs);
 
-  return MyPreferenceApi.setAppPreferences({
-    namespace: getCurrentNamespace(),
-    appId
-  }, prefObj);
+  return MyPreferenceApi.setAppPreferences(
+    {
+      namespace: getCurrentNamespace(),
+      appId,
+    },
+    prefObj
+  );
 };
 
 const updatePipeline = () => {
@@ -153,11 +173,10 @@ const updatePipeline = () => {
     maxConcurrentRuns,
   } = PipelineConfigurationsStore.getState();
 
-  properties = Object.keys(properties)
-    .reduce(
-      (obj, key) => (obj[key] = properties[key].toString(), obj),
-      {}
-    );
+  properties = Object.keys(properties).reduce(
+    (obj, key) => ((obj[key] = properties[key].toString()), obj),
+    {}
+  );
   let commonConfig = {
     stages,
     connections,
@@ -167,39 +186,41 @@ const updatePipeline = () => {
     postActions,
     properties,
     processTimingEnabled,
-    stageLoggingEnabled
+    stageLoggingEnabled,
   };
 
   let batchOnlyConfig = {
     engine,
     schedule,
-    maxConcurrentRuns
+    maxConcurrentRuns,
   };
 
   let realtimeOnlyConfig = {
     batchInterval,
     clientResources,
     disableCheckpoints,
-    stopGracefully
+    stopGracefully,
   };
 
   let config;
   if (artifact.name === GLOBALS.etlDataPipeline) {
-    config = {...commonConfig, ...batchOnlyConfig};
+    config = { ...commonConfig, ...batchOnlyConfig };
   } else {
-    config = {...commonConfig, ...realtimeOnlyConfig};
+    config = { ...commonConfig, ...realtimeOnlyConfig };
   }
 
-  let publishObservable = MyPipelineApi.publish({
-    namespace: getCurrentNamespace(),
-    appId: name
-  }, {
-    name,
-    description,
-    artifact,
-    config,
-    principal,
-    /*
+  let publishObservable = MyPipelineApi.publish(
+    {
+      namespace: getCurrentNamespace(),
+      appId: name,
+    },
+    {
+      name,
+      description,
+      artifact,
+      config,
+      principal,
+      /*
       Ref: CDAP-13853
       TL;DR - This is here so that when we update the pipeline we don't delete
       the existing schedules (like triggers).
@@ -217,13 +238,14 @@ const updatePipeline = () => {
       This config will prevent CDAP from deleting existing schedules(triggers)
       when we update the pipeline
     */
-    'app.deploy.update.schedules': false
-  });
+      'app.deploy.update.schedules': false,
+    }
+  );
 
   publishObservable.subscribe(() => {
     PipelineDetailStore.dispatch({
       type: PipelineDetailActions.SET_CONFIG,
-      payload: { config }
+      payload: { config },
     });
   });
 
@@ -239,16 +261,16 @@ const runPipeline = (runtimeArgs) => {
     appId: name,
     programType: GLOBALS.programType[artifact.name],
     programId: GLOBALS.programId[artifact.name],
-    action: 'start'
+    action: 'start',
   };
   let observerable$ = MyProgramApi.action(params, runtimeArgs);
-  observerable$
-    .subscribe(
-      () => {},
-      (err) => {
-        setRunButtonLoading(false);
-        setRunError(err.response || err);
-      });
+  observerable$.subscribe(
+    () => {},
+    (err) => {
+      setRunButtonLoading(false);
+      setRunError(err.response || err);
+    }
+  );
   return observerable$;
 };
 
@@ -267,21 +289,23 @@ const scheduleOrSuspendPipeline = (scheduleApi) => {
   let params = {
     namespace: getCurrentNamespace(),
     appId: name,
-    scheduleId: GLOBALS.defaultScheduleId
+    scheduleId: GLOBALS.defaultScheduleId,
   };
-  scheduleApi(params)
-  .subscribe(() => {
-    setScheduleButtonLoading(false);
-    fetchScheduleStatus(params);
-  }, (err) => {
-    setScheduleButtonLoading(false);
-    setScheduleError(err.response || err);
-  });
+  scheduleApi(params).subscribe(
+    () => {
+      setScheduleButtonLoading(false);
+      fetchScheduleStatus(params);
+    },
+    (err) => {
+      setScheduleButtonLoading(false);
+      setScheduleError(err.response || err);
+    }
+  );
 };
 
 const getCustomizationMap = (properties) => {
   let profileCustomizations = {};
-  Object.keys(properties).forEach(prop => {
+  Object.keys(properties).forEach((prop) => {
     if (prop.indexOf(CLOUD.PROFILE_PROPERTIES_PREFERENCE) !== -1) {
       let propName = prop.replace(`${CLOUD.PROFILE_PROPERTIES_PREFERENCE}.`, '');
       profileCustomizations[propName] = properties[prop];
@@ -293,28 +317,27 @@ const getCustomizationMap = (properties) => {
 const fetchAndUpdateRuntimeArgs = () => {
   const params = {
     namespace: getCurrentNamespace(),
-    appId: PipelineDetailStore.getState().name
+    appId: PipelineDetailStore.getState().name,
   };
 
-  let observable$ = MyPipelineApi.fetchMacros(params)
-    .combineLatest([
-      MyPreferenceApi.getAppPreferences(params),
-      // This is required to resolve macros from preferences
-      // Say DEFAULT_STREAM is a namespace level preference used as a macro
-      // in one of the plugins in the pipeline.
-      MyPreferenceApi.getAppPreferencesResolved(params)
-    ]);
+  let observable$ = MyPipelineApi.fetchMacros(params).combineLatest([
+    MyPreferenceApi.getAppPreferences(params),
+    // This is required to resolve macros from preferences
+    // Say DEFAULT_STREAM is a namespace level preference used as a macro
+    // in one of the plugins in the pipeline.
+    MyPreferenceApi.getAppPreferencesResolved(params),
+  ]);
 
   observable$.subscribe((res) => {
     let macrosSpec = res[0];
     let macrosMap = {};
     let macros = [];
-    macrosSpec.map(ms => {
+    macrosSpec.map((ms) => {
       if (objectQuery(ms, 'spec', 'properties', 'macros', 'lookupProperties')) {
         macros = macros.concat(ms.spec.properties.macros.lookupProperties);
       }
     });
-    macros.forEach(macro => {
+    macros.forEach((macro) => {
       macrosMap[macro] = '';
     });
 
@@ -326,12 +349,11 @@ const fetchAndUpdateRuntimeArgs = () => {
     // profile that is set at the namespace level. So we populate in UI the default
     // profile for a pipeline until the user choose something else. This is populated from
     // resolved app level preference which will provide preferences from namespace.
-    const isProfileProperty = (property) => (
-      [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY, CLOUD.PROFILE_PROPERTIES_PREFERENCE]
-        .filter(profilePrefix => property.indexOf(profilePrefix) !== -1)
-        .length
-    );
-    Object.keys(currentAppResolvedPrefs).forEach(resolvePref => {
+    const isProfileProperty = (property) =>
+      [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY, CLOUD.PROFILE_PROPERTIES_PREFERENCE].filter(
+        (profilePrefix) => property.indexOf(profilePrefix) !== -1
+      ).length;
+    Object.keys(currentAppResolvedPrefs).forEach((resolvePref) => {
       if (isProfileProperty(resolvePref) !== 0) {
         currentAppPrefs[resolvePref] = currentAppResolvedPrefs[resolvePref];
       }
@@ -339,27 +361,29 @@ const fetchAndUpdateRuntimeArgs = () => {
 
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_RESOLVED_MACROS,
-      payload: { resolvedMacros }
+      payload: { resolvedMacros },
     });
-    const getPairs = (map) => (
-      Object
-        .entries(map)
+    const getPairs = (map) =>
+      Object.entries(map)
         .filter(([key]) => key.length)
         .map(([key, value]) => ({
-          key, value,
-          uniqueId: uuidV4()
-        }))
-    );
+          key,
+          value,
+          uniqueId: uuidV4(),
+        }));
     let runtimeArgsPairs = getPairs(currentAppPrefs);
     let resolveMacrosPairs = getPairs(resolvedMacros);
-    let finalRunTimeArgsPairs = uniqBy(runtimeArgsPairs.concat(resolveMacrosPairs), (pair) => pair.key);
+    let finalRunTimeArgsPairs = uniqBy(
+      runtimeArgsPairs.concat(resolveMacrosPairs),
+      (pair) => pair.key
+    );
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
       payload: {
         runtimeArgs: {
-          pairs: finalRunTimeArgsPairs
-        }
-      }
+          pairs: finalRunTimeArgsPairs,
+        },
+      },
     });
     updateKeyValueStore();
   });
@@ -368,7 +392,7 @@ const fetchAndUpdateRuntimeArgs = () => {
 
 const reset = () => {
   PipelineConfigurationsStore.dispatch({
-    type: PipelineConfigurationsActions.RESET
+    type: PipelineConfigurationsActions.RESET,
   });
 };
 
@@ -384,5 +408,5 @@ export {
   suspendSchedule,
   getCustomizationMap,
   fetchAndUpdateRuntimeArgs,
-  reset
+  reset,
 };

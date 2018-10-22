@@ -14,9 +14,8 @@
  * the License.
  */
 
-
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Loadable from 'react-loadable';
 import classnames from 'classnames';
@@ -25,14 +24,14 @@ import globalEvents from 'services/global-events';
 
 var PlusButtonModal = Loadable({
   loader: () => import(/* webpackChunkName: "PlusButtonModal" */ 'components/PlusButtonModal'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 
 export default class CaskMarketButton extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showMarketPlace: false
+      showMarketPlace: false,
     };
 
     this.openCaskMarketModal = this.openCaskMarketModal.bind(this);
@@ -55,20 +54,20 @@ export default class CaskMarketButton extends Component {
     }
 
     this.setState({
-      showMarketPlace: newState
+      showMarketPlace: newState,
     });
   }
 
-  openCaskMarketModal () {
+  openCaskMarketModal() {
     this.setState({
-      showMarketPlace: true
+      showMarketPlace: true,
     });
   }
 
-  closeCaskMarketModal () {
+  closeCaskMarketModal() {
     this.eventEmitter.emit(globalEvents.MARKETCLOSING);
     this.setState({
-      showMarketPlace: false
+      showMarketPlace: false,
     });
   }
 
@@ -76,7 +75,9 @@ export default class CaskMarketButton extends Component {
     return (
       <div>
         <span
-          className={classnames("cask-market-button", this.props.className, {'active': this.state.showMarketPlace})}
+          className={classnames('cask-market-button', this.props.className, {
+            active: this.state.showMarketPlace,
+          })}
           onClick={this.onClickHandler.bind(this)}
         >
           {this.props.children}
@@ -91,5 +92,5 @@ export default class CaskMarketButton extends Component {
 }
 CaskMarketButton.propTypes = {
   className: PropTypes.string,
-  children: PropTypes.node.isRequired
+  children: PropTypes.node.isRequired,
 };

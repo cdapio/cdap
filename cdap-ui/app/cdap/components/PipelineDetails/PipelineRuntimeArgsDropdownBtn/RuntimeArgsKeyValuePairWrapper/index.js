@@ -16,34 +16,36 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {updateKeyValueStore} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {convertMapToKeyValuePairs} from 'services/helpers';
+import PipelineConfigurationsStore, {
+  ACTIONS as PipelineConfigurationsActions,
+} from 'components/PipelineConfigurations/Store';
+import { updateKeyValueStore } from 'components/PipelineConfigurations/Store/ActionCreator';
+import { convertMapToKeyValuePairs } from 'services/helpers';
 import RuntimeArgsPairs from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/RuntimeArgsPairs';
 import classnames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 import ProvidedPopover from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/ProvidedPopover';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
 require('./RuntimeArgsKeyValuePairWrapper.scss');
 
 const toggleAllProvided = (isProvided) => {
-  let runtimeArgs = {...PipelineConfigurationsStore.getState().runtimeArgs};
-  runtimeArgs.pairs.forEach(runtimeArgsPair => {
+  let runtimeArgs = { ...PipelineConfigurationsStore.getState().runtimeArgs };
+  runtimeArgs.pairs.forEach((runtimeArgsPair) => {
     if (runtimeArgsPair.notDeletable) {
       runtimeArgsPair.provided = isProvided;
     }
   });
   PipelineConfigurationsStore.dispatch({
     type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
-    payload: { runtimeArgs }
+    payload: { runtimeArgs },
   });
   updateKeyValueStore();
 };
 
 const onPaste = (dataObj, index) => {
-  let runtimeArgs = {...PipelineConfigurationsStore.getState().runtimeArgs};
+  let runtimeArgs = { ...PipelineConfigurationsStore.getState().runtimeArgs };
 
   // If the selected key-value pair is empty, remove it first before pasting new content
   if (!runtimeArgs.pairs[index].key.length && !runtimeArgs.pairs[index].value.length) {
@@ -51,7 +53,7 @@ const onPaste = (dataObj, index) => {
   }
 
   // If there are existing keys, replace the value, and add the remaining
-  runtimeArgs.pairs.forEach(runtimeArgsPair => {
+  runtimeArgs.pairs.forEach((runtimeArgsPair) => {
     let key = runtimeArgsPair.key;
     if (key in dataObj) {
       runtimeArgsPair.value = dataObj[key];
@@ -64,34 +66,25 @@ const onPaste = (dataObj, index) => {
   }
   PipelineConfigurationsStore.dispatch({
     type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
-    payload: { runtimeArgs }
+    payload: { runtimeArgs },
   });
   updateKeyValueStore();
 };
 
-function RuntimeArgsKeyValuePairWrapper({runtimeArgs}) {
+function RuntimeArgsKeyValuePairWrapper({ runtimeArgs }) {
   return (
     <div
       id="runtime-arguments-key-value-pairs-wrapper"
       className="configuration-step-content configuration-content-container"
     >
-      <div className={classnames("runtime-arguments-labels key-value-pair-labels")}>
-        <span className="key-label">
-          {T.translate('commons.nameLabel')}
-        </span>
-        <span className="value-label">
-          {T.translate('commons.keyValPairs.valueLabel')}
-        </span>
-        <span/>
-         <ProvidedPopover
-            toggleAllProvided={toggleAllProvided}
-          />
+      <div className={classnames('runtime-arguments-labels key-value-pair-labels')}>
+        <span className="key-label">{T.translate('commons.nameLabel')}</span>
+        <span className="value-label">{T.translate('commons.keyValPairs.valueLabel')}</span>
+        <span />
+        <ProvidedPopover toggleAllProvided={toggleAllProvided} />
       </div>
       <div className="runtime-arguments-values key-value-pair-values">
-        <RuntimeArgsPairs
-          onPaste={onPaste}
-          runtimeArgs={runtimeArgs}
-        />
+        <RuntimeArgsPairs onPaste={onPaste} runtimeArgs={runtimeArgs} />
       </div>
     </div>
   );
@@ -99,15 +92,17 @@ function RuntimeArgsKeyValuePairWrapper({runtimeArgs}) {
 
 RuntimeArgsKeyValuePairWrapper.propTypes = {
   isHistoricalRun: PropTypes.bool,
-  runtimeArgs: PropTypes.object
+  runtimeArgs: PropTypes.object,
 };
 
 const mapStateToProps = (state, ownProps) => {
   return {
-    runtimeArgs: ownProps.runtimeArgs
+    runtimeArgs: ownProps.runtimeArgs,
   };
 };
 
-const ConnectedRuntimeArgsKeyValuePairWrapper = connect(mapStateToProps)(RuntimeArgsKeyValuePairWrapper);
+const ConnectedRuntimeArgsKeyValuePairWrapper = connect(mapStateToProps)(
+  RuntimeArgsKeyValuePairWrapper
+);
 
 export default ConnectedRuntimeArgsKeyValuePairWrapper;

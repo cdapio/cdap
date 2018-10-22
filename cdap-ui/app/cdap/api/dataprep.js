@@ -15,7 +15,7 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 
@@ -44,68 +44,190 @@ const MyDataPrepApi = {
   getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/status`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${baseServicePath}/status`),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
-  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`, { interval: 2000 }),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`, {
+    interval: 2000,
+  }),
 
   // File System Browser
   explorer: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs`),
   readFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs/read`),
-  getSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs/specification`),
+  getSpecification: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${baseServicePath}/methods/explorer/fs/specification`
+  ),
 
   // Database Browser
   listTables: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/tables`),
-  readTable: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/tables/:tableId/read`),
-  getDatabaseSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/tables/:tableId/specification`),
+  readTable: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/tables/:tableId/read`
+  ),
+  getDatabaseSpecification: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/tables/:tableId/specification`
+  ),
 
   // JDBC
   jdbcDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/jdbc/drivers`),
   jdbcAllowed: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/jdbc/allowed`),
-  jdbcTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/connections/jdbc/test`),
+  jdbcTestConnection: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    `${baseServicePath}/methods/connections/jdbc/test`
+  ),
   getDatabaseList: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/databases`),
 
   // Kafka
   kafkaTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/kafka/test`),
   listTopics: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/kafka`),
-  readTopic: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/kafka/:topic/read`),
-  getKafkaSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/kafka/:topic/specification`),
+  readTopic: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/kafka/:topic/read`
+  ),
+  getKafkaSpecification: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/kafka/:topic/specification`
+  ),
 
   // S3
   s3TestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/s3/test`),
-  getS3Buckets: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/:connectionId/s3/buckets`),
-  exploreBucketDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/s3/explore`),
-  readS3File: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/:connectionId/s3/buckets/:activeBucket/read`),
-  getS3Specification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/s3/buckets/:activeBucket/specification`),
+  getS3Buckets: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/s3/buckets`
+  ),
+  exploreBucketDetails: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/s3/explore`
+  ),
+  readS3File: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/s3/buckets/:activeBucket/read`
+  ),
+  getS3Specification: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/s3/buckets/:activeBucket/specification`
+  ),
 
   // GCS
   gcsTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/gcs/test`),
-  exploreGCSBucketDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/gcs/explore`),
-  readGCSFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/gcs/buckets/:activeBucket/read`),
-  getGCSSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/gcs/specification`),
+  exploreGCSBucketDetails: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/gcs/explore`
+  ),
+  readGCSFile: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/gcs/buckets/:activeBucket/read`
+  ),
+  getGCSSpecification: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/gcs/specification`
+  ),
 
   // BigQuery
-  bigQueryTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/bigquery/test`),
-  bigQueryGetDatasets: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery`),
-  bigQueryGetTables: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery/:datasetId/tables`),
-  readBigQueryTable: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery/:datasetId/tables/:tableId/read`),
-  getBigQuerySpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/bigquery/specification`),
+  bigQueryTestConnection: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    `${connectionsPath}/bigquery/test`
+  ),
+  bigQueryGetDatasets: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/bigquery`
+  ),
+  bigQueryGetTables: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/bigquery/:datasetId/tables`
+  ),
+  readBigQueryTable: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/bigquery/:datasetId/tables/:tableId/read`
+  ),
+  getBigQuerySpecification: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/bigquery/specification`
+  ),
 
   // Spanner
   spannerTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/spanner/test`),
-  spannerGetInstances: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances`),
-  spannerGetDatabases: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases`),
-  spannerGetTables: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases/:databaseId/tables`),
-  readSpannerTable: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases/:databaseId/tables/:tableId/read`),
-  getSpannerSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/spanner/workspaces/:workspaceId/specification`),
+  spannerGetInstances: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/spanner/instances`
+  ),
+  spannerGetDatabases: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases`
+  ),
+  spannerGetTables: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases/:databaseId/tables`
+  ),
+  readSpannerTable: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/spanner/instances/:instanceId/databases/:databaseId/tables/:tableId/read`
+  ),
+  getSpannerSpecification: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${baseServicePath}/methods/spanner/workspaces/:workspaceId/specification`
+  ),
 
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),
   createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),
-  updateConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/:connectionId/update`),
+  updateConnection: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/update`
+  ),
   deleteConnection: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${connectionsPath}/:connectionId`),
   getConnection: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId`),
   listDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/list/drivers`),
 
   // Connection types
-  listConnectionTypes: apiCreator(dataSrc, 'GET', 'REQUEST', connectionTypesPath)
+  listConnectionTypes: apiCreator(dataSrc, 'GET', 'REQUEST', connectionTypesPath),
 };
 
 export default MyDataPrepApi;

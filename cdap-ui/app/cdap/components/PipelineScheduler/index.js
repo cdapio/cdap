@@ -15,14 +15,16 @@
 */
 
 import React, { Component } from 'react';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import PropTypes from 'prop-types';
 import PipelineDetailStore from 'components/PipelineDetails/store';
-import PipelineSchedulerStore, {ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
+import PipelineSchedulerStore, {
+  ACTIONS as PipelineSchedulerActions,
+} from 'components/PipelineScheduler/Store';
 import {
   setStateFromCron,
   getTimeBasedSchedule,
-  setScheduleStatus
+  setScheduleStatus,
 } from 'components/PipelineScheduler/Store/ActionCreator';
 import ViewSwitch from 'components/PipelineScheduler/ViewSwitch';
 import ViewContainer from 'components/PipelineScheduler/ViewContainer';
@@ -30,17 +32,17 @@ import {
   setSchedule,
   setMaxConcurrentRuns,
   setOptionalProperty,
-  setRunError
+  setRunError,
 } from 'components/PipelineDetails/store/ActionCreator';
 import IconSVG from 'components/IconSVG';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import StatusMapper from 'services/StatusMapper';
-import {isDescendant, objectQuery} from 'services/helpers';
-import {Observable} from 'rxjs/Observable';
-import {PROFILES_DROPDOWN_DOM_CLASS} from 'components/PipelineScheduler/ProfilesForSchedule';
-import {MyScheduleApi} from 'api/schedule';
+import { isDescendant, objectQuery } from 'services/helpers';
+import { Observable } from 'rxjs/Observable';
+import { PROFILES_DROPDOWN_DOM_CLASS } from 'components/PipelineScheduler/ProfilesForSchedule';
+import { MyScheduleApi } from 'api/schedule';
 import T from 'i18n-react';
-import {GLOBALS, CLOUD} from 'services/global-constants';
+import { GLOBALS, CLOUD } from 'services/global-constants';
 import isEmpty from 'lodash/isEmpty';
 
 const PREFIX = 'features.PipelineScheduler';
@@ -54,8 +56,8 @@ export default class PipelineScheduler extends Component {
       PipelineSchedulerStore.dispatch({
         type: PipelineSchedulerActions.SET_MAX_CONCURRENT_RUNS,
         payload: {
-          maxConcurrentRuns: this.props.maxConcurrentRuns
-        }
+          maxConcurrentRuns: this.props.maxConcurrentRuns,
+        },
       });
       setStateFromCron(this.props.schedule);
     }
@@ -64,7 +66,7 @@ export default class PipelineScheduler extends Component {
       isScheduleChanged: false,
       savingSchedule: false,
       savingAndScheduling: false,
-      scheduleStatus: this.props.scheduleStatus
+      scheduleStatus: this.props.scheduleStatus,
     };
     setScheduleStatus(this.props.scheduleStatus);
 
@@ -74,23 +76,28 @@ export default class PipelineScheduler extends Component {
       let curretMaxConcurrentRuns = state.maxConcurrentRuns;
       let currentProfileName = state.profiles.selectedProfile;
       let currentBackendSchedule = state.currentBackendSchedule || {};
-      let constraintFromBackend = (currentBackendSchedule.constraints || []).find(constraint => {
-        return constraint.type === 'CONCURRENCY';
-      }) || {};
-      let profileNameFromBackend = objectQuery(
-        state, 'currentBackendSchedule', 'properties', CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY
-      ) || null;
+      let constraintFromBackend =
+        (currentBackendSchedule.constraints || []).find((constraint) => {
+          return constraint.type === 'CONCURRENCY';
+        }) || {};
+      let profileNameFromBackend =
+        objectQuery(
+          state,
+          'currentBackendSchedule',
+          'properties',
+          CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY
+        ) || null;
       if (
         currentCron !== objectQuery(currentBackendSchedule, 'trigger', 'cronExpression') ||
         curretMaxConcurrentRuns !== constraintFromBackend.maxConcurrency ||
         currentProfileName !== profileNameFromBackend
       ) {
         this.setState({
-          isScheduleChanged: true
+          isScheduleChanged: true,
         });
       } else {
         this.setState({
-          isScheduleChanged: false
+          isScheduleChanged: false,
         });
       }
     });
@@ -103,8 +110,7 @@ export default class PipelineScheduler extends Component {
 
     getTimeBasedSchedule();
 
-    this.documentClick$ = Observable.fromEvent(document, 'click')
-    .subscribe((e) => {
+    this.documentClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
       if (!this.schedulerComponent) {
         return;
       }
@@ -129,14 +135,14 @@ export default class PipelineScheduler extends Component {
   componentWillReceiveProps(nextProps) {
     if (nextProps.scheduleStatus !== this.state.scheduleStatus) {
       this.setState({
-        scheduleStatus: nextProps.scheduleStatus
+        scheduleStatus: nextProps.scheduleStatus,
       });
     }
   }
 
   componentWillUnmount() {
     PipelineSchedulerStore.dispatch({
-      type: PipelineSchedulerActions.RESET
+      type: PipelineSchedulerActions.RESET,
     });
     if (this.schedulerStoreSubscription) {
       this.schedulerStoreSubscription();
@@ -169,7 +175,7 @@ export default class PipelineScheduler extends Component {
       cron,
       maxConcurrentRuns,
       currentBackendSchedule,
-      profiles
+      profiles,
     } = PipelineSchedulerStore.getState();
 
     // In Studio mode, which is still using Angular action creator
@@ -183,15 +189,15 @@ export default class PipelineScheduler extends Component {
     let savingState = shouldSchedule ? 'savingAndScheduling' : 'savingSchedule';
 
     this.setState({
-      [savingState]: true
+      [savingState]: true,
     });
 
     let scheduleProperties = currentBackendSchedule.properties;
-    let newConstraints = currentBackendSchedule.constraints.map(constraint => {
+    let newConstraints = currentBackendSchedule.constraints.map((constraint) => {
       if (constraint.type === 'CONCURRENCY') {
         return {
           ...constraint,
-          maxConcurrency: maxConcurrentRuns
+          maxConcurrency: maxConcurrentRuns,
         };
       }
       return constraint;
@@ -199,55 +205,57 @@ export default class PipelineScheduler extends Component {
     if (profiles.selectedProfile) {
       scheduleProperties = {
         ...scheduleProperties,
-        [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY]: profiles.selectedProfile
+        [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY]: profiles.selectedProfile,
       };
     }
     if (!isEmpty(profiles.profileCustomizations)) {
       let profileCustomizations = {};
-      Object.keys(profiles.profileCustomizations).forEach(profileProp => {
-        profileCustomizations[`${CLOUD.PROFILE_PROPERTIES_PREFERENCE}.${profileProp}`] = profiles.profileCustomizations[profileProp];
+      Object.keys(profiles.profileCustomizations).forEach((profileProp) => {
+        profileCustomizations[`${CLOUD.PROFILE_PROPERTIES_PREFERENCE}.${profileProp}`] =
+          profiles.profileCustomizations[profileProp];
       });
       scheduleProperties = {
         ...scheduleProperties,
-        ...profileCustomizations
+        ...profileCustomizations,
       };
     }
     let newTrigger = {
       ...currentBackendSchedule.trigger,
-      cronExpression: cron
+      cronExpression: cron,
     };
     let newSchedule = {
       ...currentBackendSchedule,
       properties: scheduleProperties,
       constraints: newConstraints,
-      trigger: newTrigger
+      trigger: newTrigger,
     };
-    let {name: appId} = PipelineDetailStore.getState();
+    let { name: appId } = PipelineDetailStore.getState();
 
-    MyScheduleApi
-      .update({
+    MyScheduleApi.update(
+      {
         namespace: getCurrentNamespace(),
         appId,
-        scheduleName: GLOBALS.defaultScheduleId
-      }, newSchedule)
-      .subscribe(
-        () => {
-          if (shouldSchedule) {
-            this.schedulePipeline();
-          } else {
-            this.setState({
-              [savingState]: false
-            });
-            this.props.onClose();
-          }
-        },
-        err => {
-          setRunError(err.response || err);
+        scheduleName: GLOBALS.defaultScheduleId,
+      },
+      newSchedule
+    ).subscribe(
+      () => {
+        if (shouldSchedule) {
+          this.schedulePipeline();
+        } else {
           this.setState({
-            [savingState]: false
+            [savingState]: false,
           });
+          this.props.onClose();
         }
-      );
+      },
+      (err) => {
+        setRunError(err.response || err);
+        this.setState({
+          [savingState]: false,
+        });
+      }
+    );
 
     setSchedule(cron);
     setMaxConcurrentRuns(maxConcurrentRuns);
@@ -259,18 +267,10 @@ export default class PipelineScheduler extends Component {
       <div className="pipeline-scheduler-header modeless-header">
         <div className="modeless-title">
           {T.translate(`${PREFIX}.header`)}
-          {
-            this.props.pipelineName.length ?
-              ` ${this.props.pipelineName}`
-            :
-              null
-          }
+          {this.props.pipelineName.length ? ` ${this.props.pipelineName}` : null}
         </div>
         <div className="btn-group">
-          <a
-            className="btn"
-            onClick={this.props.onClose}
-          >
+          <a className="btn" onClick={this.props.onClose}>
             <IconSVG name="icon-close" />
           </a>
         </div>
@@ -282,10 +282,7 @@ export default class PipelineScheduler extends Component {
     if (this.state.scheduleStatus === StatusMapper.statusMap['SCHEDULED']) {
       return (
         <div className="schedule-navigation">
-          <button
-            className="btn btn-primary schedule-btn"
-            onClick={this.suspendSchedule}
-          >
+          <button className="btn btn-primary schedule-btn" onClick={this.suspendSchedule}>
             {T.translate(`${PREFIX}.suspendSchedule`)}
           </button>
         </div>
@@ -299,9 +296,7 @@ export default class PipelineScheduler extends Component {
             className="btn btn-primary save-schedule-btn"
             onClick={this.saveSchedule.bind(this, false)}
           >
-            <span>
-              {T.translate(`${PREFIX}.saveSchedule`)}
-            </span>
+            <span>{T.translate(`${PREFIX}.saveSchedule`)}</span>
           </button>
         </div>
       );
@@ -315,21 +310,12 @@ export default class PipelineScheduler extends Component {
           disabled={this.state.savingSchedule || this.state.savingAndScheduling}
         >
           <span>
-            {
-              this.state.isScheduleChanged ?
-                T.translate(`${PREFIX}.saveAndStartSchedule`)
-              :
-                T.translate(`${PREFIX}.startSchedule`)
-            }
-            {
-               this.state.savingAndScheduling ?
-                <IconSVG
-                  name="icon-spinner"
-                  className="fa-spin"
-                />
-              :
-                null
-            }
+            {this.state.isScheduleChanged
+              ? T.translate(`${PREFIX}.saveAndStartSchedule`)
+              : T.translate(`${PREFIX}.startSchedule`)}
+            {this.state.savingAndScheduling ? (
+              <IconSVG name="icon-spinner" className="fa-spin" />
+            ) : null}
           </span>
         </button>
         <button
@@ -338,15 +324,7 @@ export default class PipelineScheduler extends Component {
           disabled={this.state.savingSchedule || this.state.savingAndScheduling}
         >
           <span>{T.translate(`${PREFIX}.saveSchedule`)}</span>
-          {
-             this.state.savingSchedule ?
-              <IconSVG
-                name="icon-spinner"
-                className="fa-spin"
-              />
-            :
-              null
-          }
+          {this.state.savingSchedule ? <IconSVG name="icon-spinner" className="fa-spin" /> : null}
         </button>
       </div>
     );
@@ -358,18 +336,16 @@ export default class PipelineScheduler extends Component {
       <Provider store={PipelineSchedulerStore}>
         <div
           className="pipeline-scheduler-content modeless-container"
-          ref={(ref) => this.schedulerComponent = ref}
+          ref={(ref) => (this.schedulerComponent = ref)}
         >
           {this.renderHeader()}
           <div className="pipeline-scheduler-body modeless-content">
             <div className="schedule-content">
-                <fieldset disabled={isScheduled}>
-                  <ViewSwitch />
-                  <ViewContainer
-                    isDetailView={this.props.isDetailView}
-                  />
-                </fieldset>
-                {this.renderActionButtons()}
+              <fieldset disabled={isScheduled}>
+                <ViewSwitch />
+                <ViewContainer isDetailView={this.props.isDetailView} />
+              </fieldset>
+              {this.renderActionButtons()}
             </div>
           </div>
         </div>
@@ -387,5 +363,5 @@ PipelineScheduler.propTypes = {
   pipelineName: PropTypes.string,
   scheduleStatus: PropTypes.string,
   schedulePipeline: PropTypes.func,
-  suspendSchedule: PropTypes.func
+  suspendSchedule: PropTypes.func,
 };

@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import 'whatwg-fetch';
 import cookie from 'react-cookie';
@@ -30,7 +30,6 @@ require('./login.scss');
 import T from 'i18n-react';
 T.setTexts(require('./text/text-en.yaml'));
 
-
 class Login extends Component {
   constructor(props) {
     super(props);
@@ -39,7 +38,7 @@ class Login extends Component {
       password: '',
       message: '',
       formState: false,
-      rememberUser: false
+      rememberUser: false,
     };
   }
   login(e) {
@@ -49,24 +48,24 @@ class Login extends Component {
     }
     fetch('/login', {
       method: 'POST',
-      headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: this.state.username,
-        password: this.state.password
-      })
+        password: this.state.password,
+      }),
     })
       .then((response) => {
         if (response.status >= 200 && response.status < 300) {
           return response.json();
         } else {
           this.setState({
-            message: 'Login failed. Username or Password incorrect.'
+            message: 'Login failed. Username or Password incorrect.',
           });
           return Promise.reject();
         }
       })
       .then((res) => {
-        cookie.save('CDAP_Auth_Token', res.access_token, { path: '/'});
+        cookie.save('CDAP_Auth_Token', res.access_token, { path: '/' });
         cookie.save('CDAP_Auth_User', this.state.username);
         var queryObj = util.getQueryParams(location.search);
         queryObj.redirectUrl = queryObj.redirectUrl || '/';
@@ -89,28 +88,20 @@ class Login extends Component {
   }
   rememberUser() {
     this.setState({
-      rememberUser: true
+      rememberUser: true,
     });
   }
   render() {
     let footer;
     if (this.state.message) {
-      footer = (
-        <CardActionFeedback
-          type="DANGER"
-          message={this.state.message}
-        />
-      );
+      footer = <CardActionFeedback type="DANGER" message={this.state.message} />;
     }
 
     return (
       <div>
         <Card footer={footer}>
-          <div className="cdap-logo"></div>
-          <form
-            role="form"
-            onSubmit={this.login.bind(this)}
-          >
+          <div className="cdap-logo" />
+          <form role="form" onSubmit={this.login.bind(this)}>
             <div className="form-group">
               <input
                 id="username"
@@ -141,7 +132,7 @@ class Login extends Component {
                         value={this.state.rememberUser}
                         onClick={this.rememberUser.bind(this)}
                       />
-                    {T.translate('login.labels.rememberme')}
+                      {T.translate('login.labels.rememberme')}
                     </label>
                   </div>
                 </div>
@@ -164,11 +155,5 @@ class Login extends Component {
     );
   }
 }
-ReactDOM.render(
-  <Login />,
-  document.getElementById('login-form')
-);
-ReactDOM.render(
-  <Footer />,
-  document.getElementById('footer-container')
-);
+ReactDOM.render(<Login />, document.getElementById('login-form'));
+ReactDOM.render(<Footer />, document.getElementById('footer-container'));

@@ -44,7 +44,7 @@ export default class DatabaseOptions extends Component {
     this.state = {
       loading: true,
       drivers: [],
-      uploadArtifact: false
+      uploadArtifact: false,
     };
 
     this.toggleArtifactUploadWizard = this.toggleArtifactUploadWizard.bind(this);
@@ -69,7 +69,7 @@ export default class DatabaseOptions extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace
+      namespace,
     };
 
     MyDataPrepApi.jdbcAllowed(params)
@@ -99,7 +99,7 @@ export default class DatabaseOptions extends Component {
 
         this.setState({
           drivers: driversList,
-          loading: false
+          loading: false,
         });
       });
 
@@ -112,15 +112,15 @@ export default class DatabaseOptions extends Component {
         type: ArtifactUploadActions.setNameAndClass,
         payload: {
           name: db.name,
-          classname: db.class
-        }
+          classname: db.class,
+        },
       });
 
-      this.setState({uploadArtifact: true});
+      this.setState({ uploadArtifact: true });
       return;
     }
 
-    this.setState({uploadArtifact: false});
+    this.setState({ uploadArtifact: false });
   }
 
   caskMarket(db) {
@@ -130,8 +130,10 @@ export default class DatabaseOptions extends Component {
     this.sub = MarketStore.subscribe(() => {
       let state = MarketStore.getState();
 
-      if (state.list.length === 0) { return; }
-      let entity = find(state.list, { name: jdbcConfig.name, version: jdbcConfig.version});
+      if (state.list.length === 0) {
+        return;
+      }
+      let entity = find(state.list, { name: jdbcConfig.name, version: jdbcConfig.version });
 
       this.sub();
 
@@ -139,8 +141,8 @@ export default class DatabaseOptions extends Component {
         type: 'SET_ACTIVE_ENTITY',
         payload: {
           entityId: entity.id,
-          displayCTA: false
-        }
+          displayCTA: false,
+        },
       });
     });
 
@@ -150,7 +152,9 @@ export default class DatabaseOptions extends Component {
   }
 
   onDBClick(db) {
-    if (!db.installed) { return; }
+    if (!db.installed) {
+      return;
+    }
 
     this.props.onDBSelect(db);
   }
@@ -158,16 +162,15 @@ export default class DatabaseOptions extends Component {
   renderMarketOption(db) {
     let jdbcConfig = window.CDAP_UI_CONFIG.dataprep.jdbcMarketMap[db.name];
 
-    if (!jdbcConfig) { return null; }
+    if (!jdbcConfig) {
+      return null;
+    }
 
     const hub = Theme.featureNames.hub;
 
     return (
       <span className="market-option">
-        <span
-          className="upload"
-          onClick={this.caskMarket.bind(this, db)}
-        >
+        <span className="upload" onClick={this.caskMarket.bind(this, db)}>
           {hub}
         </span>
         <span> | </span>
@@ -181,10 +184,7 @@ export default class DatabaseOptions extends Component {
         <div className="db-installed">
           <span>{T.translate(`${PREFIX}.install`)}</span>
           {this.renderMarketOption(db)}
-          <span
-            className="upload"
-            onClick={this.toggleArtifactUploadWizard.bind(this, db)}
-          >
+          <span className="upload" onClick={this.toggleArtifactUploadWizard.bind(this, db)}>
             {T.translate(`${PREFIX}.upload`)}
           </span>
         </div>
@@ -193,9 +193,7 @@ export default class DatabaseOptions extends Component {
 
     return (
       <div className="db-installed">
-        <span>
-          {db.pluginInfo.version}
-        </span>
+        <span>{db.pluginInfo.version}</span>
         <span className="fa fa-fw check-icon">
           <IconSVG name="icon-check" />
         </span>
@@ -206,22 +204,16 @@ export default class DatabaseOptions extends Component {
 
   renderDBOption(db) {
     return (
-      <div
-        key={db.uniqueId}
-        className="col-xs-6"
-      >
+      <div key={db.uniqueId} className="col-xs-6">
         <div
-          className={classnames('database-option', {'installed': db.installed})}
+          className={classnames('database-option', { installed: db.installed })}
           onClick={this.onDBClick.bind(this, db)}
         >
           <div className="db-image-container">
-            <div className={`db-image db-${db.tag}`}></div>
+            <div className={`db-image db-${db.tag}`} />
           </div>
           <div className="db-info">
-            <div
-              className="db-name"
-              title={db.label}
-            >
+            <div className="db-name" title={db.label}>
               {db.label}
             </div>
             {this.renderDBInfo(db)}
@@ -232,12 +224,14 @@ export default class DatabaseOptions extends Component {
   }
 
   onWizardClose() {
-    this.setState({uploadArtifact: false});
+    this.setState({ uploadArtifact: false });
     this.fetchDrivers();
   }
 
   renderArtifactUploadWizard() {
-    if (!this.state.uploadArtifact) { return null; }
+    if (!this.state.uploadArtifact) {
+      return null;
+    }
 
     return (
       <ArtifactUploadWizard
@@ -260,13 +254,9 @@ export default class DatabaseOptions extends Component {
 
     return (
       <div className="database-options">
-        <div className="options-title">
-          {T.translate(`${PREFIX}.optionsTitle`)}
-        </div>
+        <div className="options-title">{T.translate(`${PREFIX}.optionsTitle`)}</div>
 
-        <div className="row">
-          {this.state.drivers.map((db) => this.renderDBOption(db))}
-        </div>
+        <div className="row">{this.state.drivers.map((db) => this.renderDBOption(db))}</div>
 
         {this.renderArtifactUploadWizard()}
       </div>
@@ -275,6 +265,5 @@ export default class DatabaseOptions extends Component {
 }
 
 DatabaseOptions.propTypes = {
-  onDBSelect: PropTypes.func
+  onDBSelect: PropTypes.func,
 };
-

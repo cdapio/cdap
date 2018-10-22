@@ -16,35 +16,29 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import Duration from 'components/Duration';
-import {humanReadableDuration} from 'services/helpers';
+import { humanReadableDuration } from 'services/helpers';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails';
 
 const mapStateToProps = (state) => {
   return {
-    currentRun: state.currentRun
+    currentRun: state.currentRun,
   };
 };
 
-const RunDuration = ({currentRun}) => {
+const RunDuration = ({ currentRun }) => {
   let DurationComp;
   if (currentRun && currentRun.starting) {
     if (currentRun.end) {
       DurationComp = (
-        <span>
-          {`${humanReadableDuration(currentRun.end - currentRun.starting)}`}
-        </span>
+        <span>{`${humanReadableDuration(currentRun.end - currentRun.starting)}`}</span>
       );
     } else {
       DurationComp = (
-        <Duration
-          targetTime={currentRun.starting}
-          isMillisecond={false}
-          showFullDuration={true}
-        />
+        <Duration targetTime={currentRun.starting} isMillisecond={false} showFullDuration={true} />
       );
     }
   }
@@ -53,20 +47,13 @@ const RunDuration = ({currentRun}) => {
       <div>
         <strong>{T.translate(`${PREFIX}.duration`)}</strong>
       </div>
-      <span>
-        {
-          currentRun && currentRun.starting ?
-            DurationComp
-          :
-            '--'
-        }
-      </span>
+      <span>{currentRun && currentRun.starting ? DurationComp : '--'}</span>
     </div>
   );
 };
 
 RunDuration.propTypes = {
-  currentRun: PropTypes.object
+  currentRun: PropTypes.object,
 };
 
 const ConnectedRunDuration = connect(mapStateToProps)(RunDuration);

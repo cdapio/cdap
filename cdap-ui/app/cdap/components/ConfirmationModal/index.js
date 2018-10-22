@@ -27,7 +27,6 @@ import If from 'components/If';
 require('./ConfirmationModal.scss');
 
 export default class ConfirmationModal extends Component {
-
   static propTypes = {
     cancelButtonText: PropTypes.string,
     cancelFn: PropTypes.func,
@@ -35,10 +34,7 @@ export default class ConfirmationModal extends Component {
     confirmButtonText: PropTypes.string,
     confirmationText: PropTypes.oneOfType([
       PropTypes.string,
-      PropTypes.arrayOf(PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.node
-      ]))
+      PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.node])),
     ]),
     confirmFn: PropTypes.func,
     headerTitle: PropTypes.string,
@@ -49,14 +45,14 @@ export default class ConfirmationModal extends Component {
     extendedMessage: PropTypes.string,
     disableAction: PropTypes.bool,
     closeable: PropTypes.bool,
-    keyboard: PropTypes.bool
+    keyboard: PropTypes.bool,
   };
 
   static defaultProps = {
     confirmButtonText: T.translate('features.ConfirmationModal.confirmDefaultText'),
     cancelButtonText: T.translate('features.ConfirmationModal.cancelDefaultText'),
     closeable: false,
-    keyboard: true
+    keyboard: true,
   };
 
   componentWillMount() {
@@ -77,25 +73,21 @@ export default class ConfirmationModal extends Component {
         </ModalBody>
       );
     }
-    let confirmation = this.props.confirmationElem ? this.props.confirmationElem : this.props.confirmationText;
+    let confirmation = this.props.confirmationElem
+      ? this.props.confirmationElem
+      : this.props.confirmationText;
 
     let actionBtn;
 
     if (this.props.disableAction) {
       actionBtn = (
-        <button
-          className="btn btn-primary disabled-btn"
-          disabled
-        >
+        <button className="btn btn-primary disabled-btn" disabled>
           {this.props.confirmButtonText}
         </button>
       );
     } else {
       actionBtn = (
-        <button
-          className="btn btn-primary"
-          onClick={this.props.confirmFn}
-        >
+        <button className="btn btn-primary" onClick={this.props.confirmFn}>
           {this.props.confirmButtonText}
         </button>
       );
@@ -103,23 +95,17 @@ export default class ConfirmationModal extends Component {
     return (
       <React.Fragment>
         <ModalBody>
-          <div className="confirmation">
-            {confirmation}
-          </div>
+          <div className="confirmation">{confirmation}</div>
         </ModalBody>
         <ModalFooter>
           <div className="confirmation-button-options">
             {actionBtn}
-            <button
-              className="btn btn-secondary"
-              onClick={this.props.cancelFn}
-            >
+            <button className="btn btn-secondary" onClick={this.props.cancelFn}>
               {this.props.cancelButtonText}
             </button>
           </div>
         </ModalFooter>
       </React.Fragment>
-
     );
   }
 
@@ -140,17 +126,14 @@ export default class ConfirmationModal extends Component {
         isOpen={this.props.isOpen}
         toggle={this.props.toggleModal}
         className="confirmation-modal cdap-modal"
-        backdrop='static'
+        backdrop="static"
         zIndex={1061}
         keyboard={this.props.keyboard}
       >
         <ModalHeader>
           {this.props.headerTitle}
           <If condition={this.props.closeable}>
-            <div
-              className="close-section float-xs-right"
-              onClick={this.props.cancelFn}
-            >
+            <div className="close-section float-xs-right" onClick={this.props.cancelFn}>
               <IconSVG name="icon-close" />
             </div>
           </If>

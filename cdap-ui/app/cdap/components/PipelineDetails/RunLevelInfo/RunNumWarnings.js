@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Provider, connect} from 'react-redux';
+import { Provider, connect } from 'react-redux';
 import PipelineMetricsStore from 'services/PipelineMetricsStore';
 import T from 'i18n-react';
 
@@ -25,23 +25,18 @@ const PREFIX = 'features.PipelineDetails.RunLevel';
 const mapStateToProps = (state, ownProps) => {
   return {
     logsMetrics: state && state.logsMetrics ? state.logsMetrics : {},
-    currentRun: ownProps.currentRun
+    currentRun: ownProps.currentRun,
   };
 };
 
-const RunNumWarningsComp = ({logsMetrics, currentRun}) => {
+const RunNumWarningsComp = ({ logsMetrics, currentRun }) => {
   return (
     <div className="run-info-container">
       <div>
         <strong>{T.translate(`${PREFIX}.warnings`)}</strong>
       </div>
       <span>
-        {
-          currentRun && currentRun.starting ?
-            `${logsMetrics['system.app.log.warn'] || 0}`
-          :
-            '--'
-        }
+        {currentRun && currentRun.starting ? `${logsMetrics['system.app.log.warn'] || 0}` : '--'}
       </span>
     </div>
   );
@@ -49,12 +44,12 @@ const RunNumWarningsComp = ({logsMetrics, currentRun}) => {
 
 RunNumWarningsComp.propTypes = {
   logsMetrics: PropTypes.object,
-  currentRun: PropTypes.object
+  currentRun: PropTypes.object,
 };
 
 const ConnectedRunNumWarnings = connect(mapStateToProps)(RunNumWarningsComp);
 
-export default function RunNumWarnings({currentRun}) {
+export default function RunNumWarnings({ currentRun }) {
   return (
     <Provider store={PipelineMetricsStore}>
       <ConnectedRunNumWarnings currentRun={currentRun} />
@@ -63,5 +58,5 @@ export default function RunNumWarnings({currentRun}) {
 }
 
 RunNumWarnings.propTypes = {
-  currentRun: PropTypes.object
+  currentRun: PropTypes.object,
 };

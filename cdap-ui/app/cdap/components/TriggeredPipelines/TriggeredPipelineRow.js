@@ -23,22 +23,22 @@ import T from 'i18n-react';
 
 const PREFIX = `features.TriggeredPipelines`;
 
-export default function TriggeredPipelineRow({isExpanded, pipeline, onToggle, loading, pipelineInfo, sourcePipeline}) {
+export default function TriggeredPipelineRow({
+  isExpanded,
+  pipeline,
+  onToggle,
+  loading,
+  pipelineInfo,
+  sourcePipeline,
+}) {
   if (!isExpanded) {
     return (
-      <div
-        className="triggered-pipeline-row"
-        onClick={onToggle.bind(null, pipeline)}
-      >
+      <div className="triggered-pipeline-row" onClick={onToggle.bind(null, pipeline)}>
         <div className="caret-container">
           <IconSVG name="icon-caret-right" />
         </div>
-        <div className="pipeline-name">
-          {pipeline.application}
-        </div>
-        <div className="namespace">
-          {pipeline.namespace}
-        </div>
+        <div className="pipeline-name">{pipeline.application}</div>
+        <div className="namespace">{pipeline.namespace}</div>
       </div>
     );
   }
@@ -51,52 +51,38 @@ export default function TriggeredPipelineRow({isExpanded, pipeline, onToggle, lo
 
   return (
     <div className="triggered-pipeline-expanded-row">
-      <div
-        className="header-row"
-        onClick={onToggle.bind(null, null)}
-      >
+      <div className="header-row" onClick={onToggle.bind(null, null)}>
         <div className="caret-container">
           <IconSVG name="icon-caret-down" />
         </div>
 
-        <div className="pipeline-name">
-          {pipeline.application}
-        </div>
-        <div className="namespace">
-          {pipeline.namespace}
-        </div>
+        <div className="pipeline-name">{pipeline.application}</div>
+        <div className="namespace">{pipeline.namespace}</div>
       </div>
 
-      {
-        loading ?
-          loadingIcon
-        :
-          (
-            <div className="row-content">
-              <div className="pipeline-description">
-                <strong>{T.translate(`${PREFIX}.description`)}: </strong>
-                <span>
-                  {pipelineInfo.description}
-                </span>
-                <a href={`/pipelines/ns/${pipeline.namespace}/view/${pipeline.application}`}>
-                  {T.translate(`${PREFIX}.viewPipeline`)}
-                </a>
-              </div>
+      {loading ? (
+        loadingIcon
+      ) : (
+        <div className="row-content">
+          <div className="pipeline-description">
+            <strong>{T.translate(`${PREFIX}.description`)}: </strong>
+            <span>{pipelineInfo.description}</span>
+            <a href={`/pipelines/ns/${pipeline.namespace}/view/${pipeline.application}`}>
+              {T.translate(`${PREFIX}.viewPipeline`)}
+            </a>
+          </div>
 
-              <div className="helper-text">
-                {T.translate(`${PREFIX}.helperText`, {pipelineName: sourcePipeline})}
-              </div>
+          <div className="helper-text">
+            {T.translate(`${PREFIX}.helperText`, { pipelineName: sourcePipeline })}
+          </div>
 
-              <div className="events-list">
-                {
-                  pipeline.trigger.programStatuses.map((status) => {
-                    return <div>- {T.translate(`${PREFIX}.Events.${status}`)}</div>;
-                  })
-                }
-              </div>
-            </div>
-          )
-      }
+          <div className="events-list">
+            {pipeline.trigger.programStatuses.map((status) => {
+              return <div>- {T.translate(`${PREFIX}.Events.${status}`)}</div>;
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -107,6 +93,5 @@ TriggeredPipelineRow.propTypes = {
   onToggle: PropTypes.func,
   loading: PropTypes.bool,
   pipelineInfo: PropTypes.object,
-  sourcePipeline: PropTypes.string
+  sourcePipeline: PropTypes.string,
 };
-

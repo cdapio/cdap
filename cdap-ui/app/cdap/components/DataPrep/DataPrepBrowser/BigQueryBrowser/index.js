@@ -17,12 +17,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import DisplaySwitch from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/DisplaySwitch';
 import DatasetList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/DatasetList';
 import TableList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/TableList';
-import {Route, Switch} from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 import Page404 from 'components/404';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
@@ -35,45 +35,47 @@ export default class BiqQueryBrowser extends Component {
   static propTypes = {
     toggle: PropTypes.func,
     onWorkspaceCreate: PropTypes.func,
-    enableRouting: PropTypes.bool
+    enableRouting: PropTypes.bool,
   };
 
   static defaultProps = {
-    enableRouting: true
+    enableRouting: true,
   };
 
   render() {
     return (
       <Provider store={DataPrepBrowserStore}>
         <div className="bigquery-browser">
-          {
-            this.props.enableRouting ?
-              <DataPrepBrowserPageTitle
-                browserI18NName="BigQueryBrowser"
-                browserStateName="bigquery"
-                locationToPathInState={['datasetId']}
-              />
-            :
-              null
-          }
+          {this.props.enableRouting ? (
+            <DataPrepBrowserPageTitle
+              browserI18NName="BigQueryBrowser"
+              browserStateName="bigquery"
+              locationToPathInState={['datasetId']}
+            />
+          ) : null}
 
           <DataprepBrowserTopPanel
             allowSidePanelToggle={true}
             toggle={this.props.toggle}
             browserTitle={T.translate(`${PREFIX}.title`)}
           />
-          {
-            this.props.enableRouting ?
-              (
-                <Switch>
-                  <Route exact path="/ns/:namespace/connections/bigquery/:connectionId" component={DatasetList} />
-                  <Route exact path="/ns/:namespace/connections/bigquery/:connectionId/datasets/:datasetId" component={TableList} />
-                  <Route render={Page404} />
-                </Switch>
-              )
-            :
-              <DisplaySwitch onWorkspaceCreate={this.props.onWorkspaceCreate} />
-          }
+          {this.props.enableRouting ? (
+            <Switch>
+              <Route
+                exact
+                path="/ns/:namespace/connections/bigquery/:connectionId"
+                component={DatasetList}
+              />
+              <Route
+                exact
+                path="/ns/:namespace/connections/bigquery/:connectionId/datasets/:datasetId"
+                component={TableList}
+              />
+              <Route render={Page404} />
+            </Switch>
+          ) : (
+            <DisplaySwitch onWorkspaceCreate={this.props.onWorkspaceCreate} />
+          )}
         </div>
       </Provider>
     );

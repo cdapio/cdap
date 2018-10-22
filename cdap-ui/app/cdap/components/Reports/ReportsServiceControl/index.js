@@ -17,14 +17,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import enableSystemApp from 'services/ServiceEnablerUtilities';
-import {MyReportsApi} from 'api/reports';
+import { MyReportsApi } from 'api/reports';
 import IconSVG from 'components/IconSVG';
 import BtnWithLoading from 'components/BtnWithLoading';
 import T from 'i18n-react';
-import {isSpark2Available} from 'services/CDAPComponentsVersions';
+import { isSpark2Available } from 'services/CDAPComponentsVersions';
 import isObject from 'lodash/isObject';
 import Helmet from 'react-helmet';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 require('./ReportsServiceControl.scss');
 
@@ -33,7 +33,7 @@ const ReportsArtifact = 'cdap-program-report';
 
 export default class ReportsServiceControl extends Component {
   static propTypes = {
-    onServiceStart: PropTypes.func
+    onServiceStart: PropTypes.func,
   };
 
   state = {
@@ -41,22 +41,21 @@ export default class ReportsServiceControl extends Component {
     disabled: false,
     checkingForSpark2: true,
     error: null,
-    extendedError: null
+    extendedError: null,
   };
 
   componentDidMount() {
-    isSpark2Available()
-      .subscribe(
-        isAvailable => this.setState({
-          disabled: !isAvailable,
-          checkingForSpark2: false
-        })
-      );
+    isSpark2Available().subscribe((isAvailable) =>
+      this.setState({
+        disabled: !isAvailable,
+        checkingForSpark2: false,
+      })
+    );
   }
 
   enableReports = () => {
     this.setState({
-      loading: true
+      loading: true,
     });
 
     const featureName = Theme.featureNames.reports;
@@ -66,21 +65,17 @@ export default class ReportsServiceControl extends Component {
       artifactName: ReportsArtifact,
       api: MyReportsApi,
       i18nPrefix: PREFIX,
-      featureName
-    }).subscribe(
-      this.props.onServiceStart,
-      (err) => {
-        let extendedMessage = isObject(err.extendedMessage) ?
-          err.extendedMessage.response || err.extendedMessage.message
-        :
-          err.extendedMessage;
-        this.setState({
-          error: err.error,
-          extendedError: extendedMessage,
-          loading: false
-        });
-      }
-    );
+      featureName,
+    }).subscribe(this.props.onServiceStart, (err) => {
+      let extendedMessage = isObject(err.extendedMessage)
+        ? err.extendedMessage.response || err.extendedMessage.message
+        : err.extendedMessage;
+      this.setState({
+        error: err.error,
+        extendedError: extendedMessage,
+        loading: false,
+      });
+    });
   };
 
   renderEnableBtn = () => {
@@ -128,22 +123,22 @@ export default class ReportsServiceControl extends Component {
           <IconSVG name="icon-exclamation-triangle" />
           <span>{this.state.error}</span>
         </h5>
-        <p className="text-danger">
-          {this.state.extendedError}
-        </p>
+        <p className="text-danger">{this.state.extendedError}</p>
       </div>
     );
-  }
+  };
 
   render() {
     const featureName = Theme.featureNames.reports;
 
     return (
       <div className="reports-service-control">
-        <Helmet title={T.translate('features.Reports.pageTitle', {
-          productName: Theme.productName,
-          featureName
-        })} />
+        <Helmet
+          title={T.translate('features.Reports.pageTitle', {
+            productName: Theme.productName,
+            featureName,
+          })}
+        />
         <div className="image-containers">
           <img className="img-thumbnail" src="/cdap_assets/img/Reports_preview1.png" />
           <img className="img-thumbnail" src="/cdap_assets/img/Reports_preview2.png" />
@@ -152,9 +147,7 @@ export default class ReportsServiceControl extends Component {
           <h2> {T.translate(`${PREFIX}.title`, { featureName })} </h2>
           {this.renderEnableBtn()}
           {this.renderError()}
-          <p>
-            {T.translate(`${PREFIX}.description`, { featureName })}
-          </p>
+          <p>{T.translate(`${PREFIX}.description`, { featureName })}</p>
           <div className="reports-benefit">
             {T.translate(`${PREFIX}.Benefits.title`, { featureName })}
 

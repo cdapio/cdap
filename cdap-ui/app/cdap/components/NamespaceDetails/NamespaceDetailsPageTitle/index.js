@@ -18,12 +18,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
-import {connect} from 'react-redux';
-import {Theme} from 'services/ThemeHelper';
+import { connect } from 'react-redux';
+import { Theme } from 'services/ThemeHelper';
 
 const NAMESPACE_I18N_PREFIX = 'features.NamespaceDetails';
 
-function NamespaceDetailsPageTitle({namespace_name}) {
+function NamespaceDetailsPageTitle({ namespace_name }) {
   return (
     <Helmet
       title={T.translate(`${NAMESPACE_I18N_PREFIX}.pageTitle`, {
@@ -34,10 +34,10 @@ function NamespaceDetailsPageTitle({namespace_name}) {
   );
 }
 NamespaceDetailsPageTitle.propTypes = {
-  namespace_name: PropTypes.string
+  namespace_name: PropTypes.string,
 };
 const mapStateToProps = (state) => ({
-  namespace_name: state.name
+  namespace_name: state.name,
 });
 const ConnectedNamespaceDetailsPageTitle = connect(mapStateToProps)(NamespaceDetailsPageTitle);
 export default ConnectedNamespaceDetailsPageTitle;

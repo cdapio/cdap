@@ -20,28 +20,26 @@ import React from 'react';
 import classnames from 'classnames';
 require('./WizardStepHeader.scss');
 
-export default function WizardStepHeader({id, className, label, onClick, disabled}, context) {
+export default function WizardStepHeader({ id, className, label, onClick, disabled }, context) {
   return (
     <div
       className={classnames('cask-wizard-step-header', {
-        'active': context.activeStep === id,
+        active: context.activeStep === id,
         [className]: context.activeStep !== id,
-        'disabled': disabled
+        disabled: disabled,
       })}
     >
-      <div onClick={onClick}>
-        {label}
-      </div>
+      <div onClick={onClick}>{label}</div>
     </div>
   );
 }
 WizardStepHeader.contextTypes = {
-  activeStep: PropTypes.string
+  activeStep: PropTypes.string,
 };
 WizardStepHeader.propTypes = {
   id: PropTypes.string,
   className: PropTypes.string,
   label: PropTypes.string,
   onClick: PropTypes.func,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
 };

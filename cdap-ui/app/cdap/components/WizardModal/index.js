@@ -16,34 +16,26 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {Modal, ModalBody, ModalHeader} from 'reactstrap';
+import { Modal, ModalBody, ModalHeader } from 'reactstrap';
 import { CSSTransition } from 'react-transition-group';
 import classnames from 'classnames';
 
 require('./WizardModal.scss');
 
-export default function WizardModal({children, title, isOpen, toggle, className}) {
+export default function WizardModal({ children, title, isOpen, toggle, className }) {
   return (
     <Modal
       isOpen={isOpen}
       toggle={toggle}
-      className={classnames("wizard-modal", className)}
+      className={classnames('wizard-modal', className)}
       size="lg"
-      backdrop='static'
+      backdrop="static"
       zIndex="1061"
     >
       <ModalHeader>
-        <span className="float-xs-left">
-          {title}
-        </span>
-        <div
-          className="close-section float-xs-right"
-          onClick={toggle}
-        >
-          <span
-            className="fa fa-times"
-          >
-          </span>
+        <span className="float-xs-left">{title}</span>
+        <div className="close-section float-xs-right" onClick={toggle}>
+          <span className="fa fa-times" />
         </div>
       </ModalHeader>
       <ModalBody>
@@ -63,7 +55,7 @@ export default function WizardModal({children, title, isOpen, toggle, className}
 WizardModal.defaultProps = {
   title: 'Wizard',
   isOpen: false,
-  closeHandler: () => {}
+  closeHandler: () => {},
 };
 
 WizardModal.propTypes = {
@@ -71,5 +63,5 @@ WizardModal.propTypes = {
   title: PropTypes.string,
   isOpen: PropTypes.bool,
   toggle: PropTypes.func,
-  className: PropTypes.string
+  className: PropTypes.string,
 };

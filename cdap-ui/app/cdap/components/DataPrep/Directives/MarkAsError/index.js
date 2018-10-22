@@ -19,9 +19,9 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import classnames from 'classnames';
 import T from 'i18n-react';
-import {setPopoverOffset} from 'components/DataPrep/helper';
-import {preventPropagation} from 'services/helpers';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { setPopoverOffset } from 'components/DataPrep/helper';
+import { preventPropagation } from 'services/helpers';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import IconSVG from 'components/IconSVG';
@@ -69,51 +69,52 @@ const conditionsOptions = [
   ...addPrefix('DINERCARD'),
   ...addPrefix('VPAYCARD'),
   'divider',
-  'CUSTOMCONDITION'
+  'CUSTOMCONDITION',
 ];
 const conditionToFnMap = {
-  'ISNUMBER' : 'isNumber',
-  'ISINTEGER' : 'isInteger',
-  'ISDOUBLE' : 'isDouble',
-  'ISBOOLEAN' : 'isBoolean',
-  'ISDATE' : 'isDate',
-  'ISTIME' : 'isTime',
-  'ISDATEFORMAT': 'isDate',
-  'ISIP': 'isIP',
-  'ISIPV4': 'isIPv4',
-  'ISIPV6': 'isIPv6',
-  'ISEMAIL': 'isEmail',
-  'ISURL': 'isUrl',
-  'ISDOMAINNAME': 'isDomainName',
-  'ISDOMAINTLD': 'isDomainTld',
-  'ISGENERICTLD': 'isGenericTld',
-  'ISCOUNTRYTLD': 'isCountryTld',
-  'ISISBN': 'isISBN',
-  'ISISBN10': 'isISBN10',
-  'ISISBN13': 'isISBN13',
-  'ISCREDITCARD': 'isCreditCard',
-  'ISAMEXCARD': 'isAmex',
-  'ISVISACARD': 'isVisa',
-  'ISMASTERCARD': 'isMaster',
-  'ISDINERCARD': 'isDiner',
-  'ISVPAYCARD': 'isVPay'
+  ISNUMBER: 'isNumber',
+  ISINTEGER: 'isInteger',
+  ISDOUBLE: 'isDouble',
+  ISBOOLEAN: 'isBoolean',
+  ISDATE: 'isDate',
+  ISTIME: 'isTime',
+  ISDATEFORMAT: 'isDate',
+  ISIP: 'isIP',
+  ISIPV4: 'isIPv4',
+  ISIPV6: 'isIPv6',
+  ISEMAIL: 'isEmail',
+  ISURL: 'isUrl',
+  ISDOMAINNAME: 'isDomainName',
+  ISDOMAINTLD: 'isDomainTld',
+  ISGENERICTLD: 'isGenericTld',
+  ISCOUNTRYTLD: 'isCountryTld',
+  ISISBN: 'isISBN',
+  ISISBN10: 'isISBN10',
+  ISISBN13: 'isISBN13',
+  ISCREDITCARD: 'isCreditCard',
+  ISAMEXCARD: 'isAmex',
+  ISVISACARD: 'isVisa',
+  ISMASTERCARD: 'isMaster',
+  ISDINERCARD: 'isDiner',
+  ISVPAYCARD: 'isVPay',
 };
-const dqFunctions = Object
-  .keys(conditionToFnMap)
-  .reduce((prev, curr) => {
-    let condition = curr.replace(/IS|ISNOT/, '');
-    return [...prev, `IS${condition}`, `ISNOT${condition}`];
-  }, []);
+const dqFunctions = Object.keys(conditionToFnMap).reduce((prev, curr) => {
+  let condition = curr.replace(/IS|ISNOT/, '');
+  return [...prev, `IS${condition}`, `ISNOT${condition}`];
+}, []);
 export default class MarkAsError extends Component {
   state = {
     selectedCondition: conditionsOptions[0],
     conditionValue: '',
     customCondition: `${this.props.column} == 0`,
-    ignoreCase: false
+    ignoreCase: false,
   };
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('mark-as-error-directive'));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById('mark-as-error-directive')
+    );
   }
 
   componentDidUpdate() {
@@ -121,9 +122,17 @@ export default class MarkAsError extends Component {
       this.calculateOffset();
       MouseTrap.bind('enter', this.applyDirective);
     }
-    if (this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.conditionValue.length === 0 && this.conditionValueRef) {
+    if (
+      this.state.selectedCondition.substr(0, 4) === 'TEXT' &&
+      this.state.conditionValue.length === 0 &&
+      this.conditionValueRef
+    ) {
       this.conditionValueRef.focus();
-    } else if (this.state.selectedCondition.substr(0, 6) === 'CUSTOM' && this.state.customCondition.length === 0 && this.customConditionRef) {
+    } else if (
+      this.state.selectedCondition.substr(0, 6) === 'CUSTOM' &&
+      this.state.customCondition.length === 0 &&
+      this.customConditionRef
+    ) {
       this.customConditionRef.focus();
     }
   }
@@ -137,33 +146,35 @@ export default class MarkAsError extends Component {
       return;
     }
     MouseTrap.unbind('enter');
-    execute([this.getDirectiveExpression()])
-      .subscribe(() => {
+    execute([this.getDirectiveExpression()]).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   };
 
   handleConditionValueChange = (e) => {
-    this.setState({conditionValue: e.target.value});
+    this.setState({ conditionValue: e.target.value });
   };
 
   handleCustomFilterChange = (e) => {
-    this.setState({customCondition: e.target.value});
+    this.setState({ customCondition: e.target.value });
   };
 
   toggleIgnoreCase = () => {
     this.setState({
-      ignoreCase: !this.state.ignoreCase
+      ignoreCase: !this.state.ignoreCase,
     });
   };
 
@@ -223,7 +234,9 @@ export default class MarkAsError extends Component {
         break;
       case 'ISDATEFORMAT':
       case 'ISNOTDATEFORMAT':
-        condition = `dq:${this.getDQFunction(this.state.selectedCondition)}(${column}, "${this.state.conditionValue}")`;
+        condition = `dq:${this.getDQFunction(this.state.selectedCondition)}(${column}, "${
+          this.state.conditionValue
+        }")`;
         if (this.state.selectedCondition.indexOf('NOT') !== -1) {
           condition = `!${condition}`;
         }
@@ -240,30 +253,27 @@ export default class MarkAsError extends Component {
         break;
     }
     return finalExpression;
-  }
+  };
 
   renderTextCondition = () => {
     let dateFormatConditions = ['ISDATEFORMAT', 'ISNOTDATEFORMAT'];
     if (
       this.state.selectedCondition.substr(0, 4) !== 'TEXT' &&
       dateFormatConditions.indexOf(this.state.selectedCondition) === -1
-    ) { return null; }
+    ) {
+      return null;
+    }
 
     let ignoreCase;
     if (['TEXTREGEX', ...dateFormatConditions].indexOf(this.state.selectedCondition) === -1) {
       ignoreCase = (
         <div>
-          <span
-            className="cursor-pointer"
-            onClick={this.toggleIgnoreCase}
-          >
+          <span className="cursor-pointer" onClick={this.toggleIgnoreCase}>
             <IconSVG
               className="fa"
-              name={this.state.ignoreCase ? "icon-check-square-o" : "icon-square-o"}
+              name={this.state.ignoreCase ? 'icon-check-square-o' : 'icon-square-o'}
             />
-            <span>
-              {T.translate(`${PREFIX}.ignoreCase`)}
-            </span>
+            <span>{T.translate(`${PREFIX}.ignoreCase`)}</span>
           </span>
         </div>
       );
@@ -279,7 +289,7 @@ export default class MarkAsError extends Component {
             value={this.state.conditionValue}
             onChange={this.handleConditionValueChange}
             placeholder={T.translate(`${PREFIX}.Placeholders.${this.state.selectedCondition}`)}
-            ref={ref => this.conditionValueRef = ref}
+            ref={(ref) => (this.conditionValueRef = ref)}
           />
         </div>
         {ignoreCase}
@@ -288,7 +298,9 @@ export default class MarkAsError extends Component {
   };
 
   renderCustomFilter = () => {
-    if (this.state.selectedCondition.substr(0, 6) !== 'CUSTOM') { return null; }
+    if (this.state.selectedCondition.substr(0, 6) !== 'CUSTOM') {
+      return null;
+    }
 
     return (
       <div>
@@ -297,8 +309,10 @@ export default class MarkAsError extends Component {
           className="form-control custom-condition-input"
           value={this.state.customCondition}
           onChange={this.handleCustomFilterChange}
-          ref={ref => this.customConditionRef = ref}
-          placeholder={T.translate(`${PREFIX}.Placeholders.CUSTOMCONDITION`, {column: this.props.column})}
+          ref={(ref) => (this.customConditionRef = ref)}
+          placeholder={T.translate(`${PREFIX}.Placeholders.CUSTOMCONDITION`, {
+            column: this.props.column,
+          })}
         />
       </div>
     );
@@ -306,7 +320,7 @@ export default class MarkAsError extends Component {
 
   setCondition = (e) => {
     this.setState({
-      selectedCondition: e.target.value
+      selectedCondition: e.target.value,
     });
   };
 
@@ -314,7 +328,7 @@ export default class MarkAsError extends Component {
     let markAsConditions = conditionsOptions.map((id) => {
       return {
         id,
-        displayText: T.translate(`${PREFIX}.Conditions.${id}`)
+        displayText: T.translate(`${PREFIX}.Conditions.${id}`),
       };
     });
     return (
@@ -328,30 +342,21 @@ export default class MarkAsError extends Component {
                 value={this.state.selectedCondition}
                 onChange={this.setCondition}
               >
-                {
-                  markAsConditions.map((condition, i) => {
-                    const key = `${condition.id}${i}`;
-                    if (condition.id === 'divider') {
-                      return (
-                        <option
-                          key={key}
-                          disabled="disabled"
-                          role="separator"
-                        >
-                          &#x2500;&#x2500;&#x2500;&#x2500;
-                        </option>
-                      );
-                    }
+                {markAsConditions.map((condition, i) => {
+                  const key = `${condition.id}${i}`;
+                  if (condition.id === 'divider') {
                     return (
-                      <option
-                        value={condition.id}
-                        key={key}
-                      >
-                        {condition.displayText}
+                      <option key={key} disabled="disabled" role="separator">
+                        &#x2500;&#x2500;&#x2500;&#x2500;
                       </option>
                     );
-                  })
-                }
+                  }
+                  return (
+                    <option value={condition.id} key={key}>
+                      {condition.displayText}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>
@@ -363,7 +368,8 @@ export default class MarkAsError extends Component {
   };
 
   isApplyDisabled = () => {
-    let isDateFormatCondition = ['ISDATEFORMAT', 'ISNOTDATEFORMAT'].indexOf(this.state.selectedCondition) !== -1;
+    let isDateFormatCondition =
+      ['ISDATEFORMAT', 'ISNOTDATEFORMAT'].indexOf(this.state.selectedCondition) !== -1;
     let isTextFormatCondition = this.state.selectedCondition.substr(0, 4) === 'TEXT';
     if (isTextFormatCondition || isDateFormatCondition) {
       return this.state.conditionValue.length === 0;
@@ -381,10 +387,7 @@ export default class MarkAsError extends Component {
     }
 
     return (
-      <div
-        className="filter-detail second-level-popover"
-        onClick={preventPropagation}
-      >
+      <div className="filter-detail second-level-popover" onClick={preventPropagation}>
         {this.renderCondition()}
 
         <div className="mark-as-error-tooltip">
@@ -401,10 +404,7 @@ export default class MarkAsError extends Component {
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.props.close}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
@@ -417,16 +417,13 @@ export default class MarkAsError extends Component {
       <div
         id="mark-as-error-directive"
         className={classnames('clearfix action-item', {
-          'active': this.state.isOpen
+          active: this.state.isOpen,
         })}
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
 
         <span className="float-xs-right">
-          <IconSVG
-            name="icon-caret-right"
-            className="fa"
-          />
+          <IconSVG name="icon-caret-right" className="fa" />
         </span>
 
         {this.renderDetail()}
@@ -439,5 +436,5 @@ MarkAsError.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

@@ -18,8 +18,8 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import PlusButtonStore from 'services/PlusButtonStore';
 import NamespaceStore from 'services/NamespaceStore';
-import {validateImportJSON} from 'services/PipelineErrorFactory';
-import {objectQuery} from 'services/helpers';
+import { validateImportJSON } from 'services/PipelineErrorFactory';
+import { objectQuery } from 'services/helpers';
 import IconSVG from 'components/IconSVG';
 import { Input, Label } from 'reactstrap';
 import T from 'i18n-react';
@@ -29,7 +29,7 @@ require('./ResourceCenterPipelineEntity.scss');
 
 const PREFIX = 'features.Resource-Center.HydratorPipeline';
 
-export default function ResourceCenterPipelineEntity({onError}) {
+export default function ResourceCenterPipelineEntity({ onError }) {
   const title = T.translate(`${PREFIX}.label`);
   const description = T.translate(`${PREFIX}.description`);
   const primaryActionLabel = T.translate(`${PREFIX}.actionbtn0`);
@@ -40,27 +40,27 @@ export default function ResourceCenterPipelineEntity({onError}) {
   const hydratorLinkStateName = 'hydrator.create';
   const hydratorLinkStateParams = {
     namespace: NamespaceStore.getState().selectedNamespace,
-    artifactType: 'cdap-data-pipeline'
+    artifactType: 'cdap-data-pipeline',
   };
 
   const hydratorCreateLink = window.getHydratorUrl({
     stateName: hydratorLinkStateName,
-    stateParams: hydratorLinkStateParams
+    stateParams: hydratorLinkStateParams,
   });
   const hydratorImportLink = window.getHydratorUrl({
     stateName: hydratorLinkStateName,
     stateParams: {
       ...hydratorLinkStateParams,
-      resourceCenterId
-    }
+      resourceCenterId,
+    },
   });
 
   const createBtnHandler = () => {
     PlusButtonStore.dispatch({
       type: 'TOGGLE_PLUSBUTTON_MODAL',
       payload: {
-        modalState: false
-      }
+        modalState: false,
+      },
     });
   };
 
@@ -79,7 +79,7 @@ export default function ResourceCenterPipelineEntity({onError}) {
     let reader = new FileReader();
     reader.readAsText(uploadedFile, 'UTF-8');
 
-    reader.onload =  (evt) => {
+    reader.onload = (evt) => {
       let fileDataString = evt.target.result;
       let error = validateImportJSON(fileDataString);
       if (error) {
@@ -111,7 +111,7 @@ export default function ResourceCenterPipelineEntity({onError}) {
       <div className="buttons-container">
         <a href={hydratorCreateLink}>
           <button
-            id={(primaryActionLabel + "-" + title).toLowerCase()}
+            id={(primaryActionLabel + '-' + title).toLowerCase()}
             className="btn btn-primary"
             onClick={createBtnHandler}
           >
@@ -120,13 +120,13 @@ export default function ResourceCenterPipelineEntity({onError}) {
         </a>
         <Label
           for="resource-center-import-pipeline"
-          id={(secondaryActionLabel + "-" + title).toLowerCase()}
+          id={(secondaryActionLabel + '-' + title).toLowerCase()}
           className="btn btn-secondary"
         >
           {secondaryActionLabel}
           <Input
             type="file"
-            accept='.json'
+            accept=".json"
             id="resource-center-import-pipeline"
             onChange={importBtnHandler}
           />
@@ -136,5 +136,5 @@ export default function ResourceCenterPipelineEntity({onError}) {
   );
 }
 ResourceCenterPipelineEntity.propTypes = {
-  onError: PropTypes.func
+  onError: PropTypes.func,
 };

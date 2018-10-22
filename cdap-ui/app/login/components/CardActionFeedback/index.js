@@ -23,7 +23,7 @@
     />
 */
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 require('./CardActionFeedback.scss');
 
 var classNames = require('classnames');
@@ -33,25 +33,30 @@ export default class CardActionFeedback extends Component {
     super(props);
 
     this.state = {
-      isExpanded: false
+      isExpanded: false,
     };
   }
 
   getIcon() {
-    let icon = classNames('fa',
+    let icon = classNames(
+      'fa',
       { 'fa-check': this.props.type === 'SUCCESS' },
       { 'fa-exclamation': this.props.type === 'DANGER' },
       { 'fa-exclamation-triangle': this.props.type === 'WARNING' },
       { 'fa-spinner fa-spin': this.props.type === 'LOADING' }
     );
 
-    return <span className="feedback-icon"><span className={icon}></span></span>;
+    return (
+      <span className="feedback-icon">
+        <span className={icon} />
+      </span>
+    );
   }
 
   getExtendedMessage() {
     if (this.props.extendedMessage) {
       return (
-        <div className='stack-trace'>
+        <div className="stack-trace">
           <pre>{this.props.extendedMessage}</pre>
         </div>
       );
@@ -59,7 +64,7 @@ export default class CardActionFeedback extends Component {
   }
 
   handleToggleExtendedMessage() {
-    this.setState({isExpanded: !this.state.isExpanded});
+    this.setState({ isExpanded: !this.state.isExpanded });
   }
 
   render() {
@@ -69,20 +74,20 @@ export default class CardActionFeedback extends Component {
       if (this.state.isExpanded) {
         angleIcon = (
           <span
-            className='expand-icon float-xs-right text-xs-center'
+            className="expand-icon float-xs-right text-xs-center"
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
-            <span className='fa fa-angle-double-up'></span>
+            <span className="fa fa-angle-double-up" />
           </span>
         );
         extendedMessage = this.getExtendedMessage();
       } else {
         angleIcon = (
           <span
-            className='expand-icon float-xs-right text-xs-center'
+            className="expand-icon float-xs-right text-xs-center"
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
-            <span className='fa fa-angle-double-down'></span>
+            <span className="fa fa-angle-double-down" />
           </span>
         );
       }
@@ -92,11 +97,9 @@ export default class CardActionFeedback extends Component {
 
     return (
       <div className={feedbackClass}>
-        <div className='main-message'>
+        <div className="main-message">
           {this.getIcon()}
-          <span className='message'>
-            {this.props.message}
-          </span>
+          <span className="message">{this.props.message}</span>
           {angleIcon}
         </div>
         {extendedMessage}
@@ -108,5 +111,5 @@ export default class CardActionFeedback extends Component {
 CardActionFeedback.propTypes = {
   type: PropTypes.oneOf(['SUCCESS', 'WARNING', 'DANGER', 'LOADING']).isRequired,
   message: PropTypes.string,
-  extendedMessage: PropTypes.string
+  extendedMessage: PropTypes.string,
 };

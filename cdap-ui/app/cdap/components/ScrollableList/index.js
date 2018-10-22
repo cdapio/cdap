@@ -29,7 +29,7 @@ export default class ScrollableList extends Component {
     this.state = {
       children: this.props.children,
       numberOfElemsToDisplay: null,
-      startingIndex: 0
+      startingIndex: 0,
     };
     this.computeHeight = this.computeHeight.bind(this);
     this.scrollUp = this.scrollUp.bind(this);
@@ -45,9 +45,12 @@ export default class ScrollableList extends Component {
     this.computeHeight();
   }
   componentWillReceiveProps(nextProps) {
-    let {children: newChildren} = this.getItemsInWindow(this.state.startingIndex, nextProps.children);
+    let { children: newChildren } = this.getItemsInWindow(
+      this.state.startingIndex,
+      nextProps.children
+    );
     this.setState({
-      children: newChildren
+      children: newChildren,
     });
   }
   computeHeight() {
@@ -62,36 +65,47 @@ export default class ScrollableList extends Component {
     }
 
     if (document.getElementsByClassName('column-type-label').length > 0) {
-      let labelHeight = document.getElementsByClassName('column-type-label')[0].getBoundingClientRect().height;
+      let labelHeight = document
+        .getElementsByClassName('column-type-label')[0]
+        .getBoundingClientRect().height;
       heightOfList = heightOfList - labelHeight;
     }
 
     let numberOfElemsToDisplay = Math.floor(heightOfList / this.HEIGHT_OF_ELEM);
 
-    let numberOfActualElements = this.props.children.filter(child => child.props.className.indexOf('column-action-divider') === -1);
+    let numberOfActualElements = this.props.children.filter(
+      (child) => child.props.className.indexOf('column-action-divider') === -1
+    );
 
     let nonDividerChildren = numberOfActualElements.slice(0, numberOfElemsToDisplay);
-    let actualLastIndex = findIndex(this.props.children, nonDividerChildren[nonDividerChildren.length - 1]);
+    let actualLastIndex = findIndex(
+      this.props.children,
+      nonDividerChildren[nonDividerChildren.length - 1]
+    );
 
     let children = this.props.children.slice(0, actualLastIndex + 1);
 
     this.setState({
       children,
       numberOfElemsToDisplay,
-      startingIndex: 0
+      startingIndex: 0,
     });
   }
 
   // This is to exclude considering line divider as a child.
   getItemsInWindow(startIndex, children = this.props.children) {
-    let nonDividerChildren = children
-      .filter(child => child.props.className.indexOf('column-action-divider') === -1);
-    nonDividerChildren = nonDividerChildren.slice(startIndex, startIndex + this.state.numberOfElemsToDisplay);
+    let nonDividerChildren = children.filter(
+      (child) => child.props.className.indexOf('column-action-divider') === -1
+    );
+    nonDividerChildren = nonDividerChildren.slice(
+      startIndex,
+      startIndex + this.state.numberOfElemsToDisplay
+    );
 
     let actualStartIndex = findIndex(children, nonDividerChildren[0]);
     let actualLastIndex = findIndex(children, nonDividerChildren[nonDividerChildren.length - 1]);
     return {
-      children: children.slice(actualStartIndex, actualLastIndex + 1)
+      children: children.slice(actualStartIndex, actualLastIndex + 1),
     };
   }
   scrollDown() {
@@ -99,10 +113,10 @@ export default class ScrollableList extends Component {
       return null;
     }
     let startIndex = this.state.startingIndex + 1;
-    let {children: newChildren} = this.getItemsInWindow(startIndex);
+    let { children: newChildren } = this.getItemsInWindow(startIndex);
     this.setState({
       children: newChildren,
-      startingIndex: startIndex
+      startingIndex: startIndex,
     });
   }
   scrollUp() {
@@ -110,10 +124,10 @@ export default class ScrollableList extends Component {
       return null;
     }
     let startIndex = this.state.startingIndex - 1;
-    let {children: newChildren} = this.getItemsInWindow(startIndex);
+    let { children: newChildren } = this.getItemsInWindow(startIndex);
     this.setState({
       children: newChildren,
-      startingIndex: startIndex
+      startingIndex: startIndex,
     });
   }
   onMouseEnter(listener) {
@@ -131,7 +145,7 @@ export default class ScrollableList extends Component {
     let lastChildInWindow = this.state.children[this.state.children.length - 1].key;
     let lastChild = this.props.children[this.props.children.length - 1].key;
     if (lastChild === lastChildInWindow) {
-      return  false;
+      return false;
     }
     return true;
   }
@@ -141,8 +155,8 @@ export default class ScrollableList extends Component {
   renderScrollDownContainer() {
     return (
       <div
-        className={classnames("scroll-down-container text-xs-center", {
-          'disabled': !this.shouldScrollDown()
+        className={classnames('scroll-down-container text-xs-center', {
+          disabled: !this.shouldScrollDown(),
         })}
         onClick={this.scrollDown}
         onMouseEnter={this.onMouseEnter.bind(this, this.scrollDown)}
@@ -155,8 +169,8 @@ export default class ScrollableList extends Component {
   renderScrollUpContainer() {
     return (
       <div
-        className={classnames("scroll-up-container text-xs-center", {
-          'disabled': !this.shouldScrollUp()
+        className={classnames('scroll-up-container text-xs-center', {
+          disabled: !this.shouldScrollUp(),
         })}
         onClick={this.scrollUp}
         onMouseEnter={this.onMouseEnter.bind(this, this.scrollUp)}
@@ -178,5 +192,5 @@ export default class ScrollableList extends Component {
 }
 ScrollableList.propTypes = {
   children: PropTypes.arrayOf(PropTypes.node).isRequired,
-  target: PropTypes.string
+  target: PropTypes.string,
 };

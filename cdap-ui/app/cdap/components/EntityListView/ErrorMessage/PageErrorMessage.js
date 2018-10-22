@@ -17,20 +17,20 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import NamespaceStore from 'services/NamespaceStore';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import T from 'i18n-react';
 
 require('./PageErrorMessage.scss');
 
-export default function PageErrorMessage ({pageNum, query}) {
+export default function PageErrorMessage({ pageNum, query }) {
   let selectedNamespace = NamespaceStore.getState().selectedNamespace;
   let page1Url = `/ns/${selectedNamespace}?page=1`;
   page1Url = query ? `${page1Url}&q=${query}` : page1Url;
   return (
     <div className="page-error-message empty-message">
       <h2>
-        <span className="fa fa-exclamation-triangle"></span>
-        {T.translate('features.EntityListView.PageErrorMessage.errorMessage', {pageNum})}
+        <span className="fa fa-exclamation-triangle" />
+        {T.translate('features.EntityListView.PageErrorMessage.errorMessage', { pageNum })}
       </h2>
       <div>
         <span>

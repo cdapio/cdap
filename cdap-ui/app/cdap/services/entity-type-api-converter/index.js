@@ -17,7 +17,7 @@
 const apiEntityTypeConvert = {
   application: 'apps',
   dataset: 'datasets',
-  stream: 'streams'
+  stream: 'streams',
 };
 
 export function convertEntityTypeToApi(entityType) {

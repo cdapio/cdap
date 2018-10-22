@@ -15,11 +15,11 @@
 */
 
 import React, { Component } from 'react';
-import {connect, Provider} from 'react-redux';
+import { connect, Provider } from 'react-redux';
 import PropTypes from 'prop-types';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import NamespaceDetailsStore, {NamespaceDetailsActions} from 'components/NamespaceDetails/store';
-import {getData} from 'components/NamespaceDetails/store/ActionCreator';
+import NamespaceDetailsStore, { NamespaceDetailsActions } from 'components/NamespaceDetails/store';
+import { getData } from 'components/NamespaceDetails/store/ActionCreator';
 import EntityTopPanel from 'components/EntityTopPanel';
 import Description from 'components/NamespaceDetails/Description';
 import EntityCounts from 'components/NamespaceDetails/EntityCounts';
@@ -27,19 +27,19 @@ import ComputeProfiles from 'components/NamespaceDetails/ComputeProfiles';
 import Preferences from 'components/NamespaceDetails/Preferences';
 import Mapping from 'components/NamespaceDetails/Mapping';
 import Security from 'components/NamespaceDetails/Security';
-import NamespaceStore, {getCurrentNamespace} from 'services/NamespaceStore';
+import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import NamespaceDetailsPageTitle from 'components/NamespaceDetails/NamespaceDetailsPageTitle';
 require('./NamespaceDetails.scss');
 
 const mapStateToProps = (state) => {
   return {
-    loading: state.loading
+    loading: state.loading,
   };
 };
 
-const NamespaceDetailsComp = ({loading}) => {
+const NamespaceDetailsComp = ({ loading }) => {
   if (loading) {
     return <LoadingSVGCentered />;
   }
@@ -48,7 +48,7 @@ const NamespaceDetailsComp = ({loading}) => {
     <div className="namespace-details-container">
       <EntityTopPanel
         title={`Namespace '${getCurrentNamespace()}'`}
-        closeBtnAnchorLink={ prevState ? prevState.replace(/\/cdap/g, '') : () => history.back()}
+        closeBtnAnchorLink={prevState ? prevState.replace(/\/cdap/g, '') : () => history.back()}
       />
       <div className="namespace-details-content">
         <Description />
@@ -68,30 +68,29 @@ const NamespaceDetailsComp = ({loading}) => {
 };
 
 NamespaceDetailsComp.propTypes = {
-  loading: PropTypes.bool
+  loading: PropTypes.bool,
 };
 
 const ConnectedNamespaceDetailsComp = connect(mapStateToProps)(NamespaceDetailsComp);
 
 export default class NamespaceDetails extends Component {
-
   static propTypes = {
-    match: PropTypes.object
+    match: PropTypes.object,
   };
   componentWillMount() {
     let namespace = objectQuery(this.props, 'match', 'params', 'namespace') || null;
     NamespaceStore.dispatch({
       type: NamespaceActions.selectNamespace,
       payload: {
-        selectedNamespace: namespace
-      }
+        selectedNamespace: namespace,
+      },
     });
     getData();
   }
 
   componentWillUnmount() {
     NamespaceDetailsStore.dispatch({
-      type: NamespaceDetailsActions.reset
+      type: NamespaceDetailsActions.reset,
     });
   }
 

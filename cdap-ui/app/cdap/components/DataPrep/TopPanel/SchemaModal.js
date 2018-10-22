@@ -21,36 +21,38 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Loadable from 'react-loadable';
-import {getParsedSchemaForDataPrep, getSchemaObjFromFieldsArray} from 'components/SchemaEditor/SchemaHelpers';
+import {
+  getParsedSchemaForDataPrep,
+  getSchemaObjFromFieldsArray,
+} from 'components/SchemaEditor/SchemaHelpers';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import fileDownload from 'js-file-download';
 import NamespaceStore from 'services/NamespaceStore';
-import {objectQuery, isNilOrEmpty} from 'services/helpers';
+import { objectQuery, isNilOrEmpty } from 'services/helpers';
 import T from 'i18n-react';
-import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { directiveRequestBodyCreator } from 'components/DataPrep/helper';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import CardActionFeedback from 'components/CardActionFeedback';
 import If from 'components/If';
 
 var SchemaEditor = Loadable({
   loader: () => import(/* webpackChunkName: "SchemaEditor" */ 'components/SchemaEditor'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
-
 
 const mapErrorToMessage = (e) => {
   let message = e.message;
   if (message.indexOf('invalid field name') !== -1) {
-    let splitMessage = e.message.split("field name: ");
+    let splitMessage = e.message.split('field name: ');
     let fieldName = objectQuery(splitMessage, 1) || e.message;
     return {
-      message: T.translate('features.DataPrep.TopPanel.invalidFieldNameMessage', {fieldName}),
-      remedies: `${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}`
+      message: T.translate('features.DataPrep.TopPanel.invalidFieldNameMessage', { fieldName }),
+      remedies: `${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}`,
     };
   }
-  return {message: e.message};
+  return { message: e.message };
 };
 
 export default class SchemaModal extends Component {
@@ -60,7 +62,7 @@ export default class SchemaModal extends Component {
     this.state = {
       loading: true,
       error: null,
-      schema: []
+      schema: [],
     };
 
     this.download = this.download.bind(this);
@@ -68,7 +70,7 @@ export default class SchemaModal extends Component {
 
   componentWillUnmount() {
     SchemaStore.dispatch({
-      type: 'RESET'
+      type: 'RESET',
     });
   }
 
@@ -84,73 +86,76 @@ export default class SchemaModal extends Component {
 
     let requestObj = {
       namespace,
-      workspaceId
+      workspaceId,
     };
 
     let directives = state.directives;
     let requestBody = directiveRequestBodyCreator(directives);
 
-    MyDataPrepApi.getSchema(requestObj, requestBody)
-      .subscribe((res) => {
+    MyDataPrepApi.getSchema(requestObj, requestBody).subscribe(
+      (res) => {
         let tempSchema = {
           name: 'avroSchema',
           type: 'record',
-          fields: res
+          fields: res,
         };
 
         try {
           getParsedSchemaForDataPrep(tempSchema);
         } catch (e) {
-          let {message, remedies = null} = mapErrorToMessage(e);
+          let { message, remedies = null } = mapErrorToMessage(e);
           this.setState({
-            error: {message, remedies},
-            loading: false
+            error: { message, remedies },
+            loading: false,
           });
         }
 
         SchemaStore.dispatch({
           type: 'FIELD_UPDATE',
           payload: {
-            schema: tempSchema
-          }
+            schema: tempSchema,
+          },
         });
 
         this.setState({
           loading: false,
-          schema: res
+          schema: res,
         });
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
           loading: false,
-          error: objectQuery(err, 'response', 'message') || T.translate('features.DataPrep.TopPanel.SchemaModal.defaultErrorMessage')
+          error:
+            objectQuery(err, 'response', 'message') ||
+            T.translate('features.DataPrep.TopPanel.SchemaModal.defaultErrorMessage'),
         });
-      });
+      }
+    );
   }
 
   applyDirective(directive) {
-    execute([directive])
-      .subscribe(
-        () => {
-          this.setState({
-            error: null,
-            loading: true,
-            schema: []
-          });
-          setTimeout(() => {
-            this.getSchema();
-          });
-        },
-        (err) => {
-          console.log('Error', err);
+    execute([directive]).subscribe(
+      () => {
+        this.setState({
+          error: null,
+          loading: true,
+          schema: [],
+        });
+        setTimeout(() => {
+          this.getSchema();
+        });
+      },
+      (err) => {
+        console.log('Error', err);
 
-          DataPrepStore.dispatch({
-            type: DataPrepActions.setError,
-            payload: {
-              message: err.message || err.response.message
-            }
-          });
-        }
-      );
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message,
+          },
+        });
+      }
+    );
   }
 
   download() {
@@ -180,10 +185,8 @@ export default class SchemaModal extends Component {
       content = (
         <div>
           <div className="remedy-message">
-              {
-                objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
-              }
-            </div>
+            {objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null}
+          </div>
           <span>
             {T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies2')}
             <span
@@ -213,13 +216,9 @@ export default class SchemaModal extends Component {
         className="dataprep-schema-modal cdap-modal"
       >
         <ModalHeader>
-          <span>
-            Schema
-          </span>
+          <span>Schema</span>
 
-          <div
-            className="close-section float-xs-right"
-          >
+          <div className="close-section float-xs-right">
             <button
               disabled={this.state.error ? 'disabled' : null}
               className="btn btn-link"
@@ -227,15 +226,10 @@ export default class SchemaModal extends Component {
             >
               <span className="fa fa-download" />
             </button>
-            <span
-              className="fa fa-times"
-              onClick={this.props.toggle}
-            />
+            <span className="fa fa-times" onClick={this.props.toggle} />
           </div>
         </ModalHeader>
-        <ModalBody>
-          {content}
-        </ModalBody>
+        <ModalBody>{content}</ModalBody>
         <If condition={this.state.error}>
           <CardActionFeedback
             type="DANGER"
@@ -249,5 +243,5 @@ export default class SchemaModal extends Component {
 }
 
 SchemaModal.propTypes = {
-  toggle: PropTypes.func
+  toggle: PropTypes.func,
 };

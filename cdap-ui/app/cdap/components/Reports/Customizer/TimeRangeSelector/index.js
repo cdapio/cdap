@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import TimeRangePopover from 'components/Reports/Customizer/TimeRangeSelector/TimeRangePopover';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import moment from 'moment';
 import T from 'i18n-react';
 
@@ -28,8 +28,7 @@ require('./TimeRangeSelector.scss');
 const format = 'MMM. D, YYYY h:mma';
 
 function renderDisplay(selection, start, end) {
-  let startTime,
-      endTime;
+  let startTime, endTime;
 
   if (selection === 'custom') {
     startTime = moment(start).format(format);
@@ -42,18 +41,16 @@ function renderDisplay(selection, start, end) {
     case 'lastHour':
       return T.translate(`${PREFIX}.lastHour`);
     case 'custom':
-      return T.translate(`${PREFIX}.timeRange`, {startTime, endTime});
+      return T.translate(`${PREFIX}.timeRange`, { startTime, endTime });
     default:
       return T.translate(`${PREFIX}.select`);
   }
 }
 
-function TimeRangeSelectorView({selection, start, end}) {
+function TimeRangeSelectorView({ selection, start, end }) {
   return (
     <div className="reports-time-range-selector">
-      <div className="title">
-        {T.translate(`${PREFIX}.label`)}
-      </div>
+      <div className="title">{T.translate(`${PREFIX}.label`)}</div>
 
       <div className="time-selector-value">
         <div className="time-icon">
@@ -68,19 +65,17 @@ function TimeRangeSelectorView({selection, start, end}) {
 TimeRangeSelectorView.propTypes = {
   selection: PropTypes.string,
   start: PropTypes.number,
-  end: PropTypes.number
+  end: PropTypes.number,
 };
 
 const mapStateToProps = (state) => {
   return {
     selection: state.timeRange.selection,
     start: state.timeRange.start,
-    end: state.timeRange.end
+    end: state.timeRange.end,
   };
 };
 
-const TimeRangeSelector = connect(
-  mapStateToProps
-)(TimeRangeSelectorView);
+const TimeRangeSelector = connect(mapStateToProps)(TimeRangeSelectorView);
 
 export default TimeRangeSelector;

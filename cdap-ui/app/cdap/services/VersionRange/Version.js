@@ -21,10 +21,7 @@
 
 export default class Version {
   constructor(versionString) {
-    let major,
-        minor,
-        fix,
-        suffix;
+    let major, minor, fix, suffix;
 
     // Get Suffix
     let versionSuffixSplit = versionString.split('-');
@@ -44,7 +41,9 @@ export default class Version {
   }
 
   isSnapshot() {
-    return this.suffix !== null && this.suffix.length !== 0 && this.suffix.toLowerCase() === 'snapshot';
+    return (
+      this.suffix !== null && this.suffix.length !== 0 && this.suffix.toLowerCase() === 'snapshot'
+    );
   }
 
   // -1, 0, 1   smaller, equal, greater

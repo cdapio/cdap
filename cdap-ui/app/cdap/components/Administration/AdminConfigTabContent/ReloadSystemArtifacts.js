@@ -16,7 +16,7 @@
 
 import React, { Component } from 'react';
 import ConfirmationModal from 'components/ConfirmationModal';
-import {MyArtifactApi} from 'api/artifact';
+import { MyArtifactApi } from 'api/artifact';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Administration.Configure.buttons.ReloadSystemArtifacts';
@@ -26,42 +26,41 @@ export default class ReloadSystemArtifacts extends Component {
     openConfirmation: false,
     loading: false,
     errorMessage: null,
-    extendedMessage: null
-  }
+    extendedMessage: null,
+  };
 
   onClick = () => {
     this.setState({
       openConfirmation: !this.state.openConfirmation,
       loading: false,
       errorMessage: null,
-      extendedMessage: null
+      extendedMessage: null,
     });
-  }
+  };
 
   reload = () => {
     this.setState({
-      loading: true
+      loading: true,
     });
 
-    MyArtifactApi.reloadSystemArtifacts()
-      .subscribe(() => {
+    MyArtifactApi.reloadSystemArtifacts().subscribe(
+      () => {
         this.onClick();
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
           loading: false,
           errorMessage: T.translate(`${PREFIX}.errorMessage`),
-          extendedMessage: err
+          extendedMessage: err,
         });
-      });
-  }
+      }
+    );
+  };
 
   render() {
     return (
       <span>
-        <button
-          className="btn btn-secondary"
-          onClick={this.onClick}
-        >
+        <button className="btn btn-secondary" onClick={this.onClick}>
           {T.translate(`${PREFIX}.label`)}
         </button>
 

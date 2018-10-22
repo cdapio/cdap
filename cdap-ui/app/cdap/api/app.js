@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps';
@@ -27,5 +27,5 @@ export const MyAppApi = {
   getVersions: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}/versions`),
   getDeployedApp: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   batchStatus: apiCreator(dataSrc, 'POST', 'POLL', '/namespaces/:namespace/status'),
-  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath)
+  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath),
 };

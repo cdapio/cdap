@@ -14,8 +14,8 @@
  * the License.
 */
 
-import {createStore} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 
 const ACTIONS = {
   INITIALIZE_PIPELINE_DETAILS: 'INITIALIZE_PIPELINE_DETAILS',
@@ -45,7 +45,7 @@ const ACTIONS = {
   SET_STOP_BUTTON_LOADING: 'SET_STOP_BUTTON_LOADING',
   SET_STOP_ERROR: 'SET_STOP_ERROR',
 
-  RESET: 'RESET'
+  RESET: 'RESET',
 };
 
 const DEFAULT_PIPELINE_DETAILS = {
@@ -55,7 +55,7 @@ const DEFAULT_PIPELINE_DETAILS = {
   artifact: {
     name: '',
     version: '',
-    scope: ''
+    scope: '',
   },
   config: {},
   version: '',
@@ -86,13 +86,13 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
   switch (action.type) {
     case ACTIONS.INITIALIZE_PIPELINE_DETAILS: {
       let pipeline = action.payload.pipeline;
-      let newPipelineConfig = {...state.config};
+      let newPipelineConfig = { ...state.config };
 
       try {
         newPipelineConfig = JSON.parse(pipeline.configuration);
       } catch (e) {
         console.log('ERROR: cannot parse configuration');
-        newPipelineConfig = {...state.config};
+        newPipelineConfig = { ...state.config };
       }
 
       return {
@@ -102,62 +102,62 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
         artifact: {
           name: pipeline.artifact.name,
           version: pipeline.artifact.version,
-          scope: pipeline.artifact.scope
+          scope: pipeline.artifact.scope,
         },
-        config: {...newPipelineConfig},
-        version: pipeline.appVersion
+        config: { ...newPipelineConfig },
+        version: pipeline.appVersion,
       };
     }
     case ACTIONS.SET_OPTIONAL_PROPERTY:
       return {
         ...state,
-        [action.payload.key]: action.payload.value
+        [action.payload.key]: action.payload.value,
       };
     case ACTIONS.SET_SCHEDULE:
       return {
         ...state,
         config: {
           ...state.config,
-          schedule: action.payload.schedule
-        }
+          schedule: action.payload.schedule,
+        },
       };
     case ACTIONS.SET_SCHEDULE_STATUS:
       return {
         ...state,
-        scheduleStatus: action.payload.scheduleStatus
+        scheduleStatus: action.payload.scheduleStatus,
       };
     case ACTIONS.SET_CONFIG:
       return {
         ...state,
-        config: action.payload.config
+        config: action.payload.config,
       };
     case ACTIONS.SET_MAX_CONCURRENT_RUNS:
       return {
         ...state,
         config: {
           ...state.config,
-          maxConcurrentRuns: action.payload.maxConcurrentRuns
-        }
+          maxConcurrentRuns: action.payload.maxConcurrentRuns,
+        },
       };
     case ACTIONS.SET_NEXT_RUN_TIME:
       return {
         ...state,
-        nextRunTime: action.payload.nextRunTime
+        nextRunTime: action.payload.nextRunTime,
       };
     case ACTIONS.SET_CURRENT_RUN_ID: {
       let currentRunId = action.payload.runId;
-      let currentRun = state.runs.find(run => run.runid === currentRunId) || state.currentRun;
+      let currentRun = state.runs.find((run) => run.runid === currentRunId) || state.currentRun;
       return {
         ...state,
         currentRunId,
-        currentRun
+        currentRun,
       };
     }
     case ACTIONS.SET_RUNS: {
       let currentRun;
       let runs = action.payload.runs;
       if (state.currentRunId) {
-        currentRun = runs.find(run => run.runid === state.currentRunId);
+        currentRun = runs.find((run) => run.runid === state.currentRunId);
       }
       if (!currentRun) {
         currentRun = runs[0];
@@ -168,64 +168,64 @@ const pipelineDetails = (state = DEFAULT_PIPELINE_DETAILS, action = defaultActio
         runs,
         currentRun,
         runButtonLoading: false,
-        stopButtonLoading: false
+        stopButtonLoading: false,
       };
     }
     case ACTIONS.SET_RUNS_COUNT:
       return {
         ...state,
-        runsCount: action.payload.runsCount
+        runsCount: action.payload.runsCount,
       };
     case ACTIONS.SET_STATISTICS:
       return {
         ...state,
-        statistics: action.payload.statistics
+        statistics: action.payload.statistics,
       };
     case ACTIONS.SET_USER_RUNTIME_ARGUMENTS:
       return {
         ...state,
-        userRuntimeArgumentsMap: action.payload.argsMap
+        userRuntimeArgumentsMap: action.payload.argsMap,
       };
     case ACTIONS.SET_MACROS_AND_USER_RUNTIME_ARGUMENTS:
       return {
         ...state,
         macrosMap: action.payload.macrosMap,
-        userRuntimeArgumentsMap: action.payload.argsMap
+        userRuntimeArgumentsMap: action.payload.argsMap,
       };
     case ACTIONS.SET_RUNTIME_ARGUMENTS_FOR_DISPLAY:
       return {
         ...state,
-        runtimeArgsForDisplay: action.payload.args
+        runtimeArgsForDisplay: action.payload.args,
       };
     case ACTIONS.SET_RUN_BUTTON_LOADING:
       return {
         ...state,
-        runButtonLoading: action.payload.loading
+        runButtonLoading: action.payload.loading,
       };
     case ACTIONS.SET_RUN_ERROR:
       return {
         ...state,
-        runError: action.payload.error
+        runError: action.payload.error,
       };
     case ACTIONS.SET_SCHEDULE_BUTTON_LOADING:
       return {
         ...state,
-        scheduleButtonLoading: action.payload.loading
+        scheduleButtonLoading: action.payload.loading,
       };
     case ACTIONS.SET_SCHEDULE_ERROR:
       return {
         ...state,
-        scheduleError: action.payload.error
+        scheduleError: action.payload.error,
       };
     case ACTIONS.SET_STOP_BUTTON_LOADING:
       return {
         ...state,
-        stopButtonLoading: action.payload.loading
+        stopButtonLoading: action.payload.loading,
       };
     case ACTIONS.SET_STOP_ERROR:
       return {
         ...state,
-        stopError: action.payload.error
+        stopError: action.payload.error,
       };
     case ACTIONS.RESET:
       return DEFAULT_PIPELINE_DETAILS;
@@ -241,4 +241,4 @@ const PipelineDetailStore = createStore(
 );
 
 export default PipelineDetailStore;
-export {ACTIONS};
+export { ACTIONS };

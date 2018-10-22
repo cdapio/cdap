@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import EnabledTriggerRow from 'components/PipelineTriggers/EnabledTriggersTab/EnabledTriggerRow';
 import T from 'i18n-react';
 
@@ -30,65 +30,50 @@ const mapStateToProps = (state) => {
   return {
     enabledTriggers: state.triggers.enabledTriggers,
     pipelineName: state.triggers.pipelineName,
-    expandedTrigger: state.triggers.expandedTrigger
+    expandedTrigger: state.triggers.expandedTrigger,
   };
 };
 
-function EnabledTriggersView({enabledTriggers, pipelineName}) {
+function EnabledTriggersView({ enabledTriggers, pipelineName }) {
   return (
     <div className="existing-triggers-tab">
       <div className="pipeline-trigger-header">
-        {T.translate(`${PREFIX}.title`, {pipelineName})}
+        {T.translate(`${PREFIX}.title`, { pipelineName })}
       </div>
 
       <div className="pipeline-count">
-        {
-          T.translate(`${PREFIX}.pipelineCount`, {
-            context: {
-              count: enabledTriggers.length
-            }
-          })
-        }
+        {T.translate(`${PREFIX}.pipelineCount`, {
+          context: {
+            count: enabledTriggers.length,
+          },
+        })}
       </div>
 
-      {
-        enabledTriggers.length === 0 ?
-          null
-        :
-          (
-            <div className="pipeline-list">
-              <div className="pipeline-list-header">
-                <div className="caret-container"></div>
-                <div className="pipeline-name">
-                  {T.translate(`${TRIGGER_PREFIX}.pipelineName`)}
-                </div>
-                <div className="namespace">
-                  {T.translate(`${TRIGGER_PREFIX}.namespace`)}
-                </div>
-              </div>
+      {enabledTriggers.length === 0 ? null : (
+        <div className="pipeline-list">
+          <div className="pipeline-list-header">
+            <div className="caret-container" />
+            <div className="pipeline-name">{T.translate(`${TRIGGER_PREFIX}.pipelineName`)}</div>
+            <div className="namespace">{T.translate(`${TRIGGER_PREFIX}.namespace`)}</div>
+          </div>
 
-              {
-                enabledTriggers.map((schedule) => {
-                  const mapTriggerRowStateToProps = (state) => {
-                    return {
-                      schedule,
-                      isExpanded: state.triggers.expandedTrigger === schedule.name,
-                      loading: state.enabledTriggers.loading,
-                      info: state.enabledTriggers.pipelineInfo,
-                      pipelineName
-                    };
-                  };
+          {enabledTriggers.map((schedule) => {
+            const mapTriggerRowStateToProps = (state) => {
+              return {
+                schedule,
+                isExpanded: state.triggers.expandedTrigger === schedule.name,
+                loading: state.enabledTriggers.loading,
+                info: state.enabledTriggers.pipelineInfo,
+                pipelineName,
+              };
+            };
 
-                  const TriggerRow = connect(
-                    mapTriggerRowStateToProps
-                  )(EnabledTriggerRow);
+            const TriggerRow = connect(mapTriggerRowStateToProps)(EnabledTriggerRow);
 
-                  return <TriggerRow />;
-                })
-              }
-            </div>
-          )
-      }
+            return <TriggerRow />;
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -97,11 +82,9 @@ EnabledTriggersView.propTypes = {
   enabledTriggers: PropTypes.array,
   pipelineName: PropTypes.string,
   expandedTrigger: PropTypes.string,
-  toggleExpandTrigger: PropTypes.func
+  toggleExpandTrigger: PropTypes.func,
 };
 
-const EnabledTriggersTab = connect(
-  mapStateToProps
-)(EnabledTriggersView);
+const EnabledTriggersTab = connect(mapStateToProps)(EnabledTriggersView);
 
 export default EnabledTriggersTab;

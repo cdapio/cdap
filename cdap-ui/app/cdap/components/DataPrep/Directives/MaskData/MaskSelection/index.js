@@ -21,7 +21,7 @@ import ColumnTextSelection from 'components/DataPrep/ColumnTextSelection';
 import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
 import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import Mousetrap from 'mousetrap';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 
@@ -35,7 +35,7 @@ export default class MaskSelection extends Component {
     this.state = {
       showPopover: false,
       textSelectionRange: null,
-      rowNumber: null
+      rowNumber: null,
     };
     this.renderPopover = this.renderPopover.bind(this);
     this.applyDirective = this.applyDirective.bind(this);
@@ -51,10 +51,16 @@ export default class MaskSelection extends Component {
   }
 
   getPattern() {
-    let {start, end} = this.state.textSelectionRange;
-    const getMaskPattern = (N) => Array.apply(null, {length: N}).map(() => 'x').join('');
-    const getAllowPattern = (N) => Array.apply(null, {length: N}).map(() => '#').join('');
-    let {data} = DataPrepStore.getState().dataprep;
+    let { start, end } = this.state.textSelectionRange;
+    const getMaskPattern = (N) =>
+      Array.apply(null, { length: N })
+        .map(() => 'x')
+        .join('');
+    const getAllowPattern = (N) =>
+      Array.apply(null, { length: N })
+        .map(() => '#')
+        .join('');
+    let { data } = DataPrepStore.getState().dataprep;
     let length = data[this.state.rowNumber][this.props.columns].length;
     if (start === 0) {
       return getMaskPattern(end) + getAllowPattern(length - end);
@@ -64,32 +70,31 @@ export default class MaskSelection extends Component {
   applyDirective() {
     let pattern = this.getPattern();
     let directive = [`mask-number ${this.props.columns.toString()} ${pattern}`];
-    execute(directive)
-      .subscribe(
-        () => {
-          this.props.onClose();
-        },
-        (err) => {
-          console.log('error', err);
+    execute(directive).subscribe(
+      () => {
+        this.props.onClose();
+      },
+      (err) => {
+        console.log('error', err);
 
-          DataPrepStore.dispatch({
-            type: DataPrepActions.setError,
-            payload: {
-              message: err.message || err.response.message
-            }
-          });
-        }
-      );
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message,
+          },
+        });
+      }
+    );
   }
-  onTextSelection({textSelectionRange, rowNumber}) {
+  onTextSelection({ textSelectionRange, rowNumber }) {
     this.setState({
       textSelectionRange,
-      rowNumber
+      rowNumber,
     });
   }
   togglePopover(showPopover) {
     this.setState({
-      showPopover
+      showPopover,
     });
   }
   renderPopover() {
@@ -112,30 +117,27 @@ export default class MaskSelection extends Component {
         modifiers={{
           shift: {
             order: 800,
-            enabled: true
-          }
+            enabled: true,
+          },
         }}
         container={tableContainer}
         hideArrow
       >
-        <PopoverTitle className={`${CELLHIGHLIGHTCLASSNAME} popover-title`}>{T.translate(`${PREFIX}.popoverTitle`)}</PopoverTitle>
+        <PopoverTitle className={`${CELLHIGHLIGHTCLASSNAME} popover-title`}>
+          {T.translate(`${PREFIX}.popoverTitle`)}
+        </PopoverTitle>
         <PopoverContent
           className={`${CELLHIGHLIGHTCLASSNAME} popover-content`}
           onClick={this.preventPropagation}
         >
-          <p className={`${CELLHIGHLIGHTCLASSNAME}`}>
-            {T.translate(`${PREFIX}.description`)}
-          </p>
+          <p className={`${CELLHIGHLIGHTCLASSNAME}`}>{T.translate(`${PREFIX}.description`)}</p>
           <div
             className={`btn btn-primary ${CELLHIGHLIGHTCLASSNAME}`}
             onClick={this.applyDirective}
           >
             {T.translate('features.DataPrep.Directives.apply')}
           </div>
-          <div
-            className={`btn ${CELLHIGHLIGHTCLASSNAME}`}
-            onClick={this.props.onClose}
-          >
+          <div className={`btn ${CELLHIGHLIGHTCLASSNAME}`} onClick={this.props.onClose}>
             {T.translate(`${PREFIX}.cancelBtnLabel`)}
           </div>
         </PopoverContent>
@@ -160,5 +162,5 @@ export default class MaskSelection extends Component {
 }
 MaskSelection.propTypes = {
   onClose: PropTypes.func,
-  columns: PropTypes.arrayOf(PropTypes.string)
+  columns: PropTypes.arrayOf(PropTypes.string),
 };

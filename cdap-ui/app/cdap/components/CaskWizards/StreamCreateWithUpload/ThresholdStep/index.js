@@ -16,19 +16,19 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {connect, Provider} from 'react-redux';
-import {Input, FormGroup, Form} from 'reactstrap';
+import { connect, Provider } from 'react-redux';
+import { Input, FormGroup, Form } from 'reactstrap';
 import T from 'i18n-react';
 
 require('./ThresholdStep.scss');
-import CreateStreamWithUploadActions  from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
+import CreateStreamWithUploadActions from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
 const mapStateToStreamThresholdProps = (state) => {
   return {
     value: parseInt(state.threshold.value, 10),
     type: 'text',
     defaultValue: parseInt(state.threshold.value, 10),
-    placeholder: 'Threshold'
+    placeholder: 'Threshold',
   };
 };
 const mapDispatchToStreamThresholdProps = (dispatch) => {
@@ -36,27 +36,22 @@ const mapDispatchToStreamThresholdProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: CreateStreamWithUploadActions.setThreshold,
-        payload: {threshold: e.target.value}
+        payload: { threshold: e.target.value },
       });
-    }
+    },
   };
 };
-let ThresholdTextBox = ({value, onChange}) => {
+let ThresholdTextBox = ({ value, onChange }) => {
   return (
     <FormGroup row className="threshold-step">
-      <Input
-        value={value}
-        type="number"
-        min={1}
-        onChange={onChange}
-      />
-    <h3>{T.translate('features.Wizard.StreamCreate.Step3.mblabel')}</h3>
+      <Input value={value} type="number" min={1} onChange={onChange} />
+      <h3>{T.translate('features.Wizard.StreamCreate.Step3.mblabel')}</h3>
     </FormGroup>
   );
 };
 ThresholdTextBox.propTypes = {
   value: PropTypes.number,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };
 ThresholdTextBox = connect(
   mapStateToStreamThresholdProps,
@@ -67,9 +62,7 @@ export default function ThresholdStep() {
     <Provider store={CreateStreamWithUploadStore}>
       <Form className="form-horizontal">
         <ThresholdTextBox />
-        <p>
-          {T.translate('features.Wizard.StreamCreate.Step3.thresholdlabel')}
-        </p>
+        <p>{T.translate('features.Wizard.StreamCreate.Step3.thresholdlabel')}</p>
       </Form>
     </Provider>
   );

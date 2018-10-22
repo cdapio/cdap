@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Col} from 'reactstrap';
+import { Col } from 'reactstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import classnames from 'classnames';
@@ -32,7 +32,7 @@ const SVGHEIGHT = 20;
 const SVGWIDTH = 80;
 
 const ItemTypes = {
-  Rule: 'RULEBOOKRULE'
+  Rule: 'RULEBOOKRULE',
 };
 
 const dragSource = {
@@ -54,7 +54,7 @@ const dropTarget = {
       return;
     }
 
-    let {componentRef} = component.handler.ref.current;
+    let { componentRef } = component.handler.ref.current;
     if (!componentRef) {
       return;
     }
@@ -94,9 +94,8 @@ const dropTarget = {
     let dragIndex = monitor.getItem().index;
     let hoverIndex = props.index;
     props.onRuleSort(dragIndex, hoverIndex);
-  }
+  },
 };
-
 
 class RulebookRule extends Component {
   static propTypes = {
@@ -106,52 +105,47 @@ class RulebookRule extends Component {
     onRuleSort: PropTypes.func,
     connectDragSource: PropTypes.func.isRequired,
     connectDropTarget: PropTypes.func.isRequired,
-    isDragging: PropTypes.bool.isRequired
+    isDragging: PropTypes.bool.isRequired,
   };
 
   componentRef = null;
 
   render() {
-    let {index, rule, onRemove, connectDropTarget, connectDragSource, isDragging} = this.props;
-    return connectDragSource(connectDropTarget(
-      <div
-        className={classnames("row", {
-          'dragging': isDragging
-        })}
-        ref={ref => {
-          if (ref) {
-            this.componentRef = ref;
-          }
-        }}
-      >
-        <Col xs={1}>{index + 1}</Col>
-        <Col xs={2}>{rule.id}</Col>
-        <Col xs={5}>{rule.description}</Col>
-        <Col xs={1}>
-          <button
-            className="btn btn-link remove-button"
-            onClick={() => onRemove(rule.id)}
-          >
-            {T.translate(`${PREFIX}.remove`)}
-          </button>
-        </Col>
-        <Col xs={1}>
-          <IconSVG
-            className="move-icon"
-            name="icon-arrows-v"
-          />
-        </Col>
-        <Col xs={2}>
-          {
-            isNil(rule.metric) ? null :
+    let { index, rule, onRemove, connectDropTarget, connectDragSource, isDragging } = this.props;
+    return connectDragSource(
+      connectDropTarget(
+        <div
+          className={classnames('row', {
+            dragging: isDragging,
+          })}
+          ref={(ref) => {
+            if (ref) {
+              this.componentRef = ref;
+            }
+          }}
+        >
+          <Col xs={1}>{index + 1}</Col>
+          <Col xs={2}>{rule.id}</Col>
+          <Col xs={5}>{rule.description}</Col>
+          <Col xs={1}>
+            <button className="btn btn-link remove-button" onClick={() => onRemove(rule.id)}>
+              {T.translate(`${PREFIX}.remove`)}
+            </button>
+          </Col>
+          <Col xs={1}>
+            <IconSVG className="move-icon" name="icon-arrows-v" />
+          </Col>
+          <Col xs={2}>
+            {isNil(rule.metric) ? null : (
               <Sparklines data={rule.metric} svgWidth={SVGWIDTH} svgHeight={SVGHEIGHT} limit={10}>
-                <SparklinesBars style={{ fill: SPARKLINECOLOR, fillOpacity: ".15" }} />
-                <SparklinesLine style={{ stroke: SPARKLINECOLOR, fill: "none" }} />
+                <SparklinesBars style={{ fill: SPARKLINECOLOR, fillOpacity: '.15' }} />
+                <SparklinesLine style={{ stroke: SPARKLINECOLOR, fill: 'none' }} />
               </Sparklines>
-          }
-        </Col>
-      </div>
-    ));
+            )}
+          </Col>
+        </div>
+      )
+    );
   }
 }
 
@@ -160,7 +154,7 @@ export default flow([
     connectDragSource: connect.dragSource(),
     isDragging: monitor.isDragging(),
   })),
-  DropTarget(ItemTypes.Rule, dropTarget, connect => ({
+  DropTarget(ItemTypes.Rule, dropTarget, (connect) => ({
     connectDropTarget: connect.dropTarget(),
-  }))
+  })),
 ])(RulebookRule);

@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import T from 'i18n-react';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 const PREFIX = 'features.DataPrep.Directives.Keep';
@@ -33,19 +33,21 @@ export default class KeepColumnDirective extends Component {
     let column = this.props.column.toString();
     let directive = `keep ${column}`;
 
-    execute([directive])
-      .subscribe(() => {
+    execute([directive]).subscribe(
+      () => {
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('Error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   render() {
@@ -55,22 +57,14 @@ export default class KeepColumnDirective extends Component {
     }
 
     return (
-      <div
-        className="keep-column-directive clearfix action-item"
-        onClick={this.applyDirective}
-      >
-        <span>
-          {title}
-        </span>
+      <div className="keep-column-directive clearfix action-item" onClick={this.applyDirective}>
+        <span>{title}</span>
       </div>
     );
   }
 }
 
 KeepColumnDirective.propTypes = {
-  column: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.array
-  ]),
-  onComplete: PropTypes.func
+  column: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
+  onComplete: PropTypes.func,
 };

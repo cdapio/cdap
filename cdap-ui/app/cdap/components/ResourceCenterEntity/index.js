@@ -21,22 +21,26 @@ import classnames from 'classnames';
 
 require('./ResourceCenterEntity.scss');
 
-export default function ResourceCenterEntity({className, iconClassName, title, description, actionLabel, onClick}) {
+export default function ResourceCenterEntity({
+  className,
+  iconClassName,
+  title,
+  description,
+  actionLabel,
+  onClick,
+}) {
   return (
     <div className={classnames('resourcecenter-entity-card', className)}>
       <div className="image-button-container">
-        {
-          iconClassName ?
-            (
-              <div className="entity-image">
-                <IconSVG name={iconClassName} />
-              </div>
-            )
-          :
-            <div className="entity-image empty" />
-        }
+        {iconClassName ? (
+          <div className="entity-image">
+            <IconSVG name={iconClassName} />
+          </div>
+        ) : (
+          <div className="entity-image empty" />
+        )}
         <button
-          id={(actionLabel + "-" + title).toLowerCase()}
+          id={(actionLabel + '-' + title).toLowerCase()}
           className="btn btn-primary"
           onClick={onClick}
         >
@@ -58,5 +62,5 @@ ResourceCenterEntity.propTypes = {
   description: PropTypes.string,
   actionLabel: PropTypes.string,
   onClick: PropTypes.func.isRequired,
-  className: PropTypes.string
+  className: PropTypes.string,
 };

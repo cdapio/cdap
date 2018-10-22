@@ -15,14 +15,16 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import TopPanel from 'components/Experiments/TopPanel';
 import IconSVG from 'components/IconSVG';
 import DataPrepConnections from 'components/DataPrepConnections';
 import DataPrepHome from 'components/DataPrepHome';
-import {Prompt, Link, Redirect} from 'react-router-dom';
-import createExperimentStore, {CREATION_STEPS} from 'components/Experiments/store/createExperimentStore';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { Prompt, Link, Redirect } from 'react-router-dom';
+import createExperimentStore, {
+  CREATION_STEPS,
+} from 'components/Experiments/store/createExperimentStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import Popover from 'components/Popover';
 import ExperimentPopovers from 'components/Experiments/CreateView/Popovers';
 import DataPrepStore from 'components/DataPrep/store';
@@ -38,7 +40,7 @@ import {
   fetchAlgorithmsList,
   setExperimentCreateError,
   setAlgorithmsListForCreateView,
-  updateModel
+  updateModel,
 } from 'components/Experiments/store/CreateExperimentActionCreator';
 import MLAlgorithmSelection from 'components/Experiments/CreateView/MLAlgorithmSelection';
 import SplitDataStep from 'components/Experiments/CreateView/SplitDataStep';
@@ -47,13 +49,13 @@ import Helmet from 'react-helmet';
 import queryString from 'query-string';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
+import { directiveRequestBodyCreator } from 'components/DataPrep/helper';
 import MyDataPrepApi from 'api/dataprep';
 import Alert from 'components/Alert';
 import T from 'i18n-react';
 import classnames from 'classnames';
-import {isNilOrEmpty} from 'services/helpers';
-import {Theme} from 'services/ThemeHelper';
+import { isNilOrEmpty } from 'services/helpers';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.Experiments.CreateView';
 
@@ -71,7 +73,7 @@ export default class ExperimentCreateView extends Component {
     isSplitFinalized: createExperimentStore.getState().model_create.isSplitFinalized,
     loading: createExperimentStore.getState().experiments_create.loading,
     active_step: createExperimentStore.getState().active_step.step_name,
-    redirectToExperimentDetail: false
+    redirectToExperimentDetail: false,
   };
   title = 'Create a new experiment';
   componentWillMount() {
@@ -79,8 +81,8 @@ export default class ExperimentCreateView extends Component {
   }
   componentDidMount() {
     this.dataprepsubscription = DataPrepStore.subscribe(() => {
-      let {dataprep} = DataPrepStore.getState();
-      let {headers = [], directives, workspaceInfo = {}, workspaceId} = dataprep;
+      let { dataprep } = DataPrepStore.getState();
+      let { headers = [], directives, workspaceInfo = {}, workspaceId } = dataprep;
       if (!headers.length) {
         return;
       }
@@ -89,68 +91,69 @@ export default class ExperimentCreateView extends Component {
       setOutcomeColumns(headers);
       setDirectives(directives);
       let requestBody = directiveRequestBodyCreator(directives);
-      MyDataPrepApi
-        .getSchema({
+      MyDataPrepApi.getSchema(
+        {
           namespace: getCurrentNamespace(),
-          workspaceId
-        }, requestBody)
-        .subscribe(updateSchema);
+          workspaceId,
+        },
+        requestBody
+      ).subscribe(updateSchema);
     });
     this.createExperimentStoreSubscription = createExperimentStore.subscribe(() => {
-      let {model_create, experiments_create, active_step} = createExperimentStore.getState();
-      let {modelId, isSplitFinalized, isModelTrained} = model_create;
-      let {workspaceId, loading, name: experimentId, error: experimentError} = experiments_create;
+      let { model_create, experiments_create, active_step } = createExperimentStore.getState();
+      let { modelId, isSplitFinalized, isModelTrained } = model_create;
+      let { workspaceId, loading, name: experimentId, error: experimentError } = experiments_create;
       let newState = {};
       if (this.state.experimentId !== experimentId) {
-        newState = {experimentId};
+        newState = { experimentId };
       }
       if (this.state.active_step.step_name !== active_step.step_name) {
         newState = { ...newState, active_step };
       }
       if (this.state.modelId !== modelId) {
-        newState = {...newState, modelId};
+        newState = { ...newState, modelId };
       }
       if (this.state.workspaceId !== workspaceId) {
-        newState = {...newState, workspaceId};
+        newState = { ...newState, workspaceId };
       }
       if (this.state.loading !== loading) {
-        newState = {...newState, loading};
+        newState = { ...newState, loading };
       }
       if (isSplitFinalized !== this.state.isSplitFinalized) {
-        newState = {...newState, isSplitFinalized};
+        newState = { ...newState, isSplitFinalized };
       }
       if (isModelTrained) {
-        newState = {...newState, redirectToExperimentDetail: true};
+        newState = { ...newState, redirectToExperimentDetail: true };
       }
       if (this.state.experimentError !== experimentError) {
-        newState = {...newState, experimentError};
+        newState = { ...newState, experimentError };
       }
       if (Object.keys(newState).length > 0) {
         this.setState(newState);
       }
     });
-    let {experimentId, modelId} = queryString.parse(this.props.location.search);
+    let { experimentId, modelId } = queryString.parse(this.props.location.search);
     if (experimentId && !modelId) {
       getExperimentForEdit(experimentId);
     } else if (experimentId && modelId) {
       getExperimentModelSplitForCreate(experimentId, modelId);
     } else {
-      this.setState({loading: false});
+      this.setState({ loading: false });
     }
     fetchAlgorithmsList();
   }
   componentWillUnmount() {
-    let {experiments_create} = createExperimentStore.getState();
-    let {workspaceId} = experiments_create;
+    let { experiments_create } = createExperimentStore.getState();
+    let { workspaceId } = experiments_create;
     if (workspaceId) {
       // Every workspace created in experiments create view is temp. So don't worry about deleting it.
       MyDataPrepApi.delete({
         namespace: getCurrentNamespace(),
-        workspaceId
+        workspaceId,
       }).subscribe();
     }
     DataPrepStore.dispatch({
-      type: DataPrepActions.reset
+      type: DataPrepActions.reset,
     });
     if (this.dataprepsubscription) {
       this.dataprepsubscription();
@@ -182,7 +185,7 @@ export default class ExperimentCreateView extends Component {
           singleWorkspaceMode={true}
           onWorkspaceCreate={(workspaceId) => {
             setWorkspace(workspaceId);
-            this.setState({workspaceId});
+            this.setState({ workspaceId });
           }}
           scope={true}
           browserTitle="Select a file to use in your experiment"
@@ -196,22 +199,18 @@ export default class ExperimentCreateView extends Component {
         Update Model
       </div>
     );
-    const {experimentId, addModel} = queryString.parse(this.props.location.search);
+    const { experimentId, addModel } = queryString.parse(this.props.location.search);
     let popoverElementLabel = T.translate(`${PREFIX}.createExperiment`);
 
     if (addModel) {
       popoverElementLabel = T.translate(`${PREFIX}.addModel`);
     }
-    const popoverElement = (
-      <div className="btn btn-primary">
-        {popoverElementLabel}
-      </div>
-    );
+    const popoverElement = <div className="btn btn-primary">{popoverElementLabel}</div>;
     const createModelBtn = (
       <Popover
         target={() => popoverElement}
         enableInteractionInPopover={true}
-        targetDimension={{ width: "auto" }}
+        targetDimension={{ width: 'auto' }}
         placement="bottom"
         className="create_new_experiment_popover"
         showPopover={!experimentId ? true : false}
@@ -219,7 +218,6 @@ export default class ExperimentCreateView extends Component {
         <ExperimentPopovers />
       </Popover>
     );
-
 
     let topPanelTitle = 'Create a new experiment';
     if (addModel) {
@@ -234,9 +232,7 @@ export default class ExperimentCreateView extends Component {
     return (
       <span>
         {this.renderTopPanel(topPanelTitle)}
-        <div className="experiments-model-panel">
-          {renderAddBtn()}
-        </div>
+        <div className="experiments-model-panel">{renderAddBtn()}</div>
         <DataPrepHome
           singleWorkspaceMode={true}
           enableRouting={false}
@@ -246,7 +242,7 @@ export default class ExperimentCreateView extends Component {
     );
   }
   renderSplitDataStep() {
-    let {name} = createExperimentStore.getState().model_create;
+    let { name } = createExperimentStore.getState().model_create;
     return (
       <span className="experiments-split-data-step">
         {this.renderTopPanel(`Split data for model '${name}'`)}
@@ -256,7 +252,7 @@ export default class ExperimentCreateView extends Component {
     );
   }
   renderAlgorithmSelectionStep() {
-    let {name} = createExperimentStore.getState().model_create;
+    let { name } = createExperimentStore.getState().model_create;
     return (
       <span className="experiments-algorithm-selection-step">
         {this.renderTopPanel(`Select an algorithm to train model '${name}'`)}
@@ -271,9 +267,7 @@ export default class ExperimentCreateView extends Component {
     }
     if (this.state.redirectToExperimentDetail) {
       return (
-        <Redirect
-          to={`/ns/${getCurrentNamespace()}/experiments/${this.state.experimentId}`}
-        />
+        <Redirect to={`/ns/${getCurrentNamespace()}/experiments/${this.state.experimentId}`} />
       );
     }
     switch (this.state.active_step.step_name) {
@@ -297,31 +291,35 @@ export default class ExperimentCreateView extends Component {
     return (
       <Alert
         message={this.state.experimentError}
-        type='error'
+        type="error"
         showAlert={true}
         onClose={setExperimentCreateError}
       />
     );
   }
   render() {
-    const {experimentId, addModel} = queryString.parse(this.props.location.search);
+    const { experimentId, addModel } = queryString.parse(this.props.location.search);
     let expId = experimentId ? `${experimentId} | ` : '';
     let labelSuffix = addModel ? 'Add model' : 'Create Experiment';
     const featureName = Theme.featureNames.analytics;
     return (
-      <div className={classnames("experiments-create-view", {
-        'add-model': !isNilOrEmpty(this.state.experimentId)
-      })}>
-        <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
-          productName: Theme.productName,
-          experimentIdWithSuffix: `${expId} ${labelSuffix}`,
-          featureName
-        })} />
+      <div
+        className={classnames('experiments-create-view', {
+          'add-model': !isNilOrEmpty(this.state.experimentId),
+        })}
+      >
+        <Helmet
+          title={T.translate(`${PREFIX}.pageTitle`, {
+            productName: Theme.productName,
+            experimentIdWithSuffix: `${expId} ${labelSuffix}`,
+            featureName,
+          })}
+        />
         {this.renderSteps()}
         {this.renderError()}
         <Prompt
           when={!this.state.experimentId || !this.state.modelId}
-          message={"Are you sure you want to navigate away?"}
+          message={'Are you sure you want to navigate away?'}
         />
       </div>
     );

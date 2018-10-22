@@ -16,12 +16,15 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import KeyValuePairs from 'components/KeyValuePairs';
 import Popover from 'components/Popover';
-import {getEngineDisplayLabel, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {convertKeyValuePairsObjToMap} from 'components/KeyValuePairs/KeyValueStoreActions';
+import {
+  getEngineDisplayLabel,
+  ACTIONS as PipelineConfigurationsActions,
+} from 'components/PipelineConfigurations/Store';
+import { convertKeyValuePairsObjToMap } from 'components/KeyValuePairs/KeyValueStoreActions';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
 
@@ -29,7 +32,7 @@ const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 
 const mapStateToCustomConfigKeyValuesProps = (state) => {
   return {
-    keyValues: state.customConfigKeyValuePairs
+    keyValues: state.customConfigKeyValuePairs,
   };
 };
 
@@ -38,17 +41,17 @@ const mapDispatchToCustomConfigKeyValuesProps = (dispatch, ownProps) => {
     onKeyValueChange: (keyValues) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_CUSTOM_CONFIG_KEY_VALUE_PAIRS,
-        payload: { keyValues }
+        payload: { keyValues },
       });
       let customConfigObj = convertKeyValuePairsObjToMap(keyValues);
       dispatch({
         type: PipelineConfigurationsActions.SET_CUSTOM_CONFIG,
         payload: {
           customConfig: customConfigObj,
-          isBatch: ownProps.isBatch
-        }
+          isBatch: ownProps.isBatch,
+        },
       });
-    }
+    },
   };
 };
 
@@ -64,47 +67,46 @@ const mapStateToCustomConfigProps = (state, ownProps) => {
     showCustomConfig: ownProps.showCustomConfig,
     toggleCustomConfig: ownProps.toggleCustomConfig,
     engine: state.engine,
-    customConfigKeyValuePairs: state.customConfigKeyValuePairs
+    customConfigKeyValuePairs: state.customConfigKeyValuePairs,
   };
 };
 
-const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConfig, engine, customConfigKeyValuePairs}) => {
+const CustomConfig = ({
+  isDetailView,
+  isBatch,
+  showCustomConfig,
+  toggleCustomConfig,
+  engine,
+  customConfigKeyValuePairs,
+}) => {
   let engineDisplayLabel = getEngineDisplayLabel(engine, isBatch);
-  let numberOfCustomConfigFilled = customConfigKeyValuePairs.pairs
-    .filter(pair => !isEmpty(pair.key) && !isEmpty(pair.value))
-    .length;
+  let numberOfCustomConfigFilled = customConfigKeyValuePairs.pairs.filter(
+    (pair) => !isEmpty(pair.key) && !isEmpty(pair.value)
+  ).length;
 
   const StudioViewCustomConfigLabel = () => {
     return (
       <span>
-        <a
-          className="add-custom-config-label"
-          onClick={toggleCustomConfig}
-        >
-          <IconSVG name={showCustomConfig ? "icon-caret-down" : "icon-caret-right"} />
+        <a className="add-custom-config-label" onClick={toggleCustomConfig}>
+          <IconSVG name={showCustomConfig ? 'icon-caret-down' : 'icon-caret-right'} />
           {T.translate(`${PREFIX}.showCustomConfig`)}
         </a>
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
-          showOn='Hover'
-          placement='right'
+          showOn="Hover"
+          placement="right"
         >
-          {T.translate(`${PREFIX}.customConfigTooltip`, {engineDisplayLabel})}
+          {T.translate(`${PREFIX}.customConfigTooltip`, { engineDisplayLabel })}
         </Popover>
-        {
-          showCustomConfig ?
-            (
-              <span>
-                <span className="float-xs-right num-rows">
-                  {`${numberOfCustomConfigFilled}`}
-                  {T.translate(`${PREFIX}.customConfigCount`, {context: numberOfCustomConfigFilled})}
-                </span>
-                <hr />
-              </span>
-            )
-          :
-            null
-        }
+        {showCustomConfig ? (
+          <span>
+            <span className="float-xs-right num-rows">
+              {`${numberOfCustomConfigFilled}`}
+              {T.translate(`${PREFIX}.customConfigCount`, { context: numberOfCustomConfigFilled })}
+            </span>
+            <hr />
+          </span>
+        ) : null}
       </span>
     );
   };
@@ -117,13 +119,13 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
           <label>{T.translate(`${PREFIX}.customConfig`)}</label>
           <Popover
             target={() => <IconSVG name="icon-info-circle" />}
-            showOn='Hover'
-            placement='right'
+            showOn="Hover"
+            placement="right"
           >
-            {T.translate(`${PREFIX}.customConfigTooltip`, {engineDisplayLabel})}
+            {T.translate(`${PREFIX}.customConfigTooltip`, { engineDisplayLabel })}
           </Popover>
           <span className="float-xs-right num-rows">
-            {T.translate(`${PREFIX}.customConfigCount`, {context: numberOfCustomConfigFilled})}
+            {T.translate(`${PREFIX}.customConfigCount`, { context: numberOfCustomConfigFilled })}
           </span>
         </div>
       </div>
@@ -132,32 +134,18 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
 
   return (
     <div className="add-custom-config">
-      {
-        isDetailView ?
-          <DetailViewCustomConfigLabel />
-        :
-          <StudioViewCustomConfigLabel />
-      }
-      {
-        isDetailView || showCustomConfig ?
-          (
-            <div>
-              <div className="custom-config-labels key-value-pair-labels">
-                <span className="key-label">
-                  {T.translate('commons.nameLabel')}
-                </span>
-                <span className="value-label">
-                  {T.translate('commons.keyValPairs.valueLabel')}
-                </span>
-              </div>
-              <div className="custom-config-values key-value-pair-values">
-                <ConnectedCustomConfigKeyValuePairs isBatch={isBatch} />
-              </div>
-            </div>
-          )
-        :
-          null
-      }
+      {isDetailView ? <DetailViewCustomConfigLabel /> : <StudioViewCustomConfigLabel />}
+      {isDetailView || showCustomConfig ? (
+        <div>
+          <div className="custom-config-labels key-value-pair-labels">
+            <span className="key-label">{T.translate('commons.nameLabel')}</span>
+            <span className="value-label">{T.translate('commons.keyValPairs.valueLabel')}</span>
+          </div>
+          <div className="custom-config-values key-value-pair-values">
+            <ConnectedCustomConfigKeyValuePairs isBatch={isBatch} />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -168,7 +156,7 @@ CustomConfig.propTypes = {
   showCustomConfig: PropTypes.bool,
   toggleCustomConfig: PropTypes.func,
   engine: PropTypes.string,
-  customConfigKeyValuePairs: PropTypes.object
+  customConfigKeyValuePairs: PropTypes.object,
 };
 
 const ConnectedCustomConfig = connect(mapStateToCustomConfigProps)(CustomConfig);

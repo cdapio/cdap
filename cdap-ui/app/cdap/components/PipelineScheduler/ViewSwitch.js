@@ -16,17 +16,20 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import classnames from 'classnames';
-import {SCHEDULE_VIEWS, ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
-import {setStateFromCron} from 'components/PipelineScheduler/Store/ActionCreator';
+import {
+  SCHEDULE_VIEWS,
+  ACTIONS as PipelineSchedulerActions,
+} from 'components/PipelineScheduler/Store';
+import { setStateFromCron } from 'components/PipelineScheduler/Store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineScheduler';
 
 const mapStateToBasicViewSwitchProps = (state) => {
   return {
-    scheduleView: state.scheduleView
+    scheduleView: state.scheduleView,
   };
 };
 
@@ -37,16 +40,16 @@ const mapDispatchToBasicViewSwitchProps = (dispatch) => {
       dispatch({
         type: PipelineSchedulerActions.SET_SCHEDULE_VIEW,
         payload: {
-          scheduleView: SCHEDULE_VIEWS.BASIC
-        }
+          scheduleView: SCHEDULE_VIEWS.BASIC,
+        },
       });
-    }
+    },
   };
 };
 
 const mapStateToAdvancedViewSwitchProps = (state) => {
   return {
-    scheduleView: state.scheduleView
+    scheduleView: state.scheduleView,
   };
 };
 
@@ -56,17 +59,19 @@ const mapDispatchToAdvancedViewSwitchProps = (dispatch) => {
       dispatch({
         type: PipelineSchedulerActions.SET_SCHEDULE_VIEW,
         payload: {
-          scheduleView: SCHEDULE_VIEWS.ADVANCED
-        }
+          scheduleView: SCHEDULE_VIEWS.ADVANCED,
+        },
       });
-    }
+    },
   };
 };
 
-const BasicViewSwitch = ({scheduleView, onClick}) => {
+const BasicViewSwitch = ({ scheduleView, onClick }) => {
   return (
     <span
-      className={classnames('col-xs-3 schedule-type schedule-type-basic', { 'active': scheduleView === SCHEDULE_VIEWS.BASIC })}
+      className={classnames('col-xs-3 schedule-type schedule-type-basic', {
+        active: scheduleView === SCHEDULE_VIEWS.BASIC,
+      })}
       onClick={onClick}
     >
       {T.translate(`${PREFIX}.basic`)}
@@ -76,13 +81,15 @@ const BasicViewSwitch = ({scheduleView, onClick}) => {
 
 BasicViewSwitch.propTypes = {
   scheduleView: PropTypes.string,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
 };
 
-const AdvancedViewSwitch = ({scheduleView, onClick}) => {
+const AdvancedViewSwitch = ({ scheduleView, onClick }) => {
   return (
     <span
-      className={classnames('col-xs-4 schedule-type schedule-type-advanced', { 'active': scheduleView === SCHEDULE_VIEWS.ADVANCED })}
+      className={classnames('col-xs-4 schedule-type schedule-type-advanced', {
+        active: scheduleView === SCHEDULE_VIEWS.ADVANCED,
+      })}
       onClick={onClick}
     >
       {T.translate(`${PREFIX}.advanced.label`)}
@@ -92,7 +99,7 @@ const AdvancedViewSwitch = ({scheduleView, onClick}) => {
 
 AdvancedViewSwitch.propTypes = {
   scheduleView: PropTypes.string,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
 };
 
 const ConnectedBasicViewSwitch = connect(
@@ -109,9 +116,7 @@ export default function ViewSwitch() {
   return (
     <div className="schedule-types row">
       <ConnectedBasicViewSwitch />
-      <span className="separator">
-        |
-      </span>
+      <span className="separator">|</span>
       <ConnectedAdvancedViewSwitch />
     </div>
   );

@@ -14,7 +14,7 @@
  * the License.
 */
 
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 function generateNodeConfig(backendProperties, nodeConfig) {
   var specVersion = objectQuery(nodeConfig, 'metadata', 'spec-version') || '0.0';
@@ -31,7 +31,8 @@ function generateNodeConfig(backendProperties, nodeConfig) {
     case '1.5':
     case '1.6':
       return generateConfigFor13Spec(backendProperties, nodeConfig);
-    default: // No spec version which means
+    default:
+      // No spec version which means
       throw 'NO_JSON_FOUND';
   }
 }
@@ -66,18 +67,18 @@ function generateConfigForNewSpec(backendProperties, nodeConfig) {
       outputSchemaProperty: null,
       isOutputSchemaRequired: null,
       implicitSchema: null,
-      watchProperty: null
+      watchProperty: null,
     },
-    groups: []
+    groups: [],
   };
   var missedFieldsGroup = {
     display: 'Generic',
-    fields: []
+    fields: [],
   };
 
   // Parse configuration groups
-  nodeConfig['configuration-groups'].forEach( (group) => {
-    let matchedProperties = group.properties.filter( (property) => {
+  nodeConfig['configuration-groups'].forEach((group) => {
+    let matchedProperties = group.properties.filter((property) => {
       let index = propertiesFromBackend.indexOf(property.name);
       if (index !== -1) {
         propertiesFromBackend.splice(index, 1);
@@ -94,13 +95,13 @@ function generateConfigForNewSpec(backendProperties, nodeConfig) {
     });
     groupsConfig.groups.push({
       display: group.label,
-      fields: matchedProperties
+      fields: matchedProperties,
     });
   });
 
   // Parse 'outputs' and find the property that needs to be used as output schema.
   if (nodeConfig.outputs && nodeConfig.outputs.length) {
-    nodeConfig.outputs.forEach( output => {
+    nodeConfig.outputs.forEach((output) => {
       var index;
       if (output['widget-type'] === 'non-editable-schema-editor') {
         groupsConfig.outputSchema.isOutputSchemaExists = true;
@@ -112,7 +113,8 @@ function generateConfigForNewSpec(backendProperties, nodeConfig) {
           groupsConfig.outputSchema.isOutputSchemaExists = true;
           groupsConfig.outputSchema.outputSchemaProperty = [output.name];
           groupsConfig.outputSchema.schemaProperties = output['widget-attributes'];
-          groupsConfig.outputSchema.isOutputSchemaRequired = backendProperties[output.name].required;
+          groupsConfig.outputSchema.isOutputSchemaRequired =
+            backendProperties[output.name].required;
         }
       }
     });
@@ -120,13 +122,14 @@ function generateConfigForNewSpec(backendProperties, nodeConfig) {
 
   // Parse properties that are from backend but not from config json.
   if (propertiesFromBackend.length) {
-    propertiesFromBackend.forEach( property => {
+    propertiesFromBackend.forEach((property) => {
       missedFieldsGroup.fields.push({
         'widget-type': 'textbox',
         label: property,
         name: property,
         info: 'Info',
-        description: objectQuery(backendProperties, property, 'description') || 'No Description Available'
+        description:
+          objectQuery(backendProperties, property, 'description') || 'No Description Available',
       });
     });
     groupsConfig.groups.push(missedFieldsGroup);
@@ -144,9 +147,9 @@ function generateConfigForOlderSpec(backendProperties, nodeConfig) {
       schemaProperties: null,
       outputSchemaProperty: null,
       isOutputSchemaRequired: null,
-      implicitSchema: false
+      implicitSchema: false,
     },
-    groups: []
+    groups: [],
   };
   var index;
   var schemaProperty;
@@ -156,12 +159,14 @@ function generateConfigForOlderSpec(backendProperties, nodeConfig) {
     groupConfig.outputSchema.outputSchemaProperty = Object.keys(nodeConfig.outputschema);
 
     if (!nodeConfig.outputschema.implicit) {
-      groupConfig.outputSchema.isOutputSchemaExists = (propertiesFromBackend.indexOf(groupConfig.outputSchema.outputSchemaProperty[0]) !== -1);
+      groupConfig.outputSchema.isOutputSchemaExists =
+        propertiesFromBackend.indexOf(groupConfig.outputSchema.outputSchemaProperty[0]) !== -1;
       if (groupConfig.outputSchema.isOutputSchemaExists) {
         schemaProperty = groupConfig.outputSchema.outputSchemaProperty[0];
         index = propertiesFromBackend.indexOf(schemaProperty);
         groupConfig.outputSchema.schemaProperties = nodeConfig.outputschema[schemaProperty];
-        groupConfig.outputSchema.isOutputSchemaRequired = backendProperties[schemaProperty].required;
+        groupConfig.outputSchema.isOutputSchemaRequired =
+          backendProperties[schemaProperty].required;
         propertiesFromBackend.splice(index, 1);
       }
     } else if (nodeConfig.outputschema && nodeConfig.outputschema.implicit) {
@@ -181,14 +186,22 @@ function generateConfigForOlderSpec(backendProperties, nodeConfig) {
     Object.keys(group.position).forEach((fieldName) => {
       var copyOfField = group.fields[fieldName];
       var index = propertiesFromBackend.indexOf(fieldName);
-      if (index!== -1) {
+      if (index !== -1) {
         propertiesFromBackend.splice(index, 1);
 
         copyOfField.name = fieldName;
-        copyOfField.info = objectQuery(groupConfig, 'groups', groupName, 'fields', fieldName, 'info') || 'Info';
+        copyOfField.info =
+          objectQuery(groupConfig, 'groups', groupName, 'fields', fieldName, 'info') || 'Info';
 
         // If there is a description in the config from nodejs use that otherwise fallback to description from backend.
-        let description = objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'description');
+        let description = objectQuery(
+          nodeConfig,
+          'groups',
+          groupName,
+          'fields',
+          fieldName,
+          'description'
+        );
         if (!description || (description && !description.length)) {
           description = objectQuery('backendProperties', fieldName, 'description');
           copyOfField.description = description || 'No Description Available';
@@ -199,7 +212,15 @@ function generateConfigForOlderSpec(backendProperties, nodeConfig) {
           copyOfField.label = fieldName;
         }
 
-        copyOfField.defaultValue = objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'properties', 'default');
+        copyOfField.defaultValue = objectQuery(
+          nodeConfig,
+          'groups',
+          groupName,
+          'fields',
+          fieldName,
+          'properties',
+          'default'
+        );
       }
       newGroup.fields.push(copyOfField);
     });
@@ -212,14 +233,15 @@ function generateConfigForOlderSpec(backendProperties, nodeConfig) {
   if (propertiesFromBackend.length) {
     let genericGroup = {
       label: 'Generic',
-      fields: []
+      fields: [],
     };
     propertiesFromBackend.forEach((property) => {
       genericGroup.fields.push({
         widget: 'textbox',
         label: property,
         info: 'Info',
-        description: objectQuery(backendProperties, property, 'description') || 'No Description Available'
+        description:
+          objectQuery(backendProperties, property, 'description') || 'No Description Available',
       });
     });
     groupConfig.groups.push(genericGroup);
@@ -227,6 +249,4 @@ function generateConfigForOlderSpec(backendProperties, nodeConfig) {
   return groupConfig;
 }
 
-export {
-  generateNodeConfig
-};
+export { generateNodeConfig };

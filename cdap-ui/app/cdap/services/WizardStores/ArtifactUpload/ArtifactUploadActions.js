@@ -21,7 +21,7 @@ const ArtifactUploadActions = {
   setType: 'SET-ARTIFACT-TYPE',
   setFilePath: 'SET-ARTIFACT-PATH',
   setNameAndClass: 'SET-ARTIFACT-NAME-AND-CLASSNAME',
-  onReset: 'RESET-STORE'
+  onReset: 'RESET-STORE',
 };
 
 export default ArtifactUploadActions;

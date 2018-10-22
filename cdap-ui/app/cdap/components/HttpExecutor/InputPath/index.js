@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import T from 'i18n-react';
 
@@ -25,7 +25,7 @@ const PREFIX = 'features.HttpExecutor';
 
 const mapStateToProps = (state) => {
   return {
-    value: state.http.path
+    value: state.http.path,
   };
 };
 
@@ -35,28 +35,28 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: HttpExecutorActions.setPath,
         payload: {
-          path: e.target.value
-        }
+          path: e.target.value,
+        },
       });
-    }
+    },
   };
 };
 
-function InputPathView({value, onChange}) {
+function InputPathView({ value, onChange }) {
   let url = [
     window.CDAP_CONFIG.sslEnabled ? 'https://' : 'http://',
     window.CDAP_CONFIG.cdap.routerServerUrl,
     ':',
-    window.CDAP_CONFIG.sslEnabled ? window.CDAP_CONFIG.cdap.routerSSLServerPort : window.CDAP_CONFIG.cdap.routerServerPort,
-    '/v3/'
+    window.CDAP_CONFIG.sslEnabled
+      ? window.CDAP_CONFIG.cdap.routerSSLServerPort
+      : window.CDAP_CONFIG.cdap.routerServerPort,
+    '/v3/',
   ].join('');
 
   return (
     <div className="input-path-container">
       <div className="input-group">
-        <span className="input-group-prepend">
-          {url}
-        </span>
+        <span className="input-group-prepend">{url}</span>
         <input
           type="text"
           className="form-control"
@@ -71,7 +71,7 @@ function InputPathView({value, onChange}) {
 
 InputPathView.propTypes = {
   value: PropTypes.string,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };
 
 const InputPath = connect(

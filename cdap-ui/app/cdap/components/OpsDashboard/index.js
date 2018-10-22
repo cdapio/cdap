@@ -16,15 +16,15 @@
 
 import React, { Component } from 'react';
 import RunsGraph from 'components/OpsDashboard/RunsGraph';
-import {Provider} from 'react-redux';
-import DashboardStore, {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import { Provider } from 'react-redux';
+import DashboardStore, { DashboardActions } from 'components/OpsDashboard/store/DashboardStore';
 import RunsList from 'components/OpsDashboard/RunsList';
-import {getData} from 'components/OpsDashboard/store/ActionCreator';
+import { getData } from 'components/OpsDashboard/store/ActionCreator';
 import NamespacesPicker from 'components/NamespacesPicker';
-import {setNamespacesPick} from 'components/OpsDashboard/store/ActionCreator';
+import { setNamespacesPick } from 'components/OpsDashboard/store/ActionCreator';
 import T from 'i18n-react';
 import Helmet from 'react-helmet';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.OpsDashboard';
 
@@ -37,7 +37,7 @@ export default class OpsDashboard extends Component {
 
   componentWillUnmount() {
     DashboardStore.dispatch({
-      type: DashboardActions.reset
+      type: DashboardActions.reset,
     });
   }
 
@@ -46,10 +46,12 @@ export default class OpsDashboard extends Component {
     return (
       <Provider store={DashboardStore}>
         <div className="ops-dashboard">
-          <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
-            productName: Theme.productName,
-            featureName
-          })} />
+          <Helmet
+            title={T.translate(`${PREFIX}.pageTitle`, {
+              productName: Theme.productName,
+              featureName,
+            })}
+          />
           <div className="header clearfix">
             <div className="links float-xs-left">
               <span>{featureName}</span>

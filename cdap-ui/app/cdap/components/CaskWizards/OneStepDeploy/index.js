@@ -31,7 +31,7 @@ export default class OneStepDeployWizard extends Component {
 
     this.state = {
       showWizard: this.props.isOpen,
-      license: this.props.input.package.license ? true : false
+      license: this.props.input.package.license ? true : false,
     };
 
     this.publishApp = this.publishApp.bind(this);
@@ -41,7 +41,7 @@ export default class OneStepDeployWizard extends Component {
 
   showWizardContents() {
     this.setState({
-      license: false
+      license: false,
     });
   }
 
@@ -50,14 +50,14 @@ export default class OneStepDeployWizard extends Component {
       this.props.onClose(returnResult);
     }
     this.setState({
-      showWizard: !this.state.showWizard
+      showWizard: !this.state.showWizard,
     });
   }
 
   publishApp() {
-    return this.props.onPublish().map(successInfo => {
+    return this.props.onPublish().map((successInfo) => {
       this.setState({
-        successInfo
+        successInfo,
       });
     });
   }
@@ -70,7 +70,11 @@ export default class OneStepDeployWizard extends Component {
     const getWizardContent = () => {
       return (
         <Wizard
-          wizardConfig={actionType === 'one_step_deploy_app' ? OneStepDeployAppConfig : OneStepDeployPluginConfig}
+          wizardConfig={
+            actionType === 'one_step_deploy_app'
+              ? OneStepDeployAppConfig
+              : OneStepDeployPluginConfig
+          }
           wizardType="OneStepDeploy"
           store={OneStepDeployStore}
           onSubmit={this.publishApp.bind(this)}
@@ -80,7 +84,9 @@ export default class OneStepDeployWizard extends Component {
       );
     };
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.OneStepDeploy.headerlabel');
+    let wizardModalTitle =
+      (pkg.label ? pkg.label + ' | ' : '') +
+      T.translate('features.Wizard.OneStepDeploy.headerlabel');
     return (
       <WizardModal
         title={wizardModalTitle}
@@ -88,18 +94,17 @@ export default class OneStepDeployWizard extends Component {
         toggle={this.toggleWizard.bind(this, false)}
         className="one-step-deploy-wizard"
       >
-        {
-          this.state.license ?
-            <LicenseStep
-              entityName={this.props.input.package.name}
-              entityVersion={this.props.input.package.version}
-              licenseFileName={this.props.input.package.license}
-              onAgree={this.showWizardContents}
-              onReject={this.toggleWizard.bind(this, false)}
-            />
-          :
-            getWizardContent()
-        }
+        {this.state.license ? (
+          <LicenseStep
+            entityName={this.props.input.package.name}
+            entityVersion={this.props.input.package.version}
+            licenseFileName={this.props.input.package.license}
+            onAgree={this.showWizardContents}
+            onReject={this.toggleWizard.bind(this, false)}
+          />
+        ) : (
+          getWizardContent()
+        )}
       </WizardModal>
     );
   }
@@ -109,5 +114,5 @@ OneStepDeployWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,
-  onPublish: PropTypes.func
+  onPublish: PropTypes.func,
 };

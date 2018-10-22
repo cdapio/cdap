@@ -17,21 +17,21 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Customizer from 'components/Reports/Customizer';
-import {humanReadableDate} from 'services/helpers';
+import { humanReadableDate } from 'services/helpers';
 import IconSVG from 'components/IconSVG';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import Duration from 'components/Duration';
 import { Link } from 'react-router-dom';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {listReports} from 'components/Reports/store/ActionCreator';
-import {Observable} from 'rxjs/Observable';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { listReports } from 'components/Reports/store/ActionCreator';
+import { Observable } from 'rxjs/Observable';
 import classnames from 'classnames';
 import ActionPopover from 'components/Reports/ReportsList/ActionPopover';
 import ReportsPagination from 'components/Reports/ReportsList/ReportsPagination';
 import NamespacesPicker from 'components/NamespacesPicker';
-import {setNamespacesPick} from 'components/Reports/store/ActionCreator';
+import { setNamespacesPick } from 'components/Reports/store/ActionCreator';
 import T from 'i18n-react';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.Reports.ReportsList';
 
@@ -40,17 +40,13 @@ require('./ReportsList.scss');
 class ReportsListView extends Component {
   static propTypes = {
     reports: PropTypes.array,
-    activeId: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number
-    ]),
-    offset: PropTypes.number
+    activeId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    offset: PropTypes.number,
   };
 
   componentWillMount() {
     listReports();
-    this.interval$ = Observable.interval(10000)
-      .subscribe(listReports);
+    this.interval$ = Observable.interval(10000).subscribe(listReports);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -71,8 +67,7 @@ class ReportsListView extends Component {
     if (this.interval$) {
       this.interval$.unsubscribe();
     }
-    this.interval$ = Observable.interval(10000)
-      .subscribe(listReports);
+    this.interval$ = Observable.interval(10000).subscribe(listReports);
   }
 
   renderCreated(report) {
@@ -95,14 +90,11 @@ class ReportsListView extends Component {
   }
 
   renderExpiry(report) {
-    if (!report.expiry) { return '--'; }
+    if (!report.expiry) {
+      return '--';
+    }
 
-    return (
-      <Duration
-        targetTime={report.expiry}
-        isMillisecond={false}
-      />
-    );
+    return <Duration targetTime={report.expiry} isMillisecond={false} />;
   }
 
   renderHeader() {
@@ -112,7 +104,7 @@ class ReportsListView extends Component {
           <div>{T.translate('features.Reports.reportName')}</div>
           <div>{T.translate(`${PREFIX}.created`)}</div>
           <div>{T.translate(`${PREFIX}.expiration`)}</div>
-          <div></div>
+          <div />
         </div>
       </div>
     );
@@ -123,16 +115,12 @@ class ReportsListView extends Component {
       <div
         key={report.id}
         className={classnames('grid-row grid-link not-allowed', {
-          'active': report.id === this.props.activeId,
+          active: report.id === this.props.activeId,
         })}
       >
         <div className="report-name">{report.name}</div>
-        <div>
-          {this.renderCreated(report)}
-        </div>
-        <div>
-          {this.renderExpiry(report)}
-        </div>
+        <div>{this.renderCreated(report)}</div>
+        <div>{this.renderExpiry(report)}</div>
         <div>
           <ActionPopover report={report} />
         </div>
@@ -146,16 +134,12 @@ class ReportsListView extends Component {
         key={report.id}
         to={`/ns/${getCurrentNamespace()}/reports/details/${report.id}`}
         className={classnames('grid-row grid-link', {
-          'active': report.id === this.props.activeId,
+          active: report.id === this.props.activeId,
         })}
       >
         <div className="report-name">{report.name}</div>
-        <div>
-          {this.renderCreated(report)}
-        </div>
-        <div>
-          {this.renderExpiry(report)}
-        </div>
+        <div>{this.renderCreated(report)}</div>
+        <div>{this.renderExpiry(report)}</div>
         <div>
           <ActionPopover report={report} />
         </div>
@@ -166,12 +150,11 @@ class ReportsListView extends Component {
   renderBody() {
     return (
       <div className="grid-body">
-        {
-          this.props.reports.map((report) => {
-            return report.status === 'RUNNING' ?
-              this.renderLoadingRow(report) : this.renderLinkRow(report);
-          })
-        }
+        {this.props.reports.map((report) => {
+          return report.status === 'RUNNING'
+            ? this.renderLoadingRow(report)
+            : this.renderLinkRow(report);
+        })}
       </div>
     );
   }
@@ -179,12 +162,8 @@ class ReportsListView extends Component {
   renderEmpty() {
     return (
       <div className="list-container empty">
-        <div className="text-xs-center">
-          {T.translate(`${PREFIX}.noReports`)}
-        </div>
-        <div className="text-xs-center">
-          {T.translate(`${PREFIX}.makeSelection`)}
-        </div>
+        <div className="text-xs-center">{T.translate(`${PREFIX}.noReports`)}</div>
+        <div className="text-xs-center">{T.translate(`${PREFIX}.makeSelection`)}</div>
       </div>
     );
   }
@@ -222,9 +201,7 @@ class ReportsListView extends Component {
           <Customizer />
 
           <div className="list-view">
-            <div className="section-title">
-              {T.translate(`${PREFIX}.selectAReport`)}
-            </div>
+            <div className="section-title">{T.translate(`${PREFIX}.selectAReport`)}</div>
 
             {this.renderTable()}
           </div>
@@ -238,12 +215,10 @@ const mapStateToProps = (state) => {
   return {
     reports: state.list.reports,
     activeId: state.list.activeId,
-    offset: state.list.offset
+    offset: state.list.offset,
   };
 };
 
-const ReportsList = connect(
-  mapStateToProps
-)(ReportsListView);
+const ReportsList = connect(mapStateToProps)(ReportsListView);
 
 export default ReportsList;

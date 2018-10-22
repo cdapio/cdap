@@ -14,21 +14,21 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import OneStepDeployActions from 'services/WizardStores/OneStepDeploy/OneStepDeployActions';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 const defaultState = {
   steps: [],
   __complete: false,
   __skipped: false,
-  __error: false
+  __error: false,
 };
 const defaultInitialState = {
-  oneStepDeploy: defaultState
+  oneStepDeploy: defaultState,
 };
 
 const oneStepDeploy = (state = defaultState, action = defaultAction) => {
@@ -37,7 +37,7 @@ const oneStepDeploy = (state = defaultState, action = defaultAction) => {
   switch (action.type) {
     case OneStepDeployActions.setName:
       stateCopy = Object.assign({}, state, {
-        name: action.payload
+        name: action.payload,
       });
       break;
     case OneStepDeployActions.onReset:
@@ -46,7 +46,7 @@ const oneStepDeploy = (state = defaultState, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: true
+    __complete: true,
   });
 };
 

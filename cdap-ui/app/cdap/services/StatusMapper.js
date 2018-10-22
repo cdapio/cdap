@@ -14,7 +14,7 @@
  * the License.
 */
 
-import {PROGRAM_STATUSES} from 'services/global-constants';
+import { PROGRAM_STATUSES } from 'services/global-constants';
 
 const statusMap = {
   [PROGRAM_STATUSES.DEPLOYED]: 'Deployed',
@@ -38,7 +38,7 @@ const statusMap = {
   [PROGRAM_STATUSES.PENDING]: 'Provisioning',
 };
 
-function lookupDisplayStatus (systemStatus) {
+function lookupDisplayStatus(systemStatus) {
   if (systemStatus in statusMap) {
     return statusMap[systemStatus];
   } else {
@@ -46,7 +46,7 @@ function lookupDisplayStatus (systemStatus) {
   }
 }
 
-function getStatusIndicatorClass (displayStatus) {
+function getStatusIndicatorClass(displayStatus) {
   if (
     displayStatus === statusMap[PROGRAM_STATUSES.RUNNING] ||
     displayStatus === statusMap[PROGRAM_STATUSES.STARTING] ||
@@ -66,7 +66,7 @@ function getStatusIndicatorClass (displayStatus) {
   }
 }
 
-function getStatusIndicatorIcon (displayStatus) {
+function getStatusIndicatorIcon(displayStatus) {
   if (
     displayStatus === statusMap[PROGRAM_STATUSES.PENDING] ||
     displayStatus === statusMap[PROGRAM_STATUSES.DRAFT]

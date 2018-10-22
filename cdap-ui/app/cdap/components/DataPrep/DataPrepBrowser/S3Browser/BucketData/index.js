@@ -16,9 +16,9 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {setS3Search} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import { setS3Search } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
 import TableContents from 'components/DataPrep/DataPrepBrowser/S3Browser/BucketData/TableContents';
 import If from 'components/If';
@@ -31,44 +31,42 @@ const props = {
   loading: PropTypes.bool,
   enableRouting: PropTypes.bool,
   prefix: PropTypes.string,
-  onWorkspaceCreate: PropTypes.func
+  onWorkspaceCreate: PropTypes.func,
 };
 
-const TableHeader = ({enableRouting}) => {
+const TableHeader = ({ enableRouting }) => {
   if (enableRouting) {
     return (
       <div className="row">
-        <div className="col-xs-3">
-          {T.translate(`${PREFIX}.Headers.Name`)}
-        </div>
-        <div className="col-xs-3">
-          {T.translate(`${PREFIX}.Headers.Owner`)}
-        </div>
-        <div className="col-xs-3">
-          {T.translate(`${PREFIX}.Headers.Size`)}
-        </div>
-        <div className="col-xs-3">
-          {T.translate(`${PREFIX}.Headers.LastModified`)}
-        </div>
+        <div className="col-xs-3">{T.translate(`${PREFIX}.Headers.Name`)}</div>
+        <div className="col-xs-3">{T.translate(`${PREFIX}.Headers.Owner`)}</div>
+        <div className="col-xs-3">{T.translate(`${PREFIX}.Headers.Size`)}</div>
+        <div className="col-xs-3">{T.translate(`${PREFIX}.Headers.LastModified`)}</div>
       </div>
     );
   }
   return (
     <div className="row">
-      <div className="col-xs-12">
-        {T.translate(`${PREFIX}.Headers.Name`)}
-      </div>
+      <div className="col-xs-12">{T.translate(`${PREFIX}.Headers.Name`)}</div>
     </div>
   );
 };
 TableHeader.propTypes = props;
 
-const BucketData = ({data, search, clearSearch, loading, prefix, enableRouting, onWorkspaceCreate}) => {
+const BucketData = ({
+  data,
+  search,
+  clearSearch,
+  loading,
+  prefix,
+  enableRouting,
+  onWorkspaceCreate,
+}) => {
   if (loading) {
     return <LoadingSVGCentered />;
   }
 
-  const filteredData = data.filter(d => {
+  const filteredData = data.filter((d) => {
     if (search && search.length && d.name) {
       let isSearchTextInName = d.name.indexOf(search);
       if (d.type && d.type === 'bucket') {
@@ -101,14 +99,14 @@ const BucketData = ({data, search, clearSearch, loading, prefix, enableRouting, 
 BucketData.propTypes = props;
 
 const mapStateToProps = (state, ownProps) => {
-  let {enableRouting = true, onWorkspaceCreate = () => {}} = ownProps;
+  let { enableRouting = true, onWorkspaceCreate = () => {} } = ownProps;
   return {
     data: state.s3.activeBucketDetails,
     search: state.s3.search,
     loading: state.s3.loading,
     prefix: state.s3.prefix,
     enableRouting,
-    onWorkspaceCreate
+    onWorkspaceCreate,
   };
 };
 
@@ -116,7 +114,7 @@ const mapDispatchToProps = () => {
   return {
     clearSearch: () => {
       setS3Search('');
-    }
+    },
   };
 };
 

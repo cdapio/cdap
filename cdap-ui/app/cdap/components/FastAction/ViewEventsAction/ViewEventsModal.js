@@ -17,10 +17,10 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import T from 'i18n-react';
 import Datetime from 'react-datetime';
-import {MyStreamApi} from 'api/stream';
+import { MyStreamApi } from 'api/stream';
 import NamespaceStore from 'services/NamespaceStore';
 import uuidV4 from 'uuid/v4';
 import CardActionFeedback from 'components/CardActionFeedback';
@@ -35,14 +35,14 @@ export default class ViewEventsModal extends Component {
     super(props);
 
     const NOW = Date.now();
-    const ONE_HOUR_AGO = NOW - (60 * 60 * 1000);
+    const ONE_HOUR_AGO = NOW - 60 * 60 * 1000;
 
     this.state = {
       fromDate: ONE_HOUR_AGO,
       toDate: NOW,
       limit: 10,
       events: [],
-      error: null
+      error: null,
     };
 
     this.changeFromDate = this.changeFromDate.bind(this);
@@ -54,22 +54,19 @@ export default class ViewEventsModal extends Component {
   }
 
   changeFromDate(date) {
-    this.setState({fromDate: date.valueOf()});
+    this.setState({ fromDate: date.valueOf() });
   }
   changeToDate(date) {
-    this.setState({toDate: date.valueOf()});
+    this.setState({ toDate: date.valueOf() });
   }
   handleLimitChange(e) {
-    this.setState({limit: e.target.value});
+    this.setState({ limit: e.target.value });
   }
 
   renderFromDatetime() {
     return (
       <div className="input-container">
-        <Datetime
-          value={this.state.fromDate}
-          onChange={this.changeFromDate}
-        />
+        <Datetime value={this.state.fromDate} onChange={this.changeFromDate} />
       </div>
     );
   }
@@ -77,10 +74,7 @@ export default class ViewEventsModal extends Component {
   renderToDatetime() {
     return (
       <div className="input-container">
-        <Datetime
-          value={this.state.toDate}
-          onChange={this.changeToDate}
-        />
+        <Datetime value={this.state.toDate} onChange={this.changeToDate} />
       </div>
     );
   }
@@ -90,15 +84,15 @@ export default class ViewEventsModal extends Component {
       namespace: NamespaceStore.getState().selectedNamespace,
       streamId: this.props.entity.id,
       start: this.state.fromDate,
-      end: this.state.toDate
+      end: this.state.toDate,
     };
 
     if (this.state.limit) {
       params.limit = this.state.limit;
     }
 
-    MyStreamApi.viewEvents(params)
-      .subscribe((res = []) => {
+    MyStreamApi.viewEvents(params).subscribe(
+      (res = []) => {
         let events = res.map((row) => {
           row.uniqueId = uuidV4();
           row.headers = JSON.stringify(row.headers);
@@ -108,23 +102,21 @@ export default class ViewEventsModal extends Component {
 
         this.setState({
           events,
-          error: null
+          error: null,
         });
-      }, (error) => {
+      },
+      (error) => {
         this.setState({
           error,
-          events: []
+          events: [],
         });
-      });
+      }
+    );
   }
 
   renderResults() {
     if (this.state.events.length === 0) {
-      return (
-        <div>
-          {T.translate('features.FastAction.viewEvents.noResults')}
-        </div>
-      );
+      return <div>{T.translate('features.FastAction.viewEvents.noResults')}</div>;
     }
 
     const headers = ['timestamp', 'headers', 'body'];
@@ -133,27 +125,21 @@ export default class ViewEventsModal extends Component {
       <div className="results">
         <table className="table table-bordered">
           <thead>
-            {
-              headers.map((head) => {
-                return <th key={head}>{head}</th>;
-              })
-            }
+            {headers.map((head) => {
+              return <th key={head}>{head}</th>;
+            })}
           </thead>
 
           <tbody>
-            {
-              this.state.events.map((row) => {
-                return (
-                  <tr key={row.uniqueId}>
-                    {
-                      headers.map((head) => {
-                        return <td key={head}>{row[head]}</td>;
-                      })
-                    }
-                  </tr>
-                );
-              })
-            }
+            {this.state.events.map((row) => {
+              return (
+                <tr key={row.uniqueId}>
+                  {headers.map((head) => {
+                    return <td key={head}>{row[head]}</td>;
+                  })}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -161,12 +147,14 @@ export default class ViewEventsModal extends Component {
   }
 
   renderFooter() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
 
     return (
       <ModalFooter>
         <CardActionFeedback
-          type='DANGER'
+          type="DANGER"
           message={T.translate('features.FastAction.viewEvents.failedMessage')}
           extendedMessage={this.state.error}
         />
@@ -183,25 +171,20 @@ export default class ViewEventsModal extends Component {
         toggle={this.props.onClose}
         className="confirmation-modal view-events-modal cdap-modal"
         size="lg"
-        backdrop='static'
+        backdrop="static"
       >
         <ModalHeader className="clearfix">
-          <div className="float-xs-left">
-            {headerTitle}
-          </div>
+          <div className="float-xs-left">{headerTitle}</div>
           <div className="float-xs-right">
-            <div
-              className="close-modal-btn"
-              onClick={this.props.onClose}
-            >
-              <span className={"button-icon fa fa-times"}></span>
+            <div className="close-modal-btn" onClick={this.props.onClose}>
+              <span className={'button-icon fa fa-times'} />
             </div>
           </div>
         </ModalHeader>
         <ModalBody className="modal-body">
           <h4>
             {T.translate('features.FastAction.viewEvents.modalHeader', {
-              entityId: this.props.entity.id
+              entityId: this.props.entity.id,
             })}
           </h4>
 
@@ -210,16 +193,12 @@ export default class ViewEventsModal extends Component {
               <h6>{T.translate('features.FastAction.viewEvents.timeRangeTitle')}</h6>
 
               <span className="date-container">
-                <strong>
-                  {T.translate('features.FastAction.viewEvents.from')}
-                </strong>
+                <strong>{T.translate('features.FastAction.viewEvents.from')}</strong>
                 {this.renderFromDatetime()}
               </span>
 
               <span className="date-container">
-                <strong>
-                  {T.translate('features.FastAction.viewEvents.to')}
-                </strong>
+                <strong>{T.translate('features.FastAction.viewEvents.to')}</strong>
                 {this.renderToDatetime()}
               </span>
             </div>
@@ -227,9 +206,7 @@ export default class ViewEventsModal extends Component {
             <div className="col-xs-4">
               <h6>{T.translate('features.FastAction.viewEvents.numEventsTitle')}</h6>
 
-              <strong>
-                {T.translate('features.FastAction.viewEvents.limit')}
-              </strong>
+              <strong>{T.translate('features.FastAction.viewEvents.limit')}</strong>
               <div className="input-container">
                 <input
                   type="number"
@@ -243,15 +220,12 @@ export default class ViewEventsModal extends Component {
           </div>
 
           <div className="button-container">
-            <button
-              className="btn btn-primary"
-              onClick={this.viewEvents}
-            >
+            <button className="btn btn-primary" onClick={this.viewEvents}>
               {T.translate('features.FastAction.viewEvents.button')}
             </button>
           </div>
 
-          <hr/>
+          <hr />
 
           {this.renderResults()}
         </ModalBody>
@@ -268,5 +242,5 @@ ViewEventsModal.propTypes = {
     uniqueId: PropTypes.string,
     type: PropTypes.oneOf(['stream']).isRequired,
   }),
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
 };

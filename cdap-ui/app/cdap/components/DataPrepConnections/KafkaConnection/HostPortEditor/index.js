@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {connect , Provider} from 'react-redux';
+import { connect, Provider } from 'react-redux';
 import HostPortActions from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortActions';
 import HostPortStore from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortStore';
 import HostPortRow from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortRow';
@@ -27,13 +27,13 @@ require('./HostPortEditor.scss');
 const mapStateToFieldNameProps = (state, ownProps) => {
   return {
     host: state.hostport.rows[ownProps.index].host,
-    port: state.hostport.rows[ownProps.index].port
+    port: state.hostport.rows[ownProps.index].port,
   };
 };
 
 const fieldToActionMap = {
   host: HostPortActions.setHost,
-  port: HostPortActions.setPort
+  port: HostPortActions.setPort,
 };
 
 const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
@@ -41,13 +41,13 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
     removeRow: () => {
       dispatch({
         type: HostPortActions.deletePair,
-        payload: {index: ownProps.index}
+        payload: { index: ownProps.index },
       });
     },
     addRow: () => {
       dispatch({
         type: HostPortActions.addRow,
-        payload: {index: ownProps.index}
+        payload: { index: ownProps.index },
       });
     },
     onChange: (fieldProp, e) => {
@@ -55,10 +55,10 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
         type: fieldToActionMap[fieldProp],
         payload: {
           index: ownProps.index,
-          [fieldProp]: e.target.value
-        }
+          [fieldProp]: e.target.value,
+        },
       });
-    }
+    },
   };
 };
 
@@ -72,14 +72,14 @@ export default class HostPortEditor extends Component {
     super(props);
 
     this.state = {
-      rows: this.props.values
+      rows: this.props.values,
     };
 
     this.sub = HostPortStore.subscribe(() => {
       let rows = HostPortStore.getState().hostport.rows;
 
       this.setState({
-        rows
+        rows,
       });
 
       this.props.onChange(rows);
@@ -88,14 +88,14 @@ export default class HostPortEditor extends Component {
     HostPortStore.dispatch({
       type: HostPortActions.onUpdate,
       payload: {
-        rows: this.props.values
-      }
+        rows: this.props.values,
+      },
     });
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      rows: [...nextProps.values]
+      rows: [...nextProps.values],
     });
   }
 
@@ -110,24 +110,22 @@ export default class HostPortEditor extends Component {
       this.sub();
     }
     HostPortStore.dispatch({
-      type: HostPortActions.onReset
+      type: HostPortActions.onReset,
     });
   }
 
   render() {
     return (
       <div className="host-port-editor-container">
-        {
-          this.state.rows.map( (row, index) => {
-            return (
-              <div key={row.uniqueId}>
-                <Provider store={HostPortStore}>
-                  <HostPortRowWrapper index={index} />
-                </Provider>
-              </div>
-            );
-          })
-        }
+        {this.state.rows.map((row, index) => {
+          return (
+            <div key={row.uniqueId}>
+              <Provider store={HostPortStore}>
+                <HostPortRowWrapper index={index} />
+              </Provider>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -135,5 +133,5 @@ export default class HostPortEditor extends Component {
 
 HostPortEditor.propTypes = {
   values: PropTypes.array,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };

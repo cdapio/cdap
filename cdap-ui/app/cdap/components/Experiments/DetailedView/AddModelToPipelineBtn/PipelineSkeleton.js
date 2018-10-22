@@ -14,81 +14,78 @@
  * the License.
 */
 
-export default function getPipelineConfig({
-  file,
-  wrangler,
-  mmds
-}) {
+export default function getPipelineConfig({ file, wrangler, mmds }) {
   return {
-    "artifact": {},
-    "description": "",
-    "name": "",
-    "config": {
-      "connections": [
+    artifact: {},
+    description: '',
+    name: '',
+    config: {
+      connections: [
         {
-          from: "File",
-          to: "Wrangler"
+          from: 'File',
+          to: 'Wrangler',
         },
         {
-          from: "Wrangler",
-          to: "MLPredictor"
-        }
+          from: 'Wrangler',
+          to: 'MLPredictor',
+        },
       ],
-      "comments": [],
-      "postActions": [],
-      "properties": {},
-      "processTimingEnabled": true,
-      "stageLoggingEnabled": true,
-      "stages": [
+      comments: [],
+      postActions: [],
+      properties: {},
+      processTimingEnabled: true,
+      stageLoggingEnabled: true,
+      stages: [
         {
-          "name": "File",
-          "plugin": {
-            "name": "File",
-            "type": "batchsource",
-            "label": "File",
-            "artifact": file.corepluginsArtifact,
-            "properties": {
-              "referenceName": "file_source",
-              "path": file.srcPath,
-              "schema": "{\"name\":\"fileRecord\",\"type\":\"record\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
-            }
-          }
+          name: 'File',
+          plugin: {
+            name: 'File',
+            type: 'batchsource',
+            label: 'File',
+            artifact: file.corepluginsArtifact,
+            properties: {
+              referenceName: 'file_source',
+              path: file.srcPath,
+              schema:
+                '{"name":"fileRecord","type":"record","fields":[{"name":"offset","type":"long"},{"name":"body","type":"string"}]}',
+            },
+          },
         },
         {
-          "name": "Wrangler",
-          "plugin": {
-            "name": "Wrangler",
-            "type": "transform",
-            "label": "Wrangler",
-            "artifact": wrangler.wranglerArtifact,
-            "properties": {
-              "field": "body",
-              "precondition": "false",
-              "threshold": "1",
-              "directives": wrangler.directives.join('\n'),
-              "schema": JSON.stringify(wrangler.schema),
-              "workspaceId": wrangler.workspaceId
-            }
-          }
+          name: 'Wrangler',
+          plugin: {
+            name: 'Wrangler',
+            type: 'transform',
+            label: 'Wrangler',
+            artifact: wrangler.wranglerArtifact,
+            properties: {
+              field: 'body',
+              precondition: 'false',
+              threshold: '1',
+              directives: wrangler.directives.join('\n'),
+              schema: JSON.stringify(wrangler.schema),
+              workspaceId: wrangler.workspaceId,
+            },
+          },
         },
         {
-          "name": "MLPredictor",
-          "plugin": {
-              "name": "MLPredictor",
-              "type": "sparkcompute",
-              "label": "MLPredictor",
-              "artifact": mmds.mmdsPluginsArtifact,
-              "properties": {
-                "experimentId": mmds.experimentId,
-                "modelId": mmds.modelId
-              }
-          }
-        }
+          name: 'MLPredictor',
+          plugin: {
+            name: 'MLPredictor',
+            type: 'sparkcompute',
+            label: 'MLPredictor',
+            artifact: mmds.mmdsPluginsArtifact,
+            properties: {
+              experimentId: mmds.experimentId,
+              modelId: mmds.modelId,
+            },
+          },
+        },
       ],
-      "schedule": "0 * * * *",
-      "engine": "mapreduce",
-      "numOfRecordsPreview": 100,
-      "maxConcurrentRuns": 1
-    }
+      schedule: '0 * * * *',
+      engine: 'mapreduce',
+      numOfRecordsPreview: 100,
+      maxConcurrentRuns: 1,
+    },
   };
 }

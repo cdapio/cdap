@@ -18,32 +18,33 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import T from 'i18n-react';
 require('./DatasetTab.scss');
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import ViewSwitch from 'components/ViewSwitch';
 import DatasetStreamCards from 'components/DatasetStreamCards';
 import DatasetStreamTable from 'components/DatasetStreamTable';
 import NamespaceStore from 'services/NamespaceStore';
-import {MyMetricApi} from 'api/metric';
-import {MyDatasetApi} from 'api/dataset';
-import {MyStreamApi} from 'api/stream';
-import {humanReadableNumber, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
+import { MyMetricApi } from 'api/metric';
+import { MyDatasetApi } from 'api/dataset';
+import { MyStreamApi } from 'api/stream';
+import { humanReadableNumber, HUMANREADABLESTORAGE_NODECIMAL } from 'services/helpers';
 
 export default class DatasetTab extends Component {
   constructor(props) {
     super(props);
     this.state = {
       entity: this.props.entity,
-      entitiesForTable: this.getEntitiesForTable(this.props.entity)
+      entitiesForTable: this.getEntitiesForTable(this.props.entity),
     };
     this.state.entity.datasets.forEach(this.addDatasetMetrics.bind(this));
     this.state.entity.streams.forEach(this.addStreamMetrics.bind(this));
   }
   componentWillReceiveProps(nextProps) {
-    let entitiesMatch = objectQuery(nextProps, 'entity', 'name') === objectQuery(this.props, 'entity', 'name');
+    let entitiesMatch =
+      objectQuery(nextProps, 'entity', 'name') === objectQuery(this.props, 'entity', 'name');
     if (!entitiesMatch) {
       this.setState({
         entity: nextProps.entity,
-        entitiesForTable: this.getEntitiesForTable(nextProps.entity)
+        entitiesForTable: this.getEntitiesForTable(nextProps.entity),
       });
       this.state.entity.datasets.forEach(this.addDatasetMetrics.bind(this));
       this.state.entity.streams.forEach(this.addStreamMetrics.bind(this));
@@ -53,31 +54,30 @@ export default class DatasetTab extends Component {
     this.state.entity.datasets.forEach(this.addDatasetMetrics.bind(this));
     this.state.entity.streams.forEach(this.addStreamMetrics.bind(this));
   }
-  getEntitiesForTable({datasets, streams}) {
+  getEntitiesForTable({ datasets, streams }) {
     return datasets
-      .map(dataset => Object.assign({}, dataset, {type: 'dataset', id: dataset.name}))
+      .map((dataset) => Object.assign({}, dataset, { type: 'dataset', id: dataset.name }))
       .concat(
-        streams
-        .map(stream => Object.assign({}, stream, {type: 'stream', id: stream.name}))
+        streams.map((stream) => Object.assign({}, stream, { type: 'stream', id: stream.name }))
       );
   }
   addStreamMetrics(stream) {
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     const streamParams = {
       namespace: currentNamespace,
-      streamId: this.props.entity.name
+      streamId: this.props.entity.name,
     };
     const metricsParams = {
       tag: [`namespace:${currentNamespace}`, `stream:${stream.name}`],
       metric: ['system.collect.events', 'system.collect.bytes'],
-      aggregate: true
+      aggregate: true,
     };
 
     MyMetricApi.query(metricsParams)
       .combineLatest(MyStreamApi.getPrograms(streamParams))
       .subscribe((res) => {
         let events = 0,
-            bytes = 0;
+          bytes = 0;
         if (res[0].series.length > 0) {
           res[0].series.forEach((metric) => {
             if (metric.metricName === 'system.collect.events') {
@@ -88,22 +88,21 @@ export default class DatasetTab extends Component {
           });
         }
 
-        let entities = this.state.entitiesForTable
-          .map(e => {
-            if (e.name === stream.name) {
-              return Object.assign({}, e, {
-                events,
-                reads: 'n/a',
-                writes: 'n/a',
-                bytes,
-                programs: res[1].length,
-                loading: false
-              });
-            }
-            return e;
-          });
+        let entities = this.state.entitiesForTable.map((e) => {
+          if (e.name === stream.name) {
+            return Object.assign({}, e, {
+              events,
+              reads: 'n/a',
+              writes: 'n/a',
+              bytes,
+              programs: res[1].length,
+              loading: false,
+            });
+          }
+          return e;
+        });
         this.setState({
-          entitiesForTable: entities
+          entitiesForTable: entities,
         });
       });
   }
@@ -111,21 +110,25 @@ export default class DatasetTab extends Component {
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     const datasetParams = {
       namespace: currentNamespace,
-      datasetId: this.props.entity.name
+      datasetId: this.props.entity.name,
     };
     const metricsParams = {
       tag: [`namespace:${currentNamespace}`, `dataset:${dataset.name}`],
-      metric: ['system.dataset.store.bytes', 'system.dataset.store.writes', 'system.dataset.store.reads'],
-      aggregate: true
+      metric: [
+        'system.dataset.store.bytes',
+        'system.dataset.store.writes',
+        'system.dataset.store.reads',
+      ],
+      aggregate: true,
     };
 
     MyMetricApi.query(metricsParams)
       .combineLatest(MyDatasetApi.getPrograms(datasetParams))
       .subscribe((res) => {
         let ops = 'n/a',
-            writes = 0,
-            bytes = 0,
-            reads = 0;
+          writes = 0,
+          bytes = 0,
+          reads = 0;
         if (res[0].series.length > 0) {
           res[0].series.forEach((metric) => {
             if (metric.metricName === 'system.dataset.store.writes') {
@@ -138,22 +141,21 @@ export default class DatasetTab extends Component {
           });
         }
 
-        let entities = this.state.entitiesForTable
-          .map(e => {
-            if (e.name === dataset.name) {
-              return Object.assign({}, e, {
-                events: ops,
-                writes,
-                reads,
-                bytes,
-                programs: res[1].length,
-                loading: false
-              });
-            }
-            return e;
-          });
+        let entities = this.state.entitiesForTable.map((e) => {
+          if (e.name === dataset.name) {
+            return Object.assign({}, e, {
+              events: ops,
+              writes,
+              reads,
+              bytes,
+              programs: res[1].length,
+              loading: false,
+            });
+          }
+          return e;
+        });
         this.setState({
-          entitiesForTable: entities
+          entitiesForTable: entities,
         });
       });
   }
@@ -161,11 +163,18 @@ export default class DatasetTab extends Component {
     return (
       <div className="dataset-tab">
         <div className="message-section float-xs-left">
-          <strong> {T.translate('features.Overview.DatasetTab.title', {appId: this.state.entity.name})} </strong>
+          <strong>
+            {' '}
+            {T.translate('features.Overview.DatasetTab.title', {
+              appId: this.state.entity.name,
+            })}{' '}
+          </strong>
         </div>
         {
           <ViewSwitch onSwitch={this.onTabSwitch.bind(this)}>
-            <DatasetStreamCards dataEntities={this.state.entity.datasets.concat(this.state.entity.streams)} />
+            <DatasetStreamCards
+              dataEntities={this.state.entity.datasets.concat(this.state.entity.streams)}
+            />
             <DatasetStreamTable dataEntities={this.state.entitiesForTable} />
           </ViewSwitch>
         }
@@ -178,13 +187,17 @@ DatasetTab.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string,
     name: PropTypes.string,
-    datasets: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.string,
-      type: PropTypes.string
-    })),
-    streams: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.string,
-      type: PropTypes.string
-    }))
-  })
+    datasets: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        type: PropTypes.string,
+      })
+    ),
+    streams: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        type: PropTypes.string,
+      })
+    ),
+  }),
 };

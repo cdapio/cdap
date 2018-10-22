@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import FastActions from 'components/EntityCard/FastActions';
 import isNil from 'lodash/isNil';
 import Description from 'components/Description';
@@ -33,17 +33,14 @@ export default class OverviewMetaSection extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entity: this.props.entity
+      entity: this.props.entity,
     };
   }
   componentWillReceiveProps(nextProps) {
-    let {entity} = nextProps;
-    if (
-      !isNil(entity) &&
-      entity.id !== objectQuery(this.state, 'entity', 'id')
-    ) {
+    let { entity } = nextProps;
+    if (!isNil(entity) && entity.id !== objectQuery(this.state, 'entity', 'id')) {
       this.setState({
-        entity
+        entity,
       });
     }
   }
@@ -55,7 +52,9 @@ export default class OverviewMetaSection extends Component {
   }
 
   renderStreamInfo() {
-    if (this.props.entity.type !== 'stream') { return null; }
+    if (this.props.entity.type !== 'stream') {
+      return null;
+    }
 
     const TWENTY_YEARS = 20 * 365 * 24 * 60 * 60;
 
@@ -65,16 +64,16 @@ export default class OverviewMetaSection extends Component {
 
     return (
       <div className="entity-info">
-        <strong>
-          {T.translate('features.Overview.Metadata.ttl')}
-        </strong>
+        <strong>{T.translate('features.Overview.Metadata.ttl')}</strong>
         <span>{ttl}</span>
       </div>
     );
   }
 
   renderDatasetInfo() {
-    if (this.props.entity.type !== 'dataset') { return null; }
+    if (this.props.entity.type !== 'dataset') {
+      return null;
+    }
 
     let type = objectQuery(this.props, 'entity', 'properties', 'type');
     type = type.split('.');
@@ -82,9 +81,7 @@ export default class OverviewMetaSection extends Component {
 
     return (
       <div className="entity-info">
-        <strong>
-          {T.translate('features.Overview.Metadata.type')}
-        </strong>
+        <strong>{T.translate('features.Overview.Metadata.type')}</strong>
         <span>{type}</span>
       </div>
     );
@@ -105,52 +102,35 @@ export default class OverviewMetaSection extends Component {
   render() {
     let creationTime = objectQuery(this.props, 'entity', 'properties', 'creation-time');
     const renderCreationTime = (creationTime) => {
-      return (
-        this.props.showFullCreationTime ?
-          <span>{this.getFullCreationTime(creationTime)}</span>
-        :
-          <TimeAgo date={parseInt(creationTime, 10)} />
+      return this.props.showFullCreationTime ? (
+        <span>{this.getFullCreationTime(creationTime)}</span>
+      ) : (
+        <TimeAgo date={parseInt(creationTime, 10)} />
       );
     };
-    let description =  objectQuery(this.props, 'entity', 'properties', 'description');
+    let description = objectQuery(this.props, 'entity', 'properties', 'description');
     // have to generate new uniqueId here, because we don't want the fast actions here to
     // trigger the tooltips on the card view
     let entity = Object.assign({}, this.props.entity, {
-      uniqueId: `meta-${uuidV4()}`
+      uniqueId: `meta-${uuidV4()}`,
     });
     return (
       <div className="overview-meta-section">
-        <h2 title={this.props.entity.id}>
-          {this.props.entity.id}
-        </h2>
+        <h2 title={this.props.entity.id}>{this.props.entity.id}</h2>
         <div className="fast-actions-container text-xs-center">
           <div>
-            {
-              this.props.entity.type === 'application' ?
-                <span>
-                  {
-                    this.props.entity.properties.version === '-SNAPSHOT' ?
-                      '1.0.0-SNAPSHOT'
-                    :
-                      this.props.entity.properties.version
-                  }
-                </span>
-              :
-                null
-            }
+            {this.props.entity.type === 'application' ? (
+              <span>
+                {this.props.entity.properties.version === '-SNAPSHOT'
+                  ? '1.0.0-SNAPSHOT'
+                  : this.props.entity.properties.version}
+              </span>
+            ) : null}
             <small>
-              {
-                ['dataset', 'stream'].indexOf(this.props.entity.type) !== -1 ?
-                  T.translate('features.Overview.deployedLabel.data')
-                :
-                  T.translate('features.Overview.deployedLabel.app')
-              }
-              {
-                !isNil(creationTime) ?
-                  renderCreationTime(creationTime)
-                :
-                  null
-              }
+              {['dataset', 'stream'].indexOf(this.props.entity.type) !== -1
+                ? T.translate('features.Overview.deployedLabel.data')
+                : T.translate('features.Overview.deployedLabel.app')}
+              {!isNil(creationTime) ? renderCreationTime(creationTime) : null}
             </small>
           </div>
           <FastActions
@@ -161,8 +141,8 @@ export default class OverviewMetaSection extends Component {
             actionToOpen={this.props.fastActionToOpen}
             argsToActions={{
               explore: {
-                showQueriesCount: true
-              }
+                showQueriesCount: true,
+              },
             }}
           />
         </div>
@@ -184,5 +164,5 @@ OverviewMetaSection.propTypes = {
   onFastActionUpdate: PropTypes.func,
   fastActionToOpen: PropTypes.string,
   showFullCreationTime: PropTypes.bool,
-  showSeparator: PropTypes.bool
+  showSeparator: PropTypes.bool,
 };

@@ -16,11 +16,11 @@
 
 import React from 'react';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
-import {objectQuery} from 'services/helpers';
+import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
+import { objectQuery } from 'services/helpers';
 require('./MemorySelectWidget.scss');
 
-export default function MemorySelectWidget({...props}) {
+export default function MemorySelectWidget({ ...props }) {
   let size = objectQuery(props, 'widgetProps', 'size') || 'large';
   return (
     <div className={`memory-select-widget ${size}`}>
@@ -30,9 +30,7 @@ export default function MemorySelectWidget({...props}) {
         className="form-control"
         onChange={props.onChange}
       />
-      <span>
-        GB
-      </span>
+      <span>GB</span>
     </div>
   );
 }

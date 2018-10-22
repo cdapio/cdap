@@ -28,7 +28,7 @@ export default class SingleFieldModal extends Component {
 
     this.state = {
       text: this.props.defaultValue || '',
-      optionalText: ''
+      optionalText: '',
     };
 
     this.onTextChange = this.onTextChange.bind(this);
@@ -46,11 +46,11 @@ export default class SingleFieldModal extends Component {
   }
 
   onTextChange(e) {
-    this.setState({text: e.target.value});
+    this.setState({ text: e.target.value });
   }
 
   onOptionalTextChange(e) {
-    this.setState({optionalText: e.target.value});
+    this.setState({ optionalText: e.target.value });
   }
 
   apply() {
@@ -68,7 +68,9 @@ export default class SingleFieldModal extends Component {
   }
 
   renderOptionalField() {
-    if (!this.props.hasOptionalField) { return null; }
+    if (!this.props.hasOptionalField) {
+      return null;
+    }
     let parser = this.props.parser;
 
     return (
@@ -104,14 +106,9 @@ export default class SingleFieldModal extends Component {
         className="dataprep-parse-modal cdap-modal"
       >
         <ModalHeader>
-          <span>
-            {T.translate(`${SUFFIX}.modalTitle`, {parser: parserTitle})}
-          </span>
+          <span>{T.translate(`${SUFFIX}.modalTitle`, { parser: parserTitle })}</span>
 
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.toggle}
-          >
+          <div className="close-section float-xs-right" onClick={this.props.toggle}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
@@ -125,7 +122,7 @@ export default class SingleFieldModal extends Component {
               className="form-control mousetrap"
               placeholder={T.translate(`${SUFFIX}.Parsers.${parser}.placeholder`)}
               value={this.state.text}
-              ref={(ref) => this.inputRef = ref}
+              ref={(ref) => (this.inputRef = ref)}
               onChange={this.onTextChange}
             />
           </div>
@@ -134,17 +131,10 @@ export default class SingleFieldModal extends Component {
         </ModalBody>
 
         <ModalFooter>
-          <button
-            className="btn btn-primary"
-            disabled={disabled}
-            onClick={this.apply}
-          >
+          <button className="btn btn-primary" disabled={disabled} onClick={this.apply}>
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={this.props.toggle}
-          >
+          <button className="btn btn-secondary" onClick={this.props.toggle}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </ModalFooter>
@@ -153,12 +143,11 @@ export default class SingleFieldModal extends Component {
   }
 }
 
-
 SingleFieldModal.propTypes = {
   toggle: PropTypes.func,
   parser: PropTypes.string,
   onApply: PropTypes.func,
   isTextRequired: PropTypes.bool,
   defaultValue: PropTypes.string,
-  hasOptionalField: PropTypes.bool
+  hasOptionalField: PropTypes.bool,
 };

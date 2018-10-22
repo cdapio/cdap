@@ -23,13 +23,16 @@ import T from 'i18n-react';
 const PREFIX = 'features.PipelineResources';
 const CORE_OPTIONS = range(1, 21);
 
-export default function PipelineResources({virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange}) {
+export default function PipelineResources({
+  virtualCores,
+  onVirtualCoresChange,
+  memoryMB,
+  onMemoryMBChange,
+}) {
   return (
     <div className="resource-holder">
       <div className="resource-group row">
-        <span className="col-xs-4 control-label">
-          {T.translate(`${PREFIX}.cpu`)}
-        </span>
+        <span className="col-xs-4 control-label">{T.translate(`${PREFIX}.cpu`)}</span>
         <SelectWithOptions
           className="small-dropdown form-control"
           options={CORE_OPTIONS}
@@ -38,9 +41,7 @@ export default function PipelineResources({virtualCores, onVirtualCoresChange, m
         />
       </div>
       <div className="resource-group row">
-        <span className="col-xs-4 control-label">
-          {T.translate(`${PREFIX}.memory`)}
-        </span>
+        <span className="col-xs-4 control-label">{T.translate(`${PREFIX}.memory`)}</span>
         <input
           className="memoryMB-input form-control"
           type="number"
@@ -48,9 +49,7 @@ export default function PipelineResources({virtualCores, onVirtualCoresChange, m
           value={memoryMB}
           onChange={onMemoryMBChange}
         />
-        <span className="control-label mb">
-          {T.translate(`${PREFIX}.mb`)}
-        </span>
+        <span className="control-label mb">{T.translate(`${PREFIX}.mb`)}</span>
       </div>
     </div>
   );
@@ -60,5 +59,5 @@ PipelineResources.propTypes = {
   virtualCores: PropTypes.number,
   onVirtualCoresChange: PropTypes.func,
   memoryMB: PropTypes.number,
-  onMemoryMBChange: PropTypes.func
+  onMemoryMBChange: PropTypes.func,
 };

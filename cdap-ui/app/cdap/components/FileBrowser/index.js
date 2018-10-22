@@ -19,11 +19,15 @@ import React, { Component } from 'react';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import classnames from 'classnames';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import FilePath from 'components/FileBrowser/FilePath';
-import {preventPropagation as preventPropagationService, objectQuery} from 'services/helpers';
+import { preventPropagation as preventPropagationService, objectQuery } from 'services/helpers';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import {setError, goToPath, trimSuffixSlash} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {
+  setError,
+  goToPath,
+  trimSuffixSlash,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
@@ -32,16 +36,14 @@ import DataPrepStore from 'components/DataPrep/store';
 import lastIndexOf from 'lodash/lastIndexOf';
 import isNil from 'lodash/isNil';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 
 require('./FileBrowser.scss');
 
 const BASEPATH = '/';
 const PREFIX = 'features.FileBrowser';
 
-
 export default class FileBrowser extends Component {
-
   state = {
     contents: [],
     path: '',
@@ -50,14 +52,14 @@ export default class FileBrowser extends Component {
     search: '',
     sort: 'name',
     sortOrder: 'asc',
-    searchFocus: true
+    searchFocus: true,
   };
 
   static defaultProps = {
     enableRouting: true,
     scope: false,
     browserTitle: T.translate(`${PREFIX}.TopPanel.selectData`),
-    allowSidePanelToggle: true
+    allowSidePanelToggle: true,
   };
 
   static propTypes = {
@@ -70,7 +72,7 @@ export default class FileBrowser extends Component {
     enableRouting: PropTypes.bool,
     onWorkspaceCreate: PropTypes.func,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
-    browserTitle: PropTypes.string
+    browserTitle: PropTypes.string,
   };
 
   componentDidMount() {
@@ -89,7 +91,7 @@ export default class FileBrowser extends Component {
     }
 
     this.browserStoreSubscription = DataPrepBrowserStore.subscribe(() => {
-      let {file, activeBrowser} = DataPrepBrowserStore.getState();
+      let { file, activeBrowser } = DataPrepBrowserStore.getState();
       if (activeBrowser.name !== ConnectionType.FILE) {
         return;
       }
@@ -99,7 +101,7 @@ export default class FileBrowser extends Component {
           contents: file.contents,
           loading: file.loading,
           path: file.path,
-          search: file.search
+          search: file.search,
         });
       }
     });
@@ -117,8 +119,8 @@ export default class FileBrowser extends Component {
       objectQuery(this.explorePathObservable, 'unsubscribe') &&
       typeof this.explorePathObservable.unsubscribe === 'function'
     ) {
-       this.explorePathObservable.unsubscribe();
-      }
+      this.explorePathObservable.unsubscribe();
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -134,9 +136,11 @@ export default class FileBrowser extends Component {
   }
 
   getFilePath() {
-    let {workspaceInfo} = DataPrepStore.getState().dataprep;
+    let { workspaceInfo } = DataPrepStore.getState().dataprep;
     let filePath = objectQuery(workspaceInfo, 'properties', 'path');
-    filePath = !isEmpty(filePath) ? filePath.slice(0, lastIndexOf(filePath, '/') + 1) : this.state.path;
+    filePath = !isEmpty(filePath)
+      ? filePath.slice(0, lastIndexOf(filePath, '/') + 1)
+      : this.state.path;
     if (isEmpty(filePath) || objectQuery(workspaceInfo, 'properties', 'connection') !== 'file') {
       filePath = BASEPATH;
     }
@@ -148,8 +152,7 @@ export default class FileBrowser extends Component {
       return;
     }
     preventPropagationService(e);
-
-  }
+  };
 
   fetchDirectory(props) {
     let hdfsPath;
@@ -165,7 +168,9 @@ export default class FileBrowser extends Component {
       }
     }
 
-    if (hdfsPath === this.state.path) { return; }
+    if (hdfsPath === this.state.path) {
+      return;
+    }
 
     if (hdfsPath) {
       goToPath(hdfsPath);
@@ -173,29 +178,29 @@ export default class FileBrowser extends Component {
   }
 
   handleSearch = (e) => {
-    this.setState({search: e.target.value});
-  }
+    this.setState({ search: e.target.value });
+  };
 
   orderBy(sort) {
     if (sort !== this.state.sort) {
       this.setState({
         sort,
-        sortOrder: 'asc'
+        sortOrder: 'asc',
       });
     } else {
       this.setState({
-        sortOrder: this.state.sortOrder === 'asc' ? 'desc' : 'asc'
+        sortOrder: this.state.sortOrder === 'asc' ? 'desc' : 'asc',
       });
     }
   }
   ingestFile(content) {
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let {scope} = this.props;
+    let { scope } = this.props;
     let params = {
       namespace,
       path: content.path,
       lines: 10000,
-      sampler: 'first'
+      sampler: 'first',
     };
 
     if (scope) {
@@ -210,11 +215,11 @@ export default class FileBrowser extends Component {
     }
 
     let headers = {
-      'Content-Type': content.type
+      'Content-Type': content.type,
     };
 
-    MyDataPrepApi.readFile(params, null, headers)
-      .subscribe((res) => {
+    MyDataPrepApi.readFile(params, null, headers).subscribe(
+      (res) => {
         let workspaceId = res.values[0].id;
 
         if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
@@ -223,10 +228,11 @@ export default class FileBrowser extends Component {
         }
         let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         window.location.href = navigatePath;
-      }, (err) => {
+      },
+      (err) => {
         setError(err);
-      });
-
+      }
+    );
   }
 
   renderCollapsedContent(row) {
@@ -234,22 +240,20 @@ export default class FileBrowser extends Component {
       <div
         key={row.uniqueId}
         className={classnames('row content-row', {
-          'disabled': !row.directory && !row.wrangle
+          disabled: !row.directory && !row.wrangle,
         })}
       >
         <div className="col-xs-8 name">
           <span
             className={classnames('type-icon fa fa-fw', {
               'folder-icon fa-folder-o': row.directory,
-              'file-icon fa-file-o': !row.directory
+              'file-icon fa-file-o': !row.directory,
             })}
           />
           <span title={row.name}>{row.name}</span>
         </div>
         <div className="col-xs-4">
-          <span title={row.type}>
-            {row.type}
-          </span>
+          <span title={row.type}>{row.type}</span>
         </div>
       </div>
     );
@@ -264,47 +268,35 @@ export default class FileBrowser extends Component {
       <div
         key={row.uniqueId}
         className={classnames('row content-row', {
-          'disabled': !row.directory && !row.wrangle
+          disabled: !row.directory && !row.wrangle,
         })}
       >
         <div className="col-xs-3 name">
           <span
             className={classnames('type-icon fa fa-fw', {
               'folder-icon fa-folder-o': row.directory,
-              'file-icon fa-file-o': !row.directory
+              'file-icon fa-file-o': !row.directory,
             })}
           />
           <span title={row.name}>{row.name}</span>
         </div>
         <div className="col-xs-2">
-          <span title={row.type}>
-            {row.type}
-          </span>
+          <span title={row.type}>{row.type}</span>
         </div>
         <div className="col-xs-1">
-          <span title={row.displaySize}>
-            {row.directory ? '--' : row.displaySize}
-          </span>
+          <span title={row.displaySize}>{row.directory ? '--' : row.displaySize}</span>
         </div>
         <div className="col-xs-2">
-          <span title={row['last-modified']}>
-            {row['last-modified']}
-          </span>
+          <span title={row['last-modified']}>{row['last-modified']}</span>
         </div>
         <div className="col-xs-1">
-          <span title={row.owner}>
-            {row.owner}
-          </span>
+          <span title={row.owner}>{row.owner}</span>
         </div>
         <div className="col-xs-1">
-          <span title={row.group}>
-            {row.group}
-          </span>
+          <span title={row.group}>{row.group}</span>
         </div>
         <div className="col-xs-2">
-          <span title={row.permission}>
-            {row.permission}
-          </span>
+          <span title={row.permission}>{row.permission}</span>
         </div>
       </div>
     );
@@ -326,10 +318,7 @@ export default class FileBrowser extends Component {
     let linkPath = `${this.state.statePath}${content.path}`;
     linkPath = trimSuffixSlash(linkPath);
     return (
-      <Link
-        key={content.uniqueId}
-        to={linkPath}
-      >
+      <Link key={content.uniqueId} to={linkPath}>
         {this.renderRowContent(content)}
       </Link>
     );
@@ -362,7 +351,7 @@ export default class FileBrowser extends Component {
       <div className="empty-search-container">
         <div className="empty-search">
           <strong>
-            {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.search})}
+            {T.translate(`${PREFIX}.EmptyMessage.title`, { searchText: this.state.search })}
           </strong>
           <hr />
           <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
@@ -372,7 +361,7 @@ export default class FileBrowser extends Component {
                 className="link-text"
                 onClick={() => {
                   this.setState({
-                    search: ''
+                    search: '',
                   });
                 }}
               >
@@ -388,18 +377,14 @@ export default class FileBrowser extends Component {
 
   renderContent() {
     if (this.state.loading) {
-      return (
-        <LoadingSVGCentered />
-      );
+      return <LoadingSVGCentered />;
     }
 
     if (this.state.contents.length === 0) {
       return (
         <div className="empty-search-container">
           <div className="empty-search text-xs-center">
-            <strong>
-              {T.translate(`${PREFIX}.EmptyMessage.noFilesOrDirectories`)}
-            </strong>
+            <strong>{T.translate(`${PREFIX}.EmptyMessage.noFilesOrDirectories`)}</strong>
           </div>
         </div>
       );
@@ -420,14 +405,19 @@ export default class FileBrowser extends Component {
       }
     }
 
-    displayContent = orderBy(displayContent, [(content) => {
-      let sortedItem = content[this.state.sort];
-      if (typeof sortedItem !== 'string') {
-        return sortedItem;
-
-      }
-      return sortedItem.toLowerCase();
-    }], [this.state.sortOrder]);
+    displayContent = orderBy(
+      displayContent,
+      [
+        (content) => {
+          let sortedItem = content[this.state.sort];
+          if (typeof sortedItem !== 'string') {
+            return sortedItem;
+          }
+          return sortedItem.toLowerCase();
+        },
+      ],
+      [this.state.sortOrder]
+    );
 
     const TABLE_COLUMNS_PROPERTIES = {
       name: 'col-xs-3',
@@ -436,7 +426,7 @@ export default class FileBrowser extends Component {
       'last-modified': 'col-xs-2',
       owner: 'col-xs-1',
       group: 'col-xs-1',
-      permission: 'col-xs-2'
+      permission: 'col-xs-2',
     };
 
     let columnProperties = TABLE_COLUMNS_PROPERTIES;
@@ -444,7 +434,7 @@ export default class FileBrowser extends Component {
     if (this.props.noState || !this.props.enableRouting) {
       columnProperties = {
         name: 'col-xs-8',
-        type: 'col-xs-4'
+        type: 'col-xs-4',
       };
     }
 
@@ -453,42 +443,30 @@ export default class FileBrowser extends Component {
     return (
       <div className="directory-content-table">
         <div className="content-header row">
-          {
-            COLUMN_HEADERS.map((head) => {
-              return (
-                <div
-                  key={head}
-                  className={columnProperties[head]}
-                >
-                  <span
-                    onClick={this.orderBy.bind(this, head)}
-                  >
-                    {T.translate(`${PREFIX}.Table.${head}`)}
+          {COLUMN_HEADERS.map((head) => {
+            return (
+              <div key={head} className={columnProperties[head]}>
+                <span onClick={this.orderBy.bind(this, head)}>
+                  {T.translate(`${PREFIX}.Table.${head}`)}
 
-                    {
-                      this.state.sort !== head ? null :
-                      (
-                        <span
-                          className={classnames('fa sort-caret', {
-                            'fa-caret-down': this.state.sortOrder === 'asc',
-                            'fa-caret-up': this.state.sortOrder === 'desc'
-                          })}
-                        />
-                      )
-                    }
-                  </span>
-                </div>
-              );
-            })
-          }
+                  {this.state.sort !== head ? null : (
+                    <span
+                      className={classnames('fa sort-caret', {
+                        'fa-caret-down': this.state.sortOrder === 'asc',
+                        'fa-caret-up': this.state.sortOrder === 'desc',
+                      })}
+                    />
+                  )}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         <div className="content-body clearfix">
-          {
-            displayContent.map((content) => {
-              return this.renderRow(content);
-            })
-          }
+          {displayContent.map((content) => {
+            return this.renderRow(content);
+          })}
         </div>
       </div>
     );
@@ -515,11 +493,15 @@ export default class FileBrowser extends Component {
 
           <div
             className="info-container"
-            title={T.translate(`${PREFIX}.TopPanel.directoryMetrics`, {count: this.state.contents.length})}
+            title={T.translate(`${PREFIX}.TopPanel.directoryMetrics`, {
+              count: this.state.contents.length,
+            })}
           >
             <div className="info">
               <span>
-                {T.translate(`${PREFIX}.TopPanel.directoryMetrics`, {count: this.state.contents.length})}
+                {T.translate(`${PREFIX}.TopPanel.directoryMetrics`, {
+                  count: this.state.contents.length,
+                })}
               </span>
             </div>
 
@@ -541,4 +523,3 @@ export default class FileBrowser extends Component {
     );
   }
 }
-

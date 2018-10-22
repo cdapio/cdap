@@ -16,34 +16,26 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {Input} from 'reactstrap';
+import { Input } from 'reactstrap';
 
-export default function SelectWithOptions({className, value, onChange, options}) {
+export default function SelectWithOptions({ className, value, onChange, options }) {
   return (
-    <Input
-      type="select"
-      value={value}
-      className={className}
-      onChange={onChange}
-    >
-      {options.map(o => {
+    <Input type="select" value={value} className={className} onChange={onChange}>
+      {options.map((o) => {
         if (typeof o === 'object') {
           return (
-            <option
-              key={o.id}
-              value={o.id}
-            >
+            <option key={o.id} value={o.id}>
               {o.value}
             </option>
           );
         }
-        return (<option key={o}>{o}</option>);
+        return <option key={o}>{o}</option>;
       })}
     </Input>
   );
 }
 SelectWithOptions.defaultProps = {
-  value: ''
+  value: '',
 };
 
 SelectWithOptions.propTypes = {
@@ -55,8 +47,8 @@ SelectWithOptions.propTypes = {
       PropTypes.string,
       PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-      })
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      }),
     ])
-  )
+  ),
 };

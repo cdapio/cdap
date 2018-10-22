@@ -25,13 +25,13 @@ export default class DataPrepLoading extends Component {
     super(props);
 
     this.state = {
-      loading: DataPrepStore.getState().dataprep.loading
+      loading: DataPrepStore.getState().dataprep.loading,
     };
   }
 
   componentWillMount() {
     this.sub = DataPrepStore.subscribe(() => {
-      this.setState({loading: DataPrepStore.getState().dataprep.loading});
+      this.setState({ loading: DataPrepStore.getState().dataprep.loading });
     });
   }
 
@@ -40,7 +40,9 @@ export default class DataPrepLoading extends Component {
   }
 
   render() {
-    if (!this.state.loading) { return null; }
+    if (!this.state.loading) {
+      return null;
+    }
 
     // SVG loading will need to be extracted out
 

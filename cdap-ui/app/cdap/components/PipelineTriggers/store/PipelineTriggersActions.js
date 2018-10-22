@@ -21,7 +21,7 @@ const PipelineTriggersActions = {
   setExpandedTrigger: 'TRIGGERS_SET_EXPANDED_TRIGGER',
   setTriggersAndPipelineList: 'TRIGGERS_SET_TRIGGERS_PIPELINE',
   setEnabledTriggerPipelineInfo: 'TRIGGERS_SET_PIPELINE_INFO',
-  reset: 'TRIGGERS_RESET'
+  reset: 'TRIGGERS_RESET',
 };
 
 export default PipelineTriggersActions;

@@ -14,11 +14,11 @@
 * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MySearchApi} from 'api/search';
-import {MyNamespaceApi} from 'api/namespace';
-import {getCustomAppPipelineDatasetCounts} from 'services/metadata-parser';
+import { MySearchApi } from 'api/search';
+import { MyNamespaceApi } from 'api/namespace';
+import { getCustomAppPipelineDatasetCounts } from 'services/metadata-parser';
 import IconSVG from 'components/IconSVG';
 import LoadingSVG from 'components/LoadingSVG';
 import AddNamespaceWizard from 'components/CaskWizards/AddNamespace';
@@ -29,7 +29,7 @@ import ViewAllLabel from 'components/ViewAllLabel';
 import T from 'i18n-react';
 import isEqual from 'lodash/isEqual';
 import SortableStickyGrid from 'components/SortableStickyGrid';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import uuidV4 from 'uuid/v4';
 import { Theme } from 'services/ThemeHelper';
 import If from 'components/If';
@@ -40,20 +40,20 @@ const PREFIX = 'features.Administration.Accordions.Namespace';
 const GRID_HEADERS = [
   {
     property: 'name',
-    label: T.translate('commons.nameLabel')
+    label: T.translate('commons.nameLabel'),
   },
   {
     property: 'customAppCount',
-    label: T.translate(`${PREFIX}.customApps`)
+    label: T.translate(`${PREFIX}.customApps`),
   },
   {
     property: 'pipelineCount',
-    label: T.translate('commons.pipelines')
+    label: T.translate('commons.pipelines'),
   },
   {
     property: 'datasetCount',
-    label: T.translate('commons.entity.dataset.plural')
-  }
+    label: T.translate('commons.entity.dataset.plural'),
+  },
 ];
 
 const NUM_NS_TO_SHOW = 5;
@@ -63,14 +63,14 @@ export default class NamespacesAccordion extends Component {
     loading: this.props.loading,
     namespaceWizardOpen: false,
     namespacesInfo: [],
-    viewAll: false
+    viewAll: false,
   };
 
   static propTypes = {
     namespaces: PropTypes.array,
     loading: PropTypes.bool,
     expanded: PropTypes.bool,
-    onExpand: PropTypes.func
+    onExpand: PropTypes.func,
   };
 
   eventEmitter = ee(ee);
@@ -90,108 +90,98 @@ export default class NamespacesAccordion extends Component {
   }
 
   fetchNamespacesAndGetData = () => {
-    MyNamespaceApi
-      .list()
-      .subscribe(
-        (res) => this.getNamespaceData(res),
-        (err) => console.log(err)
-      );
-  }
+    MyNamespaceApi.list().subscribe((res) => this.getNamespaceData(res), (err) => console.log(err));
+  };
 
   getNamespaceData(namespaces) {
     let searchParams = {
       target: ['dataset', 'app'],
       query: '*',
-      sort: 'entity-name asc'
+      sort: 'entity-name asc',
     };
 
-    let currentNamespaces = this.state.namespacesInfo.map(namespace => namespace.name);
+    let currentNamespaces = this.state.namespacesInfo.map((namespace) => namespace.name);
     let namespacesInfo = [];
     let hasNewNamespaces = false;
 
-    namespaces.forEach(namespace => {
+    namespaces.forEach((namespace) => {
       searchParams.namespace = namespace.name;
-      MySearchApi
-        .search(searchParams)
-        .subscribe(
-          (entities) => {
-            let {
-              pipelineCount,
-              customAppCount,
-              datasetCount
-            } = getCustomAppPipelineDatasetCounts(entities);
+      MySearchApi.search(searchParams).subscribe(
+        (entities) => {
+          let { pipelineCount, customAppCount, datasetCount } = getCustomAppPipelineDatasetCounts(
+            entities
+          );
 
-            let namespaceIsHighlighted = false;
+          let namespaceIsHighlighted = false;
 
-            if (currentNamespaces.length && currentNamespaces.indexOf(namespace.name) === -1) {
-              namespaceIsHighlighted = true;
-              hasNewNamespaces = true;
-            }
+          if (currentNamespaces.length && currentNamespaces.indexOf(namespace.name) === -1) {
+            namespaceIsHighlighted = true;
+            hasNewNamespaces = true;
+          }
 
-            namespacesInfo.push({
-              name: namespace.name,
-              pipelineCount,
-              customAppCount,
-              datasetCount,
-              highlighted: namespaceIsHighlighted
-            });
+          namespacesInfo.push({
+            name: namespace.name,
+            pipelineCount,
+            customAppCount,
+            datasetCount,
+            highlighted: namespaceIsHighlighted,
+          });
 
-            this.setState({
+          this.setState(
+            {
               namespacesInfo,
               loading: false,
-              viewAll: hasNewNamespaces || this.state.viewAll
-            }, () => {
+              viewAll: hasNewNamespaces || this.state.viewAll,
+            },
+            () => {
               if (hasNewNamespaces) {
                 setTimeout(() => {
-                  namespacesInfo = namespacesInfo.map(namespace => {
+                  namespacesInfo = namespacesInfo.map((namespace) => {
                     return {
                       ...namespace,
-                      highlighted: false
+                      highlighted: false,
                     };
                   });
                   this.setState({
-                    namespacesInfo
+                    namespacesInfo,
                   });
                 }, 4000);
               }
-            });
-          },
-          (err) => console.log(err)
-        );
+            }
+          );
+        },
+        (err) => console.log(err)
+      );
     });
   }
 
   toggleNamespaceWizard = () => {
     this.setState({
-      namespaceWizardOpen: !this.state.namespaceWizardOpen
+      namespaceWizardOpen: !this.state.namespaceWizardOpen,
     });
-  }
+  };
 
   toggleViewAll = () => {
     this.setState({
-      viewAll: !this.state.viewAll
+      viewAll: !this.state.viewAll,
     });
-  }
+  };
 
   renderLabel() {
     return (
-      <div
-        className="admin-config-container-toggle"
-        onClick={this.props.onExpand}
-      >
+      <div className="admin-config-container-toggle" onClick={this.props.onExpand}>
         <span className="admin-config-container-label">
-          <IconSVG name={this.props.expanded ? "icon-caret-down" : "icon-caret-right"} />
-          {
-            this.state.loading ?
-              (
-                <h5>
-                  {T.translate(`${PREFIX}.label`)}
-                  <IconSVG name="icon-spinner" className="fa-spin" />
-                </h5>
-              )
-            :
-              <h5>{T.translate(`${PREFIX}.labelWithCount`, {count: this.state.namespacesInfo.length})}</h5>
-          }
+          <IconSVG name={this.props.expanded ? 'icon-caret-down' : 'icon-caret-right'} />
+          {this.state.loading ? (
+            <h5>
+              {T.translate(`${PREFIX}.label`)}
+              <IconSVG name="icon-spinner" className="fa-spin" />
+            </h5>
+          ) : (
+            <h5>
+              {T.translate(`${PREFIX}.labelWithCount`, { count: this.state.namespacesInfo.length })}
+            </h5>
+          )}
         </span>
         <span className="admin-config-container-description">
           {T.translate(`${PREFIX}.description`)}
@@ -203,31 +193,21 @@ export default class NamespacesAccordion extends Component {
   renderGridBody = (namespaces) => {
     return (
       <div className="grid-body">
-        {
-          namespaces.map((namespace) => {
-            return (
-              <Link
-                to={`/ns/${namespace.name}/details`}
-                className={classnames(
-                  "grid-row grid-link", {
-                    "highlighted": namespace.highlighted
-                  }
-                )}
-                key={uuidV4()}
-              >
-                {
-                  GRID_HEADERS.map((header) => {
-                    return (
-                      <div key={uuidV4()}>
-                        {namespace[header.property]}
-                      </div>
-                    );
-                  })
-                }
-              </Link>
-            );
-          })
-        }
+        {namespaces.map((namespace) => {
+          return (
+            <Link
+              to={`/ns/${namespace.name}/details`}
+              className={classnames('grid-row grid-link', {
+                highlighted: namespace.highlighted,
+              })}
+              key={uuidV4()}
+            >
+              {GRID_HEADERS.map((header) => {
+                return <div key={uuidV4()}>{namespace[header.property]}</div>;
+              })}
+            </Link>
+          );
+        })}
       </div>
     );
   };
@@ -264,10 +244,7 @@ export default class NamespacesAccordion extends Component {
     return (
       <div className="admin-config-container-content namespaces-container-content">
         <If condition={Theme.showAddNamespace}>
-          <button
-            className="btn btn-secondary"
-            onClick={this.toggleNamespaceWizard}
-          >
+          <button className="btn btn-secondary" onClick={this.toggleNamespaceWizard}>
             {T.translate(`${PREFIX}.create`)}
           </button>
         </If>
@@ -284,25 +261,23 @@ export default class NamespacesAccordion extends Component {
           viewAllState={this.state.viewAll}
           toggleViewAll={this.toggleViewAll}
         />
-        {
-          this.state.namespaceWizardOpen ?
-            <AddNamespaceWizard
-              isOpen={this.state.namespaceWizardOpen}
-              onClose={this.toggleNamespaceWizard}
-            />
-          :
-            null
-        }
+        {this.state.namespaceWizardOpen ? (
+          <AddNamespaceWizard
+            isOpen={this.state.namespaceWizardOpen}
+            onClose={this.toggleNamespaceWizard}
+          />
+        ) : null}
       </div>
     );
   }
 
   render() {
     return (
-      <div className={classnames(
-        "admin-config-container namespaces-container",
-        {"expanded": this.props.expanded}
-      )}>
+      <div
+        className={classnames('admin-config-container namespaces-container', {
+          expanded: this.props.expanded,
+        })}
+      >
         {this.renderLabel()}
         {this.renderContent()}
       </div>

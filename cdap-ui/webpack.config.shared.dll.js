@@ -21,15 +21,15 @@ var mode = process.env.NODE_ENV || 'production';
 const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
 
 const processEnv = {
-  'NODE_ENV': JSON.stringify(isModeProduction(mode) ? 'production' : 'development'),
-  '__DEVTOOLS__': false
+  NODE_ENV: JSON.stringify(isModeProduction(mode) ? 'production' : 'development'),
+  __DEVTOOLS__: false,
 };
 
 const getWebpackOutputObj = (mode) => {
   var output = {
     path: path.join(__dirname, 'dll'),
     filename: 'dll.shared.[name].js',
-    library: 'shared_[name]'
+    library: 'shared_[name]',
   };
   if (mode === 'development') {
     output.filename = 'dll.shared.[name].development.js';
@@ -45,14 +45,14 @@ const getWebpackDLLPlugin = (mode) => {
   return new webpack.DllPlugin({
     path: path.join(__dirname, 'dll', manifestFileName),
     name: 'shared_[name]',
-    context: path.resolve(__dirname, 'dll')
+    context: path.resolve(__dirname, 'dll'),
   });
 };
 var plugins = [
   new webpack.DefinePlugin({
     'process.env': processEnv,
   }),
-  getWebpackDLLPlugin(mode)
+  getWebpackDLLPlugin(mode),
 ];
 
 if (isModeProduction(mode)) {
@@ -61,13 +61,13 @@ if (isModeProduction(mode)) {
       uglifyOptions: {
         ie8: false,
         compress: {
-          warnings: false
+          warnings: false,
         },
         output: {
           comments: false,
           beautify: false,
-        }
-      }
+        },
+      },
     })
   );
 }
@@ -92,8 +92,8 @@ var webpackConfig = {
       'event-emitter',
       'react-loadable',
       'cdap-avsc',
-      'css-vars-ponyfill'
-    ]
+      'css-vars-ponyfill',
+    ],
   },
   output: getWebpackOutputObj(mode),
   stats: {
@@ -103,12 +103,12 @@ var webpackConfig = {
     chunkModules: false,
     chunkOrigins: false,
     chunks: false,
-    modules: false
+    modules: false,
   },
   plugins,
   resolve: {
-    modules: ['node_modules']
-  }
+    modules: ['node_modules'],
+  },
 };
 
 module.exports = webpackConfig;

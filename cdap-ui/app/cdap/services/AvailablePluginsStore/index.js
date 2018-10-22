@@ -14,18 +14,18 @@
  * the License.
  */
 
-import {createStore, combineReducers, applyMiddleware} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 import thunk from 'redux-thunk';
 
 const AVAILABLE_PLUGINS_ACTIONS = {
   setPluginsMap: 'SET_AVAILABLE_PLUGINS_MAP',
-  reset: 'AVAILABLE_PLUGINS_RESET'
+  reset: 'AVAILABLE_PLUGINS_RESET',
 };
 
 let getInitialState = () => {
   return {
-    pluginsMap: {}
+    pluginsMap: {},
   };
 };
 
@@ -33,7 +33,7 @@ const plugins = (state = getInitialState(), action = defaultAction) => {
   switch (action.type) {
     case AVAILABLE_PLUGINS_ACTIONS.setPluginsMap:
       return Object.assign({}, state, {
-        pluginsMap: action.payload.pluginsMap
+        pluginsMap: action.payload.pluginsMap,
       });
     case AVAILABLE_PLUGINS_ACTIONS.reset:
       return getInitialState();
@@ -44,13 +44,11 @@ const plugins = (state = getInitialState(), action = defaultAction) => {
 
 const AvailablePluginsStore = createStore(
   combineReducers({
-    plugins
+    plugins,
   }),
   getInitialState(),
-  composeEnhancers('AvailablePluginsStore')(
-    applyMiddleware(thunk)
-  )
+  composeEnhancers('AvailablePluginsStore')(applyMiddleware(thunk))
 );
 
 export default AvailablePluginsStore;
-export {AVAILABLE_PLUGINS_ACTIONS};
+export { AVAILABLE_PLUGINS_ACTIONS };

@@ -14,29 +14,29 @@
  * the License.
 */
 
-import {createStore, combineReducers} from 'redux';
-import {defaultAction} from 'services/helpers';
-import {MyServiceProviderApi} from 'api/serviceproviders';
+import { createStore, combineReducers } from 'redux';
+import { defaultAction } from 'services/helpers';
+import { MyServiceProviderApi } from 'api/serviceproviders';
 const WAITTIME_FOR_ALTERNATE_STATUS = 10000;
 const SYSTEMSERVICESACTIONS = {
   SETSERVICES: 'SETSERVICES',
-  SETERROR: 'SETERROR'
+  SETERROR: 'SETERROR',
 };
 
 const initialSystemServices = {
   list: [],
-  __error: false
+  __error: false,
 };
 const services = (state = initialSystemServices, action = defaultAction) => {
   switch (action.type) {
     case SYSTEMSERVICESACTIONS.SETSERVICES:
       return Object.assign({}, state, {
         list: action.payload.services || [],
-        __error: false
+        __error: false,
       });
     case SYSTEMSERVICESACTIONS.SETERROR:
       return Object.assign({}, state, {
-        __error: action.payload.error
+        __error: action.payload.error,
       });
     default:
       return state;
@@ -45,34 +45,33 @@ const services = (state = initialSystemServices, action = defaultAction) => {
 
 const ServicesStore = createStore(
   combineReducers({
-    services
+    services,
   }),
   {
-    services: initialSystemServices
+    services: initialSystemServices,
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
 let systemServicesPollSubscription;
 const pollSystemServices = () => {
-  systemServicesPollSubscription = MyServiceProviderApi
-    .pollServicesList()
-    .subscribe(
-      services => ServicesStore.dispatch({
+  systemServicesPollSubscription = MyServiceProviderApi.pollServicesList().subscribe(
+    (services) =>
+      ServicesStore.dispatch({
         type: SYSTEMSERVICESACTIONS.SETSERVICES,
         payload: {
-          services
-        }
+          services,
+        },
       }),
-      err => {
-        setTimeout(() => {
-          ServicesStore.dispatch({
-            type: SYSTEMSERVICESACTIONS.SETERROR,
-            payload: {error: err}
-          });
-          pollSystemServices();
-        }, WAITTIME_FOR_ALTERNATE_STATUS);
-      }
-    );
+    (err) => {
+      setTimeout(() => {
+        ServicesStore.dispatch({
+          type: SYSTEMSERVICESACTIONS.SETERROR,
+          payload: { error: err },
+        });
+        pollSystemServices();
+      }, WAITTIME_FOR_ALTERNATE_STATUS);
+    }
+  );
 };
 
 const stopSystemServicesPolling = () => {
@@ -80,5 +79,5 @@ const stopSystemServicesPolling = () => {
 };
 
 export default ServicesStore;
-export {pollSystemServices, stopSystemServicesPolling};
-export {SYSTEMSERVICESACTIONS};
+export { pollSystemServices, stopSystemServicesPolling };
+export { SYSTEMSERVICESACTIONS };

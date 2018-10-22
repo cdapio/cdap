@@ -15,7 +15,7 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreatorAbsPath} from 'services/resource-helper';
+import { apiCreatorAbsPath } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 const basepath = `${window.CDAP_CONFIG.marketUrl}`;
@@ -23,12 +23,22 @@ const basepath = `${window.CDAP_CONFIG.marketUrl}`;
 export const MyMarketApi = {
   list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
   getCategories: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/categories.json`),
-  get: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages/:packageName/:version/spec.json`),
+  get: apiCreatorAbsPath(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${basepath}/packages/:packageName/:version/spec.json`
+  ),
   getCategoryIcon: (category) => {
     return `${basepath}/categories/${category}/icon.png`;
   },
   getIcon: (entity) => {
     return `${basepath}/packages/${entity.name}/${entity.version}/icon.png`;
   },
-  getSampleData: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages/:entityName/:entityVersion/:filename`)
+  getSampleData: apiCreatorAbsPath(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${basepath}/packages/:entityName/:entityVersion/:filename`
+  ),
 };

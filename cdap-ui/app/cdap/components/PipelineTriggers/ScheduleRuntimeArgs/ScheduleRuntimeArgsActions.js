@@ -14,93 +14,90 @@
  * the License.
 */
 
-import {MyPipelineApi} from 'api/pipeline';
-import NamespaceStore, {getCurrentNamespace} from 'services/NamespaceStore';
-import ScheduleRuntimeArgsStore, {SCHEDULERUNTIMEARGSACTIONS} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
+import { MyPipelineApi } from 'api/pipeline';
+import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
+import ScheduleRuntimeArgsStore, {
+  SCHEDULERUNTIMEARGSACTIONS,
+} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
 
 function fetchPipelineMacroDetails(pipelineId, namespace, isTriggeredPipeline) {
   if (!namespace) {
     namespace = NamespaceStore.getState().selectedNamespace;
   }
-  MyPipelineApi
-    .fetchMacros({
-      namespace,
-      appId: pipelineId
-    })
-    .subscribe(
-      macrosSpec => {
-        let macros = [];
-        let stagePropertiesMap = {};
-        let configStages = [];
-        macrosSpec.forEach(ms => {
-          let {pluginClass, properties, artifactId: artifact} = ms.spec;
-          artifact.version = artifact.version.version;
-          macros = macros.concat(properties.macros.lookupProperties);
-          stagePropertiesMap[ms.id] = Object.keys(pluginClass.properties);
-          updateStagePropertiesFromWidgetJson({
-            artifact,
-            stageName: ms.name,
-            stageType: ms.type,
-            id: ms.id
-          });
-        });
-        configStages = Object
-          .keys(stagePropertiesMap)
-          .map(stage => {
-            return {
-              id: stage,
-              properties: stagePropertiesMap[stage]
-            };
-          });
+  MyPipelineApi.fetchMacros({
+    namespace,
+    appId: pipelineId,
+  }).subscribe((macrosSpec) => {
+    let macros = [];
+    let stagePropertiesMap = {};
+    let configStages = [];
+    macrosSpec.forEach((ms) => {
+      let { pluginClass, properties, artifactId: artifact } = ms.spec;
+      artifact.version = artifact.version.version;
+      macros = macros.concat(properties.macros.lookupProperties);
+      stagePropertiesMap[ms.id] = Object.keys(pluginClass.properties);
+      updateStagePropertiesFromWidgetJson({
+        artifact,
+        stageName: ms.name,
+        stageType: ms.type,
+        id: ms.id,
+      });
+    });
+    configStages = Object.keys(stagePropertiesMap).map((stage) => {
+      return {
+        id: stage,
+        properties: stagePropertiesMap[stage],
+      };
+    });
 
-        ScheduleRuntimeArgsStore.dispatch({
-          type: isTriggeredPipeline ? SCHEDULERUNTIMEARGSACTIONS.SETTRIGGEREDPIPELINEINFO : SCHEDULERUNTIMEARGSACTIONS.SETTRIGGERINGPIPELINEINFO,
-          payload: {
-            macros,
-            configStages,
-            id: pipelineId
-          }
-        });
-      }
-    );
+    ScheduleRuntimeArgsStore.dispatch({
+      type: isTriggeredPipeline
+        ? SCHEDULERUNTIMEARGSACTIONS.SETTRIGGEREDPIPELINEINFO
+        : SCHEDULERUNTIMEARGSACTIONS.SETTRIGGERINGPIPELINEINFO,
+      payload: {
+        macros,
+        configStages,
+        id: pipelineId,
+      },
+    });
+  });
 }
 function updateStagePropertiesFromWidgetJson(stage) {
-  let {args} = ScheduleRuntimeArgsStore.getState();
-  let {stageWidgetJsonMap} = args;
-  let {name: artifactName, version: artifactVersion, scope} = stage.artifact;
-  let {stageName, stageType, id: stageid} = stage;
+  let { args } = ScheduleRuntimeArgsStore.getState();
+  let { stageWidgetJsonMap } = args;
+  let { name: artifactName, version: artifactVersion, scope } = stage.artifact;
+  let { stageName, stageType, id: stageid } = stage;
   if (!stageWidgetJsonMap[stageid]) {
     MyPipelineApi.fetchWidgetJson({
       namespace: getCurrentNamespace(),
       artifactName,
       artifactVersion,
       scope,
-      keys: `widgets.${stageName}-${stageType}`
-    })
-      .subscribe((stageWidgetJson = {}) => {
-        let widgetJson = stageWidgetJson[`widgets.${stageName}-${stageType}`];
-        try {
-          widgetJson = JSON.parse(widgetJson);
-        } catch (e) {
-          widgetJson = null;
-        }
-        if (!widgetJson) {
-          return;
-        }
-        ScheduleRuntimeArgsStore.dispatch({
-          type: SCHEDULERUNTIMEARGSACTIONS.SETSTAGEWIDGETJSON,
-          payload: {
-            stageid,
-            stageWidgetJson: widgetJson
-          }
-        });
+      keys: `widgets.${stageName}-${stageType}`,
+    }).subscribe((stageWidgetJson = {}) => {
+      let widgetJson = stageWidgetJson[`widgets.${stageName}-${stageType}`];
+      try {
+        widgetJson = JSON.parse(widgetJson);
+      } catch (e) {
+        widgetJson = null;
+      }
+      if (!widgetJson) {
+        return;
+      }
+      ScheduleRuntimeArgsStore.dispatch({
+        type: SCHEDULERUNTIMEARGSACTIONS.SETSTAGEWIDGETJSON,
+        payload: {
+          stageid,
+          stageWidgetJson: widgetJson,
+        },
       });
+    });
   }
 }
 
 function resetStore() {
   ScheduleRuntimeArgsStore.dispatch({
-    type: SCHEDULERUNTIMEARGSACTIONS.RESET
+    type: SCHEDULERUNTIMEARGSACTIONS.RESET,
   });
 }
 
@@ -111,8 +108,8 @@ function setArgMapping(key, value, type, oldValue) {
       mappingKey: key,
       mappingValue: value,
       type,
-      oldMappedValue: oldValue
-    }
+      oldMappedValue: oldValue,
+    },
   });
 }
 
@@ -121,8 +118,8 @@ function setSelectedProfile(profileName, customizations = {}) {
     type: SCHEDULERUNTIMEARGSACTIONS.SETSELECTEDPROFILE,
     payload: {
       selectedProfile: profileName,
-      customizations
-    }
+      customizations,
+    },
   });
 }
 
@@ -130,8 +127,8 @@ function bulkSetArgMapping(argsArray) {
   ScheduleRuntimeArgsStore.dispatch({
     type: SCHEDULERUNTIMEARGSACTIONS.BULKSETARGSVALUE,
     payload: {
-      argsArray
-    }
+      argsArray,
+    },
   });
 }
 export {
@@ -139,5 +136,5 @@ export {
   setArgMapping,
   resetStore,
   bulkSetArgMapping,
-  setSelectedProfile
+  setSelectedProfile,
 };

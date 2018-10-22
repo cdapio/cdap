@@ -15,12 +15,12 @@
 */
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {reverseArrayWithoutMutating, objectQuery} from 'services/helpers';
+import { reverseArrayWithoutMutating, objectQuery } from 'services/helpers';
 import findIndex from 'lodash/findIndex';
-import {setCurrentRunId} from 'components/PipelineDetails/store/ActionCreator';
+import { setCurrentRunId } from 'components/PipelineDetails/store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.RunLevel';
@@ -29,23 +29,24 @@ const mapStateToProps = (state) => {
   return {
     runsCount: state.runsCount,
     runs: state.runs,
-    currentRun: state.currentRun
+    currentRun: state.currentRun,
   };
 };
 
-const CurrentRunIndex = ({runs, currentRun, runsCount}) => {
+const CurrentRunIndex = ({ runs, currentRun, runsCount }) => {
   let reversedRuns = reverseArrayWithoutMutating(runs);
-  let currentRunIndex = findIndex(reversedRuns, {runid: objectQuery(currentRun, 'runid')});
+  let currentRunIndex = findIndex(reversedRuns, { runid: objectQuery(currentRun, 'runid') });
   // The currentRunIndex is the index in latest 100 runs
   // total runs count would be much higher for pipelines that ran more than 100 runs
-  let runIndexInTotalRunsCount = Math.max(currentRunIndex, runsCount - (runs.length - currentRunIndex));
+  let runIndexInTotalRunsCount = Math.max(
+    currentRunIndex,
+    runsCount - (runs.length - currentRunIndex)
+  );
 
   if (!reversedRuns || currentRunIndex === -1) {
     return (
       <div className="run-number-container run-info-container">
-        <h4 className="run-number">
-          {T.translate(`${PREFIX}.noRuns`)}
-        </h4>
+        <h4 className="run-number">{T.translate(`${PREFIX}.noRuns`)}</h4>
         <div className="run-number-switches">
           <button disabled>
             <IconSVG name="icon-caret-left" />
@@ -63,25 +64,22 @@ const CurrentRunIndex = ({runs, currentRun, runsCount}) => {
     previousRunId = reversedRuns[currentRunIndex - 1].runid;
   }
   if (currentRunIndex < reversedRuns.length - 1) {
-    nextRunId =  reversedRuns[currentRunIndex + 1].runid;
+    nextRunId = reversedRuns[currentRunIndex + 1].runid;
   }
 
   return (
     <div className="run-number-container run-info-container">
       <h4 className="run-number">
-        {T.translate(`${PREFIX}.currentRunIndex`, {currentRunIndex: runIndexInTotalRunsCount + 1, numRuns: runsCount})}
+        {T.translate(`${PREFIX}.currentRunIndex`, {
+          currentRunIndex: runIndexInTotalRunsCount + 1,
+          numRuns: runsCount,
+        })}
       </h4>
       <div className="run-number-switches">
-        <button
-          disabled={!previousRunId}
-          onClick={setCurrentRunId.bind(null, previousRunId)}
-        >
+        <button disabled={!previousRunId} onClick={setCurrentRunId.bind(null, previousRunId)}>
           <IconSVG name="icon-caret-left" />
         </button>
-        <button
-          disabled={!nextRunId}
-          onClick={setCurrentRunId.bind(null, nextRunId)}
-        >
+        <button disabled={!nextRunId} onClick={setCurrentRunId.bind(null, nextRunId)}>
           <IconSVG name="icon-caret-right" />
         </button>
       </div>
@@ -92,7 +90,7 @@ const CurrentRunIndex = ({runs, currentRun, runsCount}) => {
 CurrentRunIndex.propTypes = {
   runs: PropTypes.array,
   runsCount: PropTypes.number,
-  currentRun: PropTypes.object
+  currentRun: PropTypes.object,
 };
 
 const ConnectedCurrentRunIndex = connect(mapStateToProps)(CurrentRunIndex);

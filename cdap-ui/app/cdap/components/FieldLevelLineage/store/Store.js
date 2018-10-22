@@ -14,17 +14,10 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { combineReducers, createStore } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 
-export const TIME_OPTIONS = [
-  'CUSTOM',
-  'last7d',
-  'last14d',
-  'lastMonth',
-  'last6M',
-  'lastYear'
-];
+export const TIME_OPTIONS = ['CUSTOM', 'last7d', 'last14d', 'lastMonth', 'last6M', 'lastYear'];
 
 const Actions = {
   setFields: 'FLL_SET_FIELDS',
@@ -38,7 +31,7 @@ const Actions = {
   prevOperation: 'FLL_PREV_OPERATION',
   setTimeSelection: 'FLL_SET_TIME_SELECTION',
   setCustomTime: 'FLL_SET_CUSTOM_TIME',
-  reset: 'FLL_RESET'
+  reset: 'FLL_RESET',
 };
 
 const defaultInitialState = {
@@ -48,12 +41,12 @@ const defaultInitialState = {
   outgoing: [],
   activeField: null,
   search: '',
-  timeSelection: TIME_OPTIONS[1]
+  timeSelection: TIME_OPTIONS[1],
 };
 
 const customTimeInitialState = {
   start: null,
-  end: null
+  end: null,
 };
 
 const operationsInitialState = {
@@ -61,7 +54,7 @@ const operationsInitialState = {
   showOperations: false,
   activeIndex: 0,
   direction: null,
-  loading: false
+  loading: false,
 };
 
 const lineage = (state = defaultInitialState, action = defaultAction) => {
@@ -73,29 +66,29 @@ const lineage = (state = defaultInitialState, action = defaultAction) => {
         fields: action.payload.fields,
         incoming: state.search.length === 0 ? [] : state.incoming,
         outgoing: state.search.length === 0 ? [] : state.outgoing,
-        activeField: null
+        activeField: null,
       };
     case Actions.setLineageSummary:
       return {
         ...state,
         incoming: action.payload.incoming,
         outgoing: action.payload.outgoing,
-        activeField: action.payload.activeField
+        activeField: action.payload.activeField,
       };
     case Actions.closeSummary:
       return {
         ...state,
-        activeField: null
+        activeField: null,
       };
     case Actions.setSearch:
       return {
         ...state,
-        search: action.payload.search
+        search: action.payload.search,
       };
     case Actions.setTimeSelection:
       return {
         ...state,
-        timeSelection: action.payload.timeSelection
+        timeSelection: action.payload.timeSelection,
       };
     case Actions.reset:
       return defaultInitialState;
@@ -110,7 +103,7 @@ const customTime = (state = customTimeInitialState, action = defaultAction) => {
       return {
         ...state,
         start: action.payload.start,
-        end: action.payload.end
+        end: action.payload.end,
       };
     case Actions.reset:
       return customTimeInitialState;
@@ -125,7 +118,7 @@ const operations = (state = operationsInitialState, action = defaultAction) => {
       return {
         ...state,
         loading: true,
-        showOperations: true
+        showOperations: true,
       };
     case Actions.setOperations:
       return {
@@ -134,7 +127,7 @@ const operations = (state = operationsInitialState, action = defaultAction) => {
         direction: action.payload.direction,
         activeIndex: 0,
         showOperations: true,
-        loading: false
+        loading: false,
       };
     case Actions.setLineageSummary:
     case Actions.closeOperations:
@@ -142,17 +135,17 @@ const operations = (state = operationsInitialState, action = defaultAction) => {
         ...state,
         operations: [],
         direction: null,
-        showOperations: false
+        showOperations: false,
       };
     case Actions.nextOperation:
       return {
         ...state,
-        activeIndex: state.activeIndex + 1
+        activeIndex: state.activeIndex + 1,
       };
     case Actions.prevOperation:
       return {
         ...state,
-        activeIndex: state.activeIndex - 1
+        activeIndex: state.activeIndex - 1,
       };
     case Actions.reset:
       return defaultInitialState;
@@ -165,15 +158,15 @@ const Store = createStore(
   combineReducers({
     lineage,
     operations,
-    customTime
+    customTime,
   }),
   {
     lineage: defaultInitialState,
     operations: operationsInitialState,
-    customTime: customTimeInitialState
+    customTime: customTimeInitialState,
   },
   composeEnhancers('FieldLevelLineageStore')()
 );
 
 export default Store;
-export {Actions};
+export { Actions };

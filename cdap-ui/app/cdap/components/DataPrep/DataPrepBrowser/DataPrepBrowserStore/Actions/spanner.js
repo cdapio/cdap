@@ -14,28 +14,32 @@
  * the License.
  */
 
-import {setActiveBrowser, setError} from './commons';
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { setActiveBrowser, setError } from './commons';
+import DataPrepBrowserStore, {
+  Actions as BrowserStoreActions,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 const setSpannerAsActiveBrowser = (payload, getInstances = false) => {
-  let {spanner, activeBrowser} = DataPrepBrowserStore.getState();
+  let { spanner, activeBrowser } = DataPrepBrowserStore.getState();
 
   if (activeBrowser.name !== payload.name) {
     setActiveBrowser(payload);
   }
 
-  let {id: connectionId} = payload;
+  let { id: connectionId } = payload;
 
-  if (spanner.connectionId === connectionId) { return; }
+  if (spanner.connectionId === connectionId) {
+    return;
+  }
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_SPANNER_CONNECTION_ID,
     payload: {
-      connectionId
-    }
+      connectionId,
+    },
   });
 
   setSpannerLoading();
@@ -43,25 +47,27 @@ const setSpannerAsActiveBrowser = (payload, getInstances = false) => {
   let namespace = getCurrentNamespace();
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
 
-  MyDataPrepApi.getConnection(params)
-    .subscribe((res) => {
+  MyDataPrepApi.getConnection(params).subscribe(
+    (res) => {
       let info = objectQuery(res, 'values', 0);
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_SPANNER_CONNECTION_DETAILS,
         payload: {
           info,
-          connectionId
-        }
+          connectionId,
+        },
       });
       if (getInstances) {
         listSpannerInstances(connectionId);
       }
-    }, (err) => {
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const listSpannerInstances = (connectionId) => {
@@ -69,20 +75,22 @@ const listSpannerInstances = (connectionId) => {
   let namespace = getCurrentNamespace();
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
 
-  MyDataPrepApi.spannerGetInstances(params)
-    .subscribe((res) => {
+  MyDataPrepApi.spannerGetInstances(params).subscribe(
+    (res) => {
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_SPANNER_INSTANCE_LIST,
         payload: {
-          instanceList: res.values
-        }
+          instanceList: res.values,
+        },
       });
-    }, (err) => {
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const listSpannerDatabases = (connectionId, instanceId) => {
@@ -91,21 +99,23 @@ const listSpannerDatabases = (connectionId, instanceId) => {
   let params = {
     namespace,
     connectionId,
-    instanceId
+    instanceId,
   };
 
-  MyDataPrepApi.spannerGetDatabases(params)
-    .subscribe((res) => {
+  MyDataPrepApi.spannerGetDatabases(params).subscribe(
+    (res) => {
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_SPANNER_DATABASE_LIST,
         payload: {
           instanceId,
-          databaseList: res.values
-        }
+          databaseList: res.values,
+        },
       });
-    }, (err) => {
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const listSpannerTables = (connectionId, instanceId, databaseId) => {
@@ -118,23 +128,25 @@ const listSpannerTables = (connectionId, instanceId, databaseId) => {
     databaseId,
   };
 
-  MyDataPrepApi.spannerGetTables(params)
-    .subscribe((res) => {
+  MyDataPrepApi.spannerGetTables(params).subscribe(
+    (res) => {
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_SPANNER_TABLE_LIST,
         payload: {
           databaseId,
-          tableList: res.values
-        }
+          tableList: res.values,
+        },
       });
-    }, (err) => {
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const setSpannerLoading = () => {
   DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_SPANNER_LOADING
+    type: BrowserStoreActions.SET_SPANNER_LOADING,
   });
 };
 
@@ -143,5 +155,5 @@ export {
   listSpannerInstances,
   listSpannerDatabases,
   listSpannerTables,
-  setSpannerLoading
+  setSpannerLoading,
 };

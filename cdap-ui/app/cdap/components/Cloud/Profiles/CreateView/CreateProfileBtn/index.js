@@ -16,11 +16,11 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import BtnWithLoading from 'components/BtnWithLoading';
-import {isNilOrEmpty} from 'services/helpers';
+import { isNilOrEmpty } from 'services/helpers';
 
-function CreateProfileBtn({onClick, loading, disabled}) {
+function CreateProfileBtn({ onClick, loading, disabled }) {
   return (
     <BtnWithLoading
       className="btn-primary"
@@ -35,27 +35,21 @@ function CreateProfileBtn({onClick, loading, disabled}) {
 CreateProfileBtn.propTypes = {
   onClick: PropTypes.func,
   loading: PropTypes.bool,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
 };
 
 function getDisabledState(properties, profileName, profileDescription) {
-  let unfilledRequiredProperties = Object.keys(properties)
-  .filter(prop => (
-    properties[prop].required &&
-    isNilOrEmpty(properties[prop].value)
-  ));
-  return !(
-    profileName.length &&
-    profileDescription.length &&
-    !unfilledRequiredProperties.length
+  let unfilledRequiredProperties = Object.keys(properties).filter(
+    (prop) => properties[prop].required && isNilOrEmpty(properties[prop].value)
   );
+  return !(profileName.length && profileDescription.length && !unfilledRequiredProperties.length);
 }
 
 const mapStateToProps = (state, ownProps) => {
   return {
     disabled: ownProps.loading || getDisabledState(state.properties, state.name, state.description),
     loading: ownProps.loading,
-    onClick: ownProps.onClick
+    onClick: ownProps.onClick,
   };
 };
 

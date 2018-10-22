@@ -14,8 +14,8 @@
  * the License.
 */
 
-import {createStore} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 
 const DEFAULT_METRICS_STATE = {
   metrics: [],
@@ -30,7 +30,7 @@ const PipelineMetricsActions = {
   SET_METRICS: 'SET_METRICS',
   SET_LOGS_METRICS: 'SET_LOGS_METRICS',
   SET_ACTIVE_TAB: 'SET_ACTIVE_TAB',
-  RESET: 'RESET'
+  RESET: 'RESET',
 };
 
 const metrics = (state = DEFAULT_METRICS_STATE, action = defaultAction) => {
@@ -38,18 +38,18 @@ const metrics = (state = DEFAULT_METRICS_STATE, action = defaultAction) => {
     case PipelineMetricsActions.SET_METRICS:
       return {
         ...state,
-        metrics: action.payload.metrics
+        metrics: action.payload.metrics,
       };
     case PipelineMetricsActions.SET_LOGS_METRICS:
       return {
         ...state,
-        logsMetrics: action.payload.logsMetrics
+        logsMetrics: action.payload.logsMetrics,
       };
     case PipelineMetricsActions.SET_ACTIVE_TAB:
       return {
         ...state,
         metricsTabActive: action.payload.metricsTabActive,
-        portsToShow: action.payload.portsToShow ? [action.payload.portsToShow] : state.portsToShow
+        portsToShow: action.payload.portsToShow ? [action.payload.portsToShow] : state.portsToShow,
       };
     case PipelineMetricsActions.RESET:
       return DEFAULT_METRICS_STATE;
@@ -63,4 +63,4 @@ const PipelineMetricsStore = createStore(
 );
 
 export default PipelineMetricsStore;
-export {PipelineMetricsActions};
+export { PipelineMetricsActions };

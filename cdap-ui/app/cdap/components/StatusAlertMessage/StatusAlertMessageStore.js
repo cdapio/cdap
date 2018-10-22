@@ -14,11 +14,11 @@
  * the License.
 */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 
 const defaultViewState = false;
@@ -34,9 +34,9 @@ const view = (state = defaultViewState, action = defaultAction) => {
 
 const StatusAlertMessageStore = createStore(
   combineReducers({
-    view
+    view,
   }),
-  {view: defaultViewState},
+  { view: defaultViewState },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
 

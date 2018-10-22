@@ -16,7 +16,7 @@
 
 const InformationalActions = {
   setSteps: 'SET-INFORMATION-STEPS',
-  onReset: 'RESET-STORE'
+  onReset: 'RESET-STORE',
 };
 
 export default InformationalActions;

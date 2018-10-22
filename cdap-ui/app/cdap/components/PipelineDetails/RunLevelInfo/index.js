@@ -15,7 +15,7 @@
 */
 
 import React from 'react';
-import {Provider, connect} from 'react-redux';
+import { Provider, connect } from 'react-redux';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import CurrentRunIndex from 'components/PipelineDetails/RunLevelInfo/CurrentRunIndex';
 import RunConfigs from 'components/PipelineDetails/RunLevelInfo/RunConfigs';
@@ -26,7 +26,7 @@ import RunDuration from 'components/PipelineDetails/RunLevelInfo/RunDuration';
 import RunNumWarnings from 'components/PipelineDetails/RunLevelInfo/RunNumWarnings';
 import RunNumErrors from 'components/PipelineDetails/RunLevelInfo/RunNumErrors';
 import RunComputeProfile from 'components/PipelineDetails/RunLevelInfo/RunComputeProfile';
-import {GLOBALS} from 'services/global-constants';
+import { GLOBALS } from 'services/global-constants';
 
 require('./RunLevelInfo.scss');
 
@@ -35,7 +35,7 @@ const mapStateToProps = (state) => {
     currentRun: state.currentRun,
     runs: state.runs,
     isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
-    pipelineName: state.name
+    pipelineName: state.name,
   };
 };
 

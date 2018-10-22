@@ -31,7 +31,8 @@ var KeyValuePairs = require('../cdap/components/KeyValuePairs').default;
 var KeyValueStore = require('../cdap/components/KeyValuePairs/KeyValueStore').default;
 var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
 var PipelineSummary = require('../cdap/components/PipelineSummary').default;
-var PipelineNodeMetricsGraph = require('../cdap/components/PipelineNodeGraphs/PipelineNodeMetricsGraph').default;
+var PipelineNodeMetricsGraph = require('../cdap/components/PipelineNodeGraphs/PipelineNodeMetricsGraph')
+  .default;
 var CDAPHelpers = require('../cdap/services/helpers');
 var RulesEngineHome = require('../cdap/components/RulesEngineHome').default;
 var Mousetrap = require('mousetrap');
@@ -39,7 +40,8 @@ var StatusFactory = require('../cdap/services/StatusFactory').default;
 var LoadingIndicator = require('../cdap/components/LoadingIndicator').default;
 var StatusAlertMessage = require('../cdap/components/StatusAlertMessage').default;
 var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSidebars').default;
-var TriggeredPipelineStore = require('../cdap/components/TriggeredPipelines/store/TriggeredPipelineStore').default;
+var TriggeredPipelineStore = require('../cdap/components/TriggeredPipelines/store/TriggeredPipelineStore')
+  .default;
 var PipelineErrorFactory = require('../cdap/services/PipelineErrorFactory');
 var GLOBALS = require('../cdap/services/global-constants').GLOBALS;
 var PROGRAM_STATUSES = require('../cdap/services/global-constants').PROGRAM_STATUSES;
@@ -47,11 +49,14 @@ var HYDRATOR_DEFAULT_VALUES = require('../cdap/services/global-constants').HYDRA
 var StatusMapper = require('../cdap/services/StatusMapper').default;
 var PipelineDetailStore = require('../cdap/components/PipelineDetails/store').default;
 var PipelineDetailActionCreator = require('../cdap/components/PipelineDetails/store/ActionCreator');
-var PipelineDetailsTopPanel = require('../cdap/components/PipelineDetails/PipelineDetailsTopPanel').default;
+var PipelineDetailsTopPanel = require('../cdap/components/PipelineDetails/PipelineDetailsTopPanel')
+  .default;
 var PipelineScheduler = require('../cdap/components/PipelineScheduler').default;
 var AvailablePluginsStore = require('../cdap/services/AvailablePluginsStore').default;
-var AVAILABLE_PLUGINS_ACTIONS = require('../cdap/services/AvailablePluginsStore').AVAILABLE_PLUGINS_ACTIONS;
-var PipelineDetailsRunLevelInfo = require('../cdap/components/PipelineDetails/RunLevelInfo').default;
+var AVAILABLE_PLUGINS_ACTIONS = require('../cdap/services/AvailablePluginsStore')
+  .AVAILABLE_PLUGINS_ACTIONS;
+var PipelineDetailsRunLevelInfo = require('../cdap/components/PipelineDetails/RunLevelInfo')
+  .default;
 var MetricsQueryHelper = require('../cdap/services/MetricsQueryHelper').default;
 var PipelineMetricsStore = require('../cdap/services/PipelineMetricsStore').default;
 var PipelineMetricsActionCreator = require('../cdap/services/PipelineMetricsStore/ActionCreator');

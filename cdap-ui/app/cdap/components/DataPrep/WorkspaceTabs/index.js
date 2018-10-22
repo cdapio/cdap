@@ -20,10 +20,10 @@ import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
-import {getWorkspaceList} from 'components/DataPrep/store/DataPrepActionCreator';
+import { getWorkspaceList } from 'components/DataPrep/store/DataPrepActionCreator';
 import WorkspaceTab from 'components/DataPrep/WorkspaceTabs/WorkspaceTab';
 import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import ConfirmationModal from 'components/ConfirmationModal';
@@ -44,7 +44,11 @@ export default class WorkspaceTabs extends Component {
 
     let initialState = DataPrepStore.getState();
 
-    let initialSplit = this.splitTabs(initialState.workspaces.list, INITIAL_MAX_TABS, initialState.dataprep.workspaceId);
+    let initialSplit = this.splitTabs(
+      initialState.workspaces.list,
+      INITIAL_MAX_TABS,
+      initialState.dataprep.workspaceId
+    );
 
     this.state = {
       activeWorkspace: initialState.dataprep.workspaceId,
@@ -53,7 +57,7 @@ export default class WorkspaceTabs extends Component {
       deleteWorkspace: null,
       displayTabs: initialSplit.displayTabs,
       dropdownTabs: initialSplit.dropdownTabs,
-      sidePanelToggle: this.props.sidePanelToggle
+      sidePanelToggle: this.props.sidePanelToggle,
     };
 
     this.namespace = NamespaceStore.getState().selectedNamespace;
@@ -68,7 +72,7 @@ export default class WorkspaceTabs extends Component {
 
       this.setState({
         activeWorkspace: state.dataprep.workspaceId,
-        workspaceList: state.workspaces.list
+        workspaceList: state.workspaces.list,
       });
       this.calculateMaxTabs();
     });
@@ -129,7 +133,7 @@ export default class WorkspaceTabs extends Component {
 
     return {
       displayTabs,
-      dropdownTabs
+      dropdownTabs,
     };
   }
 
@@ -139,12 +143,12 @@ export default class WorkspaceTabs extends Component {
 
     let maxTabs = Math.floor((boundingBox.width - 200) / WORKSPACE_WIDTH);
 
-    let {displayTabs, dropdownTabs} = this.splitTabs(this.state.workspaceList, maxTabs);
+    let { displayTabs, dropdownTabs } = this.splitTabs(this.state.workspaceList, maxTabs);
 
     this.setState({
       maxTabs,
       displayTabs,
-      dropdownTabs
+      dropdownTabs,
     });
   }
 
@@ -157,62 +161,57 @@ export default class WorkspaceTabs extends Component {
 
     MyDataPrepApi.delete({
       namespace,
-      workspaceId
-    }).subscribe(() => {
-      if (this.props.onWorkspaceDelete) {
-        this.props.onWorkspaceDelete();
+      workspaceId,
+    }).subscribe(
+      () => {
+        if (this.props.onWorkspaceDelete) {
+          this.props.onWorkspaceDelete();
+        }
+
+        this.setState({ deleteWorkspace: null });
+        this.getWorkspaceList();
+      },
+      (err) => {
+        console.log('Error Deleting', err);
       }
-
-      this.setState({ deleteWorkspace: null });
-      this.getWorkspaceList();
-
-    }, (err) => {
-      console.log("Error Deleting", err);
-    });
+    );
   }
 
   toggleDeleteWorkspace = (workspace) => {
-    this.setState({deleteWorkspace: workspace});
-  }
+    this.setState({ deleteWorkspace: workspace });
+  };
 
   renderDropdown() {
-    if (this.state.workspaceList.length <= this.state.maxTabs) { return null; }
+    if (this.state.workspaceList.length <= this.state.maxTabs) {
+      return null;
+    }
 
     let list = this.state.dropdownTabs;
 
     return (
       <div className="workspace-tab workspace-dropdown text-xs-center">
-        <UncontrolledPopover
-          popoverClassName="workspace-list-popover"
-        >
-          {
-            list.map((workspace) => {
-              return (
-                <div
-                  key={workspace.id}
-                  className="workspace-list-dropdown-item"
+        <UncontrolledPopover popoverClassName="workspace-list-popover">
+          {list.map((workspace) => {
+            return (
+              <div key={workspace.id} className="workspace-list-dropdown-item">
+                <Link
+                  to={`/ns/${this.namespace}/dataprep/${workspace.id}`}
+                  className={classnames('workspace-link', {
+                    active: this.state.activeWorkspace === workspace.id,
+                  })}
                 >
-                  <Link
-                    to={`/ns/${this.namespace}/dataprep/${workspace.id}`}
-                    className={classnames('workspace-link', {
-                      active: this.state.activeWorkspace === workspace.id
-                    })}
-                  >
-                    {workspace.name}
-                  </Link>
+                  {workspace.name}
+                </Link>
 
-                  <span
-                    className="fa float-xs-right"
-                    onClick={this.toggleDeleteWorkspace.bind(this, workspace)}
-                  >
-                    <IconSVG
-                      name="icon-close"
-                    />
-                  </span>
-                </div>
-              );
-            })
-          }
+                <span
+                  className="fa float-xs-right"
+                  onClick={this.toggleDeleteWorkspace.bind(this, workspace)}
+                >
+                  <IconSVG name="icon-close" />
+                </span>
+              </div>
+            );
+          })}
         </UncontrolledPopover>
       </div>
     );
@@ -223,18 +222,16 @@ export default class WorkspaceTabs extends Component {
 
     return (
       <div className="workspace-tabs-list">
-        {
-          displayWorkspace.map((workspace) => {
-            return (
-              <WorkspaceTab
-                workspace={workspace}
-                active={this.state.activeWorkspace === workspace.id}
-                onDelete={this.toggleDeleteWorkspace.bind(this, workspace)}
-                key={workspace.id}
-              />
-            );
-          })
-        }
+        {displayWorkspace.map((workspace) => {
+          return (
+            <WorkspaceTab
+              workspace={workspace}
+              active={this.state.activeWorkspace === workspace.id}
+              onDelete={this.toggleDeleteWorkspace.bind(this, workspace)}
+              key={workspace.id}
+            />
+          );
+        })}
 
         {this.renderDropdown()}
       </div>
@@ -242,10 +239,16 @@ export default class WorkspaceTabs extends Component {
   }
 
   renderWorkspaceDeleteConfirmation() {
-    if (!this.state.deleteWorkspace) { return null; }
+    if (!this.state.deleteWorkspace) {
+      return null;
+    }
     const ConfirmationElement = (
       <React.Fragment>
-        <h5>{T.translate(`${PREFIX}.DeleteModal.mainMessage`, {workspace: this.state.deleteWorkspace.name})}</h5>
+        <h5>
+          {T.translate(`${PREFIX}.DeleteModal.mainMessage`, {
+            workspace: this.state.deleteWorkspace.name,
+          })}
+        </h5>
         <div>{T.translate(`${PREFIX}.DeleteModal.helperMessage`)}</div>
       </React.Fragment>
     );
@@ -278,5 +281,5 @@ export default class WorkspaceTabs extends Component {
 WorkspaceTabs.propTypes = {
   workspaceId: PropTypes.string,
   onWorkspaceDelete: PropTypes.func,
-  sidePanelToggle: PropTypes.bool
+  sidePanelToggle: PropTypes.bool,
 };

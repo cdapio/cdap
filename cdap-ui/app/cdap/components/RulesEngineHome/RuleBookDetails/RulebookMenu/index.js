@@ -17,12 +17,16 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {UncontrolledDropdown} from 'components/UncontrolledComponents';
+import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
-import {setActiveRulebook, getRuleBooks, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import {
+  setActiveRulebook,
+  getRuleBooks,
+  setError,
+} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import AddRulesEngineToPipelineModal from 'components/RulesEngineHome/RuleBookDetails/RulebookMenu/AddRulesEngineToPipelineModal';
 import T from 'i18n-react';
 
@@ -33,60 +37,54 @@ export default class RulebookMenu extends Component {
   static propTypes = {
     mode: PropTypes.string,
     rulebookid: PropTypes.string,
-    embedded: PropTypes.bool
+    embedded: PropTypes.bool,
   };
 
   state = {
     openAddToPipelineModal: false,
     downloadFileName: false,
-    anchorLink: false
+    anchorLink: false,
   };
 
   deleteWorkbook = () => {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
-    MyRulesEngine
-      .deleteRulebook({
-        namespace,
-        rulebookid: this.props.rulebookid
-      })
-      .subscribe(
-        () => {
-          setActiveRulebook();
-          getRuleBooks();
-        },
-        setError
-      );
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
+    MyRulesEngine.deleteRulebook({
+      namespace,
+      rulebookid: this.props.rulebookid,
+    }).subscribe(() => {
+      setActiveRulebook();
+      getRuleBooks();
+    }, setError);
   };
 
   downloadRulebook = () => {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
-    MyRulesEngine
-      .getRulebook({
-        namespace,
-        rulebookid: this.props.rulebookid
-      })
-      .subscribe(
-        (res) => {
-          let rulebook = res.values[0];
-          var blob = new Blob([rulebook]);
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
+    MyRulesEngine.getRulebook({
+      namespace,
+      rulebookid: this.props.rulebookid,
+    }).subscribe((res) => {
+      let rulebook = res.values[0];
+      var blob = new Blob([rulebook]);
+      this.setState(
+        {
+          downloadUrl: URL.createObjectURL(blob),
+          downloadFileName: `${this.props.rulebookid}.rbk`,
+        },
+        () => {
+          this.anchorLink.click();
           this.setState({
-            downloadUrl: URL.createObjectURL(blob),
-            downloadFileName: `${this.props.rulebookid}.rbk`
-          }, () => {
-            this.anchorLink.click();
-            this.setState({
-              downloadFileName: false,
-              downloadUrl: false,
-              anchorLink: false
-            });
+            downloadFileName: false,
+            downloadUrl: false,
+            anchorLink: false,
           });
         }
       );
+    });
   };
 
   toggleRulesEngineToPipelineModal = () => {
     this.setState({
-      openAddToPipelineModal: !this.state.openAddToPipelineModal
+      openAddToPipelineModal: !this.state.openAddToPipelineModal,
     });
   };
 
@@ -94,72 +92,55 @@ export default class RulebookMenu extends Component {
     {
       label: T.translate(`${PREFIX}.download`),
       onClick: this.downloadRulebook,
-      iconName: 'icon-download'
+      iconName: 'icon-download',
     },
     {
-      label: 'divider'
+      label: 'divider',
     },
     {
       label: T.translate(`${PREFIX}.delete`),
       onClick: this.deleteWorkbook,
-      iconName: 'icon-trash'
-    }
+      iconName: 'icon-trash',
+    },
   ];
 
   render() {
     const renderMenuItem = (menu) => {
-      let {label, iconName} = menu;
+      let { label, iconName } = menu;
       return (
         <div>
-          {
-            iconName ?
-              <IconSVG name={iconName} />
-            :
-              null
-          }
+          {iconName ? <IconSVG name={iconName} /> : null}
           <span>{label}</span>
         </div>
       );
     };
     let menuItems = this.menu;
     if (this.props.embedded) {
-      menuItems = menuItems.filter(item => !item.skipInPipelines);
+      menuItems = menuItems.filter((item) => !item.skipInPipelines);
     }
     return (
       <div className="rule-book-menu">
-        {
-          this.props.embedded ?
-            null
-          :
-            <button
-              className="btn btn-primary"
-              onClick={this.toggleRulesEngineToPipelineModal}
-            >
-              {T.translate(`${PREFIX}.createPipeline`)}
-            </button>
-        }
+        {this.props.embedded ? null : (
+          <button className="btn btn-primary" onClick={this.toggleRulesEngineToPipelineModal}>
+            {T.translate(`${PREFIX}.createPipeline`)}
+          </button>
+        )}
         <UncontrolledDropdown>
           <DropdownToggle>
             <IconSVG name="icon-bars" />
             <IconSVG name="icon-caret-down" />
           </DropdownToggle>
           <DropdownMenu right>
-            {
-              menuItems.map((menu, i) => {
-                if (menu.label === 'divider') {
-                  return <hr key={i} />;
-                }
-                return (
-                  <DropdownItem
-                    key={i}
-                    title={menu.label}
-                    onClick={menu.onClick}
-                  >
-                    {renderMenuItem(menu)}
-                  </DropdownItem>
-                );
-              })
-            }
+            {menuItems.map((menu, i) => {
+              if (menu.label === 'divider') {
+                return <hr key={i} />;
+              }
+              return (
+                <DropdownItem key={i} title={menu.label} onClick={menu.onClick}>
+                  {renderMenuItem(menu)}
+                </DropdownItem>
+              );
+            })}
           </DropdownMenu>
         </UncontrolledDropdown>
         <AddRulesEngineToPipelineModal
@@ -167,17 +148,14 @@ export default class RulebookMenu extends Component {
           onClose={this.toggleRulesEngineToPipelineModal}
           rulebookid={this.props.rulebookid}
         />
-        {
-          this.state.downloadUrl ?
-            <a
-              href={this.state.downloadUrl}
-              download={this.state.downloadFileName}
-              id="download-anchor-link"
-              ref={(ref) => this.anchorLink = ref}
-            ></a>
-          :
-            null
-        }
+        {this.state.downloadUrl ? (
+          <a
+            href={this.state.downloadUrl}
+            download={this.state.downloadFileName}
+            id="download-anchor-link"
+            ref={(ref) => (this.anchorLink = ref)}
+          />
+        ) : null}
       </div>
     );
   }

@@ -18,45 +18,38 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import EntityCard from 'components/EntityCard';
-import {parseMetadata} from 'services/metadata-parser';
+import { parseMetadata } from 'services/metadata-parser';
 import uuidV4 from 'uuid/v4';
 import EntityType from 'services/metadata-parser/EntityType';
 require('./ProgramCards.scss');
 
-export default function ProgramCards({programs}) {
+export default function ProgramCards({ programs }) {
   return (
     <div className="program-cards">
-      {
-        programs
-          .map( program => {
-            let entity = {
-              entityId: {
-                application: program.app,
-                program: program.name,
-                type: program.type,
-                entity: EntityType.program
-              },
-              metadata: {
-                SYSTEM: {}
-              }
-            };
-            entity = parseMetadata(entity);
-            let uniqueId = uuidV4();
-            entity.uniqueId = uniqueId;
-            program.uniqueId = uniqueId;
+      {programs.map((program) => {
+        let entity = {
+          entityId: {
+            application: program.app,
+            program: program.name,
+            type: program.type,
+            entity: EntityType.program,
+          },
+          metadata: {
+            SYSTEM: {},
+          },
+        };
+        entity = parseMetadata(entity);
+        let uniqueId = uuidV4();
+        entity.uniqueId = uniqueId;
+        program.uniqueId = uniqueId;
 
-            return (
-              <EntityCard
-                className="entity-card-container"
-                entity={entity}
-                key={program.uniqueId}
-              />
-            );
-          })
-      }
+        return (
+          <EntityCard className="entity-card-container" entity={entity} key={program.uniqueId} />
+        );
+      })}
     </div>
   );
 }
 ProgramCards.propTypes = {
-  programs: PropTypes.arrayOf(PropTypes.object)
+  programs: PropTypes.arrayOf(PropTypes.object),
 };

@@ -16,44 +16,34 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Link} from 'react-router-dom';
-import {getTimeQueryParams} from 'components/FieldLevelLineage/store/ActionCreator';
+import { Link } from 'react-router-dom';
+import { getTimeQueryParams } from 'components/FieldLevelLineage/store/ActionCreator';
 
-export default function SummaryRow({entity, index}) {
-  const linkPath = `/ns/${entity.dataset.namespace}/datasets/${entity.dataset.dataset}/fields?${getTimeQueryParams()}`;
+export default function SummaryRow({ entity, index }) {
+  const linkPath = `/ns/${entity.dataset.namespace}/datasets/${
+    entity.dataset.dataset
+  }/fields?${getTimeQueryParams()}`;
 
   return (
     <div className="summary-row lineage-column">
-      <div className="index">
-        {index + 1}
-      </div>
+      <div className="index">{index + 1}</div>
 
       <div className="dataset-name truncate">
-        <Link
-          to={linkPath}
-          className="field-link"
-          title={entity.dataset.dataset}
-        >
+        <Link to={linkPath} className="field-link" title={entity.dataset.dataset}>
           {entity.dataset.dataset}
         </Link>
       </div>
 
       <div className="field-name">
-        {
-          entity.fields.map((field, i) => {
-            return (
-              <div className="field-row truncate" key={i}>
-                <Link
-                  to={`${linkPath}&field=${field}`}
-                  className="field-link"
-                  title={field}
-                >
-                  {field}
-                </Link>
-              </div>
-            );
-          })
-        }
+        {entity.fields.map((field, i) => {
+          return (
+            <div className="field-row truncate" key={i}>
+              <Link to={`${linkPath}&field=${field}`} className="field-link" title={field}>
+                {field}
+              </Link>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -61,5 +51,5 @@ export default function SummaryRow({entity, index}) {
 
 SummaryRow.propTypes = {
   entity: PropTypes.object,
-  index: PropTypes.number
+  index: PropTypes.number,
 };

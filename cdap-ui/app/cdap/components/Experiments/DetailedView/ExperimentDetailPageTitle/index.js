@@ -18,29 +18,29 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
-import {connect} from 'react-redux';
-import {Theme} from 'services/ThemeHelper';
+import { connect } from 'react-redux';
+import { Theme } from 'services/ThemeHelper';
 const EXPERIMENTS_I18N_PREFIX = 'features.Experiments.DetailedView';
 
-function ExperimentDetailPageTitle ({experiment_name}) {
+function ExperimentDetailPageTitle({ experiment_name }) {
   const featureName = Theme.featureNames.analytics;
   return (
     <Helmet
       title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`, {
         experiment_name,
         productName: Theme.productName,
-        featureName
+        featureName,
       })}
     />
   );
 }
 
 ExperimentDetailPageTitle.propTypes = {
-  experiment_name: PropTypes.string
+  experiment_name: PropTypes.string,
 };
 
 const mapStateToProps = (state) => ({
-  experiment_name: state.name
+  experiment_name: state.name,
 });
 
 const ConnectedExperimentDetailPageTitle = connect(mapStateToProps)(ExperimentDetailPageTitle);

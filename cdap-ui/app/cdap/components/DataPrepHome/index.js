@@ -23,18 +23,18 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import MyDataPrepApi from 'api/dataprep';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {Redirect} from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Redirect } from 'react-router-dom';
 import orderBy from 'lodash/orderBy';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import LoadingSVG from 'components/LoadingSVG';
 import DataPrepConnections from 'components/DataPrepConnections';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import isNil from 'lodash/isNil';
 import ee from 'event-emitter';
 import Version from 'services/VersionRange/Version';
-import {Theme} from 'services/ThemeHelper';
-import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
+import { Theme } from 'services/ThemeHelper';
+import { setWorkspace } from 'components/DataPrep/store/DataPrepActionCreator';
 
 require('./DataPrepHome.scss');
 /**
@@ -51,8 +51,10 @@ export default class DataPrepHome extends Component {
       backendDown: false,
       backendCheck: true,
       isMinVersionMet: false,
-      toggleConnectionsViewFlag: isNil(this.props.workspaceId) && this.props.singleWorkspaceMode ? true : false,
-      currentWorkspaceId: objectQuery(this.props, 'match', 'params', 'workspaceId') || this.props.workspaceId || ''
+      toggleConnectionsViewFlag:
+        isNil(this.props.workspaceId) && this.props.singleWorkspaceMode ? true : false,
+      currentWorkspaceId:
+        objectQuery(this.props, 'match', 'params', 'workspaceId') || this.props.workspaceId || '',
     };
 
     this.namespace = getCurrentNamespace();
@@ -69,7 +71,9 @@ export default class DataPrepHome extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.state.backendCheck) { return; }
+    if (this.state.backendCheck) {
+      return;
+    }
 
     this.setState({
       rerouteTo: null,
@@ -82,134 +86,147 @@ export default class DataPrepHome extends Component {
     let namespace = getCurrentNamespace();
     MyDataPrepApi.ping({ namespace })
       .combineLatest(MyDataPrepApi.getApp({ namespace }))
-      .subscribe((res) => {
-        const appSpec = res[1];
+      .subscribe(
+        (res) => {
+          const appSpec = res[1];
 
-        let minimumVersion = new Version(MIN_DATAPREP_VERSION);
+          let minimumVersion = new Version(MIN_DATAPREP_VERSION);
 
-        if (minimumVersion.compareTo(new Version(appSpec.artifactVersion)) > 0) {
-          console.log('dataprep minimum version not met');
+          if (minimumVersion.compareTo(new Version(appSpec.artifactVersion)) > 0) {
+            console.log('dataprep minimum version not met');
+
+            this.setState({
+              backendCheck: false,
+              backendDown: true,
+            });
+
+            return;
+          }
+
+          this.setState({
+            isMinVersionMet: true,
+            backendCheck: false,
+          });
+
+          this.checkWorkspaceId(this.props);
+        },
+        (err) => {
+          if (err.statusCode === 503) {
+            console.log('backend not started');
+
+            this.setState({
+              backendCheck: false,
+              backendDown: true,
+            });
+
+            return;
+          }
 
           this.setState({
             backendCheck: false,
-            backendDown: true
+            error: true,
           });
-
-          return;
         }
-
-        this.setState({
-          isMinVersionMet: true,
-          backendCheck: false
-        });
-
-        this.checkWorkspaceId(this.props);
-      }, (err) => {
-        if (err.statusCode === 503) {
-          console.log('backend not started');
-
-          this.setState({
-            backendCheck: false,
-            backendDown: true
-          });
-
-          return;
-        }
-
-        this.setState({
-          backendCheck: false,
-          error: true
-        });
-      });
+      );
   }
 
   toggleConnectionsView() {
     this.setState({
-      toggleConnectionsViewFlag: !this.state.toggleConnectionsViewFlag
+      toggleConnectionsViewFlag: !this.state.toggleConnectionsViewFlag,
     });
   }
 
   onWorkspaceCreate(workspaceId) {
     this.setState({
       currentWorkspaceId: workspaceId,
-      toggleConnectionsViewFlag: !this.state.toggleConnectionsViewFlag
+      toggleConnectionsViewFlag: !this.state.toggleConnectionsViewFlag,
     });
 
     this.eventEmitter.emit('DATAPREP_CLOSE_SIDEPANEL');
   }
 
   updateWorkspaceListRetry(namespace) {
-    MyDataPrepApi.getWorkspaceList({ namespace })
-      .subscribe(
-        (res) => {
-          if (res.values.length === 0) {
-            this.setState({
-              isEmpty: true,
-              toggleConnectionsViewFlag: true,
-              backendDown: false,
-              backendCheck: false
-            });
-            DataPrepStore.dispatch({
-              type: DataPrepActions.disableLoading
-            });
-            DataPrepStore.dispatch({
-              type: DataPrepActions.setWorkspaceList,
-              payload: {
-                list: []
-              }
-            });
-
-            return;
-          }
-          let sortedWorkspace = orderBy(res.values, [(workspace) => workspace.name.toLowerCase()], ['asc']);
+    MyDataPrepApi.getWorkspaceList({ namespace }).subscribe(
+      (res) => {
+        if (res.values.length === 0) {
+          this.setState({
+            isEmpty: true,
+            toggleConnectionsViewFlag: true,
+            backendDown: false,
+            backendCheck: false,
+          });
+          DataPrepStore.dispatch({
+            type: DataPrepActions.disableLoading,
+          });
           DataPrepStore.dispatch({
             type: DataPrepActions.setWorkspaceList,
             payload: {
-              list: sortedWorkspace
-            }
+              list: [],
+            },
           });
 
-          let isCurrentWorkspaceIdValid = sortedWorkspace.find(ws => ws.id === this.props.match.params.workspaceId);
-          if (this.props.match.params.workspaceId && !isCurrentWorkspaceIdValid) {
-            let url = this.props.match.url.slice(0, this.props.match.url.indexOf(this.props.match.params.workspaceId));
-            this.props.history.replace(url);
-          } else {
-            setWorkspace(sortedWorkspace[0].id).subscribe();
-          }
+          return;
+        }
+        let sortedWorkspace = orderBy(
+          res.values,
+          [(workspace) => workspace.name.toLowerCase()],
+          ['asc']
+        );
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setWorkspaceList,
+          payload: {
+            list: sortedWorkspace,
+          },
+        });
+
+        let isCurrentWorkspaceIdValid = sortedWorkspace.find(
+          (ws) => ws.id === this.props.match.params.workspaceId
+        );
+        if (this.props.match.params.workspaceId && !isCurrentWorkspaceIdValid) {
+          let url = this.props.match.url.slice(
+            0,
+            this.props.match.url.indexOf(this.props.match.params.workspaceId)
+          );
+          this.props.history.replace(url);
+        } else {
+          setWorkspace(sortedWorkspace[0].id).subscribe();
+        }
+        this.setState({
+          rerouteTo: sortedWorkspace[0].id,
+          backendDown: false,
+          backendCheck: false,
+          currentWorkspaceId: sortedWorkspace[0].id,
+        });
+        DataPrepStore.dispatch({
+          type: DataPrepActions.disableLoading,
+        });
+
+        this.fetching = false;
+      },
+      (err) => {
+        if (err.statusCode === 503) {
+          return;
+        }
+
+        if (this.workspaceListRetries < 3) {
+          this.workspaceListRetries += 1;
+          this.updateWorkspaceListRetry(namespace);
+        } else {
           this.setState({
-            rerouteTo: sortedWorkspace[0].id,
             backendDown: false,
             backendCheck: false,
-            currentWorkspaceId: sortedWorkspace[0].id
           });
           DataPrepStore.dispatch({
-            type: DataPrepActions.disableLoading
+            type: DataPrepActions.disableLoading,
           });
-
-          this.fetching = false;
-        },
-        (err) => {
-          if (err.statusCode === 503) { return; }
-
-          if (this.workspaceListRetries < 3) {
-            this.workspaceListRetries += 1;
-            this.updateWorkspaceListRetry(namespace);
-          } else {
-            this.setState({
-              backendDown: false,
-              backendCheck: false
-            });
-            DataPrepStore.dispatch({
-              type: DataPrepActions.disableLoading
-            });
-            DataPrepStore.dispatch({
-              type: DataPrepActions.setDataError,
-              payload: {
-                errorMessage: true
-              }
-            });
-          }
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setDataError,
+            payload: {
+              errorMessage: true,
+            },
+          });
         }
+      }
     );
   }
 
@@ -218,13 +235,15 @@ export default class DataPrepHome extends Component {
 
     this.workspaceListRetries = 0;
     DataPrepStore.dispatch({
-      type: DataPrepActions.reset
+      type: DataPrepActions.reset,
     });
     this.updateWorkspaceListRetry(namespace);
   }
 
   checkWorkspaceId(props) {
-    if (this.fetching || !props.match) { return; }
+    if (this.fetching || !props.match) {
+      return;
+    }
 
     this.fetching = true;
 
@@ -239,7 +258,7 @@ export default class DataPrepHome extends Component {
       backendDown: false,
       backendCheck: false,
       error: null,
-      currentWorkspaceId: props.match.params.workspaceId
+      currentWorkspaceId: props.match.params.workspaceId,
     });
 
     this.fetching = false;
@@ -249,7 +268,7 @@ export default class DataPrepHome extends Component {
     this.setState({
       backendCheck: false,
       backendDown: false,
-      isMinVersionMet: true
+      isMinVersionMet: true,
     });
     this.fetching = false;
     this.checkWorkspaceId(this.props);
@@ -257,32 +276,26 @@ export default class DataPrepHome extends Component {
 
   renderContents() {
     let workspaceId = this.state.currentWorkspaceId;
-    let {enableRouting = false, ...attributes} = this.props;
+    let { enableRouting = false, ...attributes } = this.props;
     return (
       <div className="dataprephome-wrapper">
-        {
-          this.state.toggleConnectionsViewFlag ?
-            <DataPrepConnections
-              enableRouting={enableRouting}
-              onWorkspaceCreate={enableRouting ? null : this.onWorkspaceCreate}
-              singleWorkspaceMode={this.props.singleWorkspaceMode}
-              {...attributes}
-            />
-          :
-            null
-        }
-        {
-          !workspaceId && this.props.singleWorkspaceMode ?
-            null
-          :
-            <DataPrep
-              workspaceId={workspaceId}
-              onConnectionsToggle={this.toggleConnectionsView}
-              onWorkspaceDelete={this.props.singleWorkspaceMode ? null : this.updateWorkspaceList}
-              onSubmit={this.props.onSubmit}
-              singleWorkspaceMode={this.props.singleWorkspaceMode}
-            />
-        }
+        {this.state.toggleConnectionsViewFlag ? (
+          <DataPrepConnections
+            enableRouting={enableRouting}
+            onWorkspaceCreate={enableRouting ? null : this.onWorkspaceCreate}
+            singleWorkspaceMode={this.props.singleWorkspaceMode}
+            {...attributes}
+          />
+        ) : null}
+        {!workspaceId && this.props.singleWorkspaceMode ? null : (
+          <DataPrep
+            workspaceId={workspaceId}
+            onConnectionsToggle={this.toggleConnectionsView}
+            onWorkspaceDelete={this.props.singleWorkspaceMode ? null : this.updateWorkspaceList}
+            onSubmit={this.props.onSubmit}
+            singleWorkspaceMode={this.props.singleWorkspaceMode}
+          />
+        )}
       </div>
     );
   }
@@ -296,7 +309,7 @@ export default class DataPrepHome extends Component {
       />
     );
     const renderPageTitle = () => {
-      return !this.props.singleWorkspaceMode ?  pageTitle : null;
+      return !this.props.singleWorkspaceMode ? pageTitle : null;
     };
 
     if (this.state.backendCheck) {
@@ -312,37 +325,30 @@ export default class DataPrepHome extends Component {
       return (
         <div>
           {renderPageTitle()}
-          <DataPrepServiceControl
-            onServiceStart={this.onServiceStart}
-          />
+          <DataPrepServiceControl onServiceStart={this.onServiceStart} />
         </div>
       );
     }
 
     if (!this.props.singleWorkspaceMode && this.state.isEmpty) {
-      return (
-        <Redirect to={`/ns/${this.namespace}/connections`} />
-      );
+      return <Redirect to={`/ns/${this.namespace}/connections`} />;
     }
 
     return (
       <div>
         {renderPageTitle()}
-        {
-          this.renderContents()
-        }
+        {this.renderContents()}
       </div>
     );
   }
 }
 
-
 DataPrepHome.propTypes = {
   match: PropTypes.shape({
     params: PropTypes.shape({
-      workspaceId: PropTypes.string
+      workspaceId: PropTypes.string,
     }),
-    url: PropTypes.string
+    url: PropTypes.string,
   }),
   location: PropTypes.object,
   history: PropTypes.object,
@@ -365,5 +371,5 @@ DataPrepHome.propTypes = {
   enableRouting: PropTypes.bool,
   singleWorkspaceMode: PropTypes.bool,
   workspaceId: PropTypes.string,
-  onSubmit: PropTypes.func
+  onSubmit: PropTypes.func,
 };

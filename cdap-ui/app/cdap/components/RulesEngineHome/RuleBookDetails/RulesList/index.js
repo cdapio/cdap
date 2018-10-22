@@ -17,12 +17,15 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {DragTypes} from 'components/RulesEngineHome/RulesTab/Rule';
+import { DragTypes } from 'components/RulesEngineHome/RulesTab/Rule';
 import { DropTarget } from 'react-dnd';
 import classnames from 'classnames';
 import MyRulesEngineApi from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
-import {getRulesForActiveRuleBook, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import {
+  getRulesForActiveRuleBook,
+  setError,
+} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import update from 'immutability-helper';
 import RulebookRule from 'components/RulesEngineHome/RuleBookDetails/RulebookRule';
 import T from 'i18n-react';
@@ -35,17 +38,16 @@ const dropTarget = {
   drop: (props, monitor, component) => {
     let item = monitor.getItem();
     component.addRuleToRulebook(item.rule);
-  }
+  },
 };
 
 function collect(connect, monitor) {
   return {
     connectDropTarget: connect.dropTarget(),
     isOver: monitor.isOver(),
-    canDrop: monitor.canDrop()
+    canDrop: monitor.canDrop(),
   };
 }
-
 
 class RulesList extends Component {
   static propTypes = {
@@ -55,16 +57,16 @@ class RulesList extends Component {
     connectDropTarget: PropTypes.func.isRequired,
     isOver: PropTypes.bool.isRequired,
     onRuleAdd: PropTypes.func,
-    onRuleBookUpdate: PropTypes.func
+    onRuleBookUpdate: PropTypes.func,
   };
 
   state = {
-    rulebookRules: this.props.rules
+    rulebookRules: this.props.rules,
   };
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      rulebookRules: nextProps.rules
+      rulebookRules: nextProps.rules,
     });
   }
 
@@ -73,52 +75,50 @@ class RulesList extends Component {
       this.props.onRuleAdd(rule);
       return;
     }
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
-    MyRulesEngineApi
-      .addRuleToRuleBook({
-        namespace,
-        rulebookid: this.props.rulebookid,
-        ruleid: rule.id
-      })
-      .subscribe(
-        () => {
-          getRulesForActiveRuleBook();
-        },
-        setError
-      );
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
+    MyRulesEngineApi.addRuleToRuleBook({
+      namespace,
+      rulebookid: this.props.rulebookid,
+      ruleid: rule.id,
+    }).subscribe(() => {
+      getRulesForActiveRuleBook();
+    }, setError);
   }
 
   onRulesSort = (dragIndex, hoverIndex) => {
     const { rulebookRules } = this.state;
     const dragRule = rulebookRules[dragIndex];
 
-    this.setState(update(this.state, {
-      rulebookRules: {
-        $splice: [
-          [dragIndex, 1],
-          [hoverIndex, 0, dragRule],
-        ],
-      },
-    }), () => {
-      if (this.props.onRuleBookUpdate) {
-        this.props.onRuleBookUpdate(this.state.rulebookRules);
+    this.setState(
+      update(this.state, {
+        rulebookRules: {
+          $splice: [[dragIndex, 1], [hoverIndex, 0, dragRule]],
+        },
+      }),
+      () => {
+        if (this.props.onRuleBookUpdate) {
+          this.props.onRuleBookUpdate(this.state.rulebookRules);
+        }
       }
-    });
+    );
   };
 
   render() {
     let rules = this.state.rulebookRules;
     return this.props.connectDropTarget(
-      <div className={classnames("rules-container", {
-        'drag-hover': this.props.isOver
-      })}>
-        <div className="title"> {T.translate(`${PREFIX}.rulesLabel`)} ({Array.isArray(rules) ? rules.length : 0}) </div>
+      <div
+        className={classnames('rules-container', {
+          'drag-hover': this.props.isOver,
+        })}
+      >
+        <div className="title">
+          {' '}
+          {T.translate(`${PREFIX}.rulesLabel`)} ({Array.isArray(rules) ? rules.length : 0}){' '}
+        </div>
         <div className="rules">
-          {
-            (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) ?
-              null
-            :
-              rules.map((rule, i) => {
+          {!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)
+            ? null
+            : rules.map((rule, i) => {
                 return (
                   <RulebookRule
                     key={rule.id}
@@ -128,11 +128,8 @@ class RulesList extends Component {
                     onRemove={this.props.onRemove}
                   />
                 );
-              })
-          }
-          <div className="drag-drop-placeholder">
-            {T.translate(`${PREFIX}.dropContainerText`)}
-          </div>
+              })}
+          <div className="drag-drop-placeholder">{T.translate(`${PREFIX}.dropContainerText`)}</div>
         </div>
       </div>
     );

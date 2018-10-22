@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import FastAction from 'components/FastAction';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import isNil from 'lodash/isNil';
 
 export default class FastActions extends Component {
@@ -51,7 +51,9 @@ export default class FastActions extends Component {
   }
 
   onSuccess(action) {
-    if (action === 'startStop') { return; }
+    if (action === 'startStop') {
+      return;
+    }
 
     if (action === 'setPreferences') {
       if (this.props.onSuccess) {
@@ -68,38 +70,43 @@ export default class FastActions extends Component {
     }
   }
 
-  render () {
+  render() {
     const fastActions = this.listOfFastActions();
     let className = this.props.className || 'text-xs-center';
     return (
       <h4 className={className}>
-        {
-          fastActions.map((action) => {
-            if (this.props.actionToOpen && this.props.actionToOpen === action) {
-              return (
-                <FastAction
-                  key={action}
-                  type={action}
-                  entity={this.props.entity}
-                  opened={true}
-                  onSuccess={this.onSuccess.bind(this, action)}
-                  argsToAction={isNil(objectQuery(this.props.argsToActions, action)) ? {} : this.props.argsToActions[action]}
-                />
-              );
-            }
-            else {
-              return (
-                <FastAction
-                  key={action}
-                  type={action}
-                  entity={this.props.entity}
-                  onSuccess={this.onSuccess.bind(this, action)}
-                  argsToAction={isNil(objectQuery(this.props.argsToActions, action)) ? {} : this.props.argsToActions[action]}
-                />
-              );
-            }
-          })
-        }
+        {fastActions.map((action) => {
+          if (this.props.actionToOpen && this.props.actionToOpen === action) {
+            return (
+              <FastAction
+                key={action}
+                type={action}
+                entity={this.props.entity}
+                opened={true}
+                onSuccess={this.onSuccess.bind(this, action)}
+                argsToAction={
+                  isNil(objectQuery(this.props.argsToActions, action))
+                    ? {}
+                    : this.props.argsToActions[action]
+                }
+              />
+            );
+          } else {
+            return (
+              <FastAction
+                key={action}
+                type={action}
+                entity={this.props.entity}
+                onSuccess={this.onSuccess.bind(this, action)}
+                argsToAction={
+                  isNil(objectQuery(this.props.argsToActions, action))
+                    ? {}
+                    : this.props.argsToActions[action]
+                }
+              />
+            );
+          }
+        })}
       </h4>
     );
   }
@@ -119,6 +126,6 @@ FastActions.propTypes = {
     sendEvents: PropTypes.object,
     viewEvents: PropTypes.object,
     startStop: PropTypes.object,
-    log: PropTypes.object
-  })
+    log: PropTypes.object,
+  }),
 };

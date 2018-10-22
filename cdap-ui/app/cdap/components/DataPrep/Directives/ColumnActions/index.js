@@ -14,11 +14,11 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
-import {UncontrolledDropdown} from 'components/UncontrolledComponents';
+import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import IconSVG from 'components/IconSVG';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import Bulkset from 'components/DataPrep/Directives/ColumnActions/Bulkset';
@@ -37,18 +37,18 @@ export default class ColumnActions extends Component {
         {
           name: 'bulkset',
           label: T.translate(`${PREFIX}.actions.bulkset`),
-          component: <Bulkset onClose={this.resetActiveDirective} />
+          component: <Bulkset onClose={this.resetActiveDirective} />,
         },
         {
           name: 'cleanse',
-          label: T.translate(`${PREFIX}.actions.cleanse`)
+          label: T.translate(`${PREFIX}.actions.cleanse`),
         },
         {
           name: 'replacecolumns',
           label: T.translate(`${PREFIX}.actions.replaceColumns`),
-          component: <ReplaceColumns onClose={this.resetActiveDirective} />
-        }
-      ]
+          component: <ReplaceColumns onClose={this.resetActiveDirective} />,
+        },
+      ],
     };
     this.setActiveDirective = this.setActiveDirective.bind(this);
     this.renderActiveDirective = this.renderActiveDirective.bind(this);
@@ -56,24 +56,23 @@ export default class ColumnActions extends Component {
 
   resetActiveDirective() {
     this.setState({
-      activeDirective: null
+      activeDirective: null,
     });
   }
   applyDirective(directive) {
-    execute([directive])
-      .subscribe(
-        () => {},
-        (err) => {
-          console.log('Error', err);
+    execute([directive]).subscribe(
+      () => {},
+      (err) => {
+        console.log('Error', err);
 
-          DataPrepStore.dispatch({
-            type: DataPrepActions.setError,
-            payload: {
-              message: err.message || err.response.message
-            }
-          });
-        }
-      );
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message,
+          },
+        });
+      }
+    );
   }
 
   setActiveDirective(index) {
@@ -86,39 +85,33 @@ export default class ColumnActions extends Component {
       return;
     }
     this.setState({
-      activeDirective: currentDirective.component
+      activeDirective: currentDirective.component,
     });
   }
 
   renderActiveDirective() {
-    return (
-      this.state.activeDirective
-    );
+    return this.state.activeDirective;
   }
   render() {
     return (
       <div className="columns-actions-dropdown">
-        <UncontrolledDropdown
-          className="collapsed-dropdown-toggle"
-        >
+        <UncontrolledDropdown className="collapsed-dropdown-toggle">
           <DropdownToggle>
             <span>{T.translate('features.DataPrep.Directives.ColumnActions.label')}</span>
             <IconSVG name="icon-chevron-down" />
           </DropdownToggle>
           <DropdownMenu right>
-            {
-              this.state.columnDirectives.map((directive, i) => {
-                return (
-                  <DropdownItem
-                    key={i}
-                    title={directive.name}
-                    onClick={this.setActiveDirective.bind(this, i)}
-                  >
-                    {directive.label}
-                  </DropdownItem>
-                );
-              })
-            }
+            {this.state.columnDirectives.map((directive, i) => {
+              return (
+                <DropdownItem
+                  key={i}
+                  title={directive.name}
+                  onClick={this.setActiveDirective.bind(this, i)}
+                >
+                  {directive.label}
+                </DropdownItem>
+              );
+            })}
           </DropdownMenu>
         </UncontrolledDropdown>
         {this.renderActiveDirective()}

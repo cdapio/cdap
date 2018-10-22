@@ -16,19 +16,19 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import BasicView from 'components/PipelineScheduler/BasicView';
 import AdvancedView from 'components/PipelineScheduler/AdvancedView';
-import {SCHEDULE_VIEWS} from 'components/PipelineScheduler/Store';
+import { SCHEDULE_VIEWS } from 'components/PipelineScheduler/Store';
 
 const mapStateToViewContainerProps = (state, ownProps) => {
   return {
     scheduleView: state.scheduleView,
-    isDetailView: ownProps.isDetailView
+    isDetailView: ownProps.isDetailView,
   };
 };
 
-const ViewContainerComponent = ({scheduleView, isDetailView}) => {
+const ViewContainerComponent = ({ scheduleView, isDetailView }) => {
   if (scheduleView === SCHEDULE_VIEWS.BASIC) {
     return <BasicView isDetailView={isDetailView} />;
   } else {
@@ -38,7 +38,7 @@ const ViewContainerComponent = ({scheduleView, isDetailView}) => {
 
 ViewContainerComponent.propTypes = {
   scheduleView: PropTypes.string,
-  isDetailView: PropTypes.bool
+  isDetailView: PropTypes.bool,
 };
 
 const ConnectedViewContainer = connect(

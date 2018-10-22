@@ -28,7 +28,7 @@ export default class ViewEventsAccess extends Component {
 
     this.state = {
       modal: false,
-      tooltipOpen: false
+      tooltipOpen: false,
     };
 
     this.toggleModal = this.toggleModal.bind(this);
@@ -36,22 +36,19 @@ export default class ViewEventsAccess extends Component {
   }
 
   toggleModal() {
-    this.setState({modal: !this.state.modal});
+    this.setState({ modal: !this.state.modal });
   }
 
   toggleTooltip() {
-    this.setState({tooltipOpen: !this.state.tooltipOpen});
+    this.setState({ tooltipOpen: !this.state.tooltipOpen });
   }
 
   renderModal() {
-    if (!this.state.modal) { return null; }
+    if (!this.state.modal) {
+      return null;
+    }
 
-    return (
-      <ViewEventsModal
-        entity={this.props.entity}
-        onClose={this.toggleModal}
-      />
-    );
+    return <ViewEventsModal entity={this.props.entity} onClose={this.toggleModal} />;
   }
 
   render() {
@@ -59,11 +56,7 @@ export default class ViewEventsAccess extends Component {
 
     return (
       <span className="btn btn-secondary btn-sm">
-        <FastActionButton
-          icon="icon-filter"
-          action={this.toggleModal}
-          id={tooltipId}
-        />
+        <FastActionButton icon="icon-filter" action={this.toggleModal} id={tooltipId} />
 
         <Tooltip
           placement="top"
@@ -76,7 +69,6 @@ export default class ViewEventsAccess extends Component {
         </Tooltip>
 
         {this.renderModal()}
-
       </span>
     );
   }

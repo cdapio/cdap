@@ -14,18 +14,21 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import T from 'i18n-react';
 import debounce from 'lodash/debounce';
 import PlusButton from 'components/PlusButton';
-import {isDescendant} from 'services/helpers';
-import {Observable} from 'rxjs/Observable';
+import { isDescendant } from 'services/helpers';
+import { Observable } from 'rxjs/Observable';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
-import {DEFAULT_SEARCH_SORT_OPTIONS, DEFAULT_SEARCH_QUERY} from 'components/EntityListView/SearchStore/SearchConstants';
-import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
+import {
+  DEFAULT_SEARCH_SORT_OPTIONS,
+  DEFAULT_SEARCH_QUERY,
+} from 'components/EntityListView/SearchStore/SearchConstants';
+import { search, updateQueryString } from 'components/EntityListView/SearchStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
 
 require('./EntityListHeader.scss');
@@ -41,22 +44,18 @@ export default class EntityListHeader extends Component {
       sortOptions: searchState.sort,
       filterOptions: searchState.filters,
       activeFilters: searchState.activeFilters,
-      activeSort: searchState.activeSort
+      activeSort: searchState.activeSort,
     };
     this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
   }
 
   componentWillMount() {
     this.searchStoreSubscription = SearchStore.subscribe(() => {
-      let {
-        query,
-        activeFilters,
-        activeSort
-      } = SearchStore.getState().search;
+      let { query, activeFilters, activeSort } = SearchStore.getState().search;
       this.setState({
         searchText: query === '*' ? '' : query,
         activeFilters,
-        activeSort
+        activeSort,
       });
     });
   }
@@ -72,47 +71,49 @@ export default class EntityListHeader extends Component {
   handleFilterToggle() {
     let newState = !this.state.isFilterExpanded;
 
-    this.setState({isFilterExpanded: newState});
+    this.setState({ isFilterExpanded: newState });
 
     if (newState) {
       let element = document.getElementById('app-container');
 
-      this.documentClick$ = Observable.fromEvent(element, 'click')
-        .subscribe((e) => {
-          if (isDescendant(this.dropdownButtonRef, e.target) || !this.state.isFilterExpanded) {
-            return;
-          }
+      this.documentClick$ = Observable.fromEvent(element, 'click').subscribe((e) => {
+        if (isDescendant(this.dropdownButtonRef, e.target) || !this.state.isFilterExpanded) {
+          return;
+        }
 
-          this.handleFilterToggle();
-        });
+        this.handleFilterToggle();
+      });
     } else {
       this.documentClick$.unsubscribe();
     }
   }
 
   handleSortToggle() {
-    this.setState({isSortExpanded: !this.state.isSortExpanded});
+    this.setState({ isSortExpanded: !this.state.isSortExpanded });
   }
 
   onSearchChange(e) {
-    this.setState({
-      searchText: e.target.value
-    }, this.debouncedHandleSearch.bind(this));
+    this.setState(
+      {
+        searchText: e.target.value,
+      },
+      this.debouncedHandleSearch.bind(this)
+    );
   }
 
   handleSearch() {
     SearchStore.dispatch({
       type: SearchStoreActions.SETQUERY,
       payload: {
-        query: this.state.searchText
-      }
+        query: this.state.searchText,
+      },
     });
     if (!this.state.searchText.length) {
       SearchStore.dispatch({
         type: SearchStoreActions.SETACTIVESORT,
         payload: {
-          activeSort: DEFAULT_SEARCH_SORT_OPTIONS[4]
-        }
+          activeSort: DEFAULT_SEARCH_SORT_OPTIONS[4],
+        },
       });
     }
     search();
@@ -125,22 +126,25 @@ export default class EntityListHeader extends Component {
     event.nativeEvent.stopImmediatePropagation();
     let activeFilters = SearchStore.getState().search.activeFilters;
     if (activeFilters.indexOf(option.id) !== -1) {
-      activeFilters = activeFilters.filter(entityFilter => entityFilter !== option.id);
+      activeFilters = activeFilters.filter((entityFilter) => entityFilter !== option.id);
     } else {
       activeFilters.push(option.id);
     }
     SearchStore.dispatch({
       type: SearchStoreActions.SETACTIVEFILTERS,
       payload: {
-        activeFilters
+        activeFilters,
+      },
+    });
+    this.setState(
+      {
+        activeFilters,
+      },
+      () => {
+        search();
+        updateQueryString();
       }
-    });
-    this.setState({
-      activeFilters
-    }, () => {
-      search();
-      updateQueryString();
-    });
+    );
   }
 
   onSortClick(option) {
@@ -148,15 +152,18 @@ export default class EntityListHeader extends Component {
       type: SearchStoreActions.SETACTIVESORT,
       payload: {
         activeSort: option,
-        query: DEFAULT_SEARCH_QUERY
+        query: DEFAULT_SEARCH_QUERY,
+      },
+    });
+    this.setState(
+      {
+        activeSort: option,
+      },
+      () => {
+        search();
+        updateQueryString();
       }
-    });
-    this.setState({
-      activeSort: option
-    }, () => {
-      search();
-      updateQueryString();
-    });
+    );
   }
 
   render() {
@@ -168,38 +175,30 @@ export default class EntityListHeader extends Component {
         toggle={this.handleSortToggle.bind(this)}
         id={tooltipId}
       >
-        <DropdownToggle
-          tag='div'
-          className="sort-toggle"
-        >
+        <DropdownToggle tag="div" className="sort-toggle">
           <span>{this.state.activeSort.displayName}</span>
           <span className="float-xs-right">
             <IconSVG name="icon-angle-down" />
           </span>
         </DropdownToggle>
         <CustomDropdownMenu>
-          {
-            this.state.sortOptions.slice(1).map((option, index) => {
-              return (
-                <DropdownItem
-                  tag="li"
-                  key={index}
-                  className="clearfix"
-                  onClick={this.onSortClick.bind(this, option)}
-                >
-                  <span className="float-xs-left">{option.displayName}</span>
-                  {
-                    this.state.activeSort.fullSort === option.fullSort ?
-                      <span className="float-xs-right">
-                        <IconSVG name="icon-check" />
-                      </span>
-                    :
-                      null
-                  }
-                </DropdownItem>
-              );
-            })
-          }
+          {this.state.sortOptions.slice(1).map((option, index) => {
+            return (
+              <DropdownItem
+                tag="li"
+                key={index}
+                className="clearfix"
+                onClick={this.onSortClick.bind(this, option)}
+              >
+                <span className="float-xs-left">{option.displayName}</span>
+                {this.state.activeSort.fullSort === option.fullSort ? (
+                  <span className="float-xs-right">
+                    <IconSVG name="icon-check" />
+                  </span>
+                ) : null}
+              </DropdownItem>
+            );
+          })}
         </CustomDropdownMenu>
       </Dropdown>
     );
@@ -210,42 +209,34 @@ export default class EntityListHeader extends Component {
         toggle={() => {}}
         onClick={this.handleFilterToggle.bind(this)}
       >
-        <DropdownToggle
-          tag='div'
-          className="filter-toggle"
-        >
+        <DropdownToggle tag="div" className="filter-toggle">
           <span>{T.translate('features.EntityListView.Header.filterBy')}</span>
           <span className="float-xs-right">
             <IconSVG name="icon-angle-down" />
           </span>
         </DropdownToggle>
-        <CustomDropdownMenu onClick={e => e.stopPropagation()}>
-          {
-            this.state.filterOptions.map((option) => {
-              return (
-                <DropdownItem
-                  tag="li"
-                  key={option.id}
-                  onClick={this.onFilterClick.bind(this, option)}
-                >
-                  <div className="form-check">
-                    <label
-                      className="form-check-label"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={this.state.activeFilters.indexOf(option.id) !== -1}
-                        onChange={this.onFilterClick.bind(this, option)}
-                      />
-                      {option.displayName}
-                    </label>
-                  </div>
-                </DropdownItem>
-              );
-            })
-          }
+        <CustomDropdownMenu onClick={(e) => e.stopPropagation()}>
+          {this.state.filterOptions.map((option) => {
+            return (
+              <DropdownItem
+                tag="li"
+                key={option.id}
+                onClick={this.onFilterClick.bind(this, option)}
+              >
+                <div className="form-check">
+                  <label className="form-check-label" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      checked={this.state.activeFilters.indexOf(option.id) !== -1}
+                      onChange={this.onFilterClick.bind(this, option)}
+                    />
+                    {option.displayName}
+                  </label>
+                </div>
+              </DropdownItem>
+            );
+          })}
         </CustomDropdownMenu>
       </Dropdown>
     );
@@ -265,7 +256,7 @@ export default class EntityListHeader extends Component {
               onChange={this.onSearchChange.bind(this)}
             />
           </div>
-          <div className="filter" ref={(ref) => this.dropdownButtonRef = ref}>
+          <div className="filter" ref={(ref) => (this.dropdownButtonRef = ref)}>
             {filterDropdown}
           </div>
           <div className="sort">

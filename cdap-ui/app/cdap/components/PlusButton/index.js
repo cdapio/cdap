@@ -15,10 +15,10 @@
  */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import Popover from 'components/Popover';
 import PlusButtonModal from 'components/PlusButtonModal';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PlusButtonStore from 'services/PlusButtonStore';
 require('./PlusButton.scss');
 
@@ -26,19 +26,21 @@ const PLUSBUTTON_DIMENSION = 58;
 
 export default class PlusButton extends Component {
   static propTypes = {
-    contextItems: PropTypes.arrayOf(PropTypes.shape({
-      label: PropTypes.string,
-      to: PropTypes.string,
-      onClick: PropTypes.func
-    })),
-    mode: PropTypes.oneOf(['marketplace', 'resourcecenter'])
+    contextItems: PropTypes.arrayOf(
+      PropTypes.shape({
+        label: PropTypes.string,
+        to: PropTypes.string,
+        onClick: PropTypes.func,
+      })
+    ),
+    mode: PropTypes.oneOf(['marketplace', 'resourcecenter']),
   };
 
   componentDidMount() {
     this.plusButtonSubscription = PlusButtonStore.subscribe(() => {
       let modalState = PlusButtonStore.getState().modalState;
       this.setState({
-        showModal: modalState
+        showModal: modalState,
       });
     });
   }
@@ -50,19 +52,19 @@ export default class PlusButton extends Component {
   }
 
   static defaultProps = {
-    contextItems: []
+    contextItems: [],
   };
 
   static MODE = {
     marketplace: 'marketplace',
-    resourcecenter: 'resourcecenter'
+    resourcecenter: 'resourcecenter',
   };
 
   state = {
-    showModal: false
+    showModal: false,
   };
 
-  targetElement = ({onClick = () => {}}) => {
+  targetElement = ({ onClick = () => {} }) => {
     return (
       <img
         id="resource-center-btn"
@@ -71,10 +73,10 @@ export default class PlusButton extends Component {
         onClick={!this.props.contextItems.length ? this.toggleModal : onClick}
       />
     );
-  }
+  };
 
   toggleModal = () => {
-    this.setState({showModal: !this.state.showModal});
+    this.setState({ showModal: !this.state.showModal });
   };
 
   renderResourceCenterMenu = () => {
@@ -83,18 +85,22 @@ export default class PlusButton extends Component {
     }
     return (
       <ul>
-        {
-          this.props.contextItems.map((item, i) => {
-            if (item.to) {
-              return (
-                <li key={i}>
-                  <Link to={item.to} key={item.label}>{item.label}</Link>
-                </li>
-              );
-            }
-            return <li onClick={item.onClick} key={item.label}>{item.label}</li>;
-          })
-        }
+        {this.props.contextItems.map((item, i) => {
+          if (item.to) {
+            return (
+              <li key={i}>
+                <Link to={item.to} key={item.label}>
+                  {item.label}
+                </Link>
+              </li>
+            );
+          }
+          return (
+            <li onClick={item.onClick} key={item.label}>
+              {item.label}
+            </li>
+          );
+        })}
         <li onClick={this.toggleModal}>More</li>
       </ul>
     );
@@ -105,21 +111,23 @@ export default class PlusButton extends Component {
       <Popover
         target={this.targetElement}
         targetDimension={{ width: PLUSBUTTON_DIMENSION, height: PLUSBUTTON_DIMENSION }}
-        placement='bottom'
+        placement="bottom"
       >
         {this.renderResourceCenterMenu()}
       </Popover>
     );
-  }
+  };
 
   renderMarket = () => {
-    return PlusButton.targetElement({onClick: this.toggleModal});
+    return PlusButton.targetElement({ onClick: this.toggleModal });
   };
 
   render() {
     return (
       <div className="plus-button">
-        {this.props.mode === PlusButton.MODE.marketplace ? this.renderMarket() : this.renderResourceCenter()}
+        {this.props.mode === PlusButton.MODE.marketplace
+          ? this.renderMarket()
+          : this.renderResourceCenter()}
         <PlusButtonModal
           isOpen={this.state.showModal}
           mode={this.props.mode}

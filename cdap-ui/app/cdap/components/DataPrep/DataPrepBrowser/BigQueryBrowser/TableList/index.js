@@ -16,26 +16,31 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {listBiqQueryDatasets, listBigQueryTables, setBigQueryLoading, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { connect } from 'react-redux';
+import {
+  listBiqQueryDatasets,
+  listBigQueryTables,
+  setBigQueryLoading,
+  setError,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import IconSVG from 'components/IconSVG';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import T from 'i18n-react';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.BigQueryBrowser`;
 
-const TableListComp = ({tableList, datasetId, createWorkspace}) => {
+const TableListComp = ({ tableList, datasetId, createWorkspace }) => {
   if (!tableList.length) {
     return (
       <div className="empty-search-container">
         <div className="empty-search text-xs-center">
           <strong>
             {T.translate(`${PREFIX}.EmptyMessage.emptyTableList`, {
-              datasetName: datasetId
+              datasetName: datasetId,
             })}
           </strong>
         </div>
@@ -47,30 +52,23 @@ const TableListComp = ({tableList, datasetId, createWorkspace}) => {
     <div className="list-table">
       <div className="table-header">
         <div className="row">
-          <div className="col-xs-12">
-            {T.translate(`${PREFIX}.name`)}
-          </div>
+          <div className="col-xs-12">{T.translate(`${PREFIX}.name`)}</div>
         </div>
       </div>
 
       <div className="table-body">
-        {
-          tableList.map((table) => {
-            return (
-              <div
-                key={table.id}
-                onClick={createWorkspace.bind(null, table.id)}
-              >
-                <div className="row content-row">
-                  <div className="col-xs-12">
-                    <IconSVG name="icon-table" />
-                    {table.id}
-                  </div>
+        {tableList.map((table) => {
+          return (
+            <div key={table.id} onClick={createWorkspace.bind(null, table.id)}>
+              <div className="row content-row">
+                <div className="col-xs-12">
+                  <IconSVG name="icon-table" />
+                  {table.id}
                 </div>
               </div>
-            );
-          })
-        }
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -79,7 +77,7 @@ const TableListComp = ({tableList, datasetId, createWorkspace}) => {
 TableListComp.propTypes = {
   tableList: PropTypes.array,
   datasetId: PropTypes.string,
-  createWorkspace: PropTypes.func
+  createWorkspace: PropTypes.func,
 };
 
 class TableListView extends Component {
@@ -90,20 +88,19 @@ class TableListView extends Component {
     enableRouting: PropTypes.bool,
     match: PropTypes.object,
     loading: PropTypes.bool,
-    onWorkspaceCreate: PropTypes.func
+    onWorkspaceCreate: PropTypes.func,
   };
 
   static defaultProps = {
-    enableRouting: true
+    enableRouting: true,
   };
 
   componentWillMount() {
-    if (!this.props.enableRouting) { return; }
+    if (!this.props.enableRouting) {
+      return;
+    }
 
-    let {
-      datasetId,
-      connectionId
-    } = this.props.match.params;
+    let { datasetId, connectionId } = this.props.match.params;
 
     listBigQueryTables(connectionId, datasetId);
   }
@@ -117,23 +114,24 @@ class TableListView extends Component {
       namespace,
       connectionId: this.props.connectionId,
       datasetId: this.props.datasetId,
-      tableId
+      tableId,
     };
 
-    MyDataPrepApi.readBigQueryTable(params)
-      .subscribe(
-        (res) => {
-          let workspaceId = objectQuery(res, 'values', 0, 'id');
-          if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
-            this.props.onWorkspaceCreate(workspaceId);
-            return;
-          }
-          window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-        },
-        (err) => {
-          setError(err);
+    MyDataPrepApi.readBigQueryTable(params).subscribe(
+      (res) => {
+        let workspaceId = objectQuery(res, 'values', 0, 'id');
+        if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
+          this.props.onWorkspaceCreate(workspaceId);
+          return;
         }
-      );
+        window.location.href = `${
+          window.location.origin
+        }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+      },
+      (err) => {
+        setError(err);
+      }
+    );
   };
 
   render() {
@@ -176,12 +174,10 @@ const mapStateToProps = (state) => {
     tableList: state.bigquery.tableList,
     datasetId: state.bigquery.datasetId,
     connectionId: state.bigquery.connectionId,
-    loading: state.bigquery.loading
+    loading: state.bigquery.loading,
   };
 };
 
-const TableList = connect(
-  mapStateToProps
-)(TableListView);
+const TableList = connect(mapStateToProps)(TableListView);
 
 export default TableList;

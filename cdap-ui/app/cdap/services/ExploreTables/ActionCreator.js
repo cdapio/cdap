@@ -14,29 +14,24 @@
  * the License.
 */
 import myExploreApi from 'api/explore';
-import {MyDatasetApi} from 'api/dataset';
+import { MyDatasetApi } from 'api/dataset';
 import ExploreTablesActions from 'services/ExploreTables/ExploreTablesActions';
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 
 const fetchTables = (namespace) => {
   return (dispatch) => {
-    let exploreTables$ =  myExploreApi.fetchTables({ namespace });
+    let exploreTables$ = myExploreApi.fetchTables({ namespace });
     let datasetsSpec$ = MyDatasetApi.list({ namespace });
-    return Observable
-      .combineLatest(
-        exploreTables$,
-        datasetsSpec$
-      )
-      .subscribe(res => {
-        dispatch({
-          type: ExploreTablesActions.SET_TABLES,
-          payload: {
-            exploreTables: res[0],
-            datasetsSpec: res[1]
-          }
-        });
+    return Observable.combineLatest(exploreTables$, datasetsSpec$).subscribe((res) => {
+      dispatch({
+        type: ExploreTablesActions.SET_TABLES,
+        payload: {
+          exploreTables: res[0],
+          datasetsSpec: res[1],
+        },
       });
+    });
   };
 };
 
-export {fetchTables};
+export { fetchTables };

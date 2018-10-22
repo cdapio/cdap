@@ -17,7 +17,12 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {parseType, SCHEMA_TYPES, checkComplexType, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
+import {
+  parseType,
+  SCHEMA_TYPES,
+  checkComplexType,
+  checkParsedTypeForError,
+} from 'components/SchemaEditor/SchemaHelpers';
 import SelectWithOptions from 'components/SelectWithOptions';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 import classnames from 'classnames';
@@ -36,20 +41,20 @@ export default class ArraySchemaRow extends Component {
       this.state = {
         displayType: {
           type: parsedItemsType.displayType,
-          nullable: parsedItemsType.nullable
+          nullable: parsedItemsType.nullable,
         },
         showAbstractSchemaRow: true,
-        error: ''
+        error: '',
       };
       this.parsedType = parsedItemsType.type;
     } else {
       this.state = {
         displayType: {
           type: 'string',
-          nullable: false
+          nullable: false,
         },
         showAbstractSchemaRow: true,
-        error: ''
+        error: '',
       };
       this.parsedType = 'string';
     }
@@ -65,17 +70,20 @@ export default class ArraySchemaRow extends Component {
     } else {
       this.parsedType = selectedType;
     }
-    this.setState({
-      displayType: {
-        type: e.target.value,
-        nullable: this.state.displayType.nullable
+    this.setState(
+      {
+        displayType: {
+          type: e.target.value,
+          nullable: this.state.displayType.nullable,
+        },
+        error: '',
       },
-      error: ''
-    }, function() {
-      if (!checkComplexType(selectedType)) {
-        this.updateParent();
-      }
-    }.bind(this));
+      function() {
+        if (!checkComplexType(selectedType)) {
+          this.updateParent();
+        }
+      }.bind(this)
+    );
   }
   onNullableChange(e) {
     let parsedType = cloneDeep(this.parsedType);
@@ -85,40 +93,45 @@ export default class ArraySchemaRow extends Component {
     } else {
       this.parsedType = [parsedType, 'null'];
     }
-    this.setState({
-      displayType: {
-        type: this.state.displayType.type,
-        nullable: e.target.checked
+    this.setState(
+      {
+        displayType: {
+          type: this.state.displayType.type,
+          nullable: e.target.checked,
+        },
+        error: '',
       },
-      error: ''
-    }, this.updateParent.bind(this));
+      this.updateParent.bind(this)
+    );
   }
   onChildrenChange(itemsState) {
     let updatedItemState = cdapavsc.formatType(itemsState);
 
     let error = checkParsedTypeForError({
       type: 'array',
-      items: this.state.displayType.nullable ? [updatedItemState, 'null'] : updatedItemState
+      items: this.state.displayType.nullable ? [updatedItemState, 'null'] : updatedItemState,
     });
     if (error) {
-      this.setState({error});
+      this.setState({ error });
       return;
     }
-    this.parsedType = this.state.displayType.nullable ? [cloneDeep(updatedItemState), 'null'] : cloneDeep(updatedItemState);
+    this.parsedType = this.state.displayType.nullable
+      ? [cloneDeep(updatedItemState), 'null']
+      : cloneDeep(updatedItemState);
     this.updateParent();
   }
   updateParent() {
     let error = checkParsedTypeForError({
       type: 'array',
-      items: this.parsedType
+      items: this.parsedType,
     });
     if (error) {
-      this.setState({error});
+      this.setState({ error });
       return;
     }
     this.props.onChange({
       type: 'array',
-      items: cloneDeep(this.parsedType)
+      items: cloneDeep(this.parsedType),
     });
   }
   toggleAbstractSchemaRow() {
@@ -128,45 +141,30 @@ export default class ArraySchemaRow extends Component {
     const showArrows = () => {
       if (this.state.showAbstractSchemaRow) {
         return (
-          <span
-            className="fa fa-caret-down"
-            onClick={this.toggleAbstractSchemaRow.bind(this)}
-          >
-          </span>
+          <span className="fa fa-caret-down" onClick={this.toggleAbstractSchemaRow.bind(this)} />
         );
       }
       return (
-        <span
-          className="fa fa-caret-right"
-          onClick={this.toggleAbstractSchemaRow.bind(this)}
-        >
-        </span>
+        <span className="fa fa-caret-right" onClick={this.toggleAbstractSchemaRow.bind(this)} />
       );
     };
     return (
       <div className="array-schema-row">
-        <div className="text-danger">
-          {this.state.error}
-        </div>
-        <div className={
-            classnames("schema-row", {
-              "nested": checkComplexType(this.state.displayType.type)
-            })
-          }>
+        <div className="text-danger">{this.state.error}</div>
+        <div
+          className={classnames('schema-row', {
+            nested: checkComplexType(this.state.displayType.type),
+          })}
+        >
           <div className="field-name">
             <SelectWithOptions
               options={SCHEMA_TYPES.types}
               value={this.state.displayType.type}
               onChange={this.onTypeChange}
             />
-          {
-            checkComplexType(this.state.displayType.type) ?
-              showArrows()
-            :
-              null
-          }
+            {checkComplexType(this.state.displayType.type) ? showArrows() : null}
           </div>
-          <div className="field-type"></div>
+          <div className="field-type" />
           <div className="field-isnull">
             <div className="btn btn-link">
               <input
@@ -176,18 +174,15 @@ export default class ArraySchemaRow extends Component {
               />
             </div>
           </div>
-          {
-            checkComplexType(this.state.displayType.type) && this.state.showAbstractSchemaRow  ?
-              <AbstractSchemaRow
-                row={{
-                  type: Array.isArray(this.parsedType) ? this.parsedType[0] : this.parsedType,
-                  displayType: this.state.displayType.type
-                }}
-                onChange={this.onChildrenChange.bind(this)}
-              />
-            :
-              null
-          }
+          {checkComplexType(this.state.displayType.type) && this.state.showAbstractSchemaRow ? (
+            <AbstractSchemaRow
+              row={{
+                type: Array.isArray(this.parsedType) ? this.parsedType[0] : this.parsedType,
+                displayType: this.state.displayType.type,
+              }}
+              onChange={this.onChildrenChange.bind(this)}
+            />
+          ) : null}
         </div>
       </div>
     );
@@ -196,5 +191,5 @@ export default class ArraySchemaRow extends Component {
 
 ArraySchemaRow.propTypes = {
   row: PropTypes.any,
-  onChange: PropTypes.func.isRequired
+  onChange: PropTypes.func.isRequired,
 };

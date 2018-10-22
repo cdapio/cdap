@@ -20,12 +20,10 @@ import classnames from 'classnames';
 
 require('./TopPanel.scss');
 
-export default function TopPanel({message, children, className}) {
+export default function TopPanel({ message, children, className }) {
   return (
-    <div className={classnames("experiments-toppanel", className)}>
-      {
-        children ? children : <h4>{message}</h4>
-      }
+    <div className={classnames('experiments-toppanel', className)}>
+      {children ? children : <h4>{message}</h4>}
     </div>
   );
 }
@@ -33,5 +31,5 @@ export default function TopPanel({message, children, className}) {
 TopPanel.propTypes = {
   message: PropTypes.string,
   children: PropTypes.node,
-  className: PropTypes.string
+  className: PropTypes.string,
 };

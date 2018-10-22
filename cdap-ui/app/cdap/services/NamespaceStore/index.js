@@ -14,26 +14,26 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import NamespaceActions from './NamespaceActions';
-import {composeEnhancers, objectQuery, isNilOrEmpty} from 'services/helpers';
-import {SYSTEM_NAMESPACE} from 'services/global-constants';
+import { composeEnhancers, objectQuery, isNilOrEmpty } from 'services/helpers';
+import { SYSTEM_NAMESPACE } from 'services/global-constants';
 
 const defaultAction = {
-  action : '',
-  payload : {}
+  action: '',
+  payload: {},
 };
 
 const defaultInitialState = {
-  username : '',
-  selectedNamespace : '',
-  namespaces : []
+  username: '',
+  selectedNamespace: '',
+  namespaces: [],
 };
 
 const username = (state = '', action = defaultAction) => {
   switch (action.type) {
     case NamespaceActions.updateUsername:
-        return action.payload.username;
+      return action.payload.username;
     default:
       return state;
   }
@@ -50,7 +50,9 @@ const selectedNamespace = (state = '', action = defaultAction) => {
     case NamespaceActions.updateNamespaces: {
       let previouslyAccessedNs = localStorage.getItem('CurrentNamespace');
       if (isNilOrEmpty(state) || state === SYSTEM_NAMESPACE) {
-        return !isNilOrEmpty(previouslyAccessedNs) ? previouslyAccessedNs : objectQuery(action.payload, 'namespaces', 0, 'name');
+        return !isNilOrEmpty(previouslyAccessedNs)
+          ? previouslyAccessedNs
+          : objectQuery(action.payload, 'namespaces', 0, 'name');
       }
       return state;
     }
@@ -60,28 +62,28 @@ const selectedNamespace = (state = '', action = defaultAction) => {
 };
 
 const namespaces = (state = [], action) => {
-    switch (action.type) {
-      case NamespaceActions.updateNamespaces:
-        return action.payload.namespaces;
-      default:
-        return state;
-    }
+  switch (action.type) {
+    case NamespaceActions.updateNamespaces:
+      return action.payload.namespaces;
+    default:
+      return state;
+  }
 };
 
 const NamespaceStore = createStore(
   combineReducers({
     username,
     selectedNamespace,
-    namespaces
+    namespaces,
   }),
   defaultInitialState,
   composeEnhancers('NamespaceStore')()
 );
 
 const getCurrentNamespace = () => {
-  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  let { selectedNamespace: namespace } = NamespaceStore.getState();
   return namespace;
 };
 
 export default NamespaceStore;
-export {getCurrentNamespace};
+export { getCurrentNamespace };

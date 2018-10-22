@@ -15,23 +15,26 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
-import {MyCloudApi} from 'api/cloud';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import React, { Component } from 'react';
+import { MyCloudApi } from 'api/cloud';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
-import {MyPreferenceApi} from 'api/preference';
-import {Observable} from 'rxjs/Observable';
+import { MyPreferenceApi } from 'api/preference';
+import { Observable } from 'rxjs/Observable';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import ProfileCustomizePopover from 'components/PipelineDetails/ProfilesListView/ProfileCustomizePopover';
-import {isNilOrEmpty} from 'services/helpers';
+import { isNilOrEmpty } from 'services/helpers';
 import isEqual from 'lodash/isEqual';
-import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
-import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
-import {extractProfileName, getProfileNameWithScope} from 'components/Cloud/Profiles/Store/ActionCreator';
-import {CLOUD, SCOPES, SYSTEM_NAMESPACE} from 'services/global-constants';
+import { getCustomizationMap } from 'components/PipelineConfigurations/Store/ActionCreator';
+import { getProvisionersMap } from 'components/Cloud/Profiles/Store/Provisioners';
+import { PROFILE_STATUSES } from 'components/Cloud/Profiles/Store';
+import {
+  extractProfileName,
+  getProfileNameWithScope,
+} from 'components/Cloud/Profiles/Store/ActionCreator';
+import { CLOUD, SCOPES, SYSTEM_NAMESPACE } from 'services/global-constants';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.ProfilesListView';
@@ -39,20 +42,19 @@ const PREFIX = 'features.PipelineDetails.ProfilesListView';
 require('./ProfilesListViewInPipeline.scss');
 
 export default class ProfilesListViewInPipeline extends Component {
-
   static propTypes = {
     onProfileSelect: PropTypes.func,
     selectedProfile: PropTypes.object,
     tableTitle: PropTypes.string,
     showProfilesCount: PropTypes.bool,
     disabled: PropTypes.bool,
-    provisionersMap: PropTypes.object
+    provisionersMap: PropTypes.object,
   };
 
   static defaultProps = {
     selectedProfile: {},
     showProfilesCount: true,
-    disabled: false
+    disabled: false,
   };
 
   state = {
@@ -61,7 +63,7 @@ export default class ProfilesListViewInPipeline extends Component {
     loading: true,
     selectedProfile: this.props.selectedProfile.name || '',
     defaultProfile: '',
-    profileCustomizations: this.props.selectedProfile.profileCustomizations || {}
+    profileCustomizations: this.props.selectedProfile.profileCustomizations || {},
   };
 
   componentWillReceiveProps(nextProps) {
@@ -71,7 +73,7 @@ export default class ProfilesListViewInPipeline extends Component {
     ) {
       this.setState({
         selectedProfile: nextProps.selectedProfile.name,
-        profileCustomizations: nextProps.selectedProfile.profileCustomizations
+        profileCustomizations: nextProps.selectedProfile.profileCustomizations,
       });
     }
   }
@@ -85,53 +87,55 @@ export default class ProfilesListViewInPipeline extends Component {
       MyCloudApi.getSystemProfiles(),
       MyPreferenceApi.getAppPreferencesResolved({
         namespace,
-        appId
+        appId,
       }),
-      MyPreferenceApi.getNamespacePreferencesResolved({namespace})
-    )
-      .subscribe(
-        ([profiles = [], systemProfiles = [], preferences = {}, namespacePreferences = {}]) => {
-          let profileCustomizations = isNilOrEmpty(this.state.profileCustomizations) ?
-            getCustomizationMap(preferences)
-          :
-            this.state.profileCustomizations;
+      MyPreferenceApi.getNamespacePreferencesResolved({ namespace })
+    ).subscribe(
+      ([profiles = [], systemProfiles = [], preferences = {}, namespacePreferences = {}]) => {
+        let profileCustomizations = isNilOrEmpty(this.state.profileCustomizations)
+          ? getCustomizationMap(preferences)
+          : this.state.profileCustomizations;
 
-          let allProfiles = profiles.concat(systemProfiles);
+        let allProfiles = profiles.concat(systemProfiles);
 
-          let defaultProfile = namespacePreferences[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] || CLOUD.DEFAULT_PROFILE_NAME;
+        let defaultProfile =
+          namespacePreferences[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] ||
+          CLOUD.DEFAULT_PROFILE_NAME;
 
-          let selectedProfile = this.state.selectedProfile || preferences[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] || defaultProfile;
-          let selectedProfileName = extractProfileName(selectedProfile);
+        let selectedProfile =
+          this.state.selectedProfile ||
+          preferences[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] ||
+          defaultProfile;
+        let selectedProfileName = extractProfileName(selectedProfile);
 
-
-          // This is to surface the selected profile to the top
-          // instead of hiding somewhere in the bottom.
-          let sortedProfiles = [];
-          allProfiles.forEach(profile => {
-            if (profile.name === selectedProfileName) {
-              sortedProfiles.unshift(profile);
-            } else {
-              sortedProfiles.push(profile);
-            }
-          });
-          this.setState({
-            loading: false,
-            profiles: sortedProfiles,
-            selectedProfile,
-            defaultProfile,
-            profileCustomizations
-          });
-        },
-        (err) => {
-          console.log('ERROR in fetching profiles from backend: ', err);
-        }
-      );
+        // This is to surface the selected profile to the top
+        // instead of hiding somewhere in the bottom.
+        let sortedProfiles = [];
+        allProfiles.forEach((profile) => {
+          if (profile.name === selectedProfileName) {
+            sortedProfiles.unshift(profile);
+          } else {
+            sortedProfiles.push(profile);
+          }
+        });
+        this.setState({
+          loading: false,
+          profiles: sortedProfiles,
+          selectedProfile,
+          defaultProfile,
+          profileCustomizations,
+        });
+      },
+      (err) => {
+        console.log('ERROR in fetching profiles from backend: ', err);
+      }
+    );
   }
 
   componentDidMount() {
     getProvisionersMap().subscribe((state) => {
       this.setState({
-        provisionersMap: state.nameToLabelMap
+        provisionersMap: state.nameToLabelMap,
       });
     });
   }
@@ -141,7 +145,7 @@ export default class ProfilesListViewInPipeline extends Component {
       return;
     }
     this.setState({
-      selectedProfile: profileName
+      selectedProfile: profileName,
     });
     if (this.props.onProfileSelect) {
       this.props.onProfileSelect(profileName, customizations, e);
@@ -160,7 +164,7 @@ export default class ProfilesListViewInPipeline extends Component {
     return (
       <div className="grid-header">
         <div className="grid-row">
-          <div></div>
+          <div />
           <strong>{T.translate('features.Cloud.Profiles.ListView.profileName')}</strong>
           <strong>{T.translate('features.Cloud.Profiles.common.provisioner')}</strong>
           <strong>{T.translate('commons.scope')}</strong>
@@ -173,8 +177,11 @@ export default class ProfilesListViewInPipeline extends Component {
   };
 
   renderProfileRow = (profile) => {
-    let profileNamespace = profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : getCurrentNamespace();
-    let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
+    let profileNamespace =
+      profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : getCurrentNamespace();
+    let profileDetailsLink = `${location.protocol}//${
+      location.host
+    }/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
     let profileName = getProfileNameWithScope(profile.name, profile.scope);
     let selectedProfile = this.state.selectedProfile || '';
     selectedProfile = extractProfileName(selectedProfile);
@@ -182,7 +189,11 @@ export default class ProfilesListViewInPipeline extends Component {
     let provisionerLabel = this.state.provisionersMap[provisionerName] || provisionerName;
     const profileStatus = PROFILE_STATUSES[profile.status];
     const profileIsEnabled = profileStatus === 'enabled';
-    const onProfileSelectHandler = this.onProfileSelectWithoutCustomization.bind(this, profileName, profileIsEnabled);
+    const onProfileSelectHandler = this.onProfileSelectWithoutCustomization.bind(
+      this,
+      profileName,
+      profileIsEnabled
+    );
     const profileLabel = profile.label || profile.name;
 
     const CustomizeLabel = () => {
@@ -194,12 +205,7 @@ export default class ProfilesListViewInPipeline extends Component {
           profile={profile}
           onProfileSelect={this.onProfileSelect}
           disabled={this.props.disabled}
-          customizations={
-            profile.name === selectedProfile ?
-              this.state.profileCustomizations
-            :
-              {}
-          }
+          customizations={profile.name === selectedProfile ? this.state.profileCustomizations : {}}
         />
       );
     };
@@ -215,40 +221,25 @@ export default class ProfilesListViewInPipeline extends Component {
       <div
         key={profileName}
         className={classnames(`grid-row grid-link ${profileStatus}`, {
-          "active": this.state.selectedProfile === profileName
+          active: this.state.selectedProfile === profileName,
         })}
       >
-        {
-          /*
+        {/*
             There is an onClick handler on each cell except the last one.
             This is to prevent the user from selecting a profile while trying to click on the details link
-          */
-        }
+          */}
         <div onClick={onProfileSelectHandler}>
-          {
-            this.state.selectedProfile === profileName ? (
-              <IconSVG name="icon-check" className="text-success" />
-            ) : null
-          }
+          {this.state.selectedProfile === profileName ? (
+            <IconSVG name="icon-check" className="text-success" />
+          ) : null}
         </div>
-        <div
-          className="profile-label"
-          title={profileLabel}
-          onClick={onProfileSelectHandler}
-        >
+        <div className="profile-label" title={profileLabel} onClick={onProfileSelectHandler}>
           {renderDefaultProfileStar(profileName)}
           {profileLabel}
         </div>
-        <div onClick={onProfileSelectHandler}>
-          {provisionerLabel}
-        </div>
-        <div onClick={onProfileSelectHandler}>
-          {profile.scope}
-        </div>
-        <div
-          className="profile-status"
-          onClick={onProfileSelectHandler}
-        >
+        <div onClick={onProfileSelectHandler}>{provisionerLabel}</div>
+        <div onClick={onProfileSelectHandler}>{profile.scope}</div>
+        <div className="profile-status" onClick={onProfileSelectHandler}>
           {T.translate(`features.Cloud.Profiles.common.${profileStatus}`)}
         </div>
         <CustomizeLabel />
@@ -257,24 +248,18 @@ export default class ProfilesListViewInPipeline extends Component {
         </div>
       </div>
     );
-  }
+  };
 
   renderGridBody = () => {
     if (this.props.disabled) {
       let selectedProfileName = extractProfileName(this.state.selectedProfile);
-      let match = this.state.profiles.filter(profile => profile.name === selectedProfileName);
+      let match = this.state.profiles.filter((profile) => profile.name === selectedProfileName);
       if (match.length) {
         return match.map(this.renderProfileRow);
       }
     }
 
-    return (
-      <div className="grid-body">
-        {
-          this.state.profiles.map(this.renderProfileRow)
-        }
-      </div>
-    );
+    return <div className="grid-body">{this.state.profiles.map(this.renderProfileRow)}</div>;
   };
 
   renderGrid = () => {
@@ -294,19 +279,18 @@ export default class ProfilesListViewInPipeline extends Component {
     return (
       <div className="profiles-listview grid-wrapper">
         <strong>{this.props.tableTitle}</strong>
-        {
-          this.props.disabled || !this.props.showProfilesCount ?
-            null
-          :
-            <div className="profiles-count text-right">
-              {T.translate(`${PREFIX}.countProfiles`, {
-                context: this.state.profiles.length
-              })}
-            </div>
-        }
-        <div className={classnames('grid grid-container', {
-          disabled: this.props.disabled
-        })}>
+        {this.props.disabled || !this.props.showProfilesCount ? null : (
+          <div className="profiles-count text-right">
+            {T.translate(`${PREFIX}.countProfiles`, {
+              context: this.state.profiles.length,
+            })}
+          </div>
+        )}
+        <div
+          className={classnames('grid grid-container', {
+            disabled: this.props.disabled,
+          })}
+        >
           {this.renderGridHeader()}
           {this.renderGridBody()}
         </div>
@@ -324,7 +308,7 @@ export default class ProfilesListViewInPipeline extends Component {
     }
     if (this.props.disabled) {
       let selectedProfileName = extractProfileName(this.state.selectedProfile);
-      let match = this.state.profiles.filter(profile => profile.name === selectedProfileName);
+      let match = this.state.profiles.filter((profile) => profile.name === selectedProfileName);
       if (!match.length) {
         return (
           <div className="profiles-list-view-on-pipeline empty-container">
@@ -333,10 +317,6 @@ export default class ProfilesListViewInPipeline extends Component {
         );
       }
     }
-    return (
-      <div className="profiles-list-view-on-pipeline">
-        {this.renderGrid()}
-      </div>
-    );
+    return <div className="profiles-list-view-on-pipeline">{this.renderGrid()}</div>;
   }
 }

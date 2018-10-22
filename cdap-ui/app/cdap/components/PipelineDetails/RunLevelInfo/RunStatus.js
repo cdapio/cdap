@@ -16,11 +16,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import StatusMapper from 'services/StatusMapper';
 import IconSVG from 'components/IconSVG';
 import RunningRunsPopover from 'components/PipelineDetails/RunLevelInfo/RunningRunsPopover';
-import {PROGRAM_STATUSES} from 'services/global-constants';
+import { PROGRAM_STATUSES } from 'services/global-constants';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.RunLevel';
@@ -29,11 +29,11 @@ const mapStateToProps = (state) => {
   return {
     runs: state.runs,
     currentRun: state.currentRun,
-    pipelineId: state.name
+    pipelineId: state.name,
   };
 };
 
-const RunStatus = ({runs, currentRun, pipelineId}) => {
+const RunStatus = ({ runs, currentRun, pipelineId }) => {
   let status;
   if (currentRun && currentRun.status) {
     status = currentRun.status;
@@ -44,7 +44,7 @@ const RunStatus = ({runs, currentRun, pipelineId}) => {
   let statusCSSClass = StatusMapper.getStatusIndicatorClass(statusLabel);
   let statusIcon = StatusMapper.getStatusIndicatorIcon(statusLabel);
 
-  let runningRuns = runs.filter(run => run.status === PROGRAM_STATUSES.RUNNING);
+  let runningRuns = runs.filter((run) => run.status === PROGRAM_STATUSES.RUNNING);
 
   return (
     <div className="run-info-container run-status-container">
@@ -55,16 +55,13 @@ const RunStatus = ({runs, currentRun, pipelineId}) => {
         <IconSVG name={statusIcon} />
       </span>
       <span>{statusLabel}</span>
-      {
-        runningRuns.length > 1 && status === PROGRAM_STATUSES.RUNNING ?
-          <RunningRunsPopover
-            runs={runningRuns}
-            currentRunId={currentRun.runid}
-            pipelineId={pipelineId}
-          />
-        :
-          null
-      }
+      {runningRuns.length > 1 && status === PROGRAM_STATUSES.RUNNING ? (
+        <RunningRunsPopover
+          runs={runningRuns}
+          currentRunId={currentRun.runid}
+          pipelineId={pipelineId}
+        />
+      ) : null}
     </div>
   );
 };
@@ -72,7 +69,7 @@ const RunStatus = ({runs, currentRun, pipelineId}) => {
 RunStatus.propTypes = {
   runs: PropTypes.array,
   currentRun: PropTypes.object,
-  pipelineId: PropTypes.string
+  pipelineId: PropTypes.string,
 };
 
 const ConnectedRunStatus = connect(mapStateToProps)(RunStatus);

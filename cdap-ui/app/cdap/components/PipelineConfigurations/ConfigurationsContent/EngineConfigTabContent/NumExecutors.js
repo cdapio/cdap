@@ -16,18 +16,21 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {NUM_EXECUTORS_OPTIONS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {
+  NUM_EXECUTORS_OPTIONS,
+  ACTIONS as PipelineConfigurationsActions,
+} from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
-import {SPARK_EXECUTOR_INSTANCES} from 'components/PipelineConfigurations/PipelineConfigConstants';
+import { SPARK_EXECUTOR_INSTANCES } from 'components/PipelineConfigurations/PipelineConfigConstants';
 const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 
 const mapStateToProps = (state) => {
   return {
-    numExecutors: state.properties[SPARK_EXECUTOR_INSTANCES]
+    numExecutors: state.properties[SPARK_EXECUTOR_INSTANCES],
   };
 };
 const mapDispatchToProps = (dispatch) => {
@@ -35,18 +38,16 @@ const mapDispatchToProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_NUM_EXECUTORS,
-        payload: { numExecutors: e.target.value }
+        payload: { numExecutors: e.target.value },
       });
-    }
+    },
   };
 };
 
-const NumExecutors = ({numExecutors, onChange}) => {
+const NumExecutors = ({ numExecutors, onChange }) => {
   return (
     <div className="label-with-toggle numExecutors form-group row">
-      <span className="toggle-label col-xs-4">
-        {T.translate(`${PREFIX}.numExecutors`)}
-      </span>
+      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.numExecutors`)}</span>
       <div className="col-xs-7">
         <SelectWithOptions
           className="form-control small-dropdown"
@@ -56,8 +57,8 @@ const NumExecutors = ({numExecutors, onChange}) => {
         />
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
-          showOn='Hover'
-          placement='right'
+          showOn="Hover"
+          placement="right"
           className="num-executors-tooltip"
         >
           {T.translate(`${PREFIX}.numExecutorsTooltip`)}
@@ -69,9 +70,12 @@ const NumExecutors = ({numExecutors, onChange}) => {
 
 NumExecutors.propTypes = {
   numExecutors: PropTypes.string,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };
 
-const ConnectedNumExecutors = connect(mapStateToProps, mapDispatchToProps)(NumExecutors);
+const ConnectedNumExecutors = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(NumExecutors);
 
 export default ConnectedNumExecutors;

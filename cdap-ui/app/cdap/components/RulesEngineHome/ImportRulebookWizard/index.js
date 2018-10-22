@@ -21,8 +21,12 @@ import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import UploadFile from 'services/upload-file';
 import NamespaceStore from 'services/NamespaceStore';
-import {setActiveRulebook, getRuleBooks, getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
-import {Observable} from 'rxjs/Observable';
+import {
+  setActiveRulebook,
+  getRuleBooks,
+  getRules,
+} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import { Observable } from 'rxjs/Observable';
 import ImportRulebookWizardConfig from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookWizardConfig';
 import ImportRulebookStore from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookStore';
 import T from 'i18n-react';
@@ -33,46 +37,48 @@ require('./ImportRulebookWizard.scss');
 const PREFIX = 'features.RulesEngine.ImportRulebook';
 
 export default class ImportRulebookWizard extends Component {
-
   static propTypes = {
     isOpen: PropTypes.bool,
-    onClose: PropTypes.func
+    onClose: PropTypes.func,
   };
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.isOpen !== this.state.isOpen) {
       this.setState({
-        isOpen: nextProps.isOpen
+        isOpen: nextProps.isOpen,
       });
     }
   }
 
   state = {
     isOpen: this.props.isOpen || false,
-    file: ''
+    file: '',
   };
 
   setFile = ([file]) => {
     this.setState({
-      file
+      file,
     });
   };
 
   toggleWizard = () => {
-    this.setState({
-      isOpen: !this.state.isOpen
-    }, () => {
-      if (!this.state.isOpen && this.props.onClose) {
-        this.props.onClose();
+    this.setState(
+      {
+        isOpen: !this.state.isOpen,
+      },
+      () => {
+        if (!this.state.isOpen && this.props.onClose) {
+          this.props.onClose();
+        }
       }
-    });
+    );
   };
 
   onSubmit = () => {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
     let url = `/namespaces/${namespace}/apps/yare/services/service/methods/rulebooks`;
     let headers = {
-      'content-type': 'application/rules-engine'
+      'content-type': 'application/rules-engine',
     };
     if (window.CDAP_CONFIG.securityEnabled) {
       let token = cookie.load('CDAP_Auth_Token');
@@ -84,27 +90,24 @@ export default class ImportRulebookWizard extends Component {
     return UploadFile({
       url,
       fileContents: data,
-      headers
-    })
-      .mergeMap(
-        (res) => {
-          let response;
-          let activeRulebook;
-          try {
-            response = JSON.parse(res);
-            activeRulebook= response.values[0];
-            setActiveRulebook(activeRulebook);
-          } catch (e) {
-            console.log('Unable to parse response. Just getting rulebooks', e);
-          }
-          getRuleBooks();
-          getRules();
-          this.toggleWizard();
-          return Observable.create((obs) => {
-            obs.next();
-          });
-        }
-      );
+      headers,
+    }).mergeMap((res) => {
+      let response;
+      let activeRulebook;
+      try {
+        response = JSON.parse(res);
+        activeRulebook = response.values[0];
+        setActiveRulebook(activeRulebook);
+      } catch (e) {
+        console.log('Unable to parse response. Just getting rulebooks', e);
+      }
+      getRuleBooks();
+      getRules();
+      this.toggleWizard();
+      return Observable.create((obs) => {
+        obs.next();
+      });
+    });
   };
 
   render() {

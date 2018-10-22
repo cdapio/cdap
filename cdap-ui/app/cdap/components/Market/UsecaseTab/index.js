@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import MarketStore from 'components/Market/store/market-store.js';
 import Fuse from 'fuse.js';
 import MarketPlaceUsecaseEntity from 'components/MarketPlaceUsecaseEntity';
@@ -24,11 +24,11 @@ export default class UsecaseTab extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entities: this.getUsecases()
+      entities: this.getUsecases(),
     };
   }
   getUsecases() {
-    const {list, filter} = MarketStore.getState();
+    const { list, filter } = MarketStore.getState();
     if (filter !== 'usecase') {
       return;
     }
@@ -39,9 +39,7 @@ export default class UsecaseTab extends Component {
       location: 0,
       distance: 100,
       maxPatternLength: 32,
-      keys: [
-        "categories"
-      ]
+      keys: ['categories'],
     };
 
     let fuse = new Fuse(list, fuseOptions);
@@ -50,20 +48,15 @@ export default class UsecaseTab extends Component {
   render() {
     return (
       <div className="usecase-content-tab">
-        {
-          this.state
-            .entities
-            .map( entity => (
-              <MarketPlaceUsecaseEntity
-                key={entity.id}
-                entity={entity}
-                entityId={entity.id}
-                beta={entity.beta}
-              />
-            ))
-        }
+        {this.state.entities.map((entity) => (
+          <MarketPlaceUsecaseEntity
+            key={entity.id}
+            entity={entity}
+            entityId={entity.id}
+            beta={entity.beta}
+          />
+        ))}
       </div>
     );
   }
-
 }

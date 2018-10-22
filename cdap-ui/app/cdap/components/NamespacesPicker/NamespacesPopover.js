@@ -17,10 +17,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Popover from 'components/Popover';
-import NamespaceStore, {getCurrentNamespace} from 'services/NamespaceStore';
+import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
-import {connect} from 'react-redux';
-import {UncontrolledDropdown} from 'components/UncontrolledComponents';
+import { connect } from 'react-redux';
+import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import T from 'i18n-react';
 
@@ -29,7 +29,7 @@ const PREFIX = 'features.NamespacesPicker';
 class NamespacesPopoverView extends Component {
   static propTypes = {
     namespacesPick: PropTypes.array,
-    setNamespacesPick: PropTypes.func
+    setNamespacesPick: PropTypes.func,
   };
 
   state = {
@@ -40,7 +40,7 @@ class NamespacesPopoverView extends Component {
   componentWillMount() {
     this.namespaceStoreSub = NamespaceStore.subscribe(() => {
       this.setState({
-        namespaces: this.getNamespaceList()
+        namespaces: this.getNamespaceList(),
       });
     });
   }
@@ -54,9 +54,9 @@ class NamespacesPopoverView extends Component {
   getNamespaceList() {
     let namespace = getCurrentNamespace();
 
-    return NamespaceStore.getState().namespaces
-      .map(ns => ns.name)
-      .filter(ns => ns !== namespace);
+    return NamespaceStore.getState()
+      .namespaces.map((ns) => ns.name)
+      .filter((ns) => ns !== namespace);
   }
 
   namespaceClick = (ns) => {
@@ -81,9 +81,7 @@ class NamespacesPopoverView extends Component {
 
   render() {
     const targetElem = (
-      <div className="monitor-more text-xs-right">
-        {T.translate(`${PREFIX}.monitorMore`)}
-      </div>
+      <div className="monitor-more text-xs-right">{T.translate(`${PREFIX}.monitorMore`)}</div>
     );
 
     return (
@@ -95,45 +93,33 @@ class NamespacesPopoverView extends Component {
         enableInteractionInPopover={true}
       >
         <div className="popover-content">
-          <div className="title">
-            {T.translate(`${PREFIX}.popoverHeader`)}
-          </div>
+          <div className="title">{T.translate(`${PREFIX}.popoverHeader`)}</div>
 
           <div className="namespaces-count">
             {T.translate(`${PREFIX}.namespacesCount`, {
-              context: this.state.namespaces.length + 1
+              context: this.state.namespaces.length + 1,
             })}
           </div>
 
           <div className="namespaces-list">
             <div className="namespace-row non-selectable">
               <div className="checkbox-column">
-                <UncontrolledDropdown
-                  className="toggle-all-dropdown"
-                >
+                <UncontrolledDropdown className="toggle-all-dropdown">
                   <DropdownToggle className="dropdown-toggle-btn">
                     <IconSVG name="icon-caret-square-o-down" />
                   </DropdownToggle>
                   <DropdownMenu>
-                    <DropdownItem
-                      className="toggle-option"
-                      onClick={this.selectAll}
-                    >
+                    <DropdownItem className="toggle-option" onClick={this.selectAll}>
                       {T.translate(`${PREFIX}.selectAll`)}
                     </DropdownItem>
-                    <DropdownItem
-                      className="toggle-option"
-                      onClick={this.clearAll}
-                    >
+                    <DropdownItem className="toggle-option" onClick={this.clearAll}>
                       {T.translate(`${PREFIX}.clearAll`)}
                     </DropdownItem>
                   </DropdownMenu>
                 </UncontrolledDropdown>
               </div>
 
-              <div className="namespace-section">
-                {T.translate(`${PREFIX}.namespaceName`)}
-              </div>
+              <div className="namespace-section">{T.translate(`${PREFIX}.namespaceName`)}</div>
             </div>
 
             <hr />
@@ -143,30 +129,21 @@ class NamespacesPopoverView extends Component {
                 <div className="checkbox-column">
                   <IconSVG name="icon-check" />
                 </div>
-                <div className="namespace-section">
-                  {this.state.namespace}
-                </div>
+                <div className="namespace-section">{this.state.namespace}</div>
               </div>
 
-              {
-                this.state.namespaces.map((ns) => {
-                  let isPicked = this.props.namespacesPick.indexOf(ns) !== -1;
+              {this.state.namespaces.map((ns) => {
+                let isPicked = this.props.namespacesPick.indexOf(ns) !== -1;
 
-                  return (
-                    <div
-                      className="namespace-row"
-                      onClick={this.namespaceClick.bind(this, ns)}
-                    >
-                      <div className="checkbox-column">
-                        <IconSVG name={isPicked ? 'icon-check-square' : 'icon-square-o'} />
-                      </div>
-                      <div className="namespace-section">
-                        {ns}
-                      </div>
+                return (
+                  <div className="namespace-row" onClick={this.namespaceClick.bind(this, ns)}>
+                    <div className="checkbox-column">
+                      <IconSVG name={isPicked ? 'icon-check-square' : 'icon-square-o'} />
                     </div>
-                  );
-                })
-              }
+                    <div className="namespace-section">{ns}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -178,12 +155,10 @@ class NamespacesPopoverView extends Component {
 const mapStateToProps = (state, ownProps) => {
   return {
     namespacesPick: state.namespaces.namespacesPick,
-    setNamespacesPick: ownProps.setNamespacesPick
+    setNamespacesPick: ownProps.setNamespacesPick,
   };
 };
 
-const NamespacesPopover = connect(
-  mapStateToProps
-)(NamespacesPopoverView);
+const NamespacesPopover = connect(mapStateToProps)(NamespacesPopoverView);
 
 export default NamespacesPopover;

@@ -19,42 +19,36 @@ import React from 'react';
 import PieChart from 'components/PieChart';
 require('./PieChartWithLegend.scss');
 
-export default function PieChartWithLegends({data, width, height}) {
+export default function PieChartWithLegends({ data, width, height }) {
   return (
     <div className="pie-chart-with-legends">
-      <PieChart
-        data={data}
-        width={width}
-        height={height}
-      />
+      <PieChart data={data} width={width} height={height} />
       <div className="pie-chart-legends">
-        {
-          !data.length ? null :
-            data.map(d => {
+        {!data.length
+          ? null
+          : data.map((d) => {
               return (
                 <div key={d.color}>
-                  <span
-                    className="pie-legend-color"
-                    style={{backgroundColor: d.color}}
-                  />
+                  <span className="pie-legend-color" style={{ backgroundColor: d.color }} />
                   <span>{d.value}</span>
                 </div>
               );
-            })
-        }
+            })}
       </div>
     </div>
   );
 }
 PieChartWithLegends.defaultProps = {
   width: 150,
-  height: 150
+  height: 150,
 };
 PieChartWithLegends.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape({
-    color: PropTypes.string,
-    value: PropTypes.string
-  })),
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      color: PropTypes.string,
+      value: PropTypes.string,
+    })
+  ),
   width: PropTypes.number,
-  height: PropTypes.number
+  height: PropTypes.number,
 };

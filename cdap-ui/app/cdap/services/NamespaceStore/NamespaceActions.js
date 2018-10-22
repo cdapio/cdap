@@ -15,9 +15,9 @@
  */
 
 const NamespaceActions = {
-  selectNamespace : 'SELECT_NAMESPACE',
-  updateUsername : 'UPDATE_USERNAME',
-  updateNamespaces : 'UPDATE_NAMESPACES'
+  selectNamespace: 'SELECT_NAMESPACE',
+  updateUsername: 'UPDATE_USERNAME',
+  updateNamespaces: 'UPDATE_NAMESPACES',
 };
 
 export default NamespaceActions;

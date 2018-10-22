@@ -23,17 +23,21 @@ import PlusButtonStore from 'services/PlusButtonStore';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 require('./NoEntitiesMessage.scss');
-import {DEFAULT_SEARCH_QUERY} from 'components/EntityListView/SearchStore/SearchConstants';
+import { DEFAULT_SEARCH_QUERY } from 'components/EntityListView/SearchStore/SearchConstants';
 
-export default function NoEntitiesMessage({searchText, filtersAreApplied, clearSearchAndFilters}) {
+export default function NoEntitiesMessage({
+  searchText,
+  filtersAreApplied,
+  clearSearchAndFilters,
+}) {
   let eventEmitter = ee(ee);
 
   const openAddEntityModal = () => {
     PlusButtonStore.dispatch({
       type: 'TOGGLE_PLUSBUTTON_MODAL',
       payload: {
-        modalState: true
-      }
+        modalState: true,
+      },
     });
   };
 
@@ -42,11 +46,11 @@ export default function NoEntitiesMessage({searchText, filtersAreApplied, clearS
   };
 
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let emptyMessage = T.translate('features.EntityListView.emptyMessage.default', {namespace});
+  let emptyMessage = T.translate('features.EntityListView.emptyMessage.default', { namespace });
   let clearText;
 
   if (searchText !== DEFAULT_SEARCH_QUERY) {
-    emptyMessage = T.translate('features.EntityListView.emptyMessage.search', {searchText});
+    emptyMessage = T.translate('features.EntityListView.emptyMessage.search', { searchText });
     clearText = T.translate('features.EntityListView.emptyMessage.clearText.search');
   } else if (filtersAreApplied && filtersAreApplied()) {
     emptyMessage = T.translate('features.EntityListView.emptyMessage.filter');
@@ -60,32 +64,21 @@ export default function NoEntitiesMessage({searchText, filtersAreApplied, clearS
       <div className="empty-message-suggestions">
         <span>{T.translate('features.EntityListView.emptyMessage.suggestion')}</span>
         <br />
-        {
-          clearText ? (
-            <span>
-              <span
-                className="action-item clear"
-                onClick={clearSearchAndFilters}
-              >
-                {T.translate('features.EntityListView.emptyMessage.clearText.clear')}
-              </span>
-              <span>{clearText}</span>
-              <br />
+        {clearText ? (
+          <span>
+            <span className="action-item clear" onClick={clearSearchAndFilters}>
+              {T.translate('features.EntityListView.emptyMessage.clearText.clear')}
             </span>
-          ) : null
-        }
-        <span
-          className="action-item add-entity"
-          onClick={openAddEntityModal}
-        >
+            <span>{clearText}</span>
+            <br />
+          </span>
+        ) : null}
+        <span className="action-item add-entity" onClick={openAddEntityModal}>
           {T.translate('features.EntityListView.emptyMessage.clearText.add')}
         </span>
         <span>{T.translate('features.EntityListView.emptyMessage.clearText.entities')}</span>
         <br />
-        <span
-          className="action-item open-market"
-          onClick={openCaskMarket}
-        >
+        <span className="action-item open-market" onClick={openCaskMarket}>
           {T.translate('features.EntityListView.emptyMessage.clearText.browse')}
         </span>
         <span>{T.translate('features.EntityListView.emptyMessage.clearText.Market')}</span>
@@ -96,5 +89,5 @@ export default function NoEntitiesMessage({searchText, filtersAreApplied, clearS
 NoEntitiesMessage.propTypes = {
   searchText: PropTypes.string,
   filtersAreApplied: PropTypes.func,
-  clearSearchAndFilters: PropTypes.func
+  clearSearchAndFilters: PropTypes.func,
 };

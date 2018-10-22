@@ -20,21 +20,16 @@ import React from 'react';
 import PipelineTriggers from 'components/PipelineTriggers';
 import TriggeredPipelines from 'components/TriggeredPipelines';
 
-export default function PipelineTriggersSidebars({pipelineName, namespace}) {
+export default function PipelineTriggersSidebars({ pipelineName, namespace }) {
   return (
     <div className="pipeline-triggers-sidebar-container">
-      <PipelineTriggers
-        pipelineName={pipelineName}
-        namespace={namespace}
-      />
-      <TriggeredPipelines
-        pipelineName={pipelineName}
-      />
+      <PipelineTriggers pipelineName={pipelineName} namespace={namespace} />
+      <TriggeredPipelines pipelineName={pipelineName} />
     </div>
   );
 }
 
 PipelineTriggersSidebars.propTypes = {
   pipelineName: PropTypes.string,
-  namespace: PropTypes.string
+  namespace: PropTypes.string,
 };

@@ -21,14 +21,17 @@ import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBr
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {Input} from 'reactstrap';
+import { Input } from 'reactstrap';
 import T from 'i18n-react';
-import {setKafkaAsActiveBrowser, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {
+  setKafkaAsActiveBrowser,
+  setError,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import ee from 'event-emitter';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 import If from 'components/If';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.KafkaBrowser`;
@@ -39,11 +42,11 @@ export default class KafkaBrowser extends Component {
   static propTypes = {
     toggle: PropTypes.func,
     enableRouting: PropTypes.bool,
-    onWorkspaceCreate: PropTypes.func
+    onWorkspaceCreate: PropTypes.func,
   };
 
   static defaultProps = {
-    enableRouting: true
+    enableRouting: true,
   };
 
   state = {
@@ -53,7 +56,7 @@ export default class KafkaBrowser extends Component {
     search: '',
     searchFocus: true,
     error: null,
-    topics: []
+    topics: [],
   };
 
   eventEmitter = ee(ee);
@@ -61,7 +64,7 @@ export default class KafkaBrowser extends Component {
   componentDidMount() {
     this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_KAFKA', this.eventBasedFetchTopics);
     this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
-      let {kafka, activeBrowser} = DataPrepBrowserStore.getState();
+      let { kafka, activeBrowser } = DataPrepBrowserStore.getState();
       if (activeBrowser.name !== ConnectionType.KAFKA) {
         return;
       }
@@ -70,7 +73,7 @@ export default class KafkaBrowser extends Component {
         info: kafka.info,
         connectionId: kafka.connectionId,
         topics: kafka.topics,
-        loading: kafka.loading
+        loading: kafka.loading,
       });
     });
   }
@@ -84,42 +87,43 @@ export default class KafkaBrowser extends Component {
 
   eventBasedFetchTopics = (connectionId) => {
     if (this.state.connectionId === connectionId) {
-      setKafkaAsActiveBrowser({name: ConnectionType.KAFKA, id: connectionId});
+      setKafkaAsActiveBrowser({ name: ConnectionType.KAFKA, id: connectionId });
     }
   };
 
   handleSearch = (e) => {
     this.setState({
-      search: e.target.value
+      search: e.target.value,
     });
   };
 
   prepTopic(topic) {
     this.setState({
-      loading: true
+      loading: true,
     });
     let namespace = NamespaceStore.getState().selectedNamespace;
     let params = {
       namespace,
       connectionId: this.state.connectionId,
       topic,
-      lines: 100
+      lines: 100,
     };
 
-    MyDataPrepApi.readTopic(params)
-      .subscribe(
-        (res) => {
-          let workspaceId = res.values[0].id;
-          if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
-            this.props.onWorkspaceCreate(workspaceId);
-            return;
-          }
-          window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-        },
-        (err) => {
-          setError(err);
+    MyDataPrepApi.readTopic(params).subscribe(
+      (res) => {
+        let workspaceId = res.values[0].id;
+        if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
+          this.props.onWorkspaceCreate(workspaceId);
+          return;
         }
-      );
+        window.location.href = `${
+          window.location.origin
+        }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+      },
+      (err) => {
+        setError(err);
+      }
+    );
   }
 
   renderEmpty() {
@@ -128,7 +132,7 @@ export default class KafkaBrowser extends Component {
         <div className="empty-search-container">
           <div className="empty-search">
             <strong>
-              {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.search})}
+              {T.translate(`${PREFIX}.EmptyMessage.title`, { searchText: this.state.search })}
             </strong>
             <hr />
             <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
@@ -139,7 +143,7 @@ export default class KafkaBrowser extends Component {
                   onClick={() => {
                     this.setState({
                       search: '',
-                      searchFocus: true
+                      searchFocus: true,
                     });
                   }}
                 >
@@ -157,7 +161,9 @@ export default class KafkaBrowser extends Component {
       <div className="empty-search-container">
         <div className="empty-search text-xs-center">
           <strong>
-            {T.translate(`${PREFIX}.EmptyMessage.emptyKafka`, {connectionName: this.state.connectionName})}
+            {T.translate(`${PREFIX}.EmptyMessage.emptyKafka`, {
+              connectionName: this.state.connectionName,
+            })}
           </strong>
         </div>
       </div>
@@ -178,21 +184,19 @@ export default class KafkaBrowser extends Component {
           </div>
         </div>
         <div className="kafka-content-body">
-          {
-            topics.map(topic => {
-              return (
-                <div
-                  className="row content-row"
-                  onClick={this.prepTopic.bind(this, topic)}
-                  key={topic}
-                >
-                  <div className="col-xs-12">
-                    <span>{topic}</span>
-                  </div>
+          {topics.map((topic) => {
+            return (
+              <div
+                className="row content-row"
+                onClick={this.prepTopic.bind(this, topic)}
+                key={topic}
+              >
+                <div className="col-xs-12">
+                  <span>{topic}</span>
                 </div>
-              );
-            })
-          }
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -200,25 +204,23 @@ export default class KafkaBrowser extends Component {
 
   render() {
     if (this.state.loading) {
-      return (
-        <LoadingSVGCentered />
-      );
+      return <LoadingSVGCentered />;
     }
 
     let filteredTopics = this.state.topics;
     if (this.state.search) {
-      filteredTopics = this.state.topics.filter(topic => topic.toLowerCase().indexOf(this.state.search.toLowerCase()) !== -1);
+      filteredTopics = this.state.topics.filter(
+        (topic) => topic.toLowerCase().indexOf(this.state.search.toLowerCase()) !== -1
+      );
     }
-    const PageTitle = (...props) => (
-      this.props.enableRouting ?
+    const PageTitle = (...props) =>
+      this.props.enableRouting ? (
         <DataPrepBrowserPageTitle
           browserI18NName="KafkaBrowser"
           browserStateName="kafka"
           {...props}
         />
-      :
-        null
-    );
+      ) : null;
     return (
       <div className="kafka-browser">
         <Provider store={DataPrepBrowserStore}>
@@ -235,11 +237,9 @@ export default class KafkaBrowser extends Component {
               <div className="kafka-metadata">
                 <h5>{this.state.info.name}</h5>
                 <span className="tables-count">
-                  {
-                    T.translate(`${PREFIX}.topicCount`, {
-                      count: this.state.topics.length
-                    })
-                  }
+                  {T.translate(`${PREFIX}.topicCount`, {
+                    count: this.state.topics.length,
+                  })}
                 </span>
               </div>
               <div className="table-name-search">
@@ -253,11 +253,8 @@ export default class KafkaBrowser extends Component {
             </div>
           </div>
         </If>
-        <div className="kafka-browser-content">
-          { this.renderContents(filteredTopics) }
-        </div>
+        <div className="kafka-browser-content">{this.renderContents(filteredTopics)}</div>
       </div>
     );
   }
 }
-

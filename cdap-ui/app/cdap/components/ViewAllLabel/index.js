@@ -21,23 +21,15 @@ require('./ViewAllLabel.scss');
 
 const PREFIX = 'features.ViewAllLabel';
 
-export default function ViewAllLabel({arrayToLimit, limit, viewAllState, toggleViewAll}) {
+export default function ViewAllLabel({ arrayToLimit, limit, viewAllState, toggleViewAll }) {
   if (arrayToLimit.length <= limit) {
     return null;
   }
 
   return (
     <div className="view-all-label-container">
-      <span
-        className="view-all-label"
-        onClick={toggleViewAll}
-      >
-        {
-          viewAllState ?
-            T.translate(`${PREFIX}.viewLess`)
-          :
-            T.translate(`${PREFIX}.viewAll`)
-        }
+      <span className="view-all-label" onClick={toggleViewAll}>
+        {viewAllState ? T.translate(`${PREFIX}.viewLess`) : T.translate(`${PREFIX}.viewAll`)}
       </span>
     </div>
   );
@@ -47,6 +39,5 @@ ViewAllLabel.propTypes = {
   arrayToLimit: PropTypes.array,
   limit: PropTypes.number,
   viewAllState: PropTypes.bool,
-  toggleViewAll: PropTypes.func
+  toggleViewAll: PropTypes.func,
 };
-

@@ -24,21 +24,21 @@ import MouseTrap from 'mousetrap';
 const PREFIX = 'features.DataPrep.Directives.Parse';
 
 const OPTIONS_MAP = {
-  'OPTION1': 'MM/dd/yyyy',
-  'OPTION2': 'dd/MM/yyyy',
-  'OPTION3': 'MM-dd-yyyy',
-  'OPTION4': 'MM-dd-yy',
-  'OPTION5': 'yyyy-MM-dd',
-  'OPTION6': "yyyy-MM-dd HH:mm:ss",
-  'OPTION7': "MM-dd-yyyy 'at' HH:mm:ss z",
-  'OPTION8': 'dd/MM/yy HH:mm:ss',
-  'OPTION9': "yyyy,MM.dd'T'HH:mm:ss.SSSZ",
-  'OPTION10': 'MM.dd.yyyy HH:mm:ss.SSS',
-  'OPTION11': 'EEE, d MMM yyyy HH:mm:ss',
-  'OPTION12': "EEE, MMM d, ''yy",
-  'OPTION13': 'h:mm a',
-  'OPTION14': 'H:mm a, z',
-  'CUSTOM': 'CUSTOM'
+  OPTION1: 'MM/dd/yyyy',
+  OPTION2: 'dd/MM/yyyy',
+  OPTION3: 'MM-dd-yyyy',
+  OPTION4: 'MM-dd-yy',
+  OPTION5: 'yyyy-MM-dd',
+  OPTION6: 'yyyy-MM-dd HH:mm:ss',
+  OPTION7: "MM-dd-yyyy 'at' HH:mm:ss z",
+  OPTION8: 'dd/MM/yy HH:mm:ss',
+  OPTION9: "yyyy,MM.dd'T'HH:mm:ss.SSSZ",
+  OPTION10: 'MM.dd.yyyy HH:mm:ss.SSS',
+  OPTION11: 'EEE, d MMM yyyy HH:mm:ss',
+  OPTION12: "EEE, MMM d, ''yy",
+  OPTION13: 'h:mm a',
+  OPTION14: 'H:mm a, z',
+  CUSTOM: 'CUSTOM',
 };
 
 export default class SimpleDateModal extends Component {
@@ -47,7 +47,7 @@ export default class SimpleDateModal extends Component {
 
     this.state = {
       format: 'OPTION1',
-      customFormat: ''
+      customFormat: '',
     };
 
     this.apply = this.apply.bind(this);
@@ -74,15 +74,17 @@ export default class SimpleDateModal extends Component {
   }
 
   selectFormat(option) {
-    this.setState({format: option});
+    this.setState({ format: option });
   }
 
   handleCustomFormatChange(e) {
-    this.setState({customFormat: e.target.value});
+    this.setState({ customFormat: e.target.value });
   }
 
   renderCustomText() {
-    if (this.state.format !== 'CUSTOM') { return null; }
+    if (this.state.format !== 'CUSTOM') {
+      return null;
+    }
 
     return (
       <div className="custom-format">
@@ -114,62 +116,44 @@ export default class SimpleDateModal extends Component {
       >
         <ModalHeader>
           <span>
-            {T.translate(`${PREFIX}.Parsers.SIMPLEDATE.ModalHeader.${this.props.source}`, {parser: 'Simple Date'})}
+            {T.translate(`${PREFIX}.Parsers.SIMPLEDATE.ModalHeader.${this.props.source}`, {
+              parser: 'Simple Date',
+            })}
           </span>
 
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.toggle}
-          >
+          <div className="close-section float-xs-right" onClick={this.props.toggle}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
         <ModalBody>
-          <h5>
-            {T.translate(`${PREFIX}.Parsers.SIMPLEDATE.modalTitle`)}
-          </h5>
+          <h5>{T.translate(`${PREFIX}.Parsers.SIMPLEDATE.modalTitle`)}</h5>
 
           <br />
 
           <div className="list-options">
-            {
-              options.map((option) => {
-                return (
-                  <div
-                    key={option}
-                    onClick={this.selectFormat.bind(this, option)}
-                  >
-                    <span
-                      className={classnames('fa', {
-                        'fa-circle-o': option !== this.state.format,
-                        'fa-circle': option === this.state.format
-                      })}
-                    />
-                    <span>
-                      {T.translate(`${PREFIX}.Parsers.SIMPLEDATE.Options.${option}`)}
-                    </span>
-                  </div>
-                );
-              })
-            }
+            {options.map((option) => {
+              return (
+                <div key={option} onClick={this.selectFormat.bind(this, option)}>
+                  <span
+                    className={classnames('fa', {
+                      'fa-circle-o': option !== this.state.format,
+                      'fa-circle': option === this.state.format,
+                    })}
+                  />
+                  <span>{T.translate(`${PREFIX}.Parsers.SIMPLEDATE.Options.${option}`)}</span>
+                </div>
+              );
+            })}
           </div>
 
           {this.renderCustomText()}
-
         </ModalBody>
 
         <ModalFooter>
-          <button
-            className="btn btn-primary"
-            onClick={this.apply}
-            disabled={disabled}
-          >
+          <button className="btn btn-primary" onClick={this.apply} disabled={disabled}>
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={this.props.toggle}
-          >
+          <button className="btn btn-secondary" onClick={this.props.toggle}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </ModalFooter>
@@ -177,7 +161,6 @@ export default class SimpleDateModal extends Component {
     );
   }
 }
-
 
 SimpleDateModal.propTypes = {
   source: PropTypes.string,

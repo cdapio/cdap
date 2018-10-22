@@ -14,14 +14,14 @@
  * the License.
 */
 
-import {createStore} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 
 export const CREATION_STEPS = {
   DATAPREP_CONNECTIONS: 'DATAPREP_CONNECTIONS',
   DATAPREP: 'DATAPREP',
   DATASPLIT: 'DATASPLIT',
-  ALGORITHM_SELECTION: 'ALGORITHM_SELECTION'
+  ALGORITHM_SELECTION: 'ALGORITHM_SELECTION',
 };
 
 const ACTIONS = {
@@ -53,12 +53,12 @@ const ACTIONS = {
   UPDATE_HYPER_PARAM: 'UPDATE_HYPER_PARAM',
   SET_MODEL_TRAINED: 'SET_MODEL_TRAINED',
   SET_MODEL_ERROR: 'SET_MODEL_ERROR',
-  RESET: 'RESET'
+  RESET: 'RESET',
 };
 
 const POPOVER_TYPES = {
   EXPERIMENT: 'EXPERIMENT',
-  MODEL: 'MODEL'
+  MODEL: 'MODEL',
 };
 
 const DEFAULT_EXPERIMENTS_CREATE_VALUE = {
@@ -70,7 +70,7 @@ const DEFAULT_EXPERIMENTS_CREATE_VALUE = {
   popover: POPOVER_TYPES.EXPERIMENT,
   isEdit: false,
   workspaceId: null,
-  error: null
+  error: null,
 };
 
 const DEFAULT_MODEL_CREATE_VALUE = {
@@ -86,18 +86,18 @@ const DEFAULT_MODEL_CREATE_VALUE = {
   isSplitFinalized: false,
 
   algorithm: {
-    name: ''
+    name: '',
   },
 
   validAlgorithmsList: [],
   algorithmsList: [],
   isModelTrained: false,
-  error: null
+  error: null,
 };
 
 const DEFAULT_ACTIVE_STEP = {
   override: false,
-  step_name: CREATION_STEPS.DATAPREP_CONNECTIONS
+  step_name: CREATION_STEPS.DATAPREP_CONNECTIONS,
 };
 
 const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = defaultAction) => {
@@ -105,27 +105,27 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
     case ACTIONS.SET_EXPERIMENT_NAME:
       return {
         ...state,
-        name: action.payload.name
+        name: action.payload.name,
       };
     case ACTIONS.SET_EXPERIMENT_DESCRIPTION:
       return {
         ...state,
-        description: action.payload.description
+        description: action.payload.description,
       };
     case ACTIONS.SET_EXPERIMENT_OUTCOME:
       return {
         ...state,
-        outcome: action.payload.outcome
+        outcome: action.payload.outcome,
       };
     case ACTIONS.SET_EXPERIMENT_SRC_PATH:
       return {
         ...state,
-        srcpath: action.payload.srcpath
+        srcpath: action.payload.srcpath,
       };
     case ACTIONS.SET_CREATE_EXPERIMENT_LOADING:
       return {
         ...state,
-        loading: action.payload.loading
+        loading: action.payload.loading,
       };
     case ACTIONS.SET_WORKSPACE_ID:
       return {
@@ -134,24 +134,28 @@ const experiments_create = (state = DEFAULT_EXPERIMENTS_CREATE_VALUE, action = d
       };
     case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT:
     case ACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT: {
-      let {name, description, outcome, srcpath, workspaceId} = action.payload.experimentDetails;
+      let { name, description, outcome, srcpath, workspaceId } = action.payload.experimentDetails;
       return {
         ...state,
-        name, description, outcome, srcpath, workspaceId,
+        name,
+        description,
+        outcome,
+        srcpath,
+        workspaceId,
         isEdit: true,
         loading: false,
-        popover: POPOVER_TYPES.MODEL
+        popover: POPOVER_TYPES.MODEL,
       };
     }
     case ACTIONS.SET_VISIBLE_POPOVER:
       return {
         ...state,
-        popover: action.payload.popover
+        popover: action.payload.popover,
       };
     case ACTIONS.SET_EXPERIMENT_ERROR:
       return {
         ...state,
-        error: action.payload.error
+        error: action.payload.error,
       };
     case ACTIONS.RESET:
       return DEFAULT_EXPERIMENTS_CREATE_VALUE;
@@ -165,100 +169,99 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
     case ACTIONS.SET_MODEL_ID:
       return {
         ...state,
-        modelId: action.payload.modelId
+        modelId: action.payload.modelId,
       };
     case ACTIONS.SET_MODEL_NAME:
       return {
         ...state,
-        name: action.payload.name
+        name: action.payload.name,
       };
     case ACTIONS.SET_MODEL_DESCRIPTION:
       return {
         ...state,
-        description: action.payload.description
+        description: action.payload.description,
       };
     case ACTIONS.SET_SPLIT_INFO:
       return {
         ...state,
-        splitInfo: action.payload.splitInfo
+        splitInfo: action.payload.splitInfo,
       };
     case ACTIONS.MODEL_UPDATE:
       return {
         ...state,
-        splitInfo: DEFAULT_MODEL_CREATE_VALUE.splitInfo
+        splitInfo: DEFAULT_MODEL_CREATE_VALUE.splitInfo,
       };
     case ACTIONS.SET_SPLIT_FINALIZED:
       return {
         ...state,
-        isSplitFinalized: action.payload.isSplitFinalized
+        isSplitFinalized: action.payload.isSplitFinalized,
       };
     case ACTIONS.SET_OUTCOME_COLUMNS:
       return {
         ...state,
-        columns: action.payload.columns
+        columns: action.payload.columns,
       };
     case ACTIONS.SET_DIRECTIVES:
       return {
         ...state,
-        directives: action.payload.directives
+        directives: action.payload.directives,
       };
     case ACTIONS.SET_MODEL_ML_ALGORITHM:
       return {
         ...state,
-        algorithm: action.payload.algorithm
+        algorithm: action.payload.algorithm,
       };
     case ACTIONS.SET_ALGORITHMS_LIST:
       return {
         ...state,
-        algorithmsList: action.payload.algorithmsList
+        algorithmsList: action.payload.algorithmsList,
       };
     case ACTIONS.UPDATE_HYPER_PARAM: {
-      let {key, value} = action.payload;
+      let { key, value } = action.payload;
       return {
         ...state,
         algorithm: {
           ...state.algorithm,
           hyperparameters: {
             ...state.algorithm.hyperparameters,
-            [key]: value
-          }
-        }
+            [key]: value,
+          },
+        },
       };
     }
     case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT:
     case ACTIONS.SET_SCHEMA:
       return {
         ...state,
-        schema: action.payload.schema || state.schema
+        schema: action.payload.schema || state.schema,
       };
     case ACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT: {
-      let {name, description, id: modelId} = action.payload.modelDetails;
+      let { name, description, id: modelId } = action.payload.modelDetails;
       return {
         ...state,
         name,
         description,
         modelId,
-        splitInfo: action.payload.splitInfo
+        splitInfo: action.payload.splitInfo,
       };
     }
     case ACTIONS.SET_VALID_ALGORITHMS_LIST:
       return {
         ...state,
         validAlgorithmsList: state.algorithmsList.filter(
-          algo => action.payload.validAlgorithmsList
-            .map(al => al.name)
-            .indexOf(algo.algorithm) !== -1
-        )
+          (algo) =>
+            action.payload.validAlgorithmsList.map((al) => al.name).indexOf(algo.algorithm) !== -1
+        ),
       };
     case ACTIONS.SET_MODEL_TRAINED:
       return {
         ...state,
-        isModelTrained: true
+        isModelTrained: true,
       };
     case ACTIONS.SET_MODEL_ERROR:
       return {
         ...state,
-        error: action.payload.error
+        error: action.payload.error,
       };
     case ACTIONS.RESET:
       return DEFAULT_MODEL_CREATE_VALUE;
@@ -269,42 +272,42 @@ const model_create = (state = DEFAULT_MODEL_CREATE_VALUE, action = defaultAction
 
 const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
   const getActiveStep = (state) => {
-    let {override} = state.active_step;
+    let { override } = state.active_step;
     if (override) {
       return state.active_step;
     }
-    let {name, workspaceId} = state.experiments_create;
-    let {modelId, isSplitFinalized, algorithm} = state.model_create;
+    let { name, workspaceId } = state.experiments_create;
+    let { modelId, isSplitFinalized, algorithm } = state.model_create;
     if (!workspaceId) {
       if (name) {
         return {
           ...state.active_step,
-          step_name: CREATION_STEPS.DATAPREP
+          step_name: CREATION_STEPS.DATAPREP,
         };
       }
       return {
         ...state.active_step,
-        step_name: CREATION_STEPS.DATAPREP_CONNECTIONS
+        step_name: CREATION_STEPS.DATAPREP_CONNECTIONS,
       };
     }
     if (workspaceId && !modelId) {
       return {
         ...state.active_step,
-        step_name: CREATION_STEPS.DATAPREP
+        step_name: CREATION_STEPS.DATAPREP,
       };
     }
 
     if (modelId && !isSplitFinalized) {
       return {
         ...state.active_step,
-        step_name: CREATION_STEPS.DATASPLIT
+        step_name: CREATION_STEPS.DATASPLIT,
       };
     }
 
     if (modelId && !algorithm.name.length) {
       return {
         ...state.active_step,
-        step_name: CREATION_STEPS.ALGORITHM_SELECTION
+        step_name: CREATION_STEPS.ALGORITHM_SELECTION,
       };
     }
     return state.active_step;
@@ -315,16 +318,16 @@ const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
         ...state,
         experiments_create: {
           ...state.experiments_create,
-          workspaceId: action.payload.workspaceId
+          workspaceId: action.payload.workspaceId,
         },
         active_step: {
           ...state.active_step,
-          step_name: state.active_step.step_name
-        }
+          step_name: state.active_step.step_name,
+        },
       };
       return {
         ...state.active_step,
-        step_name: getActiveStep(newState).step_name
+        step_name: getActiveStep(newState).step_name,
       };
     }
     case ACTIONS.MODEL_UPDATE: {
@@ -332,35 +335,35 @@ const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
         ...state,
         active_step: {
           override: false,
-          step_name: state.active_step.step_name
-        }
+          step_name: state.active_step.step_name,
+        },
       };
       return {
         override: false,
-        step_name: getActiveStep(newState).step_name
+        step_name: getActiveStep(newState).step_name,
       };
     }
     case ACTIONS.OVERRIDE_CREATION_STEP:
       return {
         override: true,
-        step_name: action.payload.active_step
+        step_name: action.payload.active_step,
       };
     case ACTIONS.SET_SPLIT_FINALIZED: {
       let newState = {
         ...state,
         model_create: {
           ...state.model_create,
-          isSplitFinalized: action.payload.isSplitFinalized
+          isSplitFinalized: action.payload.isSplitFinalized,
         },
         active_step: {
           ...state.active_step,
-          override: false
-        }
+          override: false,
+        },
       };
       return getActiveStep(newState);
     }
     case ACTIONS.SET_EXPERIMENT_METADATA_FOR_EDIT: {
-      let {name, description, outcome, srcpath, workspaceId} = action.payload.experimentDetails;
+      let { name, description, outcome, srcpath, workspaceId } = action.payload.experimentDetails;
       const newState = {
         experiments_create: {
           ...state.experiments_create,
@@ -368,16 +371,26 @@ const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
           description,
           outcome,
           srcpath,
-          workspaceId
+          workspaceId,
         },
         model_create: state.model_create,
-        active_step: state.active_step
+        active_step: state.active_step,
       };
       return getActiveStep(newState);
     }
     case ACTIONS.SET_EXPERIMENT_MODEL_FOR_EDIT: {
-      let {name: experimentName, description: experimentDescription, outcome, srcpath, workspaceId} = action.payload.experimentDetails;
-      let {name: modelName, description: modelDescription, id: modelId} = action.payload.modelDetails;
+      let {
+        name: experimentName,
+        description: experimentDescription,
+        outcome,
+        srcpath,
+        workspaceId,
+      } = action.payload.experimentDetails;
+      let {
+        name: modelName,
+        description: modelDescription,
+        id: modelId,
+      } = action.payload.modelDetails;
       const newState = {
         experiments_create: {
           ...state.experiments_create,
@@ -385,15 +398,15 @@ const active_step = (state = DEFAULT_ACTIVE_STEP, action = defaultAction) => {
           description: experimentDescription,
           outcome,
           srcpath,
-          workspaceId
+          workspaceId,
         },
         model_create: {
           ...state.model_create,
           name: modelName,
           description: modelDescription,
-          modelId
+          modelId,
         },
-        active_step: state.active_step
+        active_step: state.active_step,
       };
       return getActiveStep(newState);
     }
@@ -408,7 +421,7 @@ const rootReducer = (state, action) => {
   return {
     experiments_create: experiments_create(state.experiments_create, action),
     model_create: model_create(state.model_create, action),
-    active_step: active_step(state, action)
+    active_step: active_step(state, action),
   };
 };
 
@@ -417,7 +430,7 @@ const createExperimentStore = createStore(
   {
     experiments_create: DEFAULT_EXPERIMENTS_CREATE_VALUE,
     model_create: DEFAULT_MODEL_CREATE_VALUE,
-    active_step: DEFAULT_ACTIVE_STEP
+    active_step: DEFAULT_ACTIVE_STEP,
   },
   composeEnhancers('CreateExperimentStore')()
 );
@@ -425,7 +438,7 @@ const SPLIT_STATUS = {
   SPLITTING: 'Splitting',
   COMPLETE: 'Complete',
   FAILED: 'Failed',
-  CREATING: 'CREATING' // Purely UI state. Used when UI calls backend to create a split.
+  CREATING: 'CREATING', // Purely UI state. Used when UI calls backend to create a split.
 };
-export {ACTIONS, POPOVER_TYPES, SPLIT_STATUS};
+export { ACTIONS, POPOVER_TYPES, SPLIT_STATUS };
 export default createExperimentStore;

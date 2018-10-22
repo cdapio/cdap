@@ -18,25 +18,25 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
-import {fetchTables} from 'services/ExploreTables/ActionCreator';
-import {objectQuery} from 'services/helpers';
+import { fetchTables } from 'services/ExploreTables/ActionCreator';
+import { objectQuery } from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
-import {MyDatasetApi} from 'api/dataset';
-import {MyMetadataApi} from 'api/metadata';
+import { MyDatasetApi } from 'api/dataset';
+import { MyMetadataApi } from 'api/metadata';
 import uuidV4 from 'uuid/v4';
 import T from 'i18n-react';
 import DatasetDetaildViewTab from 'components/DatasetDetailedView/Tabs';
 import FastActionToMessage from 'services/fast-action-message-helper';
-import {Redirect} from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import capitalize from 'lodash/capitalize';
 import Page404 from 'components/404';
 import BreadCrumb from 'components/BreadCrumb';
 import PlusButton from 'components/PlusButton';
 import Helmet from 'react-helmet';
 import queryString from 'query-string';
-import {Route} from 'react-router-dom';
-import {SCOPES} from 'services/global-constants';
-import {Theme} from 'services/ThemeHelper';
+import { Route } from 'react-router-dom';
+import { SCOPES } from 'services/global-constants';
+import { Theme } from 'services/ThemeHelper';
 require('./DatasetDetailedView.scss');
 
 export default class DatasetDetailedView extends Component {
@@ -44,80 +44,82 @@ export default class DatasetDetailedView extends Component {
     super(props);
     let searchObj = queryString.parse(objectQuery(this.props, 'location', 'search'));
     this.state = {
-      entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') | {
-        schema: null,
-        programs: []
-      },
+      entityDetail:
+        objectQuery(this.props, 'location', 'state', 'entityDetail') |
+        {
+          schema: null,
+          programs: [],
+        },
       loading: true,
       isInvalid: false,
       routeToHome: false,
       successMessage: null,
       notFound: false,
       modalToOpen: objectQuery(searchObj, 'modalToOpen') || '',
-      previousPathName: null
+      previousPathName: null,
     };
   }
 
   componentWillMount() {
     let selectedNamespace = NamespaceStore.getState().selectedNamespace;
-    let {namespace, datasetId} = this.props.match.params;
-    let previousPathName = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}?overviewid=${datasetId}&overviewtype=dataset`;
+    let { namespace, datasetId } = this.props.match.params;
+    let previousPathName =
+      objectQuery(this.props, 'location', 'state', 'previousPathname') ||
+      `/ns/${selectedNamespace}?overviewid=${datasetId}&overviewtype=dataset`;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
     }
     this.setState({
-      previousPathName
+      previousPathName,
     });
-    ExploreTablesStore.dispatch(
-      fetchTables(namespace)
-    );
+    ExploreTablesStore.dispatch(fetchTables(namespace));
 
     this.fetchEntityDetails(namespace, datasetId);
     if (this.state.entityDetail.id) {
       this.setState({
-        loading: false
+        loading: false,
       });
     }
-
   }
 
   componentWillReceiveProps(nextProps) {
-    let {namespace: currentNamespace, datasetId: currentDatasetId} = this.props.match.params;
-    let {namespace: nextNamespace, datasetId: nextDatasetId} = nextProps.match.params;
+    let { namespace: currentNamespace, datasetId: currentDatasetId } = this.props.match.params;
+    let { namespace: nextNamespace, datasetId: nextDatasetId } = nextProps.match.params;
     if (currentNamespace === nextNamespace && currentDatasetId === nextDatasetId) {
       return;
     }
-    let {namespace, datasetId} = nextProps.match.params;
+    let { namespace, datasetId } = nextProps.match.params;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
     }
-    ExploreTablesStore.dispatch(
-      fetchTables(namespace)
-    );
+    ExploreTablesStore.dispatch(fetchTables(namespace));
 
-    this.setState({
-      entityDetail: {
-        schema: null,
-        programs: []
+    this.setState(
+      {
+        entityDetail: {
+          schema: null,
+          programs: [],
+        },
+        loading: true,
       },
-      loading: true
-    }, () => {
-      this.fetchEntityDetails(namespace, datasetId);
-    });
+      () => {
+        this.fetchEntityDetails(namespace, datasetId);
+      }
+    );
   }
 
   fetchEntityDetails(namespace, datasetId) {
     if (!this.state.entityDetail.schema || this.state.entityDetail.programs.length === 0) {
       const datasetParams = {
         namespace,
-        datasetId
+        datasetId,
       };
 
       const metadataParams = {
         namespace,
         entityType: 'datasets',
         entityId: datasetId,
-        scope: SCOPES.SYSTEM
+        scope: SCOPES.SYSTEM,
       };
 
       MyMetadataApi.getProperties(metadataParams)
@@ -140,24 +142,27 @@ export default class DatasetDetailedView extends Component {
               app: appId,
               id: datasetId,
               type: 'dataset',
-              properties: res[0]
+              properties: res[0],
             };
 
-            this.setState({
-              entityDetail
-            }, () => {
-              setTimeout(() => {
-                this.setState({
-                  loading: false
-                });
-              }, 1000);
-            });
+            this.setState(
+              {
+                entityDetail,
+              },
+              () => {
+                setTimeout(() => {
+                  this.setState({
+                    loading: false,
+                  });
+                }, 1000);
+              }
+            );
           },
-          err => {
+          (err) => {
             if (err.statusCode === 404) {
               this.setState({
                 notFound: true,
-                loading: false
+                loading: false,
               });
             }
           }
@@ -170,47 +175,49 @@ export default class DatasetDetailedView extends Component {
       let selectedNamespace = NamespaceStore.getState().selectedNamespace;
       this.setState({
         selectedNamespace,
-        routeToHome: true
+        routeToHome: true,
       });
     }
     let successMessage;
     if (action === 'setPreferences') {
-      successMessage = FastActionToMessage(action, {entityType: capitalize(this.state.entityDetail.type)});
+      successMessage = FastActionToMessage(action, {
+        entityType: capitalize(this.state.entityDetail.type),
+      });
     } else {
       successMessage = FastActionToMessage(action);
     }
-    this.setState({
-      successMessage
-    }, () => {
-      setTimeout(() => {
-        this.setState({
-          successMessage: null
-        });
-      }, 3000);
-    });
+    this.setState(
+      {
+        successMessage,
+      },
+      () => {
+        setTimeout(() => {
+          this.setState({
+            successMessage: null,
+          });
+        }, 3000);
+      }
+    );
   }
 
   render() {
     if (this.state.loading) {
       return (
         <div className="app-detailed-view dataset-detailed-view loading">
-          <div className="fa fa-spinner fa-spin fa-3x"></div>
+          <div className="fa fa-spinner fa-spin fa-3x" />
         </div>
       );
     }
 
     if (this.state.notFound) {
-      return (
-        <Page404
-          entityType="dataset"
-          entityName={this.props.match.params.datasetId}
-        />
-      );
+      return <Page404 entityType="dataset" entityName={this.props.match.params.datasetId} />;
     }
-    let previousPaths = [{
-      pathname: this.state.previousPathName,
-      label: T.translate('commons.back')
-    }];
+    let previousPaths = [
+      {
+        pathname: this.state.previousPathName,
+        label: T.translate('commons.back'),
+      },
+    ];
 
     let datasetId = this.props.match.params.datasetId;
 
@@ -249,12 +256,7 @@ export default class DatasetDetailedView extends Component {
             );
           }}
         />
-        {
-          this.state.routeToHome ?
-            <Redirect to={`/ns/${this.state.selectedNamespace}`} />
-          :
-            null
-        }
+        {this.state.routeToHome ? <Redirect to={`/ns/${this.state.selectedNamespace}`} /> : null}
       </div>
     );
   }

@@ -16,18 +16,22 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {renderGraph} from 'components/OpsDashboard/RunsGraph/graphRenderer';
+import { connect } from 'react-redux';
+import { renderGraph } from 'components/OpsDashboard/RunsGraph/graphRenderer';
 import Legends from 'components/OpsDashboard/RunsGraph/Legends';
 import TypeSelector from 'components/OpsDashboard/RunsGraph/TypeSelector';
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 import IconSVG from 'components/IconSVG';
-import {next, prev} from 'components/OpsDashboard/store/ActionCreator';
+import { next, prev } from 'components/OpsDashboard/store/ActionCreator';
 import RunsTable from 'components/OpsDashboard/RunsGraph/RunsTable';
-import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import { DashboardActions } from 'components/OpsDashboard/store/DashboardStore';
 import classnames from 'classnames';
-import {getData, setLast24Hours, setIs7DaysAgo} from 'components/OpsDashboard/store/ActionCreator';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import {
+  getData,
+  setLast24Hours,
+  setIs7DaysAgo,
+} from 'components/OpsDashboard/store/ActionCreator';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
 import T from 'i18n-react';
 
 const PREFIX = 'features.OpsDashboard.RunsGraph';
@@ -46,7 +50,7 @@ class RunsGraphView extends Component {
     changeDisplay: PropTypes.func,
     isLast24Hours: PropTypes.bool,
     is7DaysAgo: PropTypes.bool,
-    namespacesPick: PropTypes.array
+    namespacesPick: PropTypes.array,
   };
 
   componentDidMount() {
@@ -119,18 +123,16 @@ class RunsGraphView extends Component {
     );
 
     const table = <RunsTable />;
-    const arrowLeftId = "runs-graph-arrow-left";
+    const arrowLeftId = 'runs-graph-arrow-left';
 
     return (
       <div className="runs-graph-container">
         <div className="top-panel">
           <div className="title-and-subtitle">
-            <span className="title">
-              {T.translate(`${PREFIX}.header`)}
-            </span>
+            <span className="title">{T.translate(`${PREFIX}.header`)}</span>
             <div className="subtitle">
               {T.translate(`${PREFIX}.subtitle`, {
-                context: this.props.namespacesPick.length + 1
+                context: this.props.namespacesPick.length + 1,
               })}
             </div>
           </div>
@@ -141,7 +143,7 @@ class RunsGraphView extends Component {
             <div className="time-picker">
               <div
                 className={classnames({
-                  "active": this.props.isLast24Hours
+                  active: this.props.isLast24Hours,
                 })}
                 onClick={!this.props.isLast24Hours ? this.last24Hour : undefined}
               >
@@ -151,8 +153,8 @@ class RunsGraphView extends Component {
 
             <div className="display-type">
               <span
-                className={classnames("option", {
-                  "active": this.props.displayType === 'chart'
+                className={classnames('option', {
+                  active: this.props.displayType === 'chart',
                 })}
                 onClick={this.props.changeDisplay.bind(this, 'chart')}
               >
@@ -160,8 +162,8 @@ class RunsGraphView extends Component {
               </span>
               <span className="separator">|</span>
               <span
-                className={classnames("option", {
-                  "active": this.props.displayType === 'table'
+                className={classnames('option', {
+                  active: this.props.displayType === 'table',
                 })}
                 onClick={this.props.changeDisplay.bind(this, 'table')}
               >
@@ -175,18 +177,15 @@ class RunsGraphView extends Component {
           {this.props.displayType === 'chart' ? chart : table}
 
           <div
-            className={classnames("navigation arrow-left", {
-              "disabled": this.props.is7DaysAgo
+            className={classnames('navigation arrow-left', {
+              disabled: this.props.is7DaysAgo,
             })}
             onClick={!this.props.is7DaysAgo && prev}
             id={arrowLeftId}
           >
             <IconSVG name="icon-chevron-left" />
           </div>
-          <div
-            className="navigation arrow-right"
-            onClick={next}
-          >
+          <div className="navigation arrow-right" onClick={next}>
             <IconSVG name="icon-chevron-right" />
           </div>
           {this.renderDisabledArrowToolitp(this.props.is7DaysAgo, arrowLeftId)}
@@ -206,7 +205,7 @@ const mapStateToProps = (state) => {
     viewByOption: state.dashboard.viewByOption,
     isLast24Hours: state.dashboard.isLast24Hours,
     is7DaysAgo: state.dashboard.is7DaysAgo,
-    namespacesPick: state.namespaces.namespacesPick
+    namespacesPick: state.namespaces.namespacesPick,
   };
 };
 
@@ -216,10 +215,10 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: DashboardActions.changeDisplayType,
         payload: {
-          displayType
-        }
+          displayType,
+        },
       });
-    }
+    },
   };
 };
 

@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MyMetadataApi} from 'api/metadata';
+import { MyMetadataApi } from 'api/metadata';
 import NamespaceStore from 'services/NamespaceStore';
 import map from 'lodash/map';
 import uuidV4 from 'uuid/v4';
@@ -26,16 +26,15 @@ import T from 'i18n-react';
 import DeleteConfirmation from 'components/PropertiesEditor/DeleteConfirmation';
 import EditProperty from 'components/PropertiesEditor/EditProperty';
 import classnames from 'classnames';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 
 require('./PropertiesEditor.scss');
 
 const convertObjToArr = (obj) => {
-  let properties = map(obj, (value, key) => ({key, value}))
-    .map((row) => {
-      row.id = uuidV4();
-      return row;
-    });
+  let properties = map(obj, (value, key) => ({ key, value })).map((row) => {
+    row.id = uuidV4();
+    return row;
+  });
   return properties;
 };
 
@@ -48,7 +47,7 @@ export default class PropertiesEditor extends Component {
       userProperties: [],
       activeEdit: null,
       newValue: '',
-      editedKey: null
+      editedKey: null,
     };
 
     this.fetchUserProperties = this.fetchUserProperties.bind(this);
@@ -59,7 +58,7 @@ export default class PropertiesEditor extends Component {
     const baseRequestObject = {
       namespace,
       entityType: this.props.entityType,
-      entityId: this.props.entityId
+      entityId: this.props.entityId,
     };
 
     let systemParams = Object.assign({}, baseRequestObject, { scope: SCOPES.SYSTEM });
@@ -68,14 +67,17 @@ export default class PropertiesEditor extends Component {
     MyMetadataApi.getProperties(systemParams)
       .map(convertObjToArr)
       .combineLatest(MyMetadataApi.getProperties(userParams).map(convertObjToArr))
-      .subscribe((res) => {
-        this.setState({
-          systemProperties: res[0].filter((row) => row.key !== 'schema'),
-          userProperties: res[1]
-        });
-      }, (err) => {
-        console.log('Error', err);
-      });
+      .subscribe(
+        (res) => {
+          this.setState({
+            systemProperties: res[0].filter((row) => row.key !== 'schema'),
+            userProperties: res[1],
+          });
+        },
+        (err) => {
+          console.log('Error', err);
+        }
+      );
   }
 
   fetchUserProperties() {
@@ -84,7 +86,7 @@ export default class PropertiesEditor extends Component {
       namespace,
       entityType: this.props.entityType,
       entityId: this.props.entityId,
-      scope: SCOPES.USER
+      scope: SCOPES.USER,
     };
 
     MyMetadataApi.getProperties(params)
@@ -93,7 +95,7 @@ export default class PropertiesEditor extends Component {
         this.setState({
           userProperties: res,
           activeEdit: null,
-          newValue: ''
+          newValue: '',
         });
       });
   }
@@ -105,7 +107,7 @@ export default class PropertiesEditor extends Component {
           <td>{row.key}</td>
           <td>{row.value}</td>
           <td>{T.translate('features.PropertiesEditor.system')}</td>
-          <td></td>
+          <td />
         </tr>
       );
     });
@@ -136,14 +138,12 @@ export default class PropertiesEditor extends Component {
       return (
         <tr
           key={row.id}
-          className={classnames({'text-success': row.key === this.state.editedKey})}
+          className={classnames({ 'text-success': row.key === this.state.editedKey })}
         >
           <td>{row.key}</td>
           <td>{row.value}</td>
           <td>{T.translate('features.PropertiesEditor.user')}</td>
-          <td className="actions">
-            {this.renderActions(row)}
-          </td>
+          <td className="actions">{this.renderActions(row)}</td>
         </tr>
       );
     });
@@ -155,7 +155,7 @@ export default class PropertiesEditor extends Component {
     this.fetchUserProperties();
 
     setTimeout(() => {
-      this.setState({editedKey: null});
+      this.setState({ editedKey: null });
     }, 3000);
   }
 
@@ -175,7 +175,7 @@ export default class PropertiesEditor extends Component {
               <th className="key">{T.translate('features.PropertiesEditor.name')}</th>
               <th className="value">{T.translate('features.PropertiesEditor.value')}</th>
               <th className="scope">{T.translate('features.PropertiesEditor.scope')}</th>
-              <th className="actions"></th>
+              <th className="actions" />
             </tr>
           </thead>
 
@@ -191,5 +191,5 @@ export default class PropertiesEditor extends Component {
 
 PropertiesEditor.propTypes = {
   entityId: PropTypes.string,
-  entityType: PropTypes.oneOf(['datasets', 'streams', 'apps'])
+  entityType: PropTypes.oneOf(['datasets', 'streams', 'apps']),
 };

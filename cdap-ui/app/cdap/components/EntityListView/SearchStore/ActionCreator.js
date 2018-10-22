@@ -14,18 +14,18 @@
  * the License.
 */
 
-import {MySearchApi} from 'api/search';
+import { MySearchApi } from 'api/search';
 import NamespaceStore from 'services/NamespaceStore';
-import {parseMetadata} from 'services/metadata-parser';
+import { parseMetadata } from 'services/metadata-parser';
 import uuidV4 from 'uuid/v4';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreAction from 'components/EntityListView/SearchStore/SearchStoreActions';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
-import {fetchTables} from 'services/ExploreTables/ActionCreator';
-import {DEFAULT_SEARCH_QUERY} from 'components/EntityListView/SearchStore/SearchConstants';
+import { fetchTables } from 'services/ExploreTables/ActionCreator';
+import { DEFAULT_SEARCH_QUERY } from 'components/EntityListView/SearchStore/SearchConstants';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import isNil from 'lodash/isNil';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const search = () => {
   let namespace = NamespaceStore.getState().selectedNamespace;
@@ -35,7 +35,7 @@ const search = () => {
     limit,
     activeFilters,
     activeSort,
-    query
+    query,
   } = SearchStore.getState().search;
 
   let params = {
@@ -45,7 +45,7 @@ const search = () => {
     offset,
     numCursors,
     sort: activeSort.fullSort,
-    query
+    query,
   };
   if (query !== DEFAULT_SEARCH_QUERY) {
     delete params.sort;
@@ -53,46 +53,45 @@ const search = () => {
     params.query = params.query + '*';
   }
 
-  ExploreTablesStore.dispatch(
-    fetchTables(namespace)
-  );
+  ExploreTablesStore.dispatch(fetchTables(namespace));
 
   SearchStore.dispatch({
     type: SearchStoreAction.LOADING,
     payload: {
-      loading: true
-    }
+      loading: true,
+    },
   });
 
   MySearchApi.search(params)
     .map((res) => {
-      return Object.assign({}, {
-        total: res.total,
-        limit: res.limit,
-        results: res.results
-          .map(parseMetadata)
-          .map((entity) => {
+      return Object.assign(
+        {},
+        {
+          total: res.total,
+          limit: res.limit,
+          results: res.results.map(parseMetadata).map((entity) => {
             entity.uniqueId = uuidV4();
             return entity;
-          })
-      });
+          }),
+        }
+      );
     })
     .subscribe(
       (response) => {
         let currentPage = SearchStore.getState().search.currentPage;
-        if (response.total > 0 && Math.ceil(response.total/limit) < currentPage) {
+        if (response.total > 0 && Math.ceil(response.total / limit) < currentPage) {
           SearchStore.dispatch({
             type: SearchStoreActions.SETERROR,
             payload: {
               errorStatusCode: 'PAGE_NOT_FOUND',
-              errorMessage: null
-            }
+              errorMessage: null,
+            },
           });
           return;
         }
         SearchStore.dispatch({
           type: SearchStoreAction.SETRESULTS,
-          payload: {response}
+          payload: { response },
         });
       },
       (error) => {
@@ -101,7 +100,7 @@ const search = () => {
           payload: {
             errorStatusCode: error.statusCode,
             errorMessage: typeof error === 'object' ? error.response : error,
-          }
+          },
         });
       }
     );
@@ -116,7 +115,7 @@ const updateQueryString = () => {
   let queryParams = [];
 
   let searchState = SearchStore.getState().search;
-  let {activeSort, activeFilters, query:searchQuery, currentPage, overviewEntity} = searchState;
+  let { activeSort, activeFilters, query: searchQuery, currentPage, overviewEntity } = searchState;
 
   // Generate sort params
   if (activeSort.sort !== 'none') {
@@ -154,13 +153,10 @@ const updateQueryString = () => {
 
   let obj = {
     title: Theme.productName,
-    url: location.pathname + queryString
+    url: location.pathname + queryString,
   };
 
   // Modify URL to match application state
   history.pushState(obj, obj.title, obj.url);
 };
-export {
-  search,
-  updateQueryString
-};
+export { search, updateQueryString };

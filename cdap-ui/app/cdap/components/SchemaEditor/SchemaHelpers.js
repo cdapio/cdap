@@ -16,10 +16,10 @@
 
 import uuidV4 from 'uuid/v4';
 import cdapavsc from 'services/cdapavscwrapper';
-import {GLOBALS} from 'services/global-constants';
+import { GLOBALS } from 'services/global-constants';
 
 const SCHEMA_TYPES = {
-  'types': [
+  types: [
     'boolean',
     'bytes',
     'date',
@@ -36,7 +36,7 @@ const SCHEMA_TYPES = {
     'union',
     'record',
   ],
-  'simpleTypes': [
+  simpleTypes: [
     'boolean',
     'bytes',
     'date',
@@ -47,7 +47,7 @@ const SCHEMA_TYPES = {
     'string',
     'time',
     'timestamp',
-  ]
+  ],
 };
 
 function parseType(type) {
@@ -56,7 +56,7 @@ function parseType(type) {
 
   if (!type.getTypeName) {
     try {
-      type = cdapavsc.parse(type, {wrapUnions: true});
+      type = cdapavsc.parse(type, { wrapUnions: true });
       storedType = type;
     } catch (e) {
       return;
@@ -83,7 +83,7 @@ function parseType(type) {
     displayType: type,
     type: storedType,
     nullable: nullable,
-    nested: checkComplexType(type)
+    nested: checkComplexType(type),
   };
 }
 function getParsedSchema(schema) {
@@ -92,8 +92,12 @@ function getParsedSchema(schema) {
     type: 'string',
     displayType: 'string',
     nullable: false,
-    id: 'a' + uuidV4().split('-').join(''),
-    nested: false
+    id:
+      'a' +
+      uuidV4()
+        .split('-')
+        .join(''),
+    nested: false,
   };
   const isEmptySchema = (schema) => {
     if (!schema && !(schema.fields || (schema.getFields && schema.getFields().length))) {
@@ -119,10 +123,13 @@ function getParsedSchema(schema) {
     let partialObj = parseType(type);
 
     return Object.assign({}, partialObj, {
-      id: 'a' + uuidV4().split('-').join(''),
-      name: field.getName()
+      id:
+        'a' +
+        uuidV4()
+          .split('-')
+          .join(''),
+      name: field.getName(),
     });
-
   });
 
   return parsedSchema;
@@ -136,8 +143,12 @@ function getParsedSchemaForDataPrep(schema) {
     type: 'string',
     displayType: 'string',
     nullable: false,
-    id: 'a' + uuidV4().split('-').join(''),
-    nested: false
+    id:
+      'a' +
+      uuidV4()
+        .split('-')
+        .join(''),
+    nested: false,
   };
   const isEmptySchema = (schema) => {
     if (!schema && !(schema.fields || (schema.getFields && schema.getFields().length))) {
@@ -160,10 +171,13 @@ function getParsedSchemaForDataPrep(schema) {
     let partialObj = parseType(type);
 
     return Object.assign({}, partialObj, {
-      id: 'a' + uuidV4().split('-').join(''),
-      name: field.getName()
+      id:
+        'a' +
+        uuidV4()
+          .split('-')
+          .join(''),
+      name: field.getName(),
     });
-
   });
 
   return parsedSchema;
@@ -188,14 +202,14 @@ function getSchemaObj(fields = [], name = GLOBALS.defaultSchemaName, type = 'rec
   return {
     type,
     name,
-    fields
+    fields,
   };
 }
 
 function getSchemaObjWrapper(schema, schemaObjName = GLOBALS.defaultSchemaName) {
   return {
     name: schemaObjName,
-    schema
+    schema,
   };
 }
 
@@ -212,5 +226,5 @@ export {
   checkParsedTypeForError,
   getSchemaObj,
   getSchemaObjWrapper,
-  getSchemaObjFromFieldsArray
+  getSchemaObjFromFieldsArray,
 };

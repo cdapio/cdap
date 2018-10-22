@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter,FormGroup, Label, Input } from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter, FormGroup, Label, Input } from 'reactstrap';
 import isNil from 'lodash/isNil';
 import MouseTrap from 'mousetrap';
 import classnames from 'classnames';
@@ -32,7 +32,7 @@ export default class ExcelModal extends Component {
       sheetSource: 'sheetnumber',
       sheetName: null,
       sheetNumber: 0,
-      firstRowHeader: false
+      firstRowHeader: false,
     };
     this.numberTextBox = null;
     this.onSheetNumberChange = this.onSheetNumberChange.bind(this);
@@ -70,24 +70,24 @@ export default class ExcelModal extends Component {
       return;
     }
     this.setState({
-      sheetNumber: parseInt(value, 10)
+      sheetNumber: parseInt(value, 10),
     });
   }
 
   onSheetNameChange(e) {
     this.setState({
-      sheetName: e.target.value
+      sheetName: e.target.value,
     });
   }
 
   onSheetSourceChange(e) {
     this.setState({
-      sheetSource: e.target.value
+      sheetSource: e.target.value,
     });
   }
 
   toggleSetFirstRow() {
-    this.setState({firstRowHeader: !this.state.firstRowHeader});
+    this.setState({ firstRowHeader: !this.state.firstRowHeader });
   }
 
   applyDirective() {
@@ -118,13 +118,10 @@ export default class ExcelModal extends Component {
       >
         <ModalHeader>
           <span>
-            {T.translate(`features.DataPrep.Directives.Parse.modalTitle`, {parser: 'Excel'})}
+            {T.translate(`features.DataPrep.Directives.Parse.modalTitle`, { parser: 'Excel' })}
           </span>
 
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.toggle}
-          >
+          <div className="close-section float-xs-right" onClick={this.props.toggle}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
@@ -141,23 +138,20 @@ export default class ExcelModal extends Component {
               />{' '}
               {T.translate(`${PREFIX}.modal.sheetNumberLabel`)}
             </Label>
-            {
-              this.state.sheetSource === 'sheetnumber' ?
-                <input
-                  type="number"
-                  className='form-control mousetrap'
-                  value={this.state.sheetNumber}
-                  onChange={this.onSheetNumberChange}
-                  ref={ref => {
-                    if (ref) {
-                      this.numberTextBox = ref;
-                      ref.focus();
-                    }
-                  }}
-                />
-              :
-                null
-            }
+            {this.state.sheetSource === 'sheetnumber' ? (
+              <input
+                type="number"
+                className="form-control mousetrap"
+                value={this.state.sheetNumber}
+                onChange={this.onSheetNumberChange}
+                ref={(ref) => {
+                  if (ref) {
+                    this.numberTextBox = ref;
+                    ref.focus();
+                  }
+                }}
+              />
+            ) : null}
           </FormGroup>
           <FormGroup check>
             <Label check>
@@ -169,37 +163,30 @@ export default class ExcelModal extends Component {
               />{' '}
               {T.translate(`${PREFIX}.modal.sheetNameLabel`)}
             </Label>
-            {
-              this.state.sheetSource === 'sheetname' ?
-                <input
-                  type="text"
-                  className='form-control mousetrap'
-                  value={this.state.sheetName}
-                  onChange={this.onSheetNameChange}
-                  placeholder={T.translate(`${PREFIX}.modal.sheetNameInputPlaceholder`)}
-                  ref={ref => {
-                    if (ref) {
-                      ref.focus();
-                    }
-                  }}
-                />
-              :
-                null
-            }
+            {this.state.sheetSource === 'sheetname' ? (
+              <input
+                type="text"
+                className="form-control mousetrap"
+                value={this.state.sheetName}
+                onChange={this.onSheetNameChange}
+                placeholder={T.translate(`${PREFIX}.modal.sheetNameInputPlaceholder`)}
+                ref={(ref) => {
+                  if (ref) {
+                    ref.focus();
+                  }
+                }}
+              />
+            ) : null}
           </FormGroup>
           <div className="optional-config">
-            <span
-              onClick={this.toggleSetFirstRow}
-            >
+            <span onClick={this.toggleSetFirstRow}>
               <span
                 className={classnames('fa', {
                   'fa-square-o': !this.state.firstRowHeader,
-                  'fa-check-square': this.state.firstRowHeader
+                  'fa-check-square': this.state.firstRowHeader,
                 })}
               />
-              <span>
-                {T.translate(`${PREFIX}.modal.firstRowHeader`)}
-              </span>
+              <span>{T.translate(`${PREFIX}.modal.firstRowHeader`)}</span>
             </span>
           </div>
         </ModalBody>
@@ -211,10 +198,7 @@ export default class ExcelModal extends Component {
           >
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={this.props.toggle}
-          >
+          <button className="btn btn-secondary" onClick={this.props.toggle}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </ModalFooter>
@@ -225,5 +209,5 @@ export default class ExcelModal extends Component {
 
 ExcelModal.propTypes = {
   toggle: PropTypes.func,
-  onApply: PropTypes.func
+  onApply: PropTypes.func,
 };

@@ -16,8 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { connect } from 'react-redux';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import NamespacesPopover from 'components/NamespacesPicker/NamespacesPopover';
 import T from 'i18n-react';
 
@@ -25,13 +25,13 @@ const PREFIX = 'features.NamespacesPicker';
 
 require('./NamespacesPicker.scss');
 
-function NamespacesPickerView({namespacesPick, setNamespacesPick}) {
+function NamespacesPickerView({ namespacesPick, setNamespacesPick }) {
   let monitorTitle;
 
   if (namespacesPick.length === 0) {
     monitorTitle = (
       <div className="namespace-list-monitor">
-        {T.translate(`${PREFIX}.monitorNamespace`, {namespace: getCurrentNamespace()})}
+        {T.translate(`${PREFIX}.monitorNamespace`, { namespace: getCurrentNamespace() })}
       </div>
     );
   } else {
@@ -41,16 +41,11 @@ function NamespacesPickerView({namespacesPick, setNamespacesPick}) {
     let title = namespacesList.join('\n');
 
     monitorTitle = (
-      <div
-        className="namespace-list-monitor"
-        title={title}
-      >
-        {
-          T.translate(`${PREFIX}.monitorMultipleNamespaces`, {
-            count: namespacesPick.length + 1,
-            namespaces
-          })
-        }
+      <div className="namespace-list-monitor" title={title}>
+        {T.translate(`${PREFIX}.monitorMultipleNamespaces`, {
+          count: namespacesPick.length + 1,
+          namespaces,
+        })}
       </div>
     );
   }
@@ -70,18 +65,16 @@ function NamespacesPickerView({namespacesPick, setNamespacesPick}) {
 
 NamespacesPickerView.propTypes = {
   namespacesPick: PropTypes.array,
-  setNamespacesPick: PropTypes.func
+  setNamespacesPick: PropTypes.func,
 };
 
 const mapStateToProps = (state, ownProps) => {
   return {
     namespacesPick: state.namespaces.namespacesPick,
-    setNamespacesPick: ownProps.setNamespacesPick
+    setNamespacesPick: ownProps.setNamespacesPick,
   };
 };
 
-const NamespacesPicker = connect(
-  mapStateToProps
-)(NamespacesPickerView);
+const NamespacesPicker = connect(mapStateToProps)(NamespacesPickerView);
 
 export default NamespacesPicker;

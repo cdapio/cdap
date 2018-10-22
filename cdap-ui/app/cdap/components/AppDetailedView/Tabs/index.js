@@ -17,26 +17,26 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
+import { Nav, NavItem, NavLink, TabContent } from 'reactstrap';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import DatasetTab from 'components/Overview/Tabs/DatasetTab';
 import HistoryTab from 'components/AppDetailedView/Tabs/HistoryTab';
 import PropertiesTab from 'components/AppDetailedView/Tabs/PropertiesTab';
 import isNil from 'lodash/isNil';
-import {Route, Switch, NavLink as RouterNavLink} from 'react-router-dom';
+import { Route, Switch, NavLink as RouterNavLink } from 'react-router-dom';
 import T from 'i18n-react';
 
 export default class AppDetailedViewTab extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entity: this.props.entity
+      entity: this.props.entity,
     };
   }
   componentWillReceiveProps(nextProps) {
     if (!isNil(nextProps.entity)) {
       this.setState({
-        entity: nextProps.entity
+        entity: nextProps.entity,
       });
     }
   }
@@ -50,11 +50,14 @@ export default class AppDetailedViewTab extends Component {
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/programs`}
                 activeClassName="active"
                 isActive={(match, location) => {
-                  let basepath = `^/ns/${this.props.params.namespace}/apps/${this.props.params.appId}(/programs)?$`;
-                   return location.pathname.match(basepath);
+                  let basepath = `^/ns/${this.props.params.namespace}/apps/${
+                    this.props.params.appId
+                  }(/programs)?$`;
+                  return location.pathname.match(basepath);
                 }}
               >
-                {T.translate('features.AppDetailedView.Tabs.programsLabel')} ({this.state.entity.programs.length})
+                {T.translate('features.AppDetailedView.Tabs.programsLabel')} (
+                {this.state.entity.programs.length})
               </RouterNavLink>
             </NavLink>
           </NavItem>
@@ -64,7 +67,8 @@ export default class AppDetailedViewTab extends Component {
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/datasets`}
                 activeClassName="active"
               >
-                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} ({this.state.entity.datasets.length + this.state.entity.streams.length})
+                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} (
+                {this.state.entity.datasets.length + this.state.entity.streams.length})
               </RouterNavLink>
             </NavLink>
           </NavItem>
@@ -91,31 +95,41 @@ export default class AppDetailedViewTab extends Component {
         </Nav>
         <TabContent>
           <Switch>
-            <Route exact path={'/ns/:namespace/apps/:appId/'} render={() => {
-                return (
-                  <ProgramTab entity={this.state.entity} />
-                );
-              }} />
-            <Route exact path={'/ns/:namespace/apps/:appId/programs'} render={() => {
-                return (
-                  <ProgramTab entity={this.state.entity} />
-                );
-              }} />
-            <Route exact path={'/ns/:namespace/apps/:appId/datasets'} render={() => {
-                return (
-                  <DatasetTab entity={this.state.entity} />
-                );
-              }} />
-            <Route exact path={'/ns/:namespace/apps/:appId/history'} render={() => {
-                return (
-                  <HistoryTab entity={this.state.entity} />
-                );
-            }}/>
-            <Route exact path={'/ns/:namespace/apps/:appId/properties'} render={() => {
-                return (
-                  <PropertiesTab entity={this.state.entity} />
-                );
-            }}/>
+            <Route
+              exact
+              path={'/ns/:namespace/apps/:appId/'}
+              render={() => {
+                return <ProgramTab entity={this.state.entity} />;
+              }}
+            />
+            <Route
+              exact
+              path={'/ns/:namespace/apps/:appId/programs'}
+              render={() => {
+                return <ProgramTab entity={this.state.entity} />;
+              }}
+            />
+            <Route
+              exact
+              path={'/ns/:namespace/apps/:appId/datasets'}
+              render={() => {
+                return <DatasetTab entity={this.state.entity} />;
+              }}
+            />
+            <Route
+              exact
+              path={'/ns/:namespace/apps/:appId/history'}
+              render={() => {
+                return <HistoryTab entity={this.state.entity} />;
+              }}
+            />
+            <Route
+              exact
+              path={'/ns/:namespace/apps/:appId/properties'}
+              render={() => {
+                return <PropertiesTab entity={this.state.entity} />;
+              }}
+            />
           </Switch>
         </TabContent>
       </div>
@@ -127,5 +141,5 @@ AppDetailedViewTab.propTypes = {
   entity: PropTypes.object,
   location: PropTypes.string,
   pathname: PropTypes.string,
-  params: PropTypes.object
+  params: PropTypes.object,
 };

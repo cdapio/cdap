@@ -20,12 +20,12 @@ import React, { Component } from 'react';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 import Mousetrap from 'mousetrap';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 
 require('./CustomTransform.scss');
 
@@ -36,15 +36,18 @@ export default class CustomTransform extends Component {
     column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
     onComplete: PropTypes.func,
     isOpen: PropTypes.bool,
-    close: PropTypes.func
+    close: PropTypes.func,
   };
 
   state = {
-    input: ''
+    input: '',
   };
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('custom-transform-directive'));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById('custom-transform-directive')
+    );
     Mousetrap.bind('enter', this.applyDirective);
   }
 
@@ -59,46 +62,49 @@ export default class CustomTransform extends Component {
   }
 
   handleInputChange = (e) => {
-    this.setState({input: e.target.value});
+    this.setState({ input: e.target.value });
   };
 
   applyDirective = () => {
-    if (this.state.input.length === 0) { return; }
+    if (this.state.input.length === 0) {
+      return;
+    }
 
     let directive = `set-column ${this.props.column} ${this.state.input}`;
 
-    execute([directive])
-      .subscribe(() => {
+    execute([directive]).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   };
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen) {
+      return null;
+    }
 
     return (
-      <div
-        className="second-level-popover custom-transform-popover"
-        onClick={preventPropagation}
-      >
-       <h5>{T.translate(`${PREFIX}.description`, {column: this.props.column})}</h5>
+      <div className="second-level-popover custom-transform-popover" onClick={preventPropagation}>
+        <h5>{T.translate(`${PREFIX}.description`, { column: this.props.column })}</h5>
 
         <textarea
           rows="6"
           className="form-control mousetrap"
           value={this.state.input}
           onChange={this.handleInputChange}
-          placeholder={T.translate(`${PREFIX}.placeholder`, {column: this.props.column})}
+          placeholder={T.translate(`${PREFIX}.placeholder`, { column: this.props.column })}
           autoFocus
         />
 
@@ -113,10 +119,7 @@ export default class CustomTransform extends Component {
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.props.close}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
@@ -129,12 +132,10 @@ export default class CustomTransform extends Component {
       <div
         id="custom-transform-directive"
         className={classnames('clearfix action-item', {
-          'active': this.props.isOpen
+          active: this.props.isOpen,
         })}
       >
-        <span>
-          {T.translate(`${PREFIX}.title`)}
-        </span>
+        <span>{T.translate(`${PREFIX}.title`)}</span>
 
         <span className="float-xs-right">
           <IconSVG name="icon-caret-right" />

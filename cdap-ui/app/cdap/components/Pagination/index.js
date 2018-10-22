@@ -24,15 +24,14 @@ import classnames from 'classnames';
 require('./Pagination.scss');
 
 export default class Pagination extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
-      numResults : 0,
+      numResults: 0,
       leftPressed: false,
       rightPressed: false,
       currentPage: props.currentPage,
-      totalPages: props.totalPages
+      totalPages: props.totalPages,
     };
     this.goToNext = this.goToNext.bind(this);
     this.goToPrev = this.goToPrev.bind(this);
@@ -46,7 +45,7 @@ export default class Pagination extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       currentPage: nextProps.currentPage,
-      totalPages: nextProps.totalPages
+      totalPages: nextProps.totalPages,
     });
   }
   componentWillUnmount() {
@@ -60,19 +59,19 @@ export default class Pagination extends Component {
     }
     // Highlight the side that is pressed
     this.setState({
-      leftPressed: true
+      leftPressed: true,
     });
 
     setTimeout(() => {
       this.setState({
-        leftPressed: false
+        leftPressed: false,
       });
     }, 250);
 
     if (this.props.setDirection) {
       this.props.setDirection('prev');
     }
-    this.props.setCurrentPage(this.state.currentPage-1);
+    this.props.setCurrentPage(this.state.currentPage - 1);
   }
 
   goToNext() {
@@ -81,54 +80,38 @@ export default class Pagination extends Component {
     }
     // Highlight the side that is pressed
     this.setState({
-      rightPressed: true
+      rightPressed: true,
     });
 
     setTimeout(() => {
       this.setState({
-        rightPressed: false
+        rightPressed: false,
       });
     }, 250);
 
     if (this.props.setDirection) {
       this.props.setDirection('next');
     }
-    this.props.setCurrentPage(this.state.currentPage+1);
+    this.props.setCurrentPage(this.state.currentPage + 1);
   }
 
   render() {
-    let pageChangeRightClass = classNames(
-      'change-page-panel',
-      'change-page-panel-right',
-      {
-        'pressed' : this.state.rightPressed,
-        'last-page': this.state.currentPage + 1 > this.state.totalPages
-      }
-    );
-    let pageChangeLeftClass = classNames(
-      'change-page-panel',
-      'change-page-panel-left',
-      {
-        'pressed' : this.state.leftPressed,
-        'first-page': this.state.currentPage - 1 === 0,
-      }
-    );
+    let pageChangeRightClass = classNames('change-page-panel', 'change-page-panel-right', {
+      pressed: this.state.rightPressed,
+      'last-page': this.state.currentPage + 1 > this.state.totalPages,
+    });
+    let pageChangeLeftClass = classNames('change-page-panel', 'change-page-panel-left', {
+      pressed: this.state.leftPressed,
+      'first-page': this.state.currentPage - 1 === 0,
+    });
     Mousetrap.bind('right', this.goToNext);
     Mousetrap.bind('left', this.goToPrev);
 
     return (
-      <div className={ classnames("pagination-container", this.props.className) }>
-        <div onClick={this.goToPrev}
-          className={pageChangeLeftClass}
-        >
-          </div>
-          <div className="pagination-content">
-            {this.props.children}
-          </div>
-          <div onClick={this.goToNext}
-            className={pageChangeRightClass}
-          >
-        </div>
+      <div className={classnames('pagination-container', this.props.className)}>
+        <div onClick={this.goToPrev} className={pageChangeLeftClass} />
+        <div className="pagination-content">{this.props.children}</div>
+        <div onClick={this.goToNext} className={pageChangeRightClass} />
       </div>
     );
   }
@@ -140,5 +123,5 @@ Pagination.propTypes = {
   children: PropTypes.node,
   setCurrentPage: PropTypes.func,
   setDirection: PropTypes.func,
-  className: PropTypes.string
+  className: PropTypes.string,
 };

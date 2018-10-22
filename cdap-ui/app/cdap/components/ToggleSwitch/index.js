@@ -19,21 +19,13 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 require('./ToggleSwitch.scss');
 
-export default function ToggleSwitch({isOn, onToggle, disabled, onLabel, offLabel}) {
+export default function ToggleSwitch({ isOn, onToggle, disabled, onLabel, offLabel }) {
   return (
-    <div className={classnames("toggle-switch-container", {"disabled": disabled})}>
-      <div
-        className={classnames("toggle-switch", {"on": isOn, 'off': !isOn})}
-        onClick={onToggle}
-      >
-        <div className="switch-button"></div>
-        <div className={classnames("label", {"on-label": isOn, 'off-label': !isOn})}>
-          {
-            isOn ?
-              onLabel
-            :
-              offLabel
-          }
+    <div className={classnames('toggle-switch-container', { disabled: disabled })}>
+      <div className={classnames('toggle-switch', { on: isOn, off: !isOn })} onClick={onToggle}>
+        <div className="switch-button" />
+        <div className={classnames('label', { 'on-label': isOn, 'off-label': !isOn })}>
+          {isOn ? onLabel : offLabel}
         </div>
       </div>
     </div>
@@ -42,7 +34,7 @@ export default function ToggleSwitch({isOn, onToggle, disabled, onLabel, offLabe
 
 ToggleSwitch.defaultProps = {
   onLabel: 'On',
-  offLabel: 'Off'
+  offLabel: 'Off',
 };
 
 ToggleSwitch.propTypes = {
@@ -50,5 +42,5 @@ ToggleSwitch.propTypes = {
   onToggle: PropTypes.func,
   disabled: PropTypes.bool,
   onLabel: PropTypes.string,
-  offLabel: PropTypes.string
+  offLabel: PropTypes.string,
 };

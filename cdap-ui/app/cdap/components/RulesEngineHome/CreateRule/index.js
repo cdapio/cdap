@@ -17,12 +17,12 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Row, Col, Input, Form, FormGroup, Label} from 'reactstrap';
-import {preventPropagation} from 'services/helpers';
+import { Row, Col, Input, Form, FormGroup, Label } from 'reactstrap';
+import { preventPropagation } from 'services/helpers';
 import DSVEditor from 'components/DSVEditor';
 import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
-import {getRules, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import { getRules, setError } from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 
@@ -31,7 +31,7 @@ const PREFIX = 'features.RulesEngine.CreateRule';
 
 export default class CreateRule extends Component {
   static propTypes = {
-    onClose: PropTypes.func
+    onClose: PropTypes.func,
   };
 
   componentDidMount() {
@@ -43,59 +43,61 @@ export default class CreateRule extends Component {
   state = {
     when: '',
     description: '',
-    then: [{
-      property: '',
-      uniqueId: 0
-    }],
-    name: ''
+    then: [
+      {
+        property: '',
+        uniqueId: 0,
+      },
+    ],
+    name: '',
   };
 
   onNameChange = (e) => {
     this.setState({
-      name: e.target.value
+      name: e.target.value,
     });
   };
   onRulesChange = (conditions) => {
     this.setState({
-      then: conditions
+      then: conditions,
     });
   };
   onConditionChange = (e) => {
     this.setState({
-      when: e.target.value
+      when: e.target.value,
     });
   };
 
   onDescriptionChange = (e) => {
     this.setState({
-      description: e.target.value
+      description: e.target.value,
     });
   };
 
   isActionsEmpty = () => {
-    return isEmpty(this.state.then.map(action => action.property).join(''));
+    return isEmpty(this.state.then.map((action) => action.property).join(''));
   };
 
   isApplyBtnDisabled = () => {
-    return isEmpty(this.state.name) || isEmpty(this.state.description) || isEmpty(this.state.when) || this.isActionsEmpty();
-  }
+    return (
+      isEmpty(this.state.name) ||
+      isEmpty(this.state.description) ||
+      isEmpty(this.state.when) ||
+      this.isActionsEmpty()
+    );
+  };
 
   createRule = () => {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
     let config = {};
-    let {name: id, when, then, description} = this.state;
-    then = then.map(clause => clause.property);
-    config = {id, description, when, then};
-    MyRulesEngine
-      .createRule({ namespace }, config)
-      .subscribe(
-        () => {
-          getRules();
-          this.props.onClose();
-        },
-        setError
-      );
-  }
+    let { name: id, when, then, description } = this.state;
+    then = then.map((clause) => clause.property);
+    config = { id, description, when, then };
+    MyRulesEngine.createRule({ namespace }, config).subscribe(() => {
+      getRules();
+      this.props.onClose();
+    }, setError);
+  };
 
   render() {
     return (
@@ -106,51 +108,39 @@ export default class CreateRule extends Component {
               value={this.state.name}
               onChange={this.onNameChange}
               placeholder={T.translate(`${PREFIX}.form.nameplaceholder`)}
-              innerRef={(ref) => this.nameRef = ref}
+              innerRef={(ref) => (this.nameRef = ref)}
             />
           </Col>
-          <Col xs="6">
-            {T.translate(`${PREFIX}.form.today`)}
-          </Col>
+          <Col xs="6">{T.translate(`${PREFIX}.form.today`)}</Col>
           <Col xs="12">
             <Form onSubmit={preventPropagation} className="when-then-clause-container">
               <FormGroup row>
                 <Label sm={2}> {T.translate(`${PREFIX}.form.description`)} </Label>
-                <Col
-                  sm={9}
-                  className="when-then-value"
-                >
+                <Col sm={9} className="when-then-value">
                   <textarea
                     value={this.state.description}
                     onChange={this.onDescriptionChange}
                     placeholder={T.translate(`${PREFIX}.form.descriptionplaceholder`)}
                     className="form-control"
                     row={10}
-                  >
-                  </textarea>
+                  />
                 </Col>
               </FormGroup>
               <FormGroup row>
                 <Label sm={2}> {T.translate(`commons.when`)} </Label>
-                <Col
-                  sm={9}
-                  className="when-then-value"
-                >
+                <Col sm={9} className="when-then-value">
                   <textarea
                     value={this.state.when}
                     placeholder={T.translate(`${PREFIX}.form.whenClausePlaceholder`)}
                     onChange={this.onConditionChange}
                     className="form-control"
-                    row={15}>
-                  </textarea>
+                    row={15}
+                  />
                 </Col>
               </FormGroup>
               <FormGroup row>
                 <Label sm={2}> {T.translate(`commons.then`)} </Label>
-                <Col
-                  sm={9}
-                  className="when-then-value"
-                >
+                <Col sm={9} className="when-then-value">
                   <DSVEditor
                     values={this.state.then}
                     onChange={this.onRulesChange}
@@ -173,10 +163,7 @@ export default class CreateRule extends Component {
           >
             {T.translate(`${PREFIX}.form.apply`)}
           </button>
-          <div
-            className="btn btn-secondary"
-            onClick={this.props.onClose}
-          >
+          <div className="btn btn-secondary" onClick={this.props.onClose}>
             {T.translate(`${PREFIX}.form.cancel`)}
           </div>
         </div>

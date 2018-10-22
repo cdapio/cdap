@@ -24,13 +24,13 @@ export default class Description extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      description: this.props.description
+      description: this.props.description,
     };
   }
   componentWillReceiveProps(nextProps) {
     if (nextProps.description !== this.state.description) {
       this.setState({
-        description: nextProps.description
+        description: nextProps.description,
       });
     }
   }
@@ -38,22 +38,17 @@ export default class Description extends Component {
     return (
       <div className="description-holder">
         <strong> {T.translate('features.Description.label')}: </strong>
-        <span>
-          {this.state.description}
-        </span>
-          {
-            !this.state.description.length ?
-              <i>{T.translate('features.Description.nodescription')}</i>
-            :
-              null
-          }
+        <span>{this.state.description}</span>
+        {!this.state.description.length ? (
+          <i>{T.translate('features.Description.nodescription')}</i>
+        ) : null}
       </div>
     );
   }
 }
 Description.defaultProps = {
-  description: ''
+  description: '',
 };
 Description.propTypes = {
-  description: PropTypes.string
+  description: PropTypes.string,
 };

@@ -65,6 +65,7 @@
     "eslint": "4.6.1",
     "eslint-loader": "2.0.0",
     "eslint-plugin-babel": "4.1.2",
+    "eslint-plugin-prettier": "3.0.0",
     "eslint-plugin-react": "7.3.0",
     "file-loader": "1.1.5",
     "font-awesome-sass-loader": "1.0.3",
@@ -100,7 +101,9 @@
     "node-dir": "0.1.16",
     "node-sass": "4.5.3",
     "npm-run-all": "^4.1.2",
+    "parallel-webpack": "2.3.0",
     "postcss-loader": "2.0.8",
+    "prettier": "1.14.3",
     "react-addons-test-utils": "15.3.2",
     "sass-loader": "6.0.6",
     "style-loader": "0.19.0",
@@ -112,7 +115,6 @@
     "url-loader": "0.6.2",
     "webpack": "4.20.2",
     "webpack-cli": "3.1.1",
-    "parallel-webpack": "2.3.0",
     "webpack-livereload-plugin": "2.1.1"
   },
   "dependencies": {

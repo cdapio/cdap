@@ -23,7 +23,7 @@ require('components/CaskWizards/ArtifactUpload/UploadStep/UploadStep.scss');
 
 const mapStateWithDNDFileProps = (state) => {
   return {
-    file: state.upload.file
+    file: state.upload.file,
   };
 };
 const mapDispatchWithDNDFileProps = (dispatch) => {
@@ -32,10 +32,10 @@ const mapDispatchWithDNDFileProps = (dispatch) => {
       dispatch({
         type: ArtifactUploadActions.setFilePath,
         payload: {
-          file: e[0]
-        }
+          file: e[0],
+        },
       });
-    }
+    },
   };
 };
 const ArtifactUploader = connect(

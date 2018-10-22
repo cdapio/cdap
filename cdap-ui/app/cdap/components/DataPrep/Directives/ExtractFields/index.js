@@ -23,29 +23,33 @@ import T from 'i18n-react';
 import UsingPatternsModal from 'components/DataPrep/Directives/ExtractFields/UsingPatternsModal';
 import UsingDelimiterModal from 'components/DataPrep/Directives/ExtractFields/UsingDelimiterModal';
 import CutMenuItem from 'components/DataPrep/Directives/ExtractFields/UsingPositions/CutMenuItem';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {setPopoverOffset} from 'components/DataPrep/helper';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import { setPopoverOffset } from 'components/DataPrep/helper';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
 
 require('./ExtractFields.scss');
 export default class ExtractFields extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeModal: null
+      activeModal: null,
     };
     this.parseUsingPatterns = this.parseUsingPatterns.bind(this);
     this.parseUsingDelimiters = this.parseUsingDelimiters.bind(this);
     this.preventPropagation = this.preventPropagation.bind(this);
     this.handleUsingDelimiters = this.handleUsingDelimiters.bind(this);
 
-    this.isUsingPatternsDisabled = DataPrepStore.getState().dataprep.typesCheck[this.props.column] !== 'string';
+    this.isUsingPatternsDisabled =
+      DataPrepStore.getState().dataprep.typesCheck[this.props.column] !== 'string';
   }
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('extract-fields-directive'));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById('extract-fields-directive')
+    );
   }
 
   componentDidUpdate() {
@@ -55,47 +59,36 @@ export default class ExtractFields extends Component {
   }
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen) {
+      return null;
+    }
 
     let usingPatternsId = 'extract-fields-using-patterns';
 
     return (
-      <div
-        className="extract-fields second-level-popover"
-        onClick={this.preventPropagation}
-      >
+      <div className="extract-fields second-level-popover" onClick={this.preventPropagation}>
         <div
           id={usingPatternsId}
-          className={classnames("extract-field-options", {'disabled': this.isUsingPatternsDisabled})}
+          className={classnames('extract-field-options', {
+            disabled: this.isUsingPatternsDisabled,
+          })}
         >
-          <div
-            onClick={this.parseUsingPatterns}
-            className="option"
-          >
+          <div onClick={this.parseUsingPatterns} className="option">
             {T.translate(`${PREFIX}.patternSubmenuTitle`)}
           </div>
         </div>
-        {
-          this.isUsingPatternsDisabled ? (
-            <UncontrolledTooltip
-              target={usingPatternsId}
-              delay={{show: 250, hide: 0}}
-            >
-              {T.translate(`${PREFIX}.UsingPatterns.disabledTooltip`)}
-            </UncontrolledTooltip>
-          ) : null
-        }
+        {this.isUsingPatternsDisabled ? (
+          <UncontrolledTooltip target={usingPatternsId} delay={{ show: 250, hide: 0 }}>
+            {T.translate(`${PREFIX}.UsingPatterns.disabledTooltip`)}
+          </UncontrolledTooltip>
+        ) : null}
         <div className="extract-field-options">
-          <div
-            onClick={this.parseUsingDelimiters}
-            className="option"
-          >
+          <div onClick={this.parseUsingDelimiters} className="option">
             {T.translate(`${PREFIX}.delimitersSubmenuTitle`)}
           </div>
         </div>
         <div className="extract-field-options">
-          <div
-            onClick={this.parseUsingPosition}>
+          <div onClick={this.parseUsingPosition}>
             <CutMenuItem
               column={Array.isArray(this.props.column) ? this.props.column[0] : this.props.column}
               onComplete={this.props.onComplete}
@@ -107,7 +100,9 @@ export default class ExtractFields extends Component {
   }
 
   parseUsingPatterns() {
-    if (this.isUsingPatternsDisabled) { return null; }
+    if (this.isUsingPatternsDisabled) {
+      return null;
+    }
 
     this.setState({
       activeModal: (
@@ -115,9 +110,9 @@ export default class ExtractFields extends Component {
           isOpen={true}
           column={this.props.column}
           onComplete={this.props.onComplete}
-          onClose={() => this.setState({activeModal: null})}
+          onClose={() => this.setState({ activeModal: null })}
         />
-      )
+      ),
     });
   }
 
@@ -126,9 +121,9 @@ export default class ExtractFields extends Component {
       activeModal: (
         <UsingDelimiterModal
           onApply={this.handleUsingDelimiters}
-          onClose={() => this.setState({activeModal: null})}
+          onClose={() => this.setState({ activeModal: null })}
         />
-      )
+      ),
     });
   }
 
@@ -139,20 +134,22 @@ export default class ExtractFields extends Component {
   }
 
   execute(addDirective) {
-    execute(addDirective)
-      .subscribe(() => {
+    execute(addDirective).subscribe(
+      () => {
         this.props.onComplete();
-        this.setState({activeModal: null});
-      }, (err) => {
+        this.setState({ activeModal: null });
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   renderModal() {
@@ -170,12 +167,10 @@ export default class ExtractFields extends Component {
       <div
         id="extract-fields-directive"
         className={classnames('clearfix action-item', {
-          'active': this.props.isOpen
+          active: this.props.isOpen,
         })}
       >
-        <span className="option">
-          {T.translate(`${PREFIX}.title`)}
-        </span>
+        <span className="option">{T.translate(`${PREFIX}.title`)}</span>
 
         <span className="float-xs-right">
           <span className="fa fa-caret-right" />
@@ -191,5 +186,5 @@ export default class ExtractFields extends Component {
 ExtractFields.propTypes = {
   isOpen: PropTypes.bool,
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
-  onComplete: PropTypes.func
+  onComplete: PropTypes.func,
 };

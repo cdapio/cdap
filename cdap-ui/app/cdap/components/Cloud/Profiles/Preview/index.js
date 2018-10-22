@@ -14,21 +14,21 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MyCloudApi} from 'api/cloud';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { MyCloudApi } from 'api/cloud';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
 import {
   getProvisionerLabel,
   getNodeHours,
   fetchAggregateProfileMetrics,
-  ONEDAYMETRICKEY
+  ONEDAYMETRICKEY,
 } from 'components/Cloud/Profiles/Store/ActionCreator';
-import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
-import {humanReadableDate} from 'services/helpers';
+import { PROFILE_STATUSES } from 'components/Cloud/Profiles/Store';
+import { humanReadableDate } from 'services/helpers';
 import T from 'i18n-react';
-import {SCOPES, SYSTEM_NAMESPACE} from 'services/global-constants';
+import { SCOPES, SYSTEM_NAMESPACE } from 'services/global-constants';
 require('./Preview.scss');
 
 export default class ProfilePreview extends Component {
@@ -36,7 +36,7 @@ export default class ProfilePreview extends Component {
     profileScope: PropTypes.string,
     profileLabel: PropTypes.string,
     profileName: PropTypes.string,
-    profileCustomProperties: PropTypes.object
+    profileCustomProperties: PropTypes.object,
   };
   state = {
     profileDetails: null,
@@ -44,9 +44,9 @@ export default class ProfilePreview extends Component {
     error: null,
     metrics: {
       runs: '--',
-      minutes: '--'
+      minutes: '--',
     },
-    provisioners: []
+    provisioners: [],
   };
 
   componentDidMount() {
@@ -58,61 +58,62 @@ export default class ProfilePreview extends Component {
     let namespace = getCurrentNamespace();
     let apiObservable$;
     if (this.props.profileScope === SCOPES.SYSTEM) {
-      apiObservable$ = MyCloudApi.getSystemProfile({ profile: this.props.profileName});
+      apiObservable$ = MyCloudApi.getSystemProfile({ profile: this.props.profileName });
     } else {
       apiObservable$ = MyCloudApi.get({
         namespace,
-        profile: this.props.profileName
+        profile: this.props.profileName,
       });
     }
-    apiObservable$
-      .subscribe(
-        profileDetails => {
-          this.setState({
+    apiObservable$.subscribe(
+      (profileDetails) => {
+        this.setState(
+          {
             profileDetails,
-            loading: false
-          }, this.getProfileMetrics);
-        },
-        error => {
-          this.setState({
-            error,
-            loading: false
-          });
-        }
-      );
+            loading: false,
+          },
+          this.getProfileMetrics
+        );
+      },
+      (error) => {
+        this.setState({
+          error,
+          loading: false,
+        });
+      }
+    );
   }
 
   getProfileMetrics = () => {
-    let {profileName} = this.props;
-    let {profileDetails} = this.state;
+    let { profileName } = this.props;
+    let { profileDetails } = this.state;
     const extraTags = {
       profilescope: profileDetails.scope,
-      programtype: "Workflow",
-      profile: `${profileName}`
+      programtype: 'Workflow',
+      profile: `${profileName}`,
     };
-    fetchAggregateProfileMetrics(getCurrentNamespace(), profileDetails, extraTags)
-      .subscribe(metricsMap => {
+    fetchAggregateProfileMetrics(getCurrentNamespace(), profileDetails, extraTags).subscribe(
+      (metricsMap) => {
         let oneDayMetrics = metricsMap[ONEDAYMETRICKEY];
         this.setState({
-          metrics: oneDayMetrics
+          metrics: oneDayMetrics,
         });
-      });
+      }
+    );
   };
   getProvisioners() {
-    MyCloudApi
-      .getProvisioners()
-      .subscribe(
-        (provisioners) => {
-          this.setState({
-            provisioners
-          });
-        },
-        (error) => {
-          this.setState({
-            error: error.response || error
-          });
-        }
-      );
+    MyCloudApi.getProvisioners().subscribe(
+      (provisioners) => {
+        this.setState({
+          provisioners,
+        });
+      },
+      (error) => {
+        this.setState({
+          error: error.response || error,
+        });
+      }
+    );
   }
 
   render() {
@@ -123,23 +124,25 @@ export default class ProfilePreview extends Component {
         </div>
       );
     }
-    let profileNamespace = this.state.profileDetails.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : getCurrentNamespace();
-    let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
-    let profileProvisionerLabel = getProvisionerLabel(this.state.profileDetails, this.state.provisioners);
+    let profileNamespace =
+      this.state.profileDetails.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : getCurrentNamespace();
+    let profileDetailsLink = `${location.protocol}//${
+      location.host
+    }/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
+    let profileProvisionerLabel = getProvisionerLabel(
+      this.state.profileDetails,
+      this.state.provisioners
+    );
     const profileStatus = PROFILE_STATUSES[this.state.profileDetails.status];
     const profileLabel = this.props.profileLabel || this.props.profileName;
 
     return (
       <div className="profile-preview text-xs-left">
         <div className="truncate">
-          <strong title={profileLabel}>
-            {profileLabel}
-          </strong>
+          <strong title={profileLabel}>{profileLabel}</strong>
         </div>
         <div className="profile-descripion">
-          <p className="multi-line-text">
-            {this.state.profileDetails.description}
-          </p>
+          <p className="multi-line-text">{this.state.profileDetails.description}</p>
         </div>
         <div className="grid grid-container">
           <div className="grid-header">
@@ -161,13 +164,9 @@ export default class ProfilePreview extends Component {
           <div className="grid-body">
             <div className="grid-row">
               <div>
-                <span className="provisioner-name truncate-text">
-                  {profileProvisionerLabel}
-                </span>
+                <span className="provisioner-name truncate-text">{profileProvisionerLabel}</span>
               </div>
-              <div className="truncate-text">
-                {this.state.profileDetails.scope}
-              </div>
+              <div className="truncate-text">{this.state.profileDetails.scope}</div>
               <div>{this.state.metrics.runs || '--'}</div>
               <div>{getNodeHours(this.state.metrics.minutes || '--')}</div>
               <div>{humanReadableDate(this.state.profileDetails.created, false, true)}</div>
@@ -179,9 +178,7 @@ export default class ProfilePreview extends Component {
         </div>
         <hr />
         <div>
-          <a href={profileDetailsLink}>
-            View Details
-          </a>
+          <a href={profileDetailsLink}>View Details</a>
         </div>
       </div>
     );

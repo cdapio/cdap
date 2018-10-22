@@ -14,24 +14,30 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {convertMapToKeyValuePairsObj} from 'components/KeyValuePairs/KeyValueStoreActions';
-import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
-import {reset} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {objectQuery, reverseArrayWithoutMutating, isNilOrEmpty, preventPropagation} from 'services/helpers';
+import { convertMapToKeyValuePairsObj } from 'components/KeyValuePairs/KeyValueStoreActions';
+import PipelineConfigurationsStore, {
+  ACTIONS as PipelineConfigurationsActions,
+} from 'components/PipelineConfigurations/Store';
+import { reset } from 'components/PipelineConfigurations/Store/ActionCreator';
+import {
+  objectQuery,
+  reverseArrayWithoutMutating,
+  isNilOrEmpty,
+  preventPropagation,
+} from 'services/helpers';
 import classnames from 'classnames';
 import Popover from 'components/Popover';
 import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
 import T from 'i18n-react';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import findIndex from 'lodash/findIndex';
 import CopyableID from 'components/CopyableID';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import PipelineRunTimeArgsCounter from 'components/PipelineDetails/PipelineRuntimeArgsCounter';
-import {getFilteredRuntimeArgs} from 'components/PipelineConfigurations/Store/ActionCreator';
-
+import { getFilteredRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const PREFIX = 'features.PipelineDetails.RunLevel';
 
@@ -40,14 +46,14 @@ export default class RunConfigs extends Component {
     currentRun: PropTypes.object,
     runs: PropTypes.array,
     isBatch: PropTypes.bool,
-    pipelineName: PropTypes.string
+    pipelineName: PropTypes.string,
   };
 
   state = {
     showModeless: false,
     runtimeArgs: {
-      pairs: []
-    }
+      pairs: [],
+    },
   };
 
   runtimeArgsMap = {};
@@ -63,7 +69,7 @@ export default class RunConfigs extends Component {
   getRuntimeArgsAndToggleModeless = () => {
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_MODELESS_OPEN_STATUS,
-      payload: { open: false }
+      payload: { open: false },
     });
 
     let runtimeArgs = objectQuery(this.props.currentRun, 'properties', 'runtimeArgs') || '';
@@ -79,16 +85,16 @@ export default class RunConfigs extends Component {
     runtimeArgs = getFilteredRuntimeArgs(convertMapToKeyValuePairsObj(runtimeArgs));
 
     this.setState({
-      runtimeArgs
+      runtimeArgs,
     });
 
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
       payload: {
         pipelineVisualConfiguration: {
-          isHistoricalRun: true
-        }
-      }
+          isHistoricalRun: true,
+        },
+      },
     });
   };
 
@@ -96,25 +102,28 @@ export default class RunConfigs extends Component {
     if (showModeless === this.state.showModeless) {
       return;
     }
-    this.setState({
-      showModeless: showModeless || !this.state.showModeless
-    }, () => {
-      if (!this.state.showModeless) {
-        reset();
-        /*
+    this.setState(
+      {
+        showModeless: showModeless || !this.state.showModeless,
+      },
+      () => {
+        if (!this.state.showModeless) {
+          reset();
+          /*
           Reset overrides existing pipeline config as well instead of overwriting only the
           historical run information. We should either have seperate stores for run information
           and pipeline information or don't reset the pipeline config if historical
           run information has to be reset.
         */
-        PipelineConfigurationsStore.dispatch({
-          type: PipelineConfigurationsActions.INITIALIZE_CONFIG,
-          payload: {...PipelineDetailStore.getState().config}
-        });
-      } else {
-        this.getRuntimeArgsAndToggleModeless();
+          PipelineConfigurationsStore.dispatch({
+            type: PipelineConfigurationsActions.INITIALIZE_CONFIG,
+            payload: { ...PipelineDetailStore.getState().config },
+          });
+        } else {
+          this.getRuntimeArgsAndToggleModeless();
+        }
       }
-    });
+    );
   };
 
   isRuntimeArgsEmpty = () => {
@@ -140,48 +149,34 @@ export default class RunConfigs extends Component {
           <div>Name</div>
           <div>Value</div>
         </div>
-        {
-          this.state.runtimeArgs.pairs.map(arg => {
-            return (
-              <div>
-                <input
-                  className="form-control"
-                  value={arg.key}
-                  disabled
-                />
-                <input
-                  className="form-control"
-                  value={arg.value}
-                  disabled
-                />
-              </div>
-            );
-          })
-        }
+        {this.state.runtimeArgs.pairs.map((arg) => {
+          return (
+            <div>
+              <input className="form-control" value={arg.key} disabled />
+              <input className="form-control" value={arg.value} disabled />
+            </div>
+          );
+        })}
       </div>
     );
-  }
+  };
 
   renderRunConfigsButton = () => {
     const target = (
-      <div
-        className="run-configs-btn"
-      >
+      <div className="run-configs-btn">
         <IconSVG name="icon-macro" />
-        <div className="button-label">
-          {T.translate(`${PREFIX}.configs`)}
-        </div>
+        <div className="button-label">{T.translate(`${PREFIX}.configs`)}</div>
       </div>
     );
 
-    let {runs, currentRun} = this.props;
+    let { runs, currentRun } = this.props;
     let reversedRuns = reverseArrayWithoutMutating(runs);
-    let currentRunIndex = findIndex(reversedRuns, {runid: objectQuery(currentRun, 'runid')});
+    let currentRunIndex = findIndex(reversedRuns, { runid: objectQuery(currentRun, 'runid') });
     const title = (
       <div className="runconfig-modeless-title">
         <div>
           {T.translate(`${PREFIX}.configsModelessTitle`, {
-            currentRunIndex: currentRunIndex + 1
+            currentRunIndex: currentRunIndex + 1,
           })}
         </div>
         <CopyableID
@@ -202,29 +197,21 @@ export default class RunConfigs extends Component {
         modifiers={{
           flip: {
             enabled: true,
-            behavior: ['bottom', 'right']
+            behavior: ['bottom', 'right'],
           },
           shift: {
-            enabled: true
-          }
+            enabled: true,
+          },
         }}
       >
         <Provider store={PipelineConfigurationsStore}>
-          <PipelineModeless
-            title={title}
-            onClose={this.toggleModeless.bind(this, false)}
-          >
+          <PipelineModeless title={title} onClose={this.toggleModeless.bind(this, false)}>
             <div className="historical-runtime-args-wrapper">
               {this.renderRuntimeArgs()}
               <div className="runconfig-tab-footer">
-                {
-                  this.isRuntimeArgsEmpty() ?
-                    null
-                  :
-                    <PipelineRunTimeArgsCounter
-                      runtimeArgs={this.state.runtimeArgs}
-                    />
-                }
+                {this.isRuntimeArgsEmpty() ? null : (
+                  <PipelineRunTimeArgsCounter runtimeArgs={this.state.runtimeArgs} />
+                )}
               </div>
             </div>
           </PipelineModeless>
@@ -233,17 +220,11 @@ export default class RunConfigs extends Component {
     );
   };
 
-
   render() {
     const ConfigsBtnComp = () => (
-      <div
-        className="run-configs-btn"
-        onClick={preventPropagation}
-      >
+      <div className="run-configs-btn" onClick={preventPropagation}>
         <IconSVG name="icon-macro" />
-        <div className="button-label">
-          {T.translate(`${PREFIX}.configs`)}
-        </div>
+        <div className="button-label">{T.translate(`${PREFIX}.configs`)}</div>
       </div>
     );
 
@@ -251,23 +232,22 @@ export default class RunConfigs extends Component {
       return (
         <Popover
           target={ConfigsBtnComp}
-          showOn='Hover'
-          placement='bottom-end'
+          showOn="Hover"
+          placement="bottom-end"
           className="run-info-container run-configs-container disabled"
         >
-          {
-            !this.props.runs.length ?
-              T.translate(`${PREFIX}.pipelineNeverRun`)
-            :
-              T.translate(`${PREFIX}.noRuntimeArgsForRun`)
-          }
+          {!this.props.runs.length
+            ? T.translate(`${PREFIX}.pipelineNeverRun`)
+            : T.translate(`${PREFIX}.noRuntimeArgsForRun`)}
         </Popover>
       );
     }
 
     return (
       <div
-        className={classnames("run-info-container run-configs-container", {"active" : this.state.showModeless})}
+        className={classnames('run-info-container run-configs-container', {
+          active: this.state.showModeless,
+        })}
       >
         {this.renderRunConfigsButton()}
       </div>

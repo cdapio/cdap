@@ -30,17 +30,19 @@ require('./Customizer.scss');
 
 export default class Customizer extends Component {
   state = {
-    isCollapsed: false
+    isCollapsed: false,
   };
 
   toggleCollapsed = () => {
     this.setState({
-      isCollapsed: !this.state.isCollapsed
+      isCollapsed: !this.state.isCollapsed,
     });
   };
 
   renderCollapsedDetail = () => {
-    if (this.state.isCollapsed) { return null; }
+    if (this.state.isCollapsed) {
+      return null;
+    }
 
     return (
       <div>
@@ -58,19 +60,11 @@ export default class Customizer extends Component {
 
   render() {
     return (
-      <div className={classnames('customizer-container', {collapsed: this.state.isCollapsed})}>
+      <div className={classnames('customizer-container', { collapsed: this.state.isCollapsed })}>
         <div className="collapsed-toggle-container">
-          <div
-            className="toggle"
-            onClick={this.toggleCollapsed}
-          >
+          <div className="toggle" onClick={this.toggleCollapsed}>
             <IconSVG name={this.state.isCollapsed ? 'icon-caret-right' : 'icon-caret-down'} />
-            {
-              this.state.isCollapsed ?
-                T.translate(`${PREFIX}.show`)
-              :
-                T.translate(`${PREFIX}.hide`)
-            }
+            {this.state.isCollapsed ? T.translate(`${PREFIX}.show`) : T.translate(`${PREFIX}.hide`)}
           </div>
         </div>
 

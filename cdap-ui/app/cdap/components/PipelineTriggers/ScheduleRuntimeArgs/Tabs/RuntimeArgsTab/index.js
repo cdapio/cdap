@@ -14,9 +14,11 @@
  * the License.
 */
 
-import React, {Component} from 'react';
-import ScheduleRuntimeArgsStore, {DEFAULTFIELDDELIMITER} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
-import {Row, Col} from 'reactstrap';
+import React, { Component } from 'react';
+import ScheduleRuntimeArgsStore, {
+  DEFAULTFIELDDELIMITER,
+} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
+import { Row, Col } from 'reactstrap';
 import RuntimeArgRow from 'components/PipelineTriggers/ScheduleRuntimeArgs/Tabs/RuntimeArgsTab/RuntimeArgRow';
 import T from 'i18n-react';
 import classnames from 'classnames';
@@ -24,10 +26,9 @@ import classnames from 'classnames';
 const PREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs.Tabs.RuntimeArgs';
 
 export default class RuntimArgsTab extends Component {
-
   getRuntimeArgMapping = () => {
-    let {argsMapping} = ScheduleRuntimeArgsStore.getState().args;
-    let runTimeArgMapping = argsMapping.filter(arg => {
+    let { argsMapping } = ScheduleRuntimeArgsStore.getState().args;
+    let runTimeArgMapping = argsMapping.filter((arg) => {
       if (!arg.key || !arg.value) {
         return false;
       }
@@ -38,53 +39,44 @@ export default class RuntimArgsTab extends Component {
   };
 
   state = {
-    runTimeArgMapping: this.getRuntimeArgMapping()
+    runTimeArgMapping: this.getRuntimeArgMapping(),
   };
 
   componentDidMount() {
     ScheduleRuntimeArgsStore.subscribe(() => {
       this.setState({
-        runTimeArgMapping: this.getRuntimeArgMapping()
+        runTimeArgMapping: this.getRuntimeArgMapping(),
       });
     });
   }
 
   renderEnabledRow(list) {
-    return (
-      list.map((macro) => {
-        let matchingKeyValue = this.state.runTimeArgMapping.find(arg => arg.value === macro);
-        let key, value;
-        if (matchingKeyValue) {
-          key = matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1 ? null : matchingKeyValue.key;
-          value = matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1 ? null : matchingKeyValue.value;
-        }
+    return list.map((macro) => {
+      let matchingKeyValue = this.state.runTimeArgMapping.find((arg) => arg.value === macro);
+      let key, value;
+      if (matchingKeyValue) {
+        key =
+          matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1
+            ? null
+            : matchingKeyValue.key;
+        value =
+          matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1
+            ? null
+            : matchingKeyValue.value;
+      }
 
-        return (
-          <RuntimeArgRow
-            mkey={key}
-            mvalue={value}
-          />
-        );
-
-      })
-    );
+      return <RuntimeArgRow mkey={key} mvalue={value} />;
+    });
   }
 
   renderDisabledRows(list) {
-    return (
-      list.map((arg) => {
-        return (
-          <RuntimeArgRow
-            mkey={arg.key}
-            mvalue={arg.value}
-          />
-        );
-      })
-    );
+    return list.map((arg) => {
+      return <RuntimeArgRow mkey={arg.key} mvalue={arg.value} />;
+    });
   }
 
   renderContent() {
-    let {triggeredPipelineInfo, disabled, argsMapping} = ScheduleRuntimeArgsStore.getState().args;
+    let { triggeredPipelineInfo, disabled, argsMapping } = ScheduleRuntimeArgsStore.getState().args;
     let list = triggeredPipelineInfo.macros;
 
     if (disabled) {
@@ -92,18 +84,20 @@ export default class RuntimArgsTab extends Component {
     }
 
     if (!list.length) {
-      let emptyMessage = disabled ? `${PREFIX}.disabledNoRuntimeArgsMessage` : `${PREFIX}.noRuntimeArgsMessage`;
+      let emptyMessage = disabled
+        ? `${PREFIX}.disabledNoRuntimeArgsMessage`
+        : `${PREFIX}.noRuntimeArgsMessage`;
 
       return (
-        <div className={classnames("empty-message-container", {
-          'margin-top-offset': !disabled
-        })}>
+        <div
+          className={classnames('empty-message-container', {
+            'margin-top-offset': !disabled,
+          })}
+        >
           <h4>
-            {
-              T.translate(`${emptyMessage}`, {
-                triggeredPipelineid: triggeredPipelineInfo.id
-              })
-            }
+            {T.translate(`${emptyMessage}`, {
+              triggeredPipelineid: triggeredPipelineInfo.id,
+            })}
           </h4>
         </div>
       );
@@ -122,28 +116,23 @@ export default class RuntimArgsTab extends Component {
   }
 
   render() {
-    let {triggeringPipelineInfo, triggeredPipelineInfo, disabled} = ScheduleRuntimeArgsStore.getState().args;
+    let {
+      triggeringPipelineInfo,
+      triggeredPipelineInfo,
+      disabled,
+    } = ScheduleRuntimeArgsStore.getState().args;
     return (
       <div className="run-time-args-tab">
-        {
-          disabled ?
-            null
-          :
-            (
-              <h4>
-                {
-                  T.translate(`${PREFIX}.tab_message`, {
-                    triggeringPipelineid: triggeringPipelineInfo.id,
-                    triggeredPipelineid: triggeredPipelineInfo.id
-                  })
-                }
-                <br />
-                <small>
-                  {T.translate(`${PREFIX}.tab_message2`)}
-                </small>
-              </h4>
-            )
-        }
+        {disabled ? null : (
+          <h4>
+            {T.translate(`${PREFIX}.tab_message`, {
+              triggeringPipelineid: triggeringPipelineInfo.id,
+              triggeredPipelineid: triggeredPipelineInfo.id,
+            })}
+            <br />
+            <small>{T.translate(`${PREFIX}.tab_message2`)}</small>
+          </h4>
+        )}
         {this.renderContent()}
       </div>
     );

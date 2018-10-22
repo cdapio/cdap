@@ -19,10 +19,10 @@ import React from 'react';
 import SelectWithOptions from 'components/SelectWithOptions';
 
 require('./HyperParamWidget.scss');
-const BoolWidget = ({options, value, onChange}) => {
+const BoolWidget = ({ options, value, onChange }) => {
   return (
     <div className="bool-widget">
-      {options.map(option => {
+      {options.map((option) => {
         return (
           <label key={option}>
             <input
@@ -42,7 +42,7 @@ const BoolWidget = ({options, value, onChange}) => {
 BoolWidget.propTypes = {
   options: PropTypes.arrayOf(PropTypes.string),
   value: PropTypes.string,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };
 
 const getComponent = (type) => {
@@ -53,8 +53,8 @@ const getComponent = (type) => {
         props: {
           type: 'number',
           step: 1,
-          className: 'form-control'
-        }
+          className: 'form-control',
+        },
       };
     case 'double':
       return {
@@ -62,31 +62,31 @@ const getComponent = (type) => {
         props: {
           type: 'number',
           step: 0.1,
-          className: 'form-control'
-        }
+          className: 'form-control',
+        },
       };
     case 'bool':
       return {
         comp: BoolWidget,
-        props: {}
+        props: {},
       };
     case 'string':
       return {
         comp: SelectWithOptions,
-        props: {}
+        props: {},
       };
     default:
       return {
         comp: 'input',
         props: {
           type: 'text',
-          className: 'form-control'
-        }
+          className: 'form-control',
+        },
       };
   }
 };
-export default function HyperParamWidget({type, config, onChange}) {
-  let {comp: Component, props = {}} = getComponent(type);
+export default function HyperParamWidget({ type, config, onChange }) {
+  let { comp: Component, props = {} } = getComponent(type);
   return (
     <label className="hyper-param-widget">
       <span className="param-label">{config.label || config.name || ''}</span>
@@ -98,5 +98,5 @@ export default function HyperParamWidget({type, config, onChange}) {
 HyperParamWidget.propTypes = {
   type: PropTypes.string,
   config: PropTypes.object,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };

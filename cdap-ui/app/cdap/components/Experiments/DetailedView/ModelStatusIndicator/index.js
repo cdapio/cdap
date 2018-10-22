@@ -18,58 +18,59 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import IconSVG from 'components/IconSVG';
 import capitalize from 'lodash/capitalize';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
-import {preventPropagation} from 'services/helpers';
-import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
-import {MODEL_STATUS_TO_COLOR_MAP} from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/ModelStatusesDistribution';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
+import { preventPropagation } from 'services/helpers';
+import { MODEL_STATUS } from 'components/Experiments/store/ModelStatus';
+import { MODEL_STATUS_TO_COLOR_MAP } from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/ModelStatusesDistribution';
 
 require('./ModelStatusIndicator.scss');
 
 const DEFAULT_STATUS_MAP = {
   className: 'text-info',
-  icon: 'icon-circle-o'
+  icon: 'icon-circle-o',
 };
 
 const STATUS_ICON_MAP = {
   [MODEL_STATUS.SPLITTING]: {
     className: 'fa-spin ',
     icon: 'icon-spinner',
-    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.SPLITTING]
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.SPLITTING],
   },
   [MODEL_STATUS.SPLIT_FAILED]: {
     className: '',
     icon: 'icon-circle-o',
-    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.SPLIT_FAILED]
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.SPLIT_FAILED],
   },
   [MODEL_STATUS.DATA_READY]: {
     className: '',
     icon: 'icon-circle-o',
-    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.DATA_READY]
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.DATA_READY],
   },
   [MODEL_STATUS.TRAINING]: {
     className: 'fa-spin',
     icon: 'icon-spinner',
-    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.TRAINING]
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.TRAINING],
   },
   [MODEL_STATUS.TRAINED]: {
     className: '',
     icon: 'icon-circle-o',
-    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.TRAINED]
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.TRAINED],
   },
   [MODEL_STATUS.TRAINING_FAILED]: {
     className: '',
     icon: 'icon-circle-o',
-    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.TRAINING_FAILED]
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.TRAINING_FAILED],
   },
   [MODEL_STATUS.PREPARING]: {
     className: 'fa-spin',
     icon: 'icon-spinner',
-    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.PREPARING]
-  }
+    color: MODEL_STATUS_TO_COLOR_MAP[MODEL_STATUS.PREPARING],
+  },
 };
-const getIconMap = (status) => status in STATUS_ICON_MAP ? STATUS_ICON_MAP[status] : DEFAULT_STATUS_MAP;
+const getIconMap = (status) =>
+  status in STATUS_ICON_MAP ? STATUS_ICON_MAP[status] : DEFAULT_STATUS_MAP;
 
-export default function ModelStatusIndicator({status, loading, error, model, getModelStatus}) {
+export default function ModelStatusIndicator({ status, loading, error, model, getModelStatus }) {
   if (loading) {
     return <IconSVG name="icon-spinner" className="fa-spin" />;
   }
@@ -85,18 +86,13 @@ export default function ModelStatusIndicator({status, loading, error, model, get
             getModelStatus();
           }}
         >
-          <IconSVG
-            className="text-danger"
-            name="icon-exclamation-circle"
-          />
+          <IconSVG className="text-danger" name="icon-exclamation-circle" />
           <span>Error</span>
         </span>
-        <UncontrolledTooltip
-          placement="right"
-          delay={0}
-          target={`error-${model.id}`}
-        >
-          {`Failed to get the status of the model '${model.name}'. Click to try loading the status again`}
+        <UncontrolledTooltip placement="right" delay={0} target={`error-${model.id}`}>
+          {`Failed to get the status of the model '${
+            model.name
+          }'. Click to try loading the status again`}
         </UncontrolledTooltip>
       </span>
     );
@@ -109,7 +105,7 @@ export default function ModelStatusIndicator({status, loading, error, model, get
         name={iconMap.icon}
         className={iconMap.className}
         style={{
-          color: iconMap.color
+          color: iconMap.color,
         }}
       />
       <span>{capitalize(status)}</span>
@@ -122,5 +118,5 @@ ModelStatusIndicator.propTypes = {
   loading: PropTypes.bool,
   error: PropTypes.bool,
   model: PropTypes.object,
-  getModelStatus: PropTypes.func
+  getModelStatus: PropTypes.func,
 };

@@ -36,7 +36,7 @@ export default class EntityCard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      successMessage: null
+      successMessage: null,
     };
     this.cardRef = null;
     this.onSuccess = this.onSuccess.bind(this);
@@ -45,15 +45,15 @@ export default class EntityCard extends Component {
   componentWillReceiveProps(nextProps) {
     if (nextProps.activeEntity !== this.props.entity.uniqueId) {
       this.setState({
-        overviewMode: false
+        overviewMode: false,
       });
     }
   }
 
   onSuccess(successMessage) {
-    this.setState({successMessage});
+    this.setState({ successMessage });
     setTimeout(() => {
-      this.setState({successMessage: null});
+      this.setState({ successMessage: null });
     }, 3000);
   }
 
@@ -66,7 +66,7 @@ export default class EntityCard extends Component {
       case 'dataset':
         return <DatasetMetrics entity={this.props.entity} />;
       case 'program':
-        return <ProgramMetrics entity={this.props.entity} poll={this.props.poll}/>;
+        return <ProgramMetrics entity={this.props.entity} poll={this.props.poll} />;
       case 'stream':
         return <StreamMetrics entity={this.props.entity} />;
       case 'view':
@@ -87,7 +87,9 @@ export default class EntityCard extends Component {
   onFastActionUpdate(action) {
     let successMessage;
     if (action === 'setPreferences') {
-      successMessage = FastActionToMessage(action, {entityType: capitalize(this.props.entity.type)});
+      successMessage = FastActionToMessage(action, {
+        entityType: capitalize(this.props.entity.type),
+      });
     } else {
       successMessage = FastActionToMessage(action);
     }
@@ -113,40 +115,36 @@ export default class EntityCard extends Component {
     );
     return (
       <div
-        className={
-          classnames(
-            'entity-cards',
-            this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type,
-            this.props.className)
-        }
+        className={classnames(
+          'entity-cards',
+          this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type,
+          this.props.className
+        )}
         id={this.props.id}
-        ref={(ref) => this.cardRef = ref}
+        ref={(ref) => (this.cardRef = ref)}
       >
         <Card
           header={header}
-          id={
-            classnames(
-              this.props.entity.isHydrator ?
-              `entity-cards-datapipeline` :
-              `entity-cards-${this.props.entity.type}`
-            )
-          }
+          id={classnames(
+            this.props.entity.isHydrator
+              ? `entity-cards-datapipeline`
+              : `entity-cards-${this.props.entity.type}`
+          )}
           onClick={this.onClick.bind(this)}
         >
           <div className="entity-information clearfix">
-            <div className={classnames("entity-id-container", {'with-version': this.props.entity.version})}>
+            <div
+              className={classnames('entity-id-container', {
+                'with-version': this.props.entity.version,
+              })}
+            >
               <h4
-                className={classnames({'with-version': this.props.entity.version})}
+                className={classnames({ 'with-version': this.props.entity.version })}
                 title={this.props.entity.id}
               >
                 {this.props.entity.id}
               </h4>
-              <small>{
-                  this.props.entity.version ?
-                    this.props.entity.version
-                  :
-                    ''
-                }</small>
+              <small>{this.props.entity.version ? this.props.entity.version : ''}</small>
             </div>
           </div>
 
@@ -168,7 +166,7 @@ export default class EntityCard extends Component {
 
 EntityCard.defaultProps = {
   onClick: () => {},
-  poll: false
+  poll: false,
 };
 
 EntityCard.propTypes = {
@@ -179,5 +177,5 @@ EntityCard.propTypes = {
   className: PropTypes.string,
   id: PropTypes.string,
   onClick: PropTypes.func,
-  activeEntity: PropTypes.string
+  activeEntity: PropTypes.string,
 };

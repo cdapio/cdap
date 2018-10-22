@@ -17,9 +17,13 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import ScheduleRuntimeArgsStore, {DEFAULTSTAGEMESSAGE, DEFAULTPROPERTYMESSAGE, DEFAULTTRIGGEREDMACROMESSAGE} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
-import {setArgMapping} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
-import {Row, Col} from 'reactstrap';
+import ScheduleRuntimeArgsStore, {
+  DEFAULTSTAGEMESSAGE,
+  DEFAULTPROPERTYMESSAGE,
+  DEFAULTTRIGGEREDMACROMESSAGE,
+} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
+import { setArgMapping } from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
+import { Row, Col } from 'reactstrap';
 import T from 'i18n-react';
 
 export default class StagePropertiesRow extends Component {
@@ -28,11 +32,11 @@ export default class StagePropertiesRow extends Component {
     pipelineStage: PropTypes.string,
     stageProperty: PropTypes.string,
     triggeredPipelineMacro: PropTypes.string,
-    id: PropTypes.string
+    id: PropTypes.string,
   };
 
-  getConstructedKey = ({stage, property}) => {
-    let {triggeringPipelineInfo} = ScheduleRuntimeArgsStore.getState().args;
+  getConstructedKey = ({ stage, property }) => {
+    let { triggeringPipelineInfo } = ScheduleRuntimeArgsStore.getState().args;
     if (stage && property) {
       return `${this.props.pipelineName || triggeringPipelineInfo.id}:${stage}:${property}`;
     }
@@ -40,33 +44,45 @@ export default class StagePropertiesRow extends Component {
   };
 
   state = {
-    key: this.getConstructedKey({stage: this.props.pipelineStage, property: this.props.stageProperty}),
+    key: this.getConstructedKey({
+      stage: this.props.pipelineStage,
+      property: this.props.stageProperty,
+    }),
     stage: this.props.pipelineStage,
     property: this.props.stageProperty,
-    triggeredPipelineMacro: this.props.triggeredPipelineMacro
+    triggeredPipelineMacro: this.props.triggeredPipelineMacro,
   };
 
   onPropertyChange = (e) => {
-    this.setState({
-      property: e.target.value,
-      triggeredPipelineMacro: null
-    }, this.updateStore.bind(this, this.state.triggeredPipelineMacro));
+    this.setState(
+      {
+        property: e.target.value,
+        triggeredPipelineMacro: null,
+      },
+      this.updateStore.bind(this, this.state.triggeredPipelineMacro)
+    );
   };
 
   onPipelineStageChange = (e) => {
     let oldValue = this.state.triggeredPipelineMacro;
-    this.setState({
-      stage: e.target.value,
-      property: null,
-      triggeredPipelineMacro: null
-    }, this.updateStore.bind(this, oldValue));
+    this.setState(
+      {
+        stage: e.target.value,
+        property: null,
+        triggeredPipelineMacro: null,
+      },
+      this.updateStore.bind(this, oldValue)
+    );
   };
 
   onTriggeredMacroChange = (e) => {
     let oldValue = this.state.triggeredPipelineMacro;
-    this.setState({
-      triggeredPipelineMacro: e.target.value
-    }, this.updateStore.bind(this, oldValue));
+    this.setState(
+      {
+        triggeredPipelineMacro: e.target.value,
+      },
+      this.updateStore.bind(this, oldValue)
+    );
   };
 
   updateStore = (oldValue) => {
@@ -85,74 +101,60 @@ export default class StagePropertiesRow extends Component {
     if (property === DEFAULTPROPERTYMESSAGE) {
       return DEFAULTPROPERTYMESSAGE;
     }
-    let {args} = ScheduleRuntimeArgsStore.getState();
-    let {stageWidgetJsonMap} = args;
+    let { args } = ScheduleRuntimeArgsStore.getState();
+    let { stageWidgetJsonMap } = args;
     let properties = [];
-    stageWidgetJsonMap[this.state.stage]['configuration-groups'].map(group => {
+    stageWidgetJsonMap[this.state.stage]['configuration-groups'].map((group) => {
       properties = properties.concat(group.properties);
     });
-    let matchProperty = properties.filter(prop => prop.name === property);
+    let matchProperty = properties.filter((prop) => prop.name === property);
     return !matchProperty.length ? property : matchProperty[0].label;
   };
 
   render() {
-    let {triggeringPipelineInfo, triggeredPipelineInfo} = ScheduleRuntimeArgsStore.getState().args;
+    let {
+      triggeringPipelineInfo,
+      triggeredPipelineInfo,
+    } = ScheduleRuntimeArgsStore.getState().args;
     let stage = triggeringPipelineInfo.configStagesMap[this.state.stage];
     let properties = [];
     if (stage) {
       properties = stage.properties;
     }
     properties = [DEFAULTPROPERTYMESSAGE].concat(properties);
-    properties = properties.map(prop => {
+    properties = properties.map((prop) => {
       return {
         id: prop,
-        label: this.getPropertyLabel(prop)
+        label: this.getPropertyLabel(prop),
       };
     });
     return (
       <Row>
         <Col xs={3}>
           <div className="select-dropdown">
-            <select
-              value={this.state.stage}
-              onChange={this.onPipelineStageChange}
-            >
-              {
-                [{id: DEFAULTSTAGEMESSAGE}]
-                  .concat(triggeringPipelineInfo.configStages)
-                  .map((stage) => {
-                    return (
-                      <option
-                        key={stage.id}
-                        value={stage.id}
-                      >
-                        {stage.id}
-                      </option>
-                    );
-                  })
-              }
+            <select value={this.state.stage} onChange={this.onPipelineStageChange}>
+              {[{ id: DEFAULTSTAGEMESSAGE }]
+                .concat(triggeringPipelineInfo.configStages)
+                .map((stage) => {
+                  return (
+                    <option key={stage.id} value={stage.id}>
+                      {stage.id}
+                    </option>
+                  );
+                })}
             </select>
           </div>
         </Col>
         <Col xs={4}>
           <div className="select-dropdown">
-            <select
-              onChange={this.onPropertyChange}
-              value={this.state.property}
-            >
-              {
-                properties.map((prop, i) => {
-                  return (
-                    <option
-                      key={i}
-                      value={prop.id}
-                      selected={prop.id === this.state.property}
-                    >
-                      {prop.label}
-                    </option>
-                  );
-                })
-              }
+            <select onChange={this.onPropertyChange} value={this.state.property}>
+              {properties.map((prop, i) => {
+                return (
+                  <option key={i} value={prop.id} selected={prop.id === this.state.property}>
+                    {prop.label}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </Col>
@@ -165,15 +167,11 @@ export default class StagePropertiesRow extends Component {
               value={this.state.triggeredPipelineMacro}
               onChange={this.onTriggeredMacroChange}
             >
-              {
-                this.getDisplayForTriggeredPipelineMacro()
+              {this.getDisplayForTriggeredPipelineMacro()
                 .concat(triggeredPipelineInfo.unMappedMacros)
                 .map((prop, i) => {
-                  return (
-                    <option key={i}>{prop}</option>
-                  );
-                })
-              }
+                  return <option key={i}>{prop}</option>;
+                })}
             </select>
           </div>
         </Col>

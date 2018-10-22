@@ -15,7 +15,7 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import Popover from 'components/Popover';
 
@@ -25,15 +25,15 @@ export default class CollapsibleWrapper extends Component {
   static propTypes = {
     content: PropTypes.string,
     popoverContent: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
-    alwaysShowViewLink: PropTypes.bool
+    alwaysShowViewLink: PropTypes.bool,
   };
 
   static defaultProps = {
-    alwaysShowViewLink: false
+    alwaysShowViewLink: false,
   };
 
   state = {
-    showViewLink: false
+    showViewLink: false,
   };
 
   componentWillMount() {
@@ -47,7 +47,7 @@ export default class CollapsibleWrapper extends Component {
   setViewLink = () => {
     if (this.contentRef) {
       this.setState({
-        showViewLink: this.contentRef.offsetWidth >= this.contentRef.parentElement.offsetWidth
+        showViewLink: this.contentRef.offsetWidth >= this.contentRef.parentElement.offsetWidth,
       });
     }
   };
@@ -58,31 +58,25 @@ export default class CollapsibleWrapper extends Component {
 
   render() {
     return (
-      <div
-        ref={(ref) => this.contentRef = ref}
-        className="collapsable-wrapper"
-      >
+      <div ref={(ref) => (this.contentRef = ref)} className="collapsable-wrapper">
         <span
           className={classnames({
-            "with-view-link": this.state.showViewLink
+            'with-view-link': this.state.showViewLink,
           })}
         >
           {this.props.content}
         </span>
-        {
-          this.props.alwaysShowViewLink || this.state.showViewLink ?
-          (
-            <Popover
-              target={() => <span className="view-wrapper"> View </span>}
-              className="view-popover-wrapper"
-              placement="right"
-              bubbleEvent={false}
-              enableInteractionInPopover={true}
-            >
-              {this.props.popoverContent()}
-            </Popover>
-          ): null
-        }
+        {this.props.alwaysShowViewLink || this.state.showViewLink ? (
+          <Popover
+            target={() => <span className="view-wrapper"> View </span>}
+            className="view-popover-wrapper"
+            placement="right"
+            bubbleEvent={false}
+            enableInteractionInPopover={true}
+          >
+            {this.props.popoverContent()}
+          </Popover>
+        ) : null}
       </div>
     );
   }

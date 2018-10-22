@@ -14,8 +14,8 @@
 * the License.
 */
 
-import {getDefaultKeyValuePair} from 'components/KeyValuePairs/KeyValueStore';
-import {convertMapToKeyValuePairs, convertKeyValuePairsToMap} from 'services/helpers';
+import { getDefaultKeyValuePair } from 'components/KeyValuePairs/KeyValueStore';
+import { convertMapToKeyValuePairs, convertKeyValuePairsToMap } from 'services/helpers';
 
 const KeyValueStoreActions = {
   setKey: 'SET-KEY',
@@ -24,12 +24,12 @@ const KeyValueStoreActions = {
   addPair: 'ADD-PAIR',
   deletePair: 'DELETE-PAIR',
   onReset: 'ON-RESET',
-  onUpdate: 'ON-UPDATE'
+  onUpdate: 'ON-UPDATE',
 };
 
 const convertMapToKeyValuePairsObj = (obj) => {
   let keyValuePairsObj = {
-    pairs: convertMapToKeyValuePairs(obj)
+    pairs: convertMapToKeyValuePairs(obj),
   };
   if (!keyValuePairsObj.pairs.length) {
     keyValuePairsObj.pairs.push(getDefaultKeyValuePair());
@@ -44,9 +44,11 @@ const convertKeyValuePairsObjToMap = (keyValues) => {
 const keyValuePairsHaveMissingValues = (keyValues) => {
   if (keyValues.pairs) {
     return keyValues.pairs.some((keyValuePair) => {
-      if (keyValuePair.notDeletable && keyValuePair.provided) { return false; }
-      let emptyKeyField = (keyValuePair.key.length === 0);
-      let emptyValueField = (keyValuePair.value.length === 0);
+      if (keyValuePair.notDeletable && keyValuePair.provided) {
+        return false;
+      }
+      let emptyKeyField = keyValuePair.key.length === 0;
+      let emptyValueField = keyValuePair.value.length === 0;
       // buttons are disabled when either the key or the value of a pair is empty, but not both
       return (emptyKeyField && !emptyValueField) || (!emptyKeyField && emptyValueField);
     });
@@ -58,5 +60,5 @@ export default KeyValueStoreActions;
 export {
   convertMapToKeyValuePairsObj,
   convertKeyValuePairsObjToMap,
-  keyValuePairsHaveMissingValues
+  keyValuePairsHaveMissingValues,
 };

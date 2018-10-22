@@ -15,48 +15,52 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import GroupedBarChart from 'components/GroupedBarChart';
 
 export default class SplitInfoGraph extends Component {
   static propTypes = {
     splitInfo: PropTypes.object.isRequired,
-    activeColumn: PropTypes.string.isRequired
+    activeColumn: PropTypes.string.isRequired,
   };
 
   state = {
     splitInfo: this.props.splitInfo,
-    activeColumn: this.props.activeColumn
+    activeColumn: this.props.activeColumn,
   };
 
   customEncoding = {
-    "x": {
-      "field": "type", "type": "nominal",
-      "axis": null
+    x: {
+      field: 'type',
+      type: 'nominal',
+      axis: null,
     },
-    "column": {
-      "field": "name", "type": "ordinal", "header": {"title": "values"}
+    column: {
+      field: 'name',
+      type: 'ordinal',
+      header: { title: 'values' },
     },
-    "y": {
-      "field": "count", "type": "quantitative",
-      "axis": {
-        "title": "Count (Percent)",
-        "grid": false,
-        "format": ".0%",
-      }
+    y: {
+      field: 'count',
+      type: 'quantitative',
+      axis: {
+        title: 'Count (Percent)',
+        grid: false,
+        format: '.0%',
+      },
     },
   };
 
   componentWillReceiveProps(nextProps) {
     this.setState({
       activeColumn: nextProps.activeColumn,
-      splitInfo: nextProps.splitInfo
+      splitInfo: nextProps.splitInfo,
     });
   }
 
   getFormattedData = () => {
     const matchingField = this.state.splitInfo.stats
-      .filter(stat => stat.field === this.state.activeColumn)
+      .filter((stat) => stat.field === this.state.activeColumn)
       .pop();
     if (!matchingField) {
       return [];
@@ -66,29 +70,25 @@ export default class SplitInfoGraph extends Component {
       const nulls = matchingField.numNull[dataType];
       return total - nulls;
     };
-    return matchingField
-      .histo
-      .reduce(
-        (prev, curr) => {
-          prev = prev || [];
-          return [
-            ...prev,
-            {
-              name: curr.bin,
-              count: curr.count.train / getTotalValues('train'),
-              type: 'train'
-            },
-            {
-              name: curr.bin,
-              count: curr.count.test / getTotalValues('test'),
-              type: 'test'
-            }
-          ];
-        }, []
-      );
+    return matchingField.histo.reduce((prev, curr) => {
+      prev = prev || [];
+      return [
+        ...prev,
+        {
+          name: curr.bin,
+          count: curr.count.train / getTotalValues('train'),
+          type: 'train',
+        },
+        {
+          name: curr.bin,
+          count: curr.count.test / getTotalValues('test'),
+          type: 'test',
+        },
+      ];
+    }, []);
   };
 
-  render () {
+  render() {
     if (!this.state.splitInfo.stats || !this.state.activeColumn) {
       return null;
     }
@@ -98,9 +98,9 @@ export default class SplitInfoGraph extends Component {
         data={this.getFormattedData()}
         width={(dimension, data) => {
           if (!data.length) {
-            return (dimension.width - 260);
+            return dimension.width - 260;
           }
-          return ((dimension.width - 260) / (data.length / 2));
+          return (dimension.width - 260) / (data.length / 2);
         }}
         heightOffset={80}
         tooltipOptions={{
@@ -108,15 +108,15 @@ export default class SplitInfoGraph extends Component {
           fields: [
             {
               field: 'type',
-              title: 'Type'
+              title: 'Type',
             },
             {
               field: 'count',
               title: 'Percentage',
               format: '.0%',
-              formatType: 'number'
-            }
-          ]
+              formatType: 'number',
+            },
+          ],
         }}
       />
     );

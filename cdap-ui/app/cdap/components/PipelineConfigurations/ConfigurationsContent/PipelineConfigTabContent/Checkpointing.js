@@ -16,18 +16,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
 import Popover from 'components/Popover';
-import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import { ACTIONS as PipelineConfigurationsActions } from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
 const mapStateToCheckpointingProps = (state) => {
   return {
-    checkpointing: state.disableCheckpoints
+    checkpointing: state.disableCheckpoints,
   };
 };
 const mapDispatchToCheckpointingProps = (dispatch) => {
@@ -35,27 +35,22 @@ const mapDispatchToCheckpointingProps = (dispatch) => {
     onToggle: (value) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_CHECKPOINTING,
-        payload: { checkpointing: value }
+        payload: { checkpointing: value },
       });
-    }
+    },
   };
 };
 
-const Checkpointing = ({checkpointing, onToggle}) => {
+const Checkpointing = ({ checkpointing, onToggle }) => {
   return (
     <div className="label-with-toggle checkpointing row">
-      <span className="toggle-label col-xs-4">
-        {T.translate(`${PREFIX}.checkpointing`)}
-      </span>
+      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.checkpointing`)}</span>
       <div className="col-xs-7 toggle-container">
-        <ToggleSwitch
-          isOn={checkpointing}
-          onToggle={onToggle.bind(null, !checkpointing)}
-        />
+        <ToggleSwitch isOn={checkpointing} onToggle={onToggle.bind(null, !checkpointing)} />
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
-          showOn='Hover'
-          placement='right'
+          showOn="Hover"
+          placement="right"
         >
           {T.translate(`${PREFIX}.checkpointingTooltip`)}
         </Popover>
@@ -66,7 +61,7 @@ const Checkpointing = ({checkpointing, onToggle}) => {
 
 Checkpointing.propTypes = {
   checkpointing: PropTypes.bool,
-  onToggle: PropTypes.func
+  onToggle: PropTypes.func,
 };
 
 const ConnectedCheckpointing = connect(

@@ -16,17 +16,17 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import {
   listBigQueryTables,
   listBiqQueryDatasets,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
-import {Link} from 'react-router-dom';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { Link } from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.BigQueryBrowser`;
 
@@ -36,27 +36,31 @@ class DatasetListView extends Component {
     connectionId: PropTypes.string,
     enableRouting: PropTypes.bool,
     loading: PropTypes.bool,
-    match: PropTypes.object
+    match: PropTypes.object,
   };
 
   static defaultProps = {
-    enableRouting: true
+    enableRouting: true,
   };
 
   state = {
-    connectionId: this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId'),
+    connectionId:
+      this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId'),
   };
 
   componentDidMount() {
-    if (!this.props.enableRouting) { return; }
+    if (!this.props.enableRouting) {
+      return;
+    }
 
-    const {connectionId} = this.props.match.params;
+    const { connectionId } = this.props.match.params;
 
     listBiqQueryDatasets(connectionId);
   }
 
   componentDidUpdate() {
-    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
+    const connectionId =
+      this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
 
     if (connectionId !== this.state.connectionId) {
       listBiqQueryDatasets(connectionId);
@@ -67,7 +71,9 @@ class DatasetListView extends Component {
   }
 
   clickHandler = (datasetId) => {
-    if (this.props.enableRouting) { return; }
+    if (this.props.enableRouting) {
+      return;
+    }
     listBigQueryTables(this.props.connectionId, datasetId);
   };
 
@@ -84,7 +90,7 @@ class DatasetListView extends Component {
           <div className="empty-search text-xs-center">
             <strong>
               {T.translate(`${PREFIX}.EmptyMessage.emptyDatasetList`, {
-                connectionName: this.props.connectionId
+                connectionName: this.props.connectionId,
               })}
             </strong>
           </div>
@@ -97,40 +103,38 @@ class DatasetListView extends Component {
     return (
       <div className="list-view-container">
         <div className="sub-panel">
-          {T.translate(`${PREFIX}.datasetCount`, {context: datasetList.length})}
+          {T.translate(`${PREFIX}.datasetCount`, { context: datasetList.length })}
         </div>
 
         <div className="list-table">
           <div className="table-header">
             <div className="row">
-              <div className="col-xs-12">
-                {T.translate(`${PREFIX}.name`)}
-              </div>
+              <div className="col-xs-12">{T.translate(`${PREFIX}.name`)}</div>
             </div>
           </div>
 
           <div className="table-body">
-            {
-              datasetList.map((dataset) => {
-                let Tag = this.props.enableRouting ? Link : 'div';
-                let path = `/ns/${namespace}/connections/bigquery/${this.props.connectionId}/datasets/${dataset.name}`;
+            {datasetList.map((dataset) => {
+              let Tag = this.props.enableRouting ? Link : 'div';
+              let path = `/ns/${namespace}/connections/bigquery/${
+                this.props.connectionId
+              }/datasets/${dataset.name}`;
 
-                return (
-                  <Tag
-                    key={dataset.name}
-                    to={path}
-                    onClick={this.clickHandler.bind(null, dataset.name)}
-                  >
-                    <div className="row content-row">
-                      <div className="col-xs-12">
-                        <IconSVG name="icon-database" />
-                        {dataset.name}
-                      </div>
+              return (
+                <Tag
+                  key={dataset.name}
+                  to={path}
+                  onClick={this.clickHandler.bind(null, dataset.name)}
+                >
+                  <div className="row content-row">
+                    <div className="col-xs-12">
+                      <IconSVG name="icon-database" />
+                      {dataset.name}
                     </div>
-                  </Tag>
-                );
-              })
-            }
+                  </div>
+                </Tag>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -142,12 +146,10 @@ const mapStateToProps = (state) => {
   return {
     datasetList: state.bigquery.datasetList,
     connectionId: state.bigquery.connectionId,
-    loading: state.bigquery.loading
+    loading: state.bigquery.loading,
   };
 };
 
-const DatasetList = connect(
-  mapStateToProps
-)(DatasetListView);
+const DatasetList = connect(mapStateToProps)(DatasetListView);
 
 export default DatasetList;

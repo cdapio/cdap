@@ -20,7 +20,7 @@ const EntityType = {
   dataset: 'DATASET',
   program: 'PROGRAM',
   stream: 'STREAM',
-  view: 'VIEW'
+  view: 'VIEW',
 };
 
 export default EntityType;

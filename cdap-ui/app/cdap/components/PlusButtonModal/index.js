@@ -33,7 +33,7 @@ export default class PlusButtonModal extends Component {
     super(props);
     this.state = {
       viewMode: this.props.mode,
-      error: null
+      error: null,
     };
 
     this.closeHandler = this.closeHandler.bind(this);
@@ -42,7 +42,7 @@ export default class PlusButtonModal extends Component {
     this.setState({
       viewMode: this.props.mode,
       error: null,
-      extendedError: null
+      extendedError: null,
     });
     this.props.onCloseHandler();
   }
@@ -50,11 +50,13 @@ export default class PlusButtonModal extends Component {
   onError = (error, extendedError) => {
     this.setState({
       error,
-      extendedError
+      extendedError,
     });
   };
   renderError() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
 
     return (
       <ModalFooter>
@@ -74,26 +76,23 @@ export default class PlusButtonModal extends Component {
       <Modal
         isOpen={this.props.isOpen}
         toggle={this.closeHandler.bind(this)}
-        className={classnames("plus-button-modal cdap-modal", {
-          "cask-market": this.state.viewMode === 'marketplace',
-          "add-entity-modal": this.state.viewMode === 'resourcecenter'
+        className={classnames('plus-button-modal cdap-modal', {
+          'cask-market': this.state.viewMode === 'marketplace',
+          'add-entity-modal': this.state.viewMode === 'resourcecenter',
         })}
         size="lg"
-        backdrop='static'
+        backdrop="static"
         zIndex="1061"
         fade
       >
         <ModalHeader>
           <span className="float-xs-left">
             <span className="plus-modal-header-text">
-            { this.state.viewMode === 'resourcecenter' ? resourceCenter : market }
+              {this.state.viewMode === 'resourcecenter' ? resourceCenter : market}
             </span>
           </span>
           <div className="float-xs-right">
-            <div
-              className="modal-close-btn"
-              onClick={this.closeHandler}
-            >
+            <div className="modal-close-btn" onClick={this.closeHandler}>
               <IconSVG name="icon-close" />
             </div>
           </div>
@@ -106,29 +105,25 @@ export default class PlusButtonModal extends Component {
             timeout={5000}
             component="div"
           >
-            {
-              this.state.viewMode === 'marketplace' ?
-                <Market key="1"/>
-              :
-                <ResourceCenter
-                  key="2"
-                  onError={this.onError}
-                />
-            }
+            {this.state.viewMode === 'marketplace' ? (
+              <Market key="1" />
+            ) : (
+              <ResourceCenter key="2" onError={this.onError} />
+            )}
           </CSSTransition>
         </ModalBody>
-        { this.renderError() }
+        {this.renderError()}
       </Modal>
     );
   }
 }
 
 PlusButtonModal.defaultProps = {
-  mode: 'marketplace'
+  mode: 'marketplace',
 };
 
 PlusButtonModal.propTypes = {
   onCloseHandler: PropTypes.func,
   isOpen: PropTypes.bool,
-  mode: PropTypes.oneOf(['marketplace', 'resourcecenter'])
+  mode: PropTypes.oneOf(['marketplace', 'resourcecenter']),
 };

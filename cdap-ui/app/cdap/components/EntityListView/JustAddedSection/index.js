@@ -17,21 +17,21 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MySearchApi} from 'api/search';
+import { MySearchApi } from 'api/search';
 import NamespaceStore from 'services/NamespaceStore';
-import {parseMetadata} from 'services/metadata-parser';
+import { parseMetadata } from 'services/metadata-parser';
 import uuidV4 from 'uuid/v4';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import classnames from 'classnames';
 import EntityCard from 'components/EntityCard';
 import T from 'i18n-react';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import SearchStore from 'components/EntityListView/SearchStore';
-import {JUSTADDED_THRESHOLD_TIME} from 'components/EntityListView/SearchStore/SearchConstants';
+import { JUSTADDED_THRESHOLD_TIME } from 'components/EntityListView/SearchStore/SearchConstants';
 import isNil from 'lodash/isNil';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 require('./JustAddedSection.scss');
 
 export default class JustAddedSection extends Component {
@@ -40,7 +40,7 @@ export default class JustAddedSection extends Component {
 
     this.state = {
       entities: [],
-      selectedEntity: {}
+      selectedEntity: {},
     };
 
     this.fetchEntities = this.fetchEntities.bind(this);
@@ -59,20 +59,25 @@ export default class JustAddedSection extends Component {
       let overviewEntity = SearchStore.getState().search.overviewEntity;
       if (isNil(overviewEntity)) {
         this.setState({
-          selectedEntity: {}
+          selectedEntity: {},
         });
         return;
       }
       let matchingEntity = this.state.entities
         // The unique id check to make sure not to highlight entities in both Just added section and the normal grid view.
-        .find(entity => entity.id === overviewEntity.id && entity.type === overviewEntity.type && entity.uniqueId === overviewEntity.uniqueId);
+        .find(
+          (entity) =>
+            entity.id === overviewEntity.id &&
+            entity.type === overviewEntity.type &&
+            entity.uniqueId === overviewEntity.uniqueId
+        );
       if (matchingEntity) {
         this.setState({
-          selectedEntity: matchingEntity
+          selectedEntity: matchingEntity,
         });
       } else {
         this.setState({
-          selectedEntity: {}
+          selectedEntity: {},
         });
       }
     });
@@ -82,8 +87,8 @@ export default class JustAddedSection extends Component {
     SearchStore.dispatch({
       type: SearchStoreActions.SETPAGESIZE,
       payload: {
-        element: document.getElementsByClassName('entity-list-view')
-      }
+        element: document.getElementsByClassName('entity-list-view'),
+      },
     });
     this.fetchEntities();
   }
@@ -101,7 +106,7 @@ export default class JustAddedSection extends Component {
   }
 
   fetchEntities() {
-    this.setState({loading: true});
+    this.setState({ loading: true });
     let namespace = NamespaceStore.getState().selectedNamespace;
     let numColumns = SearchStore.getState().search.numColumns;
     const params = {
@@ -109,7 +114,7 @@ export default class JustAddedSection extends Component {
       target: ['app', 'artifact', 'dataset', 'stream'],
       limit: numColumns,
       query: '*',
-      sort: 'creation-time desc'
+      sort: 'creation-time desc',
     };
 
     MySearchApi.search(params)
@@ -117,7 +122,14 @@ export default class JustAddedSection extends Component {
         return res.results
           .map(parseMetadata)
           .filter((entity) => {
-            let creationTime = objectQuery(entity, 'metadata', 'metadata', SCOPES.SYSTEM, 'properties', 'creation-time');
+            let creationTime = objectQuery(
+              entity,
+              'metadata',
+              'metadata',
+              SCOPES.SYSTEM,
+              'properties',
+              'creation-time'
+            );
 
             creationTime = parseInt(creationTime, 10);
             let thresholdTime = Date.now() - JUSTADDED_THRESHOLD_TIME;
@@ -128,20 +140,24 @@ export default class JustAddedSection extends Component {
             return entity;
           });
       })
-      .subscribe((res) => {
-        !this.unmounted && this.setState({
-          entities: res,
-          loading: false
-        });
-      }, (err) => {
-        console.log('Error', err);
-        !this.unmounted && this.setState({loading: false});
-      });
+      .subscribe(
+        (res) => {
+          !this.unmounted &&
+            this.setState({
+              entities: res,
+              loading: false,
+            });
+        },
+        (err) => {
+          console.log('Error', err);
+          !this.unmounted && this.setState({ loading: false });
+        }
+      );
   }
 
   onClick(entity) {
     this.setState({
-      selectedEntity: entity
+      selectedEntity: entity,
     });
     this.props.clickHandler(entity);
   }
@@ -150,14 +166,12 @@ export default class JustAddedSection extends Component {
       return null;
     }
 
-    let content = this.state.entities.map(entity => {
+    let content = this.state.entities.map((entity) => {
       return (
         <EntityCard
-          className={
-            classnames('entity-card-container',
-              { active: entity.uniqueId === objectQuery(this.state.selectedEntity, 'uniqueId') }
-            )
-          }
+          className={classnames('entity-card-container', {
+            active: entity.uniqueId === objectQuery(this.state.selectedEntity, 'uniqueId'),
+          })}
           key={entity.uniqueId}
           id={entity.uniqueId}
           onClick={this.onClick.bind(this, entity)}
@@ -168,18 +182,13 @@ export default class JustAddedSection extends Component {
       );
     });
 
-
     return (
       <div className="just-added-container">
         <div className="subtitle just-added">
-          <span>
-            {T.translate('features.EntityListView.JustAddedSection.subtitle')}
-          </span>
+          <span>{T.translate('features.EntityListView.JustAddedSection.subtitle')}</span>
         </div>
 
-        <div className="just-added-entities-list">
-          {content}
-        </div>
+        <div className="just-added-entities-list">{content}</div>
       </div>
     );
   }
@@ -190,5 +199,5 @@ JustAddedSection.propTypes = {
   clickHandler: PropTypes.func,
   onFastActionSuccess: PropTypes.func,
   onUpdate: PropTypes.func,
-  currentPage: PropTypes.number
+  currentPage: PropTypes.number,
 };

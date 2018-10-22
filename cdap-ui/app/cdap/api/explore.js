@@ -15,7 +15,7 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 const basepath = '/namespaces/:namespace/data/explore/tables';
@@ -28,7 +28,7 @@ const myExploreApi = {
   getQuerySchema: apiCreator(dataSrc, 'GET', 'REQUEST', queryHandleApi + '/schema'),
   getQueryPreview: apiCreator(dataSrc, 'POST', 'REQUEST', queryHandleApi + '/preview'),
   pollQueryStatus: apiCreator(dataSrc, 'GET', 'POLL', queryHandleApi + '/status'),
-  download: apiCreator(dataSrc, 'POST', 'REQUEST', queryHandleApi + '/download')
+  download: apiCreator(dataSrc, 'POST', 'REQUEST', queryHandleApi + '/download'),
 };
 
 export default myExploreApi;

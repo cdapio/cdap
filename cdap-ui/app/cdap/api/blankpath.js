@@ -15,14 +15,14 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/:path';
 
 export const MyBlankPathApi = {
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath ),
-  post: apiCreator(dataSrc, 'POST', 'REQUEST', basepath ),
-  put: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath ),
-  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath ),
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  post: apiCreator(dataSrc, 'POST', 'REQUEST', basepath),
+  put: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
+  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath),
 };

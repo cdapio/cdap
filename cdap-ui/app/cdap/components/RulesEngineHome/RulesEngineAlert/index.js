@@ -14,18 +14,17 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import Alert from 'components/Alert';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
-import {resetError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import { resetError } from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 
 export default class RulesEngineAlert extends Component {
-
   getDefaultState = () => {
     return {
       showAlert: false,
       alertMessage: null,
-      alertType: null
+      alertType: null,
     };
   };
 
@@ -33,12 +32,12 @@ export default class RulesEngineAlert extends Component {
 
   componentDidMount() {
     this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
-      let {error} = RulesEngineStore.getState();
+      let { error } = RulesEngineStore.getState();
       if (error.showError) {
         this.setState({
           alertMessage: error.message,
           showAlert: true,
-          alertType: 'error'
+          alertType: 'error',
         });
       } else {
         this.setState(this.getDefaultState());

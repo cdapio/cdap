@@ -16,13 +16,18 @@
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import {SCHEMA_TYPES, checkComplexType, getParsedSchema, checkParsedTypeForError} from 'components/SchemaEditor/SchemaHelpers';
+import {
+  SCHEMA_TYPES,
+  checkComplexType,
+  getParsedSchema,
+  checkParsedTypeForError,
+} from 'components/SchemaEditor/SchemaHelpers';
 import AbstractSchemaRow from 'components/SchemaEditor/AbstractSchemaRow';
 require('./RecordSchemaRow.scss');
 import uuidV4 from 'uuid/v4';
-import {Input} from 'reactstrap';
+import { Input } from 'reactstrap';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {insertAt, removeAt} from 'services/helpers';
+import { insertAt, removeAt } from 'services/helpers';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import cloneDeep from 'lodash/cloneDeep';
@@ -32,28 +37,35 @@ export default class RecordSchemaRow extends Component {
   constructor(props) {
     super(props);
     if (typeof props.row === 'object') {
-      let displayFields = getParsedSchema(props.row).map(field => {
+      let displayFields = getParsedSchema(props.row).map((field) => {
         field.showAbstractSchemaRow = true;
         return field;
       });
-      let parsedFields = displayFields
-        .map(({name, type, nullable}) => {
-          return {
-            name,
-            type: nullable ? [type, 'null'] : type
-          };
-        });
+      let parsedFields = displayFields.map(({ name, type, nullable }) => {
+        return {
+          name,
+          type: nullable ? [type, 'null'] : type,
+        };
+      });
       this.state = {
         type: 'record',
-        name: 'a' +  uuidV4().split('-').join(''),
+        name:
+          'a' +
+          uuidV4()
+            .split('-')
+            .join(''),
         displayFields,
-        error: ''
+        error: '',
       };
       this.parsedFields = parsedFields;
     } else {
       this.state = {
         type: 'record',
-        name: 'a' +  uuidV4().split('-').join(''),
+        name:
+          'a' +
+          uuidV4()
+            .split('-')
+            .join(''),
         displayFields: [
           {
             name: '',
@@ -61,20 +73,22 @@ export default class RecordSchemaRow extends Component {
             displayType: 'string',
             nullable: false,
             id: uuidV4(),
-            showAbstractSchemaRow: true
-          }
+            showAbstractSchemaRow: true,
+          },
         ],
-        error: ''
+        error: '',
       };
-      this.parsedFields = [{
-        name: '',
-        type: 'string'
-      }];
+      this.parsedFields = [
+        {
+          name: '',
+          type: 'string',
+        },
+      ];
     }
     setTimeout(this.updateParent.bind(this));
   }
   onRowAdd(index, e) {
-    let displayFieldsCopy = [...this.state.displayFields].map(field => {
+    let displayFieldsCopy = [...this.state.displayFields].map((field) => {
       delete field.refRequired;
       return field;
     });
@@ -89,11 +103,11 @@ export default class RecordSchemaRow extends Component {
       id: uuidV4(),
       refRequired: true,
       nullable: false,
-      showAbstractSchemaRow: true
+      showAbstractSchemaRow: true,
     });
     let parsedFields = insertAt(parsedFieldsCopy, index, {
       name: '',
-      type: 'string'
+      type: 'string',
     });
     this.parsedFields = parsedFields;
     this.setState({ displayFields }, () => {
@@ -111,21 +125,24 @@ export default class RecordSchemaRow extends Component {
           displayType: 'string',
           nullable: false,
           id: uuidV4(),
-          showAbstractSchemaRow: true
-        }
+          showAbstractSchemaRow: true,
+        },
       ];
       parsedFields = [
         {
           name: '',
-          type: 'string'
-        }
+          type: 'string',
+        },
       ];
     }
     this.parsedFields = parsedFields;
-    this.setState({
-      displayFields,
-      error: this.checkForErrors(parsedFields)
-    }, this.updateParent.bind(this));
+    this.setState(
+      {
+        displayFields,
+        error: this.checkForErrors(parsedFields),
+      },
+      this.updateParent.bind(this)
+    );
   }
   onNameChange(index, e) {
     if (!e.target.value) {
@@ -136,10 +153,13 @@ export default class RecordSchemaRow extends Component {
     displayFields[index].name = e.target.value;
     parsedFields[index].name = e.target.value;
     this.parsedFields = parsedFields;
-    this.setState({
-      displayFields,
-      error: ''
-    }, this.updateParent.bind(this));
+    this.setState(
+      {
+        displayFields,
+        error: '',
+      },
+      this.updateParent.bind(this)
+    );
   }
   onTypeChange(index, e) {
     let selectType = e.target.value;
@@ -151,48 +171,48 @@ export default class RecordSchemaRow extends Component {
     displayFields[index].displayType = selectType;
     displayFields[index].type = formattedType;
     if (displayFields[index].nullable) {
-      parsedFields[index].type = [
-        formattedType,
-        'null'
-      ];
+      parsedFields[index].type = [formattedType, 'null'];
     } else {
       parsedFields[index].type = formattedType;
     }
     this.parsedFields = parsedFields;
-    this.setState({
-      displayFields,
-      error: ''
-    }, function () {
-      if (!checkComplexType(selectType)) {
-        this.updateParent();
-      }
-    }.bind(this));
+    this.setState(
+      {
+        displayFields,
+        error: '',
+      },
+      function() {
+        if (!checkComplexType(selectType)) {
+          this.updateParent();
+        }
+      }.bind(this)
+    );
   }
   onNullableChange(index, e) {
     let displayFields = this.state.displayFields;
     let parsedFields = cloneDeep(this.parsedFields);
     displayFields[index].nullable = e.target.checked;
     if (e.target.checked) {
-      parsedFields[index].type = [
-        parsedFields[index].type,
-        'null'
-      ];
+      parsedFields[index].type = [parsedFields[index].type, 'null'];
     } else {
       if (Array.isArray(parsedFields[index].type)) {
         parsedFields[index].type = parsedFields[index].type[0];
       }
     }
     this.parsedFields = parsedFields;
-    this.setState({
-      displayFields,
-      error: ''
-    }, this.updateParent.bind(this));
+    this.setState(
+      {
+        displayFields,
+        error: '',
+      },
+      this.updateParent.bind(this)
+    );
   }
   checkForErrors(parsedTypes) {
     let parsedType = {
       name: this.state.name,
       type: 'record',
-      fields: parsedTypes.filter(field => field.name && field.type)
+      fields: parsedTypes.filter((field) => field.name && field.type),
     };
     return checkParsedTypeForError(parsedType);
   }
@@ -201,17 +221,14 @@ export default class RecordSchemaRow extends Component {
     let displayFields = this.state.displayFields;
 
     if (displayFields[index].nullable) {
-      parsedFields[index].type = [
-        fieldType,
-        "null"
-      ];
+      parsedFields[index].type = [fieldType, 'null'];
     } else {
       parsedFields[index].type = fieldType;
     }
 
     let error = this.checkForErrors(parsedFields);
     if (error) {
-      this.setState({error});
+      this.setState({ error });
       return;
     }
     this.parsedFields = parsedFields;
@@ -220,21 +237,20 @@ export default class RecordSchemaRow extends Component {
   updateParent() {
     let error = this.checkForErrors(this.parsedFields);
     if (error) {
-      this.setState({error});
+      this.setState({ error });
       return;
     }
     this.props.onChange({
       name: this.state.name,
       type: 'record',
-      fields: this.parsedFields
-        .filter(field => field.name && field.type)
+      fields: this.parsedFields.filter((field) => field.name && field.type),
     });
   }
   toggleAbstractSchemaRow(index) {
     let displayFields = this.state.displayFields;
     displayFields[index].showAbstractSchemaRow = !displayFields[index].showAbstractSchemaRow;
     this.setState({
-      displayFields
+      displayFields,
     });
   }
   render() {
@@ -244,108 +260,91 @@ export default class RecordSchemaRow extends Component {
           <span
             className="fa fa-caret-down"
             onClick={this.toggleAbstractSchemaRow.bind(this, index)}
-          >
-          </span>
+          />
         );
       }
       return (
         <span
           className="fa fa-caret-right"
           onClick={this.toggleAbstractSchemaRow.bind(this, index)}
-        >
-        </span>
+        />
       );
     };
     return (
       <div className="record-schema-row">
-        <div className="text-danger">
-          {this.state.error}
-        </div>
-        {
-          this.state
-              .displayFields
-              .map((row, index) => {
-                return (
-                  <div
-                    className={
-                      classnames("schema-row", {
-                        "nested": checkComplexType(row.displayType)
-                      })
+        <div className="text-danger">{this.state.error}</div>
+        {this.state.displayFields.map((row, index) => {
+          return (
+            <div
+              className={classnames('schema-row', {
+                nested: checkComplexType(row.displayType),
+              })}
+              key={row.id}
+            >
+              <div className="field-name">
+                {row.refRequired ? (
+                  <Input
+                    placeholder={T.translate('features.SchemaEditor.Labels.fieldName')}
+                    defaultValue={row.name}
+                    onFocus={() => row.name}
+                    getRef={(ref) => (this.inputToFocus = ref)}
+                    onBlur={this.onNameChange.bind(this, index)}
+                    onKeyPress={(e) =>
+                      e.nativeEvent.keyCode === 13 ? this.onRowAdd(index, e) : null
                     }
-                    key={row.id}
-                  >
-                    <div className="field-name">
-                      {
-                        row.refRequired ?
-                          <Input
-                            placeholder={T.translate('features.SchemaEditor.Labels.fieldName')}
-                            defaultValue={row.name}
-                            onFocus={() => row.name}
-                            getRef={(ref) => this.inputToFocus = ref}
-                            onBlur={this.onNameChange.bind(this, index)}
-                            onKeyPress={(e) => e.nativeEvent.keyCode === 13 ? this.onRowAdd(index, e) : null}
-                          />
-                        :
-                          <Input
-                            placeholder={T.translate('features.SchemaEditor.Labels.fieldName')}
-                            defaultValue={row.name}
-                            onFocus={() => row.name}
-                            onBlur={this.onNameChange.bind(this, index)}
-                            onKeyPress={(e) => e.nativeEvent.keyCode === 13 ? this.onRowAdd(index, e) : null}
-                          />
-                      }
-                      {
-                        checkComplexType(row.displayType) ?
-                          showArrow(row, index)
-                        :
-                        null
-                      }
-                    </div>
-                    <div className="field-type">
-                      <SelectWithOptions
-                        options={SCHEMA_TYPES.types}
-                        value={row.displayType}
-                        onChange={this.onTypeChange.bind(this, index)}
-                      />
-                    </div>
-                    <div className="field-isnull">
-                      <div className="btn btn-link">
-                        <input
-                          type="checkbox"
-                          checked={row.nullable}
-                          onChange={this.onNullableChange.bind(this, index)}
-                        />
-                      </div>
-                      <div className="btn btn-link">
-                        <button
-                          className="fa fa-plus fa-xs"
-                          onClick={this.onRowAdd.bind(this, index)}
-                        ></button>
-                      </div>
-                      <div className="btn btn-link">
-                        <button
-                          className="fa fa-trash fa-xs text-danger"
-                          onClick={this.onRowRemove.bind(this, index)}
-                          >
-                        </button>
-                      </div>
-                    </div>
-                    {
-                      checkComplexType(row.displayType) && row.showAbstractSchemaRow  ?
-                        <AbstractSchemaRow
-                          row={{
-                            type: Array.isArray(this.parsedFields[index].type) ? this.parsedFields[index].type[0] : this.parsedFields[index].type,
-                            displayType: row.displayType
-                          }}
-                          onChange={this.onChildrenChange.bind(this, index)}
-                        />
-                      :
-                        null
+                  />
+                ) : (
+                  <Input
+                    placeholder={T.translate('features.SchemaEditor.Labels.fieldName')}
+                    defaultValue={row.name}
+                    onFocus={() => row.name}
+                    onBlur={this.onNameChange.bind(this, index)}
+                    onKeyPress={(e) =>
+                      e.nativeEvent.keyCode === 13 ? this.onRowAdd(index, e) : null
                     }
-                  </div>
-                );
-              })
-        }
+                  />
+                )}
+                {checkComplexType(row.displayType) ? showArrow(row, index) : null}
+              </div>
+              <div className="field-type">
+                <SelectWithOptions
+                  options={SCHEMA_TYPES.types}
+                  value={row.displayType}
+                  onChange={this.onTypeChange.bind(this, index)}
+                />
+              </div>
+              <div className="field-isnull">
+                <div className="btn btn-link">
+                  <input
+                    type="checkbox"
+                    checked={row.nullable}
+                    onChange={this.onNullableChange.bind(this, index)}
+                  />
+                </div>
+                <div className="btn btn-link">
+                  <button className="fa fa-plus fa-xs" onClick={this.onRowAdd.bind(this, index)} />
+                </div>
+                <div className="btn btn-link">
+                  <button
+                    className="fa fa-trash fa-xs text-danger"
+                    onClick={this.onRowRemove.bind(this, index)}
+                  />
+                </div>
+              </div>
+              {checkComplexType(row.displayType) && row.showAbstractSchemaRow ? (
+                <AbstractSchemaRow
+                  row={{
+                    type: Array.isArray(this.parsedFields[index].type)
+                      ? this.parsedFields[index].type[0]
+                      : this.parsedFields[index].type,
+                    displayType: row.displayType,
+                  }}
+                  onChange={this.onChildrenChange.bind(this, index)}
+                />
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -353,5 +352,5 @@ export default class RecordSchemaRow extends Component {
 
 RecordSchemaRow.propTypes = {
   row: PropTypes.any,
-  onChange: PropTypes.func.isRequired
+  onChange: PropTypes.func.isRequired,
 };

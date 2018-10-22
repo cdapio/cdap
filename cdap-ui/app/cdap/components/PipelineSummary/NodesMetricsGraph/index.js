@@ -18,11 +18,11 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import NodesRecordsGraph from 'components/PipelineSummary/NodesRecordsGraph';
-import {UncontrolledDropdown} from 'components/UncontrolledComponents';
-import {DropdownToggle, DropdownItem} from 'reactstrap';
+import { UncontrolledDropdown } from 'components/UncontrolledComponents';
+import { DropdownToggle, DropdownItem } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import SortableStickyTable from 'components/SortableStickyTable';
@@ -35,20 +35,20 @@ require('./NodesMetricsGraph.scss');
 const PREFIX = 'features.PipelineSummary.nodesMetricsGraph';
 const GRAPHPREFIX = `features.PipelineSummary.graphs`;
 
-const getTableHeaders = (recordType) => ([
+const getTableHeaders = (recordType) => [
   {
     label: T.translate(`${PREFIX}.${recordType}.table.headers.runCount`),
-    property: 'index'
+    property: 'index',
   },
   {
     label: T.translate(`${PREFIX}.${recordType}.table.headers.inputrecords`),
-    property: 'numberOfRecords'
+    property: 'numberOfRecords',
   },
   {
     label: T.translate(`${PREFIX}.${recordType}.table.headers.startTime`),
-    property: 'start'
-  }
-]);
+    property: 'start',
+  },
+];
 
 export default class NodesMetricsGraph extends Component {
   constructor(props) {
@@ -57,7 +57,7 @@ export default class NodesMetricsGraph extends Component {
       nodesMap: props.nodesMap,
       activeNodeRuns: [],
       viewState: 'chart',
-      activeNode: null
+      activeNode: null,
     };
     this.tableHeaders = getTableHeaders(props.recordType);
     this.constructData = this.constructData.bind(this);
@@ -67,11 +67,14 @@ export default class NodesMetricsGraph extends Component {
     this.constructData();
   }
   componentWillReceiveProps(nextProps) {
-    this.setState({
-      nodesMap: nextProps.nodesMap,
-      activeNode: null,
-      activeNodeRuns: []
-    }, this.constructData);
+    this.setState(
+      {
+        nodesMap: nextProps.nodesMap,
+        activeNode: null,
+        activeNodeRuns: [],
+      },
+      this.constructData
+    );
   }
   constructData() {
     if (!Object.keys(this.props.nodesMap).length) {
@@ -80,11 +83,11 @@ export default class NodesMetricsGraph extends Component {
     let activeNode = Object.keys(this.props.nodesMap).pop();
     let activeNodeRuns = this.props.nodesMap[activeNode].map((run, i) => ({
       ...run,
-      index: i + 1
+      index: i + 1,
     }));
     this.setState({
       activeNode,
-      activeNodeRuns
+      activeNodeRuns,
     });
   }
   setActiveNode(activeNode) {
@@ -94,7 +97,7 @@ export default class NodesMetricsGraph extends Component {
     }));
     this.setState({
       activeNode,
-      activeNodeRuns
+      activeNodeRuns,
     });
   }
   renderNodesDropdown() {
@@ -109,19 +112,13 @@ export default class NodesMetricsGraph extends Component {
           <IconSVG name="icon-caret-down" />
         </DropdownToggle>
         <CustomDropdownMenu>
-          {
-            nodes
-              .map(node => {
-                return (
-                  <DropdownItem
-                    tag="li"
-                    onClick={this.setActiveNode.bind(this, node)}
-                  >
-                    {node}
-                  </DropdownItem>
-                );
-              })
-          }
+          {nodes.map((node) => {
+            return (
+              <DropdownItem tag="li" onClick={this.setActiveNode.bind(this, node)}>
+                {node}
+              </DropdownItem>
+            );
+          })}
         </CustomDropdownMenu>
       </UncontrolledDropdown>
     );
@@ -135,32 +132,30 @@ export default class NodesMetricsGraph extends Component {
     );
   }
   renderLoading() {
-    return (<EmptyMessageContainer loading={true} />);
+    return <EmptyMessageContainer loading={true} />;
   }
   renderTableBody(records) {
     let recordsLength = records.length;
     return (
       <table className="table">
         <tbody>
-          {
-            records.map(record => {
-              return (
-                <tr>
-                  <td>
-                    <span>{recordsLength - record.index + 1}</span>
-                    <CopyableID
-                      id={record.runid}
-                      idprefix={`nodes-metrics-${this.props.recordType}`}
-                    />
-                  </td>
-                  <td>
-                    <span>{record.numberOfRecords}</span>
-                  </td>
-                  <td> {moment(record.starting * 1000).format('llll')}</td>
-                </tr>
-              );
-            })
-          }
+          {records.map((record) => {
+            return (
+              <tr>
+                <td>
+                  <span>{recordsLength - record.index + 1}</span>
+                  <CopyableID
+                    id={record.runid}
+                    idprefix={`nodes-metrics-${this.props.recordType}`}
+                  />
+                </td>
+                <td>
+                  <span>{record.numberOfRecords}</span>
+                </td>
+                <td> {moment(record.starting * 1000).format('llll')}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     );
@@ -196,37 +191,32 @@ export default class NodesMetricsGraph extends Component {
   }
   render() {
     return (
-      <div
-        className="nods-metrics-graph"
-        ref={ref => this.containerRef = ref}
-      >
+      <div className="nods-metrics-graph" ref={(ref) => (this.containerRef = ref)}>
         <div className="title-container">
           <div className="title">{T.translate(`${PREFIX}.${this.props.recordType}.title`)} </div>
           <div className="viz-switcher">
             {this.renderNodesDropdown()}
             <span
-              className={classnames("chart", {"active": this.state.viewState === 'chart'})}
-              onClick={() => this.setState({viewState: 'chart'})}
+              className={classnames('chart', { active: this.state.viewState === 'chart' })}
+              onClick={() => this.setState({ viewState: 'chart' })}
             >
               {T.translate(`${GRAPHPREFIX}.vizSwitcher.chart`)}
             </span>
             <span
-              className={classnames({"active": this.state.viewState === 'table'})}
-              onClick={() => this.setState({viewState: 'table'})}
+              className={classnames({ active: this.state.viewState === 'table' })}
+              onClick={() => this.setState({ viewState: 'table' })}
             >
               {T.translate(`${GRAPHPREFIX}.vizSwitcher.table`)}
             </span>
           </div>
         </div>
-        {
-          this.renderContent()
-        }
+        {this.renderContent()}
       </div>
     );
   }
 }
 NodesMetricsGraph.defaultProps = {
-  nodesMap: {}
+  nodesMap: {},
 };
 NodesMetricsGraph.propTypes = {
   totalRunsCount: PropTypes.number,
@@ -238,5 +228,5 @@ NodesMetricsGraph.propTypes = {
   end: PropTypes.number,
   recordType: PropTypes.oneOf(['recordsin', 'recordsout']),
   nodesMap: PropTypes.object,
-  activeFilterLabel: PropTypes.string
+  activeFilterLabel: PropTypes.string,
 };

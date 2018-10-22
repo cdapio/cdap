@@ -17,7 +17,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import Card from '../Card';
-import {MyMarketApi} from 'api/market';
+import { MyMarketApi } from 'api/market';
 import classnames from 'classnames';
 import MarketActionsContainer from 'components/MarketActionsContainer';
 import AbstractWizard from 'components/AbstractWizard';
@@ -26,7 +26,6 @@ import ExperimentalBanner from 'components/ExperimentalBanner';
 import T from 'i18n-react';
 import If from 'components/If';
 import LicenseRow from 'components/MarketPlaceEntity/LicenseRow';
-
 
 require('./MarketPlaceEntity.scss');
 export default class MarketPlaceEntity extends Component {
@@ -38,7 +37,7 @@ export default class MarketPlaceEntity extends Component {
       performSingleAction: false,
       actionsComplete: false,
       imageError: false,
-      logoIcon: null
+      logoIcon: null,
     };
 
     if (MarketStore.getState().activeEntity === this.props.entityId) {
@@ -47,9 +46,9 @@ export default class MarketPlaceEntity extends Component {
 
     this.unsub = MarketStore.subscribe(() => {
       let marketState = MarketStore.getState();
-      if ((marketState.activeEntity !== this.props.entityId) && this.state.expandedMode) {
+      if (marketState.activeEntity !== this.props.entityId && this.state.expandedMode) {
         this.setState({
-          expandedMode: false
+          expandedMode: false,
         });
       }
     });
@@ -60,19 +59,22 @@ export default class MarketPlaceEntity extends Component {
   }
   getChildContext() {
     return {
-      entity: this.props.entity
+      entity: this.props.entity,
     };
   }
   fetchEntityDetail(displayCTA = true) {
     MyMarketApi.get({
       packageName: this.props.entity.name,
-      version: this.props.entity.version
-    }).subscribe((res) => {
-      this.setState({entityDetail: res});
-      this.toggleDetailedMode(displayCTA);
-    }, (err) => {
-      console.log('Error', err);
-    });
+      version: this.props.entity.version,
+    }).subscribe(
+      (res) => {
+        this.setState({ entityDetail: res });
+        this.toggleDetailedMode(displayCTA);
+      },
+      (err) => {
+        console.log('Error', err);
+      }
+    );
   }
   openDetailedMode() {
     if (this.state.expandedMode) {
@@ -83,28 +85,28 @@ export default class MarketPlaceEntity extends Component {
   toggleDetailedMode(displayCTA = true) {
     this.setState({
       expandedMode: !this.state.expandedMode,
-      actionsComplete: false
+      actionsComplete: false,
     });
     let payload = {
-      entityId: this.props.entityId
+      entityId: this.props.entityId,
     };
     if (typeof displayCTA === 'boolean') {
       payload.displayCTA = displayCTA;
     }
     MarketStore.dispatch({
       type: 'SET_ACTIVE_ENTITY',
-      payload
+      payload,
     });
   }
   switchCloseBtn() {
     this.setState({
-      actionsComplete: true
+      actionsComplete: true,
     });
   }
   imageError() {
     this.setState({
       imageError: true,
-      logoIcon: `icon-${this.props.entity.label[0].toUpperCase()}`
+      logoIcon: `icon-${this.props.entity.label[0].toUpperCase()}`,
     });
   }
   render() {
@@ -117,7 +119,7 @@ export default class MarketPlaceEntity extends Component {
 
     // FIXME: This could be moved to a utility function. This can be generic.
     let style = {
-      position: 'absolute'
+      position: 'absolute',
     };
     let positionClassName;
     let cardWidth = 420;
@@ -127,17 +129,20 @@ export default class MarketPlaceEntity extends Component {
       let cardRects = this.packageCardRef.getBoundingClientRect();
       if (isEntityDetailAvailable()) {
         if (this.state.entityDetail.actions.length > 1) {
-          cardWidth = Math.max((parentRects.right - cardRects.left), (cardRects.right - parentRects.left));
+          cardWidth = Math.max(
+            parentRects.right - cardRects.left,
+            cardRects.right - parentRects.left
+          );
         }
       }
       cardWidth = cardWidth - 20;
-      let shouldPositionLeft = () => parentRects.right > (cardRects.left + (cardWidth - 20));
-      let shouldPositionRight = () => parentRects.left < (cardRects.right - (cardWidth - 20));
+      let shouldPositionLeft = () => parentRects.right > cardRects.left + (cardWidth - 20);
+      let shouldPositionRight = () => parentRects.left < cardRects.right - (cardWidth - 20);
 
       if (shouldPositionLeft()) {
-          positionClassName = 'position-left';
+        positionClassName = 'position-left';
       } else if (shouldPositionRight()) {
-          positionClassName = 'position-right';
+        positionClassName = 'position-right';
       }
     }
     style.width = cardWidth;
@@ -151,16 +156,10 @@ export default class MarketPlaceEntity extends Component {
                 onActionsComplete={this.switchCloseBtn.bind(this)}
               />
               <div className="text-xs-right">
-                <button
-                  className="btn btn-secondary"
-                  onClick={this.toggleDetailedMode}
-                >
-                  {
-                    this.state.actionsComplete ?
-                      T.translate('features.MarketPlaceEntity.doneLabel')
-                    :
-                      T.translate('features.MarketPlaceEntity.closeLabel')
-                  }
+                <button className="btn btn-secondary" onClick={this.toggleDetailedMode}>
+                  {this.state.actionsComplete
+                    ? T.translate('features.MarketPlaceEntity.doneLabel')
+                    : T.translate('features.MarketPlaceEntity.closeLabel')}
                 </button>
               </div>
             </div>
@@ -170,21 +169,22 @@ export default class MarketPlaceEntity extends Component {
             <div className="text-xs-right">
               <button
                 className="btn btn-primary"
-                onClick={() => this.setState({performSingleAction: true})}
+                onClick={() => this.setState({ performSingleAction: true })}
               >
-                {T.translate('features.Market.action-types.' + this.state.entityDetail.actions[0].type + '.name')}
+                {T.translate(
+                  'features.Market.action-types.' +
+                    this.state.entityDetail.actions[0].type +
+                    '.name'
+                )}
               </button>
-              <button
-                className="btn btn-secondary"
-                onClick={this.toggleDetailedMode}
-              >
+              <button className="btn btn-secondary" onClick={this.toggleDetailedMode}>
                 {T.translate('features.MarketPlaceEntity.closeLabel')}
               </button>
               <AbstractWizard
                 isOpen={this.state.performSingleAction}
-                onClose={() => this.setState({performSingleAction: false})}
+                onClose={() => this.setState({ performSingleAction: false })}
                 wizardType={this.state.entityDetail.actions[0].type}
-                input={{action: this.state.entityDetail.actions[0], package: this.props.entity}}
+                input={{ action: this.state.entityDetail.actions[0], package: this.props.entity }}
                 displayCTA={MarketStore.getState().displayCTA}
               />
             </div>
@@ -196,95 +196,82 @@ export default class MarketPlaceEntity extends Component {
     };
 
     const getRightCard = () => {
-      let beta = classnames('package-icon-container', {'beta' : this.props.entity.beta});
+      let beta = classnames('package-icon-container', { beta: this.props.entity.beta });
 
-      return !this.state.expandedMode ?
-        (
-          <Card
-            ref={(ref)=> this.cardRef = ref}
-            onClick={this.openDetailedMode.bind(this)}
-            size="LG"
-          >
-            {
-              this.props.entity.beta ?
-                <ExperimentalBanner />
-              :
-                null
-            }
+      return !this.state.expandedMode ? (
+        <Card
+          ref={(ref) => (this.cardRef = ref)}
+          onClick={this.openDetailedMode.bind(this)}
+          size="LG"
+        >
+          {this.props.entity.beta ? <ExperimentalBanner /> : null}
+          <div className={beta}>
+            {this.state.imageError ? (
+              <span className={classnames('fa', this.state.logoIcon)} />
+            ) : (
+              <img
+                src={MyMarketApi.getIcon(this.props.entity)}
+                onError={this.imageError.bind(this)}
+              />
+            )}
+          </div>
+          <div className="package-metadata-container">
+            <strong className="package-label">{this.props.entity.label}</strong>
+          </div>
+          <div>v {this.props.entity.version}</div>
+        </Card>
+      ) : (
+        <Card
+          ref={(ref) => (this.cardRef = ref)}
+          size="LG"
+          cardStyle={style}
+          onClick={this.openDetailedMode.bind(this)}
+        >
+          {this.props.entity.beta ? <ExperimentalBanner /> : null}
+          <div>
             <div className={beta}>
-              {
-                this.state.imageError ?
-                  <span className={classnames("fa", this.state.logoIcon)}></span>
-                :
-                  <img
-                    src={MyMarketApi.getIcon(this.props.entity)}
-                    onError={this.imageError.bind(this)}
-                  />
-              }
+              {this.state.imageError ? (
+                <span className={classnames('fa', this.state.logoIcon)} />
+              ) : (
+                <img
+                  src={MyMarketApi.getIcon(this.props.entity)}
+                  onError={this.imageError.bind(this)}
+                />
+              )}
             </div>
-            <div className="package-metadata-container">
-              <strong className="package-label">{this.props.entity.label}</strong>
-            </div>
-            <div>v {this.props.entity.version}</div>
-          </Card>
-        )
-      :
-        (
-          <Card
-            ref={(ref)=> this.cardRef = ref}
-            size="LG"
-            cardStyle={style}
-            onClick={this.openDetailedMode.bind(this)}
-          >
-            {
-              this.props.entity.beta ?
-                <ExperimentalBanner />
-              :
-                null
-            }
-            <div>
-              <div
-                className={beta}>
-                {
-                  this.state.imageError ?
-                    <span className={classnames("fa", this.state.logoIcon)}></span>
-                  :
-                    <img
-                      src={MyMarketApi.getIcon(this.props.entity)}
-                      onError={this.imageError.bind(this)}
-                    />
-                }
-              </div>
 
-              <div className="package-metadata-container text-xs-left">
-                <strong className="package-label"> {this.props.entity.label} </strong>
-                <div className="package-metadata">
-                  <If condition={this.props.entity.version}>
-                    <div>
-                      <span>
-                        <strong> {T.translate('features.MarketPlaceEntity.Metadata.version')} </strong>
-                      </span>
-                      <span> {this.props.entity.version} </span>
-                    </div>
-                  </If>
-                  <LicenseRow licenseInfo={this.props.entity.licenseInfo} />
-                </div>
+            <div className="package-metadata-container text-xs-left">
+              <strong className="package-label"> {this.props.entity.label} </strong>
+              <div className="package-metadata">
+                <If condition={this.props.entity.version}>
+                  <div>
+                    <span>
+                      <strong>
+                        {' '}
+                        {T.translate('features.MarketPlaceEntity.Metadata.version')}{' '}
+                      </strong>
+                    </span>
+                    <span> {this.props.entity.version} </span>
+                  </div>
+                </If>
+                <LicenseRow licenseInfo={this.props.entity.licenseInfo} />
               </div>
             </div>
-            <div className="package-footer">
-              <p>
-                {this.props.entity.description}
-              </p>
-              { getConsolidatedFooter() }
-            </div>
-          </Card>
-        );
+          </div>
+          <div className="package-footer">
+            <p>{this.props.entity.description}</p>
+            {getConsolidatedFooter()}
+          </div>
+        </Card>
+      );
     };
 
     return (
       <div
-        className={classnames("market-place-package-card", {[positionClassName + ' expanded']: this.state.expandedMode})}
-        ref={(ref)=> this.packageCardRef = ref}
+        className={classnames('market-place-package-card', {
+          [positionClassName + ' expanded']: this.state.expandedMode,
+        })}
+        ref={(ref) => (this.packageCardRef = ref)}
       >
         {getRightCard()}
       </div>
@@ -304,9 +291,9 @@ MarketPlaceEntity.childContextTypes = {
     cdapVersion: PropTypes.string,
     licenseInfo: PropTypes.shape({
       name: PropTypes.string,
-      url: PropTypes.string
-    })
-  })
+      url: PropTypes.string,
+    }),
+  }),
 };
 
 MarketPlaceEntity.propTypes = {
@@ -325,7 +312,7 @@ MarketPlaceEntity.propTypes = {
     beta: PropTypes.bool,
     licenseInfo: PropTypes.shape({
       name: PropTypes.string,
-      url: PropTypes.string
-    })
-  })
+      url: PropTypes.string,
+    }),
+  }),
 };

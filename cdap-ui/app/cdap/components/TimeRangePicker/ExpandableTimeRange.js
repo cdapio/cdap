@@ -17,8 +17,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import TimeRangePicker from 'components/TimeRangePicker';
-import {isDescendant} from 'services/helpers';
-import {Observable} from 'rxjs/Observable';
+import { isDescendant } from 'services/helpers';
+import { Observable } from 'rxjs/Observable';
 import classnames from 'classnames';
 
 export default class ExpandableTimeRange extends Component {
@@ -27,59 +27,64 @@ export default class ExpandableTimeRange extends Component {
     start: PropTypes.number,
     end: PropTypes.number,
     onDone: PropTypes.func,
-    inSeconds: PropTypes.bool
+    inSeconds: PropTypes.bool,
   };
 
   static defaultProps = {
-    inSeconds: false
+    inSeconds: false,
   };
 
   state = {
     start: this.props.inSeconds ? this.props.start * 1000 : this.props.start,
     end: this.props.inSeconds ? this.props.end * 1000 : this.props.end,
-    displayOnly: true
+    displayOnly: true,
   };
 
   onTimeClick = () => {
     this.subscribeClick();
     this.setState({
-      displayOnly: false
+      displayOnly: false,
     });
   };
 
   subscribeClick = () => {
-    if (this.bodyClick$) { return; }
+    if (this.bodyClick$) {
+      return;
+    }
 
-    this.bodyClick$ = Observable.fromEvent(document, 'click')
-      .subscribe((e) => {
-        if (isDescendant(this.timeRangeElem, e.target)) { return; }
+    this.bodyClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
+      if (isDescendant(this.timeRangeElem, e.target)) {
+        return;
+      }
 
-        this.closeTimeRange();
-      });
+      this.closeTimeRange();
+    });
   };
 
   closeTimeRange = () => {
     this.setState({
-      displayOnly: true
+      displayOnly: true,
     });
 
     this.bodyClick$.unsubscribe();
     this.bodyClick$ = null;
   };
 
-  onChange = ({start, end}) => {
+  onChange = ({ start, end }) => {
     this.setState({
       start,
-      end
+      end,
     });
   };
 
   done = () => {
-    if (!this.state.start || !this.state.end) { return; }
+    if (!this.state.start || !this.state.end) {
+      return;
+    }
 
     if (typeof this.props.onDone === 'function') {
       let start = parseInt(this.state.start, 10),
-          end = parseInt(this.state.end, 10);
+        end = parseInt(this.state.end, 10);
 
       if (this.props.inSeconds) {
         start = Math.floor(start / 1000);
@@ -88,7 +93,7 @@ export default class ExpandableTimeRange extends Component {
 
       this.props.onDone({
         start,
-        end
+        end,
       });
     }
 
@@ -96,11 +101,15 @@ export default class ExpandableTimeRange extends Component {
   };
 
   renderDoneButton = () => {
-    if (this.state.displayOnly) { return null; }
+    if (this.state.displayOnly) {
+      return null;
+    }
 
     return (
       <div
-        className={classnames('done-button text-xs-center', { 'disabled': !this.state.start || !this.state.end })}
+        className={classnames('done-button text-xs-center', {
+          disabled: !this.state.start || !this.state.end,
+        })}
         onClick={this.done}
       >
         Done
@@ -111,8 +120,10 @@ export default class ExpandableTimeRange extends Component {
   render() {
     return (
       <div
-        className={classnames('expandable-time-range-picker', { 'expanded': !this.state.displayOnly })}
-        ref={ref => this.timeRangeElem = ref}
+        className={classnames('expandable-time-range-picker', {
+          expanded: !this.state.displayOnly,
+        })}
+        ref={(ref) => (this.timeRangeElem = ref)}
       >
         <TimeRangePicker
           onChange={this.onChange}
@@ -122,7 +133,7 @@ export default class ExpandableTimeRange extends Component {
           onTimeClick={this.onTimeClick}
         />
 
-        { this.renderDoneButton() }
+        {this.renderDoneButton()}
       </div>
     );
   }

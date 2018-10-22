@@ -14,8 +14,8 @@
  * the License.
 */
 
-import React, {Component} from 'react';
-import {objectQuery} from 'services/helpers';
+import React, { Component } from 'react';
+import { objectQuery } from 'services/helpers';
 import PropTypes from 'prop-types';
 import isNil from 'lodash/isNil';
 
@@ -25,18 +25,18 @@ export default class StateWrapper extends Component {
     value: PropTypes.oneOfType([PropTypes.array, PropTypes.string, PropTypes.number]),
     onChange: PropTypes.func,
     widgetProps: PropTypes.object,
-    extraConfig: PropTypes.object
+    extraConfig: PropTypes.object,
   };
 
   state = {
-    value: this.props.value || objectQuery(this.props, 'widgetProps', 'default')
+    value: this.props.value || objectQuery(this.props, 'widgetProps', 'default'),
   };
 
   onChange = (value) => {
     let v = objectQuery(value, 'target', 'value');
     v = isNil(v) ? value : v;
     this.setState({
-      value: v
+      value: v,
     });
     if (typeof objectQuery(this.props, 'onChange') === 'function') {
       this.props.onChange(v);
@@ -44,7 +44,7 @@ export default class StateWrapper extends Component {
   };
 
   render() {
-    let {comp: Comp, widgetProps, extraConfig} = this.props;
+    let { comp: Comp, widgetProps, extraConfig } = this.props;
     return (
       /*
         TL;DR - Get new value for input widget during each render.

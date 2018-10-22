@@ -21,14 +21,14 @@
   upgraded reactstrap.
 */
 import React, { Component } from 'react';
-import {Tooltip, Dropdown} from 'reactstrap';
+import { Tooltip, Dropdown } from 'reactstrap';
 
 const components = {
   UncontrolledDropdown: Dropdown,
-  UncontrolledTooltip: Tooltip
+  UncontrolledTooltip: Tooltip,
 };
 
-Object.keys(components).forEach(key => {
+Object.keys(components).forEach((key) => {
   const Tag = components[key];
   const defaultValue = false;
 
@@ -57,7 +57,4 @@ Object.keys(components).forEach(key => {
 
 const UncontrolledDropdown = components.UncontrolledDropdown;
 const UncontrolledTooltip = components.UncontrolledTooltip;
-export {
-  UncontrolledTooltip,
-  UncontrolledDropdown
-};
+export { UncontrolledTooltip, UncontrolledDropdown };

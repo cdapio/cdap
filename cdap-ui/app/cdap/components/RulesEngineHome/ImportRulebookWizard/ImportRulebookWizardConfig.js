@@ -26,15 +26,14 @@ let commonSteps = [
     shorttitle: T.translate(`${PREFIX}.shorttitle`),
     title: T.translate(`${PREFIX}.title`),
     description: T.translate(`${PREFIX}.description`),
-    content: (<RulebookUploadStep />),
-    requiredFields: ['file']
-  }
+    content: <RulebookUploadStep />,
+    requiredFields: ['file'],
+  },
 ];
 
 const RulebookUploadWizardConfig = {
   steps: commonSteps,
-  footertitle: T.translate(`${PREFIX}.footertitle`)
+  footertitle: T.translate(`${PREFIX}.footertitle`),
 };
-
 
 export default RulebookUploadWizardConfig;

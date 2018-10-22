@@ -16,7 +16,7 @@
 
 const OneStepDeployActions = {
   setName: 'SET-ONE-STEP-DEPLOY-NAME',
-  onReset: 'RESET-STORE'
+  onReset: 'RESET-STORE',
 };
 
 export default OneStepDeployActions;

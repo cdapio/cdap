@@ -14,14 +14,14 @@
 * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MyServiceProviderApi} from 'api/serviceproviders';
-import {humanReadableNumber, objectQuery} from 'services/helpers';
+import { MyServiceProviderApi } from 'api/serviceproviders';
+import { humanReadableNumber, objectQuery } from 'services/helpers';
 import AdminManagementTabContent from 'components/Administration/AdminManagementTabContent';
 import AdminConfigTabContent from 'components/Administration/AdminConfigTabContent';
 import AdminTabSwitch from 'components/Administration/AdminTabSwitch';
-import {Route, Switch} from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 
 require('./Administration.scss');
 
@@ -31,12 +31,15 @@ class Administration extends Component {
   state = {
     platformsDetails: {},
     uptime: 0,
-    accordionToExpand: typeof this.props.location.state === 'object' ? this.props.location.state.accordionToExpand : null
+    accordionToExpand:
+      typeof this.props.location.state === 'object'
+        ? this.props.location.state.accordionToExpand
+        : null,
   };
 
   static propTypes = {
-    location: PropTypes.object
-  }
+    location: PropTypes.object,
+  };
 
   componentDidMount() {
     this.getUptime();
@@ -46,9 +49,12 @@ class Administration extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.location.state !== this.props.location.state) {
-      let accordionToExpand = typeof nextProps.location.state === 'object' ? nextProps.location.state.accordionToExpand : null;
+      let accordionToExpand =
+        typeof nextProps.location.state === 'object'
+          ? nextProps.location.state.accordionToExpand
+          : null;
       this.setState({
-        accordionToExpand
+        accordionToExpand,
       });
     }
   }
@@ -58,21 +64,19 @@ class Administration extends Component {
   }
 
   getUptime() {
-    MyServiceProviderApi
-      .pollList()
-      .subscribe(
-        (res) => {
-          let uptime = objectQuery(res, 'cdap', 'Uptime');
-          this.setState({
-            uptime
-          });
-        },
-        () => {
-          setTimeout(() => {
-            this.getUptime();
-          }, WAITTIME_FOR_ALTERNATE_STATUS);
-        }
-      );
+    MyServiceProviderApi.pollList().subscribe(
+      (res) => {
+        let uptime = objectQuery(res, 'cdap', 'Uptime');
+        this.setState({
+          uptime,
+        });
+      },
+      () => {
+        setTimeout(() => {
+          this.getUptime();
+        }, WAITTIME_FOR_ALTERNATE_STATUS);
+      }
+    );
   }
 
   prettifyPlatformDetails(details) {
@@ -82,19 +86,18 @@ class Administration extends Component {
       lasthourload: {
         ...details.lasthourload,
         Successful: humanReadableNumber(details.lasthourload.Successful),
-        TotalRequests: humanReadableNumber(details.lasthourload.TotalRequests)
-      }
+        TotalRequests: humanReadableNumber(details.lasthourload.TotalRequests),
+      },
     });
   }
 
   getPlatformDetails() {
     MyServiceProviderApi.get({
-      serviceprovider : 'cdap'
-    })
-    .subscribe(
+      serviceprovider: 'cdap',
+    }).subscribe(
       (res) => {
         let platformsDetails = {
-          ...this.prettifyPlatformDetails(res)
+          ...this.prettifyPlatformDetails(res),
         };
         this.setState({ platformsDetails });
       },
@@ -102,28 +105,29 @@ class Administration extends Component {
         setTimeout(() => {
           this.getUptime();
         }, WAITTIME_FOR_ALTERNATE_STATUS);
-      });
+      }
+    );
   }
 
-  render () {
+  render() {
     return (
       <div className="administration">
         <AdminTabSwitch uptime={this.state.uptime} />
         <Switch>
-          <Route exact path="/administration" render={() => {
-            return (
-              <AdminManagementTabContent
-                platformsDetails={this.state.platformsDetails}
-              />
-            );
-          }} />
-          <Route exact path="/administration/configuration" render={() => {
-            return (
-              <AdminConfigTabContent
-                accordionToExpand={this.state.accordionToExpand}
-              />
-            );
-          }} />
+          <Route
+            exact
+            path="/administration"
+            render={() => {
+              return <AdminManagementTabContent platformsDetails={this.state.platformsDetails} />;
+            }}
+          />
+          <Route
+            exact
+            path="/administration/configuration"
+            render={() => {
+              return <AdminConfigTabContent accordionToExpand={this.state.accordionToExpand} />;
+            }}
+          />
         </Switch>
       </div>
     );

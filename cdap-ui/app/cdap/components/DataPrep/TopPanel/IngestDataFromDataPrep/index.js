@@ -18,24 +18,36 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import T from 'i18n-react';
-import {Modal, ModalHeader, ModalBody, ModalFooter, Button, ButtonGroup, Form, FormGroup, Label, Col, Input} from 'reactstrap';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  ButtonGroup,
+  Form,
+  FormGroup,
+  Label,
+  Col,
+  Input,
+} from 'reactstrap';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 import DataPrepStore from 'components/DataPrep/store/';
 import getPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
-import {MyArtifactApi} from 'api/artifact';
-import {MyDatasetApi} from 'api/dataset';
-import {MyAppApi} from 'api/app';
-import {MyProgramApi} from 'api/program';
+import { MyArtifactApi } from 'api/artifact';
+import { MyDatasetApi } from 'api/dataset';
+import { MyAppApi } from 'api/app';
+import { MyProgramApi } from 'api/program';
 import NamespaceStore from 'services/NamespaceStore';
 import find from 'lodash/find';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import cloneDeep from 'lodash/cloneDeep';
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 import CardActionFeedback from 'components/CardActionFeedback';
 
 require('./IngestDataFromDataPrep.scss');
@@ -44,41 +56,40 @@ const PREFIX = `features.DataPrep.TopPanel.copyToCDAPDatasetBtn`;
 const fieldsetDataType = [
   {
     id: 'TPFSAvro',
-    label: T.translate(`${PREFIX}.Formats.avro`)
+    label: T.translate(`${PREFIX}.Formats.avro`),
   },
   {
     id: 'TPFSOrc',
-    label: T.translate(`${PREFIX}.Formats.orc`)
+    label: T.translate(`${PREFIX}.Formats.orc`),
   },
   {
     id: 'TPFSParquet',
-    label: T.translate(`${PREFIX}.Formats.parquet`)
-  }
+    label: T.translate(`${PREFIX}.Formats.parquet`),
+  },
 ];
 const copyingSteps = [
   {
     message: T.translate(`${PREFIX}.copyingSteps.Step1`),
     error: T.translate(`${PREFIX}.copyingSteps.Step1Error`),
-    status: null
+    status: null,
   },
   {
     message: T.translate(`${PREFIX}.copyingSteps.Step2`),
     error: T.translate(`${PREFIX}.copyingSteps.Step2Error`),
-    status: null
-  }
+    status: null,
+  },
 ];
 export default class IngestDataFromDataPrep extends Component {
-
   static propTypes = {
     className: PropTypes.string,
     disabledState: PropTypes.bool,
-    title: PropTypes.string
+    title: PropTypes.string,
   };
 
   state = this.getDefaultState();
 
   getDefaultState() {
-    let {headers} = DataPrepStore.getState().dataprep;
+    let { headers } = DataPrepStore.getState().dataprep;
     return {
       showModal: false,
       inputType: 'fileset',
@@ -93,101 +104,101 @@ export default class IngestDataFromDataPrep extends Component {
       // Ideally users won't wait till the dataset is created (till pipeline runs successfully and creates the dataset)
       copyTaskStarted: false,
       datasetUrl: null,
-      error: null
+      error: null,
     };
   }
 
   componentWillMount() {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
     let corePlugins;
-    MyArtifactApi
-      .list({ namespace })
-      .subscribe(res => {
-        corePlugins = find(res, { 'name': 'core-plugins' });
+    MyArtifactApi.list({ namespace }).subscribe((res) => {
+      corePlugins = find(res, { name: 'core-plugins' });
 
-        corePlugins.version = '[1.7.0, 3.0.0)';
+      corePlugins.version = '[1.7.0, 3.0.0)';
 
-        const getPluginConfig = (pluginName) => {
-          return {
+      const getPluginConfig = (pluginName) => {
+        return {
+          name: pluginName,
+          plugin: {
             name: pluginName,
-            plugin: {
-              name: pluginName,
-              label: pluginName,
-              type: 'batchsink',
-              artifact: corePlugins,
-              properties: {}
-            }
-          };
+            label: pluginName,
+            type: 'batchsink',
+            artifact: corePlugins,
+            properties: {},
+          },
         };
-        let sinks = {
-          TPFSAvro: getPluginConfig('TPFSAvro'),
-          TPFSParquet: getPluginConfig('TPFSParquet'),
-          TPFSOrc: getPluginConfig('TPFSOrc'),
-          Table: getPluginConfig('Table'),
-        };
-        this.setState({
-          sinkPluginsForDataset: sinks
-        });
+      };
+      let sinks = {
+        TPFSAvro: getPluginConfig('TPFSAvro'),
+        TPFSParquet: getPluginConfig('TPFSParquet'),
+        TPFSOrc: getPluginConfig('TPFSOrc'),
+        Table: getPluginConfig('Table'),
+      };
+      this.setState({
+        sinkPluginsForDataset: sinks,
       });
+    });
   }
 
   toggleModal = () => {
     let state = Object.assign(this.getDefaultState(), {
       showModal: !this.state.showModal,
       sinkPluginsForDataset: this.state.sinkPluginsForDataset,
-      batchPipelineConfig: this.state.batchPipelineConfig
+      batchPipelineConfig: this.state.batchPipelineConfig,
     });
     this.setState(state);
     if (!this.state.showModal) {
       getPipelineConfig().subscribe(
         (res) => {
           this.setState({
-            batchPipelineConfig: res.batchConfig
+            batchPipelineConfig: res.batchConfig,
           });
         },
         (err) => {
           this.setState({
-            error: err
+            error: err,
           });
         }
       );
     }
-  }
+  };
 
   handleDatasetNameChange = (e) => {
     this.setState({
-      datasetName: e.target.value
+      datasetName: e.target.value,
     });
-  }
+  };
 
   handleRowkeyChange = (e) => {
     this.setState({
-      rowKey: e.target.value
+      rowKey: e.target.value,
     });
-  }
+  };
 
   handleFormatChange = (e) => {
     this.setState({
-      format: e.target.value
+      format: e.target.value,
     });
-  }
+  };
 
   handleOnSubmit = (e) => {
     preventPropagation(e);
     return false;
-  }
+  };
 
-  getAppConfigMacros () {
-    let {workspaceInfo, directives, headers} = DataPrepStore.getState().dataprep;
+  getAppConfigMacros() {
+    let { workspaceInfo, directives, headers } = DataPrepStore.getState().dataprep;
     let pipelineConfig = cloneDeep(this.state.batchPipelineConfig);
-    let wranglerStage = pipelineConfig.config.stages.find(stage => stage.name === 'Wrangler');
-    let dbStage = pipelineConfig.config.stages.find(stage => stage.name === 'Database');
-    let kafkaStage = pipelineConfig.config.stages.find(stage => stage.name === 'Kafka');
+    let wranglerStage = pipelineConfig.config.stages.find((stage) => stage.name === 'Wrangler');
+    let dbStage = pipelineConfig.config.stages.find((stage) => stage.name === 'Database');
+    let kafkaStage = pipelineConfig.config.stages.find((stage) => stage.name === 'Kafka');
     let databaseConfig = objectQuery(workspaceInfo, 'properties', 'databaseConfig');
-    let s3Stage = pipelineConfig.config.stages.find(stage => stage.name === 'S3');
-    let gcsStage = pipelineConfig.config.stages.find(stage => stage.name === 'GCS');
-    let bigqueryStage = pipelineConfig.config.stages.find(stage => stage.name === 'BigQueryTable');
-    let spannerStage = pipelineConfig.config.stages.find(stage => stage.name === 'Spanner');
+    let s3Stage = pipelineConfig.config.stages.find((stage) => stage.name === 'S3');
+    let gcsStage = pipelineConfig.config.stages.find((stage) => stage.name === 'GCS');
+    let bigqueryStage = pipelineConfig.config.stages.find(
+      (stage) => stage.name === 'BigQueryTable'
+    );
+    let spannerStage = pipelineConfig.config.stages.find((stage) => stage.name === 'Spanner');
 
     let macroMap = {};
     if (databaseConfig) {
@@ -211,18 +222,23 @@ export default class IngestDataFromDataPrep extends Component {
       topic: objectQuery(kafkaStage, 'plugin', 'properties', 'topic') || '',
       kafkaBrokers: objectQuery(kafkaStage, 'plugin', 'properties', 'kafkaBrokers') || '',
       accessID: objectQuery(s3Stage, 'plugin', 'properties', 'accessID') || '',
-      path: objectQuery(s3Stage, 'plugin', 'properties', 'path') || objectQuery(gcsStage, 'plugin', 'properties', 'path') || '', // This is Goofed
+      path:
+        objectQuery(s3Stage, 'plugin', 'properties', 'path') ||
+        objectQuery(gcsStage, 'plugin', 'properties', 'path') ||
+        '', // This is Goofed
       accessKey: objectQuery(s3Stage, 'plugin', 'properties', 'accessKey') || '',
       bucket: objectQuery(gcsStage, 'plugin', 'properties', 'bucket') || '',
       serviceFilePath: objectQuery(gcsStage, 'plugin', 'properties', 'serviceFilePath') || '',
       project: objectQuery(gcsStage, 'plugin', 'properties', 'project') || '',
       bqBucket: objectQuery(bigqueryStage, 'plugin', 'properties', 'bucket') || '',
-      bqServiceFilePath: objectQuery(bigqueryStage, 'plugin', 'properties', 'serviceFilePath') || '',
+      bqServiceFilePath:
+        objectQuery(bigqueryStage, 'plugin', 'properties', 'serviceFilePath') || '',
       bqProject: objectQuery(bigqueryStage, 'plugin', 'properties', 'project') || '',
       bqDataset: objectQuery(bigqueryStage, 'plugin', 'properties', 'dataset') || '',
       bqTable: objectQuery(bigqueryStage, 'plugin', 'properties', 'table') || '',
       bqSchema: objectQuery(bigqueryStage, 'plugin', 'properties', 'schema') || '',
-      spannerServiceFilePath: objectQuery(spannerStage, 'plugin', 'properties', 'serviceFilePath') || '',
+      spannerServiceFilePath:
+        objectQuery(spannerStage, 'plugin', 'properties', 'serviceFilePath') || '',
       spannerProject: objectQuery(spannerStage, 'plugin', 'properties', 'project') || '',
       spannerInstance: objectQuery(spannerStage, 'plugin', 'properties', 'instance') || '',
       spannerDatabase: objectQuery(spannerStage, 'plugin', 'properties', 'database') || '',
@@ -231,103 +247,106 @@ export default class IngestDataFromDataPrep extends Component {
     });
     var newMacorMap = {};
     // This is to prevent from passing all the empty properties as payload while starting the pipeline.
-    Object
-      .keys(macroMap)
-      .filter(key => !isEmpty(macroMap[key]))
-      .forEach(key => newMacorMap[key] = macroMap[key]);
+    Object.keys(macroMap)
+      .filter((key) => !isEmpty(macroMap[key]))
+      .forEach((key) => (newMacorMap[key] = macroMap[key]));
     return newMacorMap;
   }
 
   addMacrosToPipelineConfig(pipelineConfig) {
-    let {dataprep} = DataPrepStore.getState();
+    let { dataprep } = DataPrepStore.getState();
     let workspaceProps = objectQuery(dataprep, 'workspaceInfo', 'properties');
 
     let macroMap = this.getAppConfigMacros();
     let dataFormatProperties = {
       schema: '${schema}',
-      name: '${datasetName}'
+      name: '${datasetName}',
     };
     let pluginsMap = {
-      'Wrangler': {
+      Wrangler: {
         directives: '${directives}',
         schema: '${schema}',
         field: workspaceProps.connection === 'file' ? 'body' : '*',
         precondition: 'false',
-        'threshold': '1',
+        threshold: '1',
       },
-      'File': {
+      File: {
         path: '${filename}',
         referenceName: 'FileNode',
       },
-      'Table': {
+      Table: {
         'schema.row.field': '${schemaRowField}',
         name: '${datasetName}',
-        schema: '${schema}'
+        schema: '${schema}',
       },
-      'Database': {
+      Database: {
         connectionString: '${connectionString}',
         user: '${userName}',
         password: '${password}',
-        importQuery: '${query}'
+        importQuery: '${query}',
       },
-      'Kafka': {
+      Kafka: {
         referenceName: 'KafkaNode',
         kafkaBrokers: '${kafkaBrokers}',
         topic: '${topic}',
       },
-      'TPFSOrc': dataFormatProperties,
-      'TPFSParquet': dataFormatProperties,
-      'TPFSAvro': dataFormatProperties,
-      'S3': {
+      TPFSOrc: dataFormatProperties,
+      TPFSParquet: dataFormatProperties,
+      TPFSAvro: dataFormatProperties,
+      S3: {
         accessID: '${accessID}',
         path: '${path}',
         accessKey: '${accessKey}',
         authenticationMethod: 'Access Credentials',
-        recursive: 'false'
+        recursive: 'false',
       },
-      'GCS': {
+      GCS: {
         bucket: '${bucket}',
         filenameOnly: 'false',
         path: '${path}',
         serviceFilePath: '${serviceFilePath}',
         project: '${project}',
         recursive: 'false',
-        ignoreNonExistingFolders: "false"
+        ignoreNonExistingFolders: 'false',
       },
-      'BigQueryTable': {
+      BigQueryTable: {
         project: '${bqProject}',
         serviceFilePath: '${bqServiceFilePath}',
         bucket: '${bqBucket}',
         dataset: '${bqDataset}',
         table: '${bqTable}',
-        schema: '${bqSchema}'
+        schema: '${bqSchema}',
       },
-      'Spanner': {
+      Spanner: {
         project: '${spannerProject}',
         serviceFilePath: '${spannerServiceFilePath}',
         instance: '${spannerInstance}',
         database: '${spannerDatabase}',
         table: '${spannerTable}',
         schema: '${spannerSchema}',
-      }
+      },
     };
-    pipelineConfig.config.stages = pipelineConfig.config.stages.map(stage => {
+    pipelineConfig.config.stages = pipelineConfig.config.stages.map((stage) => {
       if (!isNil(pluginsMap[stage.name])) {
-        stage.plugin.properties = Object.assign({}, stage.plugin.properties, pluginsMap[stage.name]);
+        stage.plugin.properties = Object.assign(
+          {},
+          stage.plugin.properties,
+          pluginsMap[stage.name]
+        );
       }
       return stage;
     });
 
-    return {pipelineConfig, macroMap};
+    return { pipelineConfig, macroMap };
   }
 
   preparePipelineConfig() {
     let sink;
-    let {workspaceInfo} = DataPrepStore.getState().dataprep;
-    let {name: pipelineName} = workspaceInfo.properties;
+    let { workspaceInfo } = DataPrepStore.getState().dataprep;
+    let { name: pipelineName } = workspaceInfo.properties;
     let pipelineconfig = cloneDeep(this.state.batchPipelineConfig);
     if (this.state.inputType === 'fileset') {
-      sink = fieldsetDataType.find(dataType => dataType.id === this.state.format);
+      sink = fieldsetDataType.find((dataType) => dataType.id === this.state.format);
       if (sink) {
         sink = this.state.sinkPluginsForDataset[sink.id];
       }
@@ -336,36 +355,38 @@ export default class IngestDataFromDataPrep extends Component {
       sink = this.state.sinkPluginsForDataset['Table'];
     }
     pipelineconfig.config.stages.push(sink);
-    let {pipelineConfig: appConfig, macroMap} = this.addMacrosToPipelineConfig(pipelineconfig);
+    let { pipelineConfig: appConfig, macroMap } = this.addMacrosToPipelineConfig(pipelineconfig);
 
     let connections = this.state.batchPipelineConfig.config.connections;
     let sinkConnection = [
       {
         from: connections[0].to,
-        to: sink.name
-      }
+        to: sink.name,
+      },
     ];
     appConfig.config.connections = connections.concat(sinkConnection);
     appConfig.config.schedule = '0 * * * *';
     appConfig.config.engine = 'mapreduce';
     appConfig.description = `Pipeline to create dataset for workspace ${pipelineName} from dataprep`;
-    return {appConfig, macroMap};
+    return { appConfig, macroMap };
   }
 
   submitForm = () => {
     let steps = cloneDeep(copyingSteps);
-    let {dataprep} = DataPrepStore.getState();
+    let { dataprep } = DataPrepStore.getState();
     let workspaceProps = objectQuery(dataprep, 'workspaceInfo', 'properties');
     steps[0].status = 'running';
     this.setState({
       copyInProgress: true,
-      copyingSteps: steps
+      copyingSteps: steps,
     });
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
     let pipelineName;
     // FIXME: We need to fix backend to enable adding macro to pluginType and name in database.
     // Right now we don't support it and hence UI creates new pipeline based on jdbc plugin name.
-    let dbStage = this.state.batchPipelineConfig.config.stages.find(dataType => dataType.name === 'Database');
+    let dbStage = this.state.batchPipelineConfig.config.stages.find(
+      (dataType) => dataType.name === 'Database'
+    );
     if (this.state.inputType === 'fileset') {
       pipelineName = `one_time_copy_to_fs_${this.state.format}`;
       if (workspaceProps.connection === 'database') {
@@ -403,9 +424,9 @@ export default class IngestDataFromDataPrep extends Component {
     let pipelineconfig, macroMap;
 
     // Get list of pipelines to check if the pipeline is already published
-    MyAppApi.list({namespace})
-      .mergeMap(res => {
-        let appAlreadyDeployed = res.find(app => app.id === pipelineName);
+    MyAppApi.list({ namespace })
+      .mergeMap((res) => {
+        let appAlreadyDeployed = res.find((app) => app.id === pipelineName);
 
         if (!appAlreadyDeployed) {
           let appConfigWithMacros = this.preparePipelineConfig();
@@ -414,91 +435,87 @@ export default class IngestDataFromDataPrep extends Component {
           pipelineconfig.name = pipelineName;
           let params = {
             namespace,
-            appId: pipelineName
+            appId: pipelineName,
           };
           // If it doesn't exist create a new pipeline with macros.
           return MyAppApi.deployApp(params, pipelineconfig);
         }
         // If it already exists just move to next step.
-        return Observable.create( observer => {
+        return Observable.create((observer) => {
           observer.next();
         });
       })
-      .mergeMap(
-        () => {
-          let copyingSteps = [...this.state.copyingSteps];
-          copyingSteps[0].status = 'success';
-          copyingSteps[1].status = 'running';
-          this.setState({
-            copyingSteps
-          });
-          if (!macroMap) {
-            macroMap = this.getAppConfigMacros();
-          }
+      .mergeMap(() => {
+        let copyingSteps = [...this.state.copyingSteps];
+        copyingSteps[0].status = 'success';
+        copyingSteps[1].status = 'running';
+        this.setState({
+          copyingSteps,
+        });
+        if (!macroMap) {
+          macroMap = this.getAppConfigMacros();
+        }
 
-          // Once the pipeline is published start the workflow. Pass run time arguments for macros.
-          return MyProgramApi.action({
+        // Once the pipeline is published start the workflow. Pass run time arguments for macros.
+        return MyProgramApi.action(
+          {
             namespace,
             appId: pipelineName,
             programType: 'workflows',
             programId: 'DataPipelineWorkflow',
-            action: 'start'
-          }, macroMap);
-        }
-      )
-      .mergeMap(
-        () => {
-          this.setState({
-            copyTaskStarted: true
-          });
-          let count = 1;
-          const getDataset = (callback, errorCallback, count) => {
-            let params = {
-              namespace,
-              datasetId: this.state.datasetName
-            };
-            MyDatasetApi
-              .get(params)
-              .subscribe(
-                callback,
-                () => {
-                  if (count < 120) {
-                    count += count;
-                    setTimeout(() => {
-                      getDataset(callback, errorCallback, count);
-                    }, count * 1000);
-                  } else {
-                    errorCallback();
-                  }
-                }
-              );
+            action: 'start',
+          },
+          macroMap
+        );
+      })
+      .mergeMap(() => {
+        this.setState({
+          copyTaskStarted: true,
+        });
+        let count = 1;
+        const getDataset = (callback, errorCallback, count) => {
+          let params = {
+            namespace,
+            datasetId: this.state.datasetName,
           };
-          return Observable.create((observer) => {
-            let successCallback = () => {
-              observer.next();
-            };
-            let errorCallback = () => {
-              observer.error('Copy task timed out after 2 mins. Please check logs for more information.');
-            };
-            getDataset(successCallback, errorCallback, count);
+          MyDatasetApi.get(params).subscribe(callback, () => {
+            if (count < 120) {
+              count += count;
+              setTimeout(() => {
+                getDataset(callback, errorCallback, count);
+              }, count * 1000);
+            } else {
+              errorCallback();
+            }
           });
-        }
-      )
+        };
+        return Observable.create((observer) => {
+          let successCallback = () => {
+            observer.next();
+          };
+          let errorCallback = () => {
+            observer.error(
+              'Copy task timed out after 2 mins. Please check logs for more information.'
+            );
+          };
+          getDataset(successCallback, errorCallback, count);
+        });
+      })
       .subscribe(
         () => {
           // Once workflow started successfully create a link to pipeline datasets tab for user reference.
           let copyingSteps = [...this.state.copyingSteps];
-          let {selectedNamespace: namespaceId} = NamespaceStore.getState();
+          let { selectedNamespace: namespaceId } = NamespaceStore.getState();
           copyingSteps[1].status = 'success';
           let datasetUrl = window.getAbsUIUrl({
             namespaceId,
             entityType: 'datasets',
-            entityId: this.state.datasetName
+            entityId: this.state.datasetName,
           });
           datasetUrl = `${datasetUrl}?modalToOpen=explore`;
           this.setState({
             copyingSteps,
-            datasetUrl
+            datasetUrl,
           });
         },
         (err) => {
@@ -506,12 +523,12 @@ export default class IngestDataFromDataPrep extends Component {
 
           let copyingSteps = this.state.copyingSteps.map((step) => {
             if (step.status === 'running') {
-              return Object.assign({}, step, {status: 'failure'});
+              return Object.assign({}, step, { status: 'failure' });
             }
             return step;
           });
           let state = {
-            copyingSteps
+            copyingSteps,
           };
           if (!this.state.error) {
             state.error = typeof err === 'object' ? err.response : err;
@@ -519,45 +536,35 @@ export default class IngestDataFromDataPrep extends Component {
           this.setState(state);
         }
       ); // FIXME: Need to handle the failure case here as well.
-  }
+  };
 
   setType(type) {
     this.setState({
-      inputType: type
+      inputType: type,
     });
   }
 
   renderDatasetSpecificContent() {
     if (this.state.inputType === 'table') {
-      let {headers} = DataPrepStore.getState().dataprep;
+      let { headers } = DataPrepStore.getState().dataprep;
       return (
         <FormGroup row>
-          <Label
-            xs="4"
-            className="text-xs-right"
-          >
+          <Label xs="4" className="text-xs-right">
             {T.translate(`${PREFIX}.Form.rowKeyLabel`)}
             <span className="text-danger">*</span>
           </Label>
           <Col xs="6">
-            <Input
-              type="select"
-              onChange={this.handleRowkeyChange}
-              value={this.state.rowKey}
-            >
-              {
-                headers.map((header, index) => {
-                  return (
-                    <option value={header} key={index}>{header}</option>
-                  );
-                })
-              }
+            <Input type="select" onChange={this.handleRowkeyChange} value={this.state.rowKey}>
+              {headers.map((header, index) => {
+                return (
+                  <option value={header} key={index}>
+                    {header}
+                  </option>
+                );
+              })}
             </Input>
-            <IconSVG
-              id="row-key-info-icon"
-              name="icon-info-circle"
-            />
-            <UncontrolledTooltip target="row-key-info-icon" delay={{show: 250, hide: 0}}>
+            <IconSVG id="row-key-info-icon" name="icon-info-circle" />
+            <UncontrolledTooltip target="row-key-info-icon" delay={{ show: 250, hide: 0 }}>
               {T.translate(`${PREFIX}.Form.rowKeyTooltip`)}
             </UncontrolledTooltip>
           </Col>
@@ -567,32 +574,22 @@ export default class IngestDataFromDataPrep extends Component {
     if (this.state.inputType === 'fileset') {
       return (
         <FormGroup row>
-          <Label
-            xs="4"
-            className="text-xs-right"
-          >
+          <Label xs="4" className="text-xs-right">
             {T.translate(`${PREFIX}.Form.formatLabel`)}
             <span className="text-danger">*</span>
           </Label>
           <Col xs="6">
-            <Input
-              type="select"
-              onChange={this.handleFormatChange}
-              value={this.state.format}
-            >
-              {
-                fieldsetDataType.map((datatype, index) => {
-                  return (
-                    <option value={datatype.id} key={index}>{datatype.label}</option>
-                  );
-                })
-              }
+            <Input type="select" onChange={this.handleFormatChange} value={this.state.format}>
+              {fieldsetDataType.map((datatype, index) => {
+                return (
+                  <option value={datatype.id} key={index}>
+                    {datatype.label}
+                  </option>
+                );
+              })}
             </Input>
-            <IconSVG
-              id="row-key-info-icon"
-              name="icon-info-circle"
-            />
-            <UncontrolledTooltip target="row-key-info-icon" delay={{show: 250, hide: 0}}>
+            <IconSVG id="row-key-info-icon" name="icon-info-circle" />
+            <UncontrolledTooltip target="row-key-info-icon" delay={{ show: 250, hide: 0 }}>
               {T.translate(`${PREFIX}.Form.formatTooltip`)}
             </UncontrolledTooltip>
           </Col>
@@ -608,75 +605,58 @@ export default class IngestDataFromDataPrep extends Component {
     const statusContainer = (status) => {
       let icon, className;
       if (status === 'running') {
-        icon="icon-spinner";
-        className="fa-spin";
+        icon = 'icon-spinner';
+        className = 'fa-spin';
       }
       if (status === 'success') {
-        icon="icon-check-circle";
+        icon = 'icon-check-circle';
       }
       if (status === 'failure') {
-        icon="icon-times-circle";
+        icon = 'icon-times-circle';
       }
-      return (
-        <IconSVG
-          name={icon}
-          className={className}
-        />
-      );
+      return <IconSVG name={icon} className={className} />;
     };
     return (
       <div className="text-xs-left steps-container">
-        {
-          this.state.copyingSteps.map((step, index) => {
-            return (
-              <div
-                key={index}
-                className={classnames("step-container", {
-                  "text-success": step.status === 'success',
-                  "text-danger": step.status === 'failure',
-                  "text-info": step.status === 'running',
-                  "text-muted": step.status === null
-                })}
-              >
-                <span>
-                  {statusContainer(step.status)}
-                </span>
-                <span>
-                  {
-                    step.status === 'failure' ? step.error : step.message
-                  }
-                </span>
-              </div>
-            );
-          })
-        }
-        {
-          this.state.copyingSteps[1].status === 'success' ?
-            <a
-              className="btn btn-primary"
-              href={`${this.state.datasetUrl}`}
+        {this.state.copyingSteps.map((step, index) => {
+          return (
+            <div
+              key={index}
+              className={classnames('step-container', {
+                'text-success': step.status === 'success',
+                'text-danger': step.status === 'failure',
+                'text-info': step.status === 'running',
+                'text-muted': step.status === null,
+              })}
             >
-              {T.translate(`${PREFIX}.monitorBtnLabel`)}
-            </a>
-          :
-            null
-        }
+              <span>{statusContainer(step.status)}</span>
+              <span>{step.status === 'failure' ? step.error : step.message}</span>
+            </div>
+          );
+        })}
+        {this.state.copyingSteps[1].status === 'success' ? (
+          <a className="btn btn-primary" href={`${this.state.datasetUrl}`}>
+            {T.translate(`${PREFIX}.monitorBtnLabel`)}
+          </a>
+        ) : null}
       </div>
     );
   }
 
   renderForm() {
-    let {dataprep} = DataPrepStore.getState();
-    let isTableOptionDisabled = objectQuery(dataprep, 'workspaceInfo', 'properties', 'databaseConfig');
+    let { dataprep } = DataPrepStore.getState();
+    let isTableOptionDisabled = objectQuery(
+      dataprep,
+      'workspaceInfo',
+      'properties',
+      'databaseConfig'
+    );
     return (
       <fieldset disabled={this.state.error ? true : false}>
         <p>{T.translate(`${PREFIX}.description`)}</p>
         <Form onSubmit={this.handleOnSubmit}>
           <FormGroup row>
-            <Label
-              xs={4}
-              className="text-xs-right"
-            >
+            <Label xs={4} className="text-xs-right">
               {T.translate(`${PREFIX}.Form.typeLabel`)}
             </Label>
             <Col xs={8}>
@@ -700,14 +680,11 @@ export default class IngestDataFromDataPrep extends Component {
             </Col>
           </FormGroup>
           <FormGroup row>
-            <Col xs="4"></Col>
-            <Col xs="8"></Col>
+            <Col xs="4" />
+            <Col xs="8" />
           </FormGroup>
           <FormGroup row>
-            <Label
-              xs="4"
-              className="text-xs-right"
-            >
+            <Label xs="4" className="text-xs-right">
               {T.translate(`${PREFIX}.Form.datasetNameLabel`)}
               <span className="text-danger">*</span>
             </Label>
@@ -716,15 +693,9 @@ export default class IngestDataFromDataPrep extends Component {
                 {T.translate(`${PREFIX}.Form.requiredLabel`)}
                 <span className="text-danger">*</span>
               </p>
-              <Input
-                value={this.state.datasetName}
-                onChange={this.handleDatasetNameChange}
-              />
-              <IconSVG
-                id="dataset-name-info-icon"
-                name="icon-info-circle"
-              />
-              <UncontrolledTooltip target="dataset-name-info-icon" delay={{show: 250, hide: 0}}>
+              <Input value={this.state.datasetName} onChange={this.handleDatasetNameChange} />
+              <IconSVG id="dataset-name-info-icon" name="icon-info-circle" />
+              <UncontrolledTooltip target="dataset-name-info-icon" delay={{ show: 250, hide: 0 }}>
                 {T.translate(`${PREFIX}.Form.datasetTooltip`)}
               </UncontrolledTooltip>
             </Col>
@@ -739,7 +710,7 @@ export default class IngestDataFromDataPrep extends Component {
     if (this.state.error) {
       return (
         <CardActionFeedback
-          type='DANGER'
+          type="DANGER"
           message={T.translate(`${PREFIX}.ingestFailMessage`)}
           extendedMessage={this.state.error}
         />
@@ -755,15 +726,10 @@ export default class IngestDataFromDataPrep extends Component {
           >
             {T.translate(`${PREFIX}.createBtnLabel`)}
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={this.toggleModal}
-          >
+          <button className="btn btn-secondary" onClick={this.toggleModal}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
-          {
-            this.renderSteps()
-          }
+          {this.renderSteps()}
         </ModalFooter>
       );
     }
@@ -772,7 +738,7 @@ export default class IngestDataFromDataPrep extends Component {
     return (
       <span className="create-dataset-btn" title={this.props.title}>
         <button
-          className={classnames("btn btn-link", this.props.className)}
+          className={classnames('btn btn-link', this.props.className)}
           onClick={this.toggleModal}
           disabled={this.props.disabledState}
         >
@@ -787,32 +753,30 @@ export default class IngestDataFromDataPrep extends Component {
           className="cdap-modal dataprep-create-dataset-modal"
         >
           <ModalHeader>
-            <span>
-              {T.translate(`${PREFIX}.modalTitle`)}
-            </span>
+            <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
 
             <div
-              className={classnames("close-section float-xs-right", {
-                "disabled": this.state.copyInProgress && !this.state.copyTaskStarted && !this.state.error
+              className={classnames('close-section float-xs-right', {
+                disabled:
+                  this.state.copyInProgress && !this.state.copyTaskStarted && !this.state.error,
               })}
-              onClick={this.state.copyInProgress && !this.state.copyTaskStarted && !this.state.error? () => {} : this.toggleModal}
+              onClick={
+                this.state.copyInProgress && !this.state.copyTaskStarted && !this.state.error
+                  ? () => {}
+                  : this.toggleModal
+              }
             >
               <span className="fa fa-times" />
             </div>
           </ModalHeader>
-          <ModalBody className={classnames({
-            "copying-steps-container": this.state.copyInProgress
-          })}>
-            {
-              this.state.copyInProgress ?
-                this.renderSteps()
-              :
-                this.renderForm()
-            }
+          <ModalBody
+            className={classnames({
+              'copying-steps-container': this.state.copyInProgress,
+            })}
+          >
+            {this.state.copyInProgress ? this.renderSteps() : this.renderForm()}
           </ModalBody>
-          {
-            this.renderFooter()
-          }
+          {this.renderFooter()}
         </Modal>
       </span>
     );

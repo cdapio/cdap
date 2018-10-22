@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import TopPanel from 'components/Experiments/TopPanel';
 import PieChart from 'components/PieChart';
@@ -28,11 +28,15 @@ import InvalidPageView from 'components/Experiments/ListView/InvalidPageView';
 import EmptyListView from 'components/Experiments/ListView/EmptyListView';
 import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
 import { Link } from 'react-router-dom';
-import {handlePageChange, handleExperimentsSort, setExperimentsListError} from 'components/Experiments/store/ExperimentsListActionCreator';
+import {
+  handlePageChange,
+  handleExperimentsSort,
+  setExperimentsListError,
+} from 'components/Experiments/store/ExperimentsListActionCreator';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
 import T from 'i18n-react';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.Experiments.ListView';
 
@@ -41,28 +45,28 @@ require('./ListView.scss');
 const tableHeaders = [
   {
     label: T.translate(`${PREFIX}.experiment`),
-    property: 'name'
+    property: 'name',
   },
   {
     label: T.translate(`${PREFIX}.numModels`),
-    property: 'numOfModels'
+    property: 'numOfModels',
   },
   {
     label: T.translate(`${PREFIX}.algoTypes`),
-    property: 'algorithmTypes'
+    property: 'algorithmTypes',
   },
   {
     label: T.translate(`${PREFIX}.data`),
-    property: 'testData'
-  }
+    property: 'testData',
+  },
 ];
 
 const colorScale = d3Lib.scaleOrdinal(d3Lib.schemeCategory20);
 const PLUSBUTTONCONTEXTMENUITEMS = [
   {
     label: T.translate(`${PREFIX}.createNew`),
-    to: `/ns/${getCurrentNamespace()}/experiments/create`
-  }
+    to: `/ns/${getCurrentNamespace()}/experiments/create`,
+  },
 ];
 
 const getAlgoDistribution = (models) => {
@@ -70,7 +74,7 @@ const getAlgoDistribution = (models) => {
     return [];
   }
   let modelsMap = {};
-  models.forEach(model => {
+  models.forEach((model) => {
     let algo = model.algorithm;
     if (!algo) {
       return;
@@ -81,33 +85,33 @@ const getAlgoDistribution = (models) => {
         [algo]: {
           value: algo,
           count: 1,
-          color: colorScale(algo)
-        }
+          color: colorScale(algo),
+        },
       };
     } else {
       modelsMap = {
         ...modelsMap,
         [algo]: {
           ...modelsMap[algo],
-          count: modelsMap[algo].count + 1
-        }
+          count: modelsMap[algo].count + 1,
+        },
       };
     }
   });
-  return Object.keys(modelsMap).map(m => modelsMap[m]);
+  return Object.keys(modelsMap).map((m) => modelsMap[m]);
 };
 
 const renderGrid = (experiments, sortMethod, sortColumn) => {
-  let list = experiments.map(entity => {
+  let list = experiments.map((entity) => {
     let models = entity.models || [];
     let modelsCount = entity.modelsCount;
     return {
       name: entity.name,
       description: entity.description,
       numOfModels: modelsCount,
-      numOfDeployedModels: models.filter(model => model.deploytime).length,
+      numOfDeployedModels: models.filter((model) => model.deploytime).length,
       testData: entity.srcpath.split('/').pop(),
-      algorithmTypes: getAlgoDistribution(models)
+      algorithmTypes: getAlgoDistribution(models),
     };
   });
   const renderSortIcon = (sortMethod) =>
@@ -117,63 +121,50 @@ const renderGrid = (experiments, sortMethod, sortColumn) => {
     <div className="grid grid-container">
       <div className="grid-header">
         <div className="grid-row">
-          {
-            tableHeaders.map((header, i) => {
-              if (sortColumn === header.property) {
-                return (
-                  <strong
-                    className="sortable-header"
-                    key={i}
-                    onClick={handleExperimentsSort.bind(null, header.property)}
-                  >
-                    <span>{header.label}</span>
-                    {renderSortIcon(sortMethod)}
-                  </strong>
-                );
-              }
+          {tableHeaders.map((header, i) => {
+            if (sortColumn === header.property) {
               return (
-                <strong key={i}>
-                  {header.label}
+                <strong
+                  className="sortable-header"
+                  key={i}
+                  onClick={handleExperimentsSort.bind(null, header.property)}
+                >
+                  <span>{header.label}</span>
+                  {renderSortIcon(sortMethod)}
                 </strong>
               );
-            })
-          }
+            }
+            return <strong key={i}>{header.label}</strong>;
+          })}
         </div>
       </div>
       <div className="grid-body">
-        {
-          list.map(experiment => {
-            return (
-              <Link
-                to={`/ns/${getCurrentNamespace()}/experiments/${experiment.name}`}
-                className="grid-row grid-link"
-                key={experiment.name}
-              >
-                <div>
-                  <h5>
-                    <div className="experiment-list-name">{experiment.name}</div>
-                  </h5>
-                  <div className="experiment-list-description">{experiment.description}</div>
-                </div>
-                <div>{experiment.numOfModels}</div>
-                <div>
-                  {
-                    !experiment.algorithmTypes.length ?
-                      '--'
-                    :
-                      // This is to align with empty content beneath if happens.
-                      <PieChart
-                        data={experiment.algorithmTypes}
-                        translateX={15}
-                        translateY={25}
-                      />
-                  }
-                </div>
-                <div>{experiment.testData}</div>
-              </Link>
-            );
-          })
-        }
+        {list.map((experiment) => {
+          return (
+            <Link
+              to={`/ns/${getCurrentNamespace()}/experiments/${experiment.name}`}
+              className="grid-row grid-link"
+              key={experiment.name}
+            >
+              <div>
+                <h5>
+                  <div className="experiment-list-name">{experiment.name}</div>
+                </h5>
+                <div className="experiment-list-description">{experiment.description}</div>
+              </div>
+              <div>{experiment.numOfModels}</div>
+              <div>
+                {!experiment.algorithmTypes.length ? (
+                  '--'
+                ) : (
+                  // This is to align with empty content beneath if happens.
+                  <PieChart data={experiment.algorithmTypes} translateX={15} translateY={25} />
+                )}
+              </div>
+              <div>{experiment.testData}</div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
@@ -184,39 +175,34 @@ const getDataForGroupedChart = (experiments) => {
     return null;
   }
   let data = [];
-  experiments.map(experiment => {
-    data.push(
-      {
-        name: experiment.name,
-        type: 'Models',
-        count: Array.isArray(experiment.models) ? experiment.models.length : 0
-      }
-    );
+  experiments.map((experiment) => {
+    data.push({
+      name: experiment.name,
+      type: 'Models',
+      count: Array.isArray(experiment.models) ? experiment.models.length : 0,
+    });
   });
   return data;
 };
 
-function ExperimentsListView({...props}) {
+function ExperimentsListView({ ...props }) {
   return (
     <div>
       {ExperimentsListViewContent(props)}
-      {
-        props.error ?
-          <Alert
-            message={props.error}
-            type='error'
-            showAlert={true}
-            onClose={setExperimentsListError}
-          />
-        :
-          null
-      }
+      {props.error ? (
+        <Alert
+          message={props.error}
+          type="error"
+          showAlert={true}
+          onClose={setExperimentsListError}
+        />
+      ) : null}
     </div>
   );
 }
 
 ExperimentsListView.propTypes = {
-  error: PropTypes.any
+  error: PropTypes.any,
 };
 
 function ExperimentsListViewContent({
@@ -226,12 +212,12 @@ function ExperimentsListViewContent({
   currentPage,
   totalCount,
   sortMethod,
-  sortColumn
+  sortColumn,
 }) {
   if (loading) {
     return <LoadingSVGCentered />;
   }
-  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  let { selectedNamespace: namespace } = NamespaceStore.getState();
   const featureName = Theme.featureNames.analytics;
 
   if (!list.length) {
@@ -244,10 +230,11 @@ function ExperimentsListViewContent({
             contextItems={PLUSBUTTONCONTEXTMENUITEMS}
           />
         </TopPanel>
-        {
-          totalPages ? <InvalidPageView namespace={namespace} /> : <EmptyListView namespace={namespace} />
-        }
-
+        {totalPages ? (
+          <InvalidPageView namespace={namespace} />
+        ) : (
+          <EmptyListView namespace={namespace} />
+        )}
       </div>
     );
   }
@@ -260,20 +247,16 @@ function ExperimentsListViewContent({
           contextItems={PLUSBUTTONCONTEXTMENUITEMS}
         />
       </TopPanel>
-      <ExperimentsListBarChart
-        data={getDataForGroupedChart(list)}
-      />
+      <ExperimentsListBarChart data={getDataForGroupedChart(list)} />
       <div className="clearfix">
         <PaginationWithTitle
           handlePageChange={handlePageChange}
           currentPage={currentPage}
           totalPages={totalPages}
-          title={T.translate(`${PREFIX}.experiments`, {context: totalCount})}
+          title={T.translate(`${PREFIX}.experiments`, { context: totalCount })}
         />
       </div>
-      <div className="grid-wrapper">
-        { renderGrid(list, sortMethod, sortColumn) }
-      </div>
+      <div className="grid-wrapper">{renderGrid(list, sortMethod, sortColumn)}</div>
     </div>
   );
 }
@@ -285,7 +268,7 @@ ExperimentsListViewContent.propTypes = {
   currentPage: PropTypes.number,
   totalCount: PropTypes.number,
   sortMethod: PropTypes.string,
-  sortColumn: PropTypes.string
+  sortColumn: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {
@@ -293,11 +276,14 @@ const mapStateToProps = (state) => {
     loading: state.experiments.loading,
     list: state.experiments.list,
     totalPages: state.experiments.totalPages,
-    currentPage: state.experiments.offset === 0 ? 1 : Math.ceil((state.experiments.offset + 1) / state.experiments.limit),
+    currentPage:
+      state.experiments.offset === 0
+        ? 1
+        : Math.ceil((state.experiments.offset + 1) / state.experiments.limit),
     totalCount: state.experiments.totalCount,
     sortMethod: state.experiments.sortMethod,
     sortColumn: state.experiments.sortColumn,
-    error: state.experiments.error
+    error: state.experiments.error,
   };
 };
 

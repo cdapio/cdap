@@ -14,8 +14,8 @@
  * the License.
 */
 
-import {createStore, combineReducers} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore, combineReducers } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 import difference from 'lodash/difference';
 import findIndex from 'lodash/findIndex';
 import T from 'i18n-react';
@@ -30,7 +30,7 @@ const SCHEDULERUNTIMEARGSACTIONS = {
   SETDISABLED: 'SETDISABLED',
   SETSTAGEWIDGETJSON: 'SETSTAGEWIDGETJSON',
   SETSELECTEDPROFILE: 'DEFAULTSELECTEDPROFILE',
-  RESET: 'RESET'
+  RESET: 'RESET',
 };
 
 const I18NPREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs';
@@ -38,7 +38,9 @@ const I18NPREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs';
 const DEFAULTRUNTIMEARGSMESSAGE = T.translate(`${I18NPREFIX}.DefaultMessages.choose_runtime_arg`);
 const DEFAULTSTAGEMESSAGE = T.translate(`${I18NPREFIX}.DefaultMessages.choose_plugin`);
 const DEFAULTPROPERTYMESSAGE = T.translate(`${I18NPREFIX}.DefaultMessages.choose_plugin_property`);
-const DEFAULTTRIGGEREDMACROMESSAGE = T.translate(`${I18NPREFIX}.DefaultMessages.choose_runtime_arg`);
+const DEFAULTTRIGGEREDMACROMESSAGE = T.translate(
+  `${I18NPREFIX}.DefaultMessages.choose_runtime_arg`
+);
 const DEFAULTFIELDDELIMITER = ':';
 
 const DEFAULTMACROS = [];
@@ -51,62 +53,68 @@ const DEFAULTARGS = {
     macros: DEFAULTMACROS,
     configStages: DEFAULTCONFIGSTAGES,
     configStagesMap: UNMAPPEDCONFIGSTAGEPROPERTIES,
-    id: null
+    id: null,
   },
   triggeredPipelineInfo: {
     macros: DEFAULTMACROS,
     unMappedMacros: DEFAULTMACROS,
-    id: null
+    id: null,
   },
   argsMapping: DEFAULTARGSMAPPING,
   selectedProfile: DEFAULTSELECTEDPROFILE,
   stageWidgetJsonMap: {},
-  disabled: false
+  disabled: false,
 };
 
-const isDefaultMessage = (input) => [DEFAULTRUNTIMEARGSMESSAGE, DEFAULTSTAGEMESSAGE, DEFAULTPROPERTYMESSAGE, DEFAULTTRIGGEREDMACROMESSAGE].indexOf(input) !== -1;
+const isDefaultMessage = (input) =>
+  [
+    DEFAULTRUNTIMEARGSMESSAGE,
+    DEFAULTSTAGEMESSAGE,
+    DEFAULTPROPERTYMESSAGE,
+    DEFAULTTRIGGEREDMACROMESSAGE,
+  ].indexOf(input) !== -1;
 
 const handleDefaultMessage = (input) => {
   if (typeof input === 'undefined') {
     return '';
   }
-  return  isDefaultMessage(input) ? '' : input;
+  return isDefaultMessage(input) ? '' : input;
 };
 
 const arrayToMap = (stages) => {
   let map = {};
-  stages.forEach(stage => {
+  stages.forEach((stage) => {
     let properties = stage.properties;
 
     map[stage.id] = {
-      properties
+      properties,
     };
   });
   return map;
 };
 
-const getUpdatedMapping = (state, {key, value, type}, oldValue) => {
+const getUpdatedMapping = (state, { key, value, type }, oldValue) => {
   let argsMapping = [...state.argsMapping];
   let existingMap = {};
 
   // This means one macro is changed as something else. Remove the existing map. That becomes invalid now.
   if (oldValue !== value) {
-    argsMapping = argsMapping.filter(arg => arg.value !== oldValue);
+    argsMapping = argsMapping.filter((arg) => arg.value !== oldValue);
   }
 
   if (isDefaultMessage(value) || isDefaultMessage(key) || !value || !key) {
-    argsMapping = argsMapping.filter(arg => arg.value !== oldValue);
+    argsMapping = argsMapping.filter((arg) => arg.value !== oldValue);
     return argsMapping;
   }
   // This means we have a valid key and value. Either update or insert the new one.
-  existingMap = findIndex(argsMapping, arg => arg.value === value);
+  existingMap = findIndex(argsMapping, (arg) => arg.value === value);
   if (existingMap !== -1) {
     argsMapping[existingMap].key = key;
   } else {
     existingMap = {
       key: handleDefaultMessage(key),
       value: handleDefaultMessage(value),
-      type
+      type,
     };
     argsMapping.push(existingMap);
   }
@@ -121,32 +129,36 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
           macros: action.payload.macros,
           configStages: action.payload.configStages,
           configStagesMap: arrayToMap(action.payload.configStages),
-          id: action.payload.id
-        }
+          id: action.payload.id,
+        },
       });
     case SCHEDULERUNTIMEARGSACTIONS.SETTRIGGEREDPIPELINEINFO:
       return Object.assign({}, state, {
         triggeredPipelineInfo: {
           macros: action.payload.macros,
           unMappedMacros: action.payload.macros,
-          id: action.payload.id
-        }
+          id: action.payload.id,
+        },
       });
     case SCHEDULERUNTIMEARGSACTIONS.SETARGSVALUE: {
-      let argsMapping = getUpdatedMapping(state, {
-        key: action.payload.mappingKey,
-        value: action.payload.mappingValue,
-        type: action.payload.type
-      }, action.payload.oldMappedValue);
+      let argsMapping = getUpdatedMapping(
+        state,
+        {
+          key: action.payload.mappingKey,
+          value: action.payload.mappingValue,
+          type: action.payload.type,
+        },
+        action.payload.oldMappedValue
+      );
 
       let returnObj = Object.assign({}, state, {
         argsMapping,
         triggeredPipelineInfo: Object.assign({}, state.triggeredPipelineInfo, {
-          unMappedMacros: action.payload.mappingKey && action.payload.mappingValue ?
-            difference(state.triggeredPipelineInfo.macros, argsMapping.map(arg => arg.value))
-            :
-            state.triggeredPipelineInfo.unMappedMacros
-        })
+          unMappedMacros:
+            action.payload.mappingKey && action.payload.mappingValue
+              ? difference(state.triggeredPipelineInfo.macros, argsMapping.map((arg) => arg.value))
+              : state.triggeredPipelineInfo.unMappedMacros,
+        }),
       });
 
       return returnObj;
@@ -154,11 +166,11 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
     case SCHEDULERUNTIMEARGSACTIONS.BULKSETARGSVALUE:
       return {
         ...state,
-        argsMapping: action.payload.argsArray
+        argsMapping: action.payload.argsArray,
       };
     case SCHEDULERUNTIMEARGSACTIONS.SETDISABLED:
       return Object.assign({}, state, {
-        disabled: true
+        disabled: true,
       });
     case SCHEDULERUNTIMEARGSACTIONS.RESET:
       return DEFAULTARGS;
@@ -167,16 +179,16 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
         ...state,
         stageWidgetJsonMap: {
           ...state.stageWidgetJsonMap,
-          [action.payload.stageid]: action.payload.stageWidgetJson || {}
-        }
+          [action.payload.stageid]: action.payload.stageWidgetJson || {},
+        },
       };
     case SCHEDULERUNTIMEARGSACTIONS.SETSELECTEDPROFILE:
       return {
         ...state,
         selectedProfile: {
           name: action.payload.selectedProfile,
-          profileCustomizations: action.payload.customizations
-        }
+          profileCustomizations: action.payload.customizations,
+        },
       };
     default:
       return state;
@@ -185,10 +197,10 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
 
 let ScheduleRuntimeArgsStore = createStore(
   combineReducers({
-    args
+    args,
   }),
   {
-    args: DEFAULTARGS
+    args: DEFAULTARGS,
   },
   composeEnhancers('ScheduleRuntimeArgsStore')()
 );
@@ -199,5 +211,5 @@ export {
   DEFAULTSTAGEMESSAGE,
   DEFAULTPROPERTYMESSAGE,
   DEFAULTTRIGGEREDMACROMESSAGE,
-  DEFAULTFIELDDELIMITER
+  DEFAULTFIELDDELIMITER,
 };

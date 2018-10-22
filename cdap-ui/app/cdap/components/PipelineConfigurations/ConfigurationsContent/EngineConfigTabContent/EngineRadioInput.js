@@ -14,15 +14,15 @@
  * the License.
 */
 
-import {connect} from 'react-redux';
-import {Input} from 'reactstrap';
-import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import { connect } from 'react-redux';
+import { Input } from 'reactstrap';
+import { ACTIONS as PipelineConfigurationsActions } from 'components/PipelineConfigurations/Store';
 
 const mapStateToProps = (state, ownProps) => {
   return {
     type: 'radio',
     checked: state.engine === ownProps.value,
-    value: ownProps.value
+    value: ownProps.value,
   };
 };
 
@@ -31,12 +31,15 @@ const mapDispatchToProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_ENGINE,
-        payload: { engine: e.target.value }
+        payload: { engine: e.target.value },
       });
-    }
+    },
   };
 };
 
-const EngineRadioInput = connect(mapStateToProps, mapDispatchToProps)(Input);
+const EngineRadioInput = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Input);
 
 export default EngineRadioInput;

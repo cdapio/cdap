@@ -15,7 +15,7 @@
  */
 
 import thunk from 'redux-thunk';
-import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
+import { combineReducers, createStore, applyMiddleware, compose } from 'redux';
 import ExploreTablesActions from 'services/ExploreTables/ExploreTablesActions';
 import uuidV4 from 'uuid/v4';
 import findIndex from 'lodash/findIndex';
@@ -23,11 +23,11 @@ import findIndex from 'lodash/findIndex';
 const defaultAction = {
   type: '',
   payload: {},
-  uniqueId: uuidV4()
+  uniqueId: uuidV4(),
 };
 
 const defaultInitialState = {
-  tables: []
+  tables: [],
 };
 
 /*
@@ -50,23 +50,27 @@ const defaultInitialState = {
 const tables = (state = defaultInitialState.tables, action = defaultAction) => {
   switch (action.type) {
     case ExploreTablesActions.SET_TABLES: {
-      let datasetsSpec = action.payload
-        .datasetsSpec
-        .filter(dSpec => dSpec.properties['explore.database.name'] || dSpec.properties['explore.table.name'])
-        .map(dSpec => {
+      let datasetsSpec = action.payload.datasetsSpec
+        .filter(
+          (dSpec) =>
+            dSpec.properties['explore.database.name'] || dSpec.properties['explore.table.name']
+        )
+        .map((dSpec) => {
           return {
             datasetName: dSpec.name,
             database: dSpec.properties['explore.database.name'] || 'default',
-            table: dSpec.properties['explore.table.name'] || ''
+            table: dSpec.properties['explore.table.name'] || '',
           };
         });
       let exploreTables = action.payload.exploreTables;
-      let tables = exploreTables.map(tb => {
+      let tables = exploreTables.map((tb) => {
         let tableIndex = tb.table.indexOf('_');
         let dbIndex = tb.database.indexOf('_');
-        let matchingSpec = datasetsSpec.find(dspec => {
-          let isSameTable = dspec.table === (tableIndex !== -1 ? tb.table.slice(tableIndex) : tb.table);
-          let isSameDB = dspec.database === (dbIndex !== -1 ? tb.database.slice(dbIndex) : tb.table);
+        let matchingSpec = datasetsSpec.find((dspec) => {
+          let isSameTable =
+            dspec.table === (tableIndex !== -1 ? tb.table.slice(tableIndex) : tb.table);
+          let isSameDB =
+            dspec.database === (dbIndex !== -1 ? tb.database.slice(dbIndex) : tb.table);
           return isSameTable || isSameDB;
         });
         if (matchingSpec) {
@@ -74,7 +78,7 @@ const tables = (state = defaultInitialState.tables, action = defaultAction) => {
           datasetsSpec.splice(matchingSpecIndex, 1);
           return {
             table: matchingSpec.table || tb.table,
-            database: matchingSpec.database || tb.database
+            database: matchingSpec.database || tb.database,
           };
         }
         return tb;
@@ -82,7 +86,7 @@ const tables = (state = defaultInitialState.tables, action = defaultAction) => {
       if (datasetsSpec.length) {
         tables = [...tables, ...datasetsSpec];
       }
-      return [...tables || []];
+      return [...(tables || [])];
     }
     default:
       return state;
@@ -92,12 +96,10 @@ const tables = (state = defaultInitialState.tables, action = defaultAction) => {
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const ExploreTablesStore = createStore(
   combineReducers({
-    tables
+    tables,
   }),
   defaultInitialState,
-  composeEnhancers(
-    applyMiddleware(thunk)
-  )
+  composeEnhancers(applyMiddleware(thunk))
 );
 
 export default ExploreTablesStore;

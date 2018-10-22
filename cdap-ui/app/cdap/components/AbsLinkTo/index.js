@@ -18,12 +18,9 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 
-export default function AbsLinkTo({context, linkLabel, className, children}) {
+export default function AbsLinkTo({ context, linkLabel, className, children }) {
   return (
-    <a
-      href={window.getAbsUIUrl(context)}
-      className={className}
-    >
+    <a href={window.getAbsUIUrl(context)} className={className}>
       {linkLabel ? linkLabel : children}
     </a>
   );
@@ -36,9 +33,9 @@ AbsLinkTo.propTypes = {
     appId: PropTypes.string,
     entityId: PropTypes.string,
     entityType: PropTypes.string,
-    runId: PropTypes.string
+    runId: PropTypes.string,
   }),
   linkLabel: PropTypes.string,
   className: PropTypes.any,
-  children: PropTypes.node
+  children: PropTypes.node,
 };

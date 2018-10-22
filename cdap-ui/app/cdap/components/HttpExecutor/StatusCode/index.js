@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import classnames from 'classnames';
 import T from 'i18n-react';
 
@@ -25,21 +25,21 @@ const PREFIX = 'features.HttpExecutor';
 
 const mapStateToProps = (state) => {
   return {
-    code: state.http.statusCode
+    code: state.http.statusCode,
   };
 };
 
-function StatusCodeView({code}) {
+function StatusCodeView({ code }) {
   return (
     <div className="status-code">
-      <div className="status-title">
-        {T.translate(`${PREFIX}.statusCode`)}
-      </div>
+      <div className="status-title">{T.translate(`${PREFIX}.statusCode`)}</div>
 
-      <div className={classnames('code', {
-        'text-success': code < 300,
-        'text-danger': code !== null && code >= 300
-      })}>
+      <div
+        className={classnames('code', {
+          'text-success': code < 300,
+          'text-danger': code !== null && code >= 300,
+        })}
+      >
         {code}
       </div>
     </div>
@@ -47,11 +47,9 @@ function StatusCodeView({code}) {
 }
 
 StatusCodeView.propTypes = {
-  code: PropTypes.number
+  code: PropTypes.number,
 };
 
-const StatusCode = connect(
-  mapStateToProps
-)(StatusCodeView);
+const StatusCode = connect(mapStateToProps)(StatusCodeView);
 
 export default StatusCode;

@@ -20,23 +20,23 @@ import React from 'react';
 import PropertiesEditor from 'components/PropertiesEditor';
 import T from 'i18n-react';
 
-export default function PropertiesTab({entity}) {
+export default function PropertiesTab({ entity }) {
   return (
     <div className="properties-container">
       <div className="message-section">
         <strong>
-          {T.translate('features.DetailView.PropertiesTab.title', { entityType: 'application', entityId: entity.name })}
+          {T.translate('features.DetailView.PropertiesTab.title', {
+            entityType: 'application',
+            entityId: entity.name,
+          })}
         </strong>
       </div>
 
-      <PropertiesEditor
-        entityType="apps"
-        entityId={entity.name}
-      />
+      <PropertiesEditor entityType="apps" entityId={entity.name} />
     </div>
   );
 }
 
 PropertiesTab.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
 };

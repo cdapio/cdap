@@ -16,7 +16,7 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import SaveModal from 'components/Reports/ReportsDetail/SaveButton/SaveModal';
 import T from 'i18n-react';
 
@@ -28,40 +28,37 @@ class SaveButtonView extends Component {
   static propTypes = {
     expiry: PropTypes.number,
     name: PropTypes.string,
-    reportId: PropTypes.string
+    reportId: PropTypes.string,
   };
 
   state = {
-    showModal: false
+    showModal: false,
   };
 
   toggleModal = () => {
     this.setState({
-      showModal: !this.state.showModal
+      showModal: !this.state.showModal,
     });
   };
 
   renderModal = () => {
-    if (!this.state.showModal) { return null; }
+    if (!this.state.showModal) {
+      return null;
+    }
 
     return (
-      <SaveModal
-        name={this.props.name}
-        toggle={this.toggleModal}
-        reportId={this.props.reportId}
-      />
+      <SaveModal name={this.props.name} toggle={this.toggleModal} reportId={this.props.reportId} />
     );
-  }
+  };
 
   render() {
-    if (!this.props.expiry) { return null; }
+    if (!this.props.expiry) {
+      return null;
+    }
 
     return (
       <span>
-        <button
-          className="btn btn-primary"
-          onClick={this.toggleModal}
-        >
+        <button className="btn btn-primary" onClick={this.toggleModal}>
           {T.translate(`${PREFIX}.saveReport`)}
         </button>
 
@@ -75,12 +72,10 @@ const mapStateToProps = (state) => {
   return {
     expiry: state.details.expiry,
     name: state.details.name,
-    reportId: state.details.reportId
+    reportId: state.details.reportId,
   };
 };
 
-const SaveButton = connect(
-  mapStateToProps
-)(SaveButtonView);
+const SaveButton = connect(mapStateToProps)(SaveButtonView);
 
 export default SaveButton;

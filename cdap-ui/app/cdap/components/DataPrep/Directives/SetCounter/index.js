@@ -21,9 +21,9 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {setPopoverOffset} from 'components/DataPrep/helper';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
-import {preventPropagation} from 'services/helpers';
+import { setPopoverOffset } from 'components/DataPrep/helper';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
+import { preventPropagation } from 'services/helpers';
 import Mousetrap from 'mousetrap';
 
 require('./SetCounter.scss');
@@ -38,17 +38,13 @@ export default class SetCounterDirective extends Component {
       selectedCondition: 'ALWAYS',
       ifCondition: '',
       variableName: '',
-      incrementBy: 1
+      incrementBy: 1,
     };
 
     this.applyDirective = this.applyDirective.bind(this);
 
-    this.conditions = [
-      'ALWAYS',
-      'IFCONDITION'
-    ];
+    this.conditions = ['ALWAYS', 'IFCONDITION'];
   }
-
 
   componentDidMount() {
     let directiveElem = document.getElementById('set-counter-directive');
@@ -71,7 +67,7 @@ export default class SetCounterDirective extends Component {
 
   handleStateValueChange(key, e) {
     this.setState({
-      [key]: e.target.value
+      [key]: e.target.value,
     });
   }
 
@@ -79,7 +75,9 @@ export default class SetCounterDirective extends Component {
     let variableName = this.state.variableName;
     let incrementBy = this.state.incrementBy;
 
-    if (!variableName || !incrementBy) { return; }
+    if (!variableName || !incrementBy) {
+      return;
+    }
 
     let expression = this.state.selectedCondition === 'ALWAYS' ? 'true' : this.state.ifCondition;
 
@@ -89,24 +87,28 @@ export default class SetCounterDirective extends Component {
   }
 
   execute(addDirective) {
-    execute(addDirective)
-      .subscribe(() => {
+    execute(addDirective).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   renderCustomCondition() {
-    if (this.state.selectedCondition !== 'IFCONDITION') { return null; }
+    if (this.state.selectedCondition !== 'IFCONDITION') {
+      return null;
+    }
 
     return (
       <textarea
@@ -126,18 +128,13 @@ export default class SetCounterDirective extends Component {
           value={this.state.selectedCondition}
           onChange={this.handleStateValueChange.bind(this, 'selectedCondition')}
         >
-          {
-            this.conditions.map((condition) => {
-              return (
-                <option
-                  key={condition}
-                  value={condition}
-                >
-                  {T.translate(`${PREFIX}.Conditions.${condition}`)}
-                </option>
-              );
-            })
-          }
+          {this.conditions.map((condition) => {
+            return (
+              <option key={condition} value={condition}>
+                {T.translate(`${PREFIX}.Conditions.${condition}`)}
+              </option>
+            );
+          })}
         </select>
 
         {this.renderCustomCondition()}
@@ -148,9 +145,7 @@ export default class SetCounterDirective extends Component {
   renderIncrementCounter() {
     return (
       <div>
-        <label className="control-label">
-          {T.translate(`${PREFIX}.incrementCounterLabel`)}
-        </label>
+        <label className="control-label">{T.translate(`${PREFIX}.incrementCounterLabel`)}</label>
 
         <input
           type="number"
@@ -165,9 +160,7 @@ export default class SetCounterDirective extends Component {
   renderVariableName() {
     return (
       <div>
-        <label className="control-label">
-          {T.translate(`${PREFIX}.variableNameLabel`)}
-        </label>
+        <label className="control-label">{T.translate(`${PREFIX}.variableNameLabel`)}</label>
 
         <input
           type="text"
@@ -181,15 +174,15 @@ export default class SetCounterDirective extends Component {
   }
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen) {
+      return null;
+    }
 
-    let disabled = this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0;
+    let disabled =
+      this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0;
 
     return (
-      <div
-        className="set-variable-detail second-level-popover"
-        onClick={preventPropagation}
-      >
+      <div className="set-variable-detail second-level-popover" onClick={preventPropagation}>
         {this.renderCondition()}
 
         {this.renderIncrementCounter()}
@@ -209,10 +202,7 @@ export default class SetCounterDirective extends Component {
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.props.close}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
@@ -225,7 +215,7 @@ export default class SetCounterDirective extends Component {
       <div
         id="set-counter-directive"
         className={classnames('set-counter-directive clearfix action-item', {
-          'active': this.state.isOpen
+          active: this.state.isOpen,
         })}
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
@@ -244,5 +234,5 @@ SetCounterDirective.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

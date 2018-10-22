@@ -14,30 +14,33 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import ApplicationUploadActions from 'services/WizardStores/ApplicationUpload/ApplicationUploadActions';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 const defaultState = {
   __complete: false,
   __skipped: false,
-  __error: false
+  __error: false,
 };
-const defaultUploadFileState = Object.assign({
-  file: ''
-}, defaultState);
+const defaultUploadFileState = Object.assign(
+  {
+    file: '',
+  },
+  defaultState
+);
 const defaultInitialState = {
-  uploadFile: defaultUploadFileState
+  uploadFile: defaultUploadFileState,
 };
 const uploadFile = (state = defaultUploadFileState, action = defaultAction) => {
   switch (action.type) {
     case ApplicationUploadActions.UPLOAD_JAR:
       return Object.assign({}, state, {
         file: action.payload.file,
-        __complete: true
+        __complete: true,
       });
     case ApplicationUploadActions.onReset:
       return defaultUploadFileState;
@@ -48,7 +51,7 @@ const uploadFile = (state = defaultUploadFileState, action = defaultAction) => {
 const ApplicationUploadStoreWrapper = () => {
   return createStore(
     combineReducers({
-      uploadFile
+      uploadFile,
     }),
     defaultInitialState
   );

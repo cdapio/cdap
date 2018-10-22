@@ -14,27 +14,30 @@
  * the License.
  */
 import React from 'react';
-import {connect, Provider} from 'react-redux';
-import {Col, FormGroup, Label, Form} from 'reactstrap';
+import { connect, Provider } from 'react-redux';
+import { Col, FormGroup, Label, Form } from 'reactstrap';
 import T from 'i18n-react';
 
 import SelectWithOptions from 'components/SelectWithOptions';
 import SimpleSchema from 'components/SimpleSchema';
-import CreateStreamStore, { defaultSchemaFormats } from 'services/WizardStores/CreateStream/CreateStreamStore';
+import CreateStreamStore, {
+  defaultSchemaFormats,
+} from 'services/WizardStores/CreateStream/CreateStreamStore';
 import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStreamActions';
 const mapStateToSchemaTypeProps = (state) => {
   return {
     value: state.schema.format,
-    options: defaultSchemaFormats
+    options: defaultSchemaFormats,
   };
 };
 
 const mapDispatchToSchemaTypeProps = (dispatch) => {
   return {
-    onChange: (e) => (dispatch({
-      type: CreateStreamActions.setSchemaFormat,
-      payload: { format: e.target.value}
-    }))
+    onChange: (e) =>
+      dispatch({
+        type: CreateStreamActions.setSchemaFormat,
+        payload: { format: e.target.value },
+      }),
   };
 };
 
@@ -43,19 +46,19 @@ const SchemaType = connect(
   mapDispatchToSchemaTypeProps
 )(SelectWithOptions);
 const SimpleSchemaWrapper = connect(
-  state => {
+  (state) => {
     return {
       schema: state.schema.value,
     };
   },
-  dispatch => {
+  (dispatch) => {
     return {
       onSchemaChange: (schema) => {
         dispatch({
           type: CreateStreamActions.setSchema,
-          payload: { schema }
+          payload: { schema },
         });
-      }
+      },
     };
   }
 )(SimpleSchema);
@@ -75,7 +78,7 @@ export default function SchemaStep() {
             <Label className="control-label">{T.translate('commons.formatLabel')}</Label>
           </Col>
           <Col xs="4">
-            <SchemaType className="input-sm"/>
+            <SchemaType className="input-sm" />
           </Col>
         </FormGroup>
         <FormGroup row>

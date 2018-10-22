@@ -26,7 +26,7 @@ const mapStateToArtifactNameProps = (state) => {
   return {
     value: state.configure.name,
     type: 'text',
-    placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.namePlaceholder')
+    placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.namePlaceholder'),
   };
 };
 const mapStateToArtifactDescriptionProps = (state) => {
@@ -34,14 +34,14 @@ const mapStateToArtifactDescriptionProps = (state) => {
     value: state.configure.description,
     type: 'textarea',
     rows: '7',
-    placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.descriptionPlaceholder')
+    placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.descriptionPlaceholder'),
   };
 };
 const mapStateToArtifactClassnameProps = (state) => {
   return {
     value: state.configure.classname,
     type: 'text',
-    placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.classnamePlaceholder')
+    placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.classnamePlaceholder'),
   };
 };
 const mapDispatchToArtifactNameProps = (dispatch) => {
@@ -49,25 +49,27 @@ const mapDispatchToArtifactNameProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: ArtifactUploadActions.setName,
-        payload: {name: e.target.value}
+        payload: { name: e.target.value },
       });
-    }
+    },
   };
 };
 const mapDispatchToArtifactDescriptionProps = (dispatch) => {
   return {
-    onChange: (e) => (dispatch({
-      type: ArtifactUploadActions.setDescription,
-      payload: {description: e.target.value}
-    }))
+    onChange: (e) =>
+      dispatch({
+        type: ArtifactUploadActions.setDescription,
+        payload: { description: e.target.value },
+      }),
   };
 };
 const mapDispatchToArtifactClassnameProps = (dispatch) => {
   return {
-    onChange: (e) => (dispatch({
-      type: ArtifactUploadActions.setClassname,
-      payload: {classname: e.target.value}
-    }))
+    onChange: (e) =>
+      dispatch({
+        type: ArtifactUploadActions.setClassname,
+        payload: { classname: e.target.value },
+      }),
   };
 };
 
@@ -96,33 +98,38 @@ export default function ConfigureStep() {
       >
         <FormGroup row>
           <Col xs="3">
-            <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.nameLabel')}</Label>
+            <Label className="control-label">
+              {T.translate('features.Wizard.ArtifactUpload.Step2.nameLabel')}
+            </Label>
           </Col>
           <Col xs="7">
             <InputArtifactName />
           </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left"/>
+          <i className="fa fa-asterisk text-danger float-xs-left" />
         </FormGroup>
 
         <FormGroup row>
           <Col xs="3">
-            <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.classnameLabel')}</Label>
+            <Label className="control-label">
+              {T.translate('features.Wizard.ArtifactUpload.Step2.classnameLabel')}
+            </Label>
           </Col>
           <Col xs="7">
             <InputArtifactClassname />
           </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left"/>
+          <i className="fa fa-asterisk text-danger float-xs-left" />
         </FormGroup>
 
         <FormGroup row>
           <Col xs="3">
-            <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.descriptionLabel')}</Label>
+            <Label className="control-label">
+              {T.translate('features.Wizard.ArtifactUpload.Step2.descriptionLabel')}
+            </Label>
           </Col>
           <Col xs="7">
             <InputArtifactDescription />
           </Col>
         </FormGroup>
-
       </Form>
     </Provider>
   );

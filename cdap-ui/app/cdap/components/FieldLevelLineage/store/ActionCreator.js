@@ -14,34 +14,34 @@
  * the License.
 */
 
-import {MyMetadataApi} from 'api/metadata';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import Store, {Actions, TIME_OPTIONS} from 'components/FieldLevelLineage/store/Store';
+import { MyMetadataApi } from 'api/metadata';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import Store, { Actions, TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 import debounce from 'lodash/debounce';
-import {parseQueryString} from 'services/helpers';
-import {Theme} from 'services/ThemeHelper';
+import { parseQueryString } from 'services/helpers';
+import { Theme } from 'services/ThemeHelper';
 
 const TIME_OPTIONS_MAP = {
   [TIME_OPTIONS[1]]: {
     start: 'now-7d',
-    end: 'now'
+    end: 'now',
   },
   [TIME_OPTIONS[2]]: {
     start: 'now-14d',
-    end: 'now'
+    end: 'now',
   },
   [TIME_OPTIONS[3]]: {
     start: 'now-30d',
-    end: 'now'
+    end: 'now',
   },
   [TIME_OPTIONS[4]]: {
     start: 'now-180d',
-    end: 'now'
+    end: 'now',
   },
   [TIME_OPTIONS[5]]: {
     start: 'now-365d',
-    end: 'now'
-  }
+    end: 'now',
+  },
 };
 
 function getTimeRange() {
@@ -51,7 +51,7 @@ function getTimeRange() {
   if (selection === TIME_OPTIONS[0]) {
     return {
       start: store.customTime.start || 'now-7d',
-      end: store.customTime.end || 'now'
+      end: store.customTime.end || 'now',
     };
   }
 
@@ -83,8 +83,8 @@ export function init(datasetId) {
     Store.dispatch({
       type: Actions.setTimeSelection,
       payload: {
-        timeSelection: queryParams.time
-      }
+        timeSelection: queryParams.time,
+      },
     });
 
     timeObj = TIME_OPTIONS_MAP[queryParams.time];
@@ -93,15 +93,15 @@ export function init(datasetId) {
   if (queryParams.time === TIME_OPTIONS[0]) {
     timeObj = {
       start: parseInt(queryParams.start, 10),
-      end: parseInt(queryParams.end, 10)
+      end: parseInt(queryParams.end, 10),
     };
 
     Store.dispatch({
       type: Actions.setCustomTime,
       payload: {
         start: timeObj.start,
-        end: timeObj.end
-      }
+        end: timeObj.end,
+      },
     });
   }
 
@@ -110,32 +110,31 @@ export function init(datasetId) {
     entityId: datasetId,
     start: timeObj.start,
     end: timeObj.end,
-    includeCurrent: true
+    includeCurrent: true,
   };
 
-  MyMetadataApi.getFields(params)
-    .subscribe((fields) => {
-      Store.dispatch({
-        type: Actions.setFields,
-        payload: {
-          datasetId,
-          fields
-        }
-      });
-
-      if (queryParams.field) {
-        getLineageSummary(queryParams.field);
-        return;
-      }
-
-      // If there is no query parameter for selected field, choose first field that have lineage
-      getFirstFieldLineage(fields);
+  MyMetadataApi.getFields(params).subscribe((fields) => {
+    Store.dispatch({
+      type: Actions.setFields,
+      payload: {
+        datasetId,
+        fields,
+      },
     });
+
+    if (queryParams.field) {
+      getLineageSummary(queryParams.field);
+      return;
+    }
+
+    // If there is no query parameter for selected field, choose first field that have lineage
+    getFirstFieldLineage(fields);
+  });
 }
 
 export function getFields(datasetId, prefix, start = 'now-7d', end = 'now') {
   Store.dispatch({
-    type: Actions.closeSummary
+    type: Actions.closeSummary,
   });
 
   const namespace = getCurrentNamespace();
@@ -145,31 +144,30 @@ export function getFields(datasetId, prefix, start = 'now-7d', end = 'now') {
     entityId: datasetId,
     start,
     end,
-    includeCurrent: true
+    includeCurrent: true,
   };
 
   if (prefix && prefix.length > 0) {
     params.prefix = prefix;
   }
 
-  MyMetadataApi.getFields(params)
-    .subscribe((res) => {
-      Store.dispatch({
-        type: Actions.setFields,
-        payload: {
-          datasetId,
-          fields: res
-        }
-      });
-
-      getFirstFieldLineage(res);
+  MyMetadataApi.getFields(params).subscribe((res) => {
+    Store.dispatch({
+      type: Actions.setFields,
+      payload: {
+        datasetId,
+        fields: res,
+      },
     });
+
+    getFirstFieldLineage(res);
+  });
 }
 
 export function getLineageSummary(fieldName) {
   const namespace = getCurrentNamespace();
   const datasetId = Store.getState().lineage.datasetId;
-  const {start, end} = getTimeRange();
+  const { start, end } = getTimeRange();
 
   const params = {
     namespace,
@@ -177,22 +175,21 @@ export function getLineageSummary(fieldName) {
     fieldName,
     direction: 'both',
     start,
-    end
+    end,
   };
 
-  MyMetadataApi.getFieldLineage(params)
-    .subscribe((res) => {
-      Store.dispatch({
-        type: Actions.setLineageSummary,
-        payload: {
-          incoming: res.incoming,
-          outgoing: res.outgoing,
-          activeField: fieldName
-        }
-      });
-
-      replaceHistory();
+  MyMetadataApi.getFieldLineage(params).subscribe((res) => {
+    Store.dispatch({
+      type: Actions.setLineageSummary,
+      payload: {
+        incoming: res.incoming,
+        outgoing: res.outgoing,
+        activeField: fieldName,
+      },
     });
+
+    replaceHistory();
+  });
 }
 
 const debouncedGetFields = debounce(getFields, 500);
@@ -204,8 +201,8 @@ export function search(e) {
   Store.dispatch({
     type: Actions.setSearch,
     payload: {
-      search: searchText
-    }
+      search: searchText,
+    },
   });
 
   debouncedGetFields(datasetId, searchText);
@@ -213,14 +210,14 @@ export function search(e) {
 
 export function getOperations(direction) {
   Store.dispatch({
-    type: Actions.operationsLoading
+    type: Actions.operationsLoading,
   });
 
   const state = Store.getState().lineage;
   const entityId = state.datasetId;
   const fieldName = state.activeField;
   const namespace = getCurrentNamespace();
-  const {start, end} = getTimeRange();
+  const { start, end } = getTimeRange();
 
   const params = {
     namespace,
@@ -228,28 +225,27 @@ export function getOperations(direction) {
     fieldName,
     start,
     end,
-    direction
+    direction,
   };
 
-  MyMetadataApi.getFieldOperations(params)
-    .subscribe((res) => {
-      Store.dispatch({
-        type: Actions.setOperations,
-        payload: {
-          operations: res[direction],
-          direction
-        }
-      });
+  MyMetadataApi.getFieldOperations(params).subscribe((res) => {
+    Store.dispatch({
+      type: Actions.setOperations,
+      payload: {
+        operations: res[direction],
+        direction,
+      },
     });
+  });
 }
 
-export function setCustomTimeRange({start, end}) {
+export function setCustomTimeRange({ start, end }) {
   Store.dispatch({
     type: Actions.setCustomTime,
     payload: {
       start,
-      end
-    }
+      end,
+    },
   });
 
   const state = Store.getState().lineage;
@@ -260,18 +256,22 @@ export function setCustomTimeRange({start, end}) {
 }
 
 export function setTimeRange(option) {
-  if (TIME_OPTIONS.indexOf(option) === -1) { return; }
+  if (TIME_OPTIONS.indexOf(option) === -1) {
+    return;
+  }
 
   Store.dispatch({
     type: Actions.setTimeSelection,
     payload: {
-      timeSelection: option
-    }
+      timeSelection: option,
+    },
   });
 
-  if (option === TIME_OPTIONS[0]) { return; }
+  if (option === TIME_OPTIONS[0]) {
+    return;
+  }
 
-  const {start, end} = TIME_OPTIONS_MAP[option];
+  const { start, end } = TIME_OPTIONS_MAP[option];
   const state = Store.getState().lineage;
 
   getFields(state.datasetId, state.search, start, end);
@@ -295,11 +295,13 @@ export function replaceHistory() {
   const url = constructQueryParamsURL();
   const currentLocation = location.pathname + location.search;
 
-  if (url === currentLocation) { return; }
+  if (url === currentLocation) {
+    return;
+  }
 
   const stateObj = {
     title: Theme.productName,
-    url
+    url,
   };
 
   // This timeout is to make sure rendering by store update is finished before changing the state.

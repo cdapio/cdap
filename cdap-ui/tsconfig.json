@@ -15,11 +15,21 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "components/*": ["./app/cdap/components/*"],
-      "services/*": ["./app/cdap/services/*"],
-      "api/*": ["./app/cdap/api/*"],
-      "lib/*": ["./app/cdap/lib/*"],
-      "styles/*": ["./app/cdap/styles/*"]
+      "components/*": [
+        "./app/cdap/components/*"
+      ],
+      "services/*": [
+        "./app/cdap/services/*"
+      ],
+      "api/*": [
+        "./app/cdap/api/*"
+      ],
+      "lib/*": [
+        "./app/cdap/lib/*"
+      ],
+      "styles/*": [
+        "./app/cdap/styles/*"
+      ]
     }
   },
   "include": [
@@ -29,6 +39,7 @@
     "app/cdap/**/*.tsx",
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "server/**/*.js"
   ]
 }

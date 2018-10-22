@@ -14,20 +14,22 @@
  * the License.
  */
 
-import {setActiveBrowser, setError} from './commons';
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import { setActiveBrowser, setError } from './commons';
+import DataPrepBrowserStore, {
+  Actions as BrowserStoreActions,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 const setS3AsActiveBrowser = (payload) => {
-  let {s3, activeBrowser} = DataPrepBrowserStore.getState();
+  let { s3, activeBrowser } = DataPrepBrowserStore.getState();
 
   if (activeBrowser.name !== payload.name) {
     setActiveBrowser(payload);
   }
 
-  let {id: connectionId, path} = payload;
+  let { id: connectionId, path } = payload;
 
   if (s3.connectionId === connectionId) {
     if (path && path !== s3.prefix) {
@@ -39,93 +41,87 @@ const setS3AsActiveBrowser = (payload) => {
   let namespace = NamespaceStore.getState().selectedNamespace;
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_S3_CONNECTION_ID,
     payload: {
-      connectionId
-    }
+      connectionId,
+    },
   });
   setS3Loading();
-  MyDataPrepApi.getConnection(params)
-    .subscribe((res) => {
+  MyDataPrepApi.getConnection(params).subscribe(
+    (res) => {
       let info = objectQuery(res, 'values', 0);
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_S3_CONNECTION_DETAILS,
         payload: {
           info,
-          connectionId
-        }
+          connectionId,
+        },
       });
       if (path) {
         setPrefix(path);
       } else {
         fetchBucketDetails();
       }
-    }, (err) => {
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const setPrefix = (prefix) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_S3_PREFIX,
     payload: {
-      prefix
-    }
+      prefix,
+    },
   });
   fetchBucketDetails(prefix);
 };
 
 const fetchBucketDetails = (path = '') => {
-  let { connectionId, loading} = DataPrepBrowserStore.getState().s3;
+  let { connectionId, loading } = DataPrepBrowserStore.getState().s3;
   if (!loading) {
     setS3Loading();
   }
-  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  let { selectedNamespace: namespace } = NamespaceStore.getState();
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
   if (path) {
-    params = {...params, path};
+    params = { ...params, path };
   }
-  MyDataPrepApi
-    .exploreBucketDetails(params)
-    .subscribe(
-      (res) => {
-        DataPrepBrowserStore.dispatch({
-          type: BrowserStoreActions.SET_S3_ACTIVE_BUCKET_DETAILS,
-          payload: {
-            activeBucketDetails: res.values,
-            truncated: res.truncated === 'true' || false
-          }
-        });
-      },
-      (err) => {
-        setError(err);
-      }
-    );
+  MyDataPrepApi.exploreBucketDetails(params).subscribe(
+    (res) => {
+      DataPrepBrowserStore.dispatch({
+        type: BrowserStoreActions.SET_S3_ACTIVE_BUCKET_DETAILS,
+        payload: {
+          activeBucketDetails: res.values,
+          truncated: res.truncated === 'true' || false,
+        },
+      });
+    },
+    (err) => {
+      setError(err);
+    }
+  );
 };
 
 const setS3Loading = () => {
   DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_S3_LOADING
+    type: BrowserStoreActions.SET_S3_LOADING,
   });
 };
 
 const setS3Search = (search) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_S3_SEARCH,
-    payload: {search}
+    payload: { search },
   });
 };
 
-export {
-  setS3AsActiveBrowser,
-  setPrefix,
-  fetchBucketDetails,
-  setS3Loading,
-  setS3Search
-};
+export { setS3AsActiveBrowser, setPrefix, fetchBucketDetails, setS3Loading, setS3Search };

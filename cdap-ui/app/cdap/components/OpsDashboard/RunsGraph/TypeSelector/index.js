@@ -17,30 +17,31 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {connect} from 'react-redux';
-import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
+import { connect } from 'react-redux';
+import { DashboardActions } from 'components/OpsDashboard/store/DashboardStore';
 import T from 'i18n-react';
 require('./TypeSelector.scss');
 
 const PREFIX = 'features.OpsDashboard.RunsGraph.TypeSelector';
 
-function TypeSelectorView({togglePipeline, toggleCustomApp, pipeline, customApp, pipelineCount, customAppCount}) {
+function TypeSelectorView({
+  togglePipeline,
+  toggleCustomApp,
+  pipeline,
+  customApp,
+  pipelineCount,
+  customAppCount,
+}) {
   return (
     <div className="type-selector">
-      <div
-        className="type-item"
-        onClick={togglePipeline}
-      >
+      <div className="type-item" onClick={togglePipeline}>
         <IconSVG name={pipeline ? 'icon-check-square' : 'icon-square-o'} />
-        <span>{T.translate(`${PREFIX}.pipelinesWithCount`, {count: pipelineCount})}</span>
+        <span>{T.translate(`${PREFIX}.pipelinesWithCount`, { count: pipelineCount })}</span>
       </div>
 
-      <div
-        className="type-item"
-        onClick={toggleCustomApp}
-      >
+      <div className="type-item" onClick={toggleCustomApp}>
         <IconSVG name={customApp ? 'icon-check-square' : 'icon-square-o'} />
-        <span>{T.translate(`${PREFIX}.customAppsWithCount`, {count: customAppCount})}</span>
+        <span>{T.translate(`${PREFIX}.customAppsWithCount`, { count: customAppCount })}</span>
       </div>
     </div>
   );
@@ -52,7 +53,7 @@ TypeSelectorView.propTypes = {
   pipeline: PropTypes.bool,
   customApp: PropTypes.bool,
   pipelineCount: PropTypes.number,
-  customAppCount: PropTypes.number
+  customAppCount: PropTypes.number,
 };
 
 const mapStateToProps = (state) => {
@@ -60,7 +61,7 @@ const mapStateToProps = (state) => {
     pipeline: state.dashboard.pipeline,
     customApp: state.dashboard.customApp,
     pipelineCount: state.dashboard.pipelineCount,
-    customAppCount: state.dashboard.customAppCount
+    customAppCount: state.dashboard.customAppCount,
   };
 };
 
@@ -68,14 +69,14 @@ const mapDispatch = (dispatch) => {
   return {
     togglePipeline: () => {
       dispatch({
-        type: DashboardActions.togglePipeline
+        type: DashboardActions.togglePipeline,
       });
     },
     toggleCustomApp: () => {
       dispatch({
-        type: DashboardActions.toggleCustomApp
+        type: DashboardActions.toggleCustomApp,
       });
-    }
+    },
   };
 };
 

@@ -18,8 +18,8 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import NamespaceStore from 'services/NamespaceStore';
-import {changeNamespace} from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
-import {connect} from 'react-redux';
+import { changeNamespace } from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
+import { connect } from 'react-redux';
 import PipelineTriggersActions from 'components/PipelineTriggers/store/PipelineTriggersActions';
 import PipelineTriggersRow from 'components/PipelineTriggers/PipelineListTab/PipelineTriggersRow';
 import T from 'i18n-react';
@@ -34,7 +34,7 @@ const mapStateToProps = (state) => {
     pipelineList: state.triggers.pipelineList,
     selectedNamespace: state.triggers.selectedNamespace,
     pipelineName: state.triggers.pipelineName,
-    expandedPipeline: state.triggers.expandedPipeline
+    expandedPipeline: state.triggers.expandedPipeline,
   };
 };
 
@@ -43,18 +43,24 @@ const mapDispatch = (dispatch) => {
     toggleExpandPipeline: (pipeline) => {
       dispatch({
         type: PipelineTriggersActions.setExpandedPipeline,
-        payload: { expandedPipeline : pipeline }
+        payload: { expandedPipeline: pipeline },
       });
-    }
+    },
   };
 };
 
-function PipelineListTabView({pipelineList, pipelineName, selectedNamespace, expandedPipeline, toggleExpandPipeline}) {
+function PipelineListTabView({
+  pipelineList,
+  pipelineName,
+  selectedNamespace,
+  expandedPipeline,
+  toggleExpandPipeline,
+}) {
   let namespaceList = NamespaceStore.getState().namespaces;
-  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  let { selectedNamespace: namespace } = NamespaceStore.getState();
   let triggeredPipelineInfo = {
     id: pipelineName,
-    namespace
+    namespace,
   };
   function changeNamespaceEvent(e) {
     changeNamespace(e.target.value);
@@ -63,7 +69,7 @@ function PipelineListTabView({pipelineList, pipelineName, selectedNamespace, exp
   return (
     <div className="pipeline-list-tab">
       <div className="pipeline-trigger-header">
-        {T.translate(`${PREFIX}.title`, {pipelineName})}
+        {T.translate(`${PREFIX}.title`, { pipelineName })}
       </div>
 
       <div className="namespace-selector">
@@ -75,61 +81,47 @@ function PipelineListTabView({pipelineList, pipelineName, selectedNamespace, exp
             value={selectedNamespace}
             onChange={changeNamespaceEvent}
           >
-            {
-              namespaceList.map((namespace) => {
-                return (
-                  <option
-                    value={namespace.name}
-                    key={namespace.name}
-                  >
-                    {namespace.name}
-                  </option>
-                );
-              })
-            }
+            {namespaceList.map((namespace) => {
+              return (
+                <option value={namespace.name} key={namespace.name}>
+                  {namespace.name}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>
 
       <div className="pipeline-count">
-        {T.translate(`${PREFIX}.pipelineCount`, {count: pipelineList.length})}
+        {T.translate(`${PREFIX}.pipelineCount`, { count: pipelineList.length })}
       </div>
 
-      {
-        pipelineList.length === 0 ?
-          null
-        :
-          (
-            <div className="pipeline-list">
-              <div className="pipeline-list-header">
-                <div className="caret-container"></div>
-                <div className="pipeline-name">
-                  {T.translate(`${TRIGGER_PREFIX}.pipelineName`)}
-                </div>
-              </div>
-              {
-                pipelineList.map((pipeline) => {
-                  let triggeringPipelineInfo = {
-                    id: pipeline.name,
-                    namespace: selectedNamespace,
-                    description: pipeline.description
-                  };
-                  return (
-                    <PipelineTriggersRow
-                      key={pipeline.name}
-                      pipelineRow={pipeline.name}
-                      isExpanded={expandedPipeline === pipeline.name}
-                      onToggle={toggleExpandPipeline}
-                      triggeringPipelineInfo={triggeringPipelineInfo}
-                      triggeredPipelineInfo={triggeredPipelineInfo}
-                      selectedNamespace={selectedNamespace}
-                    />
-                  );
-                })
-              }
-            </div>
-          )
-      }
+      {pipelineList.length === 0 ? null : (
+        <div className="pipeline-list">
+          <div className="pipeline-list-header">
+            <div className="caret-container" />
+            <div className="pipeline-name">{T.translate(`${TRIGGER_PREFIX}.pipelineName`)}</div>
+          </div>
+          {pipelineList.map((pipeline) => {
+            let triggeringPipelineInfo = {
+              id: pipeline.name,
+              namespace: selectedNamespace,
+              description: pipeline.description,
+            };
+            return (
+              <PipelineTriggersRow
+                key={pipeline.name}
+                pipelineRow={pipeline.name}
+                isExpanded={expandedPipeline === pipeline.name}
+                onToggle={toggleExpandPipeline}
+                triggeringPipelineInfo={triggeringPipelineInfo}
+                triggeredPipelineInfo={triggeredPipelineInfo}
+                selectedNamespace={selectedNamespace}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -139,7 +131,7 @@ PipelineListTabView.propTypes = {
   selectedNamespace: PropTypes.string,
   pipelineName: PropTypes.string,
   expandedPipeline: PropTypes.string,
-  toggleExpandPipeline: PropTypes.bool
+  toggleExpandPipeline: PropTypes.bool,
 };
 
 const PipelineListTab = connect(

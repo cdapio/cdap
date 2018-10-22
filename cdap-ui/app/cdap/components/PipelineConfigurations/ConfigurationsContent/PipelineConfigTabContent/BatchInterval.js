@@ -15,9 +15,13 @@
 */
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {BATCH_INTERVAL_RANGE, BATCH_INTERVAL_UNITS, ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import {
+  BATCH_INTERVAL_RANGE,
+  BATCH_INTERVAL_UNITS,
+  ACTIONS as PipelineConfigurationsActions,
+} from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
@@ -25,7 +29,7 @@ const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 const mapStateToSelectBatchIntervalRangeProps = (state) => {
   return {
     value: state.batchInterval.slice(0, -1),
-    options: BATCH_INTERVAL_RANGE
+    options: BATCH_INTERVAL_RANGE,
   };
 };
 const mapDispatchToSelectBatchIntervalRangeProps = (dispatch) => {
@@ -33,9 +37,9 @@ const mapDispatchToSelectBatchIntervalRangeProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_BATCH_INTERVAL_RANGE,
-        payload: { batchIntervalRange: e.target.value }
+        payload: { batchIntervalRange: e.target.value },
       });
-    }
+    },
   };
 };
 
@@ -47,7 +51,7 @@ const SelectBatchIntervalRange = connect(
 const mapStateToSelectBatchIntervalUnitProps = (state) => {
   return {
     value: state.batchInterval.slice(-1),
-    options: BATCH_INTERVAL_UNITS
+    options: BATCH_INTERVAL_UNITS,
   };
 };
 const mapDispatchToSelectBatchIntervalUnitProps = (dispatch) => {
@@ -55,9 +59,9 @@ const mapDispatchToSelectBatchIntervalUnitProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_BATCH_INTERVAL_UNIT,
-        payload: { batchIntervalUnit: e.target.value }
+        payload: { batchIntervalUnit: e.target.value },
       });
-    }
+    },
   };
 };
 
@@ -69,9 +73,7 @@ const SelectBatchIntervalUnit = connect(
 const BatchInterval = () => {
   return (
     <div className="label-with-toggle batch-interval form-group row">
-      <span className="toggle-label col-xs-4">
-        {T.translate(`${PREFIX}.batchInterval`)}
-      </span>
+      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.batchInterval`)}</span>
       <div className="col-xs-7">
         <SelectBatchIntervalRange className="form-control small-dropdown" />
         <SelectBatchIntervalUnit className="form-control small-dropdown batch-interval-unit" />

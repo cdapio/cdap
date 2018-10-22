@@ -34,29 +34,19 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 require('./Card.scss');
 
 var classNames = require('classnames');
 
 export default class Card extends Component {
-  getHeader () {
+  getHeader() {
     let closeButton;
     if (this.props.closeable) {
-      closeButton = (
-        <span
-          className='fa fa-times'
-          onClick={this.props.onClose}
-        >
-        </span>
-      );
+      closeButton = <span className="fa fa-times" onClick={this.props.onClose} />;
     }
 
-    const titleHeader = (
-      <h3 className="card-title">
-        {this.props.title}
-      </h3>
-    );
+    const titleHeader = <h3 className="card-title">{this.props.title}</h3>;
     const headerContent = this.props.title ? titleHeader : this.props.header;
 
     const headerElem = (
@@ -69,39 +59,30 @@ export default class Card extends Component {
     return this.props.header || this.props.title ? headerElem : null;
   }
 
-  getBody () {
+  getBody() {
     const content = this.props.children ? this.props.children : this.props.body;
 
-    const bodyElem = (
-      <div className="card-body">
-        {content}
-      </div>
-    );
+    const bodyElem = <div className="card-body">{content}</div>;
 
     return content ? bodyElem : null;
   }
 
-  getFooter () {
-    const footerElem = (
-      <div className="card-footer">
-        {this.props.footer}
-      </div>
-    );
+  getFooter() {
+    const footerElem = <div className="card-footer">{this.props.footer}</div>;
 
     return this.props.footer ? footerElem : null;
   }
 
   render() {
-    const cardClass = classNames('cask-card', this.props.cardClass,
+    const cardClass = classNames(
+      'cask-card',
+      this.props.cardClass,
       { [`card-${this.props.size}`]: this.props.size },
       { 'card-LG': !this.props.size }
     );
 
     return (
-      <div
-        className={cardClass}
-        style={this.props.cardStyle}
-      >
+      <div className={cardClass} style={this.props.cardStyle}>
         {this.getHeader()}
         {this.getBody()}
         {this.getFooter()}
@@ -112,10 +93,7 @@ export default class Card extends Component {
 
 Card.propTypes = {
   header: PropTypes.element,
-  body: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.element
-  ]),
+  body: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   footer: PropTypes.element,
   title: PropTypes.string,
   children: PropTypes.node,
@@ -123,5 +101,5 @@ Card.propTypes = {
   onClose: PropTypes.func,
   cardClass: PropTypes.string,
   size: PropTypes.oneOf(['SM', 'MD', 'LG']),
-  cardStyle: PropTypes.object
+  cardStyle: PropTypes.object,
 };

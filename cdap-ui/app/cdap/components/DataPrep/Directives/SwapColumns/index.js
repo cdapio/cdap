@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import T from 'i18n-react';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 
@@ -32,19 +32,21 @@ export default class SwapColumnsDirective extends Component {
     let columns = this.props.column;
     let directive = `swap ${columns[0]} ${columns[1]}`;
 
-    execute([directive])
-      .subscribe(() => {
+    execute([directive]).subscribe(
+      () => {
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('Error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   render() {
@@ -53,9 +55,7 @@ export default class SwapColumnsDirective extends Component {
         className="swap-column-directive clearfix action-item"
         onClick={!this.props.isDisabled ? this.applyDirective : undefined}
       >
-        <span>
-          {T.translate('features.DataPrep.Directives.Swap.title')}
-        </span>
+        <span>{T.translate('features.DataPrep.Directives.Swap.title')}</span>
       </div>
     );
   }
@@ -64,5 +64,5 @@ export default class SwapColumnsDirective extends Component {
 SwapColumnsDirective.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
-  isDisabled: PropTypes.bool
+  isDisabled: PropTypes.bool,
 };

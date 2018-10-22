@@ -14,7 +14,7 @@
  * the License.
  */
 import React from 'react';
-import CreateStreamActions  from 'services/WizardStores/CreateStream/CreateStreamActions';
+import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStreamActions';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import { Label, Form, FormGroup, Col, Input } from 'reactstrap';
 // import TimeToLive from 'components/TimeToLive';
@@ -27,7 +27,7 @@ const mapStateToStreamNameProps = (state) => {
   return {
     value: state.general.name,
     type: 'text',
-    placeholder: 'Stream Name'
+    placeholder: 'Stream Name',
   };
 };
 const mapStateToStreamDescritionProps = (state) => {
@@ -35,13 +35,13 @@ const mapStateToStreamDescritionProps = (state) => {
     value: state.general.description,
     type: 'textarea',
     rows: '7',
-    placeholder: 'Description'
+    placeholder: 'Description',
   };
 };
 const mapStateToStreamTTLProps = (state) => {
   return {
     value: state.general.ttl,
-    placeholder: T.translate('features.Wizard.StreamCreate.Step1.ttl-placeholder')
+    placeholder: T.translate('features.Wizard.StreamCreate.Step1.ttl-placeholder'),
   };
 };
 
@@ -50,17 +50,18 @@ const mapDispatchToStreamNameProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: CreateStreamActions.setName,
-        payload: {name: e.target.value}
+        payload: { name: e.target.value },
       });
-    }
+    },
   };
 };
 const mapDispatchToStreamDescriptionProps = (dispatch) => {
   return {
-    onChange: (e) => (dispatch({
-      type: CreateStreamActions.setDescription,
-      payload: {description: e.target.value}
-    }))
+    onChange: (e) =>
+      dispatch({
+        type: CreateStreamActions.setDescription,
+        payload: { description: e.target.value },
+      }),
   };
 };
 const mapDispatchToToStreamTTL = (dispatch) => {
@@ -68,9 +69,9 @@ const mapDispatchToToStreamTTL = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: CreateStreamActions.setTTL,
-        payload: {ttl: e.target.ttlValue}
+        payload: { ttl: e.target.ttlValue },
       });
-    }
+    },
   };
 };
 
@@ -104,7 +105,7 @@ export default function GeneralInfoStep() {
           <Col xs="7">
             <InputStreamName />
           </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left"/>
+          <i className="fa fa-asterisk text-danger float-xs-left" />
         </FormGroup>
         <FormGroup row>
           <Col xs="3">
@@ -116,7 +117,9 @@ export default function GeneralInfoStep() {
         </FormGroup>
         <FormGroup row>
           <Col sm="3">
-            <Label className="control-label">{T.translate('features.Wizard.StreamCreate.Step1.ttllabel')} </Label>
+            <Label className="control-label">
+              {T.translate('features.Wizard.StreamCreate.Step1.ttllabel')}{' '}
+            </Label>
           </Col>
           <Col sm="7">
             <InputStreamTTL />

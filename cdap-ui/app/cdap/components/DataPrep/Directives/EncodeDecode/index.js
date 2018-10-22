@@ -19,32 +19,32 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import T from 'i18n-react';
 import classnames from 'classnames';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
-import {setPopoverOffset} from 'components/DataPrep/helper';
-import {preventPropagation} from 'services/helpers';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
+import { setPopoverOffset } from 'components/DataPrep/helper';
+import { preventPropagation } from 'services/helpers';
 
 require('./EncodeDecode.scss');
 const PREFIX = 'features.DataPrep.Directives.Encode';
 const ENCODEOPTIONS = [
   {
     label: T.translate(`${PREFIX}.base64`),
-    getDirective: (column) => `encode base64 ${column}`
+    getDirective: (column) => `encode base64 ${column}`,
   },
   {
     label: T.translate(`${PREFIX}.base32`),
-    getDirective: (column) => `encode base32 ${column}`
+    getDirective: (column) => `encode base32 ${column}`,
   },
   {
     label: T.translate(`${PREFIX}.hex`),
-    getDirective: (column) => `encode hex ${column}`
+    getDirective: (column) => `encode hex ${column}`,
   },
   {
     label: T.translate(`${PREFIX}.url`),
-    getDirective: (column) => `url-encode ${column}`
-  }
+    getDirective: (column) => `url-encode ${column}`,
+  },
 ];
 export default class EncodeDecode extends Component {
   constructor(props) {
@@ -58,53 +58,46 @@ export default class EncodeDecode extends Component {
   }
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById(`${this.props.directive}-directive`));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById(`${this.props.directive}-directive`)
+    );
   }
 
-  applyDirective({getDirective = () => {}}) {
+  applyDirective({ getDirective = () => {} }) {
     let directive = getDirective(this.props.column);
     if (!directive) {
       return;
     }
-    execute([directive])
-      .subscribe(
-        () => {
-          this.props.onComplete();
-        },
-        (err) => {
-          console.log('error', err);
+    execute([directive]).subscribe(
+      () => {
+        this.props.onComplete();
+      },
+      (err) => {
+        console.log('error', err);
 
-          DataPrepStore.dispatch({
-            type: DataPrepActions.setError,
-            payload: {
-              message: err.message || err.response.message
-            }
-          });
-        }
-      );
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message,
+          },
+        });
+      }
+    );
   }
   renderDetail() {
     if (!this.props.isOpen || this.props.isDisabled) {
       return;
     }
     return (
-      <div
-        className="encode-decode-options second-level-popover"
-        onClick={this.preventPropagation}
-      >
-        {
-          this.props.options.map((option, i) => {
-            return (
-              <div
-                className="option"
-                key={i}
-                onClick={this.applyDirective.bind(this, option)}
-              >
-                {option.label}
-              </div>
-            );
-          })
-        }
+      <div className="encode-decode-options second-level-popover" onClick={this.preventPropagation}>
+        {this.props.options.map((option, i) => {
+          return (
+            <div className="option" key={i} onClick={this.applyDirective.bind(this, option)}>
+              {option.label}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -115,8 +108,8 @@ export default class EncodeDecode extends Component {
         <div
           id={id}
           className={classnames('encode-decode-directive clearfix action-item', {
-            'active': this.props.isOpen && !this.props.isDisabled,
-            'disabled': this.props.isDisabled
+            active: this.props.isOpen && !this.props.isDisabled,
+            disabled: this.props.isDisabled,
           })}
         >
           <span>{this.props.mainMenuLabel}</span>
@@ -127,16 +120,11 @@ export default class EncodeDecode extends Component {
 
           {this.renderDetail()}
         </div>
-        {
-          this.props.isDisabled && this.props.disabledTooltip ? (
-            <UncontrolledTooltip
-              target={id}
-              delay={{show: 250, hide: 0}}
-            >
-              {this.props.disabledTooltip}
-            </UncontrolledTooltip>
-          ) : null
-        }
+        {this.props.isDisabled && this.props.disabledTooltip ? (
+          <UncontrolledTooltip target={id} delay={{ show: 250, hide: 0 }}>
+            {this.props.disabledTooltip}
+          </UncontrolledTooltip>
+        ) : null}
       </div>
     );
   }
@@ -145,7 +133,7 @@ export default class EncodeDecode extends Component {
 EncodeDecode.defaultProps = {
   options: ENCODEOPTIONS,
   directive: 'encode',
-  mainMenuLabel: T.translate(`${PREFIX}.title`)
+  mainMenuLabel: T.translate(`${PREFIX}.title`),
 };
 
 EncodeDecode.propTypes = {
@@ -156,5 +144,5 @@ EncodeDecode.propTypes = {
   onComplete: PropTypes.func,
   options: PropTypes.arrayOf(PropTypes.object),
   directive: PropTypes.string,
-  mainMenuLabel: PropTypes.string
+  mainMenuLabel: PropTypes.string,
 };

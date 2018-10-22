@@ -14,10 +14,10 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {Link} from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Link } from 'react-router-dom';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
@@ -25,7 +25,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import orderBy from 'lodash/orderBy';
 import ViewAllLabel from 'components/ViewAllLabel';
 import ConfirmationModal from 'components/ConfirmationModal';
-import ProfilesStore, {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
+import ProfilesStore, { PROFILE_STATUSES } from 'components/Cloud/Profiles/Store';
 import {
   getProfiles,
   deleteProfile,
@@ -34,70 +34,70 @@ import {
   setDefaultProfile,
   extractProfileName,
   getProfileNameWithScope,
-  getNodeHours
+  getNodeHours,
 } from 'components/Cloud/Profiles/Store/ActionCreator';
-import {connect, Provider} from 'react-redux';
+import { connect, Provider } from 'react-redux';
 import Alert from 'components/Alert';
 import uuidV4 from 'uuid/v4';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
-import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
-import {CLOUD, SYSTEM_NAMESPACE} from 'services/global-constants';
-import {preventPropagation} from 'services/helpers';
+import { getProvisionersMap } from 'components/Cloud/Profiles/Store/Provisioners';
+import { CLOUD, SYSTEM_NAMESPACE } from 'services/global-constants';
+import { preventPropagation } from 'services/helpers';
 import findIndex from 'lodash/findIndex';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 require('./ListView.scss');
 
 const PREFIX = 'features.Cloud.Profiles';
 
 const PROFILES_TABLE_HEADERS = [
   {
-    label: T.translate(`${PREFIX}.ListView.default`)
+    label: T.translate(`${PREFIX}.ListView.default`),
   },
   {
     property: 'name',
-    label: T.translate(`${PREFIX}.ListView.profileName`)
+    label: T.translate(`${PREFIX}.ListView.profileName`),
   },
   {
-    property: (profile) => (profile.provisioner.label),
-    label: T.translate(`${PREFIX}.common.provisioner`)
+    property: (profile) => profile.provisioner.label,
+    label: T.translate(`${PREFIX}.common.provisioner`),
   },
   {
     property: 'scope',
-    label: T.translate('commons.scope')
+    label: T.translate('commons.scope'),
   },
   {
     property: 'last24HrRuns',
-    label: T.translate(`${PREFIX}.common.last24HrRuns`)
+    label: T.translate(`${PREFIX}.common.last24HrRuns`),
   },
   {
     property: 'last24HrNodeHr',
-    label: T.translate(`${PREFIX}.common.last24HrNodeHr`)
+    label: T.translate(`${PREFIX}.common.last24HrNodeHr`),
   },
   {
     property: 'totalNodeHr',
-    label: T.translate(`${PREFIX}.common.totalNodeHr`)
+    label: T.translate(`${PREFIX}.common.totalNodeHr`),
   },
   {
     property: 'schedulesCount',
-    label: T.translate(`${PREFIX}.ListView.schedules`)
+    label: T.translate(`${PREFIX}.ListView.schedules`),
   },
   {
     property: 'triggersCount',
-    label: T.translate(`${PREFIX}.ListView.triggers`)
+    label: T.translate(`${PREFIX}.ListView.triggers`),
   },
   {
     property: 'status',
-    label: 'Status'
+    label: 'Status',
   },
   {
-    label: ''
-  }
+    label: '',
+  },
 ];
 
 const SORT_METHODS = {
   asc: 'asc',
-  desc: 'desc'
+  desc: 'desc',
 };
 
 const NUM_PROFILES_TO_SHOW = 5;
@@ -111,7 +111,7 @@ class ProfilesListView extends Component {
     sortColumn: PROFILES_TABLE_HEADERS[1].property,
     profileToDelete: null,
     deleteErrMsg: '',
-    extendedDeleteErrMsg: ''
+    extendedDeleteErrMsg: '',
   };
 
   static propTypes = {
@@ -120,7 +120,7 @@ class ProfilesListView extends Component {
     defaultProfile: PropTypes.string,
     newProfile: PropTypes.string,
     error: PropTypes.any,
-    loading: PropTypes.bool
+    loading: PropTypes.bool,
   };
 
   componentDidMount() {
@@ -131,21 +131,27 @@ class ProfilesListView extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (!isEqual(nextProps.profiles, this.props.profiles)) {
-      let orderedProfiles = orderBy(nextProps.profiles, this.state.sortColumn, this.state.sortMethod);
+      let orderedProfiles = orderBy(
+        nextProps.profiles,
+        this.state.sortColumn,
+        this.state.sortMethod
+      );
       let viewAll = this.state.viewAll;
 
-      if (this.props.newProfile
-          && orderedProfiles.length > NUM_PROFILES_TO_SHOW
-          && !this.state.viewAll) {
+      if (
+        this.props.newProfile &&
+        orderedProfiles.length > NUM_PROFILES_TO_SHOW &&
+        !this.state.viewAll
+      ) {
         let newProfileName = extractProfileName(this.props.newProfile);
-        let newProfileIndex = findIndex(orderedProfiles, {name: newProfileName});
+        let newProfileIndex = findIndex(orderedProfiles, { name: newProfileName });
         if (newProfileIndex >= NUM_PROFILES_TO_SHOW) {
           viewAll = true;
         }
       }
       this.setState({
         profiles: orderedProfiles,
-        viewAll
+        viewAll,
       });
     }
   }
@@ -153,22 +159,23 @@ class ProfilesListView extends Component {
   getProvisioners() {
     getProvisionersMap().subscribe((state) => {
       this.setState({
-        provisionersMap: state.nameToLabelMap
+        provisionersMap: state.nameToLabelMap,
       });
     });
   }
 
   toggleViewAll = () => {
     this.setState({
-      viewAll: !this.state.viewAll
+      viewAll: !this.state.viewAll,
     });
-  }
+  };
 
   handleProfilesSort = (field) => {
     let newSortColumn, newSortMethod;
     if (this.state.sortColumn === field) {
       newSortColumn = this.state.sortColumn;
-      newSortMethod = this.state.sortMethod === SORT_METHODS.asc ? SORT_METHODS.desc : SORT_METHODS.asc;
+      newSortMethod =
+        this.state.sortMethod === SORT_METHODS.asc ? SORT_METHODS.desc : SORT_METHODS.asc;
     } else {
       newSortColumn = field;
       newSortMethod = SORT_METHODS.asc;
@@ -177,61 +184,57 @@ class ProfilesListView extends Component {
     this.setState({
       sortColumn: newSortColumn,
       sortMethod: newSortMethod,
-      profiles: orderBy(this.state.profiles, [newSortColumn], [newSortMethod])
+      profiles: orderBy(this.state.profiles, [newSortColumn], [newSortMethod]),
     });
   };
 
   deleteProfile = (profile) => {
     let namespace = profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : this.props.namespace;
 
-    deleteProfile(namespace, profile.name, this.props.namespace)
-      .subscribe(() => {
+    deleteProfile(namespace, profile.name, this.props.namespace).subscribe(
+      () => {
         this.setState({
           profileToDelete: null,
           deleteErrMsg: '',
-          extendedDeleteErrMsg: ''
+          extendedDeleteErrMsg: '',
         });
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
           deleteErrMsg: T.translate(`${PREFIX}.common.deleteError`),
-          extendedDeleteErrMsg: err
+          extendedDeleteErrMsg: err,
         });
-      });
+      }
+    );
   };
 
   toggleDeleteConfirmationModal = (profileToDelete = null) => {
     this.setState({
       profileToDelete,
       deleteErrMsg: '',
-      extendedDeleteErrMsg: ''
+      extendedDeleteErrMsg: '',
     });
-  }
+  };
 
   renderProfilesTable() {
     if (!this.state.profiles.length) {
       return (
         <div className="text-xs-center">
-          {
-            this.props.namespace === SYSTEM_NAMESPACE ?
-              (
-                <span>
-                  {T.translate(`${PREFIX}.ListView.noProfilesSystem`)}
-                  <Link to={'/ns/system/profiles/create'}>
-                    {T.translate(`${PREFIX}.ListView.createOne`)}
-                  </Link>
-                </span>
-              )
-            :
-              (
-                <span>
-                  {T.translate(`${PREFIX}.ListView.noProfiles`)}
-                  <Link to={`/ns/${getCurrentNamespace()}/profiles/create`}>
-                    {T.translate(`${PREFIX}.ListView.createOne`)}
-                  </Link>
-                </span>
-              )
-          }
-
+          {this.props.namespace === SYSTEM_NAMESPACE ? (
+            <span>
+              {T.translate(`${PREFIX}.ListView.noProfilesSystem`)}
+              <Link to={'/ns/system/profiles/create'}>
+                {T.translate(`${PREFIX}.ListView.createOne`)}
+              </Link>
+            </span>
+          ) : (
+            <span>
+              {T.translate(`${PREFIX}.ListView.noProfiles`)}
+              <Link to={`/ns/${getCurrentNamespace()}/profiles/create`}>
+                {T.translate(`${PREFIX}.ListView.createOne`)}
+              </Link>
+            </span>
+          )}
         </div>
       );
     }
@@ -251,11 +254,10 @@ class ProfilesListView extends Component {
       return null;
     }
 
-    return (
-      this.state.sortMethod === SORT_METHODS.asc ?
-        <IconSVG name="icon-caret-down" />
-      :
-        <IconSVG name="icon-caret-up" />
+    return this.state.sortMethod === SORT_METHODS.asc ? (
+      <IconSVG name="icon-caret-down" />
+    ) : (
+      <IconSVG name="icon-caret-up" />
     );
   }
 
@@ -268,9 +270,7 @@ class ProfilesListView extends Component {
           <div />
           <div />
           <div />
-          <div className="sub-title">
-            {T.translate(`${PREFIX}.ListView.pipelineUsage`)}
-          </div>
+          <div className="sub-title">{T.translate(`${PREFIX}.ListView.pipelineUsage`)}</div>
           <div />
           <div />
           <div />
@@ -278,27 +278,23 @@ class ProfilesListView extends Component {
           <div />
         </div>
         <div className="grid-row">
-          {
-            PROFILES_TABLE_HEADERS.map((header, i) => {
-              if (header.property) {
-                return (
-                  <strong
-                    className={classnames("sortable-header", {"active": this.state.sortColumn === header.property})}
-                    key={i}
-                    onClick={this.handleProfilesSort.bind(this, header.property)}
-                  >
-                    <span>{header.label}</span>
-                    {this.renderSortIcon(header.property)}
-                  </strong>
-                );
-              }
+          {PROFILES_TABLE_HEADERS.map((header, i) => {
+            if (header.property) {
               return (
-                <strong key={i}>
-                  {header.label}
+                <strong
+                  className={classnames('sortable-header', {
+                    active: this.state.sortColumn === header.property,
+                  })}
+                  key={i}
+                  onClick={this.handleProfilesSort.bind(this, header.property)}
+                >
+                  <span>{header.label}</span>
+                  {this.renderSortIcon(header.property)}
                 </strong>
               );
-            })
-          }
+            }
+            return <strong key={i}>{header.label}</strong>;
+          })}
         </div>
       </div>
     );
@@ -309,7 +305,7 @@ class ProfilesListView extends Component {
       setDefaultProfile(this.props.namespace, profileName);
     }
     preventPropagation(e);
-  }
+  };
 
   renderProfilerow = (profile) => {
     let namespace = profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : this.props.namespace;
@@ -329,9 +325,10 @@ class ProfilesListView extends Component {
               preventPropagation(e);
               return false;
             }}
-          />);
+          />
+        );
       }
-      return (<IconSVG name="icon-cog-empty" />);
+      return <IconSVG name="icon-cog-empty" />;
     };
     if (isNativeProfile) {
       Tag = 'div';
@@ -339,33 +336,20 @@ class ProfilesListView extends Component {
     return (
       <Tag
         to={`/ns/${namespace}/profiles/details/${profile.name}`}
-        className={classnames("grid-row grid-link", {
-          "native-profile": isNativeProfile,
-          "highlighted": profileName === this.props.newProfile
+        className={classnames('grid-row grid-link', {
+          'native-profile': isNativeProfile,
+          highlighted: profileName === this.props.newProfile,
         })}
         key={uuidV4()}
       >
-        <div
-          className="default-star"
-          onClick={this.setProfileAsDefault.bind(this, profileName)}
-        >
-          {
-            profileIsDefault ?
-              <IconSVG
-                name="icon-star"
-                className="default-profile"
-              />
-            :
-              <IconSVG
-                name="icon-star-o"
-                className="not-default-profile"
-              />
-          }
+        <div className="default-star" onClick={this.setProfileAsDefault.bind(this, profileName)}>
+          {profileIsDefault ? (
+            <IconSVG name="icon-star" className="default-profile" />
+          ) : (
+            <IconSVG name="icon-star-o" className="not-default-profile" />
+          )}
         </div>
-        <div
-          className="profile-label"
-          title={profile.label || profile.name}
-        >
+        <div className="profile-label" title={profile.label || profile.name}>
           {profile.label || profile.name}
         </div>
         <div>{profile.provisioner.label}</div>
@@ -408,13 +392,7 @@ class ProfilesListView extends Component {
       profiles = profiles.slice(0, NUM_PROFILES_TO_SHOW);
     }
 
-    return (
-      <div className="grid-body">
-        {
-          profiles.map(this.renderProfilerow)
-        }
-      </div>
-    );
+    return <div className="grid-body">{profiles.map(this.renderProfilerow)}</div>;
   }
 
   renderDeleteConfirmationModal() {
@@ -422,7 +400,9 @@ class ProfilesListView extends Component {
       return null;
     }
 
-    const confirmationText = T.translate(`${PREFIX}.common.deleteConfirmation`, {profile: this.state.profileToDelete.name});
+    const confirmationText = T.translate(`${PREFIX}.common.deleteConfirmation`, {
+      profile: this.state.profileToDelete.name,
+    });
 
     return (
       <ConfirmationModal
@@ -446,14 +426,7 @@ class ProfilesListView extends Component {
 
     let error = this.props.error.response || this.props.error;
 
-    return (
-      <Alert
-        message={error}
-        type='error'
-        showAlert={true}
-        onClose={setError}
-      />
-    );
+    return <Alert message={error} type="error" showAlert={true} onClose={setError} />;
   }
 
   render() {
@@ -492,7 +465,7 @@ const mapStateToProps = (state) => {
     defaultProfile: state.defaultProfile,
     newProfile: state.newProfile,
     loading: state.loading,
-    error: state.error
+    error: state.error,
   };
 };
 

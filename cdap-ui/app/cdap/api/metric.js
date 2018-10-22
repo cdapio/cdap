@@ -15,12 +15,12 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 const basepath = '/metrics/query';
 
 export const MyMetricApi = {
   query: apiCreator(dataSrc, 'POST', 'REQUEST', basepath),
-  search: apiCreator(dataSrc, 'POST', 'REQUEST', '/metrics/search')
+  search: apiCreator(dataSrc, 'POST', 'REQUEST', '/metrics/search'),
 };

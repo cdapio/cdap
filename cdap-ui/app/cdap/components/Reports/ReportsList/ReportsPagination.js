@@ -16,14 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {handleReportsPageChange} from 'components/Reports/store/ActionCreator';
+import { connect } from 'react-redux';
+import { handleReportsPageChange } from 'components/Reports/store/ActionCreator';
 import PaginationWithTitle from 'components/PaginationWithTitle';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Reports';
 
-function ReportsPaginationView({totalCount, offset, limit}) {
+function ReportsPaginationView({ totalCount, offset, limit }) {
   let totalPages = Math.ceil(totalCount / limit);
   let currentPage;
 
@@ -38,7 +38,7 @@ function ReportsPaginationView({totalCount, offset, limit}) {
       handlePageChange={handleReportsPageChange}
       currentPage={currentPage}
       totalPages={totalPages}
-      title={T.translate(`${PREFIX}.reports`, {context: totalCount})}
+      title={T.translate(`${PREFIX}.reports`, { context: totalCount })}
     />
   );
 }
@@ -46,19 +46,17 @@ function ReportsPaginationView({totalCount, offset, limit}) {
 ReportsPaginationView.propTypes = {
   totalCount: PropTypes.number,
   offset: PropTypes.number,
-  limit: PropTypes.number
+  limit: PropTypes.number,
 };
 
 const mapStateToProps = (state) => {
   return {
     totalCount: state.list.total,
     offset: state.list.offset,
-    limit: state.list.limit
+    limit: state.list.limit,
   };
 };
 
-const ReportsPagination = connect(
-  mapStateToProps
-)(ReportsPaginationView);
+const ReportsPagination = connect(mapStateToProps)(ReportsPaginationView);
 
 export default ReportsPagination;

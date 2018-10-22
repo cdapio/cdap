@@ -25,23 +25,22 @@ let commonSteps = [
     shorttitle: T.translate('features.Wizard.LibraryUpload.Step1.shorttitle'),
     title: T.translate('features.Wizard.LibraryUpload.Step1.title'),
     description: T.translate('features.Wizard.LibraryUpload.Step1.description'),
-    content: (<UploadStep />),
-    requiredFields: ['file']
+    content: <UploadStep />,
+    requiredFields: ['file'],
   },
   {
     id: 'configuration',
     shorttitle: T.translate('features.Wizard.LibraryUpload.Step2.shorttitle'),
     title: T.translate('features.Wizard.LibraryUpload.Step2.title'),
     description: T.translate('features.Wizard.LibraryUpload.Step2.description'),
-    content: (<ConfigureStep />),
-    requiredFields: ['name', 'type', 'parentArtifact', 'classname']
-  }
+    content: <ConfigureStep />,
+    requiredFields: ['name', 'type', 'parentArtifact', 'classname'],
+  },
 ];
 
 const LibraryUploadWizardConfig = {
   steps: commonSteps,
-  footertitle: T.translate('features.Wizard.LibraryUpload.footertitle')
+  footertitle: T.translate('features.Wizard.LibraryUpload.footertitle'),
 };
-
 
 export default LibraryUploadWizardConfig;

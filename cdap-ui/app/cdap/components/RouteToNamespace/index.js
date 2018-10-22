@@ -14,16 +14,16 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import find from 'lodash/find';
 import NamespaceStore from 'services/NamespaceStore';
-import {Redirect} from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 
 export default class RouteToNamespace extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedNamespace: null
+      selectedNamespace: null,
     };
   }
 
@@ -37,13 +37,15 @@ export default class RouteToNamespace extends Component {
   }
 
   findNamespace(list, name) {
-    return find(list, {name: name});
+    return find(list, { name: name });
   }
 
   setNamespace() {
     let list = NamespaceStore.getState().namespaces;
 
-    if (!list || list.length === 0) { return; }
+    if (!list || list.length === 0) {
+      return;
+    }
 
     /**
      * 1. Check if localStorage has a 'DefaultNamespace' set by the user, if not,
@@ -57,7 +59,7 @@ export default class RouteToNamespace extends Component {
     // Check #1
     if (!selectedNamespace) {
       defaultNamespace = localStorage.getItem('DefaultNamespace');
-      let defaultNsFromBackend = list.filter(ns => ns.name === defaultNamespace);
+      let defaultNsFromBackend = list.filter((ns) => ns.name === defaultNamespace);
       if (defaultNsFromBackend.length) {
         selectedNamespace = defaultNsFromBackend[0];
       }
@@ -74,7 +76,7 @@ export default class RouteToNamespace extends Component {
     }
 
     localStorage.setItem('DefaultNamespace', selectedNamespace);
-    this.setState({selectedNamespace});
+    this.setState({ selectedNamespace });
   }
 
   render() {

@@ -24,7 +24,7 @@ const GRAPHPREFIX = `features.PipelineSummary.graphs`;
 
 require('./EmptyMessageContainer.scss');
 
-export default function EmptyMessageContainer({xDomainType, label, loading, message}) {
+export default function EmptyMessageContainer({ xDomainType, label, loading, message }) {
   if (loading) {
     return (
       <div className="empty-runs-container">
@@ -33,23 +33,20 @@ export default function EmptyMessageContainer({xDomainType, label, loading, mess
     );
   }
   return (
-      <div className="empty-runs-container">
-        <h1>
-          {
-            message ?
-              message
-            :
-              T.translate(`${GRAPHPREFIX}.emptyMessage`, {
-                filter: xDomainType === 'time' ? `in ${label}` : ''
-              })
-          }
-        </h1>
-      </div>
-    );
+    <div className="empty-runs-container">
+      <h1>
+        {message
+          ? message
+          : T.translate(`${GRAPHPREFIX}.emptyMessage`, {
+              filter: xDomainType === 'time' ? `in ${label}` : '',
+            })}
+      </h1>
+    </div>
+  );
 }
 EmptyMessageContainer.propTypes = {
   xDomainType: PropTypes.string,
   label: PropTypes.string,
   message: PropTypes.string,
-  loading: PropTypes.bool
+  loading: PropTypes.bool,
 };

@@ -26,18 +26,18 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ee from 'event-emitter';
-import {setWorkspace, getWorkspaceList} from 'components/DataPrep/store/DataPrepActionCreator';
+import { setWorkspace, getWorkspaceList } from 'components/DataPrep/store/DataPrepActionCreator';
 import WorkspaceTabs from 'components/DataPrep/WorkspaceTabs';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
-import {checkDataPrepHigherVersion} from 'components/DataPrep/helper';
-import {isNilOrEmpty} from 'services/helpers';
+import { checkDataPrepHigherVersion } from 'components/DataPrep/helper';
+import { isNilOrEmpty } from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import Helmet from 'react-helmet';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 require('./DataPrep.scss');
 
@@ -46,7 +46,7 @@ const DATAPREP_I18N_PREFIX = 'features.DataPrep';
 const MIN_DATAPREP_VERSION = '3.0.3-SNAPSHOT';
 const artifactName = 'wrangler-service';
 
-export {i18nPrefix, MIN_DATAPREP_VERSION, artifactName};
+export { i18nPrefix, MIN_DATAPREP_VERSION, artifactName };
 /**
  *  Data Prep requires a container component (DataPrepHome) that will handle routing within React.
  *  This is beacause DataPrep component will be included in Pipelines.
@@ -61,7 +61,7 @@ export default class DataPrep extends Component {
       onSubmitError: null,
       currentWorkspace: null,
       sidePanelToggle: false,
-      workspaceName: null
+      workspaceName: null,
     };
 
     this.toggleBackendDown = this.toggleBackendDown.bind(this);
@@ -90,10 +90,10 @@ export default class DataPrep extends Component {
     this._isMounted = false;
     if (this.props.onSubmit) {
       let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
-      this.props.onSubmit({workspaceId});
+      this.props.onSubmit({ workspaceId });
     }
     DataPrepStore.dispatch({
-      type: DataPrepActions.reset
+      type: DataPrepActions.reset,
     });
     this.eventEmitter.off('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
     this.eventEmitter.off('DATAPREP_CLOSE_SIDEPANEL', this.closeSidePanel);
@@ -104,20 +104,23 @@ export default class DataPrep extends Component {
   }
 
   refreshDataPrep = () => {
-    this.setState({
-      loading: true
-    }, () => {
-      /*
+    this.setState(
+      {
+        loading: true,
+      },
+      () => {
+        /*
         Not sure if this is necessary but added it is safer when doing an upgrade.
         - Modified directives?
         - Modified API calls that are not compatible with earlier version?
       */
-      DataPrepStore.dispatch({
-        type: DataPrepActions.reset
-      });
-      let workspaceId = this.props.workspaceId;
-      this.setCurrentWorkspace(workspaceId);
-    });
+        DataPrepStore.dispatch({
+          type: DataPrepActions.reset,
+        });
+        let workspaceId = this.props.workspaceId;
+        this.setCurrentWorkspace(workspaceId);
+      }
+    );
   };
 
   checkBackendUp() {
@@ -130,16 +133,18 @@ export default class DataPrep extends Component {
 
     const namespace = getCurrentNamespace();
 
-    MyDataPrepApi.ping({ namespace })
-      .subscribe(() => {
+    MyDataPrepApi.ping({ namespace }).subscribe(
+      () => {
         this.init(this.props);
-      }, (err) => {
+      },
+      (err) => {
         if (err.statusCode === 503) {
           console.log('backend not started');
           this.eventEmitter.emit('DATAPREP_BACKEND_DOWN');
           return;
         }
-      });
+      }
+    );
   }
 
   init(props) {
@@ -149,8 +154,8 @@ export default class DataPrep extends Component {
       DataPrepStore.dispatch({
         type: DataPrepActions.setWorkspaceMode,
         payload: {
-          singleWorkspaceMode: true
-        }
+          singleWorkspaceMode: true,
+        },
       });
     } else {
       getWorkspaceList();
@@ -160,34 +165,36 @@ export default class DataPrep extends Component {
   }
 
   setCurrentWorkspace(workspaceId) {
-    setWorkspace(workspaceId)
-      .subscribe(() => {
-        let {properties} = DataPrepStore.getState().dataprep;
+    setWorkspace(workspaceId).subscribe(
+      () => {
+        let { properties } = DataPrepStore.getState().dataprep;
         let workspaceName = properties.name;
         if (this._isMounted) {
           this.setState({
             loading: false,
             currentWorkspace: workspaceId,
-            workspaceName
+            workspaceName,
           });
         }
-      }, () => {
+      },
+      () => {
         if (this._isMounted) {
-          this.setState({loading: false});
+          this.setState({ loading: false });
           DataPrepStore.dispatch({
-            type: DataPrepActions.setInitialized
+            type: DataPrepActions.setInitialized,
           });
           this.eventEmitter.emit('DATAPREP_NO_WORKSPACE_ID');
         }
-      });
+      }
+    );
   }
 
   toggleBackendDown() {
-    this.setState({backendDown: true});
+    this.setState({ backendDown: true });
   }
 
   onServiceStart() {
-    this.setState({backendDown: false});
+    this.setState({ backendDown: false });
     let workspaceId = this.props.workspaceId;
     this.setCurrentWorkspace(workspaceId);
   }
@@ -197,7 +204,7 @@ export default class DataPrep extends Component {
       return;
     }
     this.setState({
-      sidePanelToggle: !this.state.sidePanelToggle
+      sidePanelToggle: !this.state.sidePanelToggle,
     });
     if (this.props.onConnectionsToggle) {
       this.props.onConnectionsToggle();
@@ -206,20 +213,18 @@ export default class DataPrep extends Component {
 
   closeSidePanel() {
     this.setState({
-      sidePanelToggle: false
+      sidePanelToggle: false,
     });
   }
 
   renderBackendDown() {
-    return (
-      <DataPrepServiceControl
-        onServiceStart={this.onServiceStart.bind(this)}
-      />
-    );
+    return <DataPrepServiceControl onServiceStart={this.onServiceStart.bind(this)} />;
   }
 
   renderTabs() {
-    if (this.props.singleWorkspaceMode) { return null; }
+    if (this.props.singleWorkspaceMode) {
+      return null;
+    }
 
     return (
       <WorkspaceTabs
@@ -230,48 +235,44 @@ export default class DataPrep extends Component {
     );
   }
 
-  onSubmitToListener({workspaceId, directives, schema}) {
+  onSubmitToListener({ workspaceId, directives, schema }) {
     if (!this.props.onSubmit) {
       return;
     }
     this.props.onSubmit({
       workspaceId,
       directives,
-      schema: schema
+      schema: schema,
     });
   }
 
   renderTogglePanel() {
     let prefix = `features.DataPrep.sidePanelTooltip`;
-    let tooltip = this.state.sidePanelToggle ? T.translate(`${prefix}.collapse`) : T.translate(`${prefix}.expand`);
+    let tooltip = this.state.sidePanelToggle
+      ? T.translate(`${prefix}.collapse`)
+      : T.translate(`${prefix}.expand`);
     return (
       <div
-        className={classnames("panel-toggle float-xs-left text-xs-center", {
-          'disabled': isEmpty(this.state.currentWorkspace)
+        className={classnames('panel-toggle float-xs-left text-xs-center', {
+          disabled: isEmpty(this.state.currentWorkspace),
         })}
         onClick={this.onSidePanelToggle}
       >
-        <span
-          className="panel-button"
-          title={tooltip}
-        >
-          {
-            this.state.sidePanelToggle ?
-              <IconSVG
-                name="icon-chevron-left"
-              />
-            :
-              <IconSVG
-                name="icon-chevron-right"
-              />
-          }
+        <span className="panel-button" title={tooltip}>
+          {this.state.sidePanelToggle ? (
+            <IconSVG name="icon-chevron-left" />
+          ) : (
+            <IconSVG name="icon-chevron-right" />
+          )}
         </span>
       </div>
     );
   }
 
   render() {
-    if (this.state.backendDown) { return this.renderBackendDown(); }
+    if (this.state.backendDown) {
+      return this.renderBackendDown();
+    }
 
     if (this.state.loading) {
       return (
@@ -282,19 +283,22 @@ export default class DataPrep extends Component {
     }
     const featureName = Theme.featureNames.dataPrep;
     return (
-      <div className={classnames('dataprep-container', {
-        'single-workspace': this.props.singleWorkspaceMode
-      })}>
-        {
-          this.props.singleWorkspaceMode ?
-            null
-          :
-            <Helmet title={T.translate(`${DATAPREP_I18N_PREFIX}.pageTitle`, {
-              workspaceUri: !isNilOrEmpty(this.state.workspaceName) ? `| ${this.state.workspaceName}` : '',
+      <div
+        className={classnames('dataprep-container', {
+          'single-workspace': this.props.singleWorkspaceMode,
+        })}
+      >
+        {this.props.singleWorkspaceMode ? null : (
+          <Helmet
+            title={T.translate(`${DATAPREP_I18N_PREFIX}.pageTitle`, {
+              workspaceUri: !isNilOrEmpty(this.state.workspaceName)
+                ? `| ${this.state.workspaceName}`
+                : '',
               productName: Theme.productName,
               featureName,
-            })} />
-        }
+            })}
+          />
+        )}
         <DataPrepErrorAlert />
 
         <div className="top-section clearfix">
@@ -313,7 +317,6 @@ export default class DataPrep extends Component {
           <div className="dataprep-main col-xs-12">
             <DataPrepContentWrapper />
           </div>
-
         </div>
 
         <DataPrepLoading />
@@ -326,5 +329,5 @@ DataPrep.propTypes = {
   workspaceId: PropTypes.string,
   onSubmit: PropTypes.func,
   onConnectionsToggle: PropTypes.func.isRequired,
-  onWorkspaceDelete: PropTypes.func
+  onWorkspaceDelete: PropTypes.func,
 };

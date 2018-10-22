@@ -14,12 +14,12 @@
  * the License.
  */
 import React from 'react';
-import {Col, FormGroup, Label, Form} from 'reactstrap';
+import { Col, FormGroup, Label, Form } from 'reactstrap';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
-import AddNamespaceActions  from 'services/WizardStores/AddNamespace/AddNamespaceActions';
+import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import T from 'i18n-react';
 import InputWithValidations from 'components/InputWithValidations';
-import {Provider, connect} from 'react-redux';
+import { Provider, connect } from 'react-redux';
 
 // HDFS Root Directory
 const mapStateToHDFSRootDirectoryProps = (state) => {
@@ -27,7 +27,7 @@ const mapStateToHDFSRootDirectoryProps = (state) => {
     value: state.mapping.hdfsDirectory,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hdfs-root-directory-placeholder'),
-    disabled: state.editableFields.fields.indexOf('hdfsDirectory') === -1
+    disabled: state.editableFields.fields.indexOf('hdfsDirectory') === -1,
   };
 };
 
@@ -36,9 +36,9 @@ const mapDispatchToHDFSRootDirectoryProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: AddNamespaceActions.setHDFSDirectory,
-        payload: { hdfsDirectory : e.target.value }
+        payload: { hdfsDirectory: e.target.value },
       });
-    }
+    },
   };
 };
 
@@ -48,7 +48,7 @@ const mapStateToHiveDatabaseNameProps = (state) => {
     value: state.mapping.hiveDatabaseName,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hive-db-name-placeholder'),
-    disabled: state.editableFields.fields.indexOf('hiveDatabaseName') === -1
+    disabled: state.editableFields.fields.indexOf('hiveDatabaseName') === -1,
   };
 };
 
@@ -57,9 +57,9 @@ const mapDispatchToHiveDatabaseNameProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: AddNamespaceActions.setHiveDatabaseName,
-        payload: { hiveDatabaseName : e.target.value }
+        payload: { hiveDatabaseName: e.target.value },
       });
-    }
+    },
   };
 };
 
@@ -69,7 +69,7 @@ const mapStateToHBASENamespaceNameProps = (state) => {
     value: state.mapping.hbaseNamespace,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hbase-nm-name-placeholder'),
-    disabled: state.editableFields.fields.indexOf('hbaseNamespace') === -1
+    disabled: state.editableFields.fields.indexOf('hbaseNamespace') === -1,
   };
 };
 
@@ -78,9 +78,9 @@ const mapDispatchToHBASENamespaceNameProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: AddNamespaceActions.setHBaseNamespace,
-        payload: { hbaseNamespace : e.target.value }
+        payload: { hbaseNamespace: e.target.value },
       });
-    }
+    },
   };
 };
 
@@ -89,7 +89,7 @@ const mapStateToSchedulerQueueNameProps = (state) => {
     value: state.mapping.schedulerQueueName,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step2.scheduler-queue-placeholder'),
-    disabled: state.editableFields.fields.indexOf('schedulerQueueName') === -1
+    disabled: state.editableFields.fields.indexOf('schedulerQueueName') === -1,
   };
 };
 const mapDispatchToSchedulerQueueNameProps = (dispatch) => {
@@ -97,9 +97,9 @@ const mapDispatchToSchedulerQueueNameProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: AddNamespaceActions.setSchedulerQueueName,
-        payload: { schedulerQueueName: e.target.value }
+        payload: { schedulerQueueName: e.target.value },
       });
-    }
+    },
   };
 };
 
@@ -118,7 +118,10 @@ const InputHbaseNamespace = connect(
   mapDispatchToHBASENamespaceNameProps
 )(InputWithValidations);
 
-const InputSchedulerQueueName = connect(mapStateToSchedulerQueueNameProps, mapDispatchToSchedulerQueueNameProps)(InputWithValidations);
+const InputSchedulerQueueName = connect(
+  mapStateToSchedulerQueueNameProps,
+  mapDispatchToSchedulerQueueNameProps
+)(InputWithValidations);
 export default function MappingStep() {
   return (
     <Provider store={AddNamespaceStore}>

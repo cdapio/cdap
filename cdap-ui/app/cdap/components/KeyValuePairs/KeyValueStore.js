@@ -14,28 +14,28 @@
 * the License.
 */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import KeyValueStoreActions from './KeyValueStoreActions';
-import {composeEnhancers} from 'services/helpers';
+import { composeEnhancers } from 'services/helpers';
 import uuidV4 from 'uuid/v4';
 import cloneDeep from 'lodash/cloneDeep';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 
 const initialState = {
-  pairs: []
+  pairs: [],
 };
 const INITIAL_STORE_STATE = cloneDeep({
-  keyValues: initialState
+  keyValues: initialState,
 });
 export const getDefaultKeyValuePair = () => ({
-  key : '',
-  value : '',
+  key: '',
+  value: '',
   uniqueId: uuidV4(),
-  provided: null
+  provided: null,
 });
 
 const keyValues = (state = initialState, action = defaultAction) => {
@@ -85,7 +85,7 @@ const keyValues = (state = initialState, action = defaultAction) => {
 };
 
 const KeyValueStore = createStore(
-  combineReducers({keyValues}),
+  combineReducers({ keyValues }),
   INITIAL_STORE_STATE,
   composeEnhancers('KeyValueStore')()
 );

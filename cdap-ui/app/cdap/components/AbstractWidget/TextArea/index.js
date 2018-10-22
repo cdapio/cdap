@@ -15,8 +15,8 @@
 */
 
 import React from 'react';
-import {Input} from 'reactstrap';
-import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
+import { Input } from 'reactstrap';
+import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 require('./TextAreaWidget.scss');
 
 export default function TextArea({ onChange, value, widgetProps }) {

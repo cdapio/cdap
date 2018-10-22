@@ -14,22 +14,22 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {Link} from 'react-router-dom';
-import {objectQuery} from 'services/helpers';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Link } from 'react-router-dom';
+import { objectQuery } from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {connect, Provider} from 'react-redux';
+import { connect, Provider } from 'react-redux';
 import ProvisionerInfoStore from 'components/Cloud/Store';
-import {fetchProvisioners} from 'components/Cloud/Store/ActionCreator';
-import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
+import { fetchProvisioners } from 'components/Cloud/Store/ActionCreator';
+import { ADMIN_CONFIG_ACCORDIONS } from 'components/Administration/AdminConfigTabContent';
 import EntityTopPanel from 'components/EntityTopPanel';
 import ExperimentalBanner from 'components/ExperimentalBanner';
 import IconSVG from 'components/IconSVG';
-import {SYSTEM_NAMESPACE} from 'services/global-constants';
+import { SYSTEM_NAMESPACE } from 'services/global-constants';
 import Helmet from 'react-helmet';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Cloud.Profiles.CreateView';
@@ -41,15 +41,15 @@ class ProfileCreateProvisionerSelection extends Component {
     match: PropTypes.object,
     provisionerJsonSpecMap: PropTypes.object,
     loading: PropTypes.bool,
-    error: PropTypes.any
+    error: PropTypes.any,
   };
 
   static defaultProps = {
-    provisionerJsonSpecMap: {}
+    provisionerJsonSpecMap: {},
   };
 
   state = {
-    isSystem: objectQuery(this.props.match, 'params', 'namespace') === SYSTEM_NAMESPACE
+    isSystem: objectQuery(this.props.match, 'params', 'namespace') === SYSTEM_NAMESPACE,
   };
 
   componentDidMount() {
@@ -80,54 +80,39 @@ class ProfileCreateProvisionerSelection extends Component {
     }
 
     return (
-      <Link
-        to={`/ns/${namespace}/profiles/create/${provisioner.name}`}
-        className="provisioner-box"
-      >
-        {
-          provisioner.beta ?
-            <ExperimentalBanner />
-          :
-            null
-        }
+      <Link to={`/ns/${namespace}/profiles/create/${provisioner.name}`} className="provisioner-box">
+        {provisioner.beta ? <ExperimentalBanner /> : null}
         <div className="provisioner-content">
           <div className="provisioner-icon">
-            {
-              src ?
-                <img src={src} />
-              :
-                <IconSVG name={icon} />
-            }
-
+            {src ? <img src={src} /> : <IconSVG name={icon} />}
           </div>
-          <div className="provisioner-label">
-            {provisionerName}
-          </div>
-          <div className="provisioner-description">
-            {provisioner.description}
-          </div>
+          <div className="provisioner-label">{provisionerName}</div>
+          <div className="provisioner-description">{provisioner.description}</div>
         </div>
       </Link>
     );
   }
 
   render() {
-    let linkObj = this.state.isSystem ? {
-      pathname: '/administration/configuration',
-      state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
-    } : () => history.back();
+    let linkObj = this.state.isSystem
+      ? {
+          pathname: '/administration/configuration',
+          state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles },
+        }
+      : () => history.back();
     let breadCrumbLabel = this.state.isSystem ? 'Administration' : 'Namespace';
-    let breadCrumbAnchorLink = this.state.isSystem ? {
-      pathname: '/administration/configuration',
-      state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
-    } : `/ns/${getCurrentNamespace()}/details`;
+    let breadCrumbAnchorLink = this.state.isSystem
+      ? {
+          pathname: '/administration/configuration',
+          state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles },
+        }
+      : `/ns/${getCurrentNamespace()}/details`;
     let createLabel;
     if (this.state.isSystem) {
       createLabel = 'Create a compute profile for all namespaces';
     } else {
       createLabel = `Create a compute profile for '${getCurrentNamespace()}'`;
     }
-
 
     return (
       <div className="profile-create-provisioner-selection">
@@ -142,26 +127,20 @@ class ProfileCreateProvisionerSelection extends Component {
             Select a provisioner for your compute profile
           </h3>
           <div className="provisioner-selections">
-            {
-              this.props.loading ?
-                <LoadingSVGCentered />
-              :
-                Object.values(this.props.provisionerJsonSpecMap)
-                  .filter(provisioner => provisioner.name !== 'native')
-                  .map(provisioner => {
-                    return this.renderProvisionerBox(provisioner);
-                  })
-            }
+            {this.props.loading ? (
+              <LoadingSVGCentered />
+            ) : (
+              Object.values(this.props.provisionerJsonSpecMap)
+                .filter((provisioner) => provisioner.name !== 'native')
+                .map((provisioner) => {
+                  return this.renderProvisionerBox(provisioner);
+                })
+            )}
           </div>
         </div>
-        {
-          this.props.error ?
-            <div className="error-section text-danger">
-              {this.props.error}
-            </div>
-          :
-            null
-        }
+        {this.props.error ? (
+          <div className="error-section text-danger">{this.props.error}</div>
+        ) : null}
       </div>
     );
   }
@@ -171,18 +150,22 @@ const mapStateToProps = (state) => {
   return {
     loading: state.loading,
     error: state.error,
-    provisionerJsonSpecMap: state.map
+    provisionerJsonSpecMap: state.map,
   };
 };
-const ConnectedProfileCreateProvisionerSelection = connect(mapStateToProps)(ProfileCreateProvisionerSelection);
+const ConnectedProfileCreateProvisionerSelection = connect(mapStateToProps)(
+  ProfileCreateProvisionerSelection
+);
 
-export default function ProfileCreateProvisionerSelectionFn({...props}) {
+export default function ProfileCreateProvisionerSelectionFn({ ...props }) {
   return (
     <Provider store={ProvisionerInfoStore}>
       <div>
-        <Helmet title={T.translate(`${PREFIX}.ProvisionerSelection.pageTitle`, {
-          productName: Theme.productName,
-        })} />
+        <Helmet
+          title={T.translate(`${PREFIX}.ProvisionerSelection.pageTitle`, {
+            productName: Theme.productName,
+          })}
+        />
         <ConnectedProfileCreateProvisionerSelection {...props} />
       </div>
     </Provider>

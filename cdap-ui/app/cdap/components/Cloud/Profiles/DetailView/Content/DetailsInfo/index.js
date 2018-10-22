@@ -14,12 +14,12 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import Popover from 'components/Popover';
-import {SECURE_KEY_PREFIX, SECURE_KEY_SUFFIX} from 'services/global-constants';
+import { SECURE_KEY_PREFIX, SECURE_KEY_SUFFIX } from 'services/global-constants';
 
 require('./DetailsInfo.scss');
 
@@ -27,34 +27,28 @@ const PREFIX = 'features.Cloud.Profiles.DetailView';
 
 export default class ProfileDetailViewDetailsInfo extends Component {
   state = {
-    viewDetails: false
+    viewDetails: false,
   };
 
   static propTypes = {
     profile: PropTypes.object,
-    provisioners: PropTypes.array
+    provisioners: PropTypes.array,
   };
 
   toggleViewDetails = () => {
     this.setState({
-      viewDetails: !this.state.viewDetails
+      viewDetails: !this.state.viewDetails,
     });
   };
 
   renderViewDetailsLabel() {
     return (
-      <span
-        className="view-details-label"
-        onClick={this.toggleViewDetails}
-      >
-        <IconSVG name={this.state.viewDetails ? "icon-caret-down" : "icon-caret-right"} />
+      <span className="view-details-label" onClick={this.toggleViewDetails}>
+        <IconSVG name={this.state.viewDetails ? 'icon-caret-down' : 'icon-caret-right'} />
         <span>
-          {
-            this.state.viewDetails ?
-              T.translate(`${PREFIX}.hideDetails`)
-            :
-              T.translate(`${PREFIX}.viewDetails`)
-          }
+          {this.state.viewDetails
+            ? T.translate(`${PREFIX}.hideDetails`)
+            : T.translate(`${PREFIX}.viewDetails`)}
         </span>
       </span>
     );
@@ -64,7 +58,9 @@ export default class ProfileDetailViewDetailsInfo extends Component {
     const beginIndex = value.indexOf(SECURE_KEY_PREFIX);
     const endIndex = value.lastIndexOf(SECURE_KEY_SUFFIX);
 
-    if (beginIndex === -1 || endIndex === -1) { return value; }
+    if (beginIndex === -1 || endIndex === -1) {
+      return value;
+    }
 
     const stringLength = endIndex - beginIndex;
     const secureKey = value.slice(SECURE_KEY_PREFIX.length, stringLength);
@@ -77,7 +73,7 @@ export default class ProfileDetailViewDetailsInfo extends Component {
           target={() => <IconSVG name="icon-shield" />}
           targetDimension={{
             width: 16,
-            height: 21
+            height: 21,
           }}
           placement="top"
           showOn="Hover"
@@ -90,16 +86,14 @@ export default class ProfileDetailViewDetailsInfo extends Component {
 
   renderDetailsTable(profile) {
     if (!profile.provisioner.properties.length) {
-      return (
-        <span>{T.translate(`${PREFIX}.noProperties`)}</span>
-      );
+      return <span>{T.translate(`${PREFIX}.noProperties`)}</span>;
     }
 
     const propertyToLabelMap = {};
-    this.props.provisioners.forEach(provisioner => {
+    this.props.provisioners.forEach((provisioner) => {
       if (provisioner.name === this.props.profile.provisioner.name) {
-        provisioner['configuration-groups'].forEach(provisionerGroup => {
-          provisionerGroup.properties.forEach(prop => {
+        provisioner['configuration-groups'].forEach((provisionerGroup) => {
+          provisionerGroup.properties.forEach((prop) => {
             propertyToLabelMap[prop.name] = prop.label;
           });
         });
@@ -108,39 +102,25 @@ export default class ProfileDetailViewDetailsInfo extends Component {
 
     return (
       <div className="details-table">
-        {
-          profile
-            .provisioner
-            .properties
-            .map(property => {
-              let propertyLabel = propertyToLabelMap[property.name] || property.name;
-              let value = property.value;
+        {profile.provisioner.properties.map((property) => {
+          let propertyLabel = propertyToLabelMap[property.name] || property.name;
+          let value = property.value;
 
-              if (property.name === 'accountKey') {
-                value = this.getSecureKeyValue(value);
-              }
+          if (property.name === 'accountKey') {
+            value = this.getSecureKeyValue(value);
+          }
 
-              return (
-                <div
-                  className="details-row"
-                  key={property.name}
-                >
-                  <strong
-                    className="label-holder"
-                    title={propertyLabel}
-                  >
-                    {`${propertyLabel}:`}
-                  </strong>
-                  <span
-                    className="value-holder"
-                    title={property.value}
-                  >
-                    {value}
-                  </span>
-                </div>
-              );
-            })
-        }
+          return (
+            <div className="details-row" key={property.name}>
+              <strong className="label-holder" title={propertyLabel}>
+                {`${propertyLabel}:`}
+              </strong>
+              <span className="value-holder" title={property.value}>
+                {value}
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   }

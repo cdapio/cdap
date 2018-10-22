@@ -19,12 +19,12 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import classnames from 'classnames';
 import T from 'i18n-react';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import WarningContainer from 'components/WarningContainer';
-import {columnNameAlreadyExists} from 'components/DataPrep/helper';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { columnNameAlreadyExists } from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 
 const PREFIX = 'features.DataPrep.Directives.Copy';
 const COPY_NEW_COLUMN_PREFIX = 'features.DataPrep.DataPrepTable.copyToNewColumn';
@@ -34,7 +34,7 @@ export default class CopyColumnDirective extends Component {
     super(props);
 
     this.state = {
-      input: this.props.column + T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputSuffix`)
+      input: this.props.column + T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputSuffix`),
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -62,46 +62,51 @@ export default class CopyColumnDirective extends Component {
   }
 
   handleInputChange(e) {
-    this.setState({input: e.target.value});
+    this.setState({ input: e.target.value });
   }
 
   handleKeyPress(e) {
-    if (e.nativeEvent.keyCode !== 13 || this.state.input.length === 0) { return; }
+    if (e.nativeEvent.keyCode !== 13 || this.state.input.length === 0) {
+      return;
+    }
 
     this.applyDirective();
   }
 
   applyDirective() {
-    if (this.state.input.length === 0) { return; }
+    if (this.state.input.length === 0) {
+      return;
+    }
     let source = this.props.column;
     let destination = this.state.input;
 
     let directive = `copy ${source} ${destination} true`;
 
-    execute([directive])
-      .subscribe(() => {
+    execute([directive]).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen) {
+      return null;
+    }
 
     return (
-      <div
-        className="copy-column-detail second-level-popover"
-        onClick={this.preventPropagation}
-      >
+      <div className="copy-column-detail second-level-popover" onClick={this.preventPropagation}>
         <h5>{T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputLabel`)}</h5>
 
         <div className="input">
@@ -112,17 +117,13 @@ export default class CopyColumnDirective extends Component {
             onChange={this.handleInputChange}
             onKeyPress={this.handleKeyPress}
             placeholder={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputPlaceholder`)}
-            ref={ref => this.inputBox = ref}
+            ref={(ref) => (this.inputBox = ref)}
           />
         </div>
 
-        {
-          columnNameAlreadyExists(this.state.input) ? (
-            <WarningContainer
-              message={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputDuplicate`)}
-            />
-          ) : null
-        }
+        {columnNameAlreadyExists(this.state.input) ? (
+          <WarningContainer message={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputDuplicate`)} />
+        ) : null}
 
         <hr />
 
@@ -135,14 +136,10 @@ export default class CopyColumnDirective extends Component {
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.props.close}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
-
       </div>
     );
   }
@@ -152,12 +149,10 @@ export default class CopyColumnDirective extends Component {
       <div
         id="copy-directive"
         className={classnames('copy-directive clearfix action-item', {
-          'active': this.props.isOpen
+          active: this.props.isOpen,
         })}
       >
-        <span>
-          {T.translate(`${PREFIX}.title`)}
-        </span>
+        <span>{T.translate(`${PREFIX}.title`)}</span>
 
         <span className="float-xs-right">
           <span className="fa fa-caret-right" />
@@ -173,5 +168,5 @@ CopyColumnDirective.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

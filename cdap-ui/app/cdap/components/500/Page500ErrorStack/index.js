@@ -15,43 +15,42 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import classnames from 'classnames';
 require('./Page500ErrorStack.scss');
 
 export default class Page500ErrorStack extends Component {
   static propTypes = {
     stack: PropTypes.string,
-    message: PropTypes.string
+    message: PropTypes.string,
   };
 
   state = {
-    showError: false
+    showError: false,
   };
 
   toggleShowError = () => {
     this.setState({
-      showError: !this.state.showError
+      showError: !this.state.showError,
     });
   };
 
   render() {
-    let {stack} = this.props;
+    let { stack } = this.props;
     return (
       <div className="page-500-error-stack">
-        <div
-          className="btn btn-link"
-          onClick={this.toggleShowError}
-        >
-          {
-            this.state.showError ? 'Hide error stack' : 'Show error stack'
-          }
+        <div className="btn btn-link" onClick={this.toggleShowError}>
+          {this.state.showError ? 'Hide error stack' : 'Show error stack'}
         </div>
-        <div className={classnames("stack-section", {
-          'open': this.state.showError
-        })}>
+        <div
+          className={classnames('stack-section', {
+            open: this.state.showError,
+          })}
+        >
           <strong>{this.props.message}</strong>
-          <pre className="text-danger">{typeof stack === 'object' ? JSON.stringify(stack, null, 2) : stack}</pre>
+          <pre className="text-danger">
+            {typeof stack === 'object' ? JSON.stringify(stack, null, 2) : stack}
+          </pre>
         </div>
       </div>
     );

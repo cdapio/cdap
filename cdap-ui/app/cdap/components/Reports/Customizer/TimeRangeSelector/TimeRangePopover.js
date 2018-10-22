@@ -19,8 +19,8 @@ import PropTypes from 'prop-types';
 import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
 import TimeRangePicker from 'components/TimeRangePicker';
-import {connect} from 'react-redux';
-import {ReportsActions} from 'components/Reports/store/ReportsStore';
+import { connect } from 'react-redux';
+import { ReportsActions } from 'components/Reports/store/ReportsStore';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Reports.Customizer.TimeRangeSelector';
@@ -30,20 +30,20 @@ class TimeRangePopoverView extends Component {
     onApply: PropTypes.func,
     start: PropTypes.number,
     end: PropTypes.number,
-    selection: PropTypes.string
+    selection: PropTypes.string,
   };
 
   state = {
     selection: this.props.selection,
     start: this.props.start,
-    end: this.props.end
+    end: this.props.end,
   };
 
   componentWillReceiveProps(nextProps) {
     this.setState({
       selection: nextProps.selection,
       start: nextProps.start,
-      end: nextProps.end
+      end: nextProps.end,
     });
   }
 
@@ -51,17 +51,17 @@ class TimeRangePopoverView extends Component {
     this.setState({ selection });
   };
 
-  onCustomRangeChange = ({start, end}) => {
+  onCustomRangeChange = ({ start, end }) => {
     this.setState({
       start,
-      end
+      end,
     });
   };
 
   apply = () => {
     let selection = this.state.selection;
     let start = null,
-        end = null;
+      end = null;
 
     if (selection === 'custom') {
       start = this.state.start;
@@ -71,7 +71,7 @@ class TimeRangePopoverView extends Component {
     this.props.onApply({
       selection,
       start,
-      end
+      end,
     });
 
     // to close popover
@@ -79,7 +79,9 @@ class TimeRangePopoverView extends Component {
   };
 
   renderCustomRange = () => {
-    if (this.state.selection !== 'custom') { return null; }
+    if (this.state.selection !== 'custom') {
+      return null;
+    }
 
     return (
       <div className="custom-range-container">
@@ -103,20 +105,13 @@ class TimeRangePopoverView extends Component {
      *    a. Must have start and end time
      *    b. End time must be greater than startTime
      **/
-    let disabled = !this.state.selection ||
-                    (
-                      this.state.selection === 'custom' &&
-                      ((!startTime || !endTime) ||
-                      !(startTime < endTime))
-                    );
+    let disabled =
+      !this.state.selection ||
+      (this.state.selection === 'custom' && (!startTime || !endTime || !(startTime < endTime)));
 
     return (
       <div className="apply-button">
-        <button
-          className="btn btn-primary"
-          disabled={disabled}
-          onClick={this.apply}
-        >
+        <button className="btn btn-primary" disabled={disabled} onClick={this.apply}>
           {T.translate('commons.apply')}
         </button>
       </div>
@@ -135,39 +130,28 @@ class TimeRangePopoverView extends Component {
         modifiers={{
           flip: {
             enabled: true,
-            behavior: ['bottom', 'left']
+            behavior: ['bottom', 'left'],
           },
           preventOverflow: {
             enabled: true,
-            boundariesElement: 'scrollParent'
-          }
+            boundariesElement: 'scrollParent',
+          },
         }}
       >
-        <div className="title">
-          {T.translate(`${PREFIX}.labelWithColon`)}
-        </div>
+        <div className="title">{T.translate(`${PREFIX}.labelWithColon`)}</div>
 
         <div className="options">
-          <div
-            className="option"
-            onClick={this.changeSelection.bind(this, 'last30')}
-          >
+          <div className="option" onClick={this.changeSelection.bind(this, 'last30')}>
             <IconSVG name={this.state.selection === 'last30' ? 'icon-circle' : 'icon-circle-o'} />
             {T.translate(`${PREFIX}.last30Min`)}
           </div>
 
-          <div
-            className="option"
-            onClick={this.changeSelection.bind(this, 'lastHour')}
-          >
+          <div className="option" onClick={this.changeSelection.bind(this, 'lastHour')}>
             <IconSVG name={this.state.selection === 'lastHour' ? 'icon-circle' : 'icon-circle-o'} />
             {T.translate(`${PREFIX}.lastHour`)}
           </div>
 
-          <div
-            className="option"
-            onClick={this.changeSelection.bind(this, 'custom')}
-          >
+          <div className="option" onClick={this.changeSelection.bind(this, 'custom')}>
             <IconSVG name={this.state.selection === 'custom' ? 'icon-circle' : 'icon-circle-o'} />
             {T.translate(`${PREFIX}.customRange`)}
           </div>
@@ -185,7 +169,7 @@ const mapStateToProps = (state) => {
   return {
     start: state.timeRange.start,
     end: state.timeRange.end,
-    selection: state.timeRange.selection
+    selection: state.timeRange.selection,
   };
 };
 
@@ -194,9 +178,9 @@ const mapDispatch = (dispatch) => {
     onApply: (payload) => {
       dispatch({
         type: ReportsActions.setTimeRange,
-        payload
+        payload,
       });
-    }
+    },
   };
 };
 

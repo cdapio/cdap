@@ -15,9 +15,9 @@
  */
 
 import DataPrepStore from 'components/DataPrep/store';
-import {MyArtifactApi} from 'api/artifact';
+import { MyArtifactApi } from 'api/artifact';
 import MyDataPrepApi from 'api/dataprep';
-import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
+import { findHighestVersion } from 'services/VersionRange/VersionUtilities';
 import Version from 'services/VersionRange/Version';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import NamespaceStore from 'services/NamespaceStore';
@@ -29,15 +29,15 @@ export function directiveRequestBodyCreator(directivesArray, wsId) {
     version: 1.0,
     workspace: {
       name: workspaceId,
-      results: 1000
+      results: 1000,
     },
     recipe: {
-      directives: directivesArray
+      directives: directivesArray,
     },
     sampling: {
-      method: "FIRST",
-      limit: 1000
-    }
+      method: 'FIRST',
+      limit: 1000,
+    },
   };
 }
 
@@ -59,7 +59,7 @@ export function setPopoverOffset(element, popoverLevel = 'second-level-popover')
   // FIXME: 5 is the magic number for aligning the bottom of the popover menu with the popover item.
   // We should fix the logic of showing the menu to not account in these magic numbers.
   // JIRA: CDAP-12468 to track this for a subsequent release.
-  let diff = (bodyBottom - (popoverMenuItemTop + popoverHeight) - tableContainerScroll) + 5;
+  let diff = bodyBottom - (popoverMenuItemTop + popoverHeight) - tableContainerScroll + 5;
 
   if (elemBounding.bottom > popover[0].getBoundingClientRect().bottom) {
     // This is to align the bottom of second level popover menu with that of the main menu
@@ -85,11 +85,13 @@ export function checkDataPrepHigherVersion() {
   MyArtifactApi.list({ namespace })
     .combineLatest(MyDataPrepApi.getApp({ namespace }))
     .subscribe((res) => {
-      let wranglerArtifactVersions = res[0].filter((artifact) => {
-        return artifact.name === 'wrangler-service';
-      }).map((artifact) => {
-        return artifact.version;
-      });
+      let wranglerArtifactVersions = res[0]
+        .filter((artifact) => {
+          return artifact.name === 'wrangler-service';
+        })
+        .map((artifact) => {
+          return artifact.version;
+        });
 
       let highestVersion = findHighestVersion(wranglerArtifactVersions);
       let currentAppArtifactVersion = new Version(res[1].artifact.version);
@@ -98,8 +100,8 @@ export function checkDataPrepHigherVersion() {
         DataPrepStore.dispatch({
           type: DataPrepActions.setHigherVersion,
           payload: {
-            higherVersion: highestVersion.toString()
-          }
+            higherVersion: highestVersion.toString(),
+          },
         });
       }
     });

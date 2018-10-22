@@ -15,7 +15,7 @@
 */
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
 require('./EntityCounts.scss');
@@ -26,11 +26,11 @@ const mapStateToProps = (state) => {
   return {
     customAppCount: state.customAppCount,
     pipelineCount: state.pipelineCount,
-    datasetCount: state.datasetCount
+    datasetCount: state.datasetCount,
   };
 };
 
-const NamespaceDetailsEntityCounts = ({customAppCount, pipelineCount, datasetCount}) => {
+const NamespaceDetailsEntityCounts = ({ customAppCount, pipelineCount, datasetCount }) => {
   return (
     <div className="namespace-details-entity-count">
       <div className="entity-count">
@@ -52,8 +52,10 @@ const NamespaceDetailsEntityCounts = ({customAppCount, pipelineCount, datasetCou
 NamespaceDetailsEntityCounts.propTypes = {
   customAppCount: PropTypes.number,
   pipelineCount: PropTypes.number,
-  datasetCount: PropTypes.number
+  datasetCount: PropTypes.number,
 };
 
-const ConnectedNamespaceDetailsEntityCounts = connect(mapStateToProps)(NamespaceDetailsEntityCounts);
+const ConnectedNamespaceDetailsEntityCounts = connect(mapStateToProps)(
+  NamespaceDetailsEntityCounts
+);
 export default ConnectedNamespaceDetailsEntityCounts;

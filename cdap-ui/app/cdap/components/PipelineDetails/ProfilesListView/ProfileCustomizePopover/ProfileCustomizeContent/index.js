@@ -15,13 +15,13 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {PureComponent} from 'react';
+import React, { PureComponent } from 'react';
 import LoadingSVG from 'components/LoadingSVG';
-import Accordion, {AccordionContent, AccordionTitle, AccordionPane} from 'components/Accordion';
-import {MyCloudApi} from 'api/cloud';
+import Accordion, { AccordionContent, AccordionTitle, AccordionPane } from 'components/Accordion';
+import { MyCloudApi } from 'api/cloud';
 import AbstractWidget from 'components/AbstractWidget';
 import uuidV4 from 'uuid/v4';
-import {extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
+import { extractProfileName } from 'components/Cloud/Profiles/Store/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import cloneDeep from 'lodash/cloneDeep';
 import classnames from 'classnames';
@@ -36,34 +36,33 @@ export default class ProfileCustomizeContent extends PureComponent {
     provisioner: PropTypes.object,
     onSave: PropTypes.func,
     disabled: PropTypes.bool,
-    onClose: PropTypes.func
+    onClose: PropTypes.func,
   };
   static defaultProps = {
     customizations: {},
-    disabled: false
+    disabled: false,
   };
 
   state = {
     loading: true,
-    provisionerspec: null
+    provisionerspec: null,
   };
 
   customization = cloneDeep(this.props.customizations);
 
   componentDidMount() {
     MyCloudApi.getProvisionerDetailSpec({
-      provisioner: this.props.provisioner.name
-    })
-    .subscribe(
-      provisionerspec => {
+      provisioner: this.props.provisioner.name,
+    }).subscribe(
+      (provisionerspec) => {
         this.setState({
           provisionerspec,
-          loading: false
+          loading: false,
         });
       },
-      err => {
+      (err) => {
         this.setState({
-          loading: false
+          loading: false,
         });
         console.log('Failed to fetch provisioner spec ', err);
       }
@@ -99,9 +98,11 @@ export default class ProfileCustomizeContent extends PureComponent {
       return <LoadingSVG />;
     }
     let groups = this.state.provisionerspec['configuration-groups'];
-    let editablePropertiesFromProfile = this.props.provisioner.properties.filter(property => property.isEditable);
+    let editablePropertiesFromProfile = this.props.provisioner.properties.filter(
+      (property) => property.isEditable
+    );
     let editablePropertiesMap = {};
-    editablePropertiesFromProfile.forEach(property => {
+    editablePropertiesFromProfile.forEach((property) => {
       if (property.name in this.props.customizations) {
         editablePropertiesMap[property.name] = this.props.customizations[property.name];
       } else {
@@ -116,91 +117,72 @@ export default class ProfileCustomizeContent extends PureComponent {
           <div className="profile-customize-metadata">
             <div className="profile-customize-name">
               <strong title={profileName}>{profileName}</strong>
-              {
-                editablePropertiesFromProfile.length ?
-                  <small>Customize the values for the runs started by this schedule</small>
-                :
-                  null
-              }
+              {editablePropertiesFromProfile.length ? (
+                <small>Customize the values for the runs started by this schedule</small>
+              ) : null}
             </div>
-            <IconSVG
-              name="icon-close"
-              onClick={this.onClose}
-            />
+            <IconSVG name="icon-close" onClick={this.onClose} />
           </div>
           <Accordion size="small" active="0">
-            {
-              groups.map((group, i) => {
-                let editableProperties = group.properties
-                  .filter(property => property.name in editablePropertiesMap)
-                  .map(property => ({
-                    ...property,
-                    value: editablePropertiesMap[property.name]
-                  }));
-                return (
-                  <AccordionPane id={i}>
-                    <AccordionTitle>
-                      <strong>{group.label} ({group.properties.length})</strong>
-                    </AccordionTitle>
-                    <AccordionContent>
-                      {
-                        editableProperties.map(property => {
-                          let uniqueId = `provisioner-${uuidV4()}`;
-                          return (
-                            <div key={uniqueId} className="profile-group-content">
-                              <div>
-                                <strong
-                                  id={uniqueId}
-                                >
-                                  {property.label}
-                                </strong>
-                              </div>
-                              <div>
-                                <AbstractWidget
-                                  type={property['widget-type']}
-                                  value={this.getProfilePropValue.bind(this, property)}
-                                  onChange={this.onPropertyUpdate.bind(this, property.name)}
-                                  widgetProps={property['widget-attributes']}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })
-                      }
-                      {
-                        !editableProperties.length ?
-                          <strong> Properties cannot be customized</strong>
-                        :
-                          null
-                      }
-                    </AccordionContent>
-                  </AccordionPane>
-                );
-              })
-            }
+            {groups.map((group, i) => {
+              let editableProperties = group.properties
+                .filter((property) => property.name in editablePropertiesMap)
+                .map((property) => ({
+                  ...property,
+                  value: editablePropertiesMap[property.name],
+                }));
+              return (
+                <AccordionPane id={i}>
+                  <AccordionTitle>
+                    <strong>
+                      {group.label} ({group.properties.length})
+                    </strong>
+                  </AccordionTitle>
+                  <AccordionContent>
+                    {editableProperties.map((property) => {
+                      let uniqueId = `provisioner-${uuidV4()}`;
+                      return (
+                        <div key={uniqueId} className="profile-group-content">
+                          <div>
+                            <strong id={uniqueId}>{property.label}</strong>
+                          </div>
+                          <div>
+                            <AbstractWidget
+                              type={property['widget-type']}
+                              value={this.getProfilePropValue.bind(this, property)}
+                              onChange={this.onPropertyUpdate.bind(this, property.name)}
+                              widgetProps={property['widget-attributes']}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {!editableProperties.length ? (
+                      <strong> Properties cannot be customized</strong>
+                    ) : null}
+                  </AccordionContent>
+                </AccordionPane>
+              );
+            })}
           </Accordion>
         </div>
-        {
-          this.props.disabled ?
-            null
-          :
-            <div>
-              {
-                !editablePropertiesFromProfile.length ?
-                  <small className="text-danger">Properties of this profile cannot be customized.</small>
-                :
-                  null
-              }
-              <div
-                className={classnames("btn btn-primary", {
-                  'disabled': editablePropertiesFromProfile.length === 0
-                })}
-                onClick={editablePropertiesFromProfile.length === 0 ? undefined : this.onSave}
-              >
-                Done
-              </div>
+        {this.props.disabled ? null : (
+          <div>
+            {!editablePropertiesFromProfile.length ? (
+              <small className="text-danger">
+                Properties of this profile cannot be customized.
+              </small>
+            ) : null}
+            <div
+              className={classnames('btn btn-primary', {
+                disabled: editablePropertiesFromProfile.length === 0,
+              })}
+              onClick={editablePropertiesFromProfile.length === 0 ? undefined : this.onSave}
+            >
+              Done
             </div>
-        }
+          </div>
+        )}
       </div>
     );
   }

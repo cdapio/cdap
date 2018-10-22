@@ -13,63 +13,67 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import PluginArtifactUploadActions from 'services/WizardStores/PluginArtifactUpload/PluginArtifactUploadActions';
-import {getArtifactNameAndVersion} from 'services/helpers';
+import { getArtifactNameAndVersion } from 'services/helpers';
 import T from 'i18n-react';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 const defaultState = {
   __complete: false,
   __skipped: false,
-  __error: false
+  __error: false,
 };
-const defaultJarState = Object.assign({}, {
-  contents: '',
-  fileMetadataObj: {}
-}, defaultState);
+const defaultJarState = Object.assign(
+  {},
+  {
+    contents: '',
+    fileMetadataObj: {},
+  },
+  defaultState
+);
 
-const defaultJsonState = Object.assign({}, {
-  contents: '',
-  properties: {},
-  artifactExtends: '',
-  artifactPlugins: []
-}, defaultState);
+const defaultJsonState = Object.assign(
+  {},
+  {
+    contents: '',
+    properties: {},
+    artifactExtends: '',
+    artifactPlugins: [],
+  },
+  defaultState
+);
 
 const defaultUploadState = Object.assign({
   jar: defaultJarState,
-  json: defaultJsonState
+  json: defaultJsonState,
 });
 
 const defaultInitialState = {
-  upload: defaultUploadState
+  upload: defaultUploadState,
 };
 
 const upload = (state = defaultUploadState, action = defaultAction) => {
   let stateCopy;
-  let pluginProperties,
-      artifactExtends,
-      artifactPlugins,
-      artifactJson,
-      fileMetadataObj;
+  let pluginProperties, artifactExtends, artifactPlugins, artifactJson, fileMetadataObj;
   switch (action.type) {
     case PluginArtifactUploadActions.setFilePath:
       if (!action.payload.file.name.endsWith('.jar')) {
         return Object.assign({}, state, {
           jar: Object.assign({}, defaultJarState, {
-            __error: T.translate('features.Wizard.PluginArtifact.Step1.errorMessage')
-          })
+            __error: T.translate('features.Wizard.PluginArtifact.Step1.errorMessage'),
+          }),
         });
       }
       fileMetadataObj = getArtifactNameAndVersion(action.payload.file.name.split('.jar')[0]);
       stateCopy = Object.assign({}, state, {
         jar: {
           contents: action.payload.file,
-          fileMetadataObj
-        }
+          fileMetadataObj,
+        },
       });
       break;
     case PluginArtifactUploadActions.setJson:
@@ -79,27 +83,29 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
       } catch (e) {
         return Object.assign({}, state, {
           json: Object.assign({}, defaultJsonState, {
-            __error: T.translate('features.Wizard.PluginArtifact.Step2.errorMessage')
-          })
+            __error: T.translate('features.Wizard.PluginArtifact.Step2.errorMessage'),
+          }),
         });
       }
       if (!artifactJson.parents) {
         return Object.assign({}, state, {
           json: Object.assign({}, defaultJsonState, {
-            __error: T.translate('features.Wizard.PluginArtifact.Step2.errorMessageParentArtifacts')
-          })
+            __error: T.translate(
+              'features.Wizard.PluginArtifact.Step2.errorMessageParentArtifacts'
+            ),
+          }),
         });
       }
       pluginProperties = artifactJson.properties;
-      artifactExtends = artifactJson.parents.reduce( (prev, curr) => `${prev}/${curr}`);
+      artifactExtends = artifactJson.parents.reduce((prev, curr) => `${prev}/${curr}`);
       artifactPlugins = artifactJson.plugins || [];
       stateCopy = Object.assign({}, state, {
         json: {
           properties: pluginProperties,
           artifactExtends,
           artifactPlugins,
-          contents: action.payload.jsonFile
-        }
+          contents: action.payload.jsonFile,
+        },
       });
       return stateCopy;
     case PluginArtifactUploadActions.onReset:
@@ -109,15 +115,14 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
   }
 
   return Object.assign({}, stateCopy, {
-    __complete: true
+    __complete: true,
   });
 };
-
 
 const PluginArtifactUploadStoreWrapper = () => {
   return createStore(
     combineReducers({
-      upload
+      upload,
     }),
     defaultInitialState
   );

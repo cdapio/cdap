@@ -21,10 +21,10 @@ import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
 import isObject from 'lodash/isObject';
-import {myExperimentsApi} from 'api/experiments';
-import {isSpark2Available} from 'services/CDAPComponentsVersions';
+import { myExperimentsApi } from 'api/experiments';
+import { isSpark2Available } from 'services/CDAPComponentsVersions';
 import Helmet from 'react-helmet';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 require('./ExperimentsServiceControl.scss');
 
@@ -34,17 +34,16 @@ const MMDSArtifact = 'mmds-app';
 
 export default class ExperimentsServiceControl extends Component {
   static propTypes = {
-    onServiceStart: PropTypes.func
+    onServiceStart: PropTypes.func,
   };
 
   componentDidMount() {
-    isSpark2Available()
-      .subscribe(
-        isAvailable => this.setState({
-          checkingForSpark2: false,
-          disabled: !isAvailable
-        })
-      );
+    isSpark2Available().subscribe((isAvailable) =>
+      this.setState({
+        checkingForSpark2: false,
+        disabled: !isAvailable,
+      })
+    );
   }
 
   state = {
@@ -52,12 +51,12 @@ export default class ExperimentsServiceControl extends Component {
     disabled: false,
     checkingForSpark2: true,
     error: null,
-    extendedError: null
+    extendedError: null,
   };
 
   enableMMDS = () => {
     this.setState({
-      loading: true
+      loading: true,
     });
 
     const featureName = Theme.featureNames.analytics;
@@ -66,21 +65,17 @@ export default class ExperimentsServiceControl extends Component {
       artifactName: MMDSArtifact,
       api: myExperimentsApi,
       i18nPrefix: PREFIX,
-      featureName
-    }).subscribe(
-      this.props.onServiceStart,
-      (err) => {
-        let extendedMessage = isObject(err.extendedMessage) ?
-          err.extendedMessage.response || err.extendedMessage.message
-        :
-          err.extendedMessage;
-        this.setState({
-          error: err.error,
-          extendedError: extendedMessage,
-          loading: false
-        });
-      }
-    );
+      featureName,
+    }).subscribe(this.props.onServiceStart, (err) => {
+      let extendedMessage = isObject(err.extendedMessage)
+        ? err.extendedMessage.response || err.extendedMessage.message
+        : err.extendedMessage;
+      this.setState({
+        error: err.error,
+        extendedError: extendedMessage,
+        loading: false,
+      });
+    });
   };
 
   renderEnableBtn = () => {
@@ -109,18 +104,11 @@ export default class ExperimentsServiceControl extends Component {
     }
     return (
       <div className="action-container">
-        <button
-          className="btn btn-primary"
-          onClick={this.enableMMDS}
-          disabled={this.state.loading}
-        >
-          {
-            this.state.loading ?
-              <LoadingSVG />
-            :
-              null
-          }
-          <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`, { featureName })}</span>
+        <button className="btn btn-primary" onClick={this.enableMMDS} disabled={this.state.loading}>
+          {this.state.loading ? <LoadingSVG /> : null}
+          <span className="btn-label">
+            {T.translate(`${PREFIX}.enableBtnLabel`, { featureName })}
+          </span>
         </button>
       </div>
     );
@@ -136,21 +124,21 @@ export default class ExperimentsServiceControl extends Component {
           <IconSVG name="icon-exclamation-triangle" />
           <span>{this.state.error}</span>
         </h5>
-        <p className="text-danger">
-          {this.state.extendedError}
-        </p>
+        <p className="text-danger">{this.state.extendedError}</p>
       </div>
     );
-  }
+  };
 
   render() {
     const featureName = Theme.featureNames.analytics;
     return (
       <div className="experiments-service-control">
-        <Helmet title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`, {
-          productName: Theme.productName,
-          featureName
-        })} />
+        <Helmet
+          title={T.translate(`${EXPERIMENTS_I18N_PREFIX}.pageTitle`, {
+            productName: Theme.productName,
+            featureName,
+          })}
+        />
         <div className="image-containers">
           <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview1.png" />
           <img className="img-thumbnail" src="/cdap_assets/img/MMDS_preview2.png" />
@@ -159,9 +147,7 @@ export default class ExperimentsServiceControl extends Component {
           <h2> {T.translate(`${PREFIX}.title`, { featureName })} </h2>
           {this.renderEnableBtn()}
           {this.renderError()}
-          <p>
-            {T.translate(`${PREFIX}.description`, { featureName })}
-          </p>
+          <p>{T.translate(`${PREFIX}.description`, { featureName })}</p>
           <div className="experiments-benefit">
             {T.translate(`${PREFIX}.Benefits.title`, { featureName })}
 

@@ -25,23 +25,22 @@ let commonSteps = [
     shorttitle: T.translate('features.Wizard.PluginArtifact.Step1.shorttitle'),
     title: T.translate('features.Wizard.PluginArtifact.Step1.title'),
     description: T.translate('features.Wizard.PluginArtifact.Step1.description'),
-    content: (<UploadJarStep />),
-    requiredFields: ['file']
+    content: <UploadJarStep />,
+    requiredFields: ['file'],
   },
   {
     id: 'uploadjson',
     shorttitle: T.translate('features.Wizard.PluginArtifact.Step2.shorttitle'),
     title: T.translate('features.Wizard.PluginArtifact.Step2.title'),
     description: T.translate('features.Wizard.PluginArtifact.Step2.description'),
-    content: (<UploadJsonStep />),
-    requiredFields: ['name', 'type', 'parentArtifact', 'classname']
-  }
+    content: <UploadJsonStep />,
+    requiredFields: ['name', 'type', 'parentArtifact', 'classname'],
+  },
 ];
 
 const PluginArtifactUploadWizardConfig = {
   steps: commonSteps,
-  footertitle: T.translate('features.Wizard.PluginArtifact.footertitle')
+  footertitle: T.translate('features.Wizard.PluginArtifact.footertitle'),
 };
-
 
 export default PluginArtifactUploadWizardConfig;

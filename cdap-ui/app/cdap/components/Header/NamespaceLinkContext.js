@@ -25,7 +25,7 @@ export function withContext(Component) {
   return function ComponentWithContext(props) {
     return (
       <NamespaceLinkContext.Consumer>
-        {context => <Component {...props} context={context} />}
+        {(context) => <Component {...props} context={context} />}
       </NamespaceLinkContext.Consumer>
     );
   };

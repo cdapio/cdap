@@ -16,7 +16,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import Mousetrap from 'mousetrap';
@@ -26,12 +26,11 @@ require('./UsingDelimiter.scss');
 const PREFIX = 'features.DataPrep.Directives.ExtractFields.UsingDelimiters';
 const DEFAULT_DELIMITER = T.translate(`${PREFIX}.comma`);
 const DELIMITER_MAP = {
-
   [T.translate(`${PREFIX}.comma`)]: ',',
   [T.translate(`${PREFIX}.tab`)]: '\\t',
   [T.translate(`${PREFIX}.pipe`)]: '\\|',
   [T.translate(`${PREFIX}.whitespace`)]: '\\s+',
-  [T.translate(`${PREFIX}.custom`)]: 'CUSTOM'
+  [T.translate(`${PREFIX}.custom`)]: 'CUSTOM',
 };
 
 export default class UsingDelimiterModal extends Component {
@@ -39,7 +38,7 @@ export default class UsingDelimiterModal extends Component {
     super(props);
     this.state = {
       delimiterSelection: DEFAULT_DELIMITER,
-      customDelimiter: ''
+      customDelimiter: '',
     };
     this.applyDirective = this.applyDirective.bind(this);
     this.handleDelimiterInput = this.handleDelimiterInput.bind(this);
@@ -59,15 +58,17 @@ export default class UsingDelimiterModal extends Component {
   }
 
   handleSplitByClick(option) {
-    this.setState({delimiterSelection: option});
+    this.setState({ delimiterSelection: option });
   }
 
   handleDelimiterInput(e) {
-    this.setState({customDelimiter: e.target.value});
+    this.setState({ customDelimiter: e.target.value });
   }
 
   handleKeyPress(e) {
-    if (e.nativeEvent.keyCode !== 13 || this.state.customDelimiter.length === 0) { return; }
+    if (e.nativeEvent.keyCode !== 13 || this.state.customDelimiter.length === 0) {
+      return;
+    }
 
     this.applyDirective();
   }
@@ -91,11 +92,12 @@ export default class UsingDelimiterModal extends Component {
     );
   }
   applyDirective() {
-
     let delimiter = DELIMITER_MAP[this.state.delimiterSelection];
 
     if (delimiter === 'CUSTOM') {
-      if (this.state.customDelimiter.length === 0) { return; }
+      if (this.state.customDelimiter.length === 0) {
+        return;
+      }
 
       delimiter = this.state.customDelimiter;
     }
@@ -108,7 +110,8 @@ export default class UsingDelimiterModal extends Component {
   render() {
     const OPTIONS = Object.keys(DELIMITER_MAP);
     const isCustomDelimiter = () => DELIMITER_MAP[this.state.delimiterSelection] === 'CUSTOM';
-    const getApplyBtnDisabledState = () => isCustomDelimiter() && isEmpty(this.state.customDelimiter);
+    const getApplyBtnDisabledState = () =>
+      isCustomDelimiter() && isEmpty(this.state.customDelimiter);
     return (
       <Modal
         isOpen={true}
@@ -119,37 +122,30 @@ export default class UsingDelimiterModal extends Component {
         className="dataprep-parse-modal using-delimiter-modal cdap-modal"
       >
         <ModalHeader>
+          <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
 
-          <span>
-            {T.translate(`${PREFIX}.modalTitle`)}
-          </span>
-
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.onClose}
-          >
+          <div className="close-section float-xs-right" onClick={this.props.onClose}>
             <span className="fa fa-times" />
           </div>
-
         </ModalHeader>
         <ModalBody>
-          {
-            OPTIONS.map((option) => {
-              return (
-                <div
-                  key={option}
-                  onClick={this.handleSplitByClick.bind(this, option)}
-                  className="cursor-pointer"
-                >
-                  <span className={classnames('fa fa-fw', {
+          {OPTIONS.map((option) => {
+            return (
+              <div
+                key={option}
+                onClick={this.handleSplitByClick.bind(this, option)}
+                className="cursor-pointer"
+              >
+                <span
+                  className={classnames('fa fa-fw', {
                     'fa-circle-o': option !== this.state.delimiterSelection,
-                    'fa-circle': option === this.state.delimiterSelection
-                  })} />
-                  <span>{option}</span>
-                </div>
-              );
-            })
-          }
+                    'fa-circle': option === this.state.delimiterSelection,
+                  })}
+                />
+                <span>{option}</span>
+              </div>
+            );
+          })}
 
           {this.renderCustomDelimiter()}
         </ModalBody>
@@ -161,10 +157,7 @@ export default class UsingDelimiterModal extends Component {
           >
             {T.translate('features.DataPrep.Directives.ExtractFields.extractBtnLabel')}
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={this.props.onClose}
-          >
+          <button className="btn btn-secondary" onClick={this.props.onClose}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </ModalFooter>
@@ -175,5 +168,5 @@ export default class UsingDelimiterModal extends Component {
 
 UsingDelimiterModal.propTypes = {
   onClose: PropTypes.func,
-  onApply: PropTypes.func
+  onApply: PropTypes.func,
 };

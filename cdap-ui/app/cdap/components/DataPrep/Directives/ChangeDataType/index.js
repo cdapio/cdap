@@ -18,14 +18,14 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import classnames from 'classnames';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 import debounce from 'lodash/debounce';
 import ee from 'event-emitter';
 import T from 'i18n-react';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 import { UncontrolledTooltip } from 'components/UncontrolledComponents';
 import If from 'components/If';
 
@@ -41,14 +41,10 @@ const DATATYPE_OPTIONS = [
   'short',
   'float',
   'double',
-  'bytes'
+  'bytes',
 ];
 
-const DISABLED_TYPE = [
-  'localdate',
-  'localtime',
-  'zoneddatetime'
-];
+const DISABLED_TYPE = ['localdate', 'localtime', 'zoneddatetime'];
 
 export default class ChangeDataTypeDirective extends Component {
   constructor(props) {
@@ -58,7 +54,7 @@ export default class ChangeDataTypeDirective extends Component {
 
     this.state = {
       selectedChangeDataType: null,
-      isDisabled: DISABLED_TYPE.indexOf(this.columnType) !== -1
+      isDisabled: DISABLED_TYPE.indexOf(this.columnType) !== -1,
     };
 
     window.addEventListener('resize', this.offsetCalcDebounce);
@@ -73,9 +69,12 @@ export default class ChangeDataTypeDirective extends Component {
   }
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('change-data-type-directive'));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById('change-data-type-directive')
+    );
     this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
-   }
+  }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.offsetCalcDebounce);
@@ -87,23 +86,22 @@ export default class ChangeDataTypeDirective extends Component {
     }
 
     let directive = `set-type :${this.props.column} ${option}`;
-    execute([directive])
-      .subscribe(
-        () => {
-          this.eventEmitter.emit('DATAPREP_DATA_TYPE_CHANGED', this.props.column);
-          this.props.onComplete();
-        },
-        (err) => {
-          console.log('error', err);
+    execute([directive]).subscribe(
+      () => {
+        this.eventEmitter.emit('DATAPREP_DATA_TYPE_CHANGED', this.props.column);
+        this.props.onComplete();
+      },
+      (err) => {
+        console.log('error', err);
 
-          DataPrepStore.dispatch({
-            type: DataPrepActions.setError,
-            payload: {
-              message: err.message || err.response.message
-            }
-          });
-        }
-      );
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message,
+          },
+        });
+      }
+    );
   }
 
   renderDetail() {
@@ -111,25 +109,20 @@ export default class ChangeDataTypeDirective extends Component {
       return null;
     }
     return (
-      <div
-        className="change-data-type-options second-level-popover"
-        onClick={preventPropagation}
-      >
-        {
-          this.props.options.map((option, i) => {
-            return (
-              <div
-                className={classnames('option', {
-                             'disabled': this.columnType.toUpperCase() === option.toUpperCase()
-                           })}
-                key={i}
-                onClick={this.applyDirective.bind(this, option)}
-              >
-                {T.translate(`${PREFIX}.Options.${option}`)}
-              </div>
-            );
-          })
-        }
+      <div className="change-data-type-options second-level-popover" onClick={preventPropagation}>
+        {this.props.options.map((option, i) => {
+          return (
+            <div
+              className={classnames('option', {
+                disabled: this.columnType.toUpperCase() === option.toUpperCase(),
+              })}
+              key={i}
+              onClick={this.applyDirective.bind(this, option)}
+            >
+              {T.translate(`${PREFIX}.Options.${option}`)}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -141,13 +134,11 @@ export default class ChangeDataTypeDirective extends Component {
         <div
           id={id}
           className={classnames('change-data-type-directive clearfix action-item', {
-            'active': this.props.isOpen && !this.state.isDisabled,
-            'disabled': this.state.isDisabled
+            active: this.props.isOpen && !this.state.isDisabled,
+            disabled: this.state.isDisabled,
           })}
         >
-          <span>
-            {T.translate(`${PREFIX}.title`)}
-          </span>
+          <span>{T.translate(`${PREFIX}.title`)}</span>
 
           <span className="float-xs-right">
             <span className="fa fa-caret-right" />
@@ -157,10 +148,7 @@ export default class ChangeDataTypeDirective extends Component {
         </div>
 
         <If condition={this.state.isDisabled}>
-          <UncontrolledTooltip
-            target={id}
-            delay={{ show: 250, hide: 0 }}
-          >
+          <UncontrolledTooltip target={id} delay={{ show: 250, hide: 0 }}>
             {T.translate(`${PREFIX}.disabledTooltip`)}
           </UncontrolledTooltip>
         </If>
@@ -170,7 +158,7 @@ export default class ChangeDataTypeDirective extends Component {
 }
 
 ChangeDataTypeDirective.defaultProps = {
-  options: DATATYPE_OPTIONS
+  options: DATATYPE_OPTIONS,
 };
 
 ChangeDataTypeDirective.propTypes = {
@@ -179,5 +167,5 @@ ChangeDataTypeDirective.propTypes = {
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
   isDisabled: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

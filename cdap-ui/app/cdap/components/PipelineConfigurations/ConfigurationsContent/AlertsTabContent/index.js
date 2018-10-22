@@ -29,12 +29,8 @@ export default class AlertsTabContent extends Component {
         id="alerts-tab-content"
         className="configuration-step-content configuration-content-container"
       >
-        <div className="step-content-heading">
-          {T.translate(`${PREFIX}.contentHeading`)}
-        </div>
-        <PostRunActions
-          actions={postActions}
-        />
+        <div className="step-content-heading">{T.translate(`${PREFIX}.contentHeading`)}</div>
+        <PostRunActions actions={postActions} />
       </div>
     );
   }

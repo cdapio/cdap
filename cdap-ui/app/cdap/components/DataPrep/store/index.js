@@ -14,13 +14,13 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {composeEnhancers} from 'services/helpers';
+import { composeEnhancers } from 'services/helpers';
 
 const defaultAction = {
-  action : '',
-  payload : {}
+  action: '',
+  payload: {},
 };
 
 const defaultInitialState = {
@@ -34,29 +34,29 @@ const defaultInitialState = {
   selectedHeaders: [],
   highlightColumns: {
     directive: null,
-    columns: []
+    columns: [],
   },
   directives: [],
   higherVersion: null,
   loading: false,
   singleWorkspaceMode: false,
   workspaceInfo: null,
-  properties: {}
+  properties: {},
 };
 
 const errorInitialState = {
   showError: null,
   cliError: null,
   dataError: false,
-  dataErrorMessage: null
+  dataErrorMessage: null,
 };
 
 const columnsInformationInitialState = {
-  columns: {}
+  columns: {},
 };
 
 const workspacesInitialState = {
-  list: []
+  list: [],
 };
 
 const getTypesCheck = (types = {}, headers = []) => {
@@ -76,7 +76,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
       stateCopy = Object.assign({}, state, {
         data: action.payload.data,
         headers: action.payload.headers,
-        loading: false
+        loading: false,
       });
       break;
     case DataPrepActions.setDirectives:
@@ -91,23 +91,23 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         // the list of headers
         selectedHeaders: state.selectedHeaders.filter((head) => {
           return action.payload.headers.indexOf(head) !== -1;
-        })
+        }),
       });
       break;
     case DataPrepActions.setProperties: {
       let properties = {
         ...state.properties,
-        ...action.payload.properties
+        ...action.payload.properties,
       };
       return {
         ...state,
-        properties
+        properties,
       };
     }
     case DataPrepActions.setWorkspaceId:
       stateCopy = Object.assign({}, state, {
         workspaceId: action.payload.workspaceId,
-        loading: action.payload.loading
+        loading: action.payload.loading,
       });
       break;
     case DataPrepActions.setWorkspace:
@@ -123,12 +123,12 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         initialized: true,
         loading: false,
         selectedHeaders: [],
-        workspaceInfo: action.payload.workspaceInfo
+        workspaceInfo: action.payload.workspaceInfo,
       });
       break;
     case DataPrepActions.setSelectedHeaders:
       stateCopy = Object.assign({}, state, {
-        selectedHeaders: action.payload.selectedHeaders
+        selectedHeaders: action.payload.selectedHeaders,
       });
       break;
     case DataPrepActions.setInitialized:
@@ -136,28 +136,28 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
       break;
     case DataPrepActions.setHigherVersion:
       stateCopy = Object.assign({}, state, {
-        higherVersion: action.payload.higherVersion
+        higherVersion: action.payload.higherVersion,
       });
       break;
     case DataPrepActions.setWorkspaceMode:
       stateCopy = Object.assign({}, state, {
-        singleWorkspaceMode: action.payload.singleWorkspaceMode
+        singleWorkspaceMode: action.payload.singleWorkspaceMode,
       });
       break;
     case DataPrepActions.setHighlightColumns:
       stateCopy = Object.assign({}, state, {
-        highlightColumns: action.payload.highlightColumns
+        highlightColumns: action.payload.highlightColumns,
       });
       break;
     case DataPrepActions.enableLoading:
       stateCopy = Object.assign({}, state, {
-        loading: true
+        loading: true,
       });
       break;
     case DataPrepActions.setDataError:
     case DataPrepActions.disableLoading:
       stateCopy = Object.assign({}, state, {
-        loading: false
+        loading: false,
       });
       break;
     case DataPrepActions.reset:
@@ -176,20 +176,20 @@ const error = (state = errorInitialState, action = defaultAction) => {
     case DataPrepActions.setError:
       stateCopy = Object.assign({}, state, {
         showError: action.payload.message,
-        cliError: null
+        cliError: null,
       });
       break;
     case DataPrepActions.setDataError:
       stateCopy = Object.assign({}, state, {
         dataError: true,
         loading: false,
-        dataErrorMessage: action.payload.errorMessage
+        dataErrorMessage: action.payload.errorMessage,
       });
       break;
     case DataPrepActions.setCLIError:
       stateCopy = Object.assign({}, state, {
         showError: null,
-        cliError: action.payload.message
+        cliError: action.payload.message,
       });
       break;
     case DataPrepActions.setWorkspace:
@@ -197,18 +197,18 @@ const error = (state = errorInitialState, action = defaultAction) => {
       stateCopy = Object.assign({}, state, {
         showError: null,
         cliError: null,
-        dataError: false
+        dataError: false,
       });
       break;
     case DataPrepActions.dismissError:
       stateCopy = Object.assign({}, state, {
-        showError: null
+        showError: null,
       });
       break;
     case DataPrepActions.setData:
       stateCopy = Object.assign({}, state, {
         dataError: false,
-        dataErrorMessage: null
+        dataErrorMessage: null,
       });
       break;
     case DataPrepActions.reset:
@@ -226,7 +226,7 @@ const columnsInformation = (state = columnsInformationInitialState, action = def
   switch (action.type) {
     case DataPrepActions.setColumnsInformation:
       stateCopy = Object.assign({}, state, {
-        columns: action.payload.columns
+        columns: action.payload.columns,
       });
       break;
     case DataPrepActions.reset:
@@ -244,7 +244,7 @@ const workspaces = (state = workspacesInitialState, action = defaultAction) => {
   switch (action.type) {
     case DataPrepActions.setWorkspaceList:
       stateCopy = Object.assign({}, state, {
-        list: action.payload.list
+        list: action.payload.list,
       });
       break;
     case DataPrepActions.reset:
@@ -261,12 +261,12 @@ const DataPrepStore = createStore(
     dataprep,
     error,
     columnsInformation,
-    workspaces
+    workspaces,
   }),
   {
     dataprep: defaultInitialState,
     error: errorInitialState,
-    workspaces: workspacesInitialState
+    workspaces: workspacesInitialState,
   },
   composeEnhancers('DataPrepStore')()
 );

@@ -28,7 +28,7 @@ export default class SendEventAction extends Component {
     super(props);
 
     this.state = {
-      modal: false
+      modal: false,
     };
 
     this.eventText = '';
@@ -38,12 +38,12 @@ export default class SendEventAction extends Component {
 
   componentWillMount() {
     if (this.props.opened) {
-      this.setState({modal: true});
+      this.setState({ modal: true });
     }
   }
 
   toggleTooltip() {
-    this.setState({ tooltipOpen : !this.state.tooltipOpen });
+    this.setState({ tooltipOpen: !this.state.tooltipOpen });
   }
 
   toggleModal(event) {
@@ -60,11 +60,7 @@ export default class SendEventAction extends Component {
     let tooltipID = `sendevents-${this.props.entity.uniqueId}`;
     return (
       <span className="btn btn-secondary btn-sm">
-        <FastActionButton
-          icon="icon-upload"
-          action={this.toggleModal}
-          id={tooltipID}
-        />
+        <FastActionButton icon="icon-upload" action={this.toggleModal} id={tooltipID} />
         <Tooltip
           placement="top"
           isOpen={this.state.tooltipOpen}
@@ -75,14 +71,9 @@ export default class SendEventAction extends Component {
           {T.translate('features.FastAction.sendEventsLabel')}
         </Tooltip>
 
-        {
-          this.state.modal ? (
-            <SendEventModal
-              entity={this.props.entity}
-              onClose={this.toggleModal}
-            />
-          ) : null
-        }
+        {this.state.modal ? (
+          <SendEventModal entity={this.props.entity} onClose={this.toggleModal} />
+        ) : null}
       </span>
     );
   }
@@ -95,5 +86,5 @@ SendEventAction.propTypes = {
     type: PropTypes.oneOf(['dataset', 'stream']).isRequired,
   }),
   onSuccess: PropTypes.func,
-  opened: PropTypes.bool
+  opened: PropTypes.bool,
 };

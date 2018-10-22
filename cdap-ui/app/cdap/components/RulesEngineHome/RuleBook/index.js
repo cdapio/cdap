@@ -20,7 +20,7 @@ import React from 'react';
 import moment from 'moment';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import classnames from 'classnames';
-import {setActiveRulebook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import { setActiveRulebook } from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 
@@ -28,26 +28,23 @@ require('./RuleBook.scss');
 
 const PREFIX = 'features.RulesEngine.Rulebook';
 
-export default function RuleBook({bookDetails}) {
-  let {id, user:owner, updated, rules, description} = bookDetails;
+export default function RuleBook({ bookDetails }) {
+  let { id, user: owner, updated, rules, description } = bookDetails;
   let numOfRules = !isNil(rules) && typeof rules === 'string' ? rules.split(',').length : 0;
   const onClick = () => {
     setActiveRulebook(id);
   };
-  let {rulebooks} = RulesEngineStore.getState();
+  let { rulebooks } = RulesEngineStore.getState();
 
   return (
     <div
       onClick={onClick}
-      className={classnames("rule-book", {
-        active: rulebooks.activeRulebookId === id
+      className={classnames('rule-book', {
+        active: rulebooks.activeRulebookId === id,
       })}
     >
       <div className="rule-book-top" />
-      <div
-        className="rule-book-id"
-        title={id}
-      >
+      <div className="rule-book-id" title={id}>
         <strong> {id} </strong>
       </div>
       <div className="rule-book-owner">
@@ -58,12 +55,11 @@ export default function RuleBook({bookDetails}) {
         <div>{moment(updated * 1000).format('MM-DD-YYYY HH:mm')}</div>
       </div>
       <div className="rule-book-num-of-rules">
-        <strong>{numOfRules} {T.translate(`${PREFIX}.rules`)}</strong>
+        <strong>
+          {numOfRules} {T.translate(`${PREFIX}.rules`)}
+        </strong>
       </div>
-      <p
-        className="rule-book-description"
-        title={description}
-      >
+      <p className="rule-book-description" title={description}>
         {description}
       </p>
     </div>
@@ -71,11 +67,10 @@ export default function RuleBook({bookDetails}) {
 }
 
 RuleBook.defaultProps = {
-  onClick: () => {}
+  onClick: () => {},
 };
 
 RuleBook.propTypes = {
   bookDetails: PropTypes.object,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
 };
-

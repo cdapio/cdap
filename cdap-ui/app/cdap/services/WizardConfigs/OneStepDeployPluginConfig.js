@@ -22,12 +22,16 @@ const OneStepDeployPluginConfig = {
   steps: [
     {
       id: 'one_step_deploy_plugin',
-      shorttitle: T.translate('features.Wizard.OneStepDeploy.Step1.shorttitle', {entityType: 'Plugin'}),
+      shorttitle: T.translate('features.Wizard.OneStepDeploy.Step1.shorttitle', {
+        entityType: 'Plugin',
+      }),
       title: T.translate('features.Wizard.OneStepDeploy.Step1.title'),
-      description: T.translate('features.Wizard.OneStepDeploy.Step1.description', {entityType: 'Plugin'}),
-      content: (<Deploy />),
-    }
-  ]
+      description: T.translate('features.Wizard.OneStepDeploy.Step1.description', {
+        entityType: 'Plugin',
+      }),
+      content: <Deploy />,
+    },
+  ],
 };
 
 export default OneStepDeployPluginConfig;

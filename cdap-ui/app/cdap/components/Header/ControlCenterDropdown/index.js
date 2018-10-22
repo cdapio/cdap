@@ -30,11 +30,11 @@ require('./ControlCenterDropdown.scss');
 export default class ControlCenterDropdown extends Component {
   static propTypes = {
     nativeLink: PropTypes.bool,
-    namespace: PropTypes.string
+    namespace: PropTypes.string,
   };
 
   static defaultProps = {
-    nativeLink: false
+    nativeLink: false,
   };
 
   isCDAPActive = () => {
@@ -69,16 +69,9 @@ export default class ControlCenterDropdown extends Component {
     const featureName = Theme.featureNames.controlCenter;
 
     return (
-      <li
-        id="navbar-control-center"
-        className={classnames({ 'active': this.isCDAPActive() })}
-      >
-        <UncontrolledDropdown
-          className="header-dropdown control-center"
-        >
-          <DropdownToggle caret>
-            {featureName}
-          </DropdownToggle>
+      <li id="navbar-control-center" className={classnames({ active: this.isCDAPActive() })}>
+        <UncontrolledDropdown className="header-dropdown control-center">
+          <DropdownToggle caret>{featureName}</DropdownToggle>
           <CustomDropdownMenu>
             <EntitiesLink />
             <DashboardLink />

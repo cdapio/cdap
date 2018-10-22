@@ -35,7 +35,7 @@ const UploadApplication = () => {
       headers.Authorization = `Bearer ${token}`;
     }
   }
-  return UploadFile({url, fileContents: state.uploadFile.file, headers});
+  return UploadFile({ url, fileContents: state.uploadFile.file, headers });
 };
 
-export {UploadApplication};
+export { UploadApplication };

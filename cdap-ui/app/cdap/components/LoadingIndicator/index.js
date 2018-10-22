@@ -14,46 +14,58 @@
  * the License.
 */
 
-import React, {Component} from 'react';
-import LoadingIndicatorStore, {BACKENDSTATUS, LOADINGSTATUS} from 'components/LoadingIndicator/LoadingIndicatorStore';
+import React, { Component } from 'react';
+import LoadingIndicatorStore, {
+  BACKENDSTATUS,
+  LOADINGSTATUS,
+} from 'components/LoadingIndicator/LoadingIndicatorStore';
 import T from 'i18n-react';
-import {Modal} from 'reactstrap';
+import { Modal } from 'reactstrap';
 import LoadingSVG from 'components/LoadingSVG';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.LoadingIndicator';
 
 require('./LoadingIndicator.scss');
 
 export default class LoadingIndicator extends Component {
-
   static defaultProps = {
     icon: '',
-    message: T.translate('features.LoadingIndicator.defaultMessage')
+    message: T.translate('features.LoadingIndicator.defaultMessage'),
   };
 
   state = {
-    showLoading: false
-  }
+    showLoading: false,
+  };
 
   componentDidMount() {
     this.loadingIndicatorStoreSubscription = LoadingIndicatorStore.subscribe(() => {
       if (location.pathname.indexOf('/cdap/administration') !== -1) {
         return;
       }
-      let {status, services = []} = LoadingIndicatorStore.getState().loading;
+      let { status, services = [] } = LoadingIndicatorStore.getState().loading;
       let showLoading;
-      if ([BACKENDSTATUS.BACKENDUP, BACKENDSTATUS.NODESERVERUP, LOADINGSTATUS.HIDELOADING].indexOf(status) !== -1) {
+      if (
+        [BACKENDSTATUS.BACKENDUP, BACKENDSTATUS.NODESERVERUP, LOADINGSTATUS.HIDELOADING].indexOf(
+          status
+        ) !== -1
+      ) {
         showLoading = false;
       }
-      if ([LOADINGSTATUS.SHOWLOADING, BACKENDSTATUS.NODESERVERDOWN, BACKENDSTATUS.BACKENDDOWN].indexOf(status) !== -1) {
+      if (
+        [
+          LOADINGSTATUS.SHOWLOADING,
+          BACKENDSTATUS.NODESERVERDOWN,
+          BACKENDSTATUS.BACKENDDOWN,
+        ].indexOf(status) !== -1
+      ) {
         showLoading = true;
       }
       if (this.state.showLoading !== showLoading) {
         this.setState({
           showLoading,
           services,
-          status
+          status,
         });
       }
     });
@@ -78,9 +90,11 @@ export default class LoadingIndicator extends Component {
         return (
           <div>
             <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
-            <div>{T.translate(`${PREFIX}.restartCDAP`, {
-              productName: Theme.productName,
-            })}</div>
+            <div>
+              {T.translate(`${PREFIX}.restartCDAP`, {
+                productName: Theme.productName,
+              })}
+            </div>
           </div>
         );
       }
@@ -89,22 +103,21 @@ export default class LoadingIndicator extends Component {
     return (
       <div className="subtitle">
         <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
-        {
-          this.state.status === BACKENDSTATUS.NODESERVERDOWN ?
-            null
-          :
-            <a href="/cdap/administration"> {T.translate(`${PREFIX}.systemDashboard`)}</a>
-        }
+        {this.state.status === BACKENDSTATUS.NODESERVERDOWN ? null : (
+          <a href="/cdap/administration"> {T.translate(`${PREFIX}.systemDashboard`)}</a>
+        )}
         <span> {T.translate(`${PREFIX}.contactadmin`)} </span>
       </div>
     );
   }
   renderContent() {
     let message;
-    let {loading} = LoadingIndicatorStore.getState();
+    let { loading } = LoadingIndicatorStore.getState();
     if (loading.status === BACKENDSTATUS.BACKENDDOWN) {
       if (this.state.services.length === 1) {
-        message = T.translate(`${PREFIX}.serviceDown`, {serviceName: this.state.servives[0].name});
+        message = T.translate(`${PREFIX}.serviceDown`, {
+          serviceName: this.state.servives[0].name,
+        });
       } else {
         message = T.translate(`${PREFIX}.servicesDown`);
       }
@@ -127,11 +140,10 @@ export default class LoadingIndicator extends Component {
     return (
       <Modal
         isOpen={this.state.showLoading}
-        toggle={() =>{}}
+        toggle={() => {}}
         zIndex={2000}
         className="loading-indicator"
       >
-
         <div className="text-xs-center">
           <div className="icon-loading-bars">
             <LoadingSVG />

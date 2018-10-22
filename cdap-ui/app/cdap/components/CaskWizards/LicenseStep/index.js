@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MyMarketApi} from 'api/market';
+import { MyMarketApi } from 'api/market';
 import T from 'i18n-react';
 require('./LicenseStep.scss');
 
@@ -25,29 +25,27 @@ export default class LicenseStep extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      license: null
+      license: null,
     };
   }
   componentWillMount() {
-    let {entityName, entityVersion, licenseFileName} = this.props;
+    let { entityName, entityVersion, licenseFileName } = this.props;
     let params = {
       entityName,
       entityVersion,
-      filename: licenseFileName
+      filename: licenseFileName,
     };
-    MyMarketApi
-      .getSampleData(params)
-      .subscribe(license => {
-        this.setState({
-          license
-        });
+    MyMarketApi.getSampleData(params).subscribe((license) => {
+      this.setState({
+        license,
       });
+    });
   }
   render() {
     if (!this.state.license) {
       return (
         <div className="spinner-container">
-          <div className="fa fa-spin fa-spinner fa-3x"></div>
+          <div className="fa fa-spin fa-spinner fa-3x" />
         </div>
       );
     }
@@ -56,16 +54,10 @@ export default class LicenseStep extends Component {
         <h2>{T.translate('features.Wizard.licenseStep.termsandconditions')}</h2>
         <pre className="license-text">{this.state.license}</pre>
         <div>
-          <div
-            className="btn btn-primary agree-btn"
-            onClick={this.props.onAgree.bind(this)}
-          >
+          <div className="btn btn-primary agree-btn" onClick={this.props.onAgree.bind(this)}>
             {T.translate('features.Wizard.licenseStep.agreeAndActionBtnLabel')}
           </div>
-          <div
-            className="back-to-cdap-link"
-            onClick={this.props.onReject.bind(this, false)}
-          >
+          <div className="back-to-cdap-link" onClick={this.props.onReject.bind(this, false)}>
             {T.translate('features.Wizard.licenseStep.backToCaskBtnLabel')}
           </div>
         </div>
@@ -78,5 +70,5 @@ LicenseStep.propTypes = {
   entityVersion: PropTypes.string,
   licenseFileName: PropTypes.string,
   onReject: PropTypes.func.required,
-  onAgree: PropTypes.func.required
+  onAgree: PropTypes.func.required,
 };

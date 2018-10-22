@@ -24,16 +24,14 @@ var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var uuidV4 = require('uuid/v4');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-var ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-let pathsToClean = [
-  'cdap_dist'
-];
+let pathsToClean = ['cdap_dist'];
 
 // the clean options to use
 let cleanOptions = {
   verbose: true,
-  dry: false
+  dry: false,
 };
 
 var mode = process.env.NODE_ENV || 'production';
@@ -48,12 +46,12 @@ const getWebpackDllPlugins = (mode) => {
   return [
     new webpack.DllReferencePlugin({
       context: path.resolve(__dirname, 'dll'),
-      manifest: require(path.join(__dirname, 'dll', sharedDllManifestFileName))
+      manifest: require(path.join(__dirname, 'dll', sharedDllManifestFileName)),
     }),
     new webpack.DllReferencePlugin({
       context: path.resolve(__dirname, 'dll'),
-      manifest: require(path.join(__dirname, 'dll', cdapDllManifestFileName))
-    })
+      manifest: require(path.join(__dirname, 'dll', cdapDllManifestFileName)),
+    }),
   ];
 };
 var plugins = [
@@ -63,27 +61,27 @@ var plugins = [
   new LodashModuleReplacementPlugin({
     shorthands: true,
     collections: true,
-    caching: true
+    caching: true,
   }),
   new CaseSensitivePathsPlugin(),
   ...getWebpackDllPlugins(mode),
   new CopyWebpackPlugin([
     {
       from: './styles/fonts',
-      to: './fonts/'
+      to: './fonts/',
     },
     {
       from: path.resolve(__dirname, 'node_modules', 'font-awesome', 'fonts'),
-      to: './fonts/'
+      to: './fonts/',
     },
     {
       from: './styles/img',
-      to: './img/'
-    }
+      to: './img/',
+    },
   ]),
   new StyleLintPlugin({
     syntax: 'scss',
-    files: ['**/*.scss']
+    files: ['**/*.scss'],
   }),
   new HtmlWebpackPlugin({
     title: 'CDAP',
@@ -91,7 +89,7 @@ var plugins = [
     filename: 'cdap.html',
     hash: true,
     hashId: uuidV4(),
-    mode: isModeProduction(mode) ? '' : 'development.'
+    mode: isModeProduction(mode) ? '' : 'development.',
   }),
 ];
 if (!isModeProduction(mode)) {
@@ -100,38 +98,31 @@ if (!isModeProduction(mode)) {
       tsconfig: __dirname + '/tsconfig.json',
       tslint: __dirname + '/tslint.json',
       // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
-      memoryLimit: 4096
-    }),
+      memoryLimit: 4096,
+    })
   );
 }
 
 var rules = [
   {
     test: /\.scss$/,
-    use: [
-      'style-loader',
-      'css-loader',
-      'postcss-loader',
-      'sass-loader'
-    ]
+    use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
   },
   {
     test: /\.ya?ml$/,
-    use: 'yml-loader'
+    use: 'yml-loader',
   },
   {
     test: /\.css$/,
-    use: [
-      'style-loader',
-      'css-loader',
-      'postcss-loader',
-      'sass-loader'
-    ]
+    use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
   },
   {
     enforce: 'pre',
     test: /\.js$/,
-    use: 'eslint-loader',
+    loader: 'eslint-loader',
+    options: {
+      fix: true,
+    },
     exclude: [
       /node_modules/,
       /bower_components/,
@@ -140,20 +131,14 @@ var rules = [
       /cdap_dist/,
       /common_dist/,
       /lib/,
-      /wrangler_dist/
-    ]
+      /wrangler_dist/,
+    ],
   },
   {
     test: /\.js$/,
     use: ['babel-loader'],
-    exclude: [
-      /node_modules/,
-      /lib/
-    ],
-    include: [
-      path.join(__dirname, 'app'),
-      path.join(__dirname, '.storybook')
-    ]
+    exclude: [/node_modules/, /lib/],
+    include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
     test: /\.tsx?$/,
@@ -162,18 +147,12 @@ var rules = [
       {
         loader: 'ts-loader',
         options: {
-          transpileOnly: true
-        }
+          transpileOnly: true,
+        },
       },
     ],
-    exclude: [
-      /node_modules/,
-      /lib/
-    ],
-    include: [
-      path.join(__dirname, 'app'),
-      path.join(__dirname, '.storybook')
-    ]
+    exclude: [/node_modules/, /lib/],
+    include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
@@ -182,44 +161,44 @@ var rules = [
         loader: 'url-loader',
         options: {
           limit: 10000,
-          mimetype: 'application/font-woff'
-        }
-      }
-    ]
+          mimetype: 'application/font-woff',
+        },
+      },
+    ],
   },
   {
     test: /\.(ttf|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-    use: 'url-loader'
+    use: 'url-loader',
   },
   {
     test: /\.svg/,
     use: [
       {
-        loader: 'svg-sprite-loader'
-      }
-    ]
-  }
+        loader: 'svg-sprite-loader',
+      },
+    ],
+  },
 ];
 
 if (isModeProduction(mode)) {
   plugins.push(
     new webpack.DefinePlugin({
-      'process.env':{
-        'NODE_ENV': JSON.stringify("production"),
-        '__DEVTOOLS__': false
+      'process.env': {
+        NODE_ENV: JSON.stringify('production'),
+        __DEVTOOLS__: false,
       },
     }),
     new UglifyJsPlugin({
       uglifyOptions: {
         ie8: false,
         compress: {
-          warnings: false
+          warnings: false,
         },
         output: {
           comments: false,
           beautify: false,
-        }
-      }
+        },
+      },
     })
   );
 }
@@ -228,27 +207,26 @@ if (mode === 'development') {
   plugins.push(
     new LiveReloadPlugin({
       port: 35728,
-      appendScriptTag: true
+      appendScriptTag: true,
     })
   );
 }
-
 
 var webpackConfig = {
   mode: isModeProduction(mode) ? 'production' : 'development',
   devtool: 'source-map',
   context: __dirname + '/app/cdap',
   entry: {
-    'cdap': ['@babel/polyfill', './cdap.js']
+    cdap: ['@babel/polyfill', './cdap.js'],
   },
   module: {
-    rules
+    rules,
   },
   output: {
     filename: '[name].[chunkhash].js',
     chunkFilename: '[name].[chunkhash].js',
     path: __dirname + '/cdap_dist/cdap_assets/',
-    publicPath: '/cdap_assets/'
+    publicPath: '/cdap_assets/',
   },
   stats: {
     assets: false,
@@ -257,12 +235,12 @@ var webpackConfig = {
     chunkModules: false,
     chunkOrigins: false,
     chunks: false,
-    modules: false
+    modules: false,
   },
   plugins: plugins,
   // TODO: Need to investigate this more.
   optimization: {
-    splitChunks: false
+    splitChunks: false,
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
@@ -271,9 +249,9 @@ var webpackConfig = {
       services: __dirname + '/app/cdap/services',
       api: __dirname + '/app/cdap/api',
       lib: __dirname + '/app/lib',
-      styles: __dirname + '/app/cdap/styles'
-    }
-  }
+      styles: __dirname + '/app/cdap/styles',
+    },
+  },
 };
 
 module.exports = webpackConfig;

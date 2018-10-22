@@ -19,27 +19,27 @@ import MarketStore from '../store/market-store.js';
 function setList(list) {
   MarketStore.dispatch({
     type: 'SET_ENTITIES',
-    payload: list
+    payload: list,
   });
 }
 
 function setFilter(filter) {
   MarketStore.dispatch({
     type: 'SET_FILTER',
-    payload: filter
+    payload: filter,
   });
 }
 
 function setError() {
   MarketStore.dispatch({
-    type: 'SET_ERROR'
+    type: 'SET_ERROR',
   });
 }
 
 const MarketAction = {
   setList,
   setFilter,
-  setError
+  setError,
 };
 
 export default MarketAction;

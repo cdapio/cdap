@@ -18,11 +18,11 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
-import {Observable} from 'rxjs/Observable';
-import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
-import {objectQuery} from 'services/helpers';
+import { Observable } from 'rxjs/Observable';
+import { directiveRequestBodyCreator } from 'components/DataPrep/helper';
+import { objectQuery } from 'services/helpers';
 import ee from 'event-emitter';
-import {orderBy, find} from 'lodash';
+import { orderBy, find } from 'lodash';
 
 let workspaceRetries;
 
@@ -31,7 +31,7 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
   eventEmitter.emit('CLOSE_POPOVER');
   if (!hideLoading) {
     DataPrepStore.dispatch({
-      type: DataPrepActions.enableLoading
+      type: DataPrepActions.enableLoading,
     });
   }
 
@@ -55,15 +55,15 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
 
   let params = {
     namespace,
-    workspaceId
+    workspaceId,
   };
 
   let requestBody = directiveRequestBodyCreator(updatedDirectives);
   requestBody.properties = properties;
 
   return Observable.create((observer) => {
-    MyDataPrepApi.execute(params, requestBody)
-      .subscribe((res) => {
+    MyDataPrepApi.execute(params, requestBody).subscribe(
+      (res) => {
         observer.next(res);
 
         DataPrepStore.dispatch({
@@ -72,24 +72,26 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
             data: res.values,
             headers: res.header,
             directives: res.directives,
-            types: res.types
-          }
+            types: res.types,
+          },
         });
 
         fetchColumnsInformation(params, requestBody, res.header);
-      }, (err) => {
+      },
+      (err) => {
         observer.error(err);
         DataPrepStore.dispatch({
-          type: DataPrepActions.disableLoading
+          type: DataPrepActions.disableLoading,
         });
-      });
+      }
+    );
   });
 }
 
 function setWorkspaceRetry(params, observer, workspaceId) {
-  MyDataPrepApi.getWorkspace(params)
-    .subscribe((res) => {
-      let {dataprep} = DataPrepStore.getState();
+  MyDataPrepApi.getWorkspace(params).subscribe(
+    (res) => {
+      let { dataprep } = DataPrepStore.getState();
       /*
         1. Open a tab with huge data (like 400 columns and 100 rows)
         2. Change of mind, open another tab
@@ -109,8 +111,8 @@ function setWorkspaceRetry(params, observer, workspaceId) {
       let workspaceUri = objectQuery(res, 'values', '0', 'properties', 'path');
       let workspaceInfo = objectQuery(res, 'values', '0');
 
-      MyDataPrepApi.execute(params, requestBody)
-        .subscribe((response) => {
+      MyDataPrepApi.execute(params, requestBody).subscribe(
+        (response) => {
           DataPrepStore.dispatch({
             type: DataPrepActions.setWorkspace,
             payload: {
@@ -121,14 +123,14 @@ function setWorkspaceRetry(params, observer, workspaceId) {
               workspaceId,
               workspaceUri,
               workspaceInfo,
-              properties
-            }
+              properties,
+            },
           });
 
           observer.next(response);
           fetchColumnsInformation(params, requestBody, response.header);
-
-        }, (err) => {
+        },
+        (err) => {
           // Backend returned an exception. Show default error message for now able to show data.
           if (workspaceRetries < 3) {
             workspaceRetries += 1;
@@ -136,18 +138,19 @@ function setWorkspaceRetry(params, observer, workspaceId) {
           } else {
             observer.next(err);
             DataPrepStore.dispatch({
-              type: DataPrepActions.disableLoading
+              type: DataPrepActions.disableLoading,
             });
             DataPrepStore.dispatch({
               type: DataPrepActions.setDataError,
               payload: {
-                errorMessage: true
-              }
+                errorMessage: true,
+              },
             });
           }
-        });
-
-    }, (err) => {
+        }
+      );
+    },
+    (err) => {
       if (workspaceRetries < 3) {
         workspaceRetries += 1;
         setWorkspaceRetry(params, observer, workspaceId);
@@ -155,32 +158,31 @@ function setWorkspaceRetry(params, observer, workspaceId) {
         DataPrepStore.dispatch({
           type: DataPrepActions.setDataError,
           payload: {
-            errorMessage: true
-          }
+            errorMessage: true,
+          },
         });
         observer.error(err);
       }
-    });
+    }
+  );
 }
 
 export function updateWorkspaceProperties() {
-  let {directives, workspaceId, properties} = DataPrepStore.getState().dataprep;
+  let { directives, workspaceId, properties } = DataPrepStore.getState().dataprep;
   let namespace = NamespaceStore.getState().selectedNamespace;
   let params = {
     namespace,
-    workspaceId
+    workspaceId,
   };
   let requestBody = directiveRequestBodyCreator(directives);
   requestBody.properties = properties;
-  MyDataPrepApi
-    .execute(params, requestBody)
-    .subscribe(
-      () => {},
-      (err) => console.log('Error updating workspace visualization: ', err)
-    );
+  MyDataPrepApi.execute(params, requestBody).subscribe(
+    () => {},
+    (err) => console.log('Error updating workspace visualization: ', err)
+  );
 }
 function checkAndUpdateExistingWorkspaceProperties() {
-  let {workspaceId, workspaceInfo} = DataPrepStore.getState().dataprep;
+  let { workspaceId, workspaceInfo } = DataPrepStore.getState().dataprep;
   if (!workspaceId || !workspaceInfo) {
     return;
   }
@@ -192,15 +194,15 @@ export function setWorkspace(workspaceId) {
 
   let params = {
     namespace,
-    workspaceId
+    workspaceId,
   };
 
   DataPrepStore.dispatch({
     type: DataPrepActions.setWorkspaceId,
     payload: {
       workspaceId,
-      loading: true
-    }
+      loading: true,
+    },
   });
 
   workspaceRetries = 0;
@@ -211,70 +213,74 @@ export function setWorkspace(workspaceId) {
 }
 
 function fetchColumnsInformation(params, requestBody, headers) {
-  MyDataPrepApi.summary(params, requestBody)
-    .subscribe((summaryRes) => {
+  MyDataPrepApi.summary(params, requestBody).subscribe(
+    (summaryRes) => {
       let columns = {};
 
       headers.forEach((head) => {
         columns[head] = {
           general: objectQuery(summaryRes, 'values', 'statistics', head, 'general'),
           types: objectQuery(summaryRes, 'values', 'statistics', head, 'types'),
-          isValid: objectQuery(summaryRes, 'values', 'validation', head, 'valid')
+          isValid: objectQuery(summaryRes, 'values', 'validation', head, 'valid'),
         };
       });
 
       DataPrepStore.dispatch({
         type: DataPrepActions.setColumnsInformation,
         payload: {
-          columns
-        }
+          columns,
+        },
       });
-
-    }, (err) => {
+    },
+    (err) => {
       console.log('error fetching summary', err);
-    });
+    }
+  );
 }
 
 export function getWorkspaceList(workspaceId) {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
-  MyDataPrepApi.getWorkspaceList({ namespace })
-    .subscribe((res) => {
-      if (res.values.length === 0) {
-        DataPrepStore.dispatch({
-          type: DataPrepActions.setWorkspaceList,
-          payload: {
-            list: []
-          }
-        });
-
-        return;
-      }
-
-      let workspaceList = orderBy(res.values, [(workspace) => (workspace.name || '').toLowerCase()], ['asc']);
-
+  MyDataPrepApi.getWorkspaceList({ namespace }).subscribe((res) => {
+    if (res.values.length === 0) {
       DataPrepStore.dispatch({
         type: DataPrepActions.setWorkspaceList,
         payload: {
-          list: workspaceList
-        }
+          list: [],
+        },
       });
 
-      if (workspaceId) {
-        // Set active workspace
-        // Check for existance of the workspaceId
-        let workspaceObj = find(workspaceList, { id: workspaceId });
+      return;
+    }
 
-        let workspaceStream;
-        if (workspaceObj) {
-          workspaceStream = setWorkspace(workspaceId);
-        } else {
-          workspaceStream = setWorkspace(workspaceList[0].id);
-        }
+    let workspaceList = orderBy(
+      res.values,
+      [(workspace) => (workspace.name || '').toLowerCase()],
+      ['asc']
+    );
 
-        workspaceStream.subscribe();
-      }
+    DataPrepStore.dispatch({
+      type: DataPrepActions.setWorkspaceList,
+      payload: {
+        list: workspaceList,
+      },
     });
+
+    if (workspaceId) {
+      // Set active workspace
+      // Check for existance of the workspaceId
+      let workspaceObj = find(workspaceList, { id: workspaceId });
+
+      let workspaceStream;
+      if (workspaceObj) {
+        workspaceStream = setWorkspace(workspaceId);
+      } else {
+        workspaceStream = setWorkspace(workspaceList[0].id);
+      }
+
+      workspaceStream.subscribe();
+    }
+  });
 }
 
 export function setVisualizationState(state) {
@@ -282,8 +288,8 @@ export function setVisualizationState(state) {
     type: DataPrepActions.setProperties,
     payload: {
       properties: {
-        visualization: state
-      }
-    }
+        visualization: state,
+      },
+    },
   });
 }

@@ -25,26 +25,22 @@
   (in Studio view) or to PipelineDetailStore (in Detail view)
 */
 
-import {
-  defaultAction,
-  composeEnhancers,
-  objectQuery
-} from 'services/helpers';
-import {createStore} from 'redux';
+import { defaultAction, composeEnhancers, objectQuery } from 'services/helpers';
+import { createStore } from 'redux';
 import range from 'lodash/range';
-import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
-import {getCustomizationMap} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {CLOUD} from 'services/global-constants';
+import { HYDRATOR_DEFAULT_VALUES } from 'services/global-constants';
+import { getCustomizationMap } from 'components/PipelineConfigurations/Store/ActionCreator';
+import { CLOUD } from 'services/global-constants';
 
 const INTERVAL_OPTIONS = {
   '5MIN': 'Every 5 min',
   '10MIN': 'Every 10 min',
   '30MIN': 'Every 30 min',
-  'HOURLY': 'Hourly',
-  'DAILY': 'Daily',
-  'WEEKLY': 'Weekly',
-  'MONTHLY': 'Monthly',
-  'YEARLY': 'Yearly',
+  HOURLY: 'Hourly',
+  DAILY: 'Daily',
+  WEEKLY: 'Weekly',
+  MONTHLY: 'Monthly',
+  YEARLY: 'Yearly',
 };
 
 const DAY_OF_WEEK_OPTIONS = range(1, 8);
@@ -56,8 +52,8 @@ const MONTH_OPTIONS = range(0, 12);
 const AM_PM_OPTIONS = ['AM', 'PM'];
 const MAX_CONCURRENT_RUNS_OPTIONS = range(1, 11);
 const SCHEDULE_VIEWS = {
-  'BASIC': 'basic',
-  'ADVANCED': 'advanced'
+  BASIC: 'basic',
+  ADVANCED: 'advanced',
 };
 
 const ACTIONS = {
@@ -80,7 +76,7 @@ const ACTIONS = {
   SET_SELECTED_PROFILE: 'SET_SELECTED_PROFILE',
   SET_CURRENT_BACKEND_SCHEDULE: 'SET_CURRENT_BACKEND_SCHEDULE',
   SET_SCHEDULE_STATUS: 'SET_SCHEDULE_STATUS',
-  RESET: 'RESET'
+  RESET: 'RESET',
 };
 const DEFAULT_CRON_OPTIONS = {
   intervalOption: INTERVAL_OPTIONS.DAILY,
@@ -92,7 +88,7 @@ const DEFAULT_CRON_OPTIONS = {
   monthInterval: MONTH_OPTIONS[0],
   startingAtMinute: MINUTE_OPTIONS[0],
   startingAtHour: HOUR_OPTIONS[0],
-  startingAtAMPM: AM_PM_OPTIONS[0]
+  startingAtAMPM: AM_PM_OPTIONS[0],
 };
 const DEFAULT_SCHEDULE_OPTIONS = {
   cron: HYDRATOR_DEFAULT_VALUES.schedule,
@@ -101,10 +97,10 @@ const DEFAULT_SCHEDULE_OPTIONS = {
   scheduleView: Object.values(SCHEDULE_VIEWS)[0],
   profiles: {
     selectedProfile: CLOUD.DEFAULT_PROFILE_NAME,
-    profileCustomizations: {}
+    profileCustomizations: {},
   },
   currentBackendSchedule: null,
-  scheduleStatus: null
+  scheduleStatus: null,
 };
 
 const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
@@ -112,51 +108,51 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
     case ACTIONS.SET_CRON:
       return {
         ...state,
-        cron: action.payload.cron
+        cron: action.payload.cron,
       };
     case ACTIONS.SET_SCHEDULE_STATUS:
       return {
         ...state,
-        scheduleStatus: action.payload.scheduleStatus
+        scheduleStatus: action.payload.scheduleStatus,
       };
     case ACTIONS.CRON_RESET:
       return {
         ...state,
-        ...DEFAULT_CRON_OPTIONS
+        ...DEFAULT_CRON_OPTIONS,
       };
     case ACTIONS.UPDATE_CRON: {
-      let cronArray = state.cron.split(" ");
+      let cronArray = state.cron.split(' ');
       cronArray[action.payload.index] = action.payload.value || '0';
 
       return {
         ...state,
-        cron: cronArray.join(" ")
+        cron: cronArray.join(' '),
       };
     }
     case ACTIONS.SET_STATE:
       return {
         ...state,
-        ...action.payload
+        ...action.payload,
       };
     case ACTIONS.SET_INTERVAL_OPTION:
       return {
         ...state,
-        intervalOption: action.payload.intervalOption
+        intervalOption: action.payload.intervalOption,
       };
     case ACTIONS.SET_MINUTE_INTERVAL:
       return {
         ...state,
-        minInterval: parseInt(action.payload.minInterval, 10)
+        minInterval: parseInt(action.payload.minInterval, 10),
       };
     case ACTIONS.SET_HOUR_INTERVAL:
       return {
         ...state,
-        hourInterval: parseInt(action.payload.hourInterval, 10)
+        hourInterval: parseInt(action.payload.hourInterval, 10),
       };
     case ACTIONS.SET_DAY_INTERVAL:
       return {
         ...state,
-        dayInterval: parseInt(action.payload.dayInterval, 10)
+        dayInterval: parseInt(action.payload.dayInterval, 10),
       };
     case ACTIONS.SET_DAYS_OF_WEEK_INTERVAL: {
       let daysOfWeekInterval = [...state.daysOfWeekInterval];
@@ -170,62 +166,69 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
       daysOfWeekInterval.sort();
       return {
         ...state,
-        daysOfWeekInterval
+        daysOfWeekInterval,
       };
     }
     case ACTIONS.SET_DATE_OF_MONTH_INTERVAL:
       return {
         ...state,
-        dateOfMonthInterval: parseInt(action.payload.dateOfMonthInterval, 10)
+        dateOfMonthInterval: parseInt(action.payload.dateOfMonthInterval, 10),
       };
     case ACTIONS.SET_MONTH_INTERVAL:
       return {
         ...state,
-        monthInterval: parseInt(action.payload.monthInterval, 10)
+        monthInterval: parseInt(action.payload.monthInterval, 10),
       };
     case ACTIONS.SET_STARTING_AT_MINUTE:
       return {
         ...state,
-        startingAtMinute: parseInt(action.payload.startingAtMinute, 10)
+        startingAtMinute: parseInt(action.payload.startingAtMinute, 10),
       };
     case ACTIONS.SET_STARTING_AT_HOUR:
       return {
         ...state,
-        startingAtHour: parseInt(action.payload.startingAtHour, 10)
+        startingAtHour: parseInt(action.payload.startingAtHour, 10),
       };
     case ACTIONS.SET_STARTING_AT_AM_PM:
       return {
         ...state,
-        startingAtAMPM: action.payload.startingAtAMPM
+        startingAtAMPM: action.payload.startingAtAMPM,
       };
     case ACTIONS.SET_MAX_CONCURRENT_RUNS:
       return {
         ...state,
-        maxConcurrentRuns: parseInt(action.payload.maxConcurrentRuns, 10)
+        maxConcurrentRuns: parseInt(action.payload.maxConcurrentRuns, 10),
       };
     case ACTIONS.SET_SELECTED_PROFILE:
       return {
         ...state,
         profiles: {
           selectedProfile: action.payload.selectedProfile,
-          profileCustomizations: action.payload.profileCustomizations
-        }
+          profileCustomizations: action.payload.profileCustomizations,
+        },
       };
     case ACTIONS.SET_SCHEDULE_VIEW:
       return {
         ...state,
-        scheduleView: action.payload.scheduleView
+        scheduleView: action.payload.scheduleView,
       };
     case ACTIONS.SET_CURRENT_BACKEND_SCHEDULE: {
-      let {currentBackendSchedule, profileFromPreferences} = action.payload;
-      let profileFromBackend = objectQuery(currentBackendSchedule, 'properties', CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY);
-      let profileCustomizations = getCustomizationMap(objectQuery(currentBackendSchedule, 'properties') || {});
-      let constraintFromBackend = (currentBackendSchedule.constraints || []).find(constraint => {
+      let { currentBackendSchedule, profileFromPreferences } = action.payload;
+      let profileFromBackend = objectQuery(
+        currentBackendSchedule,
+        'properties',
+        CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY
+      );
+      let profileCustomizations = getCustomizationMap(
+        objectQuery(currentBackendSchedule, 'properties') || {}
+      );
+      let constraintFromBackend = (currentBackendSchedule.constraints || []).find((constraint) => {
         return constraint.type === 'CONCURRENCY';
       });
       let maxConcurrencyFromBackend = objectQuery(constraintFromBackend, 'maxConcurrency');
       let cronFromBackend = objectQuery(currentBackendSchedule, 'trigger', 'cronExpression');
-      let selectedProfile = profileFromBackend || profileFromPreferences || CLOUD.DEFAULT_PROFILE_NAME;
+      let selectedProfile =
+        profileFromBackend || profileFromPreferences || CLOUD.DEFAULT_PROFILE_NAME;
       return {
         ...state,
         currentBackendSchedule: action.payload.currentBackendSchedule,
@@ -233,14 +236,13 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
         maxConcurrentRuns: maxConcurrencyFromBackend,
         profiles: {
           selectedProfile,
-          profileCustomizations
-        }
+          profileCustomizations,
+        },
       };
     }
     case ACTIONS.RESET:
     default:
       return DEFAULT_SCHEDULE_OPTIONS;
-
   }
 };
 
@@ -263,5 +265,5 @@ export {
   MAX_CONCURRENT_RUNS_OPTIONS,
   SCHEDULE_VIEWS,
   ACTIONS,
-  DEFAULT_SCHEDULE_OPTIONS
+  DEFAULT_SCHEDULE_OPTIONS,
 };

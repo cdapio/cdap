@@ -19,9 +19,8 @@ export const apiCreatorAbsPath = createApiFromExactPath;
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
 
-function createApi (dataSrc, method, type, path, options = {}) {
+function createApi(dataSrc, method, type, path, options = {}) {
   return (params = {}, body, headers) => {
-
     let url = buildUrl(path, params);
 
     let reqObj = Object.assign({ _cdapPath: url, method }, options);
@@ -49,7 +48,7 @@ function createApi (dataSrc, method, type, path, options = {}) {
 }
 
 /* The following function might be able to be merged to createApi */
-function createApiFromExactPath (dataSrc, method, type, path, options = {}) {
+function createApiFromExactPath(dataSrc, method, type, path, options = {}) {
   return (params = {}, body, headers) => {
     let url = buildUrl(path, params);
 
@@ -105,13 +104,13 @@ function addQueryParams(url, params = {}) {
   }
 
   function encodeUriQuery(val, pctEncodeSpaces) {
-    return encodeURIComponent(val).
-           replace(/%40/gi, '@').
-           replace(/%3A/gi, ':').
-           replace(/%24/g, '$').
-           replace(/%2C/gi, ',').
-           replace(/%3B/gi, ';').
-           replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+    return encodeURIComponent(val)
+      .replace(/%40/gi, '@')
+      .replace(/%3A/gi, ':')
+      .replace(/%24/g, '$')
+      .replace(/%2C/gi, ',')
+      .replace(/%3B/gi, ';')
+      .replace(/%20/g, pctEncodeSpaces ? '%20' : '+');
   }
 
   forEachSorted(params, function(value, key) {
@@ -134,7 +133,7 @@ function addQueryParams(url, params = {}) {
     });
   });
   if (parts.length > 0) {
-    url += ((url.indexOf('?') === -1) ? '?' : '&') + parts.join('&');
+    url += (url.indexOf('?') === -1 ? '?' : '&') + parts.join('&');
   }
   return url;
 }

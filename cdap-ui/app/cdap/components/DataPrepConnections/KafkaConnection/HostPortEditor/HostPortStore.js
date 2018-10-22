@@ -14,17 +14,17 @@
 * the License.
 */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import HostPortActions from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortActions';
 import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 
 const initialState = {
-  rows: []
+  rows: [],
 };
 
 const hostport = (state = initialState, action = defaultAction) => {
@@ -50,7 +50,7 @@ const hostport = (state = initialState, action = defaultAction) => {
       stateCopy.rows.splice(action.payload.index + 1, 0, {
         host: '',
         port: '',
-        uniqueId: uuidV4()
+        uniqueId: uuidV4(),
       });
       return stateCopy;
     case HostPortActions.deletePair:
@@ -60,7 +60,7 @@ const hostport = (state = initialState, action = defaultAction) => {
         stateCopy.rows.push({
           host: '',
           port: '',
-          uniqueId: uuidV4()
+          uniqueId: uuidV4(),
         });
       }
       return stateCopy;
@@ -77,12 +77,12 @@ const hostport = (state = initialState, action = defaultAction) => {
 
 const HostPortStore = createStore(
   combineReducers({
-    hostport
+    hostport,
   }),
   {
-    hostport: initialState
+    hostport: initialState,
   },
-  window.devToolsExtension ? window.devToolsExtension() : f => f
+  window.devToolsExtension ? window.devToolsExtension() : (f) => f
 );
 
 export default HostPortStore;

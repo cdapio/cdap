@@ -37,7 +37,7 @@ export default class ConnectionsUpload extends Component {
     this.state = {
       file: '',
       recordDelimiter: '\\n',
-      error: null
+      error: null,
     };
 
     this.fileHandler = this.fileHandler.bind(this);
@@ -46,24 +46,23 @@ export default class ConnectionsUpload extends Component {
   }
 
   fileHandler(e) {
-    const isJSONOrXML = (
-      e[0].type === "application/json" ||
-      e[0].type === "text/xml"
-    );
+    const isJSONOrXML = e[0].type === 'application/json' || e[0].type === 'text/xml';
 
     this.setState({
       file: e[0],
       recordDelimiter: isJSONOrXML ? '' : '\\n',
-      error: e[0].size > FILE_SIZE_LIMIT
+      error: e[0].size > FILE_SIZE_LIMIT,
     });
   }
 
   recordDelimiterHandler(e) {
-    this.setState({recordDelimiter: e.target.value});
+    this.setState({ recordDelimiter: e.target.value });
   }
 
   upload() {
-    if (!this.state.file) { return; }
+    if (!this.state.file) {
+      return;
+    }
 
     let delimiter = this.state.recordDelimiter;
     let namespace = NamespaceStore.getState().selectedNamespace;
@@ -74,7 +73,7 @@ export default class ConnectionsUpload extends Component {
     let headers = {
       'Content-Type': 'application/data-prep',
       'X-Archive-Name': fileName,
-      'file': fileName
+      file: fileName,
     };
 
     if (window.CDAP_CONFIG.securityEnabled) {
@@ -88,8 +87,8 @@ export default class ConnectionsUpload extends Component {
       headers['recorddelimiter'] = delimiter;
     }
 
-    UploadFile({url, fileContents: this.state.file, headers})
-      .subscribe((res) => {
+    UploadFile({ url, fileContents: this.state.file, headers }).subscribe(
+      (res) => {
         try {
           let parsed = JSON.parse(res);
           let workspaceId = parsed.values[0].id;
@@ -100,13 +99,15 @@ export default class ConnectionsUpload extends Component {
         } catch (e) {
           console.log('error', e);
         }
-      }, (err) => {
+      },
+      (err) => {
         console.log(err);
         this.setState({
           messageType: 'DANGER',
-          message: err.message
+          message: err.message,
         });
-      });
+      }
+    );
   }
 
   render() {
@@ -116,9 +117,7 @@ export default class ConnectionsUpload extends Component {
     if (this.state.error) {
       error = (
         <div className="upload-error">
-          <span className="message">
-            {T.translate(`${PREFIX}.fileSizeError`)}
-          </span>
+          <span className="message">{T.translate(`${PREFIX}.fileSizeError`)}</span>
         </div>
       );
     }
@@ -133,25 +132,16 @@ export default class ConnectionsUpload extends Component {
 
         <div className="upload-content-container">
           <div className="file-upload">
-            <FileDnD
-              onDropHandler={this.fileHandler}
-              file={this.state.file}
-            />
+            <FileDnD onDropHandler={this.fileHandler} file={this.state.file} />
           </div>
 
           <div className="row upload-row">
             <div className="col-xs-6">
-              <button
-                className="btn btn-primary"
-                onClick={this.upload}
-                disabled={uploadDisabled}
-              >
+              <button className="btn btn-primary" onClick={this.upload} disabled={uploadDisabled}>
                 {T.translate(`${PREFIX}.uploadButton`)}
               </button>
 
-              <span className="helper-text">
-                {T.translate(`${PREFIX}.helperText`)}
-              </span>
+              <span className="helper-text">{T.translate(`${PREFIX}.helperText`)}</span>
             </div>
 
             <div className="col-xs-6 text-xs-right">
@@ -181,5 +171,5 @@ export default class ConnectionsUpload extends Component {
 
 ConnectionsUpload.propTypes = {
   toggle: PropTypes.func,
-  onWorkspaceCreate: PropTypes.func
+  onWorkspaceCreate: PropTypes.func,
 };

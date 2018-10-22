@@ -14,23 +14,26 @@
  * the License.
 */
 
-import {createStore} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 
 const ACTIONS = {
   SET_JSON_SPEC: 'SET_JSON_SPEC',
   SET_JSON_SPECS: 'SET_JSON_SPECS',
   SET_LOADING: 'SET_LOADING',
-  SET_ERROR: 'SET_ERROR'
+  SET_ERROR: 'SET_ERROR',
 };
 
 const DEFAULT_PROVISIONER_JSON_SPEC_MAP = {
   map: {},
   loading: true,
-  error: null
+  error: null,
 };
 
-const provisionerJsonSpecMap = (state = DEFAULT_PROVISIONER_JSON_SPEC_MAP, action = defaultAction) => {
+const provisionerJsonSpecMap = (
+  state = DEFAULT_PROVISIONER_JSON_SPEC_MAP,
+  action = defaultAction
+) => {
   switch (action.type) {
     case ACTIONS.SET_JSON_SPEC:
       return {
@@ -38,13 +41,13 @@ const provisionerJsonSpecMap = (state = DEFAULT_PROVISIONER_JSON_SPEC_MAP, actio
         error: null,
         map: {
           ...state.map,
-          [action.payload.provisionerName]: action.payload.provisionerSpec
+          [action.payload.provisionerName]: action.payload.provisionerSpec,
         },
-        loading: false
+        loading: false,
       };
     case ACTIONS.SET_JSON_SPECS: {
       let map = {};
-      action.payload.provisioners.forEach(provisioner => {
+      action.payload.provisioners.forEach((provisioner) => {
         map[provisioner.name] = provisioner;
       });
       return {
@@ -52,22 +55,22 @@ const provisionerJsonSpecMap = (state = DEFAULT_PROVISIONER_JSON_SPEC_MAP, actio
         error: null,
         map: {
           ...state.map,
-          ...map
+          ...map,
         },
-        loading: false
+        loading: false,
       };
     }
     case ACTIONS.SET_LOADING:
       return {
         ...state,
         error: null,
-        loading: action.payload.loading
+        loading: action.payload.loading,
       };
     case ACTIONS.SET_ERROR:
       return {
         ...state,
         error: action.payload.error,
-        loading: false
+        loading: false,
       };
     default:
       return state;
@@ -81,4 +84,4 @@ const ProvisionerInfoStore = createStore(
 );
 
 export default ProvisionerInfoStore;
-export {ACTIONS};
+export { ACTIONS };

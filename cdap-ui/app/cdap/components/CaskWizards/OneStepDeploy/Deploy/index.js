@@ -22,7 +22,7 @@ require('./Deploy.scss');
 
 const mapStateWithProps = (state) => {
   return {
-    file: {name: state.oneStepDeploy.name}
+    file: { name: state.oneStepDeploy.name },
   };
 };
 
@@ -30,7 +30,6 @@ let ApplicationName = connect(
   mapStateWithProps,
   null
 )(FileDnD);
-
 
 export default function Deploy() {
   return (

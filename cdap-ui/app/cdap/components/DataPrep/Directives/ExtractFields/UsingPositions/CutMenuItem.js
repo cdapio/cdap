@@ -27,32 +27,27 @@ export default class CutMenuItem extends Component {
     this.highlightColumn = this.highlightColumn.bind(this);
   }
   highlightColumn() {
-    let {highlightColumns} = DataPrepStore.getState().dataprep;
+    let { highlightColumns } = DataPrepStore.getState().dataprep;
     DataPrepStore.dispatch({
       type: DataPrepActions.setHighlightColumns,
       payload: {
         highlightColumns: {
           columns: highlightColumns.columns.concat([this.props.column]),
-          directive: 'CUT'
-        }
-      }
+          directive: 'CUT',
+        },
+      },
     });
     this.props.onComplete();
   }
   render() {
     return (
-      <div
-        className="cut-menu-item option clearfix"
-        onClick={this.highlightColumn}
-      >
-        <span>
-          {T.translate('features.DataPrep.Directives.CutMenuItem.menuLabel')}
-        </span>
+      <div className="cut-menu-item option clearfix" onClick={this.highlightColumn}>
+        <span>{T.translate('features.DataPrep.Directives.CutMenuItem.menuLabel')}</span>
       </div>
     );
   }
 }
 CutMenuItem.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
-  onComplete: PropTypes.func
+  onComplete: PropTypes.func,
 };
