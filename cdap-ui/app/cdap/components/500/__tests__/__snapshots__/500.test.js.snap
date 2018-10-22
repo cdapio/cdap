@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Page500 renders correctly 1`] = `
+<div
+  class="page-500"
+>
+  <h1
+    class="error-main-title"
+  >
+    features.Page500.mainTitle
+  </h1>
+  <h1>
+    <strong>
+      features.Page500.secondaryTitle
+    </strong>
+  </h1>
+  <div
+    class="message-section"
+  >
+    <h4>
+      <strong>
+        features.Page404.subtitleMessage1
+      </strong>
+    </h4>
+    <div
+      class="navigation-section"
+    >
+      <div>
+        features.Page500.suggestion1Part1
+        <a
+          href="http://localhost/"
+        >
+          features.Page500.suggestion1Part2
+        </a>
+        features.Page500.suggestion1Part3
+      </div>
+      <div>
+        features.Page500.suggestion2
+      </div>
+    </div>
+  </div>
+</div>
+`;
