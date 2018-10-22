@@ -52,6 +52,7 @@
     "autoprefixer": "6.5.0",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "7.2.3",
+    "babel-jest": "^23.6.0",
     "babel-loader": "^8.0.0-beta",
     "babel-plugin-lodash": "3.3.4",
     "babel-runtime": "^6.26.0",
@@ -93,7 +94,8 @@
     "gulp-wrapper": "1.0.0",
     "html-webpack-plugin": "3.2.0",
     "is-color": "^1.0.2",
-    "jest-cli": "16.0.2",
+    "jest": "^23.6.0",
+    "jest-cli": "23.6.0",
     "jshint": "2.9.5",
     "lodash-webpack-plugin": "0.11.5",
     "main-bower-files": "2.13.1",
@@ -206,9 +208,9 @@
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
       ".scss$": "<rootDir>/__mocks__/styleMocks.js",
-      "^components": "<rootDir>/components",
-      "^services": "<rootDir>/services",
-      "^api": "<rootDir>/api",
+      "/^components/": "<rootDir>/app/cdap/components",
+      "/^services/": "<rootDir>/app/cdap/services",
+      "/^api/": "<rootDir>/app/cdap/api",
       "^lib": "<rootDir>/../lib",
       "^mocks": "<rootDir>/__mocks__"
     }

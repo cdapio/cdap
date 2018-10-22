@@ -523,7 +523,7 @@ export const highlightNewProfile = (profileName) => {
 
 export const getNodeHours = (nodeminutes) => {
   if (typeof nodeminutes === 'number') {
-    let nodeHours = (nodeminutes / 60);
+    let nodeHours = nodeminutes / 60;
     return typeof nodeHours.toFixed === 'function' ? nodeHours.toFixed(2) : nodeHours;
   }
   return nodeminutes;
