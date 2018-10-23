@@ -13,14 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import UploadDataAction from 'services/WizardStores/UploadData/UploadDataActions';
 import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
 import head from 'lodash/head';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 const defaultViewData = {
   data: '',
@@ -30,56 +30,53 @@ const defaultViewData = {
   packageversion: '',
   __complete: true,
   __skipped: false,
-  __error: false
+  __error: false,
 };
-const defaultDestinationTypes = [{id: 'streams', value: 'Stream'}];
+const defaultDestinationTypes = [{ id: 'streams', value: 'Stream' }];
 const defaultSelectDestination = {
   type: defaultDestinationTypes[0].value,
   name: '',
   types: defaultDestinationTypes,
   __complete: false,
   __skipped: true,
-  __error: false
+  __error: false,
 };
 
 const defaultInitialState = {
   viewdata: defaultViewData,
-  selectdestination: defaultSelectDestination
+  selectdestination: defaultSelectDestination,
 };
 
 const isNil = (value) => value === null || typeof value === 'undefined' || value === '';
 const isComplete = (state, requiredFields) => {
-  let emptyFieldsInState = Object.keys(state)
-    .filter(fieldName => {
-      return isNil(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
-    });
+  let emptyFieldsInState = Object.keys(state).filter((fieldName) => {
+    return isNil(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
+  });
   return !emptyFieldsInState.length ? true : false;
 };
 const selectDestinationStepRequiredFields = head(
-  UploadDataWizardConfig
-    .steps
-    .filter(step => step.id === 'selectdestination')
-  ).requiredFields;
+  UploadDataWizardConfig.steps.filter((step) => step.id === 'selectdestination')
+).requiredFields;
 
 const viewdata = (state = defaultViewData, action = defaultAction) => {
   switch (action.type) {
     case UploadDataAction.setDefaultData:
       return Object.assign({}, state, {
         data: action.payload.data,
-        loading: false
+        loading: false,
       });
     case UploadDataAction.setFilename:
       return Object.assign({}, state, {
-        filename: action.payload.filename
+        filename: action.payload.filename,
       });
     case UploadDataAction.setPackageInfo:
       return Object.assign({}, state, {
         packagename: action.payload.name,
-        packageversion: action.payload.version
+        packageversion: action.payload.version,
       });
     case UploadDataAction.setDefaultDataLoading:
       return Object.assign({}, state, {
-        loading: true
+        loading: true,
       });
     case UploadDataAction.onReset:
       return defaultViewData;
@@ -92,12 +89,12 @@ const selectdestination = (state = defaultSelectDestination, action = defaultAct
   switch (action.type) {
     case UploadDataAction.setDestinationType:
       stateCopy = Object.assign({}, state, {
-        type: action.payload.type
+        type: action.payload.type,
       });
       break;
     case UploadDataAction.setDestinationName:
       stateCopy = Object.assign({}, state, {
-        name: action.payload.name
+        name: action.payload.name,
       });
       break;
     case UploadDataAction.onReset:
@@ -108,14 +105,14 @@ const selectdestination = (state = defaultSelectDestination, action = defaultAct
   return Object.assign({}, stateCopy, {
     __complete: isComplete(stateCopy, selectDestinationStepRequiredFields),
     __skipped: false,
-    __error: action.payload.error || false
+    __error: action.payload.error || false,
   });
 };
 const createStoreWrapper = () => {
   return createStore(
     combineReducers({
       viewdata,
-      selectdestination
+      selectdestination,
     }),
     defaultInitialState
   );

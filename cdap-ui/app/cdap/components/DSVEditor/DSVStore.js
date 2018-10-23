@@ -14,17 +14,17 @@
 * the License.
 */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import DSVActions from 'components/DSVEditor/DSVActions';
 import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 
 const initialState = {
-  rows: []
+  rows: [],
 };
 
 const DSV = (state = initialState, action = defaultAction) => {
@@ -42,7 +42,7 @@ const DSV = (state = initialState, action = defaultAction) => {
       stateCopy = Object.assign({}, state);
       stateCopy.rows.splice(action.payload.index + 1, 0, {
         property: '',
-        uniqueId: uuidV4()
+        uniqueId: uuidV4(),
       });
       return stateCopy;
     case DSVActions.deleteRow:
@@ -51,7 +51,7 @@ const DSV = (state = initialState, action = defaultAction) => {
       if (!stateCopy.rows.length) {
         stateCopy.rows.push({
           property: '',
-          uniqueId: uuidV4()
+          uniqueId: uuidV4(),
         });
       }
       return stateCopy;
@@ -67,12 +67,9 @@ const DSV = (state = initialState, action = defaultAction) => {
 };
 
 const createDSVStore = (initialState = initialState) => {
-  return createStore(
-    combineReducers({DSV}),
-    {
-      DSV: initialState
-    }
-  );
+  return createStore(combineReducers({ DSV }), {
+    DSV: initialState,
+  });
 };
 
 export { createDSVStore };

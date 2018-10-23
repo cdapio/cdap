@@ -16,8 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {getEngineDisplayLabel} from 'components/PipelineConfigurations/Store';
+import { connect } from 'react-redux';
+import { getEngineDisplayLabel } from 'components/PipelineConfigurations/Store';
 import DriverResources from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent/DriverResources';
 import ExecutorResources from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent/ExecutorResources';
 import ClientResources from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent/ClientResources';
@@ -30,38 +30,36 @@ const PREFIX = 'features.PipelineConfigurations.Resources';
 const mapStateToStepContentHeadingProps = (state, ownProps) => {
   return {
     isBatch: ownProps.isBatch,
-    engine: state.engine
+    engine: state.engine,
   };
 };
-const StepContentHeading = ({isBatch, engine}) => {
+const StepContentHeading = ({ isBatch, engine }) => {
   let engineDisplayLabel = getEngineDisplayLabel(engine, isBatch);
   return (
     <div className="step-content-heading">
-      {T.translate(`${PREFIX}.contentHeading`, {engineDisplayLabel})}
+      {T.translate(`${PREFIX}.contentHeading`, { engineDisplayLabel })}
     </div>
   );
 };
 
 StepContentHeading.propTypes = {
   isBatch: PropTypes.bool,
-  engine: PropTypes.string
+  engine: PropTypes.string,
 };
 
 const ConnectedStepContentHeading = connect(mapStateToStepContentHeadingProps)(StepContentHeading);
 
-function ResourcesTabContent({isBatch}) {
+function ResourcesTabContent({ isBatch }) {
   return (
     <div
       id="resources-tab-content"
-      className={classnames(
-        "configuration-step-content", {
-          "batch-content": isBatch,
-          "realtime-content": !isBatch
-        }
-      )}
+      className={classnames('configuration-step-content', {
+        'batch-content': isBatch,
+        'realtime-content': !isBatch,
+      })}
     >
       <ConnectedStepContentHeading isBatch={isBatch} />
-      { !isBatch ? <ClientResources /> : null }
+      {!isBatch ? <ClientResources /> : null}
       <DriverResources isBatch={isBatch} />
       <ExecutorResources isBatch={isBatch} />
     </div>
@@ -69,12 +67,12 @@ function ResourcesTabContent({isBatch}) {
 }
 
 ResourcesTabContent.propTypes = {
-  isBatch: PropTypes.bool
+  isBatch: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {
   return {
-    isBatch: state.pipelineVisualConfiguration.isBatch
+    isBatch: state.pipelineVisualConfiguration.isBatch,
   };
 };
 const ConnectedResourceTabContent = connect(mapStateToProps)(ResourcesTabContent);

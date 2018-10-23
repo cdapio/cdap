@@ -14,19 +14,19 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import TriggeredPipelineActions from 'components/TriggeredPipelines/store/TriggeredPipelineActions';
 
 const defaultAction = {
-  action : '',
-  payload : {}
+  action: '',
+  payload: {},
 };
 
 const defaultInitialState = {
   triggeredPipelines: [],
   expandedPipeline: null,
   pipelineInfoLoading: false,
-  expandedPipelineInfo: null
+  expandedPipelineInfo: null,
 };
 
 const triggered = (state = defaultInitialState, action = defaultAction) => {
@@ -34,7 +34,7 @@ const triggered = (state = defaultInitialState, action = defaultAction) => {
     case TriggeredPipelineActions.setTriggered:
       return {
         ...state,
-        triggeredPipelines: action.payload.triggeredPipelines
+        triggeredPipelines: action.payload.triggeredPipelines,
       };
 
     case TriggeredPipelineActions.setToggle:
@@ -42,14 +42,14 @@ const triggered = (state = defaultInitialState, action = defaultAction) => {
         ...state,
         expandedPipeline: action.payload.expandedPipeline,
         expandedPipelineInfo: null,
-        pipelineInfoLoading: action.payload.expandedPipeline === null ? false : true
+        pipelineInfoLoading: action.payload.expandedPipeline === null ? false : true,
       };
 
     case TriggeredPipelineActions.setPipelineInfo:
       return {
         ...state,
         expandedPipelineInfo: action.payload.expandedPipelineInfo,
-        pipelineInfoLoading: false
+        pipelineInfoLoading: false,
       };
 
     case TriggeredPipelineActions.reset:
@@ -61,7 +61,7 @@ const triggered = (state = defaultInitialState, action = defaultAction) => {
 
 const TriggeredPipelineStore = createStore(
   combineReducers({
-    triggered
+    triggered,
   }),
   {
     triggered: defaultInitialState,

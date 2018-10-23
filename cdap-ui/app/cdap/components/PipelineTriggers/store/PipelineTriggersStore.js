@@ -14,12 +14,12 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import PipelineTriggersActions from 'components/PipelineTriggers/store/PipelineTriggersActions';
 
 const defaultAction = {
-  action : '',
-  payload : {}
+  action: '',
+  payload: {},
 };
 
 const defaultInitialState = {
@@ -28,12 +28,12 @@ const defaultInitialState = {
   enabledTriggers: [],
   pipelineName: '',
   expandedPipeline: null,
-  expandedTrigger: null
+  expandedTrigger: null,
 };
 
 const defaultInitialEnabledTriggersState = {
   loading: false,
-  pipelineInfo: null
+  pipelineInfo: null,
 };
 
 const triggers = (state = defaultInitialState, action = defaultAction) => {
@@ -42,14 +42,14 @@ const triggers = (state = defaultInitialState, action = defaultAction) => {
   switch (action.type) {
     case PipelineTriggersActions.setPipelineName:
       stateCopy = Object.assign({}, state, {
-        pipelineName: action.payload.pipelineName
+        pipelineName: action.payload.pipelineName,
       });
       break;
     case PipelineTriggersActions.changeNamespace:
       stateCopy = Object.assign({}, state, {
         pipelineList: action.payload.pipelineList,
         selectedNamespace: action.payload.selectedNamespace,
-        expandedPipeline: null
+        expandedPipeline: null,
       });
       break;
     case PipelineTriggersActions.setTriggersAndPipelineList:
@@ -57,17 +57,17 @@ const triggers = (state = defaultInitialState, action = defaultAction) => {
         pipelineList: action.payload.pipelineList,
         enabledTriggers: action.payload.enabledTriggers,
         selectedNamespace: action.payload.selectedNamespace,
-        expandedPipeline: null
+        expandedPipeline: null,
       });
       break;
     case PipelineTriggersActions.setExpandedPipeline:
       stateCopy = Object.assign({}, state, {
-        expandedPipeline: action.payload.expandedPipeline
+        expandedPipeline: action.payload.expandedPipeline,
       });
       break;
     case PipelineTriggersActions.setExpandedTrigger:
       stateCopy = Object.assign({}, state, {
-        expandedTrigger: action.payload.expandedTrigger
+        expandedTrigger: action.payload.expandedTrigger,
       });
       break;
     case PipelineTriggersActions.reset:
@@ -85,13 +85,13 @@ const enabledTriggers = (state = defaultInitialEnabledTriggersState, action = de
   switch (action.type) {
     case PipelineTriggersActions.setExpandedTrigger:
       stateCopy = Object.assign({}, state, {
-        loading: true
+        loading: true,
       });
       break;
     case PipelineTriggersActions.setEnabledTriggerPipelineInfo:
       stateCopy = Object.assign({}, state, {
         pipelineInfo: action.payload.pipelineInfo,
-        loading: false
+        loading: false,
       });
       break;
     case PipelineTriggersActions.reset:
@@ -106,11 +106,11 @@ const enabledTriggers = (state = defaultInitialEnabledTriggersState, action = de
 const PipelineTriggersStore = createStore(
   combineReducers({
     triggers,
-    enabledTriggers
+    enabledTriggers,
   }),
   {
     triggers: defaultInitialState,
-    enabledTriggers: defaultInitialEnabledTriggersState
+    enabledTriggers: defaultInitialEnabledTriggersState,
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );

@@ -16,11 +16,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
 import Popover from 'components/Popover';
-import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import { ACTIONS as PipelineConfigurationsActions } from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.EngineConfig';
@@ -28,7 +28,7 @@ const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 const mapStateToProps = (state, ownProps) => {
   return {
     backpressure: state.properties['system.spark.spark.streaming.backpressure.enabled'],
-    disabled: ownProps.disabled
+    disabled: ownProps.disabled,
   };
 };
 const mapDispatchToProps = (dispatch) => {
@@ -36,18 +36,16 @@ const mapDispatchToProps = (dispatch) => {
     onToggle: (value) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_BACKPRESSURE,
-        payload: { backpressure: value }
+        payload: { backpressure: value },
       });
-    }
+    },
   };
 };
 
-const Backpressure = ({backpressure, disabled, onToggle}) => {
+const Backpressure = ({ backpressure, disabled, onToggle }) => {
   return (
     <div className="label-with-toggle backpressure row">
-      <span className="toggle-label col-xs-4">
-        {T.translate(`${PREFIX}.backpressure`)}
-      </span>
+      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.backpressure`)}</span>
       <div className="col-xs-7 toggle-container">
         <ToggleSwitch
           isOn={backpressure}
@@ -56,8 +54,8 @@ const Backpressure = ({backpressure, disabled, onToggle}) => {
         />
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
-          showOn='Hover'
-          placement='right'
+          showOn="Hover"
+          placement="right"
         >
           {T.translate(`${PREFIX}.backpressureTooltip`)}
         </Popover>
@@ -69,9 +67,12 @@ const Backpressure = ({backpressure, disabled, onToggle}) => {
 Backpressure.propTypes = {
   backpressure: PropTypes.string,
   disabled: PropTypes.bool,
-  onToggle: PropTypes.func
+  onToggle: PropTypes.func,
 };
 
-const ConnectedBackpressure = connect(mapStateToProps, mapDispatchToProps)(Backpressure);
+const ConnectedBackpressure = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Backpressure);
 
 export default ConnectedBackpressure;

@@ -20,15 +20,13 @@ const getQueryParams = (queryString) => {
     return queryObj;
   }
   queryString = queryString.slice(1);
-  queryString
-    .split('&')
-    .forEach((aa) => {
-      var [key, value] = aa.split('=');
-      if (!key || !value) {
-        return;
-      }
-      queryObj[key] = decodeURIComponent(value);
-    });
+  queryString.split('&').forEach((aa) => {
+    var [key, value] = aa.split('=');
+    if (!key || !value) {
+      return;
+    }
+    queryObj[key] = decodeURIComponent(value);
+  });
   return queryObj;
 };
-export {getQueryParams};
+export { getQueryParams };

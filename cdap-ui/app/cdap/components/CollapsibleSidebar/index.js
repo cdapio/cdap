@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import classnames from 'classnames';
 import ee from 'event-emitter';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 
 require('./CollapsibleSidebar.scss');
 
@@ -28,7 +28,7 @@ export default class CollapsibleSidebar extends Component {
     super(props);
 
     this.state = {
-      expanded: false
+      expanded: false,
     };
 
     this.eventEmitter = ee(ee);
@@ -52,7 +52,7 @@ export default class CollapsibleSidebar extends Component {
       this.props.onToggle(newState);
     }
 
-    this.setState({expanded: newState});
+    this.setState({ expanded: newState });
   }
 
   closeSidebar() {
@@ -63,38 +63,35 @@ export default class CollapsibleSidebar extends Component {
       this.props.onToggle(false);
     }
 
-    this.setState({expanded: false});
+    this.setState({ expanded: false });
   }
 
   render() {
     return (
       <div
-        className={
-          classnames('collapsible-sidebar', this.props.backdropClass, this.props.position, {
+        className={classnames(
+          'collapsible-sidebar',
+          this.props.backdropClass,
+          this.props.position,
+          {
             backdrop: this.props.backdrop,
-            expanded: this.state.expanded
+            expanded: this.state.expanded,
           }
         )}
         onClick={this.closeSidebar}
       >
-        <div
-          className={classnames('collapsible-content', { 'show-content': this.state.expanded })}
-        >
+        <div className={classnames('collapsible-content', { 'show-content': this.state.expanded })}>
           <div
-            className={
-              classnames('collapsible-toggle-tab text-xs-center text-center', this.props.toggleTabClass)
-            }
+            className={classnames(
+              'collapsible-toggle-tab text-xs-center text-center',
+              this.props.toggleTabClass
+            )}
             onClick={this.onToggleClick}
           >
-            <span className="toggle-tab-label">
-              {this.props.toggleTabLabel}
-            </span>
+            <span className="toggle-tab-label">{this.props.toggleTabLabel}</span>
           </div>
 
-          <div
-            className="collapsible-body"
-            onClick={preventPropagation}
-          >
+          <div className="collapsible-body" onClick={preventPropagation}>
             {this.props.children}
           </div>
         </div>
@@ -105,7 +102,7 @@ export default class CollapsibleSidebar extends Component {
 
 CollapsibleSidebar.defaultProps = {
   backdrop: true,
-  onlyOneCanOpen: true
+  onlyOneCanOpen: true,
 };
 
 CollapsibleSidebar.propTypes = {
@@ -116,5 +113,5 @@ CollapsibleSidebar.propTypes = {
   toggleTabClass: PropTypes.string,
   children: PropTypes.any,
   onlyOneCanOpen: PropTypes.bool,
-  onToggle: PropTypes.func
+  onToggle: PropTypes.func,
 };

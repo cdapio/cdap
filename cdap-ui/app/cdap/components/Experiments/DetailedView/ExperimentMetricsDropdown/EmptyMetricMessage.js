@@ -21,13 +21,13 @@ import IconSVG from 'components/IconSVG';
 
 const POPOVER_ICON_DIMENSION = 20;
 
-export default function EmptyMetricMessage({mainMessage, popoverMessage}) {
+export default function EmptyMetricMessage({ mainMessage, popoverMessage }) {
   return (
     <div className="empty-message">
       <Popover
         target={() => <IconSVG name="icon-info-circle" />}
         targetDimension={{ width: POPOVER_ICON_DIMENSION, height: POPOVER_ICON_DIMENSION }}
-        placement='bottom'
+        placement="bottom"
       >
         {popoverMessage}
       </Popover>
@@ -38,5 +38,5 @@ export default function EmptyMetricMessage({mainMessage, popoverMessage}) {
 
 EmptyMetricMessage.propTypes = {
   mainMessage: PropTypes.string,
-  popoverMessage: PropTypes.string
+  popoverMessage: PropTypes.string,
 };

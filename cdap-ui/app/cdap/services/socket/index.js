@@ -15,7 +15,7 @@
  */
 
 import SockJS from 'sockjs-client';
-import {Subject} from 'rxjs/Subject';
+import { Subject } from 'rxjs/Subject';
 
 class Socket {
   constructor() {
@@ -58,9 +58,7 @@ class Socket {
     // Need to implement the reconnect function
     this.socket.onclose = () => {
       // reconnect with exponential backoff
-      let delay = Math.max(500, Math.round(
-        (Math.random() + 1) * 500 * Math.pow(2, attempt)
-      ));
+      let delay = Math.max(500, Math.round((Math.random() + 1) * 500 * Math.pow(2, attempt)));
 
       this.timeout = setTimeout(() => {
         this.init(attempt++);

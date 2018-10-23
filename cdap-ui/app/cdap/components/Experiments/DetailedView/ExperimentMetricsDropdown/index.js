@@ -16,8 +16,8 @@
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import {connect} from 'react-redux';
-import {NUMBER_TYPES} from 'services/global-constants';
+import { connect } from 'react-redux';
+import { NUMBER_TYPES } from 'services/global-constants';
 import StyledSelectTag from 'components/StyledSelectTag';
 import AlgorithmDistribution from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/AlgorithmDistribution';
 import ModelStatusesDistribution from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/ModelStatusesDistribution';
@@ -34,17 +34,17 @@ class ExperimentMetricsDropdown extends Component {
     evaluationMetrics: PropTypes.object,
     algorithms: PropTypes.object,
     statuses: PropTypes.object,
-    outcomeType: PropTypes.string
+    outcomeType: PropTypes.string,
   };
   static commonKeys = [
     {
       id: 'algorithms',
-      value: T.translate(`${PREFIX}.algoTypes`)
+      value: T.translate(`${PREFIX}.algoTypes`),
     },
     {
       id: 'statuses',
-      value: T.translate(`${PREFIX}.modelStatus`)
-    }
+      value: T.translate(`${PREFIX}.modelStatus`),
+    },
   ];
   static regressionKeys = [
     {
@@ -55,8 +55,8 @@ class ExperimentMetricsDropdown extends Component {
         colorVariables.bluegrey02,
         colorVariables.bluegrey03,
         colorVariables.bluegrey04,
-        colorVariables.bluegrey05
-      ]
+        colorVariables.bluegrey05,
+      ],
     },
     {
       id: 'mae',
@@ -66,8 +66,8 @@ class ExperimentMetricsDropdown extends Component {
         colorVariables.green02,
         colorVariables.green03,
         colorVariables.green04,
-        colorVariables.green05
-      ]
+        colorVariables.green05,
+      ],
     },
     {
       id: 'r2',
@@ -77,8 +77,8 @@ class ExperimentMetricsDropdown extends Component {
         colorVariables.blue02,
         colorVariables.blue03,
         colorVariables.blue04,
-        colorVariables.blue05
-      ]
+        colorVariables.blue05,
+      ],
     },
     {
       id: 'evariance',
@@ -88,21 +88,21 @@ class ExperimentMetricsDropdown extends Component {
         colorVariables.orange02,
         colorVariables.orange03,
         colorVariables.orange04,
-        colorVariables.orange05
-      ]
-    }
+        colorVariables.orange05,
+      ],
+    },
   ];
   static categoricalKeys = [
     {
       id: 'precision',
       value: T.translate(`${PREFIX}.precision`),
-       colorRange: [
+      colorRange: [
         colorVariables.blue01,
         colorVariables.blue02,
         colorVariables.blue03,
         colorVariables.blue04,
-        colorVariables.blue05
-      ]
+        colorVariables.blue05,
+      ],
     },
     {
       id: 'recall',
@@ -112,8 +112,8 @@ class ExperimentMetricsDropdown extends Component {
         colorVariables.orange02,
         colorVariables.orange03,
         colorVariables.orange04,
-        colorVariables.orange05
-      ]
+        colorVariables.orange05,
+      ],
     },
     {
       id: 'f1',
@@ -123,33 +123,29 @@ class ExperimentMetricsDropdown extends Component {
         colorVariables.green02,
         colorVariables.green03,
         colorVariables.green04,
-        colorVariables.green05
-      ]
-    }
+        colorVariables.green05,
+      ],
+    },
   ];
 
   state = {
-    active: 'algorithms'
+    active: 'algorithms',
   };
 
   onSelectChange = (e) => {
     this.setState({
-      active: e.target.value
+      active: e.target.value,
     });
   };
-  renderMetricBarChart = ({id: metric, value: label, colorRange}) => {
+  renderMetricBarChart = ({ id: metric, value: label, colorRange }) => {
     if (metric === 'algorithms') {
-      return (
-        <AlgorithmDistribution algorithms={this.props.algorithms.histo || []}/>
-      );
+      return <AlgorithmDistribution algorithms={this.props.algorithms.histo || []} />;
     }
     if (metric === 'statuses') {
-      return (
-        <ModelStatusesDistribution modelStatuses={this.props.statuses.histo || []} />
-      );
+      return <ModelStatusesDistribution modelStatuses={this.props.statuses.histo || []} />;
     }
     let values = this.props.evaluationMetrics[metric] || {};
-    let {width, height} = this.containerRef.getBoundingClientRect();
+    let { width, height } = this.containerRef.getBoundingClientRect();
     return (
       <MetricChartWithLegend
         colorRange={colorRange}
@@ -163,13 +159,16 @@ class ExperimentMetricsDropdown extends Component {
   };
   render() {
     let keys = [...ExperimentMetricsDropdown.commonKeys];
-      keys = NUMBER_TYPES.indexOf(this.props.outcomeType) !== -1 ?
-        keys.concat(ExperimentMetricsDropdown.regressionKeys)
-      :
-        keys.concat(ExperimentMetricsDropdown.categoricalKeys);
-    let matchingKey = keys.find(key => key.id === this.state.active);
+    keys =
+      NUMBER_TYPES.indexOf(this.props.outcomeType) !== -1
+        ? keys.concat(ExperimentMetricsDropdown.regressionKeys)
+        : keys.concat(ExperimentMetricsDropdown.categoricalKeys);
+    let matchingKey = keys.find((key) => key.id === this.state.active);
     return (
-      <div className="experiments-metrics-dropdown clearfix" ref={ref => this.containerRef = ref}>
+      <div
+        className="experiments-metrics-dropdown clearfix"
+        ref={(ref) => (this.containerRef = ref)}
+      >
         <StyledSelectTag keys={keys} onChange={this.onSelectChange} />
         {this.renderMetricBarChart(matchingKey)}
       </div>
@@ -182,10 +181,12 @@ const mapStateToExperimentMetricsDropdownProps = (state) => {
     outcomeType: state.outcomeType,
     evaluationMetrics: state.evaluationMetrics,
     algorithms: state.algorithms,
-    statuses: state.statuses
+    statuses: state.statuses,
   };
 };
 
-const ConnectedExperimentsDropdown = connect(mapStateToExperimentMetricsDropdownProps)(ExperimentMetricsDropdown);
+const ConnectedExperimentsDropdown = connect(mapStateToExperimentMetricsDropdownProps)(
+  ExperimentMetricsDropdown
+);
 
 export default ConnectedExperimentsDropdown;

@@ -14,18 +14,18 @@
  * the License.
 */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 const defaultModalState = {
-  openModal: false
+  openModal: false,
 };
 
 const initialState = {
-  modalState: defaultModalState
+  modalState: defaultModalState,
 };
 
 const modalState = (state = defaultModalState, action = defaultAction) => {
@@ -38,7 +38,7 @@ const modalState = (state = defaultModalState, action = defaultAction) => {
 };
 const PlusButtonStore = createStore(
   combineReducers({
-    modalState
+    modalState,
   }),
   initialState
 );

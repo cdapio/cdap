@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import LoadingSVG from 'components/LoadingSVG';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
 import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
@@ -29,8 +29,8 @@ import GCSConnection from 'components/DataPrepConnections/GCSConnection';
 import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnection';
 import SpannerConnection from 'components/DataPrepConnections/SpannerConnection';
 import T from 'i18n-react';
-import {objectQuery} from 'services/helpers';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { objectQuery } from 'services/helpers';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 import CardActionFeedback from 'components/CardActionFeedback';
 import If from 'components/If';
 require('./ConnectionPopover.scss');
@@ -56,7 +56,7 @@ export default class ConnectionPopover extends Component {
       error: null,
       edit: false,
       duplicate: false,
-      loading: false
+      loading: false,
     };
 
     this.delete = this.delete.bind(this);
@@ -66,52 +66,57 @@ export default class ConnectionPopover extends Component {
   }
 
   toggleDeleteConfirmation() {
-    this.setState({deleteConfirmation: !this.state.deleteConfirmation});
+    this.setState({ deleteConfirmation: !this.state.deleteConfirmation });
   }
 
   toggleEdit() {
-    this.setState({edit: !this.state.edit});
+    this.setState({ edit: !this.state.edit });
   }
 
   toggleDuplicate() {
-    this.setState({duplicate: !this.state.duplicate});
+    this.setState({ duplicate: !this.state.duplicate });
   }
 
   delete() {
-    this.setState({loading: true});
+    this.setState({ loading: true });
 
     let namespace = NamespaceStore.getState().selectedNamespace;
     let connectionId = this.props.connectionInfo.id;
 
     let params = {
       namespace,
-      connectionId
+      connectionId,
     };
 
-    MyDataPrepApi.deleteConnection(params)
-      .subscribe(() => {
+    MyDataPrepApi.deleteConnection(params).subscribe(
+      () => {
         this.setState({
           loading: false,
-          deleteConfirmation: false
+          deleteConfirmation: false,
         });
 
         this.props.onAction('delete', connectionId);
-
-      }, (err) => {
-        let errMessage = objectQuery(err, 'message') ||
+      },
+      (err) => {
+        let errMessage =
+          objectQuery(err, 'message') ||
           objectQuery(err, 'response', 'message') ||
-          objectQuery(err, 'response') || null;
+          objectQuery(err, 'response') ||
+          null;
 
         this.setState({
           loading: false,
           error: T.translate(`${PREFIX}.Confirmations.failedDeleteMessage`),
-          extendedErrorMessage: errMessage
+          extendedErrorMessage: errMessage,
         });
-      });
+      }
+    );
   }
 
   renderDeleteConfirmationModal() {
-    if (!this.state.deleteConfirmation) { return null; }
+    if (!this.state.deleteConfirmation) {
+      return null;
+    }
 
     let content;
     if (this.state.loading) {
@@ -126,22 +131,15 @@ export default class ConnectionPopover extends Component {
       content = (
         <ModalBody>
           <h4>
-            {
-              T.translate(`${PREFIX}.Confirmations.DatabaseDelete.mainMessage`, {
-                connection: this.props.connectionInfo.name
-              })
-            }
+            {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.mainMessage`, {
+              connection: this.props.connectionInfo.name,
+            })}
           </h4>
 
-          <p>
-            {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.helper1`)}
-          </p>
-          <p>
-            {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.helper2`)}
-          </p>
+          <p>{T.translate(`${PREFIX}.Confirmations.DatabaseDelete.helper1`)}</p>
+          <p>{T.translate(`${PREFIX}.Confirmations.DatabaseDelete.helper2`)}</p>
 
           <br />
-
         </ModalBody>
       );
     }
@@ -155,25 +153,17 @@ export default class ConnectionPopover extends Component {
         zIndex="1061"
       >
         <ModalHeader toggle={this.toggleDeleteConfirmation}>
-          {
-            T.translate(`${PREFIX}.Confirmations.DatabaseDelete.header`, {
-              connection: this.props.connectionInfo.name
-            })
-          }
+          {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.header`, {
+            connection: this.props.connectionInfo.name,
+          })}
         </ModalHeader>
 
         {content}
         <ModalFooter>
-          <button
-            className="btn btn-primary"
-            onClick={this.delete}
-          >
+          <button className="btn btn-primary" onClick={this.delete}>
             {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.deleteButton`)}
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={this.toggleDeleteConfirmation}
-          >
+          <button className="btn btn-secondary" onClick={this.toggleDeleteConfirmation}>
             {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.cancel`)}
           </button>
         </ModalFooter>
@@ -189,7 +179,9 @@ export default class ConnectionPopover extends Component {
   }
 
   renderEdit() {
-    if (!this.state.edit) { return null; }
+    if (!this.state.edit) {
+      return null;
+    }
 
     let Tag = COMPONENT_MAP[this.props.connectionInfo.type];
 
@@ -204,7 +196,9 @@ export default class ConnectionPopover extends Component {
   }
 
   renderDuplicate() {
-    if (!this.state.duplicate) { return null; }
+    if (!this.state.duplicate) {
+      return null;
+    }
 
     let Tag = COMPONENT_MAP[this.props.connectionInfo.type];
 
@@ -219,31 +213,18 @@ export default class ConnectionPopover extends Component {
   }
 
   render() {
-
     return (
       <span className="expanded-menu-popover-icon text-xs-center float-xs-right">
-        <UncontrolledPopover
-          icon="fa-ellipsis-v"
-          popoverClassName="connection-action-popover"
-        >
-          <div
-            className="connection-action-item"
-            onClick={this.toggleEdit}
-          >
+        <UncontrolledPopover icon="fa-ellipsis-v" popoverClassName="connection-action-popover">
+          <div className="connection-action-item" onClick={this.toggleEdit}>
             <span>{T.translate(`${PREFIX}.edit`)}</span>
           </div>
 
-          <div
-            className="connection-action-item"
-            onClick={this.toggleDuplicate}
-          >
+          <div className="connection-action-item" onClick={this.toggleDuplicate}>
             <span>{T.translate(`${PREFIX}.duplicate`)}</span>
           </div>
 
-          <div
-            className="connection-action-item"
-            onClick={this.toggleDeleteConfirmation}
-          >
+          <div className="connection-action-item" onClick={this.toggleDeleteConfirmation}>
             <span>{T.translate(`${PREFIX}.delete`)}</span>
           </div>
         </UncontrolledPopover>
@@ -259,5 +240,5 @@ export default class ConnectionPopover extends Component {
 // NEEDs TO BE UPDATED
 ConnectionPopover.propTypes = {
   connectionInfo: PropTypes.object,
-  onAction: PropTypes.func
+  onAction: PropTypes.func,
 };

@@ -15,8 +15,8 @@
  */
 
 const ApplicationUploadActions = {
-  'UPLOAD_JAR': 'UPLOAD_JAR',
-  onReset: 'RESET-STORE'
+  UPLOAD_JAR: 'UPLOAD_JAR',
+  onReset: 'RESET-STORE',
 };
 
 export default ApplicationUploadActions;

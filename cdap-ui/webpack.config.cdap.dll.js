@@ -21,15 +21,15 @@ const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimi
 
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const processEnv = {
-  'NODE_ENV': JSON.stringify(isModeProduction(mode) ? 'production' : 'development'),
-  '__DEVTOOLS__': false
+  NODE_ENV: JSON.stringify(isModeProduction(mode) ? 'production' : 'development'),
+  __DEVTOOLS__: false,
 };
 
 const getWebpackOutputObj = (mode) => {
   var output = {
     path: path.join(__dirname, 'dll'),
     filename: 'dll.cdap.[name].js',
-    library: 'cdap_[name]'
+    library: 'cdap_[name]',
   };
   if (mode === 'development') {
     output.filename = 'dll.cdap.[name].development.js';
@@ -45,7 +45,7 @@ const getWebpackDLLPlugin = (mode) => {
   return new webpack.DllPlugin({
     path: path.join(__dirname, 'dll', manifestFileName),
     name: 'cdap_[name]',
-    context: path.resolve(__dirname, 'dll')
+    context: path.resolve(__dirname, 'dll'),
   });
 };
 
@@ -53,7 +53,7 @@ var plugins = [
   new webpack.DefinePlugin({
     'process.env': processEnv,
   }),
-  getWebpackDLLPlugin(mode)
+  getWebpackDLLPlugin(mode),
 ];
 
 if (isModeProduction(mode)) {
@@ -62,13 +62,13 @@ if (isModeProduction(mode)) {
       uglifyOptions: {
         ie8: false,
         compress: {
-          warnings: false
+          warnings: false,
         },
         output: {
           comments: false,
           beautify: false,
-        }
-      }
+        },
+      },
     })
   );
 }
@@ -100,8 +100,8 @@ var webpackConfig = {
       'vega-lite',
       'vega-tooltip',
       'react-helmet',
-      'react-popper'
-    ]
+      'react-popper',
+    ],
   },
   output: getWebpackOutputObj(mode),
   plugins,
@@ -112,11 +112,11 @@ var webpackConfig = {
     chunkModules: false,
     chunkOrigins: false,
     chunks: false,
-    modules: false
+    modules: false,
   },
   resolve: {
-    modules: ['node_modules']
-  }
+    modules: ['node_modules'],
+  },
 };
 
 module.exports = webpackConfig;

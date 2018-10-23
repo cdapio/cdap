@@ -25,23 +25,22 @@ let commonSteps = [
     shorttitle: T.translate('features.Wizard.DirectiveUpload.Step1.shorttitle'),
     title: T.translate('features.Wizard.DirectiveUpload.Step1.title'),
     description: T.translate('features.Wizard.DirectiveUpload.Step1.description'),
-    content: (<UploadJarStep />),
-    requiredFields: ['file']
+    content: <UploadJarStep />,
+    requiredFields: ['file'],
   },
   {
     id: 'uploadjson',
     shorttitle: T.translate('features.Wizard.DirectiveUpload.Step2.shorttitle'),
     title: T.translate('features.Wizard.DirectiveUpload.Step2.title'),
     description: T.translate('features.Wizard.DirectiveUpload.Step2.description'),
-    content: (<UploadJsonStep />),
-    requiredFields: ['name', 'type', 'parentArtifact', 'classname']
-  }
+    content: <UploadJsonStep />,
+    requiredFields: ['name', 'type', 'parentArtifact', 'classname'],
+  },
 ];
 
 const DirectiveArtifactUploadWizardConfig = {
   steps: commonSteps,
-  footertitle: T.translate('features.Wizard.DirectiveUpload.footertitle')
+  footertitle: T.translate('features.Wizard.DirectiveUpload.footertitle'),
 };
-
 
 export default DirectiveArtifactUploadWizardConfig;

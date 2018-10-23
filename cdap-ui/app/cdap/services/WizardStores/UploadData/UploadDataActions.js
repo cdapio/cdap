@@ -21,7 +21,7 @@ const UploadDataAction = {
   setDefaultDataLoading: 'SET-DEFAULT-DATA-LOADING',
   setDestinationType: 'SET-DESTINATION-TYPE',
   setDestinationName: 'SET-DESTINATION-NAME',
-  onReset: 'RESET-STORE'
+  onReset: 'RESET-STORE',
 };
 
 export default UploadDataAction;

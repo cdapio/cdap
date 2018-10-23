@@ -18,8 +18,8 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
-import {Observable} from 'rxjs/Observable';
-import {isDescendant} from 'services/helpers';
+import { Observable } from 'rxjs/Observable';
+import { isDescendant } from 'services/helpers';
 import T from 'i18n-react';
 
 require('./RulebooksPopover.scss');
@@ -27,16 +27,15 @@ const PREFIX = 'features.RulesEngine.RulebooksPopover';
 
 export default class RulebooksPopover extends Component {
   static propTypes = {
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
   };
 
   state = {
-    showPopover: false
+    showPopover: false,
   };
 
   componentDidMount() {
-    this.documentClick$ = Observable.fromEvent(document, 'click')
-    .subscribe((e) => {
+    this.documentClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
       if (!this.popover) {
         return;
       }
@@ -51,9 +50,9 @@ export default class RulebooksPopover extends Component {
 
   togglePopover = () => {
     this.setState({
-      showPopover: !this.state.showPopover
+      showPopover: !this.state.showPopover,
     });
-  }
+  };
 
   onRulebookSelect = (rbid) => {
     if (this.props.onChange) {
@@ -66,7 +65,7 @@ export default class RulebooksPopover extends Component {
     if (!this.state.showPopover) {
       return null;
     }
-    let {rulebooks} = RulesEngineStore.getState();
+    let { rulebooks } = RulesEngineStore.getState();
     if (!rulebooks.list.length) {
       return (
         <div className="sub-menu empty">
@@ -75,32 +74,24 @@ export default class RulebooksPopover extends Component {
       );
     }
     return (
-      <div
-        className="sub-menu"
-      >
-        {
-          rulebooks.list.map((rb, i) => {
-            return (
-              <div
-                onClick={this.onRulebookSelect.bind(this, rb.id)}
-                key={i}
-                title={rb.id}
-              >
-                {rb.id}
-              </div>
-            );
-          })
-        }
+      <div className="sub-menu">
+        {rulebooks.list.map((rb, i) => {
+          return (
+            <div onClick={this.onRulebookSelect.bind(this, rb.id)} key={i} title={rb.id}>
+              {rb.id}
+            </div>
+          );
+        })}
       </div>
     );
   };
 
-  render () {
+  render() {
     return (
       <div
         className="rule-book-popover"
         onClick={this.togglePopover}
-        ref={(ref) => this.popover = ref}
+        ref={(ref) => (this.popover = ref)}
       >
         <div className="btn btn-secondary"> {T.translate(`${PREFIX}.addToRulebookbtn`)} </div>
         {this.renderPopover()}

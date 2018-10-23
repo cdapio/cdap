@@ -14,10 +14,10 @@
  * the License.
  */
 
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 let dataSrc = DataSourceConfigurer.getInstance();
 
 export const MyOperationsApi = {
-  getDashboard: apiCreator(dataSrc, 'GET', 'REQUEST', '/dashboard')
+  getDashboard: apiCreator(dataSrc, 'GET', 'REQUEST', '/dashboard'),
 };

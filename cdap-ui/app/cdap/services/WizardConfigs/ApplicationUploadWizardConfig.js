@@ -18,19 +18,18 @@ import ApplicationUploadStep from 'components/CaskWizards/ApplicationUpload/Uplo
 
 import T from 'i18n-react';
 let commonSteps = [
- {
-   id: 'upload',
-   shorttitle: T.translate('features.Wizard.ApplicationUpload.Step1.shorttitle'),
-   title: T.translate('features.Wizard.ApplicationUpload.Step1.title'),
-   description: T.translate('features.Wizard.ApplicationUpload.Step1.description'),
-   content: (<ApplicationUploadStep />),
-   requiredFields: ['file']
- }
+  {
+    id: 'upload',
+    shorttitle: T.translate('features.Wizard.ApplicationUpload.Step1.shorttitle'),
+    title: T.translate('features.Wizard.ApplicationUpload.Step1.title'),
+    description: T.translate('features.Wizard.ApplicationUpload.Step1.description'),
+    content: <ApplicationUploadStep />,
+    requiredFields: ['file'],
+  },
 ];
 
 const ApplicationUploadWizardConfig = {
- steps: commonSteps
+  steps: commonSteps,
 };
 
-
- export default ApplicationUploadWizardConfig;
+export default ApplicationUploadWizardConfig;

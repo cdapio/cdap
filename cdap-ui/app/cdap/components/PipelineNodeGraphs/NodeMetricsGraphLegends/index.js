@@ -33,33 +33,31 @@ export default class NodeMetricsGraphLegends extends Component {
         PropTypes.shape({
           title: PropTypes.string.isRequired,
           color: PropTypes.string,
-          disabled: PropTypes.bool
+          disabled: PropTypes.bool,
         }),
         PropTypes.string.isRequired,
-        PropTypes.element
+        PropTypes.element,
       ])
     ).isRequired,
-    checkedItems: PropTypes.arrayOf(
-      PropTypes.string
-    ),
+    checkedItems: PropTypes.arrayOf(PropTypes.string),
     onLegendClick: PropTypes.func,
-    isMultiplePorts: PropTypes.bool
+    isMultiplePorts: PropTypes.bool,
   };
 
   state = {
-    showLegendPopover: false
+    showLegendPopover: false,
   };
 
   itemsWithoutErrorRecords = this.props.items.filter((item) => item.title !== recordsErrorTitle);
 
   toggleLegendPopover = () => {
     this.setState({
-      showLegendPopover: !this.state.showLegendPopover
+      showLegendPopover: !this.state.showLegendPopover,
     });
   };
 
   renderRecordsErrorLegend(showCheckbox = false, orientation = 'horizontal') {
-    let recordsErrorItem = this.props.items.find(item => item.title === recordsErrorTitle);
+    let recordsErrorItem = this.props.items.find((item) => item.title === recordsErrorTitle);
     if (!recordsErrorItem) {
       return null;
     }
@@ -79,16 +77,10 @@ export default class NodeMetricsGraphLegends extends Component {
 
   renderNormalMetricsLegends() {
     return (
-      <div className='rv-discrete-color-legend horizontal'>
-        {
-          this.itemsWithoutErrorRecords
-            .map((item, i) =>
-              <NodeMetricsGraphLegend
-                item={item}
-                key={i}
-              />
-            )
-        }
+      <div className="rv-discrete-color-legend horizontal">
+        {this.itemsWithoutErrorRecords.map((item, i) => (
+          <NodeMetricsGraphLegend item={item} key={i} />
+        ))}
         {this.renderRecordsErrorLegend()}
       </div>
     );
@@ -96,95 +88,81 @@ export default class NodeMetricsGraphLegends extends Component {
 
   renderPortsMetricsLegends() {
     return (
-      <div className='rv-discrete-color-legend horizontal'>
-        {
-          this.itemsWithoutErrorRecords
-            .map((item, i) => {
-              let itemChecked = this.props.checkedItems.indexOf(item.title) !== -1;
+      <div className="rv-discrete-color-legend horizontal">
+        {this.itemsWithoutErrorRecords.map((item, i) => {
+          let itemChecked = this.props.checkedItems.indexOf(item.title) !== -1;
 
-              return (
-                <NodeMetricsGraphLegend
-                  item={item}
-                  key={i}
-                  showCheckbox={true}
-                  itemChecked={itemChecked}
-                  onLegendClick={this.props.onLegendClick}
-                />
-              );
-            })
-        }
+          return (
+            <NodeMetricsGraphLegend
+              item={item}
+              key={i}
+              showCheckbox={true}
+              itemChecked={itemChecked}
+              onLegendClick={this.props.onLegendClick}
+            />
+          );
+        })}
         {this.renderRecordsErrorLegend(true)}
       </div>
     );
   }
 
   renderPortsMetricsLegendsPopover() {
-    let checkedItemsWithoutErrorRecords = this.props.checkedItems.filter((item) => item !== recordsErrorTitle);
+    let checkedItemsWithoutErrorRecords = this.props.checkedItems.filter(
+      (item) => item !== recordsErrorTitle
+    );
     let itemToShowOnTop = this.itemsWithoutErrorRecords[0];
     if (checkedItemsWithoutErrorRecords.length) {
-      itemToShowOnTop = this.itemsWithoutErrorRecords.find(item => item.title === checkedItemsWithoutErrorRecords[0]);
+      itemToShowOnTop = this.itemsWithoutErrorRecords.find(
+        (item) => item.title === checkedItemsWithoutErrorRecords[0]
+      );
     }
-    let showCheckedItemsCount = this.state.showLegendPopover || checkedItemsWithoutErrorRecords.length === 0 || checkedItemsWithoutErrorRecords.length >= 2;
+    let showCheckedItemsCount =
+      this.state.showLegendPopover ||
+      checkedItemsWithoutErrorRecords.length === 0 ||
+      checkedItemsWithoutErrorRecords.length >= 2;
 
     return (
-      <div className='ports-legend-popover-with-errors'>
-        <div className='ports-legend-popover'>
-          <div
-            className="legend-popover-toggle"
-            onClick={this.toggleLegendPopover}
-          >
-            {
-              showCheckedItemsCount ?
-                (
-                  <span>
-                    {
-                      T.translate(`${PREFIX}.checkedPortLegendsCount`, {
-                        selected: checkedItemsWithoutErrorRecords.length,
-                        total: this.itemsWithoutErrorRecords.length
-                      })
-                    }
-                  </span>
-                )
-              :
-                (
-                  <div className='rv-discrete-color-legend horizontal'>
-                    <NodeMetricsGraphLegend item={itemToShowOnTop} />
-                  </div>
-                )
-            }
+      <div className="ports-legend-popover-with-errors">
+        <div className="ports-legend-popover">
+          <div className="legend-popover-toggle" onClick={this.toggleLegendPopover}>
+            {showCheckedItemsCount ? (
+              <span>
+                {T.translate(`${PREFIX}.checkedPortLegendsCount`, {
+                  selected: checkedItemsWithoutErrorRecords.length,
+                  total: this.itemsWithoutErrorRecords.length,
+                })}
+              </span>
+            ) : (
+              <div className="rv-discrete-color-legend horizontal">
+                <NodeMetricsGraphLegend item={itemToShowOnTop} />
+              </div>
+            )}
             <span className="toggle-caret">
               <IconSVG name="icon-caret-down" />
             </span>
           </div>
-          {
-            !this.state.showLegendPopover ?
-              null
-            :
-              (
-                <div className='legend-popover'>
-                  <div className='popover-content rv-discrete-color-legend'>
-                    {
-                      this.itemsWithoutErrorRecords
-                        .map((item, i) => {
-                          let itemChecked = this.props.checkedItems.indexOf(item.title) !== -1;
-                          return (
-                            <NodeMetricsGraphLegend
-                              item={item}
-                              key={i}
-                              showCheckbox={true}
-                              itemChecked={itemChecked}
-                              onLegendClick={this.props.onLegendClick}
-                              orientation='vertical'
-                            />
-                          );
-                        })
-                    }
-                  </div>
-                </div>
-              )
-          }
+          {!this.state.showLegendPopover ? null : (
+            <div className="legend-popover">
+              <div className="popover-content rv-discrete-color-legend">
+                {this.itemsWithoutErrorRecords.map((item, i) => {
+                  let itemChecked = this.props.checkedItems.indexOf(item.title) !== -1;
+                  return (
+                    <NodeMetricsGraphLegend
+                      item={item}
+                      key={i}
+                      showCheckbox={true}
+                      itemChecked={itemChecked}
+                      onLegendClick={this.props.onLegendClick}
+                      orientation="vertical"
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
-        <div className='rv-discrete-color-legend horizontal error-item'>
+        <div className="rv-discrete-color-legend horizontal error-item">
           {this.renderRecordsErrorLegend(true)}
         </div>
       </div>

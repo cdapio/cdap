@@ -16,10 +16,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import moment from 'moment';
-import {DashboardActions} from 'components/OpsDashboard/store/DashboardStore';
-import {humanReadableDuration} from 'services/helpers';
+import { DashboardActions } from 'components/OpsDashboard/store/DashboardStore';
+import { humanReadableDuration } from 'services/helpers';
 import T from 'i18n-react';
 
 const PREFIX = 'features.OpsDashboard.RunsGraph.RunsTable';
@@ -30,36 +30,16 @@ const renderHeader = () => {
   return (
     <div className="grid-header">
       <div className="grid-row">
-        <div>
-          {T.translate(`${PREFIX}.time`)}
-        </div>
-        <div>
-          {T.translate(`${PREFIX}.date`)}
-        </div>
-        <div>
-          {T.translate(`${PREFIX}.totalRunsStarted`)}
-        </div>
-        <div>
-          {T.translate(`${PREFIX}.scheduledTriggered`)}
-        </div>
-        <div>
-          {T.translate(`${PREFIX}.manually`)}
-        </div>
-        <div>
-          {T.translate(`${PREFIX}.totalRunsEnded`)}
-        </div>
-        <div>
-          {T.translate(`${PREFIX}.successful`)}
-        </div>
-        <div>
-          {T.translate(`${PREFIX}.failed`)}
-        </div>
-        <div>
-          {T.translate(`${PREFIX}.running`)}
-        </div>
-        <div>
-          {T.translate(`${PREFIX}.totalStartDelay`)}
-        </div>
+        <div>{T.translate(`${PREFIX}.time`)}</div>
+        <div>{T.translate(`${PREFIX}.date`)}</div>
+        <div>{T.translate(`${PREFIX}.totalRunsStarted`)}</div>
+        <div>{T.translate(`${PREFIX}.scheduledTriggered`)}</div>
+        <div>{T.translate(`${PREFIX}.manually`)}</div>
+        <div>{T.translate(`${PREFIX}.totalRunsEnded`)}</div>
+        <div>{T.translate(`${PREFIX}.successful`)}</div>
+        <div>{T.translate(`${PREFIX}.failed`)}</div>
+        <div>{T.translate(`${PREFIX}.running`)}</div>
+        <div>{T.translate(`${PREFIX}.totalStartDelay`)}</div>
       </div>
     </div>
   );
@@ -68,55 +48,29 @@ const renderHeader = () => {
 const renderBody = (data, onRowClick) => {
   return (
     <div className="grid-body">
-      {
-        data.map((row) => {
-          let time = moment(parseInt(row.time, 10));
+      {data.map((row) => {
+        let time = moment(parseInt(row.time, 10));
 
-          return (
-            <div
-              key={row.time}
-              className="grid-row"
-              onClick={onRowClick.bind(this, row)}
-            >
-              <div className="column-time">
-                {time.format('ha')}
-              </div>
-              <div className="column-date">
-                {time.format('ddd. MMM D, YYYY')}
-              </div>
-              <div className="column-total-start">
-                {row.schedule + row.manual}
-              </div>
-              <div className="column-schedule">
-                {row.schedule}
-              </div>
-              <div className="column-manual">
-                {row.manual}
-              </div>
-              <div className="column-total-runs">
-                {row.successful + row.failed}
-              </div>
-              <div className="column-successful">
-                {row.successful}
-              </div>
-              <div className="column-failed">
-                {row.failed}
-              </div>
-              <div className="column-running">
-                {row.running}
-              </div>
-              <div className="column-delay">
-                {humanReadableDuration(row.delay)}
-              </div>
-            </div>
-          );
-        })
-      }
+        return (
+          <div key={row.time} className="grid-row" onClick={onRowClick.bind(this, row)}>
+            <div className="column-time">{time.format('ha')}</div>
+            <div className="column-date">{time.format('ddd. MMM D, YYYY')}</div>
+            <div className="column-total-start">{row.schedule + row.manual}</div>
+            <div className="column-schedule">{row.schedule}</div>
+            <div className="column-manual">{row.manual}</div>
+            <div className="column-total-runs">{row.successful + row.failed}</div>
+            <div className="column-successful">{row.successful}</div>
+            <div className="column-failed">{row.failed}</div>
+            <div className="column-running">{row.running}</div>
+            <div className="column-delay">{humanReadableDuration(row.delay)}</div>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
-function RunsTableView({data, onRowClick}) {
+function RunsTableView({ data, onRowClick }) {
   return (
     <div className="runs-table-container grid-wrapper">
       <div className="grid grid-container">
@@ -130,12 +84,12 @@ function RunsTableView({data, onRowClick}) {
 
 RunsTableView.propTypes = {
   data: PropTypes.array,
-  onRowClick: PropTypes.func
+  onRowClick: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {
   return {
-    data: state.dashboard.data
+    data: state.dashboard.data,
   };
 };
 
@@ -145,10 +99,10 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: DashboardActions.setDisplayBucket,
         payload: {
-          displayBucketInfo: data
-        }
+          displayBucketInfo: data,
+        },
       });
-    }
+    },
   };
 };
 

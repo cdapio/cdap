@@ -23,7 +23,7 @@ import Summary from 'components/PipelineScheduler/BasicView/Summary';
 import ProfilesForSchedule from 'components/PipelineScheduler/ProfilesForSchedule';
 import PropTypes from 'prop-types';
 
-export default function BasicView({isDetailView}) {
+export default function BasicView({ isDetailView }) {
   return (
     <div className="schedule-type-content">
       <IntervalOption />
@@ -31,13 +31,11 @@ export default function BasicView({isDetailView}) {
       <StartingAt />
       <Summary />
       <MaxConcurrentRuns />
-      {
-        isDetailView ? <ProfilesForSchedule /> : null
-      }
+      {isDetailView ? <ProfilesForSchedule /> : null}
     </div>
   );
 }
 
 BasicView.propTypes = {
-  isDetailView: PropTypes.bool
+  isDetailView: PropTypes.bool,
 };

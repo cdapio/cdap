@@ -23,7 +23,7 @@ import T from 'i18n-react';
 import TextboxOnValium from 'components/TextboxOnValium';
 import classnames from 'classnames';
 import isNil from 'lodash/isNil';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import DataPrepStore from 'components/DataPrep/store';
 
@@ -37,8 +37,8 @@ export default class CutDirective extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      textSelectionRange: {start: null, end: null, index: null},
-      showPopover: false
+      textSelectionRange: { start: null, end: null, index: null },
+      showPopover: false,
     };
     this.newColName = '';
     this.onTextSelection = this.onTextSelection.bind(this);
@@ -56,40 +56,43 @@ export default class CutDirective extends Component {
   }
 
   applyDirective() {
-    let {start, end} = this.state.textSelectionRange;
+    let { start, end } = this.state.textSelectionRange;
     if (!isNil(start) && !isNil(end)) {
-      let directive = `cut-character ${this.props.columns[0]} ${this.newColName} ${start + 1}-${end}`;
-      execute([directive])
-        .subscribe(() => {
+      let directive = `cut-character ${this.props.columns[0]} ${this.newColName} ${start +
+        1}-${end}`;
+      execute([directive]).subscribe(
+        () => {
           this.props.onClose();
-        }, (err) => {
+        },
+        (err) => {
           console.log('error', err);
 
           DataPrepStore.dispatch({
             type: DataPrepActions.setError,
             payload: {
-              message: err.message || err.response.message
-            }
+              message: err.message || err.response.message,
+            },
           });
-        });
+        }
+      );
     }
   }
 
-  onTextSelection({textSelectionRange}) {
+  onTextSelection({ textSelectionRange }) {
     this.setState({
-      textSelectionRange
+      textSelectionRange,
     });
   }
   togglePopover(showPopover) {
     this.setState({
-      showPopover
+      showPopover,
     });
   }
   renderPopover() {
     if (!this.state.showPopover) {
       return null;
     }
-    let {start, end} = this.state.textSelectionRange;
+    let { start, end } = this.state.textSelectionRange;
     let tableContainer = document.getElementById('dataprep-table-id');
     let targetId = `highlight-cell-${this.state.textSelectionRange.index}`;
     /*
@@ -106,23 +109,27 @@ export default class CutDirective extends Component {
         modifiers={{
           shift: {
             order: 800,
-            enabled: true
-          }
+            enabled: true,
+          },
         }}
         hideArrow
       >
-        <PopoverHeader className={`${CELLHIGHLIGHTCLASSNAME} popover-title`}>{T.translate(`${PREFIX}.popoverTitle`)}</PopoverHeader>
+        <PopoverHeader className={`${CELLHIGHLIGHTCLASSNAME} popover-title`}>
+          {T.translate(`${PREFIX}.popoverTitle`)}
+        </PopoverHeader>
         <PopoverBody
           className={`${CELLHIGHLIGHTCLASSNAME} popover-content`}
           onClick={this.preventPropagation}
         >
           <span className={CELLHIGHLIGHTCLASSNAME}>
-            {T.translate(`${PREFIX}.extractDescription`, {range: `${start + 1}-${end}`})}
+            {T.translate(`${PREFIX}.extractDescription`, { range: `${start + 1}-${end}` })}
           </span>
-          <div className={classnames("col-input-container", CELLHIGHLIGHTCLASSNAME)}>
-            <strong className={CELLHIGHLIGHTCLASSNAME}>{T.translate(`${PREFIX}.inputLabel`)}</strong>
+          <div className={classnames('col-input-container', CELLHIGHLIGHTCLASSNAME)}>
+            <strong className={CELLHIGHLIGHTCLASSNAME}>
+              {T.translate(`${PREFIX}.inputLabel`)}
+            </strong>
             <TextboxOnValium
-              className={classnames("form-control mousetrap", CELLHIGHLIGHTCLASSNAME)}
+              className={classnames('form-control mousetrap', CELLHIGHLIGHTCLASSNAME)}
               onChange={this.handleColNameChange}
               value={this.newColName}
               validCharacterRegex={/^\w+$/}
@@ -134,10 +141,7 @@ export default class CutDirective extends Component {
           >
             {T.translate('features.DataPrep.Directives.apply')}
           </div>
-          <div
-            className={`btn ${CELLHIGHLIGHTCLASSNAME}`}
-            onClick={this.props.onClose}
-          >
+          <div className={`btn ${CELLHIGHLIGHTCLASSNAME}`} onClick={this.props.onClose}>
             {T.translate(`${PREFIX}.cancelBtnLabel`)}
           </div>
         </PopoverBody>
@@ -163,5 +167,5 @@ export default class CutDirective extends Component {
 
 CutDirective.propTypes = {
   onClose: PropTypes.func,
-  columns: PropTypes.arrayOf(PropTypes.string)
+  columns: PropTypes.arrayOf(PropTypes.string),
 };

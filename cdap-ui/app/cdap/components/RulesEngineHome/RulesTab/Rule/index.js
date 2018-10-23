@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Col, Form, FormGroup, Label, Row} from 'reactstrap';
+import { Col, Form, FormGroup, Label, Row } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import moment from 'moment';
 import classnames from 'classnames';
@@ -25,24 +25,27 @@ import MyRulesEngineApi from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
 import LoadingSVG from 'components/LoadingSVG';
 import DSVEditor from 'components/DSVEditor';
-import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
+import RulesEngineStore, { RULESENGINEACTIONS } from 'components/RulesEngineHome/RulesEngineStore';
 import uuidV4 from 'uuid/v4';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 import RulebooksPopover from 'components/RulesEngineHome/RulesTab/Rule/RulebooksPopover';
-import {getRuleBooks, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import {
+  getRuleBooks,
+  setError,
+} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import { DragSource } from 'react-dnd';
 import ConfirmationModal from 'components/ConfirmationModal';
-import {getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import { getRules } from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import T from 'i18n-react';
 
 require('./Rule.scss');
 
 const PREFIX = 'features.RulesEngine.Rule';
 const DragTypes = {
-  RULE: 'RULE'
+  RULE: 'RULE',
 };
 
-export {DragTypes};
+export { DragTypes };
 
 const ruleSource = {
   beginDrag(props) {
@@ -55,20 +58,20 @@ const ruleSource = {
     if (!monitor.didDrop()) {
       return;
     }
-  }
+  },
 };
 
 function collect(connect, monitor) {
   return {
     connectDragSource: connect.dragSource(),
-    isDragging: monitor.isDragging()
+    isDragging: monitor.isDragging(),
   };
 }
 class Rule extends Component {
   static propTypes = {
     rule: PropTypes.object,
     connectDragSource: PropTypes.func.isRequired,
-    isDragging: PropTypes.bool.isRequired
+    isDragging: PropTypes.bool.isRequired,
   };
 
   state = {
@@ -79,18 +82,18 @@ class Rule extends Component {
     errorMessage: '',
     loading: false,
     extendedMessage: '',
-    confirmationModalIsOpen: false
+    confirmationModalIsOpen: false,
   };
 
   componentDidMount() {
     this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
-      let {rules} = RulesEngineStore.getState();
+      let { rules } = RulesEngineStore.getState();
       if (rules.activeRuleId === this.props.rule.id) {
         this.fetchRuleDetails();
       } else {
         if (this.state.viewDetails) {
           this.setState({
-            viewDetails: false
+            viewDetails: false,
           });
         }
       }
@@ -106,15 +109,15 @@ class Rule extends Component {
   viewDetails = () => {
     if (this.state.viewDetails) {
       RulesEngineStore.dispatch({
-        type: RULESENGINEACTIONS.RESETACTIVERULE
+        type: RULESENGINEACTIONS.RESETACTIVERULE,
       });
       return;
     }
     RulesEngineStore.dispatch({
       type: RULESENGINEACTIONS.SETACTIVERULE,
       payload: {
-        activeRuleId: this.props.rule.id
-      }
+        activeRuleId: this.props.rule.id,
+      },
     });
   };
 
@@ -122,63 +125,61 @@ class Rule extends Component {
     if (this.state.viewDetails) {
       return;
     }
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
     this.setState({
       viewDetails: true,
-      detailsLoading: true
+      detailsLoading: true,
     });
-    MyRulesEngineApi
-      .getRuleDetails({
-        namespace,
-        ruleid: this.props.rule.id
-      })
-      .subscribe(
-        res => {
-          this.setState({
-            ruleDetails: res.values,
-            detailsLoading: false
-          });
-        },
-        () => {
-          this.setState({
-            detailsLoading: false
-          });
-        }
-      );
+    MyRulesEngineApi.getRuleDetails({
+      namespace,
+      ruleid: this.props.rule.id,
+    }).subscribe(
+      (res) => {
+        this.setState({
+          ruleDetails: res.values,
+          detailsLoading: false,
+        });
+      },
+      () => {
+        this.setState({
+          detailsLoading: false,
+        });
+      }
+    );
   };
 
   toggleConfirmationModal = () => {
     this.setState({
-      confirmationModalIsOpen: !this.state.confirmationModalIsOpen
+      confirmationModalIsOpen: !this.state.confirmationModalIsOpen,
     });
   };
 
   onDeleteRule = () => {
     this.setState({
-      loading: true
+      loading: true,
     });
-    let {selectedNamespace:namespace} = NamespaceStore.getState();
-    MyRulesEngineApi
-      .deleteRule({
-        namespace,
-        ruleid: this.state.ruleDetails.id
-      })
-      .subscribe(
-        () => {
-          getRules();
-          this.setState({
-            loading: false,
-            confirmationModalIsOpen: false
-          });
-        },
-        (err) => {
-          this.setState({
-            errorMessage: T.translate(`${PREFIX}.ConfirmationModal.failedMessage`, {id: this.state.ruleDetails.id}),
-            extendedMessage: JSON.stringify(err),
-            loading: false
-          });
-        }
-      );
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
+    MyRulesEngineApi.deleteRule({
+      namespace,
+      ruleid: this.state.ruleDetails.id,
+    }).subscribe(
+      () => {
+        getRules();
+        this.setState({
+          loading: false,
+          confirmationModalIsOpen: false,
+        });
+      },
+      (err) => {
+        this.setState({
+          errorMessage: T.translate(`${PREFIX}.ConfirmationModal.failedMessage`, {
+            id: this.state.ruleDetails.id,
+          }),
+          extendedMessage: JSON.stringify(err),
+          loading: false,
+        });
+      }
+    );
   };
 
   onRulesChange(rows) {
@@ -187,20 +188,15 @@ class Rule extends Component {
   }
 
   onRuleBookSelect = (rulebookid) => {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
-    MyRulesEngineApi
-      .addRuleToRuleBook({
-        namespace,
-        rulebookid,
-        ruleid: this.props.rule.id
-      })
-      .subscribe(
-        () => {
-          getRuleBooks();
-        },
-        setError
-      );
-  }
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
+    MyRulesEngineApi.addRuleToRuleBook({
+      namespace,
+      rulebookid,
+      ruleid: this.props.rule.id,
+    }).subscribe(() => {
+      getRuleBooks();
+    }, setError);
+  };
 
   renderDetails = () => {
     if (this.state.detailsLoading) {
@@ -210,9 +206,9 @@ class Rule extends Component {
         </Col>
       );
     }
-    let rules = this.state.ruleDetails.action.map(action => ({
+    let rules = this.state.ruleDetails.action.map((action) => ({
       uniqueId: uuidV4(),
-      property: action
+      property: action,
     }));
     return (
       <Col xs="12">
@@ -229,8 +225,8 @@ class Rule extends Component {
                 value={this.state.ruleDetails.condition}
                 className="form-control"
                 row={10}
-                disabled>
-              </textarea>
+                disabled
+              />
             </Col>
           </FormGroup>
           <FormGroup row>
@@ -247,9 +243,7 @@ class Rule extends Component {
           </FormGroup>
           <Row>
             <Col xs={6}>
-              <RulebooksPopover
-                onChange={this.onRuleBookSelect}
-              />
+              <RulebooksPopover onChange={this.onRuleBookSelect} />
             </Col>
             <Col xs={6} className="text-xs-right delete-btn-container">
               <div className="btn btn-secondary" onClick={this.toggleConfirmationModal}>
@@ -258,7 +252,9 @@ class Rule extends Component {
               <ConfirmationModal
                 headerTitle={T.translate(`${PREFIX}.ConfirmationModal.title`)}
                 toggleModal={this.toggleConfirmationModal}
-                confirmationText={T.translate(`${PREFIX}.ConfirmationModal.text`, {id: this.state.ruleDetails.id})}
+                confirmationText={T.translate(`${PREFIX}.ConfirmationModal.text`, {
+                  id: this.state.ruleDetails.id,
+                })}
                 confirmFn={this.onDeleteRule}
                 cancelFn={this.toggleConfirmationModal}
                 isOpen={this.state.confirmationModalIsOpen}
@@ -271,57 +267,44 @@ class Rule extends Component {
         </Form>
       </Col>
     );
-  }
+  };
 
   renderRow = () => {
     const { connectDragSource } = this.props;
-    return (
-      connectDragSource(
-        <div onClick={this.viewDetails}>
-          <Col xs="6">
-            <div className="rule-name-container">
-              <div className="svg-arrow-wrapper">
-                {
-                  !this.state.viewDetails ?
-                    <IconSVG name="icon-caret-right" />
-                  :
-                    <IconSVG name="icon-caret-down" />
-                }
-              </div>
-              <div
-                className="rule-name"
-                title={this.props.rule.id}
-              >
-                {this.props.rule.id}
-              </div>
+    return connectDragSource(
+      <div onClick={this.viewDetails}>
+        <Col xs="6">
+          <div className="rule-name-container">
+            <div className="svg-arrow-wrapper">
+              {!this.state.viewDetails ? (
+                <IconSVG name="icon-caret-right" />
+              ) : (
+                <IconSVG name="icon-caret-down" />
+              )}
             </div>
-          </Col>
-          <Col xs="5">
-            {moment(this.props.rule.updated * 1000).format('MM-DD-YYYY')}
-          </Col>
-          <Col xs="1">
-            <IconSVG name="icon-bars" />
-          </Col>
-        </div>
-      )
+            <div className="rule-name" title={this.props.rule.id}>
+              {this.props.rule.id}
+            </div>
+          </div>
+        </Col>
+        <Col xs="5">{moment(this.props.rule.updated * 1000).format('MM-DD-YYYY')}</Col>
+        <Col xs="1">
+          <IconSVG name="icon-bars" />
+        </Col>
+      </div>
     );
-  }
+  };
 
   render() {
     return (
-        <div
-          className={classnames("engine-rule row", {
-            'expanded': this.state.viewDetails
-          })}
-        >
-          {this.renderRow()}
-          {
-            this.state.viewDetails ?
-              this.renderDetails()
-            :
-              null
-          }
-        </div>
+      <div
+        className={classnames('engine-rule row', {
+          expanded: this.state.viewDetails,
+        })}
+      >
+        {this.renderRow()}
+        {this.state.viewDetails ? this.renderDetails() : null}
+      </div>
     );
   }
 }

@@ -14,9 +14,8 @@
  * the License.
  */
 
-
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PlusButtonStore from 'services/PlusButtonStore';
 import PlusButtonModal from 'components/PlusButtonModal';
 import classnames from 'classnames';
@@ -26,14 +25,14 @@ export default class ResourceCenterButton extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showResourceCenter: false
+      showResourceCenter: false,
     };
   }
   componentDidMount() {
     this.plusButtonSubscription = PlusButtonStore.subscribe(() => {
       let modalState = PlusButtonStore.getState().modalState;
       this.setState({
-        showResourceCenter: modalState
+        showResourceCenter: modalState,
       });
     });
   }
@@ -44,14 +43,14 @@ export default class ResourceCenterButton extends Component {
   }
   onClickHandler() {
     this.setState({
-      showResourceCenter: !this.state.showResourceCenter
+      showResourceCenter: !this.state.showResourceCenter,
     });
   }
   render() {
     return (
       <div>
         <div
-          className={classnames("cask-resourcecenter-button", this.props.className)}
+          className={classnames('cask-resourcecenter-button', this.props.className)}
           onClick={this.onClickHandler.bind(this)}
         >
           <img
@@ -70,5 +69,5 @@ export default class ResourceCenterButton extends Component {
   }
 }
 ResourceCenterButton.propTypes = {
-  className: PropTypes.string
+  className: PropTypes.string,
 };

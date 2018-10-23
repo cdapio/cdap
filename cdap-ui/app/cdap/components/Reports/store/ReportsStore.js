@@ -14,8 +14,8 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
-import {defaultAction} from 'services/helpers';
+import { combineReducers, createStore } from 'redux';
+import { defaultAction } from 'services/helpers';
 
 const ReportsActions = {
   toggleCustomizerOption: 'REPORTS_TOGGLE_CUSTOMIZER_OPTION',
@@ -32,15 +32,10 @@ const ReportsActions = {
   setDetailsError: 'REPORTS_DETAILS_ERROR',
   detailsReset: 'REPORTS_DETAILS_RESET',
   setNamespaces: 'REPORTS_SET_NAMESPACES',
-  reset: 'REPORTS_RESET'
+  reset: 'REPORTS_RESET',
 };
 
-const STATUS_OPTIONS = [
-  'FAILED',
-  'COMPLETED',
-  'RUNNING',
-  'STOPPED'
-];
+const STATUS_OPTIONS = ['FAILED', 'COMPLETED', 'RUNNING', 'STOPPED'];
 
 const defaultCustomizerState = {
   pipelines: false,
@@ -55,21 +50,21 @@ const defaultCustomizerState = {
   runtimeArgs: false,
   numLogWarnings: false,
   numLogErrors: false,
-  numRecordsOut: false
+  numRecordsOut: false,
 };
 
 const defaultStatusState = {
-  statusSelections: [STATUS_OPTIONS[0]]
+  statusSelections: [STATUS_OPTIONS[0]],
 };
 
 const defaultTimeRangeState = {
   selection: null,
   start: null,
-  end: null
+  end: null,
 };
 
 const namespacesInitialState = {
-  namespacesPick: []
+  namespacesPick: [],
 };
 
 const defaultListState = {
@@ -77,7 +72,7 @@ const defaultListState = {
   reports: [],
   offset: 0,
   limit: 20,
-  activeId: null
+  activeId: null,
 };
 
 const defaultDetailsState = {
@@ -93,7 +88,7 @@ const defaultDetailsState = {
   runsLimit: 20,
   totalRunsCount: 0,
   error: null,
-  detailError: null
+  detailError: null,
 };
 
 const customizer = (state = defaultCustomizerState, action = defaultAction) => {
@@ -101,12 +96,12 @@ const customizer = (state = defaultCustomizerState, action = defaultAction) => {
     case ReportsActions.toggleCustomizerOption:
       return {
         ...state,
-        [action.payload.type]: !state[action.payload.type]
+        [action.payload.type]: !state[action.payload.type],
       };
     case ReportsActions.setSelections:
       return {
         ...state,
-        ...action.payload.selections
+        ...action.payload.selections,
       };
     case ReportsActions.clearSelection:
     case ReportsActions.reset:
@@ -122,7 +117,7 @@ const status = (state = defaultStatusState, action = defaultAction) => {
     case ReportsActions.setSelections:
       return {
         ...state,
-        statusSelections: action.payload.statusSelections
+        statusSelections: action.payload.statusSelections,
       };
     case ReportsActions.clearSelection:
     case ReportsActions.reset:
@@ -139,12 +134,12 @@ const timeRange = (state = defaultTimeRangeState, action = defaultAction) => {
         ...state,
         selection: action.payload.selection,
         start: action.payload.start,
-        end: action.payload.end
+        end: action.payload.end,
       };
     case ReportsActions.setSelections:
       return {
         ...state,
-        ...action.payload.timeRange
+        ...action.payload.timeRange,
       };
     case ReportsActions.clearSelection:
     case ReportsActions.reset:
@@ -160,7 +155,7 @@ const namespaces = (state = namespacesInitialState, action = defaultAction) => {
     case ReportsActions.setNamespaces:
       return {
         ...state,
-        namespacesPick: action.payload.namespacesPick
+        namespacesPick: action.payload.namespacesPick,
       };
     case ReportsActions.clearSelection:
     case ReportsActions.reset:
@@ -178,17 +173,17 @@ const list = (state = defaultListState, action = defaultAction) => {
         reports: action.payload.list.reports,
         offset: action.payload.list.offset,
         limit: action.payload.list.limit,
-        activeId: action.payload.activeId
+        activeId: action.payload.activeId,
       };
     case ReportsActions.setPagination:
       return {
         ...state,
-        offset: action.payload.offset
+        offset: action.payload.offset,
       };
     case ReportsActions.setActiveId:
       return {
         ...state,
-        activeId: action.payload.activeId
+        activeId: action.payload.activeId,
       };
     case ReportsActions.reset:
       return defaultListState;
@@ -203,23 +198,23 @@ const details = (state = defaultDetailsState, action = defaultAction) => {
       return {
         ...state,
         ...action.payload.info,
-        reportId: action.payload.reportId
+        reportId: action.payload.reportId,
       };
     case ReportsActions.setRuns:
       return {
         ...state,
         runs: action.payload.runs,
-        totalRunsCount: action.payload.totalRunsCount
+        totalRunsCount: action.payload.totalRunsCount,
       };
     case ReportsActions.setRunsPagination:
       return {
         ...state,
-        runsOffset: action.payload.offset
+        runsOffset: action.payload.offset,
       };
     case ReportsActions.setDetailsError:
       return {
         ...state,
-        detailError: action.payload.error
+        detailError: action.payload.error,
       };
     case ReportsActions.detailsReset:
     case ReportsActions.reset:
@@ -236,7 +231,7 @@ const ReportsStore = createStore(
     list,
     details,
     timeRange,
-    namespaces
+    namespaces,
   }),
   {
     customizer: defaultCustomizerState,
@@ -244,10 +239,10 @@ const ReportsStore = createStore(
     list: defaultListState,
     details: defaultDetailsState,
     timeRange: defaultTimeRangeState,
-    namespaces: namespacesInitialState
+    namespaces: namespacesInitialState,
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
 
 export default ReportsStore;
-export {ReportsActions, STATUS_OPTIONS};
+export { ReportsActions, STATUS_OPTIONS };

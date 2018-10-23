@@ -15,11 +15,13 @@
 */
 
 import React, { Component } from 'react';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import PropTypes from 'prop-types';
-import {Observable} from 'rxjs/Observable';
-import {isDescendant} from 'services/helpers';
-import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import { Observable } from 'rxjs/Observable';
+import { isDescendant } from 'services/helpers';
+import PipelineConfigurationsStore, {
+  ACTIONS as PipelineConfigurationsActions,
+} from 'components/PipelineConfigurations/Store';
 import ConfigModelessActionButtons from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
@@ -39,13 +41,13 @@ export default class PipelineConfigurations extends Component {
     isBatch: PropTypes.bool,
     isHistoricalRun: PropTypes.bool,
     action: PropTypes.string,
-    pipelineName: PropTypes.string
+    pipelineName: PropTypes.string,
   };
 
   static defaultProps = {
     isDetailView: false,
     isPreview: false,
-    isBatch: true
+    isBatch: true,
   };
 
   componentDidMount() {
@@ -54,10 +56,10 @@ export default class PipelineConfigurations extends Component {
     }
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_MODELESS_OPEN_STATUS,
-      payload: { open: true }
+      payload: { open: true },
     });
 
-    let {isBatch, isDetailView, isHistoricalRun, isPreview} = this.props;
+    let { isBatch, isDetailView, isHistoricalRun, isPreview } = this.props;
 
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
@@ -66,9 +68,9 @@ export default class PipelineConfigurations extends Component {
           isBatch,
           isDetailView,
           isHistoricalRun,
-          isPreview
-        }
-      }
+          isPreview,
+        },
+      },
     });
 
     this.storeSubscription = PipelineConfigurationsStore.subscribe(() => {
@@ -79,9 +81,12 @@ export default class PipelineConfigurations extends Component {
       }
     });
 
-    this.documentClick$ = Observable.fromEvent(document, 'click')
-    .subscribe((e) => {
-      if (!this.configModeless || isDescendant(this.configModeless, e.target) || document.getElementsByClassName('post-run-actions-modal').length > 0) {
+    this.documentClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
+      if (
+        !this.configModeless ||
+        isDescendant(this.configModeless, e.target) ||
+        document.getElementsByClassName('post-run-actions-modal').length > 0
+      ) {
         return;
       }
 
@@ -110,14 +115,9 @@ export default class PipelineConfigurations extends Component {
     }
     return (
       <div className="pipeline-configurations-header modeless-header">
-        <div className="modeless-title">
-          {headerLabel}
-        </div>
+        <div className="modeless-title">{headerLabel}</div>
         <div className="btn-group">
-          <a
-            className="btn"
-            onClick={this.props.onClose}
-          >
+          <a className="btn" onClick={this.props.onClose}>
             <IconSVG name="icon-close" />
           </a>
         </div>
@@ -130,10 +130,10 @@ export default class PipelineConfigurations extends Component {
     if (this.props.isBatch) {
       tabConfig = TabConfig;
     } else {
-      tabConfig = {...TabConfig};
+      tabConfig = { ...TabConfig };
       // Don't show Alerts tab for realtime pipelines
       const alertsTabName = T.translate(`${PREFIX}.Alerts.title`);
-      tabConfig.tabs = TabConfig.tabs.filter(tab => {
+      tabConfig.tabs = TabConfig.tabs.filter((tab) => {
         return tab.name !== alertsTabName;
       });
     }
@@ -141,7 +141,7 @@ export default class PipelineConfigurations extends Component {
       <Provider store={PipelineConfigurationsStore}>
         <div
           className="pipeline-configurations-content modeless-container"
-          ref={(ref) => this.configModeless = ref}
+          ref={(ref) => (this.configModeless = ref)}
         >
           {this.renderHeader()}
           <div className="pipeline-config-tabs-wrapper">

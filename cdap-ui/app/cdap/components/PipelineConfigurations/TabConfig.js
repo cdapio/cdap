@@ -28,41 +28,41 @@ const TabConfig = {
     {
       id: 1,
       name: T.translate(`${PREFIX}.ComputeConfig.title`),
-      content: (<ComputeTabContent />),
+      content: <ComputeTabContent />,
       contentClassName: 'pipeline-configurations-body',
-      paneClassName: 'configuration-content'
+      paneClassName: 'configuration-content',
     },
     {
       id: 2,
       name: T.translate(`${PREFIX}.PipelineConfig.title`),
-      content: (<PipelineConfigTabContent />),
+      content: <PipelineConfigTabContent />,
       contentClassName: 'pipeline-configurations-body',
-      paneClassName: 'configuration-content'
+      paneClassName: 'configuration-content',
     },
     {
       id: 3,
       name: T.translate(`${PREFIX}.EngineConfig.title`),
-      content: (<EngineConfigTabContent />),
+      content: <EngineConfigTabContent />,
       contentClassName: 'pipeline-configurations-body',
-      paneClassName: 'configuration-content'
+      paneClassName: 'configuration-content',
     },
     {
       id: 4,
       name: T.translate(`${PREFIX}.Resources.title`),
-      content: (<ResourcesTabContent />),
+      content: <ResourcesTabContent />,
       contentClassName: 'pipeline-configurations-body',
-      paneClassName: 'configuration-content'
+      paneClassName: 'configuration-content',
     },
     {
       id: 5,
       name: T.translate(`${PREFIX}.Alerts.title`),
-      content: (<AlertsTabContent />),
+      content: <AlertsTabContent />,
       contentClassName: 'pipeline-configurations-body',
-      paneClassName: 'configuration-content'
-    }
+      paneClassName: 'configuration-content',
+    },
   ],
   layout: 'vertical',
-  defaultTab: 1
+  defaultTab: 1,
 };
 
 export default TabConfig;

@@ -17,8 +17,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {ReportsActions} from 'components/Reports/store/ReportsStore';
-import {connect} from 'react-redux';
+import { ReportsActions } from 'components/Reports/store/ReportsStore';
+import { connect } from 'react-redux';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Reports.Customizer';
@@ -34,11 +34,11 @@ const OPTIONS = [
   'runtimeArgs',
   'numLogWarnings',
   'numLogErrors',
-  'numRecordsOut'
+  'numRecordsOut',
 ];
 
 ColumnsSelectorView.propTypes = {
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
 };
 
 OPTIONS.forEach((option) => {
@@ -48,26 +48,19 @@ OPTIONS.forEach((option) => {
 function ColumnsSelectorView(props) {
   return (
     <div className="columns-selector">
-      <div className="title">
-        {T.translate(`${PREFIX}.selectColumns`)}
-      </div>
+      <div className="title">{T.translate(`${PREFIX}.selectColumns`)}</div>
 
-      {
-        OPTIONS.map((option) => {
-          return (
-            <div
-              key={option}
-              className="option"
-            >
-              <span onClick={props.onClick.bind(this, option)}>
-                <IconSVG name={props[option] ? 'icon-check-square' : 'icon-square-o'} />
+      {OPTIONS.map((option) => {
+        return (
+          <div key={option} className="option">
+            <span onClick={props.onClick.bind(this, option)}>
+              <IconSVG name={props[option] ? 'icon-check-square' : 'icon-square-o'} />
 
-                {T.translate(`${PREFIX}.Options.${option}`)}
-              </span>
-            </div>
-          );
-        })
-      }
+              {T.translate(`${PREFIX}.Options.${option}`)}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -88,10 +81,10 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: ReportsActions.toggleCustomizerOption,
         payload: {
-          type: option
-        }
+          type: option,
+        },
       });
-    }
+    },
   };
 };
 
@@ -101,4 +94,3 @@ const ColumnsSelector = connect(
 )(ColumnsSelectorView);
 
 export default ColumnsSelector;
-

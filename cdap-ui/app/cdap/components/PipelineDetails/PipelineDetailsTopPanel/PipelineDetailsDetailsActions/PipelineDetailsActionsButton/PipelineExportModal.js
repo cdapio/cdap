@@ -17,17 +17,18 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { ModalBody, ModalFooter } from 'reactstrap';
-import {Modal} from 'reactstrap';
+import { Modal } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
-export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
+export default function PipelineExportModal({ isOpen, onClose, pipelineConfig }) {
   const exportPipeline = () => {
-    let blob = new Blob([JSON.stringify(pipelineConfig, null, 4)], { type: 'application/json'});
+    let blob = new Blob([JSON.stringify(pipelineConfig, null, 4)], { type: 'application/json' });
     let url = URL.createObjectURL(blob);
-    let exportFileName = (pipelineConfig.name? pipelineConfig.name: 'noname') + '-' + pipelineConfig.artifact.name;
+    let exportFileName =
+      (pipelineConfig.name ? pipelineConfig.name : 'noname') + '-' + pipelineConfig.artifact.name;
     let aElement = document.getElementById('pipeline-export-config-link');
     aElement.href = url;
     aElement.download = exportFileName + '.json';
@@ -47,16 +48,11 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
     >
       <div className="modal-header">
         <h3 className="modal-title float-xs-left">
-          <span>
-            {T.translate(`${PREFIX}.exportModalTitle`)}
-          </span>
+          <span>{T.translate(`${PREFIX}.exportModalTitle`)}</span>
         </h3>
         <div className="btn-group float-xs-right">
-          <a
-            className="btn"
-            onClick={onClose}
-          >
-            <IconSVG name = "icon-close" />
+          <a className="btn" onClick={onClose}>
+            <IconSVG name="icon-close" />
           </a>
         </div>
       </div>
@@ -65,25 +61,16 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
         <fieldset disabled className="view-plugin-json">
           <div className="widget-json-editor">
             <div className="textarea-container">
-              <textarea
-                className="form-control"
-                value={JSON.stringify(pipelineConfig, null, 2)}
-              />
+              <textarea className="form-control" value={JSON.stringify(pipelineConfig, null, 2)} />
             </div>
           </div>
         </fieldset>
       </ModalBody>
       <ModalFooter>
-        <div
-          className="btn btn-grey-cancel close-button"
-          onClick={onClose}
-        >
+        <div className="btn btn-grey-cancel close-button" onClick={onClose}>
           {T.translate('commons.close')}
         </div>
-        <div
-          className="btn btn-blue"
-          onClick={exportPipeline}
-        >
+        <div className="btn btn-blue" onClick={exportPipeline}>
           {T.translate(`${PREFIX}.export`)}
           <a id="pipeline-export-config-link" />
         </div>
@@ -95,5 +82,5 @@ export default function PipelineExportModal({isOpen, onClose, pipelineConfig}) {
 PipelineExportModal.propTypes = {
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
-  pipelineConfig: PropTypes.object
+  pipelineConfig: PropTypes.object,
 };

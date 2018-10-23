@@ -21,7 +21,7 @@ import FastActions from 'components/EntityCard/FastActions';
 import SortableTable from 'components/SortableTable';
 import IconSVG from 'components/IconSVG';
 import uuidV4 from 'uuid/v4';
-import {humanReadableDate} from 'services/helpers';
+import { humanReadableDate } from 'services/helpers';
 import EntityIconMap from 'services/entity-icon-map';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
@@ -32,61 +32,62 @@ require('./ProgramTable.scss');
 const tableHeaders = [
   {
     property: 'name',
-    label: T.translate('features.ViewSwitch.nameLabel')
+    label: T.translate('features.ViewSwitch.nameLabel'),
   },
   {
     property: 'programType',
-    label: T.translate('features.ViewSwitch.typeLabel')
+    label: T.translate('features.ViewSwitch.typeLabel'),
   },
   // have to convert latestRun back from string to seconds from epoch
   {
     property: 'latestRun',
     label: T.translate('features.ViewSwitch.ProgramTable.lastStartedLabel'),
-    sortFunc: (entity) => { return moment(entity.latestRun.starting).valueOf(); }
+    sortFunc: (entity) => {
+      return moment(entity.latestRun.starting).valueOf();
+    },
   },
   {
     property: 'status',
-    label: T.translate('features.ViewSwitch.ProgramTable.statusLabel')
+    label: T.translate('features.ViewSwitch.ProgramTable.statusLabel'),
   },
   // empty header label for Actions column
   {
-    label: ''
-  }
+    label: '',
+  },
 ];
 
 export default class ProgramTable extends Component {
   static propTypes = {
-    programs: PropTypes.arrayOf(PropTypes.object)
+    programs: PropTypes.arrayOf(PropTypes.object),
   };
 
-
   state = {
-    entities: []
+    entities: [],
   };
 
   componentWillMount() {
     let entities = this.updateEntities(this.props.programs);
     this.setState({
-      entities
+      entities,
     });
   }
 
   componentWillReceiveProps(nextProps) {
     let entities = this.updateEntities(nextProps.programs);
     this.setState({
-      entities
+      entities,
     });
   }
 
   updateEntities(programs) {
-    return programs.map(prog => {
+    return programs.map((prog) => {
       return Object.assign({}, prog, {
         latestRun: prog.latestRun || {},
         applicationId: prog.app,
         programType: prog.type,
         type: 'program',
         id: prog.name,
-        uniqueId: `program-${uuidV4()}`
+        uniqueId: `program-${uuidV4()}`,
       });
     });
   }
@@ -94,49 +95,39 @@ export default class ProgramTable extends Component {
   renderTableBody = (entities) => {
     return (
       <tbody>
-        {
-          entities.map(program => {
-            let icon = EntityIconMap[program.programType];
-            let statusClass = program.status === 'RUNNING' ? 'text-success' : '';
-            return (
-              <tr key={program.uniqueId}>
-                <td>
-                  <span title={program.name}>
-                    {program.name}
-                  </span>
-                </td>
-                <td>
-                  <IconSVG
-                    name={icon}
-                    className="program-type-icon"
-                  />
-                  {program.programType}
-                </td>
-                <td>
-                  {
-                    !isEmpty(program.latestRun) ? humanReadableDate(program.latestRun.starting) : 'n/a'
-                  }
-                </td>
-                <td className={statusClass}>
-                  {
-                    !isEmpty(program.status) ? StatusMapper.lookupDisplayStatus(program.status) : 'n/a'
-                  }
-                </td>
-                <td>
-                  <div className="fast-actions-container text-xs-center">
-                    <FastActions
-                      className="text-xs-left btn-group"
-                      entity={program}
-                    />
-                  </div>
-                </td>
-              </tr>
-            );
-          })
-        }
+        {entities.map((program) => {
+          let icon = EntityIconMap[program.programType];
+          let statusClass = program.status === 'RUNNING' ? 'text-success' : '';
+          return (
+            <tr key={program.uniqueId}>
+              <td>
+                <span title={program.name}>{program.name}</span>
+              </td>
+              <td>
+                <IconSVG name={icon} className="program-type-icon" />
+                {program.programType}
+              </td>
+              <td>
+                {!isEmpty(program.latestRun)
+                  ? humanReadableDate(program.latestRun.starting)
+                  : 'n/a'}
+              </td>
+              <td className={statusClass}>
+                {!isEmpty(program.status)
+                  ? StatusMapper.lookupDisplayStatus(program.status)
+                  : 'n/a'}
+              </td>
+              <td>
+                <div className="fast-actions-container text-xs-center">
+                  <FastActions className="text-xs-left btn-group" entity={program} />
+                </div>
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     );
-  }
+  };
 
   render() {
     if (this.state.entities && Array.isArray(this.state.entities)) {
@@ -153,9 +144,7 @@ export default class ProgramTable extends Component {
       } else {
         return (
           <div className="history-tab">
-            <i>
-              {T.translate('features.Overview.ProgramTab.emptyMessage')}
-            </i>
+            <i>{T.translate('features.Overview.ProgramTab.emptyMessage')}</i>
           </div>
         );
       }
@@ -163,7 +152,7 @@ export default class ProgramTable extends Component {
     return (
       <div className="program-table">
         <h3 className="text-xs-center">
-          <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
+          <span className="fa fa-spinner fa-spin fa-2x loading-spinner" />
         </h3>
       </div>
     );

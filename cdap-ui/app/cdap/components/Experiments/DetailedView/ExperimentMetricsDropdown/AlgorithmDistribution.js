@@ -18,12 +18,12 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import * as d3Lib from 'd3';
 import PieChartWithLegends from 'components/PieChartWithLegend';
-import {getAlgorithmLabel} from 'components/Experiments/store/SharedActionCreator';
+import { getAlgorithmLabel } from 'components/Experiments/store/SharedActionCreator';
 import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
 
 const HEIGHT_OF_PIE_CHART = 190;
 const colorScale = d3Lib.scaleOrdinal(d3Lib.schemeCategory20);
-const AlgorithmDistribution = ({algorithms}) => {
+const AlgorithmDistribution = ({ algorithms }) => {
   if (!algorithms.length) {
     return (
       <EmptyMetricMessage
@@ -32,27 +32,25 @@ const AlgorithmDistribution = ({algorithms}) => {
       />
     );
   }
-  let algos = algorithms.map(algo => {
+  let algos = algorithms.map((algo) => {
     return {
       ...algo,
       value: getAlgorithmLabel(algo.bin),
-      color: colorScale(algo.bin)
+      color: colorScale(algo.bin),
     };
   });
   return (
-    <PieChartWithLegends
-      data={algos}
-      width={HEIGHT_OF_PIE_CHART}
-      height={HEIGHT_OF_PIE_CHART}
-    />
+    <PieChartWithLegends data={algos} width={HEIGHT_OF_PIE_CHART} height={HEIGHT_OF_PIE_CHART} />
   );
 };
 
 AlgorithmDistribution.propTypes = {
-  algorithms: PropTypes.arrayOf(PropTypes.shape({
-    bin: PropTypes.string,
-    count: PropTypes.number
-  }))
+  algorithms: PropTypes.arrayOf(
+    PropTypes.shape({
+      bin: PropTypes.string,
+      count: PropTypes.number,
+    })
+  ),
 };
 
 export default AlgorithmDistribution;

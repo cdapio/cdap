@@ -15,19 +15,13 @@
 */
 
 import React from 'react';
-import {Input} from 'reactstrap';
-import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
+import { Input } from 'reactstrap';
+import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 
-export default function DefaultInput({...props}) {
+export default function DefaultInput({ ...props }) {
   let { onChange, value, widgetProps } = props;
 
-  return (
-    <Input
-      value={value}
-      onChange={onChange}
-      {...widgetProps}
-    />
-  );
+  return <Input value={value} onChange={onChange} {...widgetProps} />;
 }
 
 DefaultInput.propTypes = WIDGET_PROPTYPES;

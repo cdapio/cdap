@@ -31,34 +31,32 @@ export default class PluginArtifactUploadWizard extends Component {
     super(props);
     this.state = {
       showWizard: this.props.isOpen,
-      successInfo: {}
+      successInfo: {},
     };
   }
   componentWillUnmount() {
     PluginArtifactUploadStore.dispatch({
-      type: PluginArtifactUploadActions.onReset
+      type: PluginArtifactUploadActions.onReset,
     });
   }
   onSubmit() {
     this.buildSuccessInfo();
-    return ArtifactUploadActionCreator
-      .uploadArtifact(this.props.includeParents)
-      .mergeMap(() => {
-        this.props.onSubmit();
-        return ArtifactUploadActionCreator.uploadConfigurationJson();
-      });
+    return ArtifactUploadActionCreator.uploadArtifact(this.props.includeParents).mergeMap(() => {
+      this.props.onSubmit();
+      return ArtifactUploadActionCreator.uploadConfigurationJson();
+    });
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
       this.props.onClose(returnResult);
     }
     this.setState({
-      showWizard: !this.state.showWizard
+      showWizard: !this.state.showWizard,
     });
   }
   buildSuccessInfo() {
     this.setState({
-      successInfo: this.props.buildInfo()
+      successInfo: this.props.buildInfo(),
     });
   }
   render() {
@@ -66,7 +64,9 @@ export default class PluginArtifactUploadWizard extends Component {
     let pkg = input.package || {};
     let headerLabel = input.headerLabel;
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + (headerLabel ? headerLabel : T.translate('features.Wizard.Informational.headerlabel'));
+    let wizardModalTitle =
+      (pkg.label ? pkg.label + ' | ' : '') +
+      (headerLabel ? headerLabel : T.translate('features.Wizard.Informational.headerlabel'));
     return (
       <WizardModal
         title={wizardModalTitle}
@@ -80,7 +80,8 @@ export default class PluginArtifactUploadWizard extends Component {
           store={PluginArtifactUploadStore}
           onSubmit={this.onSubmit.bind(this)}
           successInfo={this.state.successInfo}
-          onClose={this.toggleWizard.bind(this)}/>
+          onClose={this.toggleWizard.bind(this)}
+        />
       </WizardModal>
     );
   }
@@ -89,11 +90,11 @@ export default class PluginArtifactUploadWizard extends Component {
 PluginArtifactUploadWizard.defaultProps = {
   input: {
     action: {
-      arguments: {}
+      arguments: {},
     },
-    package: {}
+    package: {},
   },
-  includeParents: true
+  includeParents: true,
 };
 PluginArtifactUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
@@ -102,5 +103,5 @@ PluginArtifactUploadWizard.propTypes = {
   buildInfo: PropTypes.func,
   wizardConfig: PropTypes.object,
   onSubmit: PropTypes.func,
-  includeParents: PropTypes.bool
+  includeParents: PropTypes.bool,
 };

@@ -16,8 +16,8 @@
 
 import Socket from '../socket';
 import uuidV4 from 'uuid/v4';
-import {Observable} from 'rxjs/Observable';
-import {Subject} from 'rxjs/Subject';
+import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 import 'rxjs/add/observable/combineLatest';
 import 'rxjs/add/observable/throw';
 import 'rxjs/add/observable/of';
@@ -37,38 +37,38 @@ export default class Datasource {
     let socketData = Socket.getObservable();
     this.bindings = {};
 
-    this.socketSubscription = socketData.subscribe(
-      (data) => {
-        let hash = data.resource.id;
-        if (!this.bindings[hash]) { return; }
+    this.socketSubscription = socketData.subscribe((data) => {
+      let hash = data.resource.id;
+      if (!this.bindings[hash]) {
+        return;
+      }
 
-        genericResponseHandlers.forEach(handler => handler(data));
+      genericResponseHandlers.forEach((handler) => handler(data));
 
-        if (data.statusCode > 299 || data.warning) {
-          /*
+      if (data.statusCode > 299 || data.warning) {
+        /*
             There is an issue here. When backend goes down we stop all the poll
             and inspite of stopping all polling calls and unsubscribing all subscribers
             we still get the rx.error call which tries to set the observers length to 0
             and errors out. This doesn't harm us today as when system comes up we refresh
             the UI and everything loads.
           */
-          this.bindings[hash].rx.error({
-            statusCode: data.statusCode,
-            response: data.response || data.body || data.error
-          });
-        } else {
-          this.bindings[hash].rx.next(data.response);
-        }
-
-        // Adding check if bindings[hash] exist because if a Poll that gets cancelled
-        // within 1 tick, the bindings[hash] will already be deleted
-        if (this.bindings[hash] && this.bindings[hash].type === 'REQUEST') {
-          this.bindings[hash].rx.complete();
-          this.bindings[hash].rx.unsubscribe();
-          delete this.bindings[hash];
-        }
+        this.bindings[hash].rx.error({
+          statusCode: data.statusCode,
+          response: data.response || data.body || data.error,
+        });
+      } else {
+        this.bindings[hash].rx.next(data.response);
       }
-    );
+
+      // Adding check if bindings[hash] exist because if a Poll that gets cancelled
+      // within 1 tick, the bindings[hash] will already be deleted
+      if (this.bindings[hash] && this.bindings[hash].type === 'REQUEST') {
+        this.bindings[hash].rx.complete();
+        this.bindings[hash].rx.unsubscribe();
+        delete this.bindings[hash];
+      }
+    });
   }
 
   request(resource = {}) {
@@ -76,7 +76,7 @@ export default class Datasource {
       id: uuidV4(),
       json: resource.json === false ? false : true,
       method: resource.method || 'GET',
-      suppressErrors: resource.suppressErrors || false
+      suppressErrors: resource.suppressErrors || false,
     };
 
     if (resource.body) {
@@ -102,12 +102,12 @@ export default class Datasource {
     this.bindings[generatedResource.id] = {
       rx: subject,
       resource: generatedResource,
-      type: 'REQUEST'
+      type: 'REQUEST',
     };
 
     Socket.send({
       action: 'request',
-      resource: generatedResource
+      resource: generatedResource,
     });
 
     return subject;
@@ -159,12 +159,12 @@ export default class Datasource {
     this.bindings[generatedResource.id] = {
       rx: subject,
       resource: generatedResource,
-      type: 'POLL'
+      type: 'POLL',
     };
 
     Socket.send({
       action: 'poll-start',
-      resource: generatedResource
+      resource: generatedResource,
     });
 
     return observable;
@@ -182,7 +182,7 @@ export default class Datasource {
     if (this.bindings[id]) {
       Socket.send({
         action: 'poll-stop',
-        resource: this.bindings[id].resource
+        resource: this.bindings[id].resource,
       });
 
       this.bindings[id].rx.unsubscribe();
@@ -203,7 +203,6 @@ export default class Datasource {
   }
 
   static constructUrl = (resource) => {
-
     let url;
 
     // further sugar for building absolute url
@@ -212,9 +211,11 @@ export default class Datasource {
         window.CDAP_CONFIG.sslEnabled ? 'https://' : 'http://',
         window.CDAP_CONFIG.cdap.routerServerUrl,
         ':',
-        window.CDAP_CONFIG.sslEnabled ? window.CDAP_CONFIG.cdap.routerSSLServerPort : window.CDAP_CONFIG.cdap.routerServerPort,
+        window.CDAP_CONFIG.sslEnabled
+          ? window.CDAP_CONFIG.cdap.routerSSLServerPort
+          : window.CDAP_CONFIG.cdap.routerServerPort,
         '/v3',
-        resource._cdapPath
+        resource._cdapPath,
       ].join('');
 
       delete resource._cdapPath;
@@ -238,13 +239,13 @@ export default class Datasource {
     }
 
     function encodeUriQuery(val, pctEncodeSpaces) {
-      return encodeURIComponent(val).
-             replace(/%40/gi, '@').
-             replace(/%3A/gi, ':').
-             replace(/%24/g, '$').
-             replace(/%2C/gi, ',').
-             replace(/%3B/gi, ';').
-             replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+      return encodeURIComponent(val)
+        .replace(/%40/gi, '@')
+        .replace(/%3A/gi, ':')
+        .replace(/%24/g, '$')
+        .replace(/%2C/gi, ',')
+        .replace(/%3B/gi, ';')
+        .replace(/%20/g, pctEncodeSpaces ? '%20' : '+');
     }
 
     forEachSorted(params, function(value, key) {
@@ -267,7 +268,7 @@ export default class Datasource {
       });
     });
     if (parts.length > 0) {
-      url += ((url.indexOf('?') === -1) ? '?' : '&') + parts.join('&');
+      url += (url.indexOf('?') === -1 ? '?' : '&') + parts.join('&');
     }
     return url;
   }

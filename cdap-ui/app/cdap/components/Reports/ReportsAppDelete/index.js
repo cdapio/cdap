@@ -15,58 +15,61 @@
  */
 
 import React, { Component } from 'react';
-import {MyReportsApi} from 'api/reports';
-import {Redirect} from 'react-router-dom';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { MyReportsApi } from 'api/reports';
+import { Redirect } from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 export default class ReportsAppDelete extends Component {
   state = {
     loading: false,
     error: null,
-    finished: false
+    finished: false,
   };
 
   stopService = () => {
     console.log('stopping service');
-    MyReportsApi.stopService()
-      .subscribe(() => {
+    MyReportsApi.stopService().subscribe(
+      () => {
         this.pollStatus();
-      }, (err) => {
+      },
+      (err) => {
         console.log('failed to stop service');
 
         this.setState({
           loading: false,
-          error: err
+          error: err,
         });
-      });
+      }
+    );
   };
 
   pollStatus = () => {
-    let servicePoll = MyReportsApi.pollServiceStatus()
-      .subscribe((res) => {
-        if (res.status === 'STOPPED') {
-          servicePoll.unsubscribe();
-          this.deleteApplication();
-        }
-      });
+    let servicePoll = MyReportsApi.pollServiceStatus().subscribe((res) => {
+      if (res.status === 'STOPPED') {
+        servicePoll.unsubscribe();
+        this.deleteApplication();
+      }
+    });
   };
 
   deleteApplication = () => {
     console.log('deleting application');
 
-    MyReportsApi.deleteApp()
-      .subscribe(() => {
+    MyReportsApi.deleteApp().subscribe(
+      () => {
         this.setState({
-          finished: true
+          finished: true,
         });
-      }, (err) => {
+      },
+      (err) => {
         console.log('failed to delete app');
 
         this.setState({
           loading: false,
-          error: err
+          error: err,
         });
-      });
+      }
+    );
   };
 
   removeApp = () => {
@@ -76,22 +79,20 @@ export default class ReportsAppDelete extends Component {
   };
 
   renderError = () => {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
 
-    return (
-      <div className="error-container text-danger">
-        {this.state.error}
-      </div>
-    );
+    return <div className="error-container text-danger">{this.state.error}</div>;
   };
 
   renderFinish = () => {
-    if (!this.state.finished) { return null; }
+    if (!this.state.finished) {
+      return null;
+    }
 
-    return (
-      <Redirect to={`/ns/${getCurrentNamespace()}`} />
-    );
-  }
+    return <Redirect to={`/ns/${getCurrentNamespace()}`} />;
+  };
 
   render() {
     return (
@@ -99,11 +100,7 @@ export default class ReportsAppDelete extends Component {
         <h3>Are you sure you want to delete Reports app?</h3>
 
         <div className="button">
-          <button
-            className="btn btn-danger"
-            onClick={this.removeApp}
-            disabled={this.state.loading}
-          >
+          <button className="btn btn-danger" onClick={this.removeApp} disabled={this.state.loading}>
             Delete
           </button>
         </div>

@@ -16,7 +16,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 import findIndex from 'lodash/findIndex';
 import first from 'lodash/head';
 import uuidV4 from 'uuid/v4';
@@ -29,7 +29,7 @@ import classnames from 'classnames';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import T from 'i18n-react';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 require('./Wizard.scss');
 
@@ -56,7 +56,7 @@ export default class Wizard extends Component {
       error: '',
       requiredStepsCompleted: false,
       disabledStepsEnabled: false,
-      callToActionInfo: {}
+      callToActionInfo: {},
     };
 
     this.handleCallToActionClick = this.handleCallToActionClick.bind(this);
@@ -78,12 +78,12 @@ export default class Wizard extends Component {
     let steps = Object.keys(state);
 
     // non-required steps are marked as complete by default
-    let requiredStepsCompleted = steps.every(key => {
+    let requiredStepsCompleted = steps.every((key) => {
       return (!state[key].__disabled && state[key].__complete) || state[key].__disabled;
     });
     if (this.state.requiredStepsCompleted != requiredStepsCompleted) {
       this.setState({
-        requiredStepsCompleted
+        requiredStepsCompleted,
       });
     }
   }
@@ -92,7 +92,7 @@ export default class Wizard extends Component {
     let steps = Object.keys(state);
 
     // non-required steps are marked as complete by default
-    let disabledStepsEnabled = steps.every(key => {
+    let disabledStepsEnabled = steps.every((key) => {
       return !state[key].__disabled;
     });
     if (this.state.disabledStepsEnabled != disabledStepsEnabled) {
@@ -100,19 +100,19 @@ export default class Wizard extends Component {
       // is just to rerender the component so that the disabled/enabled tabs are
       // shown correctly
       this.setState({
-        disabledStepsEnabled
+        disabledStepsEnabled,
       });
     }
   }
 
   getChildContext() {
     return {
-      activeStep: this.state.activeStep
+      activeStep: this.state.activeStep,
     };
   }
   setActiveStep(stepId) {
     this.setState({
-      activeStep: stepId
+      activeStep: stepId,
     });
   }
   goToNextStep(currentStepId) {
@@ -125,10 +125,7 @@ export default class Wizard extends Component {
     let state = this.props.store.getState();
     let steps = this.props.wizardConfig.steps;
 
-    let currentStep = findIndex(
-      steps,
-      (step) => currentStepId === step.id
-    );
+    let currentStep = findIndex(steps, (step) => currentStepId === step.id);
 
     let directionStepIndex;
     if (direction === 'next') {
@@ -157,17 +154,16 @@ export default class Wizard extends Component {
   }
   submitForm() {
     let onSubmitReturn = this.props.onSubmit(this.props.store);
-    this.setState({loading: true});
+    this.setState({ loading: true });
     if (onSubmitReturn instanceof Observable) {
-      onSubmitReturn
-      .subscribe(
+      onSubmitReturn.subscribe(
         () => {
           this.setState({
             error: false,
-            loading: false
+            loading: false,
           });
           if (this.props.successInfo && !isEmpty(this.props.successInfo)) {
-            this.setState({callToActionInfo: this.props.successInfo});
+            this.setState({ callToActionInfo: this.props.successInfo });
           } else {
             this.props.onClose(true);
           }
@@ -184,7 +180,7 @@ export default class Wizard extends Component {
             }
             this.setState({
               error: message,
-              loading: false
+              loading: false,
             });
           }
         }
@@ -210,22 +206,21 @@ export default class Wizard extends Component {
 
   handleMainCallToActionClick() {
     if (this.state.callToActionInfo.buttonOnClick) {
-      this.setState({loadingCTA: true});
+      this.setState({ loadingCTA: true });
       let buttonClickReturn = this.state.callToActionInfo.buttonOnClick();
       if (buttonClickReturn instanceof Observable) {
-        buttonClickReturn
-        .subscribe(
+        buttonClickReturn.subscribe(
           () => {
             this.setState({
               error: false,
-              loadingCTA: false
+              loadingCTA: false,
             });
             this.handleCallToActionClick();
           },
           (err) => {
             this.setState({
               error: err,
-              loadingCTA: false
+              loadingCTA: false,
             });
             this.handleCallToActionClick();
           }
@@ -263,7 +258,11 @@ export default class Wizard extends Component {
       <button
         className="btn btn-primary"
         onClick={this.submitForm.bind(this)}
-        disabled={(!this.state.requiredStepsCompleted || this.state.loading || btnsDisabled) ? 'disabled' : null}
+        disabled={
+          !this.state.requiredStepsCompleted || this.state.loading || btnsDisabled
+            ? 'disabled'
+            : null
+        }
       >
         <span>{T.translate('features.Wizard.NavigationButtons.finish')}</span>
       </button>
@@ -277,7 +276,10 @@ export default class Wizard extends Component {
         </span>
       );
     }
-    if (matchedIndex === this.props.wizardConfig.steps.length - 1 && this.props.wizardConfig.steps.length > 1) {
+    if (
+      matchedIndex === this.props.wizardConfig.steps.length - 1 &&
+      this.props.wizardConfig.steps.length > 1
+    ) {
       navButtons = (
         <span>
           {prevButton}
@@ -285,9 +287,11 @@ export default class Wizard extends Component {
         </span>
       );
     }
-    if (matchedIndex !== 0 &&
-        matchedIndex !== this.props.wizardConfig.steps.length - 1 &&
-        this.props.wizardConfig.steps.length > 1) {
+    if (
+      matchedIndex !== 0 &&
+      matchedIndex !== this.props.wizardConfig.steps.length - 1 &&
+      this.props.wizardConfig.steps.length > 1
+    ) {
       navButtons = (
         <span>
           {prevButton}
@@ -297,39 +301,30 @@ export default class Wizard extends Component {
       );
     }
     if (this.props.wizardConfig.steps.length === 1) {
-      navButtons = (
-        <span>
-          {finishButton}
-        </span>
-      );
+      navButtons = <span>{finishButton}</span>;
     }
 
     return navButtons;
   }
 
   getStepHeaders() {
-    let stepHeaders = this.props
-      .wizardConfig
-      .steps
-      .map((step) => (
-        <WizardStepHeader
-          label={`${step.shorttitle}`}
-          className={this.isStepComplete(step.id) ? 'completed' : null}
-          id={step.id}
-          key={uuidV4()}
-          onClick={this.setActiveStep.bind(this, step.id)}
-          disabled={this.isStepDisabled(step.id)}
-        />
-      ));
+    let stepHeaders = this.props.wizardConfig.steps.map((step) => (
+      <WizardStepHeader
+        label={`${step.shorttitle}`}
+        className={this.isStepComplete(step.id) ? 'completed' : null}
+        id={step.id}
+        key={uuidV4()}
+        onClick={this.setActiveStep.bind(this, step.id)}
+        disabled={this.isStepDisabled(step.id)}
+      />
+    ));
 
     return stepHeaders;
   }
 
   getStepContent() {
-    let stepContent = this.props
-      .wizardConfig
-      .steps
-      .filter(step => step.id === this.state.activeStep)
+    let stepContent = this.props.wizardConfig.steps
+      .filter((step) => step.id === this.state.activeStep)
       .map((matchedStep) => {
         let isStepReadOnly = this.isStepReadOnly(matchedStep.id);
 
@@ -342,15 +337,9 @@ export default class Wizard extends Component {
           >
             {matchedStep.content}
             <div className="wizard-navigation">
-              {
-                isStepReadOnly ?
-                  (
-                    <span className="step-helper-text">
-                      {matchedStep.helperText}
-                    </span>
-                  )
-                : null
-              }
+              {isStepReadOnly ? (
+                <span className="step-helper-text">{matchedStep.helperText}</span>
+              ) : null}
               <span className="navigation-btn">
                 {this.getNavigationButtons(matchedStep, isStepReadOnly)}
               </span>
@@ -367,23 +356,14 @@ export default class Wizard extends Component {
     let callToActionInfo = this.state.callToActionInfo;
     return (
       <div>
-        <div
-          className="close-section float-xs-right"
-          onClick={this.props.onClose.bind(null, true)}
-        >
+        <div className="close-section float-xs-right" onClick={this.props.onClose.bind(null, true)}>
           <IconSVG name="icon-close" />
         </div>
         <div className="result-container">
-          <span
-            className="success-message"
-            title={callToActionInfo.message}
-          >
+          <span className="success-message" title={callToActionInfo.message}>
             {callToActionInfo.message}
           </span>
-          <span
-            className="success-subtitle"
-            title={callToActionInfo.subtitle}
-          >
+          <span className="success-subtitle" title={callToActionInfo.subtitle}>
             {callToActionInfo.subtitle}
           </span>
 
@@ -391,32 +371,19 @@ export default class Wizard extends Component {
             <a
               href={callToActionInfo.buttonUrl}
               title={callToActionInfo.buttonLabel}
-              className={classnames("call-to-action btn btn-primary", {"disabled": this.state.loadingCTA})}
+              className={classnames('call-to-action btn btn-primary', {
+                disabled: this.state.loadingCTA,
+              })}
               onClick={this.handleMainCallToActionClick}
             >
               {callToActionInfo.buttonLabel}
-              {
-                this.state.loadingCTA ?
-                  <IconSVG
-                    name="icon-spinner"
-                    className="fa-spin"
-                  />
-                :
-                  null
-              }
+              {this.state.loadingCTA ? <IconSVG name="icon-spinner" className="fa-spin" /> : null}
             </a>
-            {
-              callToActionInfo.links ?
-                (
-                  callToActionInfo.links.map(link => {
-                    return (
-                      this.getCallToActionLink(link)
-                    );
-                  })
-                )
-              :
-                this.getCallToActionLink(callToActionInfo)
-            }
+            {callToActionInfo.links
+              ? callToActionInfo.links.map((link) => {
+                  return this.getCallToActionLink(link);
+                })
+              : this.getCallToActionLink(callToActionInfo)}
           </div>
         </div>
       </div>
@@ -450,19 +417,14 @@ export default class Wizard extends Component {
       }
       wizardFooter = (
         <CardActionFeedback
-          type='DANGER'
-          message={T.translate('features.Wizard.FailedMessage', {step})}
+          type="DANGER"
+          message={T.translate('features.Wizard.FailedMessage', { step })}
           extendedMessage={this.state.error}
         />
       );
     }
     if (this.state.loading) {
-      wizardFooter = (
-        <CardActionFeedback
-          type='LOADING'
-          message="Loading"
-        />
-      );
+      wizardFooter = <CardActionFeedback type="LOADING" message="Loading" />;
     }
     return wizardFooter;
   }
@@ -471,14 +433,14 @@ export default class Wizard extends Component {
     return (
       <div className="cask-wizard">
         <div className="wizard-body">
-          <div className="wizard-steps-header">
-            {this.getStepHeaders()}
-          </div>
-          <div className="wizard-steps-content">
-            {this.getStepContent()}
-          </div>
+          <div className="wizard-steps-header">{this.getStepHeaders()}</div>
+          <div className="wizard-steps-content">{this.getStepContent()}</div>
         </div>
-        <div className={classnames("wizard-footer", {success: !isEmpty(this.state.callToActionInfo)})}>
+        <div
+          className={classnames('wizard-footer', {
+            success: !isEmpty(this.state.callToActionInfo),
+          })}
+        >
           {this.getWizardFooter()}
         </div>
       </div>
@@ -493,13 +455,13 @@ const wizardConfigType = PropTypes.shape({
       title: PropTypes.string,
       description: PropTypes.string,
       content: PropTypes.node,
-      skipToComplete: PropTypes.bool
+      skipToComplete: PropTypes.bool,
     })
-  )
+  ),
 });
 
 Wizard.childContextTypes = {
-  activeStep: PropTypes.string
+  activeStep: PropTypes.string,
 };
 Wizard.propTypes = {
   wizardConfig: wizardConfigType.isRequired,
@@ -508,10 +470,10 @@ Wizard.propTypes = {
     getState: PropTypes.func,
     dispatch: PropTypes.func,
     subscribe: PropTypes.func,
-    replaceReducer: PropTypes.func
+    replaceReducer: PropTypes.func,
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
   successInfo: PropTypes.object,
   onClose: PropTypes.func.isRequired,
-  activeStepId: PropTypes.string
+  activeStepId: PropTypes.string,
 };

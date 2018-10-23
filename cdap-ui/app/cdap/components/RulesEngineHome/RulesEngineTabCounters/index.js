@@ -16,39 +16,33 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import isNil from 'lodash/isNil';
 
-const Count = ({count}) => <span>{count}</span>;
+const Count = ({ count }) => <span>{count}</span>;
 Count.propTypes = {
-  count: PropTypes.number
+  count: PropTypes.number,
 };
 
 const mapRuleBookStateToProps = (state) => {
   return {
-    count: isNil(state.rulebooks.list) ? 0 : state.rulebooks.list.length
+    count: isNil(state.rulebooks.list) ? 0 : state.rulebooks.list.length,
   };
 };
 
-const RuleBookCountWrapper = connect(
-  mapRuleBookStateToProps
-)(Count);
+const RuleBookCountWrapper = connect(mapRuleBookStateToProps)(Count);
 
-
-const RulesCount = ({count}) => <span>{count}</span>;
+const RulesCount = ({ count }) => <span>{count}</span>;
 RulesCount.propTypes = {
-  count: PropTypes.number
+  count: PropTypes.number,
 };
 
 const mapRulesStateToProps = (state) => {
   return {
-    count: isNil(state.rules.list) ? 0 : state.rules.list.length
+    count: isNil(state.rules.list) ? 0 : state.rules.list.length,
   };
 };
 
-const RulesCountWrapper = connect(
-  mapRulesStateToProps
-)(Count);
+const RulesCountWrapper = connect(mapRulesStateToProps)(Count);
 
-export {RuleBookCountWrapper, RulesCountWrapper};
-
+export { RuleBookCountWrapper, RulesCountWrapper };

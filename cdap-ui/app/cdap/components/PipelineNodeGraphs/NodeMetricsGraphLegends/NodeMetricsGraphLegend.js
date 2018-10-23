@@ -18,17 +18,18 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import classnames from 'classnames';
 
-export default function NodeMetricsGraphLegend({item, orientation, showCheckbox, onLegendClick, itemChecked}) {
+export default function NodeMetricsGraphLegend({
+  item,
+  orientation,
+  showCheckbox,
+  onLegendClick,
+  itemChecked,
+}) {
   if (!showCheckbox) {
     return (
       <div className={classnames('rv-discrete-color-legend-item', orientation)}>
-        <span
-          className="rv-discrete-color-legend-item__color"
-          style={{background: item.color}}
-        />
-        <span className="rv-discrete-color-legend-item__title">
-          {item.title}
-        </span>
+        <span className="rv-discrete-color-legend-item__color" style={{ background: item.color }} />
+        <span className="rv-discrete-color-legend-item__title">{item.title}</span>
       </div>
     );
   }
@@ -38,18 +39,14 @@ export default function NodeMetricsGraphLegend({item, orientation, showCheckbox,
       className={classnames('rv-discrete-color-legend-item pointer', orientation)}
       onClick={onLegendClick.bind(null, item.title)}
     >
-      <span className={classnames('fa legend-item-checkbox', {
+      <span
+        className={classnames('fa legend-item-checkbox', {
           'fa-square-o': !itemChecked,
-          'fa-check-square': itemChecked
+          'fa-check-square': itemChecked,
         })}
       />
-      <span
-        className="rv-discrete-color-legend-item__color"
-        style={{background: item.color}}
-      />
-      <span className="rv-discrete-color-legend-item__title">
-        {item.title}
-      </span>
+      <span className="rv-discrete-color-legend-item__color" style={{ background: item.color }} />
+      <span className="rv-discrete-color-legend-item__title">{item.title}</span>
     </div>
   );
 }
@@ -59,18 +56,18 @@ NodeMetricsGraphLegend.propTypes = {
     PropTypes.shape({
       title: PropTypes.string.isRequired,
       color: PropTypes.string,
-      disabled: PropTypes.bool
+      disabled: PropTypes.bool,
     }),
     PropTypes.string.isRequired,
-    PropTypes.element
+    PropTypes.element,
   ]).isRequired,
   orientation: PropTypes.string,
   showCheckbox: PropTypes.bool,
   onLegendClick: PropTypes.func,
-  itemChecked: PropTypes.bool
+  itemChecked: PropTypes.bool,
 };
 
 NodeMetricsGraphLegend.defaultProps = {
   orientation: 'horizontal',
-  showCheckbox: false
+  showCheckbox: false,
 };

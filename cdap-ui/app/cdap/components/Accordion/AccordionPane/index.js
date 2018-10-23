@@ -14,7 +14,7 @@
  * the License.
 */
 
-import React, {PureComponent} from 'react';
+import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 
@@ -24,40 +24,35 @@ export default class AccordionPane extends PureComponent {
     id: PropTypes.string.isRequired,
     onTabPaneClick: PropTypes.func,
     activePane: PropTypes.string,
-    size: PropTypes.oneOf(["small", "medium", "large"]),
-    children: PropTypes.node
+    size: PropTypes.oneOf(['small', 'medium', 'large']),
+    children: PropTypes.node,
   };
 
   render() {
-    let {
-      onTabPaneClick,
-      activePane,
-      size,
-      id
-    } = this.props;
+    let { onTabPaneClick, activePane, size, id } = this.props;
     return (
-      <div className={classnames("accordion-pane", {
-        active: this.props.activePane === this.props.id
-      })}>
-        {
-          React.Children.map(this.props.children, child => {
-            if (
-              child.type.displayName === 'AccordionTitle' ||
-              child.type.name === 'AccordionTitle' ||
-              this.props.activePane === this.props.id
-            ) {
-              return React.cloneElement(child, {
-                ...child.props,
-                onTabPaneClick,
-                activePane,
-                size,
-                id,
-                key: this.props.id
-              });
-            }
-            return null;
-          })
-        }
+      <div
+        className={classnames('accordion-pane', {
+          active: this.props.activePane === this.props.id,
+        })}
+      >
+        {React.Children.map(this.props.children, (child) => {
+          if (
+            child.type.displayName === 'AccordionTitle' ||
+            child.type.name === 'AccordionTitle' ||
+            this.props.activePane === this.props.id
+          ) {
+            return React.cloneElement(child, {
+              ...child.props,
+              onTabPaneClick,
+              activePane,
+              size,
+              id,
+              key: this.props.id,
+            });
+          }
+          return null;
+        })}
       </div>
     );
   }

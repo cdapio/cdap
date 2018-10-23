@@ -14,20 +14,25 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import ConfirmationModal from 'components/ConfirmationModal';
-import {Redirect} from 'react-router-dom';
-import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
+import { Redirect } from 'react-router-dom';
+import { ADMIN_CONFIG_ACCORDIONS } from 'components/Administration/AdminConfigTabContent';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import ActionsPopover from 'components/Cloud/Profiles/ActionsPopover';
 import isEqual from 'lodash/isEqual';
-import {getProvisionerLabel, extractProfileName, getNodeHours, deleteProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
+import {
+  getProvisionerLabel,
+  extractProfileName,
+  getNodeHours,
+  deleteProfile,
+} from 'components/Cloud/Profiles/Store/ActionCreator';
 import ProfileStatusToggle from 'components/Cloud/Profiles/DetailView/Content/BasicInfo/ProfileStatusToggle';
-import {CLOUD, SYSTEM_NAMESPACE} from 'services/global-constants';
-import {humanReadableDate} from 'services/helpers';
+import { CLOUD, SYSTEM_NAMESPACE } from 'services/global-constants';
+import { humanReadableDate } from 'services/helpers';
 import CopyableId from 'components/CopyableID';
 
 require('./BasicInfo.scss');
@@ -44,12 +49,12 @@ export default class ProfileDetailViewBasicInfo extends Component {
     provisionerLabel: getProvisionerLabel(this.props.profile, this.props.provisioners),
     oneDayMetrics: {
       runs: this.props.oneDayMetrics.runs,
-      minutes: this.props.oneDayMetrics.minutes
+      minutes: this.props.oneDayMetrics.minutes,
     },
     overallMetrics: {
       runs: this.props.overallMetrics.runs,
-      minutes: this.props.overallMetrics.minutes
-    }
+      minutes: this.props.overallMetrics.minutes,
+    },
   };
 
   static propTypes = {
@@ -59,24 +64,24 @@ export default class ProfileDetailViewBasicInfo extends Component {
     toggleProfileStatusCallback: PropTypes.func,
     oneDayMetrics: PropTypes.shape({
       runs: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      minutes: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+      minutes: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     }),
     overallMetrics: PropTypes.shape({
       runs: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      minutes: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    })
+      minutes: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
   };
 
   componentWillReceiveProps(nextProps) {
     if (!isEqual(nextProps.provisioners, this.props.provisioners)) {
       this.setState({
-        provisionerLabel: getProvisionerLabel(nextProps.profile, nextProps.provisioners)
+        provisionerLabel: getProvisionerLabel(nextProps.profile, nextProps.provisioners),
       });
     }
-    let {oneDayMetrics, overallMetrics} = nextProps;
+    let { oneDayMetrics, overallMetrics } = nextProps;
     this.setState({
       oneDayMetrics,
-      overallMetrics
+      overallMetrics,
     });
   }
 
@@ -84,31 +89,31 @@ export default class ProfileDetailViewBasicInfo extends Component {
     this.setState({
       deleteModalOpen: !this.state.deleteModalOpen,
       deleteErrMsg: '',
-      extendedDeleteErrMsg: ''
+      extendedDeleteErrMsg: '',
     });
   };
 
   deleteProfile = () => {
     this.setState({
-      deleteLoading: true
+      deleteLoading: true,
     });
 
     let namespace = this.props.isSystem ? SYSTEM_NAMESPACE : getCurrentNamespace();
-    deleteProfile(namespace, this.props.profile.name, getCurrentNamespace())
-      .subscribe(
-        () => {
-          this.setState({
-            redirectToListView: true,
-            deleteLoading: false
-          });
-        },
-        (err) => {
-          this.setState({
-            deleteErrMsg: T.translate(`${PREFIX}.common.deleteError`),
-            extendedDeleteErrMsg: err,
-            deleteLoading: false
-          });
+    deleteProfile(namespace, this.props.profile.name, getCurrentNamespace()).subscribe(
+      () => {
+        this.setState({
+          redirectToListView: true,
+          deleteLoading: false,
         });
+      },
+      (err) => {
+        this.setState({
+          deleteErrMsg: T.translate(`${PREFIX}.common.deleteError`),
+          extendedDeleteErrMsg: err,
+          deleteLoading: false,
+        });
+      }
+    );
   };
 
   renderDeleteConfirmationModal() {
@@ -116,12 +121,10 @@ export default class ProfileDetailViewBasicInfo extends Component {
       return null;
     }
 
-    const confirmationText = T.translate(`${PREFIX}.common.deleteConfirmation`, {profile: this.props.profile.name});
-    const confirmationElem = (
-      <span title={this.props.profile.name}>
-        {confirmationText}
-      </span>
-    );
+    const confirmationText = T.translate(`${PREFIX}.common.deleteConfirmation`, {
+      profile: this.props.profile.name,
+    });
+    const confirmationElem = <span title={this.props.profile.name}>{confirmationText}</span>;
 
     return (
       <ConfirmationModal
@@ -178,15 +181,17 @@ export default class ProfileDetailViewBasicInfo extends Component {
     if (isNativeProfile) {
       return null;
     }
-    return <span className="divider"></span>;
+    return <span className="divider" />;
   }
 
   render() {
     let profile = this.props.profile;
-    let redirectToObj = this.props.isSystem ? {
-      pathname: '/administration/configuration',
-      state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
-    } : `/ns/${getCurrentNamespace()}/details`;
+    let redirectToObj = this.props.isSystem
+      ? {
+          pathname: '/administration/configuration',
+          state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles },
+        }
+      : `/ns/${getCurrentNamespace()}/details`;
     let namespace = this.props.isSystem ? SYSTEM_NAMESPACE : getCurrentNamespace();
     const isNativeProfile = profile.name === extractProfileName(CLOUD.DEFAULT_PROFILE_NAME);
 
@@ -206,17 +211,14 @@ export default class ProfileDetailViewBasicInfo extends Component {
             <h2 className="profile-name" title={profile.label || profile.name}>
               {profile.label || profile.name}
             </h2>
-            {
-              profile.label ?
-                <CopyableId
-                  id={profile.name}
-                  placement="right"
-                  label="Profile ID"
-                  tooltipText="Click to copy to clipboard"
-                />
-              :
-                null
-            }
+            {profile.label ? (
+              <CopyableId
+                id={profile.name}
+                placement="right"
+                label="Profile ID"
+                tooltipText="Click to copy to clipboard"
+              />
+            ) : null}
           </div>
           <div className="profile-actions-wrapper">
             <ProfileStatusToggle
@@ -233,17 +235,10 @@ export default class ProfileDetailViewBasicInfo extends Component {
             />
           </div>
         </div>
-        <div className="profile-description">
-          {profile.description}
-        </div>
+        <div className="profile-description">{profile.description}</div>
         {this.renderProfileInfoGrid()}
         {this.renderDeleteConfirmationModal()}
-        {
-          this.state.redirectToListView ?
-            <Redirect to={redirectToObj} />
-          :
-            null
-        }
+        {this.state.redirectToListView ? <Redirect to={redirectToObj} /> : null}
       </div>
     );
   }

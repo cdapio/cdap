@@ -16,8 +16,8 @@
 
 import uuidV4 from 'uuid/v4';
 import FilePath from 'components/FileBrowser/FilePath';
-import {connect} from 'react-redux';
-import {setPrefix} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import { connect } from 'react-redux';
+import { setPrefix } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 
 class S3Path extends FilePath {
   constructor(props) {
@@ -25,7 +25,7 @@ class S3Path extends FilePath {
   }
   processPath(props) {
     let path = props.fullpath;
-    if (path[path.length -1 ] === '/') {
+    if (path[path.length - 1] === '/') {
       path = path.slice(0, path.length - 1);
     }
     let parts = path.split(/\//);
@@ -35,7 +35,7 @@ class S3Path extends FilePath {
       individualPaths.push({
         name: 'Root',
         id: uuidV4(),
-        link: `${pathname}?prefix=/`
+        link: `${pathname}?prefix=/`,
       });
     } else {
       parts.forEach((part, i) => {
@@ -53,13 +53,13 @@ class S3Path extends FilePath {
         individualPaths.push({
           id: uuidV4(),
           link: `${pathname}?prefix=${newPath}`,
-          name: part
+          name: part,
         });
       });
     }
     this.setState({
       paths: individualPaths,
-      originalPath: path
+      originalPath: path,
     });
   }
 }
@@ -67,7 +67,7 @@ class S3Path extends FilePath {
 const mapStateToProps = (state, ownProps) => {
   return {
     ...ownProps,
-    fullpath: state.s3.prefix
+    fullpath: state.s3.prefix,
   };
 };
 const mapDispatchToProps = () => {
@@ -78,10 +78,13 @@ const mapDispatchToProps = () => {
       let p = path.split('=').pop();
       p = p[p.length - 1] !== '/' ? `${p}/` : p;
       setPrefix(p);
-    }
+    },
   };
 };
 
-const S3PathWrapper = connect(mapStateToProps, mapDispatchToProps)(S3Path);
+const S3PathWrapper = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(S3Path);
 
 export default S3PathWrapper;

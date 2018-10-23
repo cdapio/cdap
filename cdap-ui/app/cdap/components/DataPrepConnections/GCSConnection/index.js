@@ -22,11 +22,11 @@ import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
-import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
-import {objectQuery} from 'services/helpers';
+import CardActionFeedback, { CARD_ACTION_TYPES } from 'components/CardActionFeedback';
+import { objectQuery } from 'services/helpers';
 import ee from 'event-emitter';
 import BtnWithLoading from 'components/BtnWithLoading';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.GCS';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -48,8 +48,8 @@ export default class GCSConnection extends Component {
       testConnectionLoading: false,
       connectionResult: {
         message: null,
-        type: null
-      }
+        type: null,
+      },
     };
 
     this.eventEmitter = ee(ee);
@@ -59,22 +59,24 @@ export default class GCSConnection extends Component {
   }
 
   componentWillMount() {
-    if (this.props.mode === 'ADD') { return; }
+    if (this.props.mode === 'ADD') {
+      return;
+    }
 
-    this.setState({loading: true});
+    this.setState({ loading: true });
 
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
       namespace,
-      connectionId: this.props.connectionId
+      connectionId: this.props.connectionId,
     };
 
-    MyDataPrepApi.getConnection(params)
-      .subscribe((res) => {
+    MyDataPrepApi.getConnection(params).subscribe(
+      (res) => {
         let info = objectQuery(res, 'values', 0),
-            projectId = objectQuery(info, 'properties', 'projectId'),
-            serviceAccountKeyfile = objectQuery(info, 'properties', 'service-account-keyfile');
+          projectId = objectQuery(info, 'properties', 'projectId'),
+          serviceAccountKeyfile = objectQuery(info, 'properties', 'service-account-keyfile');
 
         let name = this.props.mode === 'EDIT' ? info.name : '';
 
@@ -82,15 +84,17 @@ export default class GCSConnection extends Component {
           name,
           projectId,
           serviceAccountKeyfile,
-          loading: false
+          loading: false,
         });
-      }, (err) => {
+      },
+      (err) => {
         console.log('failed to fetch connection detail', err);
 
         this.setState({
-          loading: false
+          loading: false,
         });
-      });
+      }
+    );
   }
 
   constructProperties = () => {
@@ -105,7 +109,7 @@ export default class GCSConnection extends Component {
     }
 
     return properties;
-  }
+  };
 
   addConnection() {
     let namespace = NamespaceStore.getState().selectedNamespace;
@@ -116,17 +120,19 @@ export default class GCSConnection extends Component {
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.createConnection({namespace}, requestBody)
-      .subscribe(() => {
-        this.setState({error: null});
+    MyDataPrepApi.createConnection({ namespace }, requestBody).subscribe(
+      () => {
+        this.setState({ error: null });
         this.props.onAdd();
         this.props.close();
-      }, (err) => {
+      },
+      (err) => {
         console.log('err', err);
 
         let error = objectQuery(err, 'response', 'message') || objectQuery(err, 'response');
         this.setState({ error });
-      });
+      }
+    );
   }
 
   editConnection() {
@@ -134,7 +140,7 @@ export default class GCSConnection extends Component {
 
     let params = {
       namespace,
-      connectionId: this.props.connectionId
+      connectionId: this.props.connectionId,
     };
 
     let requestBody = {
@@ -144,18 +150,20 @@ export default class GCSConnection extends Component {
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.updateConnection(params, requestBody)
-      .subscribe(() => {
-        this.setState({error: null});
+    MyDataPrepApi.updateConnection(params, requestBody).subscribe(
+      () => {
+        this.setState({ error: null });
         this.eventEmitter.emit('DATAPREP_CONNECTION_EDIT_GCS', this.props.connectionId);
         this.props.onAdd();
         this.props.close();
-      }, (err) => {
+      },
+      (err) => {
         console.log('err', err);
 
         let error = objectQuery(err, 'response', 'message') || objectQuery(err, 'response');
         this.setState({ error });
-      });
+      }
+    );
   }
 
   testConnection() {
@@ -163,9 +171,9 @@ export default class GCSConnection extends Component {
       testConnectionLoading: true,
       connectionResult: {
         message: null,
-        type: null
+        type: null,
       },
-      error: null
+      error: null,
     });
 
     let namespace = NamespaceStore.getState().selectedNamespace;
@@ -176,33 +184,38 @@ export default class GCSConnection extends Component {
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.gcsTestConnection({namespace}, requestBody)
-      .subscribe((res) => {
+    MyDataPrepApi.gcsTestConnection({ namespace }, requestBody).subscribe(
+      (res) => {
         this.setState({
           connectionResult: {
             type: CARD_ACTION_TYPES.SUCCESS,
-            message: res.message
+            message: res.message,
           },
-          testConnectionLoading: false
+          testConnectionLoading: false,
         });
-      }, (err) => {
+      },
+      (err) => {
         console.log('Error testing kafka connection', err);
 
-        let errorMessage = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || T.translate(`${PREFIX}.defaultTestErrorMessage`);
+        let errorMessage =
+          objectQuery(err, 'response', 'message') ||
+          objectQuery(err, 'response') ||
+          T.translate(`${PREFIX}.defaultTestErrorMessage`);
 
         this.setState({
           connectionResult: {
             type: CARD_ACTION_TYPES.DANGER,
-            message: errorMessage
+            message: errorMessage,
           },
-          testConnectionLoading: false
+          testConnectionLoading: false,
         });
-      });
+      }
+    );
   }
 
   handleChange(key, e) {
     this.setState({
-      [key]: e.target.value
+      [key]: e.target.value,
     });
   }
 
@@ -232,11 +245,7 @@ export default class GCSConnection extends Component {
 
     return (
       <ModalFooter>
-        <button
-          className="btn btn-primary"
-          onClick={onClickFn}
-          disabled={disabled}
-        >
+        <button className="btn btn-primary" onClick={onClickFn} disabled={disabled}>
           {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
         </button>
 
@@ -257,7 +266,6 @@ export default class GCSConnection extends Component {
 
     return (
       <div className="gcs-detail">
-
         <div className="form">
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
@@ -279,9 +287,7 @@ export default class GCSConnection extends Component {
           </div>
 
           <div className="form-group row">
-            <label className={LABEL_COL_CLASS}>
-              {T.translate(`${PREFIX}.projectId`)}
-            </label>
+            <label className={LABEL_COL_CLASS}>{T.translate(`${PREFIX}.projectId`)}</label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
                 <input
@@ -311,14 +317,15 @@ export default class GCSConnection extends Component {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     );
   }
 
   renderError() {
-    if (!this.state.error && !this.state.connectionResult.message) { return null; }
+    if (!this.state.error && !this.state.connectionResult.message) {
+      return null;
+    }
 
     if (this.state.error) {
       return (
@@ -333,8 +340,14 @@ export default class GCSConnection extends Component {
     const connectionResultType = this.state.connectionResult.type;
     return (
       <CardActionFeedback
-        message={T.translate(`${ADDCONN_PREFIX}.TestConnectionLabels.${connectionResultType.toLowerCase()}`)}
-        extendedMessage={connectionResultType === CARD_ACTION_TYPES.SUCCESS ? null : this.state.connectionResult.message}
+        message={T.translate(
+          `${ADDCONN_PREFIX}.TestConnectionLabels.${connectionResultType.toLowerCase()}`
+        )}
+        extendedMessage={
+          connectionResultType === CARD_ACTION_TYPES.SUCCESS
+            ? null
+            : this.state.connectionResult.message
+        }
         type={connectionResultType}
       />
     );
@@ -352,12 +365,12 @@ export default class GCSConnection extends Component {
           zIndex="1061"
         >
           <ModalHeader toggle={this.props.close}>
-            {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {connection: this.props.connectionId})}
+            {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {
+              connection: this.props.connectionId,
+            })}
           </ModalHeader>
 
-          <ModalBody>
-            {this.renderContent()}
-          </ModalBody>
+          <ModalBody>{this.renderContent()}</ModalBody>
           {this.renderAddConnectionButton()}
           {this.renderError()}
         </Modal>
@@ -370,5 +383,5 @@ GCSConnection.propTypes = {
   close: PropTypes.func,
   onAdd: PropTypes.func,
   mode: PropTypes.oneOf(['ADD', 'EDIT', 'DUPLICATE']).isRequired,
-  connectionId: PropTypes.string
+  connectionId: PropTypes.string,
 };

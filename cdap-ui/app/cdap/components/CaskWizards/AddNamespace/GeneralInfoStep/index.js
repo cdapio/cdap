@@ -14,10 +14,10 @@
  * the License.
  */
 import React from 'react';
-import {Col, FormGroup, Label, Form} from 'reactstrap';
-import AddNamespaceActions  from 'services/WizardStores/AddNamespace/AddNamespaceActions';
+import { Col, FormGroup, Label, Form } from 'reactstrap';
+import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
-import {Provider, connect} from 'react-redux';
+import { Provider, connect } from 'react-redux';
 import InputWithValidations from 'components/InputWithValidations';
 import T from 'i18n-react';
 
@@ -27,7 +27,7 @@ const mapStateToNamespaceNameProps = (state) => {
     value: state.general.name,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step1.name-placeholder'),
-    disabled: state.editableFields.fields.indexOf('name') === -1
+    disabled: state.editableFields.fields.indexOf('name') === -1,
   };
 };
 
@@ -36,9 +36,9 @@ const mapDispatchToNamespaceNameProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: AddNamespaceActions.setName,
-        payload: { name : e.target.value }
+        payload: { name: e.target.value },
       });
-    }
+    },
   };
 };
 
@@ -48,7 +48,7 @@ const mapStateToNamespaceDescriptionProps = (state) => {
     value: state.general.description,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step1.description-placeholder'),
-    disabled: state.editableFields.fields.indexOf('description') === -1
+    disabled: state.editableFields.fields.indexOf('description') === -1,
   };
 };
 
@@ -57,9 +57,9 @@ const mapDispatchToNamespaceDescriptionProps = (dispatch) => {
     onChange: (e) => {
       dispatch({
         type: AddNamespaceActions.setDescription,
-        payload: { description: e.target.value }
+        payload: { description: e.target.value },
       });
-    }
+    },
   };
 };
 
@@ -83,23 +83,27 @@ export default function GeneralInfoStep() {
           return false;
         }}
       >
-          <FormGroup row>
-            <Col xs="3">
-              <Label className="control-label">{T.translate('features.Wizard.Add-Namespace.Step1.name-label')}</Label>
-            </Col>
-            <Col xs="7">
-              <InputNamespaceName />
-            </Col>
-            <span className="fa fa-asterisk text-danger float-xs-left" />
-          </FormGroup>
-          <FormGroup row>
-            <Col xs="3">
-              <Label className="control-label">{T.translate('features.Wizard.Add-Namespace.Step1.description-label')}</Label>
-            </Col>
-            <Col xs="7">
-              <InputNamespaceDescription />
-            </Col>
-          </FormGroup>
+        <FormGroup row>
+          <Col xs="3">
+            <Label className="control-label">
+              {T.translate('features.Wizard.Add-Namespace.Step1.name-label')}
+            </Label>
+          </Col>
+          <Col xs="7">
+            <InputNamespaceName />
+          </Col>
+          <span className="fa fa-asterisk text-danger float-xs-left" />
+        </FormGroup>
+        <FormGroup row>
+          <Col xs="3">
+            <Label className="control-label">
+              {T.translate('features.Wizard.Add-Namespace.Step1.description-label')}
+            </Label>
+          </Col>
+          <Col xs="7">
+            <InputNamespaceDescription />
+          </Col>
+        </FormGroup>
       </Form>
     </Provider>
   );

@@ -17,19 +17,29 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, MarkSeries, Hint} from 'react-vis';
+import {
+  XYPlot,
+  AreaSeries,
+  makeVisFlexible,
+  XAxis,
+  YAxis,
+  HorizontalGridLines,
+  LineSeries,
+  MarkSeries,
+  Hint,
+} from 'react-vis';
 import {
   getXDomain,
   getTicksTotal,
   getYAxisProps,
-  xTickFormat
+  xTickFormat,
 } from 'components/PipelineSummary/RunsGraphHelpers';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import moment from 'moment';
 import ee from 'event-emitter';
 import isEqual from 'lodash/isEqual';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 
 const PREFIX = `features.PipelineSummary.nodesMetricsGraph`;
 const RECORDS_IN_COLOR = '#58B7F6';
@@ -46,20 +56,20 @@ export default class NodesRecordsGraph extends Component {
     super(props);
     this.state = {
       data: [],
-      currentHoveredElement: null
+      currentHoveredElement: null,
     };
     this.eventEmitter = ee(ee);
     this.closeTooltip = this.closeTooltip.bind(this);
   }
   componentDidMount() {
     this.setState({
-      data: this.constructData()
+      data: this.constructData(),
     });
     this.eventEmitter.on('CLOSE_HINT_TOOLTIP', this.closeTooltip);
   }
   closeTooltip() {
     this.setState({
-      currentHoveredElement: null
+      currentHoveredElement: null,
     });
   }
   componentWillReceiveProps(nextProps) {
@@ -67,38 +77,43 @@ export default class NodesRecordsGraph extends Component {
       data: this.constructData(nextProps),
       totalRunsCount: nextProps.totalRunsCount,
       currentHoveredElement: null,
-      runsLimit: nextProps.runsLimit
+      runsLimit: nextProps.runsLimit,
     });
   }
   componentWillUnmount() {
     this.eventEmitter.off('CLOSE_HINT_TOOLTIP', this.closeTooltip);
   }
   constructData(props = this.props) {
-    let data = [].concat(props.records).reverse().map((run, id) => {
-      let {totalRunsCount, runsLimit, xDomainType} = this.props;
-      let x;
-      if (xDomainType === 'limit') {
-        x = totalRunsCount > runsLimit ? totalRunsCount - runsLimit : 0;
-        x = x + (id + 1);
-      }
-      if (xDomainType === 'time') {
-        x = run.starting;
-      }
-      return {
-        x,
-        y: run.numberOfRecords,
-        color: 'gray',
-        runid: run.runid
-      };
-    });
+    let data = []
+      .concat(props.records)
+      .reverse()
+      .map((run, id) => {
+        let { totalRunsCount, runsLimit, xDomainType } = this.props;
+        let x;
+        if (xDomainType === 'limit') {
+          x = totalRunsCount > runsLimit ? totalRunsCount - runsLimit : 0;
+          x = x + (id + 1);
+        }
+        if (xDomainType === 'time') {
+          x = run.starting;
+        }
+        return {
+          x,
+          y: run.numberOfRecords,
+          color: 'gray',
+          runid: run.runid,
+        };
+      });
     return data;
   }
   renderChart() {
     let FPlot = makeVisFlexible(XYPlot);
-    let {yDomain, tickFormat} = getYAxisProps(this.state.data);
+    let { yDomain, tickFormat } = getYAxisProps(this.state.data);
     let popOverData;
     if (this.state.currentHoveredElement) {
-      popOverData = this.props.records.find(run => this.state.currentHoveredElement.runid === run.runid);
+      popOverData = this.props.records.find(
+        (run) => this.state.currentHoveredElement.runid === run.runid
+      );
     }
     let xDomain = [];
     if (this.state.data.length > 0) {
@@ -113,13 +128,8 @@ export default class NodesRecordsGraph extends Component {
           yDomain={yDomain}
           className="run-history-fp-plot"
         >
-          <XAxis
-            tickTotal={getTicksTotal(this.props)}
-            tickFormat={xTickFormat(this.props)}
-          />
-          <YAxis
-            tickFormat={tickFormat}
-          />
+          <XAxis tickTotal={getTicksTotal(this.props)} tickFormat={xTickFormat(this.props)} />
+          <YAxis tickFormat={tickFormat} />
           <HorizontalGridLines />
           <AreaSeries
             curve="curveLinear"
@@ -143,57 +153,50 @@ export default class NodesRecordsGraph extends Component {
                 return;
               }
               this.setState({
-                currentHoveredElement: d
+                currentHoveredElement: d,
               });
             }}
             onValueMouseOut={() => {
               this.setState({
-                currentHoveredElement: null
+                currentHoveredElement: null,
               });
             }}
           />
 
-          {
-            this.state.currentHoveredElement && popOverData ?
-              (
-                <Hint value={this.state.currentHoveredElement}>
-                  <div className="title">
-                    <span>{this.props.activeNode}</span>
-                    <IconSVG
-                      name="icon-close"
-                      onClick={(e) => {
-                        this.setState({
-                          currentHoveredElement: null
-                        });
-                        preventPropagation(e);
-                      }}
-                    />
-                  </div>
-                  <strong>{T.translate(`${PREFIX}.${this.props.recordType}.hint.title`, {count: popOverData.numberOfRecords || '0'})} </strong>
-                  {
-                    this.props.xDomainType === 'limit' ?
-                      <div>
-                        <strong>{T.translate(`${PREFIX}.hint.runNumber`)}: </strong>
-                        <span>{this.state.currentHoveredElement.x}</span>
-                      </div>
-                    :
-                      null
-                  }
-                  <div>
-                    <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
-                    <span>{ moment(popOverData.starting * 1000).format('llll')}</span>
-                  </div>
-                </Hint>
-              )
-            :
-              null
-          }
-          {
-            this.props.xDomainType === 'limit' ?
-              <div className="x-axis-title"> {T.translate(`${PREFIX}.xAxisTitle`)} </div>
-            :
-              null
-          }
+          {this.state.currentHoveredElement && popOverData ? (
+            <Hint value={this.state.currentHoveredElement}>
+              <div className="title">
+                <span>{this.props.activeNode}</span>
+                <IconSVG
+                  name="icon-close"
+                  onClick={(e) => {
+                    this.setState({
+                      currentHoveredElement: null,
+                    });
+                    preventPropagation(e);
+                  }}
+                />
+              </div>
+              <strong>
+                {T.translate(`${PREFIX}.${this.props.recordType}.hint.title`, {
+                  count: popOverData.numberOfRecords || '0',
+                })}{' '}
+              </strong>
+              {this.props.xDomainType === 'limit' ? (
+                <div>
+                  <strong>{T.translate(`${PREFIX}.hint.runNumber`)}: </strong>
+                  <span>{this.state.currentHoveredElement.x}</span>
+                </div>
+              ) : null}
+              <div>
+                <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
+                <span>{moment(popOverData.starting * 1000).format('llll')}</span>
+              </div>
+            </Hint>
+          ) : null}
+          {this.props.xDomainType === 'limit' ? (
+            <div className="x-axis-title"> {T.translate(`${PREFIX}.xAxisTitle`)} </div>
+          ) : null}
           <div className="y-axis-title">{T.translate(`${PREFIX}.yAxisTitle`)}</div>
         </FPlot>
       </div>
@@ -214,5 +217,5 @@ NodesRecordsGraph.propTypes = {
   end: PropTypes.number,
   activeFilterLabel: PropTypes.string,
   activeNode: PropTypes.string,
-  recordType: PropTypes.oneOf(['recordsin', 'recordsout'])
+  recordType: PropTypes.oneOf(['recordsin', 'recordsout']),
 };

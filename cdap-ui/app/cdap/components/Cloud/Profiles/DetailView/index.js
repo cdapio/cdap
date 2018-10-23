@@ -14,21 +14,25 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MyCloudApi} from 'api/cloud';
+import { MyCloudApi } from 'api/cloud';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import EntityTopPanel from 'components/EntityTopPanel';
 import ProfileDetailViewContent from 'components/Cloud/Profiles/DetailView/Content';
-import {ADMIN_CONFIG_ACCORDIONS} from 'components/Administration/AdminConfigTabContent';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {getProvisionersMap} from 'components/Cloud/Profiles/Store/Provisioners';
-import {ONEDAYMETRICKEY, OVERALLMETRICKEY, fetchAggregateProfileMetrics} from 'components/Cloud/Profiles/Store/ActionCreator';
+import { ADMIN_CONFIG_ACCORDIONS } from 'components/Administration/AdminConfigTabContent';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { getProvisionersMap } from 'components/Cloud/Profiles/Store/Provisioners';
+import {
+  ONEDAYMETRICKEY,
+  OVERALLMETRICKEY,
+  fetchAggregateProfileMetrics,
+} from 'components/Cloud/Profiles/Store/ActionCreator';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
-import {SYSTEM_NAMESPACE} from 'services/global-constants';
-import {Theme} from 'services/ThemeHelper';
+import { SYSTEM_NAMESPACE } from 'services/global-constants';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.Cloud.Profiles.DetailView';
 require('./DetailView.scss');
@@ -38,21 +42,21 @@ export default class ProfileDetailView extends Component {
     profile: {},
     [ONEDAYMETRICKEY]: {
       runs: '--',
-      minutes: '--'
+      minutes: '--',
     },
     [OVERALLMETRICKEY]: {
       runs: '--',
-      minutes: '--'
+      minutes: '--',
     },
     provisioners: [],
     loading: true,
     error: null,
-    isSystem: objectQuery(this.props.match, 'params', 'namespace') === SYSTEM_NAMESPACE
+    isSystem: objectQuery(this.props.match, 'params', 'namespace') === SYSTEM_NAMESPACE,
   };
 
   static propTypes = {
     location: PropTypes.object,
-    match: PropTypes.object
+    match: PropTypes.object,
   };
 
   componentDidMount() {
@@ -69,55 +73,54 @@ export default class ProfileDetailView extends Component {
   }
 
   fetchAggregateMetrics = () => {
-    let {namespace} = this.props.match.params;
-    let {profile} = this.state;
+    let { namespace } = this.props.match.params;
+    let { profile } = this.state;
     let extraTags = {
       profile: `${profile.name}`,
-      programtype: 'Workflow'
+      programtype: 'Workflow',
     };
-    fetchAggregateProfileMetrics(namespace, profile, extraTags)
-      .subscribe(
-        metricsMap => {
-          this.setState({
-            ...metricsMap
-          });
-        }
-      );
-  }
+    fetchAggregateProfileMetrics(namespace, profile, extraTags).subscribe((metricsMap) => {
+      this.setState({
+        ...metricsMap,
+      });
+    });
+  };
 
   fetchMetrics = () => {
     this.fetchAggregateMetrics();
   };
 
   getProfile = () => {
-    let {namespace, profileId} = this.props.match.params;
+    let { namespace, profileId } = this.props.match.params;
     let apiObservable$;
     if (namespace === SYSTEM_NAMESPACE) {
       apiObservable$ = MyCloudApi.getSystemProfile({ profile: profileId });
     } else {
       apiObservable$ = MyCloudApi.get({ namespace, profile: profileId });
     }
-    apiObservable$
-      .subscribe(
-        (profile) => {
-          this.setState({
+    apiObservable$.subscribe(
+      (profile) => {
+        this.setState(
+          {
             profile,
-            loading: false
-          }, this.fetchMetrics);
-        },
-        (error) => {
-          this.setState({
-            error: error.response || error,
-            loading: false
-          });
-        }
-      );
+            loading: false,
+          },
+          this.fetchMetrics
+        );
+      },
+      (error) => {
+        this.setState({
+          error: error.response || error,
+          loading: false,
+        });
+      }
+    );
   };
 
   getProvisioners() {
     getProvisionersMap().subscribe((state) => {
       this.setState({
-        provisioners: state.list
+        provisioners: state.list,
       });
     });
   }
@@ -127,49 +130,50 @@ export default class ProfileDetailView extends Component {
       return <LoadingSVGCentered />;
     }
 
-    let closeBtnlinkObj = this.state.isSystem ? {
-      pathname: '/administration/configuration',
-      state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
-    } : () => history.back();
+    let closeBtnlinkObj = this.state.isSystem
+      ? {
+          pathname: '/administration/configuration',
+          state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles },
+        }
+      : () => history.back();
     let breadCrumbLabel = this.state.isSystem ? 'Administration' : 'Namespace';
-    let breadCrumbAnchorLink = this.state.isSystem ? {
-      pathname: '/administration/configuration',
-      state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles }
-    } : `/ns/${getCurrentNamespace()}/details`;
-    let {namespace} = this.props.match.params;
+    let breadCrumbAnchorLink = this.state.isSystem
+      ? {
+          pathname: '/administration/configuration',
+          state: { accordionToExpand: ADMIN_CONFIG_ACCORDIONS.systemProfiles },
+        }
+      : `/ns/${getCurrentNamespace()}/details`;
+    let { namespace } = this.props.match.params;
     if (!namespace) {
       namespace = getCurrentNamespace();
     }
     return (
       <div className="profile-detail-view">
-        <Helmet title={T.translate(`${PREFIX}.pageTitle`, {
-          profile_name: this.state.profile.label || this.state.profile.name,
-          productName: Theme.productName,
-        })} />
+        <Helmet
+          title={T.translate(`${PREFIX}.pageTitle`, {
+            profile_name: this.state.profile.label || this.state.profile.name,
+            productName: Theme.productName,
+          })}
+        />
         <EntityTopPanel
           breadCrumbAnchorLink={breadCrumbAnchorLink}
           breadCrumbAnchorLabel={breadCrumbLabel}
           title={T.translate(`${PREFIX}.computeProfileOverview`)}
           closeBtnAnchorLink={closeBtnlinkObj}
         />
-        {
-          this.state.error ?
-            (
-              <div className="text-danger text-xs-center">
-                {this.state.error}
-              </div>
-            )
-          :
-            <ProfileDetailViewContent
-              profile={this.state.profile}
-              provisioners={this.state.provisioners}
-              isSystem={this.state.isSystem}
-              toggleProfileStatusCallback={this.getProfile}
-              namespace={namespace}
-              oneDayMetrics={this.state[ONEDAYMETRICKEY]}
-              overallMetrics={this.state[OVERALLMETRICKEY]}
-            />
-        }
+        {this.state.error ? (
+          <div className="text-danger text-xs-center">{this.state.error}</div>
+        ) : (
+          <ProfileDetailViewContent
+            profile={this.state.profile}
+            provisioners={this.state.provisioners}
+            isSystem={this.state.isSystem}
+            toggleProfileStatusCallback={this.getProfile}
+            namespace={namespace}
+            oneDayMetrics={this.state[ONEDAYMETRICKEY]}
+            overallMetrics={this.state[OVERALLMETRICKEY]}
+          />
+        )}
       </div>
     );
   }

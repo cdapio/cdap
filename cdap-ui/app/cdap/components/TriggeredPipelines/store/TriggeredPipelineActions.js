@@ -18,7 +18,7 @@ const TriggeredPipelineActions = {
   setTriggered: 'SET_TRIGGERED_PIPELINE',
   setToggle: 'SET_TOGGLED_TRIGGERED_PIPELINE',
   setPipelineInfo: 'SET_TRIGGERED_PIPELINE_INFO',
-  reset: 'TRIGGERED_PIPELINE_RESET'
+  reset: 'TRIGGERED_PIPELINE_RESET',
 };
 
 export default TriggeredPipelineActions;

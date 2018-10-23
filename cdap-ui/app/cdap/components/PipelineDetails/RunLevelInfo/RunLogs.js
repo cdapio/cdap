@@ -15,18 +15,18 @@
 */
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {GLOBALS} from 'services/global-constants';
-import {objectQuery} from 'services/helpers';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { GLOBALS } from 'services/global-constants';
+import { objectQuery } from 'services/helpers';
 import Popover from 'components/Popover';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.RunLevel';
 
-const RunLogs = ({currentRun, runs, appId, artifactName}) => {
+const RunLogs = ({ currentRun, runs, appId, artifactName }) => {
   const LogsBtnComp = () => (
     <div className="run-logs-btn">
       <IconSVG name="icon-file-text-o" />
@@ -38,8 +38,8 @@ const RunLogs = ({currentRun, runs, appId, artifactName}) => {
     return (
       <Popover
         target={LogsBtnComp}
-        showOn='Hover'
-        placement='bottom-end'
+        showOn="Hover"
+        placement="bottom-end"
         className="run-info-container run-logs-container disabled"
       >
         {T.translate(`${PREFIX}.pipelineNeverRun`)}
@@ -48,9 +48,9 @@ const RunLogs = ({currentRun, runs, appId, artifactName}) => {
   }
 
   let namespace = getCurrentNamespace(),
-      programType = GLOBALS.programType[artifactName],
-      programId = GLOBALS.programId[artifactName],
-      runId = objectQuery(currentRun, 'runid');
+    programType = GLOBALS.programType[artifactName],
+    programId = GLOBALS.programId[artifactName],
+    runId = objectQuery(currentRun, 'runid');
 
   let path = `/logviewer/view?namespace=${namespace}&appId=${appId}&programType=${programType}&programId=${programId}&runId=${runId}`;
 
@@ -67,7 +67,7 @@ RunLogs.propTypes = {
   currentRun: PropTypes.object,
   runs: PropTypes.array,
   appId: PropTypes.string,
-  artifactName: PropTypes.string
+  artifactName: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {
@@ -75,7 +75,7 @@ const mapStateToProps = (state) => {
     currentRun: state.currentRun,
     runs: state.runs,
     appId: state.name,
-    artifactName: state.artifact.name
+    artifactName: state.artifact.name,
   };
 };
 

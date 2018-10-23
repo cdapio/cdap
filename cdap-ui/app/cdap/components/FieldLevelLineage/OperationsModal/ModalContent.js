@@ -16,8 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {humanReadableDate, objectQuery} from 'services/helpers';
+import { connect } from 'react-redux';
+import { humanReadableDate, objectQuery } from 'services/helpers';
 import Navigation from 'components/FieldLevelLineage/OperationsModal/Navigation';
 import OperationsTable from 'components/FieldLevelLineage/OperationsModal/OperationsTable';
 import T from 'i18n-react';
@@ -25,9 +25,7 @@ import T from 'i18n-react';
 const PREFIX = 'features.FieldLevelLineage.OperationsModal';
 
 function formatDatasets(datasets) {
-  return datasets
-    .map((dataset) => `'${dataset}'`)
-    .join('; ');
+  return datasets.map((dataset) => `'${dataset}'`).join('; ');
 }
 
 function getDatasets(operations) {
@@ -53,17 +51,14 @@ function getDatasets(operations) {
   };
 }
 
-function ModalContentView({operations, activeIndex}) {
+function ModalContentView({ operations, activeIndex }) {
   const activeSet = operations[activeIndex];
   const lastApp = objectQuery(activeSet, 'programs', 0);
   const application = objectQuery(lastApp, 'program', 'application');
   const lastExecutedTime = objectQuery(lastApp, 'lastExecutedTimeInSeconds');
   const activeOperations = activeSet.operations;
 
-  const {
-    sources,
-    targets
-  } = getDatasets(activeOperations);
+  const { sources, targets } = getDatasets(activeOperations);
 
   return (
     <div className="operations-container">
@@ -74,7 +69,10 @@ function ModalContentView({operations, activeIndex}) {
       </div>
 
       <div className="last-execution">
-        {T.translate(`${PREFIX}.lastExecution`, { app: application, time: humanReadableDate(lastExecutedTime) })}
+        {T.translate(`${PREFIX}.lastExecution`, {
+          app: application,
+          time: humanReadableDate(lastExecutedTime),
+        })}
       </div>
 
       <OperationsTable operations={activeOperations} />
@@ -94,8 +92,6 @@ const mapStateToProps = (state) => {
   };
 };
 
-const ModalContent = connect(
-  mapStateToProps
-)(ModalContentView);
+const ModalContent = connect(mapStateToProps)(ModalContentView);
 
 export default ModalContent;

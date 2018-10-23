@@ -15,7 +15,7 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from '../../services/resource-helper';
+import { apiCreator } from '../../services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/system/serviceproviders';
@@ -29,5 +29,5 @@ export const MyServiceProviderApi = {
   pollServicesList: apiCreator(dataSrc, 'GET', 'POLL', servicesbasepath),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${serviceidpath}/status`),
   setProvisions: apiCreator(dataSrc, 'PUT', 'REQUEST', `${serviceidpath}/instances`),
-  getInstances: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceidpath}/instances`)
+  getInstances: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceidpath}/instances`),
 };

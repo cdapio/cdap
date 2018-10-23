@@ -30,20 +30,20 @@ export default class AppOverviewTab extends Component {
     super(props);
     this.state = {
       activeTab: '1',
-      entity: this.props.entity
+      entity: this.props.entity,
     };
   }
   componentWillReceiveProps(nextProps) {
     if (!isNil(nextProps.entity)) {
       this.setState({
-        entity: nextProps.entity
+        entity: nextProps.entity,
       });
     }
   }
   toggleTab(tab) {
     if (this.state.activeTab !== tab) {
       this.setState({
-        activeTab: tab
+        activeTab: tab,
       });
     }
   }
@@ -55,7 +55,9 @@ export default class AppOverviewTab extends Component {
             <NavItem>
               <NavLink
                 className={classnames({ active: this.state.activeTab === '1' })}
-                onClick={() => { this.toggleTab('1'); }}
+                onClick={() => {
+                  this.toggleTab('1');
+                }}
               >
                 Programs ({this.state.entity.programs.length})
               </NavLink>
@@ -63,9 +65,12 @@ export default class AppOverviewTab extends Component {
             <NavItem>
               <NavLink
                 className={classnames({ active: this.state.activeTab === '2' })}
-                onClick={() => { this.toggleTab('2'); }}
+                onClick={() => {
+                  this.toggleTab('2');
+                }}
               >
-                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} ({this.state.entity.datasets.length + this.state.entity.streams.length})
+                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} (
+                {this.state.entity.datasets.length + this.state.entity.streams.length})
               </NavLink>
             </NavItem>
           </Nav>
@@ -73,24 +78,14 @@ export default class AppOverviewTab extends Component {
             <TabPane tabId="1">
               <Row>
                 <Col sm="12">
-                  {
-                    this.state.activeTab === '1' ?
-                      <ProgramTab entity={this.state.entity} />
-                    :
-                      null
-                  }
+                  {this.state.activeTab === '1' ? <ProgramTab entity={this.state.entity} /> : null}
                 </Col>
               </Row>
             </TabPane>
             <TabPane tabId="2">
               <Row>
                 <Col sm="12">
-                  {
-                    this.state.activeTab === '2' ?
-                      <DatasetTab entity={this.state.entity} />
-                    :
-                      null
-                  }
+                  {this.state.activeTab === '2' ? <DatasetTab entity={this.state.entity} /> : null}
                 </Col>
               </Row>
             </TabPane>
@@ -102,5 +97,5 @@ export default class AppOverviewTab extends Component {
   }
 }
 AppOverviewTab.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
 };

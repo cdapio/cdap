@@ -17,18 +17,23 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import moment from 'moment';
-import {humanReadableDuration, ONE_SECOND_MS, ONE_MIN_SECONDS, ONE_HOUR_SECONDS} from 'services/helpers';
+import {
+  humanReadableDuration,
+  ONE_SECOND_MS,
+  ONE_MIN_SECONDS,
+  ONE_HOUR_SECONDS,
+} from 'services/helpers';
 
 export default class Duration extends Component {
   static propTypes = {
     targetTime: PropTypes.number,
     isMillisecond: PropTypes.bool,
-    showFullDuration: PropTypes.bool
+    showFullDuration: PropTypes.bool,
   };
 
   static defaultProps = {
     isMillisecond: true,
-    showFullDuration: false
+    showFullDuration: false,
   };
 
   componentWillMount() {
@@ -48,7 +53,7 @@ export default class Duration extends Component {
   }
 
   state = {
-    displayDuration: null
+    displayDuration: null,
   };
 
   stopCounter() {
@@ -58,7 +63,9 @@ export default class Duration extends Component {
   }
 
   calculateTime(newTime = this.props.targetTime) {
-    if (!newTime) { return; }
+    if (!newTime) {
+      return;
+    }
 
     let targetTime = newTime;
 
@@ -68,19 +75,23 @@ export default class Duration extends Component {
 
     if (this.props.showFullDuration) {
       let duration = new Date().valueOf() - targetTime;
-      this.setState({
-        displayDuration: humanReadableDuration(duration /= ONE_SECOND_MS)
-      }, this.calculateTimeCallback.bind(this, duration));
-
+      this.setState(
+        {
+          displayDuration: humanReadableDuration((duration /= ONE_SECOND_MS)),
+        },
+        this.calculateTimeCallback.bind(this, duration)
+      );
     } else {
       let duration = targetTime - new Date().valueOf();
       let isPast = duration < 0;
 
-      this.setState({
-        displayDuration: moment.duration(duration).humanize(isPast)
-      }, this.calculateTimeCallback.bind(this, duration));
+      this.setState(
+        {
+          displayDuration: moment.duration(duration).humanize(isPast),
+        },
+        this.calculateTimeCallback.bind(this, duration)
+      );
     }
-
   }
 
   calculateTimeCallback = (duration) => {
@@ -105,15 +116,9 @@ export default class Duration extends Component {
 
   render() {
     if (!this.props.targetTime) {
-      return (
-        <span  className="duration-display">--</span>
-      );
+      return <span className="duration-display">--</span>;
     }
 
-    return (
-      <span className="duration-display">
-        {this.state.displayDuration}
-      </span>
-    );
+    return <span className="duration-display">{this.state.displayDuration}</span>;
   }
 }

@@ -18,11 +18,11 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
-import {MyDatasetApi} from 'api/dataset';
-import {MyStreamApi} from 'api/stream';
+import { MyDatasetApi } from 'api/dataset';
+import { MyStreamApi } from 'api/stream';
 import FastActionButton from '../FastActionButton';
 import ConfirmationModal from 'components/ConfirmationModal';
-import {Tooltip} from 'reactstrap';
+import { Tooltip } from 'reactstrap';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import { getType } from 'services/metadata-parser';
@@ -40,40 +40,43 @@ export default class TruncateAction extends Component {
       errorMessage: '',
       success: false,
       extendedMessage: '',
-      tooltipOpen: false
+      tooltipOpen: false,
     };
     this.toggleTooltip = this.toggleTooltip.bind(this);
   }
 
   toggleModal(event) {
-    this.setState({modal: !this.state.modal});
+    this.setState({ modal: !this.state.modal });
     if (event) {
       event.stopPropagation();
       event.nativeEvent.stopImmediatePropagation();
     }
   }
   toggleTooltip() {
-    this.setState({ tooltipOpen : !this.state.tooltipOpen });
+    this.setState({ tooltipOpen: !this.state.tooltipOpen });
   }
   onSuccess(res) {
-    this.setState({
-      success: true
-    }, () => {
-      if (this.props.onSuccess) {
-        this.props.onSuccess(res);
+    this.setState(
+      {
+        success: true,
+      },
+      () => {
+        if (this.props.onSuccess) {
+          this.props.onSuccess(res);
+        }
+        setTimeout(() => {
+          this.setState({
+            success: false,
+          });
+        }, 3000);
       }
-      setTimeout(() => {
-        this.setState({
-          success: false
-        });
-      }, 3000);
-    });
+    );
   }
   action() {
-    this.setState({loading: true});
+    this.setState({ loading: true });
     let api;
     let params = {
-      namespace: NamespaceStore.getState().selectedNamespace
+      namespace: NamespaceStore.getState().selectedNamespace,
     };
     switch (this.props.entity.type) {
       case 'dataset':
@@ -86,20 +89,24 @@ export default class TruncateAction extends Component {
         break;
     }
 
-    api(params)
-      .subscribe((res) => {
+    api(params).subscribe(
+      (res) => {
         this.onSuccess(res);
         this.setState({
           loading: false,
-          modal: false
+          modal: false,
         });
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
           loading: false,
-          errorMessage: T.translate('features.FastAction.truncateFailed', {entityId: this.props.entity.id}),
-          extendedMessage: err
+          errorMessage: T.translate('features.FastAction.truncateFailed', {
+            entityId: this.props.entity.id,
+          }),
+          extendedMessage: err,
         });
-      });
+      }
+    );
   }
 
   render() {
@@ -126,22 +133,22 @@ export default class TruncateAction extends Component {
           {T.translate('features.FastAction.truncateLabel')}
         </Tooltip>
 
-        {
-          this.state.modal ? (
-            <ConfirmationModal
-              headerTitle={headerTitle}
-              toggleModal={this.toggleModal}
-              confirmationText={T.translate('features.FastAction.truncateConfirmation', {entityId: this.props.entity.id})}
-              confirmButtonText={actionLabel}
-              confirmFn={this.action}
-              cancelFn={this.toggleModal}
-              isOpen={this.state.modal}
-              isLoading={this.state.loading}
-              errorMessage={this.state.errorMessage}
-              extendedMessage={this.state.extendedMessage}
-            />
-          ) : null
-        }
+        {this.state.modal ? (
+          <ConfirmationModal
+            headerTitle={headerTitle}
+            toggleModal={this.toggleModal}
+            confirmationText={T.translate('features.FastAction.truncateConfirmation', {
+              entityId: this.props.entity.id,
+            })}
+            confirmButtonText={actionLabel}
+            confirmFn={this.action}
+            cancelFn={this.toggleModal}
+            isOpen={this.state.modal}
+            isLoading={this.state.loading}
+            errorMessage={this.state.errorMessage}
+            extendedMessage={this.state.extendedMessage}
+          />
+        ) : null}
       </span>
     );
   }
@@ -153,5 +160,5 @@ TruncateAction.propTypes = {
     uniqueId: PropTypes.string,
     type: PropTypes.oneOf(['dataset', 'stream']).isRequired,
   }),
-  onSuccess: PropTypes.func
+  onSuccess: PropTypes.func,
 };

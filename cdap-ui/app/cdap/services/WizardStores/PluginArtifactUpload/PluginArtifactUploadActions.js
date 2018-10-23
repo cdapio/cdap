@@ -17,7 +17,7 @@
 const PluginArtifactUploadActions = {
   setFilePath: 'SET-ARTIFACT-JAR',
   setJson: 'SET-PLUGIN-JSON',
-  onReset: 'RESET-STORE'
+  onReset: 'RESET-STORE',
 };
 
 export default PluginArtifactUploadActions;

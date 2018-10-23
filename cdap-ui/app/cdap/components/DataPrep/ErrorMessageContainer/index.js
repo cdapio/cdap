@@ -20,29 +20,24 @@ import React from 'react';
 require('./ErrorMessageContainer.scss');
 import T from 'i18n-react';
 
-export default function ErrorMessageContainer({workspaceName, refreshFn}) {
+export default function ErrorMessageContainer({ workspaceName, refreshFn }) {
   const prefix = 'features.DataPrep.DataPrepTable';
 
   let errorMessageTitle = T.translate(`${prefix}.dataErrorMessageTitle`);
   if (workspaceName) {
-    errorMessageTitle = T.translate(`${prefix}.dataErrorMessageTitle2`, {workspaceName});
+    errorMessageTitle = T.translate(`${prefix}.dataErrorMessageTitle2`, { workspaceName });
   }
 
   return (
     <div className="dataprep-error-container">
       <h4>
-        <strong>
-          {errorMessageTitle}
-        </strong>
+        <strong>{errorMessageTitle}</strong>
       </h4>
       <hr />
       <div className="message-container">
         <div> {T.translate(`${prefix}.suggestionTitle`)} </div>
         <span>
-          <span
-            className="btn-link"
-            onClick={refreshFn}
-          >
+          <span className="btn-link" onClick={refreshFn}>
             {T.translate(`${prefix}.refreshBtnLinkLabel`)}
           </span>
 
@@ -55,5 +50,5 @@ export default function ErrorMessageContainer({workspaceName, refreshFn}) {
 
 ErrorMessageContainer.propTypes = {
   workspaceName: PropTypes.string,
-  refreshFn: PropTypes.func
+  refreshFn: PropTypes.func,
 };

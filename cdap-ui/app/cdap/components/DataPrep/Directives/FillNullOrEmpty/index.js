@@ -18,10 +18,10 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import classnames from 'classnames';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 import T from 'i18n-react';
 
 const PREFIX = 'features.DataPrep.Directives.FillNullOrEmpty';
@@ -31,7 +31,7 @@ export default class FillNullOrEmptyDirective extends Component {
     super(props);
 
     this.state = {
-      input: ''
+      input: '',
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -40,7 +40,10 @@ export default class FillNullOrEmptyDirective extends Component {
   }
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('fill-null-or-empty-directive'));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById('fill-null-or-empty-directive')
+    );
   }
 
   componentDidUpdate() {
@@ -59,46 +62,51 @@ export default class FillNullOrEmptyDirective extends Component {
   }
 
   handleInputChange(e) {
-    this.setState({input: e.target.value});
+    this.setState({ input: e.target.value });
   }
 
   handleKeyPress(e) {
-    if (e.nativeEvent.keyCode !== 13 || this.state.input.length === 0) { return; }
+    if (e.nativeEvent.keyCode !== 13 || this.state.input.length === 0) {
+      return;
+    }
 
     this.applyDirective();
   }
 
   applyDirective() {
-    if (this.state.input.length === 0) { return; }
+    if (this.state.input.length === 0) {
+      return;
+    }
     let column = this.props.column;
     let value = this.state.input;
 
     let directive = `fill-null-or-empty :${column} '${value}'`;
 
-    execute([directive])
-      .subscribe(() => {
+    execute([directive]).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen) {
+      return null;
+    }
 
     return (
-      <div
-        className="second-level-popover"
-        onClick={this.preventPropagation}
-      >
+      <div className="second-level-popover" onClick={this.preventPropagation}>
         <h5>{T.translate(`${PREFIX}.title`)}</h5>
 
         <div className="input">
@@ -109,7 +117,7 @@ export default class FillNullOrEmptyDirective extends Component {
             onChange={this.handleInputChange}
             onKeyPress={this.handleKeyPress}
             placeholder="Enter value to set"
-            ref={ref => this.inputBox = ref}
+            ref={(ref) => (this.inputBox = ref)}
           />
         </div>
 
@@ -124,14 +132,10 @@ export default class FillNullOrEmptyDirective extends Component {
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.props.close}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
-
       </div>
     );
   }
@@ -141,7 +145,7 @@ export default class FillNullOrEmptyDirective extends Component {
       <div
         id="fill-null-or-empty-directive"
         className={classnames('clearfix action-item', {
-          'active': this.props.isOpen
+          active: this.props.isOpen,
         })}
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
@@ -160,5 +164,5 @@ FillNullOrEmptyDirective.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

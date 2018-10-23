@@ -21,10 +21,10 @@ import enableSystemApp from 'services/ServiceEnablerUtilities';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import MyDataPrepApi from 'api/dataprep';
-import {i18nPrefix, MIN_DATAPREP_VERSION, artifactName} from 'components/DataPrep';
+import { i18nPrefix, MIN_DATAPREP_VERSION, artifactName } from 'components/DataPrep';
 import isObject from 'lodash/isObject';
-import {Theme} from 'services/ThemeHelper';
-import {objectQuery} from 'services/helpers';
+import { Theme } from 'services/ThemeHelper';
+import { objectQuery } from 'services/helpers';
 
 require('./DataPrepServiceControl.scss');
 
@@ -34,11 +34,11 @@ export default class DataPrepServiceControl extends Component {
   state = {
     loading: false,
     error: null,
-    extendedMessage: null
+    extendedMessage: null,
   };
 
   enableService = () => {
-    this.setState({loading: true});
+    this.setState({ loading: true });
     const featureName = Theme.featureNames.dataPrep;
     enableSystemApp({
       shouldStopService: false,
@@ -46,15 +46,15 @@ export default class DataPrepServiceControl extends Component {
       api: MyDataPrepApi,
       i18nPrefix,
       MIN_VERSION: MIN_DATAPREP_VERSION,
-      featureName
-    })
-      .subscribe(() => {
+      featureName,
+    }).subscribe(
+      () => {
         this.props.onServiceStart();
-      }, (err) => {
-        let extendedMessage = isObject(err.extendedMessage) ?
-          err.extendedMessage.response || err.extendedMessage.message
-        :
-          err.extendedMessage;
+      },
+      (err) => {
+        let extendedMessage = isObject(err.extendedMessage)
+          ? err.extendedMessage.response || err.extendedMessage.message
+          : err.extendedMessage;
         let statusCode = objectQuery(err, 'extendedMessage', 'statusCode');
         // 409 = conflict in status, meaning when we are trying to start the app
         // when it is already running.
@@ -67,22 +67,21 @@ export default class DataPrepServiceControl extends Component {
         this.setState({
           error: err.error,
           extendedMessage,
-          loading: false
+          loading: false,
         });
-      });
+      }
+    );
   };
 
   renderError() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
 
     return (
       <div className="dataprep-service-control-error">
-        <h5 className="text-danger">
-          {this.state.error}
-        </h5>
-        <p className="text-danger">
-          {this.state.extendedMessage}
-        </p>
+        <h5 className="text-danger">{this.state.error}</h5>
+        <p className="text-danger">{this.state.extendedMessage}</p>
       </div>
     );
   }
@@ -91,9 +90,11 @@ export default class DataPrepServiceControl extends Component {
     const featureName = Theme.featureNames.dataPrep;
 
     return (
-      <div className={classnames("dataprep-container dataprep-service-control", {
-        'error': this.state.error
-      })}>
+      <div
+        className={classnames('dataprep-container dataprep-service-control', {
+          error: this.state.error,
+        })}
+      >
         <div className="service-control-container">
           <div className="image-container">
             <img src="/cdap_assets/img/DataPrep_preview1.png" className="img-thumbnail" />
@@ -101,28 +102,25 @@ export default class DataPrepServiceControl extends Component {
           </div>
           <div className="text-container">
             <div className="description-container">
-              <h2 className="text-xs-left">
-                {T.translate(`${PREFIX}.title`, { featureName })}
-              </h2>
+              <h2 className="text-xs-left">{T.translate(`${PREFIX}.title`, { featureName })}</h2>
               <div className="text-xs-left action-container">
                 <button
                   className="btn btn-primary"
                   onClick={this.enableService}
                   disabled={this.state.loading}
                 >
-                  {
-                    !this.state.loading ? T.translate(`${PREFIX}.btnLabel`, { featureName }) : (
-                      <span>
-                        <span className="fa fa-spin fa-spinner" /> {T.translate(`${PREFIX}.btnLoadingLabel`)}
-                      </span>
-                    )
-                  }
+                  {!this.state.loading ? (
+                    T.translate(`${PREFIX}.btnLabel`, { featureName })
+                  ) : (
+                    <span>
+                      <span className="fa fa-spin fa-spinner" />{' '}
+                      {T.translate(`${PREFIX}.btnLoadingLabel`)}
+                    </span>
+                  )}
                 </button>
               </div>
               {this.renderError()}
-              <p>
-                {T.translate(`${PREFIX}.description`, { featureName })}
-              </p>
+              <p>{T.translate(`${PREFIX}.description`, { featureName })}</p>
               <ul className="dataprep-checklist">
                 <li>{T.translate(`${PREFIX}.list.1`)}</li>
                 <li>{T.translate(`${PREFIX}.list.2`)}</li>
@@ -137,5 +135,5 @@ export default class DataPrepServiceControl extends Component {
   }
 }
 DataPrepServiceControl.propTypes = {
-  onServiceStart: PropTypes.func
+  onServiceStart: PropTypes.func,
 };

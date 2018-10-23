@@ -22,18 +22,18 @@ require('./PostRunActions.scss');
 
 export default class PostRunActions extends Component {
   static propTypes = {
-    actions: PropTypes.array
+    actions: PropTypes.array,
   };
 
   state = {
-    activeActionWizard: null
-  }
+    activeActionWizard: null,
+  };
 
   setActiveActionWizard = (action = null) => {
     this.setState({
-      activeActionWizard: action
+      activeActionWizard: action,
     });
-  }
+  };
 
   render() {
     if (!this.props.actions.length) {
@@ -52,40 +52,30 @@ export default class PostRunActions extends Component {
             <tr>
               <th>Alert</th>
               <th>Event</th>
-              <th></th>
+              <th />
             </tr>
           </thead>
           <tbody>
-            {
-              this.props.actions.map(action => {
-                return (
-                  <tr>
-                    <td>{action.plugin.name}</td>
-                    <td>{action.plugin.properties.runCondition}</td>
-                    <td className="text-center">
-                      <a onClick={this.setActiveActionWizard.bind(this, action)}>
-                        View
-                      </a>
-                    </td>
-                  </tr>
-                );
-              })
-            }
+            {this.props.actions.map((action) => {
+              return (
+                <tr>
+                  <td>{action.plugin.name}</td>
+                  <td>{action.plugin.properties.runCondition}</td>
+                  <td className="text-center">
+                    <a onClick={this.setActiveActionWizard.bind(this, action)}>View</a>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-        {
-          this.state.activeActionWizard !== null ?
-            (
-              <PostRunActionsWizard
-                action={this.state.activeActionWizard}
-                isOpen={this.state.activeActionWizard !== null}
-                toggleModal={this.setActiveActionWizard}
-              />
-            )
-          :
-            null
-        }
-
+        {this.state.activeActionWizard !== null ? (
+          <PostRunActionsWizard
+            action={this.state.activeActionWizard}
+            isOpen={this.state.activeActionWizard !== null}
+            toggleModal={this.setActiveActionWizard}
+          />
+        ) : null}
       </div>
     );
   }

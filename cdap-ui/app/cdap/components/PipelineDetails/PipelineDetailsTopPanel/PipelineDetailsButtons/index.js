@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Provider, connect} from 'react-redux';
+import { Provider, connect } from 'react-redux';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import PipelineScheduleButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineScheduleButton';
 import PipelineConfigureButton from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineConfigureButton';
@@ -29,7 +29,7 @@ const mapStateToConfigureButton = (state, ownProps) => {
     isBatch: ownProps.isBatch,
     pipelineName: ownProps.pipelineName,
     resolvedMacros: state.resolvedMacros,
-    runtimeArgs: state.runtimeArgs
+    runtimeArgs: state.runtimeArgs,
   };
 };
 
@@ -39,7 +39,7 @@ const mapStateToRunButton = (state, ownProps) => {
     pipelineName: ownProps.pipelineName,
     runButtonLoading: ownProps.runButtonLoading,
     runError: ownProps.runError,
-    runtimeArgs: state.runtimeArgs
+    runtimeArgs: state.runtimeArgs,
   };
 };
 
@@ -52,7 +52,7 @@ const mapStateToScheduleButton = (state, ownProps) => {
     scheduleStatus: ownProps.scheduleStatus,
     scheduleButtonLoading: ownProps.scheduleButtonLoading,
     scheduleError: ownProps.scheduleError,
-    runtimeArgs: state.runtimeArgs
+    runtimeArgs: state.runtimeArgs,
   };
 };
 
@@ -60,14 +60,25 @@ const ConnectedConfigureButton = connect(mapStateToConfigureButton)(PipelineConf
 const ConnectedRunButton = connect(mapStateToRunButton)(PipelineRunButton);
 const ConnectedScheduleButton = connect(mapStateToScheduleButton)(PipelineScheduleButton);
 
-export default function PipelineDetailsButtons({isBatch, pipelineName, schedule, maxConcurrentRuns, scheduleStatus, runs, currentRun, runButtonLoading, runError, scheduleButtonLoading, scheduleError, stopButtonLoading, stopError}) {
+export default function PipelineDetailsButtons({
+  isBatch,
+  pipelineName,
+  schedule,
+  maxConcurrentRuns,
+  scheduleStatus,
+  runs,
+  currentRun,
+  runButtonLoading,
+  runError,
+  scheduleButtonLoading,
+  scheduleError,
+  stopButtonLoading,
+  stopError,
+}) {
   return (
     <Provider store={PipelineConfigurationsStore}>
       <div className="pipeline-details-buttons">
-        <ConnectedConfigureButton
-          isBatch={isBatch}
-          pipelineName={pipelineName}
-        />
+        <ConnectedConfigureButton isBatch={isBatch} pipelineName={pipelineName} />
         <ConnectedScheduleButton
           isBatch={isBatch}
           pipelineName={pipelineName}
@@ -91,10 +102,7 @@ export default function PipelineDetailsButtons({isBatch, pipelineName, schedule,
           runButtonLoading={runButtonLoading}
           runError={runError}
         />
-        <PipelineSummaryButton
-          isBatch={isBatch}
-          pipelineName={pipelineName}
-        />
+        <PipelineSummaryButton isBatch={isBatch} pipelineName={pipelineName} />
       </div>
     </Provider>
   );

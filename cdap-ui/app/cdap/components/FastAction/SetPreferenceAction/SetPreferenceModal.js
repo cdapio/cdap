@@ -23,19 +23,19 @@ import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 import uuidV4 from 'uuid/v4';
 import { Modal, ModalHeader, ModalBody, Tooltip } from 'reactstrap';
-import {MyPreferenceApi} from 'api/preference';
-import {convertProgramToApi} from 'services/program-api-converter';
+import { MyPreferenceApi } from 'api/preference';
+import { convertProgramToApi } from 'services/program-api-converter';
 import KeyValuePairs from 'components/KeyValuePairs';
 import KeyValueStore from 'components/KeyValuePairs/KeyValueStore';
 import KeyValueStoreActions from 'components/KeyValuePairs/KeyValueStoreActions';
 import NamespaceStore from 'services/NamespaceStore';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 
 export const PREFERENCES_LEVEL = {
   SYSTEM: SCOPES.SYSTEM,
-  NAMESPACE: 'NAMESPACE'
+  NAMESPACE: 'NAMESPACE',
 };
 
 const PREFIX = 'features.FastAction.SetPreferences';
@@ -50,7 +50,7 @@ export default class SetPreferenceModal extends Component {
       keyValues: {},
       inheritedPreferences: [],
       sortByAttribute: 'key',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
     };
 
     let namespace = NamespaceStore.getState().selectedNamespace;
@@ -107,44 +107,45 @@ export default class SetPreferenceModal extends Component {
     if (this.subscription) {
       this.subscription();
     }
-    this.apiSubscriptions.forEach(apiSubscription => apiSubscription.unsubscribe());
+    this.apiSubscriptions.forEach((apiSubscription) => apiSubscription.unsubscribe());
   }
 
   onKeyValueChange(keyValues) {
-    this.setState({keyValues});
+    this.setState({ keyValues });
   }
 
   getSpecifiedPreferences() {
     this.apiSubscriptions.push(
-      this.getSpecifiedPreferencesApi(this.params)
-        .subscribe(
-          (res) => {
-            let keyValues;
-            if (isEmpty(res)) {
-              keyValues = {
-                'pairs': [{
-                    'key':'',
-                    'value':'',
-                    'uniqueId': uuidV4()
-                  }]
-              };
-            } else {
-              keyValues = {'pairs': this.getKeyValPair(res)};
-            }
-            this.setState({
-              keyValues
-            });
-            KeyValueStore.dispatch({
-              type: KeyValueStoreActions.onUpdate,
-              payload: {pairs: keyValues.pairs}
-            });
-          },
-          (error) => {
-            this.setState({
-              error: isObject(error) ? error.response : error
-            });
+      this.getSpecifiedPreferencesApi(this.params).subscribe(
+        (res) => {
+          let keyValues;
+          if (isEmpty(res)) {
+            keyValues = {
+              pairs: [
+                {
+                  key: '',
+                  value: '',
+                  uniqueId: uuidV4(),
+                },
+              ],
+            };
+          } else {
+            keyValues = { pairs: this.getKeyValPair(res) };
           }
-        )
+          this.setState({
+            keyValues,
+          });
+          KeyValueStore.dispatch({
+            type: KeyValueStoreActions.onUpdate,
+            payload: { pairs: keyValues.pairs },
+          });
+        },
+        (error) => {
+          this.setState({
+            error: isObject(error) ? error.response : error,
+          });
+        }
+      )
     );
   }
 
@@ -153,45 +154,47 @@ export default class SetPreferenceModal extends Component {
       return;
     }
     this.apiSubscriptions.push(
-      this.getInheritedPreferencesApi(this.params)
-        .subscribe(
-          (res) => {
-            let resolvedPrefArray = this.getKeyValPair(res);
-            resolvedPrefArray = orderBy(resolvedPrefArray, [this.state.sortByAttribute], [this.state.sortOrder]);
-            this.setState({
-             inheritedPreferences: resolvedPrefArray
-            });
-          },
-          (error) => {
-            this.setState({
-             error: isObject(error) ? error.response : error
-            });
-          }
-        )
+      this.getInheritedPreferencesApi(this.params).subscribe(
+        (res) => {
+          let resolvedPrefArray = this.getKeyValPair(res);
+          resolvedPrefArray = orderBy(
+            resolvedPrefArray,
+            [this.state.sortByAttribute],
+            [this.state.sortOrder]
+          );
+          this.setState({
+            inheritedPreferences: resolvedPrefArray,
+          });
+        },
+        (error) => {
+          this.setState({
+            error: isObject(error) ? error.response : error,
+          });
+        }
+      )
     );
   }
 
   setPreferences() {
-    this.setState({saving: true});
+    this.setState({ saving: true });
     this.apiSubscriptions.push(
-      this.setPreferencesApi(this.params, this.getKeyValObject())
-        .subscribe(
-          () => {
-            if (this.props.onSuccess) {
-              this.props.onSuccess();
-            }
-            if (this.props.setAtLevel === PREFERENCES_LEVEL.NAMESPACE) {
-              this.eventEmitter.emit(globalEvents.NSPREFERENCESSAVED);
-            }
-            this.props.toggleModal();
-            this.setState({saving: false});
-          },
-          (error) => {
-            this.setState({
-              error: isObject(error) ? error.response : error
-            });
+      this.setPreferencesApi(this.params, this.getKeyValObject()).subscribe(
+        () => {
+          if (this.props.onSuccess) {
+            this.props.onSuccess();
           }
-        )
+          if (this.props.setAtLevel === PREFERENCES_LEVEL.NAMESPACE) {
+            this.eventEmitter.emit(globalEvents.NSPREFERENCESSAVED);
+          }
+          this.props.toggleModal();
+          this.setState({ saving: false });
+        },
+        (error) => {
+          this.setState({
+            error: isObject(error) ? error.response : error,
+          });
+        }
+      )
     );
   }
 
@@ -199,11 +202,11 @@ export default class SetPreferenceModal extends Component {
     // doing this to make sure that we iterate through the keys
     // in alphabetical order
     let sortedPrefObjectKeys = [...Object.keys(prefObj)].sort();
-    return sortedPrefObjectKeys.map(key => {
+    return sortedPrefObjectKeys.map((key) => {
       return {
         key: key,
         value: prefObj[key],
-        uniqueId: uuidV4()
+        uniqueId: uuidV4(),
       };
     });
   }
@@ -220,29 +223,29 @@ export default class SetPreferenceModal extends Component {
   }
 
   toggleTooltip() {
-    this.setState({ tooltipOpen : !this.state.tooltipOpen });
+    this.setState({ tooltipOpen: !this.state.tooltipOpen });
   }
 
   toggleSorted(attribute) {
     let sortOrder = 'asc';
     if (this.state.sortByAttribute != attribute) {
-      this.setState({sortOrder});
+      this.setState({ sortOrder });
     } else {
       if (this.state.sortOrder === 'asc') {
         sortOrder = 'desc';
       }
-      this.setState({sortOrder});
+      this.setState({ sortOrder });
     }
-    this.setState({sortByAttribute: attribute});
+    this.setState({ sortByAttribute: attribute });
     let newInheritedPreferences = orderBy(this.state.inheritedPreferences, attribute, sortOrder);
-    this.setState({inheritedPreferences: newInheritedPreferences});
+    this.setState({ inheritedPreferences: newInheritedPreferences });
   }
 
   oneFieldMissing() {
     if (this.state.keyValues.pairs) {
       return this.state.keyValues.pairs.some((keyValuePair) => {
-        let emptyKeyField = (keyValuePair.key.length === 0);
-        let emptyValueField = (keyValuePair.value.length === 0);
+        let emptyKeyField = keyValuePair.key.length === 0;
+        let emptyValueField = keyValuePair.value.length === 0;
         return (emptyKeyField && !emptyValueField) || (!emptyKeyField && emptyValueField);
       });
     }
@@ -250,9 +253,9 @@ export default class SetPreferenceModal extends Component {
   }
 
   isTitleOverflowing() {
-    let modalTitle = document.querySelector(".specify-preferences-description h4");
+    let modalTitle = document.querySelector('.specify-preferences-description h4');
     if (modalTitle) {
-      return (modalTitle.offsetWidth < modalTitle.scrollWidth);
+      return modalTitle.offsetWidth < modalTitle.scrollWidth;
     }
     return false;
   }
@@ -260,12 +263,12 @@ export default class SetPreferenceModal extends Component {
   resetFields(event) {
     event.preventDefault();
     this.setState({
-      showResetMessage: true
+      showResetMessage: true,
     });
     this.getSpecifiedPreferences();
     setTimeout(() => {
       this.setState({
-        showResetMessage: false
+        showResetMessage: false,
       });
     }, 3000);
   }
@@ -303,24 +306,19 @@ export default class SetPreferenceModal extends Component {
     const valueLabel = T.translate(`${PREFIX}.ColumnLabel.value`);
     return (
       <div>
-        {
-          this.isTitleOverflowing() ?
-            (
-              <Tooltip
-                placement="top"
-                isOpen={this.state.tooltipOpen}
-                target={tooltipID}
-                toggle={this.toggleTooltip}
-                className="entity-preferences-modal"
-                delay={0}
-              >
-                {entity}
-              </Tooltip>
-            )
-          :
-            null
-        }
-        <div className='specify-preferences-description'>
+        {this.isTitleOverflowing() ? (
+          <Tooltip
+            placement="top"
+            isOpen={this.state.tooltipOpen}
+            target={tooltipID}
+            toggle={this.toggleTooltip}
+            className="entity-preferences-modal"
+            delay={0}
+          >
+            {entity}
+          </Tooltip>
+        ) : null}
+        <div className="specify-preferences-description">
           <h4 id={tooltipID}>{title}</h4>
           <p>{description}</p>
         </div>
@@ -330,19 +328,14 @@ export default class SetPreferenceModal extends Component {
             <span className="value-label">{valueLabel}</span>
           </div>
           <div className="specify-preferences-values">
-            {
-              !isEmpty(this.state.keyValues) ?
-                (
-                  <KeyValuePairs
-                    keyValues = {this.state.keyValues}
-                    onKeyValueChange = {this.onKeyValueChange}
-                  />
-                )
-              :
-                (
-                  <span className = "fa fa-spinner fa-spin" />
-                )
-            }
+            {!isEmpty(this.state.keyValues) ? (
+              <KeyValuePairs
+                keyValues={this.state.keyValues}
+                onKeyValueChange={this.onKeyValueChange}
+              />
+            ) : (
+              <span className="fa fa-spinner fa-spin" />
+            )}
           </div>
         </div>
       </div>
@@ -357,22 +350,20 @@ export default class SetPreferenceModal extends Component {
           className="toggleable-columns"
           onClick={this.toggleSorted.bind(this, columnToAttribute)}
         >
-          {
-            this.state.sortByAttribute === columnToAttribute ?
+          {this.state.sortByAttribute === columnToAttribute ? (
+            <span>
+              <span className="text-underline">{column}</span>
               <span>
-                <span className="text-underline">{column}</span>
-                <span>
-                  {
-                    this.state.sortOrder === 'asc' ?
-                      <i className="fa fa-caret-down fa-lg"></i>
-                    :
-                      <i className="fa fa-caret-up fa-lg"></i>
-                  }
-                </span>
+                {this.state.sortOrder === 'asc' ? (
+                  <i className="fa fa-caret-down fa-lg" />
+                ) : (
+                  <i className="fa fa-caret-up fa-lg" />
+                )}
               </span>
-            :
-              <span>{column}</span>
-          }
+            </span>
+          ) : (
+            <span>{column}</span>
+          )}
         </span>
       </th>
     );
@@ -389,11 +380,12 @@ export default class SetPreferenceModal extends Component {
     return (
       <div>
         <div className="inherited-preferences-label">
-          <h4>{titleLabel} ({numInheritedPreferences})</h4>
+          <h4>
+            {titleLabel} ({numInheritedPreferences})
+          </h4>
         </div>
         <div className="inherited-preferences-list">
-        {
-           numInheritedPreferences ?
+          {numInheritedPreferences ? (
             <div>
               <table>
                 <thead>
@@ -403,26 +395,20 @@ export default class SetPreferenceModal extends Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {
-                    this.state
-                      .inheritedPreferences
-                      .map((inheritedPreference, index) => {
-                        return (
-                          <tr className="inherited-preference" key={index}>
-                            <td>{inheritedPreference.key}</td>
-                            <td>{inheritedPreference.value}</td>
-                          </tr>
-                        );
-                      })
-                  }
+                  {this.state.inheritedPreferences.map((inheritedPreference, index) => {
+                    return (
+                      <tr className="inherited-preference" key={index}>
+                        <td>{inheritedPreference.key}</td>
+                        <td>{inheritedPreference.value}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-          :
-            <div className="text-xs-center">
-              {T.translate(`${PREFIX}.noInheritedPrefs`)}
-            </div>
-        }
+          ) : (
+            <div className="text-xs-center">{T.translate(`${PREFIX}.noInheritedPrefs`)}</div>
+          )}
         </div>
       </div>
     );
@@ -439,95 +425,61 @@ export default class SetPreferenceModal extends Component {
         toggle={this.props.toggleModal}
         className="confirmation-modal set-preference-modal"
         size="lg"
-        backdrop='static'
+        backdrop="static"
       >
         <ModalHeader className="modal-header">
           <div className="float-xs-left">
             <span className="button-icon fa fa-wrench" />
-            <span className="button-icon title">
-              {modalLabel}
-            </span>
+            <span className="button-icon title">{modalLabel}</span>
           </div>
           <div className="float-xs-right">
-            <div
-              className="close-modal-btn"
-              onClick={this.props.toggleModal}
-            >
+            <div className="close-modal-btn" onClick={this.props.toggleModal}>
               <span className="button-icon fa fa-times" />
             </div>
           </div>
         </ModalHeader>
-        <ModalBody
-          className="modal-body"
-          onClick={this.preventPropagation}
-        >
+        <ModalBody className="modal-body" onClick={this.preventPropagation}>
           <div className="preferences-container">
             <div className="specify-preferences-container">
               {this.renderSpecifyPreferences()}
               <div className="clearfix">
-                {
-                  this.state.saving ?
-                    <button
-                      className="btn btn-primary float-xs-left saving"
-                      disabled="disabled"
-                    >
-                      <span className="fa fa-spinner fa-spin" />
-                      <span>{savingLabel}</span>
-                    </button>
-                  :
-                    <button
-                      className="btn btn-primary float-xs-left not-saving"
-                      onClick={this.setPreferences}
-                      disabled={(this.oneFieldMissing() || this.state.error) ? 'disabled' : null}
-                    >
-                      <span>{saveAndCloseLabel}</span>
-                    </button>
-                }
+                {this.state.saving ? (
+                  <button className="btn btn-primary float-xs-left saving" disabled="disabled">
+                    <span className="fa fa-spinner fa-spin" />
+                    <span>{savingLabel}</span>
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-primary float-xs-left not-saving"
+                    onClick={this.setPreferences}
+                    disabled={this.oneFieldMissing() || this.state.error ? 'disabled' : null}
+                  >
+                    <span>{saveAndCloseLabel}</span>
+                  </button>
+                )}
                 <span className="float-xs-left reset">
-                  <a onClick = {this.resetFields}>{resetLink}</a>
+                  <a onClick={this.resetFields}>{resetLink}</a>
                 </span>
-                {
-                  this.state.showResetMessage ?
-                    (
-                      <span className="float-xs-left text-success reset-success">
-                        Reset Successful
-                      </span>
-                    )
-                  :
-                    null
-                }
-                {
-                  this.state.keyValues.pairs ?
-                    (
-                      <span className="float-xs-right num-rows">
-                        {
-                          this.state.keyValues.pairs.length === 1 ?
-                            <span>{this.state.keyValues.pairs.length} row</span>
-                          :
-                            <span>{this.state.keyValues.pairs.length} rows</span>
-                        }
-                      </span>
-                    )
-                  :
-                    null
-
-                }
+                {this.state.showResetMessage ? (
+                  <span className="float-xs-left text-success reset-success">Reset Successful</span>
+                ) : null}
+                {this.state.keyValues.pairs ? (
+                  <span className="float-xs-right num-rows">
+                    {this.state.keyValues.pairs.length === 1 ? (
+                      <span>{this.state.keyValues.pairs.length} row</span>
+                    ) : (
+                      <span>{this.state.keyValues.pairs.length} rows</span>
+                    )}
+                  </span>
+                ) : null}
               </div>
               <div className="preferences-error">
-                {
-                  this.state.error ?
-                    <div className="bg-danger text-white">{this.state.error}</div>
-                  :
-                    null
-                }
+                {this.state.error ? (
+                  <div className="bg-danger text-white">{this.state.error}</div>
+                ) : null}
               </div>
             </div>
-            {
-              !this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM ?
-                <hr />
-              :
-                null
-            }
+            {!this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM ? <hr /> : null}
             <div className="inherited-preferences-container">
               {this.renderInheritedPreferences()}
             </div>
@@ -544,14 +496,14 @@ SetPreferenceModal.propTypes = {
     applicationId: PropTypes.string,
     uniqueId: PropTypes.string,
     type: PropTypes.oneOf(['application', 'program']).isRequired,
-    programType: PropTypes.string
+    programType: PropTypes.string,
   }),
   isOpen: PropTypes.bool.isRequired,
   toggleModal: PropTypes.func.isRequired,
   setAtLevel: PropTypes.string,
-  onSuccess: PropTypes.func
+  onSuccess: PropTypes.func,
 };
 
 SetPreferenceModal.defaultProps = {
-  onSuccess: () => {}
+  onSuccess: () => {},
 };

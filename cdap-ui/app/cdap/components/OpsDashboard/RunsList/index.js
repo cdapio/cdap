@@ -16,8 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {humanReadableDuration, humanReadableDate} from 'services/helpers';
+import { connect } from 'react-redux';
+import { humanReadableDuration, humanReadableDate } from 'services/helpers';
 import SortableStickyGrid from 'components/SortableStickyGrid';
 import capitalize from 'lodash/capitalize';
 import StatusMapper from 'services/StatusMapper';
@@ -30,35 +30,35 @@ const PREFIX = 'features.OpsDashboard.RunsList';
 const GRID_HEADERS = [
   {
     property: 'namespace',
-    label: T.translate(`${PREFIX}.namespace`)
+    label: T.translate(`${PREFIX}.namespace`),
   },
   {
     property: (run) => run.application.name,
-    label: T.translate(`${PREFIX}.name`)
+    label: T.translate(`${PREFIX}.name`),
   },
   {
     property: 'type',
-    label: T.translate(`${PREFIX}.type`)
+    label: T.translate(`${PREFIX}.type`),
   },
   {
     property: 'starting',
-    label: T.translate(`${PREFIX}.start`)
+    label: T.translate(`${PREFIX}.start`),
   },
   {
-    property: (run) => run.end ? run.end - run.starting : 0,
-    label: T.translate(`${PREFIX}.duration`)
+    property: (run) => (run.end ? run.end - run.starting : 0),
+    label: T.translate(`${PREFIX}.duration`),
   },
   {
     property: 'user',
-    label: T.translate(`${PREFIX}.user`)
+    label: T.translate(`${PREFIX}.user`),
   },
   {
     property: 'startMethod',
-    label: T.translate(`${PREFIX}.startMethod`)
+    label: T.translate(`${PREFIX}.startMethod`),
   },
   {
     property: (run) => StatusMapper.lookupDisplayStatus(run.status),
-    label: T.translate(`${PREFIX}.status`)
+    label: T.translate(`${PREFIX}.status`),
   },
 ];
 
@@ -67,61 +67,40 @@ require('./RunsList.scss');
 function renderBody(data) {
   return (
     <div className="grid-body">
-      {
-        data.map((run, i) => {
-          let duration = run.end ? run.end - run.running : '--';
-          duration = humanReadableDuration(duration);
+      {data.map((run, i) => {
+        let duration = run.end ? run.end - run.running : '--';
+        duration = humanReadableDuration(duration);
 
-          const displayStatus = StatusMapper.lookupDisplayStatus(run.status) || '';
+        const displayStatus = StatusMapper.lookupDisplayStatus(run.status) || '';
 
-          let startTime = run.running || run.starting;
-          startTime = humanReadableDate(startTime, false);
+        let startTime = run.running || run.starting;
+        startTime = humanReadableDate(startTime, false);
 
-          const user = run.user || '--';
+        const user = run.user || '--';
 
-          const statusIcon = (
-            <IconSVG
-              name="icon-circle"
-              className={`${displayStatus.toLowerCase()}`}
-            />
-          );
+        const statusIcon = (
+          <IconSVG name="icon-circle" className={`${displayStatus.toLowerCase()}`} />
+        );
 
-          return (
-            <div
-              className="grid-row"
-              key={`${run.application.name}${run.program}${run.starting}${i}`}
-            >
-              <div title={run.namespace}>
-                {run.namespace}
-              </div>
-              <div title={run.application.name}>
-                {run.application.name}
-              </div>
-              <div>
-                {T.translate(`commons.entity.${run.type.toLowerCase()}.singular`)}
-              </div>
-              <div>
-                {startTime}
-              </div>
-              <div>
-                {duration}
-              </div>
-              <div title={user}>
-                {user}
-              </div>
-              <div>
-                {capitalize(run.startMethod)}
-              </div>
-              <div>
-                { displayStatus ? statusIcon : '--' }
-                <span>
-                  {displayStatus}
-                </span>
-              </div>
+        return (
+          <div
+            className="grid-row"
+            key={`${run.application.name}${run.program}${run.starting}${i}`}
+          >
+            <div title={run.namespace}>{run.namespace}</div>
+            <div title={run.application.name}>{run.application.name}</div>
+            <div>{T.translate(`commons.entity.${run.type.toLowerCase()}.singular`)}</div>
+            <div>{startTime}</div>
+            <div>{duration}</div>
+            <div title={user}>{user}</div>
+            <div>{capitalize(run.startMethod)}</div>
+            <div>
+              {displayStatus ? statusIcon : '--'}
+              <span>{displayStatus}</span>
             </div>
-          );
-        })
-      }
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -149,14 +128,11 @@ function renderGrid(data) {
   );
 }
 
-
-function RunsListView({bucketInfo}) {
+function RunsListView({ bucketInfo }) {
   if (!bucketInfo) {
     return (
       <div className="runs-list-container">
-        <h3 className="text-xs-center">
-          {T.translate(`${PREFIX}.noData`)}
-        </h3>
+        <h3 className="text-xs-center">{T.translate(`${PREFIX}.noData`)}</h3>
       </div>
     );
   }
@@ -171,17 +147,15 @@ function RunsListView({bucketInfo}) {
 }
 
 RunsListView.propTypes = {
-  bucketInfo: PropTypes.object
+  bucketInfo: PropTypes.object,
 };
 
 const mapStateToProps = (state) => {
   return {
-    bucketInfo: state.dashboard.displayBucketInfo
+    bucketInfo: state.dashboard.displayBucketInfo,
   };
 };
 
-const RunsList = connect(
-  mapStateToProps
-)(RunsListView);
+const RunsList = connect(mapStateToProps)(RunsListView);
 
 export default RunsList;

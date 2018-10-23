@@ -27,39 +27,32 @@ const TabConfig = PropTypes.shape({
   name: PropTypes.string,
   content: PropTypes.node,
   contentClassName: PropTypes.string,
-  paneClassName: PropTypes.string
+  paneClassName: PropTypes.string,
 });
 
 export default class ConfigurableTab extends Component {
-
   static propTypes = {
     onTabClick: PropTypes.func,
-    activeTab: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number
-    ]),
+    activeTab: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     tabConfig: PropTypes.shape({
       tabs: PropTypes.arrayOf(TabConfig),
       layout: PropTypes.string,
-      defaultTab: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.number
-      ])
-    })
+      defaultTab: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
   };
 
   componentWillReceiveProps(nextProps) {
-    this.setState({ tabs: nextProps.tabConfig.tabs});
+    this.setState({ tabs: nextProps.tabConfig.tabs });
   }
 
   state = {
     tabs: this.props.tabConfig.tabs,
     layout: this.props.tabConfig.layout,
-    activeTab: this.props.activeTab || this.props.tabConfig.defaultTab
+    activeTab: this.props.activeTab || this.props.tabConfig.defaultTab,
   };
 
   setTab = (tabId) => {
-    this.setState({activeTab: tabId});
+    this.setState({ activeTab: tabId });
     document.querySelector('.tab-content').scrollTop = 0;
 
     if (typeof this.props.onTabClick === 'function') {
@@ -73,14 +66,14 @@ export default class ConfigurableTab extends Component {
 
   render() {
     let tabs = [];
-    this.state.tabs.forEach(tab => {
+    this.state.tabs.forEach((tab) => {
       if (tab.type === 'tab-group') {
         tabs = [...tabs, ...tab.subtabs];
         return;
       }
       tabs.push(tab);
     });
-    let activeTab = tabs.find(tab => this.state.activeTab === tab.id);
+    let activeTab = tabs.find((tab) => this.state.activeTab === tab.id);
     return (
       <div className="cask-configurable-tab">
         <Tabs layout={this.state.layout}>
@@ -109,11 +102,15 @@ export default class ConfigurableTab extends Component {
               );
             })}
           </TabHeaders>
-          <div className={classnames("tab-content active", {
-            [activeTab.contentClassName || '']: true
-          })}>
+          <div
+            className={classnames('tab-content active', {
+              [activeTab.contentClassName || '']: true,
+            })}
+          >
             <div
-              className={`tab-pane active ${activeTab.paneClassName ? activeTab.paneClassName : ''}`}
+              className={`tab-pane active ${
+                activeTab.paneClassName ? activeTab.paneClassName : ''
+              }`}
               tabid={activeTab.id}
             >
               {activeTab.content}

@@ -17,8 +17,8 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MyAppApi} from 'api/app';
-import {MyArtifactApi} from 'api/artifact';
+import { MyAppApi } from 'api/app';
+import { MyArtifactApi } from 'api/artifact';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 
@@ -30,7 +30,7 @@ export default class ArtifactMetrics extends Component {
       extensions: 0,
       apps: 0,
       type: '-',
-      loading: true
+      loading: true,
     };
     this.unsub = null;
   }
@@ -40,7 +40,7 @@ export default class ArtifactMetrics extends Component {
       namespace: NamespaceStore.getState().selectedNamespace,
       artifactId: this.props.entity.id,
       version: this.props.entity.version,
-      scope: this.props.entity.scope
+      scope: this.props.entity.scope,
     };
 
     const appsParams = {
@@ -56,7 +56,7 @@ export default class ArtifactMetrics extends Component {
           extensions: res[0].length,
           apps: res[1].length,
           type: res[2].classes.plugins.length > 0 ? 'Plugin' : 'App',
-          loading: false
+          loading: false,
         });
       });
   }
@@ -64,8 +64,8 @@ export default class ArtifactMetrics extends Component {
     this.unsub.unsubscribe();
   }
 
-  render () {
-    const loading = <span className="fa fa-spin fa-spinner"></span>;
+  render() {
+    const loading = <span className="fa fa-spin fa-spinner" />;
 
     return (
       <div className="metrics-container">
@@ -87,5 +87,5 @@ export default class ArtifactMetrics extends Component {
 }
 
 ArtifactMetrics.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
 };

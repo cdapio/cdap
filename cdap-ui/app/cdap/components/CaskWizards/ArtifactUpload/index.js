@@ -35,7 +35,7 @@ export default class ArtifactUploadWizard extends Component {
     super(props);
     this.state = {
       showWizard: this.props.isOpen,
-      successInfo: {}
+      successInfo: {},
     };
     this.eventEmitter = ee(ee);
   }
@@ -43,14 +43,14 @@ export default class ArtifactUploadWizard extends Component {
     ArtifactUploadStore.dispatch({
       type: ArtifactUploadActions.setType,
       payload: {
-        type: 'jdbc'
-      }
+        type: 'jdbc',
+      },
     });
   }
 
   componentWillUnmount() {
     ArtifactUploadStore.dispatch({
-      type: ArtifactUploadActions.onReset
+      type: ArtifactUploadActions.onReset,
     });
   }
 
@@ -58,14 +58,12 @@ export default class ArtifactUploadWizard extends Component {
     if (!this.props.buildSuccessInfo && this.props.displayCTA) {
       this.buildSuccessInfo();
     }
-    return ArtifactUploadActionCreator
-      .uploadArtifact(false)
-      .mergeMap((res) => {
-        if (this.props.displayCTA === false) {
-          this.eventEmitter.emit(globalEvents.CLOSEMARKET);
-        }
-        this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
-        return res; // needs to return something
+    return ArtifactUploadActionCreator.uploadArtifact(false).mergeMap((res) => {
+      if (this.props.displayCTA === false) {
+        this.eventEmitter.emit(globalEvents.CLOSEMARKET);
+      }
+      this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
+      return res; // needs to return something
     });
   }
 
@@ -74,20 +72,20 @@ export default class ArtifactUploadWizard extends Component {
       this.props.onClose(returnResult);
     }
     this.setState({
-      showWizard: !this.state.showWizard
+      showWizard: !this.state.showWizard,
     });
   }
   // TODO: shouldn't do this, replace in 4.2
   getChildContext() {
     return {
-      isMarket: !this.props.hideUploadHelper && this.props.buildSuccessInfo
+      isMarket: !this.props.hideUploadHelper && this.props.buildSuccessInfo,
     };
   }
   buildSuccessInfo() {
     let state = ArtifactUploadStore.getState();
     let artifactName = state.configure.name;
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let message = T.translate('features.Wizard.ArtifactUpload.success', {artifactName});
+    let message = T.translate('features.Wizard.ArtifactUpload.success', { artifactName });
     let subtitle = T.translate('features.Wizard.ArtifactUpload.subtitle');
     let buttonLabel = T.translate('features.Wizard.ArtifactUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
@@ -99,14 +97,14 @@ export default class ArtifactUploadWizard extends Component {
         buttonUrl: window.getHydratorUrl({
           stateName: 'hydrator.create',
           stateParams: {
-            namespace
-          }
+            namespace,
+          },
         }),
         linkLabel,
         linkUrl: window.getAbsUIUrl({
-          namespaceId: namespace
-        })
-      }
+          namespaceId: namespace,
+        }),
+      },
     });
   }
   render() {
@@ -114,7 +112,9 @@ export default class ArtifactUploadWizard extends Component {
     let pkg = input.package || {};
     let headerLabel = input.headerLabel;
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + (headerLabel ? headerLabel : T.translate('features.Wizard.ArtifactUpload.headerlabel'));
+    let wizardModalTitle =
+      (pkg.label ? pkg.label + ' | ' : '') +
+      (headerLabel ? headerLabel : T.translate('features.Wizard.ArtifactUpload.headerlabel'));
     return (
       <WizardModal
         title={wizardModalTitle}
@@ -123,7 +123,11 @@ export default class ArtifactUploadWizard extends Component {
         className="artifact-upload-wizard"
       >
         <Wizard
-          wizardConfig={this.props.buildSuccessInfo ? MarketArtifactUploadWizardConfig : ArtifactUploadWizardConfig}
+          wizardConfig={
+            this.props.buildSuccessInfo
+              ? MarketArtifactUploadWizardConfig
+              : ArtifactUploadWizardConfig
+          }
           wizardType="ArtifactUpload"
           store={ArtifactUploadStore}
           onSubmit={this.onSubmit.bind(this)}
@@ -138,14 +142,14 @@ export default class ArtifactUploadWizard extends Component {
 ArtifactUploadWizard.defaultProps = {
   input: {
     action: {
-      arguments: {}
+      arguments: {},
     },
     package: {},
   },
-  displayCTA: true
+  displayCTA: true,
 };
 ArtifactUploadWizard.childContextTypes = {
-  isMarket: PropTypes.bool
+  isMarket: PropTypes.bool,
 };
 ArtifactUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
@@ -153,5 +157,5 @@ ArtifactUploadWizard.propTypes = {
   onClose: PropTypes.func,
   buildSuccessInfo: PropTypes.func,
   hideUploadHelper: PropTypes.bool,
-  displayCTA: PropTypes.bool
+  displayCTA: PropTypes.bool,
 };

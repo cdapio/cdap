@@ -14,7 +14,6 @@
  * the License.
  */
 
-
 /**
  *  Should be able to refactor other places to use this shared function instead
  **/
@@ -27,9 +26,11 @@ export function constructCdapUrl(resource) {
       window.CDAP_CONFIG.sslEnabled ? 'https://' : 'http://',
       window.CDAP_CONFIG.cdap.routerServerUrl,
       ':',
-      window.CDAP_CONFIG.sslEnabled ? window.CDAP_CONFIG.cdap.routerSSLServerPort : window.CDAP_CONFIG.cdap.routerServerPort,
+      window.CDAP_CONFIG.sslEnabled
+        ? window.CDAP_CONFIG.cdap.routerSSLServerPort
+        : window.CDAP_CONFIG.cdap.routerServerPort,
       '/v3',
-      resource._cdapPath
+      resource._cdapPath,
     ].join('');
 
     delete resource._cdapPath;

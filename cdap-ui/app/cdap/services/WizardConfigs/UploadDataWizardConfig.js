@@ -26,17 +26,17 @@ const UploadDataWizardConfig = {
       shorttitle: T.translate('features.Wizard.UploadData.Step1.shorttitle'),
       title: T.translate('features.Wizard.UploadData.Step1.title'),
       description: T.translate('features.Wizard.UploadData.Step1.description'),
-      content: (<ViewDataStep />),
+      content: <ViewDataStep />,
     },
     {
       id: 'selectdestination',
       shorttitle: T.translate('features.Wizard.UploadData.Step2.shorttitle'),
       title: T.translate('features.Wizard.UploadData.Step2.title'),
       description: T.translate('features.Wizard.UploadData.Step2.description'),
-      content: (<SelectDestination />),
-      requiredFields: ['name', 'type']
-    }
-  ]
+      content: <SelectDestination />,
+      requiredFields: ['name', 'type'],
+    },
+  ],
 };
 
 export default UploadDataWizardConfig;

@@ -19,7 +19,7 @@ import DataPrepStore from 'components/DataPrep/store';
 import uuidV4 from 'uuid/v4';
 import DirectivesTabRow from 'components/DataPrep/DataPrepSidePanel/DirectivesTab/DirectivesTabRow';
 import fileDownload from 'js-file-download';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import T from 'i18n-react';
 
 require('./DirectivesTab.scss');
@@ -34,10 +34,10 @@ export default class DirectivesTab extends Component {
       directives: store.directives.map((directive) => {
         let obj = {
           name: directive,
-          uniqueId: uuidV4()
+          uniqueId: uuidV4(),
         };
         return obj;
-      })
+      }),
     };
 
     this.download = this.download.bind(this);
@@ -49,10 +49,10 @@ export default class DirectivesTab extends Component {
         directives: state.directives.map((directive) => {
           let obj = {
             name: directive,
-            uniqueId: uuidV4()
+            uniqueId: uuidV4(),
           };
           return obj;
-        })
+        }),
       });
     });
   }
@@ -62,10 +62,10 @@ export default class DirectivesTab extends Component {
   }
 
   onMouseEnter(index) {
-    this.setState({deleteHover: index});
+    this.setState({ deleteHover: index });
   }
   onMouseLeave() {
-    this.setState({deleteHover: null});
+    this.setState({ deleteHover: null });
   }
 
   deleteDirective(index) {
@@ -74,21 +74,23 @@ export default class DirectivesTab extends Component {
 
     let newDirectives = directives.slice(0, index);
 
-    execute(newDirectives, true)
-      .subscribe(() => {}, (err) => {
+    execute(newDirectives, true).subscribe(
+      () => {},
+      (err) => {
         // Should not ever come to this.. this is only if backend
         // fails somehow
         console.log('Error deleting directives', err);
-      });
+      }
+    );
   }
 
   download() {
     let state = DataPrepStore.getState().dataprep;
     let workspaceId = state.workspaceId,
-        directives = state.directives;
+      directives = state.directives;
 
     let data = directives.join('\n'),
-        filename = `${workspaceId}-directives.txt`;
+      filename = `${workspaceId}-directives.txt`;
 
     fileDownload(data, filename);
   }
@@ -96,34 +98,28 @@ export default class DirectivesTab extends Component {
   render() {
     return (
       <div className="directives-tab">
-
         <div className="directives-tab-header">
           <span>#</span>
           <span>{T.translate('features.DataPrep.DataPrepSidePanel.DirectivesTab.label')}</span>
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.download}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.download}>
             <span className="fa fa-download" />
           </button>
         </div>
 
         <div className="directives-tab-body">
-          {
-            this.state.directives.map((directive, index) => {
-              return (
-                <DirectivesTabRow
-                  key={directive.uniqueId}
-                  rowInfo={directive}
-                  rowIndex={index}
-                  isInactive={this.state.deleteHover !== null && index >= this.state.deleteHover}
-                  handleDelete={this.deleteDirective.bind(this, index)}
-                  handleMouseEnter={this.onMouseEnter.bind(this, index)}
-                  handleMouseLeave={this.onMouseLeave.bind(this)}
-                />
-              );
-            })
-          }
+          {this.state.directives.map((directive, index) => {
+            return (
+              <DirectivesTabRow
+                key={directive.uniqueId}
+                rowInfo={directive}
+                rowIndex={index}
+                isInactive={this.state.deleteHover !== null && index >= this.state.deleteHover}
+                handleDelete={this.deleteDirective.bind(this, index)}
+                handleMouseEnter={this.onMouseEnter.bind(this, index)}
+                handleMouseLeave={this.onMouseLeave.bind(this)}
+              />
+            );
+          })}
         </div>
       </div>
     );

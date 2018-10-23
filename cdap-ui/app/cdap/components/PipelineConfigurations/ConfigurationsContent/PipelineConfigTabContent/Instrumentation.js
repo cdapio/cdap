@@ -16,18 +16,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
 import Popover from 'components/Popover';
-import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import { ACTIONS as PipelineConfigurationsActions } from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
 const mapStateToInstrumentationProps = (state) => {
   return {
-    instrumentation: state.processTimingEnabled
+    instrumentation: state.processTimingEnabled,
   };
 };
 const mapDispatchToInstrumentationProps = (dispatch) => {
@@ -35,27 +35,22 @@ const mapDispatchToInstrumentationProps = (dispatch) => {
     onToggle: (value) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_INSTRUMENTATION,
-        payload: { instrumentation: value }
+        payload: { instrumentation: value },
       });
-    }
+    },
   };
 };
 
-const Instrumentation = ({instrumentation, onToggle}) => {
+const Instrumentation = ({ instrumentation, onToggle }) => {
   return (
     <div className="label-with-toggle instrumentation row">
-      <span className="toggle-label col-xs-4">
-        {T.translate(`${PREFIX}.instrumentation`)}
-      </span>
+      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.instrumentation`)}</span>
       <div className="col-xs-7 toggle-container">
-        <ToggleSwitch
-          isOn={instrumentation}
-          onToggle={onToggle.bind(null, !instrumentation)}
-        />
+        <ToggleSwitch isOn={instrumentation} onToggle={onToggle.bind(null, !instrumentation)} />
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
-          showOn='Hover'
-          placement='right'
+          showOn="Hover"
+          placement="right"
         >
           {T.translate(`${PREFIX}.instrumentationTooltip`)}
         </Popover>
@@ -66,7 +61,7 @@ const Instrumentation = ({instrumentation, onToggle}) => {
 
 Instrumentation.propTypes = {
   instrumentation: PropTypes.bool,
-  onToggle: PropTypes.func
+  onToggle: PropTypes.func,
 };
 
 const ConnectedInstrumentation = connect(

@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import SplitInfoTable from 'components/Experiments/CreateView/SplitDataStep/SplitInfoTable';
 import SplitInfoGraph from 'components/Experiments/CreateView/SplitDataStep/SplitInfoGraph';
 import IconSVG from 'components/IconSVG';
@@ -30,23 +30,23 @@ class SplitInfo extends Component {
   static propTypes = {
     splitInfo: PropTypes.object,
     outcome: PropTypes.string,
-    activeColumn: PropTypes.string
+    activeColumn: PropTypes.string,
   };
 
   state = {
     activeColumn: this.props.outcome,
-    splitInfo: this.props.splitInfo
+    splitInfo: this.props.splitInfo,
   };
 
   onActiveColumnChange = (activeColumn) => {
-    this.setState({activeColumn});
+    this.setState({ activeColumn });
   };
 
-  componentWillReceiveProps({splitInfo, outcome, schema}) {
+  componentWillReceiveProps({ splitInfo, outcome, schema }) {
     this.setState({
       splitInfo,
       activeColumn: outcome,
-      schema
+      schema,
     });
   }
 
@@ -57,22 +57,18 @@ class SplitInfo extends Component {
         <div className="active-column-container">
           <span>Displaying column: </span>
           <strong>
-            {
-              this.state.activeColumn === this.props.outcome ? (
-                <span className="outcome-field">
-                  <IconSVG name="icon-star" />
-                  <span>{this.state.activeColumn}</span>
-                </span>
-              )
-              : this.state.activeColumn
-            }
+            {this.state.activeColumn === this.props.outcome ? (
+              <span className="outcome-field">
+                <IconSVG name="icon-star" />
+                <span>{this.state.activeColumn}</span>
+              </span>
+            ) : (
+              this.state.activeColumn
+            )}
           </strong>
         </div>
         <div className="split-info-graph-wrapper">
-          <SplitInfoGraph
-            splitInfo={this.state.splitInfo}
-            activeColumn={this.state.activeColumn}
-          />
+          <SplitInfoGraph splitInfo={this.state.splitInfo} activeColumn={this.state.activeColumn} />
         </div>
         <SplitInfoTable
           splitInfo={this.state.splitInfo}
@@ -89,7 +85,7 @@ const mapStateToSplitInfoProps = (state) => {
   return {
     splitInfo: state.model_create.splitInfo,
     outcome: state.experiments_create.outcome,
-    schema: state.model_create.schema
+    schema: state.model_create.schema,
   };
 };
 

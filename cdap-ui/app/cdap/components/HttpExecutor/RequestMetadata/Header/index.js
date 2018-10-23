@@ -15,12 +15,12 @@
  */
 
 import KeyValuePairs from 'components/KeyValuePairs';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 
 const mapStateToKeyValProps = (state) => {
   return {
-    keyValues : state.http.headers
+    keyValues: state.http.headers,
   };
 };
 
@@ -30,10 +30,10 @@ const mapDispatchToKeyValProps = (dispatch) => {
       dispatch({
         type: HttpExecutorActions.setHeaders,
         payload: {
-          headers: keyValues
-        }
+          headers: keyValues,
+        },
       });
-    }
+    },
   };
 };
 

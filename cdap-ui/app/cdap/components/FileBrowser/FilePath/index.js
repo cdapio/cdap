@@ -19,9 +19,9 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
-import {UncontrolledDropdown} from 'components/UncontrolledComponents';
+import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 
 require('./FilePath.scss');
@@ -34,34 +34,37 @@ export default class FilePath extends Component {
 
     this.state = {
       originalPath: '',
-      paths: []
+      paths: [],
     };
     this.handlePropagation = this.handlePropagation.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.originalPath === nextProps.fullpath) { return; }
+    if (nextProps.originalPath === nextProps.fullpath) {
+      return;
+    }
 
     this.processPath(nextProps);
   }
 
   processPath(props) {
-    let splitPath = props.fullpath.split('/')
-      .filter((directory) => {
-        return directory.length > 0;
-      });
+    let splitPath = props.fullpath.split('/').filter((directory) => {
+      return directory.length > 0;
+    });
     let bspath = this.props.baseStatePath;
     if (bspath[bspath.length - 1] !== '/') {
       bspath = `${bspath}/`;
     }
-    let paths = [{
-      id: uuidV4(),
-      name: 'Root',
-      link: bspath
-    }];
+    let paths = [
+      {
+        id: uuidV4(),
+        name: 'Root',
+        link: bspath,
+      },
+    ];
 
     splitPath.forEach((value, index) => {
-      let directoryPath = splitPath.slice(0, index+1).join('/');
+      let directoryPath = splitPath.slice(0, index + 1).join('/');
 
       let link = this.props.baseStatePath;
       link = `${link}/${directoryPath}`;
@@ -69,13 +72,13 @@ export default class FilePath extends Component {
       paths.push({
         id: uuidV4(),
         name: value,
-        link
+        link,
       });
     });
 
     this.setState({
       paths,
-      originalPath: props.fullpath
+      originalPath: props.fullpath,
     });
   }
 
@@ -93,33 +96,23 @@ export default class FilePath extends Component {
   renderCollapsedDropdown(collapsedLinks) {
     return (
       <div className="collapsed-dropdown">
-        <UncontrolledDropdown
-          className="collapsed-dropdown-toggle"
-        >
-          <DropdownToggle>
-            ...
-          </DropdownToggle>
+        <UncontrolledDropdown className="collapsed-dropdown-toggle">
+          <DropdownToggle>...</DropdownToggle>
           <DropdownMenu>
-            {
-              collapsedLinks.map((path, i) => {
-                return (
-                  <DropdownItem
-                    key={i}
-                    title={path.name}
-                    tag="div"
+            {collapsedLinks.map((path, i) => {
+              return (
+                <DropdownItem key={i} title={path.name} tag="div">
+                  <NavLinkWrapper
+                    key={path.id}
+                    to={path.link}
+                    onClick={this.handlePropagation.bind(this, path.link)}
+                    isNativeLink={!this.props.enableRouting}
                   >
-                    <NavLinkWrapper
-                      key={path.id}
-                      to={path.link}
-                      onClick={this.handlePropagation.bind(this, path.link)}
-                      isNativeLink={!this.props.enableRouting}
-                    >
-                      {path.name}
-                    </NavLinkWrapper>
-                  </DropdownItem>
-                );
-              })
-            }
+                    {path.name}
+                  </NavLinkWrapper>
+                </DropdownItem>
+              );
+            })}
           </DropdownMenu>
         </UncontrolledDropdown>
       </div>
@@ -127,30 +120,23 @@ export default class FilePath extends Component {
   }
 
   renderBreadcrumb(links) {
-    let pathsTitle = links.map(path => path.name).join('/') || '';
+    let pathsTitle = links.map((path) => path.name).join('/') || '';
     return (
-      <div
-        className="paths"
-        title={pathsTitle}
-      >
-        {
-          links.map((path, index) => {
-            return (
-              <NavLinkWrapper
-                key={path.id}
-                to={path.link}
-                className={classnames({'active-directory': index === links.length - 1})}
-                onClick={this.handlePropagation.bind(this, path.link)}
-                isNativeLink={!this.props.enableRouting}
-              >
-                <span>{path.name}</span>
-                {
-                  index !== links.length - 1 ? <span className="path-divider">/</span> : null
-                }
-              </NavLinkWrapper>
-            );
-          })
-        }
+      <div className="paths" title={pathsTitle}>
+        {links.map((path, index) => {
+          return (
+            <NavLinkWrapper
+              key={path.id}
+              to={path.link}
+              className={classnames({ 'active-directory': index === links.length - 1 })}
+              onClick={this.handlePropagation.bind(this, path.link)}
+              isNativeLink={!this.props.enableRouting}
+            >
+              <span>{path.name}</span>
+              {index !== links.length - 1 ? <span className="path-divider">/</span> : null}
+            </NavLinkWrapper>
+          );
+        })}
       </div>
     );
   }
@@ -176,12 +162,9 @@ export default class FilePath extends Component {
   render() {
     return (
       <div className="file-path-container">
-        {
-          this.state.paths.length > VIEW_LIMIT ?
-            this.renderCollapsedView()
-          :
-            this.renderBreadcrumb(this.state.paths)
-        }
+        {this.state.paths.length > VIEW_LIMIT
+          ? this.renderCollapsedView()
+          : this.renderBreadcrumb(this.state.paths)}
       </div>
     );
   }
@@ -192,5 +175,5 @@ FilePath.propTypes = {
   fullpath: PropTypes.string,
   enableRouting: PropTypes.bool,
   onPathChange: PropTypes.func,
-  originalPath: PropTypes.string
+  originalPath: PropTypes.string,
 };

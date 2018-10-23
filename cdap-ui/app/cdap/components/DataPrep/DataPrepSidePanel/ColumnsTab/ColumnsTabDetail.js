@@ -20,9 +20,11 @@ import React from 'react';
 import T from 'i18n-react';
 
 const PREFIX = 'features.DataPrep.DataPrepSidePanel.ColumnsTab.ColumnDetail';
-export default function ColumnsTabDetail({columnInfo}) {
-  let {types} = columnInfo;
-  if (!types) { return null; }
+export default function ColumnsTabDetail({ columnInfo }) {
+  let { types } = columnInfo;
+  if (!types) {
+    return null;
+  }
   let headers = Object.keys(types);
   return (
     <tr className="column-tab-details">
@@ -31,25 +33,21 @@ export default function ColumnsTabDetail({columnInfo}) {
           <thead>
             <tr>
               <th>{T.translate(`${PREFIX}.Header.inferredType`)}</th>
-              <th className="text-xs-right">
-                {T.translate(`${PREFIX}.Header.percentageChange`)}
-              </th>
+              <th className="text-xs-right">{T.translate(`${PREFIX}.Header.percentageChange`)}</th>
             </tr>
           </thead>
 
           <tbody>
-            {
-              headers.map((head) => {
-                let chance = Number(Math.round(types[head]+'e2')+'e-2');
+            {headers.map((head) => {
+              let chance = Number(Math.round(types[head] + 'e2') + 'e-2');
 
-                return (
-                  <tr key={head}>
-                    <td>{head}</td>
-                    <td className="text-xs-right">{chance}</td>
-                  </tr>
-                );
-              })
-            }
+              return (
+                <tr key={head}>
+                  <td>{head}</td>
+                  <td className="text-xs-right">{chance}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </td>
@@ -58,5 +56,5 @@ export default function ColumnsTabDetail({columnInfo}) {
 }
 
 ColumnsTabDetail.propTypes = {
-  columnInfo: PropTypes.object
+  columnInfo: PropTypes.object,
 };

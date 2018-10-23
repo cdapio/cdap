@@ -18,8 +18,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
-import {runPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {setRunError} from 'components/PipelineDetails/store/ActionCreator';
+import { runPipeline } from 'components/PipelineConfigurations/Store/ActionCreator';
+import { setRunError } from 'components/PipelineDetails/store/ActionCreator';
 import PipelineRuntimeArgsDropdownBtn from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
@@ -32,11 +32,11 @@ export default class PipelineRunButton extends Component {
     pipelineName: PropTypes.string,
     runButtonLoading: PropTypes.bool,
     runError: PropTypes.string,
-    runtimeArgs: PropTypes.array
-  }
+    runtimeArgs: PropTypes.array,
+  };
 
   state = {
-    showRunOptions: false
+    showRunOptions: false,
   };
 
   toggleRunConfigOption = (showRunOptions) => {
@@ -44,7 +44,7 @@ export default class PipelineRunButton extends Component {
       return;
     }
     this.setState({
-      showRunOptions: showRunOptions || !this.state.showRunOptions
+      showRunOptions: showRunOptions || !this.state.showRunOptions,
     });
   };
 
@@ -54,7 +54,7 @@ export default class PipelineRunButton extends Component {
     }
 
     if (!this.state.showRunOptions) {
-      let {isMissingKeyValues} = PipelineConfigurationsStore.getState();
+      let { isMissingKeyValues } = PipelineConfigurationsStore.getState();
       if (isMissingKeyValues) {
         this.toggleRunConfigOption();
       } else {
@@ -71,7 +71,7 @@ export default class PipelineRunButton extends Component {
     return (
       <Alert
         message={this.props.runError}
-        type='error'
+        type="error"
         showAlert={true}
         onClose={setRunError.bind(null, '')}
       />
@@ -96,27 +96,17 @@ export default class PipelineRunButton extends Component {
         disabled={this.props.runButtonLoading}
       >
         <div className="btn-container">
-          {
-            this.props.runButtonLoading ?
-              (
-                <span className="text-success">
-                  <IconSVG name="icon-spinner" className="fa-spin" />
-                  <div className="button-label">
-                    {T.translate(`${PREFIX}.starting`)}
-                  </div>
-                </span>
-              )
-
-            :
-              (
-                <span className="text-success">
-                  <IconSVG name="icon-play"/>
-                  <div className="button-label">
-                    {T.translate(`${PREFIX}.run`)}
-                  </div>
-                </span>
-              )
-          }
+          {this.props.runButtonLoading ? (
+            <span className="text-success">
+              <IconSVG name="icon-spinner" className="fa-spin" />
+              <div className="button-label">{T.translate(`${PREFIX}.starting`)}</div>
+            </span>
+          ) : (
+            <span className="text-success">
+              <IconSVG name="icon-play" />
+              <div className="button-label">{T.translate(`${PREFIX}.run`)}</div>
+            </span>
+          )}
         </div>
       </div>
     );

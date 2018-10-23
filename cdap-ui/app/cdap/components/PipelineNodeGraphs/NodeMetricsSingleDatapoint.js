@@ -18,10 +18,9 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
-export default function NodeMetricsSingleDatapoint({data}) {
-
+export default function NodeMetricsSingleDatapoint({ data }) {
   /*
     We would need this check
      - if we have only aggregated metric
@@ -38,25 +37,23 @@ export default function NodeMetricsSingleDatapoint({data}) {
   if (!Array.isArray(data) && typeof data === 'object') {
     return (
       <div className="node-metrics-single-datapoint">
-        {
-          Object.keys(data).map(key => {
-            return (
+        {Object.keys(data).map((key) => {
+          return (
+            <span>
+              <small>{data[key].label}</small>
               <span>
-                <small>{data[key].label}</small>
-                <span>{isNil(data[key].data) ? T.translate('commons.notAvailable') : renderData(data[key].data)}</span>
+                {isNil(data[key].data)
+                  ? T.translate('commons.notAvailable')
+                  : renderData(data[key].data)}
               </span>
-            );
-          })
-        }
+            </span>
+          );
+        })}
       </div>
     );
   }
-  return (
-    <div className="node-metrics-single-datapoint">
-      {data}
-    </div>
-  );
+  return <div className="node-metrics-single-datapoint">{data}</div>;
 }
 NodeMetricsSingleDatapoint.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.object)
+  data: PropTypes.arrayOf(PropTypes.object),
 };

@@ -20,18 +20,9 @@ import { Input } from 'reactstrap';
 import SelectWithOptions from 'components/SelectWithOptions';
 
 require('./FieldRow.scss');
-const defaultFieldTypes = [
-  '',
-  'boolean',
-  'bytes',
-  'double',
-  'float',
-  'int',
-  'long',
-  'string'
-];
+const defaultFieldTypes = ['', 'boolean', 'bytes', 'double', 'float', 'int', 'long', 'string'];
 
-const FieldRow = ({className, name, type, isNullable, onKeyUp, onChange, onRemove}) => {
+const FieldRow = ({ className, name, type, isNullable, onKeyUp, onChange, onRemove }) => {
   return (
     <tr className={className}>
       <td>
@@ -52,17 +43,11 @@ const FieldRow = ({className, name, type, isNullable, onKeyUp, onChange, onRemov
         />
       </td>
       <td>
-        <input
-          type="checkbox"
-          checked={isNullable}
-          onChange={onChange.bind(null, 'isNullable')}
-        />
+        <input type="checkbox" checked={isNullable} onChange={onChange.bind(null, 'isNullable')} />
       </td>
       <td>
-        <a
-          onClick={onRemove}
-          className="btn btn-sm btn-danger">
-          <i className="fa fa-trash"/>
+        <a onClick={onRemove} className="btn btn-sm btn-danger">
+          <i className="fa fa-trash" />
         </a>
       </td>
     </tr>
@@ -75,7 +60,7 @@ FieldRow.propTypes = {
   isNullable: PropTypes.bool,
   onKeyUp: PropTypes.func,
   onChange: PropTypes.func,
-  onRemove: PropTypes.func
+  onRemove: PropTypes.func,
 };
 
 export default FieldRow;

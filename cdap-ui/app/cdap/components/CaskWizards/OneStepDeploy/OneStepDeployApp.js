@@ -20,9 +20,9 @@ import React, { Component } from 'react';
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
 import OneStepDeployActions from 'services/WizardStores/OneStepDeploy/OneStepDeployActions';
 import NamespaceStore from 'services/NamespaceStore';
-import {constructCdapUrl} from 'services/cdap-url-builder';
+import { constructCdapUrl } from 'services/cdap-url-builder';
 import 'whatwg-fetch';
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 import OneStepDeployWizard from 'components/CaskWizards/OneStepDeploy';
 import cookie from 'react-cookie';
 import T from 'i18n-react';
@@ -40,7 +40,7 @@ export default class OneStepDeployApp extends Component {
   componentWillMount() {
     OneStepDeployStore.dispatch({
       type: OneStepDeployActions.setName,
-      payload: this.props.input.package.label || this.props.input.package.name
+      payload: this.props.input.package.label || this.props.input.package.name,
     });
   }
 
@@ -48,7 +48,7 @@ export default class OneStepDeployApp extends Component {
     // fetchResponse has the format "Successfully deployed app {appName}"
     let appName = fetchResponse.slice(fetchResponse.indexOf('app') + 4);
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let message = T.translate('features.Wizard.ApplicationUpload.success', {appName});
+    let message = T.translate('features.Wizard.ApplicationUpload.success', { appName });
     let buttonLabel = T.translate('features.Wizard.ApplicationUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
     let successInfo = {
@@ -56,12 +56,12 @@ export default class OneStepDeployApp extends Component {
       buttonLabel,
       buttonUrl: window.getAbsUIUrl({
         namespaceId: namespace,
-        appId: appName
+        appId: appName,
       }),
       linkLabel,
       linkUrl: window.getAbsUIUrl({
-        namespaceId: namespace
-      })
+        namespaceId: namespace,
+      }),
     };
     return successInfo;
   }
@@ -69,10 +69,7 @@ export default class OneStepDeployApp extends Component {
   publishApp() {
     const marketBasepath = `${window.CDAP_CONFIG.marketUrl}`;
 
-    const {
-      name,
-      version
-    } = this.props.input.package;
+    const { name, version } = this.props.input.package;
 
     let jarName;
 
@@ -92,7 +89,7 @@ export default class OneStepDeployApp extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let cdapPath = constructCdapUrl({
-      _cdapPath: `/namespaces/${namespace}/apps`
+      _cdapPath: `/namespaces/${namespace}/apps`,
     });
     cdapPath = encodeURIComponent(cdapPath);
 
@@ -114,27 +111,25 @@ export default class OneStepDeployApp extends Component {
       fetch(fetchUrl, {
         method: 'GET',
         headers,
-        credentials: 'include'
+        credentials: 'include',
       })
         .then((res) => {
           if (res.status > 299) {
-            res.text()
-              .then((err) => {
-                observer.error(err);
-              });
+            res.text().then((err) => {
+              observer.error(err);
+            });
           } else {
             // need to do this, because app name is returned in the response text
-            res.text()
-              .then((textResponse) => {
-                let successInfo = this.buildSuccessInfo(textResponse);
+            res.text().then((textResponse) => {
+              let successInfo = this.buildSuccessInfo(textResponse);
 
-                if (this.props.buildSuccessInfo) {
-                  successInfo = this.props.buildSuccessInfo();
-                }
-                this.eventEmitter.emit(globalEvents.APPUPLOAD);
-                observer.next(successInfo);
-                observer.complete();
-              });
+              if (this.props.buildSuccessInfo) {
+                successInfo = this.props.buildSuccessInfo();
+              }
+              this.eventEmitter.emit(globalEvents.APPUPLOAD);
+              observer.next(successInfo);
+              observer.complete();
+            });
           }
         })
         .catch((err) => {
@@ -155,11 +150,9 @@ export default class OneStepDeployApp extends Component {
   }
 }
 
-
-
 OneStepDeployApp.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,
-  buildSuccessInfo: PropTypes.func
+  buildSuccessInfo: PropTypes.func,
 };

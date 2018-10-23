@@ -17,24 +17,24 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {fetchSummary} from 'components/PipelineSummary/Store/PipelineSummaryActions';
+import { fetchSummary } from 'components/PipelineSummary/Store/PipelineSummaryActions';
 import PipelineSummaryStore from 'components/PipelineSummary/Store/PipelineSummaryStore';
-import {convertProgramToApi} from 'services/program-api-converter';
+import { convertProgramToApi } from 'services/program-api-converter';
 import RunsHistoryGraph from 'components/PipelineSummary/RunsHistoryGraph';
 import LogsMetricsGraph from 'components/PipelineSummary/LogsMetricsGraph';
 import NodesMetricsGraph from 'components/PipelineSummary/NodesMetricsGraph';
 import { DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
-import {UncontrolledDropdown} from 'components/UncontrolledComponents';
+import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
-import {MyPipelineApi} from 'api/pipeline';
-import {humanReadableDuration, isBatchPipeline} from 'services/helpers';
+import { MyPipelineApi } from 'api/pipeline';
+import { humanReadableDuration, isBatchPipeline } from 'services/helpers';
 import isNil from 'lodash/isNil';
 import Mousetrap from 'mousetrap';
 import ee from 'event-emitter';
-import {isDescendant} from 'services/helpers';
-import {Observable} from 'rxjs/Observable';
+import { isDescendant } from 'services/helpers';
+import { Observable } from 'rxjs/Observable';
 
 const PREFIX = 'features.PipelineSummary';
 
@@ -45,7 +45,7 @@ export default class PipelineSummary extends Component {
   constructor(props) {
     super(props);
     const RUNSFILTERPREFIX = `${PREFIX}.runsFilter`;
-    let {namespaceId, appId, programType, programId, pipelineConfig} = props;
+    let { namespaceId, appId, programType, programId, pipelineConfig } = props;
     this.state = {
       runs: [],
       logsMetrics: [],
@@ -59,37 +59,37 @@ export default class PipelineSummary extends Component {
       start: null,
       end: null,
       avgRunTime: '--',
-      nodesMap: {}
+      nodesMap: {},
     };
     this.fetchRunsByLimit = this.fetchRunsByLimit.bind(this);
     this.fetchRunsByTime = this.fetchRunsByTime.bind(this);
     this.runsDropdown = [
       {
         label: T.translate(`${RUNSFILTERPREFIX}.last10Runs`),
-        onClick: this.fetchRunsByLimit.bind(this, 10)
+        onClick: this.fetchRunsByLimit.bind(this, 10),
       },
       {
         label: T.translate(`${RUNSFILTERPREFIX}.last50Runs`),
-        onClick: this.fetchRunsByLimit.bind(this, 50)
+        onClick: this.fetchRunsByLimit.bind(this, 50),
       },
       {
         label: T.translate(`${RUNSFILTERPREFIX}.last100Runs`),
-        onClick: this.fetchRunsByLimit.bind(this, 100)
+        onClick: this.fetchRunsByLimit.bind(this, 100),
       },
       {
-        label: 'divider'
+        label: 'divider',
       },
       {
         label: T.translate(`${RUNSFILTERPREFIX}.last1Day`),
-        onClick: this.fetchRunsByTime.bind(this, ONE_DAY_SECONDS)
+        onClick: this.fetchRunsByTime.bind(this, ONE_DAY_SECONDS),
       },
       {
         label: T.translate(`${RUNSFILTERPREFIX}.last7Days`),
-        onClick: this.fetchRunsByTime.bind(this, ONE_DAY_SECONDS * 7)
+        onClick: this.fetchRunsByTime.bind(this, ONE_DAY_SECONDS * 7),
       },
       {
         label: T.translate(`${RUNSFILTERPREFIX}.last30Days`),
-        onClick: this.fetchRunsByTime.bind(this, ONE_DAY_SECONDS * 30)
+        onClick: this.fetchRunsByTime.bind(this, ONE_DAY_SECONDS * 30),
       },
       {
         label: T.translate(`${RUNSFILTERPREFIX}.sinceInception`),
@@ -98,17 +98,17 @@ export default class PipelineSummary extends Component {
             activeRunsFilter: T.translate(`${RUNSFILTERPREFIX}.sinceInception`),
             filterType: 'time',
             start: null,
-            end: null
+            end: null,
           });
           fetchSummary({
             namespaceId,
             appId,
             programType: convertProgramToApi(programType),
             programId,
-            pipelineConfig
+            pipelineConfig,
           });
-        }
-      }
+        },
+      },
     ];
     fetchSummary({
       namespaceId,
@@ -116,7 +116,7 @@ export default class PipelineSummary extends Component {
       programType: convertProgramToApi(programType),
       programId,
       pipelineConfig,
-      limit: this.state.runsLimit
+      limit: this.state.runsLimit,
     });
     this.eventEmitter = ee(ee);
   }
@@ -125,7 +125,7 @@ export default class PipelineSummary extends Component {
       return;
     }
     this.setState({
-      totalRunsCount: nextProps.totalRunsCount
+      totalRunsCount: nextProps.totalRunsCount,
     });
   }
   componentWillUnmount() {
@@ -142,26 +142,22 @@ export default class PipelineSummary extends Component {
     if (!isBatchPipeline(this.props.pipelineType)) {
       return;
     }
-    let {namespaceId: namespace, appId, programId: workflowId} = this.props;
+    let { namespaceId: namespace, appId, programId: workflowId } = this.props;
     MyPipelineApi.getStatistics({
       namespace,
       appId,
-      workflowId
-    })
-      .subscribe(
-        res => {
-          if (typeof res !== 'object') {
-            return;
-          }
-          this.setState({
-            avgRunTime: res.avgRunTime
-          });
-        }
-      );
+      workflowId,
+    }).subscribe((res) => {
+      if (typeof res !== 'object') {
+        return;
+      }
+      this.setState({
+        avgRunTime: res.avgRunTime,
+      });
+    });
   };
   componentDidMount() {
-    this.documentClick$ = Observable.fromEvent(document, 'click')
-    .subscribe((e) => {
+    this.documentClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
       if (!this.summaryComponent) {
         return;
       }
@@ -177,36 +173,41 @@ export default class PipelineSummary extends Component {
     Mousetrap.bind('esc', () => {
       this.eventEmitter.emit('CLOSE_HINT_TOOLTIP');
       this.setState({
-        currentHoveredElement: null
+        currentHoveredElement: null,
       });
     });
     this.storeSubscription = PipelineSummaryStore.subscribe(() => {
-      let {runs, loading, nodesMap, nodeMetricsLoading} = PipelineSummaryStore.getState().pipelinerunssummary;
-      runs = runs.map(run => ({
+      let {
+        runs,
+        loading,
+        nodesMap,
+        nodeMetricsLoading,
+      } = PipelineSummaryStore.getState().pipelinerunssummary;
+      runs = runs.map((run) => ({
         ...run,
         starting: run.starting,
       }));
-      let logsMetrics = runs.map(run => ({
+      let logsMetrics = runs.map((run) => ({
         runid: run.runid,
         logsMetrics: run.logsMetrics || {},
         start: run.start,
         starting: run.starting,
-        end: run.end
+        end: run.end,
       }));
-      runs = runs.map(run => ({
+      runs = runs.map((run) => ({
         runid: run.runid,
         duration: run.duration,
         start: run.start,
         starting: run.starting,
         end: run.end,
-        status: run.status
+        status: run.status,
       }));
       let state = {
         runs,
         logsMetrics,
         nodesMap,
         loading,
-        nodeMetricsLoading
+        nodeMetricsLoading,
       };
       if (this.state.filterType === 'time') {
         const getStartAndEnd = () => {
@@ -216,11 +217,11 @@ export default class PipelineSummary extends Component {
             end = runs[0].starting;
             start = runs[runs.length - 1].starting;
           }
-          return !isNil(start) && !isNil(end) ? {start, end} : {};
+          return !isNil(start) && !isNil(end) ? { start, end } : {};
         };
 
-        state = Object.assign({}, state, getStartAndEnd() , {
-          limit: runs.length
+        state = Object.assign({}, state, getStartAndEnd(), {
+          limit: runs.length,
         });
       }
       this.setState(state);
@@ -232,16 +233,16 @@ export default class PipelineSummary extends Component {
       activeRunsFilter: filterLabel,
       filterType: 'limit',
       start: null,
-      end: null
+      end: null,
     });
-    let {namespaceId, appId, programType, programId, pipelineConfig} = this.props;
+    let { namespaceId, appId, programType, programId, pipelineConfig } = this.props;
     fetchSummary({
       namespaceId,
       appId,
       programType: convertProgramToApi(programType),
       programId,
       pipelineConfig,
-      limit
+      limit,
     });
   }
   fetchRunsByTime(time, filterLabel) {
@@ -252,9 +253,9 @@ export default class PipelineSummary extends Component {
       filterType: 'time',
       runsLimit: null,
       start,
-      end
+      end,
     });
-    let {namespaceId, appId, programType, programId, pipelineConfig} = this.props;
+    let { namespaceId, appId, programType, programId, pipelineConfig } = this.props;
     fetchSummary({
       namespaceId,
       appId,
@@ -262,7 +263,7 @@ export default class PipelineSummary extends Component {
       programId,
       pipelineConfig,
       start,
-      end
+      end,
     });
   }
   renderTitleBar() {
@@ -270,25 +271,17 @@ export default class PipelineSummary extends Component {
       <div className="top-title-bar">
         <div> {T.translate(`${PREFIX}.title`)}</div>
         <div className="stats-container text-xs-right">
-          {
-            isBatchPipeline(this.props.pipelineType) ?
-              <span>
-                <strong>{T.translate(`${PREFIX}.statsContainer.avgRunTime`)}: </strong>
-                {
-                  humanReadableDuration(this.state.avgRunTime)
-                }
-              </span>
-            :
-              null
-          }
+          {isBatchPipeline(this.props.pipelineType) ? (
+            <span>
+              <strong>{T.translate(`${PREFIX}.statsContainer.avgRunTime`)}: </strong>
+              {humanReadableDuration(this.state.avgRunTime)}
+            </span>
+          ) : null}
           <span>
             <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)}: </strong>
             {this.state.totalRunsCount}
           </span>
-          <IconSVG
-            name="icon-close"
-            onClick={this.props.onClose}
-          />
+          <IconSVG name="icon-close" onClick={this.props.onClose} />
         </div>
       </div>
     );
@@ -297,11 +290,9 @@ export default class PipelineSummary extends Component {
     return (
       <div
         className="pipeline-settings pipeline-summary"
-        ref={(ref) => this.summaryComponent = ref}
+        ref={(ref) => (this.summaryComponent = ref)}
       >
-        {
-          this.renderTitleBar()
-        }
+        {this.renderTitleBar()}
         <div className="filter-container">
           <span> {T.translate(`${PREFIX}.filterContainer.view`)} </span>
           <UncontrolledDropdown className="runs-dropdown">
@@ -310,28 +301,16 @@ export default class PipelineSummary extends Component {
               <IconSVG name="icon-caret-down" />
             </DropdownToggle>
             <CustomDropdownMenu>
-              {
-                this.runsDropdown.map(dropdown => {
-                  if (dropdown.label === 'divider') {
-                    return (
-                      <DropdownItem
-                        tag="li"
-                        divider
-                      />
-                    );
-                  }
-                  return (
-                    <DropdownItem
-                      tag="li"
-                      onClick={dropdown.onClick.bind(this, dropdown.label)}
-                    >
-                      {
-                        dropdown.label
-                      }
-                    </DropdownItem>
-                  );
-                })
-              }
+              {this.runsDropdown.map((dropdown) => {
+                if (dropdown.label === 'divider') {
+                  return <DropdownItem tag="li" divider />;
+                }
+                return (
+                  <DropdownItem tag="li" onClick={dropdown.onClick.bind(this, dropdown.label)}>
+                    {dropdown.label}
+                  </DropdownItem>
+                );
+              })}
             </CustomDropdownMenu>
           </UncontrolledDropdown>
         </div>
@@ -398,5 +377,5 @@ PipelineSummary.propTypes = {
   programId: PropTypes.string.isRequired,
   pipelineConfig: PropTypes.object.isRequired,
   totalRunsCount: PropTypes.number,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
 };

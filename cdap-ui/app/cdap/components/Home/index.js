@@ -16,76 +16,86 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Route, Switch} from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 import Page404 from 'components/404';
 import EntityListView from 'components/EntityListView';
 import Loadable from 'react-loadable';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
-import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {
+  setActiveBrowser,
+  setDatabaseProperties,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 
 require('./Home.scss');
 
 const DataPrepBrowser = Loadable({
-  loader: () => import(/* webpackChunkName: "DataPrepBrowser" */ 'components/DataPrep/DataPrepBrowser'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "DataPrepBrowser" */ 'components/DataPrep/DataPrepBrowser'),
+  loading: LoadingSVGCentered,
 });
 const DataPrepConnections = Loadable({
-  loader: () => import(/* webpackChunkName: "DataPrepConnections" */ 'components/DataPrepConnections'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "DataPrepConnections" */ 'components/DataPrepConnections'),
+  loading: LoadingSVGCentered,
 });
 const DataPrepHome = Loadable({
   loader: () => import(/* webpackChunkName: "DataPrepHome" */ 'components/DataPrepHome'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 const RulesEngineHome = Loadable({
   loader: () => import(/* webpackChunkName: "RulesEngineHome" */ 'components/RulesEngineHome'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 const DatasetDetailedView = Loadable({
-  loader: () => import(/* webpackChunkName: "DatasetDetailedView" */ 'components/DatasetDetailedView'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "DatasetDetailedView" */ 'components/DatasetDetailedView'),
+  loading: LoadingSVGCentered,
 });
 const StreamDetailedView = Loadable({
-  loader: () => import(/* webpackChunkName: "StreamDetailedView" */ 'components/StreamDetailedView'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "StreamDetailedView" */ 'components/StreamDetailedView'),
+  loading: LoadingSVGCentered,
 });
 const AppDetailedView = Loadable({
   loader: () => import(/* webpackChunkName: "AppDetailedView" */ 'components/AppDetailedView'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 const Experiments = Loadable({
   loader: () => import(/* webpackChunkName: "Experiments" */ 'components/Experiments'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 const NamespaceDetails = Loadable({
   loader: () => import(/* webpackChunkName: "NamespaceDetails" */ 'components/NamespaceDetails'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 const ProfileCreateView = Loadable({
-  loader: () => import(/* webpackChunkName: "ProfileCreateView" */ 'components/Cloud/Profiles/CreateView'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "ProfileCreateView" */ 'components/Cloud/Profiles/CreateView'),
+  loading: LoadingSVGCentered,
 });
 const ProfileCreateProvisionerSelection = Loadable({
-  loader: () => import(/* webpackChunkName: "ProfileCreateProvisionerSelection" */ 'components/Cloud/Profiles/CreateView/ProvisionerSelection'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "ProfileCreateProvisionerSelection" */ 'components/Cloud/Profiles/CreateView/ProvisionerSelection'),
+  loading: LoadingSVGCentered,
 });
 const ProfileDetailView = Loadable({
-  loader: () => import(/* webpackChunkName: "ProfileDetailView" */ 'components/Cloud/Profiles/DetailView'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "ProfileDetailView" */ 'components/Cloud/Profiles/DetailView'),
+  loading: LoadingSVGCentered,
 });
 const Reports = Loadable({
   loader: () => import(/* webpackChunkName: "Reports" */ 'components/Reports'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 const OpsDashboard = Loadable({
   loader: () => import(/* webpackChunkName: "OpsDashboard" */ 'components/OpsDashboard'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 const FieldLevelLineage = Loadable({
   loader: () => import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 
 export default class Home extends Component {
@@ -93,8 +103,8 @@ export default class Home extends Component {
     NamespaceStore.dispatch({
       type: NamespaceActions.selectNamespace,
       payload: {
-        selectedNamespace: this.props.match.params.namespace
-      }
+        selectedNamespace: this.props.match.params.namespace,
+      },
     });
   }
   render() {
@@ -103,34 +113,51 @@ export default class Home extends Component {
         <Switch>
           <Route exact path="/ns/:namespace" component={EntityListView} />
           <Route path="/ns/:namespace/apps/:appId" component={AppDetailedView} />
-          <Route exact path="/ns/:namespace/datasets/:datasetId/fields" component={FieldLevelLineage} />
+          <Route
+            exact
+            path="/ns/:namespace/datasets/:datasetId/fields"
+            component={FieldLevelLineage}
+          />
           <Route path="/ns/:namespace/datasets/:datasetId" component={DatasetDetailedView} />
           <Route path="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
           <Route exact path="/ns/:namespace/rulesengine" component={RulesEngineHome} />
           <Route exact path="/ns/:namespace/dataprep" component={DataPrepHome} />
           <Route exact path="/ns/:namespace/dataprep/:workspaceId" component={DataPrepHome} />
-          <Route path="/ns/:namespace/databasebrowser" render={() => {
-            setActiveBrowser({ name: 'database' });
-            setDatabaseProperties({
-              properties: {
-                connectionString: 'jdbc:mysql://localhost:3306/test',
-                userName: 'root',
-                password: 'root',
-                databasename: 'test'
-              }
-            });
-            return (
-              <DataPrepBrowser />
-            );
-          }} />
+          <Route
+            path="/ns/:namespace/databasebrowser"
+            render={() => {
+              setActiveBrowser({ name: 'database' });
+              setDatabaseProperties({
+                properties: {
+                  connectionString: 'jdbc:mysql://localhost:3306/test',
+                  userName: 'root',
+                  password: 'root',
+                  databasename: 'test',
+                },
+              });
+              return <DataPrepBrowser />;
+            }}
+          />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
           <Route path="/ns/:namespace/experiments" component={Experiments} />
           <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
           <Route exact path="/ns/:namespace/details" component={NamespaceDetails} />
           <Route path="/ns/:namespace/reports" component={Reports} />
-          <Route exact path="/ns/:namespace/profiles/create" component={ProfileCreateProvisionerSelection} />
-          <Route exact path="/ns/:namespace/profiles/create/:provisionerId" component={ProfileCreateView} />
-          <Route exact path="/ns/:namespace/profiles/details/:profileId" component={ProfileDetailView} />
+          <Route
+            exact
+            path="/ns/:namespace/profiles/create"
+            component={ProfileCreateProvisionerSelection}
+          />
+          <Route
+            exact
+            path="/ns/:namespace/profiles/create/:provisionerId"
+            component={ProfileCreateView}
+          />
+          <Route
+            exact
+            path="/ns/:namespace/profiles/details/:profileId"
+            component={ProfileDetailView}
+          />
           <Route component={Page404} />
         </Switch>
       </div>
@@ -140,7 +167,7 @@ export default class Home extends Component {
 
 Home.propTypes = {
   params: PropTypes.shape({
-    namespace : PropTypes.string
+    namespace: PropTypes.string,
   }),
-  match: PropTypes.object
+  match: PropTypes.object,
 };

@@ -15,35 +15,39 @@
 */
 
 import React from 'react';
-import {Provider, connect} from 'react-redux';
+import { Provider, connect } from 'react-redux';
 import FileDnD from 'components/FileDnD';
-import ImportRulebookStore, {IMPORTRULEBOOKACTIONS} from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookStore';
+import ImportRulebookStore, {
+  IMPORTRULEBOOKACTIONS,
+} from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookStore';
 
 const mapStateToFileDnDProps = (state) => {
   return {
-    file: state.upload.file
+    file: state.upload.file,
   };
 };
 const mapDispatchToDndProps = (dispatch) => {
   return {
     onDropHandler: (e) => {
-      if (!e[0]) { return; }
+      if (!e[0]) {
+        return;
+      }
       var reader = new FileReader();
       var filename = e[0].name;
       reader.readAsText(e[0], 'UTF-8');
-      reader.onload = function (evt) {
+      reader.onload = function(evt) {
         var data = evt.target.result;
         dispatch({
           type: IMPORTRULEBOOKACTIONS.UPLOADFILE,
           payload: {
             file: {
               contents: data,
-              name: filename
-            }
-          }
+              name: filename,
+            },
+          },
         });
       };
-    }
+    },
   };
 };
 const ImportRulebookFile = connect(

@@ -15,7 +15,7 @@
 */
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
 require('./Mapping.scss');
@@ -27,11 +27,16 @@ const mapStateToProps = (state) => {
     hdfsRootDirectory: state.hdfsRootDirectory,
     hbaseNamespaceName: state.hbaseNamespaceName,
     hiveDatabaseName: state.hiveDatabaseName,
-    schedulerQueueName: state.schedulerQueueName
+    schedulerQueueName: state.schedulerQueueName,
   };
 };
 
-const NamespaceDetailsMapping = ({hdfsRootDirectory, hbaseNamespaceName, hiveDatabaseName, schedulerQueueName}) => {
+const NamespaceDetailsMapping = ({
+  hdfsRootDirectory,
+  hbaseNamespaceName,
+  hiveDatabaseName,
+  schedulerQueueName,
+}) => {
   return (
     <div className="namespace-details-mapping">
       <div className="namespace-details-section-label">
@@ -40,29 +45,21 @@ const NamespaceDetailsMapping = ({hdfsRootDirectory, hbaseNamespaceName, hiveDat
       <div className="mapping-values-group">
         <span className="mapping-values">
           <strong>{T.translate(`${PREFIX}.hdfsRootDirectory`)}</strong>
-          <span title={hdfsRootDirectory}>
-            {hdfsRootDirectory || '- -'}
-          </span>
+          <span title={hdfsRootDirectory}>{hdfsRootDirectory || '- -'}</span>
         </span>
         <span className="mapping-values">
           <strong>{T.translate(`${PREFIX}.hbaseNamespaceName`)}</strong>
-          <span title={hbaseNamespaceName}>
-            {hbaseNamespaceName || '- -'}
-          </span>
+          <span title={hbaseNamespaceName}>{hbaseNamespaceName || '- -'}</span>
         </span>
       </div>
       <div className="mapping-values-group">
         <span className="mapping-values">
           <strong>{T.translate(`${PREFIX}.hiveDatabaseName`)}</strong>
-          <span title={hiveDatabaseName}>
-            {hiveDatabaseName || '- -'}
-          </span>
+          <span title={hiveDatabaseName}>{hiveDatabaseName || '- -'}</span>
         </span>
         <span className="mapping-values">
           <strong>{T.translate(`${PREFIX}.schedulerQueueName`)}</strong>
-          <span title={schedulerQueueName}>
-            {schedulerQueueName || '- -'}
-          </span>
+          <span title={schedulerQueueName}>{schedulerQueueName || '- -'}</span>
         </span>
       </div>
     </div>
@@ -73,7 +70,7 @@ NamespaceDetailsMapping.propTypes = {
   hdfsRootDirectory: PropTypes.string,
   hbaseNamespaceName: PropTypes.string,
   hiveDatabaseName: PropTypes.string,
-  schedulerQueueName: PropTypes.string
+  schedulerQueueName: PropTypes.string,
 };
 
 const ConnectedNamespaceDetailsMapping = connect(mapStateToProps)(NamespaceDetailsMapping);

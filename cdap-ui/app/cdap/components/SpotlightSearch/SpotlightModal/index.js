@@ -17,10 +17,10 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MySearchApi} from 'api/search';
+import { MySearchApi } from 'api/search';
 import NamespaceStore from 'services/NamespaceStore';
-import {parseMetadata} from 'services/metadata-parser';
-import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
+import { parseMetadata } from 'services/metadata-parser';
+import { convertEntityTypeToApi } from 'services/entity-type-api-converter';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
@@ -29,12 +29,7 @@ import Pagination from 'components/Pagination';
 import SpotlightModalHeader from 'components/SpotlightSearch/SpotlightModal/SpotlightModalHeader';
 import T from 'i18n-react';
 
-import {
-  Col,
-  Modal,
-  ModalBody,
-  Badge
-} from 'reactstrap';
+import { Col, Modal, ModalBody, Badge } from 'reactstrap';
 
 require('./SpotlightModal.scss');
 
@@ -48,11 +43,11 @@ export default class SpotlightModal extends Component {
     target: PropTypes.array,
     isOpen: PropTypes.bool,
     toggle: PropTypes.func,
-    isNativeLink: PropTypes.bool
+    isNativeLink: PropTypes.bool,
   };
 
   static defaultProps = {
-    isNativeLink: false
+    isNativeLink: false,
   };
 
   state = {
@@ -60,7 +55,7 @@ export default class SpotlightModal extends Component {
     currentPage: 1,
     numPages: 1,
     focusIndex: 0,
-    isPaginationExpanded: false
+    isPaginationExpanded: false,
   };
 
   componentWillMount() {
@@ -80,20 +75,22 @@ export default class SpotlightModal extends Component {
   handleUpDownArrow(direction) {
     if (direction === 'UP') {
       let focusIndex = this.state.focusIndex === 0 ? 0 : this.state.focusIndex - 1;
-      this.setState({focusIndex});
-    } else if (direction ==='DOWN') {
+      this.setState({ focusIndex });
+    } else if (direction === 'DOWN') {
       let totalResults = this.state.searchResults.results.length;
 
-      let focusIndex = this.state.focusIndex === totalResults - 1 ?
-        this.state.focusIndex : this.state.focusIndex + 1;
+      let focusIndex =
+        this.state.focusIndex === totalResults - 1
+          ? this.state.focusIndex
+          : this.state.focusIndex + 1;
 
-      this.setState({focusIndex});
+      this.setState({ focusIndex });
     }
   }
 
   handlePaginationToggle = () => {
     this.setState({
-      isPaginationExpanded: !this.state.isPaginationExpanded
+      isPaginationExpanded: !this.state.isPaginationExpanded,
     });
   };
 
@@ -107,7 +104,9 @@ export default class SpotlightModal extends Component {
   }
 
   handleSearch(page) {
-    if (page === 0 || page > this.state.numPages) { return; }
+    if (page === 0 || page > this.state.numPages) {
+      return;
+    }
 
     let offset = (page - 1) * PAGE_SIZE;
 
@@ -120,13 +119,13 @@ export default class SpotlightModal extends Component {
       query,
       target,
       limit: PAGE_SIZE,
-      offset
+      offset,
     }).subscribe((res) => {
       this.setState({
         searchResults: res,
         currentPage: page,
         numPages: Math.ceil(res.total / PAGE_SIZE),
-        focusIndex: 0
+        focusIndex: 0,
       });
     });
   }
@@ -135,81 +134,59 @@ export default class SpotlightModal extends Component {
     if (!this.state.searchResults.results.length) {
       return (
         <div className="text-xs-center no-search-results">
-          {T.translate(`${PREFIX}.noResults`, {tag: this.props.tag})}
+          {T.translate(`${PREFIX}.noResults`, { tag: this.props.tag })}
         </div>
       );
     }
 
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
-    let searchResultsToBeRendered = (
-        this.state.searchResults.results
-        .map(parseMetadata)
-        .map((entity, index) => {
-          let entityTypeLabel = convertEntityTypeToApi(entity.type);
-          let entityUrl = `/ns/${currentNamespace}/${entityTypeLabel}/${entity.id}`;
-          return (
-            <NavLinkWrapper
-              key={entity.id}
-              to={this.props.isNativeLink ? `/cdap${entityUrl}` : entityUrl}
-              isNativeLink={this.props.isNativeLink}
+    let searchResultsToBeRendered = this.state.searchResults.results
+      .map(parseMetadata)
+      .map((entity, index) => {
+        let entityTypeLabel = convertEntityTypeToApi(entity.type);
+        let entityUrl = `/ns/${currentNamespace}/${entityTypeLabel}/${entity.id}`;
+        return (
+          <NavLinkWrapper
+            key={entity.id}
+            to={this.props.isNativeLink ? `/cdap${entityUrl}` : entityUrl}
+            isNativeLink={this.props.isNativeLink}
+          >
+            <div
+              key={uuidV4()}
+              className={classnames('row search-results-item', {
+                active: index === this.state.focusIndex,
+              })}
             >
-              <div
-                key={uuidV4()}
-                className={classnames('row search-results-item', {
-                  active: index === this.state.focusIndex
-                })}
-              >
-                <Col xs="6">
-                  <div className="entity-title">
-                    <span className="entity-icon">
-                      <span className={entity.icon} />
-                    </span>
-                    <span className="entity-name">
-                      {entity.id}
-                    </span>
-                  </div>
-                  <div className="entity-description">
-                    <span>
-                      {entity.metadata.metadata.SYSTEM.properties.description}
-                    </span>
-                  </div>
-                </Col>
+              <Col xs="6">
+                <div className="entity-title">
+                  <span className="entity-icon">
+                    <span className={entity.icon} />
+                  </span>
+                  <span className="entity-name">{entity.id}</span>
+                </div>
+                <div className="entity-description">
+                  <span>{entity.metadata.metadata.SYSTEM.properties.description}</span>
+                </div>
+              </Col>
 
-                <Col xs="6">
-                  <div className="entity-tags-container text-xs-right">
-                    {
-                      entity.metadata.metadata.SYSTEM.tags.map((tag) => {
-                        return (
-                          <Badge key={uuidV4()}>{tag}</Badge>
-                        );
+              <Col xs="6">
+                <div className="entity-tags-container text-xs-right">
+                  {entity.metadata.metadata.SYSTEM.tags.map((tag) => {
+                    return <Badge key={uuidV4()}>{tag}</Badge>;
+                  })}
+                  {entity.metadata.metadata.USER
+                    ? entity.metadata.metadata.USER.tags.map((tag) => {
+                        return <Badge key={uuidV4()}>{tag}</Badge>;
                       })
-                    }
-                    {
-                      entity.metadata.metadata.USER ?
-                        (
-                          entity.metadata.metadata.USER.tags.map((tag) => {
-                            return (
-                              <Badge key={uuidV4()}>{tag}</Badge>
-                            );
-                          })
-                        )
-                      :
-                        null
+                    : null}
+                </div>
+              </Col>
+            </div>
+          </NavLinkWrapper>
+        );
+      });
 
-                    }
-                  </div>
-                </Col>
-              </div>
-            </NavLinkWrapper>
-          );
-        })
-      );
-
-    return (
-      <div>
-        {searchResultsToBeRendered}
-      </div>
-    );
+    return <div>{searchResultsToBeRendered}</div>;
   }
 
   render() {
@@ -217,7 +194,7 @@ export default class SpotlightModal extends Component {
       <Modal
         isOpen={this.props.isOpen}
         toggle={this.props.toggle}
-        className='search-results-modal'
+        className="search-results-modal"
         size="lg"
         backdrop="static"
       >

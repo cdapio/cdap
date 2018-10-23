@@ -13,48 +13,53 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
 import ArtifactUploadWizardConfig from 'services/WizardConfigs/ArtifactUploadWizardConfig';
 import head from 'lodash/head';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 const defaultState = {
   __complete: false,
   __skipped: false,
-  __error: false
+  __error: false,
 };
 
-const defaultConfigureState = Object.assign({
-  name: '',
-  type: '',
-  description: '',
-  classname: '',
-  parentArtifact: [
-    'system:cdap-data-pipeline[3.0.0,10.0.0]',
-    'system:cdap-data-streams[3.0.0,10.0.0]',
-    'system:cdap-etl-batch[3.0.0,10.0.0]'
-  ]
-}, defaultState);
+const defaultConfigureState = Object.assign(
+  {
+    name: '',
+    type: '',
+    description: '',
+    classname: '',
+    parentArtifact: [
+      'system:cdap-data-pipeline[3.0.0,10.0.0]',
+      'system:cdap-data-streams[3.0.0,10.0.0]',
+      'system:cdap-etl-batch[3.0.0,10.0.0]',
+    ],
+  },
+  defaultState
+);
 
-const defaultUploadState = Object.assign({
-  file: []
-}, defaultState);
+const defaultUploadState = Object.assign(
+  {
+    file: [],
+  },
+  defaultState
+);
 
 const defaultInitialState = {
   upload: defaultUploadState,
-  configure: defaultConfigureState
+  configure: defaultConfigureState,
 };
 
 const isNil = (value) => value === null || typeof value === 'undefined' || value === '';
 const isComplete = (state, requiredFields) => {
-  let emptyFieldsInState = Object.keys(state)
-    .filter(fieldName => {
-      return isNil(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
-    });
+  let emptyFieldsInState = Object.keys(state).filter((fieldName) => {
+    return isNil(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
+  });
   return !emptyFieldsInState.length ? true : false;
 };
 
@@ -63,7 +68,7 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
     case ArtifactUploadActions.setFilePath:
       return Object.assign({}, state, {
         file: action.payload.file,
-        __complete: true
+        __complete: true,
       });
     case ArtifactUploadActions.onReset:
       return defaultUploadState;
@@ -77,36 +82,34 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
   let configurationStepRequiredFields = [];
   if (ArtifactUploadWizardConfig) {
     configurationStepRequiredFields = head(
-      ArtifactUploadWizardConfig
-        .steps
-        .filter(step => step.id === 'configuration')
-      ).requiredFields;
+      ArtifactUploadWizardConfig.steps.filter((step) => step.id === 'configuration')
+    ).requiredFields;
   }
   switch (action.type) {
     case ArtifactUploadActions.setName:
       stateCopy = Object.assign({}, state, {
-        name: action.payload.name
+        name: action.payload.name,
       });
       break;
     case ArtifactUploadActions.setDescription:
       stateCopy = Object.assign({}, state, {
-        description: action.payload.description
+        description: action.payload.description,
       });
       break;
     case ArtifactUploadActions.setClassname:
       stateCopy = Object.assign({}, state, {
-        classname: action.payload.classname
+        classname: action.payload.classname,
       });
       break;
     case ArtifactUploadActions.setType:
       stateCopy = Object.assign({}, state, {
-        type: action.payload.type
+        type: action.payload.type,
       });
       break;
     case ArtifactUploadActions.setNameAndClass:
       stateCopy = Object.assign({}, state, {
         name: action.payload.name,
-        classname: action.payload.classname
+        classname: action.payload.classname,
       });
       break;
     case ArtifactUploadActions.onReset:
@@ -115,7 +118,7 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy, configurationStepRequiredFields)
+    __complete: isComplete(stateCopy, configurationStepRequiredFields),
   });
 };
 
@@ -123,7 +126,7 @@ const ArtifactUploadStoreWrapper = () => {
   return createStore(
     combineReducers({
       upload,
-      configure
+      configure,
     }),
     defaultInitialState
   );

@@ -15,8 +15,8 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {PureComponent} from 'react';
-import {Link} from 'react-router-dom';
+import React, { PureComponent } from 'react';
+import { Link } from 'react-router-dom';
 import IconSVG from 'components/IconSVG';
 
 require('./EntityTopPanel.scss');
@@ -29,7 +29,7 @@ export default class EntityTopPanel extends PureComponent {
     entityIcon: PropTypes.string,
     entityType: PropTypes.string,
     closeBtnAnchorLink: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    historyBack: PropTypes.bool
+    historyBack: PropTypes.bool,
   };
 
   renderBreadCrumnAnchorLink = () => {
@@ -44,7 +44,9 @@ export default class EntityTopPanel extends PureComponent {
     }
 
     const onClickHandler = () => {
-      if (!this.props.historyBack) { return; }
+      if (!this.props.historyBack) {
+        return;
+      }
       history.back();
     };
 
@@ -55,12 +57,8 @@ export default class EntityTopPanel extends PureComponent {
           onClick={onClickHandler}
           className="link-container"
         >
-          <span className="arrow-left">
-            &laquo;
-          </span>
-          <span className="breadcrumb-label">
-            {this.props.breadCrumbAnchorLabel}
-          </span>
+          <span className="arrow-left">&laquo;</span>
+          <span className="breadcrumb-label">{this.props.breadCrumbAnchorLabel}</span>
         </Tag>
         <span className="divider"> | </span>
       </div>
@@ -71,22 +69,16 @@ export default class EntityTopPanel extends PureComponent {
     if (this.props.entityIcon && this.props.entityType) {
       return (
         <div className="multiline-title">
-          <h5 className="overview-heading">
-            {this.props.title}
-          </h5>
+          <h5 className="overview-heading">{this.props.title}</h5>
           <div className="entity-type">
             <IconSVG name={this.props.entityIcon} />
-            <span className="entity-type-text">
-              {this.props.entityType}
-            </span>
+            <span className="entity-type-text">{this.props.entityType}</span>
           </div>
         </div>
       );
     }
 
-    return (
-      <h5 className="overview-heading">{this.props.title}</h5>
-    );
+    return <h5 className="overview-heading">{this.props.title}</h5>;
   };
 
   renderCloseBtn = () => {
@@ -97,19 +89,14 @@ export default class EntityTopPanel extends PureComponent {
     if (typeof this.props.closeBtnAnchorLink === 'function') {
       return (
         <h5 className="toppanel-close-btn">
-          <IconSVG
-            name="icon-close"
-            onClick={this.props.closeBtnAnchorLink}
-          />
+          <IconSVG name="icon-close" onClick={this.props.closeBtnAnchorLink} />
         </h5>
       );
     }
 
     return (
       <h5 className="toppanel-close-btn">
-        <Link
-          to={this.props.closeBtnAnchorLink}
-        >
+        <Link to={this.props.closeBtnAnchorLink}>
           <IconSVG name="icon-close" />
         </Link>
       </h5>

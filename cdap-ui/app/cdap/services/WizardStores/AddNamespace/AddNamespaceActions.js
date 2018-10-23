@@ -29,7 +29,7 @@ const AddNamespaceActions = {
   onReset: 'FORM-RESET',
   setPreferences: 'SET-PREFERENCES',
   setProperties: 'SET-PROPERTIES',
-  setEditableFields: 'SET-EDITABLE-FIELDS'
+  setEditableFields: 'SET-EDITABLE-FIELDS',
 };
 
 export default AddNamespaceActions;

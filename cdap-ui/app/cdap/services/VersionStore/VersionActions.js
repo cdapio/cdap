@@ -14,8 +14,8 @@
  * the License.
  */
 
- const VersionActions = {
-   updateVersion : 'UPDATE_VERSION'
- };
+const VersionActions = {
+  updateVersion: 'UPDATE_VERSION',
+};
 
- export default VersionActions;
+export default VersionActions;

@@ -25,9 +25,9 @@ const InformationalWizardConfig = {
       shorttitle: T.translate('features.Wizard.Informational.Step1.shorttitle'),
       title: T.translate('features.Wizard.Informational.Step1.title'),
       description: T.translate('features.Wizard.Informational.Step1.description'),
-      content: (<ShowInfo />),
-    }
-  ]
+      content: <ShowInfo />,
+    },
+  ],
 };
 
 export default InformationalWizardConfig;

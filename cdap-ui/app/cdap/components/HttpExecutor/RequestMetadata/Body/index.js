@@ -17,12 +17,12 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 
 const mapStateToProps = (state) => {
   return {
-    value: state.http.body
+    value: state.http.body,
   };
 };
 
@@ -32,28 +32,24 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: HttpExecutorActions.setBody,
         payload: {
-          body: e.target.value
-        }
+          body: e.target.value,
+        },
       });
-    }
+    },
   };
 };
 
-function BodyView({value, onChange}) {
+function BodyView({ value, onChange }) {
   return (
     <div className="request-body">
-      <textarea
-        className="form-control"
-        value={value}
-        onChange={onChange}
-      />
+      <textarea className="form-control" value={value} onChange={onChange} />
     </div>
   );
 }
 
 BodyView.propTypes = {
   value: PropTypes.string,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };
 
 const Body = connect(

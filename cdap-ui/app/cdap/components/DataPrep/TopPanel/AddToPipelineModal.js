@@ -20,11 +20,11 @@ import React, { Component } from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {objectQuery} from 'services/helpers';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { objectQuery } from 'services/helpers';
 import T from 'i18n-react';
 import classnames from 'classnames';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import CardActionFeedback from 'components/CardActionFeedback';
 import getPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
 import isString from 'lodash/isString';
@@ -32,14 +32,14 @@ import If from 'components/If';
 
 const mapErrorToMessage = (message) => {
   if (message.indexOf('invalid field name') !== -1) {
-    let splitMessage = message.split("field name: ");
+    let splitMessage = message.split('field name: ');
     let fieldName = objectQuery(splitMessage, 1) || message;
     return {
-      message: T.translate(`${PREFIX}.invalidFieldNameMessage`, {fieldName}),
-      remedies: `${T.translate(`${PREFIX}.invalidFieldNameRemedies1`)}`
+      message: T.translate(`${PREFIX}.invalidFieldNameMessage`, { fieldName }),
+      remedies: `${T.translate(`${PREFIX}.invalidFieldNameRemedies1`)}`,
     };
   }
-  return {message};
+  return { message };
 };
 
 const PREFIX = 'features.DataPrep.TopPanel';
@@ -54,7 +54,7 @@ export default class AddToHydratorModal extends Component {
       error: null,
       workspaceId: null,
       realtimeConfig: null,
-      batchConfig: null
+      batchConfig: null,
     };
   }
 
@@ -79,8 +79,8 @@ export default class AddToHydratorModal extends Component {
             stateParams: {
               namespace,
               workspaceId,
-              artifactType: 'cdap-data-streams'
-            }
+              artifactType: 'cdap-data-streams',
+            },
           });
         }
 
@@ -89,8 +89,8 @@ export default class AddToHydratorModal extends Component {
           stateParams: {
             namespace,
             workspaceId,
-            artifactType: 'cdap-data-pipeline'
-          }
+            artifactType: 'cdap-data-pipeline',
+          },
         });
 
         this.setState({
@@ -99,51 +99,53 @@ export default class AddToHydratorModal extends Component {
           batchUrl,
           workspaceId,
           realtimeConfig: res.realtimeConfig,
-          batchConfig: res.batchConfig
+          batchConfig: res.batchConfig,
         });
       },
       (err) => {
-        let {message, remedies = null} = mapErrorToMessage(err);
+        let { message, remedies = null } = mapErrorToMessage(err);
 
         if (remedies) {
           this.setState({
-            error: {message, remedies},
-            loading: false
+            error: { message, remedies },
+            loading: false,
           });
           return;
         }
 
         this.setState({
           error: err,
-          loading: false
+          loading: false,
         });
       }
     );
   }
 
   applyDirective(directive) {
-    execute([directive])
-      .subscribe(
-        () => {
-          this.setState({
+    execute([directive]).subscribe(
+      () => {
+        this.setState(
+          {
             error: null,
             loading: true,
-            schema: []
-          }, () => {
+            schema: [],
+          },
+          () => {
             this.generateLinks();
-          });
-        },
-        (err) => {
-          console.log('Error', err);
+          }
+        );
+      },
+      (err) => {
+        console.log('Error', err);
 
-          DataPrepStore.dispatch({
-            type: DataPrepActions.setError,
-            payload: {
-              message: err.message || err.response.message
-            }
-          });
-        }
-      );
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message,
+          },
+        });
+      }
+    );
   }
 
   renderInvalidFieldError() {
@@ -151,9 +153,7 @@ export default class AddToHydratorModal extends Component {
       <div className="message">
         <pre>
           <div className="remedy-message">
-            {
-              objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
-            }
+            {objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null}
           </div>
           <span>
             {T.translate(`${PREFIX}.invalidFieldNameRemedies2`)}
@@ -187,41 +187,49 @@ export default class AddToHydratorModal extends Component {
 
       if (!this.state.realtimeUrl) {
         realtimeDisabledTooltip = T.translate(`${PREFIX}.realtimeDisabledTooltip`, {
-          type: T.translate(`${PREFIX}.${type}`)
+          type: T.translate(`${PREFIX}.${type}`),
         });
       }
 
       content = (
         <div>
-          <div className="message">
-            {T.translate(`${PREFIX}.addToPipelineModal.title`)}
-          </div>
+          <div className="message">{T.translate(`${PREFIX}.addToPipelineModal.title`)}</div>
           <div className="action-buttons">
             <a
               href={this.state.error ? null : this.state.batchUrl}
               className={classnames('btn btn-secondary', {
-                'inactive': this.state.error
+                inactive: this.state.error,
               })}
               onClick={(() => {
-                if (this.state.error) { return; }
-                window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.batchConfig));
+                if (this.state.error) {
+                  return;
+                }
+                window.localStorage.setItem(
+                  this.state.workspaceId,
+                  JSON.stringify(this.state.batchConfig)
+                );
               }).bind(this)}
             >
-              <i className="fa icon-ETLBatch"/>
+              <i className="fa icon-ETLBatch" />
               <span>{T.translate(`${PREFIX}.addToPipelineModal.batchPipelineBtn`)}</span>
             </a>
             <a
               href={this.state.realtimeUrl}
               className={classnames('btn btn-secondary', {
-                'inactive': !this.state.realtimeUrl || this.state.error
+                inactive: !this.state.realtimeUrl || this.state.error,
               })}
               onClick={(() => {
-                if (!this.state.realtimeUrl) { return; }
-                window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.realtimeConfig));
+                if (!this.state.realtimeUrl) {
+                  return;
+                }
+                window.localStorage.setItem(
+                  this.state.workspaceId,
+                  JSON.stringify(this.state.realtimeConfig)
+                );
               }).bind(this)}
               title={realtimeDisabledTooltip}
             >
-              <i className="fa icon-sparkstreaming"/>
+              <i className="fa icon-sparkstreaming" />
               <span>{T.translate(`${PREFIX}.addToPipelineModal.realtimePipelineBtn`)}</span>
             </a>
           </div>
@@ -239,23 +247,16 @@ export default class AddToHydratorModal extends Component {
         className="add-to-pipeline-dataprep-modal cdap-modal"
       >
         <ModalHeader>
-          <span>
-            {T.translate(`${PREFIX}.addToPipelineBtnLabel`)}
-          </span>
+          <span>{T.translate(`${PREFIX}.addToPipelineBtnLabel`)}</span>
 
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.toggle}
-          >
+          <div className="close-section float-xs-right" onClick={this.props.toggle}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
-        <ModalBody>
-          {showContent ? content : this.renderInvalidFieldError()}
-        </ModalBody>
+        <ModalBody>{showContent ? content : this.renderInvalidFieldError()}</ModalBody>
         <If condition={this.state.error}>
           <CardActionFeedback
-            type='DANGER'
+            type="DANGER"
             message={T.translate(`${PREFIX}.addToPipelineModal.errorTitle`)}
             extendedMessage={isString(this.state.error) ? this.state.error : null}
           />
@@ -266,5 +267,5 @@ export default class AddToHydratorModal extends Component {
 }
 
 AddToHydratorModal.propTypes = {
-  toggle: PropTypes.func
+  toggle: PropTypes.func,
 };

@@ -14,14 +14,16 @@
  * the License.
 */
 
-import {myExperimentsApi} from 'api/experiments';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import AlgorithmsListStore, {ACTIONS as AlgorithmsStoreActions} from 'components/Experiments/store/AlgorithmsListStore';
-import {Observable} from 'rxjs/Observable';
+import { myExperimentsApi } from 'api/experiments';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import AlgorithmsListStore, {
+  ACTIONS as AlgorithmsStoreActions,
+} from 'components/Experiments/store/AlgorithmsListStore';
+import { Observable } from 'rxjs/Observable';
 
 const getAlgorithmLabel = (algorithm) => {
   let algorithmsList = AlgorithmsListStore.getState();
-  let match = algorithmsList.find(algo => algo.name === algorithm);
+  let match = algorithmsList.find((algo) => algo.name === algorithm);
   if (match) {
     return match.label;
   }
@@ -30,9 +32,9 @@ const getAlgorithmLabel = (algorithm) => {
 
 const getHyperParamLabel = (algorithm, hyperparam) => {
   let algorithmsList = AlgorithmsListStore.getState();
-  let match = algorithmsList.find(algo => algo.name === algorithm);
+  let match = algorithmsList.find((algo) => algo.name === algorithm);
   if (match) {
-    let matchingHyperParameter = match.hyperparameters.find(hp => hp.name === hyperparam);
+    let matchingHyperParameter = match.hyperparameters.find((hp) => hp.name === hyperparam);
     if (matchingHyperParameter) {
       return matchingHyperParameter.label;
     }
@@ -47,24 +49,18 @@ const setAlgorithmsList = () => {
   }
 
   const getAlgorithmsApi = myExperimentsApi.getAlgorithms({
-    namespace: getCurrentNamespace()
+    namespace: getCurrentNamespace(),
   });
 
-  getAlgorithmsApi
-    .subscribe(algorithmsList => {
-      algorithmsList = algorithmsList.map(algo => ({...algo, name: algo.algorithm}));
-      AlgorithmsListStore.dispatch({
-        type: AlgorithmsStoreActions.SET_ALGORITHMS_LIST,
-        payload: {algorithmsList}
-      });
+  getAlgorithmsApi.subscribe((algorithmsList) => {
+    algorithmsList = algorithmsList.map((algo) => ({ ...algo, name: algo.algorithm }));
+    AlgorithmsListStore.dispatch({
+      type: AlgorithmsStoreActions.SET_ALGORITHMS_LIST,
+      payload: { algorithmsList },
     });
+  });
 
   return getAlgorithmsApi;
 };
 
-export {
-  getAlgorithmLabel,
-  getHyperParamLabel,
-  setAlgorithmsList
-};
-
+export { getAlgorithmLabel, getHyperParamLabel, setAlgorithmsList };

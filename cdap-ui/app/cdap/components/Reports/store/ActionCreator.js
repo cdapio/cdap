@@ -14,23 +14,18 @@
  * the License.
  */
 
-import ReportsStore, {ReportsActions} from 'components/Reports/store/ReportsStore';
+import ReportsStore, { ReportsActions } from 'components/Reports/store/ReportsStore';
 import moment from 'moment';
-import {MyReportsApi} from 'api/reports';
+import { MyReportsApi } from 'api/reports';
 import orderBy from 'lodash/orderBy';
-import {GLOBALS} from 'services/global-constants';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { GLOBALS } from 'services/global-constants';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import StatusMapper from 'services/StatusMapper';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Reports.ReportsDetail';
 
-export const DefaultSelection = [
-  'artifactName',
-  'applicationName',
-  'program',
-  'programType'
-];
+export const DefaultSelection = ['artifactName', 'applicationName', 'program', 'programType'];
 
 function getTimeRange() {
   let state = ReportsStore.getState().timeRange;
@@ -40,10 +35,14 @@ function getTimeRange() {
 
   switch (state.selection) {
     case 'last30':
-      start = moment().subtract(30, 'm').format('x');
+      start = moment()
+        .subtract(30, 'm')
+        .format('x');
       break;
     case 'lastHour':
-      start = moment().subtract(1, 'h').format('x');
+      start = moment()
+        .subtract(1, 'h')
+        .format('x');
       break;
     case 'custom':
       start = state.start;
@@ -56,7 +55,7 @@ function getTimeRange() {
 
   return {
     start,
-    end
+    end,
   };
 }
 
@@ -72,7 +71,7 @@ function getName(start, end) {
   return T.translate(`${PREFIX}.getReportName`, {
     statusLabel,
     startDate,
-    endDate
+    endDate,
   });
 }
 
@@ -85,12 +84,12 @@ function getFilters() {
   if (selections.pipelines && !selections.customApps) {
     filters.push({
       fieldName: 'artifactName',
-      whitelist: GLOBALS.etlPipelineTypes
+      whitelist: GLOBALS.etlPipelineTypes,
     });
   } else if (!selections.pipelines && selections.customApps) {
     filters.push({
       fieldName: 'artifactName',
-      blacklist: GLOBALS.etlPipelineTypes
+      blacklist: GLOBALS.etlPipelineTypes,
     });
   }
 
@@ -104,7 +103,7 @@ function getFilters() {
 
   filters.push({
     fieldName: 'status',
-    whitelist: statusSelections
+    whitelist: statusSelections,
   });
 
   // namespaces
@@ -112,27 +111,29 @@ function getFilters() {
 
   filters.push({
     fieldName: 'namespace',
-    whitelist: [...namespacesPick, getCurrentNamespace()]
+    whitelist: [...namespacesPick, getCurrentNamespace()],
   });
 
   return filters;
 }
 
 export function generateReport() {
-  let {start, end} = getTimeRange();
+  let { start, end } = getTimeRange();
 
   let selections = ReportsStore.getState().customizer;
 
   const FILTER_OUT = ['pipelines', 'customApps'];
 
-  let fields = Object.keys(selections).filter(field => selections[field] && FILTER_OUT.indexOf(field) === -1);
+  let fields = Object.keys(selections).filter(
+    (field) => selections[field] && FILTER_OUT.indexOf(field) === -1
+  );
   fields = DefaultSelection.concat(fields);
 
   let requestBody = {
     name: getName(start, end),
     start,
     end,
-    fields
+    fields,
   };
 
   let filters = getFilters();
@@ -140,95 +141,98 @@ export function generateReport() {
     requestBody.filters = filters;
   }
 
-  MyReportsApi.generateReport(null, requestBody)
-    .subscribe((res) => {
+  MyReportsApi.generateReport(null, requestBody).subscribe(
+    (res) => {
       // Switch to 1st page after generating a report, so we can
       // highlight the new report
-      handleReportsPageChange({selected: 0}, res.id);
-    }, (err) => {
+      handleReportsPageChange({ selected: 0 }, res.id);
+    },
+    (err) => {
       console.log('error', err);
-    });
+    }
+  );
 }
 
 export function listReports(id) {
-  let {offset, limit} = ReportsStore.getState().list;
+  let { offset, limit } = ReportsStore.getState().list;
 
   let params = {
     offset,
-    limit
+    limit,
   };
 
-  MyReportsApi.list(params)
-    .subscribe((res) => {
-      res.reports = orderBy(res.reports, ['created'], ['desc']);
+  MyReportsApi.list(params).subscribe((res) => {
+    res.reports = orderBy(res.reports, ['created'], ['desc']);
 
-      ReportsStore.dispatch({
-        type: ReportsActions.setList,
-        payload: {
-          list: res,
-          activeId: id
-        }
-      });
-
-      if (id) {
-        setTimeout(() => {
-          ReportsStore.dispatch({
-            type: ReportsActions.setActiveId,
-            payload: {
-              activeId: null
-            }
-          });
-        }, 3000);
-      }
+    ReportsStore.dispatch({
+      type: ReportsActions.setList,
+      payload: {
+        list: res,
+        activeId: id,
+      },
     });
+
+    if (id) {
+      setTimeout(() => {
+        ReportsStore.dispatch({
+          type: ReportsActions.setActiveId,
+          payload: {
+            activeId: null,
+          },
+        });
+      }, 3000);
+    }
+  });
 }
 
 export function fetchRuns(reportId = ReportsStore.getState().details.reportId) {
-  let {runsOffset: offset, runsLimit: limit} = ReportsStore.getState().details;
+  let { runsOffset: offset, runsLimit: limit } = ReportsStore.getState().details;
   let params = {
     'report-id': reportId,
     offset,
-    limit
+    limit,
   };
 
-  MyReportsApi.getDetails(params)
-    .subscribe((res) => {
+  MyReportsApi.getDetails(params).subscribe(
+    (res) => {
       ReportsStore.dispatch({
         type: ReportsActions.setRuns,
         payload: {
           runs: res.details,
-          totalRunsCount: res.total
-        }
+          totalRunsCount: res.total,
+        },
       });
-    }, (err) => {
+    },
+    (err) => {
       console.log('err', err);
       ReportsStore.dispatch({
         type: ReportsActions.setDetailsError,
         payload: {
-          error: err.response
-        }
+          error: err.response,
+        },
       });
-    });
+    }
+  );
 }
 
-export function handleRunsPageChange({selected}) {
-  let {runsLimit} = ReportsStore.getState().details;
+export function handleRunsPageChange({ selected }) {
+  let { runsLimit } = ReportsStore.getState().details;
   ReportsStore.dispatch({
     type: ReportsActions.setRunsPagination,
     payload: {
-      offset: selected * runsLimit
-    }
+      offset: selected * runsLimit,
+    },
   });
   fetchRuns();
 }
 
-export function handleReportsPageChange({selected}, id) {
-  let {limit} = ReportsStore.getState().list;
+export function handleReportsPageChange({ selected }, id) {
+  let { limit } = ReportsStore.getState().list;
   ReportsStore.dispatch({
     type: ReportsActions.setPagination,
     payload: {
-      offset: selected * limit
-    }
+      offset: selected * limit,
+    },
   });
   listReports(id);
 }
@@ -237,13 +241,13 @@ export function setNamespacesPick(namespacesPick) {
   ReportsStore.dispatch({
     type: ReportsActions.setNamespaces,
     payload: {
-      namespacesPick
-    }
+      namespacesPick,
+    },
   });
 }
 
 export function getStatusSelectionsLabels(selections) {
-  return selections.map(selection => {
+  return selections.map((selection) => {
     return StatusMapper.lookupDisplayStatus(selection);
   });
 }

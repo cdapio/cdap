@@ -14,37 +14,37 @@
  * the License.
 */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 
 const defaultAction = {
-  action : '',
-  payload : {}
+  action: '',
+  payload: {},
 };
 const BACKENDSTATUS = {
   STATUSUPDATE: 'STATUSUPDATE',
   BACKENDUP: 'BACKENDUP',
   NODESERVERDOWN: 'NODESERVERDOWN',
   NODESERVERUP: 'NODESERVERUP',
-  BACKENDDOWN: 'BACKENDDOWN'
+  BACKENDDOWN: 'BACKENDDOWN',
 };
 const defaultLoadingState = {
   status: BACKENDSTATUS.BACKENDUP,
-  services: []
+  services: [],
 };
 const LOADINGSTATUS = {
   SHOWLOADING: 'SHOWLOADING',
-  HIDELOADING: 'HIDELOADING'
+  HIDELOADING: 'HIDELOADING',
 };
 
 const loading = (state = defaultLoadingState, action = defaultAction) => {
   switch (action.type) {
-    case 'STATUSUPDATE':
-      {
-        let {status = state.status, services = []} = action.payload;
-        return Object.assign({}, state, {
-          status,
-          services
-        });}
+    case 'STATUSUPDATE': {
+      let { status = state.status, services = [] } = action.payload;
+      return Object.assign({}, state, {
+        status,
+        services,
+      });
+    }
     default:
       return state;
   }
@@ -52,11 +52,11 @@ const loading = (state = defaultLoadingState, action = defaultAction) => {
 
 const LoadingIndicatorStore = createStore(
   combineReducers({
-    loading
+    loading,
   }),
-  {loading: defaultLoadingState},
+  { loading: defaultLoadingState },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
 
 export default LoadingIndicatorStore;
-export {BACKENDSTATUS, LOADINGSTATUS};
+export { BACKENDSTATUS, LOADINGSTATUS };

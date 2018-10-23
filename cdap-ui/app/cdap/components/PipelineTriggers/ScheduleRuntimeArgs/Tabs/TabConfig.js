@@ -33,23 +33,23 @@ const TabConfig = {
         {
           id: 1.1,
           name: T.translate(`${PREFIX}.RuntimeArgs.title`),
-          content: (<RuntimeArgsTab />),
-          default: true
+          content: <RuntimeArgsTab />,
+          default: true,
         },
         {
           id: 1.2,
           name: T.translate(`${PREFIX}.StageProps.title`),
-          content: (<StagePropertiesTab />)
-        }
-      ]
+          content: <StagePropertiesTab />,
+        },
+      ],
     },
     {
       id: 2,
       name: T.translate(`${PREFIX}.ComputeConfig.tabTitle`),
-      content: (<ComputeConfigTab />)
-    }
+      content: <ComputeConfigTab />,
+    },
   ],
   layout: 'vertical',
-  defaultTab: 1.1
+  defaultTab: 1.1,
 };
 export default TabConfig;

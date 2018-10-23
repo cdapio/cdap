@@ -18,8 +18,8 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import classnames from 'classnames';
-import {setPopoverOffset} from 'components/DataPrep/helper';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { setPopoverOffset } from 'components/DataPrep/helper';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import DataPrepStore from 'components/DataPrep/store';
 import T from 'i18n-react';
@@ -37,7 +37,10 @@ export default class MaskData extends Component {
     this.isDirectiveEnabled = this.isDirectiveEnabled.bind(this);
   }
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('mask-fields-directive'));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById('mask-fields-directive')
+    );
   }
 
   componentDidUpdate() {
@@ -47,15 +50,15 @@ export default class MaskData extends Component {
   }
 
   maskCustomSelection() {
-    let {highlightColumns} = DataPrepStore.getState().dataprep;
+    let { highlightColumns } = DataPrepStore.getState().dataprep;
     DataPrepStore.dispatch({
       type: DataPrepActions.setHighlightColumns,
       payload: {
         highlightColumns: {
           columns: highlightColumns.columns.concat([this.props.column]),
-          directive: 'MASK'
-        }
-      }
+          directive: 'MASK',
+        },
+      },
     });
     this.props.onComplete();
   }
@@ -63,31 +66,35 @@ export default class MaskData extends Component {
     this.applyDirective(`mask-shuffle ${this.props.column}`);
   }
   applyDirective(directive) {
-    execute([directive])
-      .subscribe(
-        () => {
-          this.props.onComplete();
-        }, (err) => {
-          console.log('error', err);
+    execute([directive]).subscribe(
+      () => {
+        this.props.onComplete();
+      },
+      (err) => {
+        console.log('error', err);
 
-          DataPrepStore.dispatch({
-            type: DataPrepActions.setError,
-            payload: {
-              message: err.message || err.response.message
-            }
-          });
-        }
-      );
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message,
+          },
+        });
+      }
+    );
   }
   isDirectiveEnabled() {
-    let {typesCheck} = DataPrepStore.getState().dataprep;
+    let { typesCheck } = DataPrepStore.getState().dataprep;
     return typesCheck[this.props.column] === 'string';
   }
   maskLastNDigits(N) {
-    let {data} = DataPrepStore.getState().dataprep;
+    let { data } = DataPrepStore.getState().dataprep;
     let length = data[0][this.props.column].length;
-    let maskPattern = Array.apply(null, {length: length - N}).map(() => 'x').join('');
-    let allowPattern = Array.apply(null, {length: N}).map(() => '#').join('');
+    let maskPattern = Array.apply(null, { length: length - N })
+      .map(() => 'x')
+      .join('');
+    let allowPattern = Array.apply(null, { length: N })
+      .map(() => '#')
+      .join('');
 
     let pattern = maskPattern + allowPattern;
     return pattern;
@@ -101,34 +108,24 @@ export default class MaskData extends Component {
     this.applyDirective(`mask-number ${this.props.column} ${pattern}`);
   }
   renderSubMenu() {
-    if (!this.props.isOpen || !this.isDirectiveEnabled()) { return null; }
+    if (!this.props.isOpen || !this.isDirectiveEnabled()) {
+      return null;
+    }
 
     return (
-      <div
-        className="mask-fields second-level-popover"
-        onClick={this.preventPropagation}
-      >
+      <div className="mask-fields second-level-popover" onClick={this.preventPropagation}>
         <div className="mask-field-options">
-          <div
-            onClick={this.maskLast4Digits}
-            className="option"
-          >
+          <div onClick={this.maskLast4Digits} className="option">
             {T.translate(`${PREFIX}.option1`)}
           </div>
         </div>
         <div className="mask-field-options">
-          <div
-            onClick={this.maskLast2Digits}
-            className="option"
-          >
+          <div onClick={this.maskLast2Digits} className="option">
             {T.translate(`${PREFIX}.option2`)}
           </div>
         </div>
         <div className="mask-field-options">
-          <div
-            onClick={this.maskCustomSelection}
-            className="option"
-          >
+          <div onClick={this.maskCustomSelection} className="option">
             {T.translate(`${PREFIX}.option3`)}
           </div>
         </div>
@@ -136,10 +133,7 @@ export default class MaskData extends Component {
           <hr />
         </div>
         <div className="mask-field-options">
-          <div
-            onClick={this.maskByShuffling}
-            className="option"
-          >
+          <div onClick={this.maskByShuffling} className="option">
             {T.translate(`${PREFIX}.option4`)}
           </div>
         </div>
@@ -151,13 +145,11 @@ export default class MaskData extends Component {
       <div
         id="mask-fields-directive"
         className={classnames('clearfix action-item', {
-          'active': this.props.isOpen && this.isDirectiveEnabled(),
-          'disabled': !this.isDirectiveEnabled()
+          active: this.props.isOpen && this.isDirectiveEnabled(),
+          disabled: !this.isDirectiveEnabled(),
         })}
       >
-        <span className="option">
-          {T.translate(`${PREFIX}.menuLabel`)}
-        </span>
+        <span className="option">{T.translate(`${PREFIX}.menuLabel`)}</span>
 
         <span className="float-xs-right">
           <span className="fa fa-caret-right" />
@@ -170,5 +162,5 @@ export default class MaskData extends Component {
 MaskData.propTypes = {
   isOpen: PropTypes.bool,
   onComplete: PropTypes.func,
-  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string])
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
 };

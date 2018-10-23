@@ -14,18 +14,20 @@
  * the License.
 */
 
-import {MMDS_SORT_METHODS} from 'components/Experiments/store';
-import experimentDetailsStore, {ACTIONS as EXPERIMENTDETAILACTIONS} from 'components/Experiments/store/experimentDetailStore';
-import {setAlgorithmsList} from 'components/Experiments/store/SharedActionCreator';
-import {myExperimentsApi} from 'api/experiments';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { MMDS_SORT_METHODS } from 'components/Experiments/store';
+import experimentDetailsStore, {
+  ACTIONS as EXPERIMENTDETAILACTIONS,
+} from 'components/Experiments/store/experimentDetailStore';
+import { setAlgorithmsList } from 'components/Experiments/store/SharedActionCreator';
+import { myExperimentsApi } from 'api/experiments';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 function setExperimentDetailError(error = null) {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_ERROR,
     payload: {
-      error
-    }
+      error,
+    },
   });
 }
 
@@ -33,53 +35,63 @@ function getExperimentDetails(experimentId) {
   myExperimentsApi
     .getExperiment({
       namespace: getCurrentNamespace(),
-      experimentId
+      experimentId,
     })
-    .subscribe(res => {
-      experimentDetailsStore.dispatch({
-        type: EXPERIMENTDETAILACTIONS.SET_EXPERIMENT_DETAILS,
-        payload: {
-          experimentDetails: {
-            ...res
-          }
-        }
-      });
-    }, (err) => {
-      setExperimentDetailError(`Failed to get details for the experiment '${experimentId}' - ${err.response || err}`);
-    });
+    .subscribe(
+      (res) => {
+        experimentDetailsStore.dispatch({
+          type: EXPERIMENTDETAILACTIONS.SET_EXPERIMENT_DETAILS,
+          payload: {
+            experimentDetails: {
+              ...res,
+            },
+          },
+        });
+      },
+      (err) => {
+        setExperimentDetailError(
+          `Failed to get details for the experiment '${experimentId}' - ${err.response || err}`
+        );
+      }
+    );
 }
 
 function getModelsInExperiment(experimentId) {
   experimentDetailsStore.dispatch({
-    type: EXPERIMENTDETAILACTIONS.SET_LOADING
+    type: EXPERIMENTDETAILACTIONS.SET_LOADING,
   });
   let {
     modelsOffset: offset,
     modelsLimit: limit,
     modelsSortMethod,
-    modelsSortColumn
+    modelsSortColumn,
   } = experimentDetailsStore.getState();
   let ModelsObservable$ = myExperimentsApi.getModelsInExperiment({
     namespace: getCurrentNamespace(),
     experimentId,
     offset,
     limit,
-    sort: `${modelsSortColumn} ${modelsSortMethod}`
+    sort: `${modelsSortColumn} ${modelsSortMethod}`,
   });
 
-  ModelsObservable$.subscribe(res => {
-    let models = res.models;
-    experimentDetailsStore.dispatch({
-      type: EXPERIMENTDETAILACTIONS.SET_MODELS,
-      payload: {
-        models,
-        totalCount: res.totalRowCount
-      }
-    });
-    getSplitsInExperiment(experimentId);
-  }, (err) => {
-    setExperimentDetailError(`Failed to get models in the experiment '${experimentId}' - ${err.response || err}`);
-  });
+  ModelsObservable$.subscribe(
+    (res) => {
+      let models = res.models;
+      experimentDetailsStore.dispatch({
+        type: EXPERIMENTDETAILACTIONS.SET_MODELS,
+        payload: {
+          models,
+          totalCount: res.totalRowCount,
+        },
+      });
+      getSplitsInExperiment(experimentId);
+    },
+    (err) => {
+      setExperimentDetailError(
+        `Failed to get models in the experiment '${experimentId}' - ${err.response || err}`
+      );
+    }
+  );
   return ModelsObservable$;
 }
 
@@ -88,23 +100,28 @@ function handleModelsPageChange({ selected }) {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_MODEL_PAGINATION,
     payload: {
-      modelsOffset: selected * modelsLimit
-    }
+      modelsOffset: selected * modelsLimit,
+    },
   });
   updateQueryForModelsListView();
   getModelsInExperiment(experimentId);
 }
 
 function handleModelsSorting(field) {
-  let { modelsSortMethod, modelsSortColumn, name: experimentId } = experimentDetailsStore.getState();
-  let newSortField = (field !== modelsSortColumn) ? field : modelsSortColumn;
-  let newSortMethod = MMDS_SORT_METHODS.ASC === modelsSortMethod ? MMDS_SORT_METHODS.DESC : MMDS_SORT_METHODS.ASC;
+  let {
+    modelsSortMethod,
+    modelsSortColumn,
+    name: experimentId,
+  } = experimentDetailsStore.getState();
+  let newSortField = field !== modelsSortColumn ? field : modelsSortColumn;
+  let newSortMethod =
+    MMDS_SORT_METHODS.ASC === modelsSortMethod ? MMDS_SORT_METHODS.DESC : MMDS_SORT_METHODS.ASC;
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_MODELS_SORT,
     payload: {
       modelsSortMethod: newSortMethod,
-      modelsSortColumn: newSortField
-    }
+      modelsSortColumn: newSortField,
+    },
   });
   updateQueryForModelsListView();
   getModelsInExperiment(experimentId);
@@ -114,7 +131,7 @@ function updateQueryParametersForModels({
   modelsLimit,
   modelsOffset,
   modelsSortMethod,
-  modelsSortColumn
+  modelsSortColumn,
 }) {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_MODELS_QUERY_PARAMS,
@@ -122,8 +139,8 @@ function updateQueryParametersForModels({
       modelsOffset,
       modelsLimit,
       modelsSortMethod,
-      modelsSortColumn
-    }
+      modelsSortColumn,
+    },
   });
 }
 
@@ -132,12 +149,12 @@ function updateQueryForModelsListView() {
     modelsOffset: offset,
     modelsLimit: limit,
     modelsSortMethod,
-    modelsSortColumn
+    modelsSortColumn,
   } = experimentDetailsStore.getState();
   let newQuery = `offset=${offset}&limit=${limit}&sort=${modelsSortColumn} ${modelsSortMethod}`;
   let obj = {
     title: document.title,
-    url: `${location.pathname}?${newQuery}`
+    url: `${location.pathname}?${newQuery}`,
   };
   history.pushState(obj, obj.title, obj.url);
 }
@@ -146,18 +163,23 @@ function getSplitsInExperiment(experimentId) {
   myExperimentsApi
     .getSplitsInExperiment({
       namespace: getCurrentNamespace(),
-      experimentId
+      experimentId,
     })
-    .subscribe(splits => {
-      experimentDetailsStore.dispatch({
-        type: EXPERIMENTDETAILACTIONS.SET_SPLITS,
-        payload: {
-          splits
-        }
-      });
-    }, (err) => {
-      setExperimentDetailError(`Failed to get splits in the experiment '${experimentId}' - ${err.response || err}`);
-    });
+    .subscribe(
+      (splits) => {
+        experimentDetailsStore.dispatch({
+          type: EXPERIMENTDETAILACTIONS.SET_SPLITS,
+          payload: {
+            splits,
+          },
+        });
+      },
+      (err) => {
+        setExperimentDetailError(
+          `Failed to get splits in the experiment '${experimentId}' - ${err.response || err}`
+        );
+      }
+    );
 }
 
 function pollModelStatus(experimentId, modelId) {
@@ -165,19 +187,22 @@ function pollModelStatus(experimentId, modelId) {
     .pollModelStatus({
       namespace: getCurrentNamespace(),
       experimentId,
-      modelId
+      modelId,
     })
-    .subscribe(modelStatus => {
-      experimentDetailsStore.dispatch({
-        type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
-        payload: {
-          modelId,
-          modelStatus
-        }
-      });
-    }, () => {
-      addModelsWithError(modelId);
-    });
+    .subscribe(
+      (modelStatus) => {
+        experimentDetailsStore.dispatch({
+          type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
+          payload: {
+            modelId,
+            modelStatus,
+          },
+        });
+      },
+      () => {
+        addModelsWithError(modelId);
+      }
+    );
 }
 
 function getModelStatus(experimentId, modelId) {
@@ -187,21 +212,25 @@ function getModelStatus(experimentId, modelId) {
     .getModelStatus({
       namespace: getCurrentNamespace(),
       experimentId,
-      modelId
+      modelId,
     })
-    .subscribe(modelStatus => {
-      experimentDetailsStore.dispatch({
-        type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
-        payload: {
-          modelId,
-          modelStatus
-        }
-      });
-    }, () => {
-      addModelsWithError(modelId);
-    }, () => {
-      removeModelsLoading(modelId);
-    });
+    .subscribe(
+      (modelStatus) => {
+        experimentDetailsStore.dispatch({
+          type: EXPERIMENTDETAILACTIONS.SET_MODEL_STATUS,
+          payload: {
+            modelId,
+            modelStatus,
+          },
+        });
+      },
+      () => {
+        addModelsWithError(modelId);
+      },
+      () => {
+        removeModelsLoading(modelId);
+      }
+    );
 }
 
 function addModelsLoading(modelId) {
@@ -212,8 +241,8 @@ function addModelsLoading(modelId) {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_MODELS_LOADING,
     payload: {
-      modelsLoading
-    }
+      modelsLoading,
+    },
   });
 }
 
@@ -226,8 +255,8 @@ function removeModelsLoading(modelId) {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_MODELS_LOADING,
     payload: {
-      modelsLoading
-    }
+      modelsLoading,
+    },
   });
 }
 
@@ -239,44 +268,43 @@ function addModelsWithError(modelId) {
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_MODELS_WITH_ERROR,
     payload: {
-      modelsWithError
-    }
+      modelsWithError,
+    },
   });
 }
 
 function setActiveModel(activeModelId) {
   let state = experimentDetailsStore.getState();
-  let {splitDetails} = state.models.find(model => model.id === activeModelId) || {};
+  let { splitDetails } = state.models.find((model) => model.id === activeModelId) || {};
   if (!splitDetails) {
     getSplitsInExperiment(state.name);
   }
   experimentDetailsStore.dispatch({
     type: EXPERIMENTDETAILACTIONS.SET_ACTIVE_MODEL,
     payload: {
-      activeModelId
-    }
+      activeModelId,
+    },
   });
 }
 
 const setAlgorithmsListForDetailedView = () => {
-  setAlgorithmsList()
-    .subscribe(
-      () => {},
-      (err) => {
-        setExperimentDetailError(`Failed to get list of algorithms: ${err.response || err}`);
-      }
-    );
+  setAlgorithmsList().subscribe(
+    () => {},
+    (err) => {
+      setExperimentDetailError(`Failed to get list of algorithms: ${err.response || err}`);
+    }
+  );
 };
 
 function resetExperimentDetailStore() {
   experimentDetailsStore.dispatch({
-    type: EXPERIMENTDETAILACTIONS.RESET
+    type: EXPERIMENTDETAILACTIONS.RESET,
   });
 }
 
 function resetNewlyTrainingModel() {
   experimentDetailsStore.dispatch({
-    type: EXPERIMENTDETAILACTIONS.RESET_NEWLY_TRAINING_MODEL
+    type: EXPERIMENTDETAILACTIONS.RESET_NEWLY_TRAINING_MODEL,
   });
 }
 
@@ -293,6 +321,5 @@ export {
   setActiveModel,
   setAlgorithmsListForDetailedView,
   resetExperimentDetailStore,
-  resetNewlyTrainingModel
+  resetNewlyTrainingModel,
 };
-

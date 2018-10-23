@@ -17,21 +17,21 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {connect , Provider} from 'react-redux';
+import { connect, Provider } from 'react-redux';
 import DSVActions from 'components/DSVEditor/DSVActions';
-import {createDSVStore} from 'components/DSVEditor/DSVStore';
+import { createDSVStore } from 'components/DSVEditor/DSVStore';
 import DSVRow from 'components/DSVEditor/DSVRow';
 
 require('./DSVEditor.scss');
 
 const mapStateToFieldNameProps = (state, ownProps) => {
   return {
-    property: state.DSV.rows[ownProps.index].property
+    property: state.DSV.rows[ownProps.index].property,
   };
 };
 
 const fieldToActionMap = {
-  property: DSVActions.setProperty
+  property: DSVActions.setProperty,
 };
 
 const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
@@ -39,13 +39,13 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
     removeRow: () => {
       dispatch({
         type: DSVActions.deleteRow,
-        payload: {index: ownProps.index}
+        payload: { index: ownProps.index },
       });
     },
     addRow: () => {
       dispatch({
         type: DSVActions.addRow,
-        payload: {index: ownProps.index}
+        payload: { index: ownProps.index },
       });
     },
     onChange: (fieldProp, e) => {
@@ -53,10 +53,10 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
         type: fieldToActionMap[fieldProp],
         payload: {
           index: ownProps.index,
-          [fieldProp]: e.target.value
-        }
+          [fieldProp]: e.target.value,
+        },
       });
-    }
+    },
   };
 };
 
@@ -71,10 +71,10 @@ export default class DSVEditor extends Component {
     let { values } = props;
 
     this.state = {
-      rows: values
+      rows: values,
     };
 
-    this.DSVStore = createDSVStore({rows: values});
+    this.DSVStore = createDSVStore({ rows: values });
   }
 
   componentDidMount() {
@@ -90,14 +90,14 @@ export default class DSVEditor extends Component {
     this.DSVStore.dispatch({
       type: DSVActions.onUpdate,
       payload: {
-        rows: values
-      }
+        rows: values,
+      },
     });
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      rows: [...nextProps.values]
+      rows: [...nextProps.values],
     });
   }
 
@@ -111,28 +111,26 @@ export default class DSVEditor extends Component {
       this.sub();
     }
     this.DSVStore.dispatch({
-      type: DSVActions.onReset
+      type: DSVActions.onReset,
     });
   }
 
   render() {
     return (
       <div className="dsv-editor-container">
-        {
-          this.state.rows.map( (row, index) => {
-            return (
-              <div key={row.uniqueId}>
-                <Provider store={this.DSVStore}>
-                  <DSVRowWrapper
-                    index={index}
-                    placeholder={this.props.placeholder}
-                    disabled={this.props.disabled}
-                  />
-                </Provider>
-              </div>
-            );
-          })
-        }
+        {this.state.rows.map((row, index) => {
+          return (
+            <div key={row.uniqueId}>
+              <Provider store={this.DSVStore}>
+                <DSVRowWrapper
+                  index={index}
+                  placeholder={this.props.placeholder}
+                  disabled={this.props.disabled}
+                />
+              </Provider>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -142,5 +140,5 @@ DSVEditor.propTypes = {
   values: PropTypes.array,
   onChange: PropTypes.func,
   placeholder: PropTypes.string,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
 };

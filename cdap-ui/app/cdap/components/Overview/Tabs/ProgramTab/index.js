@@ -17,12 +17,12 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
-import {MyProgramApi} from 'api/program';
+import { MyProgramApi } from 'api/program';
 import NamespaceStore from 'services/NamespaceStore';
-import {convertProgramToApi} from 'services/program-api-converter';
+import { convertProgramToApi } from 'services/program-api-converter';
 import ViewSwitch from 'components/ViewSwitch';
 import ProgramCards from 'components/ProgramCards';
 import ProgramTable from 'components/ProgramTable';
@@ -34,57 +34,62 @@ export default class ProgramsTab extends Component {
     super(props);
     this.state = {
       entity: this.props.entity,
-      runningPrograms: []
+      runningPrograms: [],
     };
     this.statusSubscriptions = [];
-    if (
-      !isNil(this.props.entity) &&
-      !isEmpty(this.props.entity)
-    ) {
+    if (!isNil(this.props.entity) && !isEmpty(this.props.entity)) {
       this.setRunningPrograms();
     }
   }
   componentWillReceiveProps(nextProps) {
-    let entitiesMatch = objectQuery(nextProps, 'entity', 'name') === objectQuery(this.props, 'entity', 'name');
+    let entitiesMatch =
+      objectQuery(nextProps, 'entity', 'name') === objectQuery(this.props, 'entity', 'name');
     if (!entitiesMatch) {
       this.setState({
         entity: nextProps.entity,
-        runningPrograms: []
+        runningPrograms: [],
       });
-      this.statusSubscriptions.forEach(sub => sub.unsubscribe());
+      this.statusSubscriptions.forEach((sub) => sub.unsubscribe());
       this.setRunningPrograms();
     }
   }
   componentWillUnmount() {
-    this.statusSubscriptions.forEach(sub => sub.unsubscribe());
+    this.statusSubscriptions.forEach((sub) => sub.unsubscribe());
   }
   setRunningPrograms() {
     let namespace = NamespaceStore.getState().selectedNamespace;
-    this.state.entity.programs.forEach(program => {
+    this.state.entity.programs.forEach((program) => {
       let params = {
         namespace,
         appId: program.app,
         programType: convertProgramToApi(program.type),
-        programId: program.name
+        programId: program.name,
       };
-      let subscription =  MyProgramApi
-        .pollRuns(params)
+      let subscription = MyProgramApi.pollRuns(params)
         .combineLatest(MyProgramApi.pollStatus(params))
-        .subscribe(res => {
+        .subscribe((res) => {
           let runningPrograms = this.state.runningPrograms;
-          let programState = runningPrograms.filter(prog => prog.name === program.name && prog.app === program.app);
+          let programState = runningPrograms.filter(
+            (prog) => prog.name === program.name && prog.app === program.app
+          );
           if (programState.length) {
-            runningPrograms = runningPrograms.filter(prog => prog.name !== program.name || (prog.name === program.name && prog.app !== program.app));
+            runningPrograms = runningPrograms.filter(
+              (prog) =>
+                prog.name !== program.name ||
+                (prog.name === program.name && prog.app !== program.app)
+            );
           }
-          runningPrograms.push(Object.assign({}, !isEmpty(programState) ? programState[0] : {}, {
-            latestRun: objectQuery(res, 0, 0) || {},
-            status: res[1].status === 'RUNNING' ? 1 : 0,
-            backendStatus: res[1].status,
-            name: program.name,
-            app: program.app
-          }));
+          runningPrograms.push(
+            Object.assign({}, !isEmpty(programState) ? programState[0] : {}, {
+              latestRun: objectQuery(res, 0, 0) || {},
+              status: res[1].status === 'RUNNING' ? 1 : 0,
+              backendStatus: res[1].status,
+              name: program.name,
+              app: program.app,
+            })
+          );
           this.setState({
-            runningPrograms
+            runningPrograms,
           });
         });
       this.statusSubscriptions.push(subscription);
@@ -94,29 +99,32 @@ export default class ProgramsTab extends Component {
     let runningProgramsCount = 0;
     let programsForTable = this.state.entity.programs;
     if (this.state.runningPrograms.length) {
-      runningProgramsCount = this.state
-        .runningPrograms
-        .map(runningProgram => runningProgram.status)
+      runningProgramsCount = this.state.runningPrograms
+        .map((runningProgram) => runningProgram.status)
         .reduce((prev, curr) => prev + curr);
-      programsForTable = this.state.entity.programs.map(program => {
-        let matchedProg = this.state.runningPrograms.find(prog => prog.name === program.name && prog.app === program.app) || null;
-        return !matchedProg ?
-          program
-        :
-          Object.assign({}, program, {
-            status: matchedProg.backendStatus,
-            latestRun: matchedProg.latestRun
-          });
+      programsForTable = this.state.entity.programs.map((program) => {
+        let matchedProg =
+          this.state.runningPrograms.find(
+            (prog) => prog.name === program.name && prog.app === program.app
+          ) || null;
+        return !matchedProg
+          ? program
+          : Object.assign({}, program, {
+              status: matchedProg.backendStatus,
+              latestRun: matchedProg.latestRun,
+            });
       });
     }
     if (!isNil(this.state.entity)) {
       if (this.state.entity.programs.length) {
-        let title = T.translate('features.Overview.ProgramTab.title', {appId: this.state.entity.name});
+        let title = T.translate('features.Overview.ProgramTab.title', {
+          appId: this.state.entity.name,
+        });
 
         if (['dataset', 'stream'].indexOf(this.state.entity.type) !== -1) {
           title = T.translate('features.Overview.ProgramTab.altTitle', {
             entityId: this.state.entity.id,
-            entityType: this.state.entity.type
+            entityType: this.state.entity.type,
           });
         }
 
@@ -124,7 +132,11 @@ export default class ProgramsTab extends Component {
           <div className="program-tab clearfix">
             <div className="message-section float-xs-left">
               <strong> {title} </strong>
-              <div>{T.translate('features.Overview.ProgramTab.runningProgramLabel', {programCount: runningProgramsCount})}</div>
+              <div>
+                {T.translate('features.Overview.ProgramTab.runningProgramLabel', {
+                  programCount: runningProgramsCount,
+                })}
+              </div>
             </div>
             <ViewSwitch>
               <ProgramCards programs={this.state.entity.programs} />
@@ -145,17 +157,19 @@ export default class ProgramsTab extends Component {
 }
 ProgramsTab.defaultProps = {
   entity: {
-    programs: []
-  }
+    programs: [],
+  },
 };
 ProgramsTab.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string,
-    programs: PropTypes.arrayOf(PropTypes.shape({
-      app: PropTypes.string,
-      id: PropTypes.string,
-      type: PropTypes.string
-    })),
-    type: PropTypes.string
-  })
+    programs: PropTypes.arrayOf(
+      PropTypes.shape({
+        app: PropTypes.string,
+        id: PropTypes.string,
+        type: PropTypes.string,
+      })
+    ),
+    type: PropTypes.string,
+  }),
 };

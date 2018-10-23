@@ -20,21 +20,21 @@ import { connect, Provider } from 'react-redux';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {Input, Form, FormGroup, Col, Label} from 'reactstrap';
-import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import { Input, Form, FormGroup, Col, Label } from 'reactstrap';
+import { UncontrolledTooltip } from 'components/UncontrolledComponents';
 require('./SelectDestination.scss');
 import T from 'i18n-react';
 
 const mapStateToDestinationTypeProps = (state) => {
   return {
     options: state.selectdestination.types,
-    value: state.selectdestination.type
+    value: state.selectdestination.type,
   };
 };
 const mapStateToDestinationNameProps = (state) => {
   return {
     value: state.selectdestination.name,
-    placeholder: T.translate('features.Wizard.UploadData.Step2.dataentitynameplaceholder')
+    placeholder: T.translate('features.Wizard.UploadData.Step2.dataentitynameplaceholder'),
   };
 };
 const mapDispatchToDestinationTypeProps = (dispatch) => {
@@ -43,10 +43,10 @@ const mapDispatchToDestinationTypeProps = (dispatch) => {
       dispatch({
         type: UploadDataActions.setDestinationType,
         payload: {
-          type: e.target.value
-        }
+          type: e.target.value,
+        },
       });
-    }
+    },
   };
 };
 const mapDispatchToDestinationNameProps = (dispatch) => {
@@ -55,27 +55,18 @@ const mapDispatchToDestinationNameProps = (dispatch) => {
       dispatch({
         type: UploadDataActions.setDestinationName,
         payload: {
-          name: e.target.value
-        }
+          name: e.target.value,
+        },
       });
-    }
+    },
   };
 };
 
-let DestinationInput = ({value, placeholder, onChange}) => (
+let DestinationInput = ({ value, placeholder, onChange }) => (
   <div className="destination-input">
-    <Input
-      value={value}
-      placeholder={placeholder}
-      onChange={onChange}
-    />
-    <i
-      id="upload-data-destination-tooltip"
-      className="fa fa-exclamation-circle btn-link"
-    />
-    <UncontrolledTooltip
-      target="upload-data-destination-tooltip"
-    >
+    <Input value={value} placeholder={placeholder} onChange={onChange} />
+    <i id="upload-data-destination-tooltip" className="fa fa-exclamation-circle btn-link" />
+    <UncontrolledTooltip target="upload-data-destination-tooltip">
       {T.translate('features.Wizard.UploadData.Step2.tooltiptext')}
     </UncontrolledTooltip>
   </div>
@@ -83,7 +74,7 @@ let DestinationInput = ({value, placeholder, onChange}) => (
 DestinationInput.propTypes = {
   value: PropTypes.string,
   placeholder: PropTypes.string,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };
 
 let DestinationType = connect(
@@ -100,25 +91,32 @@ export default function SelectDestination() {
     <Provider store={UploadDataStore}>
       <Form
         className="form-horizontal select-destination-step"
-         onSubmit={(e) => {e.stopPropagation(); e.preventDefault();}}
+        onSubmit={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
       >
-      <FormGroup row>
-        <Col xs="3">
-          <Label className="control-label">{T.translate('features.Wizard.UploadData.Step2.destinationtype')}</Label>
-        </Col>
-        <Col xs="7">
-          <DestinationType />
-        </Col>
-      </FormGroup>
-      <FormGroup row>
-        <Col xs="3">
-          <Label className="control-label">{T.translate('features.Wizard.UploadData.Step2.destinationname')}</Label>
-        </Col>
-        <Col xs="7">
-          <DestinationName />
-        </Col>
-      </FormGroup>
-    </Form>
+        <FormGroup row>
+          <Col xs="3">
+            <Label className="control-label">
+              {T.translate('features.Wizard.UploadData.Step2.destinationtype')}
+            </Label>
+          </Col>
+          <Col xs="7">
+            <DestinationType />
+          </Col>
+        </FormGroup>
+        <FormGroup row>
+          <Col xs="3">
+            <Label className="control-label">
+              {T.translate('features.Wizard.UploadData.Step2.destinationname')}
+            </Label>
+          </Col>
+          <Col xs="7">
+            <DestinationName />
+          </Col>
+        </FormGroup>
+      </Form>
     </Provider>
   );
 }

@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import BtnWithLoading from 'components/BtnWithLoading';
 import T from 'i18n-react';
 
@@ -25,11 +25,11 @@ const PREFIX = 'features.PipelineConfigurations.ActionButtons';
 const mapStateToProps = (state, ownProps) => {
   return {
     saveLoading: ownProps.saveLoading,
-    saveConfig: ownProps.saveConfig
+    saveConfig: ownProps.saveConfig,
   };
 };
 
-const ConfigModelessSaveBtn = ({saveLoading, saveConfig}) => {
+const ConfigModelessSaveBtn = ({ saveLoading, saveConfig }) => {
   return (
     <BtnWithLoading
       loading={saveLoading}
@@ -43,7 +43,7 @@ const ConfigModelessSaveBtn = ({saveLoading, saveConfig}) => {
 
 ConfigModelessSaveBtn.propTypes = {
   saveLoading: PropTypes.bool,
-  saveConfig: PropTypes.func
+  saveConfig: PropTypes.func,
 };
 
 const ConnectedConfigModelessSaveBtn = connect(mapStateToProps)(ConfigModelessSaveBtn);

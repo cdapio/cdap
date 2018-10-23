@@ -23,10 +23,10 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MyArtifactApi} from 'api/artifact';
+import { MyArtifactApi } from 'api/artifact';
 import NamespaceStore from 'services/NamespaceStore';
-import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
-import {Modal, ModalHeader, ModalBody} from 'reactstrap';
+import { findHighestVersion } from 'services/VersionRange/VersionUtilities';
+import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import MyRulesEngine from 'api/rulesengine';
 import classnames from 'classnames';
 import T from 'i18n-react';
@@ -41,7 +41,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
   static propTypes = {
     rulebookid: PropTypes.string,
     isOpen: PropTypes.bool,
-    onClose: PropTypes.func
+    onClose: PropTypes.func,
   };
 
   state = {
@@ -51,106 +51,116 @@ export default class AddRulesEngineToPipelineModal extends Component {
     realtimeUrl: '',
     batchConfig: null,
     realtimeConfig: null,
-    error: null
+    error: null,
   };
 
   updateBatchAndRealtimeConfigs = () => {
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
-    MyArtifactApi
-      .list({namespace})
+    let { selectedNamespace: namespace } = NamespaceStore.getState();
+    MyArtifactApi.list({ namespace })
       .combineLatest(
-        MyRulesEngine
-          .getRulebook({
-            namespace,
-            rulebookid: this.props.rulebookid
-          })
+        MyRulesEngine.getRulebook({
+          namespace,
+          rulebookid: this.props.rulebookid,
+        })
       )
-      .subscribe(
-        (res) => {
-          let artifacts = res[0];
-          let rulebook = res[1].values[0];
-          let batchArtifacts = artifacts.filter(artifact => artifact.name === 'cdap-data-pipeline');
-          let realtimeArtifacts = artifacts.filter(artifact => artifact.name === 'cdap-data-streams');
-          let yareArtifact = artifacts.filter(artifact => artifact.name === RulesEnginePluginArtifact);
-          if (!yareArtifact.length) {
-            this.setState({
-              error: T.translate(`${PREFIX}.error`)
-            });
-            return;
-          }
-          let batchHighestArtifact, realtimeHighestArtifact;
-          if (batchArtifacts.length > 1) {
-            let highestBatchArtifactVersion = findHighestVersion(batchArtifacts.map(artifact => artifact.version), true);
-            batchHighestArtifact = batchArtifacts.find(bArtifact => bArtifact.version === highestBatchArtifactVersion);
-          } else {
-            batchHighestArtifact = batchArtifacts[0];
-          }
-          if (realtimeArtifacts.length > 1) {
-            let highestRealtimeArtifactVersion = findHighestVersion(realtimeArtifacts.map(artifact => artifact.version), true);
-            realtimeHighestArtifact = realtimeArtifacts.find(rArtifact => rArtifact.version === highestRealtimeArtifactVersion);
-          } else {
-            realtimeHighestArtifact = realtimeArtifacts[0];
-          }
-          let rulesEnginePlugin = {
-            name: 'RulesEngine',
-            plugin: {
-              "name": "RulesEngine",
-              "type": "transform",
-              "label": "RulesEngine",
-              artifact: yareArtifact,
-              "properties": {
-                "rulebook": rulebook,
-                "rulebookid": this.props.rulebookid
-              }
-            }
-          };
-          let batchConfig = {
-            artifact: batchHighestArtifact,
-            config: {
-              stages: [rulesEnginePlugin],
-              connections: []
-            }
-          };
-          let realtimeConfig = {
-            artifact: realtimeHighestArtifact,
-            config: {
-              stages: [rulesEnginePlugin],
-              batchInterval: '10s',
-              connections: []
-            }
-          };
-          let batchUrl = window.getHydratorUrl({
-            stateName: 'hydrator.create',
-            stateParams: {
-              namespace,
-              rulesengineid: this.props.rulebookid,
-              artifactType: batchHighestArtifact.name
-            }
-          });
-          let realtimeUrl = window.getHydratorUrl({
-            stateName: 'hydrator.create',
-            stateParams: {
-              namespace,
-              rulesengineid: this.props.rulebookid,
-              artifactType: realtimeHighestArtifact.name
-            }
-          });
+      .subscribe((res) => {
+        let artifacts = res[0];
+        let rulebook = res[1].values[0];
+        let batchArtifacts = artifacts.filter((artifact) => artifact.name === 'cdap-data-pipeline');
+        let realtimeArtifacts = artifacts.filter(
+          (artifact) => artifact.name === 'cdap-data-streams'
+        );
+        let yareArtifact = artifacts.filter(
+          (artifact) => artifact.name === RulesEnginePluginArtifact
+        );
+        if (!yareArtifact.length) {
           this.setState({
-            batchConfig,
-            batchUrl,
-            realtimeUrl,
-            realtimeConfig,
-            error: null
+            error: T.translate(`${PREFIX}.error`),
           });
+          return;
         }
-      );
+        let batchHighestArtifact, realtimeHighestArtifact;
+        if (batchArtifacts.length > 1) {
+          let highestBatchArtifactVersion = findHighestVersion(
+            batchArtifacts.map((artifact) => artifact.version),
+            true
+          );
+          batchHighestArtifact = batchArtifacts.find(
+            (bArtifact) => bArtifact.version === highestBatchArtifactVersion
+          );
+        } else {
+          batchHighestArtifact = batchArtifacts[0];
+        }
+        if (realtimeArtifacts.length > 1) {
+          let highestRealtimeArtifactVersion = findHighestVersion(
+            realtimeArtifacts.map((artifact) => artifact.version),
+            true
+          );
+          realtimeHighestArtifact = realtimeArtifacts.find(
+            (rArtifact) => rArtifact.version === highestRealtimeArtifactVersion
+          );
+        } else {
+          realtimeHighestArtifact = realtimeArtifacts[0];
+        }
+        let rulesEnginePlugin = {
+          name: 'RulesEngine',
+          plugin: {
+            name: 'RulesEngine',
+            type: 'transform',
+            label: 'RulesEngine',
+            artifact: yareArtifact,
+            properties: {
+              rulebook: rulebook,
+              rulebookid: this.props.rulebookid,
+            },
+          },
+        };
+        let batchConfig = {
+          artifact: batchHighestArtifact,
+          config: {
+            stages: [rulesEnginePlugin],
+            connections: [],
+          },
+        };
+        let realtimeConfig = {
+          artifact: realtimeHighestArtifact,
+          config: {
+            stages: [rulesEnginePlugin],
+            batchInterval: '10s',
+            connections: [],
+          },
+        };
+        let batchUrl = window.getHydratorUrl({
+          stateName: 'hydrator.create',
+          stateParams: {
+            namespace,
+            rulesengineid: this.props.rulebookid,
+            artifactType: batchHighestArtifact.name,
+          },
+        });
+        let realtimeUrl = window.getHydratorUrl({
+          stateName: 'hydrator.create',
+          stateParams: {
+            namespace,
+            rulesengineid: this.props.rulebookid,
+            artifactType: realtimeHighestArtifact.name,
+          },
+        });
+        this.setState({
+          batchConfig,
+          batchUrl,
+          realtimeUrl,
+          realtimeConfig,
+          error: null,
+        });
+      });
   };
 
   componentWillReceiveProps(nextProps) {
     if (this.state.isOpen !== nextProps.isOpen) {
       this.setState({
         isOpen: nextProps.isOpen,
-        rulebookid: nextProps.rulebookid
+        rulebookid: nextProps.rulebookid,
       });
       if (nextProps.isOpen) {
         this.updateBatchAndRealtimeConfigs();
@@ -159,7 +169,9 @@ export default class AddRulesEngineToPipelineModal extends Component {
   }
 
   handleOnRealtimeUrlClick = () => {
-    if (!this.state.realtimeUrl) { return; }
+    if (!this.state.realtimeUrl) {
+      return;
+    }
     window.localStorage.setItem(this.state.rulebookid, JSON.stringify(this.state.realtimeConfig));
   };
 
@@ -178,9 +190,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
     }
     return (
       <div>
-        <div className="message">
-          {T.translate(`${PREFIX}.message`)}
-        </div>
+        <div className="message">{T.translate(`${PREFIX}.message`)}</div>
         <div className="action-buttons">
           <a
             className="btn btn-secondary"
@@ -193,7 +203,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
           <a
             href={this.state.realtimeUrl}
             className={classnames('btn btn-secondary', {
-              'inactive': !this.state.realtimeUrl
+              inactive: !this.state.realtimeUrl,
             })}
             onClick={this.handleOnRealtimeUrlClick}
           >
@@ -203,7 +213,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
         </div>
       </div>
     );
-  }
+  };
 
   render() {
     return (
@@ -216,9 +226,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
         <ModalHeader toggle={this.props.onClose}>
           <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
         </ModalHeader>
-        <ModalBody>
-          {this.renderContent()}
-        </ModalBody>
+        <ModalBody>{this.renderContent()}</ModalBody>
       </Modal>
     );
   }

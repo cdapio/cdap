@@ -18,11 +18,11 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
-import {getHyperParamLabel} from 'components/Experiments/store/SharedActionCreator';
+import { getHyperParamLabel } from 'components/Experiments/store/SharedActionCreator';
 
 require('./HyperParamsPopover.scss');
 
-export default function HyperParamsPopover({algorithm, hyperparameters}) {
+export default function HyperParamsPopover({ algorithm, hyperparameters }) {
   return (
     <Popover
       target={() => <IconSVG name="icon-cogs" />}
@@ -39,18 +39,14 @@ export default function HyperParamsPopover({algorithm, hyperparameters}) {
           </tr>
         </thead>
         <tbody>
-          {
-            Object
-              .keys(hyperparameters)
-              .map((param, i) => {
-                return (
-                  <tr key={i}>
-                    <td>{getHyperParamLabel(algorithm, param)}</td>
-                    <td>{hyperparameters[param]} </td>
-                  </tr>
-                );
-              })
-          }
+          {Object.keys(hyperparameters).map((param, i) => {
+            return (
+              <tr key={i}>
+                <td>{getHyperParamLabel(algorithm, param)}</td>
+                <td>{hyperparameters[param]} </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </Popover>
@@ -58,5 +54,5 @@ export default function HyperParamsPopover({algorithm, hyperparameters}) {
 }
 HyperParamsPopover.propTypes = {
   hyperparameters: PropTypes.object,
-  algorithm: PropTypes.string
+  algorithm: PropTypes.string,
 };

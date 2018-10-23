@@ -16,33 +16,26 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {ReportsActions} from 'components/Reports/store/ReportsStore';
-import {generateReport} from 'components/Reports/store/ActionCreator';
+import { connect } from 'react-redux';
+import { ReportsActions } from 'components/Reports/store/ReportsStore';
+import { generateReport } from 'components/Reports/store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Reports.Customizer';
 
-function ActionButtonsView({clearSelection, timeRange, customizer, status}) {
-  let disabled = (!timeRange.selection) ||
-                  (!customizer.pipelines && !customizer.customApps) ||
-                  (status.statusSelections.length === 0);
-
+function ActionButtonsView({ clearSelection, timeRange, customizer, status }) {
+  let disabled =
+    !timeRange.selection ||
+    (!customizer.pipelines && !customizer.customApps) ||
+    status.statusSelections.length === 0;
 
   return (
     <div className="action-buttons">
-      <button
-        className="btn btn-primary"
-        onClick={generateReport}
-        disabled={disabled}
-      >
+      <button className="btn btn-primary" onClick={generateReport} disabled={disabled}>
         {T.translate(`${PREFIX}.generate`)}
       </button>
 
-      <button
-        className="btn btn-link"
-        onClick={clearSelection}
-      >
+      <button className="btn btn-link" onClick={clearSelection}>
         {T.translate(`${PREFIX}.clear`)}
       </button>
     </div>
@@ -53,14 +46,14 @@ ActionButtonsView.propTypes = {
   clearSelection: PropTypes.func,
   timeRange: PropTypes.object,
   customizer: PropTypes.object,
-  status: PropTypes.object
+  status: PropTypes.object,
 };
 
 const mapStateToProps = (state) => {
   return {
     timeRange: state.timeRange,
     customizer: state.customizer,
-    status: state.status
+    status: state.status,
   };
 };
 
@@ -68,9 +61,9 @@ const mapDispatch = (dispatch) => {
   return {
     clearSelection: () => {
       dispatch({
-        type: ReportsActions.clearSelection
+        type: ReportsActions.clearSelection,
       });
-    }
+    },
   };
 };
 

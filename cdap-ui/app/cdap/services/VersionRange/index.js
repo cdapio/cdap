@@ -20,12 +20,7 @@ import Version from 'services/VersionRange/Version';
 // co.cask.cdap.proto.artifact.ArtifactRange
 export default class VersionRange {
   constructor(range) {
-    let {
-      lower,
-      upper,
-      isLowerInclusive,
-      isUpperInclusive
-    } = parseRange(range);
+    let { lower, upper, isLowerInclusive, isUpperInclusive } = parseRange(range);
 
     this.lower = lower;
     this.upper = upper;
@@ -45,10 +40,7 @@ export default class VersionRange {
 }
 
 function parseRange(range) {
-  let lower,
-      upper,
-      isLowerInclusive,
-      isUpperInclusive;
+  let lower, upper, isLowerInclusive, isUpperInclusive;
 
   let trimmedRange = range.trim();
 
@@ -57,13 +49,23 @@ function parseRange(range) {
 
   let split = trimmedRange.split(',');
 
-  lower = new Version(split[0].trim().substr(1).trim());
-  upper = new Version(split[1].trim().substr(0, split[1].length - 1).trim());
+  lower = new Version(
+    split[0]
+      .trim()
+      .substr(1)
+      .trim()
+  );
+  upper = new Version(
+    split[1]
+      .trim()
+      .substr(0, split[1].length - 1)
+      .trim()
+  );
 
   return {
     lower,
     upper,
     isLowerInclusive,
-    isUpperInclusive
+    isUpperInclusive,
   };
 }

@@ -20,25 +20,18 @@ import IconSVG from 'components/IconSVG';
 
 require('./PipelineModeless.scss');
 
-export default function PipelineModeless ({title, onClose, children}) {
+export default function PipelineModeless({ title, onClose, children }) {
   return (
     <div className="pipeline-modeless-container">
       <div className="pipeline-modeless-header">
-        <div className="pipeline-modeless-title">
-          {title}
-        </div>
+        <div className="pipeline-modeless-title">{title}</div>
         <div className="btn-group">
-          <a
-            className="btn"
-            onClick={onClose}
-          >
+          <a className="btn" onClick={onClose}>
             <IconSVG name="icon-close" />
           </a>
         </div>
       </div>
-      <div className="pipeline-modeless-content">
-        {children}
-      </div>
+      <div className="pipeline-modeless-content">{children}</div>
     </div>
   );
 }
@@ -46,5 +39,5 @@ export default function PipelineModeless ({title, onClose, children}) {
 PipelineModeless.propTypes = {
   title: PropTypes.node,
   onClose: PropTypes.func,
-  children: PropTypes.node
+  children: PropTypes.node,
 };

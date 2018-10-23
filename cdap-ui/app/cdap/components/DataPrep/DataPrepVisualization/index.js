@@ -15,11 +15,11 @@
 */
 
 import React, { Component } from 'react';
-import {CreateVoyager} from 'cask-datavoyager';
+import { CreateVoyager } from 'cask-datavoyager';
 import DataPrepStore from 'components/DataPrep/store';
-import {setVisualizationState} from 'components/DataPrep/store/DataPrepActionCreator';
+import { setVisualizationState } from 'components/DataPrep/store/DataPrepActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import {updateWorkspaceProperties} from 'components/DataPrep/store/DataPrepActionCreator';
+import { updateWorkspaceProperties } from 'components/DataPrep/store/DataPrepActionCreator';
 import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
 import debounce from 'lodash/debounce';
@@ -30,16 +30,15 @@ require('./DataPrepVisualization.scss');
 
 // FIXME: After rebase against latest develop this hardcoding should be taken away;
 const PLOT_VEGA_LITE_CONFIG = {
-  "mark": {
-    "color": "#3b78e7"
-  }
+  mark: {
+    color: '#3b78e7',
+  },
 };
 
 export default class DataPrepVisualization extends Component {
-
   state = {
-    loading: true
-  }
+    loading: true,
+  };
 
   /*
     Today we have a 1s timeout before hide loading animation and show the graphs
@@ -52,8 +51,8 @@ export default class DataPrepVisualization extends Component {
     return {
       ...state,
       dataset: {
-        isLoading: false
-      }
+        isLoading: false,
+      },
     };
   };
 
@@ -62,31 +61,37 @@ export default class DataPrepVisualization extends Component {
       ...state,
       config: {
         ...state.config,
-        vegaPlotSpec: PLOT_VEGA_LITE_CONFIG
+        vegaPlotSpec: PLOT_VEGA_LITE_CONFIG,
       },
       dataset: {
         isLoading: false,
         data: {
-          values: data
-        }
-      }
+          values: data,
+        },
+      },
     };
   };
 
   renderVoyager = () => {
-    let {properties, data} = DataPrepStore.getState().dataprep;
+    let { properties, data } = DataPrepStore.getState().dataprep;
     let visualization = properties.visualization || {};
-    this.voyagerInstance = CreateVoyager(this.containerRef, {
-      vegaPlotSpec: PLOT_VEGA_LITE_CONFIG
-    }, {
-      values: data
-    });
+    this.voyagerInstance = CreateVoyager(
+      this.containerRef,
+      {
+        vegaPlotSpec: PLOT_VEGA_LITE_CONFIG,
+      },
+      {
+        values: data,
+      }
+    );
     if (Object.keys(visualization).length) {
       this.voyagerInstance.setApplicationState(this.addDatasetToVoyagerState(visualization, data));
     }
-    this.voyagerStateSubscription = this.voyagerInstance.onStateChange(debounce((voyagerState) => {
-      setVisualizationState(this.removeDatasetFromVoyagerState(voyagerState));
-    }, 500));
+    this.voyagerStateSubscription = this.voyagerInstance.onStateChange(
+      debounce((voyagerState) => {
+        setVisualizationState(this.removeDatasetFromVoyagerState(voyagerState));
+      }, 500)
+    );
   };
 
   updateVizProperties = () => {
@@ -104,16 +109,22 @@ export default class DataPrepVisualization extends Component {
     window.addEventListener('beforeunload', this.updateVizProperties);
     let localData = [...DataPrepStore.getState().dataprep.data];
     this.datapreSubscription = DataPrepStore.subscribe(() => {
-      let {dataprep} = DataPrepStore.getState();
+      let { dataprep } = DataPrepStore.getState();
       let properties = dataprep.properties || {};
       let visualization = properties.visualization || {};
-      if (!localData || dataprep.data.length !== localData.length || !this.isArrayEqual(localData, dataprep.data)) {
+      if (
+        !localData ||
+        dataprep.data.length !== localData.length ||
+        !this.isArrayEqual(localData, dataprep.data)
+      ) {
         if (!Object.keys(visualization).length) {
           this.voyagerInstance.updateData({
-            values: dataprep.data
+            values: dataprep.data,
           });
         } else {
-          this.voyagerInstance.setApplicationState(this.addDatasetToVoyagerState(visualization, cloneDeep(dataprep.data)));
+          this.voyagerInstance.setApplicationState(
+            this.addDatasetToVoyagerState(visualization, cloneDeep(dataprep.data))
+          );
         }
         localData = cloneDeep(dataprep.data);
       }
@@ -122,7 +133,7 @@ export default class DataPrepVisualization extends Component {
     // when the user clicks on Data Relationship tab.
     setTimeout(() => {
       if (!this.unmounted) {
-        this.setState({loading: false}, this.renderVoyager);
+        this.setState({ loading: false }, this.renderVoyager);
       }
     }, 1000);
   }
@@ -141,17 +152,8 @@ export default class DataPrepVisualization extends Component {
 
   render() {
     return (
-      <div
-        className="datapre-visualization"
-        ref={ref => this.containerRef = ref}
-      >
-
-        {
-          this.state.loading ?
-            <LoadingSVGCentered />
-          :
-            <div id="dataprep-viz"></div>
-        }
+      <div className="datapre-visualization" ref={(ref) => (this.containerRef = ref)}>
+        {this.state.loading ? <LoadingSVGCentered /> : <div id="dataprep-viz" />}
       </div>
     );
   }

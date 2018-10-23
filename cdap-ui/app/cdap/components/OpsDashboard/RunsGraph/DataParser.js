@@ -15,33 +15,33 @@
  */
 
 import moment from 'moment';
-import {DAY_IN_SEC} from 'components/OpsDashboard/store/ActionCreator';
+import { DAY_IN_SEC } from 'components/OpsDashboard/store/ActionCreator';
 import uniqWith from 'lodash/uniqWith';
 
 export function parseDashboardData(rawData, startTime, duration, pipeline, customApp) {
-  let {
-    buckets,
-    timeArray
-  } = setBuckets(startTime, duration);
+  let { buckets, timeArray } = setBuckets(startTime, duration);
 
   let pipelineCount = 0,
-      customAppCount = 0;
+    customAppCount = 0;
 
   rawData.forEach((runInfo) => {
     if (['cdap-data-pipeline', 'cdap-data-streams'].indexOf(runInfo.artifact.name) !== -1) {
       pipelineCount++;
 
-      if (!pipeline) { return; }
+      if (!pipeline) {
+        return;
+      }
     } else {
       customAppCount++;
 
-      if (!customApp) { return; }
+      if (!customApp) {
+        return;
+      }
     }
 
     let startTime = getBucket(runInfo.start * 1000);
     let endTime = getBucket(runInfo.end * 1000);
     let runningTime;
-
 
     if (buckets[startTime]) {
       // add start method
@@ -101,28 +101,32 @@ export function parseDashboardData(rawData, startTime, duration, pipeline, custo
 
   timeArray.forEach((time) => {
     buckets[time].runsList = uniqWith(buckets[time].runsList, (a, b) => {
-      return (a.run && b.run) && (a.run === b.run);
+      return a.run && b.run && a.run === b.run;
     });
   });
 
   let data = Object.keys(buckets).map((time) => {
     return {
       ...buckets[time],
-      time
+      time,
     };
   });
 
   return {
     pipelineCount,
     customAppCount,
-    data
+    data,
   };
 }
 
 function getBucket(time) {
-  if (!time) { return null; }
+  if (!time) {
+    return null;
+  }
 
-  return moment(time).startOf('hour').format('x');
+  return moment(time)
+    .startOf('hour')
+    .format('x');
 }
 
 function setBuckets(startTime, duration) {
@@ -139,7 +143,7 @@ function setBuckets(startTime, duration) {
     if (duration === DAY_IN_SEC) {
       time = time.add(i, 'h').format('x');
     } else {
-      time = time.add(i*5, 'm').format('x');
+      time = time.add(i * 5, 'm').format('x');
     }
 
     timeArray.push(time);
@@ -150,12 +154,12 @@ function setBuckets(startTime, duration) {
       manual: 0,
       schedule: 0,
       delay: 0,
-      runsList: []
+      runsList: [],
     };
   }
 
   return {
     buckets,
-    timeArray
+    timeArray,
   };
 }

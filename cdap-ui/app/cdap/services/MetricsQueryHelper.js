@@ -29,7 +29,7 @@ function contextToTags(context) {
     return null;
   }
   tags = {};
-  for (i = 0; i < parts.length; i+=2) {
+  for (i = 0; i < parts.length; i += 2) {
     // In context, '~' is used to represent '.'
     tagValue = parts[i + 1].replace(/~/g, '.');
     tags[parts[i]] = tagValue;
@@ -44,8 +44,8 @@ function contextToTags(context) {
 function constructQuery(queryId, tags, metric, isTimeRange, groupBy) {
   var timeRange, retObj;
   timeRange = {
-    'start': metric.startTime || 'now-60s',
-    'end': metric.endTime || 'now'
+    start: metric.startTime || 'now-60s',
+    end: metric.endTime || 'now',
   };
   if (metric.resolution) {
     timeRange.resolution = metric.resolution;
@@ -53,14 +53,14 @@ function constructQuery(queryId, tags, metric, isTimeRange, groupBy) {
   retObj = {};
   retObj[queryId] = {
     tags: tags,
-    metrics: metric.names
+    metrics: metric.names,
   };
   groupBy = groupBy || [];
   if (groupBy.length) {
     retObj[queryId].groupBy = groupBy;
   }
 
-  isTimeRange = (isTimeRange !== false);
+  isTimeRange = isTimeRange !== false;
   if (isTimeRange) {
     retObj[queryId].timeRange = timeRange;
   }
@@ -126,5 +126,5 @@ export default {
   roundDownToNearest,
   aggregate,
   tagToContext,
-  tagsToParams
+  tagsToParams,
 };

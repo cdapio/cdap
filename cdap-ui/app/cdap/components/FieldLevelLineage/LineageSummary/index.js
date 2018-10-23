@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import SummaryRow from 'components/FieldLevelLineage/LineageSummary/SummaryRow';
-import {getOperations} from 'components/FieldLevelLineage/store/ActionCreator';
+import { getOperations } from 'components/FieldLevelLineage/store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.FieldLevelLineage.Summary';
@@ -27,28 +27,26 @@ const HEADERS_PREFIX = 'features.FieldLevelLineage.Headers';
 require('./LineageSummary.scss');
 
 const handleViewOperationsClick = (direction, summary) => {
-  if (summary.length === 0) { return; }
+  if (summary.length === 0) {
+    return;
+  }
 
   getOperations(direction);
 };
 
-export default function LineageSummary({activeField, datasetId, summary, direction}) {
+export default function LineageSummary({ activeField, datasetId, summary, direction }) {
   const datasetFieldTitle = `${datasetId}: ${activeField}`;
 
   if (activeField && summary.length === 0) {
     return (
       <div className="lineage-summary-empty-container">
-        <span>
-          {T.translate(`${PREFIX}.Empty.${direction}`, { fieldId: datasetFieldTitle })}
-        </span>
+        <span>{T.translate(`${PREFIX}.Empty.${direction}`, { fieldId: datasetFieldTitle })}</span>
       </div>
     );
   } else if (!activeField) {
     return (
       <div className="lineage-summary-empty-container">
-        <span>
-          {T.translate(`${PREFIX}.noFieldSelected`)}
-        </span>
+        <span>{T.translate(`${PREFIX}.noFieldSelected`)}</span>
       </div>
     );
   }
@@ -57,14 +55,9 @@ export default function LineageSummary({activeField, datasetId, summary, directi
     <div className="lineage-summary-container">
       <div className="field-lineage-info">
         <div className="title">
-          <strong>
-            {T.translate(`${PREFIX}.Title.${direction}`)}
-          </strong>
+          <strong>{T.translate(`${PREFIX}.Title.${direction}`)}</strong>
 
-          <span
-            className="dataset-field truncate"
-            title={datasetFieldTitle}
-          >
+          <span className="dataset-field truncate" title={datasetFieldTitle}>
             {datasetFieldTitle}
           </span>
         </div>
@@ -77,26 +70,14 @@ export default function LineageSummary({activeField, datasetId, summary, directi
       <div className="lineage-fields">
         <div className="lineage-column lineage-fields-header">
           <div className="index" />
-          <div className="dataset-name">
-            {T.translate(`${HEADERS_PREFIX}.datasetName`)}
-          </div>
-          <div className="field-name">
-            {T.translate(`${HEADERS_PREFIX}.fieldName`)}
-          </div>
+          <div className="dataset-name">{T.translate(`${HEADERS_PREFIX}.datasetName`)}</div>
+          <div className="field-name">{T.translate(`${HEADERS_PREFIX}.fieldName`)}</div>
         </div>
 
         <div className="lineage-fields-body">
-          {
-            summary.map((entity, i) => {
-              return (
-                <SummaryRow
-                  key={i}
-                  entity={entity}
-                  index={i}
-                />
-              );
-            })
-          }
+          {summary.map((entity, i) => {
+            return <SummaryRow key={i} entity={entity} index={i} />;
+          })}
         </div>
       </div>
 
@@ -116,5 +97,5 @@ LineageSummary.propTypes = {
   activeField: PropTypes.string,
   datasetId: PropTypes.string,
   summary: PropTypes.array,
-  direction: PropTypes.oneOf(['incoming', 'outgoing'])
+  direction: PropTypes.oneOf(['incoming', 'outgoing']),
 };

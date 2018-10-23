@@ -16,12 +16,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
-import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import { ACTIONS as PipelineConfigurationsActions } from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.Resources';
@@ -30,7 +30,7 @@ const mapStateToProps = (state, ownProps) => {
   return {
     isBatch: ownProps.isBatch,
     virtualCores: state.driverResources.virtualCores,
-    memoryMB: state.driverResources.memoryMB
+    memoryMB: state.driverResources.memoryMB,
   };
 };
 const mapDispatchToProps = (dispatch) => {
@@ -38,34 +38,38 @@ const mapDispatchToProps = (dispatch) => {
     onVirtualCoresChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_DRIVER_VIRTUAL_CORES,
-        payload: { virtualCores: e.target.value }
+        payload: { virtualCores: e.target.value },
       });
     },
     onMemoryMBChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_DRIVER_MEMORY_MB,
-        payload: { memoryMB: e.target.value }
+        payload: { memoryMB: e.target.value },
       });
-    }
+    },
   };
 };
 
-const DriverResources = ({isBatch, virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange}) => {
+const DriverResources = ({
+  isBatch,
+  virtualCores,
+  onVirtualCoresChange,
+  memoryMB,
+  onMemoryMBChange,
+}) => {
   return (
     <div
-      className={classnames("driver", {
-        "col-xs-6": isBatch,
-        "col-xs-4": !isBatch
+      className={classnames('driver', {
+        'col-xs-6': isBatch,
+        'col-xs-4': !isBatch,
       })}
     >
       <div className="resource-title-icon">
-        <span className="resource-title">
-          {T.translate(`${PREFIX}.driver`)}
-        </span>
+        <span className="resource-title">{T.translate(`${PREFIX}.driver`)}</span>
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
-          showOn='Hover'
-          placement='right'
+          showOn="Hover"
+          placement="right"
         >
           {T.translate(`${PREFIX}.driverTooltip`)}
         </Popover>
@@ -85,9 +89,12 @@ DriverResources.propTypes = {
   virtualCores: PropTypes.number,
   onVirtualCoresChange: PropTypes.func,
   memoryMB: PropTypes.number,
-  onMemoryMBChange: PropTypes.func
+  onMemoryMBChange: PropTypes.func,
 };
 
-const ConnectedDriverResources = connect(mapStateToProps, mapDispatchToProps)(DriverResources);
+const ConnectedDriverResources = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(DriverResources);
 
 export default ConnectedDriverResources;

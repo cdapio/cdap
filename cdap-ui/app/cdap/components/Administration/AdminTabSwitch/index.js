@@ -14,10 +14,10 @@
 * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {Link, Route, Switch} from 'react-router-dom';
-import {humanReadableDuration} from 'services/helpers';
+import { Link, Route, Switch } from 'react-router-dom';
+import { humanReadableDuration } from 'services/helpers';
 import VersionStore from 'services/VersionStore';
 import VersionActions from 'services/VersionStore/VersionActions';
 import MyCDAPVersionApi from 'api/version';
@@ -30,48 +30,42 @@ const PREFIX = 'features.Administration';
 
 export default class AdminTabSwitch extends Component {
   state = {
-    version: null
+    version: null,
   };
 
   static propTypes = {
-    uptime: PropTypes.number
+    uptime: PropTypes.number,
   };
 
   componentDidMount() {
     if (!VersionStore.getState().version) {
       this.getCDAPVersion();
     } else {
-      this.setState({ version : VersionStore.getState().version });
+      this.setState({ version: VersionStore.getState().version });
     }
   }
 
   getCDAPVersion() {
-    MyCDAPVersionApi
-      .get()
-      .subscribe((res) => {
-        this.setState({ version : res.version });
-        VersionStore.dispatch({
-          type: VersionActions.updateVersion,
-          payload: {
-            version: res.version
-          }
-        });
+    MyCDAPVersionApi.get().subscribe((res) => {
+      this.setState({ version: res.version });
+      VersionStore.dispatch({
+        type: VersionActions.updateVersion,
+        payload: {
+          version: res.version,
+        },
       });
+    });
   }
 
   renderTabTitle(isManagement = true) {
     return (
       <span className="tab-title">
-        <h5 className={classnames({"active": isManagement})}>
-          <Link to='/administration'>
-            {T.translate(`${PREFIX}.Tabs.management`)}
-          </Link>
+        <h5 className={classnames({ active: isManagement })}>
+          <Link to="/administration">{T.translate(`${PREFIX}.Tabs.management`)}</Link>
         </h5>
         <span className="divider"> | </span>
-        <h5 className={classnames({"active": !isManagement})}>
-          <Link to='/administration/configuration'>
-            {T.translate(`${PREFIX}.Tabs.config`)}
-          </Link>
+        <h5 className={classnames({ active: !isManagement })}>
+          <Link to="/administration/configuration">{T.translate(`${PREFIX}.Tabs.config`)}</Link>
         </h5>
       </span>
     );
@@ -81,25 +75,17 @@ export default class AdminTabSwitch extends Component {
     return (
       <span className="uptime-version-container">
         <span>
-          {
-            this.props.uptime ?
-              T.translate(`${PREFIX}.uptimeLabel`, {
-                time: humanReadableDuration(Math.ceil(this.props.uptime / 1000))
+          {this.props.uptime
+            ? T.translate(`${PREFIX}.uptimeLabel`, {
+                time: humanReadableDuration(Math.ceil(this.props.uptime / 1000)),
               })
-            :
-              null
-          }
+            : null}
         </span>
-        {
-          isNil(this.state.version) ?
-            null
-          :
-            (
-              <i className="cdap-version">
-                {T.translate(`${PREFIX}.Top.version-label`)} - {this.state.version}
-              </i>
-            )
-        }
+        {isNil(this.state.version) ? null : (
+          <i className="cdap-version">
+            {T.translate(`${PREFIX}.Top.version-label`)} - {this.state.version}
+          </i>
+        )}
       </span>
     );
   }
@@ -107,21 +93,25 @@ export default class AdminTabSwitch extends Component {
   render() {
     return (
       <Switch>
-        <Route exact path="/administration" render={() => {
-          return (
-            <div className="tab-title-and-version">
-              {this.renderTabTitle()}
-              {this.renderUptimeVersion()}
-            </div>
-          );
-        }} />
-        <Route exact path="/administration/configuration" render={() => {
-          return (
-            <div className="tab-title-and-version">
-              {this.renderTabTitle(false)}
-            </div>
-          );
-        }} />
+        <Route
+          exact
+          path="/administration"
+          render={() => {
+            return (
+              <div className="tab-title-and-version">
+                {this.renderTabTitle()}
+                {this.renderUptimeVersion()}
+              </div>
+            );
+          }}
+        />
+        <Route
+          exact
+          path="/administration/configuration"
+          render={() => {
+            return <div className="tab-title-and-version">{this.renderTabTitle(false)}</div>;
+          }}
+        />
       </Switch>
     );
   }

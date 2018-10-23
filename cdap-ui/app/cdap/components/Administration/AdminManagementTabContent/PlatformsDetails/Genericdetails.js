@@ -23,26 +23,23 @@ import classnames from 'classnames';
 
 require('./Genericdetails.scss');
 
-export default function GenericDetails({details, className}) {
+export default function GenericDetails({ details, className }) {
   return (
-    <div className={classnames(className, "generic-details")}>
-      {
-        Object
-          .keys(details)
-          .filter(detail => ['name', 'url', 'version', 'logs'].indexOf(detail) === -1)
-          .map((detail, i) => {
-            return (
-              <div key={i}>
-                <strong>{capitalize(detail)}</strong>
-                <RenderObjectAsTable obj={details[detail]} />
-              </div>
-            );
-          })
-      }
+    <div className={classnames(className, 'generic-details')}>
+      {Object.keys(details)
+        .filter((detail) => ['name', 'url', 'version', 'logs'].indexOf(detail) === -1)
+        .map((detail, i) => {
+          return (
+            <div key={i}>
+              <strong>{capitalize(detail)}</strong>
+              <RenderObjectAsTable obj={details[detail]} />
+            </div>
+          );
+        })}
     </div>
   );
 }
 GenericDetails.propTypes = {
   details: PropTypes.object,
-  className: PropTypes.string
+  className: PropTypes.string,
 };

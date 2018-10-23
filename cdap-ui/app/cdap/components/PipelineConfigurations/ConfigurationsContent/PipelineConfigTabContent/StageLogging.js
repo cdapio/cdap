@@ -16,18 +16,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import ToggleSwitch from 'components/ToggleSwitch';
 import Popover from 'components/Popover';
-import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import { ACTIONS as PipelineConfigurationsActions } from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
 const mapStateToStageLoggingProps = (state) => {
   return {
-    stageLogging: state.stageLoggingEnabled
+    stageLogging: state.stageLoggingEnabled,
   };
 };
 const mapDispatchToStageLoggingProps = (dispatch) => {
@@ -35,27 +35,22 @@ const mapDispatchToStageLoggingProps = (dispatch) => {
     onToggle: (value) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_STAGE_LOGGING,
-        payload: { stageLogging: value }
+        payload: { stageLogging: value },
       });
-    }
+    },
   };
 };
 
-const StageLogging = ({stageLogging, onToggle}) => {
+const StageLogging = ({ stageLogging, onToggle }) => {
   return (
     <div className="label-with-toggle stageLogging row">
-      <span className="toggle-label col-xs-4">
-        {T.translate(`${PREFIX}.stageLogging`)}
-      </span>
+      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.stageLogging`)}</span>
       <div className="col-xs-7 toggle-container">
-        <ToggleSwitch
-          isOn={stageLogging}
-          onToggle={onToggle.bind(null, !stageLogging)}
-        />
+        <ToggleSwitch isOn={stageLogging} onToggle={onToggle.bind(null, !stageLogging)} />
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
-          showOn='Hover'
-          placement='right'
+          showOn="Hover"
+          placement="right"
         >
           {T.translate(`${PREFIX}.stageLoggingTooltip`)}
         </Popover>
@@ -66,7 +61,7 @@ const StageLogging = ({stageLogging, onToggle}) => {
 
 StageLogging.propTypes = {
   stageLogging: PropTypes.bool,
-  onToggle: PropTypes.func
+  onToggle: PropTypes.func,
 };
 
 const ConnectedStageLogging = connect(

@@ -14,10 +14,10 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import RuleBook from 'components/RulesEngineHome/RuleBook';
-import {Input, InputGroup, InputGroupAddon} from 'reactstrap';
-import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
+import { Input, InputGroup, InputGroupAddon } from 'reactstrap';
+import RulesEngineStore, { RULESENGINEACTIONS } from 'components/RulesEngineHome/RulesEngineStore';
 import Fuse from 'fuse.js';
 import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
@@ -35,15 +35,15 @@ export default class RuleBooksTab extends Component {
   state = {
     searchStr: '',
     isOpenImportWizard: false,
-    rulebooks: RulesEngineStore.getState().rulebooks.list
+    rulebooks: RulesEngineStore.getState().rulebooks.list,
   };
 
   componentDidMount() {
     this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
-      let {rulebooks} = RulesEngineStore.getState();
+      let { rulebooks } = RulesEngineStore.getState();
       if (Array.isArray(rulebooks.list)) {
         this.setState({
-          rulebooks: rulebooks.list
+          rulebooks: rulebooks.list,
         });
       }
     });
@@ -57,39 +57,34 @@ export default class RuleBooksTab extends Component {
 
   updateSearchStr = (e) => {
     this.setState({
-      searchStr: e.target.value
+      searchStr: e.target.value,
     });
   };
 
   createNewRuleBook = () => {
     RulesEngineStore.dispatch({
       type: RULESENGINEACTIONS.SETCREATERULEBOOK,
-      payload:{
-        isCreate: true
-      }
+      payload: {
+        isCreate: true,
+      },
     });
   };
 
   toggleImportWizard = () => {
     this.setState({
-      isOpenImportWizard: !this.state.isOpenImportWizard
+      isOpenImportWizard: !this.state.isOpenImportWizard,
     });
   };
 
   renderRulebooks() {
-
     if (isNil(this.state.rulebooks)) {
-      return (<LoadingSVG />);
+      return <LoadingSVG />;
     }
 
     if (isEmpty(this.state.searchStr)) {
-      return (
-        this.state
-          .rulebooks
-          .map(rulebook => {
-            return (<RuleBook key={rulebook.id} bookDetails={rulebook}/>);
-          })
-      );
+      return this.state.rulebooks.map((rulebook) => {
+        return <RuleBook key={rulebook.id} bookDetails={rulebook} />;
+      });
     }
 
     // TODO not sure about performance
@@ -99,32 +94,19 @@ export default class RuleBooksTab extends Component {
       location: 0,
       distance: 100,
       maxPatternLength: 32,
-      keys: [
-        "id",
-        "user",
-        "rules",
-        "description",
-        "source"
-      ]
+      keys: ['id', 'user', 'rules', 'description', 'source'],
     };
 
     let fuse = new Fuse(this.state.rulebooks, fuseOptions);
-    return (
-      fuse.search(this.state.searchStr)
-        .map(rulebook => {
-          return (
-            <RuleBook key={rulebook.id} bookDetails={rulebook}/>
-          );
-        })
-    );
+    return fuse.search(this.state.searchStr).map((rulebook) => {
+      return <RuleBook key={rulebook.id} bookDetails={rulebook} />;
+    });
   }
 
   render() {
     return (
       <div className="rule-books-tab">
-        <span className="rule-books-search-label">
-          {T.translate(`${PREFIX}.searchLabel`)}
-        </span>
+        <span className="rule-books-search-label">{T.translate(`${PREFIX}.searchLabel`)}</span>
         <InputGroup className="rule-books-search-group">
           <InputGroupAddon addonType="prepend">
             <IconSVG name="icon-search" />
@@ -135,9 +117,11 @@ export default class RuleBooksTab extends Component {
             onChange={this.updateSearchStr}
           />
         </InputGroup>
-        <div className={classnames("rule-books-container", {
-          'loading': isNil(this.state.rulebooks)
-        })}>
+        <div
+          className={classnames('rule-books-container', {
+            loading: isNil(this.state.rulebooks),
+          })}
+        >
           <div className="rule-book center">
             <div onClick={this.createNewRuleBook}>
               <strong> {T.translate(`${PREFIX}.createrulebook`)} </strong>

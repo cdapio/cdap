@@ -32,7 +32,7 @@ import Header from 'components/Header';
 import Footer from 'components/Footer';
 import ConnectionExample from 'components/ConnectionExample';
 import cookie from 'react-cookie';
-import {BrowserRouter, Route, Switch} from 'react-router-dom';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
@@ -43,67 +43,67 @@ import VersionActions from 'services/VersionStore/VersionActions';
 import StatusFactory from 'services/StatusFactory';
 import LoadingIndicator from 'components/LoadingIndicator';
 import StatusAlertMessage from 'components/StatusAlertMessage';
-import AuthorizationErrorMessage  from 'components/AuthorizationErrorMessage';
+import AuthorizationErrorMessage from 'components/AuthorizationErrorMessage';
 import Page404 from 'components/404';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import HttpExecutor from 'components/HttpExecutor';
-import {applyTheme} from 'services/ThemeHelper';
+import { applyTheme } from 'services/ThemeHelper';
 import ErrorBoundary from 'components/ErrorBoundary';
 import OverlayFocus from 'components/OverlayFocus';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
 const SampleTSXComponent = Loadable({
-  loader: () => import (/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
+  loading: LoadingSVGCentered,
 });
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
-  loading: LoadingSVGCentered
+  loading: LoadingSVGCentered,
 });
 
 class CDAP extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedNamespace : NamespaceStore.getState().selectedNamespace,
+      selectedNamespace: NamespaceStore.getState().selectedNamespace,
       version: '',
-      authorizationFailed: false
+      authorizationFailed: false,
     };
     this.eventEmitter = ee(ee);
   }
 
   componentWillMount() {
     applyTheme();
-    cookie.save('DEFAULT_UI', 'NEW', {path: '/'});
+    cookie.save('DEFAULT_UI', 'NEW', { path: '/' });
     if (window.CDAP_CONFIG.securityEnabled) {
       NamespaceStore.dispatch({
         type: NamespaceActions.updateUsername,
         payload: {
-          username: cookie.load('CDAP_Auth_User') || ''
-        }
+          username: cookie.load('CDAP_Auth_User') || '',
+        },
       });
     }
 
     StatusFactory.startPollingForBackendStatus();
     this.eventEmitter.on(globalEvents.NONAMESPACE, () => {
       this.setState({
-        authorizationFailed: true
+        authorizationFailed: true,
       });
     });
     if (!VersionStore.getState().version) {
       MyCDAPVersionApi.get().subscribe((res) => {
-        this.setState({ version : res.version });
+        this.setState({ version: res.version });
         VersionStore.dispatch({
           type: VersionActions.updateVersion,
           payload: {
-            version: res.version
-          }
+            version: res.version,
+          },
         });
       });
     }
-
   }
 
   render() {
@@ -114,65 +114,94 @@ class CDAP extends Component {
           <Header />
           <LoadingIndicator />
           <StatusAlertMessage />
-          {
-            this.state.authorizationFailed ?
-              <AuthorizationErrorMessage />
-            :
-              <div className="container-fluid">
-                <Switch>
-                  <Route exact path="/" render={(props) => (
+          {this.state.authorizationFailed ? (
+            <AuthorizationErrorMessage />
+          ) : (
+            <div className="container-fluid">
+              <Switch>
+                <Route
+                  exact
+                  path="/"
+                  render={(props) => (
                     <ErrorBoundary>
                       <RouteToNamespace {...props} />
                     </ErrorBoundary>
-                   )} />
-                  <Route exact path="/notfound" render={(props) => (
+                  )}
+                />
+                <Route
+                  exact
+                  path="/notfound"
+                  render={(props) => (
                     <ErrorBoundary>
                       <Page404 {...props} />
                     </ErrorBoundary>
-                  )} />
-                  <Route path="/administration" render={(props) => (
+                  )}
+                />
+                <Route
+                  path="/administration"
+                  render={(props) => (
                     <ErrorBoundary>
                       <Administration {...props} />
                     </ErrorBoundary>
-                  )} />
-                  <Route exact path="/ns" render={(props) => (
+                  )}
+                />
+                <Route
+                  exact
+                  path="/ns"
+                  render={(props) => (
                     <ErrorBoundary>
                       <RouteToNamespace {...props} />
                     </ErrorBoundary>
-                  )} />
-                  <Route path="/ns/:namespace" history={history} render={(props) => (
+                  )}
+                />
+                <Route
+                  path="/ns/:namespace"
+                  history={history}
+                  render={(props) => (
                     <ErrorBoundary>
                       <Home {...props} />
                     </ErrorBoundary>
-                  )} />
-                  <Route path="/socket-example" render={(props) => (
+                  )}
+                />
+                <Route
+                  path="/socket-example"
+                  render={(props) => (
                     <ErrorBoundary>
                       <ConnectionExample {...props} />
                     </ErrorBoundary>
-                  )} />
-                  <Route exact path="/httpexecutor" render={(props) => (
+                  )}
+                />
+                <Route
+                  exact
+                  path="/httpexecutor"
+                  render={(props) => (
                     <ErrorBoundary>
                       <HttpExecutor {...props} />
                     </ErrorBoundary>
-                  )} />
-                  <Route exact path="/ts-example" render={(props) => (
+                  )}
+                />
+                <Route
+                  exact
+                  path="/ts-example"
+                  render={(props) => (
                     <ErrorBoundary>
                       <SampleTSXComponent {...props} />
                     </ErrorBoundary>
-                  )} />
-                  {
-                    /*
+                  )}
+                />
+                {/*
                     Eventually handling 404 should move to the error boundary and all container components will have the error object.
-                    */
-                  }
-                  <Route render={(props) => (
+                    */}
+                <Route
+                  render={(props) => (
                     <ErrorBoundary>
                       <Page404 {...props} />
                     </ErrorBoundary>
-                  )} />
-                </Switch>
-              </div>
-          }
+                  )}
+                />
+              </Switch>
+            </div>
+          )}
           <Footer />
           <OverlayFocus />
           <AuthRefresher />
@@ -183,10 +212,7 @@ class CDAP extends Component {
 }
 
 CDAP.propTypes = {
-  children: PropTypes.node
+  children: PropTypes.node,
 };
 
-ReactDOM.render(
-  <CDAP />,
-  document.getElementById('app-container')
-);
+ReactDOM.render(<CDAP />, document.getElementById('app-container'));

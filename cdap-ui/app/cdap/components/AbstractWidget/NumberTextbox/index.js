@@ -15,11 +15,11 @@
 */
 
 import React from 'react';
-import {Input} from 'reactstrap';
-import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
+import { Input } from 'reactstrap';
+import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 require('./NumberTextbox.scss');
 
-export default function NumberTextbox({...props}) {
+export default function NumberTextbox({ ...props }) {
   let { onChange, value, widgetProps } = props;
   let min = widgetProps.min || -Infinity;
   let max = widgetProps.max || Infinity;

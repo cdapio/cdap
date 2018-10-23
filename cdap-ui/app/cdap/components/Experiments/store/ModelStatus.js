@@ -22,7 +22,7 @@ const MODEL_STATUS = {
   TRAINING: 'Training',
   TRAINED: 'Trained',
   TRAINING_FAILED: 'Training Failed',
-  DEPLOYED: 'Deployed'
+  DEPLOYED: 'Deployed',
 };
 
-export {MODEL_STATUS};
+export { MODEL_STATUS };

@@ -17,17 +17,30 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {objectQuery, preventPropagation} from 'services/helpers';
-import {XYPlot, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, Hint, DiscreteColorLegend, VerticalBarSeries as BarSeries} from 'react-vis';
+import { objectQuery, preventPropagation } from 'services/helpers';
+import {
+  XYPlot,
+  makeVisFlexible,
+  XAxis,
+  YAxis,
+  HorizontalGridLines,
+  Hint,
+  DiscreteColorLegend,
+  VerticalBarSeries as BarSeries,
+} from 'react-vis';
 import moment from 'moment';
-import {convertProgramToApi} from 'services/program-api-converter';
+import { convertProgramToApi } from 'services/program-api-converter';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
-import {getTicksTotal, xTickFormat, getXDomain} from 'components/PipelineSummary/RunsGraphHelpers';
+import {
+  getTicksTotal,
+  xTickFormat,
+  getXDomain,
+} from 'components/PipelineSummary/RunsGraphHelpers';
 import CopyableID from 'components/CopyableID';
 import SortableStickyTable from 'components/SortableStickyTable';
-import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
+import { getYAxisProps } from 'components/PipelineSummary/RunsGraphHelpers';
 import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
 import isEqual from 'lodash/isEqual';
@@ -39,34 +52,34 @@ const GRAPHPREFIX = `features.PipelineSummary.graphs`;
 const COLOR_LEGEND = [
   {
     title: T.translate(`${PREFIX}.legend1`),
-    color: WARNINGBARCOLOR
+    color: WARNINGBARCOLOR,
   },
   {
     title: T.translate(`${PREFIX}.legend2`),
-    color: ERRORBARCOLOR
-  }
+    color: ERRORBARCOLOR,
+  },
 ];
 const tableHeaders = [
   {
     label: T.translate(`${PREFIX}.table.header.runCount`),
-    property: 'index'
+    property: 'index',
   },
   {
     label: T.translate(`${PREFIX}.table.header.errors`),
-    property: 'errors'
+    property: 'errors',
   },
   {
     label: T.translate(`${PREFIX}.table.header.warnings`),
-    property: 'warnings'
+    property: 'warnings',
   },
   {
     label: '',
-    property: ''
+    property: '',
   },
   {
     label: T.translate(`${PREFIX}.table.header.startTime`),
-    property: 'start'
-  }
+    property: 'start',
+  },
 ];
 require('./LogsMetricsGraph.scss');
 /*
@@ -79,7 +92,7 @@ export default class LogsMetricsGraph extends Component {
     this.state = {
       currentHoveredElement: null,
       viewState: 'chart',
-      runsLimit: props.runsLimit
+      runsLimit: props.runsLimit,
     };
     this.eventEmitter = ee(ee);
     this.renderTableBody = this.renderTableBody.bind(this);
@@ -88,7 +101,7 @@ export default class LogsMetricsGraph extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       currentHoveredElement: null,
-      runsLimit: nextProps.runsLimit
+      runsLimit: nextProps.runsLimit,
     });
   }
   componentDidMount() {
@@ -99,51 +112,54 @@ export default class LogsMetricsGraph extends Component {
   }
   closeTooltip() {
     this.setState({
-      currentHoveredElement: null
+      currentHoveredElement: null,
     });
   }
   getDataClusters() {
     let warnings = [];
     let errors = [];
     // Clustering by runs. Stack warnings and errors by clusters.
-    [].concat(this.props.runs).reverse().forEach((run, i) => {
-      let {totalRunsCount, runsLimit, xDomainType} = this.props;
-      let x;
-      if (xDomainType === 'limit') {
-        x = totalRunsCount > runsLimit ? totalRunsCount - runsLimit : 0;
-        x = x + (i + 1);
-      }
-      if (xDomainType === 'time') {
-        x = run.starting;
-      }
-      warnings.push({
-        x,
-        y: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0,
-        runid: run.runid
+    []
+      .concat(this.props.runs)
+      .reverse()
+      .forEach((run, i) => {
+        let { totalRunsCount, runsLimit, xDomainType } = this.props;
+        let x;
+        if (xDomainType === 'limit') {
+          x = totalRunsCount > runsLimit ? totalRunsCount - runsLimit : 0;
+          x = x + (i + 1);
+        }
+        if (xDomainType === 'time') {
+          x = run.starting;
+        }
+        warnings.push({
+          x,
+          y: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0,
+          runid: run.runid,
+        });
+        errors.push({
+          x,
+          y: objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0,
+          runid: run.runid,
+        });
       });
-      errors.push({
-        x,
-        y: objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0,
-        runid: run.runid
-      });
-    });
     if (errors.length === 1 || warnings.length === 1) {
       // FIXME: This is a hack. Something is not right with VerticalBarSeries
       // if it has only one data point. The width of rect element is not scaled correctly
       let maxXValue = errors.length === 1 ? errors[0].x : warnings[0].x;
       errors.push({
         x: maxXValue + 1,
-        y: 0
+        y: 0,
       });
       warnings.push({
         x: maxXValue + 1,
-        y: 0
+        y: 0,
       });
     }
-    return {errors, warnings};
+    return { errors, warnings };
   }
   renderEmptyMessage() {
-   return (
+    return (
       <EmptyMessageContainer
         xDomainType={this.props.xDomainType}
         label={this.props.activeFilterLabel}
@@ -152,17 +168,21 @@ export default class LogsMetricsGraph extends Component {
   }
   renderChart() {
     let FPlot = makeVisFlexible(XYPlot);
-    let {errors, warnings} = this.getDataClusters();
+    let { errors, warnings } = this.getDataClusters();
     let xDomain = [];
     if (errors.length > 0 || warnings.length > 0) {
       xDomain = getXDomain(this.props);
     }
-    let {tickTotals, yDomain, tickFormat} = getYAxisProps(errors.concat(warnings));
+    let { tickTotals, yDomain, tickFormat } = getYAxisProps(errors.concat(warnings));
     let popOverData, logUrl;
     if (this.state.currentHoveredElement) {
-      popOverData = this.props.runs.find(run => this.state.currentHoveredElement.runid === run.runid);
-      let {namespaceId, appId, programType, programId} = this.props.runContext;
-      logUrl = `/logviewer/view?namespace=${namespaceId}&appId=${appId}&programType=${convertProgramToApi(programType)}&programId=${programId}&runId=${popOverData.runid}`;
+      popOverData = this.props.runs.find(
+        (run) => this.state.currentHoveredElement.runid === run.runid
+      );
+      let { namespaceId, appId, programType, programId } = this.props.runContext;
+      logUrl = `/logviewer/view?namespace=${namespaceId}&appId=${appId}&programType=${convertProgramToApi(
+        programType
+      )}&programId=${programId}&runId=${popOverData.runid}`;
     }
     return (
       <div className="graph-plot-container">
@@ -174,153 +194,137 @@ export default class LogsMetricsGraph extends Component {
           stackBy="y"
         >
           <DiscreteColorLegend
-            style={{position: 'absolute', left: '40px', top: '0px'}}
+            style={{ position: 'absolute', left: '40px', top: '0px' }}
             orientation="horizontal"
             items={COLOR_LEGEND}
           />
           <HorizontalGridLines />
-          <XAxis
-            tickTotal={getTicksTotal(this.props)}
-            tickFormat={xTickFormat(this.props)}
-          />
-          <YAxis
-            tickTotal={tickTotals}
-            tickFormat={tickFormat}
-          />
-          {
-            warnings.length > 0 ?
-              <BarSeries
-                cluster="runs"
-                color={WARNINGBARCOLOR}
-                onValueMouseOver={(d) => {
-                  if (isEqual(this.state.currentHoveredElement, d)) {
-                    return;
-                  }
-                  this.setState({
-                    currentHoveredElement: d
-                  });
-                }}
-                onValueMouseOut={() => {
-                  this.setState({
-                    currentHoveredElement: null
-                  });
-                }}
-                data={warnings}/>
-              :
-                null
-          }
-          {
-            errors.length > 0 ?
-              <BarSeries
-                cluster="runs"
-                color={ERRORBARCOLOR}
-                onValueMouseOver={(d) => {
-                  if (isEqual(this.state.currentHoveredElement, d)) {
-                    return;
-                  }
-                  this.setState({
-                    currentHoveredElement: d
-                  });
-                }}
-                onValueMouseOut={() => {
-                  this.setState({
-                    currentHoveredElement: null
-                  });
-                }}
-                data={errors}/>
-              :
-                null
-          }
-          {
-            this.state.currentHoveredElement && popOverData ?
-              (
-                <Hint value={this.state.currentHoveredElement}>
-                  <div className="title">
-                    <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
-                    <IconSVG
-                      name="icon-close"
-                      onClick={(e) => {
-                        this.setState({
-                          currentHoveredElement: null
-                        });
-                        preventPropagation(e);
-                      }}
-                    />
-                  </div>
-                  <div className="log-stats">
-                    <div>
-                      <span>{T.translate(`${PREFIX}.hint.errors`)}</span>
-                      <span className="text-danger">{popOverData.logsMetrics['system.app.log.error'] || '0'}</span>
-                    </div>
-                    <div>
-                      <span>{T.translate(`${PREFIX}.hint.warnings`)}</span>
-                      <span className="text-warning">{popOverData.logsMetrics['system.app.log.warn'] || '0'}</span>
-                    </div>
-                    <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.hint.viewLogs`)}</a>
-                  </div>
-                  {
-                    this.props.xDomainType === 'limit' ?
-                      <div>
-                        <strong>{T.translate(`${PREFIX}.hint.runNumber`)}: </strong>
-                        <span>{this.state.currentHoveredElement.x}</span>
-                      </div>
-                    :
-                      null
-                  }
-                  <div>
-                    <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
-                    <span>{ moment(popOverData.starting * 1000).format('llll')}</span>
-                  </div>
-                </Hint>
-              )
-            :
-              null
-          }
-          {
-              this.props.xDomainType === 'limit' ?
-                <div className="x-axis-title"> {T.translate(`${PREFIX}.xAxisTitle`)} </div>
-              :
-                null
-          }
+          <XAxis tickTotal={getTicksTotal(this.props)} tickFormat={xTickFormat(this.props)} />
+          <YAxis tickTotal={tickTotals} tickFormat={tickFormat} />
+          {warnings.length > 0 ? (
+            <BarSeries
+              cluster="runs"
+              color={WARNINGBARCOLOR}
+              onValueMouseOver={(d) => {
+                if (isEqual(this.state.currentHoveredElement, d)) {
+                  return;
+                }
+                this.setState({
+                  currentHoveredElement: d,
+                });
+              }}
+              onValueMouseOut={() => {
+                this.setState({
+                  currentHoveredElement: null,
+                });
+              }}
+              data={warnings}
+            />
+          ) : null}
+          {errors.length > 0 ? (
+            <BarSeries
+              cluster="runs"
+              color={ERRORBARCOLOR}
+              onValueMouseOver={(d) => {
+                if (isEqual(this.state.currentHoveredElement, d)) {
+                  return;
+                }
+                this.setState({
+                  currentHoveredElement: d,
+                });
+              }}
+              onValueMouseOut={() => {
+                this.setState({
+                  currentHoveredElement: null,
+                });
+              }}
+              data={errors}
+            />
+          ) : null}
+          {this.state.currentHoveredElement && popOverData ? (
+            <Hint value={this.state.currentHoveredElement}>
+              <div className="title">
+                <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
+                <IconSVG
+                  name="icon-close"
+                  onClick={(e) => {
+                    this.setState({
+                      currentHoveredElement: null,
+                    });
+                    preventPropagation(e);
+                  }}
+                />
+              </div>
+              <div className="log-stats">
+                <div>
+                  <span>{T.translate(`${PREFIX}.hint.errors`)}</span>
+                  <span className="text-danger">
+                    {popOverData.logsMetrics['system.app.log.error'] || '0'}
+                  </span>
+                </div>
+                <div>
+                  <span>{T.translate(`${PREFIX}.hint.warnings`)}</span>
+                  <span className="text-warning">
+                    {popOverData.logsMetrics['system.app.log.warn'] || '0'}
+                  </span>
+                </div>
+                <a href={logUrl} target="_blank">
+                  {T.translate(`${PREFIX}.hint.viewLogs`)}
+                </a>
+              </div>
+              {this.props.xDomainType === 'limit' ? (
+                <div>
+                  <strong>{T.translate(`${PREFIX}.hint.runNumber`)}: </strong>
+                  <span>{this.state.currentHoveredElement.x}</span>
+                </div>
+              ) : null}
+              <div>
+                <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
+                <span>{moment(popOverData.starting * 1000).format('llll')}</span>
+              </div>
+            </Hint>
+          ) : null}
+          {this.props.xDomainType === 'limit' ? (
+            <div className="x-axis-title"> {T.translate(`${PREFIX}.xAxisTitle`)} </div>
+          ) : null}
           <div className="y-axis-title">{T.translate(`${PREFIX}.yAxisTitle`)}</div>
         </FPlot>
       </div>
     );
   }
   renderTableBody(runs) {
-    let {namespaceId, appId, programType, programId} = this.props.runContext;
+    let { namespaceId, appId, programType, programId } = this.props.runContext;
     let runsLength = runs.length;
 
     return (
       <table className="table">
         <tbody>
-          {
-            runs.map(run => {
-              let logUrl = `/logviewer/view?namespace=${namespaceId}&appId=${appId}&programType=${convertProgramToApi(programType)}&programId=${programId}&runId=${run.runid}`;
-              let runid = run.runid;
-              return (
-                <tr>
-                  <td>
-                    <span>{runsLength - run.index + 1}</span>
-                    <CopyableID
-                      id={runid}
-                      idprefix="logs-metrics"
-                    />
-                  </td>
-                  <td>
-                    <span className="text-danger">{run.errors}</span>
-                  </td>
-                  <td>
-                    <span className="text-warning">{run.warnings}</span>
-                  </td>
-                  <td>
-                    <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.table.body.viewLog`)} </a>
-                  </td>
-                  <td> {moment(run.starting * 1000).format('llll')}</td>
-                </tr>
-              );
-            })
-          }
+          {runs.map((run) => {
+            let logUrl = `/logviewer/view?namespace=${namespaceId}&appId=${appId}&programType=${convertProgramToApi(
+              programType
+            )}&programId=${programId}&runId=${run.runid}`;
+            let runid = run.runid;
+            return (
+              <tr>
+                <td>
+                  <span>{runsLength - run.index + 1}</span>
+                  <CopyableID id={runid} idprefix="logs-metrics" />
+                </td>
+                <td>
+                  <span className="text-danger">{run.errors}</span>
+                </td>
+                <td>
+                  <span className="text-warning">{run.warnings}</span>
+                </td>
+                <td>
+                  <a href={logUrl} target="_blank">
+                    {T.translate(`${PREFIX}.table.body.viewLog`)}{' '}
+                  </a>
+                </td>
+                <td> {moment(run.starting * 1000).format('llll')}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     );
@@ -331,7 +335,7 @@ export default class LogsMetricsGraph extends Component {
         index: i + 1,
         warnings: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0,
         errors: objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0,
-        start: run.starting
+        start: run.starting,
       });
     });
     return (
@@ -343,7 +347,7 @@ export default class LogsMetricsGraph extends Component {
     );
   }
   renderLoading() {
-    return (<EmptyMessageContainer loading={true} />);
+    return <EmptyMessageContainer loading={true} />;
   }
   renderContent() {
     if (this.props.isLoading) {
@@ -361,30 +365,25 @@ export default class LogsMetricsGraph extends Component {
   }
   render() {
     return (
-      <div
-        className="logs-metrics-graph"
-        ref={ref => this.containerRef = ref}
-      >
+      <div className="logs-metrics-graph" ref={(ref) => (this.containerRef = ref)}>
         <div className="title-container">
           <div className="title">{T.translate(`${PREFIX}.title`)} </div>
           <div className="viz-switcher">
             <span
-              className={classnames("chart", {"active": this.state.viewState === 'chart'})}
-              onClick={() => this.setState({viewState: 'chart'})}
+              className={classnames('chart', { active: this.state.viewState === 'chart' })}
+              onClick={() => this.setState({ viewState: 'chart' })}
             >
               {T.translate(`${GRAPHPREFIX}.vizSwitcher.chart`)}
             </span>
             <span
-              className={classnames({"active": this.state.viewState === 'table'})}
-              onClick={() => this.setState({viewState: 'table'})}
+              className={classnames({ active: this.state.viewState === 'table' })}
+              onClick={() => this.setState({ viewState: 'table' })}
             >
               {T.translate(`${GRAPHPREFIX}.vizSwitcher.table`)}
             </span>
           </div>
         </div>
-        {
-          this.renderContent()
-        }
+        {this.renderContent()}
       </div>
     );
   }
@@ -398,5 +397,5 @@ LogsMetricsGraph.propTypes = {
   isLoading: PropTypes.bool,
   start: PropTypes.number,
   end: PropTypes.number,
-  activeFilterLabel: PropTypes.string
+  activeFilterLabel: PropTypes.string,
 };

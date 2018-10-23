@@ -16,12 +16,12 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {connect} from 'react-redux';
-import {Input} from 'reactstrap';
-import {setGCSSearch} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import { connect } from 'react-redux';
+import { Input } from 'reactstrap';
+import { setGCSSearch } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
 
-const SearchBox = ({search, onChange}) => {
+const SearchBox = ({ search, onChange }) => {
   return (
     <Input
       placeholder={T.translate('features.DataPrep.DataPrepBrowser.GCSBrowser.Search.placeholder')}
@@ -33,21 +33,24 @@ const SearchBox = ({search, onChange}) => {
 
 SearchBox.propTypes = {
   search: PropTypes.string,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {
   return {
-    search: state.gcs.search
+    search: state.gcs.search,
   };
 };
 const mapDispatchToProps = () => {
   return {
     onChange: (e) => {
       setGCSSearch(e.target.value);
-    }
+    },
   };
 };
 
-const GCSSearch = connect(mapStateToProps, mapDispatchToProps)(SearchBox);
+const GCSSearch = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(SearchBox);
 export default GCSSearch;

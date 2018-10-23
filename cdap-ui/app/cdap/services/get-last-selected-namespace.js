@@ -18,7 +18,7 @@ import find from 'lodash/find';
 import NamespaceStore from 'services/NamespaceStore';
 
 function findNamespace(list, name) {
-  return find(list, {name: name});
+  return find(list, { name: name });
 }
 
 /**
@@ -28,10 +28,12 @@ function findNamespace(list, name) {
  **/
 function getDefaultNamespace() {
   let list = NamespaceStore.getState().namespaces;
-  if (!list || list.length === 0) { return; }
+  if (!list || list.length === 0) {
+    return;
+  }
   let selectedNamespace;
   let defaultNamespace = localStorage.getItem('DefaultNamespace');
-  let defaultNsFromBackend = list.filter(ns => ns.name === defaultNamespace);
+  let defaultNsFromBackend = list.filter((ns) => ns.name === defaultNamespace);
   if (defaultNsFromBackend.length) {
     selectedNamespace = defaultNsFromBackend[0];
   }
@@ -54,5 +56,9 @@ function getDefaultNamespace() {
  * 3. Get the 'default' namespace.
  **/
 export default function getLastSelectedNamespace() {
-  return NamespaceStore.getState().selectedNamespace || localStorage.getItem('CurrentNamespace') || getDefaultNamespace();
+  return (
+    NamespaceStore.getState().selectedNamespace ||
+    localStorage.getItem('CurrentNamespace') ||
+    getDefaultNamespace()
+  );
 }

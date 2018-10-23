@@ -25,7 +25,7 @@ export default class DataPrepPlusButton extends Component {
 
     this.state = {
       showCustomDirective: false,
-      showSuccessAlert: false
+      showSuccessAlert: false,
     };
 
     this.onDirectiveClick = this.onDirectiveClick.bind(this);
@@ -33,31 +33,36 @@ export default class DataPrepPlusButton extends Component {
   }
 
   onDirectiveClick = () => {
-    this.setState({showCustomDirective: !this.state.showCustomDirective});
-  }
+    this.setState({ showCustomDirective: !this.state.showCustomDirective });
+  };
 
   PLUSBUTTONCONTEXTMENUITEMS = [
     {
       label: 'Add directive',
-      onClick: this.onDirectiveClick
-    }
+      onClick: this.onDirectiveClick,
+    },
   ];
 
   onDirectiveSubmit() {
-    this.setState({
-      showCustomDirective: false,
-      showSuccessAlert: true
-    }, () => {
-      setTimeout(() => {
-        this.setState({
-          showSuccessAlert: false
-        });
-      }, 3000);
-    });
+    this.setState(
+      {
+        showCustomDirective: false,
+        showSuccessAlert: true,
+      },
+      () => {
+        setTimeout(() => {
+          this.setState({
+            showSuccessAlert: false,
+          });
+        }, 3000);
+      }
+    );
   }
 
   renderSuccessAlert() {
-    if (!this.state.showSuccessAlert) { return null; }
+    if (!this.state.showSuccessAlert) {
+      return null;
+    }
 
     return (
       <div className="success-alert">
@@ -67,16 +72,18 @@ export default class DataPrepPlusButton extends Component {
   }
 
   renderDirectiveWizard() {
-    if (!this.state.showCustomDirective) { return null; }
+    if (!this.state.showCustomDirective) {
+      return null;
+    }
 
     let input = {
-      headerLabel: T.translate('features.Resource-Center.Directive.modalheadertitle')
+      headerLabel: T.translate('features.Resource-Center.Directive.modalheadertitle'),
     };
 
     return (
       <DirectiveUploadWizard
         isOpen={this.state.showCustomDirective}
-        onClose={() => this.setState({showCustomDirective: false})}
+        onClose={() => this.setState({ showCustomDirective: false })}
         onSubmit={this.onDirectiveSubmit}
         input={input}
         displayCTA={false}

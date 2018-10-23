@@ -18,16 +18,16 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
-import {MyAppApi} from 'api/app';
-import {MyArtifactApi} from 'api/artifact';
-import {MyDatasetApi} from 'api/dataset';
-import {MyStreamApi} from 'api/stream';
+import { MyAppApi } from 'api/app';
+import { MyArtifactApi } from 'api/artifact';
+import { MyDatasetApi } from 'api/dataset';
+import { MyStreamApi } from 'api/stream';
 import FastActionButton from '../FastActionButton';
 import ConfirmationModal from 'components/ConfirmationModal';
-import {Tooltip} from 'reactstrap';
+import { Tooltip } from 'reactstrap';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 import T from 'i18n-react';
 
 export default class DeleteAction extends Component {
@@ -44,7 +44,7 @@ export default class DeleteAction extends Component {
       tooltipOpen: false,
       errorMessage: '',
       extendedMessage: '',
-      disabled: this.props.entity.type === 'artifact' && this.props.entity.scope === SCOPES.SYSTEM
+      disabled: this.props.entity.type === 'artifact' && this.props.entity.scope === SCOPES.SYSTEM,
     };
     this.eventEmitter = ee(ee);
   }
@@ -62,14 +62,14 @@ export default class DeleteAction extends Component {
   }
 
   toggleTooltip() {
-    this.setState({ tooltipOpen : !this.state.tooltipOpen});
+    this.setState({ tooltipOpen: !this.state.tooltipOpen });
   }
 
   action() {
-    this.setState({loading: true});
+    this.setState({ loading: true });
     let api;
     let params = {
-      namespace: NamespaceStore.getState().selectedNamespace
+      namespace: NamespaceStore.getState().selectedNamespace,
     };
     switch (this.props.entity.type) {
       case 'application':
@@ -89,24 +89,27 @@ export default class DeleteAction extends Component {
         api = MyStreamApi.delete;
         params.streamId = this.props.entity.id;
         break;
-
     }
 
-    api(params)
-      .subscribe((res) => {
+    api(params).subscribe(
+      (res) => {
         this.props.onSuccess(res);
         this.setState({
           loading: false,
-          modal: false
+          modal: false,
         });
         this.eventEmitter.emit(globalEvents.DELETEENTITY, params);
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
           loading: false,
-          errorMessage: T.translate('features.FastAction.deleteFailed', {entityId: this.props.entity.id}),
-          extendedMessage: err
+          errorMessage: T.translate('features.FastAction.deleteFailed', {
+            entityId: this.props.entity.id,
+          }),
+          extendedMessage: err,
         });
-      });
+      }
+    );
   }
 
   render() {
@@ -133,23 +136,22 @@ export default class DeleteAction extends Component {
           {T.translate('features.FastAction.deleteLabel')}
         </Tooltip>
 
-
-        {
-          this.state.modal ? (
-            <ConfirmationModal
-              headerTitle={headerTitle}
-              toggleModal={this.toggleModal}
-              confirmationText={T.translate('features.FastAction.deleteConfirmation', {entityId: this.props.entity.id})}
-              confirmButtonText={actionLabel}
-              confirmFn={this.action}
-              cancelFn={this.toggleModal}
-              isOpen={this.state.modal}
-              isLoading={this.state.loading}
-              errorMessage={this.state.errorMessage}
-              extendedMessage={this.state.extendedMessage}
-            />
-          ) : null
-        }
+        {this.state.modal ? (
+          <ConfirmationModal
+            headerTitle={headerTitle}
+            toggleModal={this.toggleModal}
+            confirmationText={T.translate('features.FastAction.deleteConfirmation', {
+              entityId: this.props.entity.id,
+            })}
+            confirmButtonText={actionLabel}
+            confirmFn={this.action}
+            cancelFn={this.toggleModal}
+            isOpen={this.state.modal}
+            isLoading={this.state.loading}
+            errorMessage={this.state.errorMessage}
+            extendedMessage={this.state.extendedMessage}
+          />
+        ) : null}
       </span>
     );
   }
@@ -161,7 +163,7 @@ DeleteAction.propTypes = {
     uniqueId: PropTypes.string,
     version: PropTypes.string,
     scope: PropTypes.oneOf([SCOPES.SYSTEM, SCOPES.USER]),
-    type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired
+    type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
   }),
-  onSuccess: PropTypes.func
+  onSuccess: PropTypes.func,
 };

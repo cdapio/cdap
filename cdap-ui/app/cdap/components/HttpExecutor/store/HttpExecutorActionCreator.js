@@ -16,17 +16,12 @@
 
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import HttpExecutorStore from 'components/HttpExecutor/store/HttpExecutorStore';
-import {MyBlankPathApi} from 'api/blankpath';
+import { MyBlankPathApi } from 'api/blankpath';
 
 export function execute() {
   let state = HttpExecutorStore.getState().http;
 
-  let {
-    method,
-    path,
-    body,
-    headers
-  } = state;
+  let { method, path, body, headers } = state;
 
   let api;
 
@@ -66,23 +61,24 @@ export function execute() {
     });
   }
 
-  api({path}, requestBody, requestHeaders)
-    .subscribe((res) => {
+  api({ path }, requestBody, requestHeaders).subscribe(
+    (res) => {
       HttpExecutorStore.dispatch({
         type: HttpExecutorActions.setResponse,
         payload: {
           response: res,
-          statusCode: 200
-        }
+          statusCode: 200,
+        },
       });
-    }, (err) => {
+    },
+    (err) => {
       HttpExecutorStore.dispatch({
         type: HttpExecutorActions.setResponse,
         payload: {
           response: err.data || err.response,
-          statusCode: err.statusCode
-        }
+          statusCode: err.statusCode,
+        },
       });
-    });
-
+    }
+  );
 }

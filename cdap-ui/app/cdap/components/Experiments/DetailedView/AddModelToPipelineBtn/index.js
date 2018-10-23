@@ -15,18 +15,21 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
-import {MyArtifactApi} from 'api/artifact';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {isNilOrEmpty, objectQuery} from 'services/helpers';
+import React, { Component } from 'react';
+import { MyArtifactApi } from 'api/artifact';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { isNilOrEmpty, objectQuery } from 'services/helpers';
 import getPipelineConfig from 'components/Experiments/DetailedView/AddModelToPipelineBtn/PipelineSkeleton';
-import {GLOBALS} from 'services/global-constants';
+import { GLOBALS } from 'services/global-constants';
 import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
 import { connect } from 'react-redux';
 import uuidV4 from 'uuid/v4';
-import {myExperimentsApi} from 'api/experiments';
-import {createWorkspace, applyDirectives} from 'components/Experiments/store/CreateExperimentActionCreator';
+import { myExperimentsApi } from 'api/experiments';
+import {
+  createWorkspace,
+  applyDirectives,
+} from 'components/Experiments/store/CreateExperimentActionCreator';
 import classnames from 'classnames';
 require('./AddModelToPipelineBtn.scss');
 
@@ -41,11 +44,11 @@ class AddModelToPipelineBtn extends Component {
     srcPath: PropTypes.string,
     directives: PropTypes.arrayOf(PropTypes.string),
     splitId: PropTypes.string,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
   };
 
   static defaultProps = {
-    disabled: false
+    disabled: false,
   };
 
   state = {
@@ -55,7 +58,7 @@ class AddModelToPipelineBtn extends Component {
     datapipelineArtifact: null,
     wranglerArtifact: null,
     corepluginsArtifact: null,
-    schema: null
+    schema: null,
   };
 
   cloneId = uuidV4();
@@ -64,8 +67,8 @@ class AddModelToPipelineBtn extends Component {
     stateParams: {
       namespace: getCurrentNamespace(),
       cloneId: this.cloneId,
-      artifactType: GLOBALS.etlDataPipeline
-    }
+      artifactType: GLOBALS.etlDataPipeline,
+    },
   });
 
   componentDidMount() {
@@ -74,38 +77,34 @@ class AddModelToPipelineBtn extends Component {
   }
 
   setWorkspaceId = () => {
-    let {srcPath} = this.props;
-    createWorkspace(srcPath)
-    .subscribe(
-      (res) => {
-          let workspaceId;
-          let {directives} = this.props;
-          workspaceId = res.values[0].id;
-          this.setState({
-            workspaceId
-          });
-          applyDirectives(workspaceId, directives).subscribe();
-        });
+    let { srcPath } = this.props;
+    createWorkspace(srcPath).subscribe((res) => {
+      let workspaceId;
+      let { directives } = this.props;
+      workspaceId = res.values[0].id;
+      this.setState({
+        workspaceId,
+      });
+      applyDirectives(workspaceId, directives).subscribe();
+    });
   };
 
   fetchArtifactForPipelines() {
-    let {experimentId, splitId} = this.props;
-    MyArtifactApi
-      .list({
-        namespace: getCurrentNamespace()
-      })
+    let { experimentId, splitId } = this.props;
+    MyArtifactApi.list({
+      namespace: getCurrentNamespace(),
+    })
       .combineLatest([
-        myExperimentsApi
-          .getSplitDetails({
-            namespace: getCurrentNamespace(),
-            experimentId,
-            splitId
-          })
+        myExperimentsApi.getSplitDetails({
+          namespace: getCurrentNamespace(),
+          experimentId,
+          splitId,
+        }),
       ])
       .subscribe(
         ([artifacts, splitDetails]) => {
           let mmdsPluginsArtifact, datapipelineArtifact, wranglerArtifact, corepluginsArtifact;
-          artifacts.forEach(artifact => {
+          artifacts.forEach((artifact) => {
             switch (artifact.name) {
               case MMDS_PLUGINS_ARTIFACT_NAME:
                 mmdsPluginsArtifact = artifact;
@@ -131,7 +130,7 @@ class AddModelToPipelineBtn extends Component {
             isNilOrEmpty(schema)
           ) {
             this.setState({
-              error: ERROR_MSG
+              error: ERROR_MSG,
             });
           } else {
             this.setState({
@@ -140,69 +139,70 @@ class AddModelToPipelineBtn extends Component {
               wranglerArtifact,
               corepluginsArtifact,
               schema,
-              disabled: this.props.disabled || false
+              disabled: this.props.disabled || false,
             });
           }
         },
         () => {
           this.setState({
-            error: ERROR_MSG
+            error: ERROR_MSG,
           });
         }
       );
   }
   generatePipelineConfig = () => {
-    let {experimentId, modelId, modelName, srcPath, directives} = this.props;
-    let {mmdsPluginsArtifact, wranglerArtifact, datapipelineArtifact, corepluginsArtifact, workspaceId, schema} = this.state;
+    let { experimentId, modelId, modelName, srcPath, directives } = this.props;
+    let {
+      mmdsPluginsArtifact,
+      wranglerArtifact,
+      datapipelineArtifact,
+      corepluginsArtifact,
+      workspaceId,
+      schema,
+    } = this.state;
     let pipelineConfig = getPipelineConfig({
       mmds: {
         mmdsPluginsArtifact,
         experimentId,
-        modelId
+        modelId,
       },
       wrangler: {
         wranglerArtifact,
         directives,
         schema,
-        workspaceId
+        workspaceId,
       },
       file: {
         corepluginsArtifact,
-        srcPath
-      }
+        srcPath,
+      },
     });
     pipelineConfig = {
       ...pipelineConfig,
       name: `Scoring_Pipeline_${experimentId}_${modelName}`,
       description: `Scoring pipeline for ${modelName} under experiment ${experimentId}.`,
-      artifact: datapipelineArtifact
+      artifact: datapipelineArtifact,
     };
     window.localStorage.setItem(this.cloneId, JSON.stringify(pipelineConfig));
-  }
+  };
 
   render() {
     const AnchorTag = this.state.disabled ? 'button' : 'a';
     return (
       <fieldset className="add-model-to-pipeline" disabled={this.state.disabled}>
         <AnchorTag
-          className={classnames("btn btn-primary btn-sm", {
-            'disabled': this.state.disabled
+          className={classnames('btn btn-primary btn-sm', {
+            disabled: this.state.disabled,
           })}
           onClick={this.generatePipelineConfig}
           href={this.state.disabled ? null : this.batchPipelineUrl}
         >
           <span>Create a scoring pipeline</span>
-          {
-            this.state.error ?
-              <Popover
-                target={() => <IconSVG name="icon-exclamation-triangle" />}
-                showOn="Hover"
-              >
-                {this.state.error}
-              </Popover>
-            :
-              null
-          }
+          {this.state.error ? (
+            <Popover target={() => <IconSVG name="icon-exclamation-triangle" />} showOn="Hover">
+              {this.state.error}
+            </Popover>
+          ) : null}
         </AnchorTag>
       </fieldset>
     );
@@ -210,14 +210,14 @@ class AddModelToPipelineBtn extends Component {
 }
 
 const mapStateToProps = (state, ownProps) => {
-  let modelObj = state.models.find(model => model.id === ownProps.modelId);
+  let modelObj = state.models.find((model) => model.id === ownProps.modelId);
   return {
     experimentId: state.name,
     modelId: ownProps.modelId,
     modelName: objectQuery(modelObj, 'name'),
     directives: objectQuery(modelObj, 'directives'),
     srcPath: state.srcpath,
-    splitId: objectQuery(modelObj, 'split')
+    splitId: objectQuery(modelObj, 'split'),
   };
 };
 

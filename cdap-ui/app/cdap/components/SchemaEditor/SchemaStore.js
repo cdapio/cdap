@@ -14,11 +14,11 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
 };
 
 const defaultState = {
@@ -28,15 +28,15 @@ const defaultState = {
     {
       name: '',
       type: {},
-      displayType: 'string'
-    }
-  ]
+      displayType: 'string',
+    },
+  ],
 };
 
 const schema = (state = defaultState, action = defaultAction) => {
   switch (action.type) {
     case 'FIELD_UPDATE': {
-      return Object.assign({}, state, {fields: action.payload.schema.fields});
+      return Object.assign({}, state, { fields: action.payload.schema.fields });
     }
     case 'RESET': {
       return defaultState;
@@ -49,12 +49,12 @@ const schema = (state = defaultState, action = defaultAction) => {
 let createStoreInstance = () => {
   return createStore(
     combineReducers({
-      schema
+      schema,
     }),
     window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
   );
 };
 
-export {createStoreInstance};
-let SchemaStore =  createStoreInstance();
+export { createStoreInstance };
+let SchemaStore = createStoreInstance();
 export default SchemaStore;

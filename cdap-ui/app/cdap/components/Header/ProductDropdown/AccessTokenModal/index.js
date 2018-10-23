@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
 import T from 'i18n-react';
 import 'whatwg-fetch';
@@ -33,7 +33,7 @@ export default class AccessTokenModal extends Component {
       passwordInput: '',
       accessToken: '',
       error: null,
-      loading: false
+      loading: false,
     };
 
     this.toggleModal = this.toggleModal.bind(this);
@@ -47,30 +47,30 @@ export default class AccessTokenModal extends Component {
       usernameInput: '',
       passwordInput: '',
       accessToken: '',
-      error: null
+      error: null,
     });
     this.props.toggle();
   }
 
   handleUsernameChange(e) {
-    this.setState({usernameInput: e.target.value});
+    this.setState({ usernameInput: e.target.value });
   }
   handlePasswordChange(e) {
-    this.setState({passwordInput: e.target.value});
+    this.setState({ passwordInput: e.target.value });
   }
 
   onSubmit() {
     this.setState({
-      loading: true
+      loading: true,
     });
     fetch('/login', {
       method: 'POST',
-      headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: this.state.usernameInput,
-        password: this.state.passwordInput
+        password: this.state.passwordInput,
       }),
-      credentials: 'include'
+      credentials: 'include',
     })
       .then((response) => {
         if (response.status >= 200 && response.status < 300) {
@@ -78,7 +78,7 @@ export default class AccessTokenModal extends Component {
         } else {
           this.setState({
             error: T.translate('features.AccessTokenModal.login.error'),
-            loading: false
+            loading: false,
           });
           return Promise.reject();
         }
@@ -87,18 +87,19 @@ export default class AccessTokenModal extends Component {
         this.setState({
           accessToken: res.access_token,
           error: null,
-          loading: false
+          loading: false,
         });
       });
   }
 
   renderLogin() {
-    let disabled = this.state.usernameInput.length === 0 || this.state.passwordInput.length === 0 || this.state.loading;
+    let disabled =
+      this.state.usernameInput.length === 0 ||
+      this.state.passwordInput.length === 0 ||
+      this.state.loading;
     return (
       <div>
-        <span>
-          {T.translate('features.AccessTokenModal.login.textContent')}
-        </span>
+        <span>{T.translate('features.AccessTokenModal.login.textContent')}</span>
         <div className="username-password">
           <input
             type="text"
@@ -116,11 +117,7 @@ export default class AccessTokenModal extends Component {
           />
         </div>
         <div className="text-xs-left submit-button">
-          <button
-            className="btn btn-primary"
-            onClick={this.onSubmit}
-            disabled={disabled}
-          >
+          <button className="btn btn-primary" onClick={this.onSubmit} disabled={disabled}>
             {T.translate('features.AccessTokenModal.login.submit')}
           </button>
         </div>
@@ -136,10 +133,7 @@ export default class AccessTokenModal extends Component {
           <strong>{this.state.accessToken}</strong>
         </span>
         <div className="text-xs-left done-button">
-          <button
-            className="btn btn-primary"
-            onClick={this.toggleModal}
-          >
+          <button className="btn btn-primary" onClick={this.toggleModal}>
             {T.translate('features.AccessTokenModal.close')}
           </button>
         </div>
@@ -148,13 +142,12 @@ export default class AccessTokenModal extends Component {
   }
 
   renderFeedback() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
     return (
       <ModalFooter>
-        <CardActionFeedback
-          type='DANGER'
-          message={this.state.error}
-        />
+        <CardActionFeedback type="DANGER" message={this.state.error} />
       </ModalFooter>
     );
   }
@@ -166,26 +159,16 @@ export default class AccessTokenModal extends Component {
         toggle={this.toggleModal}
         size="md"
         className="access-token-modal cdap-modal"
-        backdrop='static'
+        backdrop="static"
       >
         <ModalHeader>
-          <span>
-            {T.translate('features.AccessTokenModal.modalHeader')}
-          </span>
-          <div
-            className="close-section float-xs-right"
-            onClick={this.toggleModal}
-          >
+          <span>{T.translate('features.AccessTokenModal.modalHeader')}</span>
+          <div className="close-section float-xs-right" onClick={this.toggleModal}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
         <ModalBody>
-          {
-            this.state.accessToken.length > 0 ?
-              this.renderAccessToken()
-            :
-              this.renderLogin()
-          }
+          {this.state.accessToken.length > 0 ? this.renderAccessToken() : this.renderLogin()}
         </ModalBody>
         {this.renderFeedback()}
       </Modal>
@@ -195,5 +178,5 @@ export default class AccessTokenModal extends Component {
 
 AccessTokenModal.propTypes = {
   isOpen: PropTypes.bool,
-  toggle: PropTypes.func
+  toggle: PropTypes.func,
 };

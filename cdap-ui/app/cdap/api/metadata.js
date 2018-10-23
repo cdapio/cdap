@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/:entityType/:entityId/metadata';
@@ -32,5 +32,5 @@ export const MyMetadataApi = {
   // Field Level Lineage
   getFields: apiCreator(dataSrc, 'GET', 'REQUEST', lineagePath),
   getFieldLineage: apiCreator(dataSrc, 'GET', 'REQUEST', `${lineagePath}/:fieldName`),
-  getFieldOperations: apiCreator(dataSrc, 'GET', 'REQUEST', `${lineagePath}/:fieldName/operations`)
+  getFieldOperations: apiCreator(dataSrc, 'GET', 'REQUEST', `${lineagePath}/:fieldName/operations`),
 };

@@ -17,15 +17,14 @@ import React from 'react';
 import KeyValuePairs from 'components/KeyValuePairs';
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
-import {Provider, connect} from 'react-redux';
+import { Provider, connect } from 'react-redux';
 require('./PreferencesStep.scss');
 
 export default function PreferencesStep() {
-
   const mapStateToKeyValProps = (state) => {
     return {
-      keyValues : state.preferences.preferences,
-      disabled: state.editableFields.fields.indexOf('preferences') === -1
+      keyValues: state.preferences.preferences,
+      disabled: state.editableFields.fields.indexOf('preferences') === -1,
     };
   };
 
@@ -34,9 +33,9 @@ export default function PreferencesStep() {
       onKeyValueChange: (keyValues) => {
         dispatch({
           type: AddNamespaceActions.setPreferences,
-          payload: { keyValues }
+          payload: { keyValues },
         });
-      }
+      },
     };
   };
 

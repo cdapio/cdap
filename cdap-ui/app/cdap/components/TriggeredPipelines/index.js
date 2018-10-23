@@ -20,8 +20,11 @@ import React, { Component } from 'react';
 import CollapsibleSidebar from 'components/CollapsibleSidebar';
 import NamespaceStore from 'services/NamespaceStore';
 import TriggeredPipelineRow from 'components/TriggeredPipelines/TriggeredPipelineRow';
-import {setTriggeredPipelines, togglePipeline} from 'components/TriggeredPipelines/store/TriggeredPipelineActionCreator';
-import {Provider, connect} from 'react-redux';
+import {
+  setTriggeredPipelines,
+  togglePipeline,
+} from 'components/TriggeredPipelines/store/TriggeredPipelineActionCreator';
+import { Provider, connect } from 'react-redux';
 import TriggeredPipelineStore from 'components/TriggeredPipelines/store/TriggeredPipelineStore';
 import T from 'i18n-react';
 
@@ -34,7 +37,7 @@ const mapStateToProps = (state) => {
     triggeredPipelines: state.triggered.triggeredPipelines,
     expanded: state.triggered.expandedPipeline,
     pipelineInfo: state.triggered.expandedPipelineInfo,
-    pipelineInfoLoading: state.triggered.pipelineInfoLoading
+    pipelineInfoLoading: state.triggered.pipelineInfoLoading,
   };
 };
 
@@ -43,7 +46,7 @@ class TriggeredPipelinesView extends Component {
     super(props);
 
     this.state = {
-      tabText: `${PREFIX}.collapsedTabLabel`
+      tabText: `${PREFIX}.collapsedTabLabel`,
     };
 
     this.onToggle = this.onToggle.bind(this);
@@ -57,7 +60,7 @@ class TriggeredPipelinesView extends Component {
 
   onToggleSidebar(isExpanded) {
     this.setState({
-      tabText: isExpanded ? `${PREFIX}.expandedTabLabel` : `${PREFIX}.collapsedTabLabel`
+      tabText: isExpanded ? `${PREFIX}.expandedTabLabel` : `${PREFIX}.collapsedTabLabel`,
     });
   }
 
@@ -72,57 +75,46 @@ class TriggeredPipelinesView extends Component {
     return (
       <CollapsibleSidebar
         position="right"
-        toggleTabLabel={T.translate(`${this.state.tabText}`, {count})}
+        toggleTabLabel={T.translate(`${this.state.tabText}`, { count })}
         backdrop={false}
         onToggle={this.onToggleSidebar}
       >
         <div className="triggered-pipeline-content">
           <div className="triggered-pipeline-header">
-            {T.translate(`${PREFIX}.title`, {pipelineName})}
+            {T.translate(`${PREFIX}.title`, { pipelineName })}
           </div>
 
           <div className="triggered-pipeline-count">
-            {
-              T.translate(`${PREFIX}.pipelineCount`, {
-                context: {
-                  count
-                }
-              })
-            }
+            {T.translate(`${PREFIX}.pipelineCount`, {
+              context: {
+                count,
+              },
+            })}
           </div>
 
-          {
-            this.props.triggeredPipelines.length === 0 ?
-              null
-            :
-              (
-                <div className="triggered-pipeline-list">
-                  <div className="pipeline-list-header">
-                    <div className="caret-container"></div>
-                    <div className="pipeline-name">
-                      {T.translate(`${PREFIX}.pipelineName`)}
-                    </div>
-                    <div className="namespace">
-                      {T.translate(`${PREFIX}.namespace`)}
-                    </div>
-                  </div>
-                  {
-                    this.props.triggeredPipelines.map((pipeline) => {
-                      return (
-                        <TriggeredPipelineRow
-                          isExpanded={`${pipeline.namespace}_${pipeline.application}` === this.props.expanded}
-                          pipeline={pipeline}
-                          onToggle={this.onToggle}
-                          loading={this.props.pipelineInfoLoading}
-                          pipelineInfo={this.props.pipelineInfo}
-                          sourcePipeline={this.props.pipelineName}
-                        />
-                      );
-                    })
-                  }
-                </div>
-              )
-          }
+          {this.props.triggeredPipelines.length === 0 ? null : (
+            <div className="triggered-pipeline-list">
+              <div className="pipeline-list-header">
+                <div className="caret-container" />
+                <div className="pipeline-name">{T.translate(`${PREFIX}.pipelineName`)}</div>
+                <div className="namespace">{T.translate(`${PREFIX}.namespace`)}</div>
+              </div>
+              {this.props.triggeredPipelines.map((pipeline) => {
+                return (
+                  <TriggeredPipelineRow
+                    isExpanded={
+                      `${pipeline.namespace}_${pipeline.application}` === this.props.expanded
+                    }
+                    pipeline={pipeline}
+                    onToggle={this.onToggle}
+                    loading={this.props.pipelineInfoLoading}
+                    pipelineInfo={this.props.pipelineInfo}
+                    sourcePipeline={this.props.pipelineName}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </CollapsibleSidebar>
     );
@@ -134,23 +126,19 @@ TriggeredPipelinesView.propTypes = {
   triggeredPipelines: PropTypes.array,
   expanded: PropTypes.string,
   pipelineInfo: PropTypes.object,
-  pipelineInfoLoading: PropTypes.bool
+  pipelineInfoLoading: PropTypes.bool,
 };
 
-const TriggeredPipelinesConnect = connect(
-  mapStateToProps
-)(TriggeredPipelinesView);
+const TriggeredPipelinesConnect = connect(mapStateToProps)(TriggeredPipelinesView);
 
-export default function TriggeredPipelines({pipelineName}) {
+export default function TriggeredPipelines({ pipelineName }) {
   return (
     <Provider store={TriggeredPipelineStore}>
-      <TriggeredPipelinesConnect
-        pipelineName={pipelineName}
-      />
+      <TriggeredPipelinesConnect pipelineName={pipelineName} />
     </Provider>
   );
 }
 
 TriggeredPipelines.propTypes = {
-  pipelineName: PropTypes.string.isRequired
+  pipelineName: PropTypes.string.isRequired,
 };

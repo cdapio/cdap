@@ -31,7 +31,7 @@ export default class InformationalWizard extends Component {
     super(props);
     this.state = {
       showWizard: this.props.isOpen,
-      license: this.props.input.package.license ? true : false
+      license: this.props.input.package.license ? true : false,
     };
     this.showWizardContents = this.showWizardContents.bind(this);
     this.toggleWizard = this.toggleWizard.bind(this);
@@ -43,27 +43,26 @@ export default class InformationalWizard extends Component {
 
     InformationalWizardStore.dispatch({
       type: InformationalActions.setSteps,
-      payload: actionSteps
+      payload: actionSteps,
     });
-
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
       this.props.onClose(returnResult);
     }
     this.setState({
-      showWizard: !this.state.showWizard
+      showWizard: !this.state.showWizard,
     });
   }
   componentWillUnmount() {
     InformationalWizardStore.dispatch({
-      type: InformationalActions.onReset
+      type: InformationalActions.onReset,
     });
   }
 
   showWizardContents() {
     this.setState({
-      license: false
+      license: false,
     });
   }
   render() {
@@ -81,8 +80,9 @@ export default class InformationalWizard extends Component {
       );
     };
 
-
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.Informational.headerlabel');
+    let wizardModalTitle =
+      (pkg.label ? pkg.label + ' | ' : '') +
+      T.translate('features.Wizard.Informational.headerlabel');
     return (
       <WizardModal
         title={wizardModalTitle}
@@ -90,18 +90,17 @@ export default class InformationalWizard extends Component {
         toggle={this.toggleWizard.bind(this, false)}
         className="informational-wizard"
       >
-        {
-          this.state.license ?
-            <LicenseStep
-              entityName={this.props.input.package.name}
-              entityVersion={this.props.input.package.version}
-              licenseFileName={this.props.input.package.license}
-              onAgree={this.showWizardContents}
-              onReject={this.toggleWizard.bind(this, false)}
-            />
-          :
-            getWizardContent()
-        }
+        {this.state.license ? (
+          <LicenseStep
+            entityName={this.props.input.package.name}
+            entityVersion={this.props.input.package.version}
+            licenseFileName={this.props.input.package.license}
+            onAgree={this.showWizardContents}
+            onReject={this.toggleWizard.bind(this, false)}
+          />
+        ) : (
+          getWizardContent()
+        )}
       </WizardModal>
     );
   }
@@ -109,5 +108,5 @@ export default class InformationalWizard extends Component {
 InformationalWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
 };

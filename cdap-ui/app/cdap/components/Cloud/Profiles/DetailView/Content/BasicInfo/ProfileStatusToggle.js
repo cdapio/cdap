@@ -14,16 +14,16 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ConfirmationModal from 'components/ConfirmationModal';
 import ToggleSwitch from 'components/ToggleSwitch';
 import Alert from 'components/Alert';
-import {PROFILE_STATUSES} from 'components/Cloud/Profiles/Store';
-import {extractProfileName} from 'components/Cloud/Profiles/Store/ActionCreator';
-import {MyCloudApi} from 'api/cloud';
+import { PROFILE_STATUSES } from 'components/Cloud/Profiles/Store';
+import { extractProfileName } from 'components/Cloud/Profiles/Store/ActionCreator';
+import { MyCloudApi } from 'api/cloud';
 import T from 'i18n-react';
-import {CLOUD, SYSTEM_NAMESPACE} from 'services/global-constants';
+import { CLOUD, SYSTEM_NAMESPACE } from 'services/global-constants';
 
 const PREFIX = 'features.Cloud.Profiles';
 
@@ -32,13 +32,13 @@ export default class ProfileStatusToggle extends Component {
     disableModalOpen: false,
     disableErrMsg: '',
     extendedDisableErrMsg: '',
-    disableLoading: false
+    disableLoading: false,
   };
 
   static propTypes = {
     profile: PropTypes.object,
     namespace: PropTypes.string,
-    toggleProfileStatusCallback: PropTypes.func
+    toggleProfileStatusCallback: PropTypes.func,
   };
 
   toggleDisableModal = () => {
@@ -46,13 +46,13 @@ export default class ProfileStatusToggle extends Component {
       disableModalOpen: !this.state.disableModalOpen,
       disableErrMsg: '',
       extendedDisableErrMsg: '',
-      disableLoading: false
+      disableLoading: false,
     });
   };
 
   toggleProfileStatus = () => {
     this.setState({
-      disableLoading: true
+      disableLoading: true,
     });
 
     const profile = this.props.profile;
@@ -61,31 +61,31 @@ export default class ProfileStatusToggle extends Component {
     if (this.props.namespace === SYSTEM_NAMESPACE) {
       apiObservable$ = MyCloudApi.toggleSystemProfileStatus({
         profile: profile.name,
-        action
+        action,
       });
     } else {
       apiObservable$ = MyCloudApi.toggleProfileStatus({
         namespace: this.props.namespace,
         profile: profile.name,
-        action
+        action,
       });
     }
-      apiObservable$.subscribe(
-        () => {
-          if (this.state.disableModalOpen) {
-            this.toggleDisableModal();
-          }
-          if (typeof this.props.toggleProfileStatusCallback === 'function') {
-            this.props.toggleProfileStatusCallback();
-          }
-        },
-        (err) => {
-          this.setState({
-            disableErrMsg: T.translate(`${PREFIX}.DetailView.disableError`),
-            extendedDisableErrMsg: err.response || err,
-            disableLoading: false
-          });
+    apiObservable$.subscribe(
+      () => {
+        if (this.state.disableModalOpen) {
+          this.toggleDisableModal();
         }
+        if (typeof this.props.toggleProfileStatusCallback === 'function') {
+          this.props.toggleProfileStatusCallback();
+        }
+      },
+      (err) => {
+        this.setState({
+          disableErrMsg: T.translate(`${PREFIX}.DetailView.disableError`),
+          extendedDisableErrMsg: err.response || err,
+          disableLoading: false,
+        });
+      }
     );
   };
 
@@ -109,7 +109,9 @@ export default class ProfileStatusToggle extends Component {
     }
 
     const profile = this.props.profile;
-    const confirmationText = T.translate(`${PREFIX}.DetailView.disableConfirmation`, {profile: profile.name});
+    const confirmationText = T.translate(`${PREFIX}.DetailView.disableConfirmation`, {
+      profile: profile.name,
+    });
 
     return (
       <ConfirmationModal
@@ -136,16 +138,11 @@ export default class ProfileStatusToggle extends Component {
     }
 
     const message = T.translate(`${PREFIX}.DetailView.enableError`, {
-      message: this.state.extendedDisableErrMsg
+      message: this.state.extendedDisableErrMsg,
     });
 
     return (
-      <Alert
-        message={message}
-        type='error'
-        showAlert={true}
-        onClose={this.closeAlertBanner}
-      />
+      <Alert message={message} type="error" showAlert={true} onClose={this.closeAlertBanner} />
     );
   }
 

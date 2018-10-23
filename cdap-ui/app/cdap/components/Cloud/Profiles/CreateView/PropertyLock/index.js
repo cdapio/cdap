@@ -17,19 +17,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {togglePropertyLock} from 'components/Cloud/Profiles/CreateView/CreateProfileActionCreator';
-import {objectQuery} from 'services/helpers';
-import {connect} from 'react-redux';
+import { togglePropertyLock } from 'components/Cloud/Profiles/CreateView/CreateProfileActionCreator';
+import { objectQuery } from 'services/helpers';
+import { connect } from 'react-redux';
 import Popover from 'components/Popover';
 require('./PropertyLock.scss');
 
-function PropertyLock({isEditable, propertyName}) {
+function PropertyLock({ isEditable, propertyName }) {
   let iconName = !isEditable ? 'icon-lock_close' : 'icon-lock_open';
   let title = isEditable
-    ?
-      'Click to disallow editing the value of this property after the profile is created'
-    :
-      'Click to allow editing the value of this property before running a program';
+    ? 'Click to disallow editing the value of this property after the profile is created'
+    : 'Click to allow editing the value of this property before running a program';
   const target = (
     <IconSVG
       className="property-lock"
@@ -42,7 +40,7 @@ function PropertyLock({isEditable, propertyName}) {
       target={() => target}
       targetDimension={{
         width: 16,
-        height: 21
+        height: 21,
       }}
       placement="right"
       showOn="Hover"
@@ -54,14 +52,14 @@ function PropertyLock({isEditable, propertyName}) {
 
 PropertyLock.propTypes = {
   isEditable: PropTypes.bool,
-  propertyName: PropTypes.string
+  propertyName: PropTypes.string,
 };
 
 const mapStateToProps = (state, ownProps) => {
-  let {propertyName} = ownProps;
+  let { propertyName } = ownProps;
   return {
     isEditable: objectQuery(state, 'properties', propertyName, 'isEditable'),
-    propertyName
+    propertyName,
   };
 };
 

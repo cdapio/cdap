@@ -14,33 +14,31 @@
  * the License.
  */
 
-import {MyMarketApi} from 'api/market';
+import { MyMarketApi } from 'api/market';
 import UploadDataAction from 'services/WizardStores/UploadData/UploadDataActions';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import 'whatwg-fetch';
-import {Subject} from 'rxjs/Subject';
+import { Subject } from 'rxjs/Subject';
 import isNil from 'lodash/isNil';
 
-const fetchDefaultData = ({filename, packagename: entityName, packageversion: entityVersion}) => {
+const fetchDefaultData = ({ filename, packagename: entityName, packageversion: entityVersion }) => {
   UploadDataStore.dispatch({
     type: UploadDataAction.setDefaultDataLoading,
-    payload: {}
+    payload: {},
   });
-  MyMarketApi
-    .getSampleData({ entityName, entityVersion, filename })
-    .subscribe((data) => {
-      UploadDataStore.dispatch({
-        type: UploadDataAction.setDefaultData,
-        payload: { data }
-      });
+  MyMarketApi.getSampleData({ entityName, entityVersion, filename }).subscribe((data) => {
+    UploadDataStore.dispatch({
+      type: UploadDataAction.setDefaultData,
+      payload: { data },
     });
+  });
 };
 // FIXME: Extract it out???
-const uploadData = ({url, fileContents, headers}) => {
+const uploadData = ({ url, fileContents, headers }) => {
   let subject = new Subject();
   let xhr = new window.XMLHttpRequest();
   let path;
-  xhr.upload.addEventListener('progress', function (e) {
+  xhr.upload.addEventListener('progress', function(e) {
     if (e.type === 'progress') {
       console.info('App Upload in progress');
     }
@@ -53,7 +51,7 @@ const uploadData = ({url, fileContents, headers}) => {
     xhr.setRequestHeader('Authorization', 'Bearer ' + headers.authToken);
   }
   xhr.send(fileContents);
-  xhr.onreadystatechange = function () {
+  xhr.onreadystatechange = function() {
     if (xhr.readyState === 4) {
       if (xhr.status > 200) {
         subject.error(xhr.response);
@@ -66,7 +64,7 @@ const uploadData = ({url, fileContents, headers}) => {
 };
 const UploadDataActionCreator = {
   fetchDefaultData,
-  uploadData
+  uploadData,
 };
 
 export default UploadDataActionCreator;

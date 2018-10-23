@@ -17,15 +17,15 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
 const mapStateToProps = (state) => {
   return {
-    response: state.http.response
+    response: state.http.response,
   };
 };
 
-function HttpResponseView({response}) {
+function HttpResponseView({ response }) {
   let viewResponse = response;
 
   let type = typeof response;
@@ -42,12 +42,9 @@ function HttpResponseView({response}) {
 }
 
 HttpResponseView.propTypes = {
-  response: PropTypes.any
+  response: PropTypes.any,
 };
 
-
-const HttpResponse = connect(
-  mapStateToProps
-)(HttpResponseView);
+const HttpResponse = connect(mapStateToProps)(HttpResponseView);
 
 export default HttpResponse;

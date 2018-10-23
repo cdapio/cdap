@@ -16,13 +16,13 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {MyProgramApi} from 'api/program';
+import { MyProgramApi } from 'api/program';
 import IconSVG from 'components/IconSVG';
 import Alert from 'components/Alert';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {GLOBALS} from 'services/global-constants';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { GLOBALS } from 'services/global-constants';
 import PipelineStopPopover from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons/PipelineStopButton/PipelineStopPopover';
-import {setStopButtonLoading, setStopError} from 'components/PipelineDetails/store/ActionCreator';
+import { setStopButtonLoading, setStopError } from 'components/PipelineDetails/store/ActionCreator';
 import isEqual from 'lodash/isEqual';
 import T from 'i18n-react';
 
@@ -35,24 +35,24 @@ export default class PipelineStopButton extends Component {
     currentRun: PropTypes.object,
     runs: PropTypes.array,
     stopButtonLoading: PropTypes.bool,
-    stopError: PropTypes.string
-  }
+    stopError: PropTypes.string,
+  };
 
   state = {
     disabled: true,
-    activeRuns: []
+    activeRuns: [],
   };
 
   activeStatuses = ['PENDING', 'STARTING', 'RUNNING'];
 
   componentWillReceiveProps(nextProps) {
-    let activeRuns = nextProps.runs.filter(run => {
+    let activeRuns = nextProps.runs.filter((run) => {
       return this.activeStatuses.indexOf(run.status) !== -1;
     });
     if (!isEqual(this.state.activeRuns, activeRuns)) {
       this.setState({
         activeRuns,
-        disabled: activeRuns.length === 0
+        disabled: activeRuns.length === 0,
       });
     }
   }
@@ -63,15 +63,14 @@ export default class PipelineStopButton extends Component {
     }
 
     setStopButtonLoading(true);
-    this.stopRun()
-      .subscribe(
-        () => {},
-        (err) => {
-          setStopButtonLoading(false);
-          setStopError(err.response || err);
-        }
-      );
-  }
+    this.stopRun().subscribe(
+      () => {},
+      (err) => {
+        setStopButtonLoading(false);
+        setStopError(err.response || err);
+      }
+    );
+  };
 
   stopRun = (runId = this.props.runs[0].runid) => {
     let pipelineType = this.props.isBatch ? GLOBALS.etlDataPipeline : GLOBALS.etlDataStreams;
@@ -80,10 +79,10 @@ export default class PipelineStopButton extends Component {
       appId: this.props.pipelineName,
       programType: GLOBALS.programType[pipelineType],
       programId: GLOBALS.programId[pipelineType],
-      runId
+      runId,
     };
     return MyProgramApi.stopRun(params);
-  }
+  };
 
   renderStopError() {
     if (!this.props.stopError) {
@@ -93,7 +92,7 @@ export default class PipelineStopButton extends Component {
     return (
       <Alert
         message={this.props.stopError}
-        type='error'
+        type="error"
         showAlert={true}
         onClose={() => {
           setStopError(null);
@@ -120,26 +119,17 @@ export default class PipelineStopButton extends Component {
         disabled={this.props.stopButtonLoading || this.state.disabled}
       >
         <div className="btn-container">
-          {
-            this.props.stopButtonLoading ?
-              (
-                <span>
-                  <IconSVG name="icon-spinner" className="fa-spin" />
-                  <div className="button-label">
-                    {T.translate(`${PREFIX}.stopping`)}
-                  </div>
-                </span>
-              )
-            :
-              (
-                <span>
-                  <IconSVG name="icon-stop" />
-                  <div className="button-label">
-                    {T.translate(`${PREFIX}.stop`)}
-                  </div>
-                </span>
-              )
-          }
+          {this.props.stopButtonLoading ? (
+            <span>
+              <IconSVG name="icon-spinner" className="fa-spin" />
+              <div className="button-label">{T.translate(`${PREFIX}.stopping`)}</div>
+            </span>
+          ) : (
+            <span>
+              <IconSVG name="icon-stop" />
+              <div className="button-label">{T.translate(`${PREFIX}.stop`)}</div>
+            </span>
+          )}
         </div>
       </div>
     );

@@ -17,9 +17,9 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {isDescendant} from 'services/helpers';
-import {Popover, PopoverBody} from 'reactstrap';
-import {Observable} from 'rxjs/Observable';
+import { isDescendant } from 'services/helpers';
+import { Popover, PopoverBody } from 'reactstrap';
+import { Observable } from 'rxjs/Observable';
 import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
 import Mousetrap from 'mousetrap';
@@ -62,11 +62,10 @@ export default class ColumnActionsDropdown extends Component {
     this.state = {
       dropdownOpen: false,
       open: null,
-      selectedHeaders: DataPrepStore.getState().dataprep.selectedHeaders
+      selectedHeaders: DataPrepStore.getState().dataprep.selectedHeaders,
     };
     this.unmounted = false;
     this.toggleDropdown = this.toggleDropdown.bind(this);
-
 
     /*
       requiredColCount attribute refers to the number of selected columns a directive needs for it to work
@@ -82,129 +81,129 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: uuidV4(),
         tag: ParseDirective,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
-        tag: 'divider'
+        tag: 'divider',
       },
       {
         id: uuidV4(),
         tag: SetCharacterEncoding,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
         tag: ChangeDataTypeDirective,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
-        tag: 'divider'
+        tag: 'divider',
       },
       {
         id: uuidV4(),
         tag: Format,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
         tag: Calculate,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
         tag: CustomTransform,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
-        tag: 'divider'
+        tag: 'divider',
       },
       {
         id: uuidV4(),
         tag: FilterDirective,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
-        tag: MarkAsError
+        tag: MarkAsError,
       },
       {
         id: uuidV4(),
         tag: FindAndReplaceDirective,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
         tag: FillNullOrEmpty,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
-        tag: 'divider'
+        tag: 'divider',
       },
       {
         id: uuidV4(),
         tag: CopyColumnDirective,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
         tag: DropColumnDirective,
-        requiredColCount: 0
+        requiredColCount: 0,
       },
       {
         id: uuidV4(),
         tag: KeepColumnDirective,
-        requiredColCount: 0
+        requiredColCount: 0,
       },
       {
         id: uuidV4(),
         tag: MergeColumnsDirective,
-        requiredColCount: 2
+        requiredColCount: 2,
       },
       {
         id: uuidV4(),
         tag: SwapColumnsDirective,
-        requiredColCount: 2
+        requiredColCount: 2,
       },
       {
-        tag: 'divider'
+        tag: 'divider',
       },
       {
         id: uuidV4(),
         tag: ExtractFields,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
         tag: Explode,
-        requiredColCount: 0
+        requiredColCount: 0,
       },
       {
         id: uuidV4(),
         tag: DefineVariableDirective,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
         tag: SetCounterDirective,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
-        tag: 'divider'
+        tag: 'divider',
       },
       {
         id: uuidV4(),
-        tag: MaskData
+        tag: MaskData,
       },
       {
         id: uuidV4(),
         tag: EncodeDecode,
-        requiredColCount: 1
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
         tag: Decode,
-        requiredColCount: 1
-      }
+        requiredColCount: 1,
+      },
     ];
     this.eventEmitter = ee(ee);
     this.eventEmitter.on('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
@@ -218,7 +217,7 @@ export default class ColumnActionsDropdown extends Component {
       let newState = DataPrepStore.getState().dataprep;
       if (!isEqual(this.state.selectedHeaders, newState.selectedHeaders)) {
         this.setState({
-          selectedHeaders: newState.selectedHeaders
+          selectedHeaders: newState.selectedHeaders,
         });
       }
     });
@@ -243,7 +242,7 @@ export default class ColumnActionsDropdown extends Component {
 
     this.setState({
       dropdownOpen: newState,
-      open: null
+      open: null,
     });
 
     this.props.dropdownOpened(this.props.column, newState);
@@ -253,14 +252,13 @@ export default class ColumnActionsDropdown extends Component {
       if (!element && this.singleWorkspaceMode) {
         element = document.getElementsByClassName('wrangler-modal')[0];
       }
-      this.documentClick$ = Observable.fromEvent(element, 'click')
-        .subscribe((e) => {
-          if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
-            return;
-          }
+      this.documentClick$ = Observable.fromEvent(element, 'click').subscribe((e) => {
+        if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
+          return;
+        }
 
-          this.toggleDropdown();
-        });
+        this.toggleDropdown();
+      });
 
       Mousetrap.bind('esc', this.toggleDropdown);
     } else {
@@ -289,57 +287,58 @@ export default class ColumnActionsDropdown extends Component {
         modifiers={{
           shift: {
             order: 800,
-            enabled: true
+            enabled: true,
           },
           preventOverflow: {
             boundariesElement: tableContainer,
             priority: ['top', 'bottom'],
-            escapeWithReference: true
-          }
+            escapeWithReference: true,
+          },
         }}
         hideArrow
       >
         <PopoverBody>
           <ScrollableList target={`dataprep-action-${this.dropdownId}`}>
-              {
-                this.directives.map((directive, index) => {
-                  if (directive.tag === 'divider') {
-                    return (
-                      <div className="column-action-divider" key={index}>
-                        <hr />
-                      </div>
-                    );
-                  }
-                  let Tag = directive.tag;
-                  let disabled = false;
-                  let column = this.props.column;
-
-                  if (this.state.selectedHeaders.indexOf(this.props.column) !== -1) {
-                    column = this.state.selectedHeaders;
-
-                    if (this.state.selectedHeaders.length !== directive.requiredColCount && directive.requiredColCount !== 0) {
-                      disabled = true;
-                    }
-                  } else if (directive.requiredColCount === 2) {
-                    disabled = true;
-                  }
+            {this.directives.map((directive, index) => {
+              if (directive.tag === 'divider') {
                 return (
-                  <div
-                    key={directive.id}
-                    onClick={!disabled ? this.directiveClick.bind(this, directive.id) : undefined}
-                    className={classnames({'disabled': disabled})}
-                  >
-                    <Tag
-                      column={column}
-                      onComplete={this.toggleDropdown.bind(this, false)}
-                      isOpen={this.state.open === directive.id}
-                      isDisabled={disabled}
-                      close={this.directiveClick.bind(this, null)}
-                    />
+                  <div className="column-action-divider" key={index}>
+                    <hr />
                   </div>
                 );
-              })
-            }
+              }
+              let Tag = directive.tag;
+              let disabled = false;
+              let column = this.props.column;
+
+              if (this.state.selectedHeaders.indexOf(this.props.column) !== -1) {
+                column = this.state.selectedHeaders;
+
+                if (
+                  this.state.selectedHeaders.length !== directive.requiredColCount &&
+                  directive.requiredColCount !== 0
+                ) {
+                  disabled = true;
+                }
+              } else if (directive.requiredColCount === 2) {
+                disabled = true;
+              }
+              return (
+                <div
+                  key={directive.id}
+                  onClick={!disabled ? this.directiveClick.bind(this, directive.id) : undefined}
+                  className={classnames({ disabled: disabled })}
+                >
+                  <Tag
+                    column={column}
+                    onComplete={this.toggleDropdown.bind(this, false)}
+                    isOpen={this.state.open === directive.id}
+                    isDisabled={disabled}
+                    close={this.directiveClick.bind(this, null)}
+                  />
+                </div>
+              );
+            })}
           </ScrollableList>
         </PopoverBody>
       </Popover>
@@ -348,20 +347,16 @@ export default class ColumnActionsDropdown extends Component {
 
   render() {
     return (
-      <span
-        className="column-actions-dropdown-container"
-        ref={(ref) => this.popover = ref}
-      >
+      <span className="column-actions-dropdown-container" ref={(ref) => (this.popover = ref)}>
         <span
           className={classnames('fa fa-caret-down', {
-            'expanded': this.state.dropdownOpen
+            expanded: this.state.dropdownOpen,
           })}
           onClick={this.toggleDropdown}
           id={`dataprep-action-${this.dropdownId}`}
         />
 
         {this.renderMenu()}
-
       </span>
     );
   }
@@ -369,5 +364,5 @@ export default class ColumnActionsDropdown extends Component {
 
 ColumnActionsDropdown.propTypes = {
   column: PropTypes.string,
-  dropdownOpened: PropTypes.func
+  dropdownOpened: PropTypes.func,
 };

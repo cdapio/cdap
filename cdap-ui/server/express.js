@@ -1,3 +1,4 @@
+// @ts-nocheck
 /*
  * Copyright © 2015-2018 Cask Data, Inc.
  *
@@ -17,35 +18,36 @@
 /* global require, module, process, __dirname */
 
 module.exports = {
-  getApp: function () {
-    return require('q').all([
+  getApp: function() {
+    return require('q')
+      .all([
         // router check also fetches the auth server address if security is enabled
         require('./config/router-check.js').ping(),
         require('./config/parser.js').extractConfig('cdap'),
-        require('./config/parser.js').extractUISettings()
+        require('./config/parser.js').extractUISettings(),
       ])
       .spread(makeApp);
-  }
+  },
 };
 var pkg = require('../package.json');
 var path = require('path');
 var express = require('express'),
-    cookieParser = require('cookie-parser'),
-    compression = require('compression'),
-    finalhandler = require('finalhandler'),
-    serveFavicon = require('serve-favicon'),
-    request = require('request'),
-    uuidV4 = require('uuid/v4'),
-    log4js = require('log4js'),
-    bodyParser = require('body-parser'),
-    DLL_PATH = path.normalize(__dirname + '/../dll'),
-    DIST_PATH = path.normalize(__dirname + '/../dist'),
-    OLD_DIST_PATH = path.normalize(__dirname + '/../old_dist'),
-    LOGIN_DIST_PATH= path.normalize(__dirname + '/../login_dist'),
-    CDAP_DIST_PATH= path.normalize(__dirname + '/../cdap_dist'),
-    MARKET_DIST_PATH= path.normalize(__dirname + '/../common_dist'),
-    fs = require('fs'),
-    objectQuery = require('lodash/get');
+  cookieParser = require('cookie-parser'),
+  compression = require('compression'),
+  finalhandler = require('finalhandler'),
+  serveFavicon = require('serve-favicon'),
+  request = require('request'),
+  uuidV4 = require('uuid/v4'),
+  log4js = require('log4js'),
+  bodyParser = require('body-parser'),
+  DLL_PATH = path.normalize(__dirname + '/../dll'),
+  DIST_PATH = path.normalize(__dirname + '/../dist'),
+  OLD_DIST_PATH = path.normalize(__dirname + '/../old_dist'),
+  LOGIN_DIST_PATH = path.normalize(__dirname + '/../login_dist'),
+  CDAP_DIST_PATH = path.normalize(__dirname + '/../cdap_dist'),
+  MARKET_DIST_PATH = path.normalize(__dirname + '/../common_dist'),
+  fs = require('fs'),
+  objectQuery = require('lodash/get');
 
 var log = log4js.getLogger('default');
 
@@ -58,7 +60,7 @@ const getExpressStaticConfig = () => {
   }
   return {
     index: false,
-    maxAge: '1y'
+    maxAge: '1y',
   };
 };
 
@@ -109,29 +111,31 @@ function extractUITheme(cdapConfig) {
   return uiThemeConfig;
 }
 
-function makeApp (authAddress, cdapConfig, uiSettings) {
+function makeApp(authAddress, cdapConfig, uiSettings) {
   var app = express();
 
   const uiThemeConfig = extractUITheme(cdapConfig);
   const faviconPath = getFaviconPath(uiThemeConfig);
   // middleware
-  try { app.use(serveFavicon(faviconPath)); }
-  catch (e) { log.error('Favicon missing! Please run `gulp build`'); }
+  try {
+    app.use(serveFavicon(faviconPath));
+  } catch (e) {
+    log.error('Favicon missing! Please run `gulp build`');
+  }
 
   app.use(compression());
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
 
-  app.use(function (err, req, res, next) {
+  app.use(function(err, req, res, next) {
     log.error(err);
     res.status(500).send(err);
     next(err);
   });
 
-
   // serve the config file
-  app.get('/config.js', function (req, res) {
+  app.get('/config.js', function(req, res) {
     var data = JSON.stringify({
       // the following will be available in angular via the "MY_CONFIG" injectable
 
@@ -140,28 +144,29 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         routerServerUrl: cdapConfig['router.server.address'],
         routerServerPort: cdapConfig['router.server.port'],
         routerSSLServerPort: cdapConfig['router.ssl.server.port'],
-        standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] === 'true' || false,
-        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false
+        standaloneWebsiteSDKDownload:
+          uiSettings['standalone.website.sdk.download'] === 'true' || false,
+        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false,
       },
       hydrator: {
-        previewEnabled: cdapConfig['enable.preview'] === 'true'
+        previewEnabled: cdapConfig['enable.preview'] === 'true',
       },
       marketUrl: cdapConfig['market.base.url'],
       sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: isModeProduction(),
       sandboxMode: process.env.NODE_ENV,
-      authRefreshURL: cdapConfig['dashboard.auth.refresh.path'] || false
+      authRefreshURL: cdapConfig['dashboard.auth.refresh.path'] || false,
     });
 
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
     });
-    res.send('window.CDAP_CONFIG = '+data+';');
+    res.send('window.CDAP_CONFIG = ' + data + ';');
   });
 
-  app.get('/ui-config.js', function (req, res) {
+  app.get('/ui-config.js', function(req, res) {
     var path = __dirname + '/config/cdap-ui-config.json';
 
     var fileConfig = {};
@@ -169,15 +174,15 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     fileConfig = fs.readFileSync(path, 'utf8');
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
     });
-    res.send('window.CDAP_UI_CONFIG = ' + fileConfig+ ';');
+    res.send('window.CDAP_UI_CONFIG = ' + fileConfig + ';');
   });
 
-  app.get('/ui-theme.js', function (req, res) {
+  app.get('/ui-theme.js', function(req, res) {
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
     });
     res.send(`window.CDAP_UI_THEME = ${JSON.stringify(uiThemeConfig)};`);
   });
@@ -193,16 +198,15 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       rejectUnauthorized: false,
       requestCert: true,
       agent: false,
-      headers: req.headers
+      headers: req.headers,
     })
-    .on('error', function (e) {
-      log.error('Error request: ', e);
-    })
-    .pipe(res)
-    .on('error', function (e) {
-      log.error('Error downloading query: ', e);
-    });
-
+      .on('error', function(e) {
+        log.error('Error request: ', e);
+      })
+      .pipe(res)
+      .on('error', function(e) {
+        log.error('Error downloading query: ', e);
+      });
   });
 
   /**
@@ -217,33 +221,33 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
    **/
   app.get('/forwardMarketToCdap', function(req, res) {
     var sourceLink = req.query.source,
-        targetLink = req.query.target,
-        sourceMethod = req.query.sourceMethod || 'GET',
-        targetMethod = req.query.targetMethod || 'POST';
+      targetLink = req.query.target,
+      sourceMethod = req.query.sourceMethod || 'GET',
+      targetMethod = req.query.targetMethod || 'POST';
 
     var forwardRequestObject = {
       url: targetLink,
       method: targetMethod,
-      headers: req.headers
+      headers: req.headers,
     };
 
     request({
       url: sourceLink,
-      method: sourceMethod
+      method: sourceMethod,
     })
-    .on('error', function (e) {
-      log.error('Error', e);
-    })
-    .pipe(request(forwardRequestObject))
-    .on('error', function (e) {
-      log.error('Error', e);
-    })
-    .pipe(res);
+      .on('error', function(e) {
+        log.error('Error', e);
+      })
+      .pipe(request(forwardRequestObject))
+      .on('error', function(e) {
+        log.error('Error', e);
+      })
+      .pipe(res);
   });
 
   app.get('/downloadLogs', function(req, res) {
     var url = decodeURIComponent(req.query.backendUrl);
-    var method = (req.query.method || 'GET');
+    var method = req.query.method || 'GET';
     log.info('Download Logs Start: ', url);
     var customHeaders;
     var requestObject = {
@@ -256,7 +260,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
     if (req.cookies['CDAP_Auth_Token']) {
       customHeaders = {
-        authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token']
+        authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token'],
       };
     }
 
@@ -266,32 +270,30 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
     var type = req.query.type;
     var responseHeaders = {
-      'Cache-Control': 'no-cache, no-store'
+      'Cache-Control': 'no-cache, no-store',
     };
 
     try {
       request(requestObject)
-        .on('error', function (e) {
+        .on('error', function(e) {
           log.error('Error request logs: ', e);
         })
-        .on('response',
-          function (response) {
-            // This happens when use tries to access the link directly when
-            // no autorization token present
-            if (response.statusCode === 200) {
-              if (type === 'download') {
-                var filename = req.query.filename;
-                responseHeaders['Content-Disposition'] = 'attachment; filename='+filename;
-              } else {
-                responseHeaders['Content-Type'] = 'text/plain';
-              }
-
-              res.set(responseHeaders);
+        .on('response', function(response) {
+          // This happens when use tries to access the link directly when
+          // no autorization token present
+          if (response.statusCode === 200) {
+            if (type === 'download') {
+              var filename = req.query.filename;
+              responseHeaders['Content-Disposition'] = 'attachment; filename=' + filename;
+            } else {
+              responseHeaders['Content-Type'] = 'text/plain';
             }
+
+            res.set(responseHeaders);
           }
-        )
+        })
         .pipe(res)
-        .on('error', function (e) {
+        .on('error', function(e) {
           log.error('Error downloading logs: ', e);
         });
     } catch (e) {
@@ -314,9 +316,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     Handle POST requests made outside of the websockets from front-end.
     For now it handles file upload POST /namespaces/:namespace/apps API
   */
-  app.post('/namespaces/:namespace/:path(*)', function (req, res) {
-    var protocol,
-        port;
+  app.post('/namespaces/:namespace/:path(*)', function(req, res) {
+    var protocol, port;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
       protocol = 'https://';
     } else {
@@ -340,101 +341,99 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       '/v3/namespaces/',
       req.param('namespace'),
       '/',
-      req.param('path')
+      req.param('path'),
     ].join('');
 
     var opts = {
       method: 'POST',
       url: url,
       headers: {
-        'Content-Type': headers['content-type']
-      }
+        'Content-Type': headers['content-type'],
+      },
     };
 
     req
-      .on('error', function (e) {
+      .on('error', function(e) {
         log.error(e);
       })
       .pipe(request.post(opts))
-        .on('error', function (e) {
-          log.error(e);
-        })
+      .on('error', function(e) {
+        log.error(e);
+      })
       .pipe(res)
-        .on('error', function (e) {
-          log.error(e);
-        });
+      .on('error', function(e) {
+        log.error(e);
+      });
   });
 
   app.use('/old_assets', [
     express.static(OLD_DIST_PATH + '/assets', getExpressStaticConfig()),
     function(req, res) {
       finalhandler(req, res)(false); // 404
-    }
+    },
   ]);
   // serve static assets
   app.use('/assets', [
     express.static(DIST_PATH + '/assets'),
     function(req, res) {
       finalhandler(req, res)(false); // 404
-    }
+    },
   ]);
   app.use('/cdap_assets', [
     express.static(CDAP_DIST_PATH + '/cdap_assets', getExpressStaticConfig()),
     function(req, res) {
       finalhandler(req, res)(false); // 404
-    }
+    },
   ]);
   app.use('/dll_assets', [
     express.static(DLL_PATH, getExpressStaticConfig()),
     function(req, res) {
       finalhandler(req, res)(false);
-    }
+    },
   ]);
   app.use('/login_assets', [
     express.static(LOGIN_DIST_PATH + '/login_assets', getExpressStaticConfig()),
     function(req, res) {
       finalhandler(req, res)(false); // 404
-    }
+    },
   ]);
   app.use('/common_assets', [
     express.static(MARKET_DIST_PATH, {
-      index: false
+      index: false,
     }),
     function(req, res) {
       finalhandler(req, res)(false); // 404
-    }
+    },
   ]);
   app.get('/robots.txt', [
-    function (req, res) {
+    function(req, res) {
       res.type('text/plain');
       res.send('User-agent: *\nDisallow: /');
-    }
+    },
   ]);
 
   function authentication(req, res) {
     var opts = {
       auth: {
         user: req.body.username,
-        password: req.body.password
+        password: req.body.password,
       },
-      url: authAddress.get()
+      url: authAddress.get(),
     };
-    request(opts,
-      function (nerr, nres, nbody) {
-        if (nerr || nres.statusCode !== 200) {
-          var statusCode = (nres ? nres.statusCode : 500) || 500;
-          res.status(statusCode).send(nbody);
-        } else {
-          res.send(nbody);
-        }
+    request(opts, function(nerr, nres, nbody) {
+      if (nerr || nres.statusCode !== 200) {
+        var statusCode = (nres ? nres.statusCode : 500) || 500;
+        res.status(statusCode).send(nbody);
+      } else {
+        res.send(nbody);
       }
-    );
+    });
   }
 
   app.get('/test/playground', [
-    function (req, res) {
+    function(req, res) {
       res.sendFile(DIST_PATH + '/test.html');
-    }
+    },
   ]);
 
   // CDAP-678, CDAP-8260 This is added for health check on node proxy.
@@ -449,7 +448,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         return;
       }
       res.sendFile(LOGIN_DIST_PATH + '/login_assets/login.html');
-    }
+    },
   ]);
 
   /*
@@ -462,9 +461,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   app.post('/login', authentication);
 
   app.get('/backendstatus', [
-    function (req, res) {
-      var protocol,
-          port;
+    function(req, res) {
+      var protocol, port;
       if (cdapConfig['ssl.external.enabled'] === 'true') {
         protocol = 'https://';
       } else {
@@ -477,13 +475,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         port = cdapConfig['router.server.port'];
       }
 
-      var link = [
-        protocol,
-        cdapConfig['router.server.address'],
-        ':',
-        port,
-        '/v3/namespaces'
-      ].join('');
+      var link = [protocol, cdapConfig['router.server.address'], ':', port, '/v3/namespaces'].join(
+        ''
+      );
 
       // FIXME: The reason for doing this is here: https://issues.cask.co/browse/CDAP-9059
       // TL;DR - The source of this issue is because of large browser urls
@@ -491,20 +485,23 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       // That is the reason we are temporarily stripping out referer from the headers.
       var headers = req.headers;
       delete headers.referer;
-      request({
-        method: 'GET',
-        url: link,
-        rejectUnauthorized: false,
-        requestCert: true,
-        agent: false,
-        headers: headers
-      }, function (err, response) {
-        if (err) {
-          res.status(500).send(err);
-        } else {
-          res.status(response.statusCode).send('OK');
+      request(
+        {
+          method: 'GET',
+          url: link,
+          rejectUnauthorized: false,
+          requestCert: true,
+          agent: false,
+          headers: headers,
+        },
+        function(err, response) {
+          if (err) {
+            res.status(500).send(err);
+          } else {
+            res.status(response.statusCode).send('OK');
+          }
         }
-      }).on('error', function (err) {
+      ).on('error', function(err) {
         try {
           res.status(500).send(err);
         } catch (e) {
@@ -512,40 +509,40 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         }
         log.error(err);
       });
-    }
+    },
   ]);
 
   app.get('/predefinedapps/:apptype', [
-      function (req, res) {
-        var apptype = req.params.apptype;
-        var config = {};
-        var fileConfig = {};
-        var filesToMetadataMap = [];
-        var filePath = __dirname + '/../templates/apps/predefined/config.json';
-        try {
-          fileConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-          filesToMetadataMap = fileConfig[apptype] || [];
-          if (filesToMetadataMap.length === 0) {
-            throw {code: 404};
-          }
-          filesToMetadataMap = filesToMetadataMap.map(function(metadata) {
-            return {
-              name: metadata.name,
-              description: metadata.description
-            };
-          });
-          res.send(filesToMetadataMap);
-        } catch (e) {
-          config.error = e.code;
-          config.message = 'Error reading template - '+ apptype;
-          log.debug(config.message);
-          res.status(404).send(config);
+    function(req, res) {
+      var apptype = req.params.apptype;
+      var config = {};
+      var fileConfig = {};
+      var filesToMetadataMap = [];
+      var filePath = __dirname + '/../templates/apps/predefined/config.json';
+      try {
+        fileConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        filesToMetadataMap = fileConfig[apptype] || [];
+        if (filesToMetadataMap.length === 0) {
+          throw { code: 404 };
         }
+        filesToMetadataMap = filesToMetadataMap.map(function(metadata) {
+          return {
+            name: metadata.name,
+            description: metadata.description,
+          };
+        });
+        res.send(filesToMetadataMap);
+      } catch (e) {
+        config.error = e.code;
+        config.message = 'Error reading template - ' + apptype;
+        log.debug(config.message);
+        res.status(404).send(config);
       }
+    },
   ]);
 
   app.get('/predefinedapps/:apptype/:appname', [
-    function (req, res) {
+    function(req, res) {
       var apptype = req.params.apptype;
       var appname = req.params.appname;
       var filesToMetadataMap = [];
@@ -564,11 +561,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
           }
         });
         if (filesToMetadataMap.length === 0) {
-          throw {code: 404};
+          throw { code: 404 };
         }
-        appConfig = JSON.parse(
-          fs.readFileSync(dirPath + '/' + filesToMetadataMap[0].file)
-        );
+        appConfig = JSON.parse(fs.readFileSync(dirPath + '/' + filesToMetadataMap[0].file));
         res.send(appConfig);
       } catch (e) {
         config.error = e.code;
@@ -576,11 +571,11 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         log.debug(config.message);
         res.status(404).send(config);
       }
-    }
+    },
   ]);
 
   app.get('/validators', [
-    function (req, res) {
+    function(req, res) {
       var filePath = __dirname + '/../templates/validators/validators.json';
       var config = {};
       var validators = {};
@@ -594,64 +589,76 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         log.debug(config.message);
         res.status(404).send(config);
       }
-    }
+    },
   ]);
 
   // any other path, serve index.html
-  app.all(['/pipelines', '/pipelines*'], [
-    function (req, res) {
-      // BCookie is the browser cookie, that is generated and will live for a year.
-      // This cookie is always generated to provide unique id for the browser that
-      // is being used to interact with the CDAP backend.
-      var date = new Date();
-      date.setDate(date.getDate() + 365); // Expires after a year.
-      if (!req.cookies.bcookie) {
-        res.cookie('bcookie', uuidV4(), { expires: date });
-      } else {
-        res.cookie('bcookie', req.cookies.bcookie, { expires: date });
-      }
-     res.sendFile(DIST_PATH + '/hydrator.html');
-    }
-  ]);
-  app.all(['/metadata', '/metadata*'], [
-    function (req, res) {
-      // BCookie is the browser cookie, that is generated and will live for a year.
-      // This cookie is always generated to provide unique id for the browser that
-      // is being used to interact with the CDAP backend.
-      var date = new Date();
-      date.setDate(date.getDate() + 365); // Expires after a year.
-      if (!req.cookies.bcookie) {
-        res.cookie('bcookie', uuidV4(), { expires: date });
-      } else {
-        res.cookie('bcookie', req.cookies.bcookie, { expires: date });
-      }
-     res.sendFile(DIST_PATH + '/tracker.html');
-    }
-  ]);
+  app.all(
+    ['/pipelines', '/pipelines*'],
+    [
+      function(req, res) {
+        // BCookie is the browser cookie, that is generated and will live for a year.
+        // This cookie is always generated to provide unique id for the browser that
+        // is being used to interact with the CDAP backend.
+        var date = new Date();
+        date.setDate(date.getDate() + 365); // Expires after a year.
+        if (!req.cookies.bcookie) {
+          res.cookie('bcookie', uuidV4(), { expires: date });
+        } else {
+          res.cookie('bcookie', req.cookies.bcookie, { expires: date });
+        }
+        res.sendFile(DIST_PATH + '/hydrator.html');
+      },
+    ]
+  );
+  app.all(
+    ['/metadata', '/metadata*'],
+    [
+      function(req, res) {
+        // BCookie is the browser cookie, that is generated and will live for a year.
+        // This cookie is always generated to provide unique id for the browser that
+        // is being used to interact with the CDAP backend.
+        var date = new Date();
+        date.setDate(date.getDate() + 365); // Expires after a year.
+        if (!req.cookies.bcookie) {
+          res.cookie('bcookie', uuidV4(), { expires: date });
+        } else {
+          res.cookie('bcookie', req.cookies.bcookie, { expires: date });
+        }
+        res.sendFile(DIST_PATH + '/tracker.html');
+      },
+    ]
+  );
 
-  app.all(['/logviewer', '/logviewer*'], [
-    function (req, res) {
-      // BCookie is the browser cookie, that is generated and will live for a year.
-      // This cookie is always generated to provide unique id for the browser that
-      // is being used to interact with the CDAP backend.
-      var date = new Date();
-      date.setDate(date.getDate() + 365); // Expires after a year.
-      if (!req.cookies.bcookie) {
-        res.cookie('bcookie', uuidV4(), { expires: date });
-      } else {
-        res.cookie('bcookie', req.cookies.bcookie, { expires: date });
-      }
-     res.sendFile(DIST_PATH + '/logviewer.html');
-    }
-  ]);
+  app.all(
+    ['/logviewer', '/logviewer*'],
+    [
+      function(req, res) {
+        // BCookie is the browser cookie, that is generated and will live for a year.
+        // This cookie is always generated to provide unique id for the browser that
+        // is being used to interact with the CDAP backend.
+        var date = new Date();
+        date.setDate(date.getDate() + 365); // Expires after a year.
+        if (!req.cookies.bcookie) {
+          res.cookie('bcookie', uuidV4(), { expires: date });
+        } else {
+          res.cookie('bcookie', req.cookies.bcookie, { expires: date });
+        }
+        res.sendFile(DIST_PATH + '/logviewer.html');
+      },
+    ]
+  );
 
-  app.all(['/', '/cdap', '/cdap*'], [
-    function(req, res) {
-      res.sendFile(CDAP_DIST_PATH + '/cdap_assets/cdap.html');
-    }
-  ]);
+  app.all(
+    ['/', '/cdap', '/cdap*'],
+    [
+      function(req, res) {
+        res.sendFile(CDAP_DIST_PATH + '/cdap_assets/cdap.html');
+      },
+    ]
+  );
 
-  app.get('/ui-config-old.js', function (req, res) {
+  app.get('/ui-config-old.js', function(req, res) {
     var path = __dirname + '/config/cdap-ui-config.json';
 
     var fileConfig = {};
@@ -659,13 +666,13 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     fileConfig = fs.readFileSync(path, 'utf8');
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
     });
-    res.send('angular.module("'+pkg.name+'.config")' +
-              '.constant("UI_CONFIG",'+fileConfig+');');
+    res.send(
+      'angular.module("' + pkg.name + '.config")' + '.constant("UI_CONFIG",' + fileConfig + ');'
+    );
   });
-  app.get('/config-old.js', function (req, res) {
-
+  app.get('/config-old.js', function(req, res) {
     var data = JSON.stringify({
       // the following will be available in angular via the "MY_CONFIG" injectable
 
@@ -673,29 +680,32 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       cdap: {
         routerServerUrl: cdapConfig['router.server.address'],
         routerServerPort: cdapConfig['router.server.port'],
-        routerSSLServerPort: cdapConfig['router.ssl.server.port']
+        routerSSLServerPort: cdapConfig['router.ssl.server.port'],
       },
       hydrator: {
-        previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
+        previewEnabled: cdapConfig['enable.alpha.preview'] === 'true',
       },
       sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
-      isEnterprise: isModeProduction()
+      isEnterprise: isModeProduction(),
     });
 
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
     });
-    res.send('angular.module("'+pkg.name+'.config", [])' +
-              '.constant("MY_CONFIG",'+data+');');
+    res.send(
+      'angular.module("' + pkg.name + '.config", [])' + '.constant("MY_CONFIG",' + data + ');'
+    );
   });
 
-  app.all(['/oldcdap', '/oldcdap*'], [
-    function (req, res) {
-      res.sendFile(OLD_DIST_PATH + '/index.html');
-    }
-  ]);
+  app.all(
+    ['/oldcdap', '/oldcdap*'],
+    [
+      function(req, res) {
+        res.sendFile(OLD_DIST_PATH + '/index.html');
+      },
+    ]
+  );
   return app;
-
 }

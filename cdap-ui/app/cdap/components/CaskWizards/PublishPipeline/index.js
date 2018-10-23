@@ -26,7 +26,7 @@ import head from 'lodash/head';
 import uuidV4 from 'uuid/v4';
 import MyUserStoreApi from 'api/userstore';
 import NamespaceStore from 'services/NamespaceStore';
-import {MyPipelineApi} from 'api/pipeline';
+import { MyPipelineApi } from 'api/pipeline';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import LicenseStep from 'components/CaskWizards/LicenseStep';
@@ -38,7 +38,7 @@ export default class PublishPipelineWizard extends Component {
     this.state = {
       showWizard: this.props.isOpen,
       successInfo: {},
-      license: this.props.input.package.license ? true : false
+      license: this.props.input.package.license ? true : false,
     };
 
     this.setDefaultConfig();
@@ -47,26 +47,26 @@ export default class PublishPipelineWizard extends Component {
   }
   componentWillMount() {
     let action = this.props.input.action;
-    let filename = head(action.arguments.filter(arg => arg.name === 'config')).value;
+    let filename = head(action.arguments.filter((arg) => arg.name === 'config')).value;
     PublishPipelineActionCreator.fetchPipelineConfig({
       entityName: this.props.input.package.name,
       entityVersion: this.props.input.package.version,
-      filename
+      filename,
     });
   }
-  componentWillReceiveProps({isOpen}) {
+  componentWillReceiveProps({ isOpen }) {
     this.setState({
-      showWizard: isOpen
+      showWizard: isOpen,
     });
   }
   componentWillUnmount() {
     PublishPipelineWizardStore.dispatch({
-      type: PublishPipelineAction.onReset
+      type: PublishPipelineAction.onReset,
     });
   }
   showWizardContents() {
     this.setState({
-      license: false
+      license: false,
     });
   }
   setDefaultConfig() {
@@ -77,14 +77,14 @@ export default class PublishPipelineWizard extends Component {
         case 'name':
           PublishPipelineWizardStore.dispatch({
             type: PublishPipelineAction.setPipelineName,
-            payload: {name: arg.value}
+            payload: { name: arg.value },
           });
           break;
       }
     });
   }
   buildSuccessInfo(pipelineName, namespace, draftId) {
-    let message = T.translate('features.Wizard.PublishPipeline.success', {pipelineName});
+    let message = T.translate('features.Wizard.PublishPipeline.success', { pipelineName });
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
     let buttonLabel = T.translate('features.Wizard.PublishPipeline.callToAction.customize');
     this.setState({
@@ -95,14 +95,14 @@ export default class PublishPipelineWizard extends Component {
           stateName: 'hydrator.create',
           stateParams: {
             namespace,
-            draftId
-          }
+            draftId,
+          },
         }),
         linkLabel,
         linkUrl: window.getAbsUIUrl({
-          namespaceId: namespace
-        })
-      }
+          namespaceId: namespace,
+        }),
+      },
     });
   }
   toggleWizard(returnResult) {
@@ -110,31 +110,31 @@ export default class PublishPipelineWizard extends Component {
       this.props.onClose(returnResult);
     }
     this.setState({
-      showWizard: !this.state.showWizard
+      showWizard: !this.state.showWizard,
     });
   }
   publishPipeline() {
     let action = this.props.input.action;
-    let artifact = head(action.arguments.filter(arg => arg.name === 'artifact')).value;
-    let {name, pipelineConfig} = PublishPipelineWizardStore.getState().pipelinemetadata;
+    let artifact = head(action.arguments.filter((arg) => arg.name === 'artifact')).value;
+    let { name, pipelineConfig } = PublishPipelineWizardStore.getState().pipelinemetadata;
     let draftConfig = {
       artifact,
       config: pipelineConfig,
       name: name,
-      __ui__: {}
+      __ui__: {},
     };
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     let draftId;
     if (this.props.input.action.type === 'create_pipeline_draft') {
-      return MyUserStoreApi
-        .get()
+      return MyUserStoreApi.get()
         .mergeMap((res) => {
           draftId = uuidV4();
           draftConfig.__ui__.draftId = draftId;
           res = res || {};
           res.property = res.property || {};
           res.property.hydratorDrafts = res.property.hydratorDrafts || {};
-          res.property.hydratorDrafts[currentNamespace] = res.property.hydratorDrafts[currentNamespace] || {};
+          res.property.hydratorDrafts[currentNamespace] =
+            res.property.hydratorDrafts[currentNamespace] || {};
           res.property.hydratorDrafts[currentNamespace][draftId] = draftConfig;
           return MyUserStoreApi.set({}, res.property);
         })
@@ -147,64 +147,61 @@ export default class PublishPipelineWizard extends Component {
     // this is the case when this is used in an usecase, so
     // PublishPipelineUsecase passes the CTA info to this component
     if (this.props.input.action.type === 'create_pipeline' && this.props.buildSuccessInfo) {
-      return MyPipelineApi
-        .publish({
+      return MyPipelineApi.publish(
+        {
           namespace: currentNamespace,
-          appId: name
-          }, {
-            artifact,
-            config: pipelineConfig
-          }
-        )
-        .map((res) => {
-          let successInfo = this.props.buildSuccessInfo(name, currentNamespace);
-          this.setState({
-            successInfo
-          });
-          this.eventEmitter.emit(globalEvents.PUBLISHPIPELINE);
-          return res;
+          appId: name,
+        },
+        {
+          artifact,
+          config: pipelineConfig,
+        }
+      ).map((res) => {
+        let successInfo = this.props.buildSuccessInfo(name, currentNamespace);
+        this.setState({
+          successInfo,
         });
+        this.eventEmitter.emit(globalEvents.PUBLISHPIPELINE);
+        return res;
+      });
     }
   }
   render() {
     let input = this.props.input || {};
     let pkg = input.package || {};
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.PublishPipeline.headerlabel');
+    let wizardModalTitle =
+      (pkg.label ? pkg.label + ' | ' : '') +
+      T.translate('features.Wizard.PublishPipeline.headerlabel');
     return (
       <div>
-        {
-          this.state.showWizard ?
-            // eww..
-            <WizardModal
-              title={wizardModalTitle}
-              isOpen={this.state.showWizard}
-              toggle={this.toggleWizard.bind(this, false)}
-              className="create-stream-wizard"
-            >
-
-              {
-                this.state.license ?
-                  <LicenseStep
-                    entityName={this.props.input.package.name}
-                    entityVersion={this.props.input.package.version}
-                    licenseFileName={this.props.input.package.license}
-                    onAgree={this.showWizardContents}
-                    onReject={this.toggleWizard.bind(this, false)}
-                  />
-                :
-                  <Wizard
-                    wizardConfig={PublishPipelineWizardConfig}
-                    wizardType="PublishPipeline"
-                    onSubmit={this.publishPipeline.bind(this)}
-                    successInfo={this.state.successInfo}
-                    onClose={this.toggleWizard.bind(this)}
-                    store={PublishPipelineWizardStore}
-                  />
-              }
-            </WizardModal>
-          :
-            null
-        }
+        {this.state.showWizard ? (
+          // eww..
+          <WizardModal
+            title={wizardModalTitle}
+            isOpen={this.state.showWizard}
+            toggle={this.toggleWizard.bind(this, false)}
+            className="create-stream-wizard"
+          >
+            {this.state.license ? (
+              <LicenseStep
+                entityName={this.props.input.package.name}
+                entityVersion={this.props.input.package.version}
+                licenseFileName={this.props.input.package.license}
+                onAgree={this.showWizardContents}
+                onReject={this.toggleWizard.bind(this, false)}
+              />
+            ) : (
+              <Wizard
+                wizardConfig={PublishPipelineWizardConfig}
+                wizardType="PublishPipeline"
+                onSubmit={this.publishPipeline.bind(this)}
+                successInfo={this.state.successInfo}
+                onClose={this.toggleWizard.bind(this)}
+                store={PublishPipelineWizardStore}
+              />
+            )}
+          </WizardModal>
+        ) : null}
       </div>
     );
   }

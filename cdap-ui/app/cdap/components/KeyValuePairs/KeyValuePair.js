@@ -18,7 +18,7 @@ import React, { Component } from 'react';
 require('./KeyValuePairs.scss');
 import T from 'i18n-react';
 import classnames from 'classnames';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 
 class KeyValuePair extends Component {
   static propTypes = {
@@ -37,11 +37,11 @@ class KeyValuePair extends Component {
     keyPlaceholder: PropTypes.string,
     valuePlaceholder: PropTypes.string,
     disabled: PropTypes.bool,
-    onPaste: PropTypes.func
+    onPaste: PropTypes.func,
   };
 
   static defaultProps = {
-    getResettedKeyValue: () => {}
+    getResettedKeyValue: () => {},
   };
 
   handlePaste = (e) => {
@@ -55,18 +55,19 @@ class KeyValuePair extends Component {
     } catch (e) {
       return;
     }
-  }
+  };
 
   keyDown = (e) => {
     if (e.keyCode === 13) {
       this.props.addRow();
     }
-  }
+  };
 
   renderKeyField() {
     let keyPlaceholder = '';
     if (!this.props.disabled) {
-      keyPlaceholder = this.props.keyPlaceholder || T.translate('commons.keyValPairs.keyPlaceholder');
+      keyPlaceholder =
+        this.props.keyPlaceholder || T.translate('commons.keyValPairs.keyPlaceholder');
     }
 
     return (
@@ -77,7 +78,7 @@ class KeyValuePair extends Component {
         onKeyDown={this.keyDown}
         onChange={this.props.onChange.bind(null, 'key')}
         placeholder={keyPlaceholder}
-        className={classnames("form-control key-input", {"wider": this.props.disabled})}
+        className={classnames('form-control key-input', { wider: this.props.disabled })}
         disabled={this.props.notDeletable || this.props.disabled}
         onPaste={this.handlePaste}
       />
@@ -90,7 +91,7 @@ class KeyValuePair extends Component {
         <input
           type="text"
           value=""
-          className={classnames("form-control value-input", {"wider": this.props.disabled})}
+          className={classnames('form-control value-input', { wider: this.props.disabled })}
           disabled
         />
       );
@@ -98,7 +99,8 @@ class KeyValuePair extends Component {
 
     let valuePlaceholder = '';
     if (!this.props.disabled) {
-      valuePlaceholder = this.props.valuePlaceholder || T.translate('commons.keyValPairs.valuePlaceholder');
+      valuePlaceholder =
+        this.props.valuePlaceholder || T.translate('commons.keyValPairs.valuePlaceholder');
     }
 
     return (
@@ -108,7 +110,7 @@ class KeyValuePair extends Component {
         onKeyDown={this.keyDown}
         onChange={this.props.onChange.bind(null, 'value')}
         placeholder={valuePlaceholder}
-        className={classnames("form-control value-input", {"wider": this.props.disabled})}
+        className={classnames('form-control value-input', { wider: this.props.disabled })}
         disabled={this.props.disabled}
         onPaste={this.handlePaste}
       />
@@ -116,21 +118,31 @@ class KeyValuePair extends Component {
   }
 
   renderActionButtons() {
-    if (this.props.disabled) { return null; }
+    if (this.props.disabled) {
+      return null;
+    }
 
     return (
       <span>
         <button
           type="submit"
           className="btn add-row-btn btn-link"
-          onClick={(e) => {this.props.addRow(); preventPropagation(e);}}
+          onClick={(e) => {
+            this.props.addRow();
+            preventPropagation(e);
+          }}
         >
           <i className="fa fa-plus" />
         </button>
         <button
           type="submit"
-          className={classnames("btn remove-row-btn btn-link", {"invisible": this.props.notDeletable})}
-          onClick={(e) => {this.props.removeRow(); preventPropagation(e);}}
+          className={classnames('btn remove-row-btn btn-link', {
+            invisible: this.props.notDeletable,
+          })}
+          onClick={(e) => {
+            this.props.removeRow();
+            preventPropagation(e);
+          }}
         >
           <i className="fa fa-trash" />
         </button>
@@ -156,7 +168,7 @@ class KeyValuePair extends Component {
           className="form-control provided-input"
         />
         <span
-          className={classnames("reset-action", {"hidden": !this.props.showReset})}
+          className={classnames('reset-action', { hidden: !this.props.showReset })}
           onClick={this.getResettedKeyValue.bind(this, this.props.index)}
         >
           {T.translate('commons.keyValPairs.reset')}

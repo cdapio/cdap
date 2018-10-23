@@ -18,11 +18,11 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import classnames from 'classnames';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import T from 'i18n-react';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 import MouseTrap from 'mousetrap';
 
 const PREFIX = `features.DataPrep.Directives.FindAndReplace`;
@@ -36,7 +36,7 @@ export default class FindAndReplaceDirective extends Component {
       replaceInput: '',
       exactMatch: false,
       ignoreCase: false,
-      isOpen: this.props.isOpen
+      isOpen: this.props.isOpen,
     };
 
     this.handleFindInputChange = this.handleFindInputChange.bind(this);
@@ -48,7 +48,10 @@ export default class FindAndReplaceDirective extends Component {
   }
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('find-and-replace-directive'));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById('find-and-replace-directive')
+    );
   }
 
   componentDidUpdate() {
@@ -64,13 +67,16 @@ export default class FindAndReplaceDirective extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.isOpen !== this.state.isOpen) {
-      this.setState({
-        isOpen: nextProps.isOpen
-      }, () => {
-        if (this.findInputBox) {
-          this.findInputBox.focus();
+      this.setState(
+        {
+          isOpen: nextProps.isOpen,
+        },
+        () => {
+          if (this.findInputBox) {
+            this.findInputBox.focus();
+          }
         }
-      });
+      );
     }
   }
 
@@ -81,22 +87,22 @@ export default class FindAndReplaceDirective extends Component {
   }
 
   handleFindInputChange(e) {
-    this.setState({findInput: e.target.value});
+    this.setState({ findInput: e.target.value });
   }
 
   handleReplaceInputChange(e) {
-    this.setState({replaceInput: e.target.value});
+    this.setState({ replaceInput: e.target.value });
   }
 
   handleExactMatchChange() {
     this.setState({
-      exactMatch: !this.state.exactMatch
+      exactMatch: !this.state.exactMatch,
     });
   }
 
   handleIgnoreCaseChange() {
     this.setState({
-      ignoreCase: !this.state.ignoreCase
+      ignoreCase: !this.state.ignoreCase,
     });
   }
   handleKeyPress(e) {
@@ -107,7 +113,9 @@ export default class FindAndReplaceDirective extends Component {
   }
 
   applyDirective() {
-    if (this.state.findInput.length === 0) { return; }
+    if (this.state.findInput.length === 0) {
+      return;
+    }
     let column = this.props.column;
     let findInput = this.state.findInput;
     let replaceInput = this.state.replaceInput;
@@ -122,20 +130,22 @@ export default class FindAndReplaceDirective extends Component {
       directive = `${directive}/g`;
     }
     MouseTrap.unbind('enter');
-    execute([directive])
-      .subscribe(() => {
+    execute([directive]).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   renderDetail() {
@@ -145,10 +155,7 @@ export default class FindAndReplaceDirective extends Component {
     }
 
     return (
-      <div
-        className="second-level-popover"
-        onClick={this.preventPropagation}
-      >
+      <div className="second-level-popover" onClick={this.preventPropagation}>
         <h5>{T.translate(`${PREFIX}.find`)}</h5>
 
         <div className="input">
@@ -160,39 +167,29 @@ export default class FindAndReplaceDirective extends Component {
               onKeyPress={this.handleKeyPress}
               onChange={this.handleFindInputChange}
               placeholder={T.translate(`${PREFIX}.findPlaceholder`)}
-              ref={ref => this.findInputBox = ref}
+              ref={(ref) => (this.findInputBox = ref)}
             />
           </div>
           <div>
-            <span
-              className="cursor-pointer"
-              onClick={this.handleExactMatchChange}
-            >
+            <span className="cursor-pointer" onClick={this.handleExactMatchChange}>
               <span
                 className={classnames('fa', {
                   'fa-square-o': !this.state.exactMatch,
-                  'fa-check-square': this.state.exactMatch
+                  'fa-check-square': this.state.exactMatch,
                 })}
               />
-              <span>
-                {T.translate(`${PREFIX}.exactMatchLabel`)}
-              </span>
+              <span>{T.translate(`${PREFIX}.exactMatchLabel`)}</span>
             </span>
           </div>
           <div>
-            <span
-              className="cursor-pointer"
-              onClick={this.handleIgnoreCaseChange}
-            >
+            <span className="cursor-pointer" onClick={this.handleIgnoreCaseChange}>
               <span
                 className={classnames('fa', {
                   'fa-square-o': !this.state.ignoreCase,
-                  'fa-check-square': this.state.ignoreCase
+                  'fa-check-square': this.state.ignoreCase,
                 })}
               />
-              <span>
-                {T.translate(`${PREFIX}.ignoreCaseLabel`)}
-              </span>
+              <span>{T.translate(`${PREFIX}.ignoreCaseLabel`)}</span>
             </span>
           </div>
         </div>
@@ -223,14 +220,10 @@ export default class FindAndReplaceDirective extends Component {
             {T.translate(`${PREFIX}.buttonLabel`)}
           </button>
 
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.props.close}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
-
       </div>
     );
   }
@@ -240,7 +233,7 @@ export default class FindAndReplaceDirective extends Component {
       <div
         id="find-and-replace-directive"
         className={classnames('clearfix action-item', {
-          'active': this.state.isOpen
+          active: this.state.isOpen,
         })}
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
@@ -259,5 +252,5 @@ FindAndReplaceDirective.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

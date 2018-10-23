@@ -22,7 +22,7 @@ import Wizard from 'components/Wizard';
 import ApplicationUploadWizardConfig from 'services/WizardConfigs/ApplicationUploadWizardConfig';
 import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
 import ApplicationUploadActions from 'services/WizardStores/ApplicationUpload/ApplicationUploadActions';
-import {UploadApplication} from 'services/WizardStores/ApplicationUpload/ActionCreator';
+import { UploadApplication } from 'services/WizardStores/ApplicationUpload/ActionCreator';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import ee from 'event-emitter';
@@ -33,13 +33,13 @@ export default class ApplicationUploadWizard extends Component {
     super(props);
     this.state = {
       showWizard: props.isOpen || false,
-      successInfo: {}
+      successInfo: {},
     };
     this.eventEmitter = ee(ee);
   }
   componentWillUnmount() {
     ApplicationUploadStore.dispatch({
-      type: ApplicationUploadActions.onReset
+      type: ApplicationUploadActions.onReset,
     });
   }
   onSubmit() {
@@ -54,14 +54,14 @@ export default class ApplicationUploadWizard extends Component {
       this.props.onClose(returnResult);
     }
     this.setState({
-      showWizard: !this.state.showWizard
+      showWizard: !this.state.showWizard,
     });
   }
   buildSuccessInfo(uploadResponse) {
     // uploadResponse has the format "Successfully deployed app {appName}"
     let appName = uploadResponse.slice(uploadResponse.indexOf('app') + 4);
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let message = T.translate('features.Wizard.ApplicationUpload.success', {appName});
+    let message = T.translate('features.Wizard.ApplicationUpload.success', { appName });
     let buttonLabel = T.translate('features.Wizard.ApplicationUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
     this.setState({
@@ -70,19 +70,21 @@ export default class ApplicationUploadWizard extends Component {
         buttonLabel,
         buttonUrl: window.getAbsUIUrl({
           namespaceId: namespace,
-          appId: appName
+          appId: appName,
         }),
         linkLabel,
         linkUrl: window.getAbsUIUrl({
-          namespaceId: namespace
-        })
-      }
+          namespaceId: namespace,
+        }),
+      },
     });
   }
   render() {
     let input = this.props.input;
     let headerLabel = input.headerLabel;
-    let wizardModalTitle = (headerLabel ? headerLabel : T.translate('features.Resource-Center.Application.modalheadertitle'));
+    let wizardModalTitle = headerLabel
+      ? headerLabel
+      : T.translate('features.Resource-Center.Application.modalheadertitle');
     return (
       <WizardModal
         title={wizardModalTitle}
@@ -96,7 +98,8 @@ export default class ApplicationUploadWizard extends Component {
           store={ApplicationUploadStore}
           onSubmit={this.onSubmit.bind(this)}
           successInfo={this.state.successInfo}
-          onClose={this.toggleWizard.bind(this)}/>
+          onClose={this.toggleWizard.bind(this)}
+        />
       </WizardModal>
     );
   }
@@ -105,5 +108,5 @@ export default class ApplicationUploadWizard extends Component {
 ApplicationUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
-  input: PropTypes.any
+  input: PropTypes.any,
 };

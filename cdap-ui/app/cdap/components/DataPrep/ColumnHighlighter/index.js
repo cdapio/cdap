@@ -14,7 +14,7 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import CutDirective from 'components/DataPrep/Directives/ExtractFields/UsingPositions/CutDirective';
@@ -24,31 +24,31 @@ import isNil from 'lodash/isNil';
 require('./ColumnHighlighter.scss');
 
 const directiveComponentMap = {
-  'CUT': CutDirective,
-  'MASK': MaskSelection
+  CUT: CutDirective,
+  MASK: MaskSelection,
 };
 
 export default class ColumnHighlighter extends Component {
   constructor(props) {
     super(props);
-    let {highlightColumns} = DataPrepStore.getState().dataprep;
+    let { highlightColumns } = DataPrepStore.getState().dataprep;
     this.state = {
-      highlightColumns: highlightColumns
+      highlightColumns: highlightColumns,
     };
     this.hideColumnHighlight = this.hideColumnHighlight.bind(this);
   }
   componentDidMount() {
     this.datastoreSubscription = DataPrepStore.subscribe(() => {
       let highlightColumns = DataPrepStore.getState().dataprep.highlightColumns;
-      let {directive} = highlightColumns;
+      let { directive } = highlightColumns;
       if (!isNil(directive)) {
         this.setState({
-          highlightColumns
+          highlightColumns,
         });
       }
       if (directive !== this.state.highlightColumns.directive) {
         this.setState({
-          highlightColumns
+          highlightColumns,
         });
       }
     });
@@ -64,13 +64,13 @@ export default class ColumnHighlighter extends Component {
       payload: {
         highlightColumns: {
           columns: [],
-          directive: null
-        }
-      }
+          directive: null,
+        },
+      },
     });
   }
   render() {
-    let {directive, columns} = this.state.highlightColumns;
+    let { directive, columns } = this.state.highlightColumns;
     let Tag = directiveComponentMap[directive];
 
     if (isNil(Tag)) {
@@ -79,10 +79,7 @@ export default class ColumnHighlighter extends Component {
 
     return (
       <div className="dataprep-column-highlight">
-        <Tag
-          columns={columns}
-          onClose={this.hideColumnHighlight}
-        />
+        <Tag columns={columns} onClose={this.hideColumnHighlight} />
       </div>
     );
   }

@@ -17,7 +17,10 @@
 import React from 'react';
 import T from 'i18n-react';
 require('./ListViewHeader.scss');
-import {DEFAULT_SEARCH_QUERY, DEFAULT_SEARCH_FILTER_OPTIONS} from 'components/EntityListView/SearchStore/SearchConstants';
+import {
+  DEFAULT_SEARCH_QUERY,
+  DEFAULT_SEARCH_FILTER_OPTIONS,
+} from 'components/EntityListView/SearchStore/SearchConstants';
 import SearchStore from 'components/EntityListView/SearchStore';
 
 export default function ListViewHeader() {
@@ -28,7 +31,7 @@ export default function ListViewHeader() {
   let filterOptions = DEFAULT_SEARCH_FILTER_OPTIONS;
 
   const getActiveFilterStrings = () => {
-    return activeFilters.map(filter => {
+    return activeFilters.map((filter) => {
       if (filter === 'app') {
         filter = 'application';
       }
@@ -44,7 +47,9 @@ export default function ListViewHeader() {
   };
 
   let i18nResolved_activeFilters = getActiveFilterStrings();
-  let allFiltersSelected = (i18nResolved_activeFilters.length === 0 || i18nResolved_activeFilters.length === filterOptions.length);
+  let allFiltersSelected =
+    i18nResolved_activeFilters.length === 0 ||
+    i18nResolved_activeFilters.length === filterOptions.length;
   let activeFilterString = i18nResolved_activeFilters.join(', ');
   let subtitle;
 
@@ -66,9 +71,7 @@ export default function ListViewHeader() {
 
   return (
     <div className="list-view-header subtitle">
-      <span>
-        {subtitle}
-      </span>
+      <span>{subtitle}</span>
     </div>
   );
 }

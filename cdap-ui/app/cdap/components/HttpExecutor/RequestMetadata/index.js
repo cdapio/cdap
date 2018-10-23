@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import Body from 'components/HttpExecutor/RequestMetadata/Body';
 import Header from 'components/HttpExecutor/RequestMetadata/Header';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import classnames from 'classnames';
 import T from 'i18n-react';
@@ -29,26 +29,28 @@ const PREFIX = 'features.HttpExecutor';
 const mapStateToProps = (state) => {
   return {
     activeTab: state.http.activeTab,
-    method: state.http.method
+    method: state.http.method,
   };
 };
 
 const mapDispatch = (dispatch) => {
   return {
     onTabClick: (tab, isDisabled) => {
-      if (isDisabled) { return; }
+      if (isDisabled) {
+        return;
+      }
 
       dispatch({
         type: HttpExecutorActions.setRequestTab,
         payload: {
-          activeTab: tab
-        }
+          activeTab: tab,
+        },
       });
-    }
+    },
   };
 };
 
-function RequestMetadataView({activeTab, onTabClick, method}) {
+function RequestMetadataView({ activeTab, onTabClick, method }) {
   let bodyDisabled = ['GET', 'DELETE'].indexOf(method) !== -1;
 
   return (
@@ -65,7 +67,7 @@ function RequestMetadataView({activeTab, onTabClick, method}) {
         <div
           className={classnames('metadata-header', {
             active: activeTab === 1,
-            disabled: bodyDisabled
+            disabled: bodyDisabled,
           })}
           onClick={onTabClick.bind(null, 1, bodyDisabled)}
         >
@@ -83,10 +85,10 @@ function RequestMetadataView({activeTab, onTabClick, method}) {
 RequestMetadataView.propTypes = {
   activeTab: PropTypes.number,
   onTabClick: PropTypes.func,
-  method: PropTypes.string
+  method: PropTypes.string,
 };
 
-function MetadataRequestBody({activeTab}) {
+function MetadataRequestBody({ activeTab }) {
   switch (activeTab) {
     case 0:
       return <Header />;
@@ -98,7 +100,7 @@ function MetadataRequestBody({activeTab}) {
 }
 
 MetadataRequestBody.propTypes = {
-  activeTab: PropTypes.number
+  activeTab: PropTypes.number,
 };
 
 const RequestMetadata = connect(

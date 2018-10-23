@@ -14,8 +14,8 @@
  * the License.
 */
 
-import React, {Component} from 'react';
-import {Col, Row, Button, Input} from 'reactstrap';
+import React, { Component } from 'react';
+import { Col, Row, Button, Input } from 'reactstrap';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import Rule from 'components/RulesEngineHome/RulesTab/Rule';
 import Fuse from 'fuse.js';
@@ -33,33 +33,33 @@ export default class RulesTab extends Component {
   state = {
     rules: RulesEngineStore.getState().rules.list,
     searchStr: '',
-    createRule: false
+    createRule: false,
   };
 
   updateSearchStr = (e) => {
     this.setState({
-      searchStr: e.target.value
+      searchStr: e.target.value,
     });
   };
 
-  addRule =() => {
+  addRule = () => {
     this.setState({
-      createRule: true
+      createRule: true,
     });
   };
 
   resetCreateRule = () => {
     this.setState({
-      createRule: false
+      createRule: false,
     });
   };
 
   componentDidMount() {
     this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
-      let {rules} = RulesEngineStore.getState();
+      let { rules } = RulesEngineStore.getState();
       if (Array.isArray(rules.list)) {
         this.setState({
-          rules: rules.list
+          rules: rules.list,
         });
       }
     });
@@ -83,11 +83,7 @@ export default class RulesTab extends Component {
       location: 0,
       distance: 100,
       maxPatternLength: 32,
-      keys: [
-        "id",
-        "description",
-        "action"
-      ]
+      keys: ['id', 'description', 'action'],
     };
 
     let fuse = new Fuse(this.state.rules, fuseOptions);
@@ -96,39 +92,23 @@ export default class RulesTab extends Component {
 
   renderRules(rules) {
     if (isNil(rules)) {
-      return (<LoadingSVG />);
+      return <LoadingSVG />;
     }
 
     if (!rules.length && !this.state.createRule) {
-      return (<h4 className="text-xs-center"> {T.translate(`${PREFIX}.norules`)} </h4>);
+      return <h4 className="text-xs-center"> {T.translate(`${PREFIX}.norules`)} </h4>;
     }
 
     return (
       <div className="rules-container">
         <Row>
-          <Col xs="6">
-            {T.translate(`commons.nameLabel`)}
-          </Col>
-          <Col xs="5">
-            {T.translate(`${PREFIX}.date`)}
-          </Col>
+          <Col xs="6">{T.translate(`commons.nameLabel`)}</Col>
+          <Col xs="5">{T.translate(`${PREFIX}.date`)}</Col>
         </Row>
-        {
-          this.state.createRule ?
-            <CreateRule onClose={this.resetCreateRule}/>
-          :
-            null
-        }
-        {
-          rules.map((rule) => {
-            return (
-              <Rule
-                rule={rule}
-                key={rule.id}
-              />
-            );
-          })
-        }
+        {this.state.createRule ? <CreateRule onClose={this.resetCreateRule} /> : null}
+        {rules.map((rule) => {
+          return <Rule rule={rule} key={rule.id} />;
+        })}
       </div>
     );
   }
@@ -143,9 +123,7 @@ export default class RulesTab extends Component {
           value={this.state.searchStr}
           onChange={this.updateSearchStr}
         />
-        <Button onClick={this.addRule}>
-          {T.translate(`${PREFIX}.createRuleBtn`)}
-        </Button>
+        <Button onClick={this.addRule}>{T.translate(`${PREFIX}.createRuleBtn`)}</Button>
         {this.renderRules(rules)}
       </div>
     );

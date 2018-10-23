@@ -17,13 +17,19 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Popover from 'components/Popover';
-import {exportProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
+import { exportProfile } from 'components/Cloud/Profiles/Store/ActionCreator';
 import T from 'i18n-react';
 import classnames from 'classnames';
 
 require('./ActionsPopover.scss');
 
-export default function ProfileActionsPopover({target, namespace, profile, onDeleteClick, className}) {
+export default function ProfileActionsPopover({
+  target,
+  namespace,
+  profile,
+  onDeleteClick,
+  className,
+}) {
   let isProfileDisabled = false;
   if (profile && profile.status === 'DISABLED') {
     isProfileDisabled = true;
@@ -42,10 +48,14 @@ export default function ProfileActionsPopover({target, namespace, profile, onDel
         </li>
         <hr />
         <li
-          className={classnames("delete-action", {
-            'disabled': !isProfileDisabled
+          className={classnames('delete-action', {
+            disabled: !isProfileDisabled,
           })}
-          title={!isProfileDisabled ? T.translate('features.Cloud.Profiles.common.disabledDeleteProfile') : ''}
+          title={
+            !isProfileDisabled
+              ? T.translate('features.Cloud.Profiles.common.disabledDeleteProfile')
+              : ''
+          }
           onClick={!isProfileDisabled ? null : onDeleteClick}
         >
           {T.translate('commons.delete')}
@@ -60,5 +70,5 @@ ProfileActionsPopover.propTypes = {
   namespace: PropTypes.string,
   profile: PropTypes.object,
   onDeleteClick: PropTypes.func,
-  className: PropTypes.string
+  className: PropTypes.string,
 };

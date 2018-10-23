@@ -17,9 +17,9 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import { setGCSSearch} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import { setGCSSearch } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
 import If from 'components/If';
 import TableContents from 'components/DataPrep/DataPrepBrowser/GCSBrowser/BrowserData/TableContents';
@@ -32,40 +32,37 @@ const props = {
   loading: PropTypes.bool,
   enableRouting: PropTypes.bool,
   prefix: PropTypes.string,
-  onWorkspaceCreate: PropTypes.func
+  onWorkspaceCreate: PropTypes.func,
 };
 
-
-const TableHeader = ({enableRouting}) => {
+const TableHeader = ({ enableRouting }) => {
   if (enableRouting) {
     return (
       <div className="row">
-        <div className="col-xs-3">
-          {T.translate(`${PREFIX}.Headers.Name`)}
-        </div>
-        <div className="col-xs-3">
-          {T.translate(`${PREFIX}.Headers.Type`)}
-        </div>
-        <div className="col-xs-3">
-          {T.translate(`${PREFIX}.Headers.Size`)}
-        </div>
-        <div className="col-xs-3">
-          {T.translate(`${PREFIX}.Headers.LastModified`)}
-        </div>
+        <div className="col-xs-3">{T.translate(`${PREFIX}.Headers.Name`)}</div>
+        <div className="col-xs-3">{T.translate(`${PREFIX}.Headers.Type`)}</div>
+        <div className="col-xs-3">{T.translate(`${PREFIX}.Headers.Size`)}</div>
+        <div className="col-xs-3">{T.translate(`${PREFIX}.Headers.LastModified`)}</div>
       </div>
     );
   }
   return (
     <div className="row">
-      <div className="col-xs-12">
-        {T.translate(`${PREFIX}.Headers.Name`)}
-      </div>
+      <div className="col-xs-12">{T.translate(`${PREFIX}.Headers.Name`)}</div>
     </div>
   );
 };
 TableHeader.propTypes = props;
 
-const BrowserData = ({data, search, clearSearch, loading, prefix, enableRouting, onWorkspaceCreate}) => {
+const BrowserData = ({
+  data,
+  search,
+  clearSearch,
+  loading,
+  prefix,
+  enableRouting,
+  onWorkspaceCreate,
+}) => {
   if (loading) {
     return <LoadingSVGCentered />;
   }
@@ -74,15 +71,13 @@ const BrowserData = ({data, search, clearSearch, loading, prefix, enableRouting,
     return (
       <div className="empty-search-container">
         <div className="empty-search text-xs-center">
-          <strong>
-            {T.translate(`${PREFIX}.Content.emptyBucket`)}
-          </strong>
+          <strong>{T.translate(`${PREFIX}.Content.emptyBucket`)}</strong>
         </div>
       </div>
     );
   }
 
-  const filteredData = data.filter(d => {
+  const filteredData = data.filter((d) => {
     if (search && search.length && d.name) {
       let isSearchTextInName = d.name.indexOf(search);
       if (d.type && d.type === 'bucket') {
@@ -115,14 +110,14 @@ const BrowserData = ({data, search, clearSearch, loading, prefix, enableRouting,
 BrowserData.propTypes = props;
 
 const mapStateToProps = (state, ownProps) => {
-  let {enableRouting = true, onWorkspaceCreate = () => {}} = ownProps;
+  let { enableRouting = true, onWorkspaceCreate = () => {} } = ownProps;
   return {
     data: state.gcs.activeBucketDetails,
     search: state.gcs.search,
     loading: state.gcs.loading,
     prefix: state.gcs.prefix,
     enableRouting,
-    onWorkspaceCreate
+    onWorkspaceCreate,
   };
 };
 
@@ -130,7 +125,7 @@ const mapDispatchToProps = () => {
   return {
     clearSearch: () => {
       setGCSSearch('');
-    }
+    },
   };
 };
 

@@ -14,12 +14,12 @@
  * the License.
  */
 
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 import MyCDAPVersionApi from 'api/version';
 let versions = [];
 
 const checkForSpark2 = (versions) => {
-  let sparkcompat = versions.find(component => component.name === 'sparkcompat');
+  let sparkcompat = versions.find((component) => component.name === 'sparkcompat');
   return !sparkcompat || (sparkcompat && sparkcompat.version.indexOf('spark2') !== -1);
 };
 
@@ -29,13 +29,9 @@ export function isSpark2Available() {
       return observer.next(checkForSpark2(versions));
     }
 
-    MyCDAPVersionApi
-      .getCDAPComponentVersions()
-      .subscribe(
-        (v) => {
-          versions = v;
-          observer.next(checkForSpark2(v));
-        }
-      );
+    MyCDAPVersionApi.getCDAPComponentVersions().subscribe((v) => {
+      versions = v;
+      observer.next(checkForSpark2(v));
+    });
   });
 }

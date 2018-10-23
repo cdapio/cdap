@@ -40,12 +40,14 @@ export default class DirectiveUploadWizard extends Component {
   }
 
   buildInfo() {
-    if (!this.props.displayCTA) { return; }
+    if (!this.props.displayCTA) {
+      return;
+    }
 
     let state = PluginArtifactUploadStore.getState();
     let pluginName = state.upload.jar.fileMetadataObj.name;
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let message = T.translate('features.Wizard.DirectiveUpload.success', {pluginName});
+    let message = T.translate('features.Wizard.DirectiveUpload.success', { pluginName });
     let subtitle = T.translate('features.Wizard.DirectiveUpload.subtitle');
     let buttonLabel = T.translate('features.Wizard.DirectiveUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
@@ -56,13 +58,13 @@ export default class DirectiveUploadWizard extends Component {
       buttonLabel,
       buttonUrl: window.getDataPrepUrl({
         stateParams: {
-          namespace
-        }
+          namespace,
+        },
       }),
       linkLabel,
       linkUrl: window.getAbsUIUrl({
-        namespaceId: namespace
-      })
+        namespaceId: namespace,
+      }),
     };
   }
 
@@ -81,7 +83,7 @@ export default class DirectiveUploadWizard extends Component {
 }
 
 DirectiveUploadWizard.defaultProps = {
-  displayCTA: true
+  displayCTA: true,
 };
 
 DirectiveUploadWizard.propTypes = {
@@ -89,5 +91,5 @@ DirectiveUploadWizard.propTypes = {
   input: PropTypes.any,
   onClose: PropTypes.func,
   displayCTA: PropTypes.bool,
-  onSubmit: PropTypes.func
+  onSubmit: PropTypes.func,
 };

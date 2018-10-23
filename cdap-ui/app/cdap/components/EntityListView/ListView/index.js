@@ -24,8 +24,12 @@ import NoEntitiesMessage from 'components/EntityListView/NoEntitiesMessage';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import ListViewHeader from 'components/EntityListView/ListViewHeader';
-import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
-import {DEFAULT_SEARCH_SORT_OPTIONS, DEFAULT_SEARCH_QUERY, DEFAULT_SEARCH_FILTERS} from 'components/EntityListView/SearchStore/SearchConstants';
+import { search, updateQueryString } from 'components/EntityListView/SearchStore/ActionCreator';
+import {
+  DEFAULT_SEARCH_SORT_OPTIONS,
+  DEFAULT_SEARCH_QUERY,
+  DEFAULT_SEARCH_FILTERS,
+} from 'components/EntityListView/SearchStore/SearchConstants';
 import isNil from 'lodash/isNil';
 
 export default class HomeListView extends Component {
@@ -33,14 +37,14 @@ export default class HomeListView extends Component {
     super(props);
     this.state = {
       loading: this.props.loading || false,
-      list: this.props.list || []
+      list: this.props.list || [],
     };
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
       list: nextProps.list,
-      loading: nextProps.loading
+      loading: nextProps.loading,
     });
   }
   onClick(entity) {
@@ -50,9 +54,9 @@ export default class HomeListView extends Component {
         overviewEntity: {
           id: entity.id,
           type: entity.type,
-          uniqueId: entity.uniqueId
-        }
-      }
+          uniqueId: entity.uniqueId,
+        },
+      },
     });
     updateQueryString();
   }
@@ -76,7 +80,7 @@ export default class HomeListView extends Component {
     if (this.state.loading) {
       content = (
         <h3 className="text-xs-center">
-          <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
+          <span className="fa fa-spinner fa-spin fa-2x loading-spinner" />
         </h3>
       );
     }
@@ -85,7 +89,9 @@ export default class HomeListView extends Component {
       content = (
         <NoEntitiesMessage
           searchText={query}
-          filtersAreApplied={() => activeFilters.length > 0 && activeFilters.length < filterOptions.length}
+          filtersAreApplied={() =>
+            activeFilters.length > 0 && activeFilters.length < filterOptions.length
+          }
           clearSearchAndFilters={() => {
             let searchState = SearchStore.getState().search;
             SearchStore.dispatch({
@@ -96,25 +102,20 @@ export default class HomeListView extends Component {
                 activeFilters: DEFAULT_SEARCH_FILTERS,
                 currentPage: 1,
                 offset: searchState.offset,
-                overviewEntity: null
-              }
+                overviewEntity: null,
+              },
             });
             search();
             updateQueryString();
           }}
         />
       );
-
     }
     if (!this.state.loading && this.state.list.length) {
-      content = this.state.list.map(entity => {
+      content = this.state.list.map((entity) => {
         return (
           <EntityCard
-            className={
-              classnames('entity-card-container',
-                { active: isEntityActive(entity)}
-              )
-            }
+            className={classnames('entity-card-container', { active: isEntityActive(entity) })}
             id={entity.uniqueId}
             key={entity.uniqueId}
             onClick={this.onClick.bind(this, entity)}
@@ -127,25 +128,17 @@ export default class HomeListView extends Component {
 
     let currentPage = SearchStore.getState().search.currentPage;
     return (
-      <div
-        id={this.props.id}
-        className={this.props.className}
-      >
-        {
-          !this.props.showJustAddedSection ?
-            null
-          :
-            (<JustAddedSection
-              clickHandler={this.onClick.bind(this)}
-              onFastActionSuccess={this.props.onFastActionSuccess}
-              currentPage={currentPage}
-              limit={this.props.pageSize}
-            />)
-        }
-        <ListViewHeader/>
-        <div className="entities-all-list-container">
-          {content}
-        </div>
+      <div id={this.props.id} className={this.props.className}>
+        {!this.props.showJustAddedSection ? null : (
+          <JustAddedSection
+            clickHandler={this.onClick.bind(this)}
+            onFastActionSuccess={this.props.onFastActionSuccess}
+            currentPage={currentPage}
+            limit={this.props.pageSize}
+          />
+        )}
+        <ListViewHeader />
+        <div className="entities-all-list-container">{content}</div>
       </div>
     );
   }
@@ -158,5 +151,5 @@ HomeListView.propTypes = {
   className: PropTypes.string,
   pageSize: PropTypes.number,
   showJustAddedSection: PropTypes.bool,
-  id: PropTypes.string
+  id: PropTypes.string,
 };

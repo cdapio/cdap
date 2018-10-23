@@ -33,59 +33,64 @@ export const CARD_ACTION_TYPES = {
   SUCCESS: 'SUCCESS',
   DANGER: 'DANGER',
   WARNING: 'WARNING',
-  LOADING: 'LOADING'
+  LOADING: 'LOADING',
 };
 
 export default class CardActionFeedback extends Component {
-
   static propTypes = {
     type: PropTypes.oneOf([
       CARD_ACTION_TYPES.SUCCESS,
       CARD_ACTION_TYPES.WARNING,
       CARD_ACTION_TYPES.DANGER,
-      CARD_ACTION_TYPES.LOADING
+      CARD_ACTION_TYPES.LOADING,
     ]).isRequired,
     message: PropTypes.string,
     extendedMessage: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.shape({
-        response: PropTypes.string
-      })
-    ])
+        response: PropTypes.string,
+      }),
+    ]),
   };
 
   state = {
-    isExpanded: false
+    isExpanded: false,
   };
 
   getIcon() {
-    let icon = classNames('fa',
+    let icon = classNames(
+      'fa',
       { 'fa-check': this.props.type === CARD_ACTION_TYPES.SUCCESS },
       { 'fa-exclamation': this.props.type === CARD_ACTION_TYPES.DANGER },
-      { 'fa-exclamation-triangle': this.props.type === CARD_ACTION_TYPES.WARNING },
+      {
+        'fa-exclamation-triangle': this.props.type === CARD_ACTION_TYPES.WARNING,
+      },
       { 'fa-spinner fa-spin': this.props.type === CARD_ACTION_TYPES.LOADING }
     );
 
-    return <span className="feedback-icon"><span className={icon}></span></span>;
+    return (
+      <span className="feedback-icon">
+        <span className={icon} />
+      </span>
+    );
   }
 
   getExtendedMessage() {
     if (this.props.extendedMessage) {
       return (
-        <div className='stack-trace'>
-          {
-            isObject(this.props.extendedMessage) ?
-              <pre>{this.props.extendedMessage.response}</pre>
-            :
-              <pre>{this.props.extendedMessage}</pre>
-          }
+        <div className="stack-trace">
+          {isObject(this.props.extendedMessage) ? (
+            <pre>{this.props.extendedMessage.response}</pre>
+          ) : (
+            <pre>{this.props.extendedMessage}</pre>
+          )}
         </div>
       );
     }
   }
 
   handleToggleExtendedMessage() {
-    this.setState({isExpanded: !this.state.isExpanded});
+    this.setState({ isExpanded: !this.state.isExpanded });
   }
 
   render() {
@@ -95,20 +100,20 @@ export default class CardActionFeedback extends Component {
       if (this.state.isExpanded) {
         angleIcon = (
           <span
-            className='expand-icon float-xs-right text-xs-center'
+            className="expand-icon float-xs-right text-xs-center"
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
-            <span className='fa fa-angle-double-up'></span>
+            <span className="fa fa-angle-double-up" />
           </span>
         );
         extendedMessage = this.getExtendedMessage();
       } else {
         angleIcon = (
           <span
-            className='expand-icon float-xs-right text-xs-center'
+            className="expand-icon float-xs-right text-xs-center"
             onClick={this.handleToggleExtendedMessage.bind(this)}
           >
-            <span className='fa fa-angle-double-down'></span>
+            <span className="fa fa-angle-double-down" />
           </span>
         );
       }
@@ -118,11 +123,9 @@ export default class CardActionFeedback extends Component {
 
     return (
       <div className={feedbackClass}>
-        <div className='main-message'>
+        <div className="main-message">
           {this.getIcon()}
-          <span className='message'>
-            {this.props.message}
-          </span>
+          <span className="message">{this.props.message}</span>
           {angleIcon}
         </div>
         {extendedMessage}

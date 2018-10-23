@@ -15,56 +15,49 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {PureComponent} from 'react';
+import React, { PureComponent } from 'react';
 import AccordionPane from 'components/Accordion/AccordionPane';
 import AccordionTitle from 'components/Accordion/AccordionTitle';
 import AccordionContent from 'components/Accordion/AccordionContent';
 
 import uuidV4 from 'uuid/v4';
-export {
-  AccordionContent,
-  AccordionTitle,
-  AccordionPane
-};
+export { AccordionContent, AccordionTitle, AccordionPane };
 
 export default class Accordion extends PureComponent {
-
   static propTypes = {
-    size: PropTypes.oneOf(["small", "medium", "large"]),
+    size: PropTypes.oneOf(['small', 'medium', 'large']),
     active: PropTypes.string.isRequired,
-    children: PropTypes.node
+    children: PropTypes.node,
   };
 
   state = {
-    activePane: this.props.active
+    activePane: this.props.active,
   };
 
   onTabPaneClick = (tabPaneId) => {
     if (this.state.activePane === tabPaneId) {
       this.setState({
-        activePane: null
+        activePane: null,
       });
       return;
     }
     this.setState({
-      activePane: tabPaneId
+      activePane: tabPaneId,
     });
   };
 
   render() {
     return (
       <div className="accordion">
-        {
-          React.Children.map(this.props.children, child => {
-            return React.cloneElement(child, {
-              ...child.props,
-              activePane: this.state.activePane,
-              onTabPaneClick: this.onTabPaneClick,
-              size: this.props.size,
-              key: uuidV4()
-            });
-          })
-        }
+        {React.Children.map(this.props.children, (child) => {
+          return React.cloneElement(child, {
+            ...child.props,
+            activePane: this.state.activePane,
+            onTabPaneClick: this.onTabPaneClick,
+            size: this.props.size,
+            key: uuidV4(),
+          });
+        })}
       </div>
     );
   }

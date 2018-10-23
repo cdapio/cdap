@@ -22,10 +22,10 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import enableSystemApp from 'services/ServiceEnablerUtilities';
 import CardActionFeedback from 'components/CardActionFeedback';
 import ee from 'event-emitter';
-import {i18nPrefix, MIN_DATAPREP_VERSION, artifactName} from 'components/DataPrep';
+import { i18nPrefix, MIN_DATAPREP_VERSION, artifactName } from 'components/DataPrep';
 import MyDataPrepApi from 'api/dataprep';
 import isObject from 'lodash/isObject';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = `features.DataPrep.TopPanel.UpgradeModal`;
 
@@ -36,7 +36,7 @@ export default class UpgradeModal extends Component {
     this.state = {
       loading: false,
       error: null,
-      extendedMessage: null
+      extendedMessage: null,
     };
 
     this.eventEmitter = ee(ee);
@@ -45,13 +45,15 @@ export default class UpgradeModal extends Component {
   }
 
   attemptClose() {
-    if (this.state.loading) { return; }
+    if (this.state.loading) {
+      return;
+    }
 
     this.props.toggle();
   }
 
   upgradeClick() {
-    this.setState({loading: true});
+    this.setState({ loading: true });
 
     const featureName = Theme.featureNames.dataPrep;
 
@@ -61,25 +63,28 @@ export default class UpgradeModal extends Component {
       api: MyDataPrepApi,
       i18nPrefix,
       MIN_VERSION: MIN_DATAPREP_VERSION,
-      featureName
-    })
-      .subscribe(() => {
+      featureName,
+    }).subscribe(
+      () => {
         this.eventEmitter.emit('REFRESH_DATAPREP');
-      }, (err) => {
-        let extendedMessage = isObject(err.extendedMessage) ?
-          err.extendedMessage.response || err.extendedMessage.message
-        :
-          err.extendedMessage;
+      },
+      (err) => {
+        let extendedMessage = isObject(err.extendedMessage)
+          ? err.extendedMessage.response || err.extendedMessage.message
+          : err.extendedMessage;
         this.setState({
           loading: false,
           error: err.error,
-          extendedMessage
+          extendedMessage,
         });
-      });
+      }
+    );
   }
 
   renderError() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
 
     return (
       <CardActionFeedback
@@ -104,21 +109,13 @@ export default class UpgradeModal extends Component {
     } else {
       content = (
         <div>
-          <div className="message">
-            {T.translate(`${PREFIX}.confirmation`)}
-          </div>
+          <div className="message">{T.translate(`${PREFIX}.confirmation`)}</div>
 
           <div className="action-buttons">
-            <button
-              className="btn btn-secondary"
-              onClick={this.upgradeClick}
-            >
+            <button className="btn btn-secondary" onClick={this.upgradeClick}>
               {T.translate('commons.yesLabel')}
             </button>
-            <button
-              className="btn btn-secondary"
-              onClick={this.attemptClose}
-            >
+            <button className="btn btn-secondary" onClick={this.attemptClose}>
               {T.translate('commons.noLabel')}
             </button>
           </div>
@@ -134,21 +131,12 @@ export default class UpgradeModal extends Component {
         zIndex="1061"
       >
         <ModalHeader>
-          <span>
-            {T.translate(`${PREFIX}.modalHeader`)}
-          </span>
-          {
-            this.state.loading ? null : (
-              <div
-                className="close-section float-xs-right"
-              >
-                <span
-                  className="fa fa-times"
-                  onClick={this.attemptClose}
-                />
-              </div>
-            )
-          }
+          <span>{T.translate(`${PREFIX}.modalHeader`)}</span>
+          {this.state.loading ? null : (
+            <div className="close-section float-xs-right">
+              <span className="fa fa-times" onClick={this.attemptClose} />
+            </div>
+          )}
         </ModalHeader>
         <ModalBody>
           {content}
@@ -160,5 +148,5 @@ export default class UpgradeModal extends Component {
 }
 
 UpgradeModal.propTypes = {
-  toggle: PropTypes.func
+  toggle: PropTypes.func,
 };

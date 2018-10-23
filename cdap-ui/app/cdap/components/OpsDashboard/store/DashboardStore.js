@@ -14,9 +14,9 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
-import {parseDashboardData} from 'components/OpsDashboard/RunsGraph/DataParser';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { combineReducers, createStore } from 'redux';
+import { parseDashboardData } from 'components/OpsDashboard/RunsGraph/DataParser';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 
 const DashboardActions = {
   setDisplayBucket: 'DASHBOARD_SET_DISPLAY_BUCKET',
@@ -29,12 +29,12 @@ const DashboardActions = {
   changeViewByOption: 'DASHBOARD_CHANGE_VIEW_BY_OPTION',
   setLast24Hours: 'DASHBOARD_SET_LAST_24_HOURS',
   setIs7DaysAgo: 'DASHBOARD_SET_IS_7_DAYS_AGO',
-  reset: 'DASHBOARD_RESET'
+  reset: 'DASHBOARD_RESET',
 };
 
 const ViewByOptions = {
   runStatus: 'RUN_STATUS',
-  startMethod: 'START_METHOD'
+  startMethod: 'START_METHOD',
 };
 
 const defaultInitialState = {
@@ -51,11 +51,11 @@ const defaultInitialState = {
   displayType: 'chart',
   viewByOption: ViewByOptions.runStatus,
   isLast24Hours: true,
-  is7DaysAgo: false
+  is7DaysAgo: false,
 };
 
 const namespacesInitialState = {
-  namespacesPick: []
+  namespacesPick: [],
 };
 
 const dashboard = (state = defaultInitialState, action = defaultAction) => {
@@ -70,7 +70,7 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
         startTime: action.payload.startTime,
         duration: action.payload.duration,
         displayBucketInfo: action.payload.data[action.payload.data.length - 1],
-        loading: false
+        loading: false,
       };
     case DashboardActions.setDisplayBucket:
       return {
@@ -81,38 +81,50 @@ const dashboard = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         pipeline: !state.pipeline,
-        data: parseDashboardData(state.rawData, state.startTime, state.duration, !state.pipeline, state.customApp).data
+        data: parseDashboardData(
+          state.rawData,
+          state.startTime,
+          state.duration,
+          !state.pipeline,
+          state.customApp
+        ).data,
       };
     case DashboardActions.toggleCustomApp:
       return {
         ...state,
         customApp: !state.customApp,
-        data: parseDashboardData(state.rawData, state.startTime, state.duration, state.pipeline, !state.customApp).data
+        data: parseDashboardData(
+          state.rawData,
+          state.startTime,
+          state.duration,
+          state.pipeline,
+          !state.customApp
+        ).data,
       };
     case DashboardActions.enableLoading:
       return {
         ...state,
-        loading: true
+        loading: true,
       };
     case DashboardActions.changeDisplayType:
       return {
         ...state,
-        displayType: action.payload.displayType
+        displayType: action.payload.displayType,
       };
     case DashboardActions.changeViewByOption:
       return {
         ...state,
-        viewByOption: action.payload.viewByOption
+        viewByOption: action.payload.viewByOption,
       };
     case DashboardActions.setLast24Hours:
       return {
         ...state,
-        isLast24Hours: action.payload.isLast24Hours
+        isLast24Hours: action.payload.isLast24Hours,
       };
     case DashboardActions.setIs7DaysAgo:
       return {
         ...state,
-        is7DaysAgo: action.payload.is7DaysAgo
+        is7DaysAgo: action.payload.is7DaysAgo,
       };
     case DashboardActions.reset:
       return defaultInitialState;
@@ -126,7 +138,7 @@ const namespaces = (state = namespacesInitialState, action = defaultAction) => {
     case DashboardActions.setData:
       return {
         ...state,
-        namespacesPick: action.payload.namespacesPick
+        namespacesPick: action.payload.namespacesPick,
       };
     case DashboardActions.reset:
       return namespacesInitialState;
@@ -138,14 +150,14 @@ const namespaces = (state = namespacesInitialState, action = defaultAction) => {
 const DashboardStore = createStore(
   combineReducers({
     dashboard,
-    namespaces
+    namespaces,
   }),
   {
     dashboard: defaultInitialState,
-    namespaces: namespacesInitialState
+    namespaces: namespacesInitialState,
   },
   composeEnhancers('DashboardStore')()
 );
 
 export default DashboardStore;
-export {DashboardActions, ViewByOptions};
+export { DashboardActions, ViewByOptions };

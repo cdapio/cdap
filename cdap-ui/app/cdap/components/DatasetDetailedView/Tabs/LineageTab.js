@@ -18,9 +18,9 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import NamespaceStore from 'services/NamespaceStore';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-export default function LineageTab({entity}) {
+export default function LineageTab({ entity }) {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let url = window.getTrackerUrl({
@@ -29,8 +29,8 @@ export default function LineageTab({entity}) {
       namespace,
       entityType: 'datasets',
       entityId: entity.id,
-      iframe: true
-    }
+      iframe: true,
+    },
   });
   let encodedSource = encodeURIComponent(url);
   url += `&sourceUrl=${encodedSource}`;
@@ -43,13 +43,9 @@ export default function LineageTab({entity}) {
         width="100%"
         height="100%"
         className="embed-responsive-item"
-      >
-      </iframe>
+      />
       <div className="field-lineage-link">
-        <Link
-          className="btn btn-secondary"
-          to={`/ns/${namespace}/datasets/${entity.id}/fields`}
-        >
+        <Link className="btn btn-secondary" to={`/ns/${namespace}/datasets/${entity.id}/fields`}>
           Field Level Lineage
         </Link>
       </div>
@@ -58,5 +54,5 @@ export default function LineageTab({entity}) {
 }
 
 LineageTab.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
 };

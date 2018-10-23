@@ -17,13 +17,13 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import Helmet from 'react-helmet';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import T from 'i18n-react';
-import {isNilOrEmpty, objectQuery} from 'services/helpers';
-import {Theme} from 'services/ThemeHelper';
+import { isNilOrEmpty, objectQuery } from 'services/helpers';
+import { Theme } from 'services/ThemeHelper';
 const PREFIX = 'features.DataPrep.DataPrepBrowser';
 
-function DataPrepBrowserPageTitle({connectionId, browserI18NName, path}) {
+function DataPrepBrowserPageTitle({ connectionId, browserI18NName, path }) {
   let title = T.translate(`${PREFIX}.${browserI18NName}.pageTitle`, {
     connectionId,
     productName: Theme.productName,
@@ -31,18 +31,19 @@ function DataPrepBrowserPageTitle({connectionId, browserI18NName, path}) {
   if (!isNilOrEmpty(path)) {
     title = `${title} - ${path}`;
   }
-  return (
-    <Helmet title={title} />
-  );
+  return <Helmet title={title} />;
 }
 DataPrepBrowserPageTitle.propTypes = {
   connectionId: PropTypes.string,
   browserI18NName: PropTypes.string,
-  path: PropTypes.string
+  path: PropTypes.string,
 };
 const mapStateToProps = (state, ownProps) => ({
   connectionId: state[ownProps.browserStateName].connectionId,
-  path: isNilOrEmpty(ownProps.locationToPathInState) || !Array.isArray(ownProps.locationToPathInState) ? null : objectQuery(state, ownProps.browserStateName, ...ownProps.locationToPathInState)
+  path:
+    isNilOrEmpty(ownProps.locationToPathInState) || !Array.isArray(ownProps.locationToPathInState)
+      ? null
+      : objectQuery(state, ownProps.browserStateName, ...ownProps.locationToPathInState),
 });
 
 const ConnectedDataPrepBrowserPageTitle = connect(mapStateToProps)(DataPrepBrowserPageTitle);

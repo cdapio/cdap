@@ -22,7 +22,7 @@ export default class TextboxOnValium extends Component {
     super(props);
     this.state = {
       textValue: props.value,
-      originalValue: props.value
+      originalValue: props.value,
     };
     this.updateTextValue = this.updateTextValue.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
@@ -51,19 +51,22 @@ export default class TextboxOnValium extends Component {
       return;
     }
 
-    this.setState({
-      textValue
-    }, () => {
-      if (this.state.originalValue !== this.state.textValue && this.props.onWarning) {
-        let isWarning = this.props.onWarning(this.state.textValue);
-        if (isWarning || (!isWarning && this.state.isWarning)) {
-          this.setState({
-            isWarning
-          });
-          return;
+    this.setState(
+      {
+        textValue,
+      },
+      () => {
+        if (this.state.originalValue !== this.state.textValue && this.props.onWarning) {
+          let isWarning = this.props.onWarning(this.state.textValue);
+          if (isWarning || (!isWarning && this.state.isWarning)) {
+            this.setState({
+              isWarning,
+            });
+            return;
+          }
         }
       }
-    });
+    );
   }
   onBlur() {
     if (this.state.isWarning) {
@@ -73,7 +76,11 @@ export default class TextboxOnValium extends Component {
   }
   handleKeyPress(e) {
     if (e.nativeEvent.keyCode === 13) {
-      this.props.onChange(e.target.value, this.state.originalValue === this.state.textValue, e.nativeEvent.keyCode);
+      this.props.onChange(
+        e.target.value,
+        this.state.originalValue === this.state.textValue,
+        e.nativeEvent.keyCode
+      );
     }
     if (e.nativeEvent.keyCode === 27) {
       this.props.onChange(this.state.originalValue, true, e.nativeEvent.keyCode);
@@ -83,7 +90,7 @@ export default class TextboxOnValium extends Component {
     return (
       <input
         className={this.props.className}
-        ref={ref => this.textboxRef = ref}
+        ref={(ref) => (this.textboxRef = ref)}
         onBlur={this.onBlur}
         onChange={this.updateTextValue}
         value={this.state.textValue}
@@ -96,7 +103,7 @@ export default class TextboxOnValium extends Component {
 
 TextboxOnValium.defaultProps = {
   allowSpace: true,
-  validCharacterRegex: null
+  validCharacterRegex: null,
 };
 
 TextboxOnValium.propTypes = {
@@ -106,5 +113,5 @@ TextboxOnValium.propTypes = {
   className: PropTypes.string,
   allowSpace: PropTypes.bool,
   shouldSelect: PropTypes.bool,
-  validCharacterRegex: PropTypes.object // regex expression
+  validCharacterRegex: PropTypes.object, // regex expression
 };

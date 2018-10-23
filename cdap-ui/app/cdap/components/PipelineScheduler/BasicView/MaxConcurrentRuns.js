@@ -16,8 +16,11 @@
 
 import React from 'react';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {MAX_CONCURRENT_RUNS_OPTIONS, ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
-import {connect} from 'react-redux';
+import {
+  MAX_CONCURRENT_RUNS_OPTIONS,
+  ACTIONS as PipelineSchedulerActions,
+} from 'components/PipelineScheduler/Store';
+import { connect } from 'react-redux';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineScheduler';
@@ -25,7 +28,7 @@ const PREFIX = 'features.PipelineScheduler';
 const mapStateToMaxConcurrentRunsProps = (state) => {
   return {
     options: MAX_CONCURRENT_RUNS_OPTIONS,
-    value: state.maxConcurrentRuns
+    value: state.maxConcurrentRuns,
   };
 };
 const mapDispatchToMaxConcurrentRunsProps = (dispatch) => {
@@ -34,10 +37,10 @@ const mapDispatchToMaxConcurrentRunsProps = (dispatch) => {
       dispatch({
         type: PipelineSchedulerActions.SET_MAX_CONCURRENT_RUNS,
         payload: {
-          maxConcurrentRuns: e.target.value
-        }
+          maxConcurrentRuns: e.target.value,
+        },
       });
-    }
+    },
   };
 };
 
@@ -49,9 +52,7 @@ const SelectMaxConcurrentRuns = connect(
 export default function MaxConcurrentRuns() {
   return (
     <div className="form-group row max-concurrent-runs">
-      <label className="col-xs-3 control-label">
-        {T.translate(`${PREFIX}.maxConcurrentRuns`)}
-      </label>
+      <label className="col-xs-3 control-label">{T.translate(`${PREFIX}.maxConcurrentRuns`)}</label>
       <div className="col-xs-4 schedule-values-container">
         <span className="schedule-values">
           <SelectMaxConcurrentRuns className="form-control small-dropdown" />
@@ -60,4 +61,3 @@ export default function MaxConcurrentRuns() {
     </div>
   );
 }
-

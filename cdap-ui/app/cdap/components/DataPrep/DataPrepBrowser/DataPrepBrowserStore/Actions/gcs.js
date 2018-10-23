@@ -14,20 +14,22 @@
  * the License.
  */
 
-import {setActiveBrowser, setError} from './commons';
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import { setActiveBrowser, setError } from './commons';
+import DataPrepBrowserStore, {
+  Actions as BrowserStoreActions,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 const setGCSAsActiveBrowser = (payload) => {
-  let {gcs, activeBrowser} = DataPrepBrowserStore.getState();
+  let { gcs, activeBrowser } = DataPrepBrowserStore.getState();
 
   if (activeBrowser.name !== payload.name) {
     setActiveBrowser(payload);
   }
 
-  let {id: connectionId, path} = payload;
+  let { id: connectionId, path } = payload;
 
   if (gcs.connectionId === connectionId) {
     if (path && path !== gcs.prefix) {
@@ -39,8 +41,8 @@ const setGCSAsActiveBrowser = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_GCS_CONNECTION_ID,
     payload: {
-      connectionId
-    }
+      connectionId,
+    },
   });
 
   setGCSLoading();
@@ -48,85 +50,81 @@ const setGCSAsActiveBrowser = (payload) => {
   let namespace = NamespaceStore.getState().selectedNamespace;
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
 
-  MyDataPrepApi.getConnection(params)
-    .subscribe((res) => {
+  MyDataPrepApi.getConnection(params).subscribe(
+    (res) => {
       let info = objectQuery(res, 'values', 0);
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_GCS_CONNECTION_DETAILS,
         payload: {
           info,
-          connectionId
-        }
+          connectionId,
+        },
       });
       if (path) {
         setGCSPrefix(path);
       } else {
         fetchGCSDetails();
       }
-    }, (err) => {
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const setGCSPrefix = (prefix) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_GCS_PREFIX,
     payload: {
-      prefix
-    }
+      prefix,
+    },
   });
   fetchGCSDetails(prefix);
 };
 
 const fetchGCSDetails = (path = '') => {
-  let { connectionId, loading} = DataPrepBrowserStore.getState().gcs;
+  let { connectionId, loading } = DataPrepBrowserStore.getState().gcs;
   if (!loading) {
     setGCSLoading();
   }
-  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  let { selectedNamespace: namespace } = NamespaceStore.getState();
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
   if (path) {
-    params = {...params, path};
+    params = { ...params, path };
   }
-  MyDataPrepApi.exploreGCSBucketDetails(params)
-    .subscribe(
-      (res) => {
-        DataPrepBrowserStore.dispatch({
-          type: BrowserStoreActions.SET_GCS_ACTIVE_BUCKET_DETAILS,
-          payload: {
-            activeBucketDetails: res.values,
-            truncated: res.truncated === 'true' || false
-          }
-        });
-      }, (err) => {
-        setError(err);
-      }
-    );
+  MyDataPrepApi.exploreGCSBucketDetails(params).subscribe(
+    (res) => {
+      DataPrepBrowserStore.dispatch({
+        type: BrowserStoreActions.SET_GCS_ACTIVE_BUCKET_DETAILS,
+        payload: {
+          activeBucketDetails: res.values,
+          truncated: res.truncated === 'true' || false,
+        },
+      });
+    },
+    (err) => {
+      setError(err);
+    }
+  );
 };
 
 const setGCSLoading = () => {
   DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_GCS_LOADING
+    type: BrowserStoreActions.SET_GCS_LOADING,
   });
 };
 
 const setGCSSearch = (search) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_GCS_SEARCH,
-    payload: { search }
+    payload: { search },
   });
 };
 
-export {
-  setGCSAsActiveBrowser,
-  setGCSPrefix,
-  fetchGCSDetails,
-  setGCSLoading,
-  setGCSSearch
-};
+export { setGCSAsActiveBrowser, setGCSPrefix, fetchGCSDetails, setGCSLoading, setGCSSearch };

@@ -24,7 +24,7 @@ export default class PaginationWithTitle extends Component {
     currentPage: PropTypes.number,
     totalPages: PropTypes.number,
     title: PropTypes.string,
-    handlePageChange: PropTypes.func
+    handlePageChange: PropTypes.func,
   };
 
   renderPaginationComponent() {
@@ -38,15 +38,15 @@ export default class PaginationWithTitle extends Component {
         pageRangeDisplayed={3}
         marginPagesDisplayed={1}
         breakLabel={<span>...</span>}
-        breakClassName={"ellipsis"}
-        previousLabel={<span className="fa fa-angle-left"></span>}
-        nextLabel={<span className="fa fa-angle-right"></span>}
+        breakClassName={'ellipsis'}
+        previousLabel={<span className="fa fa-angle-left" />}
+        nextLabel={<span className="fa fa-angle-right" />}
         onPageChange={this.props.handlePageChange.bind(this)}
         disableInitialCallback={true}
-        initialPage={this.props.currentPage-1}
-        forcePage={this.props.currentPage-1}
-        containerClassName={"page-list"}
-        activeClassName={"current-page"}
+        initialPage={this.props.currentPage - 1}
+        forcePage={this.props.currentPage - 1}
+        containerClassName={'page-list'}
+        activeClassName={'current-page'}
       />
     );
   }
@@ -55,9 +55,7 @@ export default class PaginationWithTitle extends Component {
     return (
       <span className="pagination-with-title">
         <ul className="total-entities">
-          <span>
-            {this.props.title}
-          </span>
+          <span>{this.props.title}</span>
         </ul>
         {this.renderPaginationComponent()}
       </span>

@@ -14,12 +14,14 @@
  * the License.
  */
 
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import DataPrepBrowserStore, {
+  Actions as BrowserStoreActions,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 
 const setActiveBrowser = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_ACTIVEBROWSER,
-    payload
+    payload,
   });
 };
 
@@ -27,19 +29,15 @@ const setError = (error = null) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_ERROR,
     payload: {
-      error
-    }
+      error,
+    },
   });
 };
 
 const reset = () => {
   DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.RESET
+    type: BrowserStoreActions.RESET,
   });
 };
 
-export {
-  setActiveBrowser,
-  setError,
-  reset
-};
+export { setActiveBrowser, setError, reset };

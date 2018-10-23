@@ -15,13 +15,13 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/configuration/user';
 const MyUserStoreApi = {
   get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  set: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath)
+  set: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
 };
 
 export default MyUserStoreApi;

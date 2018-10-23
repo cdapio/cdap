@@ -14,11 +14,11 @@
  * the License.
 */
 
-import {createStore} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 const DEFAULT_ALGORITHMS = [];
 export const ACTIONS = {
-  SET_ALGORITHMS_LIST: 'SET_ALGORITHMS_LIST'
+  SET_ALGORITHMS_LIST: 'SET_ALGORITHMS_LIST',
 };
 
 const algorithmsList = (state = DEFAULT_ALGORITHMS, action = defaultAction) => {
@@ -30,5 +30,9 @@ const algorithmsList = (state = DEFAULT_ALGORITHMS, action = defaultAction) => {
   }
 };
 
-const algorithmsStore = createStore(algorithmsList, DEFAULT_ALGORITHMS, composeEnhancers('ALGORITHMS_STORE')());
+const algorithmsStore = createStore(
+  algorithmsList,
+  DEFAULT_ALGORITHMS,
+  composeEnhancers('ALGORITHMS_STORE')()
+);
 export default algorithmsStore;

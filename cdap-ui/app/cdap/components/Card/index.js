@@ -34,7 +34,7 @@
 */
 
 import PropTypes from 'prop-types';
-import {isDescendant} from 'services/helpers';
+import { isDescendant } from 'services/helpers';
 import React, { Component } from 'react';
 require('./Card.scss');
 
@@ -43,23 +43,13 @@ var classNames = require('classnames');
 export default class Card extends Component {
   container = null;
 
-  getHeader () {
+  getHeader() {
     let closeButton;
     if (this.props.closeable) {
-      closeButton = (
-        <span
-          className='fa fa-times card-close-btn'
-          onClick={this.props.onClose}
-        >
-        </span>
-      );
+      closeButton = <span className="fa fa-times card-close-btn" onClick={this.props.onClose} />;
     }
 
-    const titleHeader = (
-      <h3 className="card-title">
-        {this.props.title}
-      </h3>
-    );
+    const titleHeader = <h3 className="card-title">{this.props.title}</h3>;
     const headerContent = this.props.title ? titleHeader : this.props.header;
 
     const headerElem = (
@@ -69,40 +59,29 @@ export default class Card extends Component {
       </div>
     );
 
-    return this.props.header || this.props.title ? headerElem :
-      <div className="card-header">
-        {closeButton}
-      </div>
-    ;
+    return this.props.header || this.props.title ? (
+      headerElem
+    ) : (
+      <div className="card-header">{closeButton}</div>
+    );
   }
 
-  getBody () {
+  getBody() {
     const content = this.props.children ? this.props.children : this.props.body;
 
-    const bodyElem = (
-      <div className="card-body">
-        {content}
-      </div>
-    );
+    const bodyElem = <div className="card-body">{content}</div>;
 
     return content ? bodyElem : null;
   }
 
-  getFooter () {
-    const footerElem = (
-      <div className="card-footer">
-        {this.props.footer}
-      </div>
-    );
+  getFooter() {
+    const footerElem = <div className="card-footer">{this.props.footer}</div>;
 
     return this.props.footer ? footerElem : null;
   }
 
   onClickHandler(e) {
-    if (
-      !this.container ||
-      (this.container && !isDescendant(this.container, e.target))
-    ) {
+    if (!this.container || (this.container && !isDescendant(this.container, e.target))) {
       return;
     }
     if (this.props.onClick) {
@@ -111,9 +90,9 @@ export default class Card extends Component {
   }
 
   render() {
-    const cardClass = classNames('cask-card', this.props.cardClass,
-      { [`card-${this.props.size}`]: this.props.size }
-    );
+    const cardClass = classNames('cask-card', this.props.cardClass, {
+      [`card-${this.props.size}`]: this.props.size,
+    });
 
     return (
       <div
@@ -121,7 +100,7 @@ export default class Card extends Component {
         className={cardClass}
         onClick={this.onClickHandler.bind(this)}
         style={this.props.cardStyle}
-        ref={ref => this.container = ref}
+        ref={(ref) => (this.container = ref)}
       >
         {this.getHeader()}
         {this.getBody()}
@@ -133,10 +112,7 @@ export default class Card extends Component {
 
 Card.propTypes = {
   header: PropTypes.element,
-  body: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.element
-  ]),
+  body: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   footer: PropTypes.element,
   title: PropTypes.string,
   children: PropTypes.node,
@@ -146,5 +122,5 @@ Card.propTypes = {
   size: PropTypes.oneOf(['SM', 'MD', 'LG']),
   cardStyle: PropTypes.object,
   onClick: PropTypes.func,
-  id: PropTypes.string
+  id: PropTypes.string,
 };

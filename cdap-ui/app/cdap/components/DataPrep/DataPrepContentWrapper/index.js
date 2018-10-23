@@ -20,10 +20,10 @@ import React, { Component } from 'react';
 import DataPrepTable from 'components/DataPrep/DataPrepTable';
 import DataPrepCLI from 'components/DataPrep/DataPrepCLI';
 import isNil from 'lodash/isNil';
-import {createStore, combineReducers} from 'redux';
-import {connect} from 'react-redux';
-import {defaultAction} from 'services/helpers';
-import {Provider} from 'react-redux';
+import { createStore, combineReducers } from 'redux';
+import { connect } from 'react-redux';
+import { defaultAction } from 'services/helpers';
+import { Provider } from 'react-redux';
 import Loadable from 'react-loadable';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
@@ -32,12 +32,13 @@ import T from 'i18n-react';
 require('./DataPrepContentWrapper.scss');
 
 const DataPrepVisualization = Loadable({
-  loader: () => import(/* webpackChunkName: "DataprepVisualization" */ 'components/DataPrep/DataPrepVisualization'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "DataprepVisualization" */ 'components/DataPrep/DataPrepVisualization'),
+  loading: LoadingSVGCentered,
 });
 const PREFIX = 'features.DataPrep.TopPanel';
 const DEFAULTVIEW = 'data';
-const DEFAULTSTORESTATE = {view: DEFAULTVIEW};
+const DEFAULTSTORESTATE = { view: DEFAULTVIEW };
 const view = (state = DEFAULTVIEW, action = defaultAction) => {
   switch (action.type) {
     case 'SETVIEW':
@@ -50,41 +51,41 @@ const view = (state = DEFAULTVIEW, action = defaultAction) => {
 };
 
 const ViewStore = createStore(
-  combineReducers({view}),
+  combineReducers({ view }),
   DEFAULTSTORESTATE,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
 
-function ContentSwitch({onSwitchChange, activeTab}) {
+function ContentSwitch({ onSwitchChange, activeTab }) {
   return (
     <div className="content-switch">
       <div
-        className={classnames("switch", {
-          'active': activeTab === 'data'
+        className={classnames('switch', {
+          active: activeTab === 'data',
         })}
         onClick={onSwitchChange.bind(null, 'data')}
       >
         {T.translate(`${PREFIX}.Tabs.dataprep`)}
       </div>
       <div
-        className={classnames("switch", {
-          'active': activeTab === 'viz'
+        className={classnames('switch', {
+          active: activeTab === 'viz',
         })}
         onClick={onSwitchChange.bind(null, 'viz')}
       >
-      {T.translate(`${PREFIX}.Tabs.dataviz`)}
+        {T.translate(`${PREFIX}.Tabs.dataviz`)}
       </div>
     </div>
   );
 }
 ContentSwitch.propTypes = {
   onSwitchChange: PropTypes.func.isRequired,
-  activeTab: PropTypes.string
+  activeTab: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {
   return {
-    activeTab: state.view
+    activeTab: state.view,
   };
 };
 const mapDispatchToProps = (dispatch) => {
@@ -92,9 +93,9 @@ const mapDispatchToProps = (dispatch) => {
     onSwitchChange: (view) => {
       dispatch({
         type: 'SETVIEW',
-        payload: {view}
+        payload: { view },
       });
-    }
+    },
   };
 };
 
@@ -108,12 +109,10 @@ const Switch = () => (
   </Provider>
 );
 
-
 export default class DataPrepContentWrapper extends Component {
-
   componentDidMount() {
     this.viewStoreSubscription = ViewStore.subscribe(() => {
-      let {view} = ViewStore.getState();
+      let { view } = ViewStore.getState();
       this.onSwitchChange(view);
     });
   }
@@ -121,7 +120,7 @@ export default class DataPrepContentWrapper extends Component {
   componentWillUnmount() {
     if (this.viewStoreSubscription) {
       ViewStore.dispatch({
-        type: 'RESET'
+        type: 'RESET',
       });
       this.viewStoreSubscription();
     }
@@ -131,12 +130,12 @@ export default class DataPrepContentWrapper extends Component {
       return;
     }
     this.setState({
-      view
+      view,
     });
-  }
+  };
 
   state = {
-    view: 'data'
+    view: 'data',
   };
   render() {
     const dataPart = (
@@ -162,12 +161,8 @@ export default class DataPrepContentWrapper extends Component {
     if (this.state.view === 'viz') {
       content = vizPart;
     }
-    return (
-      <div className="dataprep-content-wrapper">
-        {content}
-      </div>
-    );
+    return <div className="dataprep-content-wrapper">{content}</div>;
   }
 }
 
-export {Switch, ViewStore};
+export { Switch, ViewStore };

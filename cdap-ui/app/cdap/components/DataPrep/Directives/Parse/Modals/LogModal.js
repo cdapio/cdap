@@ -25,12 +25,12 @@ import MouseTrap from 'mousetrap';
 const PREFIX = 'features.DataPrep.Directives.Parse';
 
 const OPTIONS_MAP = {
-  'COMMON': 'common',
-  'COMBINED': 'combined',
-  'COMBINEDIO': 'combinedio',
-  'REFERER': 'referer',
-  'AGENT': 'agent',
-  'CUSTOM': 'CUSTOM'
+  COMMON: 'common',
+  COMBINED: 'combined',
+  COMBINEDIO: 'combinedio',
+  REFERER: 'referer',
+  AGENT: 'agent',
+  CUSTOM: 'CUSTOM',
 };
 
 export default class LogModal extends Component {
@@ -39,7 +39,7 @@ export default class LogModal extends Component {
 
     this.state = {
       format: 'COMMON',
-      customFormat: ''
+      customFormat: '',
     };
 
     this.apply = this.apply.bind(this);
@@ -66,15 +66,17 @@ export default class LogModal extends Component {
   }
 
   selectFormat(option) {
-    this.setState({format: option});
+    this.setState({ format: option });
   }
 
   handleCustomFormatChange(e) {
-    this.setState({customFormat: e.target.value});
+    this.setState({ customFormat: e.target.value });
   }
 
   renderCustomText() {
-    if (this.state.format !== 'CUSTOM') { return null; }
+    if (this.state.format !== 'CUSTOM') {
+      return null;
+    }
 
     return (
       <div className="custom-format">
@@ -105,63 +107,41 @@ export default class LogModal extends Component {
         className="dataprep-parse-modal cdap-modal"
       >
         <ModalHeader>
-          <span>
-            {T.translate(`${PREFIX}.modalTitle`, {parser: 'Log'})}
-          </span>
+          <span>{T.translate(`${PREFIX}.modalTitle`, { parser: 'Log' })}</span>
 
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.toggle}
-          >
+          <div className="close-section float-xs-right" onClick={this.props.toggle}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
         <ModalBody>
-          <h5>
-            {T.translate(`${PREFIX}.Parsers.LOG.modalTitle`)}
-          </h5>
+          <h5>{T.translate(`${PREFIX}.Parsers.LOG.modalTitle`)}</h5>
 
           <br />
 
           <div className="list-options">
-            {
-              options.map((option) => {
-                return (
-                  <div
-                    key={option}
-                    onClick={this.selectFormat.bind(this, option)}
-                  >
-                    <span
-                      className={classnames('fa', {
-                        'fa-circle-o': option !== this.state.format,
-                        'fa-circle': option === this.state.format
-                      })}
-                    />
-                    <span>
-                      {T.translate(`${PREFIX}.Parsers.LOG.Options.${option}`)}
-                    </span>
-                  </div>
-                );
-              })
-            }
+            {options.map((option) => {
+              return (
+                <div key={option} onClick={this.selectFormat.bind(this, option)}>
+                  <span
+                    className={classnames('fa', {
+                      'fa-circle-o': option !== this.state.format,
+                      'fa-circle': option === this.state.format,
+                    })}
+                  />
+                  <span>{T.translate(`${PREFIX}.Parsers.LOG.Options.${option}`)}</span>
+                </div>
+              );
+            })}
           </div>
 
           {this.renderCustomText()}
-
         </ModalBody>
 
         <ModalFooter>
-          <button
-            className="btn btn-primary"
-            onClick={this.apply}
-            disabled={disabled}
-          >
+          <button className="btn btn-primary" onClick={this.apply} disabled={disabled}>
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={this.props.toggle}
-          >
+          <button className="btn btn-secondary" onClick={this.props.toggle}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </ModalFooter>
@@ -169,7 +149,6 @@ export default class LogModal extends Component {
     );
   }
 }
-
 
 LogModal.propTypes = {
   toggle: PropTypes.func,

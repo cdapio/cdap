@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {createStore} from 'redux';
+import { createStore } from 'redux';
 import uuidV4 from 'uuid/v4';
 import VersionRange from 'services/VersionRange';
 import Version from 'services/VersionRange/Version';
@@ -27,26 +27,27 @@ const initialState = {
   filter: '*',
   loading: true,
   isError: false,
-  displayCTA: true
+  displayCTA: true,
 };
 
-const market = (state=initialState, action) => {
+const market = (state = initialState, action) => {
   switch (action.type) {
     case 'SET_ENTITIES':
       return Object.assign({}, state, {
-        list: filterEntities(action.payload)
-          .map(entity => Object.assign(entity, {id: uuidV4()})),
-        loading: false
+        list: filterEntities(action.payload).map((entity) =>
+          Object.assign(entity, { id: uuidV4() })
+        ),
+        loading: false,
       });
     case 'SET_ACTIVE_ENTITY':
       return Object.assign({}, state, {
         activeEntity: action.payload.entityId,
-        displayCTA: !isNil(action.payload.displayCTA) ? action.payload.displayCTA : true
+        displayCTA: !isNil(action.payload.displayCTA) ? action.payload.displayCTA : true,
       });
     case 'SET_FILTER':
       return Object.assign({}, state, {
         filter: action.payload,
-        activeEntity: undefined
+        activeEntity: undefined,
       });
     case 'SET_ERROR':
       return Object.assign({}, state, { isError: true, loading: false });
@@ -62,7 +63,9 @@ function filterEntities(list) {
   const cdapVersion = new Version(store.getState().version);
 
   let filteredList = list.filter((entity) => {
-    if (!entity.cdapVersion) { return true; }
+    if (!entity.cdapVersion) {
+      return true;
+    }
 
     const entityVersionRange = new VersionRange(entity.cdapVersion);
     return entityVersionRange.versionIsInRange(cdapVersion);

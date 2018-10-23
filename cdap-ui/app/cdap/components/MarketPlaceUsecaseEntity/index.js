@@ -16,7 +16,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MyMarketApi} from 'api/market';
+import { MyMarketApi } from 'api/market';
 import Card from 'components/Card';
 import moment from 'moment';
 require('./MarketPlaceUsecaseEntity.scss');
@@ -35,20 +35,20 @@ export default class MarketPlaceUsecaseEntity extends Component {
       loadingActions: false,
       entityDetail: {},
       imageError: false,
-      logoIcon: null
+      logoIcon: null,
     };
     this.unsub = MarketStore.subscribe(() => {
       let state = MarketStore.getState();
       if (state.activeEntity !== this.props.entityId && this.state.showActions) {
         this.setState({
-          showActions: false
+          showActions: false,
         });
       }
     });
   }
   getChildContext() {
     return {
-      entity: this.props.entity
+      entity: this.props.entity,
     };
   }
   componentWillUnmount() {
@@ -58,7 +58,7 @@ export default class MarketPlaceUsecaseEntity extends Component {
   imageError() {
     this.setState({
       imageError: true,
-      logoIcon: `icon-${this.props.entity.label[0].toUpperCase()}`
+      logoIcon: `icon-${this.props.entity.label[0].toUpperCase()}`,
     });
   }
 
@@ -69,68 +69,58 @@ export default class MarketPlaceUsecaseEntity extends Component {
     }
     this.setState({
       loadingActions: true,
-      showActions: true
+      showActions: true,
     });
     MarketStore.dispatch({
       type: 'SET_ACTIVE_ENTITY',
       payload: {
-        entityId: this.props.entityId
-      }
+        entityId: this.props.entityId,
+      },
     });
     MyMarketApi.get({
       packageName: this.props.entity.name,
-      version: this.props.entity.version
-    }).subscribe((res) => {
-      this.setState({
-        entityDetail: res,
-        loadingActions: false
-      });
-    }, (err) => {
-      console.log('Error', err);
-      this.setState({loadingActions: false});
-    });
+      version: this.props.entity.version,
+    }).subscribe(
+      (res) => {
+        this.setState({
+          entityDetail: res,
+          loadingActions: false,
+        });
+      },
+      (err) => {
+        console.log('Error', err);
+        this.setState({ loadingActions: false });
+      }
+    );
   }
 
   render() {
     return (
-      <Card
-        size="LG"
-        cardClass="market-place-usecase-package-card"
-      >
-        {
-          this.props.entity.beta ?
-            <ExperimentalBanner />
-          :
-            null
-        }
+      <Card size="LG" cardClass="market-place-usecase-package-card">
+        {this.props.entity.beta ? <ExperimentalBanner /> : null}
         <div className="title clearfix">
           <span className="float-xs-left">{this.props.entity.label}</span>
           <span className="float-xs-right">Version: {this.props.entity.version}</span>
         </div>
         <div className="entity-information">
           <div className="entity-modal-image">
-            {
-              this.state.imageError ?
-                <span className={classnames("fa", this.state.logoIcon)}></span>
-              :
-                <img
-                  src={MyMarketApi.getIcon(this.props.entity)}
-                  onError={this.imageError.bind(this)}
-                />
-            }
+            {this.state.imageError ? (
+              <span className={classnames('fa', this.state.logoIcon)} />
+            ) : (
+              <img
+                src={MyMarketApi.getIcon(this.props.entity)}
+                onError={this.imageError.bind(this)}
+              />
+            )}
           </div>
           <div className="entity-content">
-            <div className="entity-description">
-              {this.props.entity.description}
-            </div>
+            <div className="entity-description">{this.props.entity.description}</div>
             <div className="entity-metadata">
               <LicenseRow licenseInfo={this.props.entity.licenseInfo} />
-              <div>
-                {T.translate('features.MarketPlaceEntity.Metadata.created')}
-              </div>
+              <div>{T.translate('features.MarketPlaceEntity.Metadata.created')}</div>
               <span>
                 <strong>
-                  {(moment(this.props.entity.created * 1000)).format('MM-DD-YYYY HH:mm A')}
+                  {moment(this.props.entity.created * 1000).format('MM-DD-YYYY HH:mm A')}
                 </strong>
               </span>
             </div>
@@ -141,21 +131,15 @@ export default class MarketPlaceUsecaseEntity extends Component {
             className="arrow-container text-xs-center"
             onClick={this.fetchEntityDetail.bind(this)}
           >
-            {
-              this.state.showActions ?
-                <span className="fa fa-angle-double-up"></span>
-              :
-                <span className="fa fa-angle-double-down"></span>
-            }
+            {this.state.showActions ? (
+              <span className="fa fa-angle-double-up" />
+            ) : (
+              <span className="fa fa-angle-double-down" />
+            )}
           </div>
-          {
-            this.state.showActions ?
-              <MarketActionsContainer
-                actions={this.state.entityDetail.actions}
-              />
-            :
-              null
-          }
+          {this.state.showActions ? (
+            <MarketActionsContainer actions={this.state.entityDetail.actions} />
+          ) : null}
         </div>
       </Card>
     );
@@ -174,9 +158,9 @@ MarketPlaceUsecaseEntity.childContextTypes = {
     cdapVersion: PropTypes.string,
     licenseInfo: PropTypes.shape({
       name: PropTypes.string,
-      url: PropTypes.string
-    })
-  })
+      url: PropTypes.string,
+    }),
+  }),
 };
 
 MarketPlaceUsecaseEntity.propTypes = {
@@ -193,7 +177,7 @@ MarketPlaceUsecaseEntity.propTypes = {
     beta: PropTypes.bool,
     licenseInfo: PropTypes.shape({
       name: PropTypes.string,
-      url: PropTypes.string
-    })
-  })
+      url: PropTypes.string,
+    }),
+  }),
 };

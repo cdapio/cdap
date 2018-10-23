@@ -23,7 +23,7 @@ import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 
 require('./CopyableID.scss');
 
@@ -36,22 +36,22 @@ export default class CopyableID extends Component {
     label: PropTypes.string,
     placement: PropTypes.string,
     tooltipText: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-    bubbleEvent: PropTypes.bool
+    bubbleEvent: PropTypes.bool,
   };
 
   static defaultProps = {
     label: T.translate(`${PREFIX}.label`),
     tooltipText: true,
-    bubbleEvent: false
+    bubbleEvent: false,
   };
 
   state = {
-    showTooltip: false
+    showTooltip: false,
   };
 
   onIDClickHandler = (e) => {
     this.setState({
-      showTooltip: !this.state.showTooltip
+      showTooltip: !this.state.showTooltip,
     });
     if (!this.props.bubbleEvent) {
       preventPropagation(e);
@@ -65,10 +65,10 @@ export default class CopyableID extends Component {
   onPopoverClose = (showPopover) => {
     if (!showPopover) {
       this.setState({
-        showTooltip: showPopover
+        showTooltip: showPopover,
       });
     }
-  }
+  };
 
   renderToolTipText() {
     if (!this.props.tooltipText) {
@@ -107,28 +107,25 @@ export default class CopyableID extends Component {
         showOn="Hover"
         bubbleEvent={false}
         placement="right"
-        className={classnames("copyable-id", {
-          'hide': !this.props.tooltipText && !this.state.showTooltip
+        className={classnames('copyable-id', {
+          hide: !this.props.tooltipText && !this.state.showTooltip,
         })}
         showPopover={this.state.showTooltip}
         modifiers={{
           shift: {
             order: 800,
-            enabled: true
-          }
+            enabled: true,
+          },
         }}
         onTogglePopover={this.onPopoverClose}
       >
         <span>{this.renderToolTipText()}</span>
-        {
-          this.state.showTooltip ?
-            <div className="copied-label text-success">
-              <IconSVG name="icon-check-circle" />
-              <span>{T.translate(`${PREFIX}.copiedLabel`)}</span>
-            </div>
-          :
-            null
-        }
+        {this.state.showTooltip ? (
+          <div className="copied-label text-success">
+            <IconSVG name="icon-check-circle" />
+            <span>{T.translate(`${PREFIX}.copiedLabel`)}</span>
+          </div>
+        ) : null}
       </Popover>
     );
   }

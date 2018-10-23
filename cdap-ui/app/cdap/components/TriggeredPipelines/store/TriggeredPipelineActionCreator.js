@@ -16,8 +16,8 @@
 
 import TriggeredPipelineActions from 'components/TriggeredPipelines/store/TriggeredPipelineActions';
 import TriggeredPipelineStore from 'components/TriggeredPipelines/store/TriggeredPipelineStore';
-import {MyScheduleApi} from 'api/schedule';
-import {MyAppApi} from 'api/app';
+import { MyScheduleApi } from 'api/schedule';
+import { MyAppApi } from 'api/app';
 
 export function setTriggeredPipelines(namespace, pipelineName) {
   let params = {
@@ -26,42 +26,42 @@ export function setTriggeredPipelines(namespace, pipelineName) {
     'trigger-program-type': 'workflows',
     'trigger-app-name': pipelineName,
     'trigger-program-name': 'DataPipelineWorkflow',
-    'schedule-status': 'SCHEDULED'
+    'schedule-status': 'SCHEDULED',
   };
 
-  MyScheduleApi.getTriggeredList(params)
-    .subscribe((res) => {
-      TriggeredPipelineStore.dispatch({
-        type: TriggeredPipelineActions.setTriggered,
-        payload: {
-          triggeredPipelines: res
-        }
-      });
+  MyScheduleApi.getTriggeredList(params).subscribe((res) => {
+    TriggeredPipelineStore.dispatch({
+      type: TriggeredPipelineActions.setTriggered,
+      payload: {
+        triggeredPipelines: res,
+      },
     });
+  });
 }
 
 export function togglePipeline(pipeline) {
   TriggeredPipelineStore.dispatch({
     type: TriggeredPipelineActions.setToggle,
     payload: {
-      expandedPipeline: pipeline === null ? null : `${pipeline.namespace}_${pipeline.application}`
-    }
+      expandedPipeline: pipeline === null ? null : `${pipeline.namespace}_${pipeline.application}`,
+    },
   });
 
-  if (!pipeline) { return; }
+  if (!pipeline) {
+    return;
+  }
 
   let params = {
     namespace: pipeline.namespace,
-    appId: pipeline.application
+    appId: pipeline.application,
   };
 
-  MyAppApi.get(params)
-    .subscribe((res) => {
-      TriggeredPipelineStore.dispatch({
-        type: TriggeredPipelineActions.setPipelineInfo,
-        payload: {
-          expandedPipelineInfo: res
-        }
-      });
+  MyAppApi.get(params).subscribe((res) => {
+    TriggeredPipelineStore.dispatch({
+      type: TriggeredPipelineActions.setPipelineInfo,
+      payload: {
+        expandedPipelineInfo: res,
+      },
     });
+  });
 }

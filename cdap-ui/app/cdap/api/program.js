@@ -15,7 +15,7 @@
  */
 
 import Datasource from 'services/datasource';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = new Datasource();
 const basepath = '/namespaces/:namespace/apps/:appId/:programType/:programId';
@@ -27,5 +27,5 @@ export const MyProgramApi = {
   pollRuns: apiCreator(dataSrc, 'GET', 'POLL', `${basepath}/runs`),
   pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${basepath}/status`),
   action: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:action`),
-  stopRun: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/runs/:runId/stop`)
+  stopRun: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/runs/:runId/stop`),
 };

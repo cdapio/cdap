@@ -36,20 +36,16 @@ export default class DSVRow extends Component {
   }
 
   renderActionButtons() {
-    if (this.props.disabled) { return null; }
+    if (this.props.disabled) {
+      return null;
+    }
 
     return (
       <div className="action-buttons-container text-xs-right">
-        <button
-          className="btn add-row-btn btn-link"
-          onClick={this.props.addRow}
-        >
+        <button className="btn add-row-btn btn-link" onClick={this.props.addRow}>
           <i className="fa fa-plus" />
         </button>
-        <button
-          className="btn remove-row-btn btn-link"
-          onClick={this.props.removeRow}
-        >
+        <button className="btn remove-row-btn btn-link" onClick={this.props.removeRow}>
           <i className="fa fa-trash text-danger" />
         </button>
       </div>
@@ -61,8 +57,7 @@ export default class DSVRow extends Component {
 
     return (
       <div className="dsv-row-container">
-
-        <div className={classnames({ disabled: this.props.disabled }, "dsv-input-container")}>
+        <div className={classnames({ disabled: this.props.disabled }, 'dsv-input-container')}>
           <input
             type="text"
             value={this.props.property}
@@ -87,5 +82,5 @@ DSVRow.propTypes = {
   addRow: PropTypes.func,
   removeRow: PropTypes.func,
   placeholder: PropTypes.string,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
 };

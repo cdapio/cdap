@@ -34,16 +34,16 @@ export default class PayloadConfigModal extends Component {
     onClose: PropTypes.func,
     onEnableSchedule: PropTypes.func,
     disabled: PropTypes.bool,
-    scheduleInfo: PropTypes.object
+    scheduleInfo: PropTypes.object,
   };
 
   state = {
-    isOpen: false
+    isOpen: false,
   };
 
   toggle = () => {
     this.setState({
-      isOpen: !this.state.isOpen
+      isOpen: !this.state.isOpen,
     });
     if (!this.state.isOpen && this.props.onClose) {
       this.props.onClose();
@@ -64,18 +64,10 @@ export default class PayloadConfigModal extends Component {
         zIndex="1061"
       >
         <ModalHeader className="clearfix">
-          <span className="pull-left">
-            {T.translate(`${PREFIX}.title`)}
-          </span>
+          <span className="pull-left">{T.translate(`${PREFIX}.title`)}</span>
           <div className="btn-group pull-right">
-            <a
-              className="btn"
-              onClick={this.toggle}
-            >
-              <IconSVG
-                name="icon-close"
-                className="fa"
-              />
+            <a className="btn" onClick={this.toggle}>
+              <IconSVG name="icon-close" className="fa" />
             </a>
           </div>
         </ModalHeader>
@@ -93,14 +85,13 @@ export default class PayloadConfigModal extends Component {
   };
 
   render() {
-    let label = this.props.disabled ? T.translate(`${PREFIX}.configPayloadBtnDisabled`) : T.translate(`${PREFIX}.configPayloadBtn`);
+    let label = this.props.disabled
+      ? T.translate(`${PREFIX}.configPayloadBtnDisabled`)
+      : T.translate(`${PREFIX}.configPayloadBtn`);
 
     return (
       <div className="payload-config-modal">
-        <button
-          className="btn btn-link"
-          onClick={this.toggle}
-        >
+        <button className="btn btn-link" onClick={this.toggle}>
           {label}
         </button>
         {this.renderModal()}

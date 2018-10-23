@@ -15,57 +15,59 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
 import classnames from 'classnames';
 import Popover from 'components/Popover';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import RuntimeArgsModeless from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsModeless';
-import {fetchAndUpdateRuntimeArgs} from 'components/PipelineConfigurations/Store/ActionCreator';
-import {preventPropagation} from 'services/helpers';
+import { fetchAndUpdateRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
+import { preventPropagation } from 'services/helpers';
 
 require('./PipelineRuntimeArgsDropdownBtn.scss');
 
 export default class PipelineRuntimeArgsDropdownBtn extends Component {
-
   static propTypes = {
     showRunOptions: PropTypes.bool,
     onToggle: PropTypes.fun,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
   };
 
   static defaultProps = {
-    showRunOptions: false
+    showRunOptions: false,
   };
 
   state = {
-    showRunOptions: this.props.showRunOptions
+    showRunOptions: this.props.showRunOptions,
   };
 
   toggleRunConfigOption = (showRunOptions) => {
     if (showRunOptions === this.state.showRunOptions) {
       return;
     }
-    this.setState({
-      showRunOptions: showRunOptions || !this.state.showRunOptions
-    }, () => {
-      // FIXME: This is to when the user opens/closes the runtime args modeless.
-      // This is to restore it to whatever is the state is in the backend.
-      // This will ensure if the user clicks on the "Run" button directly
-      // UI will still operate correctly discarding recently entered inputs in the session.
-      fetchAndUpdateRuntimeArgs();
-      if (this.props.onToggle) {
-        this.props.onToggle(this.state.showRunOptions);
+    this.setState(
+      {
+        showRunOptions: showRunOptions || !this.state.showRunOptions,
+      },
+      () => {
+        // FIXME: This is to when the user opens/closes the runtime args modeless.
+        // This is to restore it to whatever is the state is in the backend.
+        // This will ensure if the user clicks on the "Run" button directly
+        // UI will still operate correctly discarding recently entered inputs in the session.
+        fetchAndUpdateRuntimeArgs();
+        if (this.props.onToggle) {
+          this.props.onToggle(this.state.showRunOptions);
+        }
       }
-    });
+    );
   };
 
   componentWillReceiveProps = (nextProps) => {
     if (nextProps.showRunOptions !== this.state.showRunOptions) {
       this.setState({
-        showRunOptions: nextProps.showRunOptions
+        showRunOptions: nextProps.showRunOptions,
       });
     }
   };
@@ -73,8 +75,8 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
   render() {
     const Btn = (
       <div
-        className={classnames("btn pipeline-action-btn pipeline-run-btn", {
-          'btn-popover-open': this.state.showRunOptions
+        className={classnames('btn pipeline-action-btn pipeline-run-btn', {
+          'btn-popover-open': this.state.showRunOptions,
         })}
         onClick={(e) => {
           /*
@@ -109,12 +111,12 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
             modifiers={{
               flip: {
                 enabled: true,
-                behavior: ['bottom']
+                behavior: ['bottom'],
               },
               preventOverflow: {
                 enabled: true,
-                boundariesElement: 'scrollParent'
-              }
+                boundariesElement: 'scrollParent',
+              },
             }}
           >
             <PipelineModeless

@@ -19,7 +19,10 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import PipelineTriggersStore from 'components/PipelineTriggers/store/PipelineTriggersStore';
-import {disableSchedule, getPipelineInfo} from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
+import {
+  disableSchedule,
+  getPipelineInfo,
+} from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
 import LoadingSVG from 'components/LoadingSVG';
 import PayloadConfigModal from 'components/PipelineTriggers/PayloadConfigModal';
 import T from 'i18n-react';
@@ -49,42 +52,40 @@ export default class EnabledTriggerRow extends Component {
   }
 
   renderContent() {
-    let {
-      schedule,
-      info,
-      pipelineName
-    } = this.props;
+    let { schedule, info, pipelineName } = this.props;
 
     let namespace = NamespaceStore.getState().selectedNamespace;
     let triggeredPipelineInfo = {
       id: pipelineName,
-      namespace
+      namespace,
     };
 
     let triggeringPipelineInfo = {
       id: schedule.trigger.programId.application,
-      namespace: schedule.trigger.programId.namespace
+      namespace: schedule.trigger.programId.namespace,
     };
 
     let events = schedule.trigger.programStatuses;
     let completed = events.indexOf('COMPLETED') > -1,
-        killed = events.indexOf('KILLED') > -1,
-        failed = events.indexOf('FAILED') > -1;
+      killed = events.indexOf('KILLED') > -1,
+      failed = events.indexOf('FAILED') > -1;
 
     return (
       <div className="row-content">
         <div className="pipeline-description">
           <strong>{T.translate(`${TRIGGER_PREFIX}.description`)}: </strong>
-          <span>
-            {info.description}
-          </span>
-          <a href={`/pipelines/ns/${schedule.trigger.programId.namespace}/view/${schedule.trigger.programId.application}`}>
+          <span>{info.description}</span>
+          <a
+            href={`/pipelines/ns/${schedule.trigger.programId.namespace}/view/${
+              schedule.trigger.programId.application
+            }`}
+          >
             {T.translate(`${TRIGGER_PREFIX}.viewPipeline`)}
           </a>
         </div>
 
         <div className="helper-text">
-          {T.translate(`${TRIGGER_PREFIX}.helperText`, {pipelineName: this.pipelineName})}
+          {T.translate(`${TRIGGER_PREFIX}.helperText`, { pipelineName: this.pipelineName })}
         </div>
 
         <div className="events-list">
@@ -105,10 +106,7 @@ export default class EnabledTriggerRow extends Component {
         </div>
 
         <div className="action-buttons-container">
-          <button
-            className="btn btn-secondary"
-            onClick={this.disableTriggerClick}
-          >
+          <button className="btn btn-secondary" onClick={this.disableTriggerClick}>
             {T.translate(`${PREFIX}.buttonLabel`)}
           </button>
 
@@ -124,47 +122,29 @@ export default class EnabledTriggerRow extends Component {
   }
 
   render() {
-    let {
-      isExpanded,
-      schedule,
-      loading
-    } = this.props;
+    let { isExpanded, schedule, loading } = this.props;
 
     if (!isExpanded) {
       return (
-        <div
-          className="pipeline-triggers-row"
-          onClick={getPipelineInfo.bind(null, schedule)}
-        >
+        <div className="pipeline-triggers-row" onClick={getPipelineInfo.bind(null, schedule)}>
           <div className="caret-container">
             <IconSVG name="icon-caret-right" />
           </div>
-          <div className="pipeline-name">
-            {schedule.trigger.programId.application}
-          </div>
-          <div className="namespace">
-            {schedule.trigger.programId.namespace}
-          </div>
+          <div className="pipeline-name">{schedule.trigger.programId.application}</div>
+          <div className="namespace">{schedule.trigger.programId.namespace}</div>
         </div>
       );
     }
 
     return (
       <div className="pipeline-triggers-expanded-row">
-        <div
-          className="header-row"
-          onClick={getPipelineInfo.bind(null, null)}
-        >
+        <div className="header-row" onClick={getPipelineInfo.bind(null, null)}>
           <div className="caret-container">
             <IconSVG name="icon-caret-down" />
           </div>
 
-          <div className="pipeline-name">
-            {schedule.trigger.programId.application}
-          </div>
-          <div className="namespace">
-            {schedule.trigger.programId.namespace}
-          </div>
+          <div className="pipeline-name">{schedule.trigger.programId.application}</div>
+          <div className="namespace">{schedule.trigger.programId.namespace}</div>
         </div>
 
         {loading ? this.renderLoading() : this.renderContent()}
@@ -178,5 +158,5 @@ EnabledTriggerRow.propTypes = {
   schedule: PropTypes.object,
   loading: PropTypes.bool,
   info: PropTypes.object,
-  pipelineName: PropTypes.string
+  pipelineName: PropTypes.string,
 };

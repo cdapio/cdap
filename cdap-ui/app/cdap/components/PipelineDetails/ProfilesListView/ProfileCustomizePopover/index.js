@@ -15,10 +15,10 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {PureComponent} from 'react';
+import React, { PureComponent } from 'react';
 import Popover from 'components/Popover';
-import  ProfileCustomizeContent from 'components/PipelineDetails/ProfilesListView/ProfileCustomizePopover/ProfileCustomizeContent';
-import {getProfileNameWithScope} from 'components/Cloud/Profiles/Store/ActionCreator';
+import ProfileCustomizeContent from 'components/PipelineDetails/ProfilesListView/ProfileCustomizePopover/ProfileCustomizeContent';
+import { getProfileNameWithScope } from 'components/Cloud/Profiles/Store/ActionCreator';
 require('./ProfileCustomizePopover.scss');
 
 export default class ProfileCustomizePopover extends PureComponent {
@@ -26,20 +26,20 @@ export default class ProfileCustomizePopover extends PureComponent {
     profile: PropTypes.object,
     onProfileSelect: PropTypes.func,
     customizations: PropTypes.object,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
   };
 
   static defaultProps = {
-    customizations: {}
+    customizations: {},
   };
 
   state = {
-    showPopover: false
+    showPopover: false,
   };
 
   onTogglePopover = (showPopover) => {
     this.setState({
-      showPopover
+      showPopover,
     });
   };
 
@@ -48,12 +48,12 @@ export default class ProfileCustomizePopover extends PureComponent {
       this.props.onProfileSelect(profileName, customizations);
     }
     this.onTogglePopover(false);
-  }
+  };
 
   render() {
-    let {name, provisioner, scope, label: profileLabel} = this.props.profile;
+    let { name, provisioner, scope, label: profileLabel } = this.props.profile;
     let profileName = getProfileNameWithScope(name, scope);
-    let customizeLink = () => (<div className="btn-link">Customize</div>);
+    let customizeLink = () => <div className="btn-link">Customize</div>;
     return (
       <Popover
         target={customizeLink}

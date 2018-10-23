@@ -17,15 +17,15 @@
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
-import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
-import {MyArtifactApi} from 'api/artifact';
-import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
-import {objectQuery} from 'services/helpers';
-import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
+import { directiveRequestBodyCreator } from 'components/DataPrep/helper';
+import { MyArtifactApi } from 'api/artifact';
+import { getParsedSchemaForDataPrep } from 'components/SchemaEditor/SchemaHelpers';
+import { objectQuery } from 'services/helpers';
+import { findHighestVersion } from 'services/VersionRange/VersionUtilities';
 import T from 'i18n-react';
-import {Subject} from 'rxjs/Subject';
+import { Subject } from 'rxjs/Subject';
 import find from 'lodash/find';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 
 const PREFIX = 'features.DataPrep.PipelineError';
 
@@ -33,15 +33,14 @@ export default function getPipelineConfig() {
   let workspaceInfo = DataPrepStore.getState().dataprep.workspaceInfo;
   let namespace = NamespaceStore.getState().selectedNamespace;
 
-  return MyDataPrepApi.getInfo({ namespace })
-    .mergeMap((res) => {
-      if (res.statusCode === 404) {
-        console.log(`can't find method; use latest wrangler-transform`);
-        return constructProperties(workspaceInfo);
-      }
-      let pluginVersion = res.values[0]['plugin.version'];
-      return constructProperties(workspaceInfo, pluginVersion);
-    });
+  return MyDataPrepApi.getInfo({ namespace }).mergeMap((res) => {
+    if (res.statusCode === 404) {
+      console.log(`can't find method; use latest wrangler-transform`);
+      return constructProperties(workspaceInfo);
+    }
+    let pluginVersion = res.values[0]['plugin.version'];
+    return constructProperties(workspaceInfo, pluginVersion);
+  });
 }
 
 function findWranglerArtifacts(artifacts, pluginVersion) {
@@ -61,9 +60,12 @@ function findWranglerArtifacts(artifacts, pluginVersion) {
   let filteredArtifacts = wranglerArtifacts;
 
   if (!pluginVersion) {
-    let highestVersion = findHighestVersion(wranglerArtifacts.map((artifact) => {
-      return artifact.version;
-    }), true);
+    let highestVersion = findHighestVersion(
+      wranglerArtifacts.map((artifact) => {
+        return artifact.version;
+      }),
+      true
+    );
 
     filteredArtifacts = wranglerArtifacts.filter((artifact) => {
       return artifact.version === highestVersion;
@@ -80,15 +82,17 @@ function findWranglerArtifacts(artifacts, pluginVersion) {
 }
 
 function constructFileSource(artifactsList, properties) {
-  if (!properties) { return null; }
+  if (!properties) {
+    return null;
+  }
 
   let plugin = objectQuery(properties, 'values', '0');
 
   let pluginName = Object.keys(plugin)[0];
 
   plugin = plugin[pluginName];
-  let batchArtifact = find(artifactsList, { 'name': 'core-plugins' });
-  let realtimeArtifact = find(artifactsList, { 'name': 'spark-plugins' });
+  let batchArtifact = find(artifactsList, { name: 'core-plugins' });
+  let realtimeArtifact = find(artifactsList, { name: 'spark-plugins' });
   if (!batchArtifact) {
     return T.translate(`${PREFIX}.fileBatch`);
   }
@@ -105,39 +109,43 @@ function constructFileSource(artifactsList, properties) {
     label: plugin.name,
     type: 'batchsource',
     artifact: batchArtifact,
-    properties: plugin.properties
+    properties: plugin.properties,
   };
 
   let realtimePluginInfo = Object.assign({}, batchPluginInfo, {
     type: 'streamingsource',
-    artifact: realtimeArtifact
+    artifact: realtimeArtifact,
   });
 
   let batchStage = {
     name: 'File',
-    plugin: batchPluginInfo
+    plugin: batchPluginInfo,
   };
 
   let realtimeStage = {
     name: 'File',
-    plugin: realtimePluginInfo
+    plugin: realtimePluginInfo,
   };
 
   return {
     batchSource: batchStage,
     realtimeSource: realtimeStage,
-    connections: [{
-      from: 'File',
-      to: 'Wrangler'
-    }]
+    connections: [
+      {
+        from: 'File',
+        to: 'Wrangler',
+      },
+    ],
   };
 }
 
 // Need to be modified once backend is complete
 function constructDatabaseSource(artifactsList, dbInfo) {
-  if (!dbInfo) { return null; }
+  if (!dbInfo) {
+    return null;
+  }
 
-  let batchArtifact = find(artifactsList, { 'name': 'database-plugins' });
+  let batchArtifact = find(artifactsList, { name: 'database-plugins' });
 
   if (!batchArtifact) {
     return T.translate(`${PREFIX}.database`);
@@ -153,20 +161,22 @@ function constructDatabaseSource(artifactsList, dbInfo) {
       label: plugin.name,
       type: 'batchsource',
       artifact: batchArtifact,
-      properties: plugin.properties
+      properties: plugin.properties,
     };
 
     let batchStage = {
       name: pluginName,
-      plugin: pluginInfo
+      plugin: pluginInfo,
     };
 
     return {
       batchSource: batchStage,
-      connections: [{
-        from: pluginName,
-        to: 'Wrangler'
-      }]
+      connections: [
+        {
+          from: pluginName,
+          to: 'Wrangler',
+        },
+      ],
     };
   } catch (e) {
     console.log('properties parse error', e);
@@ -174,7 +184,9 @@ function constructDatabaseSource(artifactsList, dbInfo) {
 }
 
 function constructKafkaSource(artifactsList, kafkaInfo) {
-  if (!kafkaInfo) { return null; }
+  if (!kafkaInfo) {
+    return null;
+  }
 
   let plugin = objectQuery(kafkaInfo, 'values', '0');
   let pluginName = Object.keys(plugin)[0];
@@ -182,7 +194,7 @@ function constructKafkaSource(artifactsList, kafkaInfo) {
   // This is a hack.. should not do this
   // We are still shipping kafka-plugins with hydrator-plugins 1.7 but
   // it doesn't contain the streamingsource or batchsource plugins
-  let pluginArtifact = find(artifactsList, {name: 'kafka-plugins'});
+  let pluginArtifact = find(artifactsList, { name: 'kafka-plugins' });
   if (!pluginArtifact) {
     return T.translate(`${PREFIX}.kafka`);
   }
@@ -195,9 +207,9 @@ function constructKafkaSource(artifactsList, kafkaInfo) {
     fields: [
       {
         name: 'body',
-        type: 'string'
-      }
-    ]
+        type: 'string',
+      },
+    ],
   });
 
   let batchPluginInfo = {
@@ -205,31 +217,33 @@ function constructKafkaSource(artifactsList, kafkaInfo) {
     label: plugin.name,
     type: 'batchsource',
     artifact: pluginArtifact,
-    properties: plugin.properties
+    properties: plugin.properties,
   };
 
   let realtimePluginInfo = Object.assign({}, batchPluginInfo, {
     type: 'streamingsource',
-    artifact: pluginArtifact
+    artifact: pluginArtifact,
   });
 
   let batchStage = {
     name: plugin.name,
-    plugin: batchPluginInfo
+    plugin: batchPluginInfo,
   };
 
   let realtimeStage = {
     name: plugin.name,
-    plugin: realtimePluginInfo
+    plugin: realtimePluginInfo,
   };
 
   return {
     batchSource: batchStage,
     realtimeSource: realtimeStage,
-    connections: [{
-      from: plugin.name,
-      to: 'Wrangler'
-    }]
+    connections: [
+      {
+        from: plugin.name,
+        to: 'Wrangler',
+      },
+    ],
   };
 }
 
@@ -237,7 +251,7 @@ function constructS3Source(artifactsList, s3Info) {
   if (!s3Info) {
     return null;
   }
-  let batchArtifact = find(artifactsList, {name: 'amazon-s3-plugins'});
+  let batchArtifact = find(artifactsList, { name: 'amazon-s3-plugins' });
   if (!batchArtifact) {
     return T.translate(`${PREFIX}.s3`);
   }
@@ -248,24 +262,28 @@ function constructS3Source(artifactsList, s3Info) {
     label: plugin.name,
     type: 'batchsource',
     artifact: batchArtifact,
-    properties: {...plugin.properties, referenceName: plugin.name}
+    properties: { ...plugin.properties, referenceName: plugin.name },
   };
   let batchStage = {
     name: 'S3',
-    plugin: batchPluginInfo
+    plugin: batchPluginInfo,
   };
   return {
     batchSource: batchStage,
-    connections: [{
-      from: 'S3',
-      to: 'Wrangler'
-    }]
+    connections: [
+      {
+        from: 'S3',
+        to: 'Wrangler',
+      },
+    ],
   };
 }
 
 function constructGCSSource(artifactsList, gcsInfo) {
-  if (!gcsInfo) { return null; }
-  let batchArtifact = find(artifactsList, {name: 'google-cloud'});
+  if (!gcsInfo) {
+    return null;
+  }
+  let batchArtifact = find(artifactsList, { name: 'google-cloud' });
   if (!batchArtifact) {
     return T.translate(`${PREFIX}.gcs`);
   }
@@ -282,27 +300,31 @@ function constructGCSSource(artifactsList, gcsInfo) {
     label: plugin.name,
     type: 'batchsource',
     artifact: batchArtifact,
-    properties: plugin.properties
+    properties: plugin.properties,
   };
 
   let batchStage = {
     name: 'GCS',
-    plugin: batchPluginInfo
+    plugin: batchPluginInfo,
   };
 
   return {
     batchSource: batchStage,
-    connections: [{
-      from: 'GCS',
-      to: 'Wrangler'
-    }]
+    connections: [
+      {
+        from: 'GCS',
+        to: 'Wrangler',
+      },
+    ],
   };
 }
 
 function constructBigQuerySource(artifactsList, bigqueryInfo) {
-  if (!bigqueryInfo) { return null; }
+  if (!bigqueryInfo) {
+    return null;
+  }
 
-  let batchArtifact = find(artifactsList, {name: 'google-cloud'});
+  let batchArtifact = find(artifactsList, { name: 'google-cloud' });
   if (!batchArtifact) {
     return T.translate(`${PREFIX}.bigquery`);
   }
@@ -319,27 +341,31 @@ function constructBigQuerySource(artifactsList, bigqueryInfo) {
     label: plugin.name,
     type: 'batchsource',
     artifact: batchArtifact,
-    properties: plugin.properties
+    properties: plugin.properties,
   };
 
   let batchStage = {
     name: 'BigQueryTable',
-    plugin: batchPluginInfo
+    plugin: batchPluginInfo,
   };
 
   return {
     batchSource: batchStage,
-    connections: [{
-      from: 'BigQueryTable',
-      to: 'Wrangler'
-    }]
+    connections: [
+      {
+        from: 'BigQueryTable',
+        to: 'Wrangler',
+      },
+    ],
   };
 }
 
 function constructSpannerSource(artifactsList, spannerInfo) {
-  if (!spannerInfo) { return null; }
+  if (!spannerInfo) {
+    return null;
+  }
 
-  let googeCloudArtifact = find(artifactsList, {name: 'google-cloud'});
+  let googeCloudArtifact = find(artifactsList, { name: 'google-cloud' });
   if (!googeCloudArtifact) {
     return T.translate(`${PREFIX}.spanner`);
   }
@@ -356,20 +382,22 @@ function constructSpannerSource(artifactsList, spannerInfo) {
     label: plugin.name,
     type: 'batchsource',
     artifact: googeCloudArtifact,
-    properties: plugin.properties
+    properties: plugin.properties,
   };
 
   let batchStage = {
     name: 'SpannerTable',
-    plugin: batchPluginInfo
+    plugin: batchPluginInfo,
   };
 
   return {
     batchSource: batchStage,
-    connections: [{
-      from: 'SpannerTable',
-      to: 'Wrangler'
-    }]
+    connections: [
+      {
+        from: 'SpannerTable',
+        to: 'Wrangler',
+      },
+    ],
   };
 }
 
@@ -381,23 +409,21 @@ function constructProperties(workspaceInfo, pluginVersion) {
 
   let requestObj = {
     namespace,
-    workspaceId
+    workspaceId,
   };
 
   let directives = state.directives;
 
   let requestBody = directiveRequestBodyCreator(directives);
 
-  let rxArray = [
-    MyDataPrepApi.getSchema(requestObj, requestBody)
-  ];
+  let rxArray = [MyDataPrepApi.getSchema(requestObj, requestBody)];
   let connectionId = objectQuery(state, 'workspaceInfo', 'properties', 'connectionid');
 
   if (state.workspaceInfo.properties.connection === 'file') {
     let specParams = {
       namespace,
       path: state.workspaceUri,
-      wid: workspaceId
+      wid: workspaceId,
     };
 
     rxArray.push(MyDataPrepApi.getSpecification(specParams));
@@ -405,7 +431,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
     let specParams = {
       namespace,
       connectionId,
-      tableId: state.workspaceInfo.properties.id
+      tableId: state.workspaceInfo.properties.id,
     };
     rxArray.push(MyDataPrepApi.getDatabaseSpecification(specParams));
     let requestBody = directiveRequestBodyCreator([]);
@@ -414,7 +440,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
     let specParams = {
       namespace,
       connectionId,
-      topic: state.workspaceInfo.properties.topic
+      topic: state.workspaceInfo.properties.topic,
     };
 
     rxArray.push(MyDataPrepApi.getKafkaSpecification(specParams));
@@ -426,187 +452,193 @@ function constructProperties(workspaceInfo, pluginVersion) {
       connectionId,
       activeBucket,
       key,
-      wid: workspaceId
+      wid: workspaceId,
     };
     rxArray.push(MyDataPrepApi.getS3Specification(specParams));
   } else if (state.workspaceInfo.properties.connection === 'gcs') {
     let specParams = {
       namespace,
       connectionId: state.workspaceInfo.properties.connectionid,
-      wid: workspaceId
+      wid: workspaceId,
     };
     rxArray.push(MyDataPrepApi.getGCSSpecification(specParams));
   } else if (state.workspaceInfo.properties.connection === 'bigquery') {
     let specParams = {
       namespace,
       connectionId: state.workspaceInfo.properties.connectionid,
-      wid: workspaceId
+      wid: workspaceId,
     };
     rxArray.push(MyDataPrepApi.getBigQuerySpecification(specParams));
   } else if (state.workspaceInfo.properties.connection === 'spanner') {
     let specParams = {
       namespace,
-      workspaceId
+      workspaceId,
     };
     rxArray.push(MyDataPrepApi.getSpannerSpecification(specParams));
   }
 
   try {
     MyArtifactApi.list({ namespace })
-    .combineLatest(rxArray)
-    .subscribe((res) => {
-      let batchArtifactsList = res[0].filter((artifact) => {
-        return artifact.name === 'cdap-data-pipeline';
-      });
-      let realtimeArtifactsList = res[0].filter((artifact) => {
-        return artifact.name === 'cdap-data-streams';
-      });
+      .combineLatest(rxArray)
+      .subscribe(
+        (res) => {
+          let batchArtifactsList = res[0].filter((artifact) => {
+            return artifact.name === 'cdap-data-pipeline';
+          });
+          let realtimeArtifactsList = res[0].filter((artifact) => {
+            return artifact.name === 'cdap-data-streams';
+          });
 
-      let highestBatchArtifactVersion = findHighestVersion(batchArtifactsList.map((artifact) => artifact.version), true);
-      let highestRealtimeArtifactVersion = findHighestVersion(realtimeArtifactsList.map((artifact) => artifact.version), true);
+          let highestBatchArtifactVersion = findHighestVersion(
+            batchArtifactsList.map((artifact) => artifact.version),
+            true
+          );
+          let highestRealtimeArtifactVersion = findHighestVersion(
+            realtimeArtifactsList.map((artifact) => artifact.version),
+            true
+          );
 
-      let batchArtifact = {
-        name: 'cdap-data-pipeline',
-        version: highestBatchArtifactVersion,
-        scope: SCOPES.SYSTEM
-      };
+          let batchArtifact = {
+            name: 'cdap-data-pipeline',
+            version: highestBatchArtifactVersion,
+            scope: SCOPES.SYSTEM,
+          };
 
-      let realtimeArtifact = {
-        name: 'cdap-data-streams',
-        version: highestRealtimeArtifactVersion,
-        scope: SCOPES.SYSTEM
-      };
+          let realtimeArtifact = {
+            name: 'cdap-data-streams',
+            version: highestRealtimeArtifactVersion,
+            scope: SCOPES.SYSTEM,
+          };
 
-      let wranglerArtifact;
-      try {
-        wranglerArtifact = findWranglerArtifacts(res[0], pluginVersion);
-      } catch (e) {
-        observable.error(e);
-      }
-
-      let tempSchema = {
-        name: 'avroSchema',
-        type: 'record',
-        fields: res[1]
-      };
-
-      let properties = {
-        workspaceId,
-        directives: directives.join('\n'),
-        schema: JSON.stringify(tempSchema),
-        field: '*',
-        precondition: "false",
-        threshold: "1"
-      };
-
-      if (state.workspaceInfo.properties.connection === 'file') {
-        properties.field = 'body';
-      }
-
-      try {
-        getParsedSchemaForDataPrep(tempSchema);
-      } catch (e) {
-        observable.error(objectQuery(e, 'message'));
-      }
-
-      let wranglerStage = {
-        name: 'Wrangler',
-        plugin: {
-          name: 'Wrangler',
-          label: 'Wrangler',
-          type: 'transform',
-          artifact: wranglerArtifact,
-          properties
-        }
-      };
-
-      let realtimeStages = [wranglerStage];
-      let batchStages = [wranglerStage];
-
-      let sourceConfigs, realtimeSource, batchSource;
-      let connections = [];
-      const connectionType = state.workspaceInfo.properties.connection;
-      if (connectionType === 'file') {
-        sourceConfigs = constructFileSource(res[0], res[2]);
-      } else if (connectionType === 'database') {
-        sourceConfigs = constructDatabaseSource(res[0], res[2]);
-        delete sourceConfigs.batchSource.plugin.properties.schema;
-      } else if (connectionType === 'kafka') {
-        sourceConfigs = constructKafkaSource(res[0], res[2]);
-      } else if (connectionType === 's3') {
-        sourceConfigs = constructS3Source(res[0], res[2]);
-      } else if (connectionType === 'gcs') {
-        sourceConfigs = constructGCSSource(res[0], res[2]);
-      } else if (connectionType === 'bigquery') {
-        sourceConfigs = constructBigQuerySource(res[0], res[2]);
-      } else if (state.workspaceInfo.properties.connection === 'spanner') {
-        sourceConfigs = constructSpannerSource(res[0], res[2]);
-      }
-
-      if (typeof sourceConfigs === 'string') {
-        observable.error(sourceConfigs);
-        return;
-      }
-
-      if (sourceConfigs) {
-        ({
-          realtimeSource,
-          batchSource,
-          connections
-        } = sourceConfigs);
-      }
-
-      let realtimeConfig = null,
-          batchConfig = null;
-
-      if (realtimeSource || connectionType === 'upload') {
-        if (realtimeSource) {
-          realtimeStages.push(realtimeSource);
-        }
-        realtimeConfig = {
-          artifact: realtimeArtifact,
-          config: {
-            stages: realtimeStages,
-            batchInterval: '10s',
-            connections,
-            "resources": {
-              "memoryMB": 1024,
-              "virtualCores": 1
-            },
-            "driverResources": {
-              "memoryMB": 1024,
-              "virtualCores": 1
-            },
+          let wranglerArtifact;
+          try {
+            wranglerArtifact = findWranglerArtifacts(res[0], pluginVersion);
+          } catch (e) {
+            observable.error(e);
           }
-        };
-      }
 
-      if (batchSource || connectionType === 'upload') {
-        if (batchSource) {
-          batchStages.push(batchSource);
-        }
-        batchConfig = {
-          artifact: batchArtifact,
-          config: {
-            stages: batchStages,
-            connections,
-            "resources": {
-              "memoryMB": 1024,
-              "virtualCores": 1
-            },
-            "driverResources": {
-              "memoryMB": 1024,
-              "virtualCores": 1
-            },
+          let tempSchema = {
+            name: 'avroSchema',
+            type: 'record',
+            fields: res[1],
+          };
+
+          let properties = {
+            workspaceId,
+            directives: directives.join('\n'),
+            schema: JSON.stringify(tempSchema),
+            field: '*',
+            precondition: 'false',
+            threshold: '1',
+          };
+
+          if (state.workspaceInfo.properties.connection === 'file') {
+            properties.field = 'body';
           }
-        };
-      }
 
-      observable.next({realtimeConfig, batchConfig});
+          try {
+            getParsedSchemaForDataPrep(tempSchema);
+          } catch (e) {
+            observable.error(objectQuery(e, 'message'));
+          }
 
-    }, (err) => {
-      observable.error(objectQuery(err, 'response', 'message') || T.translate(`${PREFIX}.defaultMessage`));
-    });
+          let wranglerStage = {
+            name: 'Wrangler',
+            plugin: {
+              name: 'Wrangler',
+              label: 'Wrangler',
+              type: 'transform',
+              artifact: wranglerArtifact,
+              properties,
+            },
+          };
+
+          let realtimeStages = [wranglerStage];
+          let batchStages = [wranglerStage];
+
+          let sourceConfigs, realtimeSource, batchSource;
+          let connections = [];
+          const connectionType = state.workspaceInfo.properties.connection;
+          if (connectionType === 'file') {
+            sourceConfigs = constructFileSource(res[0], res[2]);
+          } else if (connectionType === 'database') {
+            sourceConfigs = constructDatabaseSource(res[0], res[2]);
+            delete sourceConfigs.batchSource.plugin.properties.schema;
+          } else if (connectionType === 'kafka') {
+            sourceConfigs = constructKafkaSource(res[0], res[2]);
+          } else if (connectionType === 's3') {
+            sourceConfigs = constructS3Source(res[0], res[2]);
+          } else if (connectionType === 'gcs') {
+            sourceConfigs = constructGCSSource(res[0], res[2]);
+          } else if (connectionType === 'bigquery') {
+            sourceConfigs = constructBigQuerySource(res[0], res[2]);
+          } else if (state.workspaceInfo.properties.connection === 'spanner') {
+            sourceConfigs = constructSpannerSource(res[0], res[2]);
+          }
+
+          if (typeof sourceConfigs === 'string') {
+            observable.error(sourceConfigs);
+            return;
+          }
+
+          if (sourceConfigs) {
+            ({ realtimeSource, batchSource, connections } = sourceConfigs);
+          }
+
+          let realtimeConfig = null,
+            batchConfig = null;
+
+          if (realtimeSource || connectionType === 'upload') {
+            if (realtimeSource) {
+              realtimeStages.push(realtimeSource);
+            }
+            realtimeConfig = {
+              artifact: realtimeArtifact,
+              config: {
+                stages: realtimeStages,
+                batchInterval: '10s',
+                connections,
+                resources: {
+                  memoryMB: 1024,
+                  virtualCores: 1,
+                },
+                driverResources: {
+                  memoryMB: 1024,
+                  virtualCores: 1,
+                },
+              },
+            };
+          }
+
+          if (batchSource || connectionType === 'upload') {
+            if (batchSource) {
+              batchStages.push(batchSource);
+            }
+            batchConfig = {
+              artifact: batchArtifact,
+              config: {
+                stages: batchStages,
+                connections,
+                resources: {
+                  memoryMB: 1024,
+                  virtualCores: 1,
+                },
+                driverResources: {
+                  memoryMB: 1024,
+                  virtualCores: 1,
+                },
+              },
+            };
+          }
+
+          observable.next({ realtimeConfig, batchConfig });
+        },
+        (err) => {
+          observable.error(
+            objectQuery(err, 'response', 'message') || T.translate(`${PREFIX}.defaultMessage`)
+          );
+        }
+      );
   } catch (e) {
     observable.error(objectQuery(e, 'message') || e);
   }

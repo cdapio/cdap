@@ -30,11 +30,11 @@ export default class TimeRangePicker extends Component {
     start: PropTypes.number,
     end: PropTypes.number,
     displayOnly: PropTypes.bool,
-    onTimeClick: PropTypes.func
+    onTimeClick: PropTypes.func,
   };
 
   static defaultProps = {
-    displayOnly: false
+    displayOnly: false,
   };
 
   state = {
@@ -47,19 +47,24 @@ export default class TimeRangePicker extends Component {
   };
 
   componentWillMount() {
-    if (this.props.displayOnly) { return; }
+    if (this.props.displayOnly) {
+      return;
+    }
 
     // to set default
     this.changeDisplay('start');
   }
 
   changeDate = (date) => {
-    this.setState({
-      date,
-      [this.state.displayCalendar]: this.calculateDisplayTime({date})
-    }, () => {
-      this.applyChange();
-    });
+    this.setState(
+      {
+        date,
+        [this.state.displayCalendar]: this.calculateDisplayTime({ date }),
+      },
+      () => {
+        this.applyChange();
+      }
+    );
   };
 
   changeDisplay = (type) => {
@@ -67,11 +72,13 @@ export default class TimeRangePicker extends Component {
       this.props.onTimeClick();
     }
 
-    if (type === this.state.displayCalendar) { return; }
+    if (type === this.state.displayCalendar) {
+      return;
+    }
 
     let date = this.state.date,
-        hour = this.state.hour,
-        minute = this.state.minute;
+      hour = this.state.hour,
+      minute = this.state.minute;
 
     let initTime = this.state[type] ? this.state[type] : this.state[this.state.displayCalendar];
 
@@ -86,40 +93,50 @@ export default class TimeRangePicker extends Component {
       displayCalendar: type,
       date,
       hour,
-      minute
+      minute,
     });
   };
 
   changeHour = (e) => {
     let hour = e.target.value;
 
-    this.setState({
-      hour,
-      [this.state.displayCalendar]: this.calculateDisplayTime({hour})
-    }, () => {
-      this.applyChange();
-    });
+    this.setState(
+      {
+        hour,
+        [this.state.displayCalendar]: this.calculateDisplayTime({ hour }),
+      },
+      () => {
+        this.applyChange();
+      }
+    );
   };
 
   changeMinute = (e) => {
     let minute = e.target.value;
 
-    this.setState({
-      minute,
-      [this.state.displayCalendar]: this.calculateDisplayTime({minute})
-    }, () => {
-      this.applyChange();
-    });
+    this.setState(
+      {
+        minute,
+        [this.state.displayCalendar]: this.calculateDisplayTime({ minute }),
+      },
+      () => {
+        this.applyChange();
+      }
+    );
   };
 
   displayStartTime = () => {
-    if (!this.state.start) { return 'Start Time'; }
+    if (!this.state.start) {
+      return 'Start Time';
+    }
 
     return moment(this.state.start).format(format);
   };
 
   displayEndTime = () => {
-    if (!this.state.end) { return 'End Time'; }
+    if (!this.state.end) {
+      return 'End Time';
+    }
 
     return moment(this.state.end).format(format);
   };
@@ -129,14 +146,12 @@ export default class TimeRangePicker extends Component {
       date: this.state.date,
       hour: this.state.hour,
       minute: this.state.minute,
-      ...timeObj
+      ...timeObj,
     };
 
     let datetime = moment(timeInfo.date);
 
-    datetime
-      .add(timeInfo.hour, 'h')
-      .add(timeInfo.minute, 'm');
+    datetime.add(timeInfo.hour, 'h').add(timeInfo.minute, 'm');
 
     datetime = parseInt(datetime.format('x'), 10);
 
@@ -144,16 +159,24 @@ export default class TimeRangePicker extends Component {
   };
 
   applyChange = () => {
-    if (typeof this.props.onChange !== 'function' || this.state.start === null || this.state.end === null) { return; }
+    if (
+      typeof this.props.onChange !== 'function' ||
+      this.state.start === null ||
+      this.state.end === null
+    ) {
+      return;
+    }
 
     this.props.onChange({
       start: this.state.start,
-      end: this.state.end
+      end: this.state.end,
     });
   };
 
   renderCalendar = () => {
-    if (this.props.displayOnly) { return null; }
+    if (this.props.displayOnly) {
+      return null;
+    }
 
     let max = new Date();
     let min = null;
@@ -185,18 +208,16 @@ export default class TimeRangePicker extends Component {
   };
 
   renderHourMinuteSelector = () => {
-    if (this.props.displayOnly) { return null; }
+    if (this.props.displayOnly) {
+      return null;
+    }
 
     return (
       <div className="time-container">
         <div className="time-display">
-          <span className="time">
-            {this.padTime(this.state.hour)}
-          </span>
+          <span className="time">{this.padTime(this.state.hour)}</span>
           <span className="colon">:</span>
-          <span className="time">
-            {this.padTime(this.state.minute)}
-          </span>
+          <span className="time">{this.padTime(this.state.minute)}</span>
         </div>
 
         <div className="time-slider">
@@ -231,20 +252,22 @@ export default class TimeRangePicker extends Component {
         <div className="time-range-selector">
           <div className="time">
             <div
-              className={classnames('time-wrapper', { 'active': !this.props.displayOnly && this.state.displayCalendar === 'start' })}
+              className={classnames('time-wrapper', {
+                active: !this.props.displayOnly && this.state.displayCalendar === 'start',
+              })}
               onClick={this.changeDisplay.bind(this, 'start')}
             >
               {this.displayStartTime()}
             </div>
           </div>
 
-          <div className="separator text-xs-center">
-            to
-          </div>
+          <div className="separator text-xs-center">to</div>
 
           <div className="time">
             <div
-              className={classnames('time-wrapper', { 'active': !this.props.displayOnly && this.state.displayCalendar === 'end' })}
+              className={classnames('time-wrapper', {
+                active: !this.props.displayOnly && this.state.displayCalendar === 'end',
+              })}
               onClick={this.changeDisplay.bind(this, 'end')}
             >
               {this.displayEndTime()}

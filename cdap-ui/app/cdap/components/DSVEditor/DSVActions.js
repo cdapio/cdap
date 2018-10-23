@@ -19,7 +19,7 @@ const DSVActions = {
   addRow: 'ADD-ROW',
   deleteRow: 'DELETE-ROW',
   onReset: 'ON-RESET',
-  onUpdate: 'ON-UPDATE'
+  onUpdate: 'ON-UPDATE',
 };
 
 export default DSVActions;

@@ -17,17 +17,17 @@
 const EntityIconMap = {
   'cdap-data-pipeline': 'icon-ETLBatch',
   'cdap-data-streams': 'icon-sparkstreaming',
-  'Flow': 'icon-tigon',
-  'Mapreduce': 'icon-mapreduce',
-  'Service': 'icon-service',
-  'Spark': 'icon-spark',
-  'Worker': 'icon-worker',
-  'Workflow': 'icon-workflow',
+  Flow: 'icon-tigon',
+  Mapreduce: 'icon-mapreduce',
+  Service: 'icon-service',
+  Spark: 'icon-spark',
+  Worker: 'icon-worker',
+  Workflow: 'icon-workflow',
   application: 'icon-fist',
   artifact: 'icon-archive',
   dataset: 'icon-datasets',
   stream: 'icon-streams',
-  view: 'icon-streamview'
+  view: 'icon-streamview',
 };
 
 export default EntityIconMap;

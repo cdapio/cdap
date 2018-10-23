@@ -34,8 +34,8 @@ export default class MarketActionsContainer extends Component {
       wizard: {
         actionIndex: null,
         actionType: null,
-        action: null
-      }
+        action: null,
+      },
     };
   }
 
@@ -46,8 +46,8 @@ export default class MarketActionsContainer extends Component {
         wizard: {
           actionIndex: null,
           actionType: null,
-          action: null
-        }
+          action: null,
+        },
       });
       if (this.state.wizard.actionIndex === this.props.actions.length - 1) {
         if (this.props.onActionsComplete) {
@@ -59,19 +59,15 @@ export default class MarketActionsContainer extends Component {
     this.setState({
       wizard: {
         actionIndex: null,
-        actionType: null
-      }
+        actionType: null,
+      },
     });
   }
 
   openWizard(actionIndex, actionType, action) {
     // have to do this because the type returned from the backend is the same,
     // whether this action is in an usecase or in the 'Datapacks' tab
-    let usecases = [
-      'load_datapack',
-      'one_step_deploy_plugin',
-      'one_step_deploy_app'
-    ];
+    let usecases = ['load_datapack', 'one_step_deploy_plugin', 'one_step_deploy_app'];
 
     let isLastStep = actionIndex === this.props.actions.length - 1;
 
@@ -82,8 +78,8 @@ export default class MarketActionsContainer extends Component {
       wizard: {
         actionIndex,
         actionType,
-        action
-      }
+        action,
+      },
     });
   }
 
@@ -94,47 +90,39 @@ export default class MarketActionsContainer extends Component {
 
     return (
       <div className="market-entity-actions">
-        {
-          this.props
-            .actions
-            .map((action, index) => {
-              let isCompletedAction = this.state.completedActions.indexOf(index) !== -1;
-              let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
-              let actionIcon = getIcon(action.type);
-              return (
-                <div
-                  className="action-container text-xs-center"
-                  key={uuidV4()}
-                  onClick={this.openWizard.bind(this, index, action.type, action)}
-                >
-                  <div
-                    className="action"
-                    key={index}
-                  >
-                    <div className="step text-xs-center">
-                      <span className={classnames("tag tag-pill", {'completed' : isCompletedAction})}>{index + 1}</span>
-                    </div>
-                    <div className="action-icon">
-                      <div>
-                        <IconSVG name={actionIcon} />
-                      </div>
-                    </div>
-                    <div
-                      className="action-description"
-                      title={action.label}
-                    >
-                      {action.label}
-                    </div>
-                    <button
-                      className={classnames("btn btn-link", {'btn-completed': isCompletedAction})}
-                    >
-                      { actionName }
-                    </button>
+        {this.props.actions.map((action, index) => {
+          let isCompletedAction = this.state.completedActions.indexOf(index) !== -1;
+          let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
+          let actionIcon = getIcon(action.type);
+          return (
+            <div
+              className="action-container text-xs-center"
+              key={uuidV4()}
+              onClick={this.openWizard.bind(this, index, action.type, action)}
+            >
+              <div className="action" key={index}>
+                <div className="step text-xs-center">
+                  <span className={classnames('tag tag-pill', { completed: isCompletedAction })}>
+                    {index + 1}
+                  </span>
+                </div>
+                <div className="action-icon">
+                  <div>
+                    <IconSVG name={actionIcon} />
                   </div>
                 </div>
-              );
-          })
-        }
+                <div className="action-description" title={action.label}>
+                  {action.label}
+                </div>
+                <button
+                  className={classnames('btn btn-link', { 'btn-completed': isCompletedAction })}
+                >
+                  {actionName}
+                </button>
+              </div>
+            </div>
+          );
+        })}
         <AbstractWizard
           isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
           onClose={this.closeWizard.bind(this)}
@@ -142,7 +130,7 @@ export default class MarketActionsContainer extends Component {
           input={{
             action: this.state.wizard.action,
             package: this.context.entity,
-            isLastStepInMarket: this.state.wizard.actionIndex === this.props.actions.length - 1
+            isLastStepInMarket: this.state.wizard.actionIndex === this.props.actions.length - 1,
           }}
           displayCTA={MarketStore.getState().displayCTA}
         />
@@ -159,10 +147,9 @@ MarketActionsContainer.contextTypes = {
     author: PropTypes.string,
     description: PropTypes.string,
     org: PropTypes.string,
-    created: PropTypes.number
-  })
+    created: PropTypes.number,
+  }),
 };
-
 
 MarketActionsContainer.propTypes = {
   actions: PropTypes.arrayOf(
@@ -175,11 +162,11 @@ MarketActionsContainer.propTypes = {
           value: PropTypes.oneOfType([
             PropTypes.string,
             PropTypes.arrayOf(PropTypes.string),
-            PropTypes.object
-          ])
+            PropTypes.object,
+          ]),
         })
-      )
+      ),
     })
   ),
-  onActionsComplete: PropTypes.func
+  onActionsComplete: PropTypes.func,
 };

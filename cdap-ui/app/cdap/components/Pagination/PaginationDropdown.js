@@ -28,14 +28,14 @@ export default class PaginationDropdown extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isPaginationExpanded : false
+      isPaginationExpanded: false,
     };
     this.handleExpansionToggle = this.handleExpansionToggle.bind(this);
   }
 
   handleExpansionToggle() {
     this.setState({
-      isPaginationExpanded : !this.state.isPaginationExpanded
+      isPaginationExpanded: !this.state.isPaginationExpanded,
     });
   }
 
@@ -46,11 +46,9 @@ export default class PaginationDropdown extends Component {
       dropdownItems.push(
         <div className="dropdownItems clearfix">
           <span className="page-number float-xs-left">{i + 1}</span>
-          {
-            this.props.currentPage === (i + 1) ?
-            <span className="fa fa-check float-xs-right"></span> :
-            null
-          }
+          {this.props.currentPage === i + 1 ? (
+            <span className="fa fa-check float-xs-right" />
+          ) : null}
         </div>
       );
     }
@@ -64,21 +62,16 @@ export default class PaginationDropdown extends Component {
         <DropdownToggle tag="div">
           <span>{T.translate('features.Pagination.dropdown-label')}</span>
           <span className="current-page">{this.props.currentPage}</span>
-          <span className="fa fa-caret-down float-xs-right"></span>
+          <span className="fa fa-caret-down float-xs-right" />
         </DropdownToggle>
-        <DropdownMenu onClick={e => e.stopPropagation()}>
-          {
-            dropdownItems.map((item, index) => {
-              return (
-                <DropdownItem
-                  key={uuidV4()}
-                  onClick={this.props.onPageChange.bind(this, index+1)}
-                >
-                  {item}
-                </DropdownItem>
-              );
-            })
-          }
+        <DropdownMenu onClick={(e) => e.stopPropagation()}>
+          {dropdownItems.map((item, index) => {
+            return (
+              <DropdownItem key={uuidV4()} onClick={this.props.onPageChange.bind(this, index + 1)}>
+                {item}
+              </DropdownItem>
+            );
+          })}
         </DropdownMenu>
       </Dropdown>
     );
@@ -88,5 +81,5 @@ export default class PaginationDropdown extends Component {
 PaginationDropdown.propTypes = {
   numberOfPages: PropTypes.number,
   currentPage: PropTypes.number,
-  onPageChange: PropTypes.func
+  onPageChange: PropTypes.func,
 };

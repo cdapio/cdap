@@ -20,7 +20,7 @@ import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import PipelineConfigurations from 'components/PipelineConfigurations';
 import T from 'i18n-react';
-import {fetchAndUpdateRuntimeArgs} from 'components/PipelineConfigurations/Store/ActionCreator';
+import { fetchAndUpdateRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
@@ -29,11 +29,11 @@ export default class PipelineConfigureButton extends Component {
     isBatch: PropTypes.bool,
     pipelineName: PropTypes.string,
     resolvedMacros: PropTypes.object,
-    runtimeArgs: PropTypes.array
+    runtimeArgs: PropTypes.array,
   };
 
   state = {
-    showModeless: false
+    showModeless: false,
   };
 
   getRuntimeArgumentsAndToggleModeless = () => {
@@ -46,7 +46,7 @@ export default class PipelineConfigureButton extends Component {
 
   toggleModeless = () => {
     this.setState({
-      showModeless: !this.state.showModeless
+      showModeless: !this.state.showModeless,
     });
   };
 
@@ -57,13 +57,8 @@ export default class PipelineConfigureButton extends Component {
         className="btn pipeline-action-btn pipeline-configure-btn"
       >
         <div className="btn-container">
-          <IconSVG
-            name="icon-sliders"
-            className="configure-icon"
-          />
-          <div className="button-label">
-            {T.translate(`${PREFIX}.configure`)}
-          </div>
+          <IconSVG name="icon-sliders" className="configure-icon" />
+          <div className="button-label">{T.translate(`${PREFIX}.configure`)}</div>
         </div>
       </div>
     );
@@ -71,19 +66,20 @@ export default class PipelineConfigureButton extends Component {
 
   render() {
     return (
-      <div className={classnames("pipeline-action-container pipeline-configure-container", {"active" : this.state.showModeless})}>
+      <div
+        className={classnames('pipeline-action-container pipeline-configure-container', {
+          active: this.state.showModeless,
+        })}
+      >
         {this.renderConfigureButton()}
-        {
-          this.state.showModeless ?
-            <PipelineConfigurations
-              onClose={this.toggleModeless}
-              isDetailView={true}
-              isBatch={this.props.isBatch}
-              pipelineName={this.props.pipelineName}
-            />
-          :
-            null
-        }
+        {this.state.showModeless ? (
+          <PipelineConfigurations
+            onClose={this.toggleModeless}
+            isDetailView={true}
+            isBatch={this.props.isBatch}
+            pipelineName={this.props.pipelineName}
+          />
+        ) : null}
       </div>
     );
   }

@@ -17,16 +17,16 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import FileDataUpload from 'components/FileDataUpload';
 import BtnWithLoading from 'components/BtnWithLoading';
-import {MyStreamApi} from 'api/stream';
+import { MyStreamApi } from 'api/stream';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 import cookie from 'react-cookie';
 import NamespaceStore from 'services/NamespaceStore';
 import isEmpty from 'lodash/isEmpty';
-import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
+import CardActionFeedback, { CARD_ACTION_TYPES } from 'components/CardActionFeedback';
 import T from 'i18n-react';
 import isNil from 'lodash/isNil';
 import If from 'components/If';
@@ -50,14 +50,14 @@ export default class SendEventModal extends Component {
       droppedFile: {},
       tooltipOpen: false,
       responseStatus: null,
-      reset: 0
+      reset: 0,
     };
   }
 
   clearEvents() {
     let finalState = Object.assign({}, this.getDefaultState(), {
       modal: true,
-      reset: ++this.state.reset
+      reset: ++this.state.reset,
     });
     this.setState(finalState);
   }
@@ -66,42 +66,44 @@ export default class SendEventModal extends Component {
     e.stopPropagation();
     e.preventDefault();
     e.nativeEvent.stopImmediatePropagation();
-    this.setState({loading: true});
+    this.setState({ loading: true });
     let namespace = NamespaceStore.getState().selectedNamespace;
     let streamId = this.props.entity.id;
     let params = {
-      namespace
+      namespace,
     };
     let subscriptions = [];
     if (isEmpty(this.state.droppedFile)) {
       let events = this.state.textInput.replace(/\r\n/g, '\n').split('\n');
       params.streamId = streamId;
-      events.forEach(event => {
-        subscriptions.push(
-          MyStreamApi.sendEvent(params, event)
-        );
+      events.forEach((event) => {
+        subscriptions.push(MyStreamApi.sendEvent(params, event));
       });
       this.setState({
-        loading: true
+        loading: true,
       });
       let mergedOb = Observable.merge.apply(null, subscriptions);
       mergedOb.subscribe(
         () => {
-          this.setState(Object.assign({}, this.getDefaultState(), {
-            modal: true,
-            responseStatus: 200,
-            reset: ++this.state.reset,
-            statusMessage: T.translate('features.FastAction.sendEventsSuccess')
-          }));
+          this.setState(
+            Object.assign({}, this.getDefaultState(), {
+              modal: true,
+              responseStatus: 200,
+              reset: ++this.state.reset,
+              statusMessage: T.translate('features.FastAction.sendEventsSuccess'),
+            })
+          );
         },
         (err) => {
-          this.setState(Object.assign({}, this.getDefaultState(), {
-            modal: true,
-            responseStatus: 500,
-            reset: ++this.state.reset,
-            statusMessage: T.translate('features.FastAction.sendEventsFailed'),
-            extendedMessage: err,
-          }));
+          this.setState(
+            Object.assign({}, this.getDefaultState(), {
+              modal: true,
+              responseStatus: 500,
+              reset: ++this.state.reset,
+              statusMessage: T.translate('features.FastAction.sendEventsFailed'),
+              extendedMessage: err,
+            })
+          );
         }
       );
       return false;
@@ -113,37 +115,42 @@ export default class SendEventModal extends Component {
     let filetype = 'text/' + filename.split('.').pop();
     let authToken = cookie.load('CDAP_Auth_Token');
     this.setState({
-      loading: true
+      loading: true,
     });
-    return UploadDataActionCreator
-      .uploadData({
-        url,
-        fileContents,
-        headers: {
-          filename,
-          filetype,
-          authToken
-        }
-      })
-      .subscribe(() => {
-        this.setState(Object.assign({}, this.getDefaultState(), {
-          modal: true,
-          reset: ++this.state.reset,
-          responseStatus: 200,
-          statusMessage: T.translate('features.FastAction.sendEventsSuccess')
-        }));
-      }, (err) => {
-        this.setState(Object.assign({}, this.getDefaultState(), {
-          modal: true,
-          responseStatus: 500,
-          statusMessage: T.translate('features.FastAction.sendEventsFailed'),
-          extendedMessage: err
-        }));
-      });
+    return UploadDataActionCreator.uploadData({
+      url,
+      fileContents,
+      headers: {
+        filename,
+        filetype,
+        authToken,
+      },
+    }).subscribe(
+      () => {
+        this.setState(
+          Object.assign({}, this.getDefaultState(), {
+            modal: true,
+            reset: ++this.state.reset,
+            responseStatus: 200,
+            statusMessage: T.translate('features.FastAction.sendEventsSuccess'),
+          })
+        );
+      },
+      (err) => {
+        this.setState(
+          Object.assign({}, this.getDefaultState(), {
+            modal: true,
+            responseStatus: 500,
+            statusMessage: T.translate('features.FastAction.sendEventsFailed'),
+            extendedMessage: err,
+          })
+        );
+      }
+    );
   }
 
   onDrop(file) {
-    this.setState({droppedFile : file});
+    this.setState({ droppedFile: file });
   }
 
   noInputYet() {
@@ -152,17 +159,15 @@ export default class SendEventModal extends Component {
 
   handleTextInput(input) {
     this.setState({
-      textInput : input
+      textInput: input,
     });
   }
 
   renderFooter = () => {
     let feedbackType;
     if (!isNil(this.state.responseStatus)) {
-      feedbackType = this.state.responseStatus !== 200 ?
-      CARD_ACTION_TYPES.DANGER
-    :
-      CARD_ACTION_TYPES.SUCCESS;
+      feedbackType =
+        this.state.responseStatus !== 200 ? CARD_ACTION_TYPES.DANGER : CARD_ACTION_TYPES.SUCCESS;
     }
     return (
       <React.Fragment>
@@ -171,14 +176,14 @@ export default class SendEventModal extends Component {
             <BtnWithLoading
               className="btn btn-primary"
               onClick={this.sendEvents}
-              disabled={(this.noInputYet() || this.state.loading) ? 'disabled' : null}
+              disabled={this.noInputYet() || this.state.loading ? 'disabled' : null}
               loading={this.state.loading}
               label={T.translate('features.FastAction.sendEventsButtonLabel')}
             />
             <button
               className="btn btn-secondary"
               onClick={this.clearEvents}
-              disabled={(this.noInputYet() || this.state.loading) ? 'disabled' : null}
+              disabled={this.noInputYet() || this.state.loading ? 'disabled' : null}
             >
               <span>{T.translate('features.FastAction.clearEventsButtonLabel')}</span>
             </button>
@@ -204,18 +209,13 @@ export default class SendEventModal extends Component {
         toggle={this.props.onClose}
         className="confirmation-modal stream-send-events cdap-modal"
         size="lg"
-        backdrop='static'
+        backdrop="static"
       >
         <ModalHeader>
-          <div className="float-xs-left">
-            {headerTitle}
-          </div>
+          <div className="float-xs-left">{headerTitle}</div>
           <div className="float-xs-right">
-            <div
-              className="close-modal-btn"
-              onClick={this.props.onClose}
-            >
-              <span className={"button-icon fa fa-times"}></span>
+            <div className="close-modal-btn" onClick={this.props.onClose}>
+              <span className={'button-icon fa fa-times'} />
             </div>
           </div>
         </ModalHeader>
@@ -240,5 +240,5 @@ SendEventModal.propTypes = {
     uniqueId: PropTypes.string,
     type: PropTypes.oneOf(['dataset', 'stream']).isRequired,
   }),
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
 };

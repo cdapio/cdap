@@ -15,7 +15,7 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {PureComponent} from 'react';
+import React, { PureComponent } from 'react';
 import IconSVG from 'components/IconSVG';
 require('./AccordionTitle.scss');
 
@@ -26,12 +26,12 @@ export default class AccordionTitle extends PureComponent {
     id: PropTypes.string.isRequired,
     onTabPaneClick: PropTypes.func,
     activePane: PropTypes.string,
-    size: PropTypes.oneOf(["small", "medium", "large"]),
-    children: PropTypes.node
+    size: PropTypes.oneOf(['small', 'medium', 'large']),
+    children: PropTypes.node,
   };
 
   static defaultProps = {
-    size: "medium"
+    size: 'medium',
   };
 
   onClickHandler = () => {
@@ -41,23 +41,17 @@ export default class AccordionTitle extends PureComponent {
   };
 
   render() {
-    let {size} = this.props;
+    let { size } = this.props;
     return (
-      <div
-        className={`accordion-title ${size}`}
-        onClick={this.onClickHandler}
-      >
+      <div className={`accordion-title ${size}`} onClick={this.onClickHandler}>
         <div>
-          {
-            this.props.id === this.props.activePane ?
-              <IconSVG name="icon-caret-down" />
-            :
-              <IconSVG name="icon-caret-right" />
-          }
+          {this.props.id === this.props.activePane ? (
+            <IconSVG name="icon-caret-down" />
+          ) : (
+            <IconSVG name="icon-caret-right" />
+          )}
         </div>
-        <div>
-            {this.props.children}
-        </div>
+        <div>{this.props.children}</div>
       </div>
     );
   }

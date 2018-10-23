@@ -14,12 +14,12 @@
  * the License.
 */
 
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
 import AddNamespaceWizard from 'components/CaskWizards/AddNamespace';
-import {getNamespaceProperties} from 'components/NamespaceDetails/store/ActionCreator';
+import { getNamespaceProperties } from 'components/NamespaceDetails/store/ActionCreator';
 require('./Security.scss');
 
 const PREFIX = 'features.NamespaceDetails.security';
@@ -34,13 +34,13 @@ const mapStateToProps = (state) => {
     hiveDatabaseName: state.hiveDatabaseName,
     schedulerQueueName: state.schedulerQueueName,
     principal: state.principal,
-    keytabURI: state.keytabURI
+    keytabURI: state.keytabURI,
   };
 };
 
 class NamespaceDetailsSecurity extends Component {
   state = {
-    modalOpen: false
+    modalOpen: false,
   };
 
   static propTypes = {
@@ -52,7 +52,7 @@ class NamespaceDetailsSecurity extends Component {
     hiveDatabaseName: PropTypes.string,
     schedulerQueueName: PropTypes.string,
     principal: PropTypes.string,
-    keytabURI: PropTypes.string
+    keytabURI: PropTypes.string,
   };
 
   toggleModal = (namespaceEdited) => {
@@ -60,7 +60,7 @@ class NamespaceDetailsSecurity extends Component {
       getNamespaceProperties();
     }
     this.setState({
-      modalOpen: !this.state.modalOpen
+      modalOpen: !this.state.modalOpen,
     });
   };
 
@@ -69,45 +69,30 @@ class NamespaceDetailsSecurity extends Component {
       <div className="namespace-details-security">
         <div className="namespace-details-section-label">
           <strong>{T.translate(`${PREFIX}.label`)}</strong>
-          {
-            this.props.principal && this.props.keytabURI ?
-              (
-                <span
-                  className="edit-label"
-                  onClick={this.toggleModal}
-                >
-                  {T.translate('features.NamespaceDetails.edit')}
-                </span>
-              )
-            :
-              null
-          }
+          {this.props.principal && this.props.keytabURI ? (
+            <span className="edit-label" onClick={this.toggleModal}>
+              {T.translate('features.NamespaceDetails.edit')}
+            </span>
+          ) : null}
         </div>
         <div className="security-values">
           <strong>{T.translate(`${PREFIX}.principal`)}</strong>
-          <span title={this.props.principal}>
-            {this.props.principal || '- -'}
-          </span>
+          <span title={this.props.principal}>{this.props.principal || '- -'}</span>
         </div>
         <div className="security-values">
           <strong>{T.translate(`${PREFIX}.keytabURI`)}</strong>
-          <span title={this.props.keytabURI}>
-            {this.props.keytabURI || '- -'}
-          </span>
+          <span title={this.props.keytabURI}>{this.props.keytabURI || '- -'}</span>
         </div>
-        {
-          this.state.modalOpen ?
-            <AddNamespaceWizard
-              isOpen={this.state.modalOpen}
-              onClose={this.toggleModal}
-              isEdit={true}
-              editableFields={['keyTab']}
-              properties={{...this.props}}
-              activeStepId='security'
-            />
-          :
-            null
-        }
+        {this.state.modalOpen ? (
+          <AddNamespaceWizard
+            isOpen={this.state.modalOpen}
+            onClose={this.toggleModal}
+            isEdit={true}
+            editableFields={['keyTab']}
+            properties={{ ...this.props }}
+            activeStepId="security"
+          />
+        ) : null}
       </div>
     );
   }

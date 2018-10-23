@@ -18,13 +18,13 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import classnames from 'classnames';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
-import {isCustomOption} from 'components/DataPrep/helper';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
+import { isCustomOption } from 'components/DataPrep/helper';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {columnNameAlreadyExists} from 'components/DataPrep/helper';
+import { columnNameAlreadyExists } from 'components/DataPrep/helper';
 import WarningContainer from 'components/WarningContainer';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 
 import T from 'i18n-react';
 require('./MergeColumns.scss');
@@ -32,13 +32,13 @@ require('./MergeColumns.scss');
 const PREFIX = `features.DataPrep.Directives.Merge`;
 const DEFAULT_DELIMITER = 'COMMA';
 const DELIMITER_MAP = {
-  'COMMA': ',',
-  'PIPE': '|',
-  'COLON': ':',
-  'PERIOD': '.',
-  'DASH': '-',
-  'UNDERSCORE': '_',
-  'SPACE': `' '`
+  COMMA: ',',
+  PIPE: '|',
+  COLON: ':',
+  PERIOD: '.',
+  DASH: '-',
+  UNDERSCORE: '_',
+  SPACE: `' '`,
 };
 
 export default class MergeColumnsDirective extends Component {
@@ -51,7 +51,7 @@ export default class MergeColumnsDirective extends Component {
       newColumnInput: `${this.props.column[0]}_${this.props.column[1]}`,
       selectedDelimiter: DEFAULT_DELIMITER,
       customDelimiter: '',
-      isOpen: this.props.isOpen
+      isOpen: this.props.isOpen,
     };
 
     this.handleNewColumnInputChange = this.handleNewColumnInputChange.bind(this);
@@ -63,13 +63,16 @@ export default class MergeColumnsDirective extends Component {
   }
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('merge-columns-directive'));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById('merge-columns-directive')
+    );
   }
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.isOpen !== this.state.isOpen) {
       this.setState({
-        isOpen: nextProps.isOpen
+        isOpen: nextProps.isOpen,
       });
     }
   }
@@ -87,15 +90,15 @@ export default class MergeColumnsDirective extends Component {
   }
 
   handleNewColumnInputChange(e) {
-    this.setState({newColumnInput: e.target.value});
+    this.setState({ newColumnInput: e.target.value });
   }
 
   handleDelimiterSelect(e) {
-    this.setState({selectedDelimiter: e.target.value});
+    this.setState({ selectedDelimiter: e.target.value });
   }
 
   handleCustomDelimiterChange(e) {
-    this.setState({customDelimiter: e.target.value});
+    this.setState({ customDelimiter: e.target.value });
   }
 
   handleKeyPress(e) {
@@ -108,11 +111,11 @@ export default class MergeColumnsDirective extends Component {
   switchColumnOrder() {
     let switchedState = {
       firstColumn: this.state.secondColumn,
-      secondColumn: this.state.firstColumn
+      secondColumn: this.state.firstColumn,
     };
     if (this.state.newColumnInput === `${this.state.firstColumn}_${this.state.secondColumn}`) {
       switchedState = Object.assign({}, switchedState, {
-        newColumnInput: `${this.state.secondColumn}_${this.state.firstColumn}`
+        newColumnInput: `${this.state.secondColumn}_${this.state.firstColumn}`,
       });
     }
     this.setState(switchedState);
@@ -126,26 +129,32 @@ export default class MergeColumnsDirective extends Component {
       delimiterSymbol = this.state.customDelimiter;
     }
 
-    let directive = `merge ${this.state.firstColumn} ${this.state.secondColumn} ${newColumnInput} ${delimiterSymbol}`;
+    let directive = `merge ${this.state.firstColumn} ${
+      this.state.secondColumn
+    } ${newColumnInput} ${delimiterSymbol}`;
 
-    execute([directive])
-      .subscribe(() => {
+    execute([directive]).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   renderCustomDelimiter() {
-    if (!isCustomOption(this.state.selectedDelimiter)) { return null; }
+    if (!isCustomOption(this.state.selectedDelimiter)) {
+      return null;
+    }
 
     return (
       <div>
@@ -162,26 +171,23 @@ export default class MergeColumnsDirective extends Component {
   }
 
   renderDetail() {
-    if (!this.state.isOpen) { return null; }
-    let disabledCondition = this.state.newColumnInput.length === 0
-    || (isCustomOption(this.state.selectedDelimiter)
-    && this.state.customDelimiter.length === 0);
+    if (!this.state.isOpen) {
+      return null;
+    }
+    let disabledCondition =
+      this.state.newColumnInput.length === 0 ||
+      (isCustomOption(this.state.selectedDelimiter) && this.state.customDelimiter.length === 0);
 
     let mergeDelimiters = Object.keys(DELIMITER_MAP).map((delimiter) => {
       return {
         delimiter: delimiter,
-        displayText: T.translate(`${PREFIX}.Delimiters.${delimiter}`)
+        displayText: T.translate(`${PREFIX}.Delimiters.${delimiter}`),
       };
     });
 
     return (
-      <div
-        className="merge-columns-detail second-level-popover"
-        onClick={this.preventPropagation}
-      >
-        <h5 className="set-order">
-          {T.translate(`${PREFIX}.setOrder`)}
-        </h5>
+      <div className="merge-columns-detail second-level-popover" onClick={this.preventPropagation}>
+        <h5 className="set-order">{T.translate(`${PREFIX}.setOrder`)}</h5>
 
         <div className="columns-order">
           <span className="columns-names">
@@ -189,10 +195,7 @@ export default class MergeColumnsDirective extends Component {
             <hr />
             <span>{this.state.secondColumn}</span>
           </span>
-          <span
-            className="fa fa-exchange"
-            onClick={this.switchColumnOrder}
-          />
+          <span className="fa fa-exchange" onClick={this.switchColumnOrder} />
         </div>
 
         <br />
@@ -205,22 +208,14 @@ export default class MergeColumnsDirective extends Component {
             value={this.state.selectedDelimiter}
             onChange={this.handleDelimiterSelect}
           >
-            {
-              mergeDelimiters.map((delimiterOption) => {
-                return (
-                  <option
-                    value={delimiterOption.delimiter}
-                    key={delimiterOption.delimiter}
-                  >
-                    {delimiterOption.displayText}
-                  </option>
-                );
-              })
-            }
-            <option
-              disabled="disabled"
-              role="separator"
-            >
+            {mergeDelimiters.map((delimiterOption) => {
+              return (
+                <option value={delimiterOption.delimiter} key={delimiterOption.delimiter}>
+                  {delimiterOption.displayText}
+                </option>
+              );
+            })}
+            <option disabled="disabled" role="separator">
               &#x2500;&#x2500;&#x2500;&#x2500;
             </option>
             <option value="CUSTOMDELIMITER">
@@ -247,13 +242,9 @@ export default class MergeColumnsDirective extends Component {
           />
         </div>
 
-        {
-          columnNameAlreadyExists(this.state.newColumnInput) ? (
-            <WarningContainer
-              message={T.translate(`${PREFIX}.duplicate`)}
-            />
-          ) : null
-        }
+        {columnNameAlreadyExists(this.state.newColumnInput) ? (
+          <WarningContainer message={T.translate(`${PREFIX}.duplicate`)} />
+        ) : null}
 
         <hr />
 
@@ -266,14 +257,10 @@ export default class MergeColumnsDirective extends Component {
             {T.translate(`${PREFIX}.buttonLabel`)}
           </button>
 
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.props.close}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
-
       </div>
     );
   }
@@ -283,7 +270,7 @@ export default class MergeColumnsDirective extends Component {
       <div
         id="merge-columns-directive"
         className={classnames('merge-columns-directive clearfix action-item', {
-          'active': this.state.isOpen
+          active: this.state.isOpen,
         })}
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
@@ -302,5 +289,5 @@ MergeColumnsDirective.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

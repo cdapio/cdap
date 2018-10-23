@@ -14,20 +14,20 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
 import uuidV4 from 'uuid/v4';
 import IconSVG from 'components/IconSVG';
 import orderBy from 'lodash/orderBy';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import isEqual from 'lodash/isEqual';
 
 require('./SortableStickyGrid.scss');
 
 const SORT_ORDERS = {
   asc: 'asc',
-  desc: 'desc'
+  desc: 'desc',
 };
 
 export default class SortableStickyGrid extends Component {
@@ -39,7 +39,7 @@ export default class SortableStickyGrid extends Component {
     this.state = {
       entities: orderBy(props.entities, [sortProperty], [sortOrder]),
       sortProperty,
-      sortOrder
+      sortOrder,
     };
   }
 
@@ -48,24 +48,24 @@ export default class SortableStickyGrid extends Component {
     gridHeaders: PropTypes.arrayOf(
       PropTypes.shape({
         label: PropTypes.string,
-        property: PropTypes.string
+        property: PropTypes.string,
       })
     ),
     renderGridHeader: PropTypes.func,
     renderGridBody: PropTypes.func,
     className: PropTypes.string,
     cellIsClickable: PropTypes.bool,
-    defaultSortProperty: PropTypes.string
+    defaultSortProperty: PropTypes.string,
   };
 
   static defaultProps = {
-    cellIsClickable: false
+    cellIsClickable: false,
   };
 
   componentWillReceiveProps(nextProps) {
     if (!isEqual(this.props.entities, nextProps.entities)) {
       this.setState({
-        entities: orderBy(nextProps.entities, [this.state.sortProperty], [this.state.sortOrder])
+        entities: orderBy(nextProps.entities, [this.state.sortProperty], [this.state.sortOrder]),
       });
     }
   }
@@ -90,7 +90,7 @@ export default class SortableStickyGrid extends Component {
     this.setState({
       sortProperty: newSortProperty,
       sortOrder: newSortOrder,
-      entities: orderBy(this.state.entities, [newSortProperty], [newSortOrder])
+      entities: orderBy(this.state.entities, [newSortProperty], [newSortOrder]),
     });
   };
 
@@ -99,14 +99,12 @@ export default class SortableStickyGrid extends Component {
       return null;
     }
 
-    return (
-      this.state.sortOrder === SORT_ORDERS.asc ?
-        <IconSVG name="icon-caret-down" />
-      :
-        <IconSVG name="icon-caret-up" />
+    return this.state.sortOrder === SORT_ORDERS.asc ? (
+      <IconSVG name="icon-caret-down" />
+    ) : (
+      <IconSVG name="icon-caret-up" />
     );
   }
-
 
   renderGridHeader() {
     if (this.props.renderGridHeader) {
@@ -116,27 +114,23 @@ export default class SortableStickyGrid extends Component {
     return (
       <div className="grid-header">
         <div className="grid-row">
-          {
-            this.props.gridHeaders.map((header) => {
-              if (header.property) {
-                return (
-                  <strong
-                    className={classnames("sortable-header", {"active": this.state.sortProperty === header.property})}
-                    key={uuidV4()}
-                    onClick={this.handleSort.bind(this, header.property)}
-                  >
-                    <span>{header.label}</span>
-                    {this.renderSortIcon(header.property)}
-                  </strong>
-                );
-              }
+          {this.props.gridHeaders.map((header) => {
+            if (header.property) {
               return (
-                <strong key={uuidV4()}>
-                  {header.label}
+                <strong
+                  className={classnames('sortable-header', {
+                    active: this.state.sortProperty === header.property,
+                  })}
+                  key={uuidV4()}
+                  onClick={this.handleSort.bind(this, header.property)}
+                >
+                  <span>{header.label}</span>
+                  {this.renderSortIcon(header.property)}
                 </strong>
               );
-            })
-          }
+            }
+            return <strong key={uuidV4()}>{header.label}</strong>;
+          })}
         </div>
       </div>
     );
@@ -149,31 +143,21 @@ export default class SortableStickyGrid extends Component {
 
     return (
       <div className="grid-body">
-        {
-          this.state.entities.map((entity) => {
-            return (
-              <div
-                className={classnames(
-                  "grid-row", {
-                    "grid-link": this.props.cellIsClickable,
-                    "highlighted": entity.highlighted
-                  }
-                )}
-                key={uuidV4()}
-              >
-                {
-                  this.props.gridHeaders.map((header) => {
-                    return (
-                      <div key={uuidV4()}>
-                        {entity[header.property]}
-                      </div>
-                    );
-                  })
-                }
-              </div>
-            );
-          })
-        }
+        {this.state.entities.map((entity) => {
+          return (
+            <div
+              className={classnames('grid-row', {
+                'grid-link': this.props.cellIsClickable,
+                highlighted: entity.highlighted,
+              })}
+              key={uuidV4()}
+            >
+              {this.props.gridHeaders.map((header) => {
+                return <div key={uuidV4()}>{entity[header.property]}</div>;
+              })}
+            </div>
+          );
+        })}
       </div>
     );
   }

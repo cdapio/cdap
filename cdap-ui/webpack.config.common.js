@@ -17,33 +17,32 @@ var webpack = require('webpack');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-var ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-let pathsToClean = [
-  'common_dist'
-];
+let pathsToClean = ['common_dist'];
 
 // the clean options to use
 let cleanOptions = {
   verbose: true,
-  dry: false
+  dry: false,
 };
 var mode = process.env.NODE_ENV || 'production';
 const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
-
 
 var plugins = [
   new LodashModuleReplacementPlugin({
     shorthands: true,
     collections: true,
-    caching: true
+    caching: true,
   }),
   new CleanWebpackPlugin(pathsToClean, cleanOptions),
   new CaseSensitivePathsPlugin(),
   // by default minify it.
   new webpack.DefinePlugin({
-    'process.env':{
-      'NODE_ENV': isModeProduction(mode) ? JSON.stringify('production') : JSON.stringify('development')
+    'process.env': {
+      NODE_ENV: isModeProduction(mode)
+        ? JSON.stringify('production')
+        : JSON.stringify('development'),
     },
   }),
 ];
@@ -54,36 +53,31 @@ if (!isModeProduction(mode)) {
       tsconfig: __dirname + '/tsconfig.json',
       tslint: __dirname + '/tslint.json',
       // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
-      memoryLimit: 4096
-    }),
+      memoryLimit: 4096,
+    })
   );
 }
 
 var rules = [
   {
     test: /\.scss$/,
-    use: [
-      'style-loader',
-      'css-loader',
-      'sass-loader'
-    ]
+    use: ['style-loader', 'css-loader', 'sass-loader'],
   },
   {
     test: /\.ya?ml$/,
-    use: 'yml-loader'
+    use: 'yml-loader',
   },
   {
     test: /\.css$/,
-    use: [
-      'style-loader',
-      'css-loader',
-      'sass-loader'
-    ]
+    use: ['style-loader', 'css-loader', 'sass-loader'],
   },
   {
     enforce: 'pre',
     test: /\.js$/,
-    use: 'eslint-loader',
+    loader: 'eslint-loader',
+    options: {
+      fix: true,
+    },
     exclude: [
       /node_modules/,
       /bower_components/,
@@ -92,13 +86,13 @@ var rules = [
       /cdap_dist/,
       /common_dist/,
       /lib/,
-      /wrangler_dist/
-    ]
+      /wrangler_dist/,
+    ],
   },
   {
     test: /\.js$/,
     use: 'babel-loader',
-    exclude: /node_modules/
+    exclude: /node_modules/,
   },
   {
     test: /\.tsx?$/,
@@ -107,14 +101,11 @@ var rules = [
       {
         loader: 'ts-loader',
         options: {
-          transpileOnly: true
-        }
+          transpileOnly: true,
+        },
       },
     ],
-    exclude: [
-      /node_modules/,
-      /lib/
-    ]
+    exclude: [/node_modules/, /lib/],
   },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
@@ -123,23 +114,23 @@ var rules = [
         loader: 'url-loader',
         options: {
           limit: 10000,
-          mimetype: 'application/font-woff'
-        }
-      }
-    ]
+          mimetype: 'application/font-woff',
+        },
+      },
+    ],
   },
   {
     test: /\.(ttf|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-    use: 'url-loader'
+    use: 'url-loader',
   },
   {
     test: /\.svg/,
     use: [
       {
-        loader: 'svg-sprite-loader'
-      }
-    ]
-  }
+        loader: 'svg-sprite-loader',
+      },
+    ],
+  },
 ];
 if (isModeProduction(mode)) {
   plugins.push(
@@ -147,13 +138,13 @@ if (isModeProduction(mode)) {
       uglifyOptions: {
         ie8: false,
         compress: {
-          warnings: false
+          warnings: false,
         },
         output: {
           comments: false,
           beautify: false,
-        }
-      }
+        },
+      },
     })
   );
 }
@@ -162,8 +153,8 @@ var webpackConfig = {
   context: __dirname + '/app/common',
   optimization: {
     splitChunks: {
-      minChunks: Infinity
-    }
+      minChunks: Infinity,
+    },
   },
   entry: {
     'common-new': ['./cask-shared-components.js'],
@@ -176,11 +167,11 @@ var webpackConfig = {
       'react-dropzone',
       'react-redux',
       'svg4everybody',
-      'numeral'
-    ]
+      'numeral',
+    ],
   },
   module: {
-    rules
+    rules,
   },
   stats: {
     assets: false,
@@ -189,7 +180,7 @@ var webpackConfig = {
     chunkModules: false,
     chunkOrigins: false,
     chunks: false,
-    modules: false
+    modules: false,
   },
   output: {
     filename: '[name].js',
@@ -197,27 +188,27 @@ var webpackConfig = {
     path: __dirname + '/common_dist',
     library: 'CaskCommon',
     libraryTarget: 'umd',
-    publicPath: '/common_assets/'
+    publicPath: '/common_assets/',
   },
   externals: {
-    'react': {
+    react: {
       root: 'React',
       commonjs2: 'react',
       commonjs: 'react',
-      amd: 'react'
+      amd: 'react',
     },
     'react-dom': {
       root: 'ReactDOM',
       commonjs2: 'react-dom',
       commonjs: 'react-dom',
-      amd: 'react-dom'
+      amd: 'react-dom',
     },
     'react-addons-css-transition-group': {
       commonjs: 'react-addons-css-transition-group',
       commonjs2: 'react-addons-css-transition-group',
       amd: 'react-addons-css-transition-group',
-      root: ['React','addons','CSSTransitionGroup']
-    }
+      root: ['React', 'addons', 'CSSTransitionGroup'],
+    },
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
@@ -226,10 +217,10 @@ var webpackConfig = {
       services: __dirname + '/app/cdap/services',
       api: __dirname + '/app/cdap/api',
       wrangler: __dirname + '/app/wrangler',
-      styles: __dirname + '/app/cdap/styles'
-    }
+      styles: __dirname + '/app/cdap/styles',
+    },
   },
-  plugins
+  plugins,
 };
 
 module.exports = webpackConfig;

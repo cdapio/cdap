@@ -19,9 +19,11 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import FastActionButton from '../FastActionButton';
 import T from 'i18n-react';
-import {Tooltip} from 'reactstrap';
+import { Tooltip } from 'reactstrap';
 import classnames from 'classnames';
-import SetPreferenceModal, {PREFERENCES_LEVEL} from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
+import SetPreferenceModal, {
+  PREFERENCES_LEVEL,
+} from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
 import NamespaceStore from 'services/NamespaceStore';
 require('./SetPreferenceAction.scss');
 
@@ -33,7 +35,7 @@ export default class SetPreferenceAction extends Component {
 
     this.state = {
       modal: false,
-      preferencesSaved: false
+      preferencesSaved: false,
     };
 
     this.namespace = NamespaceStore.getState().selectedNamespace;
@@ -48,7 +50,7 @@ export default class SetPreferenceAction extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState({preferencesSaved: nextProps.savedMessageState});
+    this.setState({ preferencesSaved: nextProps.savedMessageState });
   }
 
   componentWillUnmount() {
@@ -59,28 +61,28 @@ export default class SetPreferenceAction extends Component {
     if (this.props.onSuccess) {
       this.props.onSuccess();
     }
-    this.setState({preferencesSaved: true});
+    this.setState({ preferencesSaved: true });
     setTimeout(() => {
-      this.setState({preferencesSaved: false});
+      this.setState({ preferencesSaved: false });
     }, 3000);
   }
 
   toggleTooltip() {
-    this.setState({ tooltipOpen : !this.state.tooltipOpen });
+    this.setState({ tooltipOpen: !this.state.tooltipOpen });
   }
 
   toggleModal() {
     if (this.props.modalIsOpen) {
       this.props.modalIsOpen(!this.state.modal);
     }
-    this.setState({modal: !this.state.modal});
+    this.setState({ modal: !this.state.modal });
   }
 
   render() {
     const actionLabel = T.translate(`${PREFIX}.actionLabel`);
     let iconClasses = classnames(
-      {'fa-lg': this.props.setAtLevel === PREFERENCES_LEVEL.NAMESPACE},
-      {'text-success': this.state.preferencesSaved}
+      { 'fa-lg': this.props.setAtLevel === PREFERENCES_LEVEL.NAMESPACE },
+      { 'text-success': this.state.preferencesSaved }
     );
     let tooltipID = `setpreferences-${this.namespace}`;
     if (this.props.entity) {
@@ -89,7 +91,7 @@ export default class SetPreferenceAction extends Component {
     return (
       <span className="btn btn-secondary btn-sm">
         <FastActionButton
-          icon='icon-wrench'
+          icon="icon-wrench"
           iconClasses={iconClasses}
           action={this.toggleModal}
           id={tooltipID}
@@ -105,18 +107,15 @@ export default class SetPreferenceAction extends Component {
           {actionLabel}
         </Tooltip>
 
-        {
-          this.state.modal ?
-            <SetPreferenceModal
-              isOpen={this.state.modal}
-              toggleModal={this.toggleModal}
-              entity={this.props.entity}
-              onSuccess={this.onSuccess}
-              setAtLevel={this.props.setAtLevel}
-            />
-          :
-            null
-        }
+        {this.state.modal ? (
+          <SetPreferenceModal
+            isOpen={this.state.modal}
+            toggleModal={this.toggleModal}
+            entity={this.props.entity}
+            onSuccess={this.onSuccess}
+            setAtLevel={this.props.setAtLevel}
+          />
+        ) : null}
       </span>
     );
   }
@@ -128,16 +127,16 @@ SetPreferenceAction.propTypes = {
     applicationId: PropTypes.string,
     uniqueId: PropTypes.string,
     type: PropTypes.oneOf(['application', 'program']).isRequired,
-    programType: PropTypes.string
+    programType: PropTypes.string,
   }),
   setAtLevel: PropTypes.string,
   modalIsOpen: PropTypes.func,
   onSuccess: PropTypes.func,
-  savedMessageState: PropTypes.bool
+  savedMessageState: PropTypes.bool,
 };
 
 SetPreferenceAction.defaultProps = {
   modalIsOpen: () => {},
   onSuccess: () => {},
-  savedMessageState: false
+  savedMessageState: false,
 };

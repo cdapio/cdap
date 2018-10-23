@@ -18,9 +18,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {INTERVAL_OPTIONS, MINUTE_OPTIONS, HOUR_OPTIONS_CLOCK, AM_PM_OPTIONS, ACTIONS as PipelineSchedulerActions} from 'components/PipelineScheduler/Store';
-import {updateCron} from 'components/PipelineScheduler/Store/ActionCreator';
-import {connect} from 'react-redux';
+import {
+  INTERVAL_OPTIONS,
+  MINUTE_OPTIONS,
+  HOUR_OPTIONS_CLOCK,
+  AM_PM_OPTIONS,
+  ACTIONS as PipelineSchedulerActions,
+} from 'components/PipelineScheduler/Store';
+import { updateCron } from 'components/PipelineScheduler/Store/ActionCreator';
+import { connect } from 'react-redux';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineScheduler.startingAt';
@@ -28,7 +34,7 @@ const PREFIX = 'features.PipelineScheduler.startingAt';
 const mapStateToStartingAtMinuteProps = (state) => {
   return {
     options: MINUTE_OPTIONS,
-    value: state.startingAtMinute
+    value: state.startingAtMinute,
   };
 };
 const mapDispatchToStartingAtMinuteProps = (dispatch) => {
@@ -37,18 +43,18 @@ const mapDispatchToStartingAtMinuteProps = (dispatch) => {
       dispatch({
         type: PipelineSchedulerActions.SET_STARTING_AT_MINUTE,
         payload: {
-          startingAtMinute: e.target.value
-        }
+          startingAtMinute: e.target.value,
+        },
       });
       updateCron();
-    }
+    },
   };
 };
 
 const mapStateToStartingAtHourProps = (state) => {
   return {
     options: HOUR_OPTIONS_CLOCK,
-    value: state.startingAtHour
+    value: state.startingAtHour,
   };
 };
 const mapDispatchToStartingAtHourProps = (dispatch) => {
@@ -57,18 +63,18 @@ const mapDispatchToStartingAtHourProps = (dispatch) => {
       dispatch({
         type: PipelineSchedulerActions.SET_STARTING_AT_HOUR,
         payload: {
-          startingAtHour: e.target.value
-        }
+          startingAtHour: e.target.value,
+        },
       });
       updateCron();
-    }
+    },
   };
 };
 
 const mapStateToStartingAtAMPMProps = (state) => {
   return {
     options: AM_PM_OPTIONS,
-    value: state.startingAtAMPM
+    value: state.startingAtAMPM,
   };
 };
 const mapDispatchToStartingAtAMPMProps = (dispatch) => {
@@ -77,11 +83,11 @@ const mapDispatchToStartingAtAMPMProps = (dispatch) => {
       dispatch({
         type: PipelineSchedulerActions.SET_STARTING_AT_AM_PM,
         payload: {
-          startingAtAMPM: e.target.value
-        }
+          startingAtAMPM: e.target.value,
+        },
       });
       updateCron();
-    }
+    },
   };
 };
 
@@ -100,11 +106,11 @@ const SelectStartingAtAMPM = connect(
 
 const mapStateToStartingAtComponentProps = (state) => {
   return {
-    intervalOption: state.intervalOption
+    intervalOption: state.intervalOption,
   };
 };
 
-const StartingAtComponent = ({intervalOption}) => {
+const StartingAtComponent = ({ intervalOption }) => {
   let SelectComponent;
 
   switch (intervalOption) {
@@ -132,22 +138,21 @@ const StartingAtComponent = ({intervalOption}) => {
       break;
   }
 
-  let shouldHideComponent = [INTERVAL_OPTIONS['5MIN'], INTERVAL_OPTIONS['10MIN'], INTERVAL_OPTIONS['30MIN']].indexOf(intervalOption) !== -1;
+  let shouldHideComponent =
+    [INTERVAL_OPTIONS['5MIN'], INTERVAL_OPTIONS['10MIN'], INTERVAL_OPTIONS['30MIN']].indexOf(
+      intervalOption
+    ) !== -1;
 
   return (
-    <div className={classnames('form-group row', {'invisible': shouldHideComponent})}>
-      <label className="col-xs-3 control-label">
-        {T.translate(`${PREFIX}.label`)}
-      </label>
-      <div className="col-xs-4 schedule-values-container">
-        {SelectComponent}
-      </div>
+    <div className={classnames('form-group row', { invisible: shouldHideComponent })}>
+      <label className="col-xs-3 control-label">{T.translate(`${PREFIX}.label`)}</label>
+      <div className="col-xs-4 schedule-values-container">{SelectComponent}</div>
     </div>
   );
 };
 
 StartingAtComponent.propTypes = {
-  intervalOption: PropTypes.string
+  intervalOption: PropTypes.string,
 };
 
 const ConnectedStartingAtComponent = connect(
@@ -155,9 +160,6 @@ const ConnectedStartingAtComponent = connect(
   null
 )(StartingAtComponent);
 
-
 export default function StartingAt() {
-  return (
-    <ConnectedStartingAtComponent />
-  );
+  return <ConnectedStartingAtComponent />;
 }

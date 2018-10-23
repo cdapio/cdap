@@ -21,10 +21,10 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {setPopoverOffset} from 'components/DataPrep/helper';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { setPopoverOffset } from 'components/DataPrep/helper';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import Mousetrap from 'mousetrap';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 
 require('./DefineVariable.scss');
 
@@ -39,19 +39,14 @@ export default class DefineVariableDirective extends Component {
       textFilter: '',
       customFilter: '',
       variableName: '',
-      selectedColumn: this.props.column
+      selectedColumn: this.props.column,
     };
 
     this.applyDirective = this.applyDirective.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.isApplyDisabled = this.isApplyDisabled.bind(this);
 
-    this.conditionsOptions = [
-      'TEXTEXACTLY',
-      'TEXTSTARTSWITH',
-      'TEXTENDSWITH',
-      'TEXTREGEX'
-    ];
+    this.conditionsOptions = ['TEXTEXACTLY', 'TEXTSTARTSWITH', 'TEXTENDSWITH', 'TEXTREGEX'];
   }
 
   componentWillMount() {
@@ -79,12 +74,14 @@ export default class DefineVariableDirective extends Component {
 
   handleStateValueChange(key, e) {
     this.setState({
-      [key]: e.target.value
+      [key]: e.target.value,
     });
   }
 
   handleKeyPress(e) {
-    if (e.nativeEvent.keyCode !== 13 || this.isApplyDisabled()) { return; }
+    if (e.nativeEvent.keyCode !== 13 || this.isApplyDisabled()) {
+      return;
+    }
 
     this.applyDirective();
   }
@@ -97,7 +94,9 @@ export default class DefineVariableDirective extends Component {
     let selectedColumn = this.state.selectedColumn;
     let directive;
 
-    if (!textValue || !variableName) { return; }
+    if (!textValue || !variableName) {
+      return;
+    }
 
     switch (this.state.selectedCondition) {
       case 'TEXTCONTAINS':
@@ -116,7 +115,9 @@ export default class DefineVariableDirective extends Component {
         directive = `${condition} ${variableName} ${column} =~ ${textValue} ? ${selectedColumn} : ${variableName}`;
         break;
       case 'CUSTOMCONDITION':
-        directive = `${condition} ${variableName} ${this.state.customFilter} ? ${selectedColumn} : ${variableName}`;
+        directive = `${condition} ${variableName} ${
+          this.state.customFilter
+        } ? ${selectedColumn} : ${variableName}`;
         break;
     }
 
@@ -125,30 +126,35 @@ export default class DefineVariableDirective extends Component {
 
   execute(addDirective) {
     Mousetrap.unbind('enter', this.applyDirective);
-    execute(addDirective)
-      .subscribe(() => {
+    execute(addDirective).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   isApplyDisabled() {
-    let disabled = this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0;
+    let disabled =
+      this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0;
     disabled = disabled || this.state.variableName.length === 0;
     return disabled;
   }
 
   renderCustomFilter() {
-    if (this.state.selectedCondition.substr(0, 6) !== 'CUSTOM') { return null; }
+    if (this.state.selectedCondition.substr(0, 6) !== 'CUSTOM') {
+      return null;
+    }
 
     return (
       <div className="condition-text-input">
@@ -156,7 +162,7 @@ export default class DefineVariableDirective extends Component {
           className="form-control"
           value={this.state.customFilter}
           onChange={this.handleStateValueChange.bind(this, 'customFilter')}
-          ref={ref => this.customFilterRef = ref}
+          ref={(ref) => (this.customFilterRef = ref)}
           placeholder={T.translate(`${PREFIX}.Placeholders.CUSTOMCONDITION`)}
         />
       </div>
@@ -164,7 +170,9 @@ export default class DefineVariableDirective extends Component {
   }
 
   renderTextFilter() {
-    if (this.state.selectedCondition.substr(0, 4) !== 'TEXT') { return null; }
+    if (this.state.selectedCondition.substr(0, 4) !== 'TEXT') {
+      return null;
+    }
 
     return (
       <div className="condition-text-input">
@@ -174,7 +182,7 @@ export default class DefineVariableDirective extends Component {
           value={this.state.textFilter}
           onChange={this.handleStateValueChange.bind(this, 'textFilter')}
           placeholder={T.translate(`${PREFIX}.Placeholders.${this.state.selectedCondition}`)}
-          ref={ref => this.textFilterRef = ref}
+          ref={(ref) => (this.textFilterRef = ref)}
           onKeyPress={this.handleKeyPress}
         />
       </div>
@@ -185,7 +193,7 @@ export default class DefineVariableDirective extends Component {
     let selectConditions = this.conditionsOptions.map((filter) => {
       return {
         filter: filter,
-        displayText: T.translate(`${PREFIX}.Conditions.${filter}`)
+        displayText: T.translate(`${PREFIX}.Conditions.${filter}`),
       };
     });
 
@@ -193,35 +201,23 @@ export default class DefineVariableDirective extends Component {
       <div>
         <div className="select-condition">
           <div className="condition-select">
-            <h5>
-              {T.translate(`${PREFIX}.step2`)}
-            </h5>
+            <h5>{T.translate(`${PREFIX}.step2`)}</h5>
 
-            <label className="control-label">
-              {T.translate(`${PREFIX}.if`)}
-            </label>
+            <label className="control-label">{T.translate(`${PREFIX}.if`)}</label>
             <div>
               <select
                 className="form-control mousetrap"
                 value={this.state.selectedCondition}
                 onChange={this.handleStateValueChange.bind(this, 'selectedCondition')}
               >
-                {
-                  selectConditions.map((condition) => {
-                    return (
-                      <option
-                        value={condition.filter}
-                        key={condition.filter}
-                      >
-                        {condition.displayText}
-                      </option>
-                    );
-                  })
-                }
-                <option
-                  disabled="disabled"
-                  role="separator"
-                >
+                {selectConditions.map((condition) => {
+                  return (
+                    <option value={condition.filter} key={condition.filter}>
+                      {condition.displayText}
+                    </option>
+                  );
+                })}
+                <option disabled="disabled" role="separator">
                   &#x2500;&#x2500;&#x2500;&#x2500;
                 </option>
                 <option value="CUSTOMCONDITION">
@@ -233,7 +229,6 @@ export default class DefineVariableDirective extends Component {
 
           {this.renderTextFilter()}
           {this.renderCustomFilter()}
-
         </div>
       </div>
     );
@@ -242,9 +237,7 @@ export default class DefineVariableDirective extends Component {
   renderVariableName() {
     return (
       <div>
-        <h5>
-          {T.translate(`${PREFIX}.step1`)}
-        </h5>
+        <h5>{T.translate(`${PREFIX}.step1`)}</h5>
 
         <div>
           <input
@@ -274,18 +267,13 @@ export default class DefineVariableDirective extends Component {
               value={this.state.selectedColumn}
               onChange={this.handleStateValueChange.bind(this, 'selectedColumn')}
             >
-              {
-                this.columnsList.map((column) => {
-                  return (
-                    <option
-                      value={column}
-                      key={column}
-                    >
-                      {column}
-                    </option>
-                  );
-                })
-              }
+              {this.columnsList.map((column) => {
+                return (
+                  <option value={column} key={column}>
+                    {column}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>
@@ -294,20 +282,20 @@ export default class DefineVariableDirective extends Component {
   }
 
   renderSummary() {
-    if (!this.state.textFilter || !this.state.variableName) { return null; }
+    if (!this.state.textFilter || !this.state.variableName) {
+      return null;
+    }
 
     return (
       <div className="summary">
-        <strong className="summary-label">
-          {T.translate(`${PREFIX}.summaryLabel`)}
-        </strong>
+        <strong className="summary-label">{T.translate(`${PREFIX}.summaryLabel`)}</strong>
         <span>
           {T.translate(`${PREFIX}.summaryText`, {
             variableName: this.state.variableName,
             condition: T.translate(`${PREFIX}.Conditions.${this.state.selectedCondition}`),
             value: this.state.textFilter,
             columnName: this.props.column,
-            selectedColumn: this.state.selectedColumn
+            selectedColumn: this.state.selectedColumn,
           })}
         </span>
       </div>
@@ -315,13 +303,12 @@ export default class DefineVariableDirective extends Component {
   }
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen) {
+      return null;
+    }
 
     return (
-      <div
-        className="set-variable-detail second-level-popover"
-        onClick={preventPropagation}
-      >
+      <div className="set-variable-detail second-level-popover" onClick={preventPropagation}>
         {this.renderVariableName()}
 
         <hr />
@@ -345,10 +332,7 @@ export default class DefineVariableDirective extends Component {
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.props.close}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
@@ -361,7 +345,7 @@ export default class DefineVariableDirective extends Component {
       <div
         id="set-variable-directive"
         className={classnames('set-variable-directive clearfix action-item', {
-          'active': this.state.isOpen
+          active: this.state.isOpen,
         })}
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
@@ -380,5 +364,5 @@ DefineVariableDirective.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

@@ -16,19 +16,19 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Actions} from 'components/FieldLevelLineage/store/Store';
+import { connect } from 'react-redux';
+import { Actions } from 'components/FieldLevelLineage/store/Store';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 
-function NavigationView({activeIndex, limit, prev, next}) {
+function NavigationView({ activeIndex, limit, prev, next }) {
   const prevDisabled = activeIndex === 0;
-  const nextDisabled = activeIndex === (limit - 1);
+  const nextDisabled = activeIndex === limit - 1;
 
   return (
     <div className="navigation">
       <span
-        className={classnames('nav-icon', { 'disabled': prevDisabled })}
+        className={classnames('nav-icon', { disabled: prevDisabled })}
         onClick={!prevDisabled ? prev : undefined}
       >
         <IconSVG name="icon-caret-left" />
@@ -37,7 +37,7 @@ function NavigationView({activeIndex, limit, prev, next}) {
       <span className="separator">of</span>
       <span>{limit}</span>
       <span
-        className={classnames('nav-icon', { 'disabled': nextDisabled })}
+        className={classnames('nav-icon', { disabled: nextDisabled })}
         onClick={!nextDisabled ? next : undefined}
       >
         <IconSVG name="icon-caret-right" />
@@ -50,13 +50,13 @@ NavigationView.propTypes = {
   next: PropTypes.func,
   prev: PropTypes.func,
   activeIndex: PropTypes.number,
-  limit: PropTypes.number
+  limit: PropTypes.number,
 };
 
 const mapStateToProps = (state) => {
   return {
     activeIndex: state.operations.activeIndex,
-    limit: state.operations.operations.length
+    limit: state.operations.operations.length,
   };
 };
 
@@ -64,14 +64,14 @@ const mapDispatch = (dispatch) => {
   return {
     next: () => {
       dispatch({
-        type: Actions.nextOperation
+        type: Actions.nextOperation,
       });
     },
     prev: () => {
       dispatch({
-        type: Actions.prevOperation
+        type: Actions.prevOperation,
       });
-    }
+    },
   };
 };
 

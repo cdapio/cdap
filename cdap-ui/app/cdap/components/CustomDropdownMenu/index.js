@@ -20,12 +20,8 @@ import React from 'react';
 import classNames from 'classnames';
 
 const CustomDropdownMenu = (props, context) => {
-  let { className, right, children, tag:Tag } = props;
-  const classes = classNames(
-    className,
-    'dropdown-menu',
-    { 'dropdown-menu-right': right }
-  );
+  let { className, right, children, tag: Tag } = props;
+  const classes = classNames(className, 'dropdown-menu', { 'dropdown-menu-right': right });
   Tag = Tag || 'ul';
   return (
     <Tag tabIndex="-1" aria-hidden={!context.isOpen} role="menu" className={classes}>
@@ -39,11 +35,11 @@ CustomDropdownMenu.propTypes = {
   right: PropTypes.bool,
   className: PropTypes.string,
   cssModule: PropTypes.object,
-  tag: PropTypes.oneOfType([PropTypes.func, PropTypes.string])
+  tag: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
 };
 CustomDropdownMenu.contextTypes = {
   isOpen: PropTypes.bool.isRequired,
-  right: PropTypes.bool
+  right: PropTypes.bool,
 };
 
 export default CustomDropdownMenu;

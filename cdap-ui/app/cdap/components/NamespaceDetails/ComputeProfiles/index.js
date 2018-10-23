@@ -14,16 +14,16 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {Link} from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Link } from 'react-router-dom';
 import ProfilesListView from 'components/Cloud/Profiles/ListView';
 import ProfilesStore from 'components/Cloud/Profiles/Store';
-import {importProfile} from 'components/Cloud/Profiles/Store/ActionCreator';
-import {connect, Provider} from 'react-redux';
-import {Label, Input} from 'reactstrap';
+import { importProfile } from 'components/Cloud/Profiles/Store/ActionCreator';
+import { connect, Provider } from 'react-redux';
+import { Label, Input } from 'reactstrap';
 
 require('./ComputeProfiles.scss');
 
@@ -31,15 +31,19 @@ const PREFIX = 'features.NamespaceDetails.computeProfiles';
 
 class NamespaceDetailsComputeProfiles extends Component {
   static propTypes = {
-    profilesCount: PropTypes.number
-  }
+    profilesCount: PropTypes.number,
+  };
 
   renderProfilesLabel() {
     let label;
     if (!this.props.profilesCount) {
       label = <strong>{T.translate(`${PREFIX}.label`)}</strong>;
     } else {
-      label = <strong>{T.translate(`${PREFIX}.labelWithCount`, {count: this.props.profilesCount})}</strong>;
+      label = (
+        <strong>
+          {T.translate(`${PREFIX}.labelWithCount`, { count: this.props.profilesCount })}
+        </strong>
+      );
     }
 
     return (
@@ -52,31 +56,21 @@ class NamespaceDetailsComputeProfiles extends Component {
           {T.translate(`${PREFIX}.create`)}
         </Link>
         <span> | </span>
-        <Label
-          className="import-profile-label"
-          for="import-profile"
-        >
+        <Label className="import-profile-label" for="import-profile">
           {T.translate(`${PREFIX}.import`)}
           {/* The onClick here is to clear the file, so if the user uploads the same file
           twice then we can show the error, instead of showing nothing */}
           <Input
             type="file"
-            accept='.json'
+            accept=".json"
             id="import-profile"
             onChange={importProfile.bind(this, getCurrentNamespace())}
-            onClick={(e) => e.target.value = null}
+            onClick={(e) => (e.target.value = null)}
           />
         </Label>
-        {
-          this.props.profilesCount ?
-            (
-              <p className="create-new-profile-description">
-                {T.translate(`${PREFIX}.description`)}
-              </p>
-            )
-          :
-            null
-        }
+        {this.props.profilesCount ? (
+          <p className="create-new-profile-description">{T.translate(`${PREFIX}.description`)}</p>
+        ) : null}
       </div>
     );
   }
@@ -85,9 +79,7 @@ class NamespaceDetailsComputeProfiles extends Component {
     return (
       <div className="namespace-details-compute-profiles">
         {this.renderProfilesLabel()}
-        <ProfilesListView
-          namespace={getCurrentNamespace()}
-        />
+        <ProfilesListView namespace={getCurrentNamespace()} />
       </div>
     );
   }
@@ -95,7 +87,7 @@ class NamespaceDetailsComputeProfiles extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    profilesCount: state.profiles.length
+    profilesCount: state.profiles.length,
   };
 };
 

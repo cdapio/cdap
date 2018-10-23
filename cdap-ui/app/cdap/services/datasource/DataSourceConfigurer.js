@@ -24,7 +24,7 @@ let DatasourceConfigurer = {
       console.trace();
       throw "'handlers' for Datasource should be an array";
     }
-  }
+  },
 };
 
 export default DatasourceConfigurer;

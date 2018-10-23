@@ -15,22 +15,24 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {PureComponent} from 'react';
+import React, { PureComponent } from 'react';
 import RuntimeArgsTabContent from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper';
-import {updatePreferences, runPipeline} from 'components/PipelineConfigurations/Store/ActionCreator';
+import {
+  updatePreferences,
+  runPipeline,
+} from 'components/PipelineConfigurations/Store/ActionCreator';
 import BtnWithLoading from 'components/BtnWithLoading';
 import PipelineRunTimeArgsCounter from 'components/PipelineDetails/PipelineRuntimeArgsCounter';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import isEmpty from 'lodash/isEmpty';
-import {convertKeyValuePairsToMap} from 'services/helpers';
+import { convertKeyValuePairsToMap } from 'services/helpers';
 import Popover from 'components/Popover';
 require('./RuntimeArgsModeless.scss');
 
 class RuntimeArgsModeless extends PureComponent {
-
   static propTypes = {
     runtimeArgs: PropTypes.object,
-    onClose: PropTypes.func.isRequired
+    onClose: PropTypes.func.isRequired,
   };
 
   state = {
@@ -38,37 +40,36 @@ class RuntimeArgsModeless extends PureComponent {
     savedSuccessMessage: null,
     savingAndRunBtnDisabled: this.isRuntimeArgsFilled(this.props.runtimeArgs),
     savingAndRun: false,
-    error: null
+    error: null,
   };
 
   componentWillReceiveProps(nextProps) {
-    let {runtimeArgs} = nextProps;
+    let { runtimeArgs } = nextProps;
     this.setState({
       savingAndRunBtnDisabled: this.isRuntimeArgsFilled(runtimeArgs),
-      savedSuccessMessage: null
+      savedSuccessMessage: null,
     });
   }
 
   isRuntimeArgsFilled(runtimeArgs) {
-    return runtimeArgs
-      .pairs
-      .filter(runtimearg => (
-        (!runtimearg.provided) &&
-        (!isEmpty(runtimearg.key) && isEmpty(runtimearg.value)) ||
-        (isEmpty(runtimearg.key) && !isEmpty(runtimearg.value))
-      ))
-      .length > 0;
+    return (
+      runtimeArgs.pairs.filter(
+        (runtimearg) =>
+          (!runtimearg.provided && (!isEmpty(runtimearg.key) && isEmpty(runtimearg.value))) ||
+          (isEmpty(runtimearg.key) && !isEmpty(runtimearg.value))
+      ).length > 0
+    );
   }
 
   toggleSaving = () => {
     this.setState({
-      saving: !this.state.saving
+      saving: !this.state.saving,
     });
   };
 
   toggleSavingAndRun = () => {
     this.setState({
-      savingAndRun: !this.state.savingAndRun
+      savingAndRun: !this.state.savingAndRun,
     });
   };
 
@@ -78,13 +79,13 @@ class RuntimeArgsModeless extends PureComponent {
       () => {
         this.setState({
           savedSuccessMessage: 'Runtime arguments saved successfully',
-          saving: false
+          saving: false,
         });
       },
       (err) => {
         this.setState({
           error: err.response || JSON.stringify(err),
-          saving: false
+          saving: false,
         });
       }
     );
@@ -92,8 +93,8 @@ class RuntimeArgsModeless extends PureComponent {
 
   saveRuntimeArgsAndRun = () => {
     this.toggleSavingAndRun();
-    let {runtimeArgs} = this.props;
-    runtimeArgs.pairs = runtimeArgs.pairs.filter(runtimeArg => !runtimeArg.provided);
+    let { runtimeArgs } = this.props;
+    runtimeArgs.pairs = runtimeArgs.pairs.filter((runtimeArg) => !runtimeArg.provided);
     let runtimeArgsMap = convertKeyValuePairsToMap(runtimeArgs.pairs);
     runPipeline(runtimeArgsMap);
     this.props.onClose();
@@ -124,32 +125,20 @@ class RuntimeArgsModeless extends PureComponent {
     };
     return (
       <div className="runtime-args-modeless">
-
         <RuntimeArgsTabContent />
         <div className="tab-footer">
           <div className="btns-container">
-            <Popover
-              target={SaveBtn}
-              placement="left"
-              showOn="Hover"
-            >
-              Changes to runtime arguments will be saved for all future runs of the pipeline.
-              This may impact any schedules and triggers configured for this pipeline.
+            <Popover target={SaveBtn} placement="left" showOn="Hover">
+              Changes to runtime arguments will be saved for all future runs of the pipeline. This
+              may impact any schedules and triggers configured for this pipeline.
             </Popover>
-            <Popover
-              target={RunBtn}
-              showOn="Hover"
-              placement="right"
-            >
-              Run the pipeline once with the runtime arguments set above.
-              Any changes made to the runtime arguments will be available only for the next run.
+            <Popover target={RunBtn} showOn="Hover" placement="right">
+              Run the pipeline once with the runtime arguments set above. Any changes made to the
+              runtime arguments will be available only for the next run.
             </Popover>
-            {
-              !isEmpty(this.state.savedSuccessMessage) ?
-                <span className="text-success">{this.state.savedSuccessMessage}</span>
-              :
-                null
-            }
+            {!isEmpty(this.state.savedSuccessMessage) ? (
+              <span className="text-success">{this.state.savedSuccessMessage}</span>
+            ) : null}
           </div>
           <PipelineRunTimeArgsCounter />
         </div>
@@ -160,7 +149,7 @@ class RuntimeArgsModeless extends PureComponent {
 
 const mapStateToProps = (state) => {
   return {
-    runtimeArgs: state.runtimeArgs
+    runtimeArgs: state.runtimeArgs,
   };
 };
 

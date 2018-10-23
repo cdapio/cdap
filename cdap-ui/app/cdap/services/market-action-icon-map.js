@@ -23,12 +23,12 @@ const iconMap = {
   informational: 'icon-info',
   load_datapack: 'icon-upload',
   load_app: 'icon-upload',
-  __default__: 'icon-tasks'
+  __default__: 'icon-tasks',
 };
 
 const getIcon = (action) => {
-  return (iconMap[action]) ? iconMap[action]: iconMap['__default__'];
+  return iconMap[action] ? iconMap[action] : iconMap['__default__'];
 };
 
 export default getIcon;
-export {iconMap};
+export { iconMap };

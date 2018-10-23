@@ -16,28 +16,26 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {connect} from 'react-redux';
-import {FormGroup, Label, Col, Input} from 'reactstrap';
+import { connect } from 'react-redux';
+import { FormGroup, Label, Col, Input } from 'reactstrap';
 import {
   onExperimentNameChange,
   onExperimentDescriptionChange,
   onExperimentOutcomeChange,
-  createExperiment
+  createExperiment,
 } from 'components/Experiments/store/CreateExperimentActionCreator';
-import {POPOVER_TYPES} from 'components/Experiments/store/createExperimentStore';
+import { POPOVER_TYPES } from 'components/Experiments/store/createExperimentStore';
 
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Experiments.CreateView';
 
-const ExperimentName = ({name, onNameChange}) => {
+const ExperimentName = ({ name, onNameChange }) => {
   return (
     <FormGroup row>
       <Col xs="12">
-        <Label className="control-label">
-          {T.translate(`${PREFIX}.experimentName`)}
-        </Label>
+        <Label className="control-label">{T.translate(`${PREFIX}.experimentName`)}</Label>
         <Input
           value={name}
           onChange={onNameChange}
@@ -49,16 +47,14 @@ const ExperimentName = ({name, onNameChange}) => {
 };
 ExperimentName.propTypes = {
   name: PropTypes.string,
-  onNameChange: PropTypes.func
+  onNameChange: PropTypes.func,
 };
 
-const ExperimentDescription = ({description, onDescriptionChange}) => {
+const ExperimentDescription = ({ description, onDescriptionChange }) => {
   return (
     <FormGroup row>
       <Col xs="12">
-        <Label className="control-label">
-          {T.translate('commons.descriptionLabel')}
-        </Label>
+        <Label className="control-label">{T.translate('commons.descriptionLabel')}</Label>
         <Input
           type="textarea"
           value={description}
@@ -71,29 +67,19 @@ const ExperimentDescription = ({description, onDescriptionChange}) => {
 };
 ExperimentDescription.propTypes = {
   description: PropTypes.string,
-  onDescriptionChange: PropTypes.func
+  onDescriptionChange: PropTypes.func,
 };
 
-const ExperimentOutcome = ({outcome, columns, onOutcomeChange}) => {
+const ExperimentOutcome = ({ outcome, columns, onOutcomeChange }) => {
   return (
     <FormGroup row>
       <Col xs="12">
-        <Label className="control-label">
-          {T.translate(`${PREFIX}.setOutcome`)}
-        </Label>
-        <Input
-          type="select"
-          value={outcome}
-          onChange={onOutcomeChange}
-        >
-          <option key="default">
-            {T.translate(`${PREFIX}.selectOutcome`)}
-          </option>
-          {
-            columns.map((column, i) => (
-              <option key={i}>{column}</option>
-            ))
-          }
+        <Label className="control-label">{T.translate(`${PREFIX}.setOutcome`)}</Label>
+        <Input type="select" value={outcome} onChange={onOutcomeChange}>
+          <option key="default">{T.translate(`${PREFIX}.selectOutcome`)}</option>
+          {columns.map((column, i) => (
+            <option key={i}>{column}</option>
+          ))}
         </Input>
       </Col>
     </FormGroup>
@@ -102,10 +88,10 @@ const ExperimentOutcome = ({outcome, columns, onOutcomeChange}) => {
 ExperimentOutcome.propTypes = {
   outcome: PropTypes.string,
   columns: PropTypes.arrayOf(PropTypes.object),
-  onOutcomeChange: PropTypes.func
+  onOutcomeChange: PropTypes.func,
 };
 
-const CreateExperimentBtn = ({state, createExperiment}) => {
+const CreateExperimentBtn = ({ state, createExperiment }) => {
   const isAddExperimentBtnEnabled = () => {
     return state.name.length && state.description.length && state.outcome.length;
   };
@@ -127,19 +113,17 @@ const CreateExperimentBtn = ({state, createExperiment}) => {
 };
 CreateExperimentBtn.propTypes = {
   state: PropTypes.object,
-  createExperiment: PropTypes.func
+  createExperiment: PropTypes.func,
 };
 
-const NewExperimentPopoverWrapper = ({popover, isEdit}) => {
+const NewExperimentPopoverWrapper = ({ popover, isEdit }) => {
   if (popover !== POPOVER_TYPES.EXPERIMENT || isEdit) {
     return null;
   }
   return (
     <div className="new-experiment-popover">
       <div className="popover-container">
-        <strong className="popover-heading">
-          {T.translate(`${PREFIX}.createNewExperiment`)}
-        </strong>
+        <strong className="popover-heading">{T.translate(`${PREFIX}.createNewExperiment`)}</strong>
         <ExperimentOutcomeWrapper />
         <hr />
         <ExperimentNameWrapper />
@@ -151,22 +135,46 @@ const NewExperimentPopoverWrapper = ({popover, isEdit}) => {
 };
 NewExperimentPopoverWrapper.propTypes = {
   popover: PropTypes.string,
-  isEdit: PropTypes.bool
+  isEdit: PropTypes.bool,
 };
 const mapDispatchToCreateExperimentBtnProps = () => ({ createExperiment });
-const mapStateToCreateExperimentBtnProps = (state) => ({ state: {...state.experiments_create} });
+const mapStateToCreateExperimentBtnProps = (state) => ({ state: { ...state.experiments_create } });
 const mapStateToNameProps = (state) => ({ name: state.experiments_create.name });
 const mapDispatchToNameProps = () => ({ onNameChange: onExperimentNameChange });
-const mapStateToDescriptionProps = (state) => ({ description: state.experiments_create.description });
-const mapDispatchToDescriptionToProps = () => ({ onDescriptionChange: onExperimentDescriptionChange });
-const mapStateToOutcomeProps = (state) => ({ outcome: state.experiments_create.outcome, columns: state.model_create.columns});
-const mapDispatchToOutcomeProps = () => ({onOutcomeChange: onExperimentOutcomeChange});
-const mapNEPWStateToProps = (state) => ({ popover: state.experiments_create.popover, isEdit: state.experiments_create.isEdit });
+const mapStateToDescriptionProps = (state) => ({
+  description: state.experiments_create.description,
+});
+const mapDispatchToDescriptionToProps = () => ({
+  onDescriptionChange: onExperimentDescriptionChange,
+});
+const mapStateToOutcomeProps = (state) => ({
+  outcome: state.experiments_create.outcome,
+  columns: state.model_create.columns,
+});
+const mapDispatchToOutcomeProps = () => ({ onOutcomeChange: onExperimentOutcomeChange });
+const mapNEPWStateToProps = (state) => ({
+  popover: state.experiments_create.popover,
+  isEdit: state.experiments_create.isEdit,
+});
 
-const ExperiementDescriptionWrapper = connect(mapStateToDescriptionProps, mapDispatchToDescriptionToProps)(ExperimentDescription);
-const ExperimentNameWrapper = connect(mapStateToNameProps, mapDispatchToNameProps)(ExperimentName);
-const ExperimentOutcomeWrapper = connect(mapStateToOutcomeProps, mapDispatchToOutcomeProps)(ExperimentOutcome);
-const ConnectedNewExperimentPopoverWrapper = connect(mapNEPWStateToProps)(NewExperimentPopoverWrapper);
-const ConnectedCreateExperimentBtn = connect(mapStateToCreateExperimentBtnProps, mapDispatchToCreateExperimentBtnProps)(CreateExperimentBtn);
+const ExperiementDescriptionWrapper = connect(
+  mapStateToDescriptionProps,
+  mapDispatchToDescriptionToProps
+)(ExperimentDescription);
+const ExperimentNameWrapper = connect(
+  mapStateToNameProps,
+  mapDispatchToNameProps
+)(ExperimentName);
+const ExperimentOutcomeWrapper = connect(
+  mapStateToOutcomeProps,
+  mapDispatchToOutcomeProps
+)(ExperimentOutcome);
+const ConnectedNewExperimentPopoverWrapper = connect(mapNEPWStateToProps)(
+  NewExperimentPopoverWrapper
+);
+const ConnectedCreateExperimentBtn = connect(
+  mapStateToCreateExperimentBtnProps,
+  mapDispatchToCreateExperimentBtnProps
+)(CreateExperimentBtn);
 
 export default ConnectedNewExperimentPopoverWrapper;

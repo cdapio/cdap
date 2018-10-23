@@ -22,27 +22,26 @@ import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
 import isObject from 'lodash/isObject';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 require('./RulesEngineServiceControl.scss');
 const PREFIX = 'features.RulesEngine.RulesEngineServiceControl';
 const RulesEngineArtifact = 'dre-service';
 
 export default class RulesEngineServiceControl extends Component {
-
   static propTypes = {
-    onServiceStart: PropTypes.func
+    onServiceStart: PropTypes.func,
   };
 
   state = {
     loading: false,
     error: null,
-    extendedError: null
+    extendedError: null,
   };
 
   enableRulesEngine = () => {
     this.setState({
-      loading: true
+      loading: true,
     });
 
     const featureName = Theme.featureNames.rulesEngine;
@@ -51,23 +50,18 @@ export default class RulesEngineServiceControl extends Component {
       artifactName: RulesEngineArtifact,
       api: MyRuleEngineApi,
       i18nPrefix: PREFIX,
-      featureName
-    })
-      .subscribe(
-        this.props.onServiceStart,
-        (err) => {
-          let extendedMessage = isObject(err.extendedMessage) ?
-            err.extendedMessage.response || err.extendedMessage.message
-          :
-            err.extendedMessage;
-          this.setState({
-            error: err.error,
-            extendedError: extendedMessage,
-            loading: false
-          });
-        }
-      );
-  }
+      featureName,
+    }).subscribe(this.props.onServiceStart, (err) => {
+      let extendedMessage = isObject(err.extendedMessage)
+        ? err.extendedMessage.response || err.extendedMessage.message
+        : err.extendedMessage;
+      this.setState({
+        error: err.error,
+        extendedError: extendedMessage,
+        loading: false,
+      });
+    });
+  };
 
   renderError = () => {
     if (!this.state.error) {
@@ -79,12 +73,10 @@ export default class RulesEngineServiceControl extends Component {
           <IconSVG name="icon-exclamation-triangle" />
           <span>{this.state.error}</span>
         </h5>
-        <p className="text-danger">
-          {this.state.extendedError}
-        </p>
+        <p className="text-danger">{this.state.extendedError}</p>
       </div>
     );
-  }
+  };
 
   renderEnableBtn = () => {
     const featureName = Theme.featureNames.rulesEngine;
@@ -95,13 +87,10 @@ export default class RulesEngineServiceControl extends Component {
           onClick={this.enableRulesEngine}
           disabled={this.state.loading}
         >
-          {
-            this.state.loading ?
-              <LoadingSVG />
-            :
-              null
-          }
-          <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`, { featureName })}</span>
+          {this.state.loading ? <LoadingSVG /> : null}
+          <span className="btn-label">
+            {T.translate(`${PREFIX}.enableBtnLabel`, { featureName })}
+          </span>
         </button>
       </div>
     );
@@ -119,9 +108,7 @@ export default class RulesEngineServiceControl extends Component {
           <h2> {T.translate(`${PREFIX}.title`, { featureName })} </h2>
           {this.renderEnableBtn()}
           {this.renderError()}
-          <p>
-            {T.translate(`${PREFIX}.description`, { featureName })}
-          </p>
+          <p>{T.translate(`${PREFIX}.description`, { featureName })}</p>
           <div className="rules-engine-benefit">
             {T.translate(`${PREFIX}.benefits.title`, { featureName })}
 

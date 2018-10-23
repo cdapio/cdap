@@ -33,7 +33,7 @@ const DataPrepActions = {
   dismissError: 'DATAPREP_DISMISS_ERROR',
   setHighlightColumns: 'DATAPREP_SET_HIGHLIGHT_COLUMNS',
   setColumnsInformation: 'DATAPREP_SET_COLUMNS_INFORMATION',
-  setWorkspaceList: 'DATAPREP_SET_WORKSPACE_LIST'
+  setWorkspaceList: 'DATAPREP_SET_WORKSPACE_LIST',
 };
 
 export default DataPrepActions;

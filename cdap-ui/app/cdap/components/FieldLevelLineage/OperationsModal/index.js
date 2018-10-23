@@ -16,8 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Actions} from 'components/FieldLevelLineage/store/Store';
+import { connect } from 'react-redux';
+import { Actions } from 'components/FieldLevelLineage/store/Store';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import LoadingSVG from 'components/LoadingSVG';
 import ModalContent from 'components/FieldLevelLineage/OperationsModal/ModalContent';
@@ -28,8 +28,10 @@ const PREFIX = 'features.FieldLevelLineage.OperationsModal';
 
 require('./OperationsModal.scss');
 
-function OperationsModalView({showOperations, loading, closeModal, fieldName, direction}) {
-  if (!showOperations) { return null; }
+function OperationsModalView({ showOperations, loading, closeModal, fieldName, direction }) {
+  if (!showOperations) {
+    return null;
+  }
 
   const loadingIndicator = (
     <div className="loading-container text-xs-center">
@@ -47,21 +49,14 @@ function OperationsModalView({showOperations, loading, closeModal, fieldName, di
       className="field-level-lineage-modal cdap-modal"
     >
       <ModalHeader>
-        <span>
-          {T.translate(`${PREFIX}.Title.${direction}`, { fieldName })}
-        </span>
+        <span>{T.translate(`${PREFIX}.Title.${direction}`, { fieldName })}</span>
 
-        <div
-          className="close-section float-xs-right"
-          onClick={closeModal}
-        >
+        <div className="close-section float-xs-right" onClick={closeModal}>
           <IconSVG name="icon-close" />
         </div>
       </ModalHeader>
 
-      <ModalBody>
-        { loading ? loadingIndicator : <ModalContent /> }
-      </ModalBody>
+      <ModalBody>{loading ? loadingIndicator : <ModalContent />}</ModalBody>
     </Modal>
   );
 }
@@ -87,9 +82,9 @@ const mapDispatch = (dispatch) => {
   return {
     closeModal: () => {
       dispatch({
-        type: Actions.closeOperations
+        type: Actions.closeOperations,
       });
-    }
+    },
   };
 };
 

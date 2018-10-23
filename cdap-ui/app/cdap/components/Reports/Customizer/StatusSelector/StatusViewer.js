@@ -17,8 +17,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {STATUS_OPTIONS} from 'components/Reports/store/ReportsStore';
-import {getStatusSelectionsLabels} from 'components/Reports/store/ActionCreator';
+import { STATUS_OPTIONS } from 'components/Reports/store/ReportsStore';
+import { getStatusSelectionsLabels } from 'components/Reports/store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Reports.Customizer.StatusSelector';
@@ -40,9 +40,7 @@ function StatusViewer(selections) {
 
   return (
     <div className="status-viewer">
-      <div className="status-text">
-        {text}
-      </div>
+      <div className="status-text">{text}</div>
 
       <div className="caret-dropdown">
         <IconSVG name="icon-caret-down" />
@@ -52,7 +50,7 @@ function StatusViewer(selections) {
 }
 
 StatusViewer.propTypes = {
-  selections: PropTypes.array
+  selections: PropTypes.array,
 };
 
 export default StatusViewer;

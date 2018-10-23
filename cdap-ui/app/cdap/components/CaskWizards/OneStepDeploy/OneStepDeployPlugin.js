@@ -20,14 +20,14 @@ import React, { Component } from 'react';
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
 import OneStepDeployActions from 'services/WizardStores/OneStepDeploy/OneStepDeployActions';
 import NamespaceStore from 'services/NamespaceStore';
-import {constructCdapUrl} from 'services/cdap-url-builder';
+import { constructCdapUrl } from 'services/cdap-url-builder';
 import 'whatwg-fetch';
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 import OneStepDeployWizard from 'components/CaskWizards/OneStepDeploy';
 import cookie from 'react-cookie';
 import T from 'i18n-react';
-import {MyMarketApi} from 'api/market';
-import {MyArtifactApi} from 'api/artifact';
+import { MyMarketApi } from 'api/market';
+import { MyArtifactApi } from 'api/artifact';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import isNil from 'lodash/isNil';
@@ -42,13 +42,13 @@ export default class OneStepDeployPlugin extends Component {
   componentWillMount() {
     OneStepDeployStore.dispatch({
       type: OneStepDeployActions.setName,
-      payload: this.props.input.package.label || this.props.input.package.name
+      payload: this.props.input.package.label || this.props.input.package.name,
     });
   }
 
   buildSuccessInfo(pluginName) {
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let message = T.translate('features.Wizard.PluginArtifact.success', {pluginName});
+    let message = T.translate('features.Wizard.PluginArtifact.success', { pluginName });
     let subtitle = T.translate('features.Wizard.PluginArtifact.subtitle');
     let buttonLabel = T.translate('features.Wizard.PluginArtifact.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
@@ -59,13 +59,13 @@ export default class OneStepDeployPlugin extends Component {
       buttonUrl: window.getHydratorUrl({
         stateName: 'hydrator.create',
         stateParams: {
-          namespace
-        }
+          namespace,
+        },
       }),
       linkLabel,
       linkUrl: window.getAbsUIUrl({
-        namespaceId: namespace
-      })
+        namespaceId: namespace,
+      }),
     };
     return successInfo;
   }
@@ -73,17 +73,11 @@ export default class OneStepDeployPlugin extends Component {
   publishPlugin() {
     const marketBasepath = `${window.CDAP_CONFIG.marketUrl}`;
 
-    const {
-      name,
-      version
-    } = this.props.input.package;
+    const { name, version } = this.props.input.package;
 
     const args = this.props.input.action.arguments;
 
-    let pluginName,
-        pluginVersion,
-        pluginConfig,
-        pluginJar;
+    let pluginName, pluginVersion, pluginConfig, pluginJar;
 
     args.forEach((arg) => {
       switch (arg.name) {
@@ -108,27 +102,26 @@ export default class OneStepDeployPlugin extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let cdapPath = constructCdapUrl({
-      _cdapPath: `/namespaces/${namespace}/artifacts/${pluginName}`
+      _cdapPath: `/namespaces/${namespace}/artifacts/${pluginName}`,
     });
     cdapPath = encodeURIComponent(cdapPath);
-
 
     return Observable.create((observer) => {
       MyMarketApi.getSampleData({
         entityName: name,
         entityVersion: version,
-        filename: pluginConfig
+        filename: pluginConfig,
       }).subscribe((res) => {
         let pluginJson = res;
 
-        let artifactExtends = pluginJson.parents.reduce( (prev, curr) => `${prev}/${curr}`);
+        let artifactExtends = pluginJson.parents.reduce((prev, curr) => `${prev}/${curr}`);
         let artifactPlugins = pluginJson.plugins || [];
 
         let headers = {
           'Content-Type': 'application/octet-stream',
           'Artifact-Version': pluginVersion,
           'Artifact-Extends': artifactExtends,
-          'Artifact-Plugins': artifactPlugins
+          'Artifact-Plugins': artifactPlugins,
         };
 
         if (window.CDAP_CONFIG.securityEnabled) {
@@ -143,22 +136,23 @@ export default class OneStepDeployPlugin extends Component {
         fetch(fetchUrl, {
           method: 'GET',
           headers: headers,
-          credentials: 'include'
+          credentials: 'include',
         })
           .then((res) => {
             if (res.status > 299) {
-              res.text()
-                .then((err) => {
-                  observer.error(err);
-                });
+              res.text().then((err) => {
+                observer.error(err);
+              });
             } else {
-              MyArtifactApi
-                .loadPluginConfiguration({
+              MyArtifactApi.loadPluginConfiguration(
+                {
                   namespace,
                   artifactId: pluginName,
-                  version: pluginVersion
-                }, pluginJson.properties)
-                .subscribe(() => {
+                  version: pluginVersion,
+                },
+                pluginJson.properties
+              ).subscribe(
+                () => {
                   let successInfo = this.buildSuccessInfo(pluginName);
 
                   if (this.props.buildSuccessInfo) {
@@ -167,19 +161,18 @@ export default class OneStepDeployPlugin extends Component {
                   this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
                   observer.next(successInfo);
                   observer.complete();
-                }, (error) => {
+                },
+                (error) => {
                   observer.error(error);
-                });
+                }
+              );
             }
           })
           .catch((err) => {
             observer.error(err);
           });
-
       });
-
     });
-
   }
 
   render() {
@@ -198,5 +191,5 @@ OneStepDeployPlugin.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,
-  buildSuccessInfo: PropTypes.func
+  buildSuccessInfo: PropTypes.func,
 };

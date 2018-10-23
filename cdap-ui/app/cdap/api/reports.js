@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 let dataSrc = DataSourceConfigurer.getInstance();
 
@@ -38,8 +38,10 @@ export const MyReportsApi = {
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${programPath}/start`),
   stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${programPath}/stop`),
   getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/status`),
-  pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`, { interval: 2000 }),
+  pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`, {
+    interval: 2000,
+  }),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', appPath),
   ping: apiCreator(dataSrc, 'GET', 'REQUEST', reportsPath),
-  deleteApp: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath)
+  deleteApp: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath),
 };

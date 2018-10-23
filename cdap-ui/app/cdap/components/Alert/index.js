@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import {Modal} from 'reactstrap';
+import { Modal } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 
 require('./Alert.scss');
@@ -27,7 +27,7 @@ export default class Alert extends Component {
     showAlert: this.props.showAlert || false,
     message: this.props.message,
     element: this.props.element,
-    type: this.props.type
+    type: this.props.type,
   };
 
   static propTypes = {
@@ -35,11 +35,7 @@ export default class Alert extends Component {
     message: PropTypes.string,
     element: PropTypes.node,
     onClose: PropTypes.func,
-    type: PropTypes.oneOf([
-      'success',
-      'error',
-      'info'
-    ])
+    type: PropTypes.oneOf(['success', 'error', 'info']),
   };
 
   successTimeout = null;
@@ -52,7 +48,7 @@ export default class Alert extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    let {showAlert, type, message, element} = nextProps;
+    let { showAlert, type, message, element } = nextProps;
     if (
       showAlert !== this.state.showAlert ||
       type !== this.state.type ||
@@ -62,7 +58,7 @@ export default class Alert extends Component {
         showAlert,
         type,
         message,
-        element
+        element,
       });
     }
     if (this.state.type === 'success') {
@@ -76,7 +72,7 @@ export default class Alert extends Component {
       showAlert: false,
       message: '',
       element: null,
-      type: ''
+      type: '',
     });
     if (this.props.onClose) {
       this.props.onClose();
@@ -89,10 +85,7 @@ export default class Alert extends Component {
       msgElem = <span className="message truncate">{this.state.element}</span>;
     } else if (this.state.message) {
       msgElem = (
-        <span
-          className="message truncate"
-          title={this.state.message}
-        >
+        <span className="message truncate" title={this.state.message}>
           {this.state.message}
         </span>
       );
@@ -104,14 +97,11 @@ export default class Alert extends Component {
         backdrop={false}
         keyboard={true}
         className="global-alert"
-        zIndex={1061/* This is required for showing error in angular side*/}
+        zIndex={1061 /* This is required for showing error in angular side*/}
       >
         <div className={this.state.type}>
           {msgElem}
-          <IconSVG
-            name="icon-close"
-            onClick={this.onClose}
-          />
+          <IconSVG name="icon-close" onClick={this.onClose} />
         </div>
       </Modal>
     );

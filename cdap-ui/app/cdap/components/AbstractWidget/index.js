@@ -14,7 +14,7 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import AbstractWidgetFactory from 'components/AbstractWidget/AbstractWidgetFactory';
 import StateWrapper from 'components/AbstractWidget/StateWrapper';
@@ -22,28 +22,24 @@ require('./AbstractWidget.scss');
 
 export const WIDGET_PROPTYPES = {
   widgetProps: PropTypes.object,
-  value: PropTypes.oneOfType([
-    PropTypes.array,
-    PropTypes.string,
-    PropTypes.number
-  ]),
+  value: PropTypes.oneOfType([PropTypes.array, PropTypes.string, PropTypes.number]),
   onChange: PropTypes.func,
-  extraConfig: PropTypes.object
+  extraConfig: PropTypes.object,
 };
 export const DEFAULT_WIDGET_PROPS = {
   widgetProps: {},
   value: '',
-  onChange: () => {}
+  onChange: () => {},
 };
 export default class AbstractWidget extends Component {
   static propTypes = {
     type: PropTypes.oneOf(Object.keys(AbstractWidgetFactory)),
-    ...WIDGET_PROPTYPES
+    ...WIDGET_PROPTYPES,
   };
 
   render() {
     let Comp = AbstractWidgetFactory[this.props.type];
-    let {size = 'large'} = this.props.widgetProps;
+    let { size = 'large' } = this.props.widgetProps;
     return (
       <div className={`abstract-widget-wrapper ${size}`}>
         <StateWrapper

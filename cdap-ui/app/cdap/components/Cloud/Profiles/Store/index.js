@@ -14,8 +14,8 @@
  * the License.
 */
 
-import {createStore} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 
 const PROFILES_ACTIONS = {
   SET_PROFILES: 'SET_PROFILES',
@@ -25,20 +25,20 @@ const PROFILES_ACTIONS = {
   SET_SCHEDULES_TRIGGERS_COUNT: 'SET_SCHEDULES_TRIGGERS_COUNT',
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
-  RESET: 'RESET'
+  RESET: 'RESET',
 };
 
 const DEFAULT_PROFILES_STATE = {
   profiles: [],
   defaultProfile: null,
-  newProfile: "",
+  newProfile: '',
   loading: false,
   error: null,
 };
 
 const PROFILE_STATUSES = {
   ENABLED: 'enabled',
-  DISABLED: 'disabled'
+  DISABLED: 'disabled',
 };
 
 const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
@@ -48,13 +48,13 @@ const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
         ...state,
         profiles: action.payload.profiles,
         error: null,
-        loading: false
+        loading: false,
       };
     case PROFILES_ACTIONS.SET_PROFILE_METRICS: {
-      let {profilesToMetricsMap} = action.payload;
-      let {profiles} = state;
-      profiles = profiles.map(profile => {
-        let metricObj = {runs: '--', minutes: '--'};
+      let { profilesToMetricsMap } = action.payload;
+      let { profiles } = state;
+      profiles = profiles.map((profile) => {
+        let metricObj = { runs: '--', minutes: '--' };
         let profileKey = `${profile.scope}:${profile.name}`;
         let profileMetrics = profilesToMetricsMap[profileKey] || {};
         /*
@@ -66,53 +66,53 @@ const profiles = (state = DEFAULT_PROFILES_STATE, action = defaultAction) => {
           ...profile,
           oneDayMetrics: metricObj,
           overAllMetrics: metricObj,
-          ...profileMetrics
+          ...profileMetrics,
         };
       });
       return {
         ...state,
-        profiles
+        profiles,
       };
     }
     case PROFILES_ACTIONS.SET_SCHEDULES_TRIGGERS_COUNT: {
-      let {profile: profileToUpdate, schedulesCount, triggersCount} = action.payload;
-      let {profiles} = state;
-      profiles = profiles.map(profile => {
+      let { profile: profileToUpdate, schedulesCount, triggersCount } = action.payload;
+      let { profiles } = state;
+      profiles = profiles.map((profile) => {
         if (profile.name === profileToUpdate) {
           return {
             ...profile,
             schedulesCount,
-            triggersCount
+            triggersCount,
           };
         }
         return profile;
       });
       return {
         ...state,
-        profiles
+        profiles,
       };
     }
     case PROFILES_ACTIONS.SET_DEFAULT_PROFILE:
       return {
         ...state,
-        defaultProfile: action.payload.defaultProfile
+        defaultProfile: action.payload.defaultProfile,
       };
     case PROFILES_ACTIONS.SET_NEW_PROFILE:
       return {
         ...state,
-        newProfile: action.payload.newProfile
+        newProfile: action.payload.newProfile,
       };
     case PROFILES_ACTIONS.SET_LOADING:
       return {
         ...state,
         error: null,
-        loading: action.payload.loading
+        loading: action.payload.loading,
       };
     case PROFILES_ACTIONS.SET_ERROR:
       return {
         ...state,
         error: action.payload.error,
-        loading: false
+        loading: false,
       };
     case PROFILES_ACTIONS.RESET:
       return DEFAULT_PROFILES_STATE;
@@ -128,4 +128,4 @@ const ProfilesStore = createStore(
 );
 
 export default ProfilesStore;
-export {PROFILES_ACTIONS, PROFILE_STATUSES};
+export { PROFILES_ACTIONS, PROFILE_STATUSES };

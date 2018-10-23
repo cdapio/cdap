@@ -14,20 +14,20 @@
  * the License.
 */
 
-import {createStore, combineReducers} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore, combineReducers } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 const PIPELINESSUMMARYACTIONS = {
   SETRUNS: 'SETRUNS',
   SETMETRICS: 'SETMETRICS',
   SETLOADING: 'SETLOADING',
   SETNODEMETRICSLOADING: 'SETNODEMETRICSLOADING',
-  SETNODESMETRICSMAP: 'SETNODESMETRICSMAP'
+  SETNODESMETRICSMAP: 'SETNODESMETRICSMAP',
 };
 const defaultRunsSummary = {
   runs: [],
   nodesMap: {},
   loading: false,
-  nodeMetricsLoading: false
+  nodeMetricsLoading: false,
 };
 
 const pipelinerunssummary = (state = defaultRunsSummary, action = defaultAction) => {
@@ -35,22 +35,22 @@ const pipelinerunssummary = (state = defaultRunsSummary, action = defaultAction)
     case PIPELINESSUMMARYACTIONS.SETRUNS:
       return Object.assign({}, state, {
         runs: action.payload.runs || [],
-        loading: false
+        loading: false,
       });
     case PIPELINESSUMMARYACTIONS.SETNODESMETRICSMAP:
       return Object.assign({}, state, {
         nodesMap: action.payload.nodesMap,
-        nodeMetricsLoading: false
+        nodeMetricsLoading: false,
       });
     case PIPELINESSUMMARYACTIONS.SETNODEMETRICSLOADING:
       return Object.assign({}, state, {
-        nodeMetricsLoading: action.payload.nodemetricsloading
+        nodeMetricsLoading: action.payload.nodemetricsloading,
       });
     case PIPELINESSUMMARYACTIONS.SETLOADING:
       return Object.assign({}, state, {
         loading: action.payload.loading,
         runs: [],
-        nodesMap: {}
+        nodesMap: {},
       });
     default:
       return state;
@@ -59,13 +59,13 @@ const pipelinerunssummary = (state = defaultRunsSummary, action = defaultAction)
 
 const PipelineSummaryStore = createStore(
   combineReducers({
-    pipelinerunssummary
+    pipelinerunssummary,
   }),
   {
-    pipelinerunssummary: defaultRunsSummary
+    pipelinerunssummary: defaultRunsSummary,
   },
   composeEnhancers('PipelineSummaryStore')()
 );
 
-export {PIPELINESSUMMARYACTIONS};
+export { PIPELINESSUMMARYACTIONS };
 export default PipelineSummaryStore;

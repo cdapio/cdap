@@ -14,14 +14,14 @@
  * the License.
  */
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
-import {MyStreamApi} from 'api/stream';
+import { MyStreamApi } from 'api/stream';
 import NamespaceStore from 'services/NamespaceStore';
 
 const PublishStream = () => {
   let state = CreateStreamStore.getState();
   let urlParams = {
     namespace: NamespaceStore.getState().selectedNamespace,
-    streamId: state.general.name
+    streamId: state.general.name,
   };
   let putParams = {};
   if (state.general.ttl) {
@@ -42,8 +42,7 @@ const PublishStream = () => {
     putParams.description = state.general.description;
   }
 
-  return MyStreamApi
-    .create(urlParams, putParams);
+  return MyStreamApi.create(urlParams, putParams);
 };
 
-export {PublishStream};
+export { PublishStream };

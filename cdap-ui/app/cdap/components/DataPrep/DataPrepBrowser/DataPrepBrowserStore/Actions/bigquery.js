@@ -14,54 +14,60 @@
  * the License.
  */
 
-import {setActiveBrowser, setError} from './commons';
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { setActiveBrowser, setError } from './commons';
+import DataPrepBrowserStore, {
+  Actions as BrowserStoreActions,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 const setBigQueryAsActiveBrowser = (payload, getDatasets = false) => {
-  let {bigquery, activeBrowser} = DataPrepBrowserStore.getState();
+  let { bigquery, activeBrowser } = DataPrepBrowserStore.getState();
 
   if (activeBrowser.name !== payload.name) {
     setActiveBrowser(payload);
   }
 
-  let {id: connectionId} = payload;
+  let { id: connectionId } = payload;
 
-  if (bigquery.connectionId === connectionId) { return; }
+  if (bigquery.connectionId === connectionId) {
+    return;
+  }
 
   setBigQueryLoading();
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_BIGQUERY_CONNECTION_ID,
     payload: {
-      connectionId
-    }
+      connectionId,
+    },
   });
 
   let namespace = getCurrentNamespace();
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
 
-  MyDataPrepApi.getConnection(params)
-    .subscribe((res) => {
+  MyDataPrepApi.getConnection(params).subscribe(
+    (res) => {
       let info = objectQuery(res, 'values', 0);
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_BIGQUERY_CONNECTION_DETAILS,
         payload: {
           info,
-          connectionId
-        }
+          connectionId,
+        },
       });
       if (getDatasets) {
         listBiqQueryDatasets(connectionId);
       }
-    }, (err) => {
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const listBiqQueryDatasets = (connectionId) => {
@@ -69,20 +75,22 @@ const listBiqQueryDatasets = (connectionId) => {
   let namespace = getCurrentNamespace();
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
 
-  MyDataPrepApi.bigQueryGetDatasets(params)
-    .subscribe((res) => {
+  MyDataPrepApi.bigQueryGetDatasets(params).subscribe(
+    (res) => {
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_BIGQUERY_DATASET_LIST,
         payload: {
-          datasetList: res.values
-        }
+          datasetList: res.values,
+        },
       });
-    }, (err) => {
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const listBigQueryTables = (connectionId, datasetId) => {
@@ -91,32 +99,29 @@ const listBigQueryTables = (connectionId, datasetId) => {
   let params = {
     namespace,
     connectionId,
-    datasetId
+    datasetId,
   };
 
-  MyDataPrepApi.bigQueryGetTables(params)
-    .subscribe((res) => {
+  MyDataPrepApi.bigQueryGetTables(params).subscribe(
+    (res) => {
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_BIGQUERY_TABLE_LIST,
         payload: {
           datasetId,
-          tableList: res.values
-        }
+          tableList: res.values,
+        },
       });
-    }, (err) => {
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const setBigQueryLoading = () => {
   DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_BIGQUERY_LOADING
+    type: BrowserStoreActions.SET_BIGQUERY_LOADING,
   });
 };
 
-export {
-  setBigQueryAsActiveBrowser,
-  listBiqQueryDatasets,
-  listBigQueryTables,
-  setBigQueryLoading
-};
+export { setBigQueryAsActiveBrowser, listBiqQueryDatasets, listBigQueryTables, setBigQueryLoading };

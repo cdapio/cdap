@@ -22,12 +22,16 @@ const OneStepDeployAppConfig = {
   steps: [
     {
       id: 'one_step_deploy_app',
-      shorttitle: T.translate('features.Wizard.OneStepDeploy.Step1.shorttitle', {entityType: 'Application'}),
+      shorttitle: T.translate('features.Wizard.OneStepDeploy.Step1.shorttitle', {
+        entityType: 'Application',
+      }),
       title: T.translate('features.Wizard.OneStepDeploy.Step1.title'),
-      description: T.translate('features.Wizard.OneStepDeploy.Step1.description', {entityType: 'Application'}),
-      content: (<Deploy />),
-    }
-  ]
+      description: T.translate('features.Wizard.OneStepDeploy.Step1.description', {
+        entityType: 'Application',
+      }),
+      content: <Deploy />,
+    },
+  ],
 };
 
 export default OneStepDeployAppConfig;

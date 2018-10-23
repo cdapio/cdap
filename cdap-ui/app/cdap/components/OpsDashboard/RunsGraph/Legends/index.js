@@ -17,8 +17,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {connect} from 'react-redux';
-import {ViewByOptions} from 'components/OpsDashboard/store/DashboardStore';
+import { connect } from 'react-redux';
+import { ViewByOptions } from 'components/OpsDashboard/store/DashboardStore';
 import ViewByOptionSelector from 'components/OpsDashboard/RunsGraph/Legends/ViewByOptionSelector';
 import T from 'i18n-react';
 
@@ -30,18 +30,12 @@ function StartMethodLegends() {
   return (
     <div className="start-method-legends">
       <div className="legend">
-        <IconSVG
-          name="icon-square-full"
-          className="manual"
-        />
+        <IconSVG name="icon-square-full" className="manual" />
         <span>{T.translate(`${PREFIX}.manuallyStarted`)}</span>
       </div>
 
       <div className="legend">
-        <IconSVG
-          name="icon-square-full"
-          className="schedule"
-        />
+        <IconSVG name="icon-square-full" className="schedule" />
         <span>{T.translate(`${PREFIX}.scheduledTriggered`)}</span>
       </div>
     </div>
@@ -52,26 +46,17 @@ function StatusLegends() {
   return (
     <div className="status-legends">
       <div className="legend">
-        <IconSVG
-          name="icon-square-full"
-          className="running"
-        />
+        <IconSVG name="icon-square-full" className="running" />
         <span>{T.translate(`${PREFIX}.running`)}</span>
       </div>
 
       <div className="legend">
-        <IconSVG
-          name="icon-square-full"
-          className="succeeded"
-        />
+        <IconSVG name="icon-square-full" className="succeeded" />
         <span>{T.translate(`${PREFIX}.successful`)}</span>
       </div>
 
       <div className="legend">
-        <IconSVG
-          name="icon-square-full"
-          className="failed"
-        />
+        <IconSVG name="icon-square-full" className="failed" />
         <span>{T.translate(`${PREFIX}.failed`)}</span>
       </div>
     </div>
@@ -81,12 +66,7 @@ function StatusLegends() {
 function renderLegendsByOption(viewByOption) {
   return (
     <div className="legends-by-option">
-      {
-        viewByOption === ViewByOptions.startMethod ?
-          <StartMethodLegends />
-        :
-          <StatusLegends />
-      }
+      {viewByOption === ViewByOptions.startMethod ? <StartMethodLegends /> : <StatusLegends />}
     </div>
   );
 }
@@ -94,16 +74,13 @@ function renderLegendsByOption(viewByOption) {
 function renderDelayLegend() {
   return (
     <div className="delay-legend">
-      <img
-        src="/cdap_assets/img/delay-legend-icon.png"
-        className="delay"
-      />
+      <img src="/cdap_assets/img/delay-legend-icon.png" className="delay" />
       <span>{T.translate(`${PREFIX}.delay`)}</span>
     </div>
   );
 }
 
-function LegendsView({viewByOption}) {
+function LegendsView({ viewByOption }) {
   return (
     <div className="legends-and-selector">
       <ViewByOptionSelector />
@@ -114,17 +91,15 @@ function LegendsView({viewByOption}) {
 }
 
 LegendsView.propTypes = {
-  viewByOption: PropTypes.string
+  viewByOption: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {
   return {
-    viewByOption: state.dashboard.viewByOption
+    viewByOption: state.dashboard.viewByOption,
   };
 };
 
-const Legends = connect(
-  mapStateToProps
-)(LegendsView);
+const Legends = connect(mapStateToProps)(LegendsView);
 
 export default Legends;

@@ -29,10 +29,10 @@ const WIDGET_FACTORY = {
   select: SelectWidget,
   'memory-dropdown': MemorySelectWidget,
   'memory-textbox': MemoryTextbox,
-  'securekey-textarea': SecureKeyTextarea
+  'securekey-textarea': SecureKeyTextarea,
 };
 export default new Proxy(WIDGET_FACTORY, {
-  get: function (obj, prop) {
+  get: function(obj, prop) {
     return prop in obj ? obj[prop] : DefaultInput;
-  }
+  },
 });

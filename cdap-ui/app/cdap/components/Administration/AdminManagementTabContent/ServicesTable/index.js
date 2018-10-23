@@ -14,7 +14,7 @@
 * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import SystemServicesStore from 'services/SystemServicesStore';
 import isEqual from 'lodash/isEqual';
 import SortableStickyTable from 'components/SortableStickyTable';
@@ -23,7 +23,7 @@ import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import Datasource from 'services/datasource';
 import LoadingSVG from 'components/LoadingSVG';
-import {MyServiceProviderApi} from 'api/serviceproviders';
+import { MyServiceProviderApi } from 'api/serviceproviders';
 import TextboxOnValium from 'components/TextboxOnValium';
 import Alert from 'components/Alert';
 
@@ -41,49 +41,49 @@ const DEFAULTSERVICES = [
   'metrics',
   'metrics.processor',
   'streams',
-  'transaction'
+  'transaction',
 ];
 const tableHeaders = [
   {
     label: T.translate(`${ADMINPREFIX}.headers.status`),
-    property: 'status'
+    property: 'status',
   },
   {
     label: T.translate(`${ADMINPREFIX}.headers.name`),
     property: 'name',
-    defaultSortby: true
+    defaultSortby: true,
   },
   {
     label: T.translate(`${ADMINPREFIX}.headers.provisioned`),
-    property: 'provisioned'
+    property: 'provisioned',
   },
   {
     label: T.translate(`${ADMINPREFIX}.headers.requested`),
-    property: 'requested'
+    property: 'requested',
   },
   {
     label: '',
-    property: ''
-  }
+    property: '',
+  },
 ];
 export default class ServicesTable extends Component {
   state = {
     services: SystemServicesStore.getState().services.list,
     showAlert: false,
     alertType: null,
-    alertMessage: null
+    alertMessage: null,
   };
 
   servicePolls = [];
 
   resetEditInstances = () => {
     let services = [...this.state.services];
-    services = services.map(service => {
+    services = services.map((service) => {
       service.editInstance = false;
       return service;
     });
     this.setState({
-      services
+      services,
     });
   };
 
@@ -92,16 +92,16 @@ export default class ServicesTable extends Component {
       return;
     }
     let services = [...this.state.services];
-    services = services.map(service => {
+    services = services.map((service) => {
       if (serviceName === service.name) {
         return Object.assign({}, service, {
-          editInstance: true
+          editInstance: true,
         });
       }
       return service;
     });
     this.setState({
-      services
+      services,
     });
   };
 
@@ -109,7 +109,7 @@ export default class ServicesTable extends Component {
     this.setState({
       showAlert: false,
       alertType: null,
-      alertMessage: null
+      alertMessage: null,
     });
   };
 
@@ -119,19 +119,17 @@ export default class ServicesTable extends Component {
       this.resetEditInstances();
       return;
     }
-    MyServiceProviderApi
-      .setProvisions({serviceid}, {instances : value})
-      .subscribe(
-        () => {},
-        (err) => {
-          this.resetEditInstances();
-          this.setState({
-            showAlert: true,
-            alertType: 'error',
-            alertMessage: err.response
-          });
-        }
-      );
+    MyServiceProviderApi.setProvisions({ serviceid }, { instances: value }).subscribe(
+      () => {},
+      (err) => {
+        this.resetEditInstances();
+        this.setState({
+          showAlert: true,
+          alertType: 'error',
+          alertMessage: err.response,
+        });
+      }
+    );
   };
 
   /*
@@ -146,37 +144,36 @@ export default class ServicesTable extends Component {
   */
 
   fetchServiceStatus = (serviceid) => {
-
     const setDefaultStatus = (serviceid) => {
       let services = [...this.state.services];
-      let isServiceAlreadyExist = this.state.services.find(service => service.name === serviceid);
+      let isServiceAlreadyExist = this.state.services.find((service) => service.name === serviceid);
       if (!isServiceAlreadyExist) {
         services.push({
           name: serviceid,
-          status: 'NOTOK'
+          status: 'NOTOK',
         });
       } else {
-        services = services.map(service => {
+        services = services.map((service) => {
           if (service.name === serviceid) {
             service.status = 'NOTOK';
           }
           return service;
         });
       }
-      this.setState({services});
+      this.setState({ services });
     };
 
-    const setDefaultInstance = (serviceid, {requested = '--', provisioned = '--'} = {}) => {
+    const setDefaultInstance = (serviceid, { requested = '--', provisioned = '--' } = {}) => {
       let services = [...this.state.services];
-      let isServiceAlreadyExist = this.state.services.find(service => service.name === serviceid);
+      let isServiceAlreadyExist = this.state.services.find((service) => service.name === serviceid);
       if (!isServiceAlreadyExist) {
         services.push({
           name: serviceid,
           requested,
-          provisioned
+          provisioned,
         });
       } else {
-        services = services.map(service => {
+        services = services.map((service) => {
           if (service.name === serviceid) {
             service.requested = requested;
             service.provisioned = provisioned;
@@ -184,62 +181,61 @@ export default class ServicesTable extends Component {
           return service;
         });
       }
-      this.setState({services});
+      this.setState({ services });
     };
 
-    let serviceTimeout = setTimeout(() => setDefaultStatus(serviceid), WAITTIME_FOR_ALTERNATE_STATUS);
-
-    this.servicePolls.forEach(servicePoll => servicePoll.unsubscribe());
-    this.servicePolls.push(
-      MyServiceProviderApi
-        .pollServiceStatus({serviceid})
-        .subscribe(
-          (res) => {
-            clearTimeout(serviceTimeout);
-            let services = [...this.state.services];
-            services = services.map(service => {
-              if (service.name == serviceid) {
-                service.status = res.staus;
-              }
-              return service;
-            });
-            this.setState({services});
-          },
-          () => {
-            setDefaultStatus(serviceid);
-          }
-        )
+    let serviceTimeout = setTimeout(
+      () => setDefaultStatus(serviceid),
+      WAITTIME_FOR_ALTERNATE_STATUS
     );
-    MyServiceProviderApi
-      .getInstances({serviceid})
-      .subscribe(
-        res => {
-          setDefaultInstance(serviceid, res);
+
+    this.servicePolls.forEach((servicePoll) => servicePoll.unsubscribe());
+    this.servicePolls.push(
+      MyServiceProviderApi.pollServiceStatus({ serviceid }).subscribe(
+        (res) => {
+          clearTimeout(serviceTimeout);
+          let services = [...this.state.services];
+          services = services.map((service) => {
+            if (service.name == serviceid) {
+              service.status = res.staus;
+            }
+            return service;
+          });
+          this.setState({ services });
         },
         () => {
-          setDefaultInstance(serviceid);
+          setDefaultStatus(serviceid);
         }
-      );
+      )
+    );
+    MyServiceProviderApi.getInstances({ serviceid }).subscribe(
+      (res) => {
+        setDefaultInstance(serviceid, res);
+      },
+      () => {
+        setDefaultInstance(serviceid);
+      }
+    );
   };
 
   // This is when backend does not return for /system/services call
   // Make calls to individual services to get their status
   fetchStatusFromIndividualServices = () => {
-    DEFAULTSERVICES.forEach(service => this.fetchServiceStatus(service));
-  }
+    DEFAULTSERVICES.forEach((service) => this.fetchServiceStatus(service));
+  };
 
   componentDidMount() {
     this.systemServicesSubscription = SystemServicesStore.subscribe(() => {
-      let {list:services, __error} = SystemServicesStore.getState().services;
+      let { list: services, __error } = SystemServicesStore.getState().services;
       if (__error) {
         this.fetchStatusFromIndividualServices();
         return;
       }
       if (!isEqual(services, this.state.services)) {
         this.setState({
-          services
+          services,
         });
-        this.servicePolls.forEach(servicePoll => servicePoll.unsubscribe());
+        this.servicePolls.forEach((servicePoll) => servicePoll.unsubscribe());
       }
     });
   }
@@ -254,58 +250,59 @@ export default class ServicesTable extends Component {
     return (
       <table className="table-sm">
         <tbody>
-          {
-            services.map((service, i) => {
-               let logUrl = Datasource.constructUrl({
-                _cdapPath : `/system/services/${service.name}/logs`
-              });
+          {services.map((service, i) => {
+            let logUrl = Datasource.constructUrl({
+              _cdapPath: `/system/services/${service.name}/logs`,
+            });
 
-              logUrl = `/downloadLogs?type=raw&backendUrl=${encodeURIComponent(logUrl)}`;
+            logUrl = `/downloadLogs?type=raw&backendUrl=${encodeURIComponent(logUrl)}`;
 
-              return (
-                <tr key={service.name}>
-                  <td>
-                    <span className="status-circle">
-                      <IconSVG
-                        name="icon-circle"
-                        className={classnames({
-                          "text-success": service.status === 'OK',
-                          "text-danger": service.status === 'NOTOK'
-                        })}
+            return (
+              <tr key={service.name}>
+                <td>
+                  <span className="status-circle">
+                    <IconSVG
+                      name="icon-circle"
+                      className={classnames({
+                        'text-success': service.status === 'OK',
+                        'text-danger': service.status === 'NOTOK',
+                      })}
+                    />
+                  </span>
+                </td>
+                <td>
+                  <span>{T.translate(`${ADMINPREFIX}.${service.name.replace(/\./g, '_')}`)}</span>
+                </td>
+                <td>
+                  <span>{service.provisioned || '--'}</span>
+                </td>
+                <td>
+                  <span
+                    onClick={this.editRequestedServiceInstance.bind(this, service.name, i)}
+                    className="request-instances"
+                  >
+                    {service.editInstance ? (
+                      <TextboxOnValium
+                        className="form-control"
+                        value={service.requested}
+                        onBlur={this.resetEditInstances}
+                        onChange={this.serviceInstanceRequested.bind(this, service.name, i)}
                       />
-                    </span>
-                  </td>
-                  <td>
-                    <span>{T.translate(`${ADMINPREFIX}.${service.name.replace(/\./g, '_')}`)}</span>
-                  </td>
-                  <td>
-                    <span>{service.provisioned || '--'}</span>
-                  </td>
-                  <td>
-                    <span
-                      onClick={this.editRequestedServiceInstance.bind(this, service.name, i)}
-                      className="request-instances"
-                    >
-                      {
-                        service.editInstance ?
-                          <TextboxOnValium
-                            className="form-control"
-                            value={service.requested}
-                            onBlur={this.resetEditInstances}
-                            onChange={this.serviceInstanceRequested.bind(this, service.name, i)}
-                          />
-                        :
-                          <span className="requested-instances-holder">{service.requested || '--'}</span>
-                      }
-                    </span>
-                  </td>
-                  <td>
-                    <a href={logUrl} target="_blank">{T.translate(`${ADMINPREFIX}.viewlogs`)}</a>
-                  </td>
-                </tr>
-              );
-            })
-          }
+                    ) : (
+                      <span className="requested-instances-holder">
+                        {service.requested || '--'}
+                      </span>
+                    )}
+                  </span>
+                </td>
+                <td>
+                  <a href={logUrl} target="_blank">
+                    {T.translate(`${ADMINPREFIX}.viewlogs`)}
+                  </a>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     );
@@ -337,4 +334,3 @@ export default class ServicesTable extends Component {
     );
   }
 }
-

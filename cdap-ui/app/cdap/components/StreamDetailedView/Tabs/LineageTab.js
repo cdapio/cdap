@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 
-export default function LineageTab({entity}) {
+export default function LineageTab({ entity }) {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let url = window.getTrackerUrl({
@@ -28,8 +28,8 @@ export default function LineageTab({entity}) {
       namespace,
       entityType: 'streams',
       entityId: entity.id,
-      iframe: true
-    }
+      iframe: true,
+    },
   });
   let encodedSource = encodeURIComponent(url);
   url += `&sourceUrl=${encodedSource}`;
@@ -42,12 +42,11 @@ export default function LineageTab({entity}) {
         width="100%"
         height="100%"
         className="embed-responsive-item"
-      >
-      </iframe>
+      />
     </div>
   );
 }
 
 LineageTab.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
 };

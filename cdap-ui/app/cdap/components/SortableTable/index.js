@@ -26,7 +26,8 @@ export default class SortableTable extends Component {
     entities: this.props.entities,
     sortByHeader: '',
     sortOrder: 'asc',
-    sortOnInitialLoad: typeof this.props.sortOnInitialLoad !== 'boolean' ? true : this.props.sortOnInitialLoad
+    sortOnInitialLoad:
+      typeof this.props.sortOnInitialLoad !== 'boolean' ? true : this.props.sortOnInitialLoad,
   };
 
   componentWillMount() {
@@ -38,13 +39,13 @@ export default class SortableTable extends Component {
     entities = orderBy(entities, [sortByHeader], [this.state.sortOrder]);
     this.setState({
       entities,
-      sortByHeader
+      sortByHeader,
     });
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      entities: nextProps.entities
+      entities: nextProps.entities,
     });
   }
 
@@ -65,12 +66,14 @@ export default class SortableTable extends Component {
     let sortOrder = this.state.sortOrder;
     let sortByHeader = this.state.sortByHeader;
     if (sortByHeader === headerProp) {
-      if (sortOrder === 'asc') { // already sorting in this column, sort the other way
+      if (sortOrder === 'asc') {
+        // already sorting in this column, sort the other way
         sortOrder = 'desc';
       } else {
         sortOrder = 'asc';
       }
-    } else { // a new sort, so start with ascending sort
+    } else {
+      // a new sort, so start with ascending sort
       sortByHeader = headerProp;
       sortOrder = 'asc';
     }
@@ -82,27 +85,22 @@ export default class SortableTable extends Component {
     this.setState({
       entities,
       sortOrder,
-      sortByHeader
+      sortByHeader,
     });
   }
 
   renderSortableTableHeader(header) {
     if (this.state.sortByHeader !== header.property) {
-      return (
-        <span onClick={this.sortBy.bind(this, header)}>
-          {header.label}
-        </span>
-      );
+      return <span onClick={this.sortBy.bind(this, header)}>{header.label}</span>;
     }
     return (
       <span onClick={this.sortBy.bind(this, header)}>
         <span className="text-underline">{header.label}</span>
-        {
-          this.state.sortOrder === 'asc' ?
-            <i className="fa fa-caret-down fa-lg"></i>
-          :
-            <i className="fa fa-caret-up fa-lg"></i>
-        }
+        {this.state.sortOrder === 'asc' ? (
+          <i className="fa fa-caret-down fa-lg" />
+        ) : (
+          <i className="fa fa-caret-up fa-lg" />
+        )}
       </span>
     );
   }
@@ -113,20 +111,15 @@ export default class SortableTable extends Component {
       <table className={tableClasses}>
         <thead>
           <tr>
-            {
-              this.props.tableHeaders.map((tableHeader, i) => {
-                return (
-                  <th key={i}>
-                    {
-                      tableHeader.property ?
-                        this.renderSortableTableHeader(tableHeader)
-                      :
-                        tableHeader.label
-                    }
-                  </th>
-                );
-              })
-            }
+            {this.props.tableHeaders.map((tableHeader, i) => {
+              return (
+                <th key={i}>
+                  {tableHeader.property
+                    ? this.renderSortableTableHeader(tableHeader)
+                    : tableHeader.label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         {this.props.renderTableBody(this.state.entities)}
@@ -139,11 +132,11 @@ SortableTable.propTypes = {
     PropTypes.shape({
       label: PropTypes.string,
       property: PropTypes.string,
-      defaultSortby: PropTypes.bool
+      defaultSortby: PropTypes.bool,
     })
   ),
   renderTableBody: PropTypes.func,
   entities: PropTypes.arrayOf(PropTypes.object),
   className: PropTypes.string,
-  sortOnInitialLoad: PropTypes.bool
+  sortOnInitialLoad: PropTypes.bool,
 };

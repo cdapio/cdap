@@ -24,12 +24,12 @@ const apiProgramTypeConvert = {
   worker: 'workers',
   workers: 'workers',
   workflow: 'workflows',
-  workflows: 'workflows'
+  workflows: 'workflows',
 };
 
 const metricApiProgramTypeConvert = Object.assign({}, apiProgramTypeConvert, {
   workflows: 'workflow',
-  workflow: 'workflow'
+  workflow: 'workflow',
 });
 export function convertProgramToApi(program) {
   return apiProgramTypeConvert[program.toLowerCase()];
@@ -38,4 +38,3 @@ export function convertProgramToApi(program) {
 export function convertProgramToMetricParams(program) {
   return metricApiProgramTypeConvert[program.toLowerCase()];
 }
-

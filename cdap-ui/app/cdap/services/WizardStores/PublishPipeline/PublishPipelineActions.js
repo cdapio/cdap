@@ -17,7 +17,7 @@ const PublishPipelineActions = {
   setPipelineName: 'SET-PIPELINE-NAME',
   getPipelineConfig: 'GET-PIPELINE-CONFIG',
   setPipelineConfig: 'SET-PIPELINE-CONFIG',
-  onReset: 'RESET-STORE'
+  onReset: 'RESET-STORE',
 };
 
 export default PublishPipelineActions;

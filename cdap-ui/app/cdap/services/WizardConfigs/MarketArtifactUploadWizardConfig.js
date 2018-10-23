@@ -20,9 +20,8 @@ import ConfigureStep from 'components/CaskWizards/ArtifactUpload/ConfigureStep';
 import cloneDeep from 'lodash/cloneDeep';
 
 let commonSteps = cloneDeep(ArtifactUploadWizardConfig);
-commonSteps.steps[1].content = (<ConfigureStep isMarket={true}/>);
+commonSteps.steps[1].content = <ConfigureStep isMarket={true} />;
 
 const MarketArtifactUploadWizardConfig = commonSteps;
-
 
 export default MarketArtifactUploadWizardConfig;

@@ -14,7 +14,7 @@
  * the License.
  */
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
-import {MyNamespaceApi} from 'api/namespace';
+import { MyNamespaceApi } from 'api/namespace';
 
 const createNamespace = () => {
   return createOrEditNamespace(MyNamespaceApi.create);
@@ -27,39 +27,39 @@ const editNamespaceProperties = () => {
 const createOrEditNamespace = (api) => {
   let state = AddNamespaceStore.getState();
   let urlParams = {
-    namespace: state.general.name
+    namespace: state.general.name,
   };
 
   let putParams = {
-    config : {}
+    config: {},
   };
 
   if (state.general.description) {
-    putParams["description"] = state.general.description;
+    putParams['description'] = state.general.description;
   }
 
   if (state.mapping.hbaseNamespace) {
-    putParams["config"]["hbase.namespace"] = state.mapping.hbaseNamespace;
+    putParams['config']['hbase.namespace'] = state.mapping.hbaseNamespace;
   }
 
   if (state.mapping.hiveDatabaseName) {
-    putParams["config"]["hive.database"] = state.mapping.hiveDatabaseName;
+    putParams['config']['hive.database'] = state.mapping.hiveDatabaseName;
   }
 
   if (state.mapping.hdfsDirectory) {
-    putParams["config"]["root.directory"] = state.mapping.hdfsDirectory;
+    putParams['config']['root.directory'] = state.mapping.hdfsDirectory;
   }
 
   if (state.security.keyTab) {
-    putParams["config"]["keytabURI"] = state.security.keyTab;
+    putParams['config']['keytabURI'] = state.security.keyTab;
   }
 
   if (state.security.principal) {
-    putParams["config"]["principal"] = state.security.principal;
+    putParams['config']['principal'] = state.security.principal;
   }
 
   if (state.mapping.schedulerQueueName) {
-    putParams["config"]["scheduler.queue.name"] = state.mapping.schedulerQueueName;
+    putParams['config']['scheduler.queue.name'] = state.mapping.schedulerQueueName;
   }
 
   return api(urlParams, putParams);
@@ -68,7 +68,7 @@ const createOrEditNamespace = (api) => {
 const setNamespacePreferences = () => {
   let state = AddNamespaceStore.getState();
   let urlParams = {
-    namespace: state.general.name
+    namespace: state.general.name,
   };
   let preferences = {};
 
@@ -79,13 +79,8 @@ const setNamespacePreferences = () => {
       }
     });
 
-    return MyNamespaceApi
-      .setPreferences(urlParams, preferences);
+    return MyNamespaceApi.setPreferences(urlParams, preferences);
   }
 };
 
-export {
-  createNamespace,
-  editNamespaceProperties,
-  setNamespacePreferences
-};
+export { createNamespace, editNamespaceProperties, setNamespacePreferences };

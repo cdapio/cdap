@@ -17,10 +17,10 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Popover, PopoverBody} from 'reactstrap';
-import {isDescendant} from 'services/helpers';
+import { Popover, PopoverBody } from 'reactstrap';
+import { isDescendant } from 'services/helpers';
 import Mousetrap from 'mousetrap';
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 import classnames from 'classnames';
 import uuidV4 from 'uuid/v4';
 
@@ -29,7 +29,7 @@ export default class UncontrolledPopover extends Component {
     super(props);
     this.state = {
       dropdownOpen: props.dropdownOpen,
-      id: `popover-${uuidV4()}`
+      id: `popover-${uuidV4()}`,
     };
     this.togglePopover = this.togglePopover.bind(this);
   }
@@ -41,18 +41,19 @@ export default class UncontrolledPopover extends Component {
   togglePopover() {
     let newState = !this.state.dropdownOpen;
     this.setState({
-      dropdownOpen: newState
+      dropdownOpen: newState,
     });
 
     if (this.props.documentElement && newState) {
-      this.documentClick$ = Observable.fromEvent(this.props.documentElement, 'click')
-      .subscribe((e) => {
-        if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
-          return;
-        }
+      this.documentClick$ = Observable.fromEvent(this.props.documentElement, 'click').subscribe(
+        (e) => {
+          if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
+            return;
+          }
 
-        this.togglePopover();
-      });
+          this.togglePopover();
+        }
+      );
       Mousetrap.bind('esc', this.togglePopover);
     } else {
       if (this.documentClick$) {
@@ -73,9 +74,7 @@ export default class UncontrolledPopover extends Component {
         className={this.props.popoverClassName}
         tether={tetherOption}
       >
-        <PopoverBody>
-          {this.props.children}
-        </PopoverBody>
+        <PopoverBody>{this.props.children}</PopoverBody>
       </Popover>
     );
   }
@@ -88,7 +87,7 @@ export default class UncontrolledPopover extends Component {
           id={this.state.id}
           className={this.props.className}
           onClick={this.togglePopover}
-          ref={(ref) => this.popover = ref}
+          ref={(ref) => (this.popover = ref)}
         >
           {this.props.popoverElement}
           {this.renderPopover()}
@@ -99,11 +98,11 @@ export default class UncontrolledPopover extends Component {
     return (
       <span
         className={classnames(`fa ${iconName}`, this.props.className, {
-          'expanded': this.state.dropdownOpen
+          expanded: this.state.dropdownOpen,
         })}
         id={this.state.id}
         onClick={this.togglePopover}
-        ref={(ref) => this.popover = ref}
+        ref={(ref) => (this.popover = ref)}
       >
         {this.renderPopover()}
       </span>
@@ -119,5 +118,5 @@ UncontrolledPopover.propTypes = {
   documentElement: PropTypes.node,
   icon: PropTypes.string,
   className: PropTypes.string,
-  popoverClassName: PropTypes.string
+  popoverClassName: PropTypes.string,
 };

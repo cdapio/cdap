@@ -40,7 +40,7 @@ export default class PluginUploadWizard extends Component {
     let state = PluginArtifactUploadStore.getState();
     let pluginName = state.upload.jar.fileMetadataObj.name;
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let message = T.translate('features.Wizard.PluginArtifact.success', {pluginName});
+    let message = T.translate('features.Wizard.PluginArtifact.success', { pluginName });
     let subtitle = T.translate('features.Wizard.PluginArtifact.subtitle');
     let buttonLabel = T.translate('features.Wizard.PluginArtifact.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
@@ -52,13 +52,13 @@ export default class PluginUploadWizard extends Component {
       buttonUrl: window.getHydratorUrl({
         stateName: 'hydrator.create',
         stateParams: {
-          namespace
-        }
+          namespace,
+        },
       }),
       linkLabel,
       linkUrl: window.getAbsUIUrl({
-        namespaceId: namespace
-      })
+        namespaceId: namespace,
+      }),
     };
   }
 
@@ -80,5 +80,5 @@ export default class PluginUploadWizard extends Component {
 PluginUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
 };

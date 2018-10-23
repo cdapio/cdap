@@ -19,16 +19,12 @@ import React from 'react';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import { Link } from 'react-router-dom';
 
-export default function EmptyListView({namespace}) {
+export default function EmptyListView({ namespace }) {
   return (
     <EmptyMessageContainer title="You have not created any experiments">
       <ul>
         <li>
-          <Link
-            to={`/ns/${namespace}/experiments/create`}
-          >
-            Create
-          </Link>
+          <Link to={`/ns/${namespace}/experiments/create`}>Create</Link>
           <span> a new experiment</span>
         </li>
       </ul>
@@ -37,5 +33,5 @@ export default function EmptyListView({namespace}) {
 }
 
 EmptyListView.propTypes = {
-  namespace: PropTypes.string
+  namespace: PropTypes.string,
 };

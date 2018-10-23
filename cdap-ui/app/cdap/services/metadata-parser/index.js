@@ -17,8 +17,8 @@
 import EntityIconMap from 'services/entity-icon-map';
 import intersection from 'lodash/intersection';
 import EntityType from 'services/metadata-parser/EntityType';
-import {GLOBALS, SCOPES, SYSTEM_NAMESPACE} from 'services/global-constants';
-import {objectQuery} from 'services/helpers';
+import { GLOBALS, SCOPES, SYSTEM_NAMESPACE } from 'services/global-constants';
+import { objectQuery } from 'services/helpers';
 
 export function parseMetadata(entity) {
   let type = entity.entityId.entity;
@@ -42,7 +42,8 @@ export function parseMetadata(entity) {
 export function getType(entity) {
   if (entity.type === 'program') {
     return entity.programType.toLowerCase();
-  } if (entity.type === 'dataset') {
+  }
+  if (entity.type === 'dataset') {
     return 'dataset';
   } else if (entity.type !== 'application') {
     return entity.type;
@@ -58,14 +59,14 @@ export function getType(entity) {
 }
 
 export function getCustomAppPipelineDatasetCounts(entities) {
-  let apps = entities.results.filter(entity => entityIsApp(entity));
-  let pipelineCount = apps.filter(entity => entityIsPipeline(entity)).length;
+  let apps = entities.results.filter((entity) => entityIsApp(entity));
+  let pipelineCount = apps.filter((entity) => entityIsPipeline(entity)).length;
   let customAppCount = apps.length - pipelineCount;
   let datasetCount = entities.total - apps.length;
   return {
     pipelineCount,
     customAppCount,
-    datasetCount
+    datasetCount,
   };
 }
 
@@ -74,7 +75,10 @@ function entityIsApp(entity) {
 }
 
 function entityIsPipeline(entity) {
-  return intersection(GLOBALS.etlPipelineTypes, objectQuery(entity, 'metadata', SCOPES.SYSTEM, 'tags')).length > 0;
+  return (
+    intersection(GLOBALS.etlPipelineTypes, objectQuery(entity, 'metadata', SCOPES.SYSTEM, 'tags'))
+      .length > 0
+  );
 }
 
 function createArtifactObj(entity) {
@@ -83,8 +87,9 @@ function createArtifactObj(entity) {
     type: entity.entityId.entity.toLowerCase(),
     version: entity.entityId.version,
     metadata: entity,
-    scope: entity.entityId.namespace.toLowerCase() === SYSTEM_NAMESPACE ? SCOPES.SYSTEM : SCOPES.USER,
-    icon: EntityIconMap['artifact']
+    scope:
+      entity.entityId.namespace.toLowerCase() === SYSTEM_NAMESPACE ? SCOPES.SYSTEM : SCOPES.USER,
+    icon: EntityIconMap['artifact'],
   };
 }
 
@@ -107,7 +112,7 @@ function createApplicationObj(entity) {
     metadata: entity,
     version,
     icon,
-    isHydrator: entityIsPipeline(entity)
+    isHydrator: entityIsPipeline(entity),
   };
 }
 
@@ -116,7 +121,7 @@ function createDatasetObj(entity) {
     id: entity.entityId.dataset,
     type: entity.entityId.entity.toLowerCase(),
     metadata: entity,
-    icon: EntityIconMap['dataset']
+    icon: EntityIconMap['dataset'],
   };
 }
 
@@ -127,7 +132,7 @@ function createProgramObj(entity) {
     type: entity.entityId.entity.toLowerCase(),
     programType: entity.entityId.type,
     metadata: entity,
-    icon: EntityIconMap[entity.entityId.type]
+    icon: EntityIconMap[entity.entityId.type],
   };
 }
 
@@ -136,7 +141,7 @@ function createStreamObj(entity) {
     id: entity.entityId.stream,
     type: entity.entityId.entity.toLowerCase(),
     metadata: entity,
-    icon: EntityIconMap['stream']
+    icon: EntityIconMap['stream'],
   };
 }
 
@@ -145,6 +150,6 @@ function createViewObj(entity) {
     id: entity.entityId.view,
     type: entity.entityId.entity.toLowerCase(),
     metadata: entity,
-    icon: EntityIconMap['view']
+    icon: EntityIconMap['view'],
   };
 }

@@ -15,9 +15,12 @@
  */
 
 import * as d3 from 'd3';
-import DashboardStore, {DashboardActions, ViewByOptions} from 'components/OpsDashboard/store/DashboardStore';
+import DashboardStore, {
+  DashboardActions,
+  ViewByOptions,
+} from 'components/OpsDashboard/store/DashboardStore';
 import moment from 'moment-timezone';
-import {humanReadableDate} from 'services/helpers';
+import { humanReadableDate } from 'services/helpers';
 
 const AXIS_BUFFER = 1.1;
 
@@ -26,12 +29,13 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     top: 45,
     right: 50,
     bottom: 40,
-    left: 40
+    left: 40,
   };
   let width = containerWidth - margin.left - margin.right,
-      height = containerHeight - margin.top - margin.bottom;
+    height = containerHeight - margin.top - margin.bottom;
 
-  let svg = d3.select(selector)
+  let svg = d3
+    .select(selector)
     .attr('height', containerHeight)
     .attr('width', containerWidth);
 
@@ -40,25 +44,26 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   groupElem.remove();
 
   // Start graph render
-  let chart = svg.append('g')
-      .attr('class', 'graph-group-container')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`);
+  let chart = svg
+    .append('g')
+    .attr('class', 'graph-group-container')
+    .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-  let x = d3.scaleBand()
+  let x = d3
+    .scaleBand()
     .rangeRound([0, width])
     .paddingInner(0)
     .paddingOuter(0);
 
-  let dateX = d3.scaleBand()
+  let dateX = d3
+    .scaleBand()
     .rangeRound([0, width])
     .paddingInner(0)
     .paddingOuter(0);
 
-  let yLeft = d3.scaleLinear()
-    .rangeRound([height, 0]);
+  let yLeft = d3.scaleLinear().rangeRound([height, 0]);
 
-  let yRight = d3.scaleLinear()
-    .rangeRound([height, 0]);
+  let yRight = d3.scaleLinear().rangeRound([height, 0]);
 
   // SETTING DOMAINS
   x.domain(data.map((d) => d.time));
@@ -77,32 +82,34 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   yLeft.domain([0, yLeftMax * AXIS_BUFFER]);
   yRight.domain([0, yRightMax * AXIS_BUFFER]);
 
-
   // RENDER AXIS
   let barPadding = 2;
   let stepWidth = x.bandwidth();
   let barWidth = (stepWidth - barPadding * 6) / 2;
 
   // X Axis
-  let xAxis = d3.axisBottom(x)
+  let xAxis = d3
+    .axisBottom(x)
     .tickSizeInner(-height)
     .tickSizeOuter(0)
     .tickFormat(d3.timeFormat('%-I %p'));
 
   let axisOffset = barWidth + barPadding * 2;
-  let xAxisGroup = chart.append('g')
+  let xAxisGroup = chart
+    .append('g')
     .attr('class', 'axis axis-x')
     .attr('transform', `translate(${axisOffset}, ${height})`)
     .call(xAxis);
 
-  xAxisGroup.select('.domain')
-    .remove();
+  xAxisGroup.select('.domain').remove();
 
-  xAxisGroup.selectAll('text')
+  xAxisGroup
+    .selectAll('text')
     .attr('x', -axisOffset)
     .attr('y', 10);
 
-  xAxisGroup.select('.tick:last-child')
+  xAxisGroup
+    .select('.tick:last-child')
     .select('line')
     .remove();
 
@@ -112,12 +119,12 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   let legendYOffset = margin.top + 2;
   let localTimeZone = moment.tz(moment.tz.guess()).format('z');
 
-  chart.append('g')
+  chart
+    .append('g')
     .attr('class', 'legend axis-x-legend')
     .append('text')
-      .attr('transform', `translate(${width / 2}, ${containerHeight - legendYOffset})`)
-      .text(`Time (${localTimeZone})`);
-
+    .attr('transform', `translate(${width / 2}, ${containerHeight - legendYOffset})`)
+    .text(`Time (${localTimeZone})`);
 
   // Dates axis
   let dateMap = {};
@@ -132,14 +139,16 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
   let dates = Object.keys(dateMap);
   let firstDateIndex = Math.floor(dateMap[dates[0]] / 2) || 1;
-  let secondDateIndex = Math.floor(dateMap[dates[0]] + (dateMap[dates[1]] / 2));
+  let secondDateIndex = Math.floor(dateMap[dates[0]] + dateMap[dates[1]] / 2);
 
-  let dateAxis = d3.axisTop(dateX)
+  let dateAxis = d3
+    .axisTop(dateX)
     .tickFormat(d3.timeFormat('%a. %b %e, %Y'))
     .tickSizeInner(0)
     .tickSizeOuter(0);
 
-  let dateAxisGroup = chart.append('g')
+  let dateAxisGroup = chart
+    .append('g')
     .attr('class', 'axis axis-date')
     .call(dateAxis);
 
@@ -151,83 +160,92 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     })
     .text(null);
 
-  dateAxisGroup.select('.domain')
-    .remove();
-
+  dateAxisGroup.select('.domain').remove();
 
   // Separator between two dates
   let datesSeparatorIndex = dateMap[dates[0]];
 
-  xAxisGroup.select(`.tick:nth-child(${datesSeparatorIndex})`)
+  xAxisGroup
+    .select(`.tick:nth-child(${datesSeparatorIndex})`)
     .select('line')
     .attr('stroke-width', '2');
 
-  let tickOffset = (stepWidth / 2) - barPadding;
+  let tickOffset = stepWidth / 2 - barPadding;
 
-  dateAxisGroup.select(`.tick:nth-child(${datesSeparatorIndex})`)
+  dateAxisGroup
+    .select(`.tick:nth-child(${datesSeparatorIndex})`)
     .select('line')
     .attr('stroke-width', '2')
     .attr('x1', tickOffset)
     .attr('x2', tickOffset)
     .attr('y2', -30);
 
-
   // Last updated axis
   let currentTime = humanReadableDate(Date.now(), true);
   let lastUpdatedYOffset = -35;
 
-  chart.append('g')
+  chart
+    .append('g')
     .attr('class', 'axis-last-updated')
     .append('text')
-      .attr('transform', `translate(${width + margin.right}, ${lastUpdatedYOffset})`)
-      .text(`Last updated ${currentTime} ${localTimeZone}`);
-
+    .attr('transform', `translate(${width + margin.right}, ${lastUpdatedYOffset})`)
+    .text(`Last updated ${currentTime} ${localTimeZone}`);
 
   // Y Axis Left
   const legendOffset = 30;
   const ticksFontSize = 10;
 
-  chart.append('g')
+  chart
+    .append('g')
     .attr('class', 'axis axis-y-left')
     .attr('font-size', ticksFontSize)
-    .call(d3.axisLeft(yLeft).tickFormat((e) => {
-      // showing only integers
-      if (Math.floor(e) !== e) { return; }
-      return e;
-    }));
+    .call(
+      d3.axisLeft(yLeft).tickFormat((e) => {
+        // showing only integers
+        if (Math.floor(e) !== e) {
+          return;
+        }
+        return e;
+      })
+    );
 
   // Y Axis Left Legend
-  chart.append('g')
+  chart
+    .append('g')
     .attr('class', 'legend axis-y-left-legend')
     .append('text')
-      .attr('transform', `translate(-${legendOffset}, ${height/2}) rotate(-90)`)
-      .text('# of runs');
-
+    .attr('transform', `translate(-${legendOffset}, ${height / 2}) rotate(-90)`)
+    .text('# of runs');
 
   // Y Axis Right
-  chart.append('g')
+  chart
+    .append('g')
     .attr('class', 'axis axis-y-right')
     .attr('transform', `translate(${width}, 0)`)
     .attr('font-size', ticksFontSize)
     .call(d3.axisRight(yRight).tickSizeOuter(-width));
 
   // Y Axis Right Legend
-  chart.append('g')
+  chart
+    .append('g')
     .attr('class', 'legend axis-y-right-legend')
     .append('text')
-      .attr('transform', `translate(${width + legendOffset + ticksFontSize}, ${height/2}) rotate(-90)`)
-      .text('Delay (seconds)');
-
+    .attr(
+      'transform',
+      `translate(${width + legendOffset + ticksFontSize}, ${height / 2}) rotate(-90)`
+    )
+    .text('Delay (seconds)');
 
   // BUCKETS STYLING LAYER
-  let bottomBucketsLayer = chart.append('g')
-    .attr('class', 'bottom-buckets-layer');
+  let bottomBucketsLayer = chart.append('g').attr('class', 'bottom-buckets-layer');
 
-  let bottomLayer = bottomBucketsLayer.selectAll('rect')
+  let bottomLayer = bottomBucketsLayer
+    .selectAll('rect')
     .data(data)
     .enter();
 
-  bottomLayer.append('rect')
+  bottomLayer
+    .append('rect')
     .attr('class', 'bucket bottom-layer-bucket')
     .attr('data', (d) => d.time)
     .attr('width', stepWidth)
@@ -235,21 +253,21 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .attr('height', height);
 
   // Since we always select the last bucket by default, highlights it
-  d3.select('.bottom-layer-bucket:last-child')
-    .classed('selected', true);
+  d3.select('.bottom-layer-bucket:last-child').classed('selected', true);
 
   // RENDER BAR GRAPH
 
   if (viewByOption === ViewByOptions.startMethod) {
-    let barStartMethod = chart.append('g')
-      .attr('class', 'bar-start-method');
+    let barStartMethod = chart.append('g').attr('class', 'bar-start-method');
 
-    let startMethod = barStartMethod.selectAll('rect')
+    let startMethod = barStartMethod
+      .selectAll('rect')
       .data(data)
       .enter();
 
     // Schedule
-    startMethod.append('rect')
+    startMethod
+      .append('rect')
       .attr('class', 'bar schedule')
       .attr('width', barWidth * 2)
       .attr('x', getXLocation)
@@ -257,43 +275,45 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
       .attr('height', (d) => height - yLeft(d.schedule));
 
     // Manual
-    startMethod.append('rect')
+    startMethod
+      .append('rect')
       .attr('class', 'bar manual')
       .attr('width', barWidth * 2)
       .attr('x', getXLocation)
       .attr('y', getManualY)
       .attr('height', (d) => height - yLeft(d.manual));
-
   } else {
     // Running
-    let barRunning = chart.append('g')
-      .attr('class', 'bar-running');
+    let barRunning = chart.append('g').attr('class', 'bar-running');
 
-    let runningStats = barRunning.selectAll('rect')
+    let runningStats = barRunning
+      .selectAll('rect')
       .data(data)
       .enter();
 
-    runningStats.append('rect')
+    runningStats
+      .append('rect')
       .attr('class', 'bar running')
       .attr('width', barWidth)
       .attr('x', getXLocation)
       .attr('y', (d) => yLeft(d.running))
       .attr('height', (d) => height - yLeft(d.running));
 
-
     // Statistics
     let statisticsOffsetX = barWidth + barPadding;
-    let barStatistics = chart.append('g')
+    let barStatistics = chart
+      .append('g')
       .attr('class', 'bar-statistics')
       .attr('transform', `translate(${statisticsOffsetX}, 0)`);
 
-
-    let statistics = barStatistics.selectAll('rect')
+    let statistics = barStatistics
+      .selectAll('rect')
       .data(data)
       .enter();
 
     // Successful
-    statistics.append('rect')
+    statistics
+      .append('rect')
       .attr('class', 'bar succeeded')
       .attr('width', barWidth)
       .attr('x', getXLocation)
@@ -301,7 +321,8 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
       .attr('height', (d) => height - yLeft(d.successful));
 
     // Failed
-    statistics.append('rect')
+    statistics
+      .append('rect')
       .attr('class', 'bar failed')
       .attr('width', barWidth)
       .attr('x', getXLocation)
@@ -310,14 +331,15 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   }
 
   // HOVER AND CLICK HANDLER
-  let clickHandlersLayer = chart.append('g')
-    .attr('class', 'click-handlers-layer');
+  let clickHandlersLayer = chart.append('g').attr('class', 'click-handlers-layer');
 
-  let handlerLayer = clickHandlersLayer.selectAll('rect')
+  let handlerLayer = clickHandlersLayer
+    .selectAll('rect')
     .data(data)
     .enter();
 
-  handlerLayer.append('rect')
+  handlerLayer
+    .append('rect')
     .attr('class', 'bucket handler-bucket pointer')
     .attr('data', (d) => d.time)
     .attr('opacity', 0)
@@ -327,50 +349,51 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
 
   let bottomLayerBuckets = d3.selectAll('.bottom-layer-bucket').nodes();
 
-  d3.selectAll('.handler-bucket')
-    .on('click', (data, i) => {
+  d3.selectAll('.handler-bucket').on('click', (data, i) => {
+    // Need to do this to unselect previously selected bucket
+    d3.select('.selected').classed('selected', false);
 
-      // Need to do this to unselect previously selected bucket
-      d3.select('.selected')
-        .classed('selected', false);
+    d3.select(bottomLayerBuckets[i]).classed('selected', true);
 
-      d3.select(bottomLayerBuckets[i])
-        .classed('selected', true);
-
-      DashboardStore.dispatch({
-        type: DashboardActions.setDisplayBucket,
-        payload: {
-          displayBucketInfo: data
-        }
-      });
+    DashboardStore.dispatch({
+      type: DashboardActions.setDisplayBucket,
+      payload: {
+        displayBucketInfo: data,
+      },
     });
+  });
 
   // RENDER LINE GRAPH
 
-  let line = d3.line()
+  let line = d3
+    .line()
     .x((d) => x(d.time))
     .y((d) => yRight(d.delay));
 
   let offsetX = barWidth + barPadding * 2;
 
-  let pathGroup = chart.append('g')
+  let pathGroup = chart
+    .append('g')
     .attr('class', 'line-graph')
     .attr('transform', `translate(${offsetX}, 0)`);
 
-  pathGroup.append('path')
+  pathGroup
+    .append('path')
     .datum(data)
     .attr('class', 'delay-path')
     .attr('d', line);
 
-  pathGroup.append('g')
-      .attr('class', 'dots')
+  pathGroup
+    .append('g')
+    .attr('class', 'dots')
     .selectAll('circle')
-      .data(data)
-    .enter().append('circle')
-      .attr('class', 'dot delay-dot')
-      .attr('r', 5)
-      .attr('cx', (d) => x(d.time))
-      .attr('cy', (d) => yRight(d.delay));
+    .data(data)
+    .enter()
+    .append('circle')
+    .attr('class', 'dot delay-dot')
+    .attr('r', 5)
+    .attr('cx', (d) => x(d.time))
+    .attr('cy', (d) => yRight(d.delay));
 
   // Helper functions
   function getXLocation(d) {

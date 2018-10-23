@@ -19,28 +19,35 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import uuidV4 from 'uuid/v4';
 
-export default function RadioGroup({layout, options, value}) {
-  let groupName = 'radio-group-'+ uuidV4();
+export default function RadioGroup({ layout, options, value }) {
+  let groupName = 'radio-group-' + uuidV4();
   return (
-    <div className={classnames("widget-radio-group", {"widget-radio-group-inline": layout === 'inline'})}>
-      {
-        options.map(option => {
-          return (
-            <div className={classnames({"radio": layout === 'block', 'radio-inline': layout === 'inline'})}>
-              <label>
-                <input
-                  type="radio"
-                  id={option.id}
-                  value={option.id}
-                  name={groupName}
-                  checked={value === option.id}
-                />
-                {option.label}
-              </label>
-            </div>
-          );
-        })
-      }
+    <div
+      className={classnames('widget-radio-group', {
+        'widget-radio-group-inline': layout === 'inline',
+      })}
+    >
+      {options.map((option) => {
+        return (
+          <div
+            className={classnames({
+              radio: layout === 'block',
+              'radio-inline': layout === 'inline',
+            })}
+          >
+            <label>
+              <input
+                type="radio"
+                id={option.id}
+                value={option.id}
+                name={groupName}
+                checked={value === option.id}
+              />
+              {option.label}
+            </label>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -48,5 +55,5 @@ export default function RadioGroup({layout, options, value}) {
 RadioGroup.propTypes = {
   layout: PropTypes.string,
   options: PropTypes.array,
-  value: PropTypes.string
+  value: PropTypes.string,
 };

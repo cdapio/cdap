@@ -17,9 +17,9 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
-import {MyMetadataApi} from 'api/metadata';
+import { MyMetadataApi } from 'api/metadata';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 
@@ -33,7 +33,7 @@ export default class AddPropertyModal extends Component {
       isOpen: false,
       keyInput: '',
       valueInput: '',
-      error: null
+      error: null,
     };
 
     this.toggleModal = this.toggleModal.bind(this);
@@ -47,19 +47,23 @@ export default class AddPropertyModal extends Component {
       isOpen: !this.state.isOpen,
       keyInput: '',
       valueInput: '',
-      error: null
+      error: null,
     });
   }
 
   handleKeyChange(e) {
-    this.setState({keyInput: e.target.value});
+    this.setState({ keyInput: e.target.value });
   }
   handleValueChange(e) {
-    this.setState({valueInput: e.target.value});
+    this.setState({ valueInput: e.target.value });
   }
 
   componentDidUpdate() {
-    if (this.state.isOpen && this.state.keyInput.length === 0 && this.state.valueInput.length === 0) {
+    if (
+      this.state.isOpen &&
+      this.state.keyInput.length === 0 &&
+      this.state.valueInput.length === 0
+    ) {
       document.getElementById('add-property-modal-key-input').focus();
     }
   }
@@ -71,7 +75,9 @@ export default class AddPropertyModal extends Component {
 
     if (uniqueCheck.length > 0) {
       this.setState({
-        error: T.translate('features.PropertiesEditor.AddProperty.propertyExistError', {key: this.state.keyInput})
+        error: T.translate('features.PropertiesEditor.AddProperty.propertyExistError', {
+          key: this.state.keyInput,
+        }),
       });
       return;
     }
@@ -84,27 +90,31 @@ export default class AddPropertyModal extends Component {
     let params = {
       namespace,
       entityType: this.props.entityType,
-      entityId: this.props.entityId
+      entityId: this.props.entityId,
     };
 
-    MyMetadataApi.addProperties(params, reqObj)
-      .subscribe(() => {
+    MyMetadataApi.addProperties(params, reqObj).subscribe(
+      () => {
         this.toggleModal();
         this.props.onSave({ key });
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
-          error: err
+          error: err,
         });
-      });
+      }
+    );
   }
 
   renderFeedback() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
 
     return (
       <ModalFooter>
         <CardActionFeedback
-          type='DANGER'
+          type="DANGER"
           message={T.translate('features.PropertiesEditor.AddProperty.shortError')}
           extendedMessage={this.state.error}
         />
@@ -113,7 +123,9 @@ export default class AddPropertyModal extends Component {
   }
 
   renderModal() {
-    if (!this.state.isOpen) { return null; }
+    if (!this.state.isOpen) {
+      return null;
+    }
 
     let disabled = this.state.keyInput.length === 0 || this.state.valueInput.length === 0;
 
@@ -121,19 +133,18 @@ export default class AddPropertyModal extends Component {
       <Modal
         isOpen={this.state.isOpen}
         toggle={this.toggleModal}
-        backdrop='static'
+        backdrop="static"
         size="lg"
         className="add-property-modal cdap-modal"
       >
         <ModalHeader>
           <span>
-            {T.translate('features.PropertiesEditor.AddProperty.modalHeader', {entityId: this.props.entityId})}
+            {T.translate('features.PropertiesEditor.AddProperty.modalHeader', {
+              entityId: this.props.entityId,
+            })}
           </span>
 
-          <div
-            className="close-section float-xs-right"
-            onClick={this.toggleModal}
-          >
+          <div className="close-section float-xs-right" onClick={this.toggleModal}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
@@ -162,18 +173,13 @@ export default class AddPropertyModal extends Component {
           </div>
 
           <div className="text-xs-right">
-            <button
-              className="btn btn-primary"
-              onClick={this.onSave}
-              disabled={disabled}
-            >
+            <button className="btn btn-primary" onClick={this.onSave} disabled={disabled}>
               {T.translate('features.PropertiesEditor.AddProperty.button')}
             </button>
           </div>
         </ModalBody>
 
         {this.renderFeedback()}
-
       </Modal>
     );
   }
@@ -181,15 +187,11 @@ export default class AddPropertyModal extends Component {
   render() {
     return (
       <div>
-        <button
-          className="btn btn-secondary"
-          onClick={this.toggleModal}
-        >
+        <button className="btn btn-secondary" onClick={this.toggleModal}>
           {T.translate('features.PropertiesEditor.AddProperty.button')}
         </button>
 
         {this.renderModal()}
-
       </div>
     );
   }
@@ -199,5 +201,5 @@ AddPropertyModal.propTypes = {
   entityId: PropTypes.string,
   entityType: PropTypes.oneOf(['datasets', 'streams', 'apps']),
   existingProperties: PropTypes.array,
-  onSave: PropTypes.func
+  onSave: PropTypes.func,
 };

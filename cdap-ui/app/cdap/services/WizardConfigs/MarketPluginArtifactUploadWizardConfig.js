@@ -24,14 +24,13 @@ let commonSteps = [
     shorttitle: T.translate('features.Wizard.PluginArtifact.Step1.shorttitle'),
     title: T.translate('features.Wizard.PluginArtifact.Step1.title'),
     description: T.translate('features.Wizard.PluginArtifact.Step1.description'),
-    content: (<UploadJarStep />),
-    requiredFields: ['file']
-  }
+    content: <UploadJarStep />,
+    requiredFields: ['file'],
+  },
 ];
 
 const MarketPluginArtifactUploadWizardConfig = {
-  steps: commonSteps
+  steps: commonSteps,
 };
-
 
 export default MarketPluginArtifactUploadWizardConfig;

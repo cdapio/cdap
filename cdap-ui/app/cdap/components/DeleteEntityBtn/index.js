@@ -15,10 +15,10 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import ConfirmationModal from 'components/ConfirmationModal';
-import {preventPropagation} from 'services/helpers';
+import { preventPropagation } from 'services/helpers';
 
 export default class DeleteEntityBtn extends Component {
   static propTypes = {
@@ -26,7 +26,7 @@ export default class DeleteEntityBtn extends Component {
     headerTitle: PropTypes.string,
     confirmationElem: PropTypes.element,
     btnLabel: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-    className: PropTypes.string
+    className: PropTypes.string,
   };
   getDefaulState = () => ({
     showModal: false,
@@ -40,7 +40,7 @@ export default class DeleteEntityBtn extends Component {
     this.setState({
       ...this.getDefaulState(),
       isLoading: !this.state.isLoading,
-      showModal: !this.state.showModal
+      showModal: !this.state.showModal,
     });
     if (e) {
       preventPropagation(e);
@@ -52,41 +52,33 @@ export default class DeleteEntityBtn extends Component {
     this.setState({
       errorMessage,
       extendedMessage,
-      isLoading: false
+      isLoading: false,
     });
-  }
+  };
 
   confirmFn = () => {
-    this.setState({isLoading: true});
+    this.setState({ isLoading: true });
     this.props.confirmFn(this.toggleModal, this.setError);
   };
   render() {
     return (
       <span>
-        <span
-          className={this.props.className}
-          onClick={this.toggleModal}
-        >
-          {
-            this.props.btnLabel ? this.props.btnLabel : <IconSVG name="icon-trash" />
-          }
+        <span className={this.props.className} onClick={this.toggleModal}>
+          {this.props.btnLabel ? this.props.btnLabel : <IconSVG name="icon-trash" />}
         </span>
-        {
-          this.state.showModal ?
-            <ConfirmationModal
-              isOpen={this.state.showModal}
-              cancelFn={this.toggleModal}
-              confirmFn={this.confirmFn}
-              isLoading={this.state.isLoading}
-              toggleModal={this.toggleModal}
-              headerTitle={this.props.headerTitle}
-              errorMessage={this.state.errorMessage}
-              extendedMessage={this.state.extendedMessage}
-              confirmationElem={this.props.confirmationElem}
-            />
-          :
-            null
-        }
+        {this.state.showModal ? (
+          <ConfirmationModal
+            isOpen={this.state.showModal}
+            cancelFn={this.toggleModal}
+            confirmFn={this.confirmFn}
+            isLoading={this.state.isLoading}
+            toggleModal={this.toggleModal}
+            headerTitle={this.props.headerTitle}
+            errorMessage={this.state.errorMessage}
+            extendedMessage={this.state.extendedMessage}
+            confirmationElem={this.props.confirmationElem}
+          />
+        ) : null}
       </span>
     );
   }

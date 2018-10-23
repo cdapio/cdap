@@ -25,7 +25,7 @@ require('./ViewDataStep.scss');
 const mapStateWithProps = (state) => {
   return {
     value: state.viewdata.data,
-    isLoading: state.viewdata.loading
+    isLoading: state.viewdata.loading,
   };
 };
 
@@ -35,27 +35,23 @@ const handleDownload = () => {
   fileDownload(state.viewdata.data, state.viewdata.filename);
 };
 
-let DataTextArea = ({value, isLoading}) => {
+let DataTextArea = ({ value, isLoading }) => {
   value = value.substring(0, 10000);
   return (
     <div className="datapack-container">
       <div className="view-data-step">
         <div className="download-section text-xs-right">
-          <button
-            className="btn btn-link"
-            onClick={handleDownload}
-          >
-            <span className="fa fa-download"></span>
+          <button className="btn btn-link" onClick={handleDownload}>
+            <span className="fa fa-download" />
           </button>
         </div>
-        {
-          isLoading ?
-            <div className="loading text-xs-center"><i className="fa fa-spinner fa-spin" /></div>
-            :
-            <pre>
-              {value}
-            </pre>
-        }
+        {isLoading ? (
+          <div className="loading text-xs-center">
+            <i className="fa fa-spinner fa-spin" />
+          </div>
+        ) : (
+          <pre>{value}</pre>
+        )}
       </div>
     </div>
   );
@@ -63,7 +59,7 @@ let DataTextArea = ({value, isLoading}) => {
 
 DataTextArea.propTypes = {
   value: PropTypes.string,
-  isLoading: PropTypes.bool
+  isLoading: PropTypes.bool,
 };
 
 DataTextArea = connect(
@@ -75,8 +71,7 @@ export default function ViewDataStep() {
   let { filename, packagename, packageversion, data } = UploadDataStore.getState().viewdata;
 
   if (!data) {
-    UploadDataActionCreator
-      .fetchDefaultData({ filename, packagename, packageversion });
+    UploadDataActionCreator.fetchDefaultData({ filename, packagename, packageversion });
   }
 
   return (

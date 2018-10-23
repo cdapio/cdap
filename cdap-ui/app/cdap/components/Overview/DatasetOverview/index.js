@@ -22,14 +22,14 @@ import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
 import DatasetOverviewTab from 'components/Overview/DatasetOverview/DatasetOverviewTab';
 import NamespaceStore from 'services/NamespaceStore';
 import uuidV4 from 'uuid/v4';
-import {objectQuery} from 'services/helpers';
-import {MyDatasetApi} from 'api/dataset';
-import {MyMetadataApi} from 'api/metadata';
+import { objectQuery } from 'services/helpers';
+import { MyDatasetApi } from 'api/dataset';
+import { MyMetadataApi } from 'api/metadata';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 
 export default class DatasetOverview extends Component {
   constructor(props) {
@@ -39,7 +39,7 @@ export default class DatasetOverview extends Component {
       entity: this.props.entity,
       entityDetail: null,
       loading: false,
-      successMessage: null
+      successMessage: null,
     };
   }
 
@@ -48,30 +48,33 @@ export default class DatasetOverview extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    let {entity} = nextProps;
+    let { entity } = nextProps;
     if (!isNil(entity)) {
-      this.setState({
-        entity,
-      }, this.fetchDatasetDetail.bind(this));
+      this.setState(
+        {
+          entity,
+        },
+        this.fetchDatasetDetail.bind(this)
+      );
     }
   }
 
   fetchDatasetDetail() {
     this.setState({
-      loading: true
+      loading: true,
     });
     let namespace = NamespaceStore.getState().selectedNamespace;
     if (objectQuery(this.props, 'entity', 'id')) {
       const datasetParams = {
         namespace,
-        datasetId: this.props.entity.id
+        datasetId: this.props.entity.id,
       };
 
       const metadataParams = {
         namespace,
         entityType: 'datasets',
         entityId: this.props.entity.id,
-        scope: SCOPES.SYSTEM
+        scope: SCOPES.SYSTEM,
       };
 
       MyMetadataApi.getProperties(metadataParams)
@@ -93,18 +96,21 @@ export default class DatasetOverview extends Component {
             app: appId,
             id: this.props.entity.id,
             type: 'dataset',
-            properties: res[0]
+            properties: res[0],
           };
 
-          this.setState({
-            entityDetail
-          }, () => {
-            setTimeout(() => {
-              this.setState({
-                loading: false
-              });
-            }, 1000);
-          });
+          this.setState(
+            {
+              entityDetail,
+            },
+            () => {
+              setTimeout(() => {
+                this.setState({
+                  loading: false,
+                });
+              }, 1000);
+            }
+          );
         });
     }
   }
@@ -116,20 +122,20 @@ export default class DatasetOverview extends Component {
   onFastActionUpdate(action) {
     let successMessage;
     if (action === 'truncate') {
-      successMessage = FastActionToMessage(action, {entityType: capitalize(this.props.entity.type)});
+      successMessage = FastActionToMessage(action, {
+        entityType: capitalize(this.props.entity.type),
+      });
     } else {
       successMessage = FastActionToMessage(action);
     }
     this.setState({
-      successMessage
+      successMessage,
     });
   }
 
   render() {
     if (this.state.loading) {
-      return (
-        <div className="fa fa-spinner fa-spin fa-3x"></div>
-      );
+      return <div className="fa fa-spinner fa-spin fa-3x" />;
     }
 
     let title = T.translate('commons.entity.dataset.singular');
@@ -144,8 +150,8 @@ export default class DatasetOverview extends Component {
             state: {
               entityDetail: this.state.entityDetail,
               entityMetadata: this.props.entity,
-              previousPathname: (location.pathname + location.search).replace(/\/cdap\//g, '/')
-            }
+              previousPathname: (location.pathname + location.search).replace(/\/cdap\//g, '/'),
+            },
           }}
           onClose={this.props.onClose}
           entityType="dataset"
@@ -167,5 +173,5 @@ DatasetOverview.propTypes = {
   toggleOverview: PropTypes.bool,
   entity: PropTypes.object,
   onClose: PropTypes.func,
-  onCloseAndRefresh: PropTypes.func
+  onCloseAndRefresh: PropTypes.func,
 };

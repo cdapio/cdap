@@ -15,7 +15,7 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 let dataSrc = DataSourceConfigurer.getInstance();
 
 var basepath = '/namespaces/:namespace';
@@ -32,9 +32,19 @@ export const MyCloudApi = {
   getSystemProfile: apiCreator(dataSrc, 'GET', 'REQUEST', `${systemProfilesPath}/:profile`),
   deleteSystemProfile: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${systemProfilesPath}/:profile`),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${profilesPath}/:profile`),
-  toggleSystemProfileStatus: apiCreator(dataSrc, 'POST', 'REQUEST', `${systemProfilesPath}/:profile/:action`),
+  toggleSystemProfileStatus: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    `${systemProfilesPath}/:profile/:action`
+  ),
   toggleProfileStatus: apiCreator(dataSrc, 'POST', 'REQUEST', `${profilesPath}/:profile/:action`),
 
   getProvisioners: apiCreator(dataSrc, 'GET', 'REQUEST', `${provisionersPath}`),
-  getProvisionerDetailSpec: apiCreator(dataSrc, 'GET', 'REQUEST', `${provisionersPath}/:provisioner`)
+  getProvisionerDetailSpec: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${provisionersPath}/:provisioner`
+  ),
 };

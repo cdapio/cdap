@@ -14,11 +14,13 @@
  * the License.
  */
 
-import {setActiveBrowser, setError} from './commons';
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import { setActiveBrowser, setError } from './commons';
+import DataPrepBrowserStore, {
+  Actions as BrowserStoreActions,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
+import { convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL } from 'services/helpers';
 import uuidV4 from 'uuid/v4';
 import moment from 'moment';
 import T from 'i18n-react';
@@ -30,7 +32,11 @@ const formatResponse = (contents) => {
   return contents.map((content) => {
     content.uniqueId = uuidV4();
     content['last-modified'] = moment(content['last-modified']).format('MM/DD/YY HH:mm');
-    content.displaySize = convertBytesToHumanReadable(content.size, HUMANREADABLESTORAGE_NODECIMAL, true);
+    content.displaySize = convertBytesToHumanReadable(
+      content.size,
+      HUMANREADABLESTORAGE_NODECIMAL,
+      true
+    );
 
     if (content.directory) {
       content.type = T.translate(`${PREFIX}.directory`);
@@ -51,25 +57,28 @@ const goToPath = (path) => {
   MyDataPrepApi.explorer({
     namespace,
     path,
-    hidden: true
-  }).subscribe((res) => {
-    DataPrepBrowserStore.dispatch({
-      type: BrowserStoreActions.SET_FILE_SYSTEM_CONTENTS,
-      payload: {
-        contents: formatResponse(res.values)
-      }
-    });
-  }, (err) => {
-    setError(err);
-  });
+    hidden: true,
+  }).subscribe(
+    (res) => {
+      DataPrepBrowserStore.dispatch({
+        type: BrowserStoreActions.SET_FILE_SYSTEM_CONTENTS,
+        payload: {
+          contents: formatResponse(res.values),
+        },
+      });
+    },
+    (err) => {
+      setError(err);
+    }
+  );
 };
 
 const setFileSystemLoading = () => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_FILE_SYSTEM_LOADING,
     payload: {
-      loading: true
-    }
+      loading: true,
+    },
   });
 };
 
@@ -82,8 +91,8 @@ const setFileSystemPath = (path) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_FILE_SYSTEM_PATH,
     payload: {
-      path
-    }
+      path,
+    },
   });
 };
 
@@ -91,8 +100,8 @@ const setFileSystemSearch = (search) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_FILE_SYSTEM_SEARCH,
     payload: {
-      search
-    }
+      search,
+    },
   });
 };
 
@@ -101,5 +110,5 @@ export {
   trimSuffixSlash,
   setFileSystemLoading,
   setFileSystemAsActiveBrowser,
-  setFileSystemSearch
+  setFileSystemSearch,
 };

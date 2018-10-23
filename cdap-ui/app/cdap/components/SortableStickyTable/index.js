@@ -26,20 +26,15 @@ export default class SortableStickyTable extends SortableTable {
     return (
       <thead>
         <tr>
-          {
-            this.props.tableHeaders.map((tableHeader, i) => {
-              return (
-                <th key={i}>
-                  {
-                    tableHeader.property ?
-                      this.renderSortableTableHeader(tableHeader)
-                    :
-                      tableHeader.label
-                  }
-                </th>
-              );
-            })
-          }
+          {this.props.tableHeaders.map((tableHeader, i) => {
+            return (
+              <th key={i}>
+                {tableHeader.property
+                  ? this.renderSortableTableHeader(tableHeader)
+                  : tableHeader.label}
+              </th>
+            );
+          })}
         </tr>
       </thead>
     );
@@ -48,17 +43,13 @@ export default class SortableStickyTable extends SortableTable {
     let tableClasses = classnames('table', this.props.className);
     return (
       <div className="table-container">
-        <table className={tableClasses}>
-          {this.renderTableHeader()}
-        </table>
-        <div className="table-scroll">
-          {this.props.renderTableBody(this.state.entities)}
-        </div>
+        <table className={tableClasses}>{this.renderTableHeader()}</table>
+        <div className="table-scroll">{this.props.renderTableBody(this.state.entities)}</div>
       </div>
     );
   }
 }
 
 SortableStickyTable.propTypes = {
-  ...SortableTable.propTypes
+  ...SortableTable.propTypes,
 };

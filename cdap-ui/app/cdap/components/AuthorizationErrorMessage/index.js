@@ -26,8 +26,8 @@ import T from 'i18n-react';
 export default function AuthorizationErrorMessage() {
   let eventEmitter = ee(ee);
   const logout = () => {
-    cookie.remove('show-splash-screen-for-session', {path: '/'});
-    RedirectToLogin({statusCode: 401});
+    cookie.remove('show-splash-screen-for-session', { path: '/' });
+    RedirectToLogin({ statusCode: 401 });
   };
   const openNamespaceCreateWizard = () => {
     eventEmitter.emit(globalEvents.CREATENAMESPACE);
@@ -36,35 +36,31 @@ export default function AuthorizationErrorMessage() {
   return (
     <div className="auth-error-message">
       <h3>
-        <span className="fa fa-exclamation-triangle"></span>
+        <span className="fa fa-exclamation-triangle" />
         <span>{T.translate('features.AuthorizationMessage.mainMessage')}</span>
       </h3>
       <div className="cta-section">
-      <ul>
-        <li>
-          <span>{T.translate('features.AuthorizationMessage.callToAction1')}</span>
-        </li>
-        <li>
-          <span>{T.translate('features.AuthorizationMessage.callToAction2.message1', {username})}</span>
-          <span
-            className="link"
-            onClick={logout}
-          >
-            {T.translate('features.AuthorizationMessage.callToAction2.loginLabel')}
-          </span>
-          <span>{T.translate('features.AuthorizationMessage.callToAction2.message2')}</span>
-        </li>
-        <li>
-          <span
-            className="link"
-            onClick={openNamespaceCreateWizard}
-          >
-            {T.translate('features.AuthorizationMessage.callToAction3.message1')}
-          </span>
-          <span>{T.translate('features.AuthorizationMessage.callToAction3.message2')}</span>
-        </li>
-      </ul>
-        </div>
+        <ul>
+          <li>
+            <span>{T.translate('features.AuthorizationMessage.callToAction1')}</span>
+          </li>
+          <li>
+            <span>
+              {T.translate('features.AuthorizationMessage.callToAction2.message1', { username })}
+            </span>
+            <span className="link" onClick={logout}>
+              {T.translate('features.AuthorizationMessage.callToAction2.loginLabel')}
+            </span>
+            <span>{T.translate('features.AuthorizationMessage.callToAction2.message2')}</span>
+          </li>
+          <li>
+            <span className="link" onClick={openNamespaceCreateWizard}>
+              {T.translate('features.AuthorizationMessage.callToAction3.message1')}
+            </span>
+            <span>{T.translate('features.AuthorizationMessage.callToAction3.message2')}</span>
+          </li>
+        </ul>
+      </div>
     </div>
   );
 }

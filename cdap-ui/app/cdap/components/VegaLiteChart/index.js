@@ -15,7 +15,7 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import * as vl from 'vega-lite';
 import * as vega from 'vega';
 import * as vegaTooltip from 'vega-tooltip';
@@ -31,12 +31,12 @@ export default class VegaLiteChart extends Component {
     widthOffset: PropTypes.number,
     heightOffset: PropTypes.number,
     width: PropTypes.oneOfType([PropTypes.number, PropTypes.func]),
-    tooltipOptions: PropTypes.object
+    tooltipOptions: PropTypes.object,
   };
   state = {
     data: this.props.data || [],
     isLoading: true,
-    id: `chart-${uuidV4()}`
+    id: `chart-${uuidV4()}`,
   };
   componentDidMount() {
     this.renderChart();
@@ -46,7 +46,7 @@ export default class VegaLiteChart extends Component {
     document.body.onresize = null;
   }
   componentWillReceiveProps(nextProps) {
-    this.setState({data: nextProps.data || []}, this.renderChart.bind(this, true));
+    this.setState({ data: nextProps.data || [] }, this.renderChart.bind(this, true));
   }
 
   renderChart = (isResize) => {
@@ -55,14 +55,14 @@ export default class VegaLiteChart extends Component {
     }
     if (!isResize) {
       this.setState({
-        isLoading: true
+        isLoading: true,
       });
     }
     this.mountTimeout = window.setTimeout(() => {
       this.updateSpec();
       this.runView();
       this.setState({
-        isLoading: false
+        isLoading: false,
       });
     });
   };
@@ -76,8 +76,8 @@ export default class VegaLiteChart extends Component {
         width: dimension.width - (this.props.widthOffset || 0),
         height: dimension.height - (this.props.heightOffset || 0),
         data: {
-          name: this.state.id
-        }
+          name: this.state.id,
+        },
       };
       if (this.props.width) {
         if (typeof this.props.width === 'function') {
@@ -93,11 +93,11 @@ export default class VegaLiteChart extends Component {
         .initialize(el)
         .renderer('svg')
         .hover();
-        if (this.props.tooltipOptions && Object.keys(this.props.tooltipOptions).length) {
-          vegaTooltip.vega(this.view, this.props.tooltipOptions);
-        } else {
-          vegaTooltip.vega(this.view);
-        }
+      if (this.props.tooltipOptions && Object.keys(this.props.tooltipOptions).length) {
+        vegaTooltip.vega(this.view, this.props.tooltipOptions);
+      } else {
+        vegaTooltip.vega(this.view);
+      }
       this.bindData();
     } catch (err) {
       console.log('ERROR: Failed to compile vega spec ', err);
@@ -105,12 +105,14 @@ export default class VegaLiteChart extends Component {
   };
 
   bindData = () => {
-    const {data} = this.props;
+    const { data } = this.props;
     if (data) {
-      this.view.change(this.state.id,
-        vega.changeset()
-            .remove(() => true) // remove previous data
-            .insert(data)
+      this.view.change(
+        this.state.id,
+        vega
+          .changeset()
+          .remove(() => true) // remove previous data
+          .insert(data)
       );
     }
   };
@@ -126,8 +128,8 @@ export default class VegaLiteChart extends Component {
   render() {
     return (
       <div className={`${this.props.className} vega-lite-chart`}>
-        {this.state.isLoading ? <LoadingSVG /> : null }
-        <div id={this.state.id}></div>
+        {this.state.isLoading ? <LoadingSVG /> : null}
+        <div id={this.state.id} />
       </div>
     );
   }

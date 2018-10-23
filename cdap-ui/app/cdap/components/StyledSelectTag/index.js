@@ -20,10 +20,10 @@ import IconSVG from 'components/IconSVG';
 
 require('./StyledSelectTag.scss');
 
-export default function StyledSelectTag({keys, onChange, defaultEmptyMessage = 'No Values'}) {
+export default function StyledSelectTag({ keys, onChange, defaultEmptyMessage = 'No Values' }) {
   const renderOptions = () => {
     if (Array.isArray(keys) && keys.length) {
-      return keys.map(key => {
+      return keys.map((key) => {
         key = key || {};
         return (
           <option key={key.id} value={key.id}>
@@ -31,16 +31,13 @@ export default function StyledSelectTag({keys, onChange, defaultEmptyMessage = '
           </option>
         );
       });
-     }
-     return <option>{defaultEmptyMessage}</option>;
+    }
+    return <option>{defaultEmptyMessage}</option>;
   };
   return (
     <div className="styled-select-wrapper">
-      <select
-        className="styled-select-tag"
-        onChange={onChange ? onChange : () => {}}
-      >
-        { renderOptions() }
+      <select className="styled-select-tag" onChange={onChange ? onChange : () => {}}>
+        {renderOptions()}
       </select>
       <IconSVG name="icon-caret-down" />
     </div>
@@ -48,10 +45,12 @@ export default function StyledSelectTag({keys, onChange, defaultEmptyMessage = '
 }
 
 StyledSelectTag.propTypes = {
-  keys: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    value: PropTypes.string
-  })),
+  keys: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      value: PropTypes.string,
+    })
+  ),
   onChange: PropTypes.func,
-  defaultEmptyMessage: PropTypes.string
+  defaultEmptyMessage: PropTypes.string,
 };

@@ -20,12 +20,10 @@ import React from 'react';
 import { Input } from 'reactstrap';
 
 export default function InputWithValidations(props) {
-  const {validationError, ...moreProps} = props;
+  const { validationError, ...moreProps } = props;
   return (
     <div>
-      <Input
-        {...moreProps}
-      />
+      <Input {...moreProps} />
       <span className="text-danger">{validationError}</span>
     </div>
   );
@@ -40,5 +38,5 @@ InputWithValidations.propTypes = {
   validationError: PropTypes.string,
   onChange: PropTypes.func,
   min: PropTypes.number,
-  max: PropTypes.number
+  max: PropTypes.number,
 };

@@ -15,7 +15,7 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 const basepath = '/namespaces/:namespace/streams';
@@ -27,6 +27,9 @@ export const MyStreamApi = {
   getPrograms: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:streamId/programs`),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/:streamId`),
   truncate: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:streamId/truncate`),
-  sendEvent: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:streamId`, {json: false, suppressErrors: true}),
-  viewEvents: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:streamId/events`)
+  sendEvent: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:streamId`, {
+    json: false,
+    suppressErrors: true,
+  }),
+  viewEvents: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:streamId/events`),
 };

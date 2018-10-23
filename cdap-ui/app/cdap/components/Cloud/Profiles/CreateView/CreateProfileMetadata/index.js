@@ -16,13 +16,16 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {connect} from 'react-redux';
-import {Input} from 'reactstrap';
-import {updateProfileLabel, updateProfileDescription} from 'components/Cloud/Profiles/CreateView/CreateProfileActionCreator';
+import { connect } from 'react-redux';
+import { Input } from 'reactstrap';
+import {
+  updateProfileLabel,
+  updateProfileDescription,
+} from 'components/Cloud/Profiles/CreateView/CreateProfileActionCreator';
 
 require('./CreateProfileMetadata.scss');
 
-function ProfileName({profileName}) {
+function ProfileName({ profileName }) {
   return (
     <Input
       aria-labelledby="profile-name"
@@ -33,16 +36,16 @@ function ProfileName({profileName}) {
   );
 }
 ProfileName.propTypes = {
-  profileName: PropTypes.string
+  profileName: PropTypes.string,
 };
 
 const mapNameStateToProps = (state) => {
   return {
-    profileName: state.name
+    profileName: state.name,
   };
 };
 
-function ProfileLabel({profileLabel}) {
+function ProfileLabel({ profileLabel }) {
   return (
     <Input
       aria-labelledby="profile-label"
@@ -53,18 +56,18 @@ function ProfileLabel({profileLabel}) {
   );
 }
 ProfileLabel.propTypes = {
-  profileLabel: PropTypes.string
+  profileLabel: PropTypes.string,
 };
 
 const mapLabelStateToProps = (state) => {
   return {
-    profileLabel: state.label
+    profileLabel: state.label,
   };
 };
 
 const ConnectedProfileName = connect(mapNameStateToProps)(ProfileName);
 const ConnectedProfileLabel = connect(mapLabelStateToProps)(ProfileLabel);
-function ProfileDescription({profileDescription}) {
+function ProfileDescription({ profileDescription }) {
   return (
     <Input
       type="textarea"
@@ -77,15 +80,15 @@ function ProfileDescription({profileDescription}) {
   );
 }
 ProfileDescription.propTypes = {
-  profileDescription: PropTypes.string
+  profileDescription: PropTypes.string,
 };
 
 const mapDescriptionStateToProps = (state) => {
   return {
-    profileDescription: state.description
+    profileDescription: state.description,
   };
 };
 
 const ConnectedProfileDescription = connect(mapDescriptionStateToProps)(ProfileDescription);
 
-export {ConnectedProfileName, ConnectedProfileDescription, ConnectedProfileLabel};
+export { ConnectedProfileName, ConnectedProfileDescription, ConnectedProfileLabel };

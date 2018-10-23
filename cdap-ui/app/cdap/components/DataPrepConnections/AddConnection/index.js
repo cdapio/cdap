@@ -27,7 +27,7 @@ import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnectio
 import SpannerConnection from 'components/DataPrepConnections/SpannerConnection';
 import T from 'i18n-react';
 import find from 'lodash/find';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 require('./AddConnection.scss');
 
 const PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -38,7 +38,7 @@ export default class AddConnection extends Component {
 
     this.state = {
       activeModal: null,
-      showPopover: this.props.showPopover
+      showPopover: this.props.showPopover,
     };
 
     this.CONNECTIONS_TYPE = [
@@ -46,37 +46,37 @@ export default class AddConnection extends Component {
         type: ConnectionType.DATABASE,
         label: 'Database',
         icon: 'icon-database',
-        component: DatabaseConnection
+        component: DatabaseConnection,
       },
       {
         type: ConnectionType.KAFKA,
         label: 'Kafka',
         icon: 'icon-kafka',
-        component: KafkaConnection
+        component: KafkaConnection,
       },
       {
         type: ConnectionType.S3,
         label: 'S3',
         icon: 'icon-s3',
-        component: S3Connection
+        component: S3Connection,
       },
       {
         type: ConnectionType.GCS,
         label: 'Google Cloud Storage',
         icon: 'icon-storage',
-        component: GCSConnection
+        component: GCSConnection,
       },
       {
         type: ConnectionType.BIGQUERY,
         label: 'Google BigQuery',
         icon: 'icon-bigquery',
-        component: BigQueryConnection
+        component: BigQueryConnection,
       },
       {
         type: ConnectionType.SPANNER,
         label: 'Google Cloud Spanner',
         icon: 'icon-spanner',
-        component: SpannerConnection
+        component: SpannerConnection,
       },
     ];
   }
@@ -84,19 +84,21 @@ export default class AddConnection extends Component {
   componentWillReceiveProps(nextProps) {
     if (this.props.showPopover !== nextProps.showPopover) {
       this.setState({
-        showPopover: nextProps.showPopover
+        showPopover: nextProps.showPopover,
       });
     }
   }
   connectionClickHandler(component) {
     this.setState({
       activeModal: component,
-      showPopover: false
+      showPopover: false,
     });
   }
 
   renderModal() {
-    if (!this.state.activeModal) { return null; }
+    if (!this.state.activeModal) {
+      return null;
+    }
 
     let ModalElem = this.state.activeModal;
 
@@ -122,9 +124,7 @@ export default class AddConnection extends Component {
           <IconSVG name="icon-plus" />
         </span>
 
-        <span>
-          {T.translate(`${PREFIX}.label`)}
-        </span>
+        <span>{T.translate(`${PREFIX}.label`)}</span>
       </button>
     );
 
@@ -137,32 +137,26 @@ export default class AddConnection extends Component {
         showPopover={this.state.showPopover}
         onTogglePopover={this.onPopoverClose}
       >
-        <div className="popover-header">
-          {T.translate(`${PREFIX}.Popover.title`)}
-        </div>
+        <div className="popover-header">{T.translate(`${PREFIX}.Popover.title`)}</div>
         <div className="popover-body">
-          {
-            this.CONNECTIONS_TYPE.map((connection) => {
-              if (!find(this.props.validConnectionTypes, {type: connection.type})) {
-                return null;
-              }
-              return (
-                <div
-                  key={connection.label}
-                  className="connection-type-option"
-                  onClick={this.connectionClickHandler.bind(this, connection.component)}
-                >
-                  <span className="fa fa-fw">
-                    <IconSVG name={connection.icon} />
-                  </span>
+          {this.CONNECTIONS_TYPE.map((connection) => {
+            if (!find(this.props.validConnectionTypes, { type: connection.type })) {
+              return null;
+            }
+            return (
+              <div
+                key={connection.label}
+                className="connection-type-option"
+                onClick={this.connectionClickHandler.bind(this, connection.component)}
+              >
+                <span className="fa fa-fw">
+                  <IconSVG name={connection.icon} />
+                </span>
 
-                  <span className="connection-name">
-                    {connection.label}
-                  </span>
-                </div>
-              );
-            })
-          }
+                <span className="connection-name">{connection.label}</span>
+              </div>
+            );
+          })}
         </div>
       </Popover>
     );
@@ -179,12 +173,11 @@ export default class AddConnection extends Component {
 }
 
 AddConnection.defaultProps = {
-  showPopover: false
+  showPopover: false,
 };
 AddConnection.propTypes = {
   onAdd: PropTypes.func,
   validConnectionTypes: PropTypes.arrayOf(PropTypes.object),
   showPopover: PropTypes.bool,
-  onPopoverClose: PropTypes.func
+  onPopoverClose: PropTypes.func,
 };
-

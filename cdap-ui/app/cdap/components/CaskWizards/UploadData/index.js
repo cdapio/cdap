@@ -22,7 +22,7 @@ import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
-import {MyStreamApi} from 'api/stream';
+import { MyStreamApi } from 'api/stream';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import cookie from 'react-cookie';
@@ -36,7 +36,7 @@ export default class UploadDataWizard extends Component {
     super(props);
     this.state = {
       showWizard: this.props.isOpen,
-      successInfo: {}
+      successInfo: {},
     };
     this.setDefaultConfig();
     this.prepareInputForSteps();
@@ -44,7 +44,7 @@ export default class UploadDataWizard extends Component {
   }
   componentWillUnmount() {
     UploadDataStore.dispatch({
-      type: UploadDataActions.onReset
+      type: UploadDataActions.onReset,
     });
   }
   onSubmit() {
@@ -59,22 +59,19 @@ export default class UploadDataWizard extends Component {
     if (!this.props.buildSuccessInfo) {
       this.buildSuccessInfo(packagename, streamId, currentNamespace);
     }
-    return MyStreamApi
-      .list({namespace: currentNamespace})
+    return MyStreamApi.list({ namespace: currentNamespace })
       .mergeMap((streamsList) => {
         let matchingStream = streamsList
-          .map(stream => stream.name)
-          .find(stream => stream === streamId);
+          .map((stream) => stream.name)
+          .find((stream) => stream === streamId);
         if (!matchingStream) {
-          return MyStreamApi
-            .create({
-              namespace: currentNamespace,
-              streamId
-            })
-            .mergeMap(() => {
-              this.eventEmitter.emit(globalEvents.STREAMCREATE);
-              return Promise.resolve();
-            });
+          return MyStreamApi.create({
+            namespace: currentNamespace,
+            streamId,
+          }).mergeMap(() => {
+            this.eventEmitter.emit(globalEvents.STREAMCREATE);
+            return Promise.resolve();
+          });
         }
         return Promise.resolve();
       })
@@ -85,8 +82,8 @@ export default class UploadDataWizard extends Component {
           headers: {
             filetype,
             filename,
-            authToken
-          }
+            authToken,
+          },
         });
       });
   }
@@ -95,7 +92,7 @@ export default class UploadDataWizard extends Component {
       this.props.onClose(returnResult);
     }
     this.setState({
-      showWizard: !this.state.showWizard
+      showWizard: !this.state.showWizard,
     });
   }
   setDefaultConfig() {
@@ -106,7 +103,7 @@ export default class UploadDataWizard extends Component {
         case 'name':
           UploadDataStore.dispatch({
             type: UploadDataActions.setDestinationName,
-            payload: {name: arg.value}
+            payload: { name: arg.value },
           });
           break;
       }
@@ -114,26 +111,26 @@ export default class UploadDataWizard extends Component {
   }
   prepareInputForSteps() {
     let action = this.props.input.action;
-    let filename = head(action.arguments.filter(arg => arg.name === 'files'));
+    let filename = head(action.arguments.filter((arg) => arg.name === 'files'));
 
     if (filename && filename.value.length) {
       filename = filename.value[0];
     }
     UploadDataStore.dispatch({
       type: UploadDataActions.setFilename,
-      payload: { filename }
+      payload: { filename },
     });
     UploadDataStore.dispatch({
       type: UploadDataActions.setPackageInfo,
       payload: {
         name: this.props.input.package.name,
-        version: this.props.input.package.version
-      }
+        version: this.props.input.package.version,
+      },
     });
   }
   buildSuccessInfo(datapackName, streamId, namespace) {
-    let message = T.translate('features.Wizard.UploadData.success', {datapackName});
-    let subtitle = T.translate('features.Wizard.UploadData.subtitle', {streamId});
+    let message = T.translate('features.Wizard.UploadData.success', { datapackName });
+    let subtitle = T.translate('features.Wizard.UploadData.subtitle', { streamId });
     let buttonLabel = T.translate('features.Wizard.UploadData.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
     this.setState({
@@ -144,20 +141,21 @@ export default class UploadDataWizard extends Component {
         buttonUrl: window.getAbsUIUrl({
           namespaceId: namespace,
           entityType: 'streams',
-          entityId: streamId
+          entityId: streamId,
         }),
         linkLabel,
         linkUrl: window.getAbsUIUrl({
-          namespaceId: namespace
-        })
-      }
+          namespaceId: namespace,
+        }),
+      },
     });
   }
   render() {
     let input = this.props.input;
     let pkg = input.package || {};
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.UploadData.headerlabel');
+    let wizardModalTitle =
+      (pkg.label ? pkg.label + ' | ' : '') + T.translate('features.Wizard.UploadData.headerlabel');
     return (
       <WizardModal
         title={wizardModalTitle}
@@ -171,7 +169,8 @@ export default class UploadDataWizard extends Component {
           store={UploadDataStore}
           successInfo={this.state.successInfo}
           onSubmit={this.onSubmit.bind(this)}
-          onClose={this.toggleWizard.bind(this)}/>
+          onClose={this.toggleWizard.bind(this)}
+        />
       </WizardModal>
     );
   }
@@ -180,5 +179,5 @@ UploadDataWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,
-  buildSuccessInfo: PropTypes.func
+  buildSuccessInfo: PropTypes.func,
 };

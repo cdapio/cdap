@@ -18,38 +18,38 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import classnames from 'classnames';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MouseTrap from 'mousetrap';
 import { Popover, PopoverHeader, PopoverBody } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 
 require('./FilterDirective.scss');
 
 const PREFIX = 'features.DataPrep.Directives.Filter';
 
 const DIRECTIVES_MAP = {
-  'KEEP': {
-    'EMPTY': 'filter-rows-on condition-false',
-    'TEXTEXACTLY': 'filter-rows-on regex-not-match',
-    'TEXTCONTAINS': 'filter-rows-on regex-not-match',
-    'TEXTSTARTSWITH': 'filter-rows-on condition-false',
-    'TEXTENDSWITH': 'filter-rows-on condition-false',
-    'TEXTREGEX': 'filter-rows-on regex-not-match',
-    'CUSTOMCONDITION': 'filter-rows-on condition-false'
+  KEEP: {
+    EMPTY: 'filter-rows-on condition-false',
+    TEXTEXACTLY: 'filter-rows-on regex-not-match',
+    TEXTCONTAINS: 'filter-rows-on regex-not-match',
+    TEXTSTARTSWITH: 'filter-rows-on condition-false',
+    TEXTENDSWITH: 'filter-rows-on condition-false',
+    TEXTREGEX: 'filter-rows-on regex-not-match',
+    CUSTOMCONDITION: 'filter-rows-on condition-false',
   },
-  'REMOVE': {
-    'EMPTY': 'filter-rows-on condition-true',
-    'TEXTEXACTLY': 'filter-rows-on regex-match',
-    'TEXTCONTAINS': 'filter-rows-on regex-match',
-    'TEXTSTARTSWITH': 'filter-rows-on condition-true',
-    'TEXTENDSWITH': 'filter-rows-on condition-true',
-    'TEXTREGEX': 'filter-rows-on regex-match',
-    'CUSTOMCONDITION': 'filter-rows-on condition-true'
-  }
+  REMOVE: {
+    EMPTY: 'filter-rows-on condition-true',
+    TEXTEXACTLY: 'filter-rows-on regex-match',
+    TEXTCONTAINS: 'filter-rows-on regex-match',
+    TEXTSTARTSWITH: 'filter-rows-on condition-true',
+    TEXTENDSWITH: 'filter-rows-on condition-true',
+    TEXTREGEX: 'filter-rows-on regex-match',
+    CUSTOMCONDITION: 'filter-rows-on condition-true',
+  },
 };
 
 export default class FilterDirective extends Component {
@@ -62,7 +62,7 @@ export default class FilterDirective extends Component {
       rowFilter: 'KEEP',
       customFilter: '',
       ignoreCase: false,
-      customConditionTooltip: false
+      customConditionTooltip: false,
     };
 
     this.handleConditionSelect = this.handleConditionSelect.bind(this);
@@ -79,7 +79,7 @@ export default class FilterDirective extends Component {
       'TEXTCONTAINS',
       'TEXTSTARTSWITH',
       'TEXTENDSWITH',
-      'TEXTREGEX'
+      'TEXTREGEX',
     ];
   }
 
@@ -97,9 +97,17 @@ export default class FilterDirective extends Component {
       // So we bind to enter key only when the directive is opened.
       MouseTrap.bind('enter', this.applyDirective);
     }
-    if (this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0 && this.textFilterRef) {
+    if (
+      this.state.selectedCondition.substr(0, 4) === 'TEXT' &&
+      this.state.textFilter.length === 0 &&
+      this.textFilterRef
+    ) {
       this.textFilterRef.focus();
-    } else if (this.state.selectedCondition.substr(0, 6) === 'CUSTOM' && this.state.customFilter.length === 0 && this.customFilterRef) {
+    } else if (
+      this.state.selectedCondition.substr(0, 6) === 'CUSTOM' &&
+      this.state.customFilter.length === 0 &&
+      this.customFilterRef
+    ) {
       this.customFilterRef.focus();
     }
   }
@@ -118,33 +126,38 @@ export default class FilterDirective extends Component {
   }
 
   handleConditionSelect(e) {
-    this.setState({selectedCondition: e.target.value});
+    this.setState({ selectedCondition: e.target.value });
   }
 
   handleTextFilterChange(e) {
-    this.setState({textFilter: e.target.value});
+    this.setState({ textFilter: e.target.value });
   }
 
   handleCustomFilterChange(e) {
-    this.setState({customFilter: e.target.value});
+    this.setState({ customFilter: e.target.value });
   }
 
   toggleIgnoreCase() {
-    this.setState({ignoreCase: !this.state.ignoreCase});
+    this.setState({ ignoreCase: !this.state.ignoreCase });
   }
 
   handleKeyPress(e) {
-    if (e.nativeEvent.keyCode !== 13 || this.state.textFilter.length === 0) { return; }
+    if (e.nativeEvent.keyCode !== 13 || this.state.textFilter.length === 0) {
+      return;
+    }
 
     this.applyDirective();
   }
 
   handleRowFilter(type) {
-    this.setState({rowFilter: type});
+    this.setState({ rowFilter: type });
   }
 
   applyDirective() {
-    if (this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0) {
+    if (
+      this.state.selectedCondition.substr(0, 4) === 'TEXT' &&
+      this.state.textFilter.length === 0
+    ) {
       return;
     }
     let directive;
@@ -199,40 +212,41 @@ export default class FilterDirective extends Component {
   }
 
   execute(addDirective) {
-    execute(addDirective)
-      .subscribe(() => {
+    execute(addDirective).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   toggleCustomTooltip() {
     this.setState({
-      customConditionTooltip: !this.state.customConditionTooltip
+      customConditionTooltip: !this.state.customConditionTooltip,
     });
   }
 
   renderCustomFilter() {
-    if (this.state.selectedCondition.substr(0, 6) !== 'CUSTOM') { return null; }
+    if (this.state.selectedCondition.substr(0, 6) !== 'CUSTOM') {
+      return null;
+    }
 
     return (
       <div>
         <div className="custom-condition-container">
           <strong>{this.props.column}</strong>
           <div id="customConditionTooltip">
-            <IconSVG
-              name="icon-info-circle"
-              onClick={this.toggleCustomTooltip.bind(this)}
-            />
+            <IconSVG name="icon-info-circle" onClick={this.toggleCustomTooltip.bind(this)} />
           </div>
           <Popover
             placement="right"
@@ -261,7 +275,7 @@ export default class FilterDirective extends Component {
           className="form-control"
           value={this.state.customFilter}
           onChange={this.handleCustomFilterChange}
-          ref={ref => this.customFilterRef = ref}
+          ref={(ref) => (this.customFilterRef = ref)}
           placeholder={T.translate(`${PREFIX}.Placeholders.CUSTOMCONDITION`)}
         />
       </div>
@@ -269,25 +283,22 @@ export default class FilterDirective extends Component {
   }
 
   renderTextFilter() {
-    if (this.state.selectedCondition.substr(0, 4) !== 'TEXT') { return null; }
+    if (this.state.selectedCondition.substr(0, 4) !== 'TEXT') {
+      return null;
+    }
 
     let ignoreCase;
     if (this.state.selectedCondition !== 'TEXTREGEX') {
       ignoreCase = (
         <div>
-          <span
-            className="cursor-pointer"
-            onClick={this.toggleIgnoreCase}
-          >
+          <span className="cursor-pointer" onClick={this.toggleIgnoreCase}>
             <span
               className={classnames('fa', {
                 'fa-square-o': !this.state.ignoreCase,
-                'fa-check-square': this.state.ignoreCase
+                'fa-check-square': this.state.ignoreCase,
               })}
             />
-            <span>
-              {T.translate(`${PREFIX}.ignoreCase`)}
-            </span>
+            <span>{T.translate(`${PREFIX}.ignoreCase`)}</span>
           </span>
         </div>
       );
@@ -303,7 +314,7 @@ export default class FilterDirective extends Component {
             value={this.state.textFilter}
             onChange={this.handleTextFilterChange}
             placeholder={T.translate(`${PREFIX}.Placeholders.${this.state.selectedCondition}`)}
-            ref={ref => this.textFilterRef = ref}
+            ref={(ref) => (this.textFilterRef = ref)}
             onKeyPress={this.handleKeyPress}
           />
         </div>
@@ -316,7 +327,7 @@ export default class FilterDirective extends Component {
     let filterConditions = this.conditionsOptions.map((filter) => {
       return {
         filter: filter,
-        displayText: T.translate(`${PREFIX}.Conditions.${filter}`)
+        displayText: T.translate(`${PREFIX}.Conditions.${filter}`),
       };
     });
 
@@ -325,7 +336,7 @@ export default class FilterDirective extends Component {
         <div className="row-filter-container">
           <span
             className={classnames('cursor-pointer row-filter', {
-              'active': this.state.rowFilter === 'KEEP'
+              active: this.state.rowFilter === 'KEEP',
             })}
             onClick={this.handleRowFilter.bind(this, 'KEEP')}
           >
@@ -334,7 +345,7 @@ export default class FilterDirective extends Component {
           <span> | </span>
           <span
             className={classnames('cursor-pointer row-filter', {
-              'active': this.state.rowFilter === 'REMOVE'
+              active: this.state.rowFilter === 'REMOVE',
             })}
             onClick={this.handleRowFilter.bind(this, 'REMOVE')}
           >
@@ -351,22 +362,14 @@ export default class FilterDirective extends Component {
                 value={this.state.selectedCondition}
                 onChange={this.handleConditionSelect}
               >
-                {
-                  filterConditions.map((condition) => {
-                    return (
-                      <option
-                        value={condition.filter}
-                        key={condition.filter}
-                      >
-                        {condition.displayText}
-                      </option>
-                    );
-                  })
-                }
-                <option
-                  disabled="disabled"
-                  role="separator"
-                >
+                {filterConditions.map((condition) => {
+                  return (
+                    <option value={condition.filter} key={condition.filter}>
+                      {condition.displayText}
+                    </option>
+                  );
+                })}
+                <option disabled="disabled" role="separator">
                   &#x2500;&#x2500;&#x2500;&#x2500;
                 </option>
                 <option value="CUSTOMCONDITION">
@@ -378,7 +381,6 @@ export default class FilterDirective extends Component {
 
           {this.renderTextFilter()}
           {this.renderCustomFilter()}
-
         </div>
       </div>
     );
@@ -390,13 +392,11 @@ export default class FilterDirective extends Component {
       return null;
     }
 
-    let disabled = this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0;
+    let disabled =
+      this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0;
 
     return (
-      <div
-        className="filter-detail second-level-popover"
-        onClick={this.preventPropagation}
-      >
+      <div className="filter-detail second-level-popover" onClick={this.preventPropagation}>
         {this.renderCondition()}
 
         <hr />
@@ -410,10 +410,7 @@ export default class FilterDirective extends Component {
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
-          <button
-            className="btn btn-link float-xs-right"
-            onClick={this.props.close}
-          >
+          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
@@ -426,7 +423,7 @@ export default class FilterDirective extends Component {
       <div
         id="filter-directive"
         className={classnames('filter-directive clearfix action-item', {
-          'active': this.props.isOpen
+          active: this.props.isOpen,
         })}
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
@@ -445,5 +442,5 @@ FilterDirective.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

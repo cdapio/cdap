@@ -31,7 +31,7 @@ export default class PublishPipelineUsecaseWizard extends Component {
   buildSuccessInfo(pipelineName, namespace) {
     let successInfo = {};
     if (this.props.input.isLastStepInMarket) {
-      let message = T.translate('features.Wizard.PublishPipeline.success', {pipelineName});
+      let message = T.translate('features.Wizard.PublishPipeline.success', { pipelineName });
       let linkLabel = T.translate('features.Wizard.GoToHomePage');
       let buttonLabel = T.translate('features.Wizard.PublishPipeline.callToAction.view');
       successInfo = {
@@ -41,13 +41,13 @@ export default class PublishPipelineUsecaseWizard extends Component {
           stateName: 'hydrator.detail',
           stateParams: {
             namespace,
-            pipelineId: pipelineName
-          }
+            pipelineId: pipelineName,
+          },
         }),
         linkLabel,
         linkUrl: window.getAbsUIUrl({
-          namespaceId: namespace
-        })
+          namespaceId: namespace,
+        }),
       };
     }
     return successInfo;

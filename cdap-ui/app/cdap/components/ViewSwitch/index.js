@@ -17,7 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Nav, NavItem, NavLink, TabContent, TabPane} from 'reactstrap';
+import { Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 require('./ViewSwitch.scss');
@@ -29,14 +29,14 @@ export default class ViewSwitch extends Component {
     let defaultView = cookie.load('ViewSwitchDefault');
     this.state = {
       list: this.props.list,
-      activeTab: defaultView || 'card'
+      activeTab: defaultView || 'card',
     };
   }
   toggleView(tab) {
     if (this.state.activeTab !== tab) {
       cookie.save('ViewSwitchDefault', tab);
       this.setState({
-        activeTab: tab
+        activeTab: tab,
       });
       if (this.props.onSwitch) {
         this.props.onSwitch();
@@ -51,14 +51,20 @@ export default class ViewSwitch extends Component {
             <NavItem>
               <NavLink
                 className={classnames({ active: this.state.activeTab === 'card' })}
-                onClick={() => {this.toggleView('card');}}>
+                onClick={() => {
+                  this.toggleView('card');
+                }}
+              >
                 <IconSVG name="icon-th-large" />
               </NavLink>
             </NavItem>
             <NavItem>
               <NavLink
                 className={classnames({ active: this.state.activeTab === 'list' })}
-                onClick={() => {this.toggleView('list');}}>
+                onClick={() => {
+                  this.toggleView('list');
+                }}
+              >
                 <IconSVG name="icon-list" />
               </NavLink>
             </NavItem>
@@ -66,10 +72,10 @@ export default class ViewSwitch extends Component {
         </div>
         <TabContent activeTab={this.state.activeTab}>
           <TabPane tabId="card">
-            { this.state.activeTab === 'card' ? this.props.children[0] : null}
+            {this.state.activeTab === 'card' ? this.props.children[0] : null}
           </TabPane>
           <TabPane tabId="list">
-            { this.state.activeTab === 'list' ? this.props.children[1] : null}
+            {this.state.activeTab === 'list' ? this.props.children[1] : null}
           </TabPane>
         </TabContent>
       </div>
@@ -79,5 +85,5 @@ export default class ViewSwitch extends Component {
 ViewSwitch.propTypes = {
   list: PropTypes.arrayOf(PropTypes.object),
   children: PropTypes.node,
-  onSwitch: PropTypes.func
+  onSwitch: PropTypes.func,
 };

@@ -22,7 +22,7 @@ const HttpExecutorActions = {
   setBody: 'HTTP_SET_BODY',
   setRequestTab: 'HTTP_SET_REQUEST_TAB',
   setHeaders: 'HTTP_SET_REQUEST_HEADERS',
-  reset: 'HTTP_RESET'
+  reset: 'HTTP_RESET',
 };
 
 export default HttpExecutorActions;

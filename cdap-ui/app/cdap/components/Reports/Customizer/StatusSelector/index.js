@@ -25,9 +25,7 @@ require('./StatusSelector.scss');
 export default function StatusSelector() {
   return (
     <div className="status-selector">
-      <div className="title">
-        {T.translate(`${PREFIX}.selectStatus`)}
-      </div>
+      <div className="title">{T.translate(`${PREFIX}.selectStatus`)}</div>
 
       <StatusPopover />
     </div>

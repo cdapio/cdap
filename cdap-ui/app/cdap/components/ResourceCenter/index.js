@@ -15,7 +15,7 @@
  */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import ResourceCenterEntity from 'components/ResourceCenterEntity';
 import ResourceCenterPipelineEntity from 'components/ResourceCenterEntity/ResourceCenterPipelineEntity';
 import AbstractWizard from 'components/AbstractWizard';
@@ -26,24 +26,24 @@ require('./ResourceCenter.scss');
 const WIZARD_MAP = {
   createApplicationWizard: {
     wizardType: 'create_app_rc',
-    input: {headerLabel: T.translate('features.Resource-Center.Application.modalheadertitle')}
+    input: { headerLabel: T.translate('features.Resource-Center.Application.modalheadertitle') },
   },
   createArtifactWizard: {
     wizardType: 'create_artifact_rc',
-    input: {headerLabel: T.translate('features.Resource-Center.Artifact.modalheadertitle')}
+    input: { headerLabel: T.translate('features.Resource-Center.Artifact.modalheadertitle') },
   },
   createPluginArtifactWizard: {
     wizardType: 'create_plugin_artifact_rc',
-    input: {headerLabel: T.translate('features.Resource-Center.Plugins.modalheadertitle')}
+    input: { headerLabel: T.translate('features.Resource-Center.Plugins.modalheadertitle') },
   },
   createLibraryWizard: {
     wizardType: 'create_library_rc',
-    input: {headerLabel: T.translate('features.Resource-Center.Library.modalheadertitle')}
+    input: { headerLabel: T.translate('features.Resource-Center.Library.modalheadertitle') },
   },
   createDirectiveArtifactWizard: {
     wizardType: 'create_directive_artifact_rc',
-    input: {headerLabel: T.translate('features.Resource-Center.Directive.modalheadertitle')}
-  }
+    input: { headerLabel: T.translate('features.Resource-Center.Directive.modalheadertitle') },
+  },
 };
 
 export default class ResourceCenter extends Component {
@@ -59,7 +59,7 @@ export default class ResourceCenter extends Component {
           description: T.translate('features.Resource-Center.Application.description'),
           actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
           iconClassName: 'icon-app',
-          wizardId: 'createApplicationWizard'
+          wizardId: 'createApplicationWizard',
         },
         {
           // Plugin
@@ -67,7 +67,7 @@ export default class ResourceCenter extends Component {
           description: T.translate('features.Resource-Center.Plugins.description'),
           actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
           iconClassName: 'icon-plug',
-          wizardId: 'createPluginArtifactWizard'
+          wizardId: 'createPluginArtifactWizard',
         },
         {
           // Driver
@@ -75,7 +75,7 @@ export default class ResourceCenter extends Component {
           description: T.translate('features.Resource-Center.Artifact.description'),
           actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
           iconClassName: 'icon-artifacts',
-          wizardId: 'createArtifactWizard'
+          wizardId: 'createArtifactWizard',
         },
         {
           // Library
@@ -83,7 +83,7 @@ export default class ResourceCenter extends Component {
           description: T.translate('features.Resource-Center.Library.description'),
           actionLabel: T.translate('features.Resource-Center.Library.actionbtn0'),
           iconClassName: 'icon-library',
-          wizardId: 'createLibraryWizard'
+          wizardId: 'createLibraryWizard',
         },
         {
           // Directives
@@ -91,16 +91,16 @@ export default class ResourceCenter extends Component {
           description: T.translate('features.Resource-Center.Directive.description'),
           actionLabel: T.translate('features.Resource-Center.Directive.actionbtn0'),
           iconClassName: 'icon-directives',
-          wizardId: 'createDirectiveArtifactWizard'
-        }
-      ]
+          wizardId: 'createDirectiveArtifactWizard',
+        },
+      ],
     };
   }
   toggleWizard(wizardName) {
     this.setState({
       activeWizard: wizardName,
       error: null,
-      extendedError: null
+      extendedError: null,
     });
   }
 
@@ -124,30 +124,24 @@ export default class ResourceCenter extends Component {
     return (
       <div>
         <div className="cask-resource-center">
-          <ResourceCenterPipelineEntity
-            onError={this.props.onError}
-          />
-          {
-            this.state
-              .entities
-              .map((entity, index) => (
-                <ResourceCenterEntity
-                  title={entity.title}
-                  description={entity.description}
-                  actionLabel={entity.actionLabel}
-                  iconClassName={entity.iconClassName}
-                  key={index}
-                  onClick={this.toggleWizard.bind(this, entity.wizardId)}
-                />
-              ))
-          }
+          <ResourceCenterPipelineEntity onError={this.props.onError} />
+          {this.state.entities.map((entity, index) => (
+            <ResourceCenterEntity
+              title={entity.title}
+              description={entity.description}
+              actionLabel={entity.actionLabel}
+              iconClassName={entity.iconClassName}
+              key={index}
+              onClick={this.toggleWizard.bind(this, entity.wizardId)}
+            />
+          ))}
         </div>
-        { this.getWizardToBeDisplayed() }
+        {this.getWizardToBeDisplayed()}
       </div>
     );
   }
 }
 
 ResourceCenter.propTypes = {
-  onError: PropTypes.func
+  onError: PropTypes.func,
 };

@@ -16,14 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {Input} from 'reactstrap';
-import {search} from 'components/FieldLevelLineage/store/ActionCreator';
+import { connect } from 'react-redux';
+import { Input } from 'reactstrap';
+import { search } from 'components/FieldLevelLineage/store/ActionCreator';
 import T from 'i18n-react';
 
 const PREFIX = 'features.FieldLevelLineage';
 
-function FieldSearchView({searchValue}) {
+function FieldSearchView({ searchValue }) {
   return (
     <div className="search-container">
       <Input
@@ -39,17 +39,15 @@ function FieldSearchView({searchValue}) {
 
 FieldSearchView.propTypes = {
   searchValue: PropTypes.string,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {
   return {
-    searchValue: state.lineage.search
+    searchValue: state.lineage.search,
   };
 };
 
-const FieldSearch = connect(
-  mapStateToProps
-)(FieldSearchView);
+const FieldSearch = connect(mapStateToProps)(FieldSearchView);
 
 export default FieldSearch;

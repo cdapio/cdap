@@ -16,6 +16,6 @@
 
 const ExploreTablesActions = {
   FETCH_TABLES: 'FETCH_TABLES',
-  SET_TABLES: 'SET_TABLES'
+  SET_TABLES: 'SET_TABLES',
 };
 export default ExploreTablesActions;

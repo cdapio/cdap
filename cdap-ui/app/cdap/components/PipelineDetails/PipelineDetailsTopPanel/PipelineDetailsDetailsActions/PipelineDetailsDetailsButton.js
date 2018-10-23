@@ -18,15 +18,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import AbsLinkTo from 'components/AbsLinkTo';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
-export default function PipelineDetailsDetailsButton({pipelineName}) {
+export default function PipelineDetailsDetailsButton({ pipelineName }) {
   let context = {
     namespaceId: getCurrentNamespace(),
-    appId: pipelineName
+    appId: pipelineName,
   };
 
   return (
@@ -34,10 +34,8 @@ export default function PipelineDetailsDetailsButton({pipelineName}) {
       <AbsLinkTo context={context}>
         <div className="btn pipeline-action-btn pipeline-details-btn">
           <div className="btn-container">
-            <IconSVG name="icon-info-circle"/>
-            <div className="button-label">
-              {T.translate(`${PREFIX}.details`)}
-            </div>
+            <IconSVG name="icon-info-circle" />
+            <div className="button-label">{T.translate(`${PREFIX}.details`)}</div>
           </div>
         </div>
       </AbsLinkTo>

@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
-import {MyReportsApi} from 'api/reports';
+import { MyReportsApi } from 'api/reports';
 import ReportsStore, { ReportsActions } from 'components/Reports/store/ReportsStore';
 import T from 'i18n-react';
 
@@ -27,66 +27,65 @@ export default class SaveModal extends Component {
   static propTypes = {
     toggle: PropTypes.func,
     name: PropTypes.string,
-    reportId: PropTypes.string
+    reportId: PropTypes.string,
   };
 
   state = {
     name: this.props.name,
-    error: null
+    error: null,
   };
 
   onTextChange = (e) => {
     this.setState({
-      name: e.target.value
+      name: e.target.value,
     });
   };
 
   save = () => {
     let params = {
-      reportId: this.props.reportId
+      reportId: this.props.reportId,
     };
 
     let detailParams = {
-      'report-id': this.props.reportId
+      'report-id': this.props.reportId,
     };
 
     let body = {
-      name: this.state.name
+      name: this.state.name,
     };
 
-    MyReportsApi.saveReport(params, body)
-      .subscribe(() => {
-        MyReportsApi.getReport(detailParams)
-          .subscribe((res) => {
-            ReportsStore.dispatch({
-              type: ReportsActions.setInfoStatus,
-              payload: {
-                info: {
-                  ...res,
-                  expiry: null
-                }
-              }
-            });
+    MyReportsApi.saveReport(params, body).subscribe(
+      () => {
+        MyReportsApi.getReport(detailParams).subscribe((res) => {
+          ReportsStore.dispatch({
+            type: ReportsActions.setInfoStatus,
+            payload: {
+              info: {
+                ...res,
+                expiry: null,
+              },
+            },
           });
+        });
 
         this.props.toggle();
-      }, (err) => {
+      },
+      (err) => {
         console.log('Error', err);
 
         this.setState({
-          error: err.response
+          error: err.response,
         });
-      });
+      }
+    );
   };
 
   renderError() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
 
-    return (
-      <div className="error-container text-danger">
-        {this.state.error}
-      </div>
-    );
+    return <div className="error-container text-danger">{this.state.error}</div>;
   }
 
   render() {
@@ -100,22 +99,15 @@ export default class SaveModal extends Component {
         className="report-save-button-modal cdap-modal"
       >
         <ModalHeader>
-          <span>
-            {T.translate(`${PREFIX}.saveReport`)}
-          </span>
+          <span>{T.translate(`${PREFIX}.saveReport`)}</span>
 
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.toggle}
-          >
+          <div className="close-section float-xs-right" onClick={this.props.toggle}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
         <ModalBody>
           <div className="field-row">
-            <label className="control-label">
-              {T.translate('features.Reports.reportName')}
-            </label>
+            <label className="control-label">{T.translate('features.Reports.reportName')}</label>
 
             <input
               type="text"

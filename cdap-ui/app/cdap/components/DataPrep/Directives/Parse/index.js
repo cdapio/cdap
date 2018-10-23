@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import classnames from 'classnames';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import SingleFieldModal from 'components/DataPrep/Directives/Parse/Modals/SingleFieldModal';
 import CSVModal from 'components/DataPrep/Directives/Parse/Modals/CSVModal';
 import LogModal from 'components/DataPrep/Directives/Parse/Modals/LogModal';
@@ -28,24 +28,24 @@ import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import debounce from 'lodash/debounce';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 
 const SUFFIX = 'features.DataPrep.Directives.Parse';
 
 require('./ParseDirective.scss');
 
 const DIRECTIVE_MAP = {
-  'CSV': 'parse-as-csv',
-  'XML': 'parse-as-xml',
-  'JSON': 'parse-as-json',
-  'XMLTOJSON': 'parse-xml-to-json',
-  'LOG': 'parse-as-log',
-  'SIMPLEDATE': 'parse-as-simple-date',
-  'NATURALDATE': 'parse-as-date',
-  'FIXEDLENGTH': 'parse-as-fixed-length',
-  'HL7': 'parse-as-hl7',
-  'AVRO': 'parse-as-avro-file',
-  'EXCEL': 'parse-as-excel'
+  CSV: 'parse-as-csv',
+  XML: 'parse-as-xml',
+  JSON: 'parse-as-json',
+  XMLTOJSON: 'parse-xml-to-json',
+  LOG: 'parse-as-log',
+  SIMPLEDATE: 'parse-as-simple-date',
+  NATURALDATE: 'parse-as-date',
+  FIXEDLENGTH: 'parse-as-fixed-length',
+  HL7: 'parse-as-hl7',
+  AVRO: 'parse-as-avro-file',
+  EXCEL: 'parse-as-excel',
 };
 
 export default class ParseDirective extends Component {
@@ -53,7 +53,7 @@ export default class ParseDirective extends Component {
     super(props);
 
     this.state = {
-      selectedParse: null
+      selectedParse: null,
     };
 
     this.preventPropagation = this.preventPropagation.bind(this);
@@ -69,7 +69,7 @@ export default class ParseDirective extends Component {
       'SIMPLEDATE',
       'NATURALDATE',
       'FIXEDLENGTH',
-      'HL7'
+      'HL7',
     ];
 
     window.addEventListener('resize', this.offsetCalcDebounce);
@@ -110,20 +110,22 @@ export default class ParseDirective extends Component {
   }
 
   execute(addDirective) {
-    execute(addDirective)
-      .subscribe(() => {
+    execute(addDirective).subscribe(
+      () => {
         this.props.close();
         this.props.onComplete();
-      }, (err) => {
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   selectParse(option) {
@@ -132,7 +134,7 @@ export default class ParseDirective extends Component {
       return;
     }
 
-    this.setState({selectedParse: option});
+    this.setState({ selectedParse: option });
   }
 
   renderSingleFieldModal() {
@@ -195,7 +197,9 @@ export default class ParseDirective extends Component {
   }
 
   renderModal() {
-    if (!this.state.selectedParse) { return null; }
+    if (!this.state.selectedParse) {
+      return null;
+    }
 
     if (this.state.selectedParse === 'CSV') {
       return this.renderCSVModal();
@@ -211,27 +215,20 @@ export default class ParseDirective extends Component {
   }
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen) {
+      return null;
+    }
 
     return (
-      <div
-        className="parse-detail second-level-popover"
-        onClick={this.preventPropagation}
-      >
+      <div className="parse-detail second-level-popover" onClick={this.preventPropagation}>
         <div className="parse-options">
-          {
-            this.PARSE_OPTIONS.map((option) => {
-              return (
-                <div
-                  key={option}
-                  className="option"
-                  onClick={this.selectParse.bind(this, option)}
-                >
-                  {T.translate(`${SUFFIX}.Parsers.${option}.label`)}
-                </div>
-              );
-            })
-          }
+          {this.PARSE_OPTIONS.map((option) => {
+            return (
+              <div key={option} className="option" onClick={this.selectParse.bind(this, option)}>
+                {T.translate(`${SUFFIX}.Parsers.${option}.label`)}
+              </div>
+            );
+          })}
         </div>
 
         {this.renderModal()}
@@ -244,12 +241,10 @@ export default class ParseDirective extends Component {
       <div
         id="parse-directive"
         className={classnames('parse-directive clearfix action-item', {
-          'active': this.props.isOpen
+          active: this.props.isOpen,
         })}
       >
-        <span>
-          {T.translate(`${SUFFIX}.title`)}
-        </span>
+        <span>{T.translate(`${SUFFIX}.title`)}</span>
 
         <span className="float-xs-right">
           <span className="fa fa-caret-right" />
@@ -265,5 +260,5 @@ ParseDirective.propTypes = {
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
-  close: PropTypes.func
+  close: PropTypes.func,
 };

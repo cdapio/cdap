@@ -18,22 +18,17 @@ import PropTypes from 'prop-types';
 
 import React from 'react';
 import IconSVG from 'components/IconSVG';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 require('./BreadCrumb.scss');
 
-export default function BreadCrumb({previousPaths, currentStateIcon, currentStateLabel}) {
+export default function BreadCrumb({ previousPaths, currentStateIcon, currentStateLabel }) {
   return (
     <div className="bread-crumb">
-      {
-        previousPaths.map(previousPath => (
-          <Link
-            to={previousPath.pathname}
-            key={previousPath.pathname}
-          >
-            {previousPath.label}
-          </Link>
-        ))
-      }
+      {previousPaths.map((previousPath) => (
+        <Link to={previousPath.pathname} key={previousPath.pathname}>
+          {previousPath.label}
+        </Link>
+      ))}
       <IconSVG name={currentStateIcon} />
       <span>{currentStateLabel}</span>
     </div>
@@ -41,10 +36,12 @@ export default function BreadCrumb({previousPaths, currentStateIcon, currentStat
 }
 
 BreadCrumb.propTypes = {
-  previousPaths: PropTypes.arrayOf(PropTypes.shape({
-    pathname: PropTypes.string,
-    label: PropTypes.string
-  })),
+  previousPaths: PropTypes.arrayOf(
+    PropTypes.shape({
+      pathname: PropTypes.string,
+      label: PropTypes.string,
+    })
+  ),
   currentStateIcon: PropTypes.string,
-  currentStateLabel: PropTypes.string
+  currentStateLabel: PropTypes.string,
 };

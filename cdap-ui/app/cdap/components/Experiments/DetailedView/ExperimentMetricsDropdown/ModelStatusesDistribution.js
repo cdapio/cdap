@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import PieChartWithLegends from 'components/PieChartWithLegend';
 import EmptyMetricMessage from 'components/Experiments/DetailedView/ExperimentMetricsDropdown/EmptyMetricMessage';
-import {MODEL_STATUS} from 'components/Experiments/store/ModelStatus';
+import { MODEL_STATUS } from 'components/Experiments/store/ModelStatus';
 import colorVariables from 'styles/variables.scss';
 
 const HEIGHT_OF_PIE_CHART = 190;
@@ -32,10 +32,10 @@ export const MODEL_STATUS_TO_COLOR_MAP = {
   [MODEL_STATUS.TRAINED]: colorVariables.green03,
 
   [MODEL_STATUS.SPLIT_FAILED]: colorVariables.red01,
-  [MODEL_STATUS.TRAINING_FAILED]: colorVariables.red03
+  [MODEL_STATUS.TRAINING_FAILED]: colorVariables.red03,
 };
 
-const ModelStatusesDistribution = ({modelStatuses}) => {
+const ModelStatusesDistribution = ({ modelStatuses }) => {
   if (!modelStatuses.length) {
     return (
       <EmptyMetricMessage
@@ -44,27 +44,25 @@ const ModelStatusesDistribution = ({modelStatuses}) => {
       />
     );
   }
-  let statuses = modelStatuses.map(status => {
+  let statuses = modelStatuses.map((status) => {
     return {
       ...status,
       value: status.bin,
-      color: MODEL_STATUS_TO_COLOR_MAP[status.bin]
+      color: MODEL_STATUS_TO_COLOR_MAP[status.bin],
     };
   });
   return (
-    <PieChartWithLegends
-      data={statuses}
-      width={HEIGHT_OF_PIE_CHART}
-      height={HEIGHT_OF_PIE_CHART}
-    />
+    <PieChartWithLegends data={statuses} width={HEIGHT_OF_PIE_CHART} height={HEIGHT_OF_PIE_CHART} />
   );
 };
 
 ModelStatusesDistribution.propTypes = {
-  modelStatuses: PropTypes.arrayOf(PropTypes.shape({
-    bin: PropTypes.string,
-    count: PropTypes.number
-  }))
+  modelStatuses: PropTypes.arrayOf(
+    PropTypes.shape({
+      bin: PropTypes.string,
+      count: PropTypes.number,
+    })
+  ),
 };
 
 export default ModelStatusesDistribution;

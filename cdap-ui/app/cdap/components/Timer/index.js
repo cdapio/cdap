@@ -25,7 +25,7 @@ export default class Timer extends Component {
     super(props);
 
     this.state = {
-      time: this.props.time || 0
+      time: this.props.time || 0,
     };
     this.currentTimer = 0;
     this.unmounted = false;
@@ -38,7 +38,7 @@ export default class Timer extends Component {
   componentWillReceiveProps(nextProps) {
     if (!isNil(nextProps.time) && this.props.time !== nextProps.time) {
       clearTimeout(this.currentTimer);
-      !this.unmounted && this.setState({time: nextProps.time}, this.startTimer.bind(this));
+      !this.unmounted && this.setState({ time: nextProps.time }, this.startTimer.bind(this));
     }
   }
 
@@ -53,7 +53,7 @@ export default class Timer extends Component {
     if (this.unmounted) {
       return;
     }
-    !this.unmounted && this.setState({time: newTime});
+    !this.unmounted && this.setState({ time: newTime });
 
     if (newTime > 0) {
       this.currentTimer = setTimeout(() => {
@@ -67,11 +67,7 @@ export default class Timer extends Component {
   }
 
   render() {
-    return (
-      <span className="timer-countdown">
-        {this.state.time}
-      </span>
-    );
+    return <span className="timer-countdown">{this.state.time}</span>;
   }
 }
 Timer.propTypes = {

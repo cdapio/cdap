@@ -16,7 +16,7 @@
 
 import React, { Component } from 'react';
 import DataPrepAutoComplete from 'components/DataPrep/AutoComplete';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 require('./DataPrepCLI.scss');
@@ -29,7 +29,7 @@ export default class DataPrepCLI extends Component {
       directiveInput: '',
       error: null,
       autoCompleteOpen: false,
-      currentWorkspace: null
+      currentWorkspace: null,
     };
 
     this.handleDirectiveChange = this.handleDirectiveChange.bind(this);
@@ -39,15 +39,15 @@ export default class DataPrepCLI extends Component {
     this.execute = this.execute.bind(this);
 
     this.sub = DataPrepStore.subscribe(() => {
-      let {error, dataprep} = DataPrepStore.getState();
+      let { error, dataprep } = DataPrepStore.getState();
       let newState = {
-        error: error.cliError
+        error: error.cliError,
       };
       if (dataprep.workspaceId !== this.state.currentWorkspace) {
         newState = {
           ...newState,
           currentWorkspace: dataprep.workspaceId,
-          directiveInput: ''
+          directiveInput: '',
         };
       }
       this.setState(newState);
@@ -69,64 +69,61 @@ export default class DataPrepCLI extends Component {
   handleDirectiveChange(e) {
     this.setState({
       directiveInput: e.target.value,
-      autoCompleteOpen: true
+      autoCompleteOpen: true,
     });
   }
 
   toggleAutoComplete() {
-    this.setState({autoCompleteOpen: !this.state.autoCompleteOpen});
+    this.setState({ autoCompleteOpen: !this.state.autoCompleteOpen });
   }
 
   execute(addDirective) {
-    execute(addDirective)
-      .subscribe(() => {
+    execute(addDirective).subscribe(
+      () => {
         this.setState({
-          directiveInput: ''
+          directiveInput: '',
         });
-      }, (err) => {
-
+      },
+      (err) => {
         DataPrepStore.dispatch({
           type: DataPrepActions.setCLIError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   dismissError() {
     DataPrepStore.dispatch({
       type: DataPrepActions.setCLIError,
       payload: {
-        message: null
-      }
+        message: null,
+      },
     });
   }
 
   renderError() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
 
     return (
       <div className="error-bar">
-        <span className="content">
-          {this.state.error}
-        </span>
+        <span className="content">{this.state.error}</span>
 
-        <span
-          className="fa fa-times float-xs-right"
-          onClick={this.dismissError}
-        />
+        <span className="fa fa-times float-xs-right" onClick={this.dismissError} />
       </div>
     );
   }
 
   handlePaste(e) {
     let data = e.clipboardData.getData('Text');
-    data = data.split('\n')
-      .filter((row) => {
-        // filter out empty rows
-        return row.trim().length > 0;
-      });
+    data = data.split('\n').filter((row) => {
+      // filter out empty rows
+      return row.trim().length > 0;
+    });
 
     if (data.length > 1) {
       e.preventDefault();
@@ -137,7 +134,6 @@ export default class DataPrepCLI extends Component {
   render() {
     return (
       <div className="dataprep-cli">
-
         {this.renderError()}
 
         <DataPrepAutoComplete
@@ -159,7 +155,7 @@ export default class DataPrepCLI extends Component {
               id="directive-input"
               value={this.state.directiveInput}
               onChange={this.handleDirectiveChange}
-              ref={(ref) => this.directiveRef = ref}
+              ref={(ref) => (this.directiveRef = ref)}
               onPaste={this.handlePaste}
             />
           </div>

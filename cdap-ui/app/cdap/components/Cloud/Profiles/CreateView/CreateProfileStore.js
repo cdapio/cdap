@@ -14,8 +14,8 @@
  * the License.
 */
 
-import {createStore} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 
 const ACTIONS = {
   updateProfileLabel: 'UPDATE_PROFILE_LABEL',
@@ -23,33 +23,33 @@ const ACTIONS = {
   initializeProperties: 'INITIALIZE_PROPERTIES',
   updateProperty: 'UPDATE_PROPERTIES',
   togglePropertyLock: 'TOGGLE_PROPERTY_LOCK',
-  reset: 'RESET'
+  reset: 'RESET',
 };
 const STORE_DEFAULT = {
   label: '',
   name: '',
   description: '',
-  properties: {}
+  properties: {},
 };
 const createProfileStore = (state = STORE_DEFAULT, action = defaultAction) => {
   switch (action.type) {
     case ACTIONS.updateProfileLabel: {
-      let {label = ''} = action.payload;
+      let { label = '' } = action.payload;
       return {
         ...state,
         name: label.replace(/\ +/g, '_').toLowerCase(),
-        label
+        label,
       };
     }
     case ACTIONS.updateProfileDescription:
       return {
         ...state,
-        description: action.payload.description
+        description: action.payload.description,
       };
     case ACTIONS.initializeProperties:
       return {
         ...state,
-        properties: action.payload.properties
+        properties: action.payload.properties,
       };
     case ACTIONS.updateProperty:
       return {
@@ -58,9 +58,9 @@ const createProfileStore = (state = STORE_DEFAULT, action = defaultAction) => {
           ...state.properties,
           [action.payload.propName]: {
             ...state.properties[action.payload.propName],
-            value: action.payload.propValue
-          }
-        }
+            value: action.payload.propValue,
+          },
+        },
       };
     case ACTIONS.togglePropertyLock:
       return {
@@ -69,9 +69,9 @@ const createProfileStore = (state = STORE_DEFAULT, action = defaultAction) => {
           ...state.properties,
           [action.payload.propName]: {
             ...state.properties[action.payload.propName],
-            isEditable: !state.properties[action.payload.propName].isEditable
-          }
-        }
+            isEditable: !state.properties[action.payload.propName].isEditable,
+          },
+        },
       };
     case ACTIONS.reset:
       return STORE_DEFAULT;
@@ -87,4 +87,4 @@ const CreateProfilePropertiesStore = createStore(
 );
 
 export default CreateProfilePropertiesStore;
-export {ACTIONS};
+export { ACTIONS };

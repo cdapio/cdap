@@ -14,28 +14,32 @@
  * the License.
  */
 
-import {setActiveBrowser, setError} from './commons';
-import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import { setActiveBrowser, setError } from './commons';
+import DataPrepBrowserStore, {
+  Actions as BrowserStoreActions,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 const setKafkaAsActiveBrowser = (payload) => {
-  let {kafka, activeBrowser} = DataPrepBrowserStore.getState();
+  let { kafka, activeBrowser } = DataPrepBrowserStore.getState();
 
   if (activeBrowser.name !== payload.name) {
     setActiveBrowser(payload);
   }
 
-  let {id: connectionId} = payload;
+  let { id: connectionId } = payload;
 
-  if (kafka.connectionId === connectionId) { return; }
+  if (kafka.connectionId === connectionId) {
+    return;
+  }
 
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_KAFKA_CONNECTION_ID,
     payload: {
-      connectionId
-    }
+      connectionId,
+    },
   });
 
   setKafkaInfoLoading();
@@ -44,32 +48,36 @@ const setKafkaAsActiveBrowser = (payload) => {
 
   let params = {
     namespace,
-    connectionId
+    connectionId,
   };
 
-  MyDataPrepApi.getConnection(params)
-    .subscribe((res) => {
+  MyDataPrepApi.getConnection(params).subscribe(
+    (res) => {
       let info = objectQuery(res, 'values', 0);
 
-      MyDataPrepApi.listTopics({namespace}, info)
-        .subscribe((topics) => {
+      MyDataPrepApi.listTopics({ namespace }, info).subscribe(
+        (topics) => {
           setKafkaProperties({
             info,
             topics: topics.values,
-            connectionId: params.connectionId
+            connectionId: params.connectionId,
           });
-        }, (err) => {
+        },
+        (err) => {
           setError(err);
-        });
-    }, (err) => {
+        }
+      );
+    },
+    (err) => {
       setError(err);
-    });
+    }
+  );
 };
 
 const setKafkaProperties = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_KAFKA_PROPERTIES,
-    payload
+    payload,
   });
 };
 
@@ -77,13 +85,9 @@ const setKafkaInfoLoading = () => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_KAFKA_LOADING,
     payload: {
-      loading: true
-    }
+      loading: true,
+    },
   });
 };
 
-export {
-  setKafkaAsActiveBrowser,
-  setKafkaProperties,
-  setKafkaInfoLoading
-};
+export { setKafkaAsActiveBrowser, setKafkaProperties, setKafkaInfoLoading };

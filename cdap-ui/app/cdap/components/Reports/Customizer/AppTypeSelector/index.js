@@ -17,19 +17,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import {ReportsActions} from 'components/Reports/store/ReportsStore';
-import {connect} from 'react-redux';
+import { ReportsActions } from 'components/Reports/store/ReportsStore';
+import { connect } from 'react-redux';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Reports.Customizer';
 
-const OPTIONS = [
-  'pipelines',
-  'customApps'
-];
+const OPTIONS = ['pipelines', 'customApps'];
 
 AppTypeSelectorView.propTypes = {
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
 };
 
 OPTIONS.forEach((option) => {
@@ -39,26 +36,19 @@ OPTIONS.forEach((option) => {
 function AppTypeSelectorView(props) {
   return (
     <div className="app-type-selector">
-      <div className="title">
-        {T.translate(`${PREFIX}.header`)}
-      </div>
+      <div className="title">{T.translate(`${PREFIX}.header`)}</div>
 
-      {
-        OPTIONS.map((option) => {
-          return (
-            <div
-              className="option"
-              key={option}
-            >
-              <span onClick={props.onClick.bind(this, option)}>
-                <IconSVG name={props[option] ? 'icon-check-square' : 'icon-square-o'} />
+      {OPTIONS.map((option) => {
+        return (
+          <div className="option" key={option}>
+            <span onClick={props.onClick.bind(this, option)}>
+              <IconSVG name={props[option] ? 'icon-check-square' : 'icon-square-o'} />
 
-                {T.translate(`${PREFIX}.Options.${option}`)}
-              </span>
-            </div>
-          );
-        })
-      }
+              {T.translate(`${PREFIX}.Options.${option}`)}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -79,10 +69,10 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: ReportsActions.toggleCustomizerOption,
         payload: {
-          type: option
-        }
+          type: option,
+        },
       });
-    }
+    },
   };
 };
 

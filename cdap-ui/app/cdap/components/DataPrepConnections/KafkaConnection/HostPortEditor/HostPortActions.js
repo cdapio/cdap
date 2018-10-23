@@ -20,7 +20,7 @@ const HostPortActions = {
   addRow: 'ADD-ROW',
   deletePair: 'DELETE-PAIR',
   onReset: 'ON-RESET',
-  onUpdate: 'ON-UPDATE'
+  onUpdate: 'ON-UPDATE',
 };
 
 export default HostPortActions;

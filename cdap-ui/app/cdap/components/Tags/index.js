@@ -17,31 +17,31 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MyMetadataApi} from 'api/metadata';
+import { MyMetadataApi } from 'api/metadata';
 import isObject from 'lodash/isObject';
 import Mousetrap from 'mousetrap';
 import NamespaceStore from 'services/NamespaceStore';
-import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
+import { convertEntityTypeToApi } from 'services/entity-type-api-converter';
 import Tag from 'components/Tags/Tag';
 import Alert from 'components/Alert';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 require('./Tags.scss');
 import T from 'i18n-react';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 
 const PREFIX = 'features.Tags';
 
 export default class Tags extends Component {
   static defaultProps = {
     showCountLabel: true,
-    isNativeLink: false
+    isNativeLink: false,
   };
 
   static propTypes = {
     entity: PropTypes.object,
     showCountLabel: PropTypes.bool,
-    isNativeLink: PropTypes.bool
+    isNativeLink: PropTypes.bool,
   };
 
   state = {
@@ -51,7 +51,7 @@ export default class Tags extends Component {
     loading: false,
     currentInputTag: '',
     showAllTagsLabel: false,
-    showAllTagsPopover: false
+    showAllTagsPopover: false,
   };
 
   params = {
@@ -70,23 +70,28 @@ export default class Tags extends Component {
     let userParams = Object.assign({}, this.params, { scope: SCOPES.USER });
 
     this.setState({
-      loading: true
+      loading: true,
     });
 
-    let getTagsSubscription = MyMetadataApi
-      .getTags(systemParams)
+    let getTagsSubscription = MyMetadataApi.getTags(systemParams)
       .combineLatest(MyMetadataApi.getTags(userParams))
-      .subscribe((res) => {
-        this.setState({
-          systemTags: res[0].sort(),
-          userTags: res[1].sort(),
-          loading: false
-        }, this.isTagsOverflowing);
-      }, (err) => {
-        this.setState({
-          error: isObject(err) ? err.response : err
-        });
-      });
+      .subscribe(
+        (res) => {
+          this.setState(
+            {
+              systemTags: res[0].sort(),
+              userTags: res[1].sort(),
+              loading: false,
+            },
+            this.isTagsOverflowing
+          );
+        },
+        (err) => {
+          this.setState({
+            error: isObject(err) ? err.response : err,
+          });
+        }
+      );
 
     this.subscriptions.push(getTagsSubscription);
   }
@@ -95,7 +100,7 @@ export default class Tags extends Component {
     Mousetrap.unbind('return');
     Mousetrap.unbind('escape');
 
-    this.subscriptions.map(subscriber => subscriber.unsubscribe());
+    this.subscriptions.map((subscriber) => subscriber.unsubscribe());
   }
 
   toggleInputField = () => {
@@ -103,11 +108,11 @@ export default class Tags extends Component {
       if (this.state.showInputField) {
         this.setState({
           currentInputTag: '',
-          error: false
+          error: false,
         });
       }
       this.setState({
-        showInputField: !this.state.showInputField
+        showInputField: !this.state.showInputField,
       });
     }
   };
@@ -116,36 +121,40 @@ export default class Tags extends Component {
     if (this.state.currentInputTag === '' && this.state.showInputField) {
       this.setState({
         showInputField: false,
-        error: false
+        error: false,
       });
     }
   };
 
   onInputTagChange = (e) => {
     this.setState({
-      currentInputTag: e.target.value
+      currentInputTag: e.target.value,
     });
   };
 
   fetchUserTags() {
     let params = Object.assign({}, this.params, { scope: SCOPES.USER });
 
-    let fetchTagsSubscription = MyMetadataApi
-      .getTags(params)
-      .subscribe((res) => {
-        this.setState({
-          userTags: res.sort(),
-          loading: false
-        }, this.isTagsOverflowing);
+    let fetchTagsSubscription = MyMetadataApi.getTags(params).subscribe(
+      (res) => {
+        this.setState(
+          {
+            userTags: res.sort(),
+            loading: false,
+          },
+          this.isTagsOverflowing
+        );
         if (this.state.showInputField) {
           this.toggleInputField();
         }
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
           error: isObject(err) ? err.response : err,
-          loading: false
+          loading: false,
         });
-      });
+      }
+    );
 
     this.subscriptions.push(fetchTagsSubscription);
   }
@@ -153,18 +162,21 @@ export default class Tags extends Component {
   addTag = () => {
     if (this.state.currentInputTag !== '') {
       this.setState({
-        loading: true
+        loading: true,
       });
-      let addTagsSubscription = MyMetadataApi
-        .addTags(this.params, [this.state.currentInputTag])
-        .subscribe(() => {
+      let addTagsSubscription = MyMetadataApi.addTags(this.params, [
+        this.state.currentInputTag,
+      ]).subscribe(
+        () => {
           this.fetchUserTags();
-        }, (err) => {
+        },
+        (err) => {
           this.setState({
             error: isObject(err) ? err.response : err,
-            loading: false
+            loading: false,
           });
-        });
+        }
+      );
 
       this.subscriptions.push(addTagsSubscription);
     }
@@ -177,57 +189,59 @@ export default class Tags extends Component {
 
     let params = Object.assign({}, this.params, { key: tag });
 
-    let deleteTagsSubscription = MyMetadataApi
-      .deleteTags(params)
-      .subscribe(() => {
+    let deleteTagsSubscription = MyMetadataApi.deleteTags(params).subscribe(
+      () => {
         this.fetchUserTags();
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
-          error: isObject(err) ? err.response : err
+          error: isObject(err) ? err.response : err,
         });
-      });
+      }
+    );
 
     this.subscriptions.push(deleteTagsSubscription);
   }
 
   isTagsOverflowing = () => {
-    let tagsListElem = document.getElementsByClassName("tags-list")[0];
+    let tagsListElem = document.getElementsByClassName('tags-list')[0];
     if (!tagsListElem) {
       return;
     }
 
     let tagsAreOverflowing = tagsListElem.clientWidth < tagsListElem.scrollWidth;
 
-    if (tagsAreOverflowing && this.state.showAllTagsLabel || (!tagsAreOverflowing && !this.state.showAllTagsLabel)) {
+    if (
+      (tagsAreOverflowing && this.state.showAllTagsLabel) ||
+      (!tagsAreOverflowing && !this.state.showAllTagsLabel)
+    ) {
       return;
     }
 
     this.setState({
-      showAllTagsLabel: tagsAreOverflowing
+      showAllTagsLabel: tagsAreOverflowing,
     });
   };
 
   toggleAllTagsPopover = () => {
     this.setState({
-      showAllTagsPopover: !this.state.showAllTagsPopover
+      showAllTagsPopover: !this.state.showAllTagsPopover,
     });
-  }
+  };
 
   renderSystemTags() {
     return (
       <span>
-        {
-          this.state.systemTags.map(tag => {
-            return (
-              <Tag
-                value={tag}
-                scope={SCOPES.SYSTEM}
-                isNativeLink={this.props.isNativeLink}
-                key={tag}
-              />
-            );
-          })
-        }
+        {this.state.systemTags.map((tag) => {
+          return (
+            <Tag
+              value={tag}
+              scope={SCOPES.SYSTEM}
+              isNativeLink={this.props.isNativeLink}
+              key={tag}
+            />
+          );
+        })}
       </span>
     );
   }
@@ -235,30 +249,24 @@ export default class Tags extends Component {
   renderUserTags() {
     return (
       <span>
-        {
-          this.state.userTags.map(tag => {
-            return (
-              <Tag
-                value={tag}
-                onDelete={this.deleteTag.bind(this, tag)}
-                scope={SCOPES.USER}
-                isNativeLink={this.props.isNativeLink}
-                key={tag}
-              />
-            );
-          })
-        }
+        {this.state.userTags.map((tag) => {
+          return (
+            <Tag
+              value={tag}
+              onDelete={this.deleteTag.bind(this, tag)}
+              scope={SCOPES.USER}
+              isNativeLink={this.props.isNativeLink}
+              key={tag}
+            />
+          );
+        })}
       </span>
     );
   }
 
   renderTagsPopover() {
     const labelElem = () => {
-      return (
-        <span className="all-tags-label">
-          {T.translate(`${PREFIX}.allTags`)}
-        </span>
-      );
+      return <span className="all-tags-label">{T.translate(`${PREFIX}.allTags`)}</span>;
     };
 
     let tagsCount = this.state.systemTags.length + this.state.userTags.length;
@@ -273,13 +281,8 @@ export default class Tags extends Component {
         showPopover={this.state.showAllTagsPopover}
       >
         <div className="tags-popover-header">
-          <strong>
-            {T.translate(`${PREFIX}.labelWithCount`, {count: tagsCount})}
-          </strong>
-          <IconSVG
-            name="icon-close"
-            onClick={this.toggleAllTagsPopover}
-          />
+          <strong>{T.translate(`${PREFIX}.labelWithCount`, { count: tagsCount })}</strong>
+          <IconSVG name="icon-close" onClick={this.toggleAllTagsPopover} />
         </div>
         {this.renderSystemTags()}
         {this.renderUserTags()}
@@ -305,14 +308,8 @@ export default class Tags extends Component {
 
   renderPlusButton() {
     return (
-      <span
-        className="btn btn-primary plus-button-container"
-        onClick={this.toggleInputField}
-      >
-        <IconSVG
-          name="icon-plus"
-          className="text-white"
-        />
+      <span className="btn btn-primary plus-button-container" onClick={this.toggleInputField}>
+        <IconSVG name="icon-plus" className="text-white" />
       </span>
     );
   }
@@ -322,53 +319,25 @@ export default class Tags extends Component {
 
     return (
       <div className="tags-holder">
-        {
-          this.props.showCountLabel ?
-            <strong>
-              {`${T.translate(`${PREFIX}.labelWithCount`, {count: tagsCount})}:`}
-            </strong>
-          :
-            null
-        }
-        {
-          !tagsCount && !this.state.loading ?
-            <i>{T.translate(`${PREFIX}.notags`)}</i>
-          :
-            null
-        }
+        {this.props.showCountLabel ? (
+          <strong>{`${T.translate(`${PREFIX}.labelWithCount`, { count: tagsCount })}:`}</strong>
+        ) : null}
+        {!tagsCount && !this.state.loading ? <i>{T.translate(`${PREFIX}.notags`)}</i> : null}
         <span className="tags-list">
           {this.renderSystemTags()}
           {this.renderUserTags()}
         </span>
-        {
-          this.state.showAllTagsLabel ?
-            this.renderTagsPopover()
-          :
-            null
-        }
-        {
-          this.state.showInputField ?
-            this.renderInputField()
-          :
-            this.renderPlusButton()
-        }
-        {
-          this.state.loading ?
-            <IconSVG name="icon-spinner" className="fa-lg fa-spin" />
-          :
-            null
-        }
-        {
-          this.state.error ?
-            <Alert
-              message={this.state.error}
-              type='error'
-              showAlert={true}
-              onClose={() => this.setState({ error: false })}
-            />
-          :
-            null
-        }
+        {this.state.showAllTagsLabel ? this.renderTagsPopover() : null}
+        {this.state.showInputField ? this.renderInputField() : this.renderPlusButton()}
+        {this.state.loading ? <IconSVG name="icon-spinner" className="fa-lg fa-spin" /> : null}
+        {this.state.error ? (
+          <Alert
+            message={this.state.error}
+            type="error"
+            showAlert={true}
+            onClose={() => this.setState({ error: false })}
+          />
+        ) : null}
       </div>
     );
   }

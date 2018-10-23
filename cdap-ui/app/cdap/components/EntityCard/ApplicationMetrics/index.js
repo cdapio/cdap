@@ -17,9 +17,9 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {MyAppApi} from 'api/app';
+import { MyAppApi } from 'api/app';
 import NamespaceStore from 'services/NamespaceStore';
-import {humanReadableNumber} from 'services/helpers';
+import { humanReadableNumber } from 'services/helpers';
 import T from 'i18n-react';
 
 export default class ApplicationMetrics extends Component {
@@ -30,9 +30,9 @@ export default class ApplicationMetrics extends Component {
       numPrograms: 0,
       running: 0,
       failed: 0,
-      loading: true
+      loading: true,
     };
-     this.updateState = this.updateState.bind(this);
+    this.updateState = this.updateState.bind(this);
   }
   componentWillReceiveProps(nextProps) {
     if (nextProps.entity.id !== this.props.entity.id) {
@@ -60,36 +60,40 @@ export default class ApplicationMetrics extends Component {
   fetchApplicationMetrics() {
     const params = {
       namespace: NamespaceStore.getState().selectedNamespace,
-      appId: this.props.entity.id
+      appId: this.props.entity.id,
     };
-    MyAppApi.get(params)
-      .subscribe( (res) => {
-        this.updateState({numPrograms: res.programs.length});
+    MyAppApi.get(params).subscribe(
+      (res) => {
+        this.updateState({ numPrograms: res.programs.length });
 
         const statusRequestArray = res.programs.map((program) => {
           return {
             appId: this.props.entity.id,
             programType: program.type.toLowerCase(),
-            programId: program.name
+            programId: program.name,
           };
         });
 
-        MyAppApi.batchStatus({
-          namespace: NamespaceStore.getState().selectedNamespace
-        }, statusRequestArray)
-          .subscribe((stats) => {
-            this.updateState({
-              running: stats.filter((stat) => stat.status === 'RUNNING').length,
-              failed: stats.filter((stat) => stat.status === 'FAILED').length,
-              loading: false
-            });
+        MyAppApi.batchStatus(
+          {
+            namespace: NamespaceStore.getState().selectedNamespace,
+          },
+          statusRequestArray
+        ).subscribe((stats) => {
+          this.updateState({
+            running: stats.filter((stat) => stat.status === 'RUNNING').length,
+            failed: stats.filter((stat) => stat.status === 'FAILED').length,
+            loading: false,
           });
-      }, (err) => {
+        });
+      },
+      (err) => {
         console.log('ERROR', err);
-      });
+      }
+    );
   }
-  render () {
-    const loading = <span className="fa fa-spin fa-spinner"></span>;
+  render() {
+    const loading = <span className="fa fa-spin fa-spinner" />;
 
     return (
       <div className="metrics-container">
@@ -111,5 +115,5 @@ export default class ApplicationMetrics extends Component {
 }
 
 ApplicationMetrics.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
 };

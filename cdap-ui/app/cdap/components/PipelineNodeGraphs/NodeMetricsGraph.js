@@ -16,10 +16,19 @@
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineMarkSeries, Hint} from 'react-vis';
+import {
+  XYPlot,
+  AreaSeries,
+  makeVisFlexible,
+  XAxis,
+  YAxis,
+  HorizontalGridLines,
+  LineMarkSeries,
+  Hint,
+} from 'react-vis';
 import NodeMetricsGraphLegends from 'components/PipelineNodeGraphs/NodeMetricsGraphLegends';
-import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
-import {humanReadableDate, objectQuery} from 'services/helpers';
+import { getYAxisProps } from 'components/PipelineSummary/RunsGraphHelpers';
+import { humanReadableDate, objectQuery } from 'services/helpers';
 import maxBy from 'lodash/maxBy';
 import findKey from 'lodash/findKey';
 import findIndex from 'lodash/findIndex';
@@ -32,25 +41,24 @@ const RECORDS_IN_COLOR = '#58B7F6';
 const RECORDS_OUT_COLOR = '#97A0BA';
 const PREFIX = `features.PipelineSummary.pipelineNodesMetricsGraph.NodeMetricsGraph`;
 const metricTypeToColorMap = {
-  'recordsin': RECORDS_IN_COLOR,
-  'recordsout': RECORDS_OUT_COLOR
+  recordsin: RECORDS_IN_COLOR,
+  recordsout: RECORDS_OUT_COLOR,
 };
 
 const metricLabelMap = {
-  'recordsIn': {
+  recordsIn: {
     label: T.translate(`${PREFIX}.recordsIn`),
-    numOfRecordsLabel: T.translate(`${PREFIX}.numOfRecordsIn`)
+    numOfRecordsLabel: T.translate(`${PREFIX}.numOfRecordsIn`),
   },
-  'recordsOut': {
+  recordsOut: {
     label: T.translate(`${PREFIX}.recordsOut`),
     numOfRecordsLabel: T.translate(`${PREFIX}.numOfRecordsOut`),
   },
-  'recordsError': {
+  recordsError: {
     label: T.translate(`${PREFIX}.recordsError`),
     numOfRecordsLabel: T.translate(`${PREFIX}.numOfRecordsError`),
-  }
+  },
 };
-
 
 function isDataSeriesHaveSingleDatapoint(data) {
   if (!data) {
@@ -61,7 +69,7 @@ function isDataSeriesHaveSingleDatapoint(data) {
   }
   if (typeof data === 'object') {
     let allObjectsHaveSingleDataPoint = true;
-    Object.keys(data).forEach(d => {
+    Object.keys(data).forEach((d) => {
       if (data[d].data.length > 1) {
         allObjectsHaveSingleDataPoint = false;
       }
@@ -70,18 +78,16 @@ function isDataSeriesHaveSingleDatapoint(data) {
   }
 }
 
-export {isDataSeriesHaveSingleDatapoint};
-
+export { isDataSeriesHaveSingleDatapoint };
 
 export default class NodeMetricsGraph extends Component {
-
   static propTypes = {
     xAxisTitle: PropTypes.string,
     yAxisTitle: PropTypes.string,
     data: PropTypes.arrayOf(PropTypes.object),
     metricType: PropTypes.string,
     isMultiplePorts: PropTypes.bool,
-    portsToShow: PropTypes.arrayOf(PropTypes.string)
+    portsToShow: PropTypes.arrayOf(PropTypes.string),
   };
 
   constructor(props) {
@@ -89,7 +95,7 @@ export default class NodeMetricsGraph extends Component {
 
     this.data = this.props.data;
 
-    let dataToShow = Object.keys(this.data).map(dataKey => this.data[dataKey].label);
+    let dataToShow = Object.keys(this.data).map((dataKey) => this.data[dataKey].label);
 
     if (this.props.isMultiplePorts && this.props.portsToShow && this.props.portsToShow.length) {
       let portsToShow = this.props.portsToShow;
@@ -97,12 +103,12 @@ export default class NodeMetricsGraph extends Component {
       if (portsToShow.indexOf('errors') === -1) {
         portsToShow.push('errors');
       }
-      dataToShow = portsToShow.map(port => capitalize(port));
+      dataToShow = portsToShow.map((port) => capitalize(port));
     }
 
     this.state = {
       dataToShow,
-      currentHoveredElement: null
+      currentHoveredElement: null,
     };
 
     if (Array.isArray(this.data) && !this.data.length) {
@@ -110,34 +116,36 @@ export default class NodeMetricsGraph extends Component {
     }
 
     this.xDomain = [0, 10];
-    let {tickFormat, yDomain} = getYAxisProps(this.data);
+    let { tickFormat, yDomain } = getYAxisProps(this.data);
     this.tickFormat = tickFormat;
     this.yDomain = yDomain;
-    this.dummyData = [{
-      x: 0,
-      y: 0
-    }];
+    this.dummyData = [
+      {
+        x: 0,
+        y: 0,
+      },
+    ];
 
     this.colorLegend = [];
 
     if (Array.isArray(this.data) && this.data.length > 10) {
       this.xDomain[1] = this.data.length;
-      this.colorLegend = [{
-        title: this.data.label,
-        color: this.data.color
-      }];
+      this.colorLegend = [
+        {
+          title: this.data.label,
+          color: this.data.color,
+        },
+      ];
     } else if (!Array.isArray(this.data) && typeof this.data === 'object') {
       let dataObjects = Object.keys(this.data).map((key) => this.data[key]);
       let objectWithMaxLength = maxBy(dataObjects, (dataObject) => dataObject.data.length);
       this.xDomain[1] = objectWithMaxLength.data.length;
-      Object
-        .keys(this.data)
-        .forEach(d => {
-          this.colorLegend.push({
-            title: this.data[d].label,
-            color: this.data[d].color
-          });
+      Object.keys(this.data).forEach((d) => {
+        this.colorLegend.push({
+          title: this.data[d].label,
+          color: this.data[d].color,
         });
+      });
     }
   }
 
@@ -156,13 +164,15 @@ export default class NodeMetricsGraph extends Component {
       newDataToShow.push(legendItem.label);
     }
     this.setState({
-      dataToShow: newDataToShow
+      dataToShow: newDataToShow,
     });
   };
 
   renderAreaChart(data, metricType) {
     if (!Array.isArray(data) && typeof data === 'object') {
-      let dataArrayToShow = Object.keys(data).filter(key => this.state.dataToShow.indexOf(data[key].label) !== -1);
+      let dataArrayToShow = Object.keys(data).filter(
+        (key) => this.state.dataToShow.indexOf(data[key].label) !== -1
+      );
       if (!dataArrayToShow.length) {
         return (
           <AreaSeries
@@ -175,22 +185,21 @@ export default class NodeMetricsGraph extends Component {
         );
       }
 
-      return dataArrayToShow
-        .map(key => {
-          let dataToPlot = data[key].data;
-          if (!dataToPlot || !dataToPlot.length) {
-            return null;
-          }
-          return (
-            <AreaSeries
-              curve="curveLinear"
-              color={data[key].color || metricTypeToColorMap[metricType]}
-              stroke={data[key].color || metricTypeToColorMap[metricType]}
-              data={dataToPlot}
-              opacity={0.2}
-            />
-          );
-        });
+      return dataArrayToShow.map((key) => {
+        let dataToPlot = data[key].data;
+        if (!dataToPlot || !dataToPlot.length) {
+          return null;
+        }
+        return (
+          <AreaSeries
+            curve="curveLinear"
+            color={data[key].color || metricTypeToColorMap[metricType]}
+            stroke={data[key].color || metricTypeToColorMap[metricType]}
+            data={dataToPlot}
+            opacity={0.2}
+          />
+        );
+      });
     }
     return (
       <AreaSeries
@@ -210,14 +219,13 @@ export default class NodeMetricsGraph extends Component {
         return;
       }
       this.setState({
-        currentHoveredElement: {...d, key}
+        currentHoveredElement: { ...d, key },
       });
     };
     if (!Array.isArray(data) && typeof data === 'object') {
-      return Object
-        .keys(data)
-        .filter(key => this.state.dataToShow.indexOf(data[key].label) !== -1)
-        .map(key => {
+      return Object.keys(data)
+        .filter((key) => this.state.dataToShow.indexOf(data[key].label) !== -1)
+        .map((key) => {
           if (Array.isArray(data[key].data) && !data[key].data.length) {
             return null;
           }
@@ -229,7 +237,7 @@ export default class NodeMetricsGraph extends Component {
               size={3}
               onValueMouseOut={() => {
                 this.setState({
-                  currentHoveredElement: null
+                  currentHoveredElement: null,
                 });
               }}
               onValueMouseOver={onValueMouseOver.bind(this, key)}
@@ -245,7 +253,7 @@ export default class NodeMetricsGraph extends Component {
         size={3}
         onValueMouseOut={() => {
           this.setState({
-            currentHoveredElement: null
+            currentHoveredElement: null,
           });
         }}
         onValueMouseOver={onValueMouseOver.bind(this)}
@@ -264,7 +272,8 @@ export default class NodeMetricsGraph extends Component {
         </div>
       );
     }
-    let metricLabel = objectQuery(this.state, 'currentHoveredElement', 'key') || this.props.metricType;
+    let metricLabel =
+      objectQuery(this.state, 'currentHoveredElement', 'key') || this.props.metricType;
     return (
       <div className="graph-plot-container">
         <FPlot
@@ -282,33 +291,35 @@ export default class NodeMetricsGraph extends Component {
           {this.renderLineChart(this.data, this.metricType)}
           <div className="x-axis-title">{this.props.xAxisTitle}</div>
           <div className="y-axis-title">{this.props.yAxisTitle}</div>
-          {
-            this.state.currentHoveredElement ?
-              <Hint value={this.state.currentHoveredElement}>
-                <div className="title">
-                  <h4>
-                    {metricLabelMap[metricLabel] ? metricLabelMap[metricLabel].label : `${metricLabelMap['recordsOut'].label} (${metricLabel})`}
-                  </h4>
+          {this.state.currentHoveredElement ? (
+            <Hint value={this.state.currentHoveredElement}>
+              <div className="title">
+                <h4>
+                  {metricLabelMap[metricLabel]
+                    ? metricLabelMap[metricLabel].label
+                    : `${metricLabelMap['recordsOut'].label} (${metricLabel})`}
+                </h4>
+              </div>
+              <div className="log-stats">
+                <div>
+                  <span>
+                    {metricLabelMap[metricLabel]
+                      ? metricLabelMap[metricLabel].numOfRecordsLabel
+                      : metricLabelMap['recordsOut'].numOfRecordsLabel}
+                  </span>
+                  <span>{this.state.currentHoveredElement.actualRecords || '0'}</span>
                 </div>
-                <div className="log-stats">
-                  <div>
-                    <span>{metricLabelMap[metricLabel] ? metricLabelMap[metricLabel].numOfRecordsLabel : metricLabelMap['recordsOut'].numOfRecordsLabel}</span>
-                    <span>{this.state.currentHoveredElement.actualRecords || '0'}</span>
-                  </div>
-                  <div>
-                    <span>{T.translate(`${PREFIX}.ts`)}</span>
-                    <span>{ humanReadableDate(this.state.currentHoveredElement.time, true) }
-                    </span>
-                  </div>
-                  <div>
-                    <span>{T.translate(`${PREFIX}.accumulatedRecords`)}</span>
-                    <span>{this.state.currentHoveredElement.y}</span>
-                  </div>
+                <div>
+                  <span>{T.translate(`${PREFIX}.ts`)}</span>
+                  <span>{humanReadableDate(this.state.currentHoveredElement.time, true)}</span>
                 </div>
-              </Hint>
-            :
-              null
-          }
+                <div>
+                  <span>{T.translate(`${PREFIX}.accumulatedRecords`)}</span>
+                  <span>{this.state.currentHoveredElement.y}</span>
+                </div>
+              </div>
+            </Hint>
+          ) : null}
         </FPlot>
         <NodeMetricsGraphLegends
           items={this.colorLegend}
@@ -320,4 +331,3 @@ export default class NodeMetricsGraph extends Component {
     );
   }
 }
-

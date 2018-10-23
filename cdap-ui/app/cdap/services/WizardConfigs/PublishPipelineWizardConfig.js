@@ -24,10 +24,10 @@ const PublishPipelineWizardConfig = {
       shorttitle: T.translate('features.Wizard.PublishPipeline.Step1.shorttitle'),
       title: T.translate('features.Wizard.PublishPipeline.Step1.title'),
       description: T.translate('features.Wizard.PublishPipeline.Step1.description'),
-      content: (<MetadataStep />),
-      requiredFields: ['name']
-    }
-  ]
+      content: <MetadataStep />,
+      requiredFields: ['name'],
+    },
+  ],
 };
 
 export default PublishPipelineWizardConfig;

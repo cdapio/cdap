@@ -17,25 +17,27 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Nav, NavItem, TabPane, TabContent, NavLink} from 'reactstrap';
+import { Nav, NavItem, TabPane, TabContent, NavLink } from 'reactstrap';
 import classnames from 'classnames';
 import RuleBookDetails from 'components/RulesEngineHome/RuleBookDetails';
 import RuleBooksTab from 'components/RulesEngineHome/RuleBooksTab';
 import RulesTab from 'components/RulesEngineHome/RulesTab';
-import {Provider} from 'react-redux';
-import {RuleBookCountWrapper, RulesCountWrapper} from 'components/RulesEngineHome/RulesEngineTabCounters';
+import { Provider } from 'react-redux';
+import {
+  RuleBookCountWrapper,
+  RulesCountWrapper,
+} from 'components/RulesEngineHome/RulesEngineTabCounters';
 import T from 'i18n-react';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
-import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
+import RulesEngineStore, { RULESENGINEACTIONS } from 'components/RulesEngineHome/RulesEngineStore';
 
 require('./RulesEngineWrapper.scss');
 const PREFIX = 'features.RulesEngine.Home';
 
 class RulesEngineWrapper extends Component {
-
   static propTypes = {
-    onApply: PropTypes.func
+    onApply: PropTypes.func,
   };
 
   state = {
@@ -44,10 +46,10 @@ class RulesEngineWrapper extends Component {
 
   componentDidMount() {
     this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
-      let {rulebooks} = RulesEngineStore.getState();
+      let { rulebooks } = RulesEngineStore.getState();
       if (rulebooks.activeTab && rulebooks.activeTab !== this.state.activeTab) {
         this.setState({
-          activeTab: rulebooks.activeTab
+          activeTab: rulebooks.activeTab,
         });
       }
     });
@@ -63,12 +65,12 @@ class RulesEngineWrapper extends Component {
     RulesEngineStore.dispatch({
       type: RULESENGINEACTIONS.SETACTIVETAB,
       payload: {
-        activeTab
-      }
+        activeTab,
+      },
     });
   };
 
-  render () {
+  render() {
     return (
       <div className="rules-engine-wrapper">
         <div className="left-panel">
@@ -77,58 +79,44 @@ class RulesEngineWrapper extends Component {
               <div onClick={this.toggleTab.bind(this, '1')}>
                 <NavLink
                   className={classnames({
-                    'active': this.state.activeTab == '1'
+                    active: this.state.activeTab == '1',
                   })}
                 >
                   <strong>
                     {T.translate(`${PREFIX}.Tabs.rbTitle`)} (
-                      <Provider store={RulesEngineStore}>
-                        <RuleBookCountWrapper />
-                      </Provider>
+                    <Provider store={RulesEngineStore}>
+                      <RuleBookCountWrapper />
+                    </Provider>
                     )
                   </strong>
                 </NavLink>
               </div>
             </NavItem>
             <NavItem>
-              <div  onClick={this.toggleTab.bind(this, '2')}>
+              <div onClick={this.toggleTab.bind(this, '2')}>
                 <NavLink
                   className={classnames({
-                    'active': this.state.activeTab == '2'
+                    active: this.state.activeTab == '2',
                   })}
                 >
                   <strong>
                     {T.translate(`${PREFIX}.Tabs.rulesTitle`)} (
-                      <Provider store={RulesEngineStore}>
-                        <RulesCountWrapper />
-                      </Provider>
+                    <Provider store={RulesEngineStore}>
+                      <RulesCountWrapper />
+                    </Provider>
                     )
                   </strong>
                 </NavLink>
               </div>
             </NavItem>
-            </Nav>
-            <TabContent activeTab={this.state.activeTab}>
-              <TabPane tabId="1">
-                {
-                  this.state.activeTab === '1' ?
-                    <RuleBooksTab />
-                  :
-                    null
-                }
-              </TabPane>
-              <TabPane tabId="2">
-                {
-                  this.state.activeTab === '2' ?
-                    <RulesTab />
-                  :
-                    null
-                }
-              </TabPane>
-            </TabContent>
+          </Nav>
+          <TabContent activeTab={this.state.activeTab}>
+            <TabPane tabId="1">{this.state.activeTab === '1' ? <RuleBooksTab /> : null}</TabPane>
+            <TabPane tabId="2">{this.state.activeTab === '2' ? <RulesTab /> : null}</TabPane>
+          </TabContent>
         </div>
         <div className="right-panel">
-          <RuleBookDetails onApply={this.props.onApply}/>
+          <RuleBookDetails onApply={this.props.onApply} />
         </div>
       </div>
     );

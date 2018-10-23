@@ -17,16 +17,16 @@
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 require('./ListingInfo.scss');
 
-const ListingInfo = ({bucketData, loading, truncated}) => {
+const ListingInfo = ({ bucketData, loading, truncated }) => {
   if (loading) {
     return <span>.</span>;
   }
-  let dirsCount = bucketData.filter(file => file.directory).length;
+  let dirsCount = bucketData.filter((file) => file.directory).length;
   let filesCount = bucketData.length - dirsCount;
   if (truncated) {
     return (
@@ -37,28 +37,41 @@ const ListingInfo = ({bucketData, loading, truncated}) => {
           placement="left"
           tag="span"
         >
-          {T.translate('features.DataPrep.DataPrepBrowser.S3Browser.TopPanel.ListingInfo.truncatedContentsTooltip')}
+          {T.translate(
+            'features.DataPrep.DataPrepBrowser.S3Browser.TopPanel.ListingInfo.truncatedContentsTooltip'
+          )}
         </Popover>
         <span>
-          {T.translate('features.DataPrep.DataPrepBrowser.S3Browser.TopPanel.ListingInfo.truncatedLabel', {filesCount, dirsCount})}
+          {T.translate(
+            'features.DataPrep.DataPrepBrowser.S3Browser.TopPanel.ListingInfo.truncatedLabel',
+            { filesCount, dirsCount }
+          )}
         </span>
       </div>
     );
   }
-  return <span> {T.translate('features.DataPrep.DataPrepBrowser.S3Browser.TopPanel.ListingInfo.label', {filesCount, dirsCount})} </span>;
+  return (
+    <span>
+      {' '}
+      {T.translate('features.DataPrep.DataPrepBrowser.S3Browser.TopPanel.ListingInfo.label', {
+        filesCount,
+        dirsCount,
+      })}{' '}
+    </span>
+  );
 };
 
 ListingInfo.propTypes = {
   bucketData: PropTypes.arrayOf(PropTypes.object),
   truncated: PropTypes.bool,
-  loading: PropTypes.bool
+  loading: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {
   return {
     bucketData: state.s3.activeBucketDetails,
     truncated: state.s3.truncated,
-    loading: state.s3.loading
+    loading: state.s3.loading,
   };
 };
 

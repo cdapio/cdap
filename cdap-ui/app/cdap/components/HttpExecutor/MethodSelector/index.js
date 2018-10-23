@@ -17,13 +17,12 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
-
 
 const mapStateToProps = (state) => {
   return {
-    value: state.http.method
+    value: state.http.method,
   };
 };
 
@@ -33,40 +32,26 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: HttpExecutorActions.setMethod,
         payload: {
-          method: e.target.value
-        }
+          method: e.target.value,
+        },
       });
-    }
+    },
   };
 };
 
-function MethodSelectorView({onChange, value}) {
-  const METHODS = [
-    'DELETE',
-    'GET',
-    'POST',
-    'PUT',
-  ];
+function MethodSelectorView({ onChange, value }) {
+  const METHODS = ['DELETE', 'GET', 'POST', 'PUT'];
 
   return (
     <div className="method-selector-container">
-      <select
-        className="form-control"
-        value={value}
-        onChange={onChange}
-      >
-        {
-          METHODS.map((method) => {
-            return (
-              <option
-                value={method}
-                key={method}
-              >
-                {method}
-              </option>
-            );
-          })
-        }
+      <select className="form-control" value={value} onChange={onChange}>
+        {METHODS.map((method) => {
+          return (
+            <option value={method} key={method}>
+              {method}
+            </option>
+          );
+        })}
       </select>
     </div>
   );
@@ -74,7 +59,7 @@ function MethodSelectorView({onChange, value}) {
 
 MethodSelectorView.propTypes = {
   value: PropTypes.oneOf(['GET', 'POST', 'PUT', 'DELETE']),
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
 };
 
 const MethodSelector = connect(

@@ -14,7 +14,7 @@
  * the License.
  */
 
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps/:appId/schedules';
@@ -28,5 +28,10 @@ export const MyScheduleApi = {
   getTriggers: apiCreator(dataSrc, 'GET', 'REQUEST', `${workflowPath}/schedules`),
   enableTrigger: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:scheduleName/enable`),
   disableTrigger: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:scheduleName/disable`),
-  getTriggeredList: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/schedules/trigger-type/program-status')
+  getTriggeredList: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    '/namespaces/:namespace/schedules/trigger-type/program-status'
+  ),
 };

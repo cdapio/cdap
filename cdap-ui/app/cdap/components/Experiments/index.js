@@ -15,22 +15,24 @@
 */
 
 import React, { Component } from 'react';
-import {myExperimentsApi} from 'api/experiments';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { myExperimentsApi } from 'api/experiments';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import Loadable from 'react-loadable';
-import {Route, Switch} from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ExperimentsServiceControl from 'components/Experiments/ExperimentsServiceControl';
 import ExperimentsList from 'components/Experiments/ListView';
 
 const ExperimentsCreateView = Loadable({
-  loader: () => import(/* webpackChunkName: "ExperimentsCreateView" */ 'components/Experiments/CreateView'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "ExperimentsCreateView" */ 'components/Experiments/CreateView'),
+  loading: LoadingSVGCentered,
 });
 
 const ExperimentDetailedView = Loadable({
-  loader: () => import(/* webpackChunkName: "ExperimentsDetailedView" */ 'components/Experiments/DetailedView'),
-  loading: LoadingSVGCentered
+  loader: () =>
+    import(/* webpackChunkName: "ExperimentsDetailedView" */ 'components/Experiments/DetailedView'),
+  loading: LoadingSVGCentered,
 });
 
 export default class Experiments extends Component {
@@ -40,37 +42,37 @@ export default class Experiments extends Component {
 
   state = {
     loading: true,
-    isRunning: false
+    isRunning: false,
   };
 
   checkIfMMDSRunning = () => {
     let namespace = getCurrentNamespace();
 
-    myExperimentsApi.list({namespace})
-      .subscribe(() => {
+    myExperimentsApi.list({ namespace }).subscribe(
+      () => {
         this.setState({
           loading: false,
-          isRunning: true
+          isRunning: true,
         });
-      }, () => {
+      },
+      () => {
         this.setState({
           loading: false,
-          isRunning: false
+          isRunning: false,
         });
-      });
+      }
+    );
   };
 
   onServiceStart = () => {
     this.setState({
       loading: false,
-      isRunning: true
+      isRunning: true,
     });
   };
 
   renderLoading() {
-    return (
-      <LoadingSVGCentered />
-    );
+    return <LoadingSVGCentered />;
   }
 
   render() {
@@ -79,11 +81,7 @@ export default class Experiments extends Component {
     }
 
     if (!this.state.isRunning) {
-      return (
-        <ExperimentsServiceControl
-          onServiceStart={this.onServiceStart}
-        />
-      );
+      return <ExperimentsServiceControl onServiceStart={this.onServiceStart} />;
     }
 
     return (
@@ -91,7 +89,11 @@ export default class Experiments extends Component {
         <Switch>
           <Route exact path="/ns/:namespace/experiments" component={ExperimentsList} />
           <Route exact path="/ns/:namespace/experiments/create" component={ExperimentsCreateView} />
-          <Route exact path="/ns/:namespace/experiments/:experimentId" component={ExperimentDetailedView} />
+          <Route
+            exact
+            path="/ns/:namespace/experiments/:experimentId"
+            component={ExperimentDetailedView}
+          />
         </Switch>
       </div>
     );

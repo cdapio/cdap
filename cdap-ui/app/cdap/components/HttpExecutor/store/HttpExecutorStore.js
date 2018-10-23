@@ -14,13 +14,13 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
-  action : '',
-  payload : {}
+  action: '',
+  payload: {},
 };
 
 const defaultInitialState = {
@@ -28,16 +28,18 @@ const defaultInitialState = {
   path: '',
   body: '',
   headers: {
-    pairs: [{
-      key: '',
-      value: '',
-      uniqueId: uuidV4()
-    }]
+    pairs: [
+      {
+        key: '',
+        value: '',
+        uniqueId: uuidV4(),
+      },
+    ],
   },
   response: null,
   statusCode: 0,
   loading: false,
-  activeTab: 0
+  activeTab: 0,
 };
 
 const http = (state = defaultInitialState, action = defaultAction) => {
@@ -46,39 +48,39 @@ const http = (state = defaultInitialState, action = defaultAction) => {
       return {
         ...state,
         method: action.payload.method,
-        activeTab: ['GET', 'DELETE'].indexOf(action.payload.method) !== -1 ? 0 : 1
+        activeTab: ['GET', 'DELETE'].indexOf(action.payload.method) !== -1 ? 0 : 1,
       };
     case HttpExecutorActions.setPath:
       return {
         ...state,
-        path: action.payload.path
+        path: action.payload.path,
       };
     case HttpExecutorActions.enableLoading:
       return {
         ...state,
-        loading: true
+        loading: true,
       };
     case HttpExecutorActions.setResponse:
       return {
         ...state,
         response: action.payload.response,
         statusCode: action.payload.statusCode,
-        loading: false
+        loading: false,
       };
     case HttpExecutorActions.setBody:
       return {
         ...state,
-        body: action.payload.body
+        body: action.payload.body,
       };
     case HttpExecutorActions.setRequestTab:
       return {
         ...state,
-        activeTab: action.payload.activeTab
+        activeTab: action.payload.activeTab,
       };
     case HttpExecutorActions.setHeaders:
       return {
         ...state,
-        headers: action.payload.headers
+        headers: action.payload.headers,
       };
     case HttpExecutorActions.reset:
       return defaultInitialState;
@@ -89,10 +91,10 @@ const http = (state = defaultInitialState, action = defaultAction) => {
 
 const HttpExecutorStore = createStore(
   combineReducers({
-    http
+    http,
   }),
   {
-    http: defaultInitialState
+    http: defaultInitialState,
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );

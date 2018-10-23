@@ -25,7 +25,7 @@ import SendEventAction from 'components/FastAction/SendEventAction';
 import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
 import LogAction from 'components/FastAction/LogAction';
 import ViewEventsAction from 'components/FastAction/ViewEventsAction';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 
 export default class FastAction extends Component {
   constructor(props) {
@@ -109,9 +109,18 @@ export default class FastAction extends Component {
 }
 
 FastAction.propTypes = {
-  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences', 'log', 'viewEvents']),
+  type: PropTypes.oneOf([
+    'delete',
+    'truncate',
+    'startStop',
+    'sendEvents',
+    'explore',
+    'setPreferences',
+    'log',
+    'viewEvents',
+  ]),
   entity: PropTypes.object,
   onSuccess: PropTypes.func,
   opened: PropTypes.bool,
-  argsToAction: PropTypes.object
+  argsToAction: PropTypes.object,
 };

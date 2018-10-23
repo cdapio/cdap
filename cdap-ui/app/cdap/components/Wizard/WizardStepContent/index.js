@@ -20,13 +20,7 @@ import React from 'react';
 require('./WizardStepContent.scss');
 
 export default function WizardStepContent(props) {
-  const {
-    title,
-    description,
-    stepsCount,
-    currentStep,
-    children
-  } = props;
+  const { title, description, stepsCount, currentStep, children } = props;
   return (
     <div className="wizard-step-content-container">
       <div className="step-banner clearfix">
@@ -38,9 +32,7 @@ export default function WizardStepContent(props) {
           {currentStep} / {stepsCount}
         </div>
       </div>
-      <div className="step-content">
-        {children}
-      </div>
+      <div className="step-content">{children}</div>
     </div>
   );
 }
@@ -50,5 +42,5 @@ WizardStepContent.propTypes = {
   description: PropTypes.string,
   stepsCount: PropTypes.number,
   currentStep: PropTypes.number,
-  children: PropTypes.node
+  children: PropTypes.node,
 };

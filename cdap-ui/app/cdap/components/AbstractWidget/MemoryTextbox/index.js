@@ -15,14 +15,14 @@
 */
 
 import React from 'react';
-import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
-import {Input} from 'reactstrap';
+import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
+import { Input } from 'reactstrap';
 
 require('./MemoryTextbox.scss');
 
-// MemoryTextbox explicitly displays memory in GB even though it gets the value from 
+// MemoryTextbox explicitly displays memory in GB even though it gets the value from
 // backend in MB. we are "big data". We don't talk in Mb we only start with Gb -_-
-export default function MemoryTextbox({...props}) {
+export default function MemoryTextbox({ ...props }) {
   let { onChange, value, widgetProps } = props;
   let min = Math.floor(widgetProps.min / 1024);
   let max = Math.floor(widgetProps.max / 1024);
@@ -42,9 +42,7 @@ export default function MemoryTextbox({...props}) {
         min={min}
         max={max}
       />
-      <span>
-        GB
-      </span>
+      <span>GB</span>
     </div>
   );
 }

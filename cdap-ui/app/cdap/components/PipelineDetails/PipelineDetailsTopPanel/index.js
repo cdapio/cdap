@@ -15,15 +15,17 @@
 */
 
 import React, { Component } from 'react';
-import {Provider, connect} from 'react-redux';
+import { Provider, connect } from 'react-redux';
 import PipelineDetailsMetadata from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsMetadata';
 import PipelineDetailsButtons from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsButtons';
 import PipelineDetailsDetailsActions from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions';
 import PipelineDetailStore from 'components/PipelineDetails/store';
-import PipelineConfigurationsStore, {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import PipelineConfigurationsStore, {
+  ACTIONS as PipelineConfigurationsActions,
+} from 'components/PipelineConfigurations/Store';
 import PlusButton from 'components/PlusButton';
-import {GLOBALS} from 'services/global-constants';
-import {fetchAndUpdateRuntimeArgs} from 'components/PipelineConfigurations/Store/ActionCreator';
+import { GLOBALS } from 'services/global-constants';
+import { fetchAndUpdateRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
 
 require('./PipelineDetailsTopPanel.scss');
 
@@ -41,7 +43,7 @@ const mapStateToButtonsProps = (state) => {
     scheduleButtonLoading: state.scheduleButtonLoading,
     scheduleError: state.scheduleError,
     stopButtonLoading: state.stopButtonLoading,
-    stopError: state.stopError
+    stopError: state.stopError,
   };
 };
 
@@ -55,13 +57,13 @@ export default class PipelineDetailsTopPanel extends Component {
       type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
       payload: {
         pipelineVisualConfiguration: {
-          isBatch: pipelineDetailStore.artifact.name === GLOBALS.etlDataPipeline
-        }
-      }
+          isBatch: pipelineDetailStore.artifact.name === GLOBALS.etlDataPipeline,
+        },
+      },
     });
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.INITIALIZE_CONFIG,
-      payload: {...pipelineDetailStoreConfig}
+      payload: { ...pipelineDetailStoreConfig },
     });
     fetchAndUpdateRuntimeArgs();
   }

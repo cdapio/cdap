@@ -14,38 +14,40 @@
  * the License.
 */
 
-import CreateProfileStore, {ACTIONS} from 'components/Cloud/Profiles/CreateView/CreateProfileStore';
+import CreateProfileStore, {
+  ACTIONS,
+} from 'components/Cloud/Profiles/CreateView/CreateProfileStore';
 
 function updateProfileLabel(label) {
   CreateProfileStore.dispatch({
     type: ACTIONS.updateProfileLabel,
-    payload: {label}
+    payload: { label },
   });
 }
 
 function updateProfileDescription(description) {
   CreateProfileStore.dispatch({
     type: ACTIONS.updateProfileDescription,
-    payload: {description}
+    payload: { description },
   });
 }
 
 function initializeProperties(provisionerJson = {}) {
   let configs = provisionerJson['configuration-groups'] || [];
   let properties = {};
-  configs.forEach(config => {
-    config.properties.forEach(prop => {
+  configs.forEach((config) => {
+    config.properties.forEach((prop) => {
       let widgetAttributes = prop['widget-attributes'] || {};
       properties[prop.name] = {
         value: widgetAttributes.default || '',
         isEditable: true,
-        required: prop.required || false
+        required: prop.required || false,
       };
     });
   });
   CreateProfileStore.dispatch({
     type: ACTIONS.initializeProperties,
-    payload: {properties}
+    payload: { properties },
   });
 }
 
@@ -53,20 +55,21 @@ function updateProperty(propName, propValue) {
   CreateProfileStore.dispatch({
     type: ACTIONS.updateProperty,
     payload: {
-      propName, propValue
-    }
+      propName,
+      propValue,
+    },
   });
 }
 
 function togglePropertyLock(propName) {
   CreateProfileStore.dispatch({
     type: ACTIONS.togglePropertyLock,
-    payload: {propName}
+    payload: { propName },
   });
 }
 function resetCreateProfileStore() {
   CreateProfileStore.dispatch({
-    type: ACTIONS.reset
+    type: ACTIONS.reset,
   });
 }
 export {
@@ -75,5 +78,5 @@ export {
   initializeProperties,
   updateProperty,
   togglePropertyLock,
-  resetCreateProfileStore
+  resetCreateProfileStore,
 };

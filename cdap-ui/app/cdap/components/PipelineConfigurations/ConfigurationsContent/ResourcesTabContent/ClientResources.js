@@ -16,11 +16,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
-import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import { ACTIONS as PipelineConfigurationsActions } from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.Resources';
@@ -28,7 +28,7 @@ const PREFIX = 'features.PipelineConfigurations.Resources';
 const mapStateToProps = (state) => {
   return {
     virtualCores: state.clientResources.virtualCores,
-    memoryMB: state.clientResources.memoryMB
+    memoryMB: state.clientResources.memoryMB,
   };
 };
 const mapDispatchToProps = (dispatch) => {
@@ -36,29 +36,27 @@ const mapDispatchToProps = (dispatch) => {
     onVirtualCoresChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_CLIENT_VIRTUAL_CORES,
-        payload: { virtualCores: e.target.value }
+        payload: { virtualCores: e.target.value },
       });
     },
     onMemoryMBChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_CLIENT_MEMORY_MB,
-        payload: { memoryMB: e.target.value }
+        payload: { memoryMB: e.target.value },
       });
-    }
+    },
   };
 };
 
-const ClientResources = ({virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange}) => {
+const ClientResources = ({ virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange }) => {
   return (
     <div className="col-xs-4 client">
       <div className="resource-title-icon">
-        <span className="resource-title">
-          {T.translate(`${PREFIX}.client`)}
-        </span>
+        <span className="resource-title">{T.translate(`${PREFIX}.client`)}</span>
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
-          showOn='Hover'
-          placement='right'
+          showOn="Hover"
+          placement="right"
         >
           {T.translate(`${PREFIX}.clientTooltip`)}
         </Popover>
@@ -77,9 +75,12 @@ ClientResources.propTypes = {
   virtualCores: PropTypes.number,
   onVirtualCoresChange: PropTypes.func,
   memoryMB: PropTypes.number,
-  onMemoryMBChange: PropTypes.func
+  onMemoryMBChange: PropTypes.func,
 };
 
-const ConnectedClientResources = connect(mapStateToProps, mapDispatchToProps)(ClientResources);
+const ConnectedClientResources = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ClientResources);
 
 export default ConnectedClientResources;

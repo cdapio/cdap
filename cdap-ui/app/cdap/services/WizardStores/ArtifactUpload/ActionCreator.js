@@ -28,7 +28,7 @@ const uploadArtifact = (includeParents = true) => {
     if (!nameWithVersion) {
       return {
         version: null,
-        name: null
+        name: null,
       };
     }
 
@@ -36,7 +36,7 @@ const uploadArtifact = (includeParents = true) => {
     // extracts version from the jar file name. We then get the name of the artifact (that is from the beginning up to version beginning)
     let regExpRule = new RegExp('(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
     let version = regExpRule.exec(nameWithVersion)[0];
-    let name = nameWithVersion.substr(0, nameWithVersion.indexOf(version) -1);
+    let name = nameWithVersion.substr(0, nameWithVersion.indexOf(version) - 1);
     return { version, name };
   };
 
@@ -44,7 +44,7 @@ const uploadArtifact = (includeParents = true) => {
   if (state.upload.file.name && state.upload.file.name.length !== 0) {
     filename = state.upload.file.name.split('.jar')[0];
   }
-  let {name, version} = getArtifactNameAndVersion(filename);
+  let { name, version } = getArtifactNameAndVersion(filename);
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let url = `/namespaces/${namespace}/artifacts/${name}`;
@@ -53,12 +53,14 @@ const uploadArtifact = (includeParents = true) => {
     'Content-Type': 'application/octet-stream',
     'X-Archive-Name': name,
     'Artifact-Version': version,
-    'Artifact-Plugins': JSON.stringify([{
-      name: state.configure.name,
-      type: state.configure.type,
-      className: state.configure.classname,
-      description: state.configure.description
-    }])
+    'Artifact-Plugins': JSON.stringify([
+      {
+        name: state.configure.name,
+        type: state.configure.type,
+        className: state.configure.classname,
+        description: state.configure.description,
+      },
+    ]),
   };
 
   if (includeParents) {
@@ -71,10 +73,10 @@ const uploadArtifact = (includeParents = true) => {
       headers.Authorization = `Bearer ${token}`;
     }
   }
-  return UploadFile({url, fileContents: state.upload.file, headers});
+  return UploadFile({ url, fileContents: state.upload.file, headers });
 };
 const ArtifactUploadActionCreator = {
-  uploadArtifact
+  uploadArtifact,
 };
 
 export default ArtifactUploadActionCreator;

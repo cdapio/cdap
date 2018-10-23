@@ -22,16 +22,16 @@ const PREFIX = 'features.DataPrep.Directives.Explode';
 import T from 'i18n-react';
 import UsingDelimiterModal from 'components/DataPrep/Directives/ExtractFields/UsingDelimiterModal';
 import DataPrepStore from 'components/DataPrep/store';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import {setPopoverOffset} from 'components/DataPrep/helper';
+import { setPopoverOffset } from 'components/DataPrep/helper';
 
 require('./Explode.scss');
 export default class Explode extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeModal: null
+      activeModal: null,
     };
     this.explodeUsingFilters = this.explodeUsingFilters.bind(this);
     this.preventPropagation = this.preventPropagation.bind(this);
@@ -39,7 +39,10 @@ export default class Explode extends Component {
     this.handleUsingFilters = this.handleUsingFilters.bind(this);
   }
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('explode-fields-directive'));
+    this.calculateOffset = setPopoverOffset.bind(
+      this,
+      document.getElementById('explode-fields-directive')
+    );
   }
 
   componentDidUpdate() {
@@ -49,20 +52,22 @@ export default class Explode extends Component {
   }
 
   execute(addDirective) {
-    execute(addDirective)
-      .subscribe(() => {
+    execute(addDirective).subscribe(
+      () => {
         this.props.onComplete();
-        this.setState({activeModal: null});
-      }, (err) => {
+        this.setState({ activeModal: null });
+      },
+      (err) => {
         console.log('error', err);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setError,
           payload: {
-            message: err.message || err.response.message
-          }
+            message: err.message || err.response.message,
+          },
         });
-      });
+      }
+    );
   }
 
   handleUsingFilters(delimiter) {
@@ -75,10 +80,10 @@ export default class Explode extends Component {
       activeModal: (
         <UsingDelimiterModal
           isOpen={true}
-          onClose={() => this.setState({activeModal: null})}
+          onClose={() => this.setState({ activeModal: null })}
           onApply={this.handleUsingFilters}
         />
-      )
+      ),
     });
   }
 
@@ -98,28 +103,23 @@ export default class Explode extends Component {
   }
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen) {
+      return null;
+    }
     let disableFilterSubmenu = DataPrepStore.getState().dataprep.selectedHeaders.length > 1;
     return (
-      <div
-        className="explode-fields second-level-popover"
-        onClick={this.preventPropagation}
-      >
-        <div className={classnames("explode-field-options", {
-          'disabled': disableFilterSubmenu
-        })}>
-          <div
-            onClick={this.explodeUsingFilters}
-            className="option"
-          >
+      <div className="explode-fields second-level-popover" onClick={this.preventPropagation}>
+        <div
+          className={classnames('explode-field-options', {
+            disabled: disableFilterSubmenu,
+          })}
+        >
+          <div onClick={this.explodeUsingFilters} className="option">
             {T.translate(`${PREFIX}.filtersSubmenuTitle`)}
           </div>
         </div>
         <div className="explode-field-options">
-          <div
-            onClick={this.explodeByFlattening}
-            className="option"
-          >
+          <div onClick={this.explodeByFlattening} className="option">
             {T.translate(`${PREFIX}.flatteningSubmenuTitle`)}
           </div>
         </div>
@@ -132,12 +132,10 @@ export default class Explode extends Component {
       <div
         id="explode-fields-directive"
         className={classnames('clearfix action-item', {
-          'active': this.props.isOpen
+          active: this.props.isOpen,
         })}
       >
-        <span className="option">
-          {T.translate(`${PREFIX}.title`)}
-        </span>
+        <span className="option">{T.translate(`${PREFIX}.title`)}</span>
 
         <span className="float-xs-right">
           <span className="fa fa-caret-right" />
@@ -153,5 +151,5 @@ export default class Explode extends Component {
 Explode.propTypes = {
   isOpen: PropTypes.bool,
   column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
-  onComplete: PropTypes.func
+  onComplete: PropTypes.func,
 };

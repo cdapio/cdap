@@ -16,7 +16,7 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import TopPanel from 'components/Experiments/TopPanel';
 import ExperimentMetricsDropdown from 'components/Experiments/DetailedView/ExperimentMetricsDropdown';
 import T from 'i18n-react';
@@ -25,16 +25,12 @@ const PREFIX = 'features.Experiments.DetailedView';
 
 require('./DetailedViewTopPanel.scss');
 
-
-const Metadata = ({name, description, srcpath, total, outcome}) => {
+const Metadata = ({ name, description, srcpath, total, outcome }) => {
   return (
     <div className="experiment-metadata">
       <div>
         <h2 title={name}>{name}</h2>
-        <div
-          className="description"
-          title={description}
-        >
+        <div className="description" title={description}>
           {description}
         </div>
       </div>
@@ -46,15 +42,11 @@ const Metadata = ({name, description, srcpath, total, outcome}) => {
       </div>
       <div>
         <div>
-          <strong className="experiment-meta-label">
-            {T.translate(`${PREFIX}.data`)}
-          </strong>
+          <strong className="experiment-meta-label">{T.translate(`${PREFIX}.data`)}</strong>
           <div>{srcpath}</div>
         </div>
         <div>
-          <strong className="experiment-meta-label">
-            {T.translate(`${PREFIX}.outcome`)}
-          </strong>
+          <strong className="experiment-meta-label">{T.translate(`${PREFIX}.outcome`)}</strong>
           <div>{outcome}</div>
         </div>
       </div>
@@ -67,7 +59,7 @@ Metadata.propTypes = {
   description: PropTypes.string,
   srcpath: PropTypes.string,
   total: PropTypes.number,
-  outcome: PropTypes.string
+  outcome: PropTypes.string,
 };
 
 const mapStateToMetadataProps = (state) => {
@@ -77,7 +69,7 @@ const mapStateToMetadataProps = (state) => {
     srcpath: state.srcpath,
     models: state.models,
     total: state.modelsTotalCount,
-    outcome: state.outcome
+    outcome: state.outcome,
   };
 };
 

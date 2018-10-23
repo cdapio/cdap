@@ -18,8 +18,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
-import {connect} from 'react-redux';
-import {ReportsActions, STATUS_OPTIONS} from 'components/Reports/store/ReportsStore';
+import { connect } from 'react-redux';
+import { ReportsActions, STATUS_OPTIONS } from 'components/Reports/store/ReportsStore';
 import StatusViewer from 'components/Reports/Customizer/StatusSelector/StatusViewer';
 import StatusMapper from 'services/StatusMapper';
 import T from 'i18n-react';
@@ -27,16 +27,16 @@ import T from 'i18n-react';
 class StatusPopoverView extends Component {
   static propTypes = {
     selections: PropTypes.array,
-    onApply: PropTypes.func
+    onApply: PropTypes.func,
   };
 
   state = {
-    selections: this.props.selections
+    selections: this.props.selections,
   };
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      selections: nextProps.selections
+      selections: nextProps.selections,
     });
   }
 
@@ -56,7 +56,7 @@ class StatusPopoverView extends Component {
     }
 
     this.setState({
-      selections: newArr
+      selections: newArr,
     });
   };
 
@@ -71,7 +71,7 @@ class StatusPopoverView extends Component {
   onTogglePopover = (showPopover) => {
     if (!showPopover) {
       this.setState({
-        selections: this.props.selections
+        selections: this.props.selections,
       });
     }
   };
@@ -88,30 +88,19 @@ class StatusPopoverView extends Component {
         onTogglePopover={this.onTogglePopover}
       >
         <div className="options">
-          {
-            STATUS_OPTIONS.map((option) => {
-              return (
-                <div
-                  key={option}
-                  className="option"
-                  onClick={this.toggleOption.bind(this, option)}
-                >
-                  <IconSVG name={this.isSelected(option) ? 'icon-check-square' : 'icon-square-o' } />
-                  <IconSVG name="icon-circle" className={option.toLowerCase()} />
+          {STATUS_OPTIONS.map((option) => {
+            return (
+              <div key={option} className="option" onClick={this.toggleOption.bind(this, option)}>
+                <IconSVG name={this.isSelected(option) ? 'icon-check-square' : 'icon-square-o'} />
+                <IconSVG name="icon-circle" className={option.toLowerCase()} />
 
-                  <span>
-                    {StatusMapper.lookupDisplayStatus(option)}
-                  </span>
-                </div>
-              );
-            })
-          }
+                <span>{StatusMapper.lookupDisplayStatus(option)}</span>
+              </div>
+            );
+          })}
         </div>
         <div className="action">
-          <button
-            className="btn btn-primary"
-            onClick={this.apply}
-          >
+          <button className="btn btn-primary" onClick={this.apply}>
             {T.translate('commons.apply')}
           </button>
         </div>
@@ -122,7 +111,7 @@ class StatusPopoverView extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    selections: state.status.statusSelections
+    selections: state.status.statusSelections,
   };
 };
 
@@ -132,10 +121,10 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: ReportsActions.setStatus,
         payload: {
-          statusSelections
-        }
+          statusSelections,
+        },
       });
-    }
+    },
   };
 };
 

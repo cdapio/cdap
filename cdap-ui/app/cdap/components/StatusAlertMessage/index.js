@@ -14,32 +14,31 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import StatusAlertMessageStore from 'components/StatusAlertMessage/StatusAlertMessageStore';
 import Alert from 'components/Alert';
 import T from 'i18n-react';
-
 
 export default class StatusAlertMessage extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showMessage: false
+      showMessage: false,
     };
   }
   componentWillMount() {
     StatusAlertMessageStore.subscribe(() => {
       let showMessage = StatusAlertMessageStore.getState().view;
       this.setState({
-        showMessage
+        showMessage,
       });
       if (showMessage) {
         setTimeout(() => {
           StatusAlertMessageStore.dispatch({
             type: 'VIEWUPDATE',
             payload: {
-              view: false
-            }
+              view: false,
+            },
           });
         }, 3000);
       }
@@ -49,8 +48,8 @@ export default class StatusAlertMessage extends Component {
     StatusAlertMessageStore.dispatch({
       type: 'VIEWUPDATE',
       payload: {
-        view: false
-      }
+        view: false,
+      },
     });
   }
   render() {

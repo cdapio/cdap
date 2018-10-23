@@ -16,9 +16,9 @@
 
 import React from 'react';
 import SelectWithOptions from 'components/SelectWithOptions';
-import {WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS} from 'components/AbstractWidget';
+import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 
-export default function SelectWidget({...props}) {
+export default function SelectWidget({ ...props }) {
   return (
     <div className={`select-widget`}>
       <SelectWithOptions

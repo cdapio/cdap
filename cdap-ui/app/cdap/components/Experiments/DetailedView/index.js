@@ -17,7 +17,9 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Provider } from 'react-redux';
-import experimentDetailStore, {DEFAULT_EXPERIMENT_DETAILS} from 'components/Experiments/store/experimentDetailStore';
+import experimentDetailStore, {
+  DEFAULT_EXPERIMENT_DETAILS,
+} from 'components/Experiments/store/experimentDetailStore';
 import {
   getExperimentDetails,
   getModelsInExperiment,
@@ -26,9 +28,9 @@ import {
   handleModelsPageChange,
   resetExperimentDetailStore,
   resetNewlyTrainingModel,
-  setAlgorithmsListForDetailedView
+  setAlgorithmsListForDetailedView,
 } from 'components/Experiments/store/ExperimentDetailActionCreator';
-import {MMDS_SORT_METHODS, MMDS_SORT_COLUMN} from 'components/Experiments/store';
+import { MMDS_SORT_METHODS, MMDS_SORT_COLUMN } from 'components/Experiments/store';
 import ConnectedTopPanel from 'components/Experiments/DetailedView/TopPanel';
 import ModelsTableWrapper from 'components/Experiments/DetailedView/ModelsTable';
 import Mousetrap from 'mousetrap';
@@ -37,14 +39,12 @@ import queryString from 'query-string';
 import Alert from 'components/Alert';
 import ExperimentDetailPageTitle from 'components/Experiments/DetailedView/ExperimentDetailPageTitle';
 
-
 require('./DetailedView.scss');
-
 
 export default class ExperimentDetails extends Component {
   static propTypes = {
     match: PropTypes.object,
-    location: PropTypes.object
+    location: PropTypes.object,
   };
 
   modelStatusObservables = [];
@@ -58,17 +58,19 @@ export default class ExperimentDetails extends Component {
       offset: modelsOffset,
       limit: modelsLimit,
       sortMethod: modelsSortMethod,
-      sortColumn: modelsSortColumn
+      sortColumn: modelsSortColumn,
     } = this.getQueryObject(queryString.parse(this.props.location.search));
     updateQueryParametersForModels({
       modelsOffset,
       modelsLimit,
       modelsSortMethod,
-      modelsSortColumn
+      modelsSortColumn,
     });
     getExperimentDetails(experimentId);
-    getModelsInExperiment(experimentId).subscribe(({models}) => {
-      models.forEach(model => this.modelStatusObservables.push(pollModelStatus(experimentId, model.id)));
+    getModelsInExperiment(experimentId).subscribe(({ models }) => {
+      models.forEach((model) =>
+        this.modelStatusObservables.push(pollModelStatus(experimentId, model.id))
+      );
     });
   }
 
@@ -77,17 +79,17 @@ export default class ExperimentDetails extends Component {
     Mousetrap.unbind('right');
     resetExperimentDetailStore();
     if (this.modelStatusObservables.length) {
-      this.modelStatusObservables.forEach(statusObservable$ => statusObservable$.unsubscribe());
+      this.modelStatusObservables.forEach((statusObservable$) => statusObservable$.unsubscribe());
     }
   }
 
   showNewlyTrainingModel = () => {
-    let {newlyTrainingModel} = experimentDetailStore.getState();
+    let { newlyTrainingModel } = experimentDetailStore.getState();
     if (newlyTrainingModel) {
       return (
         <Alert
           message={`You have successfully started training the model: ${newlyTrainingModel.name}`}
-          type='success'
+          type="success"
           showAlert={true}
           onClose={resetNewlyTrainingModel}
         />
@@ -96,7 +98,7 @@ export default class ExperimentDetails extends Component {
   };
 
   goToNextPage = () => {
-    let {modelsOffset, modelsLimit, modelsTotalPages} = experimentDetailStore.getState();
+    let { modelsOffset, modelsLimit, modelsTotalPages } = experimentDetailStore.getState();
     let nextPage = modelsOffset === 0 ? 1 : Math.ceil((modelsOffset + 1) / modelsLimit);
     if (nextPage < modelsTotalPages) {
       handleModelsPageChange({ selected: nextPage });
@@ -104,7 +106,7 @@ export default class ExperimentDetails extends Component {
   };
 
   goToPreviousPage = () => {
-    let {modelsOffset, modelsLimit} = experimentDetailStore.getState();
+    let { modelsOffset, modelsLimit } = experimentDetailStore.getState();
     let prevPage = modelsOffset === 0 ? 1 : Math.ceil((modelsOffset + 1) / modelsLimit);
     if (prevPage > 1) {
       handleModelsPageChange({ selected: prevPage - 2 });
@@ -118,7 +120,7 @@ export default class ExperimentDetails extends Component {
     let {
       offset = DEFAULT_EXPERIMENT_DETAILS.modelsOffset,
       limit = DEFAULT_EXPERIMENT_DETAILS.modelsLimit,
-      sort
+      sort,
     } = query;
     let sortMethod, sortColumn;
     offset = parseInt(offset, 10);

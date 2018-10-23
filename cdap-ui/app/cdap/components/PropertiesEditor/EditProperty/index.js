@@ -17,11 +17,11 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
-import {MyMetadataApi} from 'api/metadata';
+import { MyMetadataApi } from 'api/metadata';
 import NamespaceStore from 'services/NamespaceStore';
-import {SCOPES} from 'services/global-constants';
+import { SCOPES } from 'services/global-constants';
 import T from 'i18n-react';
 
 export default class EditProperty extends Component {
@@ -31,7 +31,7 @@ export default class EditProperty extends Component {
     this.state = {
       isOpen: false,
       valueInput: '',
-      error: null
+      error: null,
     };
 
     this.toggleModal = this.toggleModal.bind(this);
@@ -46,47 +46,52 @@ export default class EditProperty extends Component {
   }
 
   toggleModal() {
-    this.setState({isOpen: !this.state.isOpen});
+    this.setState({ isOpen: !this.state.isOpen });
   }
 
   saveProperty() {
-    if (!this.state.valueInput) { return; }
+    if (!this.state.valueInput) {
+      return;
+    }
     let namespace = NamespaceStore.getState().selectedNamespace;
     const params = {
       namespace,
       entityType: this.props.entityType,
       entityId: this.props.entityId,
-      scope: SCOPES.USER
+      scope: SCOPES.USER,
     };
 
     let requestBody = {};
     requestBody[this.props.property.key] = this.state.valueInput;
 
-    MyMetadataApi.addProperties(params, requestBody)
-      .subscribe(() => {
+    MyMetadataApi.addProperties(params, requestBody).subscribe(
+      () => {
         this.setState({
           isOpen: false,
-          valueInput: ''
+          valueInput: '',
         });
 
         this.props.onSave();
-
-      }, (err) => {
+      },
+      (err) => {
         this.setState({ error: err });
-      });
+      }
+    );
   }
 
   handleValueChange(e) {
-    this.setState({valueInput: e.target.value});
+    this.setState({ valueInput: e.target.value });
   }
 
   renderFeedback() {
-    if (!this.state.error) { return null; }
+    if (!this.state.error) {
+      return null;
+    }
 
     return (
       <ModalFooter>
         <CardActionFeedback
-          type='DANGER'
+          type="DANGER"
           message={T.translate('features.PropertiesEditor.EditProperty.shortError')}
           extendedMessage={this.state.error}
         />
@@ -95,7 +100,9 @@ export default class EditProperty extends Component {
   }
 
   renderModal() {
-    if (!this.state.isOpen) { return null; }
+    if (!this.state.isOpen) {
+      return null;
+    }
 
     let disabled = this.state.valueInput.length === 0;
 
@@ -108,13 +115,12 @@ export default class EditProperty extends Component {
       >
         <ModalHeader>
           <span>
-            {T.translate('features.PropertiesEditor.EditProperty.modalHeader', {key: this.props.property.key})}
+            {T.translate('features.PropertiesEditor.EditProperty.modalHeader', {
+              key: this.props.property.key,
+            })}
           </span>
 
-          <div
-            className="close-section float-xs-right"
-            onClick={this.toggleModal}
-          >
+          <div className="close-section float-xs-right" onClick={this.toggleModal}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
@@ -133,18 +139,13 @@ export default class EditProperty extends Component {
           </div>
 
           <div className="text-xs-right">
-            <button
-              className="btn btn-primary"
-              onClick={this.saveProperty}
-              disabled={disabled}
-            >
+            <button className="btn btn-primary" onClick={this.saveProperty} disabled={disabled}>
               {T.translate('features.PropertiesEditor.EditProperty.button')}
             </button>
           </div>
         </ModalBody>
 
         {this.renderFeedback()}
-
       </Modal>
     );
   }
@@ -152,10 +153,7 @@ export default class EditProperty extends Component {
   render() {
     return (
       <span>
-        <span
-          className="fa fa-pencil"
-          onClick={this.toggleModal}
-        />
+        <span className="fa fa-pencil" onClick={this.toggleModal} />
 
         {this.renderModal()}
       </span>
@@ -167,5 +165,5 @@ EditProperty.propTypes = {
   property: PropTypes.object,
   entityType: PropTypes.string,
   entityId: PropTypes.string,
-  onSave: PropTypes.func
+  onSave: PropTypes.func,
 };

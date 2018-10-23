@@ -15,7 +15,7 @@
  */
 
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps/:appId';
@@ -40,5 +40,5 @@ export const MyPipelineApi = {
   pollRunsCount: apiCreator(dataSrc, 'POST', 'POLL', `${runsCountPath}`),
   getNextRunTime: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/nextruntime)`),
   fetchMacros: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/plugins`),
-  fetchWidgetJson: apiCreator(dataSrc, 'GET', 'REQUEST', artifactBasePath)
+  fetchWidgetJson: apiCreator(dataSrc, 'GET', 'REQUEST', artifactBasePath),
 };

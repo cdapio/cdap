@@ -14,12 +14,12 @@
  * the License.
  */
 
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 const dataSrc = DataSourceConfigurer.getInstance();
 
 const basepath = '/namespaces/:namespace/securekeys';
 
 export const MySecureKeyApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath)
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
 };

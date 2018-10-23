@@ -16,29 +16,25 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {isNilOrEmpty} from 'services/helpers';
-import {DEFAULT_ERROR_MESSAGE} from 'components/ErrorBoundary';
+import { isNilOrEmpty } from 'services/helpers';
+import { DEFAULT_ERROR_MESSAGE } from 'components/ErrorBoundary';
 import Page500ErrorStack from 'components/500/Page500ErrorStack';
 import T from 'i18n-react';
 
 require('./500.scss');
 const I18N_PREFIX = 'features.Page500';
 
-export default function Page500({message, stack}) {
+export default function Page500({ message, stack }) {
   return (
     <div className="page-500">
-      <h1 className="error-main-title">
-        {T.translate(`${I18N_PREFIX}.mainTitle`)}
-      </h1>
+      <h1 className="error-main-title">{T.translate(`${I18N_PREFIX}.mainTitle`)}</h1>
       <h1>
         <strong>{T.translate(`${I18N_PREFIX}.secondaryTitle`)}</strong>
       </h1>
 
       <div className="message-section">
         <h4>
-          <strong>
-            {T.translate('features.Page404.subtitleMessage1')}
-          </strong>
+          <strong>{T.translate('features.Page404.subtitleMessage1')}</strong>
         </h4>
         <div className="navigation-section">
           <div>
@@ -46,27 +42,22 @@ export default function Page500({message, stack}) {
               // There is definitely a better way to do this :sigh:
             }
             {T.translate(`${I18N_PREFIX}.suggestion1Part1`)}
-            <a href={window.location.href}>
-              {T.translate(`${I18N_PREFIX}.suggestion1Part2`)}
-            </a>
+            <a href={window.location.href}>{T.translate(`${I18N_PREFIX}.suggestion1Part2`)}</a>
             {T.translate(`${I18N_PREFIX}.suggestion1Part3`)}
           </div>
           <div>{T.translate(`${I18N_PREFIX}.suggestion2`)}</div>
         </div>
       </div>
-      {
-        isNilOrEmpty(stack) ?
-          null
-        :
-          <Page500ErrorStack
-            stack={stack}
-            message={isNilOrEmpty(message) ? DEFAULT_ERROR_MESSAGE : message}
-          />
-      }
+      {isNilOrEmpty(stack) ? null : (
+        <Page500ErrorStack
+          stack={stack}
+          message={isNilOrEmpty(message) ? DEFAULT_ERROR_MESSAGE : message}
+        />
+      )}
     </div>
   );
 }
 Page500.propTypes = {
   message: PropTypes.string,
-  stack: PropTypes.object
+  stack: PropTypes.object,
 };

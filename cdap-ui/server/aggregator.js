@@ -1,3 +1,4 @@
+// @ts-nocheck
 /*
  * Copyright © 2015-2016 Cask Data, Inc.
  *
@@ -14,11 +15,11 @@
  * the License.
  */
 
-/*global require, module */
+/* global require, module */
 
 var request = require('request'),
-    fs = require('fs'),
-    log4js = require('log4js');
+  fs = require('fs'),
+  log4js = require('log4js');
 
 var log = log4js.getLogger('default');
 var hash = require('object-hash');
@@ -30,7 +31,7 @@ var hash = require('object-hash');
  * time, then would have to pass in the 'interval'
  * in their request.
  */
-var POLL_INTERVAL = 10*1000;
+var POLL_INTERVAL = 10 * 1000;
 
 /**
  * Aggregator
@@ -39,9 +40,9 @@ var POLL_INTERVAL = 10*1000;
  *
  * @param {Object} SockJS connection
  */
-function Aggregator (conn) {
+function Aggregator(conn) {
   // make 'new' optional
-  if ( !(this instanceof Aggregator) ) {
+  if (!(this instanceof Aggregator)) {
     return new Aggregator(conn);
   }
 
@@ -66,12 +67,20 @@ function Aggregator (conn) {
  * Upon check if it's not duplicate, we invoke doPoll that would make the
  * first call and set the interval for the timeout.
  */
-Aggregator.prototype.startPolling = function (resource) {
+Aggregator.prototype.startPolling = function(resource) {
   resource.interval = resource.interval || POLL_INTERVAL;
-  log.debug('[SCHEDULING]: (id: ' + resource.id + ', url: ' + resource.url + ', interval: ' + resource.interval + ')');
+  log.debug(
+    '[SCHEDULING]: (id: ' +
+      resource.id +
+      ', url: ' +
+      resource.url +
+      ', interval: ' +
+      resource.interval +
+      ')'
+  );
   this.polledResources[resource.id] = {
     resource: resource,
-    response: null
+    response: null,
   };
   doPoll.bind(this, this.polledResources[resource.id].resource)();
 };
@@ -83,8 +92,10 @@ Aggregator.prototype.startPolling = function (resource) {
  * there is nothing for us to do. If it's not then we go ahead and register
  * the interval timeout.
  */
-Aggregator.prototype.scheduleAnotherIteration = function (resource) {
-  log.debug('[RESCHEDULING]: (id: ' + resource.id + ',' + resource.url + ', url: ' + resource.interval + ')');
+Aggregator.prototype.scheduleAnotherIteration = function(resource) {
+  log.debug(
+    '[RESCHEDULING]: (id: ' + resource.id + ',' + resource.url + ', url: ' + resource.interval + ')'
+  );
   resource.timerId = setTimeout(doPoll.bind(this, resource), resource.interval);
 };
 
@@ -93,7 +104,7 @@ Aggregator.prototype.scheduleAnotherIteration = function (resource) {
  * is removed from the websocket local poll and the timeouts are cleared and stop flag
  * is set to true.
  */
-Aggregator.prototype.stopPolling = function (resource) {
+Aggregator.prototype.stopPolling = function(resource) {
   if (!this.polledResources[resource.id]) {
     return;
   }
@@ -137,17 +148,18 @@ Aggregator.prototype.pushConfiguration = function(resource) {
     __dirname + '/../templates/' + templateid + '/' + pluginid + '.json',
     __dirname + '/../templates/common/' + pluginid + '.json'
   );
-  var i, paths = filePaths.length;
+  var i,
+    paths = filePaths.length;
   var fileFound = true;
 
   // Check if the configuration is present within the plugin for a template
-  for (i=0; i<paths; i++) {
+  for (i = 0; i < paths; i++) {
     try {
       configString = fs.readFileSync(filePaths[i], 'utf8');
       statusCode = 200;
       fileFound = true;
       break;
-    } catch(e) {
+    } catch (e) {
       if (e.code === 'ENOENT') {
         fileFound = false;
       }
@@ -160,7 +172,7 @@ Aggregator.prototype.pushConfiguration = function(resource) {
     try {
       config = JSON.parse(configString);
       statusCode = 200;
-    } catch(e) {
+    } catch (e) {
       statusCode = 500;
       config = 'CONFIG_SYNTAX_JSON_ERROR';
     }
@@ -174,11 +186,13 @@ Aggregator.prototype.pushConfiguration = function(resource) {
     }
   }
 
-  this.connection.write(JSON.stringify({
-    resource: resource,
-    statusCode: statusCode,
-    response: config
-  }));
+  this.connection.write(
+    JSON.stringify({
+      resource: resource,
+      statusCode: statusCode,
+      response: config,
+    })
+  );
 };
 
 function validateSemanticsOfConfigJSON(config) {
@@ -188,7 +202,7 @@ function validateSemanticsOfConfigJSON(config) {
   var isValid = true;
   var fields, fieldsMap;
 
-  for (i=0; i<groups.length; i++) {
+  for (i = 0; i < groups.length; i++) {
     if (!groupsMap[groups[i]] || !isValid) {
       isValid = false;
       break;
@@ -200,7 +214,7 @@ function validateSemanticsOfConfigJSON(config) {
     if (!fields || !fieldsMap) {
       isValid = false;
     } else {
-      for (j=0; j<fields.length; j++) {
+      for (j = 0; j < fields.length; j++) {
         if (!fieldsMap[fields[j]]) {
           isValid = false;
           break;
@@ -216,26 +230,26 @@ function validateSemanticsOfConfigJSON(config) {
  * sends the response back once it receives it. Upon completion of the request
  * it schedulers the interval for next trigger.
  */
-function doPoll (resource) {
-    if (!this.polledResources[resource.id]) {
+function doPoll(resource) {
+  if (!this.polledResources[resource.id]) {
+    return;
+  }
+  var that = this,
+    callBack = this.scheduleAnotherIteration.bind(that, resource);
+
+  resource.startTs = Date.now();
+  request(resource, function(error, response, body) {
+    if (error) {
+      emitResponse.call(that, resource, error);
+      return;
+    } else if (response.statusCode > 299) {
+      var errMessage = response.statusCode + ' ' + resource.url;
+      emitResponse.call(that, resource, errMessage, response, body);
       return;
     }
-    var that = this,
-        callBack = this.scheduleAnotherIteration.bind(that, resource);
-
-    resource.startTs = Date.now();
-    request(resource, function(error, response, body) {
-      if (error) {
-        emitResponse.call(that, resource, error);
-        return;
-      } else if (response.statusCode > 299) {
-        var errMessage = response.statusCode + ' ' + resource.url;
-        emitResponse.call(that, resource, errMessage, response, body);
-        return;
-      }
-      emitResponse.call(that, resource, false, response, body);
-
-    }).on('response', callBack)
+    emitResponse.call(that, resource, false, response, body);
+  })
+    .on('response', callBack)
     .on('error', callBack);
 }
 
@@ -244,12 +258,11 @@ function doPoll (resource) {
  */
 function stripResource(key, value) {
   // note that 'stop' is not the stop timestamp, but rather a stop flag/signal (unlike the startTs)
-  if (key==='timerId' || key==='startTs' || key==='stop') {
+  if (key === 'timerId' || key === 'startTs' || key === 'stop') {
     return undefined;
   }
   return value;
 }
-
 
 /**
  * @private emitResponse
@@ -261,13 +274,21 @@ function stripResource(key, value) {
  * @param  {object} response
  * @param  {string} body
  */
-function emitResponse (resource, error, response, body) {
-  var timeDiff = Date.now()  - resource.startTs;
+function emitResponse(resource, error, response, body) {
+  var timeDiff = Date.now() - resource.startTs;
   var responseHash;
 
-  if(error) {
+  if (error) {
     log.debug('[ERROR]: (id: ' + resource.id + ', url: ' + resource.url + ')');
-    log.trace('[ERROR]: (id: ' + resource.id + ', url: ' + resource.url + ') body : (' + error.toString() + ')');
+    log.trace(
+      '[ERROR]: (id: ' +
+        resource.id +
+        ', url: ' +
+        resource.url +
+        ') body : (' +
+        error.toString() +
+        ')'
+    );
 
     if (this.polledResources[resource.id]) {
       responseHash = hash(error || {});
@@ -278,33 +299,52 @@ function emitResponse (resource, error, response, body) {
       }
     }
 
-    this.connection.write(JSON.stringify({
-      resource: resource,
-      error: error,
-      warning: error.toString(),
-      statusCode: response && response.statusCode,
-      response: response && response.body
-    }, stripResource));
-
+    this.connection.write(
+      JSON.stringify(
+        {
+          resource: resource,
+          error: error,
+          warning: error.toString(),
+          statusCode: response && response.statusCode,
+          response: response && response.body,
+        },
+        stripResource
+      )
+    );
   } else {
     log.debug('[SUCCESS]: (id: ' + resource.id + ', url: ' + resource.url + ')');
-    log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ') body : (' + JSON.stringify(body) + ')');
+    log.trace(
+      '[' +
+        timeDiff +
+        'ms] Success (' +
+        resource.id +
+        ',' +
+        resource.url +
+        ') body : (' +
+        JSON.stringify(body) +
+        ')'
+    );
 
     if (this.polledResources[resource.id]) {
       responseHash = hash(body || {});
-      if (this.polledResources[resource.id].response === responseHash.toString()){
+      if (this.polledResources[resource.id].response === responseHash.toString()) {
         // No need to send this to the client as nothing changed.
         return;
       } else {
         this.polledResources[resource.id].response = responseHash;
       }
     }
-    log.debug('[RESPONSE]: (id: ' + resource.id + ', url: ' + resource.url + ')' );
-    this.connection.write(JSON.stringify({
-      resource: resource,
-      statusCode: response.statusCode,
-      response: body
-    }, stripResource));
+    log.debug('[RESPONSE]: (id: ' + resource.id + ', url: ' + resource.url + ')');
+    this.connection.write(
+      JSON.stringify(
+        {
+          resource: resource,
+          statusCode: response.statusCode,
+          response: body,
+        },
+        stripResource
+      )
+    );
   }
 }
 
@@ -312,35 +352,42 @@ function emitResponse (resource, error, response, body) {
  * @private onSocketData
  * @param  {string} message received via socket
  */
-function onSocketData (message) {
+function onSocketData(message) {
   try {
     message = JSON.parse(message);
     var r = message.resource;
 
-    switch(message.action) {
+    switch (message.action) {
       case 'template-config':
-        log.debug('ETL application config request (' + r.method + ',' + r.id + ',' + r.templateid + ',' + r.pluginid);
+        log.debug(
+          'ETL application config request (' +
+            r.method +
+            ',' +
+            r.id +
+            ',' +
+            r.templateid +
+            ',' +
+            r.pluginid
+        );
         this.pushConfiguration(r);
         break;
       case 'poll-start':
-        log.debug ('[POLL-START]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
+        log.debug('[POLL-START]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
         this.startPolling(r);
         break;
       case 'request':
         r.startTs = Date.now();
-        log.debug ('[REQUEST]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
-        request(r, emitResponse.bind(this, r))
-          .on('error', function (err) {
-            log.error(err);
-          });
+        log.debug('[REQUEST]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
+        request(r, emitResponse.bind(this, r)).on('error', function(err) {
+          log.error(err);
+        });
         break;
       case 'poll-stop':
-        log.debug ('[POLL-STOP]: (id: ' + r.id + ', url: ' + r.url + ')');
+        log.debug('[POLL-STOP]: (id: ' + r.id + ', url: ' + r.url + ')');
         this.stopPolling(r);
         break;
     }
-  }
-  catch (e) {
+  } catch (e) {
     log.warn(e);
   }
 }
@@ -348,7 +395,7 @@ function onSocketData (message) {
 /**
  * @private onSocketClose
  */
-function onSocketClose () {
+function onSocketClose() {
   this.stopPollingAll();
   this.polledResources = {};
 }

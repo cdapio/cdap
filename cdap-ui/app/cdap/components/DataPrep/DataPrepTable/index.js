@@ -22,7 +22,7 @@ import ee from 'event-emitter';
 import classnames from 'classnames';
 import ColumnActionsDropdown from 'components/DataPrep/ColumnActionsDropdown';
 require('./DataPrepTable.scss');
-import {execute, setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
+import { execute, setWorkspace } from 'components/DataPrep/store/DataPrepActionCreator';
 import TextboxOnValium from 'components/TextboxOnValium';
 import WarningContainer from 'components/WarningContainer';
 import ColumnHighlighter from 'components/DataPrep/ColumnHighlighter';
@@ -33,7 +33,9 @@ import DataType from 'components/DataPrep/DataPrepTable/DataType';
 import ErrorMessageContainer from 'components/DataPrep/ErrorMessageContainer';
 // Lazy load polyfill in safari as InteresectionObservers are not implemented there yet.
 (async function() {
-  typeof IntersectionObserver === 'undefined' ? await import(/* webpackChunkName: "intersection-observer" */'intersection-observer') : Promise.resolve();
+  typeof IntersectionObserver === 'undefined'
+    ? await import(/* webpackChunkName: "intersection-observer" */ 'intersection-observer')
+    : Promise.resolve();
 })();
 
 const PREFIX = 'features.DataPrep.DataPrepTable';
@@ -43,18 +45,21 @@ export default class DataPrepTable extends Component {
     super(props);
     let storeState = DataPrepStore.getState();
     let workspaceId = storeState.dataprep.workspaceId;
-    let currentWorkspace = storeState.workspaces.list.find(workspace => workspace.id === workspaceId) || {};
+    let currentWorkspace =
+      storeState.workspaces.list.find((workspace) => workspace.id === workspaceId) || {};
     let currentWorkspaceName = currentWorkspace.name;
     this.state = {
-      headers: storeState.dataprep.headers.map(header => ({name: header, edit: false})),
-      data: storeState.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: uuidV4(), scrollId: i})),
+      headers: storeState.dataprep.headers.map((header) => ({ name: header, edit: false })),
+      data: storeState.dataprep.data.map((d, i) =>
+        Object.assign({}, d, { uniqueId: uuidV4(), scrollId: i })
+      ),
       windowSize: DEFAULT_WINDOW_SIZE,
       loading: !storeState.dataprep.initialized,
       directivesLength: storeState.dataprep.directives.length,
       workspaceId,
       currentWorkspaceName,
       columns: storeState.columnsInformation.columns,
-      selectedHeaders: storeState.dataprep.selectedHeaders
+      selectedHeaders: storeState.dataprep.selectedHeaders,
     };
 
     this.eventEmitter = ee(ee);
@@ -67,15 +72,17 @@ export default class DataPrepTable extends Component {
       }
       this.setState({
         windowSize: DEFAULT_WINDOW_SIZE,
-        data: state.dataprep.data.map((d, i) => Object.assign({}, d, {uniqueId: uuidV4(), scrollId: i})),
-        headers: state.dataprep.headers.map(header => ({name: header, edit: false})),
+        data: state.dataprep.data.map((d, i) =>
+          Object.assign({}, d, { uniqueId: uuidV4(), scrollId: i })
+        ),
+        headers: state.dataprep.headers.map((header) => ({ name: header, edit: false })),
         loading: !state.dataprep.initialized && !state.error.dataError,
         directivesLength: state.dataprep.directives.length,
         workspaceId: state.dataprep.workspaceId,
         workspaceInfo: state.dataprep.workspaceInfo,
         selectedHeaders: state.dataprep.selectedHeaders,
         columns: state.columnsInformation.columns,
-        error: state.error.dataError
+        error: state.error.dataError,
       });
     });
   }
@@ -85,19 +92,15 @@ export default class DataPrepTable extends Component {
   }
 
   componentDidMount() {
-    document
-      .querySelectorAll(`#dataprep-table tbody tr`)
-      .forEach(entry => {
-        this.io.observe(entry);
-      });
+    document.querySelectorAll(`#dataprep-table tbody tr`).forEach((entry) => {
+      this.io.observe(entry);
+    });
   }
 
   componentDidUpdate() {
-    document
-      .querySelectorAll(`#dataprep-table tbody tr`)
-      .forEach(entry => {
-        this.io.observe(entry);
-      });
+    document.querySelectorAll(`#dataprep-table tbody tr`).forEach((entry) => {
+      this.io.observe(entry);
+    });
   }
 
   toggleColumnSelect = (columnName) => {
@@ -114,19 +117,19 @@ export default class DataPrepTable extends Component {
     DataPrepStore.dispatch({
       type: DataPrepActions.setSelectedHeaders,
       payload: {
-        selectedHeaders: currentSelectedHeaders
-      }
+        selectedHeaders: currentSelectedHeaders,
+      },
     });
   };
 
   columnDropdownOpened = (columnDropdown, openState) => {
     if (openState) {
       this.setState({
-        columnDropdownOpen: columnDropdown
+        columnDropdownOpen: columnDropdown,
       });
     } else {
       this.setState({
-        columnDropdownOpen: null
+        columnDropdownOpen: null,
       });
     }
   };
@@ -144,7 +147,7 @@ export default class DataPrepTable extends Component {
   };
 
   switchToEditColumnName = (head) => {
-    let newHeaders = this.state.headers.map(header => {
+    let newHeaders = this.state.headers.map((header) => {
       if (header.name === head.name) {
         return Object.assign({}, header, {
           edit: !header.edit,
@@ -153,17 +156,16 @@ export default class DataPrepTable extends Component {
       }
       return {
         name: header.name,
-        edit: false
+        edit: false,
       };
     });
     this.setState({
-      headers: newHeaders
+      headers: newHeaders,
     });
   };
 
   showWarningMessage(index, currentValue) {
-    let showWarning = this.state.headers
-      .filter(header => header.name === currentValue);
+    let showWarning = this.state.headers.filter((header) => header.name === currentValue);
     let headers = this.state.headers;
     let matchedHeader = headers[index];
     if (!showWarning.length || headers[index].name === currentValue) {
@@ -171,11 +173,7 @@ export default class DataPrepTable extends Component {
         matchedHeader.showWarning = false;
         delete matchedHeader.editedColumnName;
         this.setState({
-          headers: [
-            ...headers.slice(0, index),
-            matchedHeader,
-            ...headers.slice(index + 1)
-          ]
+          headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
         });
       }
       return;
@@ -183,11 +181,7 @@ export default class DataPrepTable extends Component {
     matchedHeader.showWarning = true;
     matchedHeader.editedColumnName = currentValue;
     this.setState({
-      headers: [
-        ...headers.slice(0, index),
-        matchedHeader,
-        ...headers.slice(index + 1)
-      ]
+      headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
     });
     return true;
   }
@@ -203,48 +197,46 @@ export default class DataPrepTable extends Component {
     matchedHeader.showWarning = false;
     delete matchedHeader.editedColumnName;
     this.setState({
-      headers: [
-        ...headers.slice(0, index),
-        matchedHeader,
-        ...headers.slice(index + 1)
-      ]
+      headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
     });
   }
 
   applyDirective(directive) {
-    execute([directive])
-      .subscribe(
-        () => {},
-        (err) => {
-          DataPrepStore.dispatch({
-            type: DataPrepActions.setError,
-            payload: {
-              message: err.message || err.response.message
-            }
-          });
-        }
-      );
+    execute([directive]).subscribe(
+      () => {},
+      (err) => {
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message,
+          },
+        });
+      }
+    );
   }
 
-  io = new IntersectionObserver(entries => {
-    let lastVisibleElement = this.state.windowSize;
-    for (const entry of entries) {
-      let id = entry.target.getAttribute("id");
-      id = id.split('-').pop();
-      id = parseInt(id, 10);
-      if (entry.isIntersecting) {
-        lastVisibleElement = id + 50 > this.state.windowSize ? id + DEFAULT_WINDOW_SIZE : id;
+  io = new IntersectionObserver(
+    (entries) => {
+      let lastVisibleElement = this.state.windowSize;
+      for (const entry of entries) {
+        let id = entry.target.getAttribute('id');
+        id = id.split('-').pop();
+        id = parseInt(id, 10);
+        if (entry.isIntersecting) {
+          lastVisibleElement = id + 50 > this.state.windowSize ? id + DEFAULT_WINDOW_SIZE : id;
+        }
       }
+      if (lastVisibleElement > this.state.windowSize) {
+        this.setState({
+          windowSize: lastVisibleElement,
+        });
+      }
+    },
+    {
+      root: document.getElementById('dataprep-table-id'),
+      threshold: [0, 1],
     }
-    if (lastVisibleElement > this.state.windowSize) {
-      this.setState({
-        windowSize: lastVisibleElement
-      });
-    }
-  }, {
-    root: document.getElementById('dataprep-table-id'),
-    threshold: [0, 1]
-  });
+  );
 
   renderDataprepTable() {
     let headers = [...this.state.headers];
@@ -254,106 +246,104 @@ export default class DataPrepTable extends Component {
         <thead className="thead-inverse">
           <tr>
             <th className="row-count-header" />
-            {
-              headers.map((head, index) => {
-                return (
-                  <th
-                    id={`column-${head.name}`}
-                    className={classnames({
-                      'selected': this.columnIsSelected(head.name),
-                      'dropdownOpened': this.state.columnDropdownOpen === head.name
-                    })}
-                    key={head.name}
-                  >
-                    <DataQuality columnInfo={this.state.columns[head.name]} />
-                    <div className="column-wrapper-container">
-                      <DataType columnName={head.name} />
-                      <div
-                        className="clearfix column-wrapper"
-                      >
-                        <span className="directives-dropdown-button">
-                          <ColumnActionsDropdown
-                            column={head.name}
-                            dropdownOpened={this.columnDropdownOpened}
-                          />
-                        </span>
-                        {
-                          !head.edit ?
-                            <span
-                              className="header-text"
-                              onClick={this.switchToEditColumnName.bind(this, head)}
-                            >
-                              <span>
-                                {head.name}
-                              </span>
-                            </span>
-                          :
-                            <div className="warning-container-wrapper float-xs-left">
-                              <TextboxOnValium
-                                onChange={this.handleSaveEditedColumnName.bind(this, index)}
-                                value={head.name}
-                                onWarning={this.showWarningMessage.bind(this, index)}
-                                allowSpace={false}
-                                shouldSelect={true}
-                                validCharacterRegex={/^\w+$/}
-                              />
-                              {
-                                head.showWarning ?
-                                  <WarningContainer
-                                    message={T.translate(`${PREFIX}.copyToNewColumn.inputDuplicate`)}
-                                  >
-                                    <div className="warning-btns-container">
-                                      <div
-                                        className="btn btn-primary"
-                                        onClick={this.handleSaveEditedColumnName.bind(this, index, head.editedColumnName, false)}
-                                      >
-                                        {T.translate('features.DataPrep.Directives.apply')}
-                                      </div>
-                                      <div
-                                        className="btn"
-                                        onClick={this.handleSaveEditedColumnName.bind(this, index, head.name, true)}
-                                      >
-                                        {T.translate('features.DataPrep.Directives.cancel')}
-                                      </div>
-                                    </div>
-                                  </WarningContainer>
-                                :
-                                  null
-                              }
-                            </div>
-                        }
-                        <span
-                          onClick={this.toggleColumnSelect.bind(this, head.name)}
-                          className={classnames('float-xs-right fa column-header-checkbox', {
-                            'fa-square-o': !this.columnIsSelected(head.name),
-                            'fa-check-square': this.columnIsSelected(head.name)
-                          })}
+            {headers.map((head, index) => {
+              return (
+                <th
+                  id={`column-${head.name}`}
+                  className={classnames({
+                    selected: this.columnIsSelected(head.name),
+                    dropdownOpened: this.state.columnDropdownOpen === head.name,
+                  })}
+                  key={head.name}
+                >
+                  <DataQuality columnInfo={this.state.columns[head.name]} />
+                  <div className="column-wrapper-container">
+                    <DataType columnName={head.name} />
+                    <div className="clearfix column-wrapper">
+                      <span className="directives-dropdown-button">
+                        <ColumnActionsDropdown
+                          column={head.name}
+                          dropdownOpened={this.columnDropdownOpened}
                         />
-                      </div>
+                      </span>
+                      {!head.edit ? (
+                        <span
+                          className="header-text"
+                          onClick={this.switchToEditColumnName.bind(this, head)}
+                        >
+                          <span>{head.name}</span>
+                        </span>
+                      ) : (
+                        <div className="warning-container-wrapper float-xs-left">
+                          <TextboxOnValium
+                            onChange={this.handleSaveEditedColumnName.bind(this, index)}
+                            value={head.name}
+                            onWarning={this.showWarningMessage.bind(this, index)}
+                            allowSpace={false}
+                            shouldSelect={true}
+                            validCharacterRegex={/^\w+$/}
+                          />
+                          {head.showWarning ? (
+                            <WarningContainer
+                              message={T.translate(`${PREFIX}.copyToNewColumn.inputDuplicate`)}
+                            >
+                              <div className="warning-btns-container">
+                                <div
+                                  className="btn btn-primary"
+                                  onClick={this.handleSaveEditedColumnName.bind(
+                                    this,
+                                    index,
+                                    head.editedColumnName,
+                                    false
+                                  )}
+                                >
+                                  {T.translate('features.DataPrep.Directives.apply')}
+                                </div>
+                                <div
+                                  className="btn"
+                                  onClick={this.handleSaveEditedColumnName.bind(
+                                    this,
+                                    index,
+                                    head.name,
+                                    true
+                                  )}
+                                >
+                                  {T.translate('features.DataPrep.Directives.cancel')}
+                                </div>
+                              </div>
+                            </WarningContainer>
+                          ) : null}
+                        </div>
+                      )}
+                      <span
+                        onClick={this.toggleColumnSelect.bind(this, head.name)}
+                        className={classnames('float-xs-right fa column-header-checkbox', {
+                          'fa-square-o': !this.columnIsSelected(head.name),
+                          'fa-check-square': this.columnIsSelected(head.name),
+                        })}
+                      />
                     </div>
-                  </th>
-                );
-              })
-            }
+                  </div>
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
-          {
-            data
-              .slice(0, this.state.windowSize)
-              .map((row) => {
-                return (
-                  <tr key={row.uniqueId} id={`dataprep-${row.scrollId}`}>
-                    <td>{row.scrollId + 1}</td>
-                    {
-                      headers.map((head, i) => {
-                        return <td key={i}><div>{row[head.name]}</div></td>;
-                      })
-                    }
-                  </tr>
-                );
-              })
-          }
+          {data.slice(0, this.state.windowSize).map((row) => {
+            return (
+              <tr key={row.uniqueId} id={`dataprep-${row.scrollId}`}>
+                <td>{row.scrollId + 1}</td>
+                {headers.map((head, i) => {
+                  return (
+                    <td key={i}>
+                      <div>{row[head.name]}</div>
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     );
@@ -391,52 +381,35 @@ export default class DataPrepTable extends Component {
       } else {
         refreshFn = () => window.location.reload();
       }
-      return (
-        <ErrorMessageContainer
-          workspaceName={workspaceName}
-          refreshFn={refreshFn}
-        />
-      );
+      return <ErrorMessageContainer workspaceName={workspaceName} refreshFn={refreshFn} />;
     }
 
     // FIXME: Not sure if this is possible now.
     if (data.length === 0 || headers.length === 0) {
       return (
         <div className="dataprep-table empty">
-          {
-            this.state.directivesLength === 0 ?
-              (
-                <div>
-                  <h5 className="text-xs-center">
-                    {T.translate(`${PREFIX}.emptyWorkspace`)}
-                  </h5>
-                </div>
-              ) :
-              (
-                <div>
-                  <h5 className="text-xs-center">
-                    {T.translate(`${PREFIX}.noData`)}
-                  </h5>
-                </div>
-              )
-          }
+          {this.state.directivesLength === 0 ? (
+            <div>
+              <h5 className="text-xs-center">{T.translate(`${PREFIX}.emptyWorkspace`)}</h5>
+            </div>
+          ) : (
+            <div>
+              <h5 className="text-xs-center">{T.translate(`${PREFIX}.noData`)}</h5>
+            </div>
+          )}
         </div>
       );
     }
-    let {highlightColumns} = DataPrepStore.getState().dataprep;
+    let { highlightColumns } = DataPrepStore.getState().dataprep;
     return (
-      <div className={
-          classnames("dataprep-table", {
-            'column-highlighted': !isNil(highlightColumns.directive)
-          })
-        } id="dataprep-table-id">
+      <div
+        className={classnames('dataprep-table', {
+          'column-highlighted': !isNil(highlightColumns.directive),
+        })}
+        id="dataprep-table-id"
+      >
         <ColumnHighlighter />
-        {
-          isNil(highlightColumns.directive) ?
-            this.renderDataprepTable()
-          :
-            null
-        }
+        {isNil(highlightColumns.directive) ? this.renderDataprepTable() : null}
       </div>
     );
   }

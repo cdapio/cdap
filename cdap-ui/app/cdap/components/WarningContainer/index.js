@@ -21,23 +21,16 @@ import T from 'i18n-react';
 
 require('./WarningContainer.scss');
 
-export default function WarningContainer({title, message, children}) {
+export default function WarningContainer({ title, message, children }) {
   return (
     <div className="warning-container">
       <div className="warning-title-container">
         <span className="fa fa-lg fa-exclamation-circle" />
         <span className="warning-title">
-          {
-            title ?
-              title
-            :
-              T.translate('features.WarningContainer.title')
-          }
+          {title ? title : T.translate('features.WarningContainer.title')}
         </span>
       </div>
-      <div className="warning-message-container">
-        {message}
-      </div>
+      <div className="warning-message-container">{message}</div>
       {children}
     </div>
   );
@@ -45,11 +38,11 @@ export default function WarningContainer({title, message, children}) {
 
 WarningContainer.defaultProps = {
   title: '',
-  message: ''
+  message: '',
 };
 
 WarningContainer.propTypes = {
   title: PropTypes.string,
   message: PropTypes.string,
-  children: PropTypes.node
+  children: PropTypes.node,
 };

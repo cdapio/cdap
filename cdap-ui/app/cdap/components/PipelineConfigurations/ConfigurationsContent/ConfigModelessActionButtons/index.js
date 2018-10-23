@@ -14,17 +14,17 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   updatePipeline,
   runPipeline,
   schedulePipeline,
-  updatePreferences
+  updatePreferences,
 } from 'components/PipelineConfigurations/Store/ActionCreator';
-import {setRunError} from 'components/PipelineDetails/store/ActionCreator';
+import { setRunError } from 'components/PipelineDetails/store/ActionCreator';
 import ConfigModelessSaveBtn from 'components/PipelineConfigurations/ConfigurationsContent/ConfigModelessActionButtons/ConfigModelessSaveBtn';
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 
 require('./ConfigModelessActionButtons.scss');
 
@@ -33,12 +33,12 @@ export default class ConfigModelessActionButtons extends Component {
     saveLoading: false,
     saveAndRunLoading: false,
     saveAndScheduleLoading: false,
-    runtimeArgsCopied: false
+    runtimeArgsCopied: false,
   };
 
   static propTypes = {
     onClose: PropTypes.func,
-    isHistoricalRun: PropTypes.bool
+    isHistoricalRun: PropTypes.bool,
   };
 
   closeModeless = () => {
@@ -63,28 +63,27 @@ export default class ConfigModelessActionButtons extends Component {
 
   saveAndAction = (loadingState, actionFn) => {
     this.setState({
-      [loadingState]: true
+      [loadingState]: true,
     });
-    Observable.forkJoin(
-      updatePipeline(),
-      updatePreferences()
-    )
-      .subscribe(() => {
+    Observable.forkJoin(updatePipeline(), updatePreferences()).subscribe(
+      () => {
         actionFn();
         this.setState({
-          [loadingState]: false
+          [loadingState]: false,
         });
-      }, (err) => {
+      },
+      (err) => {
         setRunError(err.response || err);
         this.setState({
-          [loadingState]: false
+          [loadingState]: false,
         });
-      });
+      }
+    );
   };
 
   setRuntimeArgsCopiedState = () => {
     this.setState({
-      runtimeArgsCopied: true
+      runtimeArgsCopied: true,
     });
   };
 
@@ -92,15 +91,12 @@ export default class ConfigModelessActionButtons extends Component {
     return (
       <div className="configuration-step-navigation">
         <div className="apply-action-container">
-          {
-            !this.props.isHistoricalRun ?
-              <ConfigModelessSaveBtn
-                saveConfig={this.saveConfig}
-                saveLoading={this.state.saveLoading}
-              />
-            :
-              null
-          }
+          {!this.props.isHistoricalRun ? (
+            <ConfigModelessSaveBtn
+              saveConfig={this.saveConfig}
+              saveLoading={this.state.saveLoading}
+            />
+          ) : null}
         </div>
       </div>
     );

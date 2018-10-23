@@ -28,11 +28,11 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {connect , Provider} from 'react-redux';
+import { connect, Provider } from 'react-redux';
 import KeyValueStore from './KeyValueStore';
 import KeyValueStoreActions from './KeyValueStoreActions';
 import KeyValuePair from './KeyValuePair';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import cloneDeep from 'lodash/cloneDeep';
 
 // Prop Name is used in place of the reserved prop 'key'
@@ -42,13 +42,13 @@ const mapStateToFieldNameProps = (state, ownProps) => {
     value: objectQuery(state.keyValues.pairs, ownProps.index, 'value'),
     provided: objectQuery(state.keyValues.pairs, ownProps.index, 'provided'),
     notDeletable: objectQuery(state.keyValues.pairs, ownProps.index, 'notDeletable'),
-    showReset: objectQuery(state.keyValues.pairs, ownProps.index, 'showReset')
+    showReset: objectQuery(state.keyValues.pairs, ownProps.index, 'showReset'),
   };
 };
 
 const fieldToActionMap = {
   key: KeyValueStoreActions.setKey,
-  value: KeyValueStoreActions.setVal
+  value: KeyValueStoreActions.setVal,
 };
 
 const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
@@ -56,13 +56,13 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
     removeRow: () => {
       dispatch({
         type: KeyValueStoreActions.deletePair,
-        payload: {index: ownProps.index}
+        payload: { index: ownProps.index },
       });
     },
     addRow: () => {
       dispatch({
         type: KeyValueStoreActions.addPair,
-        payload: {index: ownProps.index}
+        payload: { index: ownProps.index },
       });
     },
     onChange: (fieldProp, e) => {
@@ -70,8 +70,8 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
         type: fieldToActionMap[fieldProp],
         payload: {
           index: ownProps.index,
-          [fieldProp]: e.target.value
-        }
+          [fieldProp]: e.target.value,
+        },
       });
     },
     onProvided: (e) => {
@@ -79,10 +79,10 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
         type: KeyValueStoreActions.setProvided,
         payload: {
           index: ownProps.index,
-          provided: e.target.checked
-        }
+          provided: e.target.checked,
+        },
       });
-    }
+    },
   };
 };
 
@@ -96,11 +96,11 @@ export default class KeyValuePairs extends Component {
     super(props);
     var { keyValues } = props;
     this.state = {
-      pairs: cloneDeep(keyValues.pairs)
+      pairs: cloneDeep(keyValues.pairs),
     };
     KeyValueStore.dispatch({
       type: KeyValueStoreActions.onUpdate,
-      payload: {pairs: keyValues.pairs}
+      payload: { pairs: keyValues.pairs },
     });
   }
 
@@ -117,13 +117,13 @@ export default class KeyValuePairs extends Component {
   componentWillUnmount() {
     this.subscription();
     KeyValueStore.dispatch({
-      type: KeyValueStoreActions.onReset
+      type: KeyValueStoreActions.onReset,
     });
   }
   componentWillReceiveProps(nextProps) {
     if (nextProps.keyValues.pairs.length !== this.state.pairs.length) {
       this.setState({
-        pairs: [...nextProps.keyValues.pairs]
+        pairs: [...nextProps.keyValues.pairs],
       });
     }
   }
@@ -131,8 +131,7 @@ export default class KeyValuePairs extends Component {
   render() {
     return (
       <div>
-      {
-        this.state.pairs.map( (pair, index) => {
+        {this.state.pairs.map((pair, index) => {
           return (
             <div key={pair.uniqueId}>
               <Provider store={KeyValueStore}>
@@ -147,8 +146,7 @@ export default class KeyValuePairs extends Component {
               </Provider>
             </div>
           );
-        })
-      }
+        })}
       </div>
     );
   }
@@ -156,19 +154,21 @@ export default class KeyValuePairs extends Component {
 
 KeyValuePairs.propTypes = {
   keyValues: PropTypes.shape({
-    pairs: PropTypes.arrayOf(PropTypes.shape({
-      key : PropTypes.string,
-      value : PropTypes.string,
-      uniqueId : PropTypes.string,
-      provided: PropTypes.bool,
-      notDeletable : PropTypes.bool,
-      showReset : PropTypes.bool
-    }))
+    pairs: PropTypes.arrayOf(
+      PropTypes.shape({
+        key: PropTypes.string,
+        value: PropTypes.string,
+        uniqueId: PropTypes.string,
+        provided: PropTypes.bool,
+        notDeletable: PropTypes.bool,
+        showReset: PropTypes.bool,
+      })
+    ),
   }),
   onKeyValueChange: PropTypes.func,
   getResettedKeyValue: PropTypes.func,
   keyPlaceholder: PropTypes.string,
   valuePlaceholder: PropTypes.string,
   disabled: PropTypes.bool,
-  onPaste: PropTypes.func
+  onPaste: PropTypes.func,
 };

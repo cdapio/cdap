@@ -15,7 +15,7 @@
 */
 
 import React from 'react';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import createExperimentStore from 'components/Experiments/store/createExperimentStore';
 import NewExperimentPopover from 'components/Experiments/CreateView/Popovers/NewExperimentPopover';
 import NewModelPopover from 'components/Experiments/CreateView/Popovers/NewModelPopover';

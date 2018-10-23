@@ -28,7 +28,7 @@ export default class DataType extends Component {
     super(props);
 
     this.state = {
-      highlightedDataType: null
+      highlightedDataType: null,
     };
 
     this.eventEmitter = ee(ee);
@@ -40,9 +40,9 @@ export default class DataType extends Component {
   }
 
   changeDataTypeColor = (columnName) => {
-    this.setState({highlightedDataType: columnName}, () => {
+    this.setState({ highlightedDataType: columnName }, () => {
       setTimeout(() => {
-        this.setState({highlightedDataType: null});
+        this.setState({ highlightedDataType: null });
       }, 3000);
     });
   };
@@ -50,8 +50,9 @@ export default class DataType extends Component {
   render() {
     let types = DataPrepStore.getState().dataprep.types;
     return (
-      <div className={classnames("col-type", {
-        'data-type-updated': this.state.highlightedDataType === this.props.columnName
+      <div
+        className={classnames('col-type', {
+          'data-type-updated': this.state.highlightedDataType === this.props.columnName,
         })}
       >
         {types[this.props.columnName] || T.translate(`${PREFIX}.unknown`)}
@@ -61,5 +62,5 @@ export default class DataType extends Component {
 }
 
 DataType.propTypes = {
-  columnName: PropTypes.string
+  columnName: PropTypes.string,
 };

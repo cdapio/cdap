@@ -18,9 +18,9 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
-import {Dropdown, DropdownToggle, DropdownItem} from 'reactstrap';
+import { Dropdown, DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import RedirectToLogin from 'services/redirect-to-login';
 import cookie from 'react-cookie';
 import VersionStore from 'services/VersionStore';
@@ -31,7 +31,7 @@ import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import If from 'components/If';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 require('./ProductDropdown.scss');
 
@@ -43,7 +43,7 @@ export default class ProductDropdown extends Component {
       aboutPageOpen: false,
       accessTokenModalOpen: false,
       username: NamespaceStore.getState().username,
-      currentNamespace: null
+      currentNamespace: null,
     };
     this.logout = this.logout.bind(this);
     this.toggleCdapMenuDropdown = this.toggleCdapMenuDropdown.bind(this);
@@ -56,7 +56,7 @@ export default class ProductDropdown extends Component {
       let selectedNamespace = getLastSelectedNamespace();
       if (selectedNamespace !== this.state.currentNamespace) {
         this.setState({
-          currentNamespace: selectedNamespace
+          currentNamespace: selectedNamespace,
         });
       }
     });
@@ -64,25 +64,25 @@ export default class ProductDropdown extends Component {
 
   toggleCdapMenuDropdown() {
     this.setState({
-      toggleDropdown: !this.state.toggleDropdown
+      toggleDropdown: !this.state.toggleDropdown,
     });
   }
 
   toggleAboutPage() {
     this.setState({
-      aboutPageOpen: !this.state.aboutPageOpen
+      aboutPageOpen: !this.state.aboutPageOpen,
     });
   }
 
   toggleAccessTokenModal() {
     this.setState({
-      accessTokenModalOpen: !this.state.accessTokenModalOpen
+      accessTokenModalOpen: !this.state.accessTokenModalOpen,
     });
   }
 
   logout() {
-    cookie.remove('show-splash-screen-for-session', {path: '/'});
-    RedirectToLogin({statusCode: 401});
+    cookie.remove('show-splash-screen-for-session', { path: '/' });
+    RedirectToLogin({ statusCode: 401 });
   }
 
   onProfileClick(e) {
@@ -102,10 +102,7 @@ export default class ProductDropdown extends Component {
       userSection = (
         <ul className="user-profile clearfix">
           <DropdownItem divider />
-          <DropdownItem
-            tag="li"
-            header
-          >
+          <DropdownItem tag="li" header>
             <a className="user-section">
               <span className="user-icon-container">
                 <IconSVG name="icon-user" />
@@ -113,16 +110,10 @@ export default class ProductDropdown extends Component {
               <span className="user-name">{this.state.username}</span>
             </a>
           </DropdownItem>
-          <DropdownItem
-            tag="li"
-            onClick={this.toggleAccessTokenModal}
-          >
+          <DropdownItem tag="li" onClick={this.toggleAccessTokenModal}>
             <a>{T.translate('features.Navbar.ProductDropdown.accessToken')}</a>
           </DropdownItem>
-          <DropdownItem
-            tag="li"
-            onClick={this.logout}
-          >
+          <DropdownItem tag="li" onClick={this.logout}>
             <a>{T.translate('features.Navbar.ProductDropdown.logout')}</a>
           </DropdownItem>
           <AccessTokenModal
@@ -139,7 +130,8 @@ export default class ProductDropdown extends Component {
         <Dropdown
           isOpen={this.state.toggleDropdown}
           className="product-dropdown"
-          toggle={this.toggleCdapMenuDropdown.bind(this)}>
+          toggle={this.toggleCdapMenuDropdown.bind(this)}
+        >
           <DropdownToggle caret>
             <div className="secure-mode-icon">
               <IconSVG name="icon-cogs" />
@@ -150,55 +142,37 @@ export default class ProductDropdown extends Component {
           </DropdownToggle>
           <CustomDropdownMenu right>
             <If condition={Theme.showAboutProductModal === true}>
-              <DropdownItem
-                tag="li"
-                onClick={this.toggleAboutPage}
-              >
-                <a>{T.translate('features.Navbar.ProductDropdown.aboutLabel', {
-                  productName: Theme.productName,
-                })}</a>
+              <DropdownItem tag="li" onClick={this.toggleAboutPage}>
+                <a>
+                  {T.translate('features.Navbar.ProductDropdown.aboutLabel', {
+                    productName: Theme.productName,
+                  })}
+                </a>
               </DropdownItem>
             </If>
             <DropdownItem tag="li">
-              {
-                !this.props.nativeLink ?
-                  <Link
-                    to={administrationURL}
-                    className={classnames({
-                      'active': administrationURL === location.pathname.replace(/\/cdap/, '')
-                    })}
-                  >
-                    {T.translate('features.Administration.Title')}
-                  </Link>
-                :
-                  <a href={`${baseCDAPURL}${administrationURL}`}>
-                    {T.translate('features.Administration.Title')}
-                  </a>
-              }
+              {!this.props.nativeLink ? (
+                <Link
+                  to={administrationURL}
+                  className={classnames({
+                    active: administrationURL === location.pathname.replace(/\/cdap/, ''),
+                  })}
+                >
+                  {T.translate('features.Administration.Title')}
+                </Link>
+              ) : (
+                <a href={`${baseCDAPURL}${administrationURL}`}>
+                  {T.translate('features.Administration.Title')}
+                </a>
+              )}
             </DropdownItem>
             <DropdownItem tag="li">
-              <a
-                href={docsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href={docsUrl} target="_blank" rel="noopener noreferrer">
                 {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
               </a>
             </DropdownItem>
-            {
-              window.CDAP_CONFIG.securityEnabled ?
-                (
-                  <DropdownItem divider />
-                )
-              :
-                null
-            }
-            {
-              window.CDAP_CONFIG.securityEnabled ?
-                userSection
-              :
-                null
-            }
+            {window.CDAP_CONFIG.securityEnabled ? <DropdownItem divider /> : null}
+            {window.CDAP_CONFIG.securityEnabled ? userSection : null}
           </CustomDropdownMenu>
         </Dropdown>
         <If condition={Theme.showAboutProductModal === true}>
@@ -213,5 +187,5 @@ export default class ProductDropdown extends Component {
   }
 }
 ProductDropdown.propTypes = {
-  nativeLink: PropTypes.bool
+  nativeLink: PropTypes.bool,
 };

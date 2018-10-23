@@ -16,13 +16,13 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import T from 'i18n-react';
 import moment from 'moment';
 
 const PREFIX = 'features.OpsDashboard.RunsList';
 
-function TopPanelView({bucketInfo}) {
+function TopPanelView({ bucketInfo }) {
   const time = parseInt(bucketInfo.time, 10);
 
   const date = moment(time).format('ddd. MMM. D, YYYY');
@@ -35,25 +35,21 @@ function TopPanelView({bucketInfo}) {
         {T.translate(`${PREFIX}.title`, { count: bucketInfo.runsList.length })}
       </div>
 
-      <div className="time-info">
-        {T.translate(`${PREFIX}.timeRange`, { date, hour, ampm })}
-      </div>
+      <div className="time-info">{T.translate(`${PREFIX}.timeRange`, { date, hour, ampm })}</div>
     </div>
   );
 }
 
 TopPanelView.propTypes = {
-  bucketInfo: PropTypes.object
+  bucketInfo: PropTypes.object,
 };
 
 const mapStateToProps = (state) => {
   return {
-    bucketInfo: state.dashboard.displayBucketInfo
+    bucketInfo: state.dashboard.displayBucketInfo,
   };
 };
 
-const TopPanel = connect(
-  mapStateToProps
-)(TopPanelView);
+const TopPanel = connect(mapStateToProps)(TopPanelView);
 
 export default TopPanel;

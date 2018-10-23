@@ -16,9 +16,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
-import {humanReadableDate, humanReadableDuration} from 'services/helpers';
-import {GLOBALS} from 'services/global-constants';
+import { connect } from 'react-redux';
+import { humanReadableDate, humanReadableDuration } from 'services/helpers';
+import { GLOBALS } from 'services/global-constants';
 import T from 'i18n-react';
 
 const PREFIX = 'features.Reports.ReportsDetail';
@@ -26,24 +26,28 @@ const PREFIX = 'features.Reports.ReportsDetail';
 require('./Summary.scss');
 
 function renderNamespaces(summary) {
-  if (!summary.namespaces) { return null; }
+  if (!summary.namespaces) {
+    return null;
+  }
 
   return summary.namespaces
     .map((ns) => {
-      return ns.namespace + T.translate(`${PREFIX}.numRuns`, {num: ns.runs});
+      return ns.namespace + T.translate(`${PREFIX}.numRuns`, { num: ns.runs });
     })
     .join(', ');
 }
 
 function renderAppType(summary) {
-  if (!summary.artifacts) { return null; }
+  if (!summary.artifacts) {
+    return null;
+  }
 
   const customAppLabel = T.translate(`${PREFIX}.customApp`);
 
   let counts = {
     batch: 0,
     realtime: 0,
-    [customAppLabel]: 0
+    [customAppLabel]: 0,
   };
   // BatchPipeline and RealtimePipeline case should be removed once going to real API
   summary.artifacts.forEach((artifact) => {
@@ -68,42 +72,48 @@ function renderAppType(summary) {
 }
 
 function renderDuration(summary) {
-  let {durations} = summary;
+  let { durations } = summary;
 
-  if (!durations) { return null; }
+  if (!durations) {
+    return null;
+  }
 
   let min = humanReadableDuration(durations.min);
   let max = humanReadableDuration(durations.max);
   let average = humanReadableDuration(Math.round(durations.average));
 
-  return T.translate(`${PREFIX}.runDuration`, {min, max, average});
+  return T.translate(`${PREFIX}.runDuration`, { min, max, average });
 }
 
 function renderLastStarted(summary) {
-  let {starts} = summary;
+  let { starts } = summary;
 
-  if (!starts) { return null; }
+  if (!starts) {
+    return null;
+  }
 
   return T.translate(`${PREFIX}.lastStarted`, {
     newest: humanReadableDate(starts.newest),
-    oldest: humanReadableDate(starts.oldest)
+    oldest: humanReadableDate(starts.oldest),
   });
 }
 
 function renderOwners(summary) {
-  if (!summary.owners) { return null; }
+  if (!summary.owners) {
+    return null;
+  }
 
-  return summary.owners
-    .map((owner) => `${owner.user} (${owner.runs})`)
-    .join('; ');
+  return summary.owners.map((owner) => `${owner.user} (${owner.runs})`).join('; ');
 }
 
 function renderStartMethod(summary) {
-  if (!summary.startMethods) { return null; }
+  if (!summary.startMethods) {
+    return null;
+  }
   const labelMap = {
     MANUAL: T.translate(`${PREFIX}.manually`),
     SCHEDULED: T.translate(`${PREFIX}.bySchedule`),
-    PROGRAM_STATUS: T.translate(`${PREFIX}.byTrigger`)
+    PROGRAM_STATUS: T.translate(`${PREFIX}.byTrigger`),
   };
 
   return summary.startMethods
@@ -111,7 +121,7 @@ function renderStartMethod(summary) {
     .join('; ');
 }
 
-function SummaryView({summary}) {
+function SummaryView({ summary }) {
   return (
     <div className="reports-summary-container">
       <div className="row summary-section">
@@ -120,43 +130,31 @@ function SummaryView({summary}) {
             <tbody>
               <tr className="no-border">
                 <td colSpan="2">
-                  <strong>
-                    {T.translate(`${PREFIX}.reportSummary`)}
-                  </strong>
+                  <strong>{T.translate(`${PREFIX}.reportSummary`)}</strong>
                 </td>
               </tr>
 
               <tr className="no-border">
-                <td>
-                  {T.translate(`${PREFIX}.namespaceLabel`)}
-                </td>
+                <td>{T.translate(`${PREFIX}.namespaceLabel`)}</td>
 
-                <td>
-                  {renderNamespaces(summary)}
-                </td>
+                <td>{renderNamespaces(summary)}</td>
               </tr>
 
               <tr>
-                <td>
-                  {T.translate(`${PREFIX}.timeRangeLabel`)}
-                </td>
+                <td>{T.translate(`${PREFIX}.timeRangeLabel`)}</td>
 
                 <td>
                   {T.translate(`${PREFIX}.timeRange`, {
                     start: humanReadableDate(summary.start),
-                    end: humanReadableDate(summary.end)
+                    end: humanReadableDate(summary.end),
                   })}
                 </td>
               </tr>
 
               <tr>
-                <td>
-                  {T.translate(`${PREFIX}.appTypeLabel`)}
-                </td>
+                <td>{T.translate(`${PREFIX}.appTypeLabel`)}</td>
 
-                <td>
-                  {renderAppType(summary)}
-                </td>
+                <td>{renderAppType(summary)}</td>
               </tr>
             </tbody>
           </table>
@@ -166,43 +164,27 @@ function SummaryView({summary}) {
           <table className="table">
             <tbody>
               <tr className="no-border">
-                <td>
-                  {T.translate(`${PREFIX}.runDurationLabel`)}
-                </td>
+                <td>{T.translate(`${PREFIX}.runDurationLabel`)}</td>
 
-                <td>
-                  {renderDuration(summary)}
-                </td>
+                <td>{renderDuration(summary)}</td>
               </tr>
 
               <tr>
-                <td>
-                  {T.translate(`${PREFIX}.lastStartedLabel`)}
-                </td>
+                <td>{T.translate(`${PREFIX}.lastStartedLabel`)}</td>
 
-                <td>
-                  {renderLastStarted(summary)}
-                </td>
+                <td>{renderLastStarted(summary)}</td>
               </tr>
 
               <tr>
-                <td>
-                  {T.translate(`${PREFIX}.ownersLabel`)}
-                </td>
+                <td>{T.translate(`${PREFIX}.ownersLabel`)}</td>
 
-                <td>
-                  {renderOwners(summary)}
-                </td>
+                <td>{renderOwners(summary)}</td>
               </tr>
 
               <tr>
-                <td>
-                  {T.translate(`${PREFIX}.startedLabel`)}
-                </td>
+                <td>{T.translate(`${PREFIX}.startedLabel`)}</td>
 
-                <td>
-                  {renderStartMethod(summary)}
-                </td>
+                <td>{renderStartMethod(summary)}</td>
               </tr>
             </tbody>
           </table>
@@ -213,17 +195,15 @@ function SummaryView({summary}) {
 }
 
 SummaryView.propTypes = {
-  summary: PropTypes.object
+  summary: PropTypes.object,
 };
 
 const mapStateToProps = (state) => {
   return {
-    summary: state.details.summary
+    summary: state.details.summary,
   };
 };
 
-const Summary = connect(
-  mapStateToProps
-)(SummaryView);
+const Summary = connect(mapStateToProps)(SummaryView);
 
 export default Summary;

@@ -15,7 +15,7 @@
 */
 
 import Datasource from 'services/datasource';
-import {apiCreator} from 'services/resource-helper';
+import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = new Datasource();
 const appPath = '/namespaces/:namespace/apps/yare';
@@ -23,7 +23,7 @@ const serviceBasepath = `${appPath}/services/service`;
 const serviceMethodsBasepath = `${appPath}/services/service/methods`;
 const rbbasepath = `${serviceMethodsBasepath}/rulebooks/:rulebookid`;
 
-const  MyRulesEngineApi = {
+const MyRulesEngineApi = {
   getRulebooks: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/rulebooks`),
   getRules: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/rules`),
   createRule: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceMethodsBasepath}/rules`),
@@ -44,8 +44,9 @@ const  MyRulesEngineApi = {
   getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceBasepath}/status`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${serviceBasepath}/status`),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
-  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/rules`, { interval: 2000 }),
-
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/rules`, {
+    interval: 2000,
+  }),
 };
 
 export default MyRulesEngineApi;

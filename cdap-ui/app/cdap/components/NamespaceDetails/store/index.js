@@ -14,13 +14,13 @@
  * the License.
  */
 
-import {createStore} from 'redux';
-import {defaultAction, composeEnhancers} from 'services/helpers';
+import { createStore } from 'redux';
+import { defaultAction, composeEnhancers } from 'services/helpers';
 
 const NamespaceDetailsActions = {
   enableLoading: 'NAMESPACE_DETAILS_ENABLE_LOADING',
   setData: 'NAMESPACE_DETAILS_SET_DATA',
-  reset: 'NAMESPACE_DETAILS_RESET'
+  reset: 'NAMESPACE_DETAILS_RESET',
 };
 
 const defaultInitialState = {
@@ -37,7 +37,7 @@ const defaultInitialState = {
   schedulerQueueName: '',
   principal: '',
   keytabURI: '',
-  loading: false
+  loading: false,
 };
 
 const namespaceDetails = (state = defaultInitialState, action = defaultAction) => {
@@ -46,12 +46,12 @@ const namespaceDetails = (state = defaultInitialState, action = defaultAction) =
       return {
         ...state,
         ...action.payload,
-        loading: false
+        loading: false,
       };
     case NamespaceDetailsActions.enableLoading:
       return {
         ...state,
-        loading: true
+        loading: true,
       };
     case NamespaceDetailsActions.reset:
       return defaultInitialState;
@@ -67,4 +67,4 @@ const NamespaceDetails = createStore(
 );
 
 export default NamespaceDetails;
-export {NamespaceDetailsActions};
+export { NamespaceDetailsActions };

@@ -17,57 +17,57 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import {Input, Button} from 'reactstrap';
+import { Input, Button } from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
-import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import { createNewRuleBook } from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import T from 'i18n-react';
 
 const PREFIX = 'features.RulesEngine.CreateRulebook';
 
 export default class CreateRulebook extends Component {
   static propTypes = {
-    onCancel: PropTypes.func.isRequired
+    onCancel: PropTypes.func.isRequired,
   };
 
   state = {
     name: '',
     description: '',
-    rules: []
+    rules: [],
   };
 
   onNameChangeHandler = (e) => {
     this.setState({
-      name: e.target.value
+      name: e.target.value,
     });
   };
 
   onDescriptionChangeHandler = (e) => {
     this.setState({
-      description: e.target.value
+      description: e.target.value,
     });
   };
 
   onRulesAdd = (rule) => {
-    let isRuleAlreadyExist = this.state.rules.find(r => rule.id === r.id);
+    let isRuleAlreadyExist = this.state.rules.find((r) => rule.id === r.id);
     if (isRuleAlreadyExist) {
       return;
     }
     this.setState({
-      rules: [...this.state.rules, rule]
+      rules: [...this.state.rules, rule],
     });
   };
 
   onRemove = (ruleid) => {
     this.setState({
-      rules: this.state.rules.filter(rule => rule.id !== ruleid)
+      rules: this.state.rules.filter((rule) => rule.id !== ruleid),
     });
-  }
+  };
 
   createRulebook = () => {
     let config = {};
-    let {name, description, rules} = this.state;
-    rules = rules.map(rule => rule.id);
-    config = {id: name, description, rules};
+    let { name, description, rules } = this.state;
+    rules = rules.map((rule) => rule.id);
+    config = { id: name, description, rules };
     createNewRuleBook(config);
   };
 
@@ -82,9 +82,7 @@ export default class CreateRulebook extends Component {
               onChange={this.onNameChangeHandler}
               placeholder={T.translate(`${PREFIX}.nameplaceholder`)}
             />
-            <p className="rule-book-version">
-              {T.translate(`${PREFIX}.version`, {version: 1})}
-            </p>
+            <p className="rule-book-version">{T.translate(`${PREFIX}.version`, { version: 1 })}</p>
           </div>
           <div className="rule-book-metadata">
             <div>
@@ -102,8 +100,7 @@ export default class CreateRulebook extends Component {
             value={this.state.description}
             onChange={this.onDescriptionChangeHandler}
             placeholder={T.translate(`${PREFIX}.descriptionplaceholder`)}
-          >
-          </textarea>
+          />
           <p className="fields-required-text">
             <i>{T.translate('features.RulesEngine.shared.allFieldsRequired')}</i>
           </p>
@@ -115,13 +112,10 @@ export default class CreateRulebook extends Component {
             >
               {T.translate(`${PREFIX}.createBtnLabel`)}
             </Button>
-            <span className="create-next">
-              {T.translate(`${PREFIX}.createBtnNext`)}
-            </span>
+            <span className="create-next">{T.translate(`${PREFIX}.createBtnNext`)}</span>
           </div>
         </div>
       </div>
     );
   }
 }
-

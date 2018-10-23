@@ -16,11 +16,11 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {init} from 'components/FieldLevelLineage/store/ActionCreator';
-import {Provider} from 'react-redux';
-import Store, {Actions} from 'components/FieldLevelLineage/store/Store';
+import { init } from 'components/FieldLevelLineage/store/ActionCreator';
+import { Provider } from 'react-redux';
+import Store, { Actions } from 'components/FieldLevelLineage/store/Store';
 import Lineage from 'components/FieldLevelLineage/Lineage';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import EntityTopPanel from 'components/EntityTopPanel';
 import TopPanel from 'components/FieldLevelLineage/TopPanel';
 import T from 'i18n-react';
@@ -31,7 +31,7 @@ const PREFIX = 'commons';
 
 export default class FieldLevelLineage extends Component {
   static propTypes = {
-    match: PropTypes.object
+    match: PropTypes.object,
   };
 
   componentDidMount() {
@@ -40,7 +40,7 @@ export default class FieldLevelLineage extends Component {
 
   componentWillUnmount() {
     Store.dispatch({
-      type: Actions.reset
+      type: Actions.reset,
     });
   }
 

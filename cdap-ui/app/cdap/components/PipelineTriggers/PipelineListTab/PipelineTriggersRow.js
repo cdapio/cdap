@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import PipelineTriggersStore from 'components/PipelineTriggers/store/PipelineTriggersStore';
-import {enableSchedule} from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
+import { enableSchedule } from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
 import PayloadConfigModal from 'components/PipelineTriggers/PayloadConfigModal';
 import T from 'i18n-react';
 
@@ -33,13 +33,13 @@ export default class PipelineTriggersRow extends Component {
     pipelineRow: PropTypes.string,
     triggeringPipelineInfo: PropTypes.object,
     triggeredPipelineInfo: PropTypes.object,
-    selectedNamespace: PropTypes.string
+    selectedNamespace: PropTypes.string,
   };
 
   state = {
     completed: true,
     killed: false,
-    failed: false
+    failed: false,
   };
 
   constructor(props) {
@@ -49,13 +49,13 @@ export default class PipelineTriggersRow extends Component {
 
   toggleKey(key) {
     this.setState({
-      [key]: !this.state[key]
+      [key]: !this.state[key],
     });
   }
 
   getConfig = () => {
     let config = {
-      eventTriggers: []
+      eventTriggers: [],
     };
     if (this.state.completed) {
       config.eventTriggers.push('COMPLETED');
@@ -67,12 +67,17 @@ export default class PipelineTriggersRow extends Component {
       config.eventTriggers.push('FAILED');
     }
     return config;
-  }
+  };
 
   enableScheduleClick = () => {
     let config = this.getConfig();
-    enableSchedule(this.props.triggeringPipelineInfo, this.pipelineName, this.props.selectedNamespace, config);
-  }
+    enableSchedule(
+      this.props.triggeringPipelineInfo,
+      this.pipelineName,
+      this.props.selectedNamespace,
+      config
+    );
+  };
 
   /*
     if key is triggering pipeline's run time argument use this as map
@@ -84,20 +89,20 @@ export default class PipelineTriggersRow extends Component {
     const generateRuntimeMapping = () => {
       let runArgsMapping = {
         arguments: [],
-        pluginProperties: []
+        pluginProperties: [],
       };
-      mapping.forEach(map => {
+      mapping.forEach((map) => {
         let keySplit = map.key.split(':');
         if (keySplit.length > 1) {
           runArgsMapping.pluginProperties.push({
             stageName: keySplit[1],
             source: keySplit[2],
-            target: map.value
+            target: map.value,
           });
         } else {
           runArgsMapping.arguments.push({
             source: map.key,
-            target: map.value
+            target: map.value,
           });
         }
       });
@@ -106,31 +111,26 @@ export default class PipelineTriggersRow extends Component {
     let config = this.getConfig();
     config.properties = {
       'triggering.properties.mapping': generateRuntimeMapping(),
-      ...propertiesConfig
+      ...propertiesConfig,
     };
-    enableSchedule(this.props.triggeringPipelineInfo, this.pipelineName, this.props.selectedNamespace, config);
+    enableSchedule(
+      this.props.triggeringPipelineInfo,
+      this.pipelineName,
+      this.props.selectedNamespace,
+      config
+    );
   };
 
   render() {
-    let {
-      onToggle,
-      pipelineRow,
-      triggeringPipelineInfo,
-      selectedNamespace
-    } = this.props;
+    let { onToggle, pipelineRow, triggeringPipelineInfo, selectedNamespace } = this.props;
 
     if (!this.props.isExpanded) {
       return (
-        <div
-          className="pipeline-triggers-row"
-          onClick={onToggle.bind(null, pipelineRow)}
-        >
+        <div className="pipeline-triggers-row" onClick={onToggle.bind(null, pipelineRow)}>
           <div className="caret-container">
             <IconSVG name="icon-caret-right" />
           </div>
-          <div className="pipeline-name">
-            {pipelineRow}
-          </div>
+          <div className="pipeline-name">{pipelineRow}</div>
         </div>
       );
     }
@@ -139,54 +139,38 @@ export default class PipelineTriggersRow extends Component {
 
     return (
       <div className="pipeline-triggers-expanded-row">
-        <div
-          className="header-row"
-          onClick={onToggle.bind(null, null)}
-        >
+        <div className="header-row" onClick={onToggle.bind(null, null)}>
           <div className="caret-container">
             <IconSVG name="icon-caret-down" />
           </div>
 
-          <div className="pipeline-name">
-            {pipelineRow}
-          </div>
+          <div className="pipeline-name">{pipelineRow}</div>
         </div>
 
         <div className="pipeline-description">
           <strong>{T.translate(`${TRIGGER_PREFIX}.description`)}: </strong>
-          <span>
-            {triggeringPipelineInfo.description}
-          </span>
+          <span>{triggeringPipelineInfo.description}</span>
           <a href={`/pipelines/ns/${selectedNamespace}/view/${pipelineRow}`}>
             {T.translate(`${TRIGGER_PREFIX}.viewPipeline`)}
           </a>
         </div>
 
         <div className="helper-text">
-          {T.translate(`${TRIGGER_PREFIX}.helperText`, {pipelineName: this.pipelineName})}
+          {T.translate(`${TRIGGER_PREFIX}.helperText`, { pipelineName: this.pipelineName })}
         </div>
 
         <div className="events-list">
-          <div
-            className="checkbox-item"
-            onClick={this.toggleKey.bind(this, 'completed')}
-          >
+          <div className="checkbox-item" onClick={this.toggleKey.bind(this, 'completed')}>
             <IconSVG name={this.state.completed ? 'icon-check-square' : 'icon-square-o'} />
             <span>{T.translate(`${TRIGGER_PREFIX}.Events.COMPLETED`)}</span>
           </div>
 
-          <div
-            className="checkbox-item"
-            onClick={this.toggleKey.bind(this, 'killed')}
-          >
+          <div className="checkbox-item" onClick={this.toggleKey.bind(this, 'killed')}>
             <IconSVG name={this.state.killed ? 'icon-check-square' : 'icon-square-o'} />
             <span>{T.translate(`${TRIGGER_PREFIX}.Events.KILLED`)}</span>
           </div>
 
-          <div
-            className="checkbox-item"
-            onClick={this.toggleKey.bind(this, 'failed')}
-          >
+          <div className="checkbox-item" onClick={this.toggleKey.bind(this, 'failed')}>
             <IconSVG name={this.state.failed ? 'icon-check-square' : 'icon-square-o'} />
             <span>{T.translate(`${TRIGGER_PREFIX}.Events.FAILED`)}</span>
           </div>
@@ -210,5 +194,3 @@ export default class PipelineTriggersRow extends Component {
     );
   }
 }
-
-

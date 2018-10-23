@@ -15,19 +15,19 @@
  */
 import 'whatwg-fetch';
 import LoadingIndicatorStore, {
-  BACKENDSTATUS
+  BACKENDSTATUS,
 } from 'components/LoadingIndicator/LoadingIndicatorStore';
 import StatusAlertMessageStore from 'components/StatusAlertMessage/StatusAlertMessageStore';
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
-import {Observable} from 'rxjs/Observable';
-import SystemServicesStore, {pollSystemServices} from 'services/SystemServicesStore';
+import { Observable } from 'rxjs/Observable';
+import SystemServicesStore, { pollSystemServices } from 'services/SystemServicesStore';
 
 let pollingObservable;
 let systemServiceSubscription;
 let retries = 0;
 
-const parseAndDispatchBackendStatus = response => {
+const parseAndDispatchBackendStatus = (response) => {
   /*
     We handle,
       - 1XX Information
@@ -47,14 +47,14 @@ const parseAndDispatchBackendStatus = response => {
       StatusAlertMessageStore.dispatch({
         type: 'VIEWUPDATE',
         payload: {
-          view: true
-        }
+          view: true,
+        },
       });
       LoadingIndicatorStore.dispatch({
         type: BACKENDSTATUS.STATUSUPDATE,
         payload: {
-          status: BACKENDSTATUS.BACKENDUP
-        }
+          status: BACKENDSTATUS.BACKENDUP,
+        },
       });
       retries = 0;
     }
@@ -69,8 +69,8 @@ const parseAndDispatchBackendStatus = response => {
     LoadingIndicatorStore.dispatch({
       type: BACKENDSTATUS.STATUSUPDATE,
       payload: {
-        status: BACKENDSTATUS.BACKENDDOWN
-      }
+        status: BACKENDSTATUS.BACKENDDOWN,
+      },
     });
   }
 };
@@ -79,18 +79,18 @@ const dispatchNodeServerDown = () => {
   LoadingIndicatorStore.dispatch({
     type: BACKENDSTATUS.STATUSUPDATE,
     payload: {
-      status: BACKENDSTATUS.NODESERVERDOWN
-    }
+      status: BACKENDSTATUS.NODESERVERDOWN,
+    },
   });
 };
 
 const getRequestInfo = () => {
   let headers = {
-    'Access-Control-Allow-Origin': '*'
+    'Access-Control-Allow-Origin': '*',
   };
   let requestInfo = {
     credentials: 'include',
-    mode: 'no-cors'
+    mode: 'no-cors',
   };
   if (window.CDAP_CONFIG.securityEnabled) {
     let token = cookie.load('CDAP_Auth_Token');
@@ -103,36 +103,30 @@ const getRequestInfo = () => {
 };
 
 const startServicePolling = () => {
-  systemServiceSubscription = SystemServicesStore
-    .subscribe(
-      () => {
-        let {list: services} = SystemServicesStore.getState().services;
-        services = services.filter(service => service.status === 'NOTOK');
-        if (services.length) {
-          LoadingIndicatorStore.dispatch({
-            type: BACKENDSTATUS.STATUSUPDATE,
-            payload: {
-              services
-            }
-          });
-        }
-      }
-    );
+  systemServiceSubscription = SystemServicesStore.subscribe(() => {
+    let { list: services } = SystemServicesStore.getState().services;
+    services = services.filter((service) => service.status === 'NOTOK');
+    if (services.length) {
+      LoadingIndicatorStore.dispatch({
+        type: BACKENDSTATUS.STATUSUPDATE,
+        payload: {
+          services,
+        },
+      });
+    }
+  });
 };
 
 const startPolling = () => {
   pollSystemServices();
   stopPolling();
   startServicePolling();
-  pollingObservable = Observable
-    .interval(2000)
+  pollingObservable = Observable.interval(2000)
     .mergeMap(() =>
-      Observable
-        .fromPromise(fetch('/backendstatus', getRequestInfo()))
-        .catch(error => {
-          dispatchNodeServerDown();
-          return Observable.of(`Error: ${error}`);
-        })
+      Observable.fromPromise(fetch('/backendstatus', getRequestInfo())).catch((error) => {
+        dispatchNodeServerDown();
+        return Observable.of(`Error: ${error}`);
+      })
     )
     .subscribe(parseAndDispatchBackendStatus, dispatchNodeServerDown);
 };
@@ -153,5 +147,5 @@ const stopPolling = () => {
 
 export default {
   startPollingForBackendStatus: startPolling,
-  stopPollingForBackendStatus: stopPolling
+  stopPollingForBackendStatus: stopPolling,
 };

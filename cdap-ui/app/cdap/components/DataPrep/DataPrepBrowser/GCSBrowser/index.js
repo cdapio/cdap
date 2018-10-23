@@ -18,10 +18,13 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import T from 'i18n-react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import {setGCSLoading, setError} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
-import {Route, Switch} from 'react-router-dom';
+import {
+  setGCSLoading,
+  setError,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import { Route, Switch } from 'react-router-dom';
 import Page404 from 'components/404';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import GCSPath from 'components/DataPrep/DataPrepBrowser/GCSBrowser/GCSPath';
@@ -42,20 +45,20 @@ export default class GCSBrowser extends Component {
     location: PropTypes.object,
     match: PropTypes.object,
     enableRouting: PropTypes.bool,
-    onWorkspaceCreate: PropTypes.func
+    onWorkspaceCreate: PropTypes.func,
   };
 
   static defaultProps = {
-    enableRouting: true
+    enableRouting: true,
   };
 
   onWorkspaceCreate = (file) => {
-    const {selectedNamespace: namespace} = NamespaceStore.getState();
-    const {connectionId} = DataPrepBrowserStore.getState().gcs;
+    const { selectedNamespace: namespace } = NamespaceStore.getState();
+    const { connectionId } = DataPrepBrowserStore.getState().gcs;
     setGCSLoading();
 
     let headers = {
-      'Content-Type': file.type
+      'Content-Type': file.type,
     };
 
     let params = {
@@ -64,23 +67,25 @@ export default class GCSBrowser extends Component {
       activeBucket: file.bucket,
       blob: file.blob,
       lines: 10000,
-      sampler: 'first'
+      sampler: 'first',
     };
 
-    MyDataPrepApi.readGCSFile(params, null, headers)
-      .subscribe(
-        (res) => {
-          let {id: workspaceId} = res.values[0];
-          if (this.props.enableRouting) {
-            window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-          }
-          if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
-            this.props.onWorkspaceCreate(workspaceId);
-          }
-        }, (err) => {
-          setError(err);
+    MyDataPrepApi.readGCSFile(params, null, headers).subscribe(
+      (res) => {
+        let { id: workspaceId } = res.values[0];
+        if (this.props.enableRouting) {
+          window.location.href = `${
+            window.location.origin
+          }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         }
-      );
+        if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
+          this.props.onWorkspaceCreate(workspaceId);
+        }
+      },
+      (err) => {
+        setError(err);
+      }
+    );
   };
 
   renderContentBody = () => {
@@ -105,22 +110,21 @@ export default class GCSBrowser extends Component {
     return (
       <Provider store={DataPrepBrowserStore}>
         <div className="gcs-browser">
-          {
-            this.props.enableRouting ?
-              <DataPrepBrowserPageTitle
-                browserI18NName="GCSBrowser"
-                browserStateName="gcs"
-                locationToPathInState={['prefix']}
-              />
-            :
-              null
-          }
+          {this.props.enableRouting ? (
+            <DataPrepBrowserPageTitle
+              browserI18NName="GCSBrowser"
+              browserStateName="gcs"
+              locationToPathInState={['prefix']}
+            />
+          ) : null}
           <DataprepBrowserTopPanel
             allowSidePanelToggle={true}
             toggle={this.props.toggle}
             browserTitle={T.translate(`${PREFIX}.TopPanel.selectData`)}
           />
-          <div className={classnames("sub-panel", {'routing-disabled': !this.props.enableRouting})}>
+          <div
+            className={classnames('sub-panel', { 'routing-disabled': !this.props.enableRouting })}
+          >
             <div className="path-container">
               <GCSPath
                 baseStatePath={this.props.enableRouting ? this.props.match.url : '/'}
@@ -136,9 +140,7 @@ export default class GCSBrowser extends Component {
               </div>
             </div>
           </div>
-          <div className="gcs-content">
-            {this.renderContentBody()}
-          </div>
+          <div className="gcs-content">{this.renderContentBody()}</div>
         </div>
       </Provider>
     );

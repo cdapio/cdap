@@ -17,24 +17,18 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import {NavLink} from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
-const NavLinkWrapper = ({children, to, isNativeLink, ...attributes}) => {
+const NavLinkWrapper = ({ children, to, isNativeLink, ...attributes }) => {
   if (isNativeLink) {
     return (
-      <a
-        href={to}
-        {...attributes}
-      >
+      <a href={to} {...attributes}>
         {children}
       </a>
     );
   }
   return (
-    <NavLink
-      to={to}
-      {...attributes}
-    >
+    <NavLink to={to} {...attributes}>
       {children}
     </NavLink>
   );
@@ -43,7 +37,7 @@ const NavLinkWrapper = ({children, to, isNativeLink, ...attributes}) => {
 NavLinkWrapper.propTypes = {
   children: PropTypes.node,
   to: PropTypes.string,
-  isNativeLink: PropTypes.bool
+  isNativeLink: PropTypes.bool,
 };
 
 export default NavLinkWrapper;

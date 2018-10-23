@@ -19,13 +19,13 @@ import T from 'i18n-react';
 import React from 'react';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
-const ListingInfo = ({bucketData, loading, truncated}) => {
+const ListingInfo = ({ bucketData, loading, truncated }) => {
   if (loading) {
     return <span>.</span>;
   }
-  let dirsCount = bucketData.filter(file => file.directory).length;
+  let dirsCount = bucketData.filter((file) => file.directory).length;
   let filesCount = bucketData.length - dirsCount;
   if (truncated) {
     return (
@@ -36,28 +36,41 @@ const ListingInfo = ({bucketData, loading, truncated}) => {
           placement="left"
           tag="span"
         >
-          {T.translate('features.DataPrep.DataPrepBrowser.GCSBrowser.TopPanel.ListingInfo.truncatedContentsTooltip')}
+          {T.translate(
+            'features.DataPrep.DataPrepBrowser.GCSBrowser.TopPanel.ListingInfo.truncatedContentsTooltip'
+          )}
         </Popover>
         <span>
-          {T.translate('features.DataPrep.DataPrepBrowser.GCSBrowser.TopPanel.ListingInfo.truncatedLabel', {filesCount, dirsCount})}
+          {T.translate(
+            'features.DataPrep.DataPrepBrowser.GCSBrowser.TopPanel.ListingInfo.truncatedLabel',
+            { filesCount, dirsCount }
+          )}
         </span>
       </div>
     );
   }
-  return <span> {T.translate('features.DataPrep.DataPrepBrowser.GCSBrowser.TopPanel.ListingInfo.label', {filesCount, dirsCount})} </span>;
+  return (
+    <span>
+      {' '}
+      {T.translate('features.DataPrep.DataPrepBrowser.GCSBrowser.TopPanel.ListingInfo.label', {
+        filesCount,
+        dirsCount,
+      })}{' '}
+    </span>
+  );
 };
 
 ListingInfo.propTypes = {
   bucketData: PropTypes.arrayOf(PropTypes.object),
   truncated: PropTypes.bool,
-  loading: PropTypes.bool
+  loading: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {
   return {
     bucketData: state.gcs.activeBucketDetails,
     truncated: state.gcs.truncated,
-    loading: state.gcs.loading
+    loading: state.gcs.loading,
   };
 };
 

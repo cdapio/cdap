@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import FieldRow from 'components/FieldLevelLineage/Fields/FieldRow';
 import FieldSearch from 'components/FieldLevelLineage/Fields/Search';
 import T from 'i18n-react';
@@ -25,42 +25,28 @@ require('./Fields.scss');
 
 const PREFIX = 'features.FieldLevelLineage';
 
-function FieldsView({datasetId, fields}) {
+function FieldsView({ datasetId, fields }) {
   const listContent = (
     <div className="fields-list">
-      <div className="fields-list-header">
-        {T.translate(`${PREFIX}.Headers.fieldName`)}
-      </div>
+      <div className="fields-list-header">{T.translate(`${PREFIX}.Headers.fieldName`)}</div>
 
       <div className="fields-list-body">
-        {
-          fields.map((field) => {
-            return (
-              <FieldRow
-                key={field.name}
-                field={field}
-              />
-            );
-          })
-        }
+        {fields.map((field) => {
+          return <FieldRow key={field.name} field={field} />;
+        })}
       </div>
     </div>
   );
 
   const emptyContent = (
-    <div className="empty">
-      {T.translate(`${PREFIX}.noFields`, { datasetId })}
-    </div>
+    <div className="empty">{T.translate(`${PREFIX}.noFields`, { datasetId })}</div>
   );
 
   return (
     <div className="fields-box">
       <div className="header">
         <div>
-          <strong
-            className="dataset-name truncate"
-            title={datasetId}
-          >
+          <strong className="dataset-name truncate" title={datasetId}>
             {datasetId}
           </strong>
           <div className="fields-count">
@@ -78,7 +64,7 @@ function FieldsView({datasetId, fields}) {
 
 FieldsView.propTypes = {
   datasetId: PropTypes.string,
-  fields: PropTypes.array
+  fields: PropTypes.array,
 };
 
 const mapStateToProps = (state) => {
@@ -88,8 +74,6 @@ const mapStateToProps = (state) => {
   };
 };
 
-const Fields = connect(
-  mapStateToProps
-)(FieldsView);
+const Fields = connect(mapStateToProps)(FieldsView);
 
 export default Fields;

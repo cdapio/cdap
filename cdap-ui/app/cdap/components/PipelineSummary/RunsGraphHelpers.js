@@ -29,8 +29,7 @@ const MINS_RESOLUTION = 'minutes';
 const HOURS_RESOLUTION = 'hours';
 const DAYS_RESOLUTION = 'days';
 
-
-export function getTicksTotal({start, end}) {
+export function getTicksTotal({ start, end }) {
   if (isNil(start) || isNil(end)) {
     return DEFAULT_TICKS_TOTAL;
   }
@@ -41,10 +40,10 @@ export function getTicksTotal({start, end}) {
   return DEFAULT_TICKS_TOTAL;
 }
 
-export function getXDomain({xDomainType, runsLimit, totalRunsCount, start, end}) {
+export function getXDomain({ xDomainType, runsLimit, totalRunsCount, start, end }) {
   let startDomain, endDomain;
   if (xDomainType === 'limit') {
-    startDomain = totalRunsCount > runsLimit ? (totalRunsCount - runsLimit) + 1 : 1;
+    startDomain = totalRunsCount > runsLimit ? totalRunsCount - runsLimit + 1 : 1;
     endDomain = totalRunsCount > runsLimit ? totalRunsCount : runsLimit;
   }
   if (xDomainType === 'time') {
@@ -55,14 +54,19 @@ export function getXDomain({xDomainType, runsLimit, totalRunsCount, start, end})
 }
 
 export function getYDomain(data = {}) {
-  let maxYDomain = {y: 1}, minYDomain = {y: 0};
+  let maxYDomain = { y: 1 },
+    minYDomain = { y: 0 };
   if (data.length > 1) {
-    maxYDomain = cloneDeep(data.reduce((prev, curr) => {
-      return (prev.y > curr.y) ? prev : curr;
-    }));
-    minYDomain = cloneDeep(data.reduce((prev, curr) => {
-      return (prev.y < curr.y) ? prev : curr;
-    }));
+    maxYDomain = cloneDeep(
+      data.reduce((prev, curr) => {
+        return prev.y > curr.y ? prev : curr;
+      })
+    );
+    minYDomain = cloneDeep(
+      data.reduce((prev, curr) => {
+        return prev.y < curr.y ? prev : curr;
+      })
+    );
     if (maxYDomain.y === minYDomain.y) {
       minYDomain.y = 0;
     }
@@ -77,11 +81,9 @@ export function getYAxisProps(data) {
   let formattedData = cloneDeep(data);
   if (!Array.isArray(data) && typeof data === 'object') {
     formattedData = [];
-    Object
-      .keys(data)
-      .forEach(d => {
-        formattedData = formattedData.concat(data[d].data);
-      });
+    Object.keys(data).forEach((d) => {
+      formattedData = formattedData.concat(data[d].data);
+    });
     data = formattedData;
   }
   let props = {
@@ -92,7 +94,7 @@ export function getYAxisProps(data) {
         return d;
       }
       return numeral(d).format('0.0a');
-    }
+    },
   };
   if (props.yDomain[1] === 0) {
     props.yDomain[1] = 10;
@@ -100,7 +102,7 @@ export function getYAxisProps(data) {
   return props;
 }
 
-export function xTickFormat({xDomainType, start, end}) {
+export function xTickFormat({ xDomainType, start, end }) {
   let lastDisplayedDate;
   return (v) => {
     if (xDomainType === 'time') {
@@ -148,7 +150,7 @@ export function tickFormatBasedOnTimeResolution(timeResolution) {
       return (v / ONE_MIN_SECONDS).toFixed(2);
     }
     if (timeResolution === HOURS_RESOLUTION) {
-      return (v / (ONE_HOUR_SECONDS)).toFixed(2);
+      return (v / ONE_HOUR_SECONDS).toFixed(2);
     }
     if (timeResolution === DAYS_RESOLUTION) {
       return (v / ONE_DAY_SECONDS).toFixed(2);
@@ -168,19 +170,19 @@ export function getDuration(time) {
 }
 
 export function getGapFilledAccumulatedData(data, numOfDataPoints) {
-  let {x:minx, y:miny} = data[0];
+  let { x: minx, y: miny } = data[0];
   let maxx = data[data.length - 1].x;
   let numberOfEntries = maxx - minx;
   let lasty = miny;
-  let finalData = Array.apply(null, {length: numberOfEntries + 1}).map((i, index) => {
-    let matchInActualData = data.find(d => d.x === minx + index);
+  let finalData = Array.apply(null, { length: numberOfEntries + 1 }).map((i, index) => {
+    let matchInActualData = data.find((d) => d.x === minx + index);
     if (!isNil(matchInActualData)) {
       lasty = matchInActualData.y;
     }
     return {
       ...matchInActualData,
       x: minx + index,
-      y: lasty
+      y: lasty,
     };
   });
   if (finalData.length < numOfDataPoints) {
@@ -190,7 +192,7 @@ export function getGapFilledAccumulatedData(data, numOfDataPoints) {
       let currDataPoint = {
         ...lastDataPoint,
         x: lastDataPoint.x + i,
-        y: lastDataPoint.y
+        y: lastDataPoint.y,
       };
       finalData.push(currDataPoint);
     }

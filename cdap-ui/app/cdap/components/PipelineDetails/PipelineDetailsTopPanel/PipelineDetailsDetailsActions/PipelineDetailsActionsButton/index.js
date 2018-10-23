@@ -15,12 +15,12 @@
 */
 
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import ConfirmationModal from 'components/ConfirmationModal';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {MyAppApi} from 'api/app';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { MyAppApi } from 'api/app';
 import PipelineExportModal from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsActionsButton/PipelineExportModal';
 import TriggeredPipelineStore from 'components/TriggeredPipelines/store/TriggeredPipelineStore';
 import T from 'i18n-react';
@@ -49,25 +49,25 @@ export default class PipelineDetailsActionsButton extends Component {
     pipelineName: PropTypes.string,
     description: PropTypes.string,
     artifact: PropTypes.object,
-    config: PropTypes.object
+    config: PropTypes.object,
   };
 
   state = {
     showExportModal: false,
     showDeleteConfirmationModal: false,
-    showPopover: false
+    showPopover: false,
   };
 
   togglePopover = (showPopover = !this.state.showPopover) => {
     this.setState({
-      showPopover
+      showPopover,
     });
   };
 
   componentWillReceiveProps(nextProps) {
     this.pipelineConfig = {
       ...this.pipelineConfig,
-      config: nextProps.config
+      config: nextProps.config,
     };
   }
 
@@ -75,20 +75,20 @@ export default class PipelineDetailsActionsButton extends Component {
     name: this.props.pipelineName,
     description: this.props.description,
     artifact: this.props.artifact,
-    config: this.props.config
+    config: this.props.config,
   };
 
   duplicateConfigAndNavigate = () => {
     let bumpedVersionName = getClonePipelineName(this.props.pipelineName);
-    let pipelineConfigWithBumpedVersion = {...this.pipelineConfig, name: bumpedVersionName};
+    let pipelineConfigWithBumpedVersion = { ...this.pipelineConfig, name: bumpedVersionName };
     window.localStorage.setItem(bumpedVersionName, JSON.stringify(pipelineConfigWithBumpedVersion));
     const hydratorLink = window.getHydratorUrl({
       stateName: 'hydrator.create',
       stateParams: {
         namespace: getCurrentNamespace(),
         cloneId: bumpedVersionName,
-        artifactType: this.props.artifact.name
-      }
+        artifactType: this.props.artifact.name,
+      },
     });
     window.location.href = hydratorLink;
   };
@@ -97,41 +97,43 @@ export default class PipelineDetailsActionsButton extends Component {
     let namespace = getCurrentNamespace();
     let params = {
       namespace,
-      appId: this.props.pipelineName
+      appId: this.props.pipelineName,
     };
     const pipelinesListLink = window.getHydratorUrl({
       stateName: 'hydrator.list',
       stateParams: {
-        namespace
-      }
+        namespace,
+      },
     });
 
-    MyAppApi.delete(params)
-      .subscribe(() => {
+    MyAppApi.delete(params).subscribe(
+      () => {
         this.setState({
           deleteErrMsg: '',
-          extendedDeleteErrMsg: ''
+          extendedDeleteErrMsg: '',
         });
         window.location.href = pipelinesListLink;
-      }, (err) => {
+      },
+      (err) => {
         this.setState({
           deleteErrMsg: T.translate(`${PREFIX}.deleteError`),
-          extendedDeleteErrMsg: err
+          extendedDeleteErrMsg: err,
         });
-      });
-  }
+      }
+    );
+  };
 
   toggleExportModal = () => {
     this.setState({ showExportModal: !this.state.showExportModal });
-  }
+  };
 
   toggleDeleteConfirmationModal = () => {
     this.setState({
       showDeleteConfirmationModal: !this.state.showDeleteConfirmationModal,
       deleteErrMsg: '',
-      extendedDeleteErrMsg: ''
+      extendedDeleteErrMsg: '',
     });
-  }
+  };
 
   renderExportPipelineModal() {
     if (!this.state.showExportModal) {
@@ -157,12 +159,16 @@ export default class PipelineDetailsActionsButton extends Component {
       return (
         <div>
           {T.translate(`${PREFIX}.deleteConfirmation.pipeline`)}
-          <strong><em>{this.props.pipelineName}</em></strong>
+          <strong>
+            <em>{this.props.pipelineName}</em>
+          </strong>
           {T.translate(`${PREFIX}.deleteConfirmation.trigger`)}
-          {T.translate(`${PREFIX}.deleteConfirmation.triggerPluralCheck`, {context: count})}
+          {T.translate(`${PREFIX}.deleteConfirmation.triggerPluralCheck`, { context: count })}
           <em>{triggersText}</em>
           {T.translate(`${PREFIX}.deleteConfirmation.triggerDelete`)}
-          <strong><em>{this.props.pipelineName}</em></strong>
+          <strong>
+            <em>{this.props.pipelineName}</em>
+          </strong>
           {T.translate(`${PREFIX}.deleteConfirmation.proceedPrompt`)}
         </div>
       );
@@ -171,10 +177,13 @@ export default class PipelineDetailsActionsButton extends Component {
     return (
       <div>
         {T.translate(`${PREFIX}.deleteConfirmation.confirmPrompt`)}
-        <strong><em>{this.props.pipelineName}</em></strong>?
+        <strong>
+          <em>{this.props.pipelineName}</em>
+        </strong>
+        ?
       </div>
     );
-  }
+  };
 
   renderDeleteConfirmationModal() {
     if (!this.state.showDeleteConfirmationModal) {
@@ -200,22 +209,21 @@ export default class PipelineDetailsActionsButton extends Component {
   render() {
     const ActionsBtnAndLabel = () => {
       return (
-        <div
-          className="btn pipeline-action-btn pipeline-actions-btn"
-          onClick={this.togglePopover}
-        >
+        <div className="btn pipeline-action-btn pipeline-actions-btn" onClick={this.togglePopover}>
           <div className="btn-container">
             <IconSVG name="icon-cog-empty" />
-            <div className="button-label">
-              {T.translate(`${PREFIX}.actions`)}
-            </div>
+            <div className="button-label">{T.translate(`${PREFIX}.actions`)}</div>
           </div>
         </div>
       );
     };
 
     return (
-      <div className={classnames("pipeline-action-container pipeline-actions-container", {"active" : this.state.showPopover})}>
+      <div
+        className={classnames('pipeline-action-container pipeline-actions-container', {
+          active: this.state.showPopover,
+        })}
+      >
         <Popover
           target={ActionsBtnAndLabel}
           placement="bottom"
@@ -226,17 +234,10 @@ export default class PipelineDetailsActionsButton extends Component {
           onTogglePopover={this.togglePopover}
         >
           <ul>
-            <li onClick={this.duplicateConfigAndNavigate}>
-              {T.translate(`${PREFIX}.duplicate`)}
-            </li>
-            <li onClick={this.toggleExportModal}>
-              {T.translate(`${PREFIX}.export`)}
-            </li>
+            <li onClick={this.duplicateConfigAndNavigate}>{T.translate(`${PREFIX}.duplicate`)}</li>
+            <li onClick={this.toggleExportModal}>{T.translate(`${PREFIX}.export`)}</li>
             <hr />
-            <li
-              onClick={this.toggleDeleteConfirmationModal}
-              className="delete-action"
-            >
+            <li onClick={this.toggleDeleteConfirmationModal} className="delete-action">
               {T.translate('commons.delete')}
             </li>
           </ul>

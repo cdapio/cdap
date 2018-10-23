@@ -14,22 +14,22 @@
  * the License.
  */
 
-import {combineReducers, createStore} from 'redux';
+import { combineReducers, createStore } from 'redux';
 import VersionActions from './VersionActions';
 
 const defaultAction = {
-  action : '',
-  payload : {}
+  action: '',
+  payload: {},
 };
 
 const defaultInitialState = {
-  version : ''
+  version: '',
 };
 
 const version = (state = '', action = defaultAction) => {
   switch (action.type) {
     case VersionActions.updateVersion:
-        return action.payload.version;
+      return action.payload.version;
     default:
       return state;
   }
@@ -37,7 +37,7 @@ const version = (state = '', action = defaultAction) => {
 
 const VersionStore = createStore(
   combineReducers({
-    version
+    version,
   }),
   defaultInitialState,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()

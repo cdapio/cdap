@@ -16,13 +16,13 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
-import {ENGINE_OPTIONS} from 'components/PipelineConfigurations/PipelineConfigConstants';
-import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfigurations/Store';
+import { ENGINE_OPTIONS } from 'components/PipelineConfigurations/PipelineConfigConstants';
+import { ACTIONS as PipelineConfigurationsActions } from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.Resources';
@@ -32,7 +32,7 @@ const mapStateToProps = (state, ownProps) => {
     isBatch: ownProps.isBatch,
     engine: state.engine,
     virtualCores: state.resources.virtualCores,
-    memoryMB: state.resources.memoryMB
+    memoryMB: state.resources.memoryMB,
   };
 };
 const mapDispatchToProps = (dispatch) => {
@@ -40,47 +40,48 @@ const mapDispatchToProps = (dispatch) => {
     onVirtualCoresChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_MEMORY_VIRTUAL_CORES,
-        payload: { virtualCores: e.target.value }
+        payload: { virtualCores: e.target.value },
       });
     },
     onMemoryMBChange: (e) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_MEMORY_MB,
-        payload: { memoryMB: e.target.value }
+        payload: { memoryMB: e.target.value },
       });
-    }
+    },
   };
 };
 
-const ExecutorResources = ({isBatch, engine, virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange}) => {
+const ExecutorResources = ({
+  isBatch,
+  engine,
+  virtualCores,
+  onVirtualCoresChange,
+  memoryMB,
+  onMemoryMBChange,
+}) => {
   let isMapReduce = engine === ENGINE_OPTIONS.MAPREDUCE && isBatch;
   return (
     <div
-      className={classnames("executor", {
-        "col-xs-6": isBatch,
-        "col-xs-4": !isBatch
+      className={classnames('executor', {
+        'col-xs-6': isBatch,
+        'col-xs-4': !isBatch,
       })}
     >
       <div className="resource-title-icon">
         <span className="resource-title">
-          {
-            isMapReduce ?
-              T.translate(`${PREFIX}.executorMapReduce`)
-            :
-              T.translate(`${PREFIX}.executor`)
-          }
+          {isMapReduce
+            ? T.translate(`${PREFIX}.executorMapReduce`)
+            : T.translate(`${PREFIX}.executor`)}
         </span>
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
-          showOn='Hover'
-          placement='right'
+          showOn="Hover"
+          placement="right"
         >
-          {
-            isMapReduce ?
-              T.translate(`${PREFIX}.executorMapReduceTooltip`)
-            :
-              T.translate(`${PREFIX}.executorTooltip`)
-          }
+          {isMapReduce
+            ? T.translate(`${PREFIX}.executorMapReduceTooltip`)
+            : T.translate(`${PREFIX}.executorTooltip`)}
         </Popover>
       </div>
       <PipelineResources
@@ -99,9 +100,12 @@ ExecutorResources.propTypes = {
   virtualCores: PropTypes.number,
   onVirtualCoresChange: PropTypes.func,
   memoryMB: PropTypes.number,
-  onMemoryMBChange: PropTypes.func
+  onMemoryMBChange: PropTypes.func,
 };
 
-const ConnectedExecutorResources = connect(mapStateToProps, mapDispatchToProps)(ExecutorResources);
+const ConnectedExecutorResources = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ExecutorResources);
 
 export default ConnectedExecutorResources;

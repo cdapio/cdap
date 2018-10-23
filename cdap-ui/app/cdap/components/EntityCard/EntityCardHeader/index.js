@@ -22,7 +22,7 @@ import T from 'i18n-react';
 require('./EntityCardHeader.scss');
 import classnames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
-import {getType} from 'services/metadata-parser';
+import { getType } from 'services/metadata-parser';
 
 export default class EntityCardHeader extends Component {
   constructor(props) {
@@ -36,44 +36,32 @@ export default class EntityCardHeader extends Component {
   render() {
     return (
       <div className="card-header-wrapper">
-        {
-          !isEmpty(this.props.successMessage) ?
-            (
-              <div className="entity-card-header success-message">
-                <div>
-                  <span>
-                    {
-                      this.props.successMessage
-                    }
-                  </span>
-                </div>
-              </div>
-            )
-          :
-            (
-              <div
-                onClick={this.props.onClick}
-                className={classnames("entity-card-header", this.props.className)}
-              >
-                <div>
-                  <IconSVG
-                    name={this.props.entity.icon}
-                    className="entity-icon"
-                  />
-                  <span className="entity-type">
-                    {T.translate(`commons.entity.${this.getEntityType()}.singular`)}
-                  </span>
-                </div>
-              </div>
-            )
-        }
+        {!isEmpty(this.props.successMessage) ? (
+          <div className="entity-card-header success-message">
+            <div>
+              <span>{this.props.successMessage}</span>
+            </div>
+          </div>
+        ) : (
+          <div
+            onClick={this.props.onClick}
+            className={classnames('entity-card-header', this.props.className)}
+          >
+            <div>
+              <IconSVG name={this.props.entity.icon} className="entity-icon" />
+              <span className="entity-type">
+                {T.translate(`commons.entity.${this.getEntityType()}.singular`)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 }
 
 EntityCardHeader.defaultProps = {
-  systemTags: []
+  systemTags: [],
 };
 
 EntityCardHeader.propTypes = {
@@ -81,5 +69,5 @@ EntityCardHeader.propTypes = {
   systemTags: PropTypes.array,
   className: PropTypes.string,
   onClick: PropTypes.func,
-  successMessage: PropTypes.string
+  successMessage: PropTypes.string,
 };

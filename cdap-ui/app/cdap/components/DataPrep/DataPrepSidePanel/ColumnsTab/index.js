@@ -15,7 +15,7 @@
  */
 
 import React, { Component } from 'react';
-import {UncontrolledDropdown} from 'components/UncontrolledComponents';
+import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
@@ -33,20 +33,20 @@ require('./ColumnsTab.scss');
 export default class ColumnsTab extends Component {
   constructor(props) {
     super(props);
-    let {dataprep: dataprepstate, columnsInformation: columnInfo} = DataPrepStore.getState();
+    let { dataprep: dataprepstate, columnsInformation: columnInfo } = DataPrepStore.getState();
 
     this.state = {
       columns: columnInfo.columns,
-      headers: dataprepstate.headers.map(res => ({
+      headers: dataprepstate.headers.map((res) => ({
         name: res,
-        uniqueId: uuidV4() // FIXME: This might be costly. Need to find a better way to avoid having unique IDs
+        uniqueId: uuidV4(), // FIXME: This might be costly. Need to find a better way to avoid having unique IDs
       })),
       selectedHeaders: dataprepstate.selectedHeaders,
       workspaceId: dataprepstate.workspaceId,
       loading: dataprepstate.loading,
       error: null,
       searchText: '',
-      searchFocus: false
+      searchFocus: false,
     };
 
     this.handleChangeSearch = this.handleChangeSearch.bind(this);
@@ -61,18 +61,18 @@ export default class ColumnsTab extends Component {
     this._isMounted = true;
     this.sub = DataPrepStore.subscribe(() => {
       if (this._isMounted) {
-        let {dataprep: dataprepstate, columnsInformation: columnInfo} = DataPrepStore.getState();
+        let { dataprep: dataprepstate, columnsInformation: columnInfo } = DataPrepStore.getState();
         this.setState({
           selectedHeaders: dataprepstate.selectedHeaders,
           columns: columnInfo.columns,
           headers: dataprepstate.headers.map((res) => {
             let obj = {
               name: res,
-              uniqueId: uuidV4()
+              uniqueId: uuidV4(),
             };
             return obj;
           }),
-          loading: dataprepstate.loading
+          loading: dataprepstate.loading,
         });
       }
     });
@@ -95,8 +95,8 @@ export default class ColumnsTab extends Component {
     DataPrepStore.dispatch({
       type: DataPrepActions.setSelectedHeaders,
       payload: {
-        selectedHeaders: []
-      }
+        selectedHeaders: [],
+      },
     });
   }
 
@@ -104,8 +104,8 @@ export default class ColumnsTab extends Component {
     DataPrepStore.dispatch({
       type: DataPrepActions.setSelectedHeaders,
       payload: {
-        selectedHeaders: DataPrepStore.getState().dataprep.headers
-      }
+        selectedHeaders: DataPrepStore.getState().dataprep.headers,
+      },
     });
   }
 
@@ -119,38 +119,30 @@ export default class ColumnsTab extends Component {
     DataPrepStore.dispatch({
       type: DataPrepActions.setSelectedHeaders,
       payload: {
-        selectedHeaders: currentSelectedHeaders
-      }
+        selectedHeaders: currentSelectedHeaders,
+      },
     });
   }
 
   handleChangeSearch(e) {
-    this.setState({searchText: e.target.value});
+    this.setState({ searchText: e.target.value });
   }
 
   clearSearch() {
-    this.setState({searchText: ''});
+    this.setState({ searchText: '' });
   }
 
   renderDropdown() {
     return (
-      <UncontrolledDropdown
-        className="columns-tab-toggle-all-dropdown"
-      >
+      <UncontrolledDropdown className="columns-tab-toggle-all-dropdown">
         <DropdownToggle className="columns-tab-dropdown-toggle">
           <IconSVG name="icon-caret-square-o-down" />
         </DropdownToggle>
         <DropdownMenu>
-          <DropdownItem
-            className="toggle-all-option"
-            onClick={this.clearAllColumns}
-          >
+          <DropdownItem className="toggle-all-option" onClick={this.clearAllColumns}>
             {T.translate(`${PREFIX}.toggle.clearAll`)}
           </DropdownItem>
-          <DropdownItem
-            className="toggle-all-option"
-            onClick={this.selectAllColumns}
-          >
+          <DropdownItem className="toggle-all-option" onClick={this.selectAllColumns}>
             {T.translate(`${PREFIX}.toggle.selectAll`)}
           </DropdownItem>
         </DropdownMenu>
@@ -159,14 +151,14 @@ export default class ColumnsTab extends Component {
   }
 
   showDetail(rowId) {
-    let index = findIndex(this.state.headers, (header => header.uniqueId === rowId));
+    let index = findIndex(this.state.headers, (header) => header.uniqueId === rowId);
     let match = this.state.headers[index];
     let modifiedHeaders = this.state.headers.slice(0);
     if (match.expanded) {
       match.expanded = false;
       modifiedHeaders = [
         ...modifiedHeaders.slice(0, index + 1),
-        ...modifiedHeaders.slice(index + 2)
+        ...modifiedHeaders.slice(index + 2),
       ];
     } else {
       match.expanded = true;
@@ -174,13 +166,13 @@ export default class ColumnsTab extends Component {
         ...modifiedHeaders.slice(0, index + 1),
         Object.assign({}, modifiedHeaders[index], {
           isDetail: true,
-          uniqueId: uuidV4()
+          uniqueId: uuidV4(),
         }),
-        ...modifiedHeaders.slice(index + 1)
+        ...modifiedHeaders.slice(index + 1),
       ];
     }
     this.setState({
-      headers: modifiedHeaders
+      headers: modifiedHeaders,
     });
   }
 
@@ -194,10 +186,10 @@ export default class ColumnsTab extends Component {
     }
 
     let index = -1;
-    let displayHeaders = this.state.headers.map(header => {
+    let displayHeaders = this.state.headers.map((header) => {
       if (!header.isDetail) {
         index += 1;
-        return Object.assign({}, header, {index});
+        return Object.assign({}, header, { index });
       }
       return header;
     });
@@ -217,7 +209,7 @@ export default class ColumnsTab extends Component {
           <div className="columns-tab empty-search-container">
             <div className="empty-search">
               <strong>
-                {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.searchText})}
+                {T.translate(`${PREFIX}.EmptyMessage.title`, { searchText: this.state.searchText })}
               </strong>
               <hr />
               <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
@@ -228,7 +220,7 @@ export default class ColumnsTab extends Component {
                     onClick={() => {
                       this.setState({
                         searchText: '',
-                        searchFocus: true
+                        searchFocus: true,
                       });
                     }}
                   >
@@ -246,45 +238,35 @@ export default class ColumnsTab extends Component {
             <thead>
               <tr>
                 <th />
-                <th>
-                  { this.renderDropdown() }
-                </th>
-                <th>
-                  #
-                </th>
-                <th>
-                  {T.translate(`${PREFIX}.Header.name`)}
-                </th>
-                <th>
-                  {T.translate(`${PREFIX}.Header.completion`)}
-                </th>
+                <th>{this.renderDropdown()}</th>
+                <th>#</th>
+                <th>{T.translate(`${PREFIX}.Header.name`)}</th>
+                <th>{T.translate(`${PREFIX}.Header.completion`)}</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {
-                displayHeaders.map((head) => {
-                  if (head.isDetail) {
-                    return (
-                      <ColumnsTabDetail
-                        key={head.uniqueId}
-                        columnInfo={this.state.columns[head.name]}
-                      />
-                    );
-                  }
+              {displayHeaders.map((head) => {
+                if (head.isDetail) {
                   return (
-                    <ColumnsTabRow
-                      rowInfo={this.state.columns[head.name]}
-                      onShowDetails={this.showDetail.bind(this, head.uniqueId)}
-                      columnName={head.name}
-                      index={head.index}
+                    <ColumnsTabDetail
                       key={head.uniqueId}
-                      selected={this.state.selectedHeaders.indexOf(head.name) !== -1}
-                      setSelect={this.setSelect}
+                      columnInfo={this.state.columns[head.name]}
                     />
                   );
-                })
-              }
+                }
+                return (
+                  <ColumnsTabRow
+                    rowInfo={this.state.columns[head.name]}
+                    onShowDetails={this.showDetail.bind(this, head.uniqueId)}
+                    columnName={head.name}
+                    index={head.index}
+                    key={head.uniqueId}
+                    selected={this.state.selectedHeaders.indexOf(head.name) !== -1}
+                    setSelect={this.setSelect}
+                  />
+                );
+              })}
             </tbody>
           </table>
         );
@@ -301,26 +283,18 @@ export default class ColumnsTab extends Component {
               placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
               value={this.state.searchText}
               onChange={this.handleChangeSearch}
-              ref={(ref) => this.searchBox = ref}
+              ref={(ref) => (this.searchBox = ref)}
             />
 
-            {
-              this.state.searchText.length === 0 ?
-                (<span className="fa fa-search" />)
-              :
-                (
-                  <span
-                    className="fa fa-times-circle"
-                    onClick={this.clearSearch}
-                  />
-                )
-            }
+            {this.state.searchText.length === 0 ? (
+              <span className="fa fa-search" />
+            ) : (
+              <span className="fa fa-times-circle" onClick={this.clearSearch} />
+            )}
           </div>
           <ColumnActions />
         </div>
-        <div className="columns-list">
-          {renderContents()}
-        </div>
+        <div className="columns-list">{renderContents()}</div>
       </div>
     );
   }

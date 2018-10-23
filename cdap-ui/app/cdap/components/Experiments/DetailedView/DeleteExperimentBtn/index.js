@@ -17,40 +17,44 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import DeleteEntityBtn from 'components/DeleteEntityBtn';
-import {myExperimentsApi} from 'api/experiments';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {setExperimentDetailError} from 'components/Experiments/store/ExperimentDetailActionCreator';
+import { myExperimentsApi } from 'api/experiments';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { setExperimentDetailError } from 'components/Experiments/store/ExperimentDetailActionCreator';
 
 const deleteExperiment = (experimentId, callback, errCallback) => {
   let namespace = getCurrentNamespace();
   myExperimentsApi
     .deleteExperiment({
       namespace,
-      experimentId
+      experimentId,
     })
     .subscribe(
-      () => window.location.href =`${window.location.origin}/cdap/ns/${namespace}/experiments`,
-      err => {
+      () => (window.location.href = `${window.location.origin}/cdap/ns/${namespace}/experiments`),
+      (err) => {
         let error = `Failed to delete the experiment '${experimentId}' - ${err.response || err}`;
         errCallback(error);
       }
     );
 };
 
-const deleteConfirmElement = (experimentId) => <div>Are you sure you want to delete the experiment <b>{experimentId}</b>?</div>;
+const deleteConfirmElement = (experimentId) => (
+  <div>
+    Are you sure you want to delete the experiment <b>{experimentId}</b>?
+  </div>
+);
 
-export default function DeleteExperimentBtn({experimentId}) {
+export default function DeleteExperimentBtn({ experimentId }) {
   return (
     <DeleteEntityBtn
       confirmFn={deleteExperiment.bind(null, experimentId, null, setExperimentDetailError)}
       className="btn btn-link"
-      headerTitle={"Delete Experiment"}
+      headerTitle={'Delete Experiment'}
       confirmationElem={deleteConfirmElement(experimentId)}
-      btnLabel={"Delete Experiment"}
+      btnLabel={'Delete Experiment'}
     />
   );
 }
 
 DeleteExperimentBtn.propTypes = {
-  experimentId: PropTypes.string
+  experimentId: PropTypes.string,
 };
