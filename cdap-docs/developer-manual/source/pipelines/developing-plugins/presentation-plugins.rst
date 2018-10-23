@@ -460,7 +460,7 @@ CDAP pipelines as of version |version|.
        - ``options``: an array of options where each option is defined by
          - ``id``: value to be set for the plugin property
          - ``label``: a label to be rendered in UI for that specific option
-       - ``defaultValue``: default value to use when no value is specified
+       - ``default``: default value to use when no value is specified
      - ``string``
      - A group of radio buttons to choose one among a list of available options.
      - .. container:: copyable copyable-text
@@ -472,7 +472,7 @@ CDAP pipelines as of version |version|.
             "widget-type": "radio-group",
             "widget-attributes": {
               "layout": "inline",
-              "defaultValue": "value1",
+              "default": "value1",
               "options": [
                 {
                   "id": "value1",
