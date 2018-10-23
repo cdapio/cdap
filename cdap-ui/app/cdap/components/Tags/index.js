@@ -89,6 +89,7 @@ export default class Tags extends Component {
         (err) => {
           this.setState({
             error: isObject(err) ? err.response : err,
+            loading: false
           });
         }
       );
@@ -301,6 +302,7 @@ export default class Tags extends Component {
           onBlur={this.toggleInputField}
           autoFocus={true}
           disabled={this.state.loading ? 'disabled' : null}
+          data-testid='tag-input'
         />
       </span>
     );
@@ -308,7 +310,11 @@ export default class Tags extends Component {
 
   renderPlusButton() {
     return (
-      <span className="btn btn-primary plus-button-container" onClick={this.toggleInputField}>
+      <span
+        className="btn btn-primary plus-button-container"
+        onClick={this.toggleInputField}
+        data-testid='tag-plus-button'
+      >
         <IconSVG name="icon-plus" className="text-white" />
       </span>
     );
@@ -329,7 +335,7 @@ export default class Tags extends Component {
         </span>
         {this.state.showAllTagsLabel ? this.renderTagsPopover() : null}
         {this.state.showInputField ? this.renderInputField() : this.renderPlusButton()}
-        {this.state.loading ? <IconSVG name="icon-spinner" className="fa-lg fa-spin" /> : null}
+        {this.state.loading ? <IconSVG name="icon-spinner" className="fa-lg fa-spin" data-testid="loading-icon" /> : null}
         {this.state.error ? (
           <Alert
             message={this.state.error}

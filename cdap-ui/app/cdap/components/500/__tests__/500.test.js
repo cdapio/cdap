@@ -1,6 +1,8 @@
 import React from 'react';
-import { render } from 'react-testing-library';
+import { cleanup, render } from 'react-testing-library';
 import Page500 from 'components/500';
+
+afterEach(cleanup);
 
 describe('Page500', () => {
   it('renders correctly', () => {
