@@ -24,7 +24,8 @@
     "karma-test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
     "karma-test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run",
     "storybook": "NODE_ENV=development start-storybook -p 6006",
-    "build-storybook": "NODE_ENV=development build-storybook"
+    "build-storybook": "NODE_ENV=development build-storybook",
+    "cypress": "cypress open"
   },
   "repository": {
     "type": "git",
@@ -61,12 +62,14 @@
     "clean-webpack-plugin": "^0.1.19",
     "copy-webpack-plugin": "4.5.2",
     "css-loader": "0.28.7",
+    "cypress": "^3.1.0",
     "del": "2.2.0",
     "enzyme": "2.6.0",
     "eslint": "4.6.1",
     "eslint-loader": "2.0.0",
     "eslint-plugin-babel": "4.1.2",
     "eslint-plugin-prettier": "3.0.0",
+    "eslint-plugin-cypress": "^2.0.1",
     "eslint-plugin-react": "7.3.0",
     "file-loader": "1.1.5",
     "font-awesome-sass-loader": "1.0.3",
