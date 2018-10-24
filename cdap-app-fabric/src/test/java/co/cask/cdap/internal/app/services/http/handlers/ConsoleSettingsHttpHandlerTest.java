@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -25,8 +26,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -66,21 +65,20 @@ public class ConsoleSettingsHttpHandlerTest extends AppFabricTestBase {
 
   private void putProperty(Map<String, String> props, int expectedStatus) throws Exception {
     HttpResponse response = doPut("/v3/configuration/user", GSON.toJson(props));
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedStatus, response.getResponseCode());
   }
 
   private JsonElement getProperty(int expectedStatus) throws Exception {
     HttpResponse response = doGet("/v3/configuration/user");
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedStatus, response.getResponseCode());
     if (expectedStatus == HttpResponseStatus.OK.code()) {
-      String jsonData = EntityUtils.toString(response.getEntity());
-      return new JsonParser().parse(jsonData);
+      return new JsonParser().parse(response.getResponseBodyAsString());
     }
     return null;
   }
 
   private void deleteProperty(int expectedStatus) throws Exception {
     HttpResponse response = doDelete("/v3/configuration/user");
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedStatus, response.getResponseCode());
   }
 }

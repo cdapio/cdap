@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -26,8 +27,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -116,7 +115,7 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, jsonObject.entrySet().size());
     Assert.assertEquals("n1", jsonObject.get("m1").getAsString());
 
-    addProperty("newspace", anotherDash, new HashMap<String, String>(), 200);
+    addProperty("newspace", anotherDash, new HashMap<>(), 200);
     jsonObject = getContents("newspace", anotherDash, 200).getAsJsonObject().get("config").getAsJsonObject();
     Assert.assertEquals(0, jsonObject.entrySet().size());
 
@@ -144,15 +143,14 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
     throws Exception {
     HttpResponse response = doPut(
       String.format("/v3/namespaces/%s/configuration/dashboards/%s", namespace, name), GSON.toJson(props));
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedStatus, response.getResponseCode());
   }
 
   private JsonElement getContents(String namespace, String name, int expectedStatus) throws Exception {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/configuration/dashboards/%s", namespace, name));
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    return new JsonParser().parse(s);
+    Assert.assertEquals(expectedStatus, response.getResponseCode());
+    return new JsonParser().parse(response.getResponseBodyAsString());
   }
 
   private String createDashboard(String namespace, int expectedStatus) throws Exception {
@@ -161,12 +159,11 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
 
   private String createDashboard(String namespace, String contents, int expectedStatus) throws Exception {
     HttpResponse response = doPost(String.format("/v3/namespaces/%s/configuration/dashboards", namespace), contents);
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedStatus, response.getResponseCode());
     if (expectedStatus == HttpResponseStatus.OK.code()) {
-      String jsonData = EntityUtils.toString(response.getEntity());
-      Map<String, String> idMap = GSON.fromJson(jsonData, MAP_STRING_STRING_TYPE);
+      Map<String, String> idMap = GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, idMap.size());
-      Assert.assertEquals(true, idMap.containsKey("id"));
+      Assert.assertTrue(idMap.containsKey("id"));
       return idMap.get("id");
     }
     return null;
@@ -175,13 +172,12 @@ public class DashboardHttpHandlerTest extends AppFabricTestBase {
   private JsonElement getDashboards(String namespace) throws Exception {
     String req = String.format("/v3/namespaces/%s/configuration/dashboards", namespace);
     HttpResponse response = doGet(req);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    return new JsonParser().parse(s);
+    Assert.assertEquals(200, response.getResponseCode());
+    return new JsonParser().parse(response.getResponseBodyAsString());
   }
 
   private void deleteDashboard(String namespace, String name, int expectedStatus) throws Exception {
     HttpResponse response = doDelete(String.format("/v3/namespaces/%s/configuration/dashboards/%s", namespace, name));
-    Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedStatus, response.getResponseCode());
   }
 }

@@ -38,6 +38,7 @@ import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -64,6 +65,11 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     profileService = injector.getInstance(ProfileService.class);
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
+  }
+
+  @AfterClass
+  public static void shutdown() {
+    provisioningService.stopAndWait();
   }
 
   @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,16 +37,13 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.base.Charsets;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionSystemClient;
@@ -63,8 +60,9 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -78,15 +76,11 @@ public class OpenCloseDataSetTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static Location namespaceHomeLocation;
 
-  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
-
-    @Override
-    public File get() {
-      try {
-        return TEMP_FOLDER.newFolder();
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = () -> {
+    try {
+      return TEMP_FOLDER.newFolder();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
     }
   };
 
@@ -134,8 +128,7 @@ public class OpenCloseDataSetTest {
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 4; i++) {
       String msg = "x" + i;
-      StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(),
-                                                 ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
+      StreamEvent event = new StreamEvent(Collections.emptyMap(), StandardCharsets.UTF_8.encode(msg));
       producer.enqueue(new QueueEntry(codec.encodePayload(event)));
     }
 
@@ -156,7 +149,6 @@ public class OpenCloseDataSetTest {
     Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
 
     // now send a request to the service
-    Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
 
@@ -165,17 +157,16 @@ public class OpenCloseDataSetTest {
       .pick(5, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
 
-    HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
-                                            discoverable.getSocketAddress().getHostName(),
-                                            discoverable.getSocketAddress().getPort(),
-                                            "dummy",
-                                            "DummyService",
-                                            "x1"));
-    HttpResponse response = client.execute(get);
-    String responseContent = gson.fromJson(
-      new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8), String.class);
-    client.getConnectionManager().shutdown();
+    URL url = new URL(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
+                                    discoverable.getSocketAddress().getHostName(),
+                                    discoverable.getSocketAddress().getPort(),
+                                    "dummy",
+                                    "DummyService",
+                                    "x1"));
+    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build());
+
+    String responseContent = new Gson().fromJson(response.getResponseBodyAsString(), String.class);
+
     Assert.assertEquals("x1", responseContent);
 
     // now the dataset must have a read and another open operation
@@ -219,7 +210,7 @@ public class OpenCloseDataSetTest {
   }
 
   @AfterClass
-  public static void tearDown() throws IOException {
+  public static void tearDown() {
     Locations.deleteQuietly(namespaceHomeLocation, true);
   }
 }

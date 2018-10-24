@@ -77,7 +77,7 @@ public class ProfileMetadataTest extends AppFabricTestBase {
 
     // deploy should succeed
     ApplicationId defaultAppId = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME);
-    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
 
     ScheduleId scheduleId1 = defaultAppId.schedule(AppWithSchedule.SCHEDULE);
     ScheduleId scheduleId2 = defaultAppId.schedule(AppWithSchedule.SCHEDULE);

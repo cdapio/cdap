@@ -54,15 +54,13 @@ import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
 import co.cask.cdap.reporting.ProgramHeartbeatDataset;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.Impersonator;
-import com.google.common.base.Charsets;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
-import org.apache.http.HttpResponse;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.tephra.TransactionFailureException;
@@ -97,7 +95,6 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   private static final String BASE_PATH = Constants.Gateway.API_VERSION_3;
   private static final Type DASHBOARD_DETAIL_TYPE = new TypeToken<List<DashboardProgramRunRecord>>() { }.getType();
   private static Store store;
-  private static long sourceId;
   private static Scheduler scheduler;
   private static Impersonator impersonator;
   private static final byte[] SOURCE_ID = Bytes.toBytes("sourceId");
@@ -134,9 +131,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
 
   private void writeRunRecordMeta(RunRecordMeta runRecordMeta,
                                   long timestampInMillis) throws InterruptedException, TransactionFailureException {
-    heartBeatTxnl.execute(() -> {
-      programHeartbeatDataset.writeRunRecordMeta(runRecordMeta, timestampInMillis);
-    });
+    heartBeatTxnl.execute(() -> programHeartbeatDataset.writeRunRecordMeta(runRecordMeta, timestampInMillis));
   }
 
   /**
@@ -193,8 +188,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                     String.valueOf(startTime1), String.valueOf(endTime), ns1.getNamespace(), ns2.getNamespace());
     // get ops dashboard query results
     HttpResponse response = doGet(opsDashboardQueryPath);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
+    Assert.assertEquals(200, response.getResponseCode());
+    String content = response.getResponseBodyAsString();
     List<DashboardProgramRunRecord> dashboardDetail = GSON.fromJson(content, DASHBOARD_DETAIL_TYPE);
     // assert the result contains 2 entries
     Assert.assertEquals(2, dashboardDetail.size());
@@ -210,8 +205,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
 
     // get ops dashboard query results
     response = doGet(opsDashboardQueryPath);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
+    Assert.assertEquals(200, response.getResponseCode());
+    content = response.getResponseBodyAsString();
     dashboardDetail = GSON.fromJson(content, DASHBOARD_DETAIL_TYPE);
     // assert the result contains 1 entry
     Assert.assertEquals(1, dashboardDetail.size());
@@ -220,7 +215,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
 
   }
 
-  List<Long> getExpectedRuntimes(long startTimeInMin, long endTimeInMin, long triggerTimeInMin, long testStartTime) {
+  private List<Long> getExpectedRuntimes(long startTimeInMin, long endTimeInMin,
+                                         long triggerTimeInMin, long testStartTime) {
     List<Long> triggerringTimeInSeconds = new ArrayList<>();
     for (long currentTimeInMin = startTimeInMin; currentTimeInMin <= endTimeInMin; currentTimeInMin += 1) {
       if (currentTimeInMin % triggerTimeInMin == 0) {
@@ -338,7 +334,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     throws ConflictException, BadRequestException, NotFoundException {
     ProgramSchedule schedule =
       new ProgramSchedule(String.format("%dMinSchedule", scheduleMins), "time schedule", workflowId,
-                          Collections.EMPTY_MAP, new TimeTrigger(String.format("*/%d * * * *", scheduleMins)),
+                          Collections.emptyMap(), new TimeTrigger(String.format("*/%d * * * *", scheduleMins)),
                           Collections.emptyList());
     scheduler.addSchedule(schedule);
     scheduler.enableSchedule(schedule.getScheduleId());
@@ -347,9 +343,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
 
   private static List<DashboardProgramRunRecord> getDashboardRecords(String path) throws Exception {
     HttpResponse response = doGet(path);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
-    return GSON.fromJson(content, DASHBOARD_DETAIL_TYPE);
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), DASHBOARD_DETAIL_TYPE);
   }
 
   @Test
@@ -381,8 +376,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
 
     // get ops dashboard query results
     HttpResponse response = doGet(opsDashboardQueryPath);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
+    Assert.assertEquals(200, response.getResponseCode());
+    String content = response.getResponseBodyAsString();
     List<DashboardProgramRunRecord> dashboardDetail = GSON.fromJson(content, DASHBOARD_DETAIL_TYPE);
     // assert the result contains 1 entry
     Assert.assertEquals(1, dashboardDetail.size());

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -172,7 +172,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     // cleanup
     deleteNamespace(impNsMeta.getName());
     Assert.assertEquals(HttpResponseCodes.SC_NOT_FOUND,
-                        getNamespace(impNsMeta.getName()).getStatusLine().getStatusCode());
+                        getNamespace(impNsMeta.getName()).getResponseCode());
 
     // create an impersonated ns again
     createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());

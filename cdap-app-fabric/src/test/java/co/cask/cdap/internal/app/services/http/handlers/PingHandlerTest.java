@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import org.apache.http.HttpResponse;
+import co.cask.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,12 +28,12 @@ public class PingHandlerTest extends AppFabricTestBase {
   @Test
   public void testPing() throws Exception {
     HttpResponse response = doGet("/ping");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
   @Test
   public void testStatus() throws Exception {
     HttpResponse response = doGet("/v3/system/services/appfabric/status");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
   }
 }

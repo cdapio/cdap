@@ -37,19 +37,18 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import org.apache.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -77,15 +76,15 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
 
   private void assertResponseCode(int expected, HttpResponse response) {
-    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expected, response.getResponseCode());
   }
 
-  private List<JsonObject> readListResponse(HttpResponse response) throws IOException {
+  private List<JsonObject> readListResponse(HttpResponse response) {
     Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
     return readResponse(response, typeToken);
   }
 
-  private JsonObject readGetResponse(HttpResponse response) throws IOException {
+  private JsonObject readGetResponse(HttpResponse response) {
     Type typeToken = new TypeToken<JsonObject>() { }.getType();
     return readResponse(response, typeToken);
   }
@@ -344,10 +343,10 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     waitState(program, ProgramStatus.STOPPED.name());
     assertResponseCode(200, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
-    Assert.assertTrue(getAppList(NAME).size() == 2);
-    Assert.assertTrue(getAppDetails(NAME, "AppWithServices").get("name").getAsString().equals("AppWithServices"));
-    Assert.assertTrue(getAppDetails(NAME, AppWithDataset.class.getSimpleName()).get("name").getAsString()
-                        .equals(AppWithDataset.class.getSimpleName()));
+    Assert.assertEquals(2, getAppList(NAME).size());
+    Assert.assertEquals("AppWithServices", getAppDetails(NAME, "AppWithServices").get("name").getAsString());
+    Assert.assertEquals(AppWithDataset.class.getSimpleName(),
+                        getAppDetails(NAME, AppWithDataset.class.getSimpleName()).get("name").getAsString());
     assertResponseCode(200, getNamespace(NAME));
     Assert.assertFalse(dsFramework.hasInstance(myDataset));
     assertResponseCode(200, deleteNamespace(NAME));
@@ -415,7 +414,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     setProperties(NAME, meta);
     // assert that the name in the metadata is ignored (the name from the url should be used, instead
     HttpResponse nonexistentGet = getNamespace(nonexistentName);
-    Assert.assertEquals(404, nonexistentGet.getStatusLine().getStatusCode());
+    Assert.assertEquals(404, nonexistentGet.getResponseCode());
 
     response = getNamespace(NAME);
     namespace = readGetResponse(response);
@@ -452,6 +451,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("new/url", config.getKeytabURI());
     // cleanup
     response = deleteNamespace(NAME);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
   }
 }

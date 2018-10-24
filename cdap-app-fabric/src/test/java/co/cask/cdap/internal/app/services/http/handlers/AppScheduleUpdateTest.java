@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,7 +67,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
     ApplicationId defaultAppId = TEST_NAMESPACE_META2.getNamespaceId().app(AppWithSchedule.NAME);
-    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
 
     List<ScheduleDetail> actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                                         defaultAppId.getApplication(),
@@ -80,7 +80,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
 
 
-    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
 
     actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                                                defaultAppId.getApplication(),
@@ -94,7 +94,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
-    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
 
     actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                    defaultAppId.getApplication(),
@@ -107,7 +107,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
-    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
 
     actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                    defaultAppId.getApplication(),
