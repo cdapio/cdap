@@ -17,6 +17,7 @@
 package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.annotation.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +40,17 @@ public class PluginClass {
   private final Map<String, PluginPropertyField> properties;
   private final Set<String> endpoints;
   private final Requirements requirements;
+
+  public PluginClass() {
+    this.type = Plugin.DEFAULT_TYPE;
+    this.name = null;
+    this.description = "";
+    this.className = null;
+    this.configFieldName = null;
+    this.properties = Collections.emptyMap();
+    this.endpoints = Collections.emptySet();
+    this.requirements = Requirements.EMPTY;
+  }
 
   public PluginClass(String type, String name, String description, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
@@ -146,10 +158,7 @@ public class PluginClass {
    * @return the {@link Requirements} which represents the requirements of the plugin
    */
   public Requirements getRequirements() {
-    // CDAP-14515 Requirements can be null in the case when the cluster is upgraded and the the Plugin class
-    // is being constructed from a deserialized form and the GSON used to deserialize does not uses
-    // PluginClassDeserializer responsible for handling the absence of requirements in old deserialized form.
-    return requirements == null ? Requirements.EMPTY : requirements;
+    return requirements;
   }
 
   @Override
