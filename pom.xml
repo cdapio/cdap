@@ -128,7 +128,7 @@
     <cdap.client.version>1.2.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
     <commons.codec.version>1.6</commons.codec.version>
-    <commons.compress.version>1.9</commons.compress.version>
+    <commons.compress.version>1.18</commons.compress.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
     <dumbster.version>1.6</dumbster.version>
     <fastutil.version>6.5.6</fastutil.version>
