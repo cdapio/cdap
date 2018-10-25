@@ -230,6 +230,7 @@ export default class PipelineDetailsActionsButton extends Component {
           bubbleEvent={false}
           enableInteractionInPopover={true}
           className="pipeline-actions-popper"
+          data-testid="pipeline-actions-popper"
           showPopover={this.state.showPopover}
           onTogglePopover={this.togglePopover}
         >
@@ -237,7 +238,7 @@ export default class PipelineDetailsActionsButton extends Component {
             <li onClick={this.duplicateConfigAndNavigate}>{T.translate(`${PREFIX}.duplicate`)}</li>
             <li onClick={this.toggleExportModal}>{T.translate(`${PREFIX}.export`)}</li>
             <hr />
-            <li onClick={this.toggleDeleteConfirmationModal} className="delete-action">
+            <li onClick={this.toggleDeleteConfirmationModal} className="delete-action" data-testid="delete-pipeline">
               {T.translate('commons.delete')}
             </li>
           </ul>

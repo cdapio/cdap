@@ -126,6 +126,7 @@ export default class ConfirmationModal extends Component {
         isOpen={this.props.isOpen}
         toggle={this.props.toggleModal}
         className="confirmation-modal cdap-modal"
+        data-testid="confirmation-modal"
         backdrop="static"
         zIndex={1061}
         keyboard={this.props.keyboard}

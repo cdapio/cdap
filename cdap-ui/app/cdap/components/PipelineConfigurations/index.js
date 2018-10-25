@@ -117,7 +117,7 @@ export default class PipelineConfigurations extends Component {
       <div className="pipeline-configurations-header modeless-header">
         <div className="modeless-title">{headerLabel}</div>
         <div className="btn-group">
-          <a className="btn" onClick={this.props.onClose}>
+          <a className="btn" onClick={this.props.onClose} data-testid="close-modeless">
             <IconSVG name="icon-close" />
           </a>
         </div>
