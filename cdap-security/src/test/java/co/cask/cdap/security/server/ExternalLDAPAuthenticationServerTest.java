@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -39,14 +37,15 @@ public class ExternalLDAPAuthenticationServerTest extends ExternalLDAPAuthentica
   @BeforeClass
   public static void beforeClass() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostName());
     cConf.set(Constants.Security.SSL.EXTERNAL_ENABLED, "false");
-    cConf.set(Constants.Security.AUTH_SERVER_BIND_PORT, "0");
+    cConf.setInt(Constants.Security.AUTH_SERVER_BIND_PORT, 0);
 
     configuration = cConf;
     sConfiguration = SConfiguration.create();
 
-    ldapListenerConfig = InMemoryListenerConfig.createLDAPConfig("LDAP", InetAddress.getByName("127.0.0.1"),
+    ldapListenerConfig = InMemoryListenerConfig.createLDAPConfig("LDAP",
+                                                                 InetAddress.getLoopbackAddress(),
                                                                  ldapPort, null);
     testServer = new ExternalLDAPAuthenticationServerTest();
     testServer.setup();
@@ -64,19 +63,14 @@ public class ExternalLDAPAuthenticationServerTest extends ExternalLDAPAuthentica
   }
 
   @Override
-  protected HttpClient getHTTPClient() throws Exception {
-    return new DefaultHttpClient();
-  }
-
-  @Override
-  protected Map<String, String> getAuthRequestHeader() throws Exception {
+  protected Map<String, String> getAuthRequestHeader() {
     Map<String, String> headers = new HashMap<>();
     headers.put("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     return headers;
   }
 
   @Override
-  protected String getAuthenticatedUserName() throws Exception {
+  protected String getAuthenticatedUserName() {
    return "admin";
   }
 }
