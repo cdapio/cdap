@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,6 +55,7 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -62,8 +63,6 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -119,7 +118,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Tasks.waitFor(true, () -> {
       HttpResponse response = doPost(getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
                                                          program.getNamespaceId()));
-      return expectedStatusCode == response.getStatusLine().getStatusCode();
+      return expectedStatusCode == response.getResponseCode();
     }, 60, TimeUnit.SECONDS);
   }
 
@@ -138,13 +137,12 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
                                                          programId.getNamespaceId());
     response = doPut(versionedRuntimeArgsUrl, argString);
 
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
     response = doGet(versionedRuntimeArgsUrl);
 
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String responseEntity = EntityUtils.toString(response.getEntity());
-    Map<String, String> argsRead = GSON.fromJson(responseEntity, new TypeToken<Map<String, String>>() {
-    }.getType());
+    Assert.assertEquals(200, response.getResponseCode());
+    String responseEntity = response.getResponseBodyAsString();
+    Map<String, String> argsRead = GSON.fromJson(responseEntity, new TypeToken<Map<String, String>>() { }.getType());
 
     Assert.assertEquals(args.size(), argsRead.size());
   }
@@ -469,14 +467,14 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(2, historyRuns.size());
 
     HttpResponse response = getWorkflowNodeStatesResponse(workflowId.toEntityId(), historyRuns.get(0).getPid());
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
     Map<String, WorkflowNodeStateDetail> statusMap = readResponse(response, MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE);
     Assert.assertEquals(1, statusMap.size());
     Assert.assertEquals(ConcurrentWorkflowApp.SimpleAction.class.getSimpleName(),
                         statusMap.values().iterator().next().getNodeId());
 
     response = getWorkflowNodeStatesResponse(workflowId.toEntityId(), historyRuns.get(1).getPid());
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
     statusMap = readResponse(response, MAP_STRING_TO_WORKFLOWNODESTATEDETAIL_TYPE);
     Assert.assertEquals(1, statusMap.size());
     Assert.assertEquals(ConcurrentWorkflowApp.SimpleAction.class.getSimpleName(),

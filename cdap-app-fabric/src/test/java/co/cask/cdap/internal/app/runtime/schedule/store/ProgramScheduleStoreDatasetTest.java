@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,13 +89,13 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) store));
 
     final ProgramSchedule sched1 = new ProgramSchedule("sched1", "one partition schedule", PROG1_ID,
-      Collections.EMPTY_MAP, new PartitionTrigger(DS1_ID, 1), Collections.emptyList());
+      Collections.emptyMap(), new PartitionTrigger(DS1_ID, 1), Collections.emptyList());
     final ProgramSchedule sched2 = new ProgramSchedule("sched2", "time schedule", PROG2_ID,
-      Collections.EMPTY_MAP, new TimeTrigger("* * * 1 1"), Collections.emptyList());
+      Collections.emptyMap(), new TimeTrigger("* * * 1 1"), Collections.emptyList());
     final ProgramSchedule sched3 = new ProgramSchedule("sched3", "two partitions schedule", PROG4_ID,
-      Collections.EMPTY_MAP, new PartitionTrigger(DS1_ID, 2), Collections.emptyList());
+      Collections.emptyMap(), new PartitionTrigger(DS1_ID, 2), Collections.emptyList());
     final ProgramSchedule sched4 = new ProgramSchedule("sched4", "time schedule", PROG5_ID,
-      Collections.EMPTY_MAP, new TimeTrigger("* * * 2 1"), Collections.emptyList());
+      Collections.emptyMap(), new TimeTrigger("* * * 2 1"), Collections.emptyList());
 
     txExecutor.execute(() -> {
       // assert no schedules exists before adding schedules

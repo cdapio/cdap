@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,30 +19,21 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.security.tools.HttpsEnabler;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.util.ssl.KeyStoreKeyManager;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
-import org.apache.http.client.HttpClient;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.BasicClientConnectionManager;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Tests for {@link ExternalAuthenticationServer} with SSL enabled.
@@ -50,6 +41,7 @@ import javax.net.ssl.X509TrustManager;
 public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthenticationServerTestBase {
 
   private static ExternalLDAPAuthenticationServerSSLTest testServer;
+  private static final HttpsEnabler HTTPS_ENABLER = new HttpsEnabler().setTrustAll(true);
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -60,9 +52,9 @@ public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthent
 
     CConfiguration cConf = CConfiguration.create();
     SConfiguration sConf = SConfiguration.create();
-    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostName());
     cConf.set(Constants.Security.SSL.EXTERNAL_ENABLED, "true");
-    cConf.set(Constants.Security.AuthenticationServer.SSL_PORT, "0");
+    cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, 0);
     cConf.set(authHandlerConfigBase.concat("useLdaps"), "true");
     cConf.set(authHandlerConfigBase.concat("ldapsVerifyCertificate"), "false");
     sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, certUrl.getPath());
@@ -72,7 +64,7 @@ public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthent
     String keystorePassword = sConf.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
     KeyStoreKeyManager keyManager = new KeyStoreKeyManager(certUrl.getFile(), keystorePassword.toCharArray());
     SSLUtil sslUtil = new SSLUtil(keyManager, new TrustAllTrustManager());
-    ldapListenerConfig = InMemoryListenerConfig.createLDAPSConfig("LDAP", InetAddress.getByName("127.0.0.1"),
+    ldapListenerConfig = InMemoryListenerConfig.createLDAPSConfig("LDAP", InetAddress.getLoopbackAddress(),
                                                                   ldapPort, sslUtil.createSSLServerSocketFactory(),
                                                                   sslUtil.createSSLSocketFactory());
 
@@ -90,49 +82,19 @@ public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthent
   }
 
   @Override
-  protected HttpClient getHTTPClient() throws Exception {
-    SSLContext sslContext = SSLContext.getInstance("SSL");
-
-    // set up a TrustManager that trusts everything
-    sslContext.init(null, new TrustManager[]{new X509TrustManager() {
-      @Override
-      public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-        return null;
-      }
-
-      @Override
-      public void checkClientTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
-        throws CertificateException {
-        //
-      }
-
-      @Override
-      public void checkServerTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
-        throws CertificateException {
-        //
-      }
-
-    }}, new SecureRandom());
-
-    SSLSocketFactory sf = new SSLSocketFactory(sslContext);
-    Scheme httpsScheme = new Scheme("https", getAuthServerPort(), sf);
-    SchemeRegistry schemeRegistry = new SchemeRegistry();
-    schemeRegistry.register(httpsScheme);
-
-    // apache HttpClient version >4.2 should use BasicClientConnectionManager
-    ClientConnectionManager cm = new BasicClientConnectionManager(schemeRegistry);
-    return new DefaultHttpClient(cm);
+  protected HttpURLConnection openConnection(URL url) throws Exception {
+    return HTTPS_ENABLER.enable((HttpsURLConnection) super.openConnection(url));
   }
 
   @Override
-  protected Map<String, String> getAuthRequestHeader() throws Exception {
+  protected Map<String, String> getAuthRequestHeader() {
     Map<String, String> headers = new HashMap<>();
     headers.put("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     return headers;
   }
 
   @Override
-  protected String getAuthenticatedUserName() throws Exception {
+  protected String getAuthenticatedUserName() {
     return "admin";
   }
 }

@@ -128,7 +128,7 @@
     <cdap.client.version>1.2.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
     <commons.codec.version>1.6</commons.codec.version>
-    <commons.compress.version>1.9</commons.compress.version>
+    <commons.compress.version>1.18</commons.compress.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
     <dumbster.version>1.6</dumbster.version>
     <fastutil.version>6.5.6</fastutil.version>
@@ -149,7 +149,6 @@
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
     <hive.version>1.2.1</hive.version>
     <hsql.version>2.2.4</hsql.version>
-    <http.component.version>4.3.2</http.component.version>
     <javamail.version>1.4.1</javamail.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty.version>6.1.22</jetty.version>
@@ -1400,24 +1399,6 @@
         <groupId>com.unboundid</groupId>
         <artifactId>unboundid-ldapsdk</artifactId>
         <version>${unboundid.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpclient</artifactId>
-        <version>${http.component.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore</artifactId>
-        <version>${http.component.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>

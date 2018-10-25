@@ -90,7 +90,6 @@ import com.google.inject.Key;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
-import org.apache.commons.httpclient.HttpStatus;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
@@ -109,6 +108,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -374,7 +374,7 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected void assertNamespaceNotFound(HttpResponse response, NamespaceId namespaceId) {
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
+    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.toString()));
   }
 }

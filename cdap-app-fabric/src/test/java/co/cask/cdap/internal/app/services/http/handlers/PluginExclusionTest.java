@@ -78,7 +78,7 @@ public class PluginExclusionTest extends ArtifactHttpHandlerTestBase {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("inspection", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(artifactId), InspectionApp.class, manifest, parents)
-                          .getStatusLine().getStatusCode());
+                          .getResponseCode());
     Set<PluginClass> plugins = getArtifact(artifactId).getClasses().getPlugins();
     // Only four plugins which does not have transactions as requirement should be visible.
     Assert.assertEquals(4, plugins.size());

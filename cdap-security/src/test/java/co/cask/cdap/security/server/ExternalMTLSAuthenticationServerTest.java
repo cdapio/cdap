@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,21 +19,24 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.security.tools.HttpsEnabler;
+import org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
-import java.io.FileInputStream;
-
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URL;
 import java.security.KeyStore;
-import java.security.cert.CertificateException;
+import java.util.Collections;
 import java.util.Map;
+import javax.net.ssl.HttpsURLConnection;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests for Mutual TLS a.k.a 2-way SSL Based Auth
@@ -44,12 +47,11 @@ import javax.net.ssl.X509TrustManager;
  * The Server's trust store contains the client's certificate & and the client's trust store contains the server's
  * certificate
  */
-public class ExternalMTLSAuthenticationServerTest extends ExternalMTLSAuthenticationServerTestBase {
+public class ExternalMTLSAuthenticationServerTest extends ExternalAuthenticationServerTestBase  {
 
-  static final String AUTH_HANDLER_CONFIG_BASE = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
-  static ExternalMTLSAuthenticationServerTest testServer;
-  static String validClientCN = "client";
-
+  private static final String AUTH_HANDLER_CONFIG_BASE = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
+  private static final String VALID_CLIENT_CN = "client";
+  private static ExternalMTLSAuthenticationServerTest testServer;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -63,11 +65,11 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalMTLSAuthentica
 
     CConfiguration cConf = CConfiguration.create();
     SConfiguration sConf = SConfiguration.create();
-    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostName());
 
     // enables SSL
     cConf.set(Constants.Security.SSL.EXTERNAL_ENABLED, "true");
-    cConf.set(Constants.Security.AuthenticationServer.SSL_PORT, "0");
+    cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, 0);
 
     // set up port for non-ssl endpoints
     cConf.set(Constants.Security.AUTH_SERVER_BIND_PORT, "1");
@@ -103,90 +105,126 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalMTLSAuthentica
     testServer.tearDown();
   }
 
-
   @Override
   protected String getProtocol() {
     return "https";
   }
 
   /**
-   * Sets up the client's keystore Using a certificate that is not part of the server's trustore
+   * Authentication Server with 2-way SSL and related handler configurations.
+   */
+  protected CConfiguration getConfiguration(CConfiguration cConf) {
+    String configBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
+    cConf.set(Constants.Security.SSL.EXTERNAL_ENABLED, Boolean.TRUE.toString());
+
+    // Use random port for testing
+    cConf.setInt(Constants.Security.AUTH_SERVER_BIND_PORT, Networks.getRandomPort());
+    cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, Networks.getRandomPort());
+
+    // Setting the Authentication Handler to the Certificate Handler
+    cConf.set(Constants.Security.AUTH_HANDLER_CLASS, CertificateAuthenticationHandler.class.getName());
+    cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, PropertyFileLoginModule.class.getName());
+    cConf.set(configBase.concat("debug"), "true");
+    cConf.set(configBase.concat("hostname"), "localhost");
+
+    URL keytabUrl = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("test.keytab");
+    Assert.assertNotNull(keytabUrl);
+    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, keytabUrl.getPath());
+    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "test_principal");
+    return cConf;
+  }
+
+  @Override
+  protected void startExternalAuthenticationServer() {
+    // no-op
+  }
+
+  @Override
+  protected void stopExternalAuthenticationServer() {
+    // no-op
+  }
+
+  @Override
+  protected HttpURLConnection openConnection(URL url) throws Exception {
+    return openConnection(url, "client-key.jks");
+  }
+
+  private HttpsURLConnection openConnection(URL url, String keyStoreResource) throws Exception {
+    HttpsURLConnection urlConn = (HttpsURLConnection) super.openConnection(url);
+
+    URL clientKeystoreURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource(keyStoreResource);
+    Assert.assertNotNull(clientKeystoreURL);
+    KeyStore ks = KeyStore.getInstance("JKS");
+
+    try (InputStream is = clientKeystoreURL.openConnection().getInputStream()) {
+      ks.load(is, "secret".toCharArray());
+    }
+    return new HttpsEnabler().setKeyStore(ks, () -> configuration.get("security.auth.server.ssl.keystore.password",
+                                                                      "secret").toCharArray())
+      .setTrustAll(true)
+      .enable(urlConn);
+  }
+
+  /**
+   * Test request to server using a client certificate that is not trusted by the server.
    *
-   * @return
    * @throws Exception
    */
   @Override
-  protected KeyManager[] getInvalidKeyManagers() throws Exception {
-    URL clientKeystoreURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("invalid-client" +
-                                                                                                      ".jks");
-    Assert.assertNotNull(clientKeystoreURL);
-    final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    KeyStore ks = KeyStore.getInstance("JKS");
-    char[] ksPass = "secret".toCharArray();
-    try (FileInputStream fis = new FileInputStream(clientKeystoreURL.getPath())) {
-      ks.load(fis, ksPass);
-      kmf.init(ks, configuration.get("security.auth.server.ssl.keystore.password", "secret").toCharArray());
+  @Test
+  public void testInvalidAuthentication() throws Exception {
+    HttpsURLConnection urlConn = openConnection(getURL(GrantAccessToken.Paths.GET_TOKEN), "invalid-client.jks");
+    try {
+      // Request is Unauthorized
+      assertEquals(403, urlConn.getResponseCode());
+    } finally {
+      urlConn.disconnect();
     }
-    return kmf.getKeyManagers();
   }
 
 
   /**
-   * Sets up the client's keystore from the client_keystore_path
+   * Test request to server using a client certificate that is not trusted by the server.
    *
-   * @return
    * @throws Exception
    */
-  @Override
-  protected KeyManager[] getKeyManagers() throws Exception {
-    URL clientKeystoreURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("client-key.jks");
-    Assert.assertNotNull(clientKeystoreURL);
-    final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    KeyStore ks = KeyStore.getInstance("JKS");
-    char[] ksPass = "secret".toCharArray();
-    try (FileInputStream fis = new FileInputStream(clientKeystoreURL.getPath())) {
-      ks.load(fis, ksPass);
-      kmf.init(ks, configuration.get("security.auth.server.ssl.keystore.password", "secret").toCharArray());
+  @Test
+  public void testInvalidClientCertForStatusEndpoint() throws Exception {
+    HttpsURLConnection urlConn = openConnection(getURL(Constants.EndPoints.STATUS), "invalid-client.jks");
+    try {
+      // Request is Authorized
+      assertEquals(200, urlConn.getResponseCode());
+    } finally {
+      urlConn.disconnect();
     }
-    return kmf.getKeyManagers();
   }
+
 
   /**
-   * For the test trusting any cert the server provides
+   * Test request to server without providing a client certificate
    *
-   * @return
    * @throws Exception
    */
-  @Override
-  protected TrustManager[] getTrustManagers() throws Exception {
-    // Setting up the client's trust store, which trusts all certs
-    return new TrustManager[]{new X509TrustManager() {
-      @Override
-      public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-        return null;
-      }
+  @Test
+  public void testMissingClientCertAuthentication() throws Exception {
+    HttpsURLConnection urlConn = new HttpsEnabler()
+      .setTrustAll(true)
+      .enable((HttpsURLConnection) openConnection(getURL(GrantAccessToken.Paths.GET_TOKEN)));
 
-      @Override
-      public void checkClientTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
-        throws CertificateException {
-        // no-op
-      }
-
-      @Override
-      public void checkServerTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
-        throws CertificateException {
-        // no-op
-      }
-    }};
+    try {
+      // Status request is authorized without any extra headers
+      assertEquals(403, urlConn.getResponseCode());
+    } finally {
+      urlConn.disconnect();
+    }
   }
 
-  protected Map<String, String> getAuthRequestHeader() throws Exception {
-    return null;
+  protected Map<String, String> getAuthRequestHeader() {
+    return Collections.emptyMap();
   }
 
   @Override
-  protected String getAuthenticatedUserName() throws Exception {
-    return validClientCN;
+  protected String getAuthenticatedUserName() {
+    return VALID_CLIENT_CN;
   }
-
 }

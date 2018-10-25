@@ -267,8 +267,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     Assert.assertTrue(summary.getName().endsWith(pid));
 
     // Update the dataset properties to remove keep.local so that local dataset deleter can delete it
-    Map<String, String> updatedProperties = new HashMap<>();
-    updatedProperties.putAll(summary.getProperties());
+    Map<String, String> updatedProperties = new HashMap<>(summary.getProperties());
     updatedProperties.remove(Constants.AppFabric.WORKFLOW_KEEP_LOCAL);
     datasetFramework.updateInstance(new DatasetId(TEST_NAMESPACE1, summary.getName()),
                                     DatasetProperties.of(updatedProperties));

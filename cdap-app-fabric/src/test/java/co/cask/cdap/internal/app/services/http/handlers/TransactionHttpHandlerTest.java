@@ -17,14 +17,13 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.hbase.txprune.InvalidListPruningDebugTool;
@@ -54,12 +53,7 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
   private static final Type SET_PRUNE_INFO_TYPE = new TypeToken<Set<? extends RegionPruneInfo>>() { }.getType();
   private static final Comparator<RegionPruneInfo> PRUNE_INFO_COMPARATOR =
-    new Comparator<RegionPruneInfo>() {
-      @Override
-      public int compare(RegionPruneInfo o1, RegionPruneInfo o2) {
-        return Long.compare(o1.getPruneUpperBound(), o2.getPruneUpperBound());
-      }
-    };
+    Comparator.comparingLong(RegionPruneInfo::getPruneUpperBound);
 
   @Before
   public void clear() {
@@ -75,27 +69,27 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
 
     Transaction tx1 = txClient.startShort();
     HttpResponse response = doPost("/v3/transactions/" + tx1.getWritePointer() + "/invalidate");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
 
     Transaction tx2 = txClient.startShort();
     txClient.commitOrThrow(tx2);
     response = doPost("/v3/transactions/" + tx2.getWritePointer() + "/invalidate");
-    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(409, response.getResponseCode());
 
     Assert.assertEquals(400,
-                        doPost("/v3/transactions/foobar/invalidate").getStatusLine().getStatusCode());
+                        doPost("/v3/transactions/foobar/invalidate").getResponseCode());
   }
 
   @Test
   public void testResetTxManagerState() throws Exception {
     HttpResponse response = doPost("/v3/transactions/state");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
   @Test
   public void testPruneNow() throws Exception {
     HttpResponse response = doPost("/v3/transactions/prune/now");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
   @Test
@@ -120,7 +114,7 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = 
       doPost("/v3/transactions/invalid/remove/ids",
              GSON.toJson(ImmutableMap.of("ids", ImmutableSet.of(tx1.getWritePointer(), tx3.getWritePointer()))));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
     
     Assert.assertEquals(1, txClient.getInvalidSize());
   }
@@ -151,7 +145,7 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response =
       doPost("/v3/transactions/invalid/remove/until",
              GSON.toJson(ImmutableMap.of("time", beforeTx3)));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getResponseCode());
 
     Assert.assertEquals(1, txClient.getInvalidSize());
   }
@@ -176,8 +170,8 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
 
     // Assert through REST API
     HttpResponse response = doGet("/v3/transactions/invalid/size");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Map<String, Integer> resultMap = GSON.fromJson(EntityUtils.toString(response.getEntity()), STRING_INT_TYPE);
+    Assert.assertEquals(200, response.getResponseCode());
+    Map<String, Integer> resultMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_INT_TYPE);
     Assert.assertNotNull(resultMap);
     Assert.assertEquals(3, (int) resultMap.get("size"));
   }
@@ -190,13 +184,13 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
     InvalidListPruningDebugTool.setRegionsToBeCompacted(testData);
 
     HttpResponse response = doGet("/v3/transactions/prune/regions/block");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Set<String> actual = GSON.fromJson(EntityUtils.toString(response.getEntity()), SET_STRING_TYPE);
+    Assert.assertEquals(200, response.getResponseCode());
+    Set<String> actual = GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
     Assert.assertEquals(testData.get("now"), actual);
 
     response = doGet("/v3/transactions/prune/regions/block?time=now-20s&limit=2");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    actual = GSON.fromJson(EntityUtils.toString(response.getEntity()), SET_STRING_TYPE);
+    Assert.assertEquals(200, response.getResponseCode());
+    actual = GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
     Assert.assertEquals(Sets.newTreeSet(Iterables.limit(testData.get("now-20s"), 2)), actual);
   }
 
@@ -215,14 +209,13 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
     InvalidListPruningDebugTool.setIdleRegions(testData);
 
     HttpResponse response = doGet("/v3/transactions/prune/regions/idle");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Set<? extends RegionPruneInfo> actual =
-      GSON.fromJson(EntityUtils.toString(response.getEntity()), SET_PRUNE_INFO_TYPE);
+    Assert.assertEquals(200, response.getResponseCode());
+    Set<? extends RegionPruneInfo> actual = GSON.fromJson(response.getResponseBodyAsString(), SET_PRUNE_INFO_TYPE);
     Assert.assertEquals(testData.get("now"), ImmutableSortedSet.copyOf(PRUNE_INFO_COMPARATOR, actual));
 
     response = doGet("/v3/transactions/prune/regions/idle?time=now%2B1h&limit=2");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    actual = GSON.fromJson(EntityUtils.toString(response.getEntity()), SET_PRUNE_INFO_TYPE);
+    Assert.assertEquals(200, response.getResponseCode());
+    actual = GSON.fromJson(response.getResponseBodyAsString(), SET_PRUNE_INFO_TYPE);
     Iterable<? extends RegionPruneInfo> expectedHour =
       ImmutableSortedSet.copyOf(PRUNE_INFO_COMPARATOR, Iterables.limit(testData.get("now+1h"), 2));
     Assert.assertEquals(expectedHour, ImmutableSortedSet.copyOf(PRUNE_INFO_COMPARATOR, actual));
@@ -236,12 +229,12 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
     InvalidListPruningDebugTool.setRegionPruneInfos(testData);
 
     HttpResponse response = doGet("/v3/transactions/prune/regions/r");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    RegionPruneInfo actual = GSON.fromJson(EntityUtils.toString(response.getEntity()), RegionPruneInfo.class);
+    Assert.assertEquals(200, response.getResponseCode());
+    RegionPruneInfo actual = GSON.fromJson(response.getResponseBodyAsString(), RegionPruneInfo.class);
     Assert.assertEquals(testData.get("r").getRegionNameAsString(), actual.getRegionNameAsString());
 
     response = doGet("/v3/transactions/prune/regions/non-existent");
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(404, response.getResponseCode());
   }
 
   @Test
@@ -253,13 +246,13 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
     InvalidListPruningDebugTool.setRegionsAtTime(testData);
 
     HttpResponse response = doGet("/v3/transactions/prune/regions");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    RegionsAtTime actual = GSON.fromJson(EntityUtils.toString(response.getEntity()), RegionsAtTime.class);
+    Assert.assertEquals(200, response.getResponseCode());
+    RegionsAtTime actual = GSON.fromJson(response.getResponseBodyAsString(), RegionsAtTime.class);
     Assert.assertEquals(testData.get("now"), actual);
 
     response = doGet("/v3/transactions/prune/regions?time=1234567");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    actual = GSON.fromJson(EntityUtils.toString(response.getEntity()), RegionsAtTime.class);
+    Assert.assertEquals(200, response.getResponseCode());
+    actual = GSON.fromJson(response.getResponseBodyAsString(), RegionsAtTime.class);
     Assert.assertEquals(testData.get("1234567"), actual);
   }
 

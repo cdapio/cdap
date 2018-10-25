@@ -66,7 +66,6 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
   private static String systemArtifactsDir;
   static ArtifactRepository artifactRepository;
   static MetadataClient metadataClient;
-  private static ClientConfig clientConfig;
 
   @BeforeClass
   public static void setup() {
@@ -80,7 +79,7 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
     String host = discoverable.getSocketAddress().getHostName();
     int port = discoverable.getSocketAddress().getPort();
     ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
-    clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
+    ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
     metadataClient = new MetadataClient(clientConfig);
   }
 

@@ -20,12 +20,12 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.RestartServiceInstancesStatus;
 import co.cask.cdap.proto.SystemServiceMeta;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -106,17 +106,16 @@ public class MonitorHandlerTest extends AppFabricTestBase {
                                 Constants.Service.APP_FABRIC_HTTP);
     HttpResponse response = doPost(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
     path = String.format("%s/system/services/%s/latest-restart", Constants.Gateway.API_VERSION_3,
                          Constants.Service.APP_FABRIC_HTTP);
     response = doGet(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
-    RestartServiceInstancesStatus result =
-      GSON.fromJson(new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8),
-                    RestartServiceInstancesStatus.class);
+    RestartServiceInstancesStatus result = GSON.fromJson(response.getResponseBodyAsString(),
+                                                         RestartServiceInstancesStatus.class);
 
     Assert.assertNotNull(result);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result.getServiceName());
@@ -129,17 +128,16 @@ public class MonitorHandlerTest extends AppFabricTestBase {
                                 Constants.Service.APP_FABRIC_HTTP);
     HttpResponse response = doPost(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
     path = String.format("%s/system/services/%s/latest-restart", Constants.Gateway.API_VERSION_3,
                          Constants.Service.APP_FABRIC_HTTP);
     response = doGet(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
-    RestartServiceInstancesStatus result =
-      GSON.fromJson(new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8),
-                    RestartServiceInstancesStatus.class);
+    RestartServiceInstancesStatus result = GSON.fromJson(response.getResponseBodyAsString(),
+                                                         RestartServiceInstancesStatus.class);
 
     Assert.assertNotNull(result);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result.getServiceName());
@@ -152,17 +150,16 @@ public class MonitorHandlerTest extends AppFabricTestBase {
                                 Constants.Service.APP_FABRIC_HTTP);
     HttpResponse response = doPost(path);
 
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
 
     path = String.format("%s/system/services/%s/latest-restart", Constants.Gateway.API_VERSION_3,
                          Constants.Service.APP_FABRIC_HTTP);
     response = doGet(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
-    RestartServiceInstancesStatus result =
-      GSON.fromJson(new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8),
-                    RestartServiceInstancesStatus.class);
+    RestartServiceInstancesStatus result = GSON.fromJson(response.getResponseBodyAsString(),
+                                                         RestartServiceInstancesStatus.class);
 
     Assert.assertNotNull(result);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result.getServiceName());

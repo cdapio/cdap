@@ -20,11 +20,10 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.provision.MockProvisioner;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -57,15 +56,15 @@ public class ProvisionerHttpHandlerTest extends AppFabricTestBase {
 
   private List<ProvisionerDetail> listProvisioners() throws Exception {
     HttpResponse response = doGet("/v3/provisioners");
-    return GSON.fromJson(EntityUtils.toString(response.getEntity()), LIST_PROVISIONER_DETAIL);
+    return GSON.fromJson(response.getResponseBodyAsString(), LIST_PROVISIONER_DETAIL);
   }
 
   @Nullable
   private ProvisionerDetail getProvisioner(String provisionerName, int expectedCode) throws Exception {
     HttpResponse response = doGet(String.format("/v3/provisioners/%s", provisionerName));
-    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedCode, response.getResponseCode());
     if (expectedCode == HttpResponseStatus.OK.code()) {
-      return GSON.fromJson(EntityUtils.toString(response.getEntity()), ProvisionerDetail.class);
+      return GSON.fromJson(response.getResponseBodyAsString(), ProvisionerDetail.class);
     }
     return null;
   }

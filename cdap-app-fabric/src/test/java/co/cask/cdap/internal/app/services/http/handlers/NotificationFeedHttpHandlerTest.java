@@ -19,14 +19,13 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.notification.NotificationFeedInfo;
+import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -76,15 +75,15 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void assertResponseCode(int expected, HttpResponse response) {
-    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expected, response.getResponseCode());
   }
 
-  private List<NotificationFeedInfo> readListResponse(HttpResponse response) throws IOException {
+  private List<NotificationFeedInfo> readListResponse(HttpResponse response) {
     Type typeToken = new TypeToken<List<NotificationFeedInfo>>() { }.getType();
     return readResponse(response, typeToken);
   }
 
-  private NotificationFeedInfo readGetResponse(HttpResponse response) throws IOException {
+  private NotificationFeedInfo readGetResponse(HttpResponse response) {
     return readResponse(response, NotificationFeedInfo.class);
   }
 

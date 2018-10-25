@@ -87,7 +87,6 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import co.cask.cdap.scheduler.ProgramScheduleService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

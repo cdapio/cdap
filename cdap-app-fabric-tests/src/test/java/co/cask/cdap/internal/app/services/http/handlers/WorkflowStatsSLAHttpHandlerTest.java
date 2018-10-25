@@ -42,11 +42,11 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.mapreduce.TaskCounter;
-import org.apache.http.HttpResponse;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -184,7 +184,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet(request);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
-                        response.getStatusLine().getStatusCode());
+                        response.getResponseCode());
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
                               "&percentile=%s&percentile=%s",
@@ -193,7 +193,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet(request);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
-                        response.getStatusLine().getStatusCode());
+                        response.getResponseCode());
     Id.Application appId = new Id.Application(Id.Namespace.DEFAULT, WorkflowApp.class.getSimpleName());
     deleteApp(appId, HttpResponseStatus.OK.code());
 
@@ -205,8 +205,9 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                             System.currentTimeMillis(),
                             "99");
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
-    Assert.assertTrue(readResponse(response).startsWith("There are no statistics associated with this workflow : "));
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    Assert.assertTrue(
+      response.getResponseBodyAsString().startsWith("There are no statistics associated with this workflow : "));
   }
 
 
@@ -240,28 +241,28 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), runIdList.get(6).getId());
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=10&interval=10",
                             Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), runIdList.get(6).getId());
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=10&interval=10P",
                             Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), runIdList.get(6).getId());
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=20&interval=0d",
                             Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                             WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), runIdList.get(6).getId());
 
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
   }
 
   @Test
@@ -307,8 +308,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
    * specific run's spark job.
    */
   private List<RunId> setupRuns(WorkflowId workflowProgram, ProgramId mapreduceProgram,
-                                ProgramId sparkProgram, Store store, int count,
-                                ArtifactId artifactId) throws Exception {
+                                ProgramId sparkProgram, Store store, int count, ArtifactId artifactId) {
     List<RunId> runIdList = new ArrayList<>();
     long startTime = System.currentTimeMillis();
     long currentTimeMillis;

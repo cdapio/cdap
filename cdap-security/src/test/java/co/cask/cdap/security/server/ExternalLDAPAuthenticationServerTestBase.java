@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.ldap.sdk.Entry;
 import org.junit.Assert;
 
+import java.net.InetAddress;
 import java.net.URL;
 
 
@@ -44,13 +45,13 @@ public abstract class ExternalLDAPAuthenticationServerTestBase extends ExternalA
     String configBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
 
     // Use random port for testing
-    cConf.setInt(Constants.Security.AUTH_SERVER_BIND_PORT, Networks.getRandomPort());
-    cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, Networks.getRandomPort());
+    cConf.setInt(Constants.Security.AUTH_SERVER_BIND_PORT, 0);
+    cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, 0);
 
     cConf.set(Constants.Security.AUTH_HANDLER_CLASS, LDAPAuthenticationHandler.class.getName());
     cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, LDAPLoginModule.class.getName());
     cConf.set(configBase.concat("debug"), "true");
-    cConf.set(configBase.concat("hostname"), "localhost");
+    cConf.set(configBase.concat("hostname"), InetAddress.getLoopbackAddress().getHostName());
     cConf.set(configBase.concat("port"), Integer.toString(ldapPort));
     cConf.set(configBase.concat("userBaseDn"), "dc=example,dc=com");
     cConf.set(configBase.concat("userRdnAttribute"), "cn");
@@ -85,8 +86,7 @@ public abstract class ExternalLDAPAuthenticationServerTestBase extends ExternalA
     ldapServer.startListening();
   }
 
-  protected void stopExternalAuthenticationServer() throws Exception {
+  protected void stopExternalAuthenticationServer() {
     ldapServer.shutDown(true);
   }
-
 }
