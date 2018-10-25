@@ -42,6 +42,8 @@ import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
+import co.cask.cdap.datapipeline.plugin.PluggableFilterTransform;
+import co.cask.cdap.datapipeline.plugin.ValueFilter;
 import co.cask.cdap.datapipeline.service.ServiceApp;
 import co.cask.cdap.datapipeline.spark.LineFilterProgram;
 import co.cask.cdap.datapipeline.spark.WordCount;
@@ -132,6 +134,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -168,11 +171,59 @@ public class DataPipelineTest extends HydratorTestBase {
     // add some test plugins
     addPluginArtifact(NamespaceId.DEFAULT.artifact("spark-plugins", "1.0.0"), APP_ARTIFACT_ID, extraPlugins,
                       NaiveBayesTrainer.class, NaiveBayesClassifier.class, WordCount.class, LineFilterProgram.class);
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("test-plugins", "1.0.0"), APP_ARTIFACT_ID,
+                      PluggableFilterTransform.class);
   }
 
   @After
-  public void cleanupTest() throws Exception {
+  public void cleanupTest() {
     getMetricsManager().resetAll();
+  }
+
+  @Test
+  public void testPluginOfPluginMacros() throws Exception {
+    testPluginOfPluginMacros(Engine.MAPREDUCE);
+    testPluginOfPluginMacros(Engine.SPARK);
+  }
+
+  private void testPluginOfPluginMacros(Engine engine) throws Exception {
+    String sourceName = UUID.randomUUID().toString();
+    String sinkName = UUID.randomUUID().toString();
+
+    // source -> filter -> sink
+    // the filter uses the plugin framework to instantiate a ValueFilter
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setEngine(engine)
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
+        ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"))))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addConnection("source", "filter")
+      .addConnection("filter", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Schema schema = Schema.recordOf("x", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    StructuredRecord samuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord dwayne = StructuredRecord.builder(schema).set("name", "dwayne").build();
+
+    DataSetManager<Table> sourceTable = getDataset(sourceName);
+    MockSource.writeInput(sourceTable, ImmutableList.of(samuel, dwayne));
+
+    // test macro evaluation of the ValueFilter plugin
+    // pipeline should filter out records where the value of 'name' is 'samuel'
+    Map<String, String> runtimeArgs = new HashMap<>();
+    runtimeArgs.put("field", "name");
+    runtimeArgs.put("value", "samuel");
+    WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    manager.startAndWaitForRun(runtimeArgs, ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
+
+    DataSetManager<Table> sinkTable = getDataset(sinkName);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(sinkTable);
+    Assert.assertEquals(Collections.singletonList(dwayne), outputRecords);
   }
 
   @Test
