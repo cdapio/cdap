@@ -203,7 +203,7 @@
   },
   "jest": {
     "testEnvironment": "jsdom",
-    "testPathDirs": [
+    "roots": [
       "./app/cdap/"
     ],
     "modulePaths": [
