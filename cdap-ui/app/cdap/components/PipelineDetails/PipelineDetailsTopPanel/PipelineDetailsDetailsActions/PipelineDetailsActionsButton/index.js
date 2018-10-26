@@ -238,7 +238,11 @@ export default class PipelineDetailsActionsButton extends Component {
             <li onClick={this.duplicateConfigAndNavigate}>{T.translate(`${PREFIX}.duplicate`)}</li>
             <li onClick={this.toggleExportModal}>{T.translate(`${PREFIX}.export`)}</li>
             <hr />
-            <li onClick={this.toggleDeleteConfirmationModal} className="delete-action" data-testid="delete-pipeline">
+            <li
+              onClick={this.toggleDeleteConfirmationModal}
+              className="delete-action"
+              data-testid="delete-pipeline"
+            >
               {T.translate('commons.delete')}
             </li>
           </ul>
