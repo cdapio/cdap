@@ -113,7 +113,7 @@ public class PluginFunctionContext implements Serializable {
   public SparkBatchRuntimeContext createBatchRuntimeContext() {
     PipelineRuntime pipelineRuntime = new PipelineRuntime(namespace, pipelineName, logicalStartTime,
                                                           arguments, metrics, pluginContext,
-                                                          serviceDiscoverer);
+                                                          serviceDiscoverer, secureStore);
     return new SparkBatchRuntimeContext(pipelineRuntime, stageSpec);
   }
 

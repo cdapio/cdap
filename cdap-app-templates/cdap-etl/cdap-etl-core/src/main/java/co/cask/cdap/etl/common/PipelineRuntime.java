@@ -24,6 +24,7 @@ import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataWriter;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.etl.api.StageContext;
@@ -45,36 +46,37 @@ public class PipelineRuntime {
   private final ServiceDiscoverer serviceDiscoverer;
   private final MetadataReader metadataReader;
   private final MetadataWriter metadataWriter;
+  private final SecureStore secureStore;
 
   public PipelineRuntime(SparkClientContext context) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), context.getMetrics(), context, context, context, context);
+         new BasicArguments(context), context.getMetrics(), context, context, context, context, context);
   }
 
   public PipelineRuntime(CustomActionContext context, Metrics metrics) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), metrics, context, context, context, context);
+         new BasicArguments(context), metrics, context, context, context, context, context);
   }
 
   public PipelineRuntime(MapReduceTaskContext context, Metrics metrics, BasicArguments arguments) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         arguments, metrics, context, context);
+         arguments, metrics, context, context, context);
   }
 
   public PipelineRuntime(MapReduceContext context, Metrics metrics) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), metrics, context, context, context, context);
+         new BasicArguments(context), metrics, context, context, context, context, context);
   }
 
   public PipelineRuntime(WorkflowContext context, Metrics metrics) {
     this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
          new BasicArguments(context.getToken(), context.getRuntimeArguments()), metrics, context, context, context,
-         context);
+         context, context);
   }
 
   public PipelineRuntime(String namespace, String pipelineName, long logicalStartTime, BasicArguments arguments,
                          Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
-                         MetadataReader metadataReader, MetadataWriter metadataWriter) {
+                         SecureStore secureStore, MetadataReader metadataReader, MetadataWriter metadataWriter) {
     this.namespace = namespace;
     this.pipelineName = pipelineName;
     this.logicalStartTime = logicalStartTime;
@@ -84,11 +86,14 @@ public class PipelineRuntime {
     this.serviceDiscoverer = serviceDiscoverer;
     this.metadataReader = metadataReader;
     this.metadataWriter = metadataWriter;
+    this.secureStore = secureStore;
   }
 
   public PipelineRuntime(String namespace, String pipelineName, long logicalStartTime, BasicArguments arguments,
-                         Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer) {
-    this(namespace, pipelineName, logicalStartTime, arguments, metrics, pluginContext, serviceDiscoverer, null, null);
+                         Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
+                         SecureStore secureStore) {
+    this(namespace, pipelineName, logicalStartTime, arguments, metrics, pluginContext, serviceDiscoverer,
+         secureStore, null, null);
   }
 
   public String getNamespace() {
@@ -117,6 +122,10 @@ public class PipelineRuntime {
 
   public ServiceDiscoverer getServiceDiscoverer() {
     return serviceDiscoverer;
+  }
+
+  public SecureStore getSecureStore() {
+    return secureStore;
   }
 
   /**

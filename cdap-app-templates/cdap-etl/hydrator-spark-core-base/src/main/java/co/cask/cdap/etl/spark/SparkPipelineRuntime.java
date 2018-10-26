@@ -28,7 +28,7 @@ public class SparkPipelineRuntime extends PipelineRuntime {
 
   public SparkPipelineRuntime(SparkClientContext context) {
     super(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-          new BasicArguments(context), context.getMetrics(), context, context, context, context);
+          new BasicArguments(context), context.getMetrics(), context, context, context, context, context);
   }
 
   public SparkPipelineRuntime(JavaSparkExecutionContext sec) {
@@ -37,6 +37,7 @@ public class SparkPipelineRuntime extends PipelineRuntime {
 
   public SparkPipelineRuntime(JavaSparkExecutionContext sec, long batchTime) {
     super(sec.getNamespace(), sec.getApplicationSpecification().getName(), batchTime,
-          new BasicArguments(sec), sec.getMetrics(), sec.getPluginContext(), sec.getServiceDiscoverer());
+          new BasicArguments(sec), sec.getMetrics(), sec.getPluginContext(), sec.getServiceDiscoverer(),
+          sec.getSecureStore());
   }
 }
