@@ -175,6 +175,7 @@
                   <exclude>**/dll/**</exclude>
                   <exclude>**/LICENSE-node</exclude>
                   <exclude>**/cdap-ui-upgrade/**</exclude>
+                  <exclude>**/storybook-static/**</exclude>
                 </excludes>
               </configuration>
             </execution>
