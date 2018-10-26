@@ -20,13 +20,13 @@
 
 # CDAP config
 # The git branch to clone
-CDAP_BRANCH='release/5.0'
+CDAP_BRANCH='release/5.1'
 # Optional tag to checkout - All released versions of this script should set this
 # like this: CDAP_TAG=${CDAP_TAG:+tag} as this allows setting tag to empty/null
 # otherwise, it should be CDAP_TAG=''
 CDAP_TAG=${CDAP_TAG:+hdi5.0}
 # The CDAP package version passed to Chef
-CDAP_VERSION='5.1.0-1'
+CDAP_VERSION='5.1.1-1'
 # The version of Chef to install
 CHEF_VERSION='13.8.5'
 # cdap-site.xml configuration parameters
