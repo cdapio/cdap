@@ -17,6 +17,7 @@
 package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.annotation.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,33 +41,21 @@ public class PluginClass {
   private final Set<String> endpoints;
   private final Requirements requirements;
 
+  // for GSON deserialization should not be made public. VisibleForTesting
+  PluginClass() {
+    this.type = Plugin.DEFAULT_TYPE;
+    this.name = null;
+    this.description = "";
+    this.className = null;
+    this.configFieldName = null;
+    this.properties = Collections.emptyMap();
+    this.endpoints = Collections.emptySet();
+    this.requirements = Requirements.EMPTY;
+  }
+
   public PluginClass(String type, String name, String description, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
                      Set<String> endpoints, Requirements requirements) {
-    if (type == null) {
-      throw new IllegalArgumentException("Plugin class type cannot be null");
-    }
-    if (name == null) {
-      throw new IllegalArgumentException("Plugin class name cannot be null");
-    }
-    if (description == null) {
-      throw new IllegalArgumentException("Plugin class description cannot be null");
-    }
-    if (className == null) {
-      throw new IllegalArgumentException("Plugin class className cannot be null");
-    }
-    if (properties == null) {
-      throw new IllegalArgumentException("Plugin class properties cannot be null");
-    }
-
-    if (endpoints == null) {
-      throw new IllegalArgumentException("Plugin endpoints cannot be null");
-    }
-
-    if (requirements == null) {
-      throw new IllegalArgumentException("Plugin requirements cannot be null");
-    }
-
     this.type = type;
     this.name = name;
     this.description = description;
@@ -88,6 +77,36 @@ public class PluginClass {
                      Set<String> endpoints) {
     this(type, name, description, className, configfieldName, properties, endpoints,
          Requirements.EMPTY);
+  }
+
+  /**
+   * Validates the {@link PluginClass}
+   *
+   * @throws IllegalArgumentException if any of the required fields are invalid
+   */
+  public void validate() {
+    if (name == null) {
+      throw new IllegalArgumentException("Plugin class name cannot be null.");
+    }
+    if (className == null) {
+      throw new IllegalArgumentException("Plugin class className cannot be null.");
+    }
+    if (type == null) {
+      throw new IllegalArgumentException("Plugin class type cannot be null");
+    }
+    if (description == null) {
+      throw new IllegalArgumentException("Plugin class description cannot be null");
+    }
+    if (properties == null) {
+      throw new IllegalArgumentException("Plugin class properties cannot be null");
+    }
+
+    if (endpoints == null) {
+      throw new IllegalArgumentException("Plugin class endpoints cannot be null");
+    }
+    if (requirements == null) {
+      throw new IllegalArgumentException("Plugin class requirements cannot be null");
+    }
   }
 
   /**
