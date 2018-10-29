@@ -47,6 +47,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,6 +135,7 @@ public class MonitorSocksProxyTest {
   /**
    * This test the normal operations of the SOCKS proxy.
    */
+  @Ignore
   @Test
   public void testSocksProxy() throws Exception {
     InetSocketAddress httpAddr = httpService.getBindAddress();

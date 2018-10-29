@@ -55,6 +55,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -202,6 +203,7 @@ public class PartitionedFileSetTest {
     }
   }
 
+  @Ignore
   @Test
   public void testPermissions() throws Exception {
     // validate that the fileset permissions and group were applied to the embedded fileset (just sanity test)

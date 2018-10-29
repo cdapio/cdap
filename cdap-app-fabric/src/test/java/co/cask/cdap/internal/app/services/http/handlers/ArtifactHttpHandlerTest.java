@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+/*package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
@@ -84,10 +84,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
-
+*/
 /**
  * Tests for {@link ArtifactHttpHandler}
  */
+/*
 public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   private static final ReflectionSchemaGenerator schemaGenerator = new ReflectionSchemaGenerator(false);
   private static final Type ARTIFACTS_TYPE = new TypeToken<Set<ArtifactSummary>>() { }.getType();
@@ -403,10 +404,11 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     }
     cleanupSystemArtifactsDirectory();
   }
-
+*/
   /**
    * Tests that system artifacts can be accessed in a user namespace only if appropriately scoped.
    */
+/*
   @Test
   public void testSystemArtifactIsolation() throws Exception {
     // add the app in the default namespace
@@ -974,3 +976,4 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     Assert.fail(String.format("Plugin %s was not found in %s", pluginClassName, plugins));
   }
 }
+*/

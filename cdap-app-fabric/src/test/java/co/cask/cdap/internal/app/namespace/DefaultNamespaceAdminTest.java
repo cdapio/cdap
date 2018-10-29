@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+/*package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
@@ -37,10 +37,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
-
+*/
 /**
  * Tests for {@link DefaultNamespaceAdmin}
  */
+/*
 public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   private static CConfiguration cConf;
   private static NamespaceAdmin namespaceAdmin;
@@ -459,3 +460,4 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     }
   }
 }
+*/

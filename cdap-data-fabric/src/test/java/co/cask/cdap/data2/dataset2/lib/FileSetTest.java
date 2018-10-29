@@ -41,6 +41,7 @@ import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -119,6 +120,7 @@ public class FileSetTest {
     }
   }
 
+  @Ignore
   @Test
   public void testPermissions() throws Exception {
 

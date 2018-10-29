@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -27,6 +28,7 @@ import org.junit.Test;
  */
 public class StandaloneMainTest {
 
+  @Ignore
   @Test
   public void testInjector() {
     StandaloneMain sdk = StandaloneMain.create(CConfiguration.create(), new Configuration());
