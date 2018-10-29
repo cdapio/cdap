@@ -258,6 +258,15 @@
                 </configuration>
               </execution>
               <execution>
+                <id>run-ui-tests</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>test</arguments>
+                </configuration>
+              </execution>
+              <execution>
                 <id>clean-node-modules</id>
                 <goals>
                   <goal>yarn</goal>
