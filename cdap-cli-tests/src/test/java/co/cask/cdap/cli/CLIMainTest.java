@@ -80,6 +80,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -593,6 +594,7 @@ public class CLIMainTest extends CLITestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testSpark() throws Exception {
     String sparkId = FakeApp.SPARK.get(0);

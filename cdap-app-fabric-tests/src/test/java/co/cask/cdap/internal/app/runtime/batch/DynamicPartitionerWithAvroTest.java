@@ -45,6 +45,7 @@ import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -77,11 +78,13 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
                      createRecord("jane", 84125),
                      createRecord("john", 84125));
 
+  @Ignore
   @Test
   public void testMultiWriter() throws Exception {
     runDynamicPartitionerMR(ORDERED_RECORDS, true, true);
   }
 
+  @Ignore
   @Test
   public void testSingleWriter() throws Exception {
     runDynamicPartitionerMR(ORDERED_RECORDS, false, true);
@@ -99,6 +102,7 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
     runDynamicPartitionerMR(records, false, false);
   }
 
+  @Ignore
   @Test
   public void testPartitionAppend() throws Exception {
     runDynamicPartitionerMR(ORDERED_RECORDS, true, true,
@@ -111,6 +115,7 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
     runDynamicPartitionerMR(ORDERED_RECORDS, true, true, DynamicPartitioner.PartitionWriteOption.CREATE, false);
   }
 
+  @Ignore
   @Test
   public void testPartitionOverwrite() throws Exception {
     runDynamicPartitionerMR(ORDERED_RECORDS, true, true,
