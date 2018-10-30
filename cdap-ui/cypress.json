@@ -1,3 +1,7 @@
 {
-  "baseUrl": "http://localhost:11011"
+  "baseUrl": "http://localhost:11011",
+  "projectId": "nekuf8",
+  "video": false,
+  "pluginsFile": false,
+  "supportFile": false
 }
