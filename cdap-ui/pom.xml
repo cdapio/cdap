@@ -259,12 +259,21 @@
                 </configuration>
               </execution>
               <execution>
-                <id>run-ui-tests</id>
+                <id>run-unit-integration-tests</id>
                 <goals>
                   <goal>yarn</goal>
                 </goals>
                 <configuration>
                   <arguments>test</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>run-e2e-tests</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>cypress --record --parallel</arguments>
                 </configuration>
               </execution>
               <execution>

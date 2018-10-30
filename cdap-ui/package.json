@@ -19,13 +19,15 @@
     "build-dev-common-w": "NODE_ENV=development parallel-webpack --config=webpack.config.common.js -d --watch",
     "build-prod-dlls": "NODE_ENV=production parallel-webpack --config=webpack.config.dlls.js",
     "build-dev-dlls": "NODE_ENV=development parallel-webpack --config=webpack.config.dlls.js",
-    "test": "jest --coverage",
-    "watch-test": "jest --watch",
+    "jest": "jest",
+    "jest-w": "jest --watch",
     "karma-test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
     "karma-test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run",
     "storybook": "NODE_ENV=development start-storybook -p 6006",
     "build-storybook": "NODE_ENV=development build-storybook",
-    "cypress": "cypress open"
+    "cypress": "cypress run",
+    "cypress-open": "cypress open",
+    "test": "jest | cypress run"
   },
   "repository": {
     "type": "git",
