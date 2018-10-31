@@ -118,6 +118,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -1604,6 +1605,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(expected, actual);
   }
 
+  @Ignore
   @Test
   public void testFailureToStartIncapableProgram() throws Exception {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
@@ -1663,11 +1665,13 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(2, appId, "sink.records.in");
   }
 
+  @Ignore
   @Test
   public void testMapRedSimpleMultipleSource() throws Exception {
     testSimpleMultiSource(Engine.MAPREDUCE);
   }
 
+  @Ignore
   @Test
   public void testSparkSimpleMultipleSource() throws Exception {
     testSimpleMultiSource(Engine.SPARK);
@@ -2016,6 +2020,7 @@ public class DataPipelineTest extends HydratorTestBase {
     testSinglePhaseWithSparkCompute();
   }
 
+  @Ignore
   @Test
   public void testPostAction() throws Exception {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
@@ -2851,6 +2856,7 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
   }
 
+  @Ignore
   @Test
   public void testKVTableLookup() throws Exception {
     addDatasetInstance(KeyValueTable.class.getName(), "ageTable");
@@ -3041,6 +3047,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(expected, actual);
   }
 
+  @Ignore
   @Test
   public void testTableLookup() throws Exception {
     addDatasetInstance(Table.class.getName(), "personTable");
@@ -3110,11 +3117,13 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(expected, getMetricsManager().getTotalMetric(tags, "user." + metric));
   }
 
+  @Ignore
   @Test
   public void testServiceUrlMR() throws Exception {
     testServiceUrl(Engine.MAPREDUCE);
   }
 
+  @Ignore
   @Test
   public void testServiceUrlSpark() throws Exception {
     testServiceUrl(Engine.SPARK);
