@@ -64,6 +64,7 @@ import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -98,6 +99,7 @@ public class DataStreamsTest extends HydratorTestBase {
     setupStreamingArtifacts(APP_ARTIFACT_ID, DataStreamsApp.class);
   }
 
+  @Ignore
   @Test
   public void testTransformComputeWithMacros() throws Exception {
     Schema schema = Schema.recordOf(
