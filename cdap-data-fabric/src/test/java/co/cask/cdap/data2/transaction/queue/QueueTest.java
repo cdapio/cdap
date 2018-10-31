@@ -46,6 +46,7 @@ import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -136,6 +137,7 @@ public abstract class QueueTest {
     enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 1, DequeueStrategy.FIFO, 1);
   }
 
+  @Ignore
   // Simple enqueue and dequeue with three consumers, no batch
   @Category(SlowTests.class)
   @Test(timeout = TIMEOUT_MS)
