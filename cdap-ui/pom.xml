@@ -259,12 +259,12 @@
                 </configuration>
               </execution>
               <execution>
-                <id>run-ui-tests</id>
+                <id>run-ui-unit-tests</id>
                 <goals>
                   <goal>yarn</goal>
                 </goals>
                 <configuration>
-                  <arguments>test-ci</arguments>
+                  <arguments>jest</arguments>
                 </configuration>
               </execution>
               <execution>
@@ -425,6 +425,57 @@
                 </goals>
                 <configuration>
                   <arguments>run build-storybook</arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>run-ui-e2e-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.eirslett</groupId>
+            <artifactId>frontend-maven-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>dist</id>
+                <goals>
+                  <goal>install-node-and-yarn</goal>
+                </goals>
+                <configuration>
+                  <nodeVersion>v8.11.2</nodeVersion>
+                  <yarnVersion>v1.2.1</yarnVersion>
+                </configuration>
+              </execution>
+              <execution>
+                <id>install-node-gyp</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>global add node-gyp</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>yarn-install</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>install --silent --frozen-lockfile</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>run-e2e-tests</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>test-ci</arguments>
                 </configuration>
               </execution>
             </executions>
