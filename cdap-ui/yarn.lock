@@ -5350,7 +5350,7 @@ eslint-plugin-cypress@^2.0.1:
   dependencies:
     globals "^11.0.1"
 
-eslint-plugin-prettier@3.0.0:
+eslint-plugin-prettier@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-prettier/-/eslint-plugin-prettier-3.0.0.tgz#f6b823e065f8c36529918cdb766d7a0e975ec30c"
   dependencies:
