@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-/*
+
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.AppUsingNamespace;
@@ -131,11 +131,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
-*/
+
 /**
  *
  */
-/*
 @Category(SlowTests.class)
 public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTestRun.class);
@@ -1134,14 +1133,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     centralServiceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
-*/
+
   /**
    * Checks to ensure that a particular  {@param workerManager} has {@param expected} number of
    * instances while retrying every 50 ms for 15 seconds.
    *
    * @throws Exception if the worker does not have the specified number of instances after 15 seconds.
    */
-/*
   private void workerInstancesCheck(final WorkerManager workerManager, int expected) throws Exception {
     Tasks.waitFor(expected, new Callable<Integer>() {
       @Override
@@ -1150,7 +1148,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }, 15, TimeUnit.SECONDS);
   }
-*/
+
   /**
    * Checks to ensure that a particular key is present in a {@link KeyValueTable}
    * @param namespace {@link NamespaceId}
@@ -1159,7 +1157,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
    *
    * @throws Exception if the key is not found even after 15 seconds of timeout
    */
-/*
   private void kvTableKeyCheck(final NamespaceId namespace, final String datasetName, final byte[] expectedKey)
     throws Exception {
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -2370,4 +2367,4 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }
   }
-}*/
+}
