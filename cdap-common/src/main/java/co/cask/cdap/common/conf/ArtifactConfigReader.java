@@ -60,7 +60,6 @@ public class ArtifactConfigReader {
           return new GsonBuilder()
             .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeDeserializer(namespace))
             .registerTypeAdapter(ArtifactConfig.class, new ArtifactConfigDeserializer())
-            .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
             .create();
         }
       });
@@ -87,13 +86,13 @@ public class ArtifactConfigReader {
           NamespaceId parentNamespace = new NamespaceId(parent.getNamespace());
           if (!NamespaceId.SYSTEM.equals(parentNamespace) && !namespace.toEntityId().equals(parentNamespace)) {
             throw new InvalidArtifactException(String.format("Invalid parent %s. Parents must be in the same " +
-              "namespace or a system artifact.", parent));
+                                                               "namespace or a system artifact.", parent));
           }
         }
         return config;
       } catch (JsonSyntaxException e) {
         throw new InvalidArtifactException(String.format("%s contains invalid json: %s", fileName, e.getMessage()), e);
-      } catch (JsonParseException e) {
+      } catch (JsonParseException | IllegalArgumentException e) {
         throw new InvalidArtifactException(String.format("Unable to parse %s: %s", fileName, e.getMessage()), e);
       }
     }
@@ -152,6 +151,7 @@ public class ArtifactConfigReader {
       Set<ArtifactRange> parents = context.deserialize(obj.get("parents"), PARENTS_TYPE);
       parents = parents == null ? Collections.<ArtifactRange>emptySet() : parents;
       Set<PluginClass> plugins = context.deserialize(obj.get("plugins"), PLUGINS_TYPE);
+      plugins.forEach(PluginClass::validate);
       plugins = plugins == null ? Collections.<PluginClass>emptySet() : plugins;
       Map<String, String> properties = context.deserialize(obj.get("properties"), PROPERTIES_TYPE);
       properties = properties == null ? Collections.<String, String>emptyMap() : properties;
