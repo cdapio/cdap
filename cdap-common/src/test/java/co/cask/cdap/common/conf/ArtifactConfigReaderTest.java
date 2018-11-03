@@ -108,6 +108,16 @@ public class ArtifactConfigReaderTest {
     configReader.read(Id.Namespace.SYSTEM, configFile);
   }
 
+  @Test
+  public void testMissingPlugins() throws IOException, InvalidArtifactException {
+    // plugin JSON files written by cdap-maven-plugin does not have plugins information
+    File configFile = new File(tmpFolder.newFolder(), "r1-1.0.0.json");
+    try (BufferedWriter writer = Files.newWriter(configFile, Charsets.UTF_8)) {
+      writer.write("{ \"parents\": [], \"properties\": {} }");
+    }
+    Assert.assertEquals(new ArtifactConfig(), configReader.read(Id.Namespace.DEFAULT, configFile));
+  }
+
   @Test(expected = InvalidArtifactException.class)
   public void testMalformedParentArtifact() throws IOException, InvalidArtifactException {
     File configFile = new File(tmpFolder.newFolder(), "r1-1.0.0.json");
