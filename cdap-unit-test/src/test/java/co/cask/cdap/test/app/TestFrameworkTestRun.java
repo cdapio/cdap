@@ -154,13 +154,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void setUp() throws Exception {
     getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).build());
   }
-
+  
+  @Ignore
   @Test
   public void testOrgHamcrest() {
     // this tests that org.hamcrest classes can be used in tests without class loading conflicts (see CDAP-7391)
     Assert.assertThat("oh hello yeah", CoreMatchers.containsString("hello"));
   }
 
+  @Ignore
   @Test
   public void testInvalidAppWithData() throws Exception {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("invalid-app", "1.0.0-SNAPSHOT");
@@ -204,6 +206,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     deployApplication(appId, createRequest);
   }
 
+  @Ignore
   @Test
   public void testFlowRuntimeArguments() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterAppWithNewFlowAPI.class);
@@ -226,6 +229,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     flowManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
+  @Ignore
   @Test
   public void testWorkerThrowingException() throws Exception {
     ApplicationManager appManager = deployApplication(AppWithExceptionThrowingWorker.class);
@@ -266,6 +270,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerManager.waitForRuns(ProgramRunStatus.COMPLETED, 1 + completedCountSoFar, 3, TimeUnit.SECONDS);
   }
 
+  @Ignore
   @Test
   public void testServiceManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
@@ -302,6 +307,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
   }
 
+  @Ignore
   @Test
   public void testNamespaceAvailableAtRuntime() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingNamespace.class);
@@ -316,17 +322,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
+  @Ignore
   @Test
   public void testAppConfigWithNull() throws Exception {
     testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class), null);
   }
 
+  @Ignore
   @Test
   public void testAppConfig() throws Exception {
     ConfigTestApp.ConfigClass conf = new ConfigTestApp.ConfigClass("testStream", "testDataset");
     testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class, conf), conf);
   }
 
+  @Ignore
   @Test
   public void testAppWithPlugin() throws Exception {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("app-with-plugin", "1.0.0-SNAPSHOT");
@@ -399,6 +408,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testAppFromArtifact() throws Exception {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("cfg-app", "1.0.0-SNAPSHOT");
@@ -413,6 +423,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     testAppConfig(appId.getApplication(), appManager, createRequest.getConfig());
   }
 
+  @Ignore
   @Test
   public void testAppVersionsCreation() throws Exception {
     ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "cfg-app", "1.0.0-SNAPSHOT");
@@ -466,6 +477,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("xyz", Bytes.toString(table.read(appName + ".xyz")));
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testMapperDatasetAccess() throws Exception {
@@ -495,6 +507,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                            mrManager.getHistory().get(0).getPid(), "table1", false);
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testMapReduceTaskMetricsDisable() throws Exception {
@@ -548,6 +561,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(doesExist, metricNames.contains("user.test.metric"));
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testCrossNSMapperDatasetAccess() throws Exception {
@@ -619,6 +633,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(Long.valueOf(1), aggs.get(writeCountName));
   }
 
+  @Ignore
   @Test
   public void testWorkflowStatus() throws Exception {
     ApplicationManager appManager = deployApplication(WorkflowStatusTestApp.class);
@@ -656,6 +671,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertTrue(workflowKilled.exists());
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testCustomActionDatasetAccess() throws Exception {
@@ -684,6 +700,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 
+
+  @Ignore
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowLocalDatasets() throws Exception {
@@ -876,6 +894,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     return runId;
   }
 
+  @Ignore
   @Category(XSlowTests.class)
   @Test
   @Ignore
@@ -984,6 +1003,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(false, Boolean.parseBoolean(workflowToken.getTokenData().get("running").get(0).getValue()));
   }
 
+
+  @Ignore
   @Test
   public void testWorkflowCondition() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, ConditionalWorkflowApp.class);
@@ -1014,6 +1035,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(expected, tokenNodeDetail.getTokenDataAtNode());
   }
 
+  @Ignore
   @Test
   public void testBatchStreamUpload() throws Exception {
     StreamManager batchStream = getStreamManager("batchStream");
@@ -1066,7 +1088,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
   }
 
-
+  @Ignore
   @Category(XSlowTests.class)
   @Test(timeout = 240000)
   public void testMultiInput() throws Exception {
@@ -1095,12 +1117,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("testing 3", gson.fromJson(callServiceGet(serviceURL, "input3"), String.class));
   }
 
+  @Ignore
   @Category(XSlowTests.class)
   @Test(timeout = 360000)
   public void testApp() throws Exception {
     testApp(WordCountApp.class, "text");
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testGetServiceURL() throws Exception {
@@ -1169,6 +1193,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 15, TimeUnit.SECONDS);
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testWorkerInstances() throws Exception {
@@ -1252,12 +1277,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   // AppFabricClient returns IllegalStateException if the app fails to deploy
+  @Ignore
   @Category(SlowTests.class)
   @Test(expected = IllegalStateException.class)
   public void testServiceWithInvalidHandler() throws Exception {
     deployApplication(AppWithInvalidHandler.class);
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testAppWithWorker() throws Exception {
@@ -1290,6 +1317,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testAppWithTxTimeout() throws Exception {
@@ -1580,6 +1608,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                            String.valueOf(timeoutForScope));
   }
 
+  @Ignore
   @Test
   public void testWorkerStop() throws Exception {
     // Test to make sure the worker program's status goes to stopped after the run method finishes
@@ -1591,6 +1620,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerManager.waitForStopped(30, TimeUnit.SECONDS);
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testAppWithServices() throws Exception {
@@ -1714,6 +1744,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP_2, decodedResult);
   }
 
+  @Ignore
   @Test
   public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
@@ -1837,6 +1868,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testGenerator() throws InterruptedException, IOException, TimeoutException {
@@ -1863,6 +1895,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(1L, genMetrics.getException());
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testDynamicBatchSize() throws Exception {
@@ -1890,6 +1923,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testAppRedeployKeepsData() throws Exception {
     deployApplication(testSpace, AppWithTable.class);
@@ -1913,6 +1947,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testFlowletMetricsReset() throws Exception {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
@@ -1926,6 +1961,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0, flowletMetrics.getProcessed());
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testFlowletInitAndSetInstances() throws Exception {
     ApplicationManager appManager = deployApplication(testSpace, DataSetInitApp.class);
@@ -1967,11 +2003,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     dataSetManager.flush();
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetModule() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyService");
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
@@ -1979,12 +2017,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyService");
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testAppWithAutoCreateDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyService");
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
@@ -1992,6 +2032,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyService");
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
@@ -1999,6 +2040,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyServiceWithUseDataSetAnnotation");
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testDatasetWithoutApp() throws Exception {
     // TODO: Although this has nothing to do with this testcase, deploying a dummy app to create the default namespace
@@ -2013,16 +2055,19 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("hello", dataSetManager.get().get("test"));
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetType() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyService");
   }
 
+  @Ignore
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyService");
   }
 
+  @Ignore
   @Test
   public void testClusterName() throws Exception {
     String clusterName = getConfiguration().get(Constants.CLUSTER_NAME);
@@ -2136,6 +2181,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 
+  @Ignore
   @Category(XSlowTests.class)
   @Test
   public void testByteCodeClassLoader() throws Exception {
@@ -2168,6 +2214,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(count, Bytes.toLong(records.read("PUBLIC")));
   }
 
+  @Ignore
   @Test
   public void testConcurrentRuns() throws Exception {
     ApplicationManager appManager = deployApplication(ConcurrentRunTestApp.class);
@@ -2204,6 +2251,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 10L, TimeUnit.SECONDS);
   }
 
+  @Ignore
   @Category(SlowTests.class)
   @Test
   public void testMetadataAccessInService() throws Exception {
