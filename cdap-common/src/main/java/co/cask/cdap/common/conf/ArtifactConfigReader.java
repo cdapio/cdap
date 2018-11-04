@@ -151,8 +151,8 @@ public class ArtifactConfigReader {
       Set<ArtifactRange> parents = context.deserialize(obj.get("parents"), PARENTS_TYPE);
       parents = parents == null ? Collections.<ArtifactRange>emptySet() : parents;
       Set<PluginClass> plugins = context.deserialize(obj.get("plugins"), PLUGINS_TYPE);
-      plugins.forEach(PluginClass::validate);
       plugins = plugins == null ? Collections.<PluginClass>emptySet() : plugins;
+      plugins.forEach(PluginClass::validate);
       Map<String, String> properties = context.deserialize(obj.get("properties"), PROPERTIES_TYPE);
       properties = properties == null ? Collections.<String, String>emptyMap() : properties;
 
