@@ -21,30 +21,35 @@ const DUMMY_PW = 'alicepassword';
 
 describe('Creating a pipeline', function() {
   // Uses API call to login instead of logging in manually through UI
-  beforeEach(function() {
+  before(function() {
     cy.visit('/');
-    cy.request({
-      method: 'POST',
-      url: '/login',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: DUMMY_USERNAME,
-        password: DUMMY_PW,
-      }),
-    }).then((response) => {
-      expect(response.status).to.be.at.least(200);
-      expect(response.status).to.be.lessThan(300);
-      const respBody = JSON.parse(response.body);
-      cy.setCookie('CDAP_Auth_Token', respBody.access_token, { path: '/' });
-      cy.setCookie('CDAP_Auth_User', DUMMY_USERNAME);
-      cy.visit('/', {
-        onBeforeLoad: (win) => {
-          win.sessionStorage.setItem('showWelcome', 'false');
-        },
-      });
-      cy.url().should('include', '/cdap/ns/default');
-      cy.getCookie('CDAP_Auth_Token').should('exist');
-      cy.getCookie('CDAP_Auth_User').should('have.property', 'value', DUMMY_USERNAME);
+    cy.request(`http://${Cypress.env('host')}:11015/v3/namespaces`).then((response) => {
+      // only login when ping request returns 401
+      if (response.status === 401) {
+        cy.request({
+          method: 'POST',
+          url: '/login',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: DUMMY_USERNAME,
+            password: DUMMY_PW,
+          }),
+        }).then((response) => {
+          expect(response.status).to.be.at.least(200);
+          expect(response.status).to.be.lessThan(300);
+          const respBody = JSON.parse(response.body);
+          cy.setCookie('CDAP_Auth_Token', respBody.access_token, { path: '/' });
+          cy.setCookie('CDAP_Auth_User', DUMMY_USERNAME);
+          cy.visit('/', {
+            onBeforeLoad: (win) => {
+              win.sessionStorage.setItem('showWelcome', 'false');
+            },
+          });
+          cy.url().should('include', '/cdap/ns/default');
+          cy.getCookie('CDAP_Auth_Token').should('exist');
+          cy.getCookie('CDAP_Auth_User').should('have.property', 'value', DUMMY_USERNAME);
+        });
+      }
     });
   });
 

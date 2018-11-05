@@ -1,5 +1,8 @@
 {
   "baseUrl": "http://localhost:11011",
+  "env": {
+    "host": "localhost"
+  },
   "projectId": "nekuf8",
   "video": false,
   "pluginsFile": false,
