@@ -135,6 +135,7 @@ public class StandaloneMain {
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
   private final LevelDBTableService levelDBTableService;
+  private final TMSPerfService tmsPerfService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -183,6 +184,8 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
+
+    tmsPerfService = new TMSPerfService(cConf, messagingService);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -263,6 +266,8 @@ public class StandaloneMain {
 
     operationalStatsService.startAndWait();
 
+    tmsPerfService.startAndWait();
+
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
@@ -278,6 +283,8 @@ public class StandaloneMain {
     LOG.info("Shutting down Standalone CDAP");
     boolean halt = false;
     try {
+      tmsPerfService.stopAndWait();
+
       // order matters: first shut down UI 'cause it will stop working after router is down
       if (userInterfaceService != null) {
         userInterfaceService.stopAndWait();
