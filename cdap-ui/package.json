@@ -27,8 +27,7 @@
     "build-storybook": "NODE_ENV=development build-storybook",
     "cypress": "cypress run --browser chrome",
     "cypress-open": "cypress open",
-    "test": "run-p jest cypress",
-    "test-ci": "run-p jest 'cypress --record --parallel'"
+    "test": "run-p jest cypress"
   },
   "repository": {
     "type": "git",
