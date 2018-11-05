@@ -897,7 +897,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Ignore
   @Category(XSlowTests.class)
   @Test
-  @Ignore
   public void testDeployWorkflowApp() throws Exception {
     // Add test back when CDAP-12350 is resolved
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
