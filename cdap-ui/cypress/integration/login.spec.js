@@ -18,6 +18,16 @@ const DUMMY_PW = 'alicepassword';
 const INCORRECT_LOGIN = '__UI_test';
 
 describe('Logging in', function() {
+  before(function() {
+    cy.visit('/');
+    cy.request(`http://${Cypress.env('host')}:11015/v3/namespaces`).then((response) => {
+      // only login when ping request returns 401
+      if (response.status !== 401) {
+        this.skip();
+      }
+    });
+  });
+
   it('logs user in when given correct credentials', function() {
     cy.visit('/');
     cy.get('#username')

@@ -25,7 +25,7 @@
     "karma-test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run",
     "storybook": "NODE_ENV=development start-storybook -p 6006",
     "build-storybook": "NODE_ENV=development build-storybook",
-    "cypress": "cypress run --browser chrome",
+    "cypress": "cypress run",
     "cypress-open": "cypress open",
     "test": "run-p jest cypress"
   },
