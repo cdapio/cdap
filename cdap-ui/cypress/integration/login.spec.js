@@ -20,7 +20,11 @@ const INCORRECT_LOGIN = '__UI_test';
 describe('Logging in', function() {
   before(function() {
     cy.visit('/');
-    cy.request(`http://${Cypress.env('host')}:11015/v3/namespaces`).then((response) => {
+    cy.request({
+      method: 'GET',
+      url: `http://${Cypress.env('host')}:11015/v3/namespaces`,
+      failOnStatusCode: false,
+    }).then((response) => {
       // only login when ping request returns 401
       if (response.status !== 401) {
         this.skip();

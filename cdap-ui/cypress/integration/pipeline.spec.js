@@ -23,7 +23,11 @@ describe('Creating a pipeline', function() {
   // Uses API call to login instead of logging in manually through UI
   before(function() {
     cy.visit('/');
-    cy.request(`http://${Cypress.env('host')}:11015/v3/namespaces`).then((response) => {
+    cy.request({
+      method: 'GET',
+      url: `http://${Cypress.env('host')}:11015/v3/namespaces`,
+      failOnStatusCode: false,
+    }).then((response) => {
       // only login when ping request returns 401
       if (response.status === 401) {
         cy.request({
