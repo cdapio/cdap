@@ -32,7 +32,7 @@ describe('Logging in', function() {
     cy.getCookie('CDAP_Auth_User').should('have.property', 'value', DUMMY_USERNAME);
   });
 
-  it('doesn\t log user in when given incorrect credentials', function() {
+  it("doesn't log user in when given incorrect credentials", function() {
     cy.visit('/');
     cy.get('#username')
       .click()
