@@ -36,13 +36,13 @@ angular.module(PKG.name + '.commons')
         }
       },
       'textarea': {
-        element: '<textarea></textarea>',
+        element: '<div my-ace-editor></div>',
         attributes: {
-          'class': 'form-control',
-          'ng-trim': 'false',
           'ng-model': 'model',
+          'data-config': 'myconfig',
+          'mode': 'plain_text',
+          'disabled': 'disabled',
           'rows': '{{myconfig["widget-attributes"].rows}}',
-          placeholder: '{{::myconfig["widget-attributes"].placeholder}}'
         }
       },
       'password': {
