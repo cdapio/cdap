@@ -57,6 +57,22 @@ describe('Creating a pipeline', function() {
     });
   });
 
+  beforeEach(function() {
+    cy.request({
+      method: 'GET',
+      url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
+      failOnStatusCode: false,
+    }).then((response) => {
+      if (response.status === 200) {
+        cy.request({
+          method: 'DELETE',
+          url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
+          failOnStatusCode: false,
+        });
+      }
+    });
+  });
+
   it('is configured correctly', function() {
     // Go to Pipelines studio
     cy.visit('/');
