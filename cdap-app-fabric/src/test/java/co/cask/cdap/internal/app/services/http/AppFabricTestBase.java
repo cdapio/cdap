@@ -25,6 +25,7 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
@@ -413,7 +414,7 @@ public abstract class AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
 
     try {
-      return addArtifact(artifactId, Locations.newInputSupplier(appJar), null);
+      return addArtifact(artifactId, Locations.newInputSupplier(appJar), Collections.emptySet());
     } finally {
       appJar.delete();
     }
@@ -422,10 +423,27 @@ public abstract class AppFabricTestBase {
   protected HttpResponse addPluginArtifact(Id.Artifact artifactId, Class<?> cls,
                                            Manifest manifest,
                                            Set<ArtifactRange> parents) throws Exception {
+    return addPluginArtifact(artifactId, cls, manifest, parents, null);
+  }
 
+  /**
+   * Adds a plugin artifact. This method is present for testing invalid plugin class json and it usage is not
+   * recommended.
+   * @param artifactId the artifact id
+   * @param cls the application class
+   * @param manifest manifest
+   * @param parents parents range of artifact
+   * @param pluginClasses set of plugin classes
+   * @return {@link HttpResponse} recieved response
+   * @throws Exception
+   */
+  protected HttpResponse addPluginArtifact(Id.Artifact artifactId, Class<?> cls,
+                                           Manifest manifest,
+                                           @Nullable Set<ArtifactRange> parents,
+                                           Set<PluginClass> pluginClasses) throws Exception {
     Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, cls);
     try {
-      return addArtifact(artifactId, Locations.newInputSupplier(appJar), parents);
+      return addArtifact(artifactId, Locations.newInputSupplier(appJar), parents, pluginClasses);
     } finally {
       appJar.delete();
     }
@@ -434,6 +452,12 @@ public abstract class AppFabricTestBase {
   // add an artifact and return the response code
   protected HttpResponse addArtifact(Id.Artifact artifactId, InputSupplier<? extends InputStream> artifactContents,
                                      Set<ArtifactRange> parents) throws Exception {
+    return addArtifact(artifactId, artifactContents, parents, Collections.emptySet());
+  }
+
+
+  protected HttpResponse addArtifact(Id.Artifact artifactId, InputSupplier<? extends InputStream> artifactContents,
+                                     Set<ArtifactRange> parents, Set<PluginClass> pluginClasses) throws Exception {
     String path = getVersionedAPIPath("artifacts/" + artifactId.getName(), artifactId.getNamespace().getId());
     HttpRequest.Builder builder = HttpRequest.post(getEndPoint(path).toURL())
       .addHeader(Constants.Gateway.API_KEY, "api-key-example")
@@ -441,6 +465,10 @@ public abstract class AppFabricTestBase {
 
     if (parents != null && !parents.isEmpty()) {
       builder.addHeader("Artifact-Extends", Joiner.on('/').join(parents));
+    }
+
+    if (pluginClasses != null && !pluginClasses.isEmpty()) {
+      request.setHeader("Artifact-Plugins", GSON.toJson(pluginClasses));
     }
 
     builder.withBody(artifactContents);

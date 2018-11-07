@@ -31,7 +31,9 @@ $min_height_of_graph: 340px;
     flex-wrap: wrap;
     background: $pipeline-summary-bg;
     overflow: auto;
-    height: calc(100vh - 240px); // Header + Top panel = 95 + Footer = 51 + summary title bar = 49 + border 1px
+    // Header + Top panel = 105 + Footer = 54 + summary title bar = 54 + border 1px + 41px for filter section
+    // anti-pattern. This is now how we should do this.
+    height: calc(100vh - 254px);
 
     > div {
       width: calc(50% - 20px);

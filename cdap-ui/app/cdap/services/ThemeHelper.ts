@@ -201,7 +201,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       featureNames: {
         analytics: 'Analytics',
         controlCenter: 'Control Center',
-        dashboard: 'Dasboard',
+        dashboard: 'Dashboard',
         dataPrep: 'Preparation',
         entities: 'Entities',
         hub: 'Hub',

@@ -3,9 +3,9 @@
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
     :description: Cask Data Application Platform Trademarks, Licenses, and Dependencies
 
-======================================
-Trademarks, Licenses, and Dependencies
-======================================
+==========================
+Licenses, and Dependencies
+==========================
 
 .. toctree::
    :hidden:
@@ -15,40 +15,6 @@ Trademarks, Licenses, and Dependencies
     <cdap-sandbox-dependencies>
     <cdap-ui-dependencies>
     <cdap-included-libraries>
-
-
-Trademarks, Logos, and Trade Dress
-----------------------------------
-
-The following are word trademarks and service marks ("Word Marks", "Service Marks") of
-Cask Data, Inc.:
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Mark
-     - Common descriptive name for the goods or services
-   * - Cask
-     - Computer software and related services
-   * - Cask Hydrator
-     - Computer software
-   * - Cask Tracker
-     - Computer software
-   * - Coopr
-     - Computer software
-   * - Tephra
-     - Computer software
-   * - Tigon
-     - Computer software
-
-Our logos ("Logos") include any logos or illustrations used on these webpages.
-The unique visual styling of our website and packaging is referred to as the "Trade Dress".
-
-This encompasses all trademarks and service marks, whether Word Marks, Logos or Trade
-Dress, whether registered or not, which are collectively referred to as the “Marks.”
-
-All marks are trademarks of Cask Data, Inc. All rights reserved.
 
 
 Other Products and Trademarks
@@ -109,6 +75,8 @@ The Cask Data Application Platform (CDAP) product is copyright and licensed as f
 
 CDAP Dependent Packages, Licenses, and License URLs
 ---------------------------------------------------
+
+All the licenses are packaged in the downloaded CDAP distribution for your reference
 
 - `CDAP Sandbox Dependencies <cdap-sandbox-dependencies.html>`_
   (`PDF <cdap-sandbox-dependencies.pdf>`__)

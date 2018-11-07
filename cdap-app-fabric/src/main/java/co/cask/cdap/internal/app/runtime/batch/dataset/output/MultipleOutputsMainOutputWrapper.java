@@ -16,7 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
+import co.cask.cdap.internal.app.runtime.batch.BasicOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.MainOutputCommitter;
+import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.InvalidJobConfException;
 import org.apache.hadoop.mapreduce.Job;
@@ -28,6 +31,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +53,13 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
   @Override
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
     OutputFormat<K, V> rootOutputFormat = getRootOutputFormat(job);
+    List<String> namedOutputsList = MultipleOutputs.getNamedOutputsList(job);
+    if (namedOutputsList.size() == 1) {
+      // CDAP-14524 remove prefixes added before each key. We only need this for single output because for single
+      // output rootOutputFormat is actual output format.
+      TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(job, namedOutputsList.get(0));
+      return rootOutputFormat.getRecordWriter(namedContext);
+    }
     return rootOutputFormat.getRecordWriter(job);
   }
 
@@ -63,21 +74,6 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
         ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
 
       outputFormat.checkOutputSpecs(namedContext);
-    }
-  }
-
-  /**
-   * Sets an OutputFormat class as the root OutputFormat for the Hadoop job.
-   *
-   * @param job the job on which to set the OutputFormat class
-   * @param outputFormatClass the class to set as the root OutputFormat for the job
-   * @param outputConfig the configuration to set for the specified OutputFormat
-   */
-  public static void setRootOutputFormat(Job job, String outputFormatClass, Map<String, String> outputConfig) {
-    job.getConfiguration().set(ROOT_OUTPUT_FORMAT, outputFormatClass);
-
-    for (Map.Entry<String, String> confEntry : outputConfig.entrySet()) {
-      job.getConfiguration().set(confEntry.getKey(), confEntry.getValue());
     }
   }
 
@@ -111,21 +107,74 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
       // the delegates; otherwise, its methods would get called more than expected.
       // If more than 1 outputs are configured, then the root OutputCommitter is a NullOutputCommitter (no-op).
       // See MapReduceRuntimeService#setOutputsIfNeeded.
-      if (namedOutputsList.size() > 1) {
+      if (namedOutputsList.size() == 1) {
+        // CDAP-14524 Get context without prefixes for single output. This is needed becausez
+        TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context, namedOutputsList.get(0));
+        committer = new MainOutputCommitter(getRootOutputFormat(namedContext).getOutputCommitter(namedContext),
+                                            delegates, namedContext);
+      } else {
         for (String name : namedOutputsList) {
+          TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context, name);
           Class<? extends OutputFormat> namedOutputFormatClass =
             MultipleOutputs.getNamedOutputFormatClass(context, name);
 
-          TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context, name);
           OutputFormat<K, V> outputFormat =
             ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
           delegates.put(name, outputFormat.getOutputCommitter(namedContext));
         }
+        // return a MultipleOutputsCommitter that commits for the root output format
+        // as well as all delegate outputformats
+        committer = new MainOutputCommitter(getRootOutputFormat(context).getOutputCommitter(context),
+                                            delegates, context);
       }
-      // return a MultipleOutputsCommitter that commits for the root output format as well as all delegate outputformats
-      committer = new MainOutputCommitter(getRootOutputFormat(context).getOutputCommitter(context), delegates,
-                                          context);
     }
     return committer;
+  }
+
+  /**
+   * Sets output formats and corresponding properties.
+   *
+   * @param job hadoop job on which configurations will be set
+   * @param outputsMap list of outputs
+   */
+  public static void setOutputs(Job job, List<ProvidedOutput> outputsMap)
+    throws ClassNotFoundException {
+    OutputFormatProvider rootOutputFormatProvider;
+    rootOutputFormatProvider = getRootOutputFormatProvider(job, outputsMap);
+
+    // Set root outputformat and its configuration for the Hadoop job.
+    job.getConfiguration().set(ROOT_OUTPUT_FORMAT, rootOutputFormatProvider.getOutputFormatClassName());
+    for (Map.Entry<String, String> confEntry : rootOutputFormatProvider.getOutputFormatConfiguration().entrySet()) {
+      job.getConfiguration().set(confEntry.getKey(), confEntry.getValue());
+    }
+
+    for (ProvidedOutput output : outputsMap) {
+      MultipleOutputs.addNamedOutput(job, output.getOutput().getAlias(), output.getOutputFormatClassName(),
+                                     job.getOutputKeyClass(), job.getOutputValueClass(),
+                                     output.getOutputFormatConfiguration());
+
+    }
+  }
+
+  private static OutputFormatProvider getRootOutputFormatProvider(Job job, List<ProvidedOutput> outputsMap)
+    throws ClassNotFoundException {
+    OutputFormatProvider rootOutputFormatProvider;
+    // There are 3 cases possible:
+    // [1] output map is empty: user is not going through our APIs to add output; propagate the job's output format
+    // [2] output map has single output: provided output format is set as the root OutputFormat
+    // [3] output map has multiple outputs: RootOutputFormat is UnsupportedOutputFormat which has RecordWriter that
+    // does not support writing. The OutputCommitter is effectively a no-op, as it runs as the RootOutputCommitter
+    // in MultipleOutputsCommitter.
+
+    if (outputsMap.isEmpty()) {
+      rootOutputFormatProvider = new BasicOutputFormatProvider(job.getOutputFormatClass().getName(),
+                                                               Collections.emptyMap());
+    } else if (outputsMap.size() == 1) {
+      rootOutputFormatProvider = outputsMap.get(0).getOutputFormatProvider();
+    } else {
+      rootOutputFormatProvider = new BasicOutputFormatProvider(UnsupportedOutputFormat.class.getName(),
+                                                               Collections.emptyMap());
+    }
+    return rootOutputFormatProvider;
   }
 }

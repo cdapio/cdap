@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataReader;
@@ -50,6 +51,7 @@ public abstract class AbstractStageContext implements StageContext {
   private final StageMetrics stageMetrics;
   private final Schema inputSchema;
   private final Map<String, Schema> outputPortSchemas;
+  private final MacroEvaluator macroEvaluator;
   protected final BasicArguments arguments;
 
   protected AbstractStageContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
@@ -67,6 +69,8 @@ public abstract class AbstractStageContext implements StageContext {
     }
     this.outputPortSchemas = Collections.unmodifiableMap(portSchemas);
     this.arguments = pipelineRuntime.getArguments();
+    this.macroEvaluator = new DefaultMacroEvaluator(arguments, pipelineRuntime.getLogicalStartTime(),
+                                                    pipelineRuntime.getSecureStore(), pipelineRuntime.getNamespace());
   }
 
   @Override
@@ -86,23 +90,15 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Override
   public final PluginProperties getPluginProperties(final String pluginId) {
-    return CALLER.callUnchecked(new Callable<PluginProperties>() {
-      @Override
-      public PluginProperties call() throws Exception {
-        return pipelineRuntime.getPluginContext().getPluginProperties(scopePluginId(pluginId));
-      }
-    });
+    return CALLER.callUnchecked(
+      () -> pipelineRuntime.getPluginContext().getPluginProperties(scopePluginId(pluginId)));
   }
 
   @Override
   public final <T> T newPluginInstance(final String pluginId) throws InstantiationException {
     try {
-      return CALLER.call(new Callable<T>() {
-        @Override
-        public T call() throws Exception {
-          return pipelineRuntime.getPluginContext().newPluginInstance(scopePluginId(pluginId));
-        }
-      });
+      return CALLER.call(
+        () -> pipelineRuntime.getPluginContext().newPluginInstance(scopePluginId(pluginId), macroEvaluator));
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, InstantiationException.class);
       throw Throwables.propagate(e);
@@ -111,22 +107,14 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Override
   public final <T> Class<T> loadPluginClass(final String pluginId) {
-    return CALLER.callUnchecked(new Callable<Class<T>>() {
-      @Override
-      public Class<T> call() throws Exception {
-        return pipelineRuntime.getPluginContext().loadPluginClass(scopePluginId(pluginId));
-      }
-    });
+    return CALLER.callUnchecked(
+      () -> pipelineRuntime.getPluginContext().loadPluginClass(scopePluginId(pluginId)));
   }
 
   @Override
   public final PluginProperties getPluginProperties() {
-    return CALLER.callUnchecked(new Callable<PluginProperties>() {
-      @Override
-      public PluginProperties call() throws Exception {
-        return pipelineRuntime.getPluginContext().getPluginProperties(stageSpec.getName());
-      }
-    });
+    return CALLER.callUnchecked(
+      () -> pipelineRuntime.getPluginContext().getPluginProperties(stageSpec.getName()));
   }
 
   @Override
@@ -173,23 +161,15 @@ public abstract class AbstractStageContext implements StageContext {
   @Nullable
   @Override
   public URL getServiceURL(final String applicationId, final String serviceId) {
-    return CALLER.callUnchecked(new Callable<URL>() {
-      @Override
-      public URL call() {
-        return pipelineRuntime.getServiceDiscoverer().getServiceURL(applicationId, serviceId);
-      }
-    });
+    return CALLER.callUnchecked(
+      () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(applicationId, serviceId));
   }
 
   @Nullable
   @Override
   public URL getServiceURL(final String serviceId) {
-    return CALLER.callUnchecked(new Callable<URL>() {
-      @Override
-      public URL call() {
-        return pipelineRuntime.getServiceDiscoverer().getServiceURL(serviceId);
-      }
-    });
+    return CALLER.callUnchecked(
+      () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(serviceId));
   }
 
   @Override

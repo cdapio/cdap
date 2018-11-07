@@ -76,6 +76,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -139,6 +140,29 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   }
 
   @Test
+  public void testPluginInvalid() throws Exception {
+    // invalid plugin class json array which does not have a name
+    Set<PluginClass> pluginClasses = Collections.singleton(new PluginClass("type", null, "desc1", "className1", "cnfg",
+                                                                         Collections.emptyMap(), Collections.emptySet(),
+                                                                         Requirements.EMPTY));
+    // add a system artifact
+    ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
+    addWordCountAppAsSystemArtifacts();
+
+    Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
+      systemId.getNamespace(), systemId.getArtifact(),
+      new ArtifactVersion(systemId.getVersion()), true, new ArtifactVersion(systemId.getVersion()), true));
+
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, InspectionApp.class.getPackage().getName());
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("inspection", "1.0.0");
+    // should fail with bad request as the plugin class does not have a name
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
+                        addPluginArtifact(Id.Artifact.fromEntityId(artifactId), InspectionApp.class, manifest,
+                                          parents, pluginClasses).getStatusLine().getStatusCode());
+  }
+
+  @Test
   public void testAddAndGet() throws Exception {
     File wordCountArtifact = buildAppArtifact(WordCountApp.class, "wordcount.jar");
     File configTestArtifact = buildAppArtifact(ConfigTestApp.class, "cfgtest.jar");
@@ -147,18 +171,18 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     ArtifactId wordcountId1 = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
     ArtifactId wordcountId2 = NamespaceId.DEFAULT.artifact("wordcount", "2.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addArtifact(Id.Artifact.fromEntityId(wordcountId1), 
-                                    Files.newInputStreamSupplier(wordCountArtifact), null)
+                        addArtifact(Id.Artifact.fromEntityId(wordcountId1),
+                                    Files.newInputStreamSupplier(wordCountArtifact), Collections.emptySet())
                           .getResponseCode());
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addArtifact(Id.Artifact.fromEntityId(wordcountId2), 
-                                    Files.newInputStreamSupplier(wordCountArtifact), null)
+                                    Files.newInputStreamSupplier(wordCountArtifact), Collections.emptySet())
                           .getResponseCode());
     // and 1 version of another app that uses a config
     ArtifactId configTestAppId = NamespaceId.DEFAULT.artifact("cfgtest", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addArtifact(Id.Artifact.fromEntityId(configTestAppId), 
-                                    Files.newInputStreamSupplier(configTestArtifact), null)
+                                    Files.newInputStreamSupplier(configTestArtifact), Collections.emptySet())
                           .getResponseCode());
 
     // test get /artifacts endpoint
@@ -313,7 +337,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     ArtifactId defaultId = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addArtifact(Id.Artifact.fromEntityId(defaultId), 
-                                    Files.newInputStreamSupplier(systemArtifact), null)
+                                    Files.newInputStreamSupplier(systemArtifact), Collections.emptySet())
                           .getResponseCode());
 
     // add system artifact

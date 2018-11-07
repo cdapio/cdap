@@ -161,7 +161,7 @@ public class WorkflowTest {
       Assert.fail("Should have thrown Exception because Workflow is configured with schedules having same name.");
     } catch (Exception ex) {
       Assert.assertEquals("Duplicate schedule name for schedule: 'DailySchedule'",
-                          ex.getCause().getCause().getMessage());
+                          ex.getCause().getMessage());
     }
 
     // try deploying app containing a schedule for non existent workflow

@@ -23,7 +23,6 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.PluginClassDeserializer;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.common.io.Locations;
@@ -41,7 +40,6 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -62,9 +60,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class RemotePluginFinder implements PluginFinder {
 
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
-    .create();
+  private static final Gson GSON = new Gson();
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
 
   private final RemoteClient remoteClient;
