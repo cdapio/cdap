@@ -116,7 +116,7 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
     if (!tableList.length) {
       return (
         <div className="empty-search-container">
-          <div className="empty-search text-xs-center">
+          <div className="empty-search text-center">
             <strong>
               {T.translate(`${PREFIX}.EmptyMessage.emptyTableList`, {
                 connectionName: connectionId,
@@ -164,7 +164,7 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
         <div className="list-table">
           <div className="table-header">
             <div className="row">
-              <div className="col-xs-12">
+              <div className="col-12">
                 {T.translate(`${PREFIX}.name`)}
               </div>
             </div>
@@ -179,7 +179,7 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
                     onClick={this.createWorkspace.bind(this, table.name)}
                   >
                     <div className="row content-row">
-                      <div className="col-xs-12">
+                      <div className="col-12">
                         <IconSVG name="icon-table" />
                         {table.name}
                       </div>

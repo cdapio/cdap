@@ -27,14 +27,14 @@ export default function WizardModal({ children, title, isOpen, toggle, className
     <Modal
       isOpen={isOpen}
       toggle={toggle}
-      className={classnames('wizard-modal', className)}
+      className={classnames('wizard-modal cdap-modal', className)}
       size="lg"
       backdrop="static"
       zIndex="1061"
     >
       <ModalHeader>
-        <span className="float-xs-left">{title}</span>
-        <div className="close-section float-xs-right" onClick={toggle}>
+        <span className="float-left">{title}</span>
+        <div className="close-section float-right" onClick={toggle}>
           <span className="fa fa-times" />
         </div>
       </ModalHeader>

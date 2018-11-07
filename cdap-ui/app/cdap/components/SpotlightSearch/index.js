@@ -157,7 +157,7 @@ export default class SpotlightSearch extends Component {
             <DropdownItem
               tag="a"
               onClick={this.handleToggleModal}
-              className={classnames('text-xs-center', {hover: this.state.focusIndex === VIEW_RESULT_LIMIT})}
+              className={classnames('text-center', {hover: this.state.focusIndex === VIEW_RESULT_LIMIT})}
             >
               {T.translate('features.SpotlightSearch.showAll', {num: this.state.searchResults.total})}
             </DropdownItem>

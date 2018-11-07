@@ -130,7 +130,7 @@ export default class ProgramsTab extends Component {
 
         return (
           <div className="program-tab clearfix">
-            <div className="message-section float-xs-left">
+            <div className="message-section float-left">
               <strong> {title} </strong>
               <div>
                 {T.translate('features.Overview.ProgramTab.runningProgramLabel', {

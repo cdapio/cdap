@@ -201,7 +201,7 @@ class Rule extends Component {
   renderDetails = () => {
     if (this.state.detailsLoading) {
       return (
-        <Col xs="12" className="text-xs-center">
+        <Col xs="12" className="text-center">
           <LoadingSVG />
         </Col>
       );
@@ -245,7 +245,7 @@ class Rule extends Component {
             <Col xs={6}>
               <RulebooksPopover onChange={this.onRuleBookSelect} />
             </Col>
-            <Col xs={6} className="text-xs-right delete-btn-container">
+            <Col xs={6} className="text-right delete-btn-container">
               <div className="btn btn-secondary" onClick={this.toggleConfirmationModal}>
                 <IconSVG name="icon-trash" className="text-danger" />
               </div>

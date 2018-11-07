@@ -78,7 +78,7 @@ const GuidedTour = function() {
 
       const previousButton = {
         text: 'Previous',
-        classes: 'btn btn-secondary float-xs-left',
+        classes: 'btn btn-secondary float-left',
         action: () => {
           this.back();
         },

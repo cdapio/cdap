@@ -162,7 +162,7 @@ export default class ProfileDetailView extends Component {
           closeBtnAnchorLink={closeBtnlinkObj}
         />
         {this.state.error ? (
-          <div className="text-danger text-xs-center">{this.state.error}</div>
+          <div className="text-danger text-center">{this.state.error}</div>
         ) : (
           <ProfileDetailViewContent
             profile={this.state.profile}

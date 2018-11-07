@@ -144,13 +144,13 @@ export default class AddPropertyModal extends Component {
             })}
           </span>
 
-          <div className="close-section float-xs-right" onClick={this.toggleModal}>
+          <div className="close-section float-right" onClick={this.toggleModal}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>
         <ModalBody>
           <div className="row input-properties">
-            <div className="col-xs-3">
+            <div className="col-3">
               <input
                 type="text"
                 id="add-property-modal-key-input"
@@ -161,7 +161,7 @@ export default class AddPropertyModal extends Component {
               />
             </div>
 
-            <div className="col-xs-9">
+            <div className="col-9">
               <input
                 type="text"
                 className="form-control"
@@ -172,7 +172,7 @@ export default class AddPropertyModal extends Component {
             </div>
           </div>
 
-          <div className="text-xs-right">
+          <div className="text-right">
             <button className="btn btn-primary" onClick={this.onSave} disabled={disabled}>
               {T.translate('features.PropertiesEditor.AddProperty.button')}
             </button>

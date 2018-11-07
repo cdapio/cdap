@@ -44,8 +44,8 @@ const mapDispatchToStageLoggingProps = (dispatch) => {
 const StageLogging = ({ stageLogging, onToggle }) => {
   return (
     <div className="label-with-toggle stageLogging row">
-      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.stageLogging`)}</span>
-      <div className="col-xs-7 toggle-container">
+      <span className="toggle-label col-4">{T.translate(`${PREFIX}.stageLogging`)}</span>
+      <div className="col-7 toggle-container">
         <ToggleSwitch isOn={stageLogging} onToggle={onToggle.bind(null, !stageLogging)} />
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}

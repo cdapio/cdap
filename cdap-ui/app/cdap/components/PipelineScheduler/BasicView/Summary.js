@@ -159,8 +159,8 @@ const ConnectedMaxConcurrentRunsSummary = connect(
 export default function Summary() {
   return (
     <div className="form-group row summary">
-      <label className="col-xs-3 control-label">{T.translate(`${PREFIX}.label`)}</label>
-      <div className="col-xs-8 schedule-values-container">
+      <label className="col-3 control-label">{T.translate(`${PREFIX}.label`)}</label>
+      <div className="col-8 schedule-values-container">
         <div>
           <span>{T.translate(`${PREFIX}.scheduledToRun`)}</span>
           <ConnectedSummaryComponent />

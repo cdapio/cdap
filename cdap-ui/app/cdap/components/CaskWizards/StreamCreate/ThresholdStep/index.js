@@ -43,7 +43,7 @@ const mapDispatchToStreamThresholdProps = (dispatch) => {
 };
 let ThresholdTextBox = ({ value, onChange }) => {
   return (
-    <FormGroup row className="text-xs-center">
+    <FormGroup row className="text-center">
       <Input value={value} type="number" min={1} onChange={onChange} />
       <h3>{T.translate('features.Wizard.StreamCreate.Step3.mblabel')}</h3>
     </FormGroup>

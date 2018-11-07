@@ -14,7 +14,7 @@
  * the License.
  */
 
-@import "../../styles/variables.scss";
+@import "~styles/variables.scss";
 
 footer.app-footer {
   background-color: white;
@@ -26,38 +26,6 @@ footer.app-footer {
   bottom: 0;
   border-top: solid 1px #cdcdcd;
 
-  span.cask-logo {
-    background: url('/cdap_assets/img/cask_footer_logo.svg') 0 0 no-repeat;
-    display: inline-block;
-    margin-top: -4px;
-    margin-right: 3px;
-    height: 40px;
-    width: 45px;
-    vertical-align: top;
-  }
-  > .container {
-    padding-right: 15px;
-    padding-left: 15px;
-  }
-  div.text-muted {
-    margin: 0;
-
-    $md-max: map-get($grid-breakpoints, md);
-
-    > div {
-      @media (min-width: $md-max) {
-        &:first-child { text-align: left; }
-        &:last-child { text-align: right; }
-      }
-
-      @media (max-width: $md-max) { text-align: center; }
-    }
-  }
-  img {
-    height: 26px;
-    width: 26px;
-    margin-right: 8px;
-  }
   p,
   ul {
     height: $height-of-footer;

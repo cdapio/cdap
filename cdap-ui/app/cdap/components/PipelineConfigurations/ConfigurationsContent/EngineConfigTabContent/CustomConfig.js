@@ -100,7 +100,7 @@ const CustomConfig = ({
         </Popover>
         {showCustomConfig ? (
           <span>
-            <span className="float-xs-right num-rows">
+            <span className="float-right num-rows">
               {`${numberOfCustomConfigFilled}`}
               {T.translate(`${PREFIX}.customConfigCount`, { context: numberOfCustomConfigFilled })}
             </span>
@@ -124,7 +124,7 @@ const CustomConfig = ({
           >
             {T.translate(`${PREFIX}.customConfigTooltip`, { engineDisplayLabel })}
           </Popover>
-          <span className="float-xs-right num-rows">
+          <span className="float-right num-rows">
             {T.translate(`${PREFIX}.customConfigCount`, { context: numberOfCustomConfigFilled })}
           </span>
         </div>

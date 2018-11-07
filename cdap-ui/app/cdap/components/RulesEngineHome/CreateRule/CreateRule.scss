@@ -14,11 +14,11 @@
  * the License.
 */
 
-@import '../../../styles/variables.scss';
+@import '~styles/variables.scss';
 
 $hr_color: lightgray;
 $dsv_input_border_color: rgba(0, 0, 0, 0.15);
-$rule-create-fields-required-color: $cdap-red-text;
+$rule-create-fields-required-color: $red-02;
 
 .create-rule-container {
   padding: 10px;

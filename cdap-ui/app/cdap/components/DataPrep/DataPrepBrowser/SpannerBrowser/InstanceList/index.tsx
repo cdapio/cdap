@@ -90,7 +90,7 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
     if (!instanceList.length) {
       return (
         <div className="empty-search-container">
-          <div className="empty-search text-xs-center">
+          <div className="empty-search text-center">
             <strong>
               {T.translate(`${PREFIX}.EmptyMessage.emptyInstanceList`, {
                 connectionName: connectionId,
@@ -112,7 +112,7 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
         <div className="list-table">
           <div className="table-header">
             <div className="row">
-              <div className="col-xs-12">
+              <div className="col-12">
                 {T.translate(`${PREFIX}.name`)}
               </div>
             </div>
@@ -131,7 +131,7 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
                     onClick={this.clickHandler.bind(null, instance.name)}
                   >
                     <div className="row content-row">
-                      <div className="col-xs-12">
+                      <div className="col-12">
                         <IconSVG
                           name="icon-database"
                           className="instance-icon"

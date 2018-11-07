@@ -110,7 +110,7 @@ export default class AllTabContents extends Component {
           />
         */}
         <div
-          className={classnames('body-section text-xs-center', {
+          className={classnames('body-section text-center', {
             'empty-section': this.state.entities.length === 0,
           })}
         >

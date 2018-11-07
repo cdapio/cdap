@@ -215,7 +215,7 @@ export default class NamespacesAccordion extends Component {
   renderGrid() {
     if (this.state.loading) {
       return (
-        <div className="text-xs-center">
+        <div className="text-center">
           <LoadingSVG />
         </div>
       );

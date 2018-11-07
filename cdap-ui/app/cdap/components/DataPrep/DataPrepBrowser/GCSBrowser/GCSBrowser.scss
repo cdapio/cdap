@@ -45,6 +45,9 @@ $gcs_file_icon_color: $blue-03;
     .gcs-content-body {
       height: calc(100% - 38px);
       overflow-y: auto;
+
+      a:hover { text-decoration: none; }
+
       .gcs-buckets {
         height: 100%;
         .icon-svg {

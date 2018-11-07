@@ -169,7 +169,7 @@ class NamespaceDetailsPreferences extends Component {
 
   renderPreferencesTable() {
     if (!this.state.prefs.length) {
-      return <div className="text-xs-center">{T.translate(`${PREFIX}.noPreferences`)}</div>;
+      return <div className="text-center">{T.translate(`${PREFIX}.noPreferences`)}</div>;
     }
 
     let prefs = [...this.state.prefs];

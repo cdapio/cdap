@@ -105,7 +105,7 @@ export default function ConfigureStep() {
           <Col xs="7">
             <InputArtifactName />
           </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left" />
+          <i className="fa fa-asterisk text-danger float-left" />
         </FormGroup>
 
         <FormGroup row>
@@ -117,7 +117,7 @@ export default function ConfigureStep() {
           <Col xs="7">
             <InputArtifactClassname />
           </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left" />
+          <i className="fa fa-asterisk text-danger float-left" />
         </FormGroup>
 
         <FormGroup row>

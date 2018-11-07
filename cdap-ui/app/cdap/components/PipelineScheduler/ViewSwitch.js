@@ -69,7 +69,7 @@ const mapDispatchToAdvancedViewSwitchProps = (dispatch) => {
 const BasicViewSwitch = ({ scheduleView, onClick }) => {
   return (
     <span
-      className={classnames('col-xs-3 schedule-type schedule-type-basic', {
+      className={classnames('col-3 schedule-type schedule-type-basic', {
         active: scheduleView === SCHEDULE_VIEWS.BASIC,
       })}
       onClick={onClick}
@@ -87,7 +87,7 @@ BasicViewSwitch.propTypes = {
 const AdvancedViewSwitch = ({ scheduleView, onClick }) => {
   return (
     <span
-      className={classnames('col-xs-4 schedule-type schedule-type-advanced', {
+      className={classnames('col-4 schedule-type schedule-type-advanced', {
         active: scheduleView === SCHEDULE_VIEWS.ADVANCED,
       })}
       onClick={onClick}

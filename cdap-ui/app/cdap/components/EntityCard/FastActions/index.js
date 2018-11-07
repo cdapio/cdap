@@ -72,7 +72,7 @@ export default class FastActions extends Component {
 
   render() {
     const fastActions = this.listOfFastActions();
-    let className = this.props.className || 'text-xs-center';
+    let className = this.props.className || 'text-center';
     return (
       <h4 className={className}>
         {fastActions.map((action) => {

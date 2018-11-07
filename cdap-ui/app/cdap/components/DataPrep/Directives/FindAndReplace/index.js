@@ -213,14 +213,14 @@ export default class FindAndReplaceDirective extends Component {
 
         <div className="action-buttons">
           <button
-            className="btn btn-primary float-xs-left"
+            className="btn btn-primary float-left"
             onClick={this.applyDirective}
             disabled={this.state.findInput.length === 0}
           >
             {T.translate(`${PREFIX}.buttonLabel`)}
           </button>
 
-          <button className="btn btn-link float-xs-right" onClick={this.props.close}>
+          <button className="btn btn-link float-right" onClick={this.props.close}>
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
@@ -238,7 +238,7 @@ export default class FindAndReplaceDirective extends Component {
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
 
-        <span className="float-xs-right">
+        <span className="float-right">
           <span className="fa fa-caret-right" />
         </span>
 

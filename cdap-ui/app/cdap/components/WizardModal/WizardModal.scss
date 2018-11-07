@@ -74,14 +74,6 @@ $wizard-modal-max-width: 1050px;
             cursor: pointer;
           }
         }
-        .btn-resource-center {
-          background-color: $cdap-darkorange;
-          border-color: none;
-          color: lightgray;
-          &:focus {
-            outline: 0;
-          }
-        }
       }
     }
   }

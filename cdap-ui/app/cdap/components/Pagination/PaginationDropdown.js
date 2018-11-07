@@ -45,10 +45,8 @@ export default class PaginationDropdown extends Component {
     for (let i = 0; i < this.props.numberOfPages; i++) {
       dropdownItems.push(
         <div className="dropdownItems clearfix">
-          <span className="page-number float-xs-left">{i + 1}</span>
-          {this.props.currentPage === i + 1 ? (
-            <span className="fa fa-check float-xs-right" />
-          ) : null}
+          <span className="page-number float-left">{i + 1}</span>
+          {this.props.currentPage === i + 1 ? <span className="fa fa-check float-right" /> : null}
         </div>
       );
     }
@@ -62,7 +60,7 @@ export default class PaginationDropdown extends Component {
         <DropdownToggle tag="div">
           <span>{T.translate('features.Pagination.dropdown-label')}</span>
           <span className="current-page">{this.props.currentPage}</span>
-          <span className="fa fa-caret-down float-xs-right" />
+          <span className="fa fa-caret-down float-right" />
         </DropdownToggle>
         <DropdownMenu onClick={(e) => e.stopPropagation()}>
           {dropdownItems.map((item, index) => {

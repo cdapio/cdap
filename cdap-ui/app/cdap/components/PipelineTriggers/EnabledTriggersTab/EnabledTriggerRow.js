@@ -45,7 +45,7 @@ export default class EnabledTriggerRow extends Component {
 
   renderLoading() {
     return (
-      <div className="text-xs-center text-center">
+      <div className="text-center">
         <LoadingSVG />
       </div>
     );

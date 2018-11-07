@@ -162,7 +162,7 @@ export default class DatasetTab extends Component {
   render() {
     return (
       <div className="dataset-tab">
-        <div className="message-section float-xs-left">
+        <div className="message-section float-left">
           <strong>
             {' '}
             {T.translate('features.Overview.DatasetTab.title', {

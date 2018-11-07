@@ -99,8 +99,8 @@ export default class MarketPlaceUsecaseEntity extends Component {
       <Card size="LG" cardClass="market-place-usecase-package-card">
         {this.props.entity.beta ? <ExperimentalBanner /> : null}
         <div className="title clearfix">
-          <span className="float-xs-left">{this.props.entity.label}</span>
-          <span className="float-xs-right">Version: {this.props.entity.version}</span>
+          <span className="float-left">{this.props.entity.label}</span>
+          <span className="float-right">Version: {this.props.entity.version}</span>
         </div>
         <div className="entity-information">
           <div className="entity-modal-image">
@@ -127,10 +127,7 @@ export default class MarketPlaceUsecaseEntity extends Component {
           </div>
         </div>
         <div className="actions-container">
-          <div
-            className="arrow-container text-xs-center"
-            onClick={this.fetchEntityDetail.bind(this)}
-          >
+          <div className="arrow-container text-center" onClick={this.fetchEntityDetail.bind(this)}>
             {this.state.showActions ? (
               <span className="fa fa-angle-double-up" />
             ) : (

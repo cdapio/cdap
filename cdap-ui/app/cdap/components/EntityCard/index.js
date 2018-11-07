@@ -150,7 +150,7 @@ export default class EntityCard extends Component {
 
           {this.renderEntityStatus()}
 
-          <div className="fast-actions-container text-xs-center">
+          <div className="fast-actions-container text-center">
             <FastActions
               entity={this.props.entity}
               onUpdate={this.onFastActionUpdate.bind(this)}

@@ -67,7 +67,7 @@ export default class ConfirmationModal extends Component {
     if (this.props.isLoading) {
       return (
         <ModalBody className="loading">
-          <h3 className="text-xs-center">
+          <h3 className="text-center">
             <IconSVG name="icon-spinner" className="fa-spin" />
           </h3>
         </ModalBody>
@@ -133,7 +133,7 @@ export default class ConfirmationModal extends Component {
         <ModalHeader>
           {this.props.headerTitle}
           <If condition={this.props.closeable}>
-            <div className="close-section float-xs-right" onClick={this.props.cancelFn}>
+            <div className="close-section float-right" onClick={this.props.cancelFn}>
               <IconSVG name="icon-close" />
             </div>
           </If>

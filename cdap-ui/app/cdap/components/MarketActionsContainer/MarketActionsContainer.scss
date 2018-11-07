@@ -14,7 +14,9 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
+@import '~styles/variables.scss';
+
+$success-bg-color: $green-02;
 
 .market-entity-actions {
   display: flex;
@@ -38,7 +40,7 @@
         border-radius: 0.25rem;
         background: #777777;
         &.completed {
-          background-color: $state-success-text;
+          background-color: $success-bg-color;
         }
       }
       .tag-pill {

@@ -122,7 +122,7 @@ export default class ConnectionPopover extends Component {
     if (this.state.loading) {
       content = (
         <ModalBody>
-          <div className="text-xs-center">
+          <div className="text-center">
             <LoadingSVG />
           </div>
         </ModalBody>
@@ -214,7 +214,7 @@ export default class ConnectionPopover extends Component {
 
   render() {
     return (
-      <span className="expanded-menu-popover-icon text-xs-center float-xs-right">
+      <span className="expanded-menu-popover-icon text-center float-right">
         <UncontrolledPopover icon="fa-ellipsis-v" popoverClassName="connection-action-popover">
           <div className="connection-action-item" onClick={this.toggleEdit}>
             <span>{T.translate(`${PREFIX}.edit`)}</span>

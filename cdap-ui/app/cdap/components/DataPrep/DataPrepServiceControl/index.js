@@ -102,8 +102,8 @@ export default class DataPrepServiceControl extends Component {
           </div>
           <div className="text-container">
             <div className="description-container">
-              <h2 className="text-xs-left">{T.translate(`${PREFIX}.title`, { featureName })}</h2>
-              <div className="text-xs-left action-container">
+              <h2 className="text-left">{T.translate(`${PREFIX}.title`, { featureName })}</h2>
+              <div className="text-left action-container">
                 <button
                   className="btn btn-primary"
                   onClick={this.enableService}

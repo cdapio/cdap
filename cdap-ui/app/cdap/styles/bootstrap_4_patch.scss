@@ -41,12 +41,17 @@
     opacity: 0.5;
   }
 
-  // col-xs-NUM is now col-NUM :sigh:
+  .row {
+    display: flex;
+  }
 
+  // col-xs-NUM is now col-NUM :sigh:
   @for $i from 1 through 12 {
     .col-#{$i} {
       @include make-col($size: $i);
-      @include make-gutters();
+      // gutters
+      padding-left: 15px;
+      padding-right: 15px;
     }
   }
 
@@ -202,6 +207,8 @@
   h6 {
     font-size: $font-size-base;
   }
+
+  .btn-secondary { border-color: $grey-05; }
 }
 
 // This is here just for specificity. We add bootstrap patch styles before bootstrap styles

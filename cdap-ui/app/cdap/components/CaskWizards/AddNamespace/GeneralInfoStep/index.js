@@ -92,7 +92,7 @@ export default function GeneralInfoStep() {
           <Col xs="7">
             <InputNamespaceName />
           </Col>
-          <span className="fa fa-asterisk text-danger float-xs-left" />
+          <span className="fa fa-asterisk text-danger float-left" />
         </FormGroup>
         <FormGroup row>
           <Col xs="3">

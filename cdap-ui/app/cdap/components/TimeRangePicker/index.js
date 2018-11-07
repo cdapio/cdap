@@ -261,7 +261,7 @@ export default class TimeRangePicker extends Component {
             </div>
           </div>
 
-          <div className="separator text-xs-center">to</div>
+          <div className="separator text-center">to</div>
 
           <div className="time">
             <div

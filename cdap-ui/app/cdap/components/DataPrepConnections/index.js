@@ -1065,7 +1065,7 @@ export default class DataPrepConnections extends Component {
     );
     if (this.state.backendChecking) {
       return (
-        <div className="text-xs-center">
+        <div className="text-center">
           {this.props.singleWorkspaceMode || this.props.enableRouting ? null : pageTitle}
           <LoadingSVG />
         </div>

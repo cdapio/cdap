@@ -132,7 +132,7 @@ export default class DatabaseConnection extends Component {
 
     if (this.state.loading) {
       content = (
-        <div className="text-xs-center">
+        <div className="text-center">
           <LoadingSVG />
         </div>
       );

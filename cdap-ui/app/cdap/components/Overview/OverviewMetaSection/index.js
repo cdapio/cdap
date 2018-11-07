@@ -117,7 +117,7 @@ export default class OverviewMetaSection extends Component {
     return (
       <div className="overview-meta-section">
         <h2 title={this.props.entity.id}>{this.props.entity.id}</h2>
-        <div className="fast-actions-container text-xs-center">
+        <div className="fast-actions-container text-center">
           <div>
             {this.props.entity.type === 'application' ? (
               <span>

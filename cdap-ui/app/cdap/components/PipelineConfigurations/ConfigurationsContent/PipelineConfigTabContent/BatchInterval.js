@@ -73,8 +73,8 @@ const SelectBatchIntervalUnit = connect(
 const BatchInterval = () => {
   return (
     <div className="label-with-toggle batch-interval form-group row">
-      <span className="toggle-label col-xs-4">{T.translate(`${PREFIX}.batchInterval`)}</span>
-      <div className="col-xs-7">
+      <span className="toggle-label col-4">{T.translate(`${PREFIX}.batchInterval`)}</span>
+      <div className="col-7">
         <SelectBatchIntervalRange className="form-control small-dropdown" />
         <SelectBatchIntervalUnit className="form-control small-dropdown batch-interval-unit" />
       </div>

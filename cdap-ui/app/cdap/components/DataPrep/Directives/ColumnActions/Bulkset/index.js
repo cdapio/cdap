@@ -140,7 +140,7 @@ export default class Bulkset extends Component {
         <ModalHeader>
           <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
 
-          <div className="close-section float-xs-right" onClick={this.props.onClose}>
+          <div className="close-section float-right" onClick={this.props.onClose}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>

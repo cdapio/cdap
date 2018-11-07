@@ -164,7 +164,7 @@ export default class AddConnection extends Component {
 
   render() {
     return (
-      <div className="add-connection-container text-xs-center">
+      <div className="add-connection-container text-center">
         {this.renderPopover()}
         {this.renderModal()}
       </div>

@@ -143,7 +143,7 @@ export default class ReplaceColumns extends Component {
             {T.translate(`${PREFIX}.replaceLabel`)}
           </label>
         ) : null}
-        <div className="col-xs-12">
+        <div className="col-12">
           <input
             type="text"
             className="form-control mousetrap"
@@ -166,7 +166,7 @@ export default class ReplaceColumns extends Component {
     return (
       <div className="form-group clearfix pattern-input">
         <label className="control-label">{T.translate(`${PREFIX}.withLabel`)}</label>
-        <div className="col-xs-12">
+        <div className="col-12">
           <input
             type="text"
             className="form-control mousetrap"
@@ -192,7 +192,7 @@ export default class ReplaceColumns extends Component {
         <ModalHeader>
           <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
 
-          <div className="close-section float-xs-right" onClick={this.props.onClose}>
+          <div className="close-section float-right" onClick={this.props.onClose}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>

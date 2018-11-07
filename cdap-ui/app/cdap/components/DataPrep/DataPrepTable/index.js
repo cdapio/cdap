@@ -274,7 +274,7 @@ export default class DataPrepTable extends Component {
                           <span>{head.name}</span>
                         </span>
                       ) : (
-                        <div className="warning-container-wrapper float-xs-left">
+                        <div className="warning-container-wrapper float-left">
                           <TextboxOnValium
                             onChange={this.handleSaveEditedColumnName.bind(this, index)}
                             value={head.name}
@@ -317,7 +317,7 @@ export default class DataPrepTable extends Component {
                       )}
                       <span
                         onClick={this.toggleColumnSelect.bind(this, head.name)}
-                        className={classnames('float-xs-right fa column-header-checkbox', {
+                        className={classnames('float-right fa column-header-checkbox', {
                           'fa-square-o': !this.columnIsSelected(head.name),
                           'fa-check-square': this.columnIsSelected(head.name),
                         })}
@@ -353,7 +353,7 @@ export default class DataPrepTable extends Component {
     if (this.state.loading) {
       return (
         <div className="dataprep-table empty">
-          <h4 className="text-xs-center">
+          <h4 className="text-center">
             <span className="fa fa-spin fa-spinner" />
           </h4>
         </div>
@@ -367,7 +367,7 @@ export default class DataPrepTable extends Component {
       return (
         <div className="dataprep-table empty">
           <div>
-            <h5 className="text-xs-center">Please select or upload a file to wrangle data</h5>
+            <h5 className="text-center">Please select or upload a file to wrangle data</h5>
           </div>
         </div>
       );
@@ -390,11 +390,11 @@ export default class DataPrepTable extends Component {
         <div className="dataprep-table empty">
           {this.state.directivesLength === 0 ? (
             <div>
-              <h5 className="text-xs-center">{T.translate(`${PREFIX}.emptyWorkspace`)}</h5>
+              <h5 className="text-center">{T.translate(`${PREFIX}.emptyWorkspace`)}</h5>
             </div>
           ) : (
             <div>
-              <h5 className="text-xs-center">{T.translate(`${PREFIX}.noData`)}</h5>
+              <h5 className="text-center">{T.translate(`${PREFIX}.noData`)}</h5>
             </div>
           )}
         </div>

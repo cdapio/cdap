@@ -57,7 +57,7 @@ export default class HttpExecutor extends Component {
           <div className="response-section">
             <div className="response-header">
               <span className="title">{T.translate(`${PREFIX}.responseTitle`)}</span>
-              <span className="float-xs-right">
+              <span className="float-right">
                 <StatusCode />
               </span>
             </div>

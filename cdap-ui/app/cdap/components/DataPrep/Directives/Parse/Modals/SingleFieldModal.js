@@ -108,7 +108,7 @@ export default class SingleFieldModal extends Component {
         <ModalHeader>
           <span>{T.translate(`${SUFFIX}.modalTitle`, { parser: parserTitle })}</span>
 
-          <div className="close-section float-xs-right" onClick={this.props.toggle}>
+          <div className="close-section float-right" onClick={this.props.toggle}>
             <span className="fa fa-times" />
           </div>
         </ModalHeader>

@@ -236,8 +236,8 @@ const RepeatEveryComponent = ({ intervalOption }) => {
 
   return (
     <div className={classnames('form-group row', { invisible: shouldHideComponent })}>
-      <label className="col-xs-3 control-label">{T.translate(`${PREFIX}.label`)}</label>
-      <div className="col-xs-4 schedule-values-container">{SelectComponent}</div>
+      <label className="col-3 control-label">{T.translate(`${PREFIX}.label`)}</label>
+      <div className="col-4 schedule-values-container">{SelectComponent}</div>
     </div>
   );
 };

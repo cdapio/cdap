@@ -173,8 +173,8 @@ class ProfilesForSchedule extends Component {
   render() {
     return (
       <div className="form-group row">
-        <label className="col-xs-3 control-label">{T.translate(`${PREFIX}.computeProfiles`)}</label>
-        <div className="col-xs-6 schedule-values-container">{this.renderProfilesDropdown()}</div>
+        <label className="col-3 control-label">{T.translate(`${PREFIX}.computeProfiles`)}</label>
+        <div className="col-6 schedule-values-container">{this.renderProfilesDropdown()}</div>
       </div>
     );
   }

@@ -391,7 +391,7 @@ export default class Calculate extends Component {
           onClick={this.popoverOptionClick.bind(this, option.name)}
         >
           <span>{T.translate(`${PREFIX}.OptionsLabels.${option.name}`)}</span>
-          <span className="float-xs-right">
+          <span className="float-right">
             <span className="fa fa-caret-right" />
           </span>
           {this.state.operationPopoverOpen === option.name ? this.renderOperationPopover() : null}
@@ -478,14 +478,14 @@ export default class Calculate extends Component {
     return (
       <div className="action-buttons">
         <button
-          className="btn btn-primary float-xs-left"
+          className="btn btn-primary float-left"
           disabled={this.isApplyDisabled()}
           onClick={this.getExpressionAndApply}
         >
           {T.translate('features.DataPrep.Directives.apply')}
         </button>
 
-        <button className="btn btn-link float-xs-right" onClick={this.setDefaultState}>
+        <button className="btn btn-link float-right" onClick={this.setDefaultState}>
           {T.translate('features.DataPrep.Directives.cancel')}
         </button>
       </div>
@@ -583,7 +583,7 @@ export default class Calculate extends Component {
         >
           <span>{T.translate(`${PREFIX}.title`)}</span>
 
-          <span className="float-xs-right">
+          <span className="float-right">
             <span className="fa fa-caret-right" />
           </span>
 

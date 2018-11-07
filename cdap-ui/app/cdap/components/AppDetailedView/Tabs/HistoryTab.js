@@ -123,7 +123,7 @@ export default class HistoryTab extends Component {
               <td>{StatusMapper.lookupDisplayStatus(history.status)}</td>
               <td>
                 <div className="fast-actions-container">
-                  <h4 className="text-xs-left btn-group">
+                  <h4 className="text-left btn-group">
                     <LogAction
                       entity={{
                         id: history.programName,
@@ -166,7 +166,7 @@ export default class HistoryTab extends Component {
       }
       return (
         <div className="history-tab">
-          <h3 className="text-xs-center">
+          <h3 className="text-center">
             <span className="fa fa-spinner fa-spin fa-2x loading-spinner" />
           </h3>
         </div>

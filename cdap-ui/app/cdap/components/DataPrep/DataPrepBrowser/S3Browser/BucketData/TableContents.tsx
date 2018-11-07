@@ -175,17 +175,17 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
                       className="row"
                       id={`s3connection-${file.scrollId}`}
                     >
-                      <div className="col-xs-3">
+                      <div className="col-3">
                         {this.renderIcon(file.type)}
                         {file.name}
                       </div>
-                      <div className="col-xs-3">
+                      <div className="col-3">
                         {file.owner || '--'}
                       </div>
-                      <div className="col-xs-3">
+                      <div className="col-3">
                         {file.size || '--'}
                       </div>
-                      <div className="col-xs-3">
+                      <div className="col-3">
                         {lastModified}
                       </div>
                     </div>
@@ -212,7 +212,7 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
                   className="row"
                   id={`s3connection-${file.scrollId}`}
                 >
-                  <div className="col-xs-12">
+                  <div className="col-12">
                     {this.renderIcon(file.type)}
                     {file.name}
                   </div>
@@ -234,7 +234,7 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
       return (
         <div className="s3-buckets empty-message">
           <div className="row">
-            <div className="col-xs-12">
+            <div className="col-12">
               <EmptyMessageContainer searchText={search}>
                 <ul>
                   <li>

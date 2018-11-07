@@ -152,7 +152,7 @@ export default class MicroserviceQueue extends Component {
   render() {
     return (
       <div className="microservice-queue-container">
-        <div className="col-xs-10 microservice-queue-input-container">
+        <div className="col-10 microservice-queue-input-container">
           <Form
             className="form-horizontal"
             onSubmit={(e) => {
@@ -197,7 +197,7 @@ export default class MicroserviceQueue extends Component {
             {this.renderTypeProperties()}
           </Form>
         </div>
-        <div className="col-xs-2 microservice-queue-buttons-container">
+        <div className="col-2 microservice-queue-buttons-container">
           <button
             className="btn add-row-btn btn-link"
             onClick={this.props.onAdd}

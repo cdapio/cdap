@@ -33,6 +33,7 @@ $modal-spacing: 10px;
     height: 40px;
     display: flex;
     align-items: center;
+    border-radius: 0;
 
     .modal-title {
       font-weight: normal;
@@ -76,7 +77,7 @@ $modal-spacing: 10px;
     }
   }
   .modal-footer {
-    text-align: left;
+    justify-content: flex-start;
     padding: $modal-spacing;
     .btn {
       margin: 0;

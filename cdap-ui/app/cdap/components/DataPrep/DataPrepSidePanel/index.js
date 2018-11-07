@@ -62,7 +62,7 @@ export default class DataPrepSidePanel extends Component {
 
   renderColumns() {
     if (this.state.headers.length === 0) {
-      return <h5 className="empty-message text-xs-center">{T.translate(`${PREFIX}.noColumns`)}</h5>;
+      return <h5 className="empty-message text-center">{T.translate(`${PREFIX}.noColumns`)}</h5>;
     }
 
     return (
@@ -74,9 +74,7 @@ export default class DataPrepSidePanel extends Component {
 
   renderDirectives() {
     if (this.state.directives.length === 0) {
-      return (
-        <h5 className="empty-message text-xs-center">{T.translate(`${PREFIX}.noDirectives`)}</h5>
-      );
+      return <h5 className="empty-message text-center">{T.translate(`${PREFIX}.noDirectives`)}</h5>;
     }
 
     return (
@@ -99,7 +97,7 @@ export default class DataPrepSidePanel extends Component {
 
   render() {
     return (
-      <div className="col-xs-3 dataprep-side-panel">
+      <div className="col-3 dataprep-side-panel">
         <div className="tabs">
           <div className="tabs-headers">
             <div

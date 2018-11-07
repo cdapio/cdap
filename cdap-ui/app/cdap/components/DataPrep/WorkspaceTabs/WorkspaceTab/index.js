@@ -75,11 +75,11 @@ export default class WorkspaceTab extends Component {
 
     return (
       <div id={workspace.id} className="workspace-tab active clearfix" title={workspace.name}>
-        <span className="display-name-container float-xs-left">
+        <span className="display-name-container float-left">
           {this.state.overflow ? this.renderOverflow() : this.renderName()}
         </span>
 
-        <span className="fa fa-fw delete-workspace float-xs-right" onClick={this.props.onDelete}>
+        <span className="fa fa-fw delete-workspace float-right" onClick={this.props.onDelete}>
           <IconSVG name="icon-close" />
         </span>
       </div>
@@ -91,13 +91,13 @@ export default class WorkspaceTab extends Component {
 
     return (
       <div id={workspace.id} className="workspace-tab clearfix" title={workspace.name}>
-        <span className="display-name-container float-xs-left">
+        <span className="display-name-container float-left">
           <Link to={`/ns/${this.namespace}/dataprep/${workspace.id}`}>
             {this.state.overflow ? this.renderOverflow() : this.renderName()}
           </Link>
         </span>
 
-        <span className="fa fa-fw delete-workspace float-xs-right" onClick={this.props.onDelete}>
+        <span className="fa fa-fw delete-workspace float-right" onClick={this.props.onDelete}>
           <IconSVG name="icon-close" />
         </span>
       </div>

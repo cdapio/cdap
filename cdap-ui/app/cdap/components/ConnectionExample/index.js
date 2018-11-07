@@ -118,7 +118,7 @@ export default class ConnectionExample extends Component {
 
         {error}
         <div className="row">
-          <div className="col-xs-3">
+          <div className="col-3">
             <input
               type="text"
               className="form-control"
@@ -126,7 +126,7 @@ export default class ConnectionExample extends Component {
               ref={(ref) => (this.streamNameInput = ref)}
             />
           </div>
-          <div className="col-xs-3">
+          <div className="col-3">
             <button className="btn" onClick={this.addStream.bind(this)}>
               Add Stream
             </button>

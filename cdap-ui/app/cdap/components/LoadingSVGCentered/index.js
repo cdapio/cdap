@@ -21,7 +21,7 @@ require('./LoadingSVGCentered.scss');
 
 export default function LoadingSVGCentered() {
   return (
-    <div className="loading-svg-centered text-xs-center">
+    <div className="loading-svg-centered text-center">
       <LoadingSVG />
     </div>
   );

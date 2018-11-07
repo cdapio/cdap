@@ -159,7 +159,7 @@ export default class KafkaBrowser extends Component {
 
     return (
       <div className="empty-search-container">
-        <div className="empty-search text-xs-center">
+        <div className="empty-search text-center">
           <strong>
             {T.translate(`${PREFIX}.EmptyMessage.emptyKafka`, {
               connectionName: this.state.connectionName,
@@ -178,7 +178,7 @@ export default class KafkaBrowser extends Component {
       <div className="kafka-content-table">
         <div className="kafka-content-header">
           <div className="row">
-            <div className="col-xs-12">
+            <div className="col-12">
               <span>{T.translate(`${PREFIX}.table.topics`)}</span>
             </div>
           </div>
@@ -191,7 +191,7 @@ export default class KafkaBrowser extends Component {
                 onClick={this.prepTopic.bind(this, topic)}
                 key={topic}
               >
-                <div className="col-xs-12">
+                <div className="col-12">
                   <span>{topic}</span>
                 </div>
               </div>

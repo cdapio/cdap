@@ -31,7 +31,7 @@ export default function AboutPageModal({ cdapVersion, isOpen, toggle }) {
   return (
     <Modal isOpen={isOpen} toggle={toggle} size="md" className="about-page-modal" backdrop="static">
       <ModalBody>
-        <div className="close-section float-xs-right" onClick={toggle}>
+        <div className="close-section float-right" onClick={toggle}>
           <span className="fa fa-2x fa-times" />
         </div>
         <div className="about-title">

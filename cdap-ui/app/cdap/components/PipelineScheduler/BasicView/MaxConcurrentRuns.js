@@ -52,8 +52,8 @@ const SelectMaxConcurrentRuns = connect(
 export default function MaxConcurrentRuns() {
   return (
     <div className="form-group row max-concurrent-runs">
-      <label className="col-xs-3 control-label">{T.translate(`${PREFIX}.maxConcurrentRuns`)}</label>
-      <div className="col-xs-4 schedule-values-container">
+      <label className="col-3 control-label">{T.translate(`${PREFIX}.maxConcurrentRuns`)}</label>
+      <div className="col-4 schedule-values-container">
         <span className="schedule-values">
           <SelectMaxConcurrentRuns className="form-control small-dropdown" />
         </span>

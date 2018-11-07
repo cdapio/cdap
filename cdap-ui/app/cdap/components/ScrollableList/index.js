@@ -155,7 +155,7 @@ export default class ScrollableList extends Component {
   renderScrollDownContainer() {
     return (
       <div
-        className={classnames('scroll-down-container text-xs-center', {
+        className={classnames('scroll-down-container text-center', {
           disabled: !this.shouldScrollDown(),
         })}
         onClick={this.scrollDown}
@@ -169,7 +169,7 @@ export default class ScrollableList extends Component {
   renderScrollUpContainer() {
     return (
       <div
-        className={classnames('scroll-up-container text-xs-center', {
+        className={classnames('scroll-up-container text-center', {
           disabled: !this.shouldScrollUp(),
         })}
         onClick={this.scrollUp}

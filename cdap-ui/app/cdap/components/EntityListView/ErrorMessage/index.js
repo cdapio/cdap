@@ -64,7 +64,7 @@ export default class HomeErrorMessage extends Component {
     };
 
     const normalError = (
-      <h3 className="text-xs-center empty-message text-danger">
+      <h3 className="text-center empty-message text-danger">
         <span className="fa fa-exclamation-triangle" />
         <span>{this.state.errorMessage}</span>
       </h3>
@@ -83,7 +83,7 @@ export default class HomeErrorMessage extends Component {
     );
 
     const tryAgainError = (
-      <h3 className="text-xs-center empty-message text-danger">
+      <h3 className="text-center empty-message text-danger">
         <span className="fa fa-exclamation-triangle" />
         <span>
           {T.translate('features.EntityListView.Errors.tryAgain')}
@@ -96,7 +96,7 @@ export default class HomeErrorMessage extends Component {
     );
 
     const timeOut = (
-      <h3 className="text-xs-center empty-message text-danger">
+      <h3 className="text-center empty-message text-danger">
         <span className="fa fa-exclamation-triangle" />
         <span>{T.translate('features.EntityListView.Errors.timeOut')}</span>
       </h3>

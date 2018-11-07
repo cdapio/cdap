@@ -101,7 +101,7 @@ export default class Header extends Component {
     return (
       <div className="global-navbar">
         <div
-          className="global-navbar-toggler float-xs-right btn"
+          className="global-navbar-toggler float-right btn"
           onClick={this.toggleNavbar.bind(this)}
         >
           {!this.state.toggleNavbar ? (

@@ -53,7 +53,7 @@ export default class OpsDashboard extends Component {
             })}
           />
           <div className="header clearfix">
-            <div className="links float-xs-left">
+            <div className="links float-left">
               <span>{featureName}</span>
             </div>
 

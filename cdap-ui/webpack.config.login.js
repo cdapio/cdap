@@ -186,6 +186,7 @@ var webpackConfig = {
     alias: {
       components: __dirname + '/app/login/components',
       services: __dirname + '/app/cdap/services',
+      styles: __dirname + '/app/cdap/styles',
     },
   },
 };

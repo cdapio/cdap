@@ -227,14 +227,14 @@ export default class Format extends Component {
     return (
       <div className="action-buttons">
         <button
-          className="btn btn-primary float-xs-left"
+          className="btn btn-primary float-left"
           disabled={this.isApplyDisabled()}
           onClick={this.getConcatExpressionAndApply}
         >
           {T.translate('features.DataPrep.Directives.apply')}
         </button>
 
-        <button className="btn btn-link float-xs-right" onClick={this.setDefaultFormatPopoverState}>
+        <button className="btn btn-link float-right" onClick={this.setDefaultFormatPopoverState}>
           {T.translate('features.DataPrep.Directives.cancel')}
         </button>
       </div>
@@ -328,7 +328,7 @@ export default class Format extends Component {
         >
           {T.translate(`${PREFIX}.Formats.${option.name}.label`)}
           {option.name === 'CONCATENATE' ? (
-            <span className="float-xs-right">
+            <span className="float-right">
               <IconSVG name="icon-caret-right" />
             </span>
           ) : null}
@@ -365,7 +365,7 @@ export default class Format extends Component {
         >
           <span>{T.translate(`${PREFIX}.title`)}</span>
 
-          <span className="float-xs-right">
+          <span className="float-right">
             <span className="fa fa-caret-right" />
           </span>
 

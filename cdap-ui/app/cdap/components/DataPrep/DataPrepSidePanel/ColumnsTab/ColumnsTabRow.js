@@ -87,7 +87,7 @@ export default class ColumnsTabRow extends Component {
           <span>{this.props.index + 1}</span>
         </td>
         <td>{this.props.columnName}</td>
-        <td className="text-xs-right">
+        <td className="text-right">
           <span>{`${nonNull}%`}</span>
         </td>
         <td />

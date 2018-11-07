@@ -110,7 +110,7 @@ class ReportsDetailView extends Component {
     return (
       <div className="reports-detail-container">
         <div className="action-section clearfix">
-          <div className="date-container float-xs-left">
+          <div className="date-container float-left">
             {T.translate(`${PREFIX}.generatedTime`, {
               time: humanReadableDate(this.props.created),
             })}
@@ -118,7 +118,7 @@ class ReportsDetailView extends Component {
             <Expiry />
           </div>
 
-          <div className="action-button float-xs-right">
+          <div className="action-button float-right">
             <SaveButton />
           </div>
         </div>

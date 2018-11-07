@@ -189,7 +189,7 @@ export default class WorkspaceTabs extends Component {
     let list = this.state.dropdownTabs;
 
     return (
-      <div className="workspace-tab workspace-dropdown text-xs-center">
+      <div className="workspace-tab workspace-dropdown text-center">
         <UncontrolledPopover popoverClassName="workspace-list-popover">
           {list.map((workspace) => {
             return (
@@ -204,7 +204,7 @@ export default class WorkspaceTabs extends Component {
                 </Link>
 
                 <span
-                  className="fa float-xs-right"
+                  className="fa float-right"
                   onClick={this.toggleDeleteWorkspace.bind(this, workspace)}
                 >
                   <IconSVG name="icon-close" />

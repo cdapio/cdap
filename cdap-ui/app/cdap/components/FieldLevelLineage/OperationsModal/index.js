@@ -34,7 +34,7 @@ function OperationsModalView({ showOperations, loading, closeModal, fieldName, d
   }
 
   const loadingIndicator = (
-    <div className="loading-container text-xs-center">
+    <div className="loading-container text-center">
       <LoadingSVG />
     </div>
   );
@@ -51,7 +51,7 @@ function OperationsModalView({ showOperations, loading, closeModal, fieldName, d
       <ModalHeader>
         <span>{T.translate(`${PREFIX}.Title.${direction}`, { fieldName })}</span>
 
-        <div className="close-section float-xs-right" onClick={closeModal}>
+        <div className="close-section float-right" onClick={closeModal}>
           <IconSVG name="icon-close" />
         </div>
       </ModalHeader>

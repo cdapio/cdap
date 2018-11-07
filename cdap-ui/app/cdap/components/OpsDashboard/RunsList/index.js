@@ -109,7 +109,7 @@ function renderGrid(data) {
   if (data.length === 0) {
     return (
       <div className="list-view">
-        <h5 className="text-xs-center no-runs">
+        <h5 className="text-center no-runs">
           <IconSVG name="icon-exclamation-triangle" />
           <span>{T.translate(`${PREFIX}.noRuns`)}</span>
         </h5>
@@ -132,7 +132,7 @@ function RunsListView({ bucketInfo }) {
   if (!bucketInfo) {
     return (
       <div className="runs-list-container">
-        <h3 className="text-xs-center">{T.translate(`${PREFIX}.noData`)}</h3>
+        <h3 className="text-center">{T.translate(`${PREFIX}.noData`)}</h3>
       </div>
     );
   }

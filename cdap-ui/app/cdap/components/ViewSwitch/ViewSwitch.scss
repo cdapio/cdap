@@ -14,7 +14,9 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
+@import '~styles/variables.scss';
+
+$hover-bg-color: $grey-07;
 
 .view-switch {
   height: inherit;
@@ -36,7 +38,7 @@
           border-bottom: 0;
         }
         &:not(.active):hover {
-          background-color: $cdap-gray;
+          background-color: $hover-bg-color;
         }
       }
     }

@@ -64,7 +64,7 @@ export default class DirectivesTabRow extends Component {
         >
           <span id={`name-content-${this.props.rowInfo.uniqueId}`}>{this.props.rowInfo.name}</span>
         </span>
-        <span className="float-xs-right">
+        <span className="float-right">
           <span
             className="fa fa-times"
             onClick={this.props.handleDelete}

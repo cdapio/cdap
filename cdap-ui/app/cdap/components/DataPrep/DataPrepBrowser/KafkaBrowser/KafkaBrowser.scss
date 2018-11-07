@@ -50,6 +50,9 @@ $hr_color: #999999;
     .kafka-content-body {
       height: calc(100% - 38px);
       overflow-y: auto;
+
+      a:hover { text-decoration: none; }
+
       .content-row {
         border-bottom: 1px solid $header-border;
         line-height: 36px;

@@ -118,8 +118,8 @@ export default class ProgramTable extends Component {
                   : 'n/a'}
               </td>
               <td>
-                <div className="fast-actions-container text-xs-center">
-                  <FastActions className="text-xs-left btn-group" entity={program} />
+                <div className="fast-actions-container text-center">
+                  <FastActions className="text-left btn-group" entity={program} />
                 </div>
               </td>
             </tr>
@@ -151,7 +151,7 @@ export default class ProgramTable extends Component {
     }
     return (
       <div className="program-table">
-        <h3 className="text-xs-center">
+        <h3 className="text-center">
           <span className="fa fa-spinner fa-spin fa-2x loading-spinner" />
         </h3>
       </div>
