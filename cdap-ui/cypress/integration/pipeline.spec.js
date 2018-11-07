@@ -82,10 +82,12 @@ describe('Creating a pipeline', function() {
 
   beforeEach(function() {
     // Delete TEST_PIPELINE_NAME pipeline in case it's already there
-    let authToken = cy.getCookie('CDAP_Auth_Token');
+    let authTokenCookie = cy.getCookie('CDAP_Auth_Token');
     let headers = null;
-    if (authToken) {
+    let authToken = null;
+    if (authTokenCookie) {
       Cypress.Cookies.preserveOnce('CDAP_Auth_Token');
+      authToken = authTokenCookie.value;
       headers = {
         Authorization: 'Bearer ' + authToken,
       };
