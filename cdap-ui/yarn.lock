@@ -2554,7 +2554,7 @@ babel-helpers@^6.24.1:
     babel-runtime "^6.22.0"
     babel-template "^6.24.1"
 
-babel-jest@^23.6.0:
+babel-jest@23.6.0, babel-jest@^23.6.0:
   version "23.6.0"
   resolved "https://registry.yarnpkg.com/babel-jest/-/babel-jest-23.6.0.tgz#a644232366557a2240a0c083da6b25786185a2f1"
   dependencies:
@@ -4318,7 +4318,7 @@ cyclist@~0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-0.2.2.tgz#1b33792e11e914a2fd6d6ed6447464444e5fa640"
 
-cypress@^3.1.0:
+cypress@3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/cypress/-/cypress-3.1.0.tgz#b718ba64289b887c7ab7a7f09245d871a4a409ba"
   dependencies:
@@ -5341,13 +5341,13 @@ eslint-plugin-babel@4.1.2:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/eslint-plugin-babel/-/eslint-plugin-babel-4.1.2.tgz#79202a0e35757dd92780919b2336f1fa2fe53c1e"
 
-eslint-plugin-cypress@^2.0.1:
+eslint-plugin-cypress@2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/eslint-plugin-cypress/-/eslint-plugin-cypress-2.0.1.tgz#647e942cacbfd71b0f1a1ed6978472fbd475c60a"
   dependencies:
     globals "^11.0.1"
 
-eslint-plugin-prettier@^3.0.0:
+eslint-plugin-prettier@3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-prettier/-/eslint-plugin-prettier-3.0.0.tgz#f6b823e065f8c36529918cdb766d7a0e975ec30c"
   dependencies:
@@ -8137,7 +8137,7 @@ jest-docblock@^23.2.0:
   dependencies:
     detect-newline "^2.1.0"
 
-jest-dom@^2.1.0:
+jest-dom@2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/jest-dom/-/jest-dom-2.1.0.tgz#ddd2c75d284ae0c9d17528cfd820727e964f8dd3"
   dependencies:
@@ -8351,7 +8351,7 @@ jest-worker@^23.2.0:
   dependencies:
     merge-stream "^1.0.1"
 
-jest@^23.6.0:
+jest@23.6.0:
   version "23.6.0"
   resolved "https://registry.yarnpkg.com/jest/-/jest-23.6.0.tgz#ad5835e923ebf6e19e7a1d7529a432edfee7813d"
   dependencies:
@@ -11725,7 +11725,7 @@ react-style-proptype@^3.0.0:
   dependencies:
     prop-types "^15.5.4"
 
-react-testing-library@^5.2.0:
+react-testing-library@5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/react-testing-library/-/react-testing-library-5.2.0.tgz#d7af9b0e6d1b653287d8c06cd0eab9e6d5d645ba"
   dependencies:
@@ -13611,10 +13611,6 @@ test-exclude@^4.2.1:
     object-assign "^4.1.0"
     read-pkg-up "^1.0.1"
     require-main-filename "^1.0.1"
-
-testcheck@^0.1.0:
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/testcheck/-/testcheck-0.1.4.tgz#90056edd48d11997702616ce6716f197d8190164"
 
 tether@^1.4.3:
   version "1.4.4"
