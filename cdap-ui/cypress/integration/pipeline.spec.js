@@ -19,10 +19,7 @@ const TEST_PATH = '__UI_test_path';
 const DUMMY_USERNAME = 'alice';
 const DUMMY_PW = 'alicepassword';
 
-function getArtifactsPoll(authToken, retries = 0) {
-  if (retries === 3) {
-    return;
-  }
+function getArtifactsPoll(authToken) {
   let headers = null;
   if (authToken) {
     headers = {
@@ -36,7 +33,7 @@ function getArtifactsPoll(authToken, retries = 0) {
     headers,
   }).then((response) => {
     if (response.status >= 400) {
-      return getArtifactsPoll(authToken, retries + 1);
+      return getArtifactsPoll(authToken);
     }
     return;
   });
