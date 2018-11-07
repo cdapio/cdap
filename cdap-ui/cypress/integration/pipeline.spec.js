@@ -19,15 +19,16 @@ const TEST_PATH = '__UI_test_path';
 const DUMMY_USERNAME = 'alice';
 const DUMMY_PW = 'alicepassword';
 
-function getArtifactsPoll(authToken) {
+function getArtifactsPoll(authToken, retries = 0) {
+  if (retries === 3) {
+    return;
+  }
   let headers = null;
-  // cy.log(authToken);
   if (authToken) {
     headers = {
       Authorization: 'Bearer ' + authToken,
     };
   }
-  // cy.screenshot();
   cy.request({
     method: 'GET',
     url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
@@ -35,7 +36,7 @@ function getArtifactsPoll(authToken) {
     headers,
   }).then((response) => {
     if (response.status >= 400) {
-      return getArtifactsPoll();
+      return getArtifactsPoll(authToken, retries + 1);
     }
     return;
   });
@@ -51,7 +52,6 @@ describe('Creating a pipeline', function() {
       failOnStatusCode: false,
     }).then((response) => {
       // only login when ping request returns 401
-      // cy.screenshot();
       if (response.status === 401) {
         cy.request({
           method: 'POST',
@@ -65,9 +65,8 @@ describe('Creating a pipeline', function() {
           expect(response.status).to.be.at.least(200);
           expect(response.status).to.be.lessThan(300);
           const respBody = JSON.parse(response.body);
-          cy.setCookie('CDAP_Auth_Token', respBody.access_token, { path: '/' });
+          cy.setCookie('CDAP_Auth_Token', respBody.access_token);
           cy.setCookie('CDAP_Auth_User', DUMMY_USERNAME);
-          // cy.screenshot();
           cy.visit('/', {
             onBeforeLoad: (win) => {
               win.sessionStorage.setItem('showWelcome', 'false');
@@ -76,7 +75,6 @@ describe('Creating a pipeline', function() {
           cy.url().should('include', '/cdap/ns/default');
           cy.getCookie('CDAP_Auth_Token').should('exist');
           cy.getCookie('CDAP_Auth_User').should('have.property', 'value', DUMMY_USERNAME);
-          // cy.screenshot();
         });
       }
     });
@@ -87,13 +85,11 @@ describe('Creating a pipeline', function() {
     let authToken = cy.getCookie('CDAP_Auth_Token');
     let headers = null;
     if (authToken) {
-      // cy.log(authToken);
       Cypress.Cookies.preserveOnce('CDAP_Auth_Token');
       headers = {
         Authorization: 'Bearer ' + authToken,
       };
     }
-    // cy.screenshot();
     cy.request({
       method: 'GET',
       url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
@@ -107,7 +103,6 @@ describe('Creating a pipeline', function() {
           failOnStatusCode: false,
           headers,
         });
-        // cy.screenshot();
       }
     });
     getArtifactsPoll(authToken);
