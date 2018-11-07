@@ -25,7 +25,7 @@ function getArtifactsPoll(authToken) {
     url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
     failOnStatusCode: false,
     auth: {
-      bearer: authToken,
+      Bearer: authToken,
     },
   }).then((response) => {
     if (response.status >= 400) {
@@ -81,7 +81,7 @@ describe('Creating a pipeline', function() {
       url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
       failOnStatusCode: false,
       auth: {
-        bearer: authToken,
+        Bearer: authToken,
       },
     }).then((response) => {
       if (response.status === 200) {
@@ -90,7 +90,7 @@ describe('Creating a pipeline', function() {
           url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
           failOnStatusCode: false,
           auth: {
-            bearer: authToken,
+            Bearer: authToken,
           },
         });
       }
