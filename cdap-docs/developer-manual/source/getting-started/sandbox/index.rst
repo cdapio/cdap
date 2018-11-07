@@ -27,7 +27,7 @@ CDAP Sandbox
 The CDAP Sandbox runs on Linux, MacOS, and Windows, and has these
 requirements:
 
-- `JDK 7 or 8 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__
+- `JDK 8 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__
   (required to run CDAP; note that $JAVA_HOME should be set)
 - `Node.js <https://nodejs.org>`__ (required to run the CDAP UI; we recommend any
   version beginning with |node-js-min-version|.

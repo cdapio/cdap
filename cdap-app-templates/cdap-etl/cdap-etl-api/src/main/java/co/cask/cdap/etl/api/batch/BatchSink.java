@@ -39,6 +39,7 @@ import co.cask.cdap.etl.api.Transformation;
 public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchConfigurable<BatchSinkContext>
   implements Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>>, StageLifecycle<BatchRuntimeContext> {
   public static final String PLUGIN_TYPE = "batchsink";
+  public static final String FORMAT_PLUGIN_TYPE = "outputformat";
 
   /**
    * Initialize the Batch Sink stage. Executed inside the Batch Run. This method is guaranteed to be invoked

@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2018 Cask Data, Inc.
-    :version: 5.0.0
+    :version: 5.1.0
 
 =================================================
 Cask Data Application Platform |version|

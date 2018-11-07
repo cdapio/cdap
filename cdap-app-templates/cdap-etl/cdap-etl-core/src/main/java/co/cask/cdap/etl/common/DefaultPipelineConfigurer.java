@@ -108,7 +108,7 @@ public class DefaultPipelineConfigurer<C extends PluginConfigurer & DatasetConfi
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    return configurer.usePlugin(pluginType, pluginName, pluginId, properties, selector);
+    return configurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties, selector);
   }
 
   @Nullable
@@ -122,7 +122,7 @@ public class DefaultPipelineConfigurer<C extends PluginConfigurer & DatasetConfi
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
-    return configurer.usePluginClass(pluginType, pluginName, pluginId, properties, selector);
+    return configurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties, selector);
   }
   
   private String getPluginId(String childPluginId) {

@@ -161,7 +161,7 @@
     <mockftp.version>2.6</mockftp.version>
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
-    <netty.http.version>1.1.0-SNAPSHOT</netty.http.version>
+    <netty.http.version>1.1.0</netty.http.version>
     <netty.version>4.1.16.Final</netty.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -1730,7 +1730,7 @@
                   <exclude>conf/**</exclude>
                   <exclude>data/**</exclude>
                   <exclude>plugins/**</exclude>
-                  <exclude>**/Apache-LICENSE-2.0</exclude>
+                  <exclude>**/LICENSES/**</exclude>
                   <exclude>**/VERSION</exclude>
                   <exlcude>**/*.patch</exlcude>
                   <exclude>**/logrotate.d/**</exclude>
@@ -2163,6 +2163,10 @@
                         <includes>
                           <include>LICENSE-2.0.txt</include>
                         </includes>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.basedir}/cdap-standalone/src/dist/LICENSES</directory>
+                        <targetPath>LICENSES</targetPath>
                       </resource>
                       <resource>
                         <directory>${project.parent.basedir}/cdap-common/bin</directory>
