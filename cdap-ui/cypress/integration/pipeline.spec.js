@@ -33,10 +33,11 @@ function getArtifactsPoll(authToken) {
     url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
     failOnStatusCode: false,
     headers,
-  // }).then((response) => {
-    // if (response.status >= 400) {
-      // getArtifactsPoll();
-    // }
+  }).then((response) => {
+    if (response.status >= 400) {
+      return getArtifactsPoll();
+    }
+    return;
   });
 }
 
