@@ -87,7 +87,7 @@ public final class MapReduceContextConfig {
   }
 
   /**
-   * Updates the {@link Configuration} of this class with the given paramters.
+   * Updates the {@link Configuration} of this class with the given parameters.
    *
    * @param context the context for the MapReduce program
    * @param conf the CDAP configuration

@@ -37,7 +37,7 @@ GIT_EMR_VERSIONS="4.6 through 4.8"
 GIT_PREVIOUS_SHORT_VERSION="4.2"
 GIT_PREVIOUS_VERSION="4.2.0"
 
-GIT_NODE_JS_MIN_VERSION="v4.5.0"
+GIT_NODE_JS_MIN_VERSION="v8.7.0"
 # GIT_NODE_JS_MAX_VERSION="" # not currently known
 
 # This needs to be explicitly set as Git has trouble identifying it

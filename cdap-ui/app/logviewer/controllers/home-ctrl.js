@@ -15,11 +15,12 @@
  */
 
 class LogsAppHomeController {
-  constructor($state, LogViewerStore, $scope, moment) {
+  constructor($state, LogViewerStore, $scope, moment, MyStatusMapper) {
     'ngInject';
 
     this.LogViewerStore = LogViewerStore;
     this.moment = moment;
+    this.displayStatus = MyStatusMapper.lookupDisplayStatus;
 
     let {
       namespace,

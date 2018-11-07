@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2018 Cask Data, Inc.
-    :version: 5.0.0
+    :version: 5.1.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -163,8 +163,8 @@ Cask Data Application Platform Local Sandbox Dependencies
    "org.apache.httpcomponents.httpclient-4.5.2.jar","4.5.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.httpcomponents.httpcore-4.4.4.jar","4.4.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.ivy.ivy-2.4.0.jar","2.4.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.tephra.tephra-api-0.13.0-incubating.jar","0.13.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.tephra.tephra-core-0.13.0-incubating.jar","0.13.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.tephra.tephra-api-0.15.0-incubating.jar","0.15.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.tephra.tephra-core-0.15.0-incubating.jar","0.15.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libfb303-0.9.2.jar","0.9.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libthrift-0.9.3.jar","0.9.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.twill.twill-api-0.13.0.jar","0.13.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -224,7 +224,6 @@ Cask Data Application Platform Local Sandbox Dependencies
    "org.xerial.snappy.snappy-java-1.1.1.7.jar","1.1.1.7","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "oro.oro-2.0.8.jar","2.0.8","\-","Apache License, Version 1.1","http://www.apache.org/licenses/LICENSE-1.1"
    "software.amazon.ion.ion-java-1.0.2.jar","1.0.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "stax.stax-api-1.0.1.jar","1.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "xerces.xercesImpl-2.9.1.jar","2.9.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "xml-apis.xml-apis-1.3.04.jar","1.3.04","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "xmlenc.xmlenc-0.52.jar","0.52","\-","BSD 3-Clause License","https://opensource.org/licenses/BSD-3-Clause"

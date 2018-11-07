@@ -566,6 +566,16 @@ ul.first.last.simple li {
     line-height: 1.5em;
 }
 
+/* -- Specific Table styles -- */
+
+#ui-customization .table tr td {
+  word-break: break-word;
+}
+
+#ui-customization .table tr td > code.docutils.literal {
+  word-break: break-word;
+}
+
 /* -- For lists in a table, reduce left padding -- */
 
 td > ul.first.last.simple {
