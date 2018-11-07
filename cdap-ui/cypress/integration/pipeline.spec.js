@@ -19,7 +19,10 @@ const TEST_PATH = '__UI_test_path';
 const DUMMY_USERNAME = 'alice';
 const DUMMY_PW = 'alicepassword';
 
-function getArtifactsPoll(authToken) {
+function getArtifactsPoll(authToken, retries = 0) {
+  if (retries === 3) {
+    return;
+  }
   let headers = null;
   if (authToken) {
     headers = {
@@ -33,7 +36,7 @@ function getArtifactsPoll(authToken) {
     headers,
   }).then((response) => {
     if (response.status >= 400) {
-      return getArtifactsPoll(authToken);
+      return getArtifactsPoll(authToken, retries + 1);
     }
     return;
   });
@@ -179,3 +182,4 @@ describe('Creating a pipeline', function() {
     cy.contains('a', TEST_PIPELINE_NAME, { timeout: 10000 }).should('not.exist');
   });
 });
+
