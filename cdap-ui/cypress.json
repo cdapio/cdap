@@ -4,7 +4,6 @@
     "host": "localhost"
   },
   "projectId": "nekuf8",
-  "video": false,
   "pluginsFile": false,
   "supportFile": false,
   "fixturesFolder": false
