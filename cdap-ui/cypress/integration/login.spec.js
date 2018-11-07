@@ -41,7 +41,6 @@ describe('Logging in', function() {
       .click()
       .type(DUMMY_PW);
     cy.get('#submit').click();
-    cy.url().should('include', '/cdap/ns/default');
     cy.getCookie('CDAP_Auth_Token').should('exist');
     cy.getCookie('CDAP_Auth_User').should('have.property', 'value', DUMMY_USERNAME);
   });

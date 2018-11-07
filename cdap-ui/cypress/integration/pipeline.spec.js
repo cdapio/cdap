@@ -19,6 +19,19 @@ const TEST_PATH = '__UI_test_path';
 const DUMMY_USERNAME = 'alice';
 const DUMMY_PW = 'alicepassword';
 
+function getArtifactsPoll() {
+  cy.request({
+    method: 'GET',
+    url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
+    failOnStatusCode: false,
+  }).then((response) => {
+    if (response.status === 200) {
+      return;
+    }
+    getArtifactsPoll();
+  });
+}
+
 describe('Creating a pipeline', function() {
   // Uses API call to login instead of logging in manually through UI
   before(function() {
@@ -58,6 +71,7 @@ describe('Creating a pipeline', function() {
   });
 
   beforeEach(function() {
+    // Delete TEST_PIPELINE_NAME pipeline in case it's already there
     cy.request({
       method: 'GET',
       url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
@@ -71,6 +85,7 @@ describe('Creating a pipeline', function() {
         });
       }
     });
+    getArtifactsPoll();
   });
 
   it('is configured correctly', function() {
