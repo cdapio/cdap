@@ -74,6 +74,7 @@ describe('Creating a pipeline', function() {
 
   beforeEach(function() {
     // Delete TEST_PIPELINE_NAME pipeline in case it's already there
+    Cypress.Cookies.preserveOnce('CDAP_Auth_Token');
     let authToken = cy.getCookie('CDAP_Auth_Token');
     cy.request({
       method: 'GET',
