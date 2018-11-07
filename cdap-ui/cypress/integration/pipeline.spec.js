@@ -21,6 +21,7 @@ const DUMMY_PW = 'alicepassword';
 
 function getArtifactsPoll(authToken) {
   let headers = null;
+  cy.log(authToken);
   if (authToken) {
     headers = {
       Authorization: 'Bearer ' + authToken,
@@ -31,10 +32,10 @@ function getArtifactsPoll(authToken) {
     url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
     failOnStatusCode: false,
     headers,
-  }).then((response) => {
-    if (response.status >= 400) {
-      getArtifactsPoll();
-    }
+  // }).then((response) => {
+    // if (response.status >= 400) {
+      // getArtifactsPoll();
+    // }
   });
 }
 
@@ -80,6 +81,7 @@ describe('Creating a pipeline', function() {
     // Delete TEST_PIPELINE_NAME pipeline in case it's already there
     Cypress.Cookies.preserveOnce('CDAP_Auth_Token');
     let authToken = cy.getCookie('CDAP_Auth_Token');
+    cy.log(authToken);
     let headers = null;
     if (authToken) {
       headers = {
