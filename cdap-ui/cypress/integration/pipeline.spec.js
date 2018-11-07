@@ -25,10 +25,9 @@ function getArtifactsPoll() {
     url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
     failOnStatusCode: false,
   }).then((response) => {
-    if (response.status === 200) {
-      return;
+    if (response.status >= 400) {
+      getArtifactsPoll();
     }
-    getArtifactsPoll();
   });
 }
 
