@@ -20,13 +20,17 @@ const DUMMY_USERNAME = 'alice';
 const DUMMY_PW = 'alicepassword';
 
 function getArtifactsPoll(authToken) {
+  let headers = null;
+  if (authToken) {
+    headers = {
+      Authorization: 'Bearer ' + authToken,
+    };
+  }
   cy.request({
     method: 'GET',
     url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
     failOnStatusCode: false,
-    auth: {
-      Bearer: authToken,
-    },
+    headers,
   }).then((response) => {
     if (response.status >= 400) {
       getArtifactsPoll();
@@ -76,22 +80,24 @@ describe('Creating a pipeline', function() {
     // Delete TEST_PIPELINE_NAME pipeline in case it's already there
     Cypress.Cookies.preserveOnce('CDAP_Auth_Token');
     let authToken = cy.getCookie('CDAP_Auth_Token');
+    let headers = null;
+    if (authToken) {
+      headers = {
+        Authorization: 'Bearer ' + authToken,
+      };
+    }
     cy.request({
       method: 'GET',
       url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
       failOnStatusCode: false,
-      auth: {
-        Bearer: authToken,
-      },
+      headers,
     }).then((response) => {
       if (response.status === 200) {
         cy.request({
           method: 'DELETE',
           url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
           failOnStatusCode: false,
-          auth: {
-            Bearer: authToken,
-          },
+          headers,
         });
       }
     });
