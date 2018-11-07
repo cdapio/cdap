@@ -19,15 +19,18 @@ const TEST_PATH = '__UI_test_path';
 const DUMMY_USERNAME = 'alice';
 const DUMMY_PW = 'alicepassword';
 
-function getArtifactsPoll() {
+function getArtifactsPoll(authToken) {
   cy.request({
     method: 'GET',
     url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
     failOnStatusCode: false,
-  // }).then((response) => {
-  //   if (response.status >= 400) {
-  //     getArtifactsPoll();
-  //   }
+    auth: {
+      bearer: authToken,
+    },
+  }).then((response) => {
+    if (response.status >= 400) {
+      getArtifactsPoll();
+    }
   });
 }
 
@@ -71,20 +74,27 @@ describe('Creating a pipeline', function() {
 
   beforeEach(function() {
     // Delete TEST_PIPELINE_NAME pipeline in case it's already there
+    let authToken = cy.getCookie('CDAP_Auth_Token');
     cy.request({
       method: 'GET',
       url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
       failOnStatusCode: false,
+      auth: {
+        bearer: authToken,
+      },
     }).then((response) => {
       if (response.status === 200) {
         cy.request({
           method: 'DELETE',
           url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
           failOnStatusCode: false,
+          auth: {
+            bearer: authToken,
+          },
         });
       }
     });
-    getArtifactsPoll();
+    getArtifactsPoll(authToken);
   });
 
   it('is configured correctly', function() {
