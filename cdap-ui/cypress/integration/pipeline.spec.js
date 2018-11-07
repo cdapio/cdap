@@ -19,6 +19,26 @@ const TEST_PATH = '__UI_test_path';
 const DUMMY_USERNAME = 'alice';
 const DUMMY_PW = 'alicepassword';
 
+function getArtifactsPoll(authToken) {
+  let headers = null;
+  if (authToken) {
+    headers = {
+      Authorization: 'Bearer ' + authToken,
+    };
+  }
+  cy.request({
+    method: 'GET',
+    url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
+    failOnStatusCode: false,
+    headers,
+  }).then((response) => {
+    if (response.status >= 400) {
+      return getArtifactsPoll(authToken);
+    }
+    return;
+  });
+}
+
 describe('Creating a pipeline', function() {
   // Uses API call to login instead of logging in manually through UI
   before(function() {
@@ -42,7 +62,7 @@ describe('Creating a pipeline', function() {
           expect(response.status).to.be.at.least(200);
           expect(response.status).to.be.lessThan(300);
           const respBody = JSON.parse(response.body);
-          cy.setCookie('CDAP_Auth_Token', respBody.access_token, { path: '/' });
+          cy.setCookie('CDAP_Auth_Token', respBody.access_token);
           cy.setCookie('CDAP_Auth_User', DUMMY_USERNAME);
           cy.visit('/', {
             onBeforeLoad: (win) => {
@@ -58,19 +78,33 @@ describe('Creating a pipeline', function() {
   });
 
   beforeEach(function() {
+    // Delete TEST_PIPELINE_NAME pipeline in case it's already there
+    let authTokenCookie = cy.getCookie('CDAP_Auth_Token');
+    let headers = null;
+    let authToken = null;
+    if (authTokenCookie) {
+      Cypress.Cookies.preserveOnce('CDAP_Auth_Token');
+      authToken = authTokenCookie.value;
+      headers = {
+        Authorization: 'Bearer ' + authToken,
+      };
+    }
     cy.request({
       method: 'GET',
       url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
       failOnStatusCode: false,
+      headers,
     }).then((response) => {
       if (response.status === 200) {
         cy.request({
           method: 'DELETE',
           url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
           failOnStatusCode: false,
+          headers,
         });
       }
     });
+    getArtifactsPoll(authToken);
   });
 
   it('is configured correctly', function() {
