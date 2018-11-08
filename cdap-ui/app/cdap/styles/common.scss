@@ -51,7 +51,7 @@ body {
     padding-bottom: 52px; // footer height
   }
 
-  $maxGridHeight: 200px;
+  $maxGridHeight: 210px;
   $minGridWidth: 10px;
   $maxGridWidth: 1fr;
   $headerBgColor: white;
@@ -95,6 +95,14 @@ body {
         }
         &:first-of-type > div { border-top: 0; }
         &:last-of-type > div { border-bottom: 0; }
+      }
+    }
+  }
+
+  .grid.grid-container.grid-sm {
+    .grid-body {
+      .grid-row {
+        padding: 0;
       }
     }
   }

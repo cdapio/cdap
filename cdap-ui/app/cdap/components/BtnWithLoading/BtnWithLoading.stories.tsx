@@ -22,13 +22,15 @@ import { withInfo } from '@storybook/addon-info';
 import { withKnobs, boolean, text } from '@storybook/addon-knobs';
 import BtnWithLoading from './index';
 
-storiesOf('Button With Loading Icon', module)
+/**
+ * FIXME: Once we have styled components or material ui we should have our own
+ * Button component with everything configurable. This would help us have support for a11y.
+ */
+storiesOf('Buttons', module)
   .addDecorator(withKnobs)
-  .add('with text',
+  .add('Loading button with text',
     withInfo({
-      text: `
-        Render button without loading icon
-      `,
+      text: 'Render button without loading icon',
     })(() => (
       <BtnWithLoading
         onClick={action('clicked')}
@@ -39,17 +41,39 @@ storiesOf('Button With Loading Icon', module)
         darker={boolean('Darker?', true)}
       />
   )))
-  .add('with some emoji',
+  .add('Primary Button',
     withInfo({
-      text: `
-        Render button with loading icon
-      `,
+      text: 'Render primary button',
     })(() => (
-      <BtnWithLoading
-        onClick={action('clicked')}
-        label={text('Label', "👍 💯")}
-        loading={boolean('Loading', true)}
-        disabled={boolean('Disabled', true)}
-        className="btn btn-primary"
-      />
-  )));
+      <button className="btn btn-primary">
+        {text('Label', "Primary Action Button")}
+      </button>
+    )),
+  )
+  .add('Secondary Button',
+    withInfo({
+      text: 'Render secondary button',
+    })(() => (
+      <button className="btn btn-secondary">
+        {text('Label', "Secondary Action Button")}
+      </button>
+    )),
+  )
+  .add('Link Button',
+    withInfo({
+      text: 'Render success button',
+    })(() => (
+      <button className="btn btn-link">
+        {text('Label', "Another Secondary Action Button")}
+      </button>
+    )),
+  )
+  .add('Success Button',
+    withInfo({
+      text: 'Render success button',
+    })(() => (
+      <button className="btn btn-success">
+        {text('Label', "Success Button")}
+      </button>
+    )),
+  );

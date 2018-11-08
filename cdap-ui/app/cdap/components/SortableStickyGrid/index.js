@@ -56,6 +56,7 @@ export default class SortableStickyGrid extends Component {
     className: PropTypes.string,
     cellIsClickable: PropTypes.bool,
     defaultSortProperty: PropTypes.string,
+    size: PropTypes.string,
   };
 
   static defaultProps = {
@@ -166,7 +167,11 @@ export default class SortableStickyGrid extends Component {
     let gridClasses = classnames('grid-wrapper sortable-sticky-grid', this.props.className);
     return (
       <div className={gridClasses}>
-        <div className="grid grid-container">
+        <div
+          className={classnames('grid grid-container', {
+            'grid-sm': this.props.size === 'small',
+          })}
+        >
           {this.renderGridHeader()}
           {this.renderGridBody()}
         </div>
