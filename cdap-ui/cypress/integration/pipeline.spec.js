@@ -14,20 +14,14 @@
  * the License.
 */
 
+import { loginIfRequired, getAuthHeaders } from '../helpers';
+
 const TEST_PIPELINE_NAME = '__UI_test_pipeline';
 const TEST_PATH = '__UI_test_path';
-const DUMMY_USERNAME = 'alice';
-const DUMMY_PW = 'alicepassword';
 
-function getArtifactsPoll(authToken, retries = 0) {
+function getArtifactsPoll(headers, retries = 0) {
   if (retries === 3) {
     return;
-  }
-  let headers = null;
-  if (authToken) {
-    headers = {
-      Authorization: 'Bearer ' + authToken,
-    };
   }
   cy.request({
     method: 'GET',
@@ -36,78 +30,47 @@ function getArtifactsPoll(authToken, retries = 0) {
     headers,
   }).then((response) => {
     if (response.status >= 400) {
-      return getArtifactsPoll(authToken, retries + 1);
+      return getArtifactsPoll(headers, retries + 1);
     }
     return;
+  });
+}
+
+function cleanUpPipeline(headers) {
+  cy.request({
+    method: 'GET',
+    url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
+    failOnStatusCode: false,
+    headers,
+  }).then((response) => {
+    if (response.status === 200) {
+      cy.request({
+        method: 'DELETE',
+        url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
+        failOnStatusCode: false,
+        headers,
+      });
+    }
   });
 }
 
 describe('Creating a pipeline', function() {
   // Uses API call to login instead of logging in manually through UI
   before(function() {
-    cy.visit('/');
-    cy.request({
-      method: 'GET',
-      url: `http://${Cypress.env('host')}:11015/v3/namespaces`,
-      failOnStatusCode: false,
-    }).then((response) => {
-      // only login when ping request returns 401
-      if (response.status === 401) {
-        cy.request({
-          method: 'POST',
-          url: '/login',
-          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: DUMMY_USERNAME,
-            password: DUMMY_PW,
-          }),
-        }).then((response) => {
-          expect(response.status).to.be.at.least(200);
-          expect(response.status).to.be.lessThan(300);
-          const respBody = JSON.parse(response.body);
-          cy.setCookie('CDAP_Auth_Token', respBody.access_token);
-          cy.setCookie('CDAP_Auth_User', DUMMY_USERNAME);
-          cy.visit('/', {
-            onBeforeLoad: (win) => {
-              win.sessionStorage.setItem('showWelcome', 'false');
-            },
-          });
-          cy.url().should('include', '/cdap/ns/default');
-          cy.getCookie('CDAP_Auth_Token').should('exist');
-          cy.getCookie('CDAP_Auth_User').should('have.property', 'value', DUMMY_USERNAME);
-        });
-      }
-    });
+    loginIfRequired();
   });
 
   beforeEach(function() {
+    const headers = getAuthHeaders();
     // Delete TEST_PIPELINE_NAME pipeline in case it's already there
-    let authTokenCookie = cy.getCookie('CDAP_Auth_Token');
-    let headers = null;
-    let authToken = null;
-    if (authTokenCookie) {
-      Cypress.Cookies.preserveOnce('CDAP_Auth_Token');
-      authToken = authTokenCookie.value;
-      headers = {
-        Authorization: 'Bearer ' + authToken,
-      };
-    }
-    cy.request({
-      method: 'GET',
-      url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
-      failOnStatusCode: false,
-      headers,
-    }).then((response) => {
-      if (response.status === 200) {
-        cy.request({
-          method: 'DELETE',
-          url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
-          failOnStatusCode: false,
-          headers,
-        });
-      }
-    });
-    getArtifactsPoll(authToken);
+    cleanUpPipeline(headers);
+    getArtifactsPoll(headers);
+  });
+
+  afterEach(function() {
+    // Delete the pipeline to clean up
+    const headers = getAuthHeaders();
+    cleanUpPipeline(headers);
   });
 
   it('is configured correctly', function() {
@@ -170,17 +133,5 @@ describe('Creating a pipeline', function() {
       .as('instrumentationDiv');
     cy.get('@instrumentationDiv').contains('Off');
     cy.get('[data-testid=close-modeless]').click();
-  });
-
-  afterEach(function() {
-    // Delete the pipeline to clean up
-    cy.get('.pipeline-actions-popper').click();
-    cy.get('[data-testid=delete-pipeline]').click();
-    cy.get('[data-testid=confirmation-modal]')
-      .find('.btn-primary')
-      .click();
-
-    // Assert pipeline no longer exists
-    cy.contains('a', TEST_PIPELINE_NAME, { timeout: 10000 }).should('not.exist');
   });
 });
