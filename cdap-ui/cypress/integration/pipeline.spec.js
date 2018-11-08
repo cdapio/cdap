@@ -170,7 +170,9 @@ describe('Creating a pipeline', function() {
       .as('instrumentationDiv');
     cy.get('@instrumentationDiv').contains('Off');
     cy.get('[data-testid=close-modeless]').click();
+  });
 
+  afterEach(function() {
     // Delete the pipeline to clean up
     cy.get('.pipeline-actions-popper').click();
     cy.get('[data-testid=delete-pipeline]').click();
@@ -182,4 +184,3 @@ describe('Creating a pipeline', function() {
     cy.contains('a', TEST_PIPELINE_NAME, { timeout: 10000 }).should('not.exist');
   });
 });
-
