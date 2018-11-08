@@ -50,7 +50,7 @@ class EntitiesLink extends React.PureComponent<IEntitiesLinkProps> {
 
   private isEntitiesActive = (): boolean => {
     const location = window.location;
-    const {namespace} = this.props.context;
+    const { namespace } = this.props.context;
     const basePath = `/cdap/ns/${namespace}`;
 
     const dataprepBasePath = `${basePath}/dataprep`;
@@ -74,7 +74,7 @@ class EntitiesLink extends React.PureComponent<IEntitiesLinkProps> {
       !location.pathname.startsWith(dashboardPath) &&
       !location.pathname.startsWith(reportsPath)
     );
-  }
+  };
 }
 
 const EntitiesLinkWithContext = withContext(EntitiesLink);

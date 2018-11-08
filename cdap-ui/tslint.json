@@ -1,15 +1,31 @@
 {
   "defaultSeverity": "error",
   "extends": [
-    "tslint:recommended"
+    "tslint:recommended",
+    "tslint-config-prettier"
   ],
   "rules": {
-    "quotemark": false,
+    "quotemark": [
+      false
+    ],
     "ordered-imports": false,
-    "interface-name" : [true, "always-prefix"],
+    "interface-name": [
+      true,
+      "always-prefix"
+    ],
     "no-var-requires": false,
     "object-literal-sort-keys": false,
-    "member-ordering": false
+    "member-ordering": false,
+    "prettier": [
+      true,
+      {
+        "singleQuote": true,
+        "trailingComma": "es5",
+        "arrowParens": "always",
+        "semi": true,
+        "printWidth": 100
+      }
+    ]
   },
   "jsRules": {
     "arrow-parens": false,
@@ -42,7 +58,9 @@
     "radix": false,
     "forin": false
   },
-  "rulesDirectory": [],
+  "rulesDirectory": [
+    "tslint-plugin-prettier"
+  ],
   "linterOptions": {
     "exclude": [
       "node_modules",

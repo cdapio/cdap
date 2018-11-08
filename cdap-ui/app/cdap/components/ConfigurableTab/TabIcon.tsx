@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import IconSVG from 'components/IconSVG';
 
 interface IIcon {
@@ -30,8 +30,10 @@ interface ITabIconProps {
   iconObj?: IIcon;
 }
 
-const TabIcon: React.SFC<ITabIconProps> = ({iconObj}) => {
-  if (!iconObj) { return null; }
+const TabIcon: React.SFC<ITabIconProps> = ({ iconObj }) => {
+  if (!iconObj) {
+    return null;
+  }
 
   if (iconObj.type === 'font-icon') {
     const iconName = objectQuery(iconObj, 'arguments', 'data');

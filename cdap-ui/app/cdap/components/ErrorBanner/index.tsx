@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import Alert from 'components/Alert';
 
 interface IErrorProps {
@@ -28,16 +28,10 @@ const ErrorBanner: React.SFC<IErrorProps> = ({ error, onClose }) => {
     return null;
   }
 
-  const errorMessage: string = objectQuery(error, 'response', 'message') || objectQuery(error, 'response') || error;
+  const errorMessage: string =
+    objectQuery(error, 'response', 'message') || objectQuery(error, 'response') || error;
 
-  return (
-    <Alert
-      message={errorMessage}
-      type='error'
-      showAlert={true}
-      onClose={onClose}
-    />
-  );
+  return <Alert message={errorMessage} type="error" showAlert={true} onClose={onClose} />;
 };
 
 export default ErrorBanner;

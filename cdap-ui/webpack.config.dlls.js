@@ -17,7 +17,4 @@
 var cdapdllconfig = require('./webpack.config.cdap.dll.js');
 var shareddllconfig = require('./webpack.config.shared.dll.js');
 
-module.exports = [
-  cdapdllconfig,
-  shareddllconfig
-];
+module.exports = [cdapdllconfig, shareddllconfig];

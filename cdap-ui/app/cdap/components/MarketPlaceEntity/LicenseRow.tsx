@@ -29,8 +29,10 @@ interface ITagProps {
   target?: '_blank';
 }
 
-const LicenseRow: React.SFC<ILicenseRowProps> = ({licenseInfo}) => {
-  if (!licenseInfo) { return null; }
+const LicenseRow: React.SFC<ILicenseRowProps> = ({ licenseInfo }) => {
+  if (!licenseInfo) {
+    return null;
+  }
 
   const Tag = licenseInfo.url ? 'a' : 'span';
   const tagProps: ITagProps = {};
@@ -45,9 +47,7 @@ const LicenseRow: React.SFC<ILicenseRowProps> = ({licenseInfo}) => {
       <span>
         <strong> {T.translate('features.MarketPlaceEntity.Metadata.licenseInfo')} </strong>
       </span>
-      <Tag {...tagProps}>
-        {licenseInfo.name}
-      </Tag>
+      <Tag {...tagProps}>{licenseInfo.name}</Tag>
     </div>
   );
 };

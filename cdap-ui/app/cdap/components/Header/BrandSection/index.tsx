@@ -16,7 +16,7 @@
 import * as React from 'react';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
-import {withContext} from 'components/Header/NamespaceLinkContext';
+import { withContext } from 'components/Header/NamespaceLinkContext';
 require('./BrandSection.scss');
 
 interface IBrandSectionProps {
@@ -27,18 +27,18 @@ interface IBrandSectionProps {
 }
 
 const BrandSection: React.SFC<IBrandSectionProps> = ({ context }) => {
-  const {namespace, isNativeLink } = context;
+  const { namespace, isNativeLink } = context;
   const baseCDAPUrl = `/ns/${namespace}`;
   const brandLogoSrc = Theme.productLogoNavbar || '/cdap_assets/img/company_logo.png';
   return (
     <div className="brand-section">
-        <NavLinkWrapper
-          isNativeLink={isNativeLink}
-          to={isNativeLink ? `/cdap${baseCDAPUrl}` : baseCDAPUrl}
-        >
-          <img src={brandLogoSrc} />
-        </NavLinkWrapper>
-      </div>
+      <NavLinkWrapper
+        isNativeLink={isNativeLink}
+        to={isNativeLink ? `/cdap${baseCDAPUrl}` : baseCDAPUrl}
+      >
+        <img src={brandLogoSrc} />
+      </NavLinkWrapper>
+    </div>
   );
 };
 

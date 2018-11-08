@@ -15,17 +15,17 @@
  */
 
 import * as React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import {
   listSpannerInstances,
   listSpannerDatabases,
   listSpannerTables,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
-import {Link} from 'react-router-dom';
-import {match} from 'react-router';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {objectQuery} from 'services/helpers';
+import { Link } from 'react-router-dom';
+import { match } from 'react-router';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { objectQuery } from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
 
@@ -55,18 +55,19 @@ class SpannerDatabaseListView extends React.PureComponent<ISpannerDatabaseListVi
   };
 
   private clickHandler = (databaseId: string) => {
-    if (this.props.enableRouting) { return; }
-    const {connectionId, instanceId} = this.props;
+    if (this.props.enableRouting) {
+      return;
+    }
+    const { connectionId, instanceId } = this.props;
     listSpannerTables(connectionId, instanceId, databaseId);
-  }
+  };
 
   public componentDidMount() {
-    if (!this.props.enableRouting) { return; }
+    if (!this.props.enableRouting) {
+      return;
+    }
 
-    const {
-      connectionId,
-      instanceId,
-    } = this.props.match.params;
+    const { connectionId, instanceId } = this.props.match.params;
 
     listSpannerDatabases(connectionId, instanceId);
   }
@@ -76,9 +77,11 @@ class SpannerDatabaseListView extends React.PureComponent<ISpannerDatabaseListVi
       return <LoadingSVGCentered />;
     }
 
-    const {databaseList} = this.props;
-    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
-    const instanceId = this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
+    const { databaseList } = this.props;
+    const connectionId =
+      this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
+    const instanceId =
+      this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
 
     if (!databaseList.length) {
       return (
@@ -113,43 +116,37 @@ class SpannerDatabaseListView extends React.PureComponent<ISpannerDatabaseListVi
             <span> / </span>
             <span>{instanceId}</span>
           </div>
-          <div>
-            {T.translate(`${PREFIX}.databaseCount`, {context: databaseList.length})}
-          </div>
+          <div>{T.translate(`${PREFIX}.databaseCount`, { context: databaseList.length })}</div>
         </div>
 
         <div className="list-table">
           <div className="table-header">
             <div className="row">
-              <div className="col-12">
-                {T.translate(`${PREFIX}.name`)}
-              </div>
+              <div className="col-12">{T.translate(`${PREFIX}.name`)}</div>
             </div>
           </div>
 
           <div className="table-body">
-            {
-              databaseList.map((database: ISpannerDatabaseObject) => {
-                const ElemTag = this.props.enableRouting ? Link : 'div';
-                const instanceUrl = `/ns/${namespace}/connections/spanner/${connectionId}/instances/${instanceId}`;
-                const databaseUrl = `${instanceUrl}/databases/${database.name}`;
+            {databaseList.map((database: ISpannerDatabaseObject) => {
+              const ElemTag = this.props.enableRouting ? Link : 'div';
+              const instanceUrl = `/ns/${namespace}/connections/spanner/${connectionId}/instances/${instanceId}`;
+              const databaseUrl = `${instanceUrl}/databases/${database.name}`;
 
-                return (
-                  <ElemTag
-                    key={database.name}
-                    to={databaseUrl}
-                    onClick={this.clickHandler.bind(null, database.name)}
-                  >
-                    <div className="row content-row">
-                      <div className="col-12">
-                        <IconSVG name="icon-database" />
-                        {database.name}
-                      </div>
+              return (
+                <ElemTag
+                  key={database.name}
+                  to={databaseUrl}
+                  onClick={this.clickHandler.bind(null, database.name)}
+                >
+                  <div className="row content-row">
+                    <div className="col-12">
+                      <IconSVG name="icon-database" />
+                      {database.name}
                     </div>
-                  </ElemTag>
-                );
-              })
-            }
+                  </div>
+                </ElemTag>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -166,8 +163,6 @@ const mapStateToProps = (state): Partial<ISpannerDatabaseListViewProps> => {
   };
 };
 
-const SpannerDatabaseList = connect(
-  mapStateToProps,
-)(SpannerDatabaseListView);
+const SpannerDatabaseList = connect(mapStateToProps)(SpannerDatabaseListView);
 
 export default SpannerDatabaseList;

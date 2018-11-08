@@ -27,10 +27,7 @@ export default function HubButton() {
   const featureName = Theme.featureNames.hub;
 
   return (
-    <li
-      id='navbar-hub'
-      className="with-pointer"
-    >
+    <li id="navbar-hub" className="with-pointer">
       <CaskMarketButton>
         <span className="hub-text-wrapper">{featureName}</span>
       </CaskMarketButton>

@@ -31,10 +31,12 @@ export interface ITourStep {
   buttons?: IStepButton[];
   shouldFocus?: boolean;
   classes?: string;
-  attachTo: string | {
-    element: string | HTMLElement;
-    on: string;
-  };
+  attachTo:
+    | string
+    | {
+        element: string | HTMLElement;
+        on: string;
+      };
   popperOptions?: object;
 }
 
@@ -52,10 +54,7 @@ const GuidedTour = function() {
       const countText = `${index + 1} of ${stepsArray.length}`;
 
       if (typeof stepObj.text === 'string') {
-        stepObj.text = [
-          stepObj.text,
-          countText,
-        ];
+        stepObj.text = [stepObj.text, countText];
       } else if (Array.isArray(stepObj.text)) {
         stepObj.text.push(countText);
       }

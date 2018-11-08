@@ -15,67 +15,67 @@
 */
 
 import cssVars from 'css-vars-ponyfill';
-import {objectQuery, isNilOrEmpty} from 'services/helpers';
+import { objectQuery, isNilOrEmpty } from 'services/helpers';
 import isColor from 'is-color';
 import isBoolean from 'lodash/isBoolean';
 
 interface IThemeJSON {
-  "spec-version": string;
+  'spec-version': string;
 }
 
 interface IJsonFeatureNames {
-  "analytics"?: string;
-  "control-center"?: string;
-  "dashboard"?: string;
-  "data-prep"?: string;
-  "entities"?: string;
-  "hub"?: string;
-  "metadata"?: string;
-  "pipelines"?: string;
-  "reports"?: string;
-  "rules-engine"?: string;
+  analytics?: string;
+  'control-center'?: string;
+  dashboard?: string;
+  'data-prep'?: string;
+  entities?: string;
+  hub?: string;
+  metadata?: string;
+  pipelines?: string;
+  reports?: string;
+  'rules-engine'?: string;
 }
 
 interface IOnePoint0SpecJSON extends IThemeJSON {
-  "styles"?: {
-    "brand-primary-color"?: string;
-    "navbar-color"?: string;
-    "font-family"?: string;
+  styles?: {
+    'brand-primary-color'?: string;
+    'navbar-color'?: string;
+    'font-family'?: string;
   };
-  "content"?: {
-    "product-name"?: string;
-    "product-description"?: string;
-    "product-logo-navbar"?: {
-      "type"?: string;
-      "arguments"?: {
-         "url"?: string;
-         "data"?: string;
+  content?: {
+    'product-name'?: string;
+    'product-description'?: string;
+    'product-logo-navbar'?: {
+      type?: string;
+      arguments?: {
+        url?: string;
+        data?: string;
       };
     };
-    "product-logo-about"?: {
-      "type"?: string;
-      "arguments"?: {
-         "url"?: string;
-         "data"?: string;
+    'product-logo-about'?: {
+      type?: string;
+      arguments?: {
+        url?: string;
+        data?: string;
       };
     };
-    "favicon-path"?: string;
-    "footer-text"?: string;
-    "footer-link"?: string;
-    "feature-names"?: IJsonFeatureNames;
+    'favicon-path'?: string;
+    'footer-text'?: string;
+    'footer-link'?: string;
+    'feature-names'?: IJsonFeatureNames;
   };
-  "features"?: {
-    "about-product"?: boolean;
-    "dashboard"?: boolean;
-    "reports"?: boolean;
-    "data-prep"?: boolean;
-    "pipelines"?: boolean;
-    "analytics"?: boolean;
-    "rules-engine"?: boolean;
-    "metadata"?: boolean;
-    "hub"?: boolean;
-    "ingest-data"?: boolean;
-    "add-namespace"?: boolean;
+  features?: {
+    'about-product'?: boolean;
+    dashboard?: boolean;
+    reports?: boolean;
+    'data-prep'?: boolean;
+    pipelines?: boolean;
+    analytics?: boolean;
+    'rules-engine'?: boolean;
+    metadata?: boolean;
+    hub?: boolean;
+    'ingest-data'?: boolean;
+    'add-namespace'?: boolean;
   };
 }
 

@@ -15,13 +15,13 @@
 */
 
 export enum ConnectionType {
-  UPLOAD = "UPLOAD",
-  FILE = "FILE",
-  DATABASE = "DATABASE",
-  TABLE = "TABLE",
-  S3 = "S3",
-  GCS = "GCS",
-  BIGQUERY = "BIGQUERY",
-  KAFKA = "KAFKA",
-  SPANNER = "SPANNER",
+  UPLOAD = 'UPLOAD',
+  FILE = 'FILE',
+  DATABASE = 'DATABASE',
+  TABLE = 'TABLE',
+  S3 = 'S3',
+  GCS = 'GCS',
+  BIGQUERY = 'BIGQUERY',
+  KAFKA = 'KAFKA',
+  SPANNER = 'SPANNER',
 }

@@ -15,9 +15,9 @@
  */
 
 import * as React from 'react';
-import {getLineageSummary} from 'components/FieldLevelLineage/store/ActionCreator';
+import { getLineageSummary } from 'components/FieldLevelLineage/store/ActionCreator';
 import classnames from 'classnames';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import If from 'components/If';
 import T from 'i18n-react';
 
@@ -43,24 +43,30 @@ class FieldRowView extends React.PureComponent<IFieldRowProps, IFieldRowState> {
   };
 
   private onClickHandler = (field) => {
-    if (!this.props.field.lineage) { return; }
+    if (!this.props.field.lineage) {
+      return;
+    }
 
     getLineageSummary(this.props.field.name);
-  }
+  };
 
   private onMouseEnter = () => {
-    if (this.props.field.lineage) { return; }
+    if (this.props.field.lineage) {
+      return;
+    }
     this.setState({
       isHovered: true,
     });
-  }
+  };
 
   private onMouseLeave = () => {
-    if (this.props.field.lineage) { return; }
+    if (this.props.field.lineage) {
+      return;
+    }
     this.setState({
       isHovered: false,
     });
-  }
+  };
 
   public render() {
     const field = this.props.field;
@@ -81,9 +87,7 @@ class FieldRowView extends React.PureComponent<IFieldRowProps, IFieldRowState> {
         {field.name}
 
         <If condition={isDisabled && this.state.isHovered}>
-          <em className="no-lineage-text">
-            {T.translate(`${PREFIX}.noLineage`)}
-          </em>
+          <em className="no-lineage-text">{T.translate(`${PREFIX}.noLineage`)}</em>
         </If>
       </div>
     );
@@ -97,8 +101,6 @@ const mapStateToProps = (state, ownProp) => {
   };
 };
 
-const FieldRow = connect(
-  mapStateToProps,
-)(FieldRowView);
+const FieldRow = connect(mapStateToProps)(FieldRowView);
 
 export default FieldRow;

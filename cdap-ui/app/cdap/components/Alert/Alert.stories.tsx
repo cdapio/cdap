@@ -29,12 +29,12 @@ storiesOf('Alert', module)
     })(() => (
       <Alert
         showAlert={true}
-        message='Marty! You are back.'
+        message="Marty! You are back."
         onClose={action('closed')}
-        type='success'
+        type="success"
       />
-    ),
-  ))
+    ))
+  )
   .add(
     'Error',
     withInfo({
@@ -42,12 +42,12 @@ storiesOf('Alert', module)
     })(() => (
       <Alert
         showAlert={true}
-        message='Great scott! How do you get 1.21GW of electricty!'
+        message="Great scott! How do you get 1.21GW of electricty!"
         onClose={action('closed')}
-        type='error'
+        type="error"
       />
-    ),
-  ))
+    ))
+  )
   .add(
     'Info',
     withInfo({
@@ -55,9 +55,9 @@ storiesOf('Alert', module)
     })(() => (
       <Alert
         showAlert={true}
-        message='Hey! Hey! Hey! Hey! All I want is a pepsi'
+        message="Hey! Hey! Hey! Hey! All I want is a pepsi"
         onClose={action('closed')}
-        type='info'
+        type="info"
       />
-    ),
-  ));
+    ))
+  );

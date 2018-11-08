@@ -15,7 +15,7 @@
 */
 import * as React from 'react';
 import { Theme } from 'services/ThemeHelper';
-import {withContext} from 'components/Header/NamespaceLinkContext';
+import { withContext } from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 require('./PipelinesLink.scss');
 
@@ -37,8 +37,8 @@ const PipelinesLink: React.SFC<IPipelinesLinkProps> = ({ context }) => {
     return null;
   }
   const featureName = Theme.featureNames.pipelines;
-  const {namespace } = context;
-  const pipelinesListUrl =  window.getHydratorUrl({
+  const { namespace } = context;
+  const pipelinesListUrl = window.getHydratorUrl({
     stateName: 'hydrator.list',
     stateParams: {
       namespace,
@@ -50,14 +50,12 @@ const PipelinesLink: React.SFC<IPipelinesLinkProps> = ({ context }) => {
 
   return (
     <li
-      id='navbar-pipelines'
+      id="navbar-pipelines"
       className={classnames({
         active: isPipelinesViewActive,
       })}
     >
-      <a href={pipelinesListUrl}>
-        {featureName}
-      </a>
+      <a href={pipelinesListUrl}>{featureName}</a>
     </li>
   );
 };

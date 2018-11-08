@@ -19,11 +19,11 @@ require('./AuthRefresher.scss');
 
 const AuthRefresher: React.SFC = () => {
   const url = (window as any).CDAP_CONFIG.authRefreshURL;
-  if (url === false) { return null; }
+  if (url === false) {
+    return null;
+  }
 
-  return (
-    <iframe src={url} className="auth-refresher" />
-  );
+  return <iframe src={url} className="auth-refresher" />;
 };
 
 export default AuthRefresher;

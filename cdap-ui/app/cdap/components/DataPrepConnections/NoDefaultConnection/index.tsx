@@ -15,10 +15,10 @@
  */
 
 import * as React from 'react';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
-import {isNilOrEmpty} from 'services/helpers';
-import {Redirect} from 'react-router-dom';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
+import { isNilOrEmpty } from 'services/helpers';
+import { Redirect } from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
 import T from 'i18n-react';
@@ -59,10 +59,9 @@ const NoDefaultConnection: React.SFC<INoDefaultConnectionProps> = ({
             <br />
             <ul>
               <li>
-                <span
-                  className="link-text"
-                  onClick={showAddConnectionPopover}
-                >Create</span>
+                <span className="link-text" onClick={showAddConnectionPopover}>
+                  Create
+                </span>
                 <span>a new connection; or</span>
               </li>
               <li>
@@ -78,8 +77,6 @@ const NoDefaultConnection: React.SFC<INoDefaultConnectionProps> = ({
   const connectionType = type.toLowerCase();
   const namespace = getCurrentNamespace();
   const BASEPATH = `/ns/${namespace}/connections`;
-  return (
-    <Redirect to={`${BASEPATH}/${connectionType}/${connectionId}`} />
-  );
+  return <Redirect to={`${BASEPATH}/${connectionType}/${connectionId}`} />;
 };
 export default NoDefaultConnection;

@@ -57,11 +57,11 @@ class DashboardLink extends React.PureComponent<IDashboardLinkProps> {
       return true;
     }
     const location = window.location;
-    const {namespace} = this.props.context;
+    const { namespace } = this.props.context;
     const path = `/cdap/ns/${namespace}/operations`;
 
     return location.pathname.startsWith(path);
-  }
+  };
 }
 
 const DashboardLinkWithContext = withContext(DashboardLink);

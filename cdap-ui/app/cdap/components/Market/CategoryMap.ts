@@ -17,15 +17,15 @@
 import T from 'i18n-react';
 
 const CATEGORY_MAP = {
-  'usecase': {
+  usecase: {
     icon: 'icon-usecases',
     displayName: T.translate('features.Market.tabs.useCases'),
   },
-  'pipeline': {
+  pipeline: {
     icon: 'icon-pipelines',
     displayName: T.translate('features.Market.tabs.pipelines'),
   },
-  'example': {
+  example: {
     icon: 'icon-app',
     displayName: T.translate('features.Market.tabs.examples'),
   },
@@ -33,7 +33,7 @@ const CATEGORY_MAP = {
     icon: 'icon-plug',
     displayName: T.translate('features.Market.tabs.plugins'),
   },
-  'datapack': {
+  datapack: {
     icon: 'icon-datapacks',
     displayName: T.translate('features.Market.tabs.datapacks'),
   },
@@ -45,19 +45,19 @@ const CATEGORY_MAP = {
     icon: 'icon-database',
     displayName: T.translate('features.Market.tabs.edwOffload'),
   },
-  'gcp': {
+  gcp: {
     icon: 'icon-google',
     displayName: T.translate('features.Market.tabs.gcp'),
   },
-  'Azure': {
+  Azure: {
     icon: 'icon-azureblobstore',
     displayName: T.translate('features.Market.tabs.azure'),
   },
-  'AWS': {
+  AWS: {
     icon: 'icon-aws',
     displayName: T.translate('features.Market.tabs.aws'),
   },
-  'Directives': {
+  Directives: {
     icon: 'icon-directives',
     displayName: T.translate('features.Market.tabs.directives'),
   },
@@ -77,4 +77,4 @@ const DEFAULT_CATEGORIES = [
   'Directives',
 ];
 
-export {CATEGORY_MAP, DEFAULT_CATEGORIES};
+export { CATEGORY_MAP, DEFAULT_CATEGORIES };

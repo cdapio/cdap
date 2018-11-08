@@ -16,7 +16,7 @@
 
 import GuidedTour, { ITourStep } from 'services/GuidedTour';
 import T from 'i18n-react';
-import {Theme} from 'services/ThemeHelper';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.NUX';
 const featureNames = Theme.featureNames;
@@ -28,7 +28,9 @@ const steps: ITourStep[] = [
     id: 'control-center',
     title: featureNames.controlCenter,
     text: [
-      T.translate(`${PREFIX}.ControlCenter.text`, {featureName: featureNames.controlCenter}).toString(),
+      T.translate(`${PREFIX}.ControlCenter.text`, {
+        featureName: featureNames.controlCenter,
+      }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Control_Center_NUX.png" />',
     ],
     attachTo: '#navbar-control-center bottom',
@@ -38,7 +40,7 @@ const steps: ITourStep[] = [
     id: 'pipelines',
     title: featureNames.pipelines,
     text: [
-      T.translate(`${PREFIX}.Pipelines.text`, {featureName: featureNames.pipelines}).toString(),
+      T.translate(`${PREFIX}.Pipelines.text`, { featureName: featureNames.pipelines }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Pipeline_NUX.png" />',
     ],
     attachTo: '#navbar-pipelines bottom',
@@ -48,7 +50,7 @@ const steps: ITourStep[] = [
     id: 'preparation',
     title: featureNames.dataPrep,
     text: [
-      T.translate(`${PREFIX}.Preparation.text`, {featureName: featureNames.dataPrep}).toString(),
+      T.translate(`${PREFIX}.Preparation.text`, { featureName: featureNames.dataPrep }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Dataprep_NUX.png" />',
     ],
     attachTo: '#navbar-preparation bottom',
@@ -58,7 +60,7 @@ const steps: ITourStep[] = [
     id: 'metadata',
     title: featureNames.metadata,
     text: [
-      T.translate(`${PREFIX}.Metadata.text`, {featureName: featureNames.metadata}).toString(),
+      T.translate(`${PREFIX}.Metadata.text`, { featureName: featureNames.metadata }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Metadata_NUX.png" />',
     ],
     attachTo: '#navbar-metadata bottom',

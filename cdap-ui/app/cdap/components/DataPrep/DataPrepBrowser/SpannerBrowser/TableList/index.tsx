@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import {
   listSpannerTables,
   listSpannerInstances,
@@ -24,10 +24,10 @@ import {
   setError,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
-import {Link} from 'react-router-dom';
-import {match} from 'react-router';
-import {getCurrentNamespace} from 'services/NamespaceStore';
-import {objectQuery} from 'services/helpers';
+import { Link } from 'react-router-dom';
+import { match } from 'react-router';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { objectQuery } from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
 import MyDataPrepApi from 'api/dataprep';
@@ -61,13 +61,11 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
   };
 
   public componentDidMount() {
-    if (!this.props.enableRouting) { return; }
+    if (!this.props.enableRouting) {
+      return;
+    }
 
-    const {
-      connectionId,
-      instanceId,
-      databaseId,
-    } = this.props.match.params;
+    const { connectionId, instanceId, databaseId } = this.props.match.params;
 
     listSpannerTables(connectionId, instanceId, databaseId);
   }
@@ -76,9 +74,12 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
     setSpannerLoading();
 
     const namespace = getCurrentNamespace();
-    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
-    const instanceId = this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
-    const databaseId = this.props.databaseId || objectQuery(this.props, 'match', 'params', 'databaseId');
+    const connectionId =
+      this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
+    const instanceId =
+      this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
+    const databaseId =
+      this.props.databaseId || objectQuery(this.props, 'match', 'params', 'databaseId');
     const params = {
       namespace,
       connectionId,
@@ -87,20 +88,21 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
       tableId,
     };
 
-    MyDataPrepApi.readSpannerTable(params)
-      .subscribe(
-        (res) => {
-          const workspaceId = objectQuery(res, 'values', 0, 'id');
-          if (typeof this.props.onWorkspaceCreate === 'function') {
-            this.props.onWorkspaceCreate(workspaceId);
-            return;
-          }
-          window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-        },
-        (err) => {
-          setError(err);
-        },
-      );
+    MyDataPrepApi.readSpannerTable(params).subscribe(
+      (res) => {
+        const workspaceId = objectQuery(res, 'values', 0, 'id');
+        if (typeof this.props.onWorkspaceCreate === 'function') {
+          this.props.onWorkspaceCreate(workspaceId);
+          return;
+        }
+        window.location.href = `${
+          window.location.origin
+        }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+      },
+      (err) => {
+        setError(err);
+      }
+    );
   }
 
   public render() {
@@ -108,10 +110,13 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
       return <LoadingSVGCentered />;
     }
 
-    const {tableList} = this.props;
-    const connectionId = this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
-    const instanceId = this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
-    const databaseId = this.props.databaseId || objectQuery(this.props, 'match', 'params', 'databaseId');
+    const { tableList } = this.props;
+    const connectionId =
+      this.props.connectionId || objectQuery(this.props, 'match', 'params', 'connectionId');
+    const instanceId =
+      this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
+    const databaseId =
+      this.props.databaseId || objectQuery(this.props, 'match', 'params', 'databaseId');
 
     if (!tableList.length) {
       return (
@@ -156,38 +161,29 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
             <span> / </span>
             <span>{databaseId}</span>
           </div>
-          <div>
-            {T.translate(`${PREFIX}.tableCount`, {context: tableList.length})}
-          </div>
+          <div>{T.translate(`${PREFIX}.tableCount`, { context: tableList.length })}</div>
         </div>
 
         <div className="list-table">
           <div className="table-header">
             <div className="row">
-              <div className="col-12">
-                {T.translate(`${PREFIX}.name`)}
-              </div>
+              <div className="col-12">{T.translate(`${PREFIX}.name`)}</div>
             </div>
           </div>
 
           <div className="table-body">
-            {
-              tableList.map((table: ISpannerTableObject) => {
-                return (
-                  <div
-                    key={table.name}
-                    onClick={this.createWorkspace.bind(this, table.name)}
-                  >
-                    <div className="row content-row">
-                      <div className="col-12">
-                        <IconSVG name="icon-table" />
-                        {table.name}
-                      </div>
+            {tableList.map((table: ISpannerTableObject) => {
+              return (
+                <div key={table.name} onClick={this.createWorkspace.bind(this, table.name)}>
+                  <div className="row content-row">
+                    <div className="col-12">
+                      <IconSVG name="icon-table" />
+                      {table.name}
                     </div>
                   </div>
-                );
-              })
-            }
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -205,8 +201,6 @@ const mapStateToProps = (state): Partial<ISpannerTableListViewProps> => {
   };
 };
 
-const SpannerTableList = connect(
-  mapStateToProps,
-)(SpannerTableListView);
+const SpannerTableList = connect(mapStateToProps)(SpannerTableListView);
 
 export default SpannerTableList;

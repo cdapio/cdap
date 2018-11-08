@@ -16,7 +16,7 @@
 import * as React from 'react';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
-import {withContext} from 'components/Header/NamespaceLinkContext';
+import { withContext } from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 import T from 'i18n-react';
 
@@ -63,10 +63,10 @@ class AnalyticsLink extends React.PureComponent<IAnalyticsLinkProps> {
     if (match && match.isExact) {
       return true;
     }
-    const {namespace} = this.props.context;
+    const { namespace } = this.props.context;
     const experimentsBasePath = `/cdap/ns/${namespace}/experiments`;
     return location.pathname.startsWith(experimentsBasePath);
-  }
+  };
 }
 
 const AnalyticsLinkWithContext = withContext(AnalyticsLink);

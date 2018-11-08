@@ -18,7 +18,8 @@ import * as React from 'react';
 import * as Loadable from 'react-loadable';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 const SubTSXComponent = Loadable({
-  loader: () => import(/* webpackChunkName: "ChildTSXComponent" */ 'components/SampleTSXComponent/ChildTSXComponent'),
+  loader: () =>
+    import(/* webpackChunkName: "ChildTSXComponent" */ 'components/SampleTSXComponent/ChildTSXComponent'),
   loading: LoadingSVGCentered,
 });
 
@@ -32,7 +33,9 @@ const FunctionalComponent: React.SFC<IFCProps> = ({ prop1, prop2 }) => {
     <React.Fragment>
       <h4> Stateless component </h4>
       <span> Props: </span>
-      <pre>{`${prop1}`} : {prop2}</pre>
+      <pre>
+        {`${prop1}`} : {prop2}
+      </pre>
       <hr />
       <SubTSXComponent />
     </React.Fragment>
@@ -57,10 +60,7 @@ class StatefullComponent extends React.PureComponent<IStatefulComponentProps, {}
 export default function SampleTSXComponent() {
   return [
     <h1 key="super-title"> Hello from TSX! </h1>,
-    <FunctionalComponent
-      prop1={true}
-      prop2="Nice!"
-    />,
+    <FunctionalComponent prop1={true} prop2="Nice!" />,
     <StatefullComponent prop3="hurray!! stateful prop" />,
   ];
 }

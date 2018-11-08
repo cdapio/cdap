@@ -16,7 +16,7 @@
 import * as React from 'react';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
-import {withContext} from 'components/Header/NamespaceLinkContext';
+import { withContext } from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 require('./RulesEngineLink.scss');
 
@@ -45,12 +45,12 @@ class RulesEngineLink extends React.PureComponent<IRulesEngineLinkProps> {
           active: this.isRulesEngineActive(),
         })}
       >
-          <NavLinkWrapper
-            isNativeLink={isNativeLink}
-            to={isNativeLink ? `/cdap${rulesEngineUrl}` : rulesEngineUrl}
-          >
-            {featureName}
-          </NavLinkWrapper>
+        <NavLinkWrapper
+          isNativeLink={isNativeLink}
+          to={isNativeLink ? `/cdap${rulesEngineUrl}` : rulesEngineUrl}
+        >
+          {featureName}
+        </NavLinkWrapper>
       </li>
     );
   }
@@ -60,10 +60,10 @@ class RulesEngineLink extends React.PureComponent<IRulesEngineLinkProps> {
     if (match && match.isExact) {
       return true;
     }
-    const {namespace} = this.props.context;
+    const { namespace } = this.props.context;
     const rulesenginepath = `/cdap/ns/${namespace}/rulesengine`;
     return location.pathname.startsWith(rulesenginepath);
-  }
+  };
 }
 
 const RulesEngineLinkWithContext = withContext(RulesEngineLink);
