@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,14 +20,18 @@
       scope: {
         model: '=ngModel',
         config: '=',
-        properties: '='
+        properties: '=',
+        disabled: '='
       },
       templateUrl: 'widget-container/widget-wrangler-directives/widget-wrangler-directives.html',
       controller: function($scope, myHelpers, $uibModal) {
         $scope.rows = myHelpers.objectQuery($scope, 'config', 'widget-attributes', 'rows');
-        $scope.placeholder = myHelpers.objectQuery($scope, 'config', 'widget-attributes', 'rows') || '';
+        $scope.placeholder = myHelpers.objectQuery($scope, 'config', 'widget-attributes', 'placeholder') || '';
 
         $scope.openWranglerModal = function() {
+          if ($scope.disabled) {
+            return;
+          }
           $uibModal.open({
             controller: 'WranglerModalController',
             controllerAs: 'Wrangler',
