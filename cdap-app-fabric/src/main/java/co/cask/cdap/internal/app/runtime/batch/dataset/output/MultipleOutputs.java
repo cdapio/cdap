@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -193,9 +194,16 @@ public class MultipleOutputs implements Closeable {
       }
 
       ClassLoader outputFormatClassLoader = outputFormatClass.getClassLoader();
+      // Use a CombineClassLoader of the output format's classloader and the context classloader
+      // This is to prevent class not found issues for classes that are visible to the system, but not to the
+      // program/plugin. More specifically, this happens for XML parsers that are in the Hadoop classpath but usually
+      // not packaged in programs and plugins.
+      // see CDAP-14562 for more info
+      ClassLoader outputClassLoader = new CombineClassLoader(outputFormatClassLoader,
+                                                             Thread.currentThread().getContextClassLoader());
       // This is needed in case the OutputFormat's classloader conflicts with the program classloader (for example,
       // TableOutputFormat).
-      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(outputFormatClassLoader);
+      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(outputClassLoader);
 
       try {
         // We use ReflectionUtils to instantiate the OutputFormat, because it also calls setConf on the object, if it
