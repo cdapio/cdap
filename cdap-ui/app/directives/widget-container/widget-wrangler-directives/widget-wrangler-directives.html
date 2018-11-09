@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2017 Cask Data, Inc.
+  Copyright © 2017-2018 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,21 @@
   the License.
 -->
 <div class="clearfix">
-  <textarea
-    class="form-control"
-    ng-trim="false"
+  <div
+    my-ace-editor
     ng-model="model"
+    disabled="disabled"
+    data-config="config"
+    mode="plain_text"
     rows="{{rows}}"
     placeholder="{{placeholder}}"
   >
-  </textarea>
+  </div>
 
   <div class="wrangler-button">
     <div
       class="btn btn-primary"
+      ng-class="{'disabled': disabled}"
       ng-click="openWranglerModal()"
     >
       <span class="fa icon-DataPreparation"></span>

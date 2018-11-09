@@ -226,6 +226,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-wrangler-directives></my-wrangler-directives>',
         attributes: {
           'ng-model': 'model',
+          'disabled': 'disabled',
           'data-config': 'myconfig',
           'properties': 'properties'
         }
