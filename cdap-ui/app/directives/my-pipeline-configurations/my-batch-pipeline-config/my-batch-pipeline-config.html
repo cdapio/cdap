@@ -346,6 +346,7 @@
         <div ng-if="!BatchPipelineConfigCtrl.isDeployed && !BatchPipelineConfigCtrl.showPreviewConfig">
           <button
             class="btn btn-primary apply-close"
+            data-testid="config-apply-close"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="BatchPipelineConfigCtrl.applyAndClose()">
             Save

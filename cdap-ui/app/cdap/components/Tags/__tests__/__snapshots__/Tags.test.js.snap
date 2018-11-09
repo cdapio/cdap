@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Tags renders correctly 1`] = `
+<div
+  class="tags-holder"
+>
+  <strong>
+    features.Tags.labelWithCount:
+  </strong>
+  <span
+    class="tags-list"
+  >
+    <span />
+    <span />
+  </span>
+  <span
+    class="btn btn-primary plus-button-container"
+    data-testid="tag-plus-button"
+  >
+    <svg
+      class="icon-svg icon-plus text-white"
+    >
+      <use
+        xlink:href="http://localhost/#symbol-defs_icon-plus"
+      />
+      <use
+        xlink:href="http://localhost/#symbol-defs_new_icon-plus"
+      />
+    </svg>
+  </span>
+  <svg
+    class="icon-svg icon-spinner fa-lg fa-spin"
+    data-testid="loading-icon"
+  >
+    <use
+      xlink:href="http://localhost/#symbol-defs_icon-spinner"
+    />
+    <use
+      xlink:href="http://localhost/#symbol-defs_new_icon-spinner"
+    />
+  </svg>
+</div>
+`;

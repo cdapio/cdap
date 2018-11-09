@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,19 +12,17 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
-import React from 'react';
-import { mount } from 'enzyme';
-import SchemaEditor from 'components/SchemaEditor';
+*/
 
-describe('Unit Tests for Schema Editor', () => {
-  it('Should render', () => {
-    const schemaeditor = mount(<SchemaEditor />);
-    expect(schemaeditor.find('.schema-body').length).toBe(1);
-  });
-  it('Should render a single empty RecordSchemaRow', () => {
-    const schemaeditor = mount(<SchemaEditor />);
-    expect(schemaeditor.find('.record-schema-row').length).toBe(1);
-    expect(schemaeditor.find('.record-schema-row > .schema-row').length).toBe(1);
+import React from 'react';
+import { cleanup, render } from 'react-testing-library';
+import Page500 from 'components/500';
+
+afterEach(cleanup);
+
+describe('Page500', () => {
+  it('renders correctly', () => {
+    const { container } = render(<Page500 />);
+    expect(container.firstChild).toMatchSnapshot();
   });
 });

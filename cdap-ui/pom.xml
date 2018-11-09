@@ -176,6 +176,7 @@
                   <exclude>**/LICENSE-node</exclude>
                   <exclude>**/cdap-ui-upgrade/**</exclude>
                   <exclude>**/storybook-static/**</exclude>
+                  <exclude>**/*.snap</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -255,6 +256,15 @@
                 </goals>
                 <configuration>
                   <arguments>run distribute</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>run-ui-unit-tests</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>jest</arguments>
                 </configuration>
               </execution>
               <execution>

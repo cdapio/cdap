@@ -379,6 +379,7 @@
         <div ng-if="!RealtimePipelineConfigCtrl.isDeployed && !RealtimePipelineConfigCtrl.showPreviewConfig">
           <button
             class="btn btn-primary apply-close"
+            data-testid="config-apply-close"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="RealtimePipelineConfigCtrl.applyAndClose()">
             Save
