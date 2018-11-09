@@ -15,14 +15,21 @@
  */
 package co.cask.cdap.api.common;
 
+import sun.misc.Unsafe;
+
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -893,6 +900,145 @@ public class Bytes {
         return comparer;
       } catch (Throwable t) { // ensure we really catch *everything*
         return lexicographicalComparerJavaImpl();
+      }
+    }
+
+    /**
+     * Copied from guava UnsignedBytes with modification to cater for non-zero byte[] offset and length.
+     */
+    enum UnsafeComparer implements Comparer<byte[]> {
+      INSTANCE;
+
+      static final boolean BIG_ENDIAN = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
+
+      /*
+       * The following static final fields exist for performance reasons.
+       *
+       * In UnsignedBytesBenchmark, accessing the following objects via static final fields is the
+       * fastest (more than twice as fast as the Java implementation, vs ~1.5x with non-final static
+       * fields, on x86_32) under the Hotspot server compiler. The reason is obviously that the
+       * non-final fields need to be reloaded inside the loop.
+       *
+       * And, no, defining (final or not) local variables out of the loop still isn't as good
+       * because the null check on the theUnsafe object remains inside the loop and
+       * BYTE_ARRAY_BASE_OFFSET doesn't get constant-folded.
+       *
+       * The compiler can treat static final fields as compile-time constants and can constant-fold
+       * them while (final or not) local variables are run time values.
+       */
+
+      static final Unsafe UNSAFE;
+
+      /** The offset to the first element in a byte array. */
+      static final int BYTE_ARRAY_BASE_OFFSET;
+
+      private static final int UNSIGNED_MASK = 0xFF;
+
+      static {
+        UNSAFE = getUnsafe();
+
+        BYTE_ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset(byte[].class);
+
+        // sanity check - this should never fail
+        if (UNSAFE.arrayIndexScale(byte[].class) != 1) {
+          throw new AssertionError();
+        }
+      }
+
+      /**
+       * Returns a sun.misc.Unsafe. Suitable for use in a 3rd party package. Replace with a simple
+       * call to Unsafe.getUnsafe when integrating into a jdk.
+       *
+       * @return a sun.misc.Unsafe
+       */
+      private static Unsafe getUnsafe() {
+        try {
+          return Unsafe.getUnsafe();
+        } catch (SecurityException e) {
+          // that's okay; try reflection instead
+        }
+        try {
+          return AccessController.doPrivileged(
+            (PrivilegedExceptionAction<Unsafe>) () -> {
+              Class<Unsafe> k = Unsafe.class;
+              for (Field f : k.getDeclaredFields()) {
+                f.setAccessible(true);
+                Object x = f.get(null);
+                if (k.isInstance(x)) {
+                  return k.cast(x);
+                }
+              }
+              throw new NoSuchFieldError("The sun.misc.Unsafe is not available to use");
+            });
+        } catch (PrivilegedActionException e) {
+          throw new RuntimeException("Could not initialize intrinsics", e.getCause());
+        }
+      }
+
+      @Override
+      public int compareTo(byte[] left, int leftOff, int leftLen, byte[] right, int rightOff, int rightLen) {
+        int minLength = Math.min(leftLen, rightLen);
+        int minWords = minLength / SIZEOF_LONG;
+
+        int leftOffset = BYTE_ARRAY_BASE_OFFSET + leftOff;
+        int rightOffset = BYTE_ARRAY_BASE_OFFSET + rightOff;
+
+        /*
+         * Compare 8 bytes at a time. Benchmarking shows comparing 8 bytes at a time is no slower
+         * than comparing 4 bytes at a time even on 32-bit. On the other hand, it is substantially
+         * faster on 64-bit.
+         */
+        for (int i = 0; i < minWords * SIZEOF_LONG; i += SIZEOF_LONG) {
+          long lw = UNSAFE.getLong(left, leftOffset + (long) i);
+          long rw = UNSAFE.getLong(right, rightOffset + (long) i);
+          if (lw != rw) {
+            if (BIG_ENDIAN) {
+              return compare(lw, rw);
+            }
+
+            /*
+             * We want to compare only the first index where left[index] != right[index]. This
+             * corresponds to the least significant nonzero byte in lw ^ rw, since lw and rw are
+             * little-endian. Long.numberOfTrailingZeros(diff) tells us the least significant
+             * nonzero bit, and zeroing out the first three bits of L.nTZ gives us the shift to get
+             * that least significant nonzero byte.
+             */
+            int n = Long.numberOfTrailingZeros(lw ^ rw) & ~0x7;
+            return ((int) ((lw >>> n) & UNSIGNED_MASK)) - ((int) ((rw >>> n) & UNSIGNED_MASK));
+          }
+        }
+
+        // The epilogue to cover the last (minLength % 8) elements.
+        for (int i = minWords * SIZEOF_LONG; i < minLength; i++) {
+          byte lb = UNSAFE.getByte(left, leftOffset + (long) i);
+          byte rb = UNSAFE.getByte(right, rightOffset + (long) i);
+          int result = compare(lb, rb);
+          if (result != 0) {
+            return result;
+          }
+        }
+        return leftLen - rightLen;
+      }
+
+      @Override
+      public String toString() {
+        return "UnsignedBytes.lexicographicalComparator() (sun.misc.Unsafe version)";
+      }
+
+      private static int toInt(byte value) {
+        return value & UNSIGNED_MASK;
+      }
+
+      private static int compare(byte a, byte b) {
+        return toInt(a) - toInt(b);
+      }
+
+      private static int compare(long a, long b) {
+        return Long.compare(flip(a), flip(b));
+      }
+
+      private static long flip(long a) {
+        return a ^ Long.MIN_VALUE;
       }
     }
 
