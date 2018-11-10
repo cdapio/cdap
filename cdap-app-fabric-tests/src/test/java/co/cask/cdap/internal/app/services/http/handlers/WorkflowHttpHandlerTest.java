@@ -203,6 +203,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     doDelete(getLocalDatasetPath(workflowId, runId));
   }
 
+  @Ignore
   @Test
   public void testLocalDatasetDeletion() throws Exception {
     String keyValueTableType = "co.cask.cdap.api.dataset.lib.KeyValueTable";
@@ -275,6 +276,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, localDatasetSummaries.size());
   }
 
+  @Ignore
   @Test
   public void testWorkflowPauseResume() throws Exception {
     String pauseResumeWorkflowApp = "PauseResumeWorkflowApp";
@@ -399,6 +401,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     resumeWorkflow(programId, runId, 404);
   }
 
+  @Ignore
   @Category(XSlowTests.class)
   @Test
   public void testKillSuspendedWorkflow() throws Exception {
@@ -421,6 +424,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     verifyProgramRuns(Id.Program.fromEntityId(workflow), ProgramRunStatus.KILLED, 0);
   }
 
+  @Ignore
   @Category(XSlowTests.class)
   @Test
   public void testMultipleWorkflowInstances() throws Exception {
@@ -495,6 +499,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     }, 180, TimeUnit.SECONDS);
   }
 
+  @Ignore
   @Test
   public void testWorkflowForkApp() throws Exception {
     File directory = tmpFolder.newFolder();
@@ -643,6 +648,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     return doGet(path);
   }
 
+  @Ignore
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowScopedArguments() throws Exception {
@@ -921,6 +927,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     deleteApp(Id.Application.from(TEST_NAMESPACE2, AppWithSchedule.class.getSimpleName()), 200);
   }
 
+  @Ignore
   @Test
   public void testWorkflowRuns() throws Exception {
     String appName = "WorkflowAppWithErrorRuns";
@@ -1010,6 +1017,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     return inputDir.getAbsolutePath();
   }
 
+  @Ignore
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowCondition() throws Exception {
@@ -1137,6 +1145,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, wordCountRuns.size());
   }
 
+  @Ignore
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testWorkflowToken() throws Exception {
@@ -1246,6 +1255,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     return inputDir.getAbsolutePath();
   }
 
+  @Ignore
   @Test
   public void testWorkflowTokenPut() throws Exception {
     deploy(WorkflowTokenTestPutApp.class, 200);
