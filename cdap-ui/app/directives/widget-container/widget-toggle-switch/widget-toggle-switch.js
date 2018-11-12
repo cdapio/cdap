@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,34 @@
  * the License.
  */
 
+ const CHAR_LIMIT = 64;
+
 angular.module(PKG.name + '.commons')
-  .directive('myToggleSwitchWidget', function() {
+  .directive('myToggleSwitch', function() {
     return {
       restrict: 'E',
       scope: {
-        isOn: '=',
-        isDisabled: '=',
-        onToggle: '&'
+        model: '=ngModel',
+        config: '=',
+        disabled: '=',
       },
-      templateUrl: 'widget-container/widget-toggle-switch/widget-toggle-switch.html'
+      templateUrl: 'widget-container/widget-toggle-switch/widget-toggle-switch.html',
+      controller: function($scope, myHelpers) {
+        const onValue = myHelpers.objectQuery($scope.config, 'widget-attributes', 'on', 'value') || 'on';
+        const offValue = myHelpers.objectQuery($scope.config, 'widget-attributes', 'off', 'value') || 'off';
+        const defaultValue = myHelpers.objectQuery($scope.config, 'widget-attributes', 'default') || onValue;
+        const onLabel = myHelpers.objectQuery($scope.config, 'widget-attributes', 'on', 'label') || 'On';
+        const offLabel = myHelpers.objectQuery($scope.config, 'widget-attributes', 'off', 'label') || 'Off';
+
+        $scope.onLabel = onLabel.slice(0, CHAR_LIMIT);
+        $scope.offLabel = offLabel.slice(0, CHAR_LIMIT);
+        $scope.model = $scope.model || defaultValue;
+        $scope.isOn = $scope.model === onValue;
+        $scope.onToggle = () => ($scope.isOn = !$scope.isOn);
+
+        $scope.$watch('isOn', () => {
+          $scope.model = $scope.isOn ? onValue : offValue;
+        });
+      }
     };
   });

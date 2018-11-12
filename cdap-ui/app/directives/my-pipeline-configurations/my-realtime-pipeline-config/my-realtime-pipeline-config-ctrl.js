@@ -205,20 +205,24 @@ class MyRealtimePipelineConfigCtrl {
     this.updatePipelineEditStatus();
   }
 
-  onCheckPointingChange() {
+  onCheckPointingChange = () => {
     this.checkpointing = !this.checkpointing;
     this.updatePipelineEditStatus();
-  }
+  };
 
-  onInstrumentationChange() {
+  onInstrumentationChange = () => {
     this.instrumentation = !this.instrumentation;
     this.updatePipelineEditStatus();
-  }
+  };
 
-  onStageLoggingChange() {
+  onStageLoggingChange = () => {
     this.stageLogging = !this.stageLogging;
     this.updatePipelineEditStatus();
-  }
+  };
+
+  onBackpressureChange = () => {
+    this.backpressure = !this.backpressure;
+  };
 
   getUpdatedPipelineConfig() {
     let pipelineconfig = _.cloneDeep(this.store.getCloneConfig());

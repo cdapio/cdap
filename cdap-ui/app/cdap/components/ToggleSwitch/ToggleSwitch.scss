@@ -18,8 +18,8 @@
 $switch-btn-width: 14px;
 $widget-height: 32px;
 $switch-button-margin-top: 2px;
-$on-color: $green-02;
-$off-color: $blue-02;
+$on-color: $blue-02;
+$off-color: $grey-04;
 
 .toggle-switch-container {
   display: inline-block;
@@ -54,13 +54,11 @@ $off-color: $blue-02;
 
     &.on {
       background-color: $on-color;
-      .switch-button {
-        order: 2;
-      }
     }
 
     &.off {
       background-color: $off-color;
+      flex-direction: row-reverse;
     }
   }
 

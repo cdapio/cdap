@@ -261,7 +261,15 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'config': 'myconfig'
         }
-      }
+      },
+      'toggle': {
+        element: '<my-toggle-switch></my-toggle-switch>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig',
+          'disabled': 'disabled',
+        }
+      },
     };
     this.registry['__default__'] = this.registry['textbox'];
   });
