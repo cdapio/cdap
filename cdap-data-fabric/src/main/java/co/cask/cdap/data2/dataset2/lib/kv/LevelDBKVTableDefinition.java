@@ -156,7 +156,7 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
     }
 
     private static byte[] createKey(byte[] rowKey) {
-      return new KeyValue(rowKey, DATA_COLFAM, DEFAULT_COLUMN, 1, KeyValue.Type.Put).getKey();
+      return KeyValue.getKey(rowKey, DATA_COLFAM, DEFAULT_COLUMN, 1, KeyValue.Type.Put);
     }
 
     @Override

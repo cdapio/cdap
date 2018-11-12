@@ -19,6 +19,7 @@ import co.cask.cdap.api.common.Bytes;
 
 import java.io.DataOutput;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * This is a copy of parts of HBase's KeyValue, to be used for the leveldb table implementation.
@@ -256,6 +257,34 @@ public class KeyValue {
   }
 
   /**
+   * Returns a new array that represents the key constructed from the given parameters.
+   * It is the same as calling {@link #getKey(byte[], int, int, byte[], int, int, byte[], int, int, long, Type)}
+   * with all offsets equal {@code 0} and length as the array length.
+   */
+  public static byte[] getKey(byte[] row, @Nullable byte[] family, @Nullable byte[] qualifier,
+                              long timestamp, Type type) {
+    return getKey(row, 0, row.length,
+                  family, 0, family == null ? 0 : family.length,
+                  qualifier, 0, qualifier == null ? 0 : qualifier.length, timestamp, type);
+  }
+
+  /**
+   * Returns a new array that represents the key constructed from the given parameters. Effectively it is the same
+   * as calling {@link #KeyValue(byte[], int, int, byte[], int, int, byte[], int, int, long, Type, byte[], int, int)}
+   * with {@code value} as {@code null}, followed by {@link #getKey()}.
+   * If only the key is needed, calling this method will create less intermediate arrays and less array copying.
+   */
+  public static byte[] getKey(byte[] row, int rOffset, int rLength,
+                              @Nullable byte[] family, int fOffset, int fLength,
+                              @Nullable byte[] qualifier, int qOffset, int qLength,
+                              long timestamp, Type type) {
+    int keyLength = validateAndGetKeyLength(row, rLength, family, fLength, qualifier, qLength);
+    byte[] key = new byte[keyLength];
+    writeKey(row, rOffset, rLength, family, fOffset, fLength, qualifier, qOffset, qLength, timestamp, type, key, 0);
+    return key;
+  }
+
+  /**
    * Write KeyValue format into a byte array.
    *
    * @param row row key
@@ -274,58 +303,103 @@ public class KeyValue {
    * @param vlength value length
    * @return The newly created byte array.
    */
-  static byte [] createByteArray(final byte [] row, final int roffset,
-      final int rlength, final byte [] family, final int foffset, int flength,
-      final byte [] qualifier, final int qoffset, int qlength,
-      final long timestamp, final Type type,
-      final byte [] value, final int voffset, int vlength) {
-    if (rlength > Short.MAX_VALUE) {
+  private static byte [] createByteArray(byte[] row, int roffset,
+                                         int rlength, byte[] family, int foffset, int flength,
+                                         byte[] qualifier, int qoffset, int qlength,
+                                         long timestamp, Type type,
+                                         byte[] value, int voffset, int vlength) {
+    int keyLength = validateAndGetKeyLength(row, rlength, family, flength, qualifier, qlength);
+    // Value length
+    vlength = value == null ? 0 : vlength;
+
+    // Allocate right-sized byte array.
+    byte [] bytes = new byte[KEYVALUE_INFRASTRUCTURE_SIZE + keyLength + vlength];
+    // Write key, value and key row length.
+    int pos = 0;
+    pos = Bytes.putInt(bytes, pos, keyLength);
+    pos = Bytes.putInt(bytes, pos, vlength);
+    pos = writeKey(row, roffset, rlength, family, foffset, flength, qualifier,
+                   qoffset, qlength, timestamp, type, bytes, pos);
+
+    if (value != null && value.length > 0) {
+      Bytes.putBytes(bytes, pos, value, voffset, vlength);
+    }
+    return bytes;
+  }
+
+  /**
+   * Validates the key components and return the key size in bytes.
+   *
+   * @param row array containing the row key
+   * @param rLength length of the row key
+   * @param family array containing the column family
+   * @param fLength length of the column family
+   * @param qualifier array containing the column name
+   * @param qLength length of the column name
+   * @return the key size in bytes
+   */
+  private static int validateAndGetKeyLength(byte[] row, int rLength,
+                                             @Nullable byte[] family, int fLength,
+                                             @Nullable byte[] qualifier, int qLength) {
+    if (rLength > Short.MAX_VALUE) {
       throw new IllegalArgumentException("Row > " + Short.MAX_VALUE);
     }
     if (row == null) {
       throw new IllegalArgumentException("Row is null");
     }
     // Family length
-    flength = family == null ? 0 : flength;
-    if (flength > Byte.MAX_VALUE) {
+    fLength = family == null ? 0 : fLength;
+    if (fLength > Byte.MAX_VALUE) {
       throw new IllegalArgumentException("Family > " + Byte.MAX_VALUE);
     }
     // Qualifier length
-    qlength = qualifier == null ? 0 : qlength;
-    if (qlength > Integer.MAX_VALUE - rlength - flength) {
+    qLength = qualifier == null ? 0 : qLength;
+    if (qLength > Integer.MAX_VALUE - rLength - fLength) {
       throw new IllegalArgumentException("Qualifier > " + Integer.MAX_VALUE);
     }
     // Key length
-    long longkeylength = KEY_INFRASTRUCTURE_SIZE + rlength + flength + qlength;
-    if (longkeylength > Integer.MAX_VALUE) {
-      throw new IllegalArgumentException("keylength " + longkeylength + " > " +
-        Integer.MAX_VALUE);
+    long longKeyLength = KEY_INFRASTRUCTURE_SIZE + rLength + fLength + qLength;
+    if (longKeyLength > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Key length " + longKeyLength + " > " + Integer.MAX_VALUE);
     }
-    int keylength = (int) longkeylength;
-    // Value length
-    vlength = value == null ? 0 : vlength;
+    return (int) longKeyLength;
+  }
 
-    // Allocate right-sized byte array.
-    byte [] bytes = new byte[KEYVALUE_INFRASTRUCTURE_SIZE + keylength + vlength];
-    // Write key, value and key row length.
-    int pos = 0;
-    pos = Bytes.putInt(bytes, pos, keylength);
-    pos = Bytes.putInt(bytes, pos, vlength);
-    pos = Bytes.putShort(bytes, pos, (short) (rlength & 0x0000ffff));
-    pos = Bytes.putBytes(bytes, pos, row, roffset, rlength);
-    pos = Bytes.putByte(bytes, pos, (byte) (flength & 0x0000ff));
-    if (flength != 0) {
-      pos = Bytes.putBytes(bytes, pos, family, foffset, flength);
+  /**
+   * Writes the key to the given array.
+   *
+   * @param row array containing the row key
+   * @param rOffset offset in the row array where the actual row key starts
+   * @param rLength length of the row key
+   * @param family array containing the column family
+   * @param fOffset offset in the family array where the column family starts
+   * @param fLength length of the column family
+   * @param qualifier array containing the column name
+   * @param qOffset offset in the qualifier array where the column name starts
+   * @param qLength length of the column name
+   * @param timestamp timestamp in the key
+   * @param type the {@link Type} of operation
+   * @param bytes the byte array for storing the key
+   * @param offset offset to start in the byte array for storing the key.
+   * @return the position in the key byte array right after the key was stored.
+   */
+  private static int writeKey(byte[] row, int rOffset, int rLength,
+                              @Nullable byte[] family, int fOffset, int fLength,
+                              @Nullable byte[] qualifier, int qOffset, int qLength,
+                              long timestamp, Type type,
+                              byte[] bytes, int offset) {
+    int pos = offset;
+    pos = Bytes.putShort(bytes, pos, (short) (rLength & 0x0000ffff));
+    pos = Bytes.putBytes(bytes, pos, row, rOffset, rLength);
+    pos = Bytes.putByte(bytes, pos, (byte) (fLength & 0x0000ff));
+    if (fLength != 0) {
+      pos = Bytes.putBytes(bytes, pos, family, fOffset, fLength);
     }
-    if (qlength != 0) {
-      pos = Bytes.putBytes(bytes, pos, qualifier, qoffset, qlength);
+    if (qLength != 0) {
+      pos = Bytes.putBytes(bytes, pos, qualifier, qOffset, qLength);
     }
     pos = Bytes.putLong(bytes, pos, timestamp);
-    pos = Bytes.putByte(bytes, pos, type.getCode());
-    if (value != null && value.length > 0) {
-      Bytes.putBytes(bytes, pos, value, voffset, vlength);
-    }
-    return bytes;
+    return Bytes.putByte(bytes, pos, type.getCode());
   }
 
   // Needed doing 'contains' on List.  Only compares the key portion, not the

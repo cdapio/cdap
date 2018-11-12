@@ -573,11 +573,11 @@ public class LevelDBTableCore {
   // ------- helpers to create the keys for writes and scans ----------
 
   private static byte[] createPutKey(byte[] rowKey, byte[] columnKey, long version) {
-    return new KeyValue(rowKey, DATA_COLFAM, columnKey, version, KeyValue.Type.Put).getKey();
+    return KeyValue.getKey(rowKey, DATA_COLFAM, columnKey, version, KeyValue.Type.Put);
   }
 
   private static byte[] createStartKey(byte[] row) { // the first possible key of a row
-    return new KeyValue(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
+    return KeyValue.getKey(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
   }
 
   private static byte[] createEndKey(byte[] row) {
@@ -585,16 +585,16 @@ public class LevelDBTableCore {
   }
 
   private static byte[] createStartKey(byte[] row, byte[] column) {
-    return new KeyValue(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
+    return KeyValue.getKey(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
   }
 
   private static byte[] createEndKey(byte[] row, byte[] column) {
     if (column != null) {
       // we have a stop column and can use that as an upper bound
-      return new KeyValue(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
+      return KeyValue.getKey(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
     } else {
       // no stop column - use next column family as upper bound
-      return new KeyValue(row, NEXT_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
+      return KeyValue.getKey(row, NEXT_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
     }
   }
 }
