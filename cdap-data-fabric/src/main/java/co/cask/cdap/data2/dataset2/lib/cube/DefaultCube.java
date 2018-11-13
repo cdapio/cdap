@@ -165,17 +165,17 @@ public class DefaultCube implements Cube, MeteredDataset {
 
     List<Future> futures = new ArrayList<>();
     for (FactTable table : resolutionToFactTable.values()) {
-      table.add(toWrite);
-     // futures.add(executorService.submit(() -> table.add(toWrite)));
+     // table.add(toWrite);
+      futures.add(executorService.submit(() -> table.add(toWrite)));
     }
 
-//    for (Future future : futures) {
-//      try {
-//        future.get();
-//      } catch (InterruptedException | ExecutionException e) {
-//        throw new RuntimeException(e);
-//      }
-//    }
+    for (Future future : futures) {
+      try {
+        future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     incrementMetric("cube.cubeFact.add.request.count", 1);
     incrementMetric("cube.cubeFact.added.count", facts.size());
