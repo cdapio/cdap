@@ -67,6 +67,7 @@ MyMetadataApi.generalGetter = function(property) {
 MyMetadataApi.resetState = function() {
   this.__metadata = {};
   this.__properties = {};
+  this.__tags = [];
   this.__isError = false;
 };
 MyMetadataApi.getProperties = MyMetadataApi.generalGetter('__properties');
