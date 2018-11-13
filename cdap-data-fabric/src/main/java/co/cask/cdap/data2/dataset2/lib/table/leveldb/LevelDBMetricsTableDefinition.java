@@ -41,7 +41,7 @@ public class LevelDBMetricsTableDefinition extends AbstractTableDefinition<Metri
   @Override
   public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new LevelDBMetricsTable(datasetContext, spec.getName(), service, cConf);
+    return new LevelDBMetricsTable(datasetContext.getNamespaceId(), spec.getName(), service, cConf);
   }
 
   @Override
