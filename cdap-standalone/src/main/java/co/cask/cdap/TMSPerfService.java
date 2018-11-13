@@ -75,17 +75,23 @@ public class TMSPerfService extends AbstractExecutionThreadService {
 
     @Override
     protected void run() {
-        runIter(1);
-        runIter(5);
-        runIter(10);
-        runIter(20);
-        runIter(50);
-        runIter(100);
-        runIter(200);
-        runIter(400);
+        StringBuilder sb = new StringBuilder(4000);
+        for (int i = 0; i < 400; i++) {
+            sb.append("0123456789");
+        }
+        String payload = sb.toString();
+        System.out.println("payload size: " + payload.length());
+        runIter(1, payload);
+        runIter(5, payload);
+        runIter(10, payload);
+        runIter(20, payload);
+        runIter(50, payload);
+        runIter(100, payload);
+        runIter(200, payload);
+        runIter(400, payload);
     }
 
-    public void runIter(int numThreads) {
+    public void runIter(int numThreads, String payload) {
         try {
             long startTime = System.currentTimeMillis();
             ExecutorService executor = Executors.newFixedThreadPool(numThreads);
@@ -102,7 +108,7 @@ public class TMSPerfService extends AbstractExecutionThreadService {
             int threadCount = 0;
             for (TopicId topicId : topicIds) {
                 createTopicIfNotExists(messagingService, topicId);
-                callables.add(new TMSPublishCallable("thread" + threadCount++, topicId, messagingService));
+                callables.add(new TMSPublishCallable("thread" + threadCount++, topicId, messagingService, payload));
             }
             List<Future<Long>> futures = executor.invokeAll(callables, 20, TimeUnit.MINUTES);
 
@@ -134,12 +140,14 @@ public class TMSPerfService extends AbstractExecutionThreadService {
         private final String name;
         private final MessagingService messagingService;
         private final TopicId topicId;
+        private final String payload;
         private long count;
 
-        TMSPublishCallable(String name, TopicId topicId, MessagingService messagingService) {
+        TMSPublishCallable(String name, TopicId topicId, MessagingService messagingService, String payload) {
             this.name = name;
             this.topicId = topicId;
             this.messagingService = messagingService;
+            this.payload = payload;
         }
 
         @Override
@@ -151,7 +159,7 @@ public class TMSPerfService extends AbstractExecutionThreadService {
                     for (int i = 0; i < writesPerIteration; i++) {
                         StoreRequestBuilder builder = StoreRequestBuilder.of(topicId);
                         for (int j = 0; j < payloadsPerPublish; j++) {
-                            builder.addPayload("simplePayload");
+                            builder.addPayload(payload);
                         }
                         messagingService.publish(builder.build());
                     }
