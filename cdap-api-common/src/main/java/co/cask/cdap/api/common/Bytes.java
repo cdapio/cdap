@@ -1075,7 +1075,7 @@ public class Bytes {
    * @param right right operand
    * @return True if equal
    */
-  public static boolean equals(final byte [] left, final byte [] right) {
+  public static boolean equals(@Nullable byte[] left, @Nullable byte[] right) {
     // Could use Arrays.equals?
     //noinspection SimplifiableConditionalExpression
     if (left == right) {

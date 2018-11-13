@@ -22,14 +22,12 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Maps;
 import org.apache.tephra.Transaction;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
+import org.iq80.leveldb.ReadOptions;
+import org.iq80.leveldb.Snapshot;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.slf4j.Logger;
@@ -42,6 +40,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
@@ -54,7 +53,7 @@ public class LevelDBTableCore {
   private static final Scanner EMPTY_SCANNER = createEmptyScanner();
 
   // this represents deleted values
-  protected static final byte[] DELETE_MARKER = { };
+  private static final byte[] DELETE_MARKER = { };
 
   // we use the empty column family for all data
   private static final byte[] DATA_COLFAM = { };
@@ -68,12 +67,6 @@ public class LevelDBTableCore {
   private static byte[] upperBound(byte[] column) {
     return Bytes.add(column, ONE_ZERO);
   }
-
-  // empty immutable row's column->value map constant
-  // Using ImmutableSortedMap instead of Maps.unmodifiableNavigableMap to avoid conflicts with
-  // Hadoop, which uses an older version of guava without that method.
-  static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
-    ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).build();
 
   private final String tableName;
   private final LevelDBTableService service;
@@ -93,7 +86,7 @@ public class LevelDBTableCore {
     return mapSize;
   }
 
-  public LevelDBTableCore(String tableName, LevelDBTableService service) throws IOException {
+  public LevelDBTableCore(String tableName, LevelDBTableService service) {
     this.tableName = tableName;
     this.service = service;
   }
@@ -121,60 +114,66 @@ public class LevelDBTableCore {
       // to-do
       deleteColumn(row, column);
     } else {
-      persist(Collections.singletonMap(row, Collections.singletonMap(column, newValue)), System.currentTimeMillis());
+      persist(Collections.singletonMap(row, Collections.singletonMap(column, newValue)), Long.MAX_VALUE);
     }
     return true;
   }
 
   public synchronized Map<byte[], Long> increment(byte[] row, Map<byte[], Long> increments) throws IOException {
-    Map<byte[], Long> result = getResultMap(row, increments);
-    Map<byte[], byte[]> replacing = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<byte[], Long> entry : result.entrySet()) {
-      replacing.put(entry.getKey(), Bytes.toBytes(entry.getValue()));
+    Map<byte[], Long> result = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+
+    DB db = getDB();
+    WriteBatch writeBatch = db.createWriteBatch();
+    try (Snapshot snapshot = db.getSnapshot()) {
+      ReadOptions readOptions = new ReadOptions().snapshot(snapshot);
+
+      for (Map.Entry<byte[], Long> entry : increments.entrySet()) {
+        byte[] rowKey = createPutKey(row, entry.getKey(), Long.MAX_VALUE);
+        byte[] existingValue = db.get(rowKey, readOptions);
+        long newValue = incrementValue(entry.getValue(), existingValue, row, entry.getKey());
+        result.put(entry.getKey(), newValue);
+        writeBatch.put(rowKey, Bytes.toBytes(newValue));
+      }
+      db.write(writeBatch, service.getWriteOptions());
     }
-    persist(ImmutableMap.of(row, replacing), System.currentTimeMillis());
+
     return result;
   }
 
 
   //yAOJIE
   public synchronized void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws IOException {
-    Map<byte[], Map<byte[], byte[]>> resultMap = Maps.newHashMap();
-    for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> row : updates.entrySet()) {
-      NavigableMap<byte[], Long> increments = row.getValue();
-      Map<byte[], byte[]> replacing = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      Map<byte[], Long> result = getResultMap(row.getKey(), increments);
-      for (Map.Entry<byte[], Long> entry : result.entrySet()) {
-        replacing.put(entry.getKey(), Bytes.toBytes(entry.getValue()));
-      }
-      resultMap.put(row.getKey(), replacing);
+    if (updates.isEmpty()) {
+      return;
     }
-    persist(resultMap, 0L);
+
+    DB db = getDB();
+    WriteBatch writeBatch = db.createWriteBatch();
+    try (Snapshot snapshot = db.getSnapshot()) {
+      ReadOptions readOptions = new ReadOptions().snapshot(snapshot);
+
+      for (Map.Entry<byte[], NavigableMap<byte[], Long>> updateEntry : updates.entrySet()) {
+        for (Map.Entry<byte[], Long> entry : updateEntry.getValue().entrySet()) {
+          byte[] rowKey = createPutKey(updateEntry.getKey(), entry.getKey(), Long.MAX_VALUE);
+          byte[] existingValue = db.get(rowKey, readOptions);
+          long newValue = incrementValue(entry.getValue(), existingValue, updateEntry.getKey(), entry.getKey());
+          writeBatch.put(rowKey, Bytes.toBytes(newValue));
+        }
+      }
+      db.write(writeBatch, service.getWriteOptions());
+    }
   }
 
-  //yAOJIE
-  private Map<byte[], Long> getResultMap(byte[] row, Map<byte[], Long> increments) throws IOException {
-    long startTime = System.currentTimeMillis();
-    NavigableMap<byte[], byte[]> existing =
-      getRow(row, increments.keySet().toArray(new byte[increments.size()][]), null, null, -1, null);
-    long duration = System.currentTimeMillis() - startTime;
-    readTime += duration;
-    Map<byte[], Long> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<byte[], Long> increment : increments.entrySet()) {
-      long existingValue = 0L;
-      byte[] existingBytes = existing.get(increment.getKey());
-      if (existingBytes != null) {
-        if (existingBytes.length != Bytes.SIZEOF_LONG) {
-          throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
-                                            " row: " + Bytes.toStringBinary(row) +
-                                            " column: " + Bytes.toStringBinary(increment.getKey()));
-        }
-        existingValue = Bytes.toLong(existingBytes);
-      }
-      long newValue = existingValue + increment.getValue();
-      result.put(increment.getKey(), newValue);
+  private long incrementValue(long value, @Nullable byte[] existingValue, byte[] row, byte[] col) {
+    if (existingValue == null) {
+      return value;
     }
-    return result;
+    if (existingValue.length != Bytes.SIZEOF_LONG) {
+      throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                        " row: " + Bytes.toStringBinary(row) +
+                                        " column: " + Bytes.toStringBinary(col));
+    }
+    return value + Bytes.toLong(existingValue);
   }
 
 
@@ -236,11 +235,11 @@ public class LevelDBTableCore {
    * if columns are not null, then limit param is ignored and limit is columns.length
    */
   public NavigableMap<byte[], byte[]> getRow(byte[] row, @Nullable byte[][] columns,
-                                             byte[] startCol, byte[] stopCol,
-                                             int limit, Transaction tx) throws IOException {
+                                             @Nullable byte[] startCol, @Nullable byte[] stopCol,
+                                             int limit, @Nullable Transaction tx) throws IOException {
     if (columns != null) {
       if (columns.length == 0) {
-        return EMPTY_ROW_MAP;
+        return Collections.emptyNavigableMap();
       }
       columns = Arrays.copyOf(columns, columns.length);
       Arrays.sort(columns, Bytes.BYTES_COMPARATOR);
@@ -284,14 +283,15 @@ public class LevelDBTableCore {
    * @return a pair consisting of the row key of the next non-empty row and the column map for that row. If multiRow
    *         is false, null is returned for row key because the caller already knows it.
    */
-  private static ImmutablePair<byte[], NavigableMap<byte[], byte[]>>
-  getRow(DBIterator iterator, byte[] endKey, Transaction tx, boolean multiRow, byte[][] columns, int limit)
-    throws IOException {
-
+  private static ImmutablePair<byte[], NavigableMap<byte[], byte[]>> getRow(DBIterator iterator,
+                                                                            @Nullable byte[] endKey,
+                                                                            @Nullable Transaction tx,
+                                                                            boolean multiRow,
+                                                                            @Nullable byte[][] columns, int limit) {
     byte[] rowBeingRead = null;
     byte[] previousRow = null;
     byte[] previousCol = null;
-    NavigableMap<byte[], byte[]> map = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], byte[]> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
 
     while (iterator.hasNext()) {
       Map.Entry<byte[], byte[]> entry = iterator.peekNext();
@@ -352,24 +352,6 @@ public class LevelDBTableCore {
     return new ImmutablePair<>(rowBeingRead, map);
   }
 
-  public void deleteRows(byte[] prefix) throws IOException {
-    Preconditions.checkNotNull(prefix, "prefix must not be null");
-    DB db = getDB();
-    WriteBatch batch = db.createWriteBatch();
-    try (DBIterator iterator = db.iterator()) {
-      iterator.seek(createStartKey(prefix));
-      while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = iterator.next();
-        if (!Bytes.startsWith(KeyValue.fromKey(entry.getKey()).getRow(), prefix)) {
-          // iterator is past prefix
-          break;
-        }
-        batch.delete(entry.getKey());
-      }
-      db.write(batch);
-    }
-  }
-
   /**
    * Delete a list of rows from the table entirely, disregarding transactions.
    * @param toDelete the row keys to delete
@@ -402,7 +384,7 @@ public class LevelDBTableCore {
         } else if (comp > 0) {
           // read past current row -> move to next row
           currentRow = rows.hasNext() ? rows.next() : null;
-        } else if (comp < 0) {
+        } else {
           // iterator must seek to current row
           iterator.seek(createStartKey(currentRow));
           entry = iterator.hasNext() ? iterator.next() : null;

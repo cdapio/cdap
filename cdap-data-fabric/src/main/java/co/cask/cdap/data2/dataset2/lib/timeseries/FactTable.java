@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
+import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
@@ -133,8 +134,8 @@ public final class FactTable implements Closeable {
 
   public void add(List<Fact> facts) {
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> gaugesTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> incrementsTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> gaugesTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> incrementsTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Fact fact : facts) {
       for (Measurement measurement : fact.getMeasurements()) {
         byte[] rowKey = codec.createRowKey(fact.getDimensionValues(), measurement.getName(), fact.getTimestamp());
@@ -143,23 +144,19 @@ public final class FactTable implements Closeable {
         if (MeasureType.COUNTER == measurement.getType()) {
           inc(incrementsTable, rowKey, column, measurement.getValue());
         } else {
-          set(gaugesTable, rowKey, column, Bytes.toBytes(measurement.getValue()));
+          gaugesTable
+            .computeIfAbsent(rowKey, k -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR))
+            .put(column, measurement.getValue());
         }
       }
     }
 
-    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedIncrementsTable =
-      Maps.transformValues(incrementsTable, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
-
-    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedGaugesTable =
-      Maps.transformValues(gaugesTable, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
-
     // todo: replace with single call, to be able to optimize rpcs in underlying table
-    timeSeriesTable.put(convertedGaugesTable);
-    timeSeriesTable.increment(convertedIncrementsTable);
+    timeSeriesTable.put(gaugesTable);
+    timeSeriesTable.increment(incrementsTable);
     if (metrics != null) {
-      metrics.increment(putCountMetric, convertedGaugesTable.size());
-      metrics.increment(incrementCountMetric, convertedIncrementsTable.size());
+      metrics.increment(putCountMetric, gaugesTable.size());
+      metrics.increment(incrementCountMetric, incrementsTable.size());
     }
   }
 
@@ -462,35 +459,16 @@ public final class FactTable implements Closeable {
 
   // todo: shouldn't we aggregate "before" writing to FactTable? We could do it really efficient outside
   //       also: the underlying datasets will do aggregation in memory anyways
-  private static void inc(NavigableMap<byte[], NavigableMap<byte[], byte[]>> incrementsTable,
-                   byte[] rowKey, byte[] column, long value) {
-    byte[] oldValue = get(incrementsTable, rowKey, column);
+  private static void inc(NavigableMap<byte[], NavigableMap<byte[], Long>> incrementsTable,
+                          byte[] rowKey, byte[] column, long value) {
+    NavigableMap<byte[], Long> values = incrementsTable.computeIfAbsent(rowKey,
+                                                                        k -> new TreeMap<>(Bytes.BYTES_COMPARATOR));
+    Long oldValue = values.get(column);
     long newValue = value;
     if (oldValue != null) {
-      if (Bytes.SIZEOF_LONG == oldValue.length) {
-        newValue = Bytes.toLong(oldValue) + value;
-      } else if (Bytes.SIZEOF_INT == oldValue.length) {
-        // In 2.4 and older versions we stored it as int
-        newValue = Bytes.toInt(oldValue) + value;
-      } else {
-        // should NEVER happen, unless the table is screwed up manually
-        throw new IllegalStateException(
-          String.format("Could not parse measure @row %s @column %s value %s as int or long",
-                        Bytes.toStringBinary(rowKey), Bytes.toStringBinary(column), Bytes.toStringBinary(oldValue)));
-      }
-
+      newValue += oldValue;
     }
-    set(incrementsTable, rowKey, column, Bytes.toBytes(newValue));
-  }
 
-  private static byte[] get(NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, byte[] row, byte[] column) {
-    NavigableMap<byte[], byte[]> rowMap = table.get(row);
-    return rowMap == null ? null : rowMap.get(column);
-  }
-
-  private static void set(NavigableMap<byte[], NavigableMap<byte[], byte[]>> table,
-                          byte[] row, byte[] column, byte[] value) {
-    NavigableMap<byte[], byte[]> rowMap = table.computeIfAbsent(row, k -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR));
-    rowMap.put(column, value);
+    values.put(column, newValue);
   }
 }

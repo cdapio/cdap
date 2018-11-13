@@ -96,9 +96,7 @@ public class LevelDBTable extends BufferingTable {
   @WriteOnly
   private void persist(NavigableMap<byte[], NavigableMap<byte[], Long>> increments,
                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> puts) throws IOException {
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> incEntry : increments.entrySet()) {
-      core.increment(incEntry.getKey(), incEntry.getValue());
-    }
+    core.increment(increments);
     core.persist(puts, persistedVersion);
   }
 
