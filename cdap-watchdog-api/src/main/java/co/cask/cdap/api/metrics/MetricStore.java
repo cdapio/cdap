@@ -17,6 +17,7 @@
 package co.cask.cdap.api.metrics;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -93,4 +94,24 @@ public interface MetricStore {
    * @throws Exception
    */
   Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception;
+
+  default Map<Integer, Long> getCounts() {
+    return Collections.emptyMap();
+  }
+
+  default Map<Integer, Long> getWriteTime() {
+    return Collections.emptyMap();
+  }
+
+  default Map<Integer, Long> getWriteTimeDB() {
+    return Collections.emptyMap();
+  }
+
+  default Map<Integer, Long> getReadTimeDB() {
+    return Collections.emptyMap();
+  }
+
+  default Map<Integer, Long> getMapSizeDB() {
+    return Collections.emptyMap();
+  }
 }

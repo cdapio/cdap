@@ -77,6 +77,21 @@ public class LevelDBTableCore {
 
   private final String tableName;
   private final LevelDBTableService service;
+  private long writeTime = 0L;
+  private long readTime = 0L;
+  private long mapSize = 0L;
+
+  public long getWriteTime() {
+    return writeTime;
+  }
+
+  public long getReadTime() {
+    return readTime;
+  }
+
+  public long getMapSize() {
+    return mapSize;
+  }
 
   public LevelDBTableCore(String tableName, LevelDBTableService service) throws IOException {
     this.tableName = tableName;
@@ -122,6 +137,7 @@ public class LevelDBTableCore {
   }
 
 
+  //yAOJIE
   public synchronized void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws IOException {
     Map<byte[], Map<byte[], byte[]>> resultMap = Maps.newHashMap();
     for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> row : updates.entrySet()) {
@@ -133,12 +149,16 @@ public class LevelDBTableCore {
       }
       resultMap.put(row.getKey(), replacing);
     }
-    persist(resultMap, System.currentTimeMillis());
+    persist(resultMap, 0L);
   }
 
+  //yAOJIE
   private Map<byte[], Long> getResultMap(byte[] row, Map<byte[], Long> increments) throws IOException {
+    long startTime = System.currentTimeMillis();
     NavigableMap<byte[], byte[]> existing =
       getRow(row, increments.keySet().toArray(new byte[increments.size()][]), null, null, -1, null);
+    long duration = System.currentTimeMillis() - startTime;
+    readTime += duration;
     Map<byte[], Long> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], Long> increment : increments.entrySet()) {
       long existingValue = 0L;
@@ -157,6 +177,8 @@ public class LevelDBTableCore {
     return result;
   }
 
+
+  // YAOJIE
   public void persist(Map<byte[], ? extends Map<byte[], byte[]>> changes, long version) throws IOException {
     DB db = getDB();
     // todo support writing null when no transaction
@@ -167,7 +189,11 @@ public class LevelDBTableCore {
         batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
       }
     }
+    mapSize += changes.size();
+    long startTime = System.currentTimeMillis();
     db.write(batch, service.getWriteOptions());
+    long duration = System.currentTimeMillis() - startTime;
+    writeTime += duration;
   }
 
   public void put(byte[] row, byte[] column, byte[] value, long version) throws IOException {

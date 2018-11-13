@@ -83,10 +83,10 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
    * iterator and returns quickly. Any long operations should be run in a separated thread.
    * This method is guaranteed not to get concurrent calls.
    *
-   * @param metrics collection of {@link co.cask.cdap.api.metrics.MetricValues} to publish.
+   * @param metrics collection of {@link MetricValues} to publish.
    * @throws Exception if there is error raised during publish.
    */
-  protected abstract void publish(Iterator<MetricValues> metrics) throws Exception;
+  public abstract void publish(Iterator<MetricValues> metrics) throws Exception;
 
   /**
    * Returns the initial delay in milliseconds for the first metrics to be published.
@@ -130,9 +130,9 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
 
     Iterator<MetricValues> metrics = getMetrics(timestamp);
     try {
-      publish(metrics);
-    } catch (InterruptedException e) {
-      throw e;
+    //  publish(metrics);
+//    } catch (InterruptedException e) {
+//      throw e;
     } catch (Throwable t) {
       LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
     }
@@ -175,7 +175,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
     }
   }
 
-  private Iterator<MetricValues> getMetrics(final long timestamp) {
+  public Iterator<MetricValues> getMetrics(final long timestamp) {
     // NOTE : emitters.asMap does not reset the access time in cache,
     // so it's the preferred way to access the cache entries. as we access and emit metrics every second.
     final Iterator<Map.Entry<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>>> iterator =
@@ -225,6 +225,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
   private final class MetricsContextImpl implements MetricsContext {
 
     private final Map<String, String> tags;
+    private long timeElapsed = 0L;
 
     private MetricsContextImpl(final Map<String, String> tags) {
       this.tags = ImmutableMap.copyOf(tags);
@@ -232,12 +233,34 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
 
     @Override
     public void increment(String metricName, long value) {
+      long startTime = System.currentTimeMillis();
       emitters.getUnchecked(tags).getUnchecked(metricName).increment(value);
+      long duration = System.currentTimeMillis() - startTime;
+      if (duration > 100) {
+        LOG.info("The increment call takes more than 100 millisecond to finish, took {} milliseconds", duration);
+      }
+      timeElapsed += duration;
     }
 
     @Override
     public void gauge(String metricName, long value) {
+      long startTime = System.currentTimeMillis();
       emitters.getUnchecked(tags).getUnchecked(metricName).gauge(value);
+      long duration = System.currentTimeMillis() - startTime;
+      if (duration > 100) {
+        LOG.info("The increment call takes more than 100 millisecond to finish, took {} milliseconds", duration);
+      }
+      timeElapsed += duration;
+    }
+
+    @Override
+    public long getTime() {
+      return timeElapsed;
+    }
+
+    @Override
+    public void resetTime() {
+      this.timeElapsed = 0L;
     }
 
     @Override

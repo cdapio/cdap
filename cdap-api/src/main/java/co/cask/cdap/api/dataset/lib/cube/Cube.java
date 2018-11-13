@@ -21,7 +21,9 @@ import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Cube data set.
@@ -80,4 +82,24 @@ public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
    * @return {@link Collection} of measureName string that are result of the query
    */
   Collection<String> findMeasureNames(CubeExploreQuery query);
+
+  default Map<Integer, Long> getCounts() {
+    return Collections.emptyMap();
+  }
+
+  default Map<Integer, Long> getWriteTime() {
+    return Collections.emptyMap();
+  }
+
+  default Map<Integer, Long> getWriteTimeDB() {
+    return Collections.emptyMap();
+  }
+
+  default Map<Integer, Long> getReadTimeDB() {
+    return Collections.emptyMap();
+  }
+
+  default Map<Integer, Long> getMapSizeDB() {
+    return Collections.emptyMap();
+  }
 }

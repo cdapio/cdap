@@ -38,4 +38,10 @@ public interface MetricsContext extends MetricsCollector {
    * @return tags that identify the context.
    */
   Map<String, String> getTags();
+
+  default long getTime() {
+    return 0L;
+  }
+
+  default void resetTime() {}
 }

@@ -70,7 +70,7 @@ public class AggregatedMetricsCollectionServiceTest {
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(Iterator<MetricValues> metrics) {
+      public void publish(Iterator<MetricValues> metrics) {
         Iterators.addAll(published, metrics);
       }
 
@@ -169,7 +169,7 @@ public class AggregatedMetricsCollectionServiceTest {
     final CountDownLatch latch = new CountDownLatch(1);
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(Iterator<MetricValues> metrics) {
+      public void publish(Iterator<MetricValues> metrics) {
         while (isRunning()) {
           try {
             latch.countDown();

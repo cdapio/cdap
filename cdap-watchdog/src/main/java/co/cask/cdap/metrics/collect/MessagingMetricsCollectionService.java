@@ -85,7 +85,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   }
 
   @Override
-  protected void publish(Iterator<MetricValues> metrics) throws Exception {
+  public void publish(Iterator<MetricValues> metrics) throws Exception {
     int size = topicPayloads.size();
     while (metrics.hasNext()) {
       encoderOutputStream.reset();

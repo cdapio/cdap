@@ -19,6 +19,19 @@
   <!-- 
     Your site level configuration goes here 
   -->
+  <property>
+    <name>data.local.storage.fsync</name>
+    <value>true</value>
+    <description>
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.type.value</name>
+    <value>gauge</value>
+    <description>
+    </description>
+  </property>
 
   <property>
     <name>dataset.service.exec.threads</name>

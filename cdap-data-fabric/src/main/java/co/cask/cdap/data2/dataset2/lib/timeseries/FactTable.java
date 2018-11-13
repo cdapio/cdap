@@ -107,6 +107,26 @@ public final class FactTable implements Closeable {
     this.incrementCountMetric = "factTable." + resolution + ".increment.count";
   }
 
+  public long getCount() {
+    return timeSeriesTable.getCount();
+  }
+
+  public long getWriteTime() {
+    return timeSeriesTable.getWriteTime();
+  }
+
+  public long getWriteTimeDB() {
+    return timeSeriesTable.getWriteTimeDB();
+  }
+
+  public long getReadTimeDB() {
+    return timeSeriesTable.getReadTimeDB();
+  }
+
+  public long getMapSizeDB() {
+    return timeSeriesTable.getMapSizeDB();
+  }
+
   public void setMetricsCollector(MetricsCollector metrics) {
     this.metrics = metrics;
   }

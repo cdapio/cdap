@@ -16,6 +16,7 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
@@ -68,6 +69,7 @@ import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metadata.MetadataSubscriberService;
+import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -120,7 +122,7 @@ public class StandaloneMain {
   private final AppFabricServer appFabricServer;
   private final ServiceStore serviceStore;
   private final StreamService streamService;
-  private final MetricsCollectionService metricsCollectionService;
+  private final LocalMetricsCollectionService metricsCollectionService;
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
   private final MetadataService metadataService;
@@ -135,6 +137,7 @@ public class StandaloneMain {
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
   private final LevelDBTableService levelDBTableService;
+  private final MetricsWriteService metricsWriteService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -154,7 +157,7 @@ public class StandaloneMain {
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService = injector.getInstance(LocalMetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
@@ -183,6 +186,8 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
+    MetricStore metricStore = injector.getInstance(MetricStore.class);
+    metricsWriteService = new MetricsWriteService(cConf, metricsCollectionService, metricStore);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -267,6 +272,9 @@ public class StandaloneMain {
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
       cConf.getInt(Constants.Dashboard.BIND_PORT);
+
+    metricsWriteService.startAndWait();
+
     System.out.println("CDAP Sandbox started successfully.");
     System.out.printf("Connect to the CDAP UI at %s://%s:%d\n", protocol, "localhost", dashboardPort);
   }
@@ -321,6 +329,7 @@ public class StandaloneMain {
       logAppenderInitializer.close();
       authorizerInstantiator.close();
       levelDBTableService.close();
+      metricsWriteService.stopAndWait();
     } catch (Throwable e) {
       halt = true;
       LOG.error("Exception during shutdown", e);

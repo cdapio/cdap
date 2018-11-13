@@ -90,7 +90,7 @@ public class LevelDBTableService implements AutoCloseable {
     blockSize = config.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
     writeOptions = new WriteOptions().sync(
-      config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC));
+      config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, true));
   }
 
   /**
