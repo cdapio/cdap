@@ -19,6 +19,8 @@ package co.cask.cdap.api.common;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Unit tests for {@link Bytes} class.
  */
@@ -35,4 +37,38 @@ public class BytesTest {
     Assert.assertArrayEquals(bytes, Bytes.fromHexString(hexString.toUpperCase()));
   }
 
+  @Test
+  public void testUnsafeComparer() {
+    testComparer(Bytes.LexicographicalComparerHolder.UnsafeComparer.INSTANCE);
+  }
+
+  @Test
+  public void testPureJavaComparer() {
+    testComparer(Bytes.LexicographicalComparerHolder.PureJavaComparer.INSTANCE);
+  }
+
+  private void testComparer(Bytes.Comparer<byte[]> comparer) {
+    byte[] left = "aaabbbcccdddeeefffggghhh".getBytes(StandardCharsets.US_ASCII);
+    byte[] right = "aaabbbcccdddeeefffggghhh".getBytes(StandardCharsets.US_ASCII);
+
+    // Simple comparison
+    int cmp = comparer.compareTo(left, 0, left.length, right, 0, right.length);
+    Assert.assertEquals(0, cmp);
+
+    // Compare with offset
+    cmp = comparer.compareTo(left, 2, left.length - 2, right, 0, right.length);
+    Assert.assertTrue(cmp > 0);
+
+    // Different in length
+    cmp = comparer.compareTo(left, 0, left.length - 1, right, 0, right.length);
+    Assert.assertTrue(cmp < 0);
+
+    // Empty array
+    cmp = comparer.compareTo(Bytes.EMPTY_BYTE_ARRAY, 0, 0, Bytes.EMPTY_BYTE_ARRAY, 0, 0);
+    Assert.assertEquals(0, cmp);
+
+    // Empty array is always smallest
+    cmp = comparer.compareTo(left, 0, left.length, Bytes.EMPTY_BYTE_ARRAY, 0, 0);
+    Assert.assertTrue(cmp > 0);
+  }
 }
