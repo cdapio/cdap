@@ -115,10 +115,10 @@
         <div class="label-with-toggle instrumentation row">
           <span class="toggle-label col-xs-4">Instrumentation</span>
           <div class="col-xs-7 toggle-container">
-            <my-toggle-switch-widget
+            <toggle-switch
               is-on="BatchPipelineConfigCtrl.instrumentation"
-              on-toggle="BatchPipelineConfigCtrl.onToggleInstrumentationChange()"
-            ></my-toggle-switch-widget>
+              on-toggle="BatchPipelineConfigCtrl.onToggleInstrumentationChange"
+            ></toggle-switch>
             <i class="fa fa-info-circle"
                 uib-tooltip="Emits timing metrics such as total time, mean, standard deviation for pipeline stages. It is recommended to always have this setting on, unless the environment is short on resources."
                 tooltip-placement="right">
@@ -128,10 +128,10 @@
         <div class="label-with-toggle stageLogging row">
           <span class="toggle-label col-xs-4">Stage level logging</span>
           <div class="col-xs-7 toggle-container">
-            <my-toggle-switch-widget
+            <toggle-switch
               is-on="BatchPipelineConfigCtrl.stageLogging"
-              on-toggle="BatchPipelineConfigCtrl.onStageLoggingChange()"
-            ></my-toggle-switch-widget>
+              on-toggle="BatchPipelineConfigCtrl.onStageLoggingChange"
+            ></toggle-switch>
             <i class="fa fa-info-circle"
                 uib-tooltip="Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources."
                 tooltip-placement="right">

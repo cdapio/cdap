@@ -687,6 +687,34 @@ CDAP pipelines as of version |version|.
             }
           }
 
+   * - ``toggle``
+     - - ``on``: 'On' state of the toggle, defined by ``value`` - value to be set for the plugin property, and
+         ``label`` - a label to be rendered in UI, limited to 64 characters.
+       - ``off``: 'Off' state of the toggle, defined by ``value`` - value to be set for the plugin property, and
+         ``label`` - a label to be rendered in UI, limited to 64 characters.
+       - ``default``: default value for the widget
+     - ``string``
+     - A toggle widget that allows toggling between 'on' and 'off' states
+     - .. container:: copyable copyable-text
+
+         ::
+
+          {
+            "name": "property-toggle",
+            "widget-type": "toggle",
+            "widget-attributes": {
+              "on": {
+                "value": "on",
+                "label": "On"
+              },
+              "off": {
+                "value": "off",
+                "label": "Off"
+              },
+              "default": "on"
+            }
+          }
+
 
 .. _plugins-presentation-plugin-function:
 

@@ -164,14 +164,14 @@ class MyBatchPipelineConfigCtrl {
     this.executorResources.memoryMB = value;
     this.updatePipelineEditStatus();
   }
-  onToggleInstrumentationChange() {
+  onToggleInstrumentationChange = () => {
     this.instrumentation = !this.instrumentation;
     this.updatePipelineEditStatus();
-  }
-  onStageLoggingChange() {
+  };
+  onStageLoggingChange = () => {
     this.stageLogging = !this.stageLogging;
     this.updatePipelineEditStatus();
-  }
+  };
   updatePipelineEditStatus() {
     const isResourcesEqual = (oldvalue, newvalue) => {
       return oldvalue.memoryMB === newvalue.memoryMB && oldvalue.virtualCores === newvalue.virtualCores;
