@@ -30,6 +30,35 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 4.3.5 <http://docs.cask.co/cdap/4.3.5/index.html>`__
+=============================================================
+
+New Features
+------------
+
+- :cask-issue:`CDAP-13653` - Added support for Apache Spark 2.3
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-13430` - Improved performance of spark pipelines that write to multiple sinks.
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-13331` - Fixed macro enabled properties in plugin configuration to only have macro behavior if the entire value is a macro.
+
+- :cask-issue:`CDAP-13372` - Fixed a bug where the upgrade tool did not upgrade the owner meta table
+
+- :cask-issue:`CDAP-13463` - Fixed a bug where pipelines with conditions on different branches could not be deployed.
+
+- :cask-issue:`CDAP-13532` - Fixed an issue that prevented user runtime arguments from being used in CDAP programs
+
+- :cask-issue:`CDAP-13593` - Fixed a bug that under some race condition, running a pipeline preview may cause the CDAP process to shut down.
+
+- :cask-issue:`CDAP-14019` - Fixed a bug that could prevent CDAP startup in case the metadata tables were disabled.
+
+- :cask-issue:`CDAP-14558` - Fixed a bug to turn off pipeline checkpointing based on the config for a realtime pipeline.
 
 `Release 4.3.4 <http://docs.cask.co/cdap/4.3.4/index.html>`__
 =============================================================
