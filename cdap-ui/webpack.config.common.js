@@ -141,22 +141,22 @@ var rules = [
     ]
   }
 ];
-if (isModeProduction(mode)) {
-  plugins.push(
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        ie8: false,
-        compress: {
-          warnings: false
-        },
-        output: {
-          comments: false,
-          beautify: false,
-        }
-      }
-    })
-  );
-}
+// if (isModeProduction(mode)) {
+//   plugins.push(
+//     new UglifyJsPlugin({
+//       uglifyOptions: {
+//         ie8: false,
+//         compress: {
+//           warnings: false
+//         },
+//         output: {
+//           comments: false,
+//           beautify: false,
+//         }
+//       }
+//     })
+//   );
+// }
 var webpackConfig = {
   mode: isModeProduction(mode) ? 'production' : 'development',
   context: __dirname + '/app/common',

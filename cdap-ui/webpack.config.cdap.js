@@ -208,18 +208,18 @@ if (isModeProduction(mode)) {
         '__DEVTOOLS__': false
       },
     }),
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        ie8: false,
-        compress: {
-          warnings: false
-        },
-        output: {
-          comments: false,
-          beautify: false,
-        }
-      }
-    })
+    // new UglifyJsPlugin({
+    //   uglifyOptions: {
+    //     ie8: false,
+    //     compress: {
+    //       warnings: false
+    //     },
+    //     output: {
+    //       comments: false,
+    //       beautify: false,
+    //     }
+    //   }
+    // })
   );
 }
 
