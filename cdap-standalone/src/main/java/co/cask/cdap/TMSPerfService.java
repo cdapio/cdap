@@ -81,9 +81,10 @@ public class TMSPerfService extends AbstractExecutionThreadService {
 
     @Override
     protected void run() {
-        StringBuilder sb = new StringBuilder(4000);
-        for (int i = 0; i < 400; i++) {
-            sb.append("0123456789");
+        int size = 4000;
+        StringBuilder sb = new StringBuilder(size);
+        for (int i = 0; i < size; i++) {
+            sb.append("0");
         }
         String payload = sb.toString();
         System.out.println("payload size: " + payload.length());
@@ -108,7 +109,7 @@ public class TMSPerfService extends AbstractExecutionThreadService {
             // give each thread its own topic
             int numTopics = numThreads;
             for (int i = 0; i < numTopics; i++) {
-                topicIds.add(new TopicId("default", "topic" + i));
+                topicIds.add(new TopicId("default", "topic1"));
             }
             int threadCount = 0;
             for (TopicId topicId : topicIds) {
