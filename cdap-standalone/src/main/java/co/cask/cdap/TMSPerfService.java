@@ -16,12 +16,15 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
+import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -50,6 +53,7 @@ public class TMSPerfService extends AbstractExecutionThreadService {
     private final int testDurationMillis;
     private final int payloadsPerPublish;
     private final int writesPerIteration;
+    private final int messagesFetchedPerIteration;
 //    private final int numThreads;
 
     public TMSPerfService(CConfiguration cConf, MessagingService messagingService) {
@@ -58,6 +62,8 @@ public class TMSPerfService extends AbstractExecutionThreadService {
         this.testDurationMillis = cConf.getInt("tms.publish.test.duration.millis", 10 * 1000);
         this.payloadsPerPublish = cConf.getInt("tms.publish.test.publish.batch.size", 1);
         this.writesPerIteration = cConf.getInt("tms.publish.test.publish.writes.per.iteration", 100);
+
+        this.messagesFetchedPerIteration = cConf.getInt("tms.fetch.test.limit.per.iteration", 100);
         this.executor = Executors.newScheduledThreadPool(1,
                 Threads.createDaemonThreadFactory("tms-publish"));
     }
@@ -81,21 +87,20 @@ public class TMSPerfService extends AbstractExecutionThreadService {
         }
         String payload = sb.toString();
         System.out.println("payload size: " + payload.length());
-        runIter(1, payload);
-        runIter(5, payload);
-        runIter(10, payload);
-        runIter(20, payload);
-        runIter(50, payload);
-        runIter(100, payload);
-        runIter(200, payload);
-        runIter(400, payload);
+        for (int numThreads : new int[] { 1, 5, 10, 20, 50, 100, 200, 400 }) {
+            runPublishTest(numThreads, payload);
+        }
+
+        for (int numThreads : new int[] { 1, 5, 10, 20, 50, 100, 200, 400 }) {
+            runFetchTest(numThreads);
+        }
     }
 
-    public void runIter(int numThreads, String payload) {
+    public void runPublishTest(int numThreads, String payload) {
         try {
             long startTime = System.currentTimeMillis();
             ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-            LOG.info("Starting the TMS publish perf test.");
+            System.out.println("Starting the TMS publish perf test.");
 
             List<Callable<Long>> callables = new ArrayList<>();
             List<TopicId> topicIds = new ArrayList<>();
@@ -115,7 +120,7 @@ public class TMSPerfService extends AbstractExecutionThreadService {
             long totalPublished = 0;
             for (Future<Long> future : futures) {
                 if (future.isCancelled()) {
-                    LOG.error("Expected futures to complete within duration");
+                    System.out.println("Expected futures to complete within duration");
                     continue;
                 }
                 totalPublished += future.get();
@@ -123,11 +128,53 @@ public class TMSPerfService extends AbstractExecutionThreadService {
             executor.shutdownNow();
 
             long duration = System.currentTimeMillis() - startTime;
-            LOG.info("Stopped the TMS publish test in {} milliseconds.\nThreads: {}\nPublished {} times.\n" +
-                            "Average Rate: {}/sec",
-                    duration, numThreads, totalPublished, totalPublished / (duration / 1000));
+            System.out.println(String.format("Stopped the TMS publish test in %s milliseconds.\n" +
+                            "Threads: %s\nPublished %s times.\n" +
+                            "Average Rate: %s/sec",
+                    duration, numThreads, totalPublished, 1000 * totalPublished / duration));
         } catch (Exception e) {
-            LOG.error("Got error.", e);
+            e.printStackTrace();
+        }
+    }
+
+    public void runFetchTest(int numThreads) {
+        try {
+            long startTime = System.currentTimeMillis();
+            ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+            System.out.println("Starting the TMS fetch perf test.");
+
+            List<Callable<Long>> callables = new ArrayList<>();
+            List<TopicId> topicIds = new ArrayList<>();
+
+            // give each thread its own topic
+            int numTopics = numThreads;
+            for (int i = 0; i < numTopics; i++) {
+                topicIds.add(new TopicId("default", "topic" + i));
+            }
+            int threadCount = 0;
+            for (TopicId topicId : topicIds) {
+                createTopicIfNotExists(messagingService, topicId);
+                callables.add(new TMSSubscribeCallable("thread" + threadCount++, topicId, messagingService));
+            }
+            List<Future<Long>> futures = executor.invokeAll(callables, 20, TimeUnit.MINUTES);
+
+            long totalPublished = 0;
+            for (Future<Long> future : futures) {
+                if (future.isCancelled()) {
+                    System.out.println("Expected futures to complete within duration");
+                    continue;
+                }
+                totalPublished += future.get();
+            }
+            executor.shutdownNow();
+
+            long duration = System.currentTimeMillis() - startTime;
+            System.out.println(String.format("Stopped the TMS fetch test in %s milliseconds.\nThreads: %s\n" +
+                            "Fetched %s times.\n" +
+                            "Average Rate: %s/sec",
+                    duration, numThreads, totalPublished, 1000 * totalPublished / duration));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -171,6 +218,54 @@ public class TMSPerfService extends AbstractExecutionThreadService {
             } catch (Exception e) {
                 // TODO: use ExceptionHandler instead
                 LOG.error("Got error.", e);
+                throw e;
+            }
+        }
+    }
+
+    private class TMSSubscribeCallable implements Callable<Long> {
+        private final String name;
+        private final MessagingService messagingService;
+        private final TopicId topicId;
+        private long count;
+
+        TMSSubscribeCallable(String name, TopicId topicId, MessagingService messagingService) {
+            this.name = name;
+            this.topicId = topicId;
+            this.messagingService = messagingService;
+        }
+
+        @Override
+        public Long call() throws TopicNotFoundException, IOException {
+            try {
+//                LOG.info("Starting to publish on topic {} for thread {}", topicId, name);
+                byte[] messageId = null;
+                Stopwatch stopwatch = new Stopwatch().start();
+                while (!Thread.currentThread().isInterrupted() && stopwatch.elapsedMillis() < testDurationMillis) {
+
+                    for (int i = 0; i < writesPerIteration; i++) {
+                        MessageFetcher messageFetcher = messagingService.prepareFetch(topicId);
+                        messageFetcher.setLimit(messagesFetchedPerIteration);
+                        messageFetcher.setStartMessage(messageId, false);
+                        try (CloseableIterator<RawMessage> iter = messageFetcher.fetch()) {
+                            if (!iter.hasNext()) {
+                                // topic is completely consumed
+                                return count;
+                            }
+                            while (iter.hasNext()) {
+                                RawMessage message = iter.next();
+                                messageId = message.getId();
+                                count++;
+                            }
+                        }
+                    }
+                }
+
+//                LOG.info("[{}] To publish {} times, it took: {}", name, count, stopwatch.elapsedMillis());
+                return count;
+            } catch (Exception e) {
+                // TODO: use ExceptionHandler instead
+                e.printStackTrace();
                 throw e;
             }
         }
