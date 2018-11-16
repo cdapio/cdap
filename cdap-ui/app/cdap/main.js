@@ -53,6 +53,8 @@ import ErrorBoundary from 'components/ErrorBoundary';
 import OverlayFocus from 'components/OverlayFocus';
 import { Theme } from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
+import DataSync from 'components/DataSync';
+
 const SampleTSXComponent = Loadable({
   loader: () =>
     import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
@@ -189,6 +191,7 @@ class CDAP extends Component {
                     </ErrorBoundary>
                   )}
                 />
+                <Route path="/datasync" component={DataSync} />
                 {/*
                     Eventually handling 404 should move to the error boundary and all container components will have the error object.
                     */}

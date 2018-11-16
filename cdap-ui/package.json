@@ -130,6 +130,8 @@
   },
   "dependencies": {
     "@babel/polyfill": "7.0.0-beta.53",
+    "@material-ui/core": "^3.5.1",
+    "@material-ui/icons": "^3.0.1",
     "body-parser": "1.14.2",
     "bootstrap": "4.1.3",
     "cask-datavoyager": "2.0.0-alpha.12.9",
@@ -143,6 +145,7 @@
     "event-emitter": "0.3.4",
     "express": "4.16.2",
     "finalhandler": "0.4.1",
+    "firebase": "^5.5.8",
     "font-awesome": "4.6.3",
     "fuse.js": "2.5.0",
     "history": "2.1.2",
