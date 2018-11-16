@@ -181,6 +181,7 @@ public class DataPipelineTest extends HydratorTestBase {
     getMetricsManager().resetAll();
   }
 
+  @Ignore
   @Test
   public void testPluginOfPluginMacros() throws Exception {
     testPluginOfPluginMacros(Engine.MAPREDUCE);
@@ -227,6 +228,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(Collections.singletonList(dwayne), outputRecords);
   }
 
+  @Ignore
   @Test
   public void testAlertPublisher() throws Exception {
     testAlertPublisher(Engine.MAPREDUCE);
@@ -294,6 +296,7 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(1, appId, "tms alert.records.in");
   }
 
+  @Ignore
   @Test
   public void testExternalSparkProgramPipelines() throws Exception {
     File testDir = TMP_FOLDER.newFolder("sparkProgramTest");
@@ -386,6 +389,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(expectedLines, actualLines);
   }
 
+  @Ignore
   @Test
   public void testScheduledPipelines() throws Exception {
     // Deploy middle pipeline scheduled to be triggered by the completion of head pipeline
@@ -508,6 +512,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(expected, actual);
   }
 
+  @Ignore
   @Test
   public void testMacroActionPipelines() throws Exception {
     testMacroEvaluationActionPipeline(Engine.MAPREDUCE);
@@ -538,6 +543,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "action1.row", "action1.column"));
   }
 
+  @Ignore
   @Test
   public void testErrorTransform() throws Exception {
     testErrorTransform(Engine.MAPREDUCE);
@@ -676,6 +682,7 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(3, appId, "sink2.records.in");
   }
 
+  @Ignore
   @Test
   public void testPipelineWithAllActions() throws Exception {
     String actionTable = "actionTable";
@@ -737,11 +744,13 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(value, nodeValueDetails.get(0).getValue());
   }
 
+  @Ignore
   @Test
   public void testPipelineWithActionsMR() throws Exception {
     testPipelineWithActions(Engine.MAPREDUCE);
   }
 
+  @Ignore
   @Test
   public void testPipelineWithActionsSpark() throws Exception {
     testPipelineWithActions(Engine.SPARK);
@@ -825,6 +834,7 @@ public class DataPipelineTest extends HydratorTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testSimpleCondition() throws Exception {
     testSimpleCondition(Engine.MAPREDUCE);
@@ -919,7 +929,8 @@ public class DataPipelineTest extends HydratorTestBase {
     }
     Assert.assertTrue(foundStatisticsInToken);
   }
-
+  
+  @Ignore
   @Test
   public void testSimpleConditionWithActions() throws Exception {
     Schema schema = Schema.recordOf(
@@ -992,6 +1003,7 @@ public class DataPipelineTest extends HydratorTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testSimpleConditionWithMultipleInputActions() throws Exception {
     Schema schema = Schema.recordOf(
@@ -1067,6 +1079,7 @@ public class DataPipelineTest extends HydratorTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testMultipleOrderedInputActions() throws Exception {
     Schema schema = Schema.recordOf(
@@ -1148,6 +1161,7 @@ public class DataPipelineTest extends HydratorTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testConditionsOnBranches() throws Exception {
     /*
@@ -1210,6 +1224,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(records, MockSink.readOutput(sink4Manager));
   }
 
+  @Ignore
   @Test
   public void testSimpleConditionWithSingleOutputAction() throws Exception {
     Schema schema = Schema.recordOf(
@@ -1284,6 +1299,7 @@ public class DataPipelineTest extends HydratorTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testSimpleConditionWithMultipleOutputActions() throws Exception {
     Schema schema = Schema.recordOf(
@@ -1361,6 +1377,7 @@ public class DataPipelineTest extends HydratorTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testNestedCondition() throws Exception {
     testNestedCondition(Engine.MAPREDUCE);
@@ -1468,6 +1485,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertNull(MockAction.readOutput(actionTableDS, "row5", "key5"));
   }
 
+  @Ignore
   @Test
   public void testSimpleControlOnlyDag() throws Exception {
     //
@@ -1512,6 +1530,7 @@ public class DataPipelineTest extends HydratorTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testMultiConditionControlOnlyDag() throws Exception {
     //
@@ -1561,6 +1580,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertNull(MockAction.readOutput(actionTableDS, "row3", "key3"));
   }
 
+  @Ignore
   @Test
   public void testNoConnectorsForSourceCondition() throws Exception {
     //
@@ -1625,6 +1645,7 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.waitForRun(ProgramRunStatus.FAILED, 5, TimeUnit.MINUTES);
   }
 
+  @Ignore
   @Test
   public void testSinglePhase() throws Exception {
     Schema schema = Schema.recordOf(
@@ -1745,11 +1766,13 @@ public class DataPipelineTest extends HydratorTestBase {
     getMessagingAdmin(appId.getNamespace()).deleteTopic("sleepTopic");
   }
 
+  @Ignore
   @Test
   public void testMapRedMultiSource() throws Exception {
     testMultiSource(Engine.MAPREDUCE);
   }
 
+  @Ignore
   @Test
   public void testSparkMultiSource() throws Exception {
     testMultiSource(Engine.SPARK);
@@ -1837,21 +1860,25 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(3, appId, "sink2.records.in");
   }
 
+  @Ignore
   @Test
   public void testMapRedSequentialAggregators() throws Exception {
     testSequentialAggregators(Engine.MAPREDUCE);
   }
 
+  @Ignore
   @Test
   public void testSparkSequentialAggregators() throws Exception {
     testSequentialAggregators(Engine.SPARK);
   }
 
+  @Ignore
   @Test
   public void testMapRedParallelAggregators() throws Exception {
     testParallelAggregators(Engine.MAPREDUCE);
   }
 
+  @Ignore
   @Test
   public void testSparkParallelAggregators() throws Exception {
     testParallelAggregators(Engine.SPARK);
@@ -2012,6 +2039,7 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(5, appId, "sink2.records.in");
   }
 
+  @Ignore
   @Test
   public void testSparkSinkAndCompute() throws Exception {
     // use the SparkSink to train a model
@@ -2193,11 +2221,13 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(4, appId, "sink.records.in");
   }
 
+  @Ignore
   @Test
   public void testInnerJoinMR() throws Exception {
     testInnerJoinWithMultiOutput(Engine.MAPREDUCE);
   }
 
+  @Ignore
   @Test
   public void testInnerJoinSpark() throws Exception {
     testInnerJoinWithMultiOutput(Engine.SPARK);
@@ -2326,11 +2356,13 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(2, appId, sinkName2 + ".records.in");
   }
 
+  @Ignore
   @Test
   public void testOuterJoinMR() throws Exception {
     testOuterJoin(Engine.MAPREDUCE);
   }
 
+  @Ignore
   @Test
   public void testOuterJoinSpark() throws Exception {
     testOuterJoin(Engine.SPARK);
@@ -2459,11 +2491,13 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(4, appId, sinkName + ".records.in");
   }
 
+  @Ignore
   @Test
   public void testMultiPhaseJoinerMR() throws Exception {
     testMultipleJoiner(Engine.MAPREDUCE);
   }
 
+  @Ignore
   @Test
   public void testMultipleJoinerSpark() throws Exception {
     testMultipleJoiner(Engine.SPARK);
@@ -2601,6 +2635,7 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(3, appId, sinkName + ".records.in");
   }
 
+  @Ignore
   @Test
   public void testSecureStoreMacroPipelines() throws Exception {
     testSecureStorePipeline(Engine.MAPREDUCE, "mr");
@@ -2647,21 +2682,25 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertNotNull(getDataset(prefix + "MockSecureSinkDataset").get());
   }
 
+  @Ignore
   @Test
   public void testExternalDatasetTrackingMR() throws Exception {
     testExternalDatasetTracking(Engine.MAPREDUCE, false);
   }
 
+  @Ignore
   @Test
   public void testExternalDatasetTrackingSpark() throws Exception {
     testExternalDatasetTracking(Engine.SPARK, false);
   }
 
+  @Ignore
   @Test
   public void testBackwardsCompatibleExternalDatasetTrackingMR() throws Exception {
     testExternalDatasetTracking(Engine.MAPREDUCE, true);
   }
 
+  @Ignore
   @Test
   public void testBackwardsCompatibleExternalDatasetTrackingSpark() throws Exception {
     testExternalDatasetTracking(Engine.SPARK, true);
@@ -2737,6 +2776,7 @@ public class DataPipelineTest extends HydratorTestBase {
     }
   }
 
+  @Ignore
   @Test
   public void testMacrosMapReducePipeline() throws Exception {
     /*
@@ -2778,6 +2818,7 @@ public class DataPipelineTest extends HydratorTestBase {
   /**
    * Tests that if macros are provided
    */
+  @Ignore
   @Test
   public void testMacrosSparkPipeline() throws Exception {
     /*
@@ -2822,6 +2863,7 @@ public class DataPipelineTest extends HydratorTestBase {
   /**
    * Tests that if no macro is provided to the dataset name property, datasets will be created at config time.
    */
+  @Ignore
   @Test
   public void testNoMacroMapReduce() throws Exception {
     /*
@@ -2911,6 +2953,7 @@ public class DataPipelineTest extends HydratorTestBase {
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset("outputTable"));
   }
 
+  @Ignore
   @Test
   public void testMetadata() throws Exception {
     ImmutableSet<String> inputTagsToAdd = ImmutableSet.of("tOne", "tTwo");
@@ -3002,6 +3045,7 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, numRuns + 1, 5, TimeUnit.MINUTES);
   }
 
+  @Ignore
   @Test
   public void testRuntimeArguments() throws Exception {
     testRuntimeArgs(Engine.MAPREDUCE);
@@ -3201,6 +3245,7 @@ public class DataPipelineTest extends HydratorTestBase {
     serviceManager.waitForRun(ProgramRunStatus.KILLED, 180, TimeUnit.SECONDS);
   }
 
+  @Ignore
   @Test
   public void testSplitterToConnector() throws Exception {
     testSplitterToConnector(Engine.MAPREDUCE);
@@ -3286,6 +3331,7 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(3, appId, "sink2.records.in");
   }
 
+  @Ignore
   @Test
   public void testSplitterToJoiner() throws Exception {
     testSplitterToJoiner(Engine.MAPREDUCE);

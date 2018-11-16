@@ -93,6 +93,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     setupBatchArtifacts(APP_ARTIFACT_ID, DataPipelineApp.class);
   }
 
+  @Ignore
   @Test
   public void testDataPipelinePreviewRuns() throws Exception {
     testDataPipelinePreviewRun(Engine.MAPREDUCE);
@@ -174,6 +175,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     Assert.assertNotNull(previewRunner.getRunRecord());
   }
 
+  @Ignore
   @Test
   public void testMultiPhasePreview() throws Exception {
     testMultiplePhase(Engine.MAPREDUCE);
