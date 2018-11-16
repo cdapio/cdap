@@ -143,10 +143,12 @@ public class LevelDBTableCore {
 
   //yAOJIE
   public synchronized void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws IOException {
+    mapSize += updates.size();
     if (updates.isEmpty()) {
       return;
     }
 
+    long startTime = System.currentTimeMillis();
     DB db = getDB();
     WriteBatch writeBatch = db.createWriteBatch();
     try (Snapshot snapshot = db.getSnapshot()) {
@@ -160,7 +162,10 @@ public class LevelDBTableCore {
           writeBatch.put(rowKey, Bytes.toBytes(newValue));
         }
       }
+      readTime += System.currentTimeMillis() - startTime;
+      startTime = System.currentTimeMillis();
       db.write(writeBatch, service.getWriteOptions());
+      writeTime += System.currentTimeMillis() - startTime;
     }
   }
 

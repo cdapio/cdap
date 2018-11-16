@@ -164,9 +164,12 @@ public class DefaultCube implements Cube, MeteredDataset {
     }
 
     List<Future> futures = new ArrayList<>();
-    for (FactTable table : resolutionToFactTable.values()) {
+    for (Map.Entry<Integer, FactTable> entry : resolutionToFactTable.entrySet()) {
+      if (entry.getKey() == 1) {
+        entry.getValue().add(toWrite);
+      }
      // table.add(toWrite);
-      futures.add(executorService.submit(() -> table.add(toWrite)));
+   //   futures.add(executorService.submit(() -> table.add(toWrite)));
     }
 
     for (Future future : futures) {

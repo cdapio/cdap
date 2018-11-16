@@ -327,6 +327,11 @@ public class MetricsWriteService extends AbstractScheduledService {
           totalWrites += value;
         }
 
+        if (duration > 1000) {
+          LOG.info("Yaojie - warning, spend over 1 seconds in publish, used {}, " +
+                     "the leveldb write for each table is {}", duration, newWriteTimeDBElapased);
+        }
+
         LOG.info("Added {} metrics in one publish for {} milliseconds, the time happened in metrics write " +
                    "is: {}, the number of level db writes is: {}, the time elapsed in leveldb write is {}, " +
                    "the time elapsed in leveldb read is {}, the avg write time is {}, the avg read time is {}, " +
