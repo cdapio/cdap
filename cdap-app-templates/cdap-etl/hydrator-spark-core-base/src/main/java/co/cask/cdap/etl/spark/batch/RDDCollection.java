@@ -47,6 +47,7 @@ import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.function.TransformFunction;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.gson.Gson;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -147,7 +148,13 @@ public class RDDCollection<T> implements SparkCollection<T> {
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
     compute.initialize(sparkPluginContext);
 
-    JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+    SparkConf sparkconf = jsc.getConf();
+    JavaRDD<T> countedInput = null;
+    if (sparkconf.getBoolean("spark.cdap.pipeline.autocache.enable", true)) {
+        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
+    } else {
+        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+    }
 
     return wrap(compute.transform(sparkPluginContext, countedInput)
                   .map(new CountingFunction<U>(stageName, sec.getMetrics(), "records.out",
@@ -166,8 +173,13 @@ public class RDDCollection<T> implements SparkCollection<T> {
     PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
-
-    JavaRDD<T> countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
+    SparkConf sparkconf = jsc.getConf();
+    JavaRDD<T> countedRDD = null;
+    if (sparkconf.getBoolean("spark.cdap.pipeline.autocache.enable", true)) {
+        countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
+    } else {
+        countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+    }
     sink.run(sparkPluginContext, countedRDD);
   }
 
