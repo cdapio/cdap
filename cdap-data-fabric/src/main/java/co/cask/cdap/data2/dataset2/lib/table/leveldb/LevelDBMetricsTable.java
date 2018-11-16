@@ -18,13 +18,11 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -39,27 +37,12 @@ import javax.annotation.Nullable;
  */
 public class LevelDBMetricsTable implements MetricsTable {
 
-  private static final Function<Long, byte[]> LONG_TO_BYTES = new Function<Long, byte[]>() {
-    @Override
-    public byte[] apply(Long input) {
-      return Bytes.toBytes(input);
-    }
-  };
-  private static final Function<SortedMap<byte[], Long>, SortedMap<byte[], byte[]>>
-    TRANSFORM_MAP_LONG_TO_BYTE_ARRAY = new Function<SortedMap<byte[], Long>, SortedMap<byte[], byte[]>>() {
-    @Override
-    public SortedMap<byte[], byte[]> apply(SortedMap<byte[], Long> input) {
-      return Maps.transformValues(input, LONG_TO_BYTES);
-    }
-  };
-
   private final String tableName;
   private final LevelDBTableCore core;
 
-  public LevelDBMetricsTable(DatasetContext datasetContext, String tableName,
-                             LevelDBTableService service, CConfiguration cConf) throws IOException {
-    this.core = new LevelDBTableCore(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName),
-                                     service);
+  public LevelDBMetricsTable(String namespace, String tableName,
+                             LevelDBTableService service, CConfiguration cConf) {
+    this.core = new LevelDBTableCore(PrefixedNamespaces.namespace(cConf, namespace, tableName), service);
     this.tableName = tableName;
   }
 
@@ -79,9 +62,9 @@ public class LevelDBMetricsTable implements MetricsTable {
   @Override
   public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
     SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> convertedUpdates =
-      Maps.transformValues(updates, TRANSFORM_MAP_LONG_TO_BYTE_ARRAY);
+      Maps.transformValues(updates, input -> Maps.transformValues(input, Bytes::toBytes));
     try {
-      core.persist(convertedUpdates, System.currentTimeMillis());
+      core.persist(convertedUpdates, Long.MAX_VALUE);
     } catch (IOException e) {
       throw new DataSetException("Put failed on table " + tableName, e);
     }
@@ -90,7 +73,7 @@ public class LevelDBMetricsTable implements MetricsTable {
   @Override
   public void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates) {
     try {
-      core.persist(updates, System.currentTimeMillis());
+      core.persist(updates, Long.MAX_VALUE);
     } catch (IOException e) {
       throw new DataSetException("Put failed on table " + tableName, e);
     }
