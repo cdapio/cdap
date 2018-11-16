@@ -46,9 +46,7 @@ import co.cask.cdap.etl.spark.function.PairFlatMapFunc;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.function.TransformFunction;
 import co.cask.cdap.etl.spec.StageSpec;
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -149,13 +147,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
     compute.initialize(sparkPluginContext);
 
-    SparkConf sparkconf = jsc.getConf();
-    JavaRDD<T> countedInput = null;
-    if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
-    } else {
-        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
-    }
+    JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
 
     return wrap(compute.transform(sparkPluginContext, countedInput)
                   .map(new CountingFunction<U>(stageName, sec.getMetrics(), "records.out",
@@ -163,42 +155,20 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public Runnable createStoreTask(final StageSpec stageSpec,
-                                  final PairFlatMapFunction<T, Object, Object> sinkFunction) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        JavaPairRDD<Object, Object> sinkRDD = rdd.flatMapToPair(sinkFunction);
-        sinkFactory.writeFromRDD(sinkRDD, sec, stageSpec.getName(), Object.class, Object.class);
-      }
-    };
+  public void store(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
+    JavaPairRDD<Object, Object> sinkRDD = rdd.flatMapToPair(sinkFunction);
+    sinkFactory.writeFromRDD(sinkRDD, sec, stageSpec.getName(), Object.class, Object.class);
   }
 
   @Override
-  public Runnable createStoreTask(final StageSpec stageSpec, final SparkSink<T> sink) throws Exception {
-    return new Runnable() {
-      @Override
-      public void run() {
-        String stageName = stageSpec.getName();
-        PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
-        SparkExecutionPluginContext sparkPluginContext =
-          new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
+  public void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
+    String stageName = stageSpec.getName();
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+    SparkExecutionPluginContext sparkPluginContext =
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
 
-        SparkConf sparkconf = jsc.getConf();
-        JavaRDD<T> countedRDD = null;
-        if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
-        } else {
-            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
-        }
-    
-        try {
-          sink.run(sparkPluginContext, countedRDD);
-        } catch (Exception e) {
-          Throwables.propagate(e);
-        }
-      }
-    };
+    JavaRDD<T> countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
+    sink.run(sparkPluginContext, countedRDD);
   }
 
   @Override
@@ -227,4 +197,3 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
 }
-
