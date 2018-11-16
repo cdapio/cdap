@@ -151,7 +151,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
 
     SparkConf sparkconf = jsc.getConf();
     JavaRDD<T> countedInput = null;
-    if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+    if (sparkconf.getBoolean("spark.cdap.pipeline.autocache.enable", true)) {
         countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
     } else {
         countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
@@ -175,30 +175,19 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public Runnable createStoreTask(final StageSpec stageSpec, final SparkSink<T> sink) throws Exception {
-    return new Runnable() {
-      @Override
-      public void run() {
-        String stageName = stageSpec.getName();
-        PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
-        SparkExecutionPluginContext sparkPluginContext =
-          new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
-
-        SparkConf sparkconf = jsc.getConf();
-        JavaRDD<T> countedRDD = null;
-        if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
-        } else {
-            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
-        }
-    
-        try {
-          sink.run(sparkPluginContext, countedRDD);
-        } catch (Exception e) {
-          Throwables.propagate(e);
-        }
-      }
-    };
+  public void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
+    String stageName = stageSpec.getName();
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+    SparkExecutionPluginContext sparkPluginContext =
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
+    SparkConf sparkconf = jsc.getConf();
+    JavaRDD<T> countedRDD = null;
+    if (sparkconf.getBoolean("spark.cdap.pipeline.autocache.enable", true)) {
+        countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
+    } else {
+        countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+    }
+    sink.run(sparkPluginContext, countedRDD);
   }
 
   @Override
