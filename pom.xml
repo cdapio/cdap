@@ -188,7 +188,7 @@
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
-    <release.iteration>1</release.iteration>
+    <release.iteration>${buildNumber}</release.iteration>
   </properties>
 
   <dependencyManagement>

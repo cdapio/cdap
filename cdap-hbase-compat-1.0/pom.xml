@@ -334,7 +334,7 @@
                   <artifactId>${project.artifactId}</artifactId>
                   <packaging>noarch.rpm</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/${project.artifactId}-${package.version}-1.noarch.rpm</file>
+                  <file>${project.build.directory}/${project.artifactId}-${package.version}-${release.iteration}.noarch.rpm</file>
                   <classifier>1</classifier>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
