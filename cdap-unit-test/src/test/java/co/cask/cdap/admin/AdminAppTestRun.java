@@ -45,6 +45,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -302,6 +303,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     testAdminBatchProgram(appManager.getSparkManager(AdminApp.SPARK_SCALA_NAME));
   }
 
+  @Ignore
   @Test
   public void testAdminMapReduce() throws Exception {
     testAdminBatchProgram(appManager.getMapReduceManager(AdminApp.MAPREDUCE_NAME));

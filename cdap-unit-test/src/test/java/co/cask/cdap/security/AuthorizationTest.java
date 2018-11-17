@@ -108,6 +108,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExternalResource;
@@ -377,6 +378,7 @@ public class AuthorizationTest extends TestBase {
     appManager.delete();
   }
 
+  @Ignore
   @Test
   @Category(SlowTests.class)
   public void testMRStreamAuth() throws Exception {
@@ -785,6 +787,7 @@ public class AuthorizationTest extends TestBase {
     dummyAppManager.delete();
   }
 
+  @Ignore
   @Test
   public void testCrossNSFlowlet() throws Exception {
     createAuthNamespace();
@@ -923,6 +926,7 @@ public class AuthorizationTest extends TestBase {
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 
+  @Ignore
   @Test
   public void testCrossNSMapReduce() throws Exception {
     createAuthNamespace();

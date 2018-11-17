@@ -38,6 +38,7 @@ import com.google.common.collect.Maps;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -61,6 +62,7 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
   static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
 
 
+  @Ignore
   @Test
   public void testTimePartitionedWithMR() throws Exception {
 
@@ -197,11 +199,13 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
       });
   }
 
+  @Ignore
   @Test
   public void testPartitionedFileSetWithMR() throws Exception {
     testPartitionedFileSetWithMR(false);
   }
 
+  @Ignore
   @Test
   public void testPartitionedFileSetWithMRWithCombineFileInputFormat() throws Exception {
     testPartitionedFileSetWithMR(true);

@@ -33,6 +33,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -54,6 +55,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
   private static final String LINE2 = "b a b";
   private static final String LINE3 = "c c c";
 
+  @Ignore
   @Test
   public void testMapReduceConsumer() throws Exception {
     testWordCountOnFileSet(new Function<ApplicationManager, ProgramManager>() {

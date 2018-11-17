@@ -24,12 +24,14 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.app.MyKeyValueTableDefinition;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
 public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
 
+  @Ignore
   @Test
   public void test() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestMapReduceServiceIntegrationApp.class);

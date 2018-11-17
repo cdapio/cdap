@@ -39,6 +39,7 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
@@ -73,6 +74,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
     appClient.delete(appId);
   }
 
+  @Ignore
   @Test
   public void testWorkflowClient() throws Exception {
     String keyValueTableType = "co.cask.cdap.api.dataset.lib.KeyValueTable";

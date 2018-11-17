@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.PrintWriter;
@@ -36,6 +37,7 @@ import java.util.List;
  */
 public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
 
+  @Ignore
   @Test
   public void testSimpleJoin() throws Exception {
     ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingMultipleInputs.class);
@@ -85,6 +87,7 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
     Assert.assertEquals("true", System.getProperty("mapper.destroyed"));
   }
 
+  @Ignore
   @Test
   public void testMapperOutputTypeChecking() throws Exception {
     final ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingInconsistentMappers.class);

@@ -31,6 +31,7 @@ import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapReduceStreamInputTestRun extends TestFrameworkTestBase {
 
+  @Ignore
   @Test
   public void test() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithMapReduceUsingStream.class);

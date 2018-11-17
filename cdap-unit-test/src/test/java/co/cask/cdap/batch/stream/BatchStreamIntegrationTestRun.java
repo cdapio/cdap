@@ -29,6 +29,7 @@ import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -44,6 +45,7 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
    * TestsMapReduce that consumes from stream using BytesWritableStreamDecoder
    * @throws Exception
    */
+  @Ignore
   @Test
   public void testStreamBatch() throws Exception {
     submitAndVerifyStreamBatchJob(TestBatchStreamIntegrationApp.class, "s_1", "StreamTestBatch", 300);
@@ -53,6 +55,7 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
    * Tests MapReduce that consumes from stream using IdentityStreamEventDecoder
    * @throws Exception
    */
+  @Ignore
   @Test
   public void testStreamBatchIdDecoder() throws Exception {
     submitAndVerifyStreamBatchJob(TestBatchStreamIntegrationApp.class, "s_1", "StreamTestBatchIdDecoder", 300);
@@ -61,6 +64,7 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
   /**
    * Tests MapReduce that consumes from stream without mapper.
    */
+  @Ignore
   @Test
   public void testNoMapperStreamInput() throws Exception {
     submitAndVerifyStreamBatchJob(NoMapperApp.class, "nomapper", "NoMapperMapReduce", 120);
@@ -70,6 +74,7 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
   /**
    * Tests MapReduce that consumes from stream without mapper.
    */
+  @Ignore
   @Test
   public void testNoMapperOtherStreamInput() throws Exception {
     submitAndVerifyStreamOtherNamespaceBatchJob(NoMapperStreamSpaceApp.class, NoMapperStreamSpaceApp.INPUTSTREAMSPACE,

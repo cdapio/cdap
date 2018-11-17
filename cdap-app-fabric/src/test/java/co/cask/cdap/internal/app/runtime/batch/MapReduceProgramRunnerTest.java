@@ -59,6 +59,7 @@ import org.apache.tephra.TxConstants;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExternalResource;
@@ -129,6 +130,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
                new BasicArguments(ImmutableMap.of("outputPath", TEMP_FOLDER_SUPPLIER.get().getPath() + "/output")));
   }
 
+  @Ignore
   @Test
   public void testMapreduceWithFileSet() throws Exception {
     testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001",
@@ -144,6 +146,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
                           null, null, "#"); // and also use # as the separator for validation
   }
 
+  @Ignore
   @Test
   public void testMapreduceWithDynamicDatasets() throws Exception {
     DatasetId rtInput1 = DefaultId.NAMESPACE.dataset("rtInput1");
@@ -353,6 +356,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Assert.assertEquals(AppWithMapReduce.ClassicWordCount.MEMORY_MB, mrSpec.getDriverResources().getMemoryMB());
   }
 
+  @Ignore
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
     // Deploy apps to another namespace and test cross-namespace access meanwhile
@@ -401,6 +405,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
       });
   }
 
+  @Ignore
   @Test
   public void testWordCount() throws Exception {
     // deploy to namespace default by default
@@ -453,11 +458,13 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Assert.assertTrue(lines > 0);
   }
 
+  @Ignore
   @Test
   public void testJobSuccess() throws Exception {
     testSuccess(false);
   }
 
+  @Ignore
   @Test
   public void testJobSuccessWithFrequentFlushing() throws Exception {
     // simplest test for periodic flushing
@@ -532,6 +539,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     testFailure(true);
   }
 
+  @Ignore
   @Test
   public void testMapReduceWithLocalFiles() throws Exception {
     ApplicationWithPrograms appWithPrograms = deployApp(AppWithLocalFiles.class);

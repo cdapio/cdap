@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ import java.util.List;
  */
 public class MapReduceWithMultipleOutputsTest extends MapReduceRunnerTestBase {
 
+  @Ignore
   @Test
   public void testMultipleOutputs() throws Exception {
     ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingMultipleOutputs.class);
