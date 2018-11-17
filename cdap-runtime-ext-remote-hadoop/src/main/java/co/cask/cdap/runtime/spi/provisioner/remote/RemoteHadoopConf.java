@@ -29,10 +29,12 @@ import java.util.Map;
 public class RemoteHadoopConf {
   private final SSHKeyPair sshKeyPair;
   private final String host;
+  private final String initializationAction;
 
-  private RemoteHadoopConf(SSHKeyPair sshKeyPair, String host) {
+  private RemoteHadoopConf(SSHKeyPair sshKeyPair, String host, String initializationAction) {
     this.sshKeyPair = sshKeyPair;
     this.host = host;
+    this.initializationAction = initializationAction;
   }
 
   public SSHKeyPair getKeyPair() {
@@ -43,6 +45,10 @@ public class RemoteHadoopConf {
     return host;
   }
 
+  public String getInitializationAction() {
+    return initializationAction;
+  }
+
   /**
    * Create the conf from a property map while also performing validation.
    */
@@ -50,10 +56,11 @@ public class RemoteHadoopConf {
     String host = getString(properties, "host");
     String user = getString(properties, "user");
     String privateKey = getString(properties, "sshKey");
+    String initializationAction = getString(properties, "initializationAction");
 
     SSHKeyPair keyPair = new SSHKeyPair(new SSHPublicKey(user, ""),
                                         () -> privateKey.getBytes(StandardCharsets.UTF_8));
-    return new RemoteHadoopConf(keyPair, host);
+    return new RemoteHadoopConf(keyPair, host, initializationAction);
   }
 
   private static String getString(Map<String, String> properties, String key) {

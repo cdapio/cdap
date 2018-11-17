@@ -26,7 +26,13 @@ import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import co.cask.cdap.runtime.spi.ssh.SSHSession;
+import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,6 +44,8 @@ import java.util.concurrent.TimeUnit;
  * A provisioner that does not create or tear down clusters, but just uses an existing cluster.
  */
 public class RemoteHadoopProvisioner implements Provisioner {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteHadoopProvisioner.class);
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "remote-hadoop", "Remote Hadoop Provisioner",
     "Runs programs on a pre-existing Hadoop cluster. The cluster must contain compatible software, must not use "
@@ -51,6 +59,48 @@ public class RemoteHadoopProvisioner implements Provisioner {
   @Override
   public void validateProperties(Map<String, String> properties) {
     RemoteHadoopConf.fromProperties(properties);
+  }
+
+  @Override
+  public void initializeCluster(ProvisionerContext context, Cluster cluster) throws Exception {
+    RemoteHadoopConf conf = RemoteHadoopConf.fromProperties(context.getProperties());
+    String initializationAction = conf.getInitializationAction();
+    if (initializationAction != null && !initializationAction.isEmpty()) {
+      try (SSHSession session = createSSHSession(context, getMasterExternalIp(cluster))) {
+        LOG.debug("Initializing action: {}", initializationAction);
+        String output = session.executeAndWait(initializationAction);
+        LOG.debug("Initialization action completed: {}", output);
+      }
+    }
+
+  }
+
+  private SSHSession createSSHSession(ProvisionerContext provisionerContext, String host) throws IOException {
+    try {
+      return provisionerContext.getSSHContext().createSSHSession(host);
+    } catch (IOException ioe) {
+      if (Throwables.getRootCause(ioe) instanceof ConnectException) {
+        throw new IOException(String.format(
+                "Failed to connect to host %s. Ensure that firewall rules exist that allow ssh " +
+                        "on port 22.", host),
+                ioe);
+      }
+      throw ioe;
+    }
+  }
+
+  private String getMasterExternalIp(Cluster cluster) {
+    Node masterNode = cluster.getNodes().stream()
+            .filter(node -> Node.Type.MASTER == node.getType())
+            .findFirst().orElseThrow(() ->
+                    new IllegalArgumentException("Cluster has no node of master type: " + cluster));
+
+    String ip = masterNode.getIpAddress();
+    if (ip == null) {
+      throw new IllegalArgumentException(String.format("External IP is not defined for node '%s' in cluster %s",
+              masterNode.getId(), cluster));
+    }
+    return ip;
   }
 
   @Override
