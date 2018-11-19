@@ -16,14 +16,14 @@
 
 import * as React from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
-import {getCurrentNamespace} from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
-import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
-import {objectQuery} from 'services/helpers';
+import CardActionFeedback, { CARD_ACTION_TYPES } from 'components/CardActionFeedback';
+import { objectQuery } from 'services/helpers';
 import BtnWithLoading from 'components/BtnWithLoading';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Spanner';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -54,7 +54,7 @@ interface ISpannerConnectionState {
   testConnectionLoading?: boolean;
   connectionResult?: {
     message?: string;
-    type?: string
+    type?: string;
   };
   loading?: boolean;
 }
@@ -64,7 +64,10 @@ interface IProperties {
   'service-account-keyfile'?: string;
 }
 
-export default class SpannerConnection extends React.PureComponent<ISpannerConnectionProps, ISpannerConnectionState> {
+export default class SpannerConnection extends React.PureComponent<
+  ISpannerConnectionProps,
+  ISpannerConnectionState
+> {
   public state: ISpannerConnectionState = {
     error: null,
     name: '',
@@ -83,7 +86,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
       return;
     }
 
-    this.setState({loading: true});
+    this.setState({ loading: true });
 
     const namespace = getCurrentNamespace();
 
@@ -92,8 +95,8 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
       connectionId: this.props.connectionId,
     };
 
-    MyDataPrepApi.getConnection(params)
-      .subscribe((res) => {
+    MyDataPrepApi.getConnection(params).subscribe(
+      (res) => {
         const info = objectQuery(res, 'values', 0);
         const projectId = objectQuery(info, 'properties', 'projectId');
         const serviceAccountKeyfile = objectQuery(info, 'properties', 'service-account-keyfile');
@@ -106,14 +109,17 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
           serviceAccountKeyfile,
           loading: false,
         });
-      }, (err) => {
-        const error = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
+      },
+      (err) => {
+        const error =
+          objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
 
         this.setState({
           loading: false,
           error,
         });
-      });
+      }
+    );
   }
 
   private constructProperties = (): IProperties => {
@@ -128,7 +134,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
     }
 
     return properties;
-  }
+  };
 
   private addConnection = () => {
     const namespace = getCurrentNamespace();
@@ -139,16 +145,19 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.createConnection({namespace}, requestBody)
-      .subscribe(() => {
-        this.setState({error: null});
+    MyDataPrepApi.createConnection({ namespace }, requestBody).subscribe(
+      () => {
+        this.setState({ error: null });
         this.props.onAdd();
         this.props.close();
-      }, (err) => {
-        const error = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
+      },
+      (err) => {
+        const error =
+          objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
         this.setState({ error });
-      });
-  }
+      }
+    );
+  };
 
   private editConnection = () => {
     const namespace = getCurrentNamespace();
@@ -165,16 +174,19 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.updateConnection(params, requestBody)
-      .subscribe(() => {
-        this.setState({error: null});
+    MyDataPrepApi.updateConnection(params, requestBody).subscribe(
+      () => {
+        this.setState({ error: null });
         this.props.onAdd();
         this.props.close();
-      }, (err) => {
-        const error = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
+      },
+      (err) => {
+        const error =
+          objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
         this.setState({ error });
-      });
-  }
+      }
+    );
+  };
 
   private testConnection = () => {
     this.setState({
@@ -194,8 +206,8 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.spannerTestConnection({namespace}, requestBody)
-      .subscribe((res) => {
+    MyDataPrepApi.spannerTestConnection({ namespace }, requestBody).subscribe(
+      (res) => {
         this.setState({
           connectionResult: {
             type: CARD_ACTION_TYPES.SUCCESS,
@@ -203,10 +215,12 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
           },
           testConnectionLoading: false,
         });
-      }, (err) => {
-        const errorMessage = objectQuery(err, 'response', 'message') ||
-        objectQuery(err, 'response') ||
-        T.translate(`${PREFIX}.defaultTestErrorMessage`);
+      },
+      (err) => {
+        const errorMessage =
+          objectQuery(err, 'response', 'message') ||
+          objectQuery(err, 'response') ||
+          T.translate(`${PREFIX}.defaultTestErrorMessage`);
 
         this.setState({
           connectionResult: {
@@ -215,14 +229,15 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
           },
           testConnectionLoading: false,
         });
-      });
-  }
+      }
+    );
+  };
 
   private handleChange = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({
       [key]: e.target.value,
     });
-  }
+  };
 
   private renderTestButton = () => {
     const disabled = !this.state.name;
@@ -239,7 +254,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
         />
       </span>
     );
-  }
+  };
 
   private renderAddConnectionButton = () => {
     const disabled = !this.state.name || this.state.testConnectionLoading;
@@ -252,18 +267,14 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
 
     return (
       <ModalFooter>
-        <button
-          className="btn btn-primary"
-          onClick={onClickFn}
-          disabled={disabled}
-        >
+        <button className="btn btn-primary" onClick={onClickFn} disabled={disabled}>
           {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
         </button>
 
         {this.renderTestButton()}
       </ModalFooter>
     );
-  }
+  };
 
   private renderContent() {
     if (this.state.loading) {
@@ -298,9 +309,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
           </div>
 
           <div className="form-group row">
-            <label className={LABEL_COL_CLASS}>
-              {T.translate(`${PREFIX}.projectId`)}
-            </label>
+            <label className={LABEL_COL_CLASS}>{T.translate(`${PREFIX}.projectId`)}</label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
                 <input
@@ -325,12 +334,13 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
                   className="form-control"
                   value={this.state.serviceAccountKeyfile}
                   onChange={this.handleChange.bind(this, 'serviceAccountKeyfile')}
-                  placeholder={T.translate(`${PREFIX}.Placeholders.serviceAccountKeyfile`).toString()}
+                  placeholder={T.translate(
+                    `${PREFIX}.Placeholders.serviceAccountKeyfile`
+                  ).toString()}
                 />
               </div>
             </div>
           </div>
-
         </div>
       </div>
     );
@@ -339,7 +349,9 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
   private renderMessage() {
     const connectionResult = this.state.connectionResult;
 
-    if (!this.state.error && !connectionResult.message) { return null; }
+    if (!this.state.error && !connectionResult.message) {
+      return null;
+    }
 
     if (this.state.error) {
       return (
@@ -352,11 +364,14 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
     }
 
     const connectionResultType = connectionResult.type;
-    const extendedMessage = connectionResultType === CARD_ACTION_TYPES.SUCCESS ? null : connectionResult.message;
+    const extendedMessage =
+      connectionResultType === CARD_ACTION_TYPES.SUCCESS ? null : connectionResult.message;
 
     return (
       <CardActionFeedback
-        message={T.translate(`${ADDCONN_PREFIX}.TestConnectionLabels.${connectionResultType.toLowerCase()}`)}
+        message={T.translate(
+          `${ADDCONN_PREFIX}.TestConnectionLabels.${connectionResultType.toLowerCase()}`
+        )}
         extendedMessage={extendedMessage}
         type={connectionResultType}
       />
@@ -365,7 +380,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
 
   private renderModalFooter = () => {
     return this.renderAddConnectionButton();
-  }
+  };
 
   public render() {
     return (
@@ -379,12 +394,12 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
           zIndex="1061"
         >
           <ModalHeader toggle={this.props.close}>
-            {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {connection: this.props.connectionId})}
+            {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {
+              connection: this.props.connectionId,
+            })}
           </ModalHeader>
 
-          <ModalBody>
-            {this.renderContent()}
-          </ModalBody>
+          <ModalBody>{this.renderContent()}</ModalBody>
 
           {this.renderModalFooter()}
           {this.renderMessage()}

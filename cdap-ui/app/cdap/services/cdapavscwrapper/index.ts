@@ -36,13 +36,9 @@ enum UI_TYPES {
   TIMESTAMP = 'timestamp',
 }
 
-type IUiToAvro = {
-  [key in UI_TYPES]: LogicalTypes
-};
+type IUiToAvro = { [key in UI_TYPES]: LogicalTypes };
 
-type IAvroToUi = {
-  [key in LogicalTypes]: UI_TYPES
-};
+type IAvroToUi = { [key in LogicalTypes]: UI_TYPES };
 
 const UI_TO_AVRO_MAPPING: IUiToAvro = {
   [UI_TYPES.DATE]: LogicalTypes.DATE,

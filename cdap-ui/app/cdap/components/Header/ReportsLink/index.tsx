@@ -57,11 +57,11 @@ class ReportsLink extends React.PureComponent<IReportsLinkProps> {
       return true;
     }
     const location = window.location;
-    const {namespace} = this.props.context;
+    const { namespace } = this.props.context;
     const path = `/cdap/ns/${namespace}/reports`;
 
     return location.pathname.startsWith(path);
-  }
+  };
 }
 
 const ReportsLinkWithContext = withContext(ReportsLink);

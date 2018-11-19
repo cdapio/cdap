@@ -22,16 +22,12 @@ const TopPanel: React.SFC = () => {
   return (
     <div className="top-panel">
       <div className="title-row">
-        <div className="title">
-          Field level lineage
-        </div>
+        <div className="title">Field level lineage</div>
 
         <TimePicker />
       </div>
 
-      <div className="subtitle">
-        Select a field to explore root cause and impact
-      </div>
+      <div className="subtitle">Select a field to explore root cause and impact</div>
     </div>
   );
 };

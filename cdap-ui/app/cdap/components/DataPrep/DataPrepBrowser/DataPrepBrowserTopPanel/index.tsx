@@ -32,7 +32,7 @@ export default class DataprepBrowserTopPanel extends React.PureComponent<IDatapr
         <div className="title">
           <h5>
             <span
-              className={classnames("fa fa-fw", {
+              className={classnames('fa fa-fw', {
                 disabled: !this.props.allowSidePanelToggle,
               })}
               onClick={this.props.toggle}
@@ -40,9 +40,7 @@ export default class DataprepBrowserTopPanel extends React.PureComponent<IDatapr
               <IconSVG name="icon-bars" />
             </span>
 
-            <span>
-              {this.props.browserTitle}
-            </span>
+            <span>{this.props.browserTitle}</span>
           </h5>
         </div>
       </div>

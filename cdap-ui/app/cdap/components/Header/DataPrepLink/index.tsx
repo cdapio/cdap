@@ -16,7 +16,7 @@
 import * as React from 'react';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
-import {withContext} from 'components/Header/NamespaceLinkContext';
+import { withContext } from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 require('./DataPrepLink.scss');
 
@@ -62,15 +62,18 @@ class DataPrepLink extends React.PureComponent<IDataPrepLinkProps> {
     if (match && match.isExact) {
       return true;
     }
-    const {namespace} = this.props.context;
+    const { namespace } = this.props.context;
     const dataprepBasePath = `/cdap/ns/${namespace}/dataprep`;
     const connectionsBasePath = `/cdap/ns/${namespace}/connections`;
 
-    if (location.pathname.startsWith(dataprepBasePath) || location.pathname.startsWith(connectionsBasePath)) {
+    if (
+      location.pathname.startsWith(dataprepBasePath) ||
+      location.pathname.startsWith(connectionsBasePath)
+    ) {
       return true;
     }
     return false;
-  }
+  };
 }
 
 const DataPrepLinkWithContext = withContext(DataPrepLink);

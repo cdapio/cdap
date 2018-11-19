@@ -87,7 +87,7 @@ export default class OverlayFocus extends React.Component {
       height: elemRect.height,
       display: DISPLAY_BLOCK,
     });
-  }
+  };
 
   private onHide = () => {
     this.setState({
@@ -98,7 +98,7 @@ export default class OverlayFocus extends React.Component {
       right: 0,
       height: 0,
     });
-  }
+  };
 
   private getTopStyle = () => {
     let height = this.state.top - PADDING;
@@ -111,7 +111,7 @@ export default class OverlayFocus extends React.Component {
       height: convertToPixel(height),
       display: this.state.display,
     };
-  }
+  };
 
   private getBottomStyle = () => {
     const top = this.state.bottom + PADDING;
@@ -120,10 +120,10 @@ export default class OverlayFocus extends React.Component {
       top: convertToPixel(top),
       display: this.state.display,
     };
-  }
+  };
 
   private getLeftStyle = () => {
-    const height = this.state.height + (PADDING * 2);
+    const height = this.state.height + PADDING * 2;
     let width = this.state.left - PADDING;
     const top = this.state.top - PADDING;
 
@@ -137,10 +137,10 @@ export default class OverlayFocus extends React.Component {
       top: convertToPixel(top),
       display: this.state.display,
     };
-  }
+  };
 
   private getRightStyle = () => {
-    const height = this.state.height + (PADDING * 2);
+    const height = this.state.height + PADDING * 2;
     const left = this.state.right + PADDING;
     const top = this.state.top - PADDING;
 
@@ -150,27 +150,15 @@ export default class OverlayFocus extends React.Component {
       top: convertToPixel(top),
       display: this.state.display,
     };
-  }
+  };
 
   public render() {
     return (
       <React.Fragment>
-        <div
-          className="curtain top"
-          style={this.getTopStyle()}
-        />
-        <div
-          className="curtain right"
-          style={this.getRightStyle()}
-        />
-        <div
-          className="curtain bottom"
-          style={this.getBottomStyle()}
-        />
-        <div
-          className="curtain left"
-          style={this.getLeftStyle()}
-        />
+        <div className="curtain top" style={this.getTopStyle()} />
+        <div className="curtain right" style={this.getRightStyle()} />
+        <div className="curtain bottom" style={this.getBottomStyle()} />
+        <div className="curtain left" style={this.getLeftStyle()} />
       </React.Fragment>
     );
   }

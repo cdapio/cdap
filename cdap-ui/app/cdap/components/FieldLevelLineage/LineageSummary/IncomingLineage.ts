@@ -27,8 +27,6 @@ const mapStateToProps = (state) => {
   };
 };
 
-const IncomingLineage = connect(
-  mapStateToProps,
-)(LineageSummary);
+const IncomingLineage = connect(mapStateToProps)(LineageSummary);
 
 export default IncomingLineage;

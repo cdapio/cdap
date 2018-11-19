@@ -16,13 +16,13 @@
 
 import * as React from 'react';
 import T from 'i18n-react';
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import SpannerDisplaySwitch from 'components/DataPrep/DataPrepBrowser/SpannerBrowser/DisplaySwitch';
 import SpannerInstanceList from 'components/DataPrep/DataPrepBrowser/SpannerBrowser/InstanceList';
 import SpannerDatabaseList from 'components/DataPrep/DataPrepBrowser/SpannerBrowser/DatabaseList';
 import SpannerTableList from 'components/DataPrep/DataPrepBrowser/SpannerBrowser/TableList';
-import {Route, Switch} from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 import Page404 from 'components/404';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
@@ -50,37 +50,29 @@ export default class SpannerBrowser extends React.PureComponent<ISpannerBrowserP
     return (
       <Provider store={DataPrepBrowserStore}>
         <div className="spanner-browser">
-          {
-            this.props.enableRouting ?
-              <DataPrepBrowserPageTitle
-                browserI18NName="SpannerBrowser"
-                browserStateName="spanner"
-                locationToPathInState={['datasetId']}
-              />
-            :
-              null
-          }
+          {this.props.enableRouting ? (
+            <DataPrepBrowserPageTitle
+              browserI18NName="SpannerBrowser"
+              browserStateName="spanner"
+              locationToPathInState={['datasetId']}
+            />
+          ) : null}
 
           <DataprepBrowserTopPanel
             allowSidePanelToggle={true}
             toggle={this.props.toggle}
             browserTitle={T.translate(`${PREFIX}.title`)}
           />
-          {
-            this.props.enableRouting ?
-              (
-                <Switch>
-                  <Route exact path={instancesPath} component={SpannerInstanceList} />
-                  <Route exact path={databasesPath} component={SpannerDatabaseList} />
-                  <Route exact path={tablesPath} component={SpannerTableList} />
-                  <Route render={Page404} />
-                </Switch>
-              )
-            :
-              <SpannerDisplaySwitch
-                onWorkspaceCreate={this.props.onWorkspaceCreate}
-              />
-          }
+          {this.props.enableRouting ? (
+            <Switch>
+              <Route exact path={instancesPath} component={SpannerInstanceList} />
+              <Route exact path={databasesPath} component={SpannerDatabaseList} />
+              <Route exact path={tablesPath} component={SpannerTableList} />
+              <Route render={Page404} />
+            </Switch>
+          ) : (
+            <SpannerDisplaySwitch onWorkspaceCreate={this.props.onWorkspaceCreate} />
+          )}
         </div>
       </Provider>
     );

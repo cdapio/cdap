@@ -18,7 +18,7 @@ import * as React from 'react';
 import SpannerInstanceList from 'components/DataPrep/DataPrepBrowser/SpannerBrowser/InstanceList';
 import SpannerDatabaseList from 'components/DataPrep/DataPrepBrowser/SpannerBrowser/DatabaseList';
 import SpannerTableList from 'components/DataPrep/DataPrepBrowser/SpannerBrowser/TableList';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
 interface ISpannerDisplaySwitchProps {
   instanceId: string;
@@ -27,15 +27,10 @@ interface ISpannerDisplaySwitchProps {
 }
 
 const SpannerDisplaySwitchView: React.SFC<ISpannerDisplaySwitchProps> = (props) => {
-  const {instanceId, databaseId, onWorkspaceCreate} = props;
+  const { instanceId, databaseId, onWorkspaceCreate } = props;
 
   if (databaseId) {
-    return (
-      <SpannerTableList
-        enableRouting={false}
-        onWorkspaceCreate={onWorkspaceCreate}
-      />
-    );
+    return <SpannerTableList enableRouting={false} onWorkspaceCreate={onWorkspaceCreate} />;
   } else if (instanceId) {
     return <SpannerDatabaseList enableRouting={false} />;
   }
@@ -49,8 +44,6 @@ const mapStateToProps = (state): Partial<ISpannerDisplaySwitchProps> => {
   };
 };
 
-const SpannerDisplaySwitch = connect(
-  mapStateToProps,
-)(SpannerDisplaySwitchView);
+const SpannerDisplaySwitch = connect(mapStateToProps)(SpannerDisplaySwitchView);
 
 export default SpannerDisplaySwitch;

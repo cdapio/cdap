@@ -34,7 +34,7 @@ storiesOf('Buttons', module)
     })(() => (
       <BtnWithLoading
         onClick={action('clicked')}
-        label={text('Label', "Hello Button")}
+        label={text('Label', 'Hello Button')}
         loading={boolean('Loading', true)}
         disabled={boolean('Disabled', false)}
         className="btn btn-secondary"

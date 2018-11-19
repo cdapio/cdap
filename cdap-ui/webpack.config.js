@@ -23,16 +23,9 @@ var multiConfigs = [];
 // This will prevent repeatedly building the common library shared between webapps
 // Its bad because both common & cdap webpacks will trigger a build when common stuff changes.
 if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'browser-testing') {
-  multiConfigs = [
-    cdapWebpackConfig,
-    loginWebpackConfig,
-  ];
+  multiConfigs = [cdapWebpackConfig, loginWebpackConfig];
 } else {
-  multiConfigs = [
-    cdapWebpackConfig,
-    loginWebpackConfig,
-    commonWebpackConfig
-  ];
+  multiConfigs = [cdapWebpackConfig, loginWebpackConfig, commonWebpackConfig];
 }
 
 module.exports = multiConfigs;

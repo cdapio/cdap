@@ -82,6 +82,7 @@ if (!isModeProduction(mode)) {
     new ForkTsCheckerWebpackPlugin({
       tsconfig: __dirname + '/tsconfig.json',
       tslint: __dirname + '/tslint.json',
+      tslintAutoFix: true,
       // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
       memoryLimit: 4096,
     })
@@ -118,6 +119,7 @@ var rules = [
       /lib/,
       /wrangler_dist/,
     ],
+    include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
     test: /\.js$/,

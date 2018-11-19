@@ -27,16 +27,15 @@ const PREFIX = 'features.DataPrep.DataPrepBrowser.S3Browser.BucketData';
 
 // Lazy load polyfill in safari as InteresectionObservers are not implemented there yet.
 (async () => {
-  typeof IntersectionObserver === 'undefined' ?
-    await import(/* webpackChunkName: "intersection-observer" */'intersection-observer')
-  :
-    Promise.resolve();
+  typeof IntersectionObserver === 'undefined'
+    ? await import(/* webpackChunkName: "intersection-observer" */ 'intersection-observer')
+    : Promise.resolve();
 })();
 
 interface IBucketData {
   directory?: boolean;
   name: string;
-  "last-modified": string;
+  'last-modified': string;
   owner: string;
   size: string;
   wrangle?: boolean;
@@ -57,26 +56,27 @@ interface ITableContentState {
   data: Array<Partial<IBucketData>>;
 }
 
-export default class TableContents extends React.PureComponent<ITableContentsProps, ITableContentState> {
+export default class TableContents extends React.PureComponent<
+  ITableContentsProps,
+  ITableContentState
+> {
   private static DEFAULT_WINDOW_SIZE = 100;
 
   public state: ITableContentState = {
     windowSize: TableContents.DEFAULT_WINDOW_SIZE,
-    data: this.props.data.map((d, i) => ({...d, scrollId: i})),
+    data: this.props.data.map((d, i) => ({ ...d, scrollId: i })),
   };
 
   public componentDidMount() {
-    Array.from(document.querySelectorAll(`#s3-buckets-container .row`))
-      .forEach((entry) => {
-        this.io.observe(entry);
-      });
+    Array.from(document.querySelectorAll(`#s3-buckets-container .row`)).forEach((entry) => {
+      this.io.observe(entry);
+    });
   }
 
   public componentDidUpdate() {
-    Array.from(document.querySelectorAll(`#s3-buckets-container .row`))
-      .forEach((entry) => {
-        this.io.observe(entry);
-      });
+    Array.from(document.querySelectorAll(`#s3-buckets-container .row`)).forEach((entry) => {
+      this.io.observe(entry);
+    });
   }
 
   public componentWillReceiveProps(nextProps: Partial<ITableContentsProps>) {
@@ -84,28 +84,31 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
       data: nextProps.data.map((d, i) => ({ ...d, scrollId: i })),
     });
   }
-  private io = new IntersectionObserver((entries) => {
-    let lastVisibleElement = this.state.windowSize;
-    for (const entry of entries) {
-      let id = entry.target.getAttribute("id");
-      id = id.split('-').pop();
-      const scrollId = parseInt(id, 10);
-      if (entry.isIntersecting) {
-        lastVisibleElement = scrollId + 50 > this.state.windowSize ?
-          scrollId + TableContents.DEFAULT_WINDOW_SIZE
-          :
-          scrollId;
+  private io = new IntersectionObserver(
+    (entries) => {
+      let lastVisibleElement = this.state.windowSize;
+      for (const entry of entries) {
+        let id = entry.target.getAttribute('id');
+        id = id.split('-').pop();
+        const scrollId = parseInt(id, 10);
+        if (entry.isIntersecting) {
+          lastVisibleElement =
+            scrollId + 50 > this.state.windowSize
+              ? scrollId + TableContents.DEFAULT_WINDOW_SIZE
+              : scrollId;
+        }
       }
+      if (lastVisibleElement > this.state.windowSize) {
+        this.setState({
+          windowSize: lastVisibleElement,
+        });
+      }
+    },
+    {
+      root: document.getElementById('s3-buckets-container'),
+      threshold: [0, 1],
     }
-    if (lastVisibleElement > this.state.windowSize) {
-      this.setState({
-        windowSize: lastVisibleElement,
-      });
-    }
-  }, {
-    root: document.getElementById('s3-buckets-container'),
-    threshold: [0, 1],
-  });
+  );
 
   private renderIcon = (type) => {
     switch (type) {
@@ -116,18 +119,19 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
       default:
         return <IconSVG name="icon-file-o" />;
     }
-  }
+  };
 
   private getPrefix = (file, prefix) => {
     const handleSlashAtEnd = (path) => {
-      return (
-        path.length > 1 &&
-        path[path.length - 1] === '/' ? path.slice(0, path.length - 1) : path
-      );
+      return path.length > 1 && path[path.length - 1] === '/'
+        ? path.slice(0, path.length - 1)
+        : path;
     };
     const addSuffixSlash = (path) => `${handleSlashAtEnd(path)}/`;
-    return file.type === 'bucket' ? `/${file.name}` : `${handleSlashAtEnd(prefix)}/${addSuffixSlash(file.name)}`;
-  }
+    return file.type === 'bucket'
+      ? `/${file.name}`
+      : `${handleSlashAtEnd(prefix)}/${addSuffixSlash(file.name)}`;
+  };
 
   private onClickHandler = (enableRouting, onWorkspaceCreate, file, prefix, e) => {
     if (!file.directory) {
@@ -145,91 +149,71 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
     }
     preventPropagation(e);
     return false;
-  }
+  };
 
   private renderData() {
-    const {
-      enableRouting,
-      onWorkspaceCreate,
-      prefix,
-    } = this.props;
-    const {data} = this.state;
+    const { enableRouting, onWorkspaceCreate, prefix } = this.props;
+    const { data } = this.state;
     const ContainerElement = enableRouting ? Link : 'div';
     const pathname = window.location.pathname.replace(/\/cdap/, '');
     if (enableRouting) {
       return (
         <div className="s3-buckets" id="s3-buckets-container">
-          {
-            data.slice(0, this.state.windowSize)
-              .map((file, i) => {
-                const lastModified = humanReadableDate(file['last-modified'], true);
+          {data.slice(0, this.state.windowSize).map((file, i) => {
+            const lastModified = humanReadableDate(file['last-modified'], true);
 
-                return (
-                  <ContainerElement
-                    className={classnames({ disabled: !file.directory && !file.wrangle })}
-                    to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
-                    onClick={this.onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
-                    key={`${file.name}-${i}`}
-                  >
-                    <div
-                      className="row"
-                      id={`s3connection-${file.scrollId}`}
-                    >
-                      <div className="col-3">
-                        {this.renderIcon(file.type)}
-                        {file.name}
-                      </div>
-                      <div className="col-3">
-                        {file.owner || '--'}
-                      </div>
-                      <div className="col-3">
-                        {file.size || '--'}
-                      </div>
-                      <div className="col-3">
-                        {lastModified}
-                      </div>
-                    </div>
-                  </ContainerElement>
-                );
-              })
-          }
+            return (
+              <ContainerElement
+                className={classnames({ disabled: !file.directory && !file.wrangle })}
+                to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
+                onClick={this.onClickHandler.bind(
+                  null,
+                  enableRouting,
+                  onWorkspaceCreate,
+                  file,
+                  prefix
+                )}
+                key={`${file.name}-${i}`}
+              >
+                <div className="row" id={`s3connection-${file.scrollId}`}>
+                  <div className="col-3">
+                    {this.renderIcon(file.type)}
+                    {file.name}
+                  </div>
+                  <div className="col-3">{file.owner || '--'}</div>
+                  <div className="col-3">{file.size || '--'}</div>
+                  <div className="col-3">{lastModified}</div>
+                </div>
+              </ContainerElement>
+            );
+          })}
         </div>
       );
     }
 
     return (
       <div className="s3-buckets" id="s3-buckets-container">
-        {
-          data.slice(0, this.state.windowSize)
-            .map((file, i) => (
-              <ContainerElement
-                className={classnames({ disabled: !file.directory && !file.wrangle })}
-                to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
-                onClick={this.onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
-                key={`${file.name}-${i}`}
-              >
-                <div
-                  className="row"
-                  id={`s3connection-${file.scrollId}`}
-                >
-                  <div className="col-12">
-                    {this.renderIcon(file.type)}
-                    {file.name}
-                  </div>
-                </div>
-              </ContainerElement>
-            ))
-        }
+        {data.slice(0, this.state.windowSize).map((file, i) => (
+          <ContainerElement
+            className={classnames({ disabled: !file.directory && !file.wrangle })}
+            to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
+            onClick={this.onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
+            key={`${file.name}-${i}`}
+          >
+            <div className="row" id={`s3connection-${file.scrollId}`}>
+              <div className="col-12">
+                {this.renderIcon(file.type)}
+                {file.name}
+              </div>
+            </div>
+          </ContainerElement>
+        ))}
       </div>
     );
   }
 
   public renderContents() {
-    const {
-      search,
-      data,
-      clearSearch,
-    } = this.props;
+    const { search, data, clearSearch } = this.props;
     if (!data.length) {
       return (
         <div className="s3-buckets empty-message">
@@ -238,13 +222,12 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
               <EmptyMessageContainer searchText={search}>
                 <ul>
                   <li>
-                    <span
-                      className="link-text"
-                      onClick={clearSearch}
-                    >
+                    <span className="link-text" onClick={clearSearch}>
                       {T.translate(`features.EmptyMessageContainer.clearLabel`)}
                     </span>
-                    <span>{T.translate(`${PREFIX}.Content.EmptymessageContainer.suggestion1`)}</span>
+                    <span>
+                      {T.translate(`${PREFIX}.Content.EmptymessageContainer.suggestion1`)}
+                    </span>
                   </li>
                 </ul>
               </EmptyMessageContainer>
@@ -256,10 +239,6 @@ export default class TableContents extends React.PureComponent<ITableContentsPro
     return this.renderData();
   }
   public render() {
-    return (
-      <div className="s3-content-body">
-        {this.renderContents()}
-      </div>
-    );
+    return <div className="s3-content-body">{this.renderContents()}</div>;
   }
 }
