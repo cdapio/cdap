@@ -159,7 +159,12 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     // should fail with bad request as the plugin class does not have a name
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(artifactId), InspectionApp.class, manifest,
-                                          parents, pluginClasses).getStatusLine().getStatusCode());
+                                          parents, GSON.toJson(pluginClasses)).getStatusLine().getStatusCode());
+    // tests that the addArtifact when called with empty plugin classes gets deployed. This simulates the call made
+    // by UI
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
+                        addPluginArtifact(Id.Artifact.fromEntityId(artifactId),
+                                    InspectionApp.class, manifest, parents, "").getStatusLine().getStatusCode());
   }
 
   @Test
