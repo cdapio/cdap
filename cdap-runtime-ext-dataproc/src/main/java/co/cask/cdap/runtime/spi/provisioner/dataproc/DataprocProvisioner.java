@@ -208,6 +208,7 @@ public class DataprocProvisioner implements Provisioner {
 
   private SSHSession createSSHSession(ProvisionerContext provisionerContext, String host) throws IOException {
     try {
+      LOG.info("### Trying to create ssh session with {}", host);
       return provisionerContext.getSSHContext().createSSHSession(host);
     } catch (IOException ioe) {
       if (Throwables.getRootCause(ioe) instanceof ConnectException) {

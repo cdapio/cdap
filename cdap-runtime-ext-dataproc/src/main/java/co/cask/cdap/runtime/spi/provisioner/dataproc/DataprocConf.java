@@ -23,6 +23,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.io.CharStreams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,6 +42,8 @@ import javax.annotation.Nullable;
  * Configuration for Dataproc.
  */
 public class DataprocConf {
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocConf.class);
+
   private static final String AUTO_DETECT = "auto-detect";
   private final String accountKey;
   private final String region;
@@ -268,12 +272,13 @@ public class DataprocConf {
 
     boolean preferExternalIP = Boolean.parseBoolean(properties.get("preferExternalIP"));
 
+    LOG.info("### creating conf witth prefer external up false");
     // always use 'global' region until CDAP-14376 is fixed.
     return new DataprocConf(accountKey, "global", zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            preferExternalIP, publicKey);
+                            false, publicKey);
   }
 
   // the UI never sends nulls, it only sends empty strings.

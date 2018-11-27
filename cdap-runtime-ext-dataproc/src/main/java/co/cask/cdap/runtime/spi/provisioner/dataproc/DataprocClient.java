@@ -47,6 +47,8 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -71,6 +73,7 @@ import javax.annotation.Nullable;
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
 public class DataprocClient implements AutoCloseable {
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   // something like 2018-04-16T12:09:03.943-07:00
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
 
@@ -375,10 +378,13 @@ public class DataprocClient implements AutoCloseable {
     } catch (ParseException e) {
       ts = -1L;
     }
+    LOG.info("### Determing ip");
     String ip = properties.get("ip.external");
-    if (network.equals(systemNetwork) && !conf.preferExternalIP()) {
+    LOG.info("### External ip {}", ip);
+
+
       ip = properties.get("ip.internal");
-    }
+    LOG.info("### internal ip {}", ip);
     return new Node(nodeName, type, ip, ts, properties);
   }
 
