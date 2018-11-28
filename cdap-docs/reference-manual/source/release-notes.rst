@@ -30,6 +30,24 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 5.1.2 <http://docs.cask.co/cdap/5.1.2/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-13430` - Improved performance of Apache Spark pipelines that write to multiple sinks.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-14558` - Fixed a bug where pipeline checkpointing is always on regardless of the value set by the user in realtime pipeline.
+
+- :cask-issue:`CDAP-14578` - Fixed a bug where artifacts could not be uploaded through UI.
+
+
+
 `Release 5.1.1 <http://docs.cask.co/cdap/5.1.1/index.html>`__
 =============================================================
 
