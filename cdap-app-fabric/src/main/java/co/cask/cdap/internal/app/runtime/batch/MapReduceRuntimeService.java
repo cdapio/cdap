@@ -1134,7 +1134,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Arrays.asList(
         "org.apache.hadoop.mapreduce.v2.app.MRAppMaster",
         "org.apache.hadoop.mapred.YarnChild"
-      ), MapReduceContainerLauncher.class, Locations.newOutputSupplier(launcherJar));
+      ), MapReduceContainerLauncher.class, launcherJar);
     return launcherJar;
   }
 

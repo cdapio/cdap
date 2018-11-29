@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,6 @@ import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Throwables;
-import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -122,9 +121,8 @@ public final class InMemoryConfigurator implements Configurator {
     }
   }
 
-  private ConfigResponse createResponse(Application app) throws Exception {
-    String specJson = getSpecJson(app);
-    return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
+  private ConfigResponse createResponse(Application<?> app) throws Exception {
+    return new DefaultConfigResponse(0, getSpecJson(app));
   }
 
   private <T extends Config> String getSpecJson(Application<T> app) throws Exception {

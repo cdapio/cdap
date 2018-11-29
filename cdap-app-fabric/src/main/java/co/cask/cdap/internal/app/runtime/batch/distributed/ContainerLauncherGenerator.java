@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,15 +17,16 @@
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
 import co.cask.cdap.internal.asm.Methods;
-import com.google.common.io.OutputSupplier;
+import org.apache.twill.filesystem.Location;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -39,18 +40,50 @@ import java.util.jar.JarOutputStream;
 public final class ContainerLauncherGenerator {
 
   /**
-   * Generates a JAR file that contains zero or more classes with a static main method.
+   * Generates a JAR file that contains zero or more classes with a static main method that all delegates to the
+   * same main class.
    *
    * @param mainClassNames List of main class names to generate
    * @param mainDelegatorClass the actual class that the main method will delegate to
-   * @param outputSupplier the {@link OutputSupplier} for the jar file
+   * @param location the {@link Location} of the launcher jar
+   * @throws IOException if failed to generate the launcher jar
    */
   public static void generateLauncherJar(Iterable<String> mainClassNames, Class<?> mainDelegatorClass,
-                                         OutputSupplier<? extends OutputStream> outputSupplier) throws IOException {
-    try (JarOutputStream output = new JarOutputStream(outputSupplier.getOutput())) {
-      for (String mainClassName : mainClassNames) {
-        generateMainClass(mainClassName, Type.getType(mainDelegatorClass), output);
-      }
+                                         Location location) throws IOException {
+    try (JarOutputStream jarOut = new JarOutputStream(location.getOutputStream())) {
+      generateLauncherJar(mainClassNames, mainDelegatorClass, jarOut);
+    }
+  }
+
+  /**
+   * Generates a JAR file that contains zero or more classes with a static main method that all delegates to the
+   * same main class.
+   *
+   * @param mainClassNames List of main class names to generate
+   * @param mainDelegatorClass the actual class that the main method will delegate to
+   * @param file the {@link File} for the launcher jar
+   * @throws IOException if failed to generate the launcher jar
+   */
+  public static void generateLauncherJar(Iterable<String> mainClassNames, Class<?> mainDelegatorClass,
+                                         File file) throws IOException {
+    try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(file))) {
+      generateLauncherJar(mainClassNames, mainDelegatorClass, jarOut);
+    }
+  }
+
+  /**
+   * Generates a JAR file that contains zero or more classes with a static main method that all delegates to the
+   * same main class.
+   *
+   * @param mainClassNames List of main class names to generate
+   * @param mainDelegatorClass the actual class that the main method will delegate to
+   * @param jarOut an opened {@link JarOutputStream} for writing the launche jar
+   * @throws IOException if failed to generate the launcher jar
+   */
+  private static void generateLauncherJar(Iterable<String> mainClassNames, Class<?> mainDelegatorClass,
+                                          JarOutputStream jarOut) throws IOException {
+    for (String mainClassName : mainClassNames) {
+      generateMainClass(mainClassName, Type.getType(mainDelegatorClass), jarOut);
     }
   }
 

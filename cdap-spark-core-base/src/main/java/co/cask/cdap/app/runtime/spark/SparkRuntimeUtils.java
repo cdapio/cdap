@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
 import co.cask.cdap.app.runtime.spark.distributed.SparkDriverService;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import com.google.common.io.OutputSupplier;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
@@ -86,17 +85,13 @@ public final class SparkRuntimeUtils {
 
     try {
       File confDir = new File(confDirPath);
-      BundleJarUtil.createArchive(confDir, new OutputSupplier<ZipOutputStream>() {
-        @Override
-        public ZipOutputStream getOutput() throws IOException {
-          ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(zipFile));
-          zipOutput.putNextEntry(new ZipEntry(propertiesEntryName));
-          properties.store(zipOutput, "Spark configuration.");
-          zipOutput.closeEntry();
+      try (ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(zipFile))) {
+        zipOutput.putNextEntry(new ZipEntry(propertiesEntryName));
+        properties.store(zipOutput, "Spark configuration.");
+        zipOutput.closeEntry();
 
-          return zipOutput;
-        }
-      });
+        BundleJarUtil.addToArchive(confDir, zipOutput);
+      }
       LOG.debug("Spark config archive created at {} from {}", zipFile, confDir);
       return zipFile;
     } catch (IOException e) {
