@@ -47,7 +47,7 @@
       "properties": [
         {
           "widget-type": "textarea",
-          "label": "Initialization Action (optional)",
+          "label": "Initialization Action",
           "name": "initializationAction",
           "description": "Initialization action to be executed during initialization of the cluster. For example: sudo zookeeper-server start",
           "widget-attributes": {

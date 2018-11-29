@@ -81,9 +81,9 @@ public class RemoteHadoopProvisioner implements Provisioner {
     } catch (IOException ioe) {
       if (Throwables.getRootCause(ioe) instanceof ConnectException) {
         throw new IOException(String.format(
-                "Failed to connect to host %s. Ensure that firewall rules exist that allow ssh " +
-                        "on port 22.", host),
-                ioe);
+          "Failed to connect to host %s. Ensure that firewall rules exist that allow ssh " +
+            "on port 22.", host),
+          ioe);
       }
       throw ioe;
     }
@@ -91,14 +91,14 @@ public class RemoteHadoopProvisioner implements Provisioner {
 
   private String getMasterExternalIp(Cluster cluster) {
     Node masterNode = cluster.getNodes().stream()
-            .filter(node -> Node.Type.MASTER == node.getType())
-            .findFirst().orElseThrow(() ->
-                    new IllegalArgumentException("Cluster has no node of master type: " + cluster));
+      .filter(node -> Node.Type.MASTER == node.getType())
+      .findFirst().orElseThrow(() ->
+        new IllegalArgumentException("Cluster has no node of master type: " + cluster));
 
     String ip = masterNode.getIpAddress();
     if (ip == null) {
       throw new IllegalArgumentException(String.format("External IP is not defined for node '%s' in cluster %s",
-              masterNode.getId(), cluster));
+        masterNode.getId(), cluster));
     }
     return ip;
   }
