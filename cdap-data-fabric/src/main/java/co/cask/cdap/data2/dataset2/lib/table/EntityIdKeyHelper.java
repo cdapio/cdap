@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,7 @@ import java.util.Map;
 // Note: these methods were refactored from MetadataDataset class. Once CDAP-3657 is fixed, these methods will need
 // to be cleaned up CDAP-4291
 public final class EntityIdKeyHelper {
-  public static final Map<Class<? extends NamespacedEntityId>, String> TYPE_MAP =
+  private static final Map<Class<? extends NamespacedEntityId>, String> TYPE_MAP =
     ImmutableMap.<Class<? extends NamespacedEntityId>, String>builder()
       .put(NamespaceId.class, EntityTypeSimpleName.NAMESPACE.getSerializedForm())
       .put(ArtifactId.class, EntityTypeSimpleName.ARTIFACT.getSerializedForm())
@@ -53,6 +53,7 @@ public final class EntityIdKeyHelper {
       .put(FlowId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
       .put(ServiceId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
       .put(DatasetId.class, EntityTypeSimpleName.DATASET.getSerializedForm())
+      // TODO (CDAP-14584) remove stream and view
       .put(StreamId.class, EntityTypeSimpleName.STREAM.getSerializedForm())
       .put(StreamViewId.class, EntityTypeSimpleName.VIEW.getSerializedForm())
       .put(ScheduleId.class, EntityTypeSimpleName.SCHEDULE.getSerializedForm())
@@ -86,12 +87,14 @@ public final class EntityIdKeyHelper {
       builder.add(namespaceId);
       builder.add(datasetId);
     } else if (type.equals(TYPE_MAP.get(StreamId.class))) {
+      // TODO (CDAP-14584) remove stream and view
       StreamId stream = (StreamId) namespacedEntityId;
       String namespaceId = stream.getNamespace();
       String streamId = stream.getStream();
       builder.add(namespaceId);
       builder.add(streamId);
     } else if (type.equals(TYPE_MAP.get(StreamViewId.class))) {
+      // TODO (CDAP-14584) remove stream and view
       StreamViewId view = (StreamViewId) namespacedEntityId;
       String namespaceId = view.getNamespace();
       String streamId = view.getStream();
@@ -146,6 +149,7 @@ public final class EntityIdKeyHelper {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return new DatasetId(namespaceId, instanceId);
+      // TODO (CDAP-14584) remove stream and view
     } else if (type.equals(TYPE_MAP.get(StreamId.class))) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
@@ -179,7 +183,8 @@ public final class EntityIdKeyHelper {
   public static String getV1TargetType(NamespacedEntityId namespacedEntityId) {
     String v1Type = TYPE_MAP.get(namespacedEntityId.getClass());
     switch (v1Type) {
-      case MetadataEntity.VIEW:
+      // TODO (CDAP-14584) remove stream and view
+      case "stream_view":
         v1Type = "view";
         break;
       case MetadataEntity.DATASET:

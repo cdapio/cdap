@@ -76,8 +76,6 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   // version is used by artifact and application and their children which includes programs, flowlet, runs and schedules
   public static final String VERSION = "version";
   public static final String DATASET = "dataset";
-  public static final String STREAM = "stream";
-  public static final String VIEW = "stream_view";
   public static final String TYPE = "type";
   public static final String FLOW = "flow";
   public static final String FLOWLET = "flowlet";
@@ -94,10 +92,8 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
     Map<String, String[][]> typesToKeys = new HashMap<>();
     typesToKeys.put(NAMESPACE, new String[][]{{NAMESPACE}});
     typesToKeys.put(DATASET, new String[][]{{NAMESPACE, DATASET}, {DATASET}});
-    typesToKeys.put(STREAM, new String[][]{{NAMESPACE, STREAM}});
     typesToKeys.put(APPLICATION, new String[][]{{NAMESPACE, APPLICATION, VERSION}, {NAMESPACE, APPLICATION}});
     typesToKeys.put(ARTIFACT, new String[][]{{NAMESPACE, ARTIFACT, VERSION}});
-    typesToKeys.put(VIEW, new String[][]{{NAMESPACE, STREAM, VIEW}});
     typesToKeys.put(PROGRAM, new String[][]{{NAMESPACE, APPLICATION, VERSION, TYPE, PROGRAM},
       {NAMESPACE, APPLICATION, TYPE, PROGRAM}});
     typesToKeys.put(SCHEDULE, new String[][]{{NAMESPACE, APPLICATION, VERSION, SCHEDULE},
@@ -316,13 +312,6 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
         builder.append(String.format("%s: %s which exists in ", MetadataEntity.DATASET,
                                      getValue(MetadataEntity.DATASET)));
         return getDescription(builder, MetadataEntity.NAMESPACE);
-      case MetadataEntity.STREAM:
-        builder.append(String.format("%s: %s which exists in ", MetadataEntity.STREAM,
-                                     getValue(MetadataEntity.STREAM)));
-        return getDescription(builder, MetadataEntity.NAMESPACE);
-      case MetadataEntity.VIEW:
-        builder.append(String.format("view: %s of ", getValue(MetadataEntity.VIEW)));
-        return getDescription(builder, MetadataEntity.STREAM);
       case MetadataEntity.PROGRAM:
         builder.append(String.format("%s: %s in ", getValue(MetadataEntity.TYPE).toLowerCase(),
                                      getValue(MetadataEntity.PROGRAM)));
@@ -346,8 +335,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
           builder.append(keyValue.getValue());
           builder.append(",");
         }
-        // delete the last , and space
-        builder.deleteCharAt(builder.length() - 1);
+        // delete the last ,
         builder.deleteCharAt(builder.length() - 1);
         builder.append(String.format(" of type '%s'", getType()));
         return builder.toString();

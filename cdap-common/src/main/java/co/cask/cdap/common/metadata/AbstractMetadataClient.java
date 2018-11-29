@@ -71,12 +71,10 @@ public abstract class AbstractMetadataClient {
     BiMap<String, String> map = HashBiMap.create();
     map.put(MetadataEntity.NAMESPACE, "namespaces");
     map.put(MetadataEntity.APPLICATION, "apps");
-    map.put(MetadataEntity.STREAM, "streams");
     map.put(MetadataEntity.DATASET, "datasets");
     map.put(MetadataEntity.VERSION, "versions");
     map.put(MetadataEntity.ARTIFACT, "artifacts");
     map.put(MetadataEntity.PROGRAM, "programs");
-    map.put(MetadataEntity.VIEW, "views");
     map.put(MetadataEntity.PROGRAM_RUN, "runs");
     ENTITY_TYPE_TO_API_PART = map;
   }

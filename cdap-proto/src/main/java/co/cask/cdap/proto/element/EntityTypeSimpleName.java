@@ -31,8 +31,9 @@ public enum EntityTypeSimpleName {
   APP(MetadataEntity.APPLICATION),
   PROGRAM(MetadataEntity.PROGRAM),
   DATASET(MetadataEntity.DATASET),
-  STREAM(MetadataEntity.STREAM),
-  VIEW(MetadataEntity.VIEW),
+  // TODO (CDAP-14584) remove stream and view
+  STREAM("stream"),
+  VIEW("stream_view"),
   SCHEDULE(MetadataEntity.SCHEDULE);
 
   private final String serializedForm;

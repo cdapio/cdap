@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,8 +60,8 @@ public class StreamViewId extends NamespacedEntityId implements ParentedId<Strea
 
   @Override
   public MetadataEntity toMetadataEntity() {
-    return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace).append(MetadataEntity.STREAM, stream)
-      .appendAsType(MetadataEntity.VIEW, view)
+    return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace).append("stream", stream)
+      .appendAsType("view", view)
       .build();
   }
 

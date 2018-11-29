@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,6 @@
 package co.cask.cdap.data.view;
 
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.ViewSystemMetadataWriter;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.ViewSpecification;
@@ -36,15 +34,12 @@ public class ViewAdmin {
   private final ViewStore store;
   private final ExploreFacade explore;
   private final ExploreTableNaming naming;
-  private final MetadataStore metadataStore;
 
   @Inject
-  public ViewAdmin(ViewStore store, ExploreFacade explore, ExploreTableNaming naming,
-                   MetadataStore metadataStore) {
+  public ViewAdmin(ViewStore store, ExploreFacade explore, ExploreTableNaming naming) {
     this.store = store;
     this.explore = explore;
     this.naming = naming;
-    this.metadataStore = metadataStore;
   }
 
   public boolean createOrUpdate(StreamViewId viewId, ViewSpecification spec) throws Exception {
@@ -65,17 +60,13 @@ public class ViewAdmin {
       spec = new ViewSpecification(spec.getFormat(), naming.getTableName(viewId));
     }
     explore.enableExploreStream(viewId.getParent(), spec.getTableName(), spec.getFormat());
-    boolean result = store.createOrUpdate(viewId, spec);
-    ViewSystemMetadataWriter systemMetadataWriter = new ViewSystemMetadataWriter(metadataStore, viewId, spec, !result);
-    systemMetadataWriter.write();
-    return result;
+    return store.createOrUpdate(viewId, spec);
   }
 
   public void delete(StreamViewId viewId) throws Exception {
     ViewSpecification spec = store.get(viewId);
     explore.disableExploreStream(viewId.getParent(), spec.getTableName());
     store.delete(viewId);
-    metadataStore.removeMetadata(viewId.toMetadataEntity());
   }
 
   public List<StreamViewId> list(StreamId streamId) {

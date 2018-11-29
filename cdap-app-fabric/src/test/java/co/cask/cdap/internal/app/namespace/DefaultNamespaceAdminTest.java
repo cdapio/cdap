@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -370,9 +370,11 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // Determine a group other than the current user's primary group to use for testing
     // Note: this is only meaningful if the user running this test is in at least 2 groups
+    // Note: In some environments, UGI has groups that the user does not actually belong to...
+    //       these appear to be at the end of the group list, so picking the second groups seems safest.
     String[] groups = UserGroupInformation.getCurrentUser().getGroupNames();
     Assert.assertTrue(groups.length > 0);
-    String nsGroup = groups[groups.length - 1];
+    String nsGroup = groups[groups.length > 1 ? 1 : 0];
 
     // create and validate a namespace with a default settings except that a group is configured
     namespaceAdmin.create(new NamespaceMeta.Builder().setName("dd2").setGroupName(nsGroup).build());

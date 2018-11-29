@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,7 @@ public class InvalidMetadataExceptionTest {
     invalidMetadataException =
       new InvalidMetadataException(NamespaceId.DEFAULT.stream("st").view("v").toMetadataEntity(), "error");
     expectedMessage =
-      "Unable to set metadata for view: v of stream: st which exists in namespace: default. error";
+      "Unable to set metadata for namespace=default,stream=st,view=v of type 'view'. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
 
     // test program
@@ -63,7 +63,7 @@ public class InvalidMetadataExceptionTest {
     MetadataEntity customEntity = MetadataEntity.builder(NamespaceId.DEFAULT.dataset("ds").toMetadataEntity())
       .appendAsType("field", "empName").build();
     invalidMetadataException = new InvalidMetadataException(customEntity, "error");
-    expectedMessage = "Unable to set metadata for namespace=default,dataset=ds,field=empNam of type 'field'. error";
+    expectedMessage = "Unable to set metadata for namespace=default,dataset=ds,field=empName of type 'field'. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
   }
 }

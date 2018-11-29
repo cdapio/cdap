@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -57,7 +56,6 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   private final StreamMetaStore streamMetaStore;
   private final UsageRegistry usageRegistry;
   private final LineageWriter lineageWriter;
-  private final MetadataStore metadataStore;
   private final ViewAdmin viewAdmin;
 
   private AuditPublisher auditPublisher;
@@ -67,13 +65,11 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
                              UsageRegistry usageRegistry,
                              LineageWriter lineageWriter,
                              StreamMetaStore streamMetaStore,
-                             MetadataStore metadataStore,
                              ViewAdmin viewAdmin) {
     super(queueService);
     this.usageRegistry = usageRegistry;
     this.streamMetaStore = streamMetaStore;
     this.lineageWriter = lineageWriter;
-    this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
   }
 
@@ -89,7 +85,6 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
       // Remove metadata for the stream
       StreamId stream = namespace.stream(spec.getName());
-      metadataStore.removeMetadata(stream.toMetadataEntity());
       streamMetaStore.removeStream(stream);
     }
   }
@@ -158,7 +153,6 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void drop(StreamId streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
-    metadataStore.removeMetadata(streamId.toMetadataEntity());
     drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
     publishAudit(streamId, AuditType.DELETE);
