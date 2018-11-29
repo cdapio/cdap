@@ -32,13 +32,6 @@ ClicksAndViews
 --------------
 - Demonstrates a reduce-side join across two streams using a MapReduce program.
 
-CountRandom
------------
-- Generates random numbers between 0 and 9999.
-- For each number *i*, generates i%10000, i%1000, i%100, i%10.
-- Increments the counter for each number.
-- Demonstrates the ``@Tick`` feature of flows.
-
 DataCleansing
 -------------
 - Demonstrates incrementally consuming partitions of a partitioned fileset using MapReduce.
@@ -54,14 +47,6 @@ FileSetExample
 - Uses a Service that uploads files in—or downloads files to—a FileSet.
 - Includes a MapReduce that implements the classic WordCount example. The input and
   output paths of the MapReduce can be configured through runtime arguments.
-
-HelloWorld
-----------
-- This is a simple HelloWorld example that uses a stream, a dataset, a flow, and a
-  service.
-- A dataset created using a KeyValueTable.
-- A flow with a single flowlet that reads from the stream and stores each name in the KeyValueTable.
-- A service that reads the name from the KeyValueTable and responds with "Hello [Name]!"
 
 LogAnalysis
 -----------
@@ -117,22 +102,6 @@ SportResults
 - It loads game results into a File set partitioned by league and season, and processes
   them with MapReduce.
 
-StreamConversion
-----------------
-- An application that illustrates the use of time-partitioned File sets.
-- It periodically converts a stream into partitions of a File set, which can be read by
-  SQL queries.
-
-UserProfiles
-------------
-- An application that demonstrates column-level conflict detection using the example of
-  updating of user profiles in a dataset.
-
-WebAnalytics
-------------
-- An application to generate statistics and to provide insights about web usage through
-  the analysis of web traffic.
-
 WikipediaPipeline
 -----------------
 - An application that performs analysis on Wikipedia data using MapReduce and Spark programs
@@ -152,7 +121,7 @@ License and Trademarks
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.
 
-Copyright © 2014-2017 Cask Data, Inc.
+Copyright © 2014-2018 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at

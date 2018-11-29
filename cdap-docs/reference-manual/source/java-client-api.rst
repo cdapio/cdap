@@ -183,8 +183,8 @@ MetricsClient
   // Construct the client used to interact with CDAP
   MetricsClient metricsClient = new MetricsClient(clientConfig);
 
-  // Fetch the total number of events that have been processed by a flowlet
-  RuntimeMetrics metric = metricsClient.getFlowletMetrics(NamespaceId.DEFAULT.app("HelloWorld").flow("someFlow").flowlet("someFlowlet"));
+  // Fetch the total number of requests that have been processed by a service
+  RuntimeMetrics metric = metricsClient.getServiceMetrics(NamespaceId.DEFAULT.app("SportResults").service("RetrieveCounts"));
   long processed = metric.getProcessed();
 
 .. _monitor-client:
@@ -257,16 +257,16 @@ ProgramClient
   programClient.start(NamespaceId.DEFAULT.app("WordCount").service("RetrieveCounts"));
 
   // formatted in JSON
-  programClient.getLiveInfo(NamespaceId.DEFAULT.app("HelloWorld").service("greet"));
+  programClient.getLiveInfo(NamespaceId.DEFAULT.app("SportResults").service("UploadService"));
 
   // Fetch program logs in the WordCount example
   programClient.getProgramLogs(NamespaceId.DEFAULT.app("WordCount").service("RetrieveCounts"), 0, Long.MAX_VALUE);
 
-  // Scale a service in the HelloWorld example
-  programClient.setServiceInstances(NamespaceId.DEFAULT.app("HelloWorld").service("greet"), 3);
+  // Scale a service in the SportResults example
+  programClient.setServiceInstances(NamespaceId.DEFAULT.app("SportResults").service("UploadService"), 3);
 
-  // Stop a service in the HelloWorld example
-  programClient.stop(NamespaceId.DEFAULT.app("HelloWorld").service("greet"));
+  // Stop a service in the SportResults example
+  programClient.stop(NamespaceId.DEFAULT.app("SportResults").service("UploadService"));
 
   // Start, scale, and stop a flow in the WordCount example
   programClient.start(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"));

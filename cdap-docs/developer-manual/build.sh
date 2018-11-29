@@ -79,8 +79,6 @@ function download_includes() {
 
   test_an_include 8fdb325ac2ad92bca959bd2f12fc91d7 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
 
-  test_an_include cb9f3b1968418ed32176dc070946d104 ../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
-
   test_an_include 1b4cbbca8854950d67230f9062b2548e ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
   test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
@@ -91,6 +89,8 @@ function download_includes() {
 
   test_an_include ce88887b4e60273e60deeb6d233be7ae ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
   test_an_include 76f187d9ad8ea4d14bde0f2ef8617a97 ../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
+
+  test_an_include eb9c28563b1ef25f7740c796ecf005b2 ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/RetrieveCountsHandler.java
 }
 
 function test_includes () {

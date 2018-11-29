@@ -143,14 +143,14 @@ By default, CDAP will start an implicit transaction for these methods:
   programs and sub-programs (flowlets, service handlers, and workflow actions), with the
   exception of worker programs.
 
-For example, as shown in the :ref:`HelloWorld example <examples-hello-world>`, the
-``GreetingHandler`` uses the *whom* ``KeyValueTable``. CDAP implicitly starts a
+For example, as shown in the :ref:`WordCount example <examples-word-count>`, the
+``RetrieveCountsHandler`` uses the *wordCounts* ``KeyValueTable``. CDAP implicitly starts a
 transaction for this handler method, and the handler can rely on the transactional
 consistency of the data it reads from the dataset:
 
-.. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
+.. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/RetrieveCountsHandler.java
    :language: java
-   :lines: 118-135
+   :lines: 118-140
    :dedent: 2
 
 For flowlet process methods, this starting of implicit transactions cannot be disabled,
@@ -300,15 +300,11 @@ You have these options:
   But it can also greatly reduce the number of transaction conflicts, leading to improved
   overall application throughput.
 
-  See the :ref:`UserProfile example <examples-user-profiles>`
-  for a sample use case.
-
-
 Transaction Examples
 ====================
 
-- For an example of using **implicit transactions,** see the :ref:`HelloWorld example
-  <examples-hello-world>` and its ``Greeting`` service and ``GreetingHandler``, which uses
+- For an example of using **implicit transactions,** see the :ref:`WordCount example
+  <examples-word-count>` and its ``RetrieveCounts`` service and ``RetrieveCountsHandler``, which uses
   implicit transactions.
 
 - For an example of using **explicit transactions,** see the :ref:`FileSet example

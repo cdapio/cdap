@@ -113,7 +113,7 @@ deleted when a CDAP namespace is deleted through CDAP.
 
 Namespace Examples
 ==================
-- All examples, starting with :ref:`Hello World <examples-hello-world>`, demonstrate using
+- All examples, starting with :ref:`Word Count <examples-word-count>`, demonstrate using
   namespaces when using the CDAP HTTP RESTful API.
   
 - The CDAP :ref:`Command Line Interface <cli>` is namespace-aware. You set the

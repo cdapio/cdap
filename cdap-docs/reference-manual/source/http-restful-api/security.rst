@@ -211,7 +211,7 @@ Example output (pretty-printed)::
     {
       "authorizable": {
         "entityType": "PROGRAM",
-        "entityParts":{"NAMESPACE": "default", "APPLICATION": "HelloWorld", "PROGRAM": "flow.testFlow"}
+        "entityParts":{"NAMESPACE": "default", "APPLICATION": "SportResults", "PROGRAM": "service.UploadService"}
       },
       "action": "EXECUTE"
     }

@@ -81,18 +81,9 @@ Flow and Flowlet Examples
 Flows and flowlets are included in just about every CDAP :ref:`application <apps-and-packs>`,
 :ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
 
-- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using **a
-  flow with a single flowlet** to ingest a name into a dataset.
-
-- For an example of **annotated flowlets,** see the :ref:`Count Random
-  <examples-count-random>` example.
-
 - For examples of **flows with multiple flowlets,** see the :ref:`Purchase
-  <examples-purchase>`, :ref:`Count Random <examples-count-random>`, and
-  :ref:`Word Count <examples-word-count>` examples.
+  <examples-purchase>` and :ref:`Word Count <examples-word-count>` examples.
   
-- The :ref:`Web Analytics <examples-web-analytics>` example uses a single flowlet to
-  perform analytics using access logs.
-  
+
 - The :ref:`Purchase <examples-purchase>` example demonstrates :ref:`setting the resources
   <flows-flowlets-resources>` used by an individual instance of a flowlet.

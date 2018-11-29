@@ -26,22 +26,17 @@
   <name>CDAP Examples</name>
 
   <modules>
-    <module>CountRandom</module>
     <module>ClicksAndViews</module>
     <module>CubeService</module>
     <module>DataCleansing</module>
     <module>DecisionTreeRegression</module>
     <module>FileSetExample</module>
-    <module>HelloWorld</module>
     <module>LogAnalysis</module>
     <module>Purchase</module>
     <module>SpamClassifier</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
     <module>SportResults</module>
-    <module>StreamConversion</module>
-    <module>UserProfiles</module>
-    <module>WebAnalytics</module>
     <module>WikipediaPipeline</module>
     <module>WordCount</module>
   </modules>

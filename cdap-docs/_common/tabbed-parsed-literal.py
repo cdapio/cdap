@@ -77,15 +77,15 @@ Examples:
 
     .. Linux
 
-    $ cdap cli start flow HelloWorld.WhoFlow
-    Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
+    $ cdap cli start service SoprtResults.UploadService
+    Successfully started service 'UploadService' of application 'SportResults' with stored runtime arguments '{}'
 
     $ curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
 
     .. Windows
 
-    > cdap.bat cli start flow HelloWorld.WhoFlow
-    Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
+    > cdap.bat cli start service SoprtResults.UploadService
+    Successfully started service 'UploadService' of application 'SportResults' with stored runtime arguments '{}'
 
     > <CDAP-HOME>\libexec\bin\curl.exe -d c:\|release| -X POST 'http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'
 
@@ -97,8 +97,8 @@ strings in the commands must be on a single line to convert successfully.
 
 .. tabbed-parsed-literal::
 
-    $ cdap cli start flow HelloWorld.WhoFlow
-    Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
+    $ cdap cli start service SoprtResults.UploadService
+    Successfully started service 'UploadService' of application 'SportResults' with stored runtime arguments '{}'
 
     $ curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
 

@@ -307,10 +307,10 @@ and, in all cases, with a JSON map in the request body consisting of pairs of lo
 
 For example::
 
-  PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/loglevels \
+  PUT /v3/namespaces/default/apps/SportResults/services/UploadService/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/loglevels \
       -d '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
 
-will update the log levels of the flow *WhoFlow* in the *HelloWorld* application with 
+will update the log levels of the service *UploadService* in the *SportResults* application with
 the log level of ``co.cask.cdap`` changed to ``ERROR``
 and log level of ``ROOT`` changed to ``TRACE``.
 
@@ -367,9 +367,9 @@ If the body is not provided or is empty, it will reset the log levels of all log
 
 For example::
 
-  POST /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/resetloglevels \
+  POST /v3/namespaces/default/apps/SportResults/services/UploadService/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/resetloglevels \
       -d '[ "co.cask.cdap", "ROOT" ]'
 
-will reset the log level of the *WhoFlow* flow in the *HelloWorld* application
+will reset the log level of the service *UploadService* in the *SportResults* application
 with the log levels of ``co.cask.cdap`` and ``ROOT`` reset back to
 what they were when the flow was started.
