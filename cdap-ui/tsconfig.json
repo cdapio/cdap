@@ -9,6 +9,7 @@
     "skipLibCheck": true,
     "moduleResolution": "node",
     "importHelpers": false,
+    "allowSyntheticDefaultImports": true,
     "lib": [
       "es2015",
       "dom"

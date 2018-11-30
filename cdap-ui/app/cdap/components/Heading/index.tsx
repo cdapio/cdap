@@ -16,24 +16,25 @@
 
 import * as React from 'react';
 export enum HeadingTypes {
-  h1 = "h1",
-  h2 = "h2",
-  h3 = "h3",
-  h4 = "h4",
-  h5 = "h5",
-  h6 = "h6",
+  h1 = 'h1',
+  h2 = 'h2',
+  h3 = 'h3',
+  h4 = 'h4',
+  h5 = 'h5',
+  h6 = 'h6',
 }
 interface IHeadingProps {
-  type: HeadingTypes.h1 |
-    HeadingTypes.h2 |
-    HeadingTypes.h3 |
-    HeadingTypes.h4 |
-    HeadingTypes.h5 |
-    HeadingTypes.h6;
+  type:
+    | HeadingTypes.h1
+    | HeadingTypes.h2
+    | HeadingTypes.h3
+    | HeadingTypes.h4
+    | HeadingTypes.h5
+    | HeadingTypes.h6;
   label: string;
   className?: string;
 }
-const Heading: React.SFC<IHeadingProps> = ({type, label, className}) => {
+const Heading: React.SFC<IHeadingProps> = ({ type, label, className }) => {
   let HtmlHeading: string = '';
   switch (type) {
     case HeadingTypes.h2:
@@ -54,11 +55,7 @@ const Heading: React.SFC<IHeadingProps> = ({type, label, className}) => {
     default:
       HtmlHeading = 'h1';
   }
-  return (
-    <HtmlHeading className={className}>
-      {label}
-    </HtmlHeading>
-  );
+  return <HtmlHeading className={className}>{label}</HtmlHeading>;
 };
 
 export default Heading;

@@ -54,22 +54,11 @@ storiesOf('Table', module)
     'Simple Table',
     withInfo({
       text: 'Render the default table used across CDAP UI',
-    })(() => (
-      <SortableStickyGrid
-        entities={ entities}
-        gridHeaders={GRID_HEADERS}
-      />
-    ),
-  ))
+    })(() => <SortableStickyGrid entities={entities} gridHeaders={GRID_HEADERS} />)
+  )
   .add(
     'Compact Table',
     withInfo({
       text: 'Render default table but compact one occupying lesser space',
-    })(() => (
-      <SortableStickyGrid
-        entities={entities}
-        gridHeaders={GRID_HEADERS}
-        size='small'
-      />
-    )),
+    })(() => <SortableStickyGrid entities={entities} gridHeaders={GRID_HEADERS} size="small" />)
   );

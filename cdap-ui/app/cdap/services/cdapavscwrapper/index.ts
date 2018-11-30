@@ -46,7 +46,7 @@ const UI_TO_AVRO_MAPPING: IUiToAvro = {
   [UI_TYPES.TIMESTAMP]: LogicalTypes.TIMESTAMP_MICROS,
 };
 
-const AVRO_TO_UI_MAPPING: IAvroToUi = invert(UI_TO_AVRO_MAPPING);
+const AVRO_TO_UI_MAPPING: IAvroToUi = invert(UI_TO_AVRO_MAPPING) as IAvroToUi;
 
 const CdapAvscWrapper = {
   parse: (schema, opts: object) => {

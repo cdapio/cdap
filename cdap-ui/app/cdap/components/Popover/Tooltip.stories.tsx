@@ -22,74 +22,77 @@ import Popover from './index';
 
 storiesOf('Tooltip', module)
   .addDecorator(withKnobs)
-  .add('Default Tooltip',
+  .add(
+    'Default Tooltip',
     withInfo({
       text: 'Default tooltip for simple text',
-    })(() => (
-      [
+    })(() => [
+      <Popover
+        targetDimension={{
+          margin: '0 5px',
+          display: 'inline-block',
+        }}
+        placement="right"
+        target={() => (
+          <button className="btn btn-secondary">
+            {text('Right Tooltip  Btn', 'Right Tooltip  Btn')}
+          </button>
+        )}
+        showOn="Hover"
+        tag="span"
+      >
+        {text('Right Tooltip  message', 'Right Tooltip  message')}
+      </Popover>,
+      <Popover
+        targetDimension={{
+          margin: '0 5px',
+          display: 'inline-block',
+        }}
+        placement="bottom"
+        target={() => (
+          <button className="btn btn-secondary">
+            {text('Bottom Tooltip  Btn', 'Bottom Tooltip  Btn')}
+          </button>
+        )}
+        showOn="Hover"
+        tag="span"
+      >
+        {text('Bottom Tooltip  message', 'Bottom Tooltip  message')}
+      </Popover>,
+      <div style={{ margin: '5px 0' }}>
+        <br />
         <Popover
           targetDimension={{
-            margin: "0 5px",
+            margin: '0 5px',
             display: 'inline-block',
           }}
-          placement='right'
+          placement="top"
           target={() => (
             <button className="btn btn-secondary">
-              {text('Right Tooltip  Btn', 'Right Tooltip  Btn')}
+              {text('Top Tooltip  Btn', 'Top Tooltip  Btn')}
             </button>
           )}
           showOn="Hover"
           tag="span"
         >
-          {text('Right Tooltip  message', 'Right Tooltip  message')}
-        </Popover>,
+          {text('Top Tooltip  message', 'Top Tooltip  message')}
+        </Popover>
         <Popover
           targetDimension={{
-            margin: "0 5px",
+            margin: '0 5px',
             display: 'inline-block',
           }}
-          placement='bottom'
+          placement="left"
           target={() => (
             <button className="btn btn-secondary">
-              {text('Bottom Tooltip  Btn', 'Bottom Tooltip  Btn')}
+              {text('Left Tooltip  Btn', 'Left Tooltip  Btn')}
             </button>
           )}
           showOn="Hover"
           tag="span"
         >
-          {text('Bottom Tooltip  message', 'Bottom Tooltip  message')}
-        </Popover>,
-        <div style={{margin: '5px 0'}}>
-          <br />
-          <Popover
-            targetDimension={{
-              margin: "0 5px",
-              display: 'inline-block',
-            }}
-            placement='top'
-            target={() => <button className="btn btn-secondary">{text('Top Tooltip  Btn', 'Top Tooltip  Btn')}</button>}
-            showOn="Hover"
-            tag="span"
-          >
-            {text('Top Tooltip  message', 'Top Tooltip  message')}
+          {text('Left Tooltip  message', 'Left Tooltip  message')}
         </Popover>
-        <Popover
-            targetDimension={{
-              margin: "0 5px",
-              display: 'inline-block',
-            }}
-            placement='left'
-            target={() => (
-              <button className="btn btn-secondary">
-                {text('Left Tooltip  Btn', 'Left Tooltip  Btn')}
-              </button>
-            )}
-            showOn="Hover"
-            tag="span"
-          >
-            {text('Left Tooltip  message', 'Left Tooltip  message')}
-        </Popover>
-        </div>,
-      ]
-    )),
+      </div>,
+    ])
   );

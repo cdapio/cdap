@@ -22,62 +22,73 @@ import Popover from './index';
 
 storiesOf('Popover', module)
   .addDecorator(withKnobs)
-  .add('Default Popover',
+  .add(
+    'Default Popover',
     withInfo({
       text: 'Default popover for simple text',
-    })(() => (
-      [
+    })(() => [
+      <Popover
+        targetDimension={{
+          margin: '0 5px',
+          display: 'inline-block',
+        }}
+        placement="right"
+        target={() => (
+          <button className="btn btn-secondary">
+            {text('Right Popover Btn', 'Right Popover Btn')}
+          </button>
+        )}
+        tag="span"
+      >
+        {text('Right Popover message', 'Right Popover message')}
+      </Popover>,
+      <Popover
+        targetDimension={{
+          margin: '0 5px',
+          display: 'inline-block',
+        }}
+        placement="bottom"
+        target={() => (
+          <button className="btn btn-secondary">
+            {text('Bottom Popover Btn', 'Bottom Popover Btn')}
+          </button>
+        )}
+        tag="span"
+      >
+        {text('Bottom Popover message', 'Bottom Popover message')}
+      </Popover>,
+      <div style={{ margin: '5px 0' }}>
+        <br />
         <Popover
           targetDimension={{
-            margin: "0 5px",
+            margin: '0 5px',
             display: 'inline-block',
           }}
-          placement='right'
-          target={() => <button className="btn btn-secondary">{text('Right Popover Btn', 'Right Popover Btn')}</button>}
-          tag="span"
-        >
-          {text('Right Popover message', 'Right Popover message')}
-        </Popover>,
-        <Popover
-          targetDimension={{
-            margin: "0 5px",
-            display: 'inline-block',
-          }}
-          placement='bottom'
+          placement="top"
           target={() => (
             <button className="btn btn-secondary">
-              {text('Bottom Popover Btn', 'Bottom Popover Btn')}
+              {text('Top Popover Btn', 'Top Popover Btn')}
             </button>
           )}
           tag="span"
         >
-          {text('Bottom Popover message', 'Bottom Popover message')}
-        </Popover>,
-        <div style={{margin: '5px 0'}}>
-          <br />
-          <Popover
-            targetDimension={{
-              margin: "0 5px",
-              display: 'inline-block',
-            }}
-            placement='top'
-            target={() => <button className="btn btn-secondary">{text('Top Popover Btn', 'Top Popover Btn')}</button>}
-            tag="span"
-          >
-            {text('Top Popover message', 'Top Popover message')}
+          {text('Top Popover message', 'Top Popover message')}
         </Popover>
         <Popover
-            targetDimension={{
-              margin: "0 5px",
-              display: 'inline-block',
-            }}
-            placement='left'
-            target={() => <button className="btn btn-secondary">{text('Left Popover Btn', 'Left Popover Btn')}</button>}
-            tag="span"
-          >
-            {text('Left Popover message', 'Left Popover message')}
+          targetDimension={{
+            margin: '0 5px',
+            display: 'inline-block',
+          }}
+          placement="left"
+          target={() => (
+            <button className="btn btn-secondary">
+              {text('Left Popover Btn', 'Left Popover Btn')}
+            </button>
+          )}
+          tag="span"
+        >
+          {text('Left Popover message', 'Left Popover message')}
         </Popover>
-        </div>,
-      ]
-    )),
+      </div>,
+    ])
   );

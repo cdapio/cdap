@@ -14,7 +14,7 @@
   dependencies:
     "@babel/highlight" "7.0.0-beta.53"
 
-"@babel/core@^7.0.0-beta.53":
+"@babel/core@7.0.0-beta.53":
   version "7.0.0-beta.53"
   resolved "https://registry.yarnpkg.com/@babel/core/-/core-7.0.0-beta.53.tgz#ab647cfbb27241fd22ec3ca1342d7ad4e6b54f9f"
   dependencies:
@@ -390,7 +390,7 @@
     "@babel/helper-remap-async-to-generator" "^7.1.0"
     "@babel/plugin-syntax-async-generators" "^7.0.0"
 
-"@babel/plugin-proposal-class-properties@7.0.0-beta.53", "@babel/plugin-proposal-class-properties@^7.0.0-beta.53":
+"@babel/plugin-proposal-class-properties@7.0.0-beta.53":
   version "7.0.0-beta.53"
   resolved "https://registry.yarnpkg.com/@babel/plugin-proposal-class-properties/-/plugin-proposal-class-properties-7.0.0-beta.53.tgz#268bb8c0d50a8ea91e5c81e03ad0cd3cc9cdc957"
   dependencies:
@@ -455,7 +455,7 @@
     "@babel/helper-plugin-utils" "7.0.0-beta.53"
     "@babel/plugin-syntax-numeric-separator" "7.0.0-beta.53"
 
-"@babel/plugin-proposal-object-rest-spread@7.0.0-beta.53", "@babel/plugin-proposal-object-rest-spread@^7.0.0-beta.53":
+"@babel/plugin-proposal-object-rest-spread@7.0.0-beta.53":
   version "7.0.0-beta.53"
   resolved "https://registry.yarnpkg.com/@babel/plugin-proposal-object-rest-spread/-/plugin-proposal-object-rest-spread-7.0.0-beta.53.tgz#e6b5f0bac501838f16e8f3c6d34b00b3ea4035d9"
   dependencies:
@@ -536,7 +536,7 @@
   dependencies:
     "@babel/helper-plugin-utils" "7.0.0-beta.53"
 
-"@babel/plugin-syntax-dynamic-import@7.0.0-beta.53", "@babel/plugin-syntax-dynamic-import@^7.0.0-beta.53":
+"@babel/plugin-syntax-dynamic-import@7.0.0-beta.53":
   version "7.0.0-beta.53"
   resolved "https://registry.yarnpkg.com/@babel/plugin-syntax-dynamic-import/-/plugin-syntax-dynamic-import-7.0.0-beta.53.tgz#b3e940f87ee87aaf14391b171c63476fd01af323"
   dependencies:
@@ -1087,14 +1087,14 @@
     "@babel/helper-regex" "^7.0.0"
     regexpu-core "^4.1.3"
 
-"@babel/polyfill@^7.0.0-beta.53":
+"@babel/polyfill@7.0.0-beta.53":
   version "7.0.0-beta.53"
   resolved "https://registry.yarnpkg.com/@babel/polyfill/-/polyfill-7.0.0-beta.53.tgz#514b0b5a76c7b0bfb829bc0ee4d9dd5eaca74336"
   dependencies:
     core-js "^2.5.7"
     regenerator-runtime "^0.11.1"
 
-"@babel/preset-env@^7.0.0-beta.53":
+"@babel/preset-env@7.0.0-beta.53":
   version "7.0.0-beta.53"
   resolved "https://registry.yarnpkg.com/@babel/preset-env/-/preset-env-7.0.0-beta.53.tgz#2b204bf42675e166dda5a2756c41ebbf229bb37e"
   dependencies:
@@ -1192,6 +1192,16 @@
     "@babel/helper-plugin-utils" "^7.0.0"
     "@babel/plugin-transform-flow-strip-types" "^7.0.0"
 
+"@babel/preset-react@7.0.0-beta.53":
+  version "7.0.0-beta.53"
+  resolved "https://registry.yarnpkg.com/@babel/preset-react/-/preset-react-7.0.0-beta.53.tgz#3920682830a5caef5c019780282578525897089c"
+  dependencies:
+    "@babel/helper-plugin-utils" "7.0.0-beta.53"
+    "@babel/plugin-transform-react-display-name" "7.0.0-beta.53"
+    "@babel/plugin-transform-react-jsx" "7.0.0-beta.53"
+    "@babel/plugin-transform-react-jsx-self" "7.0.0-beta.53"
+    "@babel/plugin-transform-react-jsx-source" "7.0.0-beta.53"
+
 "@babel/preset-react@^7.0.0":
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/@babel/preset-react/-/preset-react-7.0.0.tgz#e86b4b3d99433c7b3e9e91747e2653958bc6b3c0"
@@ -1202,17 +1212,7 @@
     "@babel/plugin-transform-react-jsx-self" "^7.0.0"
     "@babel/plugin-transform-react-jsx-source" "^7.0.0"
 
-"@babel/preset-react@^7.0.0-beta.53":
-  version "7.0.0-beta.53"
-  resolved "https://registry.yarnpkg.com/@babel/preset-react/-/preset-react-7.0.0-beta.53.tgz#3920682830a5caef5c019780282578525897089c"
-  dependencies:
-    "@babel/helper-plugin-utils" "7.0.0-beta.53"
-    "@babel/plugin-transform-react-display-name" "7.0.0-beta.53"
-    "@babel/plugin-transform-react-jsx" "7.0.0-beta.53"
-    "@babel/plugin-transform-react-jsx-self" "7.0.0-beta.53"
-    "@babel/plugin-transform-react-jsx-source" "7.0.0-beta.53"
-
-"@babel/preset-stage-2@^7.0.0-beta.53":
+"@babel/preset-stage-2@7.0.0-beta.53":
   version "7.0.0-beta.53"
   resolved "https://registry.yarnpkg.com/@babel/preset-stage-2/-/preset-stage-2-7.0.0-beta.53.tgz#7f5ec744b34ddf11365a45384c2de1c33109f85c"
   dependencies:
@@ -1238,7 +1238,7 @@
     "@babel/plugin-syntax-dynamic-import" "7.0.0-beta.53"
     "@babel/plugin-syntax-import-meta" "7.0.0-beta.53"
 
-"@babel/preset-typescript@^7.0.0-beta.53":
+"@babel/preset-typescript@7.0.0-beta.53":
   version "7.0.0-beta.53"
   resolved "https://registry.yarnpkg.com/@babel/preset-typescript/-/preset-typescript-7.0.0-beta.53.tgz#15faddecce27b9062ba50e1a13c201e2ce2ab9b0"
   dependencies:
@@ -1723,27 +1723,27 @@
   version "10.5.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.5.2.tgz#f19f05314d5421fe37e74153254201a7bf00a707"
 
-"@types/react-dom@^16.0.6":
+"@types/react-dom@16.0.6":
   version "16.0.6"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-16.0.6.tgz#f1a65a4e7be8ed5d123f8b3b9eacc913e35a1a3c"
   dependencies:
     "@types/node" "*"
     "@types/react" "*"
 
-"@types/react-input-calendar@^0.0.34":
+"@types/react-input-calendar@0.0.34":
   version "0.0.34"
-  resolved "https://registry.yarnpkg.com/@types/react-input-calendar/-/react-input-calendar-0.0.34.tgz#99ad0ad175226a5d8be8c5bd62fff98b3f60f08e"
+  resolved "http://registry.npmjs.org/@types/react-input-calendar/-/react-input-calendar-0.0.34.tgz#99ad0ad175226a5d8be8c5bd62fff98b3f60f08e"
   dependencies:
     "@types/react" "*"
 
-"@types/react-router@^4.0.30":
+"@types/react-router@4.0.30":
   version "4.0.30"
   resolved "https://registry.yarnpkg.com/@types/react-router/-/react-router-4.0.30.tgz#64bcd886befd1f932779b74d17954adbefb7a3a7"
   dependencies:
     "@types/history" "*"
     "@types/react" "*"
 
-"@types/react@*", "@types/react@^16.4.6":
+"@types/react@*", "@types/react@16.4.6":
   version "16.4.6"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-16.4.6.tgz#5024957c6bcef4f02823accf5974faba2e54fada"
   dependencies:
@@ -1768,7 +1768,7 @@
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/@types/sizzle/-/sizzle-2.3.2.tgz#a811b8c18e2babab7d542b3365887ae2e4d9de47"
 
-"@types/storybook__react@^3.0.9":
+"@types/storybook__react@3.0.9":
   version "3.0.9"
   resolved "https://registry.yarnpkg.com/@types/storybook__react/-/storybook__react-3.0.9.tgz#aac193f0c037ddfc2342bd027d720553ac089a56"
   dependencies:
@@ -2554,7 +2554,7 @@ babel-jest@23.6.0, babel-jest@^23.6.0:
     babel-plugin-istanbul "^4.1.6"
     babel-preset-jest "^23.2.0"
 
-babel-loader@^8.0.0-beta:
+babel-loader@8.0.0-beta.4:
   version "8.0.0-beta.4"
   resolved "https://registry.yarnpkg.com/babel-loader/-/babel-loader-8.0.0-beta.4.tgz#c3fab00696c385c70c04dbe486391f0eb996f345"
   dependencies:
@@ -2768,7 +2768,7 @@ babel-register@^6.26.0:
     mkdirp "^0.5.1"
     source-map-support "^0.4.15"
 
-babel-runtime@6.x.x, babel-runtime@^6.11.6, babel-runtime@^6.18.0, babel-runtime@^6.22.0, babel-runtime@^6.23.0, babel-runtime@^6.26.0, babel-runtime@^6.5.0, babel-runtime@^6.9.2:
+babel-runtime@6.26.0, babel-runtime@6.x.x, babel-runtime@^6.11.6, babel-runtime@^6.18.0, babel-runtime@^6.22.0, babel-runtime@^6.23.0, babel-runtime@^6.26.0, babel-runtime@^6.5.0, babel-runtime@^6.9.2:
   version "6.26.0"
   resolved "https://registry.yarnpkg.com/babel-runtime/-/babel-runtime-6.26.0.tgz#965c7058668e82b55d7bfe04ff2337bc8b5647fe"
   dependencies:
@@ -3539,9 +3539,9 @@ clean-css@4.1.x:
   dependencies:
     source-map "0.5.x"
 
-clean-webpack-plugin@^0.1.19:
+clean-webpack-plugin@0.1.19:
   version "0.1.19"
-  resolved "https://registry.yarnpkg.com/clean-webpack-plugin/-/clean-webpack-plugin-0.1.19.tgz#ceda8bb96b00fe168e9b080272960d20fdcadd6d"
+  resolved "http://registry.npmjs.org/clean-webpack-plugin/-/clean-webpack-plugin-0.1.19.tgz#ceda8bb96b00fe168e9b080272960d20fdcadd6d"
   dependencies:
     rimraf "^2.6.1"
 
@@ -7624,7 +7624,7 @@ is-ci@^1.0.10:
   dependencies:
     ci-info "^1.5.0"
 
-is-color@^1.0.2:
+is-color@1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/is-color/-/is-color-1.0.2.tgz#e92add2af9c73b23a970fb83ee8174ce3c1edb27"
   dependencies:
@@ -9536,7 +9536,7 @@ modclean-patterns-default@latest:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/modclean-patterns-default/-/modclean-patterns-default-1.1.1.tgz#52f08521ba2c3953edf5711d2847988a946e1c64"
 
-modclean@^2.1.2:
+modclean@2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/modclean/-/modclean-2.1.2.tgz#e470f0574b1066ee32d4e53652d46b36da4417c3"
   dependencies:
@@ -9935,7 +9935,7 @@ npm-packlist@^1.1.6:
     ignore-walk "^3.0.1"
     npm-bundled "^1.0.1"
 
-npm-run-all@^4.1.2:
+npm-run-all@4.1.2:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/npm-run-all/-/npm-run-all-4.1.2.tgz#90d62d078792d20669139e718621186656cea056"
   dependencies:
@@ -11618,19 +11618,19 @@ react-paginate@5.2.3:
   dependencies:
     prop-types "^15.6.1"
 
+react-popper@0.7.4:
+  version "0.7.4"
+  resolved "https://registry.yarnpkg.com/react-popper/-/react-popper-0.7.4.tgz#8649d539837e7c6f47bc9b24c9cf57a404e199a1"
+  dependencies:
+    popper.js "^1.12.5"
+    prop-types "^15.5.10"
+
 react-popper@^0.10.4:
   version "0.10.4"
   resolved "https://registry.yarnpkg.com/react-popper/-/react-popper-0.10.4.tgz#af2a415ea22291edd504678d7afda8a6ee3295aa"
   dependencies:
     popper.js "^1.14.1"
     prop-types "^15.6.1"
-
-react-popper@^0.7.4:
-  version "0.7.4"
-  resolved "https://registry.yarnpkg.com/react-popper/-/react-popper-0.7.4.tgz#8649d539837e7c6f47bc9b24c9cf57a404e199a1"
-  dependencies:
-    popper.js "^1.12.5"
-    prop-types "^15.5.10"
 
 react-redux@5.0.7:
   version "5.0.7"
@@ -11718,21 +11718,21 @@ react-timeago@4.1.9:
   version "4.1.9"
   resolved "https://registry.yarnpkg.com/react-timeago/-/react-timeago-4.1.9.tgz#a5dee4ac072299a9a5ca5a61f56177a80f83c1fb"
 
+react-transition-group@2.4.0, react-transition-group@^2.3.1:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/react-transition-group/-/react-transition-group-2.4.0.tgz#1d9391fabfd82e016f26fabd1eec329dbd922b5a"
+  dependencies:
+    dom-helpers "^3.3.1"
+    loose-envify "^1.3.1"
+    prop-types "^15.6.2"
+    react-lifecycles-compat "^3.0.4"
+
 react-transition-group@^2.0.0:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/react-transition-group/-/react-transition-group-2.5.0.tgz#70bca0e3546102c4dc5cf3f5f57f73447cce6874"
   dependencies:
     dom-helpers "^3.3.1"
     loose-envify "^1.4.0"
-    prop-types "^15.6.2"
-    react-lifecycles-compat "^3.0.4"
-
-react-transition-group@^2.3.1, react-transition-group@^2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/react-transition-group/-/react-transition-group-2.4.0.tgz#1d9391fabfd82e016f26fabd1eec329dbd922b5a"
-  dependencies:
-    dom-helpers "^3.3.1"
-    loose-envify "^1.3.1"
     prop-types "^15.6.2"
     react-lifecycles-compat "^3.0.4"
 
