@@ -366,11 +366,7 @@ Dataset Examples
 Datasets are included in just about every CDAP :ref:`application <apps-and-packs>`,
 :ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
 
-- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using a
-  stream to **ingest a name into a dataset.**
-
-- For examples of **custom datasets,** see the :ref:`Word Count <examples-word-count>`
-  and :ref:`Web Analytics <examples-web-analytics>` examples.
+- For an example of **custom datasets,** see the :ref:`Word Count <examples-word-count>` example.
 
 - For an example of **a dataset and a Map Reduce Job,** see the :ref:`Purchase
   <examples-purchase>` example.
@@ -384,13 +380,8 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
 - For an example of a **PartitionedFileSet,** see the :ref:`Sport Results <examples-sport-results>`
   example.
 
-- For an example of a **TimePartitionedFileSet,** see the :ref:`StreamConversion
-  <examples-stream-conversion>` example.
-
 - For examples of **key-value Table datasets,** see the
-  :ref:`Hello World <examples-hello-world>`,
-  :ref:`Count Random <examples-count-random>`,
-  :ref:`Word Count <examples-word-count>`, and
+  :ref:`Word Count <examples-word-count>` and
   :ref:`Purchase <examples-purchase>` examples.
 
 - For an example of an **ObjectMappedTable dataset,** see the :ref:`Purchase <examples-purchase>` example.

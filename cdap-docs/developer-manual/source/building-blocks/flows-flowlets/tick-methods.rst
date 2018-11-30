@@ -12,7 +12,7 @@ periodically, without arguments. This can be used, for example, to
 generate data, or pull data from an external data source periodically on
 a fixed cadence.
 
-In this code snippet from the *CountRandom* example, the ``@Tick``
+In this code snippet, the ``@Tick``
 method in the flowlet emits random numbers::
 
   public class RandomSource extends AbstractFlowlet {

@@ -269,9 +269,6 @@ For information on how to store, fetch, and delete a routing configuration
 
 Services Examples
 =================
-- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using a
-  service to **retrieve a name from a dataset.**
-  
 - The :ref:`Purchase example <examples-purchase>` includes two services, ``CatalogLookupService``
   and ``PurchaseHistoryService``; the latter **retrieves a specified customer's purchase 
   history in a JSON format from a dataset.**

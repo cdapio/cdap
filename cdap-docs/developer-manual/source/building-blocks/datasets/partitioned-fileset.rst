@@ -381,8 +381,7 @@ format::
 
 You need to specify the SerDe, the input format, the output format, and any additional properties
 any of these may need as table properties. This is an experimental feature and only tested for
-Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example and
-the :ref:`fileset-exploration` for more details.
+Avro; see the :ref:`fileset-exploration` for more details.
 
 .. _datasets-partitioned-fileset-transactions:
 

@@ -246,7 +246,7 @@ returned depend on the application.
 
 For example, depending on the versions deployed::
 
-  GET /v3/namespaces/default/apps/HelloWorld/versions
+  GET /v3/namespaces/default/apps/SportResults/versions
 
 .. highlight:: json
 
@@ -327,61 +327,44 @@ program type.
 
 For example::
 
-  GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow
+  GET /v3/namespaces/default/apps/SportResults/services/UploadService
 
 .. highlight:: json-ellipsis
 
-will return in a JSON array information about the *WhoFlow* of the application *HelloWorld*. The results will
+will return in a JSON array information about the *UploadService* of the application *SportResults*. The results will
 be similar to this (pretty-printed and portions deleted to fit)::
 
   {
-      "className": "co.cask.cdap.examples.helloworld.HelloWorld$WhoFlow",
-      "name": "WhoFlow",
-      "description": "A flow that collects names",
-      "flowlets": {
-          "saver": {
-              "flowletSpec": {
-                  "className": "co.cask.cdap.examples.helloworld.HelloWorld$NameSaver",
-                  "name": "saver",
-                  "description": "",
-                  "failurePolicy": "RETRY",
-                  "dataSets": [
-                      "whom"
-                  ],
-                  "properties": {
-                  },
-                  "resources": {
-                      "virtualCores": 1,
-                      "memoryMB": 512
-                  }
-              },
-              "streams": {
-              },
-              "datasetModules": {
-              },
-              "datasetSpecs": {
-              },
-              "instances": 1,
+      "className": "co.cask.cdap.examples.sportresults.UploadService",
+      "description": "A service for uploading sport results for a given league and season.",
+      "handlers": {
+          "UploadHandler": {
+              "className": "co.cask.cdap.examples.sportresults.UploadService$UploadHandler",
               "datasets": [
-                  "whom"
+                  "results"
               ],
-              "inputs": {
-
-                ...
-
-              },
-              "outputs": {
-              }
+              "description": "",
+              "endpoints": [
+                  {
+                      "method": "PUT",
+                      "path": "/leagues/{league}/seasons/{season}"
+                  },
+                  ...
+              ],
+              "name": "UploadHandler",
+              "plugins": {},
+              "properties": {}
           }
       },
-      "connections": [
-          {
-              "sourceType": "STREAM",
-              "sourceName": "who",
-              "targetName": "saver"
-          }
-      ]
+      "instances": 1,
+      "name": "UploadService",
+      "plugins": {},
+      "resources": {
+          "memoryMB": 512,
+          "virtualCores": 1
+      }
   }
+
 
 .. highlight:: console
 
@@ -431,9 +414,9 @@ a new run will be started even if other runs of the program have not finished ye
 
 For example::
 
-  POST /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/start -d '{ "foo":"bar", "this":"that" }'
+  POST /v3/namespaces/default/apps/SportResults/services/UploadService/start -d '{ "foo":"bar", "this":"that" }'
 
-will start the *WhoFlow* flow in the *HelloWorld* application with two runtime arguments.
+will start the *UploadService* of the *SportResults* application with two runtime arguments.
 
 .. _http-restful-api-lifecycle-start-multiple:
 
@@ -545,9 +528,9 @@ in the RUNNING state, this call will stop one of the runs, but not all of the ru
 
 For example::
 
-  POST /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/stop
+  POST /v3/namespaces/default/apps/SportResults/services/UploadService/stop
 
-will stop the *WhoFlow* flow in the *HelloWorld* application.
+will stop the *UploadService* service in the *SportResults* application.
 
 
 .. _http-restful-api-lifecycle-stop-run:
@@ -678,9 +661,9 @@ To retrieve the status of a program, submit an HTTP GET request::
        being called
 
 The response will be a JSON array with status of the program. For example, retrieving the status of the
-*WhoFlow* of the program *HelloWorld*::
+*UploadService* of the program *SportResults*::
 
-  GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/status
+  GET /v3/namespaces/default/apps/SportResults/services/UploadService/status
 
 .. highlight:: json-ellipsis
 
@@ -1424,9 +1407,9 @@ with the arguments as a JSON string in the body::
 .. rubric:: Example
 
 Retrieve the number of instances of the worker *DataWorker* in the application
-*HelloWorld* in the namespace *default*::
+*DemoApp* in the namespace *default*::
 
-  GET /v3/namespaces/default/apps/HelloWorld/workers/DataWorker/instances
+  GET /v3/namespaces/default/apps/DemoApp/workers/DataWorker/instances
 
 .. _rest-program-runs:
 
@@ -1491,10 +1474,10 @@ Use that runid in subsequent calls to obtain additional information.
      :class: triple-table
 
      * - Description
-       - Retrieve the run records of the flow *WhoFlow* of the application *HelloWorld*
+       - Retrieve the run records of the MapReduce *ScoreCounter* of the application *SportResults*
 
      * - HTTP Method
-       - ``GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs``
+       - ``GET /v3/namespaces/default/apps/SportResults/mapreduce/ScoreCounter/runs``
 
      * - Returns
        - | ``{"runid":"...","start":1382567598,"status":"RUNNING"},``
@@ -1542,11 +1525,11 @@ To fetch the run record for a particular run of a program, use::
      :class: triple-table
 
      * - Description
-       - Retrieve the run record of the flow *WhoFlow* of the application *HelloWorld* for
+       - Retrieve the run record of the MapReduce *ScoreCounter* of the application *SportResults*
          run *b78d0091-da42-11e4-878c-2217c18f435d*
 
      * - HTTP Method
-       - ``GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs/b78d0091-da42-11e4-878c-2217c18f435d``
+       - ``GET /v3/namespaces/default/apps/SportResults/mapreduce/ScoreCounter/runs/b78d0091-da42-11e4-878c-2217c18f435d``
 
      * - Returns
        - | ``{"runid":"...","start":1382567598,"status":"RUNNING"}``

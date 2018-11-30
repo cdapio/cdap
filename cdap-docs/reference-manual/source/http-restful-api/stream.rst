@@ -471,7 +471,7 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
          }
 
    * - Description
-     - Retrieves the properties of the ``who`` stream of the :ref:`HelloWorld example <examples-hello-world>`.
+     - Retrieves the properties of the ``who`` stream of the HelloWorld example.
 
 .. highlight:: console
 

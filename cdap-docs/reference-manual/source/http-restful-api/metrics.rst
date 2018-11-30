@@ -459,11 +459,13 @@ should be replaced, as it will be removed in a later version of CDAP::
    * - HTTP Method
      - ``POST /v3/metrics/search?target=tag&tag=namespace:default``
    * - Returns
-     - | ``[{"name":"app","value":"HelloWorld"},{"name":"app","value":"PurchaseHistory"},``
-       | `` {"name":"component","value":"gateway"},{"name":"dataset","value":"frequentCustomers"},``
-       | `` {"name":"dataset","value":"history"},{"name":"dataset","value":"purchases"},``
-       | `` {"name":"dataset","value":"userProfiles"},{"name":"dataset","value":"whom"},``
-       | `` {"name":"stream","value":"purchaseStream"},{"name":"stream","value":"who"}]``
+     - | ``[{"name":"app","value":"PurchaseHistory"},``
+       | `` {"name":"component","value":"gateway"},``
+       | `` {"name":"dataset","value":"frequentCustomers"},``
+       | `` {"name":"dataset","value":"history"},``
+       | `` {"name":"dataset","value":"purchases"},``
+       | `` {"name":"dataset","value":"userProfiles"},``
+       | `` {"name":"stream","value":"purchaseStream"}]``
    * - Description
      - Returns all tags of the of the given parent context; in this case, all entities in the default namespace.
    * -
@@ -518,25 +520,13 @@ should be replaced, as it will be removed in a later version of CDAP::
    * -
      -
    * - HTTP Method
-     - ``POST /v3/metrics/search?target=metric&tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting``
+     - ``POST /v3/metrics/search?target=metric&tag=namespace:default&tag=app:SportResults&tag=service:UploadService``
    * - Returns
      - | ``["system.dataset.store.ops","system.dataset.store.reads","system.requests.count",``
        | `` "system.response.successful.count",``
-       | `` "user.greetings.count.jane_doe"]``
+       | `` "user.uploads.completed"]``
    * - Description
-     - Returns all metrics in the context of the service *Greeting* of the application *HelloWorld* of the
-       *default* namespace; in this case, returns a list of system and user-defined metrics.
-   * -
-     -
-   * - HTTP Method
-     - ``POST /v3/metrics/search?target=metric&tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver``
-   * - Returns
-     - | ``["system.dataset.store.bytes","system.dataset.store.ops","system.dataset.store.writes",``
-       | `` "system.process.events.in","system.process.events.processed","system.process.instance",``
-       | `` "system.process.tuples.attempt.read","system.process.tuples.read","system.store.bytes",``
-       | `` "system.store.ops","system.store.writes","user.names.bytes"]``
-   * - Description
-     - Returns all metrics in the context of the flowlet *saver* of the application *HelloWorld* of the
+     - Returns all metrics in the context of the service *UploadService* of the application *SportResults* of the
        *default* namespace; in this case, returns a list of system and user-defined metrics.
 
 .. _http-restful-api-metrics-querying-a-metric:
@@ -1058,11 +1048,11 @@ Query Tips
 - User-defined metrics are always prefixed with the word ``user``, and must be queried by
   using that prefix with the metric name.
 
-  For example, to request the user-defined metric *names.byte* for the *HelloWorld*
-  application's *WhoFlow* flow::
+  For example, to request the user-defined metric *uploads.completed* for the *SportResults*
+  application's *UploadService*::
 
-    POST /v3/metrics/query?tag=namespace:default&tag=app:HelloWorld
-      &tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true
+    POST /v3/metrics/query?tag=namespace:default&tag=app:SportResults
+      &tag=service:UploadService&metric=user.uploads.completed&aggregate=true
 
 .. _http-restful-api-metrics-pending:
 
@@ -1072,8 +1062,7 @@ Query Tips
   500, the pending count is 250 events.
 
   To retrieve the cumulative pending count, you can run a metrics query without a start and end time range.
-  By default, metrics are aggregated across all available time. Your query (using the CDAP example
-  :ref:`Count Random <examples-count-random>`) could look like::
+  By default, metrics are aggregated across all available time. Your query could look like::
 
     POST /v3/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom
       &tag=consumer:counter&tag=producer:splitter&tag=queue:queue&metric=system.queue.pending

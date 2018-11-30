@@ -13,7 +13,7 @@ CDAP Examples, How-To Guides, and Tutorials
 .. _examples: examples/index.html
 
 - |examples|_ Included with the :ref:`CDAP Sandbox, <getting-started-index>` they range from a
-  simple introductory :ref:`Hello World <examples-hello-world>` to more elaborate examples
+  simple introductory :ref:`Word Count <examples-word-count>` to more elaborate examples
   such as the :ref:`Purchase application <examples-purchase>` that uses many of the CDAP
   components.
 

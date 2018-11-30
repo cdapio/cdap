@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Examples
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2018 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -16,9 +16,7 @@ Examples
    :titlesonly:
 
    Introduction to CDAP <introduction-to-cdap>
-   Hello World <hello-world>
    Clicks and Views <clicks-and-views>
-   Count Random <count-random>
    Data Cleansing <data-cleansing>
    Decision Tree Regression <decision-tree-regression>
    FileSet Example <fileset-example>
@@ -28,9 +26,6 @@ Examples
    Spark K-Means <spark-k-means>
    Spark Page Rank <spark-page-rank>
    Sport Results <sport-results>
-   Stream Conversion <stream-conversion>
-   User Profiles <user-profiles>
-   Web Analytics <web-analytics>
    Wikipedia Pipeline <wikipedia-data-pipeline>
    Word Count <word-count>
 
@@ -50,14 +45,8 @@ The :ref:`CDAP Sandbox <sandbox>` includes these examples in the download:
 
   * - Example Name
     - Description
-  * - :doc:`Hello World <hello-world>`
-    - A simple HelloWorld App that's written using CDAP. It introduces how the components stream, flow, dataset,
-      and service are used in a CDAP application.
   * - :doc:`Clicks and Views <clicks-and-views>`
     - An application that demonstrates a reduce-side join across two streams using a MapReduce program.
-  * - :doc:`Count Random <count-random>`
-    - An application that demonstrates the ``@Tick`` feature of flows. It uses a tick method to generate random
-      numbers which are then counted by downstream flowlets.
   * - :doc:`Data Cleansing <data-cleansing>`
     - A Cask Data Application Platform (CDAP) example demonstrating incrementally consuming partitions of a
       partitioned fileset using MapReduce.
@@ -90,15 +79,6 @@ The :ref:`CDAP Sandbox <sandbox>` includes these examples in the download:
   * - :doc:`Sport Results <sport-results>`
     - An application that illustrates the use of partitioned File sets.
       It loads game results into a File set partitioned by league and season, and processes them with MapReduce.
-  * - :doc:`Stream Conversion <stream-conversion>`
-    - An application that demonstrates the use of time-partitioned File sets.
-      It periodically converts a stream into partitions of a File set, which can be read by SQL queries.
-  * - :doc:`User Profiles <user-profiles>`
-    - An application that demonstrates column-level conflict detection using the example of updating of
-      user profiles in a dataset.
-  * - :doc:`Web Analytics <web-analytics>`
-    - An application to generate statistics and to provide insights about web usage through the analysis
-      of web traffic.
   * - :doc:`Wikipedia Pipeline <wikipedia-data-pipeline>`
     - An application that performs analysis on Wikipedia data using MapReduce and Spark programs
       running within a CDAP workflow: *WikipediaPipelineWorkflow*.
@@ -115,7 +95,5 @@ For more about developing data application using CDAP:
 - Look at our :ref:`How-To Guides <guides-index>` and :ref:`Tutorials <tutorials>`, with a
   collection of quick how-to-guides and longer tutorials covering a complete range of Big
   Data application topics.
-- Explore a web analytics application :doc:`source code <web-analytics>`. It includes
-  test cases that show unit-testing an application.
 - For a detailed understanding of what CDAP is capable of, read our :ref:`Overview <cdap-overview>` and
   :ref:`Building Blocks <building-blocks>` sections.

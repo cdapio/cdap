@@ -87,9 +87,6 @@ Stream Examples
 Streams are included in just about every CDAP :ref:`application <apps-and-packs>`,
 :ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
 
-- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates **using a
-  stream to ingest** a name into a dataset.
-
 - For an example of **pushing events to a stream,** see the :ref:`Purchase
   example <examples-purchase>` and its CDAP CLI command that injects data to a stream.
 

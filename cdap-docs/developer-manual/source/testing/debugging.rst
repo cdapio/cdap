@@ -21,10 +21,10 @@ debugging:
    The CDAP should confirm that the debugger port is open with a message such as
    ``Remote debugger agent started on port 5005``.
 
-#. Deploy (for example) the *HelloWorld* application to the CDAP by dragging and dropping the
-   ``HelloWorld.jar`` file from the ``/examples/HelloWorld`` directory onto the CDAP UI.
+#. Deploy (for example) the *SportResults* application to the CDAP by dragging and dropping the
+   ``SportResults.jar`` file from the ``/examples/SportResults`` directory onto the CDAP UI.
 
-#. Open the *HelloWorld* application in an IDE and connect to the remote debugger.
+#. Open the *SportResults* application in an IDE and connect to the remote debugger.
 
 For more information, see `Attaching a Debugger`_.
 
