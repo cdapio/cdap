@@ -126,10 +126,6 @@ public class MetadataKeyTest {
 
     MetadataEntity actualViewId = MetadataKey.extractMetadataEntityFromKey(mdsValueKey2.getKey());
     Assert.assertEquals(expectedViewId.toMetadataEntity(), actualViewId);
-
-    // assert that target type for parent child is correct
-    Assert.assertEquals(MetadataEntity.STREAM, MetadataKey.extractTargetType(mdsValueKey.getKey()));
-    Assert.assertEquals(MetadataEntity.VIEW, MetadataKey.extractTargetType(mdsValueKey2.getKey()));
   }
 
   @Test

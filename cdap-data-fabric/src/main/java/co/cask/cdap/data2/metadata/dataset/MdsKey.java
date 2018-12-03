@@ -26,8 +26,6 @@ import static co.cask.cdap.api.metadata.MetadataEntity.APPLICATION;
 import static co.cask.cdap.api.metadata.MetadataEntity.ARTIFACT;
 import static co.cask.cdap.api.metadata.MetadataEntity.DATASET;
 import static co.cask.cdap.api.metadata.MetadataEntity.PROGRAM;
-import static co.cask.cdap.api.metadata.MetadataEntity.STREAM;
-import static co.cask.cdap.api.metadata.MetadataEntity.VIEW;
 
 /**
  * Key class to get v1 metadata key information
@@ -61,11 +59,13 @@ public final class MdsKey {
       case APPLICATION:
       case DATASET:
       case "datasetinstance":
-      case STREAM:
+      // TODO (CDAP-14584) remove stream and view
+      case "stream":
         keySplitter.skipString();
         keySplitter.skipString();
         break;
-      case VIEW:
+      // TODO (CDAP-14584) remove stream and view
+      case "stream_view":
       case "view":
       case ARTIFACT:
         keySplitter.skipString();

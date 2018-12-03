@@ -126,16 +126,6 @@ public class MetadataEntityTest {
     MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns").append(MetadataEntity.DATASET, "ds")
       .appendAsType("field", "myField").build();
 
-    // test stream
-    MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns")
-      .appendAsType(MetadataEntity.STREAM, "myStream").build();
-    try {
-      MetadataEntity.builder().appendAsType(MetadataEntity.STREAM, "myStream").build();
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-
     // test application
     MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns")
       .appendAsType(MetadataEntity.APPLICATION, "myApp").build();
@@ -170,18 +160,6 @@ public class MetadataEntityTest {
     try {
       MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns").append(MetadataEntity.VERSION, "1")
         .append(MetadataEntity.TYPE, "worflow").appendAsType(MetadataEntity.PROGRAM, "someProg").build();
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-
-    // test view
-    MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns").appendAsType(MetadataEntity.STREAM, "myStream")
-      .appendAsType(MetadataEntity.VIEW, "myVieW").build();
-
-    try {
-      MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns")
-        .appendAsType(MetadataEntity.VIEW, "myVieW").build();
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -835,8 +834,6 @@ public class CLIMainTest extends CLITestBase {
                               "batch");
     testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", FAKE_DS_ID),
                               "explore");
-    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", FAKE_STREAM_ID),
-                              AbstractSystemMetadataWriter.EXPLORE_TAG);
     testCommandOutputContains(cli, String.format("add metadata-properties %s appKey=appValue", FAKE_APP_ID),
                               "Successfully added metadata properties");
     testCommandOutputContains(cli, String.format("get metadata-properties %s", FAKE_APP_ID), "appKey,appValue");
@@ -848,12 +845,7 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, String.format("add metadata-properties %s dsKey=dsValue", FAKE_DS_ID),
                               "Successfully added metadata properties");
     testCommandOutputContains(cli, String.format("get metadata-properties %s", FAKE_DS_ID), "dsKey,dsValue");
-    testCommandOutputContains(cli, String.format("add metadata-tags %s 'streamTag1 streamTag2'", FAKE_STREAM_ID),
-                              "Successfully added metadata tags");
 
-    output = getCommandOutput(cli, String.format("get metadata-tags %s", FAKE_STREAM_ID));
-    lines = Arrays.asList(output.split("\\r?\\n"));
-    Assert.assertTrue(lines.contains("streamTag1") && lines.contains("streamTag2"));
     // test search
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type artifact",
                                                  FakeApp.class.getSimpleName()), FAKE_ARTIFACT_ID.toString());
@@ -865,7 +857,6 @@ public class CLIMainTest extends CLITestBase {
                                              FAKE_FLOW_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     testCommandOutputContains(cli, "search metadata fake* filtered by target-type dataset", FAKE_DS_ID.toString());
-    testCommandOutputContains(cli, "search metadata fake* filtered by target-type stream", FAKE_STREAM_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s", FakeApp.TIME_SCHEDULE_NAME),
                               FAKE_APP_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type app", PingService.NAME),
@@ -885,13 +876,9 @@ public class CLIMainTest extends CLITestBase {
     expected = ImmutableList.of("Entity", FAKE_FLOW_ID.toString(), PING_SERVICE_ID.toString(),
                                 PREFIXED_ECHO_HANDLER_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
-    output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream");
-    lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_STREAM_ID.toString());
-    Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream,app");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_STREAM_ID.toString(), FAKE_APP_ID.toString());
+    expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_APP_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata wfTag* filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
@@ -915,8 +902,6 @@ public class CLIMainTest extends CLITestBase {
                                                  MetadataCommandHelper.toCliString(fieldEntity)),
                               "fieldKey,fieldValue");
 
-    // test that retrieving metadata for EntityId is returned in old format
-    testCommandOutputContains(cli, String.format("get metadata %s", FAKE_STREAM_ID), FAKE_STREAM_ID.toString());
     // test get metadata for custom entity and verify that return is in new format
     testCommandOutputContains(cli, String.format("get metadata %s", MetadataCommandHelper.toCliString(fieldEntity)),
                               fieldEntity.toString());

@@ -34,9 +34,6 @@ import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
-import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -108,7 +105,6 @@ public class FileStreamAdmin implements StreamAdmin {
   private final OwnerAdmin ownerAdmin;
   private final ExploreTableNaming tableNaming;
   private final ViewAdmin viewAdmin;
-  private final MetadataStore metadataStore;
   private final Impersonator impersonator;
 
   private ExploreFacade exploreFacade;
@@ -125,7 +121,6 @@ public class FileStreamAdmin implements StreamAdmin {
                          StreamMetaStore streamMetaStore,
                          OwnerAdmin ownerAdmin,
                          ExploreTableNaming tableNaming,
-                         MetadataStore metadataStore,
                          ViewAdmin viewAdmin,
                          Impersonator impersonator) {
     this.namespacedLocationFactory = namespacedLocationFactory;
@@ -139,7 +134,6 @@ public class FileStreamAdmin implements StreamAdmin {
     this.streamMetaStore = streamMetaStore;
     this.ownerAdmin = ownerAdmin;
     this.tableNaming = tableNaming;
-    this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
     this.impersonator = impersonator;
   }
@@ -574,9 +568,6 @@ public class FileStreamAdmin implements StreamAdmin {
           // delete the config file created above
           streamMetaStore.addStream(streamId, description);
           publishAudit(streamId, AuditType.CREATE);
-          SystemMetadataWriter systemMetadataWriter =
-            new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
-          systemMetadataWriter.write();
           return config;
         }
       });
@@ -668,7 +659,6 @@ public class FileStreamAdmin implements StreamAdmin {
 
           streamMetaStore.removeStream(streamId);
           ownerAdmin.delete(streamId);
-          metadataStore.removeMetadata(streamId.toMetadataEntity());
           publishAudit(streamId, AuditType.DELETE);
         } catch (Exception e) {
           throw Throwables.propagate(e);
@@ -705,11 +695,6 @@ public class FileStreamAdmin implements StreamAdmin {
         return null;
       }
     });
-
-    // Update system metadata for stream
-    SystemMetadataWriter systemMetadataWriter = new StreamSystemMetadataWriter(
-      metadataStore, streamId, newConfig, description);
-    systemMetadataWriter.write();
 
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
   }

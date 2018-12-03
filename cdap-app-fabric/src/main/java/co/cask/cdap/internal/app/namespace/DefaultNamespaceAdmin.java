@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,6 @@ import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -44,9 +43,7 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -64,7 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -72,7 +68,6 @@ import javax.annotation.Nullable;
  */
 public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
-  private static final Pattern NAMESPACE_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
 
   private final NamespaceStore nsStore;
   private final Store store;
@@ -176,12 +171,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       } else {
         ugi = impersonator.getUGI(namespace);
       }
-      ImpersonationUtils.doAs(ugi, new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          storageProviderNamespaceAdmin.get().create(metadata);
-          return null;
-        }
+      ImpersonationUtils.doAs(ugi, (Callable<Void>) () -> {
+        storageProviderNamespaceAdmin.get().create(metadata);
+        return null;
       });
     } catch (Throwable t) {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
@@ -384,18 +376,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     List<NamespaceMeta> namespaces = nsStore.list();
     final Principal principal = authenticationContext.getPrincipal();
 
+    //noinspection ConstantConditions
     return AuthorizationUtil.isVisible(namespaces, authorizationEnforcer, principal,
-                                       new Function<NamespaceMeta, EntityId>() {
-                                         @Override
-                                         public EntityId apply(NamespaceMeta input) {
-                                           return input.getNamespaceId();
-                                         }
-                                       }, new Predicate<NamespaceMeta>() {
-                                         @Override
-                                         public boolean apply(NamespaceMeta input) {
-                                           return principal.getName().equals(input.getConfig().getPrincipal());
-                                         }
-                                       });
+                                       NamespaceMeta::getNamespaceId,
+                                       input -> principal.getName().equals(input.getConfig().getPrincipal()));
   }
 
   /**
@@ -410,14 +394,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
 
-    boolean isAuthorzied = true;
+    boolean isAuthorized = true;
     // if the principal is not same as cdap master principal do the authorization check. Otherwise, skip the auth check
     // See: CDAP-7387
     if (masterShortUserName == null || !masterShortUserName.equals(principal.getName())) {
       try {
         AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, principal);
       } catch (UnauthorizedException e) {
-        isAuthorzied = false;
+        isAuthorized = false;
       }
     }
 
@@ -425,7 +409,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     try {
       namespaceMeta = namespaceMetaCache.get(namespaceId);
     } catch (Exception e) {
-      if (isAuthorzied) {
+      if (isAuthorized) {
         Throwable cause = e.getCause();
         if (cause instanceof NamespaceNotFoundException || cause instanceof IOException ||
           cause instanceof UnauthorizedException) {
@@ -440,7 +424,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       return namespaceMeta;
     }
 
-    if (!isAuthorzied) {
+    if (!isAuthorized) {
       throw new UnauthorizedException(
         String.format("Namespace %s is not visible to principal %s since the principal does not have any " +
                         "privilege on this namespace or any entity in this namespace.", namespaceId, principal));
