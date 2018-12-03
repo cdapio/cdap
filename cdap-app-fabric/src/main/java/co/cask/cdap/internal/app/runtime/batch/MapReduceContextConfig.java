@@ -72,7 +72,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_APP_SPEC = "cdap.mapreduce.app.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.mapreduce.program.id";
   private static final String HCONF_ATTR_WORKFLOW_INFO = "cdap.mapreduce.workflow.info";
-  private static final String HCONF_ATTR_PLUGINS = "cdap.mapreduce.plugins";
+  static final String HCONF_ATTR_PLUGINS = "cdap.mapreduce.plugins";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "cdap.mapreduce.program.jar.uri";
   private static final String HCONF_ATTR_CCONF = "cdap.mapreduce.cconf";
   private static final String HCONF_ATTR_LOCAL_FILES = "cdap.mapreduce.local.files";
@@ -183,7 +183,7 @@ public final class MapReduceContextConfig {
    * Returns the plugins being used in the MapReduce program.
    */
   public Map<String, Plugin> getPlugins() {
-    String spec = hConf.get(HCONF_ATTR_PLUGINS);
+    String spec = hConf.getRaw(HCONF_ATTR_PLUGINS);
     if (spec == null) {
       return ImmutableMap.of();
     }

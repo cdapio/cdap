@@ -23,6 +23,8 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+
 import javax.annotation.Nullable;
 
 /**
@@ -67,6 +69,31 @@ public class PluginProperties implements Serializable {
    */
   public PluginProperties setMacros(Macros macros) {
     return new PluginProperties(getProperties(), macros);
+  }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PluginProperties that = (PluginProperties) o;
+    return Objects.equals(properties, that.properties) && Objects.equals(macros, that.macros);
+  }
+
+  @Override
+  public String toString() {
+    return "PluginProperties{" +
+      "properties=" + properties +
+      ", macros=" + macros +
+      '}';
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(properties, macros);
   }
 
   /**
