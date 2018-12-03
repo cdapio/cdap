@@ -66,8 +66,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -78,10 +76,11 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -663,7 +662,7 @@ public class ArtifactStore {
    *
    * @param artifactId the id of the artifact to add
    * @param artifactMeta the metadata for the artifact
-   * @param artifactContentSupplier the supplier for the input stream of the contents of the artifact
+   * @param artifactContent the file containing the content of the artifact
    * @return detail about the newly added artifact
    * @throws WriteConflictException if the artifact is already currently being written
    * @throws ArtifactAlreadyExistsException if a non-snapshot version of the artifact already exists
@@ -672,7 +671,7 @@ public class ArtifactStore {
    */
   public ArtifactDetail write(final Id.Artifact artifactId,
                               final ArtifactMeta artifactMeta,
-                              final InputSupplier<? extends InputStream> artifactContentSupplier,
+                              File artifactContent,
                               EntityImpersonator entityImpersonator)
     throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
 
@@ -688,7 +687,7 @@ public class ArtifactStore {
 
     final Location destination;
     try {
-      destination = copyFileToDestination(artifactId, artifactContentSupplier, entityImpersonator);
+      destination = copyFileToDestination(artifactId, artifactContent, entityImpersonator);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw Throwables.propagate(e);
@@ -729,21 +728,19 @@ public class ArtifactStore {
   }
 
   private Location copyFileToDestination(final Id.Artifact artifactId,
-                                         final InputSupplier<? extends InputStream> artifactContentSupplier,
+                                         File artifactContent,
                                          EntityImpersonator entityImpersonator) throws Exception {
-    return entityImpersonator.impersonate(() -> copyFile(artifactId, artifactContentSupplier));
+    return entityImpersonator.impersonate(() -> copyFile(artifactId, artifactContent));
   }
 
-  private Location copyFile(Id.Artifact artifactId,
-                            InputSupplier<? extends InputStream> artifactContentSupplier) throws IOException {
+  private Location copyFile(Id.Artifact artifactId, File artifactContent) throws IOException {
     Location fileDirectory = namespacedLocationFactory.get(artifactId.getNamespace().toEntityId())
                                                       .append(ARTIFACTS_PATH).append(artifactId.getName());
     Location destination = fileDirectory.append(artifactId.getVersion().getVersion()).getTempFile(".jar");
     Locations.mkdirsIfNotExists(fileDirectory);
     // write the file contents
-    try (InputStream artifactContents = artifactContentSupplier.getInput();
-         OutputStream destinationStream = destination.getOutputStream()) {
-      ByteStreams.copy(artifactContents, destinationStream);
+    try (OutputStream destinationStream = destination.getOutputStream()) {
+      Files.copy(artifactContent.toPath(), destinationStream);
     }
     return destination;
   }

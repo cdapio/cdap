@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Charsets;
@@ -205,13 +204,6 @@ public class LocalizationUtilsTest {
     String extension = isJar ? ".jar" : ".zip";
     File target = TEMP_FOLDER.newFile(zipFileName + extension);
     BundleJarUtil.createJar(dirToJar, target);
-    File[] files = dirToJar.listFiles();
-    Assert.assertNotNull(files);
-    for (File file : files) {
-      if (!file.isDirectory()) {
-        BundleJarUtil.getEntry(Locations.toLocation(target), file.getName()).getInput().close();
-      }
-    }
     return target;
   }
 

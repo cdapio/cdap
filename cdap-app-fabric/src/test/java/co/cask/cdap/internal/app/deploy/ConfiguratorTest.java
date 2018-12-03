@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -117,7 +117,7 @@ public class ConfiguratorTest {
 
       // Deserialize the JSON spec back into Application object.
       ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
-      ApplicationSpecification specification = adapter.fromJson(response.get());
+      ApplicationSpecification specification = adapter.fromJson(response.getResponse());
       Assert.assertNotNull(specification);
       Assert.assertTrue(specification.getName().equals("WordCountApp")); // Simple checks.
       Assert.assertTrue(specification.getFlows().size() == 1); // # of flows.
@@ -151,7 +151,7 @@ public class ConfiguratorTest {
       Assert.assertNotNull(response);
 
       ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
-      ApplicationSpecification specification = adapter.fromJson(response.get());
+      ApplicationSpecification specification = adapter.fromJson(response.getResponse());
       Assert.assertNotNull(specification);
       Assert.assertTrue(specification.getStreams().size() == 1);
       Assert.assertTrue(specification.getStreams().containsKey("myStream"));
@@ -165,7 +165,7 @@ public class ConfiguratorTest {
       response = result.get(10, TimeUnit.SECONDS);
       Assert.assertNotNull(response);
 
-      specification = adapter.fromJson(response.get());
+      specification = adapter.fromJson(response.getResponse());
       Assert.assertNotNull(specification);
       Assert.assertTrue(specification.getStreams().size() == 1);
       Assert.assertTrue(specification.getStreams().containsKey(ConfigTestApp.DEFAULT_STREAM));

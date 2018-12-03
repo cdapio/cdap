@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,9 @@
 package co.cask.cdap.common.lang;
 
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import com.google.common.io.InputSupplier;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
@@ -111,13 +109,7 @@ public abstract class InterceptableClassLoader extends URLClassLoader implements
       if (!manifests.containsKey(jarURIString)) {
         try {
           // Tries to load the Manifest from the Jar URI
-          final URI jarURI = URI.create(jarURIString);
-          manifests.put(jarURIString, BundleJarUtil.getManifest(jarURI, new InputSupplier<InputStream>() {
-            @Override
-            public InputStream getInput() throws IOException {
-              return jarURI.toURL().openStream();
-            }
-          }));
+          manifests.put(jarURIString, BundleJarUtil.getManifest(new URL(jarURIString)));
         } catch (IOException e) {
           // Ignore if cannot get Manifest from the jar file and remember the failure
           manifests.put(jarURIString, null);

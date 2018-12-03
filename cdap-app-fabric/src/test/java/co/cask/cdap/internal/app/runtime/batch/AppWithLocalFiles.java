@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -82,18 +81,13 @@ public class AppWithLocalFiles extends AbstractApplication {
 
     private URI createTemporaryArchiveFile() throws IOException {
       File tmpDir1 = com.google.common.io.Files.createTempDir();
-      List<File> files = new ArrayList<>();
       for (int i = 0; i < 3; i++) {
-        File tmpFile = File.createTempFile("abcd" + i, "txt", tmpDir1);
-        files.add(tmpFile);
+        File.createTempFile("abcd" + i, "txt", tmpDir1);
       }
 
       File tmpDir2 = com.google.common.io.Files.createTempDir();
       File destArchive = new File(tmpDir2, "myBundle.jar");
       BundleJarUtil.createJar(tmpDir1, destArchive);
-      for (File file : files) {
-        BundleJarUtil.getEntry(Locations.toLocation(destArchive), file.getName()).getInput().close();
-      }
       return destArchive.toURI();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -758,8 +758,8 @@ public class ArtifactRepositoryTest {
   }
 
   private static ProgramClassLoader createAppClassLoader(File jarFile) throws IOException {
-    final File unpackDir = DirUtils.createTempDir(TMP_FOLDER.newFolder());
-    BundleJarUtil.unJar(Files.newInputStreamSupplier(jarFile), unpackDir);
+    File unpackDir = DirUtils.createTempDir(TMP_FOLDER.newFolder());
+    BundleJarUtil.unJar(jarFile, unpackDir);
     return new ProgramClassLoader(cConf, unpackDir,
                                   FilterClassLoader.create(ArtifactRepositoryTest.class.getClassLoader()));
   }

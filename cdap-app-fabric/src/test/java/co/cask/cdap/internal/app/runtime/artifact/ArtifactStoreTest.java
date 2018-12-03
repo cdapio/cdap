@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,17 +55,20 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -87,6 +90,10 @@ import java.util.stream.Collectors;
 // suppressing warnings for Bytes.toBytes() when we know the result is not null
 @SuppressWarnings("ConstantConditions")
 public class ArtifactStoreTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static ArtifactStore artifactStore;
 
   @BeforeClass
@@ -1465,10 +1472,13 @@ public class ArtifactStoreTest {
                         CharStreams.toString(new InputStreamReader(location.getInputStream(), Charsets.UTF_8)));
   }
 
-  private void writeArtifact(
-    Id.Artifact artifactId, ArtifactMeta meta,
-    String contents) throws ArtifactAlreadyExistsException, IOException, WriteConflictException {
-    artifactStore.write(artifactId, meta, ByteStreams.newInputStreamSupplier(Bytes.toBytes(contents)),
+  private void writeArtifact(Id.Artifact artifactId, ArtifactMeta meta, String contents)
+    throws ArtifactAlreadyExistsException, IOException, WriteConflictException {
+
+    File artifactFile = TEMP_FOLDER.newFile();
+    Files.write(artifactFile.toPath(), Bytes.toBytes(contents));
+
+    artifactStore.write(artifactId, meta, artifactFile,
                         new EntityImpersonator(artifactId.toEntityId(),
                                                new DefaultImpersonator(CConfiguration.create(), null)));
   }
