@@ -28,7 +28,8 @@ import BtnWithLoading from './index';
  */
 storiesOf('Buttons', module)
   .addDecorator(withKnobs)
-  .add('Loading button with text',
+  .add(
+    'Loading button with text',
     withInfo({
       text: 'Render button without loading icon',
     })(() => (
@@ -40,40 +41,33 @@ storiesOf('Buttons', module)
         className="btn btn-secondary"
         darker={boolean('Darker?', true)}
       />
-  )))
-  .add('Primary Button',
+    ))
+  )
+  .add(
+    'Primary Button',
     withInfo({
       text: 'Render primary button',
-    })(() => (
-      <button className="btn btn-primary">
-        {text('Label', "Primary Action Button")}
-      </button>
-    )),
+    })(() => <button className="btn btn-primary">{text('Label', 'Primary Action Button')}</button>)
   )
-  .add('Secondary Button',
+  .add(
+    'Secondary Button',
     withInfo({
       text: 'Render secondary button',
     })(() => (
-      <button className="btn btn-secondary">
-        {text('Label', "Secondary Action Button")}
-      </button>
-    )),
+      <button className="btn btn-secondary">{text('Label', 'Secondary Action Button')}</button>
+    ))
   )
-  .add('Link Button',
+  .add(
+    'Link Button',
     withInfo({
       text: 'Render success button',
     })(() => (
-      <button className="btn btn-link">
-        {text('Label', "Another Secondary Action Button")}
-      </button>
-    )),
+      <button className="btn btn-link">{text('Label', 'Another Secondary Action Button')}</button>
+    ))
   )
-  .add('Success Button',
+  .add(
+    'Success Button',
     withInfo({
       text: 'Render success button',
-    })(() => (
-      <button className="btn btn-success">
-        {text('Label', "Success Button")}
-      </button>
-    )),
+    })(() => <button className="btn btn-success">{text('Label', 'Success Button')}</button>)
   );

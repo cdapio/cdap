@@ -69,6 +69,8 @@ class MyBatchPipelineConfigCtrl {
     this.onDriverCoreChange = this.onDriverCoreChange.bind(this);
     this.onExecutorCoreChange = this.onExecutorCoreChange.bind(this);
     this.onExecutorMemoryChange = this.onExecutorMemoryChange.bind(this);
+    this.onToggleInstrumentationChange = this.onToggleInstrumentationChange.bind(this);
+    this.onStageLoggingChange = this.onStageLoggingChange.bind(this);
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
     this.containsMacros = HydratorPlusPlusHydratorService.runtimeArgsContainsMacros(this.runtimeArguments);
@@ -164,14 +166,14 @@ class MyBatchPipelineConfigCtrl {
     this.executorResources.memoryMB = value;
     this.updatePipelineEditStatus();
   }
-  onToggleInstrumentationChange = () => {
+  onToggleInstrumentationChange() {
     this.instrumentation = !this.instrumentation;
     this.updatePipelineEditStatus();
-  };
-  onStageLoggingChange = () => {
+  }
+  onStageLoggingChange() {
     this.stageLogging = !this.stageLogging;
     this.updatePipelineEditStatus();
-  };
+  }
   updatePipelineEditStatus() {
     const isResourcesEqual = (oldvalue, newvalue) => {
       return oldvalue.memoryMB === newvalue.memoryMB && oldvalue.virtualCores === newvalue.virtualCores;

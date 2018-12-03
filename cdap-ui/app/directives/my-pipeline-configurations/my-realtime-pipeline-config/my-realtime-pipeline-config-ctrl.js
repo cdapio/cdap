@@ -86,6 +86,10 @@ class MyRealtimePipelineConfigCtrl {
     this.onExecutorMemoryChange = this.onExecutorMemoryChange.bind(this);
     this.onClientCoreChange = this.onClientCoreChange.bind(this);
     this.onClientMemoryChange = this.onClientMemoryChange.bind(this);
+    this.onBackpressureChange = this.onBackpressureChange.bind(this);
+    this.onCheckPointingChange = this.onCheckPointingChange.bind(this);
+    this.onInstrumentationChange = this.onInstrumentationChange.bind(this);
+    this.onStageLoggingChange = this.onStageLoggingChange.bind(this);
     this.driverResources = {
       memoryMB: this.store.getDriverMemoryMB(),
       virtualCores: this.store.getDriverVirtualCores()
@@ -205,24 +209,24 @@ class MyRealtimePipelineConfigCtrl {
     this.updatePipelineEditStatus();
   }
 
-  onCheckPointingChange = () => {
+  onCheckPointingChange() {
     this.checkpointing = !this.checkpointing;
     this.updatePipelineEditStatus();
-  };
+  }
 
-  onInstrumentationChange = () => {
+  onInstrumentationChange() {
     this.instrumentation = !this.instrumentation;
     this.updatePipelineEditStatus();
-  };
+  }
 
-  onStageLoggingChange = () => {
+  onStageLoggingChange() {
     this.stageLogging = !this.stageLogging;
     this.updatePipelineEditStatus();
-  };
+  }
 
-  onBackpressureChange = () => {
+  onBackpressureChange() {
     this.backpressure = !this.backpressure;
-  };
+  }
 
   getUpdatedPipelineConfig() {
     let pipelineconfig = _.cloneDeep(this.store.getCloneConfig());
