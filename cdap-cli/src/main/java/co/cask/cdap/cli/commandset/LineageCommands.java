@@ -19,7 +19,6 @@ package co.cask.cdap.cli.commandset;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.lineage.GetDatasetLineageCommand;
-import co.cask.cdap.cli.command.lineage.GetStreamLineageCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -36,7 +35,6 @@ public class LineageCommands extends CommandSet<Command> implements Categorized 
     super(
       ImmutableList.<Command>builder()
         .add(injector.getInstance(GetDatasetLineageCommand.class))
-        .add(injector.getInstance(GetStreamLineageCommand.class))
         .build());
   }
 

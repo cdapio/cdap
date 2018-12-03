@@ -26,7 +26,6 @@ public enum ArgumentName {
   DESCRIPTION("description"),
 
   PROGRAM("app-id.program-id"),
-  STREAM("stream-id"),
   WORKER("app-id.worker-id"),
   METHOD("app-id.method-id"),
   FLOW("app-id.flow-id"),
@@ -50,14 +49,11 @@ public enum ArgumentName {
   NEW_DATASET_MODULE("new-dataset-module"),
   DATASET("dataset-name"),
   NEW_DATASET("new-dataset-name"),
-  STREAM_EVENT("stream-event"),
   CONTENT_TYPE("content-type"),
   LOCAL_FILE_PATH("local-file-path"),
-  NEW_STREAM("new-stream-id"),
   PARAMETER_MAP("parameter-map"),
   TTL_IN_SECONDS("ttl-in-seconds"),
   NOTIFICATION_THRESHOLD_MB("notification-threshold-mb"),
-  STREAM_DESCRIPTION("stream-description"),
   NUM_INSTANCES("num-instances"),
   START_TIME("start-time"),
   END_TIME("end-time"),
@@ -72,7 +68,6 @@ public enum ArgumentName {
   APP("app-id"),
   APP_VERSION("app-version"),
   PROGRAM_TYPES("program-types"),
-  VIEW("view-id"),
   HTTP_METHOD("http-method"),
   ENDPOINT("endpoint"),
   HEADERS("headers"),
@@ -81,9 +76,7 @@ public enum ArgumentName {
   SCHEDULE_NAME("schedule-name"),
   SCHEDULE_PROPERTIES("schedule-properties"),
   CONCURRENCY("concurrency"),
-  /**
-   * stream format
-   */
+
   FORMAT("format"),
   SCHEMA("schema"),
   SETTINGS("settings"),
@@ -155,7 +148,7 @@ public enum ArgumentName {
   public static final String ENTITY_DESCRIPTION_TEMPLATE_STRING = "<%s> " +
     "is of the form <entity-type>:<entity-id>, where <entity-type> is one of " +
     "%s" +
-    "'artifact', 'application', 'dataset', 'program', 'stream', or 'view'.\n" +
+    "'artifact', 'application', 'dataset', or 'program'.\n" +
     "\n" +
     "%s" +
     "For artifacts and apps, " +
@@ -171,12 +164,8 @@ public enum ArgumentName {
     "<namespace-name>.<app-name>.<program-type>.<program-name>. <program-type> is one of " +
     "flow, mapreduce, service, spark, worker, or workflow.\n" +
     "\n" +
-    "For datasets and streams, " +
-    "<entity-id> is the namespace and entity names, such as <namespace-name>.<dataset-name> " +
-    "or <namespace-name>.<stream-name>.\n" +
-    "\n" +
-    "For (stream) views, <entity-id> includes the stream " +
-    "that they were created from: <namespace-name>.<stream-name>.<view-name>.\n" +
+    "For datasets, " +
+    "<entity-id> is the namespace and entity names, such as <namespace-name>.<dataset-name>.\n" +
     "\n" +
     "Custom entities can be specified as hierarchical key-value pair with an optional type if the last key in " +
     "hierarchy is not the type of the entity. For example a 'field' in dataset can be specified as: " +
