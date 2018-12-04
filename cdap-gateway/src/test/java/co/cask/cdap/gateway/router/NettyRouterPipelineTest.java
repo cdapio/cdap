@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.gateway.apps.AppWritingtoStream;
 import com.google.common.collect.Iterables;
@@ -69,6 +68,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
@@ -211,7 +211,9 @@ public class NettyRouterPipelineTest {
 
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location programJar = AppJarHelper.createDeploymentJar(lf, AppWritingtoStream.class);
-    GATEWAY_SERVER.setExpectedJarBytes(ByteStreams.toByteArray(Locations.newInputSupplier(programJar)));
+    try (InputStream is = programJar.getInputStream()) {
+      GATEWAY_SERVER.setExpectedJarBytes(ByteStreams.toByteArray(is));
+    }
 
     for (int i = 0; i < num; i++) {
       LOG.info("Deploying {}/{}", i, num);
@@ -222,7 +224,9 @@ public class NettyRouterPipelineTest {
       urlConn.setDoOutput(true);
       urlConn.setDoInput(true);
 
-      ByteStreams.copy(Locations.newInputSupplier(programJar), urlConn.getOutputStream());
+      try (InputStream is = programJar.getInputStream()) {
+        ByteStreams.copy(is, urlConn.getOutputStream());
+      }
       Assert.assertEquals(200, urlConn.getResponseCode());
       urlConn.getInputStream().close();
       urlConn.disconnect();

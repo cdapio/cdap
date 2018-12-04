@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.io;
 
-import com.google.common.io.InputSupplier;
 import org.apache.hadoop.fs.Syncable;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -49,13 +48,12 @@ public abstract class SeekableInputStreamTestBase {
     }
 
     // Writes 1024 bytes to the output, and close the stream
-    OutputStream output = Locations.newOutputSupplier(location).getOutput();
-    output.write(bytes);
-    output.close();
+    try (OutputStream output = location.getOutputStream()) {
+      output.write(bytes);
+    }
 
     // Create a SeekableInputStream for the location
-    InputSupplier<? extends SeekableInputStream> inputSupplier = Locations.newInputSupplier(location);
-    SeekableInputStream input = inputSupplier.getInput();
+    SeekableInputStream input = Locations.openSeekableInputStream(location);
 
     // The stream size should be 1024
     Assert.assertEquals(bytes.length, input.size());
@@ -80,13 +78,12 @@ public abstract class SeekableInputStreamTestBase {
     }
 
     // Writes 1024 bytes to the output, and keep the output stream open
-    OutputStream output = Locations.newOutputSupplier(location).getOutput();
+    OutputStream output = location.getOutputStream();
     output.write(bytes);
     sync(output);
 
     // Create a SeekableInputStream for the location
-    InputSupplier<? extends SeekableInputStream> inputSupplier = Locations.newInputSupplier(location);
-    SeekableInputStream input = inputSupplier.getInput();
+    SeekableInputStream input = Locations.openSeekableInputStream(location);
 
     // The stream size should be 1024
     Assert.assertEquals(bytes.length, input.size());
@@ -106,7 +103,7 @@ public abstract class SeekableInputStreamTestBase {
     sync(output);
 
     // Reopen the input stream
-    input = inputSupplier.getInput();
+    input = Locations.openSeekableInputStream(location);
 
     // The stream size should be 2048
     Assert.assertEquals(bytes.length * 2, input.size());

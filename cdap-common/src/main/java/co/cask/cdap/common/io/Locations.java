@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -113,59 +113,60 @@ public final class Locations {
   }
 
   /**
+   * Opens a {@link SeekableInputStream} from the given location.
+   *
+   * @param location Location for the input stream.
+   * @return A {@link SeekableInputStream}.
+   * @throws IOException if failed to open the stream
+   */
+  public static SeekableInputStream openSeekableInputStream(Location location) throws IOException {
+    InputStream input = location.getInputStream();
+    try {
+      if (input instanceof FileInputStream) {
+        return new FileSeekableInputStream((FileInputStream) input);
+      }
+      if (input instanceof FSDataInputStream) {
+        final FSDataInputStream dataInput = (FSDataInputStream) input;
+        LocationFactory locationFactory = location.getLocationFactory();
+
+        if (locationFactory instanceof FileContextLocationFactory) {
+          final FileContextLocationFactory lf = (FileContextLocationFactory) locationFactory;
+          return lf.getFileContext().getUgi().doAs(new PrivilegedExceptionAction<SeekableInputStream>() {
+            @Override
+            public SeekableInputStream run() throws IOException {
+              // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
+              String scheme = lf.getHomeLocation().toURI().getScheme();
+              Configuration hConf = new Configuration(lf.getConfiguration());
+              hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
+              FileSystem fs = FileSystem.get(hConf);
+              return new DFSSeekableInputStream(dataInput,
+                                                createDFSStreamSizeProvider(fs, true,
+                                                                            new Path(location.toURI()), dataInput));
+            }
+          });
+        }
+
+        // This shouldn't happen
+        // Assumption is if the FS is not a HDFS fs, the location length tells the stream size
+        return new DFSSeekableInputStream(dataInput, location::length);
+      }
+
+      throw new IOException("Failed to create SeekableInputStream from location " + location);
+    } catch (Throwable t) {
+      Closeables.closeQuietly(input);
+      Throwables.propagateIfInstanceOf(t, IOException.class);
+      throw new IOException(t);
+    }
+  }
+
+  /**
    * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} from the given location.
    *
    * @param location Location for the input stream.
    * @return A {@link InputSupplier}.
    */
-  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(final Location location) {
-    return new InputSupplier<SeekableInputStream>() {
-      @Override
-      public SeekableInputStream getInput() throws IOException {
-        InputStream input = location.getInputStream();
-        try {
-          if (input instanceof FileInputStream) {
-            return new FileSeekableInputStream((FileInputStream) input);
-          }
-          if (input instanceof FSDataInputStream) {
-            final FSDataInputStream dataInput = (FSDataInputStream) input;
-            LocationFactory locationFactory = location.getLocationFactory();
-
-            if (locationFactory instanceof FileContextLocationFactory) {
-              final FileContextLocationFactory lf = (FileContextLocationFactory) locationFactory;
-              return lf.getFileContext().getUgi().doAs(new PrivilegedExceptionAction<SeekableInputStream>() {
-                @Override
-                public SeekableInputStream run() throws IOException {
-                  // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
-                  String scheme = lf.getHomeLocation().toURI().getScheme();
-                  Configuration hConf = new Configuration(lf.getConfiguration());
-                  hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
-                  FileSystem fs = FileSystem.get(hConf);
-                  return new DFSSeekableInputStream(dataInput,
-                                                    createDFSStreamSizeProvider(fs, true,
-                                                                                new Path(location.toURI()), dataInput));
-                }
-              });
-            }
-
-            // This shouldn't happen
-            return new DFSSeekableInputStream(dataInput, new StreamSizeProvider() {
-              @Override
-              public long size() throws IOException {
-                // Assumption is if the FS is not a HDFS fs, the location length tells the stream size
-                return location.length();
-              }
-            });
-          }
-
-          throw new IOException("Failed to create SeekableInputStream from location " + location);
-        } catch (Throwable t) {
-          Closeables.closeQuietly(input);
-          Throwables.propagateIfInstanceOf(t, IOException.class);
-          throw new IOException(t);
-        }
-      }
-    };
+  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(Location location) {
+    return () -> openSeekableInputStream(location);
   }
 
   /**

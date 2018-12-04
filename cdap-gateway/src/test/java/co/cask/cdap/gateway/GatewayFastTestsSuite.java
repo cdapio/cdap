@@ -25,7 +25,6 @@ import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
 import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
 import co.cask.cdap.gateway.run.StreamWriterTestRun;
 import com.google.common.collect.ObjectArrays;
-import com.google.common.io.Files;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -181,8 +180,7 @@ public class GatewayFastTestsSuite {
     LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
     File destination = new File(DirUtils.createTempDir(tmpFolder), name);
-    Files.copy(Locations.newInputSupplier(appJar), destination);
-    return destination;
+    return Locations.linkOrCopy(appJar, destination);
   }
 
 }

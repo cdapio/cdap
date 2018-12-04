@@ -37,7 +37,6 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
@@ -80,7 +79,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, MissingMapReduceWorkflowApp.class);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopy(appJar, appJarFile);
     appJar.delete();
 
     try {
@@ -200,7 +199,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Location appJar = createDeploymentJar(locationFactory, AppWithProgramsUsingGuava.class);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopy(appJar, appJarFile);
     appJar.delete();
 
     applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName",
