@@ -200,4 +200,9 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return delegateSecureStore.getSecureData(namespace, name);
   }
+
+  @Override
+  public boolean namespaceExists(String namespace) throws IOException {
+    return delegateAdmin.namespaceExists(namespace);
+  }
 }

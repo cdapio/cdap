@@ -27,6 +27,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -57,12 +58,13 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   @Nullable PluginInstantiator pluginInstantiator,
                                   SecureStore secureStore, SecureStoreManager secureStoreManager,
                                   MessagingService messagingService, MetadataReader metadataReader,
-                                  MetadataPublisher metadataPublisher) {
+                                  MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin) {
 
     super(workflow, programOptions, cConf, customActionSpecification.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
-          metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<String, String>()), secureStore,
-          secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher);
+          metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<>()), secureStore,
+          secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
+          namespaceQueryAdmin);
 
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;

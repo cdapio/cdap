@@ -30,6 +30,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
@@ -71,7 +72,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MetadataReader metadataReader;
   private final MetadataPublisher metadataPublisher;
   private final FieldLineageWriter fieldLineageWriter;
-
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
@@ -80,7 +81,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                WorkflowStateWriter workflowStateWriter, CConfiguration cConf, SecureStore secureStore,
                                SecureStoreManager secureStoreManager, MessagingService messagingService,
                                ProgramStateWriter programStateWriter, MetadataReader metadataReader,
-                               MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter) {
+                               MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
+                               NamespaceQueryAdmin namespaceQueryAdmin) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.metricsCollectionService = metricsCollectionService;
@@ -96,6 +98,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.metadataReader = metadataReader;
     this.metadataPublisher = metadataPublisher;
     this.fieldLineageWriter = fieldLineageWriter;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
@@ -132,7 +135,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                  txClient, workflowStateWriter, cConf, pluginInstantiator,
                                                  secureStore, secureStoreManager, messagingService,
                                                  programStateWriter, metadataReader, metadataPublisher,
-                                                 fieldLineageWriter);
+                                                 fieldLineageWriter, namespaceQueryAdmin);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.

@@ -845,6 +845,11 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public List<ArtifactInfo> listArtifacts(String namespace) throws IOException {
+      return null;
+    }
+
+    @Override
     public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
                                                   @Nullable ClassLoader parentClassLoader) throws IOException {
       return null;

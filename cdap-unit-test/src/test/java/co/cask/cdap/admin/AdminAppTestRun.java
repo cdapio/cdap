@@ -16,6 +16,7 @@
 
 package co.cask.cdap.admin;
 
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -26,7 +27,11 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -43,14 +48,15 @@ import com.google.gson.Gson;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,18 +68,17 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final Gson GSON = new Gson();
-  private static File artifactJar;
+  private static final ArtifactId ADMIN_APP_ARTIFACT = NamespaceId.DEFAULT.artifact("admin-app", "1.0.0");
+  private static final ArtifactSummary ADMIN_ARTIFACT_SUMMARY = new ArtifactSummary(ADMIN_APP_ARTIFACT.getArtifact(),
+                                                                                    ADMIN_APP_ARTIFACT.getVersion());
 
   private ApplicationManager appManager;
 
-  @BeforeClass
-  public static void init() throws IOException {
-    artifactJar = createArtifactJar(AdminApp.class);
-  }
-
   @Before
   public void deploy() throws Exception {
-    appManager = deployWithArtifact(AdminApp.class, artifactJar);
+    addAppArtifact(ADMIN_APP_ARTIFACT, AdminApp.class);
+    AppRequest<Void> appRequest = new AppRequest<>(ADMIN_ARTIFACT_SUMMARY);
+    appManager = deployApplication(NamespaceId.DEFAULT.app("AdminApp"), appRequest);
   }
 
   @Test
@@ -193,6 +198,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     // Start the service
     ServiceManager serviceManager = appManager.getServiceManager(AdminApp.SERVICE_NAME).start();
 
+    String namespaceX = "x";
     try {
       URI serviceURI = serviceManager.getServiceURL(10, TimeUnit.SECONDS).toURI();
 
@@ -287,8 +293,34 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
 
       Assert.assertNull(getDataset("nn").get());
 
+      // test Admin.namespaceExists()
+      HttpRequest request = HttpRequest.get(serviceURI.resolve("namespaces/y/plugins").toURL()).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(404, response.getResponseCode());
+
+      // test ArtifactManager.listArtifacts()
+      ArtifactId pluginArtifactId = new NamespaceId(namespaceX).artifact("r1", "1.0.0");
+      getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(namespaceX).build());
+
+      // add a plugin artifact to namespace X
+      addPluginArtifact(pluginArtifactId, ADMIN_APP_ARTIFACT, DummyPlugin.class);
+      // no plugins should be listed in the default namespace, but the app artifact should
+      request = HttpRequest.get(serviceURI.resolve("namespaces/default/plugins").toURL()).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
+      Type setType = new TypeToken<Set<ArtifactSummary>>() { }.getType();
+      Assert.assertEquals(Collections.singleton(ADMIN_ARTIFACT_SUMMARY),
+                          GSON.fromJson(response.getResponseBodyAsString(), setType));
+      // the plugin should be listed in namespace X
+      request = HttpRequest.get(serviceURI.resolve("namespaces/x/plugins").toURL()).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
+      ArtifactSummary expected = new ArtifactSummary(pluginArtifactId.getArtifact(), pluginArtifactId.getVersion());
+      Assert.assertEquals(Collections.singleton(expected), GSON.fromJson(response.getResponseBodyAsString(), setType));
+
     } finally {
       serviceManager.stop();
+      getNamespaceAdmin().delete(new NamespaceId(namespaceX));
     }
   }
 

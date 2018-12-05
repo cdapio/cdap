@@ -22,10 +22,20 @@ import co.cask.cdap.api.dataset.DatasetManager;
 import co.cask.cdap.api.messaging.MessagingAdmin;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 
+import java.io.IOException;
+
 /**
  * This interface provides methods for operational calls from within a CDAP application.
  */
 @Beta
 public interface Admin extends DatasetManager, SecureStoreManager, MessagingAdmin {
 
+  /**
+   * Return whether the specified namespace exists or not
+   *
+   * @param namespace the namespace to check
+   * @return true if the namespace exists, false if not
+   * @throws IOException if there was a error making the request to check namespace existence
+   */
+  boolean namespaceExists(String namespace) throws IOException;
 }

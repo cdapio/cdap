@@ -33,6 +33,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -99,6 +100,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MetadataReader metadataReader;
   private final FieldLineageWriter fieldLineageWriter;
   private final MetadataPublisher metadataPublisher;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -112,7 +114,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
                                 MessagingService messagingService, MetadataReader metadataReader,
-                                MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter) {
+                                MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
+                                NamespaceQueryAdmin namespaceQueryAdmin) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -131,6 +134,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.metadataReader = metadataReader;
     this.metadataPublisher = metadataPublisher;
     this.fieldLineageWriter = fieldLineageWriter;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
@@ -180,7 +184,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         new BasicMapReduceContext(program, options, cConf, spec, workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager,
-                                  messagingService, metadataReader, metadataPublisher);
+                                  messagingService, metadataReader, metadataPublisher, namespaceQueryAdmin);
       closeables.add(context);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
