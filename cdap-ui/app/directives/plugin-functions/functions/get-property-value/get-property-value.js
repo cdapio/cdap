@@ -23,11 +23,12 @@ angular.module(PKG.name + '.commons')
         node: '=',
         fnConfig: '='
       },
-      controller: function ($scope, $uibModal, EventPipe, myPipelineApi) {
+      controller: function ($scope, $uibModal, EventPipe, myPipelineApi, myHelpers) {
         var vm = this;
         var fnConfig = $scope.fnConfig;
         var outputProperty = fnConfig['output-property'];
         var methodName = fnConfig['plugin-method'] || 'getSchema';
+        vm.buttonlabel = myHelpers.objectQuery(fnConfig, 'widget-attributes', 'buttonlabel') || 'Get Value';
         var methodType = fnConfig.method || 'GET';
         var getPluginMethodApi = function (methodType) {
           switch (methodType) {
