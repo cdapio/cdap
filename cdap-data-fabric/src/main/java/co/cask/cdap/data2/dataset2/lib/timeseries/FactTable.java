@@ -62,14 +62,6 @@ public final class FactTable implements Closeable {
   private static final int MAX_RECORDS_TO_SCAN_DURING_SEARCH = 10 * 1000 * 1000;
   private static final int MAX_SCANS_DURING_SEARCH = 10 * 1000;
 
-  private static final Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>
-    TRANSFORM_MAP_BYTE_ARRAY_TO_LONG = new Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>() {
-    @Override
-    public NavigableMap<byte[], Long> apply(NavigableMap<byte[], byte[]> input) {
-      return Maps.transformValues(input, Bytes::toLong);
-    }
-  };
-
   private final MetricsTable timeSeriesTable;
   private final EntityTable entityTable;
   private final FactCodec codec;
@@ -79,6 +71,7 @@ public final class FactTable implements Closeable {
 
   private final String putCountMetric;
   private final String incrementCountMetric;
+  private final boolean skipSecond;
 
   @Nullable
   private MetricsCollector metrics;
@@ -96,6 +89,11 @@ public final class FactTable implements Closeable {
    */
   public FactTable(MetricsTable timeSeriesTable,
                    EntityTable entityTable, int resolution, int rollTime) {
+    this(timeSeriesTable, entityTable, resolution, rollTime, true);
+  }
+
+  public FactTable(MetricsTable timeSeriesTable,
+                   EntityTable entityTable, int resolution, int rollTime, boolean skipSecond) {
     // Two bytes for column name, which is a delta timestamp
     Preconditions.checkArgument(rollTime <= MAX_ROLL_TIME, "Rolltime should be <= " + MAX_ROLL_TIME);
 
@@ -106,7 +104,9 @@ public final class FactTable implements Closeable {
     this.rollTime = rollTime;
     this.putCountMetric = "factTable." + resolution + ".put.count";
     this.incrementCountMetric = "factTable." + resolution + ".increment.count";
+    this.skipSecond = skipSecond;
   }
+
 
   public long getCount() {
     return timeSeriesTable.getCount();
@@ -141,7 +141,7 @@ public final class FactTable implements Closeable {
         byte[] rowKey = codec.createRowKey(fact.getDimensionValues(), measurement.getName(), fact.getTimestamp());
         byte[] column = codec.createColumn(fact.getTimestamp());
 
-        if (MeasureType.COUNTER == measurement.getType()) {
+        if (MeasureType.COUNTER == measurement.getType() && (!skipSecond || resolution != 5)) {
           inc(incrementsTable, rowKey, column, measurement.getValue());
         } else {
           gaugesTable

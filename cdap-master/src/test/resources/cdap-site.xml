@@ -16,6 +16,12 @@
   the License.
   -->
 <configuration>
+  <property>
+    <name>metrics.skip.second</name>
+    <value>true</value>
+    <description>
+    </description>
+  </property>
 
   <property>
     <name>app.program.spark.compat</name>

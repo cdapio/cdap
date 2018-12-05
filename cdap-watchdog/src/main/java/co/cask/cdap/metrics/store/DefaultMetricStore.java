@@ -227,7 +227,7 @@ public class DefaultMetricStore implements MetricStore {
 
   @Inject
   DefaultMetricStore(MetricDatasetFactory dsFactory, CConfiguration cConf) {
-    this(dsFactory, new int[] {1, 60, 3600, TOTALS_RESOLUTION}, cConf);
+    this(dsFactory, new int[] {5, 60, 3600, TOTALS_RESOLUTION}, cConf);
   }
 
   // NOTE: should never be used apart from data migration during cdap upgrade
@@ -238,13 +238,10 @@ public class DefaultMetricStore implements MetricStore {
                                             Constants.Metrics.RETENTION_SECONDS_SUFFIX);
     long hourRetentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.HOUR_RESOLUTION +
                                              Constants.Metrics.RETENTION_SECONDS_SUFFIX);
-    this.resolutionTTLMap = ImmutableMap.of(1, secRetentionSecs, 60, minRetentionSecs, 3600, hourRetentionSecs);
-    FactTableSupplier factTableSupplier = new FactTableSupplier() {
-      @Override
-      public FactTable get(int resolution, int ignoredRollTime) {
-        // roll time will be taken from configuration todo: clean this up
-        return dsFactory.getOrCreateFactTable(resolution);
-      }
+    this.resolutionTTLMap = ImmutableMap.of(5, secRetentionSecs, 60, minRetentionSecs, 3600, hourRetentionSecs);
+    FactTableSupplier factTableSupplier = (resolution, ignoredRollTime) -> {
+      // roll time will be taken from configuration todo: clean this up
+      return dsFactory.getOrCreateFactTable(resolution);
     };
     this.cube = Suppliers.memoize(new Supplier<Cube>() {
       @Override

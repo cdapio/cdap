@@ -2122,7 +2122,7 @@
   </property>
 
   <property>
-    <name>metrics.data.table.retention.resolution.1.seconds</name>
+    <name>metrics.data.table.retention.resolution.5.seconds</name>
     <value>7200</value>
     <description>
       Retention resolution in seconds of the 1-second resolution table;

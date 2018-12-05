@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 public class MetricsWriteService extends AbstractScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsWriteService.class);
   private static final String PROGRAM_NAME = "DataPipelineWorkflow";
-  private static final Map<Integer, Long> DEFAULT_TIME = ImmutableMap.of(1, 0L, 60, 0L, 3600, 0L,
+  private static final Map<Integer, Long> DEFAULT_TIME = ImmutableMap.of(5, 0L, 60, 0L, 3600, 0L,
                                                                          Integer.MAX_VALUE, 0L);
 
   private final LocalMetricsCollectionService metricsCollectionService;
@@ -61,6 +61,7 @@ public class MetricsWriteService extends AbstractScheduledService {
   private final int numMetricsPerSecond;
   private final int numStages;
   private final int numThreads;
+  private final int numMillis;
   private long numPublish = 0L;
   private long avgTime = 0L;
   private Map<Integer, Long> avgWriteTime;
@@ -81,6 +82,7 @@ public class MetricsWriteService extends AbstractScheduledService {
     this.executor = Executors.newScheduledThreadPool(1,
                                                      Threads.createDaemonThreadFactory("metrics-write"));
     this.metricType = cConf.get("metrics.type.value", "normal");
+    this.numMillis = cConf.getInt("metrics.min.interval", 5000);
     this.metricStore = metricStore;
     avgWriteTime = new HashMap<>();
     avgReadTime = new HashMap<>();
@@ -178,12 +180,17 @@ public class MetricsWriteService extends AbstractScheduledService {
     public Long call() {
       LOG.info("Starting to emit metrics for {} pipelines for thread {}", metricsContexts.size(), name);
       while (!Thread.currentThread().isInterrupted()) {
-        for (MetricsContext metricsContext : metricsContexts) {
-          metricsContext.resetTime();
+//        for (MetricsContext metricsContext : metricsContexts) {
+//          metricsContext.resetTime();
+//        }
+        long sleepTime = emitMetrics();
+        if (sleepTime > 0) {
+          try {
+            TimeUnit.MILLISECONDS.sleep(sleepTime);
+          } catch (InterruptedException e) {
+            return count;
+          }
         }
-        long startTime = System.currentTimeMillis();
-        emitMetrics();
-        long duration = System.currentTimeMillis() - startTime;
    //     if (duration > 10) {
         //  long totalTime = 0L;
 //          for (MetricsContext metricsContext : metricsContexts) {
@@ -206,7 +213,8 @@ public class MetricsWriteService extends AbstractScheduledService {
       return count;
     }
 
-    private void emitMetrics() {
+    private long emitMetrics() {
+      long start = System.currentTimeMillis();
       long timestamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
       List<MetricValues> metricValues = new ArrayList<>();
       for (MetricsContext metricsContext : metricsContexts) {
@@ -238,21 +246,13 @@ public class MetricsWriteService extends AbstractScheduledService {
             metrics.add(new MetricValue(prefix + Metrics.RECORDS_OUT, MetricType.COUNTER, 5L));
             metrics.add(new MetricValue(prefix + Metrics.RECORDS_IN, MetricType.COUNTER, 5L));
           }
-//          // use some default values for time metrics since we want to test if the metrics system is able to write,
-//          // dont care about the actual number
-//          metricsContext.increment(prefix + Metrics.TOTAL_TIME, 5L);
-//          metricsContext.gauge(prefix + Metrics.MAX_TIME, 10L);
-//          metricsContext.gauge(prefix + Metrics.MIN_TIME, 1L);
-//          metricsContext.gauge(prefix + Metrics.AVG_TIME, 5L);
-//          metricsContext.gauge(prefix + Metrics.STD_DEV_TIME, 2L);
-//
-//          // these will be records.in and records.out, this number can be used to verify if the metrics system result
-//          // is correct
-//          metricsContext.increment(prefix + Metrics.RECORDS_IN, 1);
-//          metricsContext.increment(prefix + Metrics.RECORDS_OUT, 1);
           count += 7;
         }
         metricValues.add(new MetricValues(metricsContext.getTags(), timestamp, metrics));
+
+//        for (long currentTs = timestamp; currentTs < timestamp + 5; currentTs++) {
+//          metricValues.add(new MetricValues(metricsContext.getTags(), currentTs, metrics));
+//        }
       }
       Map<Integer, Long> oldWriteTime = metricStore.getWriteTime();
       Map<Integer, Long> oldMetricsCount = metricStore.getCounts();
@@ -327,9 +327,14 @@ public class MetricsWriteService extends AbstractScheduledService {
           totalWrites += value;
         }
 
-        if (duration > 1000) {
+        if (metricType.equals("gauge") && duration > 1000) {
           LOG.info("Yaojie - warning, spend over 1 seconds in publish, used {}, " +
-                     "the leveldb write for each table is {}", duration, newWriteTimeDBElapased);
+                     "the leveldb write for each table is {}, the leveldb read for each table is " +
+                     "{}", duration, newWriteTimeDBElapased, newReadTimeElapsed);
+        } else if (duration > 3000) {
+          LOG.info("Yaojie - warning, spend over 3 seconds in publish, used {}, " +
+                     "the leveldb write for each table is {}, the leveldb read for each table is " +
+                     "{}", duration, newWriteTimeDBElapased, newReadTimeElapsed);
         }
 
         LOG.info("Added {} metrics in one publish for {} milliseconds, the time happened in metrics write " +
@@ -341,6 +346,7 @@ public class MetricsWriteService extends AbstractScheduledService {
                  newReadTimeElapsed, avgWriteTime, avgReadTime, newMapSizeHappened, avgWriteTotal, avgReadTotal,
                  totalWrites);
       }
+      return Math.max(0L, numMillis - (System.currentTimeMillis() - start));
     }
   }
 

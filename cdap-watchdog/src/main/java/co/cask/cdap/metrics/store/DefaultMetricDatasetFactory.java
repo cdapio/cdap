@@ -87,9 +87,10 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     // Disable auto split
     props.add(HBaseTableAdmin.SPLIT_POLICY,
               cConf.get(Constants.Metrics.METRICS_TABLE_HBASE_SPLIT_POLICY));
+    boolean skipSecond = cConf.getBoolean("metrics.skip.second", false);
 
     MetricsTable table = getOrCreateResolutionMetricsTable(v3TableName, props, resolution);
-    return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
+    return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution), skipSecond);
   }
 
   @Override

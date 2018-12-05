@@ -645,7 +645,7 @@ public final class Constants {
 
     // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
     public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution.";
-    public static final int SECOND_RESOLUTION = 1;
+    public static final int SECOND_RESOLUTION = 5;
     public static final int MINUTE_RESOLUTION = 60;
     public static final int HOUR_RESOLUTION = 3600;
     public static final String RETENTION_SECONDS_SUFFIX = ".seconds";
