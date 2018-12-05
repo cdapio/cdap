@@ -43,7 +43,7 @@ storiesOf('Modals', module)
         >
           <ModalHeader>
             {text('Modal title', 'Default Modal')}
-            <div className="close-section float-xs-right" onClick={action('modal closed')}>
+            <div className="close-section float-right" onClick={action('modal closed')}>
               <IconSVG name="icon-close" />
             </div>
           </ModalHeader>
