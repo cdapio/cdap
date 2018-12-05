@@ -181,7 +181,7 @@ public class FactCodec {
     return newRowKey;
   }
 
-  private long roundToResolution(long ts) {
+  public long roundToResolution(long ts) {
     return (ts / resolution) * resolution;
   }
 

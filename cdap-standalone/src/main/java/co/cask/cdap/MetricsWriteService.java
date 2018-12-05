@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -77,7 +78,7 @@ public class MetricsWriteService extends AbstractScheduledService {
     this.numNamespaces = cConf.getInt("metrics.write.test.namespaces.num", 10);
     this.numProgramsPerNS = cConf.getInt("metrics.write.test.programs.per.ns", 10);
     this.numMetricsPerSecond = cConf.getInt("metrics.write.test.metrics.per.second", 1000);
-    this.numStages = cConf.getInt("metrics.write.test.num.stages", 50);
+    this.numStages = cConf.getInt("metrics.write.test.num.stages", 30);
     this.numThreads = cConf.getInt("metrics.write.test.num.threads", 1);
     this.executor = Executors.newScheduledThreadPool(1,
                                                      Threads.createDaemonThreadFactory("metrics-write"));
@@ -170,10 +171,12 @@ public class MetricsWriteService extends AbstractScheduledService {
   private class WriteMetricsCallble implements Callable<Long> {
     private final List<MetricsContext> metricsContexts;
     private final String name;
+    private final Random rand;
 
     WriteMetricsCallble(String name, List<MetricsContext> metricsContexts) {
       this.name = name;
       this.metricsContexts = new ArrayList<>(metricsContexts);
+      this.rand = new Random();
     }
 
     @Override
@@ -248,7 +251,12 @@ public class MetricsWriteService extends AbstractScheduledService {
           }
           count += 7;
         }
-        metricValues.add(new MetricValues(metricsContext.getTags(), timestamp, metrics));
+        if (rand.nextInt(10) < 1) {
+          metricValues.add(new MetricValues(metricsContext.getTags(), timestamp - 5, metrics));
+        } else {
+          metricValues.add(new MetricValues(metricsContext.getTags(), timestamp, metrics));
+
+        }
 
 //        for (long currentTs = timestamp; currentTs < timestamp + 5; currentTs++) {
 //          metricValues.add(new MetricValues(metricsContext.getTags(), currentTs, metrics));
@@ -340,8 +348,8 @@ public class MetricsWriteService extends AbstractScheduledService {
         LOG.info("Added {} metrics in one publish for {} milliseconds, the time happened in metrics write " +
                    "is: {}, the number of level db writes is: {}, the time elapsed in leveldb write is {}, " +
                    "the time elapsed in leveldb read is {}, the avg write time is {}, the avg read time is {}, " +
-                   "the number of writes is {}, the total avg write time is {} milliseconds, " +
-                   "the total avg read time is {} milliseconds, the total write number is {}.",
+                   "the number of increments is {}, the total avg write time is {} milliseconds, " +
+                   "the total avg read time is {} milliseconds, the total increment number is {}.",
                  metricValues.size(), duration, timeElapsed, writeHappened, newWriteTimeDBElapased,
                  newReadTimeElapsed, avgWriteTime, avgReadTime, newMapSizeHappened, avgWriteTotal, avgReadTotal,
                  totalWrites);

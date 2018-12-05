@@ -193,7 +193,7 @@ public class LevelDBTableCore {
         batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
       }
     }
-    mapSize += changes.size();
+  //  mapSize += changes.size();
     long startTime = System.currentTimeMillis();
     db.write(batch, service.getWriteOptions());
     long duration = System.currentTimeMillis() - startTime;
