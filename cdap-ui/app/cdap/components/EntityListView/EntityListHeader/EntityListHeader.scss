@@ -47,14 +47,12 @@ $margin-to-border: 0.5rem;
       width: $search-box-width;
       padding-left: 16px;
 
-      .input-feedback {
+      .input-group-text {
         background-color: #ffffff;
-        border: 1px solid $border-color;
-        border-right: 0;
+      }
 
-        .icon-search {
-          color: $border-color;
-        }
+      .icon-search {
+        color: $border-color;
       }
 
       .search-input {

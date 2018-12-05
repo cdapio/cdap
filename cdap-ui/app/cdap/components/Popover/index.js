@@ -175,10 +175,15 @@ export default class Popover extends PureComponent {
       targetProps['onMouseOut'] = debounce(this.onMouseOutToggle, 100);
     }
     const TargetElement = this.props.target;
+
     return (
       <Manager className={this.props.className} tag={this.props.tag}>
         <Target {...targetProps}>
-          <TargetElement />
+          <TargetElement
+            className={classnames({
+              active: this.state.showPopover,
+            })}
+          />
         </Target>
         <Popper
           id={this.id}

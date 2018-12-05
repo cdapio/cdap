@@ -68,6 +68,7 @@ var IconSVG = require('../cdap/components/IconSVG').default;
 var PipelineConfigConstants = require('../cdap/components/PipelineConfigurations/PipelineConfigConstants');
 var AuthRefresher = require('../cdap/components/AuthRefresher').default;
 var ToggleSwitch = require('../cdap/components/ToggleSwitch').default;
+var PipelineList = require('../cdap/components/PipelineList').default;
 
 export {
   Store,
@@ -117,4 +118,5 @@ export {
   PipelineConfigConstants,
   AuthRefresher,
   ToggleSwitch,
+  PipelineList,
 };
