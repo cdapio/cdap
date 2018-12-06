@@ -28,7 +28,22 @@ angular.module(PKG.name + '.commons')
         var fnConfig = $scope.fnConfig;
         var outputProperty = fnConfig['output-property'];
         var methodName = fnConfig['plugin-method'] || 'getSchema';
-        vm.buttonlabel = myHelpers.objectQuery(fnConfig, 'widget-attributes', 'buttonlabel') || 'Get Value';
+        vm.label = myHelpers.objectQuery(fnConfig, 'widget-attributes', 'label') || 'Get Value';
+        vm.node = $scope.node;
+        var getRequiredFields = function () {
+          if (!fnConfig['required-fields']) { return []; }
+          return fnConfig['required-fields'].map(function (field) {
+            if ($scope.node.plugin.properties.hasOwnProperty(field)) {
+              return $scope.node.plugin.properties[field];
+            }
+            return '';
+          });
+        };
+        vm.requiredProperties = getRequiredFields();
+        vm.requiredFieldsWatch = $scope.$watch('GetPropertyValueController.node.plugin.properties', function () {
+          vm.requiredProperties = getRequiredFields();
+        }, true);
+        vm.missingFieldsWarningMessage = fnConfig['missing-required-fields-message'] || '';
         var methodType = fnConfig.method || 'GET';
         var getPluginMethodApi = function (methodType) {
           switch (methodType) {

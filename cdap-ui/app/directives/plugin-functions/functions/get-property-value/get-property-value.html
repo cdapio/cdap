@@ -14,6 +14,18 @@
   the License.
 -->
 
-<button class="btn btn-default pull-right" type="button" ng-click="GetPropertyValueController.openModal()">
-  {{GetPropertyValueController.buttonlabel}}
+<button
+  class="btn btn-default pull-right"
+  type="button"
+  ng-disabled="GetPropertyValueController.requiredProperties.indexOf('') !== -1"
+  ng-click="GetPropertyValueController.openModal()"
+>
+  <span
+    ng-if="GetPropertyValueController.requiredProperties.indexOf('') !== -1"
+    uib-tooltip="{{OutputSchemaController.missingFieldsWarningMessage}}"
+    tooltip-append-to-body="true"
+  >
+    <i class="fa fa-exclamation-triangle text-warning"></i>
+  </span>
+  {{GetPropertyValueController.label}}
 </button>
