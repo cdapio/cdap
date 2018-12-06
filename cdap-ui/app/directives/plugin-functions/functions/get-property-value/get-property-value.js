@@ -21,12 +21,12 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'plugin-functions/functions/get-property-value/get-property-value.html',
       scope: {
         node: '=',
-        fnConfig: '='
+        fnConfig: '=',
+        nodeConfig: '='
       },
-      controller: function ($scope, $uibModal, EventPipe, myPipelineApi, myHelpers) {
+      controller: function ($scope, $uibModal, myPipelineApi, myHelpers) {
         var vm = this;
         var fnConfig = $scope.fnConfig;
-        var outputProperty = fnConfig['output-property'];
         var methodName = fnConfig['plugin-method'] || 'getSchema';
         vm.label = myHelpers.objectQuery(fnConfig, 'widget-attributes', 'label') || 'Get value';
         vm.node = $scope.node;
@@ -111,9 +111,8 @@ angular.module(PKG.name + '.commons')
           });
 
           modal.result.then(function (value) {
-            if (outputProperty) {
-              $scope.node.plugin.properties[outputProperty] = value;
-            }
+            let outputProperty = $scope.nodeConfig.name;
+            $scope.node.plugin.properties[outputProperty] = value;
           });
         };
       },
