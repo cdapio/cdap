@@ -16,9 +16,7 @@ determined the state of an entity at a given point in time. These activities inc
 creation, modification, and deletion of an entity. It also includes modification of the
 entity's :ref:`metadata <metadata>`. For data entities (datasets and
 streams), it includes access information used to generate the entity's :ref:`lineage
-<metadata-lineage>`. Audit logging is an especially important feature because it
-enables users to integrate CDAP with external data governance systems such as
-:ref:`Cloudera Navigator <navigator-integration>`.
+<metadata-lineage>`.
 
 Please note that audit logs are not published during a CDAP upgrade, as CDAP services are
 not available. Hence, any application which uses CDAP audit logs to sync metadata will go 

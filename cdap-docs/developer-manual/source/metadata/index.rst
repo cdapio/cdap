@@ -87,10 +87,3 @@ object associated with a single entity is limited to 10K bytes in size.
   primarily for enabling metadata based processing.
 
 
-.. _metadata-navigator-integration:
-
-.. |navigator-integration| replace:: **Cloudera Navigator Integration:**
-
-- |navigator-integration| CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery
-  and search. Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for
-  more information.

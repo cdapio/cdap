@@ -14,7 +14,6 @@ Cloudera
    :maxdepth: 1
    
     Ingestion and Exploration <ingesting>
-    Navigator Integration <navigator-integration>
 
 .. toctree::
    :hidden:
@@ -49,10 +48,6 @@ Configurations that include Cloudera Manager can be easily configured to ingest 
 a cluster, specify schema, or run interactive queries using Impala with CDAP for faster
 results.
 
-The Navigator Integration App is an application built by the team at Cask for bridging CDAP Metadata
-with Cloudera's data management tool, Navigator. The Navigator Integration App is a CDAP-native application
-that uses a real-time flow to fetch the CDAP Metadata and write it to Cloudera Navigator.
-
 **CDAP** |bold-version| is certified on Cloudera 5.
 
 
@@ -65,11 +60,6 @@ that uses a real-time flow to fetch the CDAP Metadata and write it to Cloudera N
 .. _cloudera-ingesting: ingesting.html
 
 - |cloudera-ingesting|_ Ingest and explore data using **Impala**
-
-.. |cloudera-navigator| replace:: **Navigator Integration:**
-.. _cloudera-navigator: navigator-integration.html
-
-- |cloudera-navigator|_ Metadata search and discovery of CDAP entities from **Cloudera Navigator**
 
 
 .. rubric:: CDAP and Cloudera Architecture Schematic

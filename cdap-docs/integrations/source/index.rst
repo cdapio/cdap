@@ -48,12 +48,6 @@ Integrations
 - |cloudera-ingesting|_ Ingesting and exploring data using **Impala**
 
 
-.. |cloudera-navigator| replace:: **Navigator Integration:**
-.. _cloudera-navigator: partners/cloudera/navigator-integration.html
-
-- |cloudera-navigator|_ Metadata search and discovery of CDAP entities from **Cloudera Navigator**
-
-
 .. |cloudera-faq| replace:: **FAQ:**
 .. _cloudera-faq: ../faqs/cloudera-manager..html
 
