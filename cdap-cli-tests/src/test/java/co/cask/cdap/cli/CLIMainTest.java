@@ -942,8 +942,7 @@ public class CLIMainTest extends CLITestBase {
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
     File appJarFile =
       new File(tmpFolder, String.format("%s-1.0.%d.jar", cls.getSimpleName(), System.currentTimeMillis()));
-    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
-    return appJarFile;
+    return Locations.linkOrCopy(deploymentJar, appJarFile);
   }
 
   private void assertProgramStatus(final ProgramClient programClient, final ProgramId programId, String programStatus)
@@ -1043,7 +1042,6 @@ public class CLIMainTest extends CLITestBase {
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
     File appJarFile =
       new File(tmpFolder, String.format("%s-1.0.jar", cls.getSimpleName()));
-    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
-    return appJarFile;
+    return Locations.linkOrCopy(deploymentJar, appJarFile);
   }
 }

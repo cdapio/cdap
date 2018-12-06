@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,7 +49,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Callable;
 
 /**
  * LogLocation representing a log file and methods to read the file's contents.
@@ -385,20 +384,15 @@ public class LogLocation {
     private final SeekableInputStream is;
     private final long len;
 
-    LocationSeekableInput(final Location location,
+    LocationSeekableInput(Location location,
                           NamespaceId namespaceId, Impersonator impersonator,
                           boolean shouldImpersonate) throws IOException {
       try {
         if (shouldImpersonate) {
-          this.is = impersonator.doAs(namespaceId, new Callable<SeekableInputStream>() {
-            @Override
-            public SeekableInputStream call() throws Exception {
-              return Locations.newInputSupplier(location).getInput();
-            }
-          });
+          this.is = impersonator.doAs(namespaceId, () -> Locations.openSeekableInputStream(location));
         } else {
           // impersonation is not required for V1 version.
-          this.is = Locations.newInputSupplier(location).getInput();
+          this.is = Locations.openSeekableInputStream(location);
         }
       } catch (IOException e) {
         throw e;

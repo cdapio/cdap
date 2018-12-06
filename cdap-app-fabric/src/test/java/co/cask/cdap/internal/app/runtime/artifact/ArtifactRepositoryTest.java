@@ -525,8 +525,8 @@ public class ArtifactRepositoryTest {
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
-    Files.copy(Locations.newInputSupplier(plugin.getKey().getLocation()),
-               new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
+    Locations.linkOrCopy(plugin.getKey().getLocation(),
+                         new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
 
     // Create another plugin jar with later version and update the repository
     Id.Artifact artifact2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "2.0");
@@ -539,8 +539,8 @@ public class ArtifactRepositoryTest {
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("2.0"), plugin.getKey().getArtifactId().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
-    Files.copy(Locations.newInputSupplier(plugin.getKey().getLocation()),
-               new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
+    Locations.linkOrCopy(plugin.getKey().getLocation(),
+                         new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
 
     // Load the Plugin class from the classLoader.
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
@@ -750,11 +750,11 @@ public class ArtifactRepositoryTest {
     return plugins;
   }
 
-  private static void copyArtifacts(File pluginDir, SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins)
-    throws IOException {
+  private static void copyArtifacts(File pluginDir,
+                                    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins) throws IOException {
     ArtifactDescriptor descriptor = plugins.firstKey();
-    Files.copy(Locations.newInputSupplier(descriptor.getLocation()),
-               new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
+    Locations.linkOrCopy(descriptor.getLocation(),
+                         new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
   }
 
   private static ProgramClassLoader createAppClassLoader(File jarFile) throws IOException {
@@ -767,17 +767,17 @@ public class ArtifactRepositoryTest {
   private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               cls, manifest);
+    destFile.delete();
     DirUtils.mkdirs(destFile.getParentFile());
-    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
-    return destFile;
+    return Locations.linkOrCopy(deploymentJar, destFile);
   }
 
   private static File createPluginJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
     Location deploymentJar = PluginJarHelper.createPluginJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                              manifest, cls);
+    destFile.delete();
     DirUtils.mkdirs(destFile.getParentFile());
-    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
-    return destFile;
+    return Locations.linkOrCopy(deploymentJar, destFile);
   }
 
   private static Manifest createManifest(Object...entries) {

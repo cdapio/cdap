@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,18 +17,19 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -74,8 +75,10 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
     // will only be 1 part file, due to the small amount of data
     Location outputLocation = outputFileSet.getBaseLocation().append("output").append("part-r-00000");
 
-    List<String> lines = CharStreams.readLines(
-      CharStreams.newReaderSupplier(Locations.newInputSupplier(outputLocation), Charsets.UTF_8));
+    List<String> lines;
+    try (Reader reader = new InputStreamReader(outputLocation.getInputStream(), StandardCharsets.UTF_8)) {
+      lines = CharStreams.readLines(reader);
+    }
 
     Assert.assertEquals(ImmutableList.of("1 Bob 75", "2 Samuel 18", "3 Joe 60"),
                         lines);
