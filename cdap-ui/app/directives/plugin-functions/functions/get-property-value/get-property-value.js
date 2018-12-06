@@ -28,7 +28,7 @@ angular.module(PKG.name + '.commons')
         var fnConfig = $scope.fnConfig;
         var outputProperty = fnConfig['output-property'];
         var methodName = fnConfig['plugin-method'] || 'getSchema';
-        vm.label = myHelpers.objectQuery(fnConfig, 'widget-attributes', 'label') || 'Get Value';
+        vm.label = myHelpers.objectQuery(fnConfig, 'widget-attributes', 'label') || 'Get value';
         vm.node = $scope.node;
         var getRequiredFields = function () {
           if (!fnConfig['required-fields']) { return []; }
