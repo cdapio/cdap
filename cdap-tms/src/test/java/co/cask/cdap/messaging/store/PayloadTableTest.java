@@ -62,7 +62,7 @@ public abstract class PayloadTableTest {
   private static final TopicMetadata M1 = new TopicMetadata(T1, DEFAULT_PROPERTY);
   private static final TopicMetadata M2 = new TopicMetadata(T2, DEFAULT_PROPERTY);
 
-  protected abstract PayloadTable getPayloadTable() throws Exception;
+  protected abstract PayloadTable getPayloadTable(TopicMetadata topicMetadata) throws Exception;
 
   protected abstract MetadataTable getMetadataTable() throws Exception;
 
@@ -73,7 +73,7 @@ public abstract class PayloadTableTest {
     String payload = "data";
     long txWritePtr = 123L;
     try (MetadataTable metadataTable = getMetadataTable();
-         PayloadTable table = getPayloadTable()) {
+         PayloadTable table = getPayloadTable(metadata)) {
       metadataTable.createTopic(metadata);
       List<PayloadTable.Entry> entryList = new ArrayList<>();
       entryList.add(new TestPayloadEntry(topicId, GENERATION, txWritePtr, 1L, (short) 1, Bytes.toBytes(payload)));
@@ -101,35 +101,37 @@ public abstract class PayloadTableTest {
   @Test
   public void testConsumption() throws Exception {
     try (MetadataTable metadataTable = getMetadataTable();
-         PayloadTable table = getPayloadTable()) {
+         PayloadTable table1 = getPayloadTable(M1);
+         PayloadTable table2 = getPayloadTable(M2)) {
       metadataTable.createTopic(M1);
       metadataTable.createTopic(M2);
       List<PayloadTable.Entry> entryList = new ArrayList<>();
       populateList(entryList);
-      table.store(entryList.iterator());
+      table1.store(entryList.iterator());
+      table2.store(entryList.iterator());
       byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
 
       // Fetch data with 100 write pointer
-      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(M1, 100, new MessageId(messageId), true,
-                                                                   Integer.MAX_VALUE)) {
+      try (CloseableIterator<PayloadTable.Entry> iterator = table1.fetch(M1, 100, new MessageId(messageId), true,
+                                                                    Integer.MAX_VALUE)) {
         checkData(iterator, 123, ImmutableSet.of(100L), 50);
       }
 
       // Fetch only 10 items with 101 write pointer
-      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(M1, 101, new MessageId(messageId), true, 1)) {
+      try (CloseableIterator<PayloadTable.Entry> iterator = table1.fetch(M1, 101, new MessageId(messageId), true, 1)) {
         checkData(iterator, 123, ImmutableSet.of(101L), 1);
       }
 
       // Fetch items with 102 write pointer
-      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(M1, 102, new MessageId(messageId), true,
-                                                                        Integer.MAX_VALUE)) {
+      try (CloseableIterator<PayloadTable.Entry> iterator = table1.fetch(M1, 102, new MessageId(messageId), true,
+                                                                         Integer.MAX_VALUE)) {
         checkData(iterator, 123, ImmutableSet.of(102L), 50);
       }
 
       // Fetch from t2 with 101 write pointer
-      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(M2, 101, new MessageId(messageId), true,
-                                                                        Integer.MAX_VALUE)) {
+      try (CloseableIterator<PayloadTable.Entry> iterator = table2.fetch(M2, 101, new MessageId(messageId), true,
+                                                                         Integer.MAX_VALUE)) {
         checkData(iterator, 123, ImmutableSet.of(101L), 50);
       }
     }
@@ -155,7 +157,7 @@ public abstract class PayloadTableTest {
       executor.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          try (PayloadTable payloadTable = getPayloadTable()) {
+          try (PayloadTable payloadTable = getPayloadTable(metadata)) {
             payloadTable.store(new AbstractIterator<PayloadTable.Entry>() {
               short messageCount = 0;
 
@@ -196,7 +198,7 @@ public abstract class PayloadTableTest {
       MessageId messageId = new MessageId(rawId);
 
       try (
-        PayloadTable payloadTable = getPayloadTable();
+        PayloadTable payloadTable = getPayloadTable(metadata);
         CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(metadata, i, messageId, true, 10);
       ) {
         List<PayloadTable.Entry> entries = Lists.newArrayList(iterator);

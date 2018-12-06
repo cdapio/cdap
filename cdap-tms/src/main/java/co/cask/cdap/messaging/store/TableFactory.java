@@ -16,6 +16,9 @@
 
 package co.cask.cdap.messaging.store;
 
+import co.cask.cdap.messaging.TopicMetadata;
+import co.cask.cdap.proto.id.TopicId;
+
 import java.io.IOException;
 
 /**
@@ -23,9 +26,9 @@ import java.io.IOException;
  */
 public interface TableFactory {
 
-  MetadataTable createMetadataTable(String tableName) throws IOException;
+  MetadataTable createMetadataTable() throws IOException;
 
-  MessageTable createMessageTable(String tableName) throws IOException;
+  MessageTable createMessageTable(TopicMetadata topicMetadata) throws IOException;
 
-  PayloadTable createPayloadTable(String tableName) throws IOException;
+  PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException;
 }

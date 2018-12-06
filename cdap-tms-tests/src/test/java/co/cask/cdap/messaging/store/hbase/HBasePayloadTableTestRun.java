@@ -27,6 +27,7 @@ import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.PayloadTableTest;
@@ -89,13 +90,13 @@ public class HBasePayloadTableTestRun extends PayloadTableTest {
   }
 
   @Override
-  protected PayloadTable getPayloadTable() throws Exception {
-    return tableFactory.createPayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+  protected PayloadTable getPayloadTable(TopicMetadata topicMetadata) throws Exception {
+    return tableFactory.createPayloadTable(topicMetadata);
   }
 
   @Override
   protected MetadataTable getMetadataTable() throws Exception {
-    return tableFactory.createMetadataTable(cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
+    return tableFactory.createMetadataTable();
   }
 
   public static Injector getInjector() {

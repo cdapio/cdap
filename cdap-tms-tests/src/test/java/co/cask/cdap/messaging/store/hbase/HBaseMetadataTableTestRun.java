@@ -76,10 +76,10 @@ public class HBaseMetadataTableTestRun extends MetadataTableTest {
 
   @Override
   protected MetadataTable createMetadataTable() throws Exception {
-    return tableFactory.createMetadataTable("metadata");
+    return tableFactory.createMetadataTable();
   }
 
-  public static Injector getInjector() {
+  private static Injector getInjector() {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new NamespaceClientUnitTestModule().getModule(),

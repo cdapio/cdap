@@ -26,7 +26,11 @@ import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.iq80.leveldb.Options;
@@ -36,9 +40,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * A {@link TableFactory} for creating tables used by the messaging system using the LevelDB implementation.
@@ -50,10 +58,14 @@ public final class LevelDBTableFactory implements TableFactory {
 
   private final File baseDir;
   private final Options dbOptions;
+  private final String metadataTableName;
+  private final String messageTableName;
+  private final String payloadTableName;
 
   private LevelDBMetadataTable metadataTable;
-  private LevelDBMessageTable messageTable;
-  private LevelDBPayloadTable payloadTable;
+
+  private final LoadingCache<TopicMetadata, LevelDBMessageTable> messageTableCache;
+  private final LoadingCache<TopicMetadata, LevelDBPayloadTable> payloadTableCache;
 
   @VisibleForTesting
   @Inject
@@ -69,42 +81,76 @@ public final class LevelDBTableFactory implements TableFactory {
     executor.scheduleAtFixedRate(new DataCleanup(), 0L,
                                  Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY)),
                                  TimeUnit.SECONDS);
+
+    // Currently we don't support customizable table name yet, hence always get it from cConf.
+    // Later on it can be done by topic properties, with impersonation setting as well.
+    this.metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
+    this.messageTableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
+    this.payloadTableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
+    this.messageTableCache = CacheBuilder.newBuilder().build(new CacheLoader<TopicMetadata, LevelDBMessageTable>() {
+      @ParametersAreNonnullByDefault
+      @Override
+      public LevelDBMessageTable load(TopicMetadata key) throws Exception {
+        File dbPath = getDataDBPath(messageTableName, key.getTopicId(), key.getGeneration());
+        LevelDBMessageTable messageTable =
+          new LevelDBMessageTable(LEVEL_DB_FACTORY.open(dbPath, dbOptions), key);
+        LOG.info("Messaging message table created at {}", dbPath);
+        return messageTable;
+      }
+    });
+
+    this.payloadTableCache = CacheBuilder.newBuilder().build(new CacheLoader<TopicMetadata, LevelDBPayloadTable>() {
+      @ParametersAreNonnullByDefault
+      @Override
+      public LevelDBPayloadTable load(TopicMetadata key) throws Exception {
+        File dbPath = getDataDBPath(payloadTableName, key.getTopicId(), key.getGeneration());
+        LevelDBPayloadTable payloadTable =
+          new LevelDBPayloadTable(LEVEL_DB_FACTORY.open(dbPath, dbOptions), key);
+        LOG.info("Messaging payload table created at {}", dbPath);
+        return payloadTable;
+      }
+    });
   }
 
   @Override
-  public synchronized MetadataTable createMetadataTable(String tableName) throws IOException {
+  public synchronized MetadataTable createMetadataTable() throws IOException {
     if (metadataTable != null) {
       return metadataTable;
     }
 
-    File dbPath = ensureDirExists(new File(baseDir, NamespaceId.SYSTEM.getNamespace() + "." + tableName));
+    File dbPath = getMetadataDBPath(metadataTableName);
     metadataTable = new LevelDBMetadataTable(LEVEL_DB_FACTORY.open(dbPath, dbOptions));
     LOG.info("Messaging metadata table created at {}", dbPath);
     return metadataTable;
   }
 
   @Override
-  public synchronized MessageTable createMessageTable(String tableName) throws IOException {
-    if (messageTable != null) {
-      return messageTable;
-    }
-
-    File dbPath = ensureDirExists(new File(baseDir, NamespaceId.SYSTEM.getNamespace() + "." + tableName));
-    messageTable = new LevelDBMessageTable(LEVEL_DB_FACTORY.open(dbPath, dbOptions));
-    LOG.info("Messaging message table created at {}", dbPath);
-    return messageTable;
+  public synchronized MessageTable createMessageTable(TopicMetadata topicMetadata) {
+    return messageTableCache.getUnchecked(topicMetadata);
   }
 
   @Override
-  public synchronized PayloadTable createPayloadTable(String tableName) throws IOException {
-    if (payloadTable != null) {
-      return payloadTable;
-    }
+  public synchronized PayloadTable createPayloadTable(TopicMetadata topicMetadata) {
+    return payloadTableCache.getUnchecked(topicMetadata);
+  }
 
-    File dbPath = ensureDirExists(new File(baseDir, NamespaceId.SYSTEM.getNamespace() + "." + tableName));
-    payloadTable = new LevelDBPayloadTable(LEVEL_DB_FACTORY.open(dbPath, dbOptions));
-    LOG.info("Messaging payload table created at {}", dbPath);
-    return payloadTable;
+  private File getDataDBPath(String tableName, TopicId topicId, int generation) throws IOException {
+    return getDataDBPath(tableName, topicId, generation, true);
+  }
+
+  private File getDataDBPath(String tableName, TopicId topicId, int generation,
+                             boolean ensureExists) throws IOException {
+    String fileName = String.format("%s.%s.%s.%d", topicId.getNamespace(), tableName, topicId.getTopic(), generation);
+    File file = new File(baseDir, fileName);
+    if (ensureExists) {
+      ensureDirExists(file);
+    }
+    return file;
+  }
+
+  private File getMetadataDBPath(String tableName) throws IOException {
+    String fileName = String.format("%s.%s", NamespaceId.SYSTEM, tableName);
+    return ensureDirExists(new File(baseDir, fileName));
   }
 
   private File ensureDirExists(File dir) throws IOException {
@@ -118,16 +164,48 @@ public final class LevelDBTableFactory implements TableFactory {
 
     @Override
     public void run() {
-      if (metadataTable == null || payloadTable == null || messageTable == null) {
+      if (metadataTable == null) {
         return;
       }
 
-      long timeStamp = System.currentTimeMillis();
       try (CloseableIterator<TopicMetadata> metadataIterator = metadataTable.scanTopics()) {
         while (metadataIterator.hasNext()) {
           TopicMetadata metadata = metadataIterator.next();
-          messageTable.pruneMessages(metadata, timeStamp);
-          payloadTable.pruneMessages(metadata, timeStamp);
+          int currGeneration = metadata.getGeneration();
+
+          // We can safely remove all generations that are less than `cleanOlderThan`.
+          int cleanOlderThan = currGeneration < 0 ? currGeneration * -1 + 1 : currGeneration;
+
+          // Find the generations older than `cleanOlderThan`, that have data on disk, and remove them in reverse order.
+          // We do it in reverse order, so that in case there is a failure in deleting one of them, we can repeat
+          // the same process next iteration and not lose track of generations that need to be deleted.
+          List<File> filesToDelete = new ArrayList<>();
+          for (int olderGeneration = cleanOlderThan - 1; olderGeneration > 0; olderGeneration--) {
+            File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(), olderGeneration, false);
+            if (!dataDBPath.exists()) {
+              break;
+            }
+            filesToDelete.add(dataDBPath);
+          }
+
+          for (int i = filesToDelete.size() - 1; i >= 0; i--) {
+            File dataDBPath = filesToDelete.get(i);
+            LOG.info("Deleting file: {}", dataDBPath);
+            DirUtils.deleteDirectoryContents(dataDBPath);
+          }
+        }
+      } catch (IOException ex) {
+        LOG.debug("Unable to perform data cleanup in TMS LevelDB tables", ex);
+      }
+
+      long timeStamp = System.currentTimeMillis();
+      try {
+        for (Map.Entry<TopicMetadata, LevelDBMessageTable> messageTableEntry : messageTableCache.asMap().entrySet()) {
+          messageTableEntry.getValue().pruneMessages(messageTableEntry.getKey(), timeStamp);
+          System.out.println(messageTableEntry.getKey());
+        }
+        for (Map.Entry<TopicMetadata, LevelDBPayloadTable> payloadTableEntry : payloadTableCache.asMap().entrySet()) {
+          payloadTableEntry.getValue().pruneMessages(payloadTableEntry.getKey(), timeStamp);
         }
       } catch (IOException ex) {
         LOG.debug("Unable to perform data cleanup in TMS LevelDB tables", ex);

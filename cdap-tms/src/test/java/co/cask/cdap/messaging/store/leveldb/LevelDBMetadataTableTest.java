@@ -55,7 +55,7 @@ public class LevelDBMetadataTableTest extends MetadataTableTest {
 
   @Override
   protected MetadataTable createMetadataTable() throws Exception {
-    return tableFactory.createMetadataTable("metadata");
+    return tableFactory.createMetadataTable();
   }
 
   @Test

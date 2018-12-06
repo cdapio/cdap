@@ -65,9 +65,19 @@ final class LevelDBMessageTable extends AbstractMessageTable {
   }
 
   private final DB levelDB;
+  private final TopicMetadata topicMetadata;
 
-  LevelDBMessageTable(DB levelDB) {
+  LevelDBMessageTable(DB levelDB, TopicMetadata topicMetadata) {
     this.levelDB = levelDB;
+    this.topicMetadata = topicMetadata;
+  }
+
+  private void checkTopic(TopicId topicId, int generation) {
+    Preconditions.checkArgument(this.topicMetadata.getTopicId().equals(topicId), "Not allowed to use table with a " +
+      "different topic id. Table's topic Id: {}. Specified topic id: {}", this.topicMetadata.getTopicId(), topicId);
+    Preconditions.checkArgument(this.topicMetadata.getGeneration() == generation, "Not allowed to use table with " +
+                                  "a different generation id. Table's generation: {}. Specified generation: {}",
+                                this.topicMetadata.getGeneration(), generation);
   }
 
   @Override
@@ -160,6 +170,7 @@ final class LevelDBMessageTable extends AbstractMessageTable {
 
         int dataGeneration = messageTableEntry.getGeneration();
         int currGeneration = topicMetadata.getGeneration();
+        checkTopic(topicMetadata.getTopicId(), topicMetadata.getGeneration());
         if (MessagingUtils.isOlderGeneration(dataGeneration, currGeneration)) {
           writeBatch.delete(entry.getKey());
           continue;
