@@ -26,15 +26,16 @@ angular.module(PKG.name + '.commons')
       controller: function(myHelpers, $scope, uuid) {
         $scope.groupName = 'radio-group-'+ uuid.v4();
         $scope.options = myHelpers.objectQuery($scope.config, 'widget-attributes', 'options') || [];
+        $scope.propertyName = myHelpers.objectQuery($scope.config, 'name');
         if (!Array.isArray($scope.options) || (Array.isArray($scope.options) && !$scope.options.length)) {
-          $scope.error = 'Missing options for ' + myHelpers.objectQuery($scope.config, 'name');
+          $scope.error = 'Missing options for ' + $scope.propertyName;
         }
         let defaultValue = myHelpers.objectQuery($scope.config, 'widget-attributes', 'default') || '';
         $scope.layout = myHelpers.objectQuery($scope.config, 'widget-attributes', 'layout') || 'block';
         $scope.model = $scope.model || defaultValue;
         let isModelValid = $scope.options.find(option => option.id === $scope.model);
         if (!isModelValid) {
-          $scope.error = 'Unknown value for ' + myHelpers.objectQuery($scope.config, 'name') + ' specified.';
+          $scope.error = 'Unknown value for ' + $scope.propertyName + ' specified.';
         }
         $scope.$watch('model', () => {
           let isModelValid = $scope.options.find(option => option.id === $scope.model);
@@ -44,6 +45,7 @@ angular.module(PKG.name + '.commons')
         });
         $scope.options = $scope.options.map(option => ({
           id: option.id,
+          elementid: $scope.propertyName + '-' + option.id,
           label: option.label || option.id
         }));
       }

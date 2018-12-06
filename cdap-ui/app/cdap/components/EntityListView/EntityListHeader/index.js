@@ -218,11 +218,7 @@ export default class EntityListHeader extends Component {
         <CustomDropdownMenu onClick={(e) => e.stopPropagation()}>
           {this.state.filterOptions.map((option) => {
             return (
-              <DropdownItem
-                tag="li"
-                key={option.id}
-                onClick={this.onFilterClick.bind(this, option)}
-              >
+              <DropdownItem tag="li" key={option.id}>
                 <div className="form-group form-check">
                   <input
                     type="checkbox"

@@ -228,7 +228,6 @@ different properties are defined; three use a *textbox* widget, while one uses a
             "plugin-function": {
               "method": "POST",
               "widget": "outputSchema",
-              "output-property": "schema",
               "plugin-method": "outputSchema",
               "required-fields": ["groupByFields", "aggregates"],
               "missing-required-fields-message":
@@ -728,8 +727,6 @@ These fields need to be configured to use the plugin functions in the CDAP UI:
 - **method:** Type of request to make when calling the plugin function from the CDAP UI
   (for example: GET or POST)
 - **widget:** Type of widget to use to import output schema
-- **output-property:** Property to update once the CDAP UI receives the data from the
-  plugin method
 - **plugin-method:** Name of the plugin method to call (as exposed by the plugin)
 - **required-fields:** Fields required to call the plugin method
 - **missing-required-fields-message:** A message for the user as to why the action is
@@ -741,6 +738,83 @@ fields are required fields to use a plugin method of the plugin in the CDAP UI.
 
 With plugin functions, if the widget is not supported in the CDAP UI or the
 plugin function map is not supplied, the user will not see the widget in the CDAP UI.
+
+.. highlight:: json-ellipsis
+
+.. list-table::
+   :widths: 15 20 20 30
+   :header-rows: 1
+
+   * - Widget Type
+     - Widget attributes
+     - Description
+     - Example Widget JSON
+  
+   * - ``outputSchema``
+     - - ``label``: Label for the button 
+       - ``btnClass``: bootstrap css class to add to the button
+       - ``multiple-inputs``: boolean to indicate if there are multiple input schemas
+     - Widget to populate output schema for a plugin. 
+       This is specifically used to populate output schema and not any other property.
+     - .. container:: copyable copyable-text
+
+         ::
+
+          {
+            "widget-type": "csv",
+            "label": "Group by fields",
+            "name": "groupByFields",
+            "widget-attributes": {
+              "delimiter": ",",
+              "value-placeholder": "Field Name"
+            },
+            "plugin-function": {
+              "method": "POST",
+              "widget": "outputSchema",
+              "label": "Get output schema",
+              "button-class": "btn-primary",
+              "plugin-method": "outputSchema",
+              "required-fields": ["groupByFields", "aggregates"],
+              "missing-required-fields-message": "'Group By Fields' & 'Aggregates' properties are required to fetch schema."
+            }
+          }
+
+   * - ``getPropertyValue``
+     - ``label``: Label for the button
+     - Widget to populate any property in a plugin. This widget should be used in the property which needs to
+       fetch its value from a plugin function implemented in the plugin backend
+     - .. container:: copyable copyable-text
+
+         ::
+
+          {
+            "widget-type": "select",
+            "label": "Format",
+            "name": "format",
+            "widget-attributes": {
+              "values": [
+                "avro",
+                "blob",
+                "csv",
+                "delimited",
+                "json",
+                "parquet",
+                "text",
+                "tsv"
+              ],
+              "default": "text"
+            },
+            "plugin-function": {
+              "method": "POST",
+              "widget": "getPropertyValue",
+              "widget-attributes": {
+                "label": "Get Schema Value"
+              },
+              "required-fields": ["path"],
+              "missing-required-fields-message": "Please provide path field",
+              "plugin-method": "getSchema"
+            }
+          }
 
 Example Plugin
 --------------
@@ -767,7 +841,6 @@ plugin-function, could be represented by::
             "plugin-function": {
               "method": "POST",
               "widget": "outputSchema",
-              "output-property": "schema",
               "plugin-method": "outputSchema",
               "required-fields": ["groupByFields", "aggregates"],
               "missing-required-fields-message":
@@ -999,7 +1072,6 @@ Based on the above specification, we can write a widget JSON for a *Batch Source
             "plugin-function": {
               "method": "POST",
               "widget": "outputSchema",
-              "output-property": "schema",
               "plugin-method": "outputSchema",
               "required-fields": ["groupByFields", "aggregates"],
               "missing-required-fields-message":

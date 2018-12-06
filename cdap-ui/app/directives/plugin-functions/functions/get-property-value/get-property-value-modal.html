@@ -1,0 +1,49 @@
+<!--
+  Copyright © 2018 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left">Property Value</h3>
+  <div class="btn-group pull-right">
+    <a class="btn" ng-click="$dismiss()">
+      <span class="fa fa-times"></span>
+    </a>
+  </div>
+</div>
+
+<div class="modal-body">
+  <div ng-if="GetPropertyValueModalController.showLoading">
+    <h3 class="fa fa-spin fa-refresh"></h3>
+  </div>
+
+  <fieldset disabled="true" ng-if="GetPropertyValueModalController.propertyValue">
+    <my-json-textbox
+      ng-model="GetPropertyValueModalController.propertyValue"
+      disabled="true"
+    >
+    </my-json-textbox>
+  </fieldset>
+
+  <p class="text-danger" ng-if="GetPropertyValueModalController.error">
+    Error: {{ GetPropertyValueModalController.error }}
+  </p>
+  </div>
+</div>
+
+<div class="modal-footer" ng-if="GetPropertyValueModalController.propertyValue">
+  <button class="btn btn-blue" ng-disabled="!GetPropertyValueModalController.propertyValue" ng-click="GetPropertyValueModalController.apply()">
+    Apply
+  </button>
+</div>

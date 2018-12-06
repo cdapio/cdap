@@ -47,7 +47,12 @@ angular.module(PKG.name + '.commons')
         vm.node = $scope.node;
         var getRequiredFields = function() {
           if (!fnConfig['required-fields']) { return []; }
-          return fnConfig['required-fields'].map( function(field) { return $scope.node.plugin.properties[field]; } );
+          return fnConfig['required-fields'].map( function(field) {
+            if ($scope.node.plugin.properties.hasOwnProperty(field)) {
+              return $scope.node.plugin.properties[field];
+            }
+            return '';
+          });
         };
         vm.requiredProperties = getRequiredFields();
         vm.requiredFieldsWatch = $scope.$watch('OutputSchemaController.node.plugin.properties', function() {
