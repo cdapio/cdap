@@ -479,7 +479,7 @@ gulp.task('default', ['lint', 'build', 'rev:replace:dev']);
 /*
   watch
  */
-gulp.task('watch', ['jshint', 'build', 'rev:replace:dev'], function() {
+gulp.task('watch', ['jshint', 'build'], function() {
   plug.livereload.listen({ port: 35728 });
 
   var jsAppSource = [
