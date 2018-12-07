@@ -84,11 +84,6 @@ This can be useful for new team members, allowing them to understand the data st
 
 - See how your datasets are being created, accessed, and processed.
 
-- Extensible integrations are available with enterprise-grade MDM (master data management)
-  systems such as `Cloudera Navigator <https://www.cloudera.com/products/cloudera-navigator.html>`__
-  for centralizing metadata repository and the delivery of complete, accurate, and correct
-  data.
-
 
 Example Use Case
 ----------------
@@ -275,21 +270,6 @@ For example, any dataset containing the column ``customerId`` will have the same
   :width: 800px
   :align: center
   :class: bordered-image
-
-Integrations
-============
-Metadata management allows for an easy integration with `Cloudera Navigator
-<https://www.cloudera.com/products/cloudera-navigator.html>`__  by providing a UI to
-connecting to a Navigator instance:
-
-.. figure:: /_images/metadata/tracker-integration-configuration.png
-  :figwidth: 100%
-  :width: 800px
-  :align: center
-  :class: bordered-image
-
-Details on completing this form are described in CDAP's documentation on the
-:ref:`Navigator Integration Application <navigator-integration>`.
 
 
 Administrating Metadata Management

@@ -274,7 +274,7 @@ function pipelines_download_includes() {
   # download_md_file elasticsearch-plugins Elasticsearch-batchsource.md # Moved to https://github.com/hydrator/amazon-s3-plugins
   download_md_file hbase-plugins HBase-batchsink.md
   download_md_file hbase-plugins HBase-batchsource.md
-  download_md_file hdfs-plugins HDFS-batchsink.md
+  download_md_file core-plugins File-batchsink.md
   download_md_file hive-plugins Hive-batchsink.md
   download_md_file hive-plugins Hive-batchsource.md
   download_md_file http-plugins HTTPCallback-postaction.md
@@ -297,7 +297,6 @@ function pipelines_download_includes() {
   download_md_file transform-plugins JSONFormatter-transform.md
   download_md_file transform-plugins JSONParser-transform.md
   download_md_file transform-plugins Normalize-transform.md
-  download_md_file transform-plugins StreamFormatter-transform.md
   download_md_file transform-plugins ValueMapper-transform.md
   download_md_file transform-plugins XMLParser-transform.md
   download_md_file transform-plugins XMLToJSON-transform.md
