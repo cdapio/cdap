@@ -53,6 +53,8 @@ import ErrorBoundary from 'components/ErrorBoundary';
 import OverlayFocus from 'components/OverlayFocus';
 import { Theme } from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
+
+import './globals';
 const SampleTSXComponent = Loadable({
   loader: () =>
     import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),

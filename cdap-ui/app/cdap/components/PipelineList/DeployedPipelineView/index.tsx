@@ -17,7 +17,10 @@
 import * as React from 'react';
 import IconSVG from 'components/IconSVG';
 import PipelineTable from 'components/PipelineList/DeployedPipelineView/PipelineTable';
-import { fetchPipelineList } from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
+import {
+  fetchPipelineList,
+  reset,
+} from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
 import PipelineCount from 'components/PipelineList/DeployedPipelineView/PipelineCount';
 import T from 'i18n-react';
 import { Provider } from 'react-redux';
@@ -30,6 +33,10 @@ const PREFIX = 'features.PipelineList';
 export default class DeployedPipelineView extends React.PureComponent {
   public componentDidMount() {
     fetchPipelineList();
+  }
+
+  public componentWillUnmount() {
+    reset();
   }
 
   public render() {

@@ -14,51 +14,69 @@
  * the License.
 */
 import * as React from 'react';
+import NavLinkWrapper from 'components/NavLinkWrapper';
 import { Theme } from 'services/ThemeHelper';
 import { withContext } from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 require('./PipelinesLink.scss');
 
-declare global {
-  /* tslint:disable:interface-name */
-  interface Window {
-    getHydratorUrl: ({}) => string;
-  }
-}
-
 interface IPipelinesLinkProps {
   context: {
     namespace: string;
+    isNativeLink: boolean;
+  };
+  match: {
+    isExact: boolean;
   };
 }
 
-const PipelinesLink: React.SFC<IPipelinesLinkProps> = ({ context }) => {
-  if (Theme.showPipelines === false) {
-    return null;
-  }
-  const featureName = Theme.featureNames.pipelines;
-  const { namespace } = context;
-  const pipelinesListUrl = window.getHydratorUrl({
-    stateName: 'hydrator.list',
-    stateParams: {
-      namespace,
-      page: 1,
-      sortBy: '_stats.lastStartTime',
-    },
-  });
-  const isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
+class PipelinesLink extends React.PureComponent<IPipelinesLinkProps> {
+  private isPipelinesActive = (location = window.location): boolean => {
+    const match = this.props.match;
+    if (match && match.isExact) {
+      return true;
+    }
 
-  return (
-    <li
-      id="navbar-pipelines"
-      className={classnames({
-        active: isPipelinesViewActive,
-      })}
-    >
-      <a href={pipelinesListUrl}>{featureName}</a>
-    </li>
-  );
-};
+    const { namespace } = this.props.context;
+    const pipelinesLink = '/pipelines';
+    const pipelinesBasePath = `/cdap/ns/${namespace}${pipelinesLink}`;
+
+    if (
+      location.pathname.startsWith(pipelinesLink) ||
+      location.pathname.startsWith(pipelinesBasePath)
+    ) {
+      return true;
+    }
+
+    return false;
+  };
+
+  public render() {
+    if (Theme.showPipelines === false) {
+      return null;
+    }
+
+    const featureName = Theme.featureNames.pipelines;
+    const { namespace, isNativeLink } = this.props.context;
+    const pipelinesListUrl = `/ns/${namespace}/pipelines`;
+
+    return (
+      <li
+        id="navbar-pipelines"
+        className={classnames({
+          active: this.isPipelinesActive(),
+        })}
+      >
+        <NavLinkWrapper
+          isNativeLink={isNativeLink}
+          to={isNativeLink ? `/cdap${pipelinesListUrl}` : pipelinesListUrl}
+        >
+          {featureName}
+        </NavLinkWrapper>
+      </li>
+    );
+  }
+}
 
 const PipelinesLinkWithContext = withContext(PipelinesLink);
 

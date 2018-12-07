@@ -27,7 +27,6 @@ import {
   setDatabaseProperties,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import PipelineList from 'components/PipelineList';
 
 require('./Home.scss');
 
@@ -98,6 +97,10 @@ const FieldLevelLineage = Loadable({
   loader: () => import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage'),
   loading: LoadingSVGCentered,
 });
+const PipelineList = Loadable({
+  loader: () => import(/* webpackChunkName: "PipelineList" */ 'components/PipelineList'),
+  loading: LoadingSVGCentered,
+});
 
 export default class Home extends Component {
   componentWillMount() {
@@ -159,7 +162,7 @@ export default class Home extends Component {
             path="/ns/:namespace/profiles/details/:profileId"
             component={ProfileDetailView}
           />
-          <Route exact path="/ns/:namespace/pipelines" component={PipelineList} />
+          <Route path="/ns/:namespace/pipelines" component={PipelineList} />
           <Route component={Page404} />
         </Switch>
       </div>

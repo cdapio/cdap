@@ -62,6 +62,8 @@ class EntitiesLink extends React.PureComponent<IEntitiesLinkProps> {
     const profileDetails = `${basePath}/profiles/details`;
     const dashboardPath = `${basePath}/operations`;
     const reportsPath = `${basePath}/reports`;
+    const pipelinesPath = `${basePath}/pipelines`;
+
     return (
       location.pathname.startsWith(basePath) &&
       !location.pathname.startsWith(dataprepBasePath) &&
@@ -72,7 +74,8 @@ class EntitiesLink extends React.PureComponent<IEntitiesLinkProps> {
       !location.pathname.startsWith(createProfile) &&
       !location.pathname.startsWith(profileDetails) &&
       !location.pathname.startsWith(dashboardPath) &&
-      !location.pathname.startsWith(reportsPath)
+      !location.pathname.startsWith(reportsPath) &&
+      !location.pathname.startsWith(pipelinesPath)
     );
   };
 }

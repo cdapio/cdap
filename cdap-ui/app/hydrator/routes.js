@@ -340,18 +340,5 @@ angular.module(PKG.name + '.feature.hydrator')
           onExit: function($uibModalStack) {
             $uibModalStack.dismissAll();
           }
-        })
-
-        .state('hydrator.list', {
-          url: '',
-          title: 'Published Pipelines',
-          onEnter: function() {
-            document.title = `${productName} | ${featureName}`;
-          },
-          data: {
-            authorizedRoles: MYAUTH_ROLE.all,
-            highlightTab: 'hydratorList'
-          },
-          templateUrl: '/assets/features/hydrator/templates/list.html'
         });
   });

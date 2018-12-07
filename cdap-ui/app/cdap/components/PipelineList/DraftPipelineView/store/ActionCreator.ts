@@ -43,6 +43,12 @@ export function getDrafts() {
   });
 }
 
+export function reset() {
+  Store.dispatch({
+    type: Actions.reset,
+  });
+}
+
 export function deleteDraft(draft: IDraft) {
   const draftId = draft.__ui__.draftId;
 
