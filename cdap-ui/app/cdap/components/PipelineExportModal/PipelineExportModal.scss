@@ -12,30 +12,18 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
-@import "~styles/variables.scss";
+@import '~styles/modals.scss';
 
-.pipeline-actions-container {
-  .popper {
-    z-index: 999;
-    min-width: 100px;
-    width: 100px;
-
-    ul {
-      padding: 10px;
-
-      li {
-        padding: 8px 4px 8px 0;
-
-        &.delete-action {
-          color: $red-02;
-        }
-      }
-
-      hr {
-        margin: 2px;
-      }
+.pipeline-export-modal {
+  .textarea-container {
+    textarea {
+      padding-right: 55px;
+      font-family: monospace;
+      resize: none;
+      height: 60vh;
+      min-height: 100px;
     }
   }
 }

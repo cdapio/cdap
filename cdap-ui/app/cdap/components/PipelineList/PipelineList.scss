@@ -21,7 +21,7 @@ $pipeline-bg-color: $grey-08;
 $view-header-bg-color: white;
 $header-link-color: $grey-01;
 
-.pipeline-list {
+.pipeline-list-view {
   // substracting the height of global header and footer
   height: calc(100vh - 50px - 53px);
   background-color: $pipeline-bg-color;

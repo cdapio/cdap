@@ -41,7 +41,7 @@ const DraftTableView: React.SFC<IProps> = ({ drafts }) => {
 
     return (
       <div className="table-body">
-        {this.props.drafts.map((draft) => {
+        {drafts.map((draft) => {
           return <DraftTableRow draft={draft} key={draft.__ui__.draftId} />;
         })}
       </div>

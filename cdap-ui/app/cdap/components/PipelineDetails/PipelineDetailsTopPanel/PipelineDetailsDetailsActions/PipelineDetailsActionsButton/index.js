@@ -21,28 +21,14 @@ import Popover from 'components/Popover';
 import ConfirmationModal from 'components/ConfirmationModal';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyAppApi } from 'api/app';
-import PipelineExportModal from 'components/PipelineDetails/PipelineDetailsTopPanel/PipelineDetailsDetailsActions/PipelineDetailsActionsButton/PipelineExportModal';
+import PipelineExportModal from 'components/PipelineExportModal';
 import TriggeredPipelineStore from 'components/TriggeredPipelines/store/TriggeredPipelineStore';
 import T from 'i18n-react';
 import classnames from 'classnames';
+import { duplicatePipeline } from 'services/PipelineUtils';
 require('./PipelineDetailsActionsButton.scss');
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
-
-const getClonePipelineName = (name) => {
-  name = typeof a === 'string' ? name : name.toString();
-  let version = name.match(/(_v[\d]*)$/g);
-  let existingSuffix; // For cases where pipeline name is of type 'SamplePipeline_v2_v4_v333'
-  if (Array.isArray(version)) {
-    version = version.pop();
-    existingSuffix = version;
-    version = version.replace('_v', '');
-    version = '_v' + ((!isNaN(parseInt(version, 10)) ? parseInt(version, 10) : 1) + 1);
-  } else {
-    version = '_v1';
-  }
-  return name.split(existingSuffix)[0] + version;
-};
 
 export default class PipelineDetailsActionsButton extends Component {
   static propTypes = {
@@ -79,18 +65,7 @@ export default class PipelineDetailsActionsButton extends Component {
   };
 
   duplicateConfigAndNavigate = () => {
-    let bumpedVersionName = getClonePipelineName(this.props.pipelineName);
-    let pipelineConfigWithBumpedVersion = { ...this.pipelineConfig, name: bumpedVersionName };
-    window.localStorage.setItem(bumpedVersionName, JSON.stringify(pipelineConfigWithBumpedVersion));
-    const hydratorLink = window.getHydratorUrl({
-      stateName: 'hydrator.create',
-      stateParams: {
-        namespace: getCurrentNamespace(),
-        cloneId: bumpedVersionName,
-        artifactType: this.props.artifact.name,
-      },
-    });
-    window.location.href = hydratorLink;
+    duplicatePipeline(this.props.pipelineName, this.pipelineConfig);
   };
 
   deletePipeline = () => {

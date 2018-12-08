@@ -1909,6 +1909,19 @@ features:
     cdap-data-pipeline: Batch
     cdap-data-streams: Realtime
     deployed: Deployed
+    DeleteConfirmation:
+      confirm: Delete
+      confirmDraftPrompt: 'Are you sure you want to delete the draft '
+      confirmPrompt: 'Are you sure you want to delete the pipeline '
+      pipeline: 'Pipeline '
+      proceedPrompt: ' is deleted. Are you sure you want to proceed?'
+      title: Delete pipeline
+      titleDraft: Delete draft
+      trigger: ' is configured to trigger '
+      triggerDelete: '. Triggers will be deleted if pipeline '
+      triggerPluralCheck:
+        1: "pipeline "
+        _: "pipelines "
     DeployedPipelineView:
       searchPlaceholder: Search by pipeline name
       pipelineCount:

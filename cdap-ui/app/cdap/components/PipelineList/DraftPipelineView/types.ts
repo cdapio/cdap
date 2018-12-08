@@ -25,4 +25,6 @@ export interface IDraft {
     draftId: string;
     lastSaved?: Date;
   };
+  description?: string;
+  config?: any;
 }
