@@ -164,6 +164,7 @@ angular.module(PKG.name + '.commons')
       vm.instance.bind('connectionDetached', removeConnection);
       vm.instance.bind('connectionMoved', moveConnection);
       vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
+
       // jsPlumb docs say the event for clicking on an endpoint is called 'endpointClick',
       // but seems like the 'click' event is triggered both when clicking on an endpoint &&
       // clicking on a connection
@@ -287,6 +288,11 @@ angular.module(PKG.name + '.commons')
             targetOptions.scope = 'alertScope';
           } else if (node.type === 'errortransform') {
             targetOptions.scope = 'errorScope';
+          }
+
+          // Disabling the ability to disconnect a connection from target
+          if (vm.isDisabled) {
+            targetOptions.connectionsDetachable = false;
           }
           vm.instance.makeTarget(node.name, targetOptions);
         }
