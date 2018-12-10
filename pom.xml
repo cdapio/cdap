@@ -2753,6 +2753,7 @@
         <module>cdap-client</module>
         <module>cdap-cli</module>
         <module>cdap-standalone</module>
+        <module>cdap-pgsql-compat-9.6</module>
         <module>cdap-distributions</module>
         <module>cdap-archetypes</module>
         <module>cdap-test</module>
