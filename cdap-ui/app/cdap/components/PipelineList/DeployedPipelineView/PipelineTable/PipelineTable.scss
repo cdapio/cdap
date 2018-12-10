@@ -15,12 +15,14 @@
  */
 
 @import '~styles/colors.scss';
+@import '~components/PipelineList/DeployedPipelineView/DeployedPipelineView.scss';
 
 $table-bg-color: white;
 $table-border-color: $grey-06;
 $table-border: 1px solid $table-border-color;
 $row-hover-color: $grey-08;
 
+$table-header-height: 40px;
 $type-width: 100px;
 $runs-width: 100px;
 $status-width: 150px;
@@ -32,9 +34,10 @@ $col-width: calc((100% - #{$type-width} - #{$runs-width} - #{$status-width} - #{
 .pipeline-list-table {
   background-color: $table-bg-color;
   padding: 0 4px;
+  height: calc(100% - #{$header-height});
 
   .table-header {
-    height: 40px;
+    height: $table-header-height;
     font-weight: bold;
     border-bottom: 3px solid $table-border-color;
     display: flex;
@@ -52,6 +55,11 @@ $col-width: calc((100% - #{$type-width} - #{$runs-width} - #{$status-width} - #{
     &:last-child {
       padding-right: 25px;
     }
+  }
+
+  .table-body {
+    height: calc(100% - #{$table-header-height});
+    overflow-y: auto;
   }
 
   .table-row-container {

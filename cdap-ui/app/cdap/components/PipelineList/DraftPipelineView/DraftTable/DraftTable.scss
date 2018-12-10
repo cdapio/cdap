@@ -15,12 +15,14 @@
  */
 
 @import '~styles/variables.scss';
+@import '~components/PipelineList/DraftPipelineView/DraftPipelineView.scss';
 
 $table-bg-color: $grey-08;
 $table-border-color: $grey-06;
 $table-border: 1px solid $table-border-color;
 $row-hover-color: white;
 
+$table-header-height: 40px;
 $type-width: 20%;
 $last-saved-width: 20%;
 $action-width: 45px;
@@ -29,9 +31,10 @@ $name-offset: 25px;
 .draft-table {
   background-color: $table-bg-color;
   padding: 0 4px;
+  height: calc(100% - #{$header-height});
 
   .table-header {
-    height: 40px;
+    height: $table-header-height;
     font-weight: bold;
     border-bottom: 3px solid $table-border-color;
     display: flex;
@@ -41,6 +44,11 @@ $name-offset: 25px;
 
   .table-column {
     padding: 0 5px;
+  }
+
+  .table-body {
+    height: calc(100% - #{$table-header-height});
+    overflow-y: auto;
   }
 
   .table-row {

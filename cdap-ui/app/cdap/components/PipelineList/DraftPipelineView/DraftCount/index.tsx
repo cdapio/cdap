@@ -18,6 +18,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import T from 'i18n-react';
 import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
+import './DraftCount.scss';
 
 interface IProps {
   drafts: IDraft[];
@@ -28,7 +29,7 @@ const PREFIX = 'features.PipelineList.DraftPipelineView';
 const DraftCountView: React.SFC<IProps> = ({ drafts }) => {
   return (
     <div className="draft-count">
-      {T.translate(`${PREFIX}.draftCount`, { context: drafts.length })}
+      <h5>{T.translate(`${PREFIX}.draftCount`, { context: drafts.length })}</h5>
     </div>
   );
 };

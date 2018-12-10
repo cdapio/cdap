@@ -321,6 +321,8 @@ let hasValidClientResources = (config, cb) => {
 };
 let validateImportJSON = (configString) => {
   let config;
+  let errorPath = ['en', 'hydrator', 'studio', 'error', 'IMPORT-JSON'];
+
   try {
     config = JSON.parse(configString);
   } catch (e) {
@@ -328,7 +330,6 @@ let validateImportJSON = (configString) => {
     return objectQuery.apply(null, [GLOBALS].concat(messagePath));
   }
 
-  let errorPath = ['en', 'hydrator', 'studio', 'error', 'IMPORT-JSON'];
   let validations = [
     { fn: hasValidArtifact, messagePath: errorPath.concat(['INVALID-ARTIFACT']) },
     { fn: hasValidConfig, messagePath: errorPath.concat(['INVALID-CONFIG']) },
