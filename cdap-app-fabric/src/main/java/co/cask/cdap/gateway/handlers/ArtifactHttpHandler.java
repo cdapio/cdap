@@ -693,7 +693,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     final Set<ArtifactRange> parentArtifacts = parseExtendsHeader(namespace, parentArtifactsStr);
 
     final Set<PluginClass> additionalPluginClasses;
-    if (pluginClasses == null) {
+    if (pluginClasses == null || pluginClasses.isEmpty()) {
       additionalPluginClasses = ImmutableSet.of();
     } else {
       try {
@@ -883,7 +883,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     Set<ArtifactRange> parentArtifacts = Sets.newHashSet();
 
-    if (extendsHeader != null) {
+    if (extendsHeader != null && !extendsHeader.isEmpty()) {
       for (String parent : Splitter.on('/').split(extendsHeader)) {
         parent = parent.trim();
         ArtifactRange range;

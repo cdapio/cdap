@@ -30,6 +30,54 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 5.1.2 <http://docs.cask.co/cdap/5.1.2/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-13430` - Improved performance of Apache Spark pipelines that write to multiple sinks.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-14558` - Fixed a bug where pipeline checkpointing is always on regardless of the value set by the user in realtime pipeline.
+
+- :cask-issue:`CDAP-14578` - Fixed a bug where artifacts could not be uploaded through UI.
+
+
+
+`Release 5.1.1 <http://docs.cask.co/cdap/5.1.1/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-14490` - Google Cloud Spanner sink will create database and table if they do not exist.
+
+- :cask-issue:`CDAP-14542` - Added a Dataset Project config property to the Google BigQuery source to allow reading from a dataset in another project.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-12229` - Fixed an issue that caused avro, parquet, and orc classes across file, Google Cloud Storage, and S3 plugins to clash and cause pipeline failures.
+
+- :cask-issue:`CDAP-14511` - Fixed a bug where plugins that register other plugins would not use the correct id when using the PluginSelector API.
+
+- :cask-issue:`CDAP-14515` - Fixed a bug where upgraded CDAP instances were not able to load artifacts.
+
+- :cask-issue:`CDAP-14524` - Fixed an issue where configuration of sink was overwritten by source.
+
+- :cask-issue:`CDAP-14538` - Fixed a packaging bug in kafka-plugins that prevented the plugins from being visible.
+
+- :cask-issue:`CDAP-14549` - Fixed a bug where plugins created by other plugins would not have their macros evaluated.
+
+- :cask-issue:`CDAP-14560` - Removed LZO as a compression option for snapshot and time partitioned fileset sinks since the codec cannot be packaged with the plugin.
+
+
+
 `Release 5.1.0 <http://docs.cask.co/cdap/5.1.0/index.html>`__
 =============================================================
 
@@ -56,7 +104,7 @@ New Features
 
 - :cask-issue:`CDAP-14244` - Added support for Date/Time in Preparation. Also, added a new directive parse-timestamp to convert unix timestamp in long or string to Timestamp object.
 
-- :cask-issue:`CDAP-14245` - Added Date, Time, and Timestamp support in plugins (Wrangler, Google Cloud BigQuery, Google Cloud Spanner, Database).
+- :cask-issue:`CDAP-14245` - Added Date, Time, and Timestamp support in plugins (Wrangler, Google BigQuery, Google Cloud Spanner, Database).
 
 - :cask-issue:`CDAP-14021` - Added Date, Time, and Timestamp support in CDAP Schema.
 
@@ -64,7 +112,7 @@ New Features
 
 - :cask-issue:`CDAP-14053` - Added Google Cloud Spanner source and sink plugins in Pipeline and Google Cloud Spanner connection in Preparation.
 
-- :cask-issue:`CDAP-14185` - Added Google Cloud PubSub realtime source.
+- :cask-issue:`CDAP-14185` - Added Google Cloud Pub/Sub realtime source.
 
 - :cask-issue:`CDAP-14088` - Added a new user onboarding tour to CDAP.
 
@@ -96,9 +144,9 @@ Improvements
 
 - :cask-issue:`CDAP-14013` - Added capability for external dataset to record their schema.
 
-- :cask-issue:`CDAP-14091` - The Dataproc provisioner will try to pick up the project id and credentials from the environment if they are not specified.
+- :cask-issue:`CDAP-14091` - The Google Cloud Dataproc provisioner will try to pick up the project id and credentials from the environment if they are not specified.
 
-- :cask-issue:`CDAP-14104` - The Dataproc provisioner will use internal IP addresses when CDAP is in the same network as the Dataproc cluster.
+- :cask-issue:`CDAP-14104` - The Google Cloud Dataproc provisioner will use internal IP addresses when CDAP is in the same network as the Google Cloud Dataproc cluster.
 
 - :cask-issue:`CDAP-14168` - Added capability to always display current dataset schema in Field Level Lineage.
 
@@ -110,9 +158,9 @@ Improvements
 
 - :cask-issue:`CDAP-14135` - Added better trace logging for dataset service.
 
-- :cask-issue:`CDAP-14386` - Make Google Cloud Storage, Google Cloud BigQuery, and Google Cloud Spanner connection properties optional (project id, service account keyfile path, temporary GCS bucket).
+- :cask-issue:`CDAP-14386` - Make Google Cloud Storage, Google BigQuery, and Google Cloud Spanner connection properties optional (project id, service account keyfile path, temporary Google Cloud Storage bucket).
 
-- :cask-issue:`CDAP-14401` - Google Cloud PubSub sink will try to create the topic if it does not exist while preparing for the run.
+- :cask-issue:`CDAP-14401` - Google Cloud Pub/Sub sink will try to create the topic if it does not exist while preparing for the run.
 
 - :cask-issue:`CDAP-14475` - Added csv, tsv, delimited, json, and blob as formats to the S3 source and sink.
 
@@ -124,7 +172,7 @@ Improvements
 
 - :cask-issue:`CDAP-14132` - Made all CDAP examples to be compatible with Spark 2.
 
-- :cask-issue:`CDAP-14220` - Added worker and master disk size properties to the Dataproc provisioner.
+- :cask-issue:`CDAP-14220` - Added worker and master disk size properties to the Google Cloud Dataproc provisioner.
 
 - :cask-issue:`CDAP-14298` - Improved operational behavior of the dataset service.
 
@@ -134,7 +182,7 @@ Improvements
 
 - :cask-issue:`CDAP-14398` - Limited the number of files showed in S3 and Google Cloud Storage browser to 1000.
 
-- :cask-issue:`CDAP-14482` - Enhanced Google Cloud BigQuery sink to create dataset if the specified dataset does not exist.
+- :cask-issue:`CDAP-14482` - Enhanced Google BigQuery sink to create dataset if the specified dataset does not exist.
 
 - :cask-issue:`CDAP-14489` - Increased log levels for the CDAP Sandbox so that only CDAP classes are at debug level.
 
@@ -174,17 +222,17 @@ Bug Fixes
 
 - :cask-issue:`CDAP-14211` - Fixed runs count for pipelines in UI to show correct number instead of limiting to 100.
 
-- :cask-issue:`CDAP-14223` - Fixed an issue where Dataproc client was not being closed, resulting in verbose error logs.
+- :cask-issue:`CDAP-14223` - Fixed an issue where Google Cloud Dataproc client was not being closed, resulting in verbose error logs.
 
 - :cask-issue:`CDAP-14261` - Fixed a bug that could cause the provisioning state of stopped program runs to be corrupted.
 
 - :cask-issue:`CDAP-14271` - Fixed a bug that caused Preparation to be unable to list buckets in a Google Cloud Storage connection in certain environments.
 
-- :cask-issue:`CDAP-14303` - Fixed a bug where Dataproc provisioner is not able to provision a singlenode cluster.
+- :cask-issue:`CDAP-14303` - Fixed a bug where Google Cloud Dataproc provisioner is not able to provision a singlenode cluster.
 
 - :cask-issue:`CDAP-14390` - Fixed a bug where Preparation could not read json or xml files on Google Cloud Storage.
 
-- :cask-issue:`CDAP-14395` - Fixed dataproc provisioner to use full API access scopes so that Google Cloud Spanner and Google Cloud PubSub are accessible by default.
+- :cask-issue:`CDAP-14395` - Fixed Google Cloud Dataproc provisioner to use full API access scopes so that Google Cloud Spanner and Google Cloud Pub/Sub are accessible by default.
 
 - :cask-issue:`CDAP-14435` - Fixed a bug where profile metrics is not deleted when a profile is deleted.
 
