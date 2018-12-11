@@ -1,6 +1,6 @@
 {
   "cdap": {
-    "version": "5.1.2-1"
+    "version": "5.1.3-SNAPSHOT-1"
   },
   "nodejs": {
     "install_method": "binary",
