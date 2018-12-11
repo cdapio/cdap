@@ -348,16 +348,14 @@ public final class SystemArguments {
   }
 
   /**
-   * Get the profile id for the given program, given arguments for a run. All non-workflow program types will use the
-   * native profile. Workflow program types will use whatever profile is specified in its arguments, or the native
-   * profile if none is specified.
+   * Determine if compute profile is allowed to be applied on the given program type.
    *
    * @param programId program to get the profile for
    * @param args arguments for a program run
    * @return the profile id for the program run
    */
   public static ProfileId getProfileIdForProgram(ProgramId programId, Map<String, String> args) {
-    if (isProgramTypeAllowedForProfile(programId.getType())) {
+    if (isProfileAllowed(programId.getType())) {
       return getProfileIdFromArgs(programId.getNamespaceId(), args).orElse(ProfileId.NATIVE);
     }
     return ProfileId.NATIVE;
@@ -368,7 +366,7 @@ public final class SystemArguments {
    * @param programType programType to check compatibility
    * @return true if the program type can use profiles, otherwise false
    */
-  public static boolean isProgramTypeAllowedForProfile(ProgramType programType) {
+  public static boolean isProfileAllowed(ProgramType programType) {
     return programType == ProgramType.WORKFLOW
             || programType == ProgramType.MAPREDUCE
             || programType == ProgramType.SPARK;

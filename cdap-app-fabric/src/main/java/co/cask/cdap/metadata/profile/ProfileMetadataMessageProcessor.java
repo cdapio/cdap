@@ -147,7 +147,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         }
 
         // Now we only support profile on Workflow type
-        if (SystemArguments.isProgramTypeAllowedForProfile(programId.getType())) {
+        if (SystemArguments.isProfileAllowed(programId.getType())) {
           updateProgramProfileMetadata(programId);
         }
         break;
