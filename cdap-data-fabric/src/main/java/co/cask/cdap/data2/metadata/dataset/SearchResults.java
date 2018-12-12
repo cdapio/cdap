@@ -16,10 +16,12 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+
 import java.util.List;
 
 /**
- * Represents a list of {@link MetadataEntry} that match a search query in the {@link MetadataDataset}, along with a
+ * Represents a list of {@link MetadataEntry} that match a search query in the {@link MetadataStore}, along with a
  * list of cursors to start subsequent searches from.
  */
 public class SearchResults {

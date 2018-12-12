@@ -21,11 +21,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
-import co.cask.cdap.data2.metadata.dataset.SortInfo;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 
 import java.io.IOException;
@@ -33,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Defines operations on {@link MetadataDataset} for both system and user metadata.
+ * Defines metadata operations for both system and user scope.
  *
  * Operations supported for a specified {@link MetadataEntity}:
  * <ul>
