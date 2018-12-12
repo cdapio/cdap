@@ -74,6 +74,12 @@ export function deletePipeline(pipeline: IPipeline) {
   MyPipelineApi.delete(params).subscribe(fetchPipelineList);
 }
 
+export function reset() {
+  Store.dispatch({
+    type: Actions.reset,
+  });
+}
+
 function fetchRunsInfo() {
   const namespace = getCurrentNamespace();
   const pipelines: IPipelineParams[] = Store.getState().deployed.pipelines.map((pipeline) => {

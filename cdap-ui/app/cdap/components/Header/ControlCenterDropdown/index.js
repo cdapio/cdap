@@ -38,17 +38,18 @@ export default class ControlCenterDropdown extends Component {
   };
 
   isCDAPActive = () => {
-    let location = window.location;
+    const location = window.location;
 
-    let basePath = `/cdap/ns/${this.props.namespace}`;
+    const basePath = `/cdap/ns/${this.props.namespace}`;
 
-    let dataprepBasePath = `${basePath}/dataprep`;
-    let connectionsBasePath = `${basePath}/connections`;
-    let rulesenginepath = `${basePath}/rulesengine`;
-    let analytics = `${basePath}/experiments`;
-    let namespaceDetails = `${basePath}/details`;
-    let createProfile = `${basePath}/profiles/create`;
-    let profileDetails = `${basePath}/profiles/details`;
+    const dataprepBasePath = `${basePath}/dataprep`;
+    const connectionsBasePath = `${basePath}/connections`;
+    const rulesenginepath = `${basePath}/rulesengine`;
+    const analytics = `${basePath}/experiments`;
+    const namespaceDetails = `${basePath}/details`;
+    const createProfile = `${basePath}/profiles/create`;
+    const profileDetails = `${basePath}/profiles/details`;
+    const pipelinesPath = `${basePath}/pipelines`;
 
     if (
       location.pathname.startsWith(basePath) &&
@@ -58,7 +59,8 @@ export default class ControlCenterDropdown extends Component {
       !location.pathname.startsWith(analytics) &&
       !location.pathname.startsWith(namespaceDetails) &&
       !location.pathname.startsWith(createProfile) &&
-      !location.pathname.startsWith(profileDetails)
+      !location.pathname.startsWith(profileDetails) &&
+      !location.pathname.startsWith(pipelinesPath)
     ) {
       return true;
     }

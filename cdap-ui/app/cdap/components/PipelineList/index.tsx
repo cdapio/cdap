@@ -19,65 +19,48 @@ import classnames from 'classnames';
 import DeployedPipelineView from 'components/PipelineList/DeployedPipelineView';
 import ResourceCenterButton from 'components/ResourceCenterButton';
 import DraftPipelineView from 'components/PipelineList/DraftPipelineView';
+import { Route, Switch, NavLink } from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import Helmet from 'react-helmet';
+import { Theme } from 'services/ThemeHelper';
 import T from 'i18n-react';
 
 import './PipelineList.scss';
 
-enum VIEWS {
-  deployed = 'DEPLOYED',
-  draft = 'DRAFT',
-}
-
-interface IPipelineListState {
-  activeView: VIEWS;
-}
-
 const PREFIX = 'features.PipelineList';
 
-export default class PipelineList extends React.PureComponent<{}, IPipelineListState> {
-  public state = {
-    activeView: VIEWS.deployed,
-  };
+const PipelineList: React.SFC = () => {
+  const namespace = getCurrentNamespace();
+  const basepath = `/ns/${namespace}/pipelines`;
 
-  private changeView(view) {
-    if (this.state.activeView === view) {
-      return;
-    }
+  const productName = Theme.productName;
+  const featureName = Theme.featureNames.pipelines;
 
-    this.setState({ activeView: view });
-  }
+  const pageTitle = `${productName} | ${featureName}`;
 
-  private renderContent() {
-    if (this.state.activeView === VIEWS.deployed) {
-      return <DeployedPipelineView />;
-    } else {
-      return <DraftPipelineView />;
-    }
-  }
+  return (
+    <div className="pipeline-list">
+      <Helmet title={pageTitle} />
+      <h4 className="view-header">
+        <NavLink exact to={basepath} className="option" activeClassName="active">
+          {T.translate(`${PREFIX}.deployed`)}
+        </NavLink>
 
-  public render() {
-    return (
-      <div className="pipeline-list">
-        <h4 className="view-header">
-          <span
-            className={classnames('option', { active: this.state.activeView === VIEWS.deployed })}
-            onClick={this.changeView.bind(this, VIEWS.deployed)}
-          >
-            {T.translate(`${PREFIX}.deployed`)}
-          </span>
-          <span className="separator">|</span>
-          <span
-            className={classnames('option', { active: this.state.activeView === VIEWS.draft })}
-            onClick={this.changeView.bind(this, VIEWS.draft)}
-          >
-            {T.translate(`${PREFIX}.draft`)}
-          </span>
-        </h4>
+        <span className="separator">|</span>
 
-        <ResourceCenterButton />
+        <NavLink exact to={`${basepath}/drafts`} className="option" activeClassName="active">
+          {T.translate(`${PREFIX}.draft`)}
+        </NavLink>
+      </h4>
 
-        {this.renderContent()}
-      </div>
-    );
-  }
-}
+      <ResourceCenterButton />
+
+      <Switch>
+        <Route exact path="/ns/:namespace/pipelines" component={DeployedPipelineView} />
+        <Route exact path="/ns/:namespace/pipelines/drafts" component={DraftPipelineView} />
+      </Switch>
+    </div>
+  );
+};
+
+export default PipelineList;

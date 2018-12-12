@@ -19,6 +19,7 @@
 $pipeline-view-header: 55px;
 $pipeline-bg-color: $grey-08;
 $view-header-bg-color: white;
+$header-link-color: $grey-01;
 
 .pipeline-list {
   // substracting the height of global header and footer
@@ -40,7 +41,10 @@ $view-header-bg-color: white;
     line-height: $pipeline-view-header;
     margin-bottom: 0;
 
-    .option { cursor: pointer; }
+    .option {
+      cursor: pointer;
+      color: $header-link-color;
+    }
 
     .active {
       font-weight: 600;
