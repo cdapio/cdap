@@ -651,15 +651,12 @@ public final class Constants {
     public static final String RETENTION_SECONDS_SUFFIX = ".seconds";
 
     public static final String TOPIC_PREFIX = "metrics.topic.prefix";
-    // legacy name, we no longer use Kafka for metrics, we use TMS
-    public static final String KAFKA_META_TABLE = "metrics.kafka.meta.table";
 
-    // NOTE: "v2" to avoid conflict with data of older metrics system
-    public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.v2.entity";
-    public static final String DEFAULT_METRIC_TABLE_PREFIX = "metrics.v2.table";
+    // part of table name for metrics
+    public static final String METRICS_META_TABLE = "metrics.meta.table";
+    public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.entity";
+    public static final String DEFAULT_METRIC_TABLE_PREFIX = "metrics.table";
 
-    // NOTE: "v3" to avoid conflict with data of older metrics system
-    public static final String DEFAULT_METRIC_V3_TABLE_PREFIX = "metrics.v3.table";
     public static final String METRICS_HBASE_MAX_SCAN_THREADS = "metrics.hbase.max.scan.threads";
     public static final String METRICS_HBASE_TABLE_SPLITS = "metrics.table.splits";
     public static final String METRICS_TABLE_HBASE_SPLIT_POLICY = "metrics.table.hbase.split.policy";
@@ -678,8 +675,6 @@ public final class Constants {
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
     public static final String PROGRAM_METRICS_ENABLED = "app.program.metrics.enabled";
-
-    public static final String METRICS_MIGRATION_SLEEP_MILLIS = "metrics.table.migration.sleep.millis";
 
     /**
      * Metric's dataset related constants.
@@ -827,8 +822,6 @@ public final class Constants {
     public static final String ADDRESS = "metrics.processor.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to process application and system metrics.";
-
-    public static final String METRICS_DATA_MIGRATION_SKIP = "metrics.data.migration.skip";
   }
 
   /**

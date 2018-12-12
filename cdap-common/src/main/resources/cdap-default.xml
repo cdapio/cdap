@@ -2189,10 +2189,10 @@
   </property>
 
   <property>
-    <name>metrics.kafka.meta.table</name>
-    <value>metrics.kafka.meta</value>
+    <name>metrics.meta.table</name>
+    <value>metrics.meta</value>
     <description>
-      Name of the Kafka metrics meta table
+      Name of the metrics meta table
     </description>
   </property>
 
@@ -2339,15 +2339,6 @@
     <description>
       Maximum delay in milliseconds allowed between the latest metrics timestamp and the
       time when it is processed
-    </description>
-  </property>
-
-  <property>
-    <name>metrics.table.migration.sleep.millis</name>
-    <value>10</value>
-    <description>
-      Delay in milliseconds after migration of each row from pre-4.3 to post 4.3 metrics tables.
-      This is used to throttle the metrics migration and reduce its the load on the metrics system
     </description>
   </property>
 

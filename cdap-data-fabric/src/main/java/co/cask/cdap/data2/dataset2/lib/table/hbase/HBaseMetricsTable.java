@@ -86,7 +86,7 @@ public class HBaseMetricsTable implements MetricsTable {
     this.tableUtil = tableUtil;
     this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
 
-    initializeV3Vars(cConf, spec);
+    initializeVars(cConf, spec);
 
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
@@ -96,39 +96,33 @@ public class HBaseMetricsTable implements MetricsTable {
     this.columnFamily = TableProperties.getColumnFamilyBytes(spec.getProperties());
   }
 
-  private void initializeV3Vars(CConfiguration cConf, DatasetSpecification spec) {
-    boolean isV3Table = spec.getName().contains("v3");
+  private void initializeVars(CConfiguration cConf, DatasetSpecification spec) {
     this.scanExecutor = null;
     this.rowKeyDistributor = null;
-    if (isV3Table) {
-      RejectedExecutionHandler callerRunsPolicy = new RejectedExecutionHandler() {
+    RejectedExecutionHandler callerRunsPolicy = (r, executor) -> {
+      REJECTION_LOG.info(
+        "No more threads in the HBase scan thread pool. Consider increase {}. Performing scan in caller thread {}",
+        Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS, Thread.currentThread().getName()
+      );
+      // Runs it from the caller thread
+      if (!executor.isShutdown()) {
+        r.run();
+      }
+    };
 
-        @Override
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-          REJECTION_LOG.info(
-            "No more threads in the HBase scan thread pool. Consider increase {}. Performing scan in caller thread {}",
-            Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS, Thread.currentThread().getName()
-          );
-          // Runs it from the caller thread
-          if (!executor.isShutdown()) {
-            r.run();
-          }
-        }
-      };
+    int maxScanThread = cConf.getInt(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS);
+    // Creates a executor that will shrink to 0 threads if left idle
+    // Uses daemon thread, hence no need to worry about shutdown
+    // When all threads are busy, use the caller thread to execute
+    this.scanExecutor = new ThreadPoolExecutor(0, maxScanThread, 60L, TimeUnit.SECONDS,
+                                               new SynchronousQueue<Runnable>(),
+                                               Threads.createDaemonThreadFactory("metrics-hbase-scanner-%d"),
+                                               callerRunsPolicy);
 
-      int maxScanThread = cConf.getInt(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS);
-      // Creates a executor that will shrink to 0 threads if left idle
-      // Uses daemon thread, hence no need to worry about shutdown
-      // When all threads are busy, use the caller thread to execute
-      this.scanExecutor = new ThreadPoolExecutor(0, maxScanThread, 60L, TimeUnit.SECONDS,
-                                                 new SynchronousQueue<Runnable>(),
-                                                 Threads.createDaemonThreadFactory("metrics-hbase-scanner-%d"),
-                                                 callerRunsPolicy);
+    this.rowKeyDistributor = new RowKeyDistributorByHashPrefix(
+      new RowKeyDistributorByHashPrefix.
+        OneByteSimpleHash(spec.getIntProperty(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, 16)));
 
-      this.rowKeyDistributor = new RowKeyDistributorByHashPrefix(
-        new RowKeyDistributorByHashPrefix.
-          OneByteSimpleHash(spec.getIntProperty(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, 16)));
-    }
   }
 
   @Override
