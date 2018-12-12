@@ -18,7 +18,6 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
-import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import com.google.common.collect.ImmutableSet;
@@ -131,23 +130,4 @@ public class NoOpMetadataStore implements MetadataStore {
     return builder.build();
   }
 
-  @Override
-  public void rebuildIndexes(MetadataScope scope, RetryStrategy retryStrategy) {
-    // NO-OP
-  }
-
-  @Override
-  public void createOrUpgrade(MetadataScope scope) {
-    // NO-OP
-  }
-
-  @Override
-  public void markUpgradeComplete(MetadataScope scope) {
-    // NO-OP
-  }
-
-  @Override
-  public boolean isUpgradeRequired(MetadataScope scope) {
-    return false;
-  }
 }

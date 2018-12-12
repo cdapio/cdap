@@ -486,8 +486,6 @@ public class UpgradeTool {
     if (includeNewDatasets) {
       // Add all new system dataset introduced in the current release in this block. If no new dataset was introduced
       // then leave this block empty but do not remove block so that it can be used in next release if needed
-      FieldLineageDataset.setupDatasets(datasetFramework);
-      DefaultMetadataStore.setupV2Datasets(datasetFramework);
     }
 
     // owner metadata
@@ -495,6 +493,7 @@ public class UpgradeTool {
     // metadata and lineage
     DefaultMetadataStore.setupDatasets(datasetFramework);
     LineageDataset.setupDatasets(datasetFramework);
+    FieldLineageDataset.setupDatasets(datasetFramework);
     // app metadata
     DefaultStore.setupDatasets(datasetFramework);
     // config store

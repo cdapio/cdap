@@ -883,9 +883,9 @@ public class MetadataDatasetTest {
     TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
     txnl.execute(() -> {
       Indexer indexer = new ReversingIndexer();
-      dataset.writeValue(new MetadataEntry(flow1, "flowKey", "flowValue"), Collections.singleton(indexer));
+      dataset.writeValue(new MetadataEntry(flow1, "flowKey", "flowValue"));
       dataset.storeIndexes(new MetadataEntry(flow1, "flowKey", "flowValue"), Collections.singleton(indexer));
-      dataset.writeValue(new MetadataEntry(dataset1, "datasetKey", "datasetValue"), Collections.singleton(indexer));
+      dataset.writeValue(new MetadataEntry(dataset1, "datasetKey", "datasetValue"));
       dataset.storeIndexes(new MetadataEntry(dataset1, "datasetKey", "datasetValue"), Collections.singleton(indexer));
     });
     final String namespaceId = flow1.getValue(MetadataEntity.NAMESPACE);
@@ -938,39 +938,6 @@ public class MetadataDatasetTest {
       searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
       Assert.assertEquals(1, searchResults.size());
     });
-  }
-
-  @Test
-  public void testIndexDeletion() throws Exception {
-    final MetadataDataset dataset =
-      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testIndexRebuilding"));
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
-    txnl.execute(() -> {
-      dataset.setProperty(flow1, "flowKey", "flowValue");
-      dataset.setProperty(dataset1, "datasetKey", "datasetValue");
-    });
-    final String namespaceId = flow1.getValue(MetadataEntity.NAMESPACE);
-    final Set<EntityTypeSimpleName> targetTypes = Collections.singleton(EntityTypeSimpleName.ALL);
-    final MetadataEntry expectedFlowEntry = new MetadataEntry(flow1, "flowKey", "flowValue");
-    final MetadataEntry expectedDatasetEntry = new MetadataEntry(dataset1, "datasetKey", "datasetValue");
-    txnl.execute(() -> {
-      List<MetadataEntry> searchResults = searchByDefaultIndex(dataset, namespaceId, "flowValue", targetTypes);
-      Assert.assertEquals(ImmutableList.of(expectedFlowEntry), searchResults);
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "flowKey:flow*", targetTypes);
-      Assert.assertEquals(ImmutableList.of(expectedFlowEntry), searchResults);
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetValue", targetTypes);
-      Assert.assertEquals(ImmutableList.of(expectedDatasetEntry), searchResults);
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
-      Assert.assertEquals(ImmutableList.of(expectedDatasetEntry), searchResults);
-    });
-    // delete indexes
-    // 6 indexes should have been deleted
-    //   ns1:flowValue, ns1:flowKey:flowValue, ns1:datasetValue, ns1:datasetKey:datasetValue
-    //   and then the types with their name i.e. ns1:flow:flow1, ns1:dataset:dataset1
-    for (int i = 0; i < 6; i++) {
-      txnl.execute(() -> Assert.assertEquals(1, dataset.deleteAllIndexes(1)));
-    }
-    txnl.execute(() -> Assert.assertEquals(0, dataset.deleteAllIndexes(1)));
   }
 
   @Test

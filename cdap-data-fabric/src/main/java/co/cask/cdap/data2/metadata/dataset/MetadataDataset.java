@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.dataset;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
@@ -30,7 +29,6 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.metadata.MetadataConstants;
@@ -44,7 +42,6 @@ import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
-import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -77,7 +74,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -194,9 +190,6 @@ public class MetadataDataset extends AbstractDataset {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataDataset.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
-    .create();
-  private static final Gson V1_GSON = new GsonBuilder()
-    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedIdCodec())
     .create();
 
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
@@ -782,7 +775,7 @@ public class MetadataDataset extends AbstractDataset {
           if (results.size() > limit + offset && (results.size() - offset) % limit == mod) {
             String cursorVal = Bytes.toString(next.get(column));
             // add the cursor, with the namespace removed.
-            if (request.isNamespaced()) {
+            if (cursorVal != null && request.isNamespaced()) {
               cursorVal = cursorVal.substring(cursorVal.indexOf(MetadataConstants.KEYVALUE_SEPARATOR) + 1);
             }
             cursors.add(cursorVal);
@@ -859,7 +852,7 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   @VisibleForTesting
-  void writeValue(MetadataEntry entry, Set<Indexer> indexers) {
+  void writeValue(MetadataEntry entry) {
     String key = entry.getKey();
     MDSKey mdsValueKey = MetadataKey.createValueRowKey(entry.getMetadataEntity(), key);
     Put put = new Put(mdsValueKey.getKey());
@@ -986,37 +979,6 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Delete all indexes in the metadata dataset.
-   *
-   * @param limit the number of rows (indexes) to delete
-   * @return the offset at which to start deletion
-   */
-  public int deleteAllIndexes(int limit) {
-    byte[] indexStartPrefix = MetadataKey.getIndexRowPrefix();
-    byte[] indexStopPrefix = Bytes.stopKeyForPrefix(indexStartPrefix);
-    int count = 0;
-    Row row;
-    try (Scanner scanner = indexedTable.scan(indexStartPrefix, indexStopPrefix)) {
-      while (count < limit && ((row = scanner.next()) != null)) {
-        if (deleteIndexRow(row)) {
-          count++;
-        }
-      }
-    }
-    return count;
-  }
-
-  /**
-   * Removes all metadata which is {@code null}.
-   *
-   * @param metadataEntity the {@link MetadataEntity} for which to remove the {@code null} or empty tags
-   */
-  public void removeNullOrEmptyTags(final MetadataEntity metadataEntity) {
-    removeMetadata(metadataEntity, input -> MetadataConstants.TAGS_KEY.equals(input) &&
-      Strings.isNullOrEmpty(getMetadata(metadataEntity, input).getValue()));
-  }
-
-  /**
    * Add new key-value pair as metadata
    *
    * @param metadataEntry The value of the metadata to be saved
@@ -1071,7 +1033,7 @@ public class MetadataDataset extends AbstractDataset {
       updatedProperties.put(entry.getKey(), entry.getValue());
       updatedMetadata = new Metadata(existing.getMetadataEntity(), updatedProperties, existing.getTags());
     }
-    writeValue(entryToWrite, indexers);
+    writeValue(entryToWrite);
     // store indexes for the tags being added
     storeIndexes(entry, indexers);
     // snapshot the update
@@ -1105,16 +1067,13 @@ public class MetadataDataset extends AbstractDataset {
    * A {@link Scanner} on the table after the delete returns the deleted rows with {@code null} values.
    *
    * @param row the row to delete
-   * @return {@code true} if the row was deleted, {@code false} otherwise
    */
-  private boolean deleteIndexRow(Row row) {
+  private void deleteIndexRow(Row row) {
     for (IndexColumn indexColumn : INDEX_COLUMNS) {
       if (row.get(indexColumn.namespaceColumn) != null || row.get(indexColumn.crossNamespaceColumn) != null) {
         indexedTable.delete(row.getRow());
-        return true;
       }
     }
-    return false;
   }
 
   @VisibleForTesting
@@ -1239,126 +1198,4 @@ public class MetadataDataset extends AbstractDataset {
 
   }
 
-  /**
-   * Starts scanning of V1 table value row keys in batches. If there are no more value row keys available,
-   * it will scan history rows. If there are no value/history rows, it returns empty list.
-   *
-   * This would mean when metadata migration is in progress, for an entity, if corresponding history record is not
-   * migrated, the get query for that history record will fail.
-   *
-   * @param limit  Batch size for scan/delete.
-   * @return metadata entries with list of {@link KeyValue} where key is timestamp for history row other wise
-   * it is null, value is {@link Object} and list of rowkeys to be deleted.
-   */
-  public MetadataEntries scanFromV1Table(int limit) {
-    MetadataEntries scannedEntries = new MetadataEntries(new LinkedList<>(), new LinkedList<>());
-
-    // Try to scan value rows first
-    byte[] rowPrefix = MdsKey.getValueRowPrefix();
-    byte[] stopRowKey = Bytes.stopKeyForPrefix(rowPrefix);
-
-    scan(rowPrefix, stopRowKey, limit, scannedEntries, this::convertFromV1Value);
-
-    // Scan History rows if all the Value rows are scanned
-    if (scannedEntries.getEntries().size() < limit) {
-      rowPrefix = MdsHistoryKey.getHistoryRowPrefix();
-      stopRowKey = Bytes.stopKeyForPrefix(rowPrefix);
-
-      limit = limit - scannedEntries.getEntries().size();
-      scan(rowPrefix, stopRowKey, limit, scannedEntries, this::convertFromV1History);
-    }
-
-    return scannedEntries;
-  }
-
-  private void scan(byte[] rowPrefix, byte[] stopRowKey, int limit, MetadataEntries entries,
-                    Function<Row, KeyValue<Long, Object>> function) {
-    try (Scanner scan = indexedTable.scan(rowPrefix, stopRowKey)) {
-      Row row;
-      while ((row = scan.next()) != null && limit > 0) {
-        KeyValue<Long, Object> entry = function.apply(row);
-
-        if (entry != null) {
-          entries.getEntries().add(entry);
-          entries.getRows().add(row.getRow());
-          limit--;
-        }
-      }
-    }
-  }
-
-  /**
-   * Deserializes value row key to get metadata entry.
-   *
-   * @param row value row.
-   * @return {@link KeyValue} key is null, value is {@link Object}.
-   */
-  @Nullable
-  private KeyValue<Long, Object> convertFromV1Value(Row row) {
-    byte[] rowKey = row.getRow();
-    String targetType = MdsKey.getTargetType(rowKey);
-    NamespacedEntityId namespacedEntityId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
-    String key = MdsKey.getMetadataKey(targetType, rowKey);
-    byte[] value = row.get(VALUE_COLUMN);
-    if (key == null || value == null) {
-      return null;
-    }
-    return new KeyValue<>(null, new MetadataEntry(namespacedEntityId, key, Bytes.toString(value)));
-  }
-
-  /**
-   * Deserializes history row key to get timestamp and metadata entry.
-   *
-   * @param row history row.
-   * @return {@link KeyValue} key is timestamp from history key, value is {@link MetadataEntry}.
-   */
-  @Nullable
-  private KeyValue<Long, Object> convertFromV1History(Row row) {
-    byte[] rowKey = row.getRow();
-    // History rows does not store entity type in the key. So to get the entity, we will read the value, deserialize it.
-    // However, in v2 tables, we are going to add type in the history row key.
-    MetadataV1 metadata = V1_GSON.fromJson(row.getString(HISTORY_COLUMN), MetadataV1.class);
-    if (metadata == null) {
-      return null;
-    }
-    long historyTime = MdsHistoryKey.extractTime(rowKey, EntityIdKeyHelper.getV1TargetType(metadata.getEntityId()));
-    // For history we do not care about key and value for MetadataEntry as we are not going to extract that
-    // information for upgrade
-    return new KeyValue<>(historyTime, metadata);
-  }
-
-  /**
-   * Writes entries to V2 MetadataTable.
-   *
-   * @param entries list of entries to be written.
-   */
-  public void writeUpgradedRows(List<KeyValue<Long, Object>> entries) {
-    Set<MetadataEntity> previouslySeenEntities = new HashSet<>();
-    for (KeyValue<Long, Object> kv : entries) {
-      if (kv.getKey() == null) {
-        MetadataEntry entry = (MetadataEntry) kv.getValue();
-        boolean isNewEntity = previouslySeenEntities.add(entry.getMetadataEntity());
-        Set<Indexer> indexers = getIndexersForKey(entry.getKey(), isNewEntity);
-        writeValue(entry, indexers);
-        // store indexes for the tags being added
-        storeIndexes(entry, indexers);
-      } else {
-        MetadataV1 metadataV1 = (MetadataV1) kv.getValue();
-        // write history with original timestamp
-        writeHistory(new Metadata(metadataV1.getEntityId(), metadataV1.getProperties(), metadataV1.getTags()),
-                     kv.getKey());
-      }
-    }
-  }
-
-  /**
-   * Deletes rows from underlying index table.
-   *
-   * @param rowsToDelete row keys to be deleted.
-   */
-  public void deleteRows(List<byte[]> rowsToDelete) {
-    for (byte[] row : rowsToDelete) {
-      indexedTable.delete(new Delete(row));
-    }
-  }
 }

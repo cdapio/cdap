@@ -16,15 +16,12 @@
 
 package co.cask.cdap.data2.metadata.store;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
-import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -180,32 +177,4 @@ public interface MetadataStore {
   Set<MetadataRecordV2> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntitys,
                                               long timeMillis);
 
-  /**
-   * Rebuild stale metadata indexes.
-   */
-  void rebuildIndexes(MetadataScope scope, RetryStrategy retryStrategy);
-
-  /**
-   * Creates the MetadataDataset if its not already created. Otherwise, upgrades it if required.
-   * @param scope of the MetadataDataset
-   * @throws DatasetManagementException when dataset service is not available
-   * @throws IOException when creation of dataset instance using its admin fails
-   */
-  void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException;
-
-  /**
-   * Creates a special tag in the MetadataDataset to mark the upgrade status of the MetadataDataset
-   * with the current CDAP Version
-   * @throws DatasetManagementException when dataset service is not available
-   * @throws IOException when creation of dataset instance using its admin fails
-   */
-  void markUpgradeComplete(MetadataScope scope) throws DatasetManagementException, IOException;
-
-  /**
-   * Uses MetadataDataset to check if the version of the MetadataDataset is same as the
-   * current CDAP version
-   * @return true if upgrade is required, false otherwise
-   * @throws DatasetManagementException when dataset service is not available
-   */
-  boolean isUpgradeRequired(MetadataScope scope) throws DatasetManagementException;
 }
