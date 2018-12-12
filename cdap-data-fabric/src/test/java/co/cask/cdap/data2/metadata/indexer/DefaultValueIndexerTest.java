@@ -17,7 +17,7 @@
 
 package co.cask.cdap.data2.metadata.indexer;
 
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
@@ -57,47 +57,47 @@ public class DefaultValueIndexerTest {
 
   @Test
   public void testSingleSimpleTags() {
-    MetadataEntry entry = new MetadataEntry(NamespaceId.DEFAULT.app("a"), MetadataDataset.TAGS_KEY, "tag");
+    MetadataEntry entry = new MetadataEntry(NamespaceId.DEFAULT.app("a"), MetadataConstants.TAGS_KEY, "tag");
     Set<String> expected = new HashSet<>();
     expected.add("tag");
-    expected.add(MetadataDataset.TAGS_KEY + ":tag");
+    expected.add(MetadataConstants.TAGS_KEY + ":tag");
     Assert.assertEquals(expected, indexer.getIndexes(entry));
   }
 
   @Test
   public void testSingleSplitTags() {
-    MetadataEntry entry = new MetadataEntry(NamespaceId.DEFAULT.app("a"), MetadataDataset.TAGS_KEY, "foo bar");
+    MetadataEntry entry = new MetadataEntry(NamespaceId.DEFAULT.app("a"), MetadataConstants.TAGS_KEY, "foo bar");
     Set<String> expected = new HashSet<>();
     expected.add("foo");
     expected.add("bar");
-    expected.add(MetadataDataset.TAGS_KEY + ":foo");
-    expected.add(MetadataDataset.TAGS_KEY + ":bar");
+    expected.add(MetadataConstants.TAGS_KEY + ":foo");
+    expected.add(MetadataConstants.TAGS_KEY + ":bar");
     Assert.assertEquals(expected, indexer.getIndexes(entry));
   }
 
   @Test
   public void testMultipleTags() {
-    MetadataEntry entry = new MetadataEntry(NamespaceId.DEFAULT.app("a"), MetadataDataset.TAGS_KEY, "t1,t2,t3");
+    MetadataEntry entry = new MetadataEntry(NamespaceId.DEFAULT.app("a"), MetadataConstants.TAGS_KEY, "t1,t2,t3");
     Set<String> expected = new HashSet<>();
     expected.add("t1");
     expected.add("t2");
     expected.add("t3");
-    expected.add(MetadataDataset.TAGS_KEY + ":t1");
-    expected.add(MetadataDataset.TAGS_KEY + ":t2");
-    expected.add(MetadataDataset.TAGS_KEY + ":t3");
+    expected.add(MetadataConstants.TAGS_KEY + ":t1");
+    expected.add(MetadataConstants.TAGS_KEY + ":t2");
+    expected.add(MetadataConstants.TAGS_KEY + ":t3");
     Assert.assertEquals(expected, indexer.getIndexes(entry));
   }
 
   @Test
   public void testMultipleSplitTags() {
-    MetadataEntry entry = new MetadataEntry(NamespaceId.DEFAULT.app("a"), MetadataDataset.TAGS_KEY, "foo,bar baz");
+    MetadataEntry entry = new MetadataEntry(NamespaceId.DEFAULT.app("a"), MetadataConstants.TAGS_KEY, "foo,bar baz");
     Set<String> expected = new HashSet<>();
     expected.add("foo");
     expected.add("bar");
     expected.add("baz");
-    expected.add(MetadataDataset.TAGS_KEY + ":foo");
-    expected.add(MetadataDataset.TAGS_KEY + ":bar");
-    expected.add(MetadataDataset.TAGS_KEY + ":baz");
+    expected.add(MetadataConstants.TAGS_KEY + ":foo");
+    expected.add(MetadataConstants.TAGS_KEY + ":bar");
+    expected.add(MetadataConstants.TAGS_KEY + ":baz");
     Assert.assertEquals(expected, indexer.getIndexes(entry));
   }
 }

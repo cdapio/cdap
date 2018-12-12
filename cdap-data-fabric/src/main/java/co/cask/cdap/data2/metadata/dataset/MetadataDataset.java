@@ -33,6 +33,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.indexer.DefaultValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.indexer.InvertedTimeIndexer;
@@ -244,9 +245,6 @@ public class MetadataDataset extends AbstractDataset {
     ImmutableList.of(DEFAULT_INDEX_COLUMN, ENTITY_NAME_INDEX_COLUMN, INVERTED_ENTITY_NAME_INDEX_COLUMN,
                      CREATION_TIME_INDEX_COLUMN, INVERTED_CREATION_TIME_INDEX_COLUMN);
 
-  public static final String TAGS_KEY = "tags";
-  public static final String KEYVALUE_SEPARATOR = ":";
-
   private final IndexedTable indexedTable;
   private final MetadataScope scope;
 
@@ -306,7 +304,8 @@ public class MetadataDataset extends AbstractDataset {
    * @param tagsToAdd the tags to add
    */
   public MetadataChange addTags(MetadataEntity metadataEntity, Set<String> tagsToAdd) {
-    return setMetadata(new MetadataEntry(metadataEntity, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(tagsToAdd)));
+    return setMetadata(new MetadataEntry(metadataEntity, MetadataConstants.TAGS_KEY,
+                                         Joiner.on(TAGS_SEPARATOR).join(tagsToAdd)));
   }
 
   @VisibleForTesting
@@ -357,10 +356,10 @@ public class MetadataDataset extends AbstractDataset {
         metadata.put(key, Bytes.toString(value));
       }
     }
-    Set<String> tags = splitTags(metadata.get(TAGS_KEY));
+    Set<String> tags = splitTags(metadata.get(MetadataConstants.TAGS_KEY));
     // safe to remove since splitTags above copies to new HashSet
     // now we are only left with properties
-    metadata.remove(TAGS_KEY);
+    metadata.remove(MetadataConstants.TAGS_KEY);
     return new Metadata(metadataEntity, metadata, tags);
   }
 
@@ -402,8 +401,9 @@ public class MetadataDataset extends AbstractDataset {
 
   private Metadata getMetadata(MetadataEntity metadataEntity, Map<String, String> metadata) {
     Map<String, String> properties = new HashMap<>(metadata);
-    Set<String> tags = properties.containsKey(TAGS_KEY) ? splitTags(properties.get(TAGS_KEY)) : Collections.emptySet();
-    properties.remove(TAGS_KEY);
+    Set<String> tags = properties.containsKey(MetadataConstants.TAGS_KEY)
+      ? splitTags(properties.get(MetadataConstants.TAGS_KEY)) : Collections.emptySet();
+    properties.remove(MetadataConstants.TAGS_KEY);
     return new Metadata(metadataEntity, properties, tags);
   }
 
@@ -469,7 +469,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which to remove the properties
    */
   public MetadataChange removeProperties(MetadataEntity metadataEntity) {
-    return removeMetadata(metadataEntity, input -> !TAGS_KEY.equals(input));
+    return removeMetadata(metadataEntity, input -> !MetadataConstants.TAGS_KEY.equals(input));
   }
 
   /**
@@ -478,7 +478,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which to remove the tags
    */
   public MetadataChange removeTags(MetadataEntity metadataEntity) {
-    return removeMetadata(metadataEntity, TAGS_KEY::equals);
+    return removeMetadata(metadataEntity, MetadataConstants.TAGS_KEY::equals);
   }
 
   /**
@@ -632,7 +632,7 @@ public class MetadataDataset extends AbstractDataset {
       Map<String, String> properties = new HashMap<>();
       Set<String> tags = Collections.emptySet();
       for (MetadataEntry metadataEntry : entry.getValue()) {
-        if (TAGS_KEY.equals(metadataEntry.getKey())) {
+        if (MetadataConstants.TAGS_KEY.equals(metadataEntry.getKey())) {
           tags = splitTags(metadataEntry.getValue());
         } else {
           properties.put(metadataEntry.getKey(), metadataEntry.getValue());
@@ -756,7 +756,7 @@ public class MetadataDataset extends AbstractDataset {
       byte[] startKey = namespaceStartKey;
       if (!Strings.isNullOrEmpty(cursor)) {
         String prefix = searchTerm.getNamespaceId() == null ?
-          "" : searchTerm.getNamespaceId().getNamespace() + KEYVALUE_SEPARATOR;
+          "" : searchTerm.getNamespaceId().getNamespace() + MetadataConstants.KEYVALUE_SEPARATOR;
         startKey = Bytes.toBytes(prefix + cursor);
       }
       @SuppressWarnings("ConstantConditions")
@@ -783,7 +783,7 @@ public class MetadataDataset extends AbstractDataset {
             String cursorVal = Bytes.toString(next.get(column));
             // add the cursor, with the namespace removed.
             if (request.isNamespaced()) {
-              cursorVal = cursorVal.substring(cursorVal.indexOf(KEYVALUE_SEPARATOR) + 1);
+              cursorVal = cursorVal.substring(cursorVal.indexOf(MetadataConstants.KEYVALUE_SEPARATOR) + 1);
             }
             cursors.add(cursorVal);
           }
@@ -878,7 +878,8 @@ public class MetadataDataset extends AbstractDataset {
     // Delete existing indexes for metadataEntity-key
     deleteIndexes(metadataEntry.getMetadataEntity(), metadataEntry.getKey());
 
-    String namespacePrefix = metadataEntry.getMetadataEntity().getValue(MetadataEntity.NAMESPACE) + KEYVALUE_SEPARATOR;
+    String namespacePrefix = metadataEntry.getMetadataEntity().getValue(MetadataEntity.NAMESPACE)
+      + MetadataConstants.KEYVALUE_SEPARATOR;
     for (Indexer indexer : indexers) {
       Set<String> indexes = indexer.getIndexes(metadataEntry);
       IndexColumn indexColumn = getIndexColumn(metadataEntry.getKey(), indexer.getSortOrder());
@@ -1011,7 +1012,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which to remove the {@code null} or empty tags
    */
   public void removeNullOrEmptyTags(final MetadataEntity metadataEntity) {
-    removeMetadata(metadataEntity, input -> TAGS_KEY.equals(input) &&
+    removeMetadata(metadataEntity, input -> MetadataConstants.TAGS_KEY.equals(input) &&
       Strings.isNullOrEmpty(getMetadata(metadataEntity, input).getValue()));
   }
 
@@ -1052,7 +1053,7 @@ public class MetadataDataset extends AbstractDataset {
     MetadataEntry entryToWrite;
     // Metadata consists of properties and tags. Properties are normal key-value pair and tag is a set of comma
     // separated value whose key is fixes to TAGS_KEY
-    if (TAGS_KEY.equals(entry.getKey())) {
+    if (MetadataConstants.TAGS_KEY.equals(entry.getKey())) {
       // we need to handle tag updates a little differently than normal key-value pair as addition of non existing
       // tag should not overwrite all the other existing tag and also we only want to generate indexes for the
       // newly added tags
@@ -1218,10 +1219,10 @@ public class MetadataDataset extends AbstractDataset {
     static SearchTerm from(@Nullable NamespaceId namespaceId, String rawTerm) {
       String formattedTerm = rawTerm.trim().toLowerCase();
 
-      if (formattedTerm.contains(MetadataDataset.KEYVALUE_SEPARATOR)) {
+      if (formattedTerm.contains(MetadataConstants.KEYVALUE_SEPARATOR)) {
         // split the search query in two parts on first occurrence of KEYVALUE_SEPARATOR and the trim the key and value
-        String[] split = formattedTerm.split(MetadataDataset.KEYVALUE_SEPARATOR, 2);
-        formattedTerm = split[0].trim() + MetadataDataset.KEYVALUE_SEPARATOR + split[1].trim();
+        String[] split = formattedTerm.split(MetadataConstants.KEYVALUE_SEPARATOR, 2);
+        formattedTerm = split[0].trim() + MetadataConstants.KEYVALUE_SEPARATOR + split[1].trim();
       }
 
       boolean isPrefix = formattedTerm.endsWith("*");
@@ -1230,7 +1231,7 @@ public class MetadataDataset extends AbstractDataset {
       }
 
       if (namespaceId != null) {
-        formattedTerm = namespaceId.getNamespace() + MetadataDataset.KEYVALUE_SEPARATOR + formattedTerm;
+        formattedTerm = namespaceId.getNamespace() + MetadataConstants.KEYVALUE_SEPARATOR + formattedTerm;
       }
 
       return new SearchTerm(namespaceId, formattedTerm, isPrefix);

@@ -24,6 +24,7 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
@@ -571,12 +572,12 @@ public class MetadataDatasetTest {
     txnl.execute(() -> {
       // Search for it based on value
       List<MetadataEntry> results =
-        searchByDefaultIndex("ns1", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
+        searchByDefaultIndex("ns1", "key1" + MetadataConstants.KEYVALUE_SEPARATOR + "value1",
                              ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
       Assert.assertEquals(ImmutableList.of(flowEntry1), results);
 
       // Search for it based on a word in value with spaces in search query
-      results = searchByDefaultIndex("ns1", "  multiword" + MetadataDataset.KEYVALUE_SEPARATOR + "aV1   ",
+      results = searchByDefaultIndex("ns1", "  multiword" + MetadataConstants.KEYVALUE_SEPARATOR + "aV1   ",
                                      ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
 
       MetadataEntry flowMultiWordEntry = new MetadataEntry(flow1, multiWordKey, multiWordValue);
@@ -584,21 +585,21 @@ public class MetadataDatasetTest {
 
       // Search for it based on a word in value
       results =
-        searchByDefaultIndex("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
+        searchByDefaultIndex("ns1", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + "aV5",
                              ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
       Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
     });
     txnl.execute(() -> dataset.removeProperties(flow1, multiWordKey));
     txnl.execute(() -> {
       List<MetadataEntry> results =
-        searchByDefaultIndex("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
+        searchByDefaultIndex("ns1", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + "aV5",
                              ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
       // search results should be empty after removing this key as the indexes are deleted
       Assert.assertTrue(results.isEmpty());
 
       // Test wrong ns
       List<MetadataEntry> results2 =
-        searchByDefaultIndex("ns12", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
+        searchByDefaultIndex("ns12", "key1" + MetadataConstants.KEYVALUE_SEPARATOR + "value1",
                              ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
       Assert.assertTrue(results2.isEmpty());
 
@@ -644,17 +645,17 @@ public class MetadataDatasetTest {
       List<MetadataEntry> results = searchByDefaultIndex("ns1", "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL));
       Assert.assertEquals(Sets.newHashSet(flowMultiWordEntry, systemArtifactEntry), Sets.newHashSet(results));
       // search only programs - should only return flow
-      results = searchByDefaultIndex("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
+      results = searchByDefaultIndex("ns1", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + "aV5",
                                      ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
       Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
       // search only artifacts - should only return system artifact
-      results = searchByDefaultIndex("ns1", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + multiWordValue,
+      results = searchByDefaultIndex("ns1", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + multiWordValue,
                                      ImmutableSet.of(EntityTypeSimpleName.ARTIFACT));
       // this query returns the system artifact 4 times, since the dataset returns a list with duplicates for scoring
       // purposes. Convert to a Set for comparison.
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
       // search all entities in namespace 'ns2' - should return the system artifact and the same artifact in ns2
-      results = searchByDefaultIndex("ns2", multiWordKey + MetadataDataset.KEYVALUE_SEPARATOR + "aV4",
+      results = searchByDefaultIndex("ns2", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + "aV4",
                                      ImmutableSet.of(EntityTypeSimpleName.ALL));
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry, ns2ArtifactEntry), Sets.newHashSet(results));
       // search only programs in a namespace 'ns2'. Should return empty
@@ -733,7 +734,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key2", "value2")),
                           searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "value2",
                                                Collections.emptySet()));
-      Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, MetadataDataset.TAGS_KEY, "tag1,tag2")),
+      Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, MetadataConstants.TAGS_KEY, "tag1,tag2")),
                           searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "tag2",
                                                Collections.emptySet()));
     });
@@ -764,7 +765,7 @@ public class MetadataDatasetTest {
         searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "tag2", ImmutableSet.of()))
       ;
       Assert.assertEquals(
-        ImmutableList.of(new MetadataEntry(flow1, MetadataDataset.TAGS_KEY, "tag1")),
+        ImmutableList.of(new MetadataEntry(flow1, MetadataConstants.TAGS_KEY, "tag1")),
         searchByDefaultIndex(flow1.getValue(MetadataEntity.NAMESPACE), "tag1", ImmutableSet.of())
       );
     });
@@ -1257,7 +1258,7 @@ public class MetadataDatasetTest {
 
   private void assertSingleIndex(final MetadataDataset dataset, final String indexColumn, final String namespaceId,
                                  final String value) {
-    final String searchQuery = namespaceId + MetadataDataset.KEYVALUE_SEPARATOR + value;
+    final String searchQuery = namespaceId + MetadataConstants.KEYVALUE_SEPARATOR + value;
     try (Scanner scan = dataset.searchByIndex(indexColumn, searchQuery)) {
       Assert.assertNotNull(scan.next());
       Assert.assertNull(scan.next());
@@ -1265,7 +1266,7 @@ public class MetadataDatasetTest {
   }
 
   private void assertNoIndexes(final MetadataDataset dataset, String indexColumn, String namespaceId, String value) {
-    String searchQuery = namespaceId + MetadataDataset.KEYVALUE_SEPARATOR + value;
+    String searchQuery = namespaceId + MetadataConstants.KEYVALUE_SEPARATOR + value;
     try (Scanner scan = dataset.searchByIndex(indexColumn, searchQuery)) {
       Assert.assertNull(scan.next());
     }

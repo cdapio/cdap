@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.metadata.indexer;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 
@@ -32,7 +32,7 @@ public class MetadataEntityTypeIndexer implements Indexer {
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
     Set<String> indexes = new HashSet<>();
-    indexes.add(entry.getMetadataEntity().getType() + MetadataDataset.KEYVALUE_SEPARATOR +
+    indexes.add(entry.getMetadataEntity().getType() + MetadataConstants.KEYVALUE_SEPARATOR +
                   entry.getMetadataEntity().getValue(entry.getMetadataEntity().getType()));
     return indexes;
   }

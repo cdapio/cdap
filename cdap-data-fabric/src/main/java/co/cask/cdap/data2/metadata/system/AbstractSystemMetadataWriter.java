@@ -19,7 +19,7 @@ package co.cask.cdap.data2.metadata.system;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.base.Strings;
@@ -104,14 +104,14 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
     // Need both name and type in the key because two plugins of different types could have the same name.
     // However, the composite of name + type is guaranteed to be unique
     properties.put(
-      PLUGIN_KEY_PREFIX + MetadataDataset.KEYVALUE_SEPARATOR + name + MetadataDataset.KEYVALUE_SEPARATOR + type,
-      name + MetadataDataset.KEYVALUE_SEPARATOR + type
+      PLUGIN_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name + MetadataConstants.KEYVALUE_SEPARATOR + type,
+      name + MetadataConstants.KEYVALUE_SEPARATOR + type
     );
     if (version != null) {
       properties.put(
-        PLUGIN_VERSION_KEY_PREFIX + MetadataDataset.KEYVALUE_SEPARATOR + name +
-          MetadataDataset.KEYVALUE_SEPARATOR + type,
-        name + MetadataDataset.KEYVALUE_SEPARATOR + version
+        PLUGIN_VERSION_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name +
+          MetadataConstants.KEYVALUE_SEPARATOR + type,
+        name + MetadataConstants.KEYVALUE_SEPARATOR + version
       );
     }
   }

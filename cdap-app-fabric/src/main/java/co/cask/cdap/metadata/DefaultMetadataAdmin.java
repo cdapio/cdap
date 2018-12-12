@@ -22,7 +22,7 @@ import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.EntityId;
@@ -187,13 +187,13 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   /**
-   * Validate that the key is not reserved {@link MetadataDataset#TAGS_KEY}.
+   * Validate that the key is not reserved {@link MetadataConstants#TAGS_KEY}.
    */
   private void validateTagReservedKey(MetadataEntity metadataEntity, String key)
     throws InvalidMetadataException {
-    if (MetadataDataset.TAGS_KEY.equals(key.toLowerCase())) {
+    if (MetadataConstants.TAGS_KEY.equals(key.toLowerCase())) {
       throw new InvalidMetadataException(metadataEntity,
-                                         "Could not set metadata with reserved key " + MetadataDataset.TAGS_KEY);
+                                         "Could not set metadata with reserved key " + MetadataConstants.TAGS_KEY);
     }
   }
 
