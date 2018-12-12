@@ -45,7 +45,7 @@ const ActionsPopover: React.SFC<IActionsPopoverProps> = ({ actions }) => {
       <ul>
         {actions.map((action, i) => {
           if (action.label === 'separator') {
-            return <hr />;
+            return <hr key={`${action.label}${i}`} />;
           }
 
           const onClick = () => {

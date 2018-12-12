@@ -39,7 +39,7 @@ const PipelineList: React.SFC = () => {
   const pageTitle = `${productName} | ${featureName}`;
 
   return (
-    <div className="pipeline-list">
+    <div className="pipeline-list-view">
       <Helmet title={pageTitle} />
       <h4 className="view-header">
         <NavLink exact to={basepath} className="option" activeClassName="active">

@@ -14,22 +14,27 @@
  * the License.
 */
 
-import PropTypes from 'prop-types';
-import React from 'react';
-import { ModalBody, ModalFooter } from 'reactstrap';
-import { Modal } from 'reactstrap';
+import * as React from 'react';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import './PipelineExportModal.scss';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
-export default function PipelineExportModal({ isOpen, onClose, pipelineConfig }) {
+interface IProps {
+  isOpen: boolean;
+  onClose: () => void;
+  pipelineConfig: any;
+}
+
+const PipelineExportModal: React.SFC<IProps> = ({ isOpen, onClose, pipelineConfig }) => {
   const exportPipeline = () => {
-    let blob = new Blob([JSON.stringify(pipelineConfig, null, 4)], { type: 'application/json' });
-    let url = URL.createObjectURL(blob);
-    let exportFileName =
+    const blob = new Blob([JSON.stringify(pipelineConfig, null, 4)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const exportFileName =
       (pipelineConfig.name ? pipelineConfig.name : 'noname') + '-' + pipelineConfig.artifact.name;
-    let aElement = document.getElementById('pipeline-export-config-link');
+    const aElement = document.getElementById('pipeline-export-config-link') as HTMLAnchorElement;
     aElement.href = url;
     aElement.download = exportFileName + '.json';
     aElement.click();
@@ -44,43 +49,40 @@ export default function PipelineExportModal({ isOpen, onClose, pipelineConfig })
       toggle={onClose}
       size="lg"
       backdrop="static"
-      modalClassName="pipeline-export-modal hydrator-modal"
+      className="cdap-modal pipeline-export-modal"
     >
-      <div className="modal-header">
-        <h3 className="modal-title float-left">
-          <span>{T.translate(`${PREFIX}.exportModalTitle`)}</span>
-        </h3>
-        <div className="btn-group float-right">
-          <a className="btn" onClick={onClose}>
-            <IconSVG name="icon-close" />
-          </a>
+      <ModalHeader>
+        <span>{T.translate(`${PREFIX}.exportModalTitle`)}</span>
+
+        <div className="close-section float-right" onClick={onClose}>
+          <IconSVG name="icon-close" />
         </div>
-      </div>
+      </ModalHeader>
 
       <ModalBody>
         <fieldset disabled className="view-plugin-json">
           <div className="widget-json-editor">
             <div className="textarea-container">
-              <textarea className="form-control" value={JSON.stringify(pipelineConfig, null, 2)} />
+              <textarea
+                className="form-control"
+                value={JSON.stringify(pipelineConfig, null, 2)}
+                readOnly
+              />
             </div>
           </div>
         </fieldset>
       </ModalBody>
       <ModalFooter>
-        <div className="btn btn-grey-cancel close-button" onClick={onClose}>
-          {T.translate('commons.close')}
-        </div>
-        <div className="btn btn-blue" onClick={exportPipeline}>
+        <div className="btn btn-primary" onClick={exportPipeline}>
           {T.translate(`${PREFIX}.export`)}
           <a id="pipeline-export-config-link" />
+        </div>
+        <div className="btn btn-secondary close-button" onClick={onClose}>
+          {T.translate('commons.close')}
         </div>
       </ModalFooter>
     </Modal>
   );
-}
-
-PipelineExportModal.propTypes = {
-  isOpen: PropTypes.bool,
-  onClose: PropTypes.func,
-  pipelineConfig: PropTypes.object,
 };
+
+export default PipelineExportModal;

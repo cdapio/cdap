@@ -28,6 +28,7 @@ interface IState {
   pipelines: IPipeline[];
   statusMap: IStatusMap;
   runsCountMap: IRunsCountMap;
+  deleteError?: string;
 }
 
 interface IStore {
@@ -38,6 +39,8 @@ const Actions = {
   setPipeline: 'DEPLOYED_PIPELINE_SET_LIST',
   setStatusMap: 'DEPLOYED_PIPELINE_SET_STATUS_MAP',
   setRunsCountMap: 'DEPLOYED_PIPELINE_SET_RUNS_COUNT_MAP',
+  setDeleteError: 'DEPLOYED_PIPELINE_SET_DELETE_ERROR',
+  clearDeleteError: 'DEPLOYED_PIPELINE_CLEAR_DELETE_ERROR',
   reset: 'DEPLOYED_PIPELINE_RESET',
 };
 
@@ -45,6 +48,7 @@ const defaultInitialState: IState = {
   pipelines: [],
   statusMap: {},
   runsCountMap: {},
+  deleteError: null,
 };
 
 const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction) => {
@@ -53,6 +57,7 @@ const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction)
       return {
         ...state,
         pipelines: action.payload.pipelines,
+        deleteError: null,
       };
     case Actions.setStatusMap:
       return {
@@ -63,6 +68,16 @@ const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction)
       return {
         ...state,
         runsCountMap: action.payload.runsCountMap,
+      };
+    case Actions.setDeleteError:
+      return {
+        ...state,
+        deleteError: action.payload.deleteError,
+      };
+    case Actions.clearDeleteError:
+      return {
+        ...state,
+        deleteError: null,
       };
     case Actions.reset:
       return defaultInitialState;

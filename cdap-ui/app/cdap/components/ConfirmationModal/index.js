@@ -42,7 +42,12 @@ export default class ConfirmationModal extends Component {
     toggleModal: PropTypes.func,
     isLoading: PropTypes.bool,
     errorMessage: PropTypes.string,
-    extendedMessage: PropTypes.string,
+    extendedMessage: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        response: PropTypes.string,
+      }),
+    ]),
     disableAction: PropTypes.bool,
     closeable: PropTypes.bool,
     keyboard: PropTypes.bool,

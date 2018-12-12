@@ -71,7 +71,14 @@ export function deletePipeline(pipeline: IPipeline) {
     appId: pipeline.name,
   };
 
-  MyPipelineApi.delete(params).subscribe(fetchPipelineList);
+  MyPipelineApi.delete(params).subscribe(fetchPipelineList, (err) => {
+    Store.dispatch({
+      type: Actions.setDeleteError,
+      payload: {
+        deleteError: err,
+      },
+    });
+  });
 }
 
 export function reset() {
