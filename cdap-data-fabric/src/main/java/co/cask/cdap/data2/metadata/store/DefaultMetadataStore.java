@@ -143,9 +143,7 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void setProperties(final MetadataScope scope, final MetadataEntity metadataEntity,
                             final Map<String, String> currentProperties) {
-    MetadataChange metadataChange = execute(mds -> {
-      return mds.setProperty(metadataEntity, currentProperties);
-    }, scope);
+    MetadataChange metadataChange = execute(mds -> mds.setProperty(metadataEntity, currentProperties), scope);
     MetadataRecordV2 previous = new MetadataRecordV2(metadataEntity, scope,
                                                      metadataChange.getExisting().getProperties(),
                                                      metadataChange.getExisting().getTags());
@@ -173,9 +171,7 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void setProperty(final MetadataScope scope, final MetadataEntity metadataEntity, final String key,
                           final String value) {
-    MetadataChange change = execute(mds -> {
-      return mds.setProperty(metadataEntity, key, value);
-    }, scope);
+    MetadataChange change = execute(mds -> mds.setProperty(metadataEntity, key, value), scope);
     publishAudit(new MetadataRecordV2(metadataEntity, scope, change.getExisting().getProperties(),
                                       change.getExisting().getTags()),
                  new MetadataRecordV2(metadataEntity, scope, ImmutableMap.of(key, value), EMPTY_TAGS),
@@ -188,9 +184,7 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void addTags(final MetadataScope scope, final MetadataEntity metadataEntity,
                       final Set<String> tagsToAdd) {
-    MetadataChange metadataChange = execute(mds -> {
-      return mds.addTags(metadataEntity, tagsToAdd);
-    }, scope);
+    MetadataChange metadataChange = execute(mds -> mds.addTags(metadataEntity, tagsToAdd), scope);
     publishAudit(new MetadataRecordV2(metadataEntity, scope, metadataChange.getExisting().getProperties(),
                                       metadataChange.getExisting().getTags()),
                  new MetadataRecordV2(metadataEntity, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
@@ -242,9 +236,7 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public Map<String, String> getProperties(MetadataScope scope, final MetadataEntity metadataEntity) {
-    return execute(mds -> {
-      return mds.getProperties(metadataEntity);
-    }, scope);
+    return execute(mds -> mds.getProperties(metadataEntity), scope);
   }
 
   @Override
@@ -260,9 +252,7 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public Set<String> getTags(MetadataScope scope, final MetadataEntity metadataEntity) {
-    return execute(mds -> {
-      return mds.getTags(metadataEntity);
-    }, scope);
+    return execute(mds -> mds.getTags(metadataEntity), scope);
   }
 
   @Override
@@ -276,9 +266,7 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public void removeMetadata(final MetadataScope scope, final MetadataEntity metadataEntity) {
-    MetadataChange metadataChange = execute(mds -> {
-      return mds.removeMetadata(metadataEntity);
-    }, scope);
+    MetadataChange metadataChange = execute(mds -> mds.removeMetadata(metadataEntity), scope);
     MetadataRecordV2 previous = new MetadataRecordV2(metadataEntity, scope,
                                                      metadataChange.getExisting().getProperties(),
                                                      metadataChange.getExisting().getTags());
@@ -290,9 +278,7 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public void removeProperties(final MetadataScope scope, final MetadataEntity metadataEntity) {
-    MetadataChange metadataChange = execute(mds -> {
-      return mds.removeProperties(metadataEntity);
-    }, scope);
+    MetadataChange metadataChange = execute(mds -> mds.removeProperties(metadataEntity), scope);
     MetadataRecordV2 previous = new MetadataRecordV2(metadataEntity, scope,
                                                      metadataChange.getExisting().getProperties(),
                                                      metadataChange.getExisting().getTags());
@@ -323,9 +309,7 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public void removeTags(final MetadataScope scope, final MetadataEntity metadataEntity) {
-    MetadataChange metadataChange = execute(mds -> {
-      return mds.removeTags(metadataEntity);
-    }, scope);
+    MetadataChange metadataChange = execute(mds -> mds.removeTags(metadataEntity), scope);
     MetadataRecordV2 previous = new MetadataRecordV2(metadataEntity, scope,
                                                      metadataChange.getExisting().getProperties(),
                                                      metadataChange.getExisting().getTags());
@@ -339,9 +323,7 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void removeTags(final MetadataScope scope, final MetadataEntity metadataEntity,
                          final Set<String> tagsToRemove) {
-    MetadataChange metadataChange = execute(mds -> {
-      return mds.removeTags(metadataEntity, tagsToRemove);
-    }, scope);
+    MetadataChange metadataChange = execute(mds -> mds.removeTags(metadataEntity, tagsToRemove), scope);
     publishAudit(new MetadataRecordV2(metadataEntity, scope, metadataChange.getExisting().getProperties(),
                                       metadataChange.getExisting().getTags()),
                  new MetadataRecordV2(metadataEntity, scope),
@@ -371,11 +353,7 @@ public class DefaultMetadataStore implements MetadataStore {
     List<MetadataEntry> results = new LinkedList<>();
     List<String> cursors = new LinkedList<>();
     for (MetadataScope scope : scopes) {
-      SearchResults searchResults = execute(
-        mds -> {
-          return mds.search(request);
-        }, scope);
-
+      SearchResults searchResults = execute(mds -> mds.search(request), scope);
       results.addAll(searchResults.getResults());
       cursors.addAll(searchResults.getCursors());
     }
@@ -444,10 +422,7 @@ public class DefaultMetadataStore implements MetadataStore {
 
   private Map<MetadataEntity, Metadata> fetchMetadata(final Set<MetadataEntity> metadataEntities,
                                                           MetadataScope scope) {
-    Set<Metadata> metadataSet =
-      execute(mds -> {
-        return mds.getMetadata(metadataEntities);
-      }, scope);
+    Set<Metadata> metadataSet = execute(mds -> mds.getMetadata(metadataEntities), scope);
     Map<MetadataEntity, Metadata> metadataMap = new HashMap<>();
     for (Metadata m : metadataSet) {
       metadataMap.put(m.getMetadataEntity(), m);
@@ -486,9 +461,7 @@ public class DefaultMetadataStore implements MetadataStore {
                                                      final Set<MetadataEntity> metadataEntities,
                                                      final long timeMillis) {
     Set<Metadata> metadataHistoryEntries =
-      execute(mds -> {
-        return mds.getSnapshotBeforeTime(metadataEntities, timeMillis);
-      }, scope);
+      execute(mds -> mds.getSnapshotBeforeTime(metadataEntities, timeMillis), scope);
 
     ImmutableSet.Builder<MetadataRecordV2> builder = ImmutableSet.builder();
     for (Metadata metadata : metadataHistoryEntries) {
