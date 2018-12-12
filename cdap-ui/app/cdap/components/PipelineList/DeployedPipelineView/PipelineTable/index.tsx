@@ -19,6 +19,7 @@ import PipelineTableRow from 'components/PipelineList/DeployedPipelineView/Pipel
 import { connect } from 'react-redux';
 import T from 'i18n-react';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
 
 import './PipelineTable.scss';
 
@@ -29,6 +30,24 @@ interface IProps {
 const PREFIX = 'features.PipelineList';
 
 const PipelineTableView: React.SFC<IProps> = ({ pipelines }) => {
+  function renderBody() {
+    if (pipelines.length === 0) {
+      return (
+        <div className="table-body">
+          <EmptyList type={VIEW_TYPES.deployed} />
+        </div>
+      );
+    }
+
+    return (
+      <div className="table-body">
+        {pipelines.map((pipeline) => {
+          return <PipelineTableRow key={pipeline.name} pipeline={pipeline} />;
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="pipeline-list-table">
       <div className="table-header">
@@ -42,11 +61,7 @@ const PipelineTableView: React.SFC<IProps> = ({ pipelines }) => {
         <div className="table-column action" />
       </div>
 
-      <div className="table-body">
-        {pipelines.map((pipeline) => {
-          return <PipelineTableRow key={pipeline.name} pipeline={pipeline} />;
-        })}
-      </div>
+      {renderBody()}
     </div>
   );
 };

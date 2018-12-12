@@ -16,15 +16,30 @@
 
 @import '~styles/colors.scss';
 
-$bg-color: $grey-06;
-$header-height: 70px;
+$action-color: var(--brand-primary-color);
 
-.pipeline-draft-view {
-  padding: 0 45px 15px 45px;
-  background-color: $bg-color;
+.pipeline-list-empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 150px;
+  height: 100%;
 
-  .draft-header {
-    height: $header-height;
-    line-height: $header-height;
+  hr {
+    border-color: $grey-01;
+  }
+
+  .action-cta {
+    margin-right: 5px;
+    color: $action-color;
+    cursor: pointer;
+  }
+
+  .call-to-actions > div {
+    line-height: 1.8;
+  }
+
+  #import-pipeline {
+    display: none;
   }
 }

@@ -1920,6 +1920,14 @@ features:
         1: "{context} pipeline you saved"
         _: "{context} pipelines you saved"
     duration: Duration
+    EmptyList:
+      actionTitle: "You can try to:"
+      aPipeline: a pipeline
+      create: Create
+      import: Import
+      Message:
+        DRAFT: There are no pipelines you saved as drafts
+        DEPLOYED: There are no pipelines deployed
     lastSaved: Last saved
     lastStartTime: Last start time
     nextRun: Next run in

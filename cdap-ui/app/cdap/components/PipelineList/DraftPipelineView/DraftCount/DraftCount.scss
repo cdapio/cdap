@@ -14,17 +14,6 @@
  * the License.
  */
 
-@import '~styles/colors.scss';
-
-$bg-color: $grey-06;
-$header-height: 70px;
-
-.pipeline-draft-view {
-  padding: 0 45px 15px 45px;
-  background-color: $bg-color;
-
-  .draft-header {
-    height: $header-height;
-    line-height: $header-height;
-  }
+.draft-count {
+  display: inline-block;
 }

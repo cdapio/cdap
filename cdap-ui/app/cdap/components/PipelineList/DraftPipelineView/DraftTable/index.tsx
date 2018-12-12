@@ -19,6 +19,7 @@ import DraftTableRow from 'components/PipelineList/DraftPipelineView/DraftTable/
 import T from 'i18n-react';
 import { connect } from 'react-redux';
 import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
+import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
 
 interface IProps {
   drafts: IDraft[];
@@ -28,26 +29,38 @@ require('./DraftTable.scss');
 
 const PREFIX = 'features.PipelineList';
 
-class DraftTableView extends React.PureComponent<IProps> {
-  public render() {
-    return (
-      <div className="draft-table">
-        <div className="table-header">
-          <div className="table-column name">{T.translate(`${PREFIX}.pipelineName`)}</div>
-          <div className="table-column type">{T.translate(`${PREFIX}.type`)}</div>
-          <div className="table-column last-saved">{T.translate(`${PREFIX}.lastSaved`)}</div>
-          <div className="table-column action" />
-        </div>
-
+const DraftTableView: React.SFC<IProps> = ({ drafts }) => {
+  function renderBody() {
+    if (drafts.length === 0) {
+      return (
         <div className="table-body">
-          {this.props.drafts.map((draft) => {
-            return <DraftTableRow draft={draft} key={draft.__ui__.draftId} />;
-          })}
+          <EmptyList type={VIEW_TYPES.draft} />
         </div>
+      );
+    }
+
+    return (
+      <div className="table-body">
+        {this.props.drafts.map((draft) => {
+          return <DraftTableRow draft={draft} key={draft.__ui__.draftId} />;
+        })}
       </div>
     );
   }
-}
+
+  return (
+    <div className="draft-table">
+      <div className="table-header">
+        <div className="table-column name">{T.translate(`${PREFIX}.pipelineName`)}</div>
+        <div className="table-column type">{T.translate(`${PREFIX}.type`)}</div>
+        <div className="table-column last-saved">{T.translate(`${PREFIX}.lastSaved`)}</div>
+        <div className="table-column action" />
+      </div>
+
+      {renderBody()}
+    </div>
+  );
+};
 
 const mapStateToProps = (state) => {
   return {
