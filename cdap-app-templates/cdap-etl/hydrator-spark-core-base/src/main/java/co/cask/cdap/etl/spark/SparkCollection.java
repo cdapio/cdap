@@ -58,9 +58,9 @@ public interface SparkCollection<T> {
 
   <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception;
 
-  void store(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction);
+  Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction);
 
-  void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception;
+  Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) throws Exception;
 
   void publishAlerts(StageSpec stageSpec, StageStatisticsCollector collector) throws Exception;
 

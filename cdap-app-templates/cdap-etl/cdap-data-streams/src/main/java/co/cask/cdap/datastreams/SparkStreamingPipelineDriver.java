@@ -126,7 +126,8 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       public JavaStreamingContext call() throws Exception {
         JavaStreamingContext jssc = new JavaStreamingContext(
           new JavaSparkContext(), Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
-        SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec, false);
+        SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec, 
+                                                                               pipelineSpec.isCheckpointsDisabled());
         PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
                                                                         pipelineSpec.isStageLoggingEnabled(),
                                                                         pipelineSpec.isProcessTimingEnabled());
