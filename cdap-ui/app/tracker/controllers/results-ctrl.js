@@ -138,7 +138,8 @@ class TrackerResultsController {
       namespace: this.$state.params.namespace,
       query: this.$state.params.searchQuery,
       scope: this.$scope,
-      entityScope: 'USER'
+      entityScope: 'USER',
+      showCustom: true,
     };
 
     if (params.query === '*') {
@@ -165,9 +166,9 @@ class TrackerResultsController {
     let query = this.myHelpers.objectQuery;
     let system = query(entity, 'metadata', 'SYSTEM');
     let sysProps = query(system, 'properties');
-    if (entity.entityId.entity === 'DATASET') {
+    if (entity.metadataEntity.type === 'dataset') {
       angular.extend(obj, {
-        name: entity.entityId.dataset,
+        name: entity.metadataEntity.details.dataset,
         type: 'Dataset',
         entityTypeState: 'datasets',
         icon: 'icon-datasets'
@@ -182,12 +183,11 @@ class TrackerResultsController {
           obj.datasetExplorable = true;
         }
       }
-
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[0].count++;
-    } else if (entity.entityId.entity === 'STREAM') {
+    } else if (entity.metadataEntity.type === 'stream') {
       angular.extend(obj, {
-        name: entity.entityId.stream,
+        name: entity.metadataEntity.details.stream,
         type: 'Stream',
         entityTypeState: 'streams',
         icon: 'icon-streams'
@@ -200,12 +200,12 @@ class TrackerResultsController {
       }
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[1].count++;
-    } else if (entity.entityId.entity === 'VIEW') {
+    } else if (entity.metadataEntity.type === 'view') {
       // THIS SECTION NEEDS TO BE UPDATED
       angular.extend(obj, {
-        name: entity.entityId.view,
+        name: entity.metadataEntity.details.view,
         type: 'Stream View',
-        entityTypeState: 'views:' + entity.entityId.stream,
+        entityTypeState: 'views:' + entity.metadataEntity.details.stream,
         icon: 'icon-streams'
       });
       if (system && sysProps) {

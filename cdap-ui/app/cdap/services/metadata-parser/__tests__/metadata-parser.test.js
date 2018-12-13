@@ -19,16 +19,18 @@ import {parseMetadata} from 'services/metadata-parser';
 describe('metadata-parser', () => {
   it('should parse application metadata', () => {
     const applicationMetadata = {
-      entityId: {
-        entity: 'APPLICATION',
-        application: 'ApplicationName',
-        version: '-SNAPSHOT'
+      metadataEntity: {
+        details: {
+          application: 'ApplicationName',
+          version: '-SNAPSHOT',
+        },
+        type: 'application',
       },
       metadata: {
         SYSTEM: {
-          tags: ['PurchaseHistory']
-        }
-      }
+          tags: ['PurchaseHistory'],
+        },
+      },
     };
 
     const parsedMetadata = parseMetadata(applicationMetadata);
@@ -41,16 +43,18 @@ describe('metadata-parser', () => {
 
   it('should detect hydrator pipeline', () => {
     const applicationMetadata = {
-      entityId: {
-        entity: 'APPLICATION',
-        application: 'ApplicationName',
-        version: '-SNAPSHOT'
+      metadataEntity: {
+        details: {
+          application: 'ApplicationName',
+          version: '-SNAPSHOT',
+        },
+        type: 'application',
       },
       metadata: {
         SYSTEM: {
           tags: ['cdap-data-pipeline']
-        }
-      }
+        },
+      },
     };
 
     const parsedMetadata = parseMetadata(applicationMetadata);
@@ -60,21 +64,25 @@ describe('metadata-parser', () => {
 
   it('should parse artifact metadata', () => {
     const systemArtifactMetadata = {
-      entityId: {
-        entity: 'ARTIFACT',
-        artifact: 'ArtifactName',
-        namespace: 'SYSTEM',
-        version: '1.0.0'
-      }
+      metadataEntity: {
+        details: {
+          artifact: 'ArtifactName',
+          namespace: 'SYSTEM',
+          version: '1.0.0',
+        },
+        type: 'artifact',
+      },
     };
 
     const userArtifactMetadata = {
-      entityId: {
-        entity: 'ARTIFACT',
-        artifact: 'ArtifactName',
-        namespace: 'USER',
-        version: '1.0.0'
-      }
+      metadataEntity: {
+        details: {
+          artifact: 'ArtifactName',
+          namespace: 'USER',
+          version: '1.0.0'
+        },
+        type: 'artifact',
+      },
     };
 
     const systemParsedMetadata = parseMetadata(systemArtifactMetadata);
@@ -90,10 +98,12 @@ describe('metadata-parser', () => {
 
   it('should parse dataset metadata', () => {
     const datasetMetadata = {
-      entityId: {
-        entity: 'DATASET',
-        dataset: 'DatasetName'
-      }
+      metadataEntity: {
+        details: {
+          dataset: 'DatasetName'
+        },
+        type: 'dataset',
+      },
     };
 
     const parsedMetadata = parseMetadata(datasetMetadata);
@@ -104,10 +114,12 @@ describe('metadata-parser', () => {
 
   it('should parse stream metadata', () => {
     const streamMetadata = {
-      entityId: {
-        entity: 'STREAM',
-        stream: 'StreamName'
-      }
+      metadataEntity: {
+        details: {
+          stream: 'StreamName',
+        },
+        type: 'stream',
+      },
     };
 
     const parsedMetadata = parseMetadata(streamMetadata);
@@ -118,12 +130,14 @@ describe('metadata-parser', () => {
 
   it('should parse program metadata', () => {
     const programMetadata = {
-      entityId: {
-        entity: 'PROGRAM',
-        program: 'ProgramName',
-        type: 'Flow',
-        application: 'SomeApplication'
-      }
+      metadataEntity: {
+        details: {
+          program: 'ProgramName',
+          type: 'Flow',
+          application: 'SomeApplication',
+        },
+        type: 'program',
+      },
     };
 
     const parsedMetadata = parseMetadata(programMetadata);
@@ -136,10 +150,12 @@ describe('metadata-parser', () => {
 
   it('should parse view metadata', () => {
     const viewMetadata = {
-      entityId: {
-        entity: 'VIEW',
-        view: 'ViewName'
-      }
+      metadataEntity: {
+        details: {
+          view: 'ViewName',
+        },
+        type: 'view',
+      },
     };
 
     const parsedMetadata = parseMetadata(viewMetadata);

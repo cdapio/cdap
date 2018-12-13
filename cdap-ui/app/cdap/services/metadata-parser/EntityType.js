@@ -15,12 +15,12 @@
  */
 
 const EntityType = {
-  application: 'APPLICATION',
-  artifact: 'ARTIFACT',
-  dataset: 'DATASET',
-  program: 'PROGRAM',
-  stream: 'STREAM',
-  view: 'VIEW',
+  application: 'application',
+  artifact: 'artifact',
+  dataset: 'dataset',
+  program: 'program',
+  stream: 'stream',
+  view: 'view',
 };
 
 export default EntityType;

@@ -46,6 +46,7 @@ const search = () => {
     numCursors,
     sort: activeSort.fullSort,
     query,
+    showCustom: true,
   };
   if (query !== DEFAULT_SEARCH_QUERY) {
     delete params.sort;

@@ -28,7 +28,7 @@ export default function DatasetStreamCards({ dataEntities }) {
   let currentNamespace = NamespaceStore.getState().selectedNamespace;
   let data = dataEntities.map((dataEntity) => {
     let entity = {
-      entityId: dataEntity.entityId,
+      metadataEntity: dataEntity.metadataEntity,
       metadata: {
         SYSTEM: {},
       },

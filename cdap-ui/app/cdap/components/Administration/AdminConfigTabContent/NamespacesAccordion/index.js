@@ -98,6 +98,7 @@ export default class NamespacesAccordion extends Component {
       target: ['dataset', 'app'],
       query: '*',
       sort: 'entity-name asc',
+      showCustom: true,
     };
 
     let currentNamespaces = this.state.namespacesInfo.map((namespace) => namespace.name);

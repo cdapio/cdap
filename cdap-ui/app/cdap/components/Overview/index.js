@@ -74,6 +74,7 @@ export default class Overview extends Component {
         namespace,
         entityId,
         entityType,
+        showCustom: true,
       }).subscribe(
         () => {
           this.setState(

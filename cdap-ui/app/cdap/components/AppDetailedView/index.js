@@ -102,17 +102,21 @@ export default class AppDetailedView extends Component {
               return prog;
             });
             let datasets = entityDetail.datasets.map((dataset) => {
-              dataset.entityId = {
-                dataset: dataset.name,
-                entity: EntityType.dataset,
+              dataset.metadataEntity = {
+                details: {
+                  dataset: dataset.name,
+                },
+                type: EntityType.dataset,
               };
               dataset.uniqueId = uuidV4();
               return dataset;
             });
             let streams = entityDetail.streams.map((stream) => {
-              stream.entityId = {
-                stream: stream.name,
-                entity: EntityType.stream,
+              stream.metadataEntity = {
+                details: {
+                  stream: stream.name,
+                },
+                type: EntityType.stream,
               };
               stream.uniqueId = uuidV4();
               return stream;
