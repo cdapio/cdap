@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.metadata.indexer;
 
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 
@@ -52,7 +52,7 @@ public class DefaultValueIndexer implements Indexer {
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
     Set<String> valueIndexes = new HashSet<>();
-    if (entry.getKey().equalsIgnoreCase(MetadataDataset.TAGS_KEY)) {
+    if (entry.getKey().equalsIgnoreCase(MetadataConstants.TAGS_KEY)) {
       // if the entry is tag then each tag is an index
       valueIndexes.addAll(Arrays.asList(TAGS_SEPARATOR_PATTERN.split(entry.getValue())));
     } else {
@@ -78,7 +78,7 @@ public class DefaultValueIndexer implements Indexer {
   private Set<String> addKeyValueIndexes(String key, Set<String> indexes) {
     Set<String> indexesWithKeyValue = new HashSet<>(indexes);
     for (String index : indexes) {
-      indexesWithKeyValue.add(key + MetadataDataset.KEYVALUE_SEPARATOR + index);
+      indexesWithKeyValue.add(key + MetadataConstants.KEYVALUE_SEPARATOR + index);
     }
     return indexesWithKeyValue;
   }

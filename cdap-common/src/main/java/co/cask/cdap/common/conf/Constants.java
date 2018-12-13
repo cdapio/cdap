@@ -488,8 +488,6 @@ public final class Constants {
       public static final String MAX_INSTANCES = "dataset.executor.max.instances";
 
       public static final String SERVICE_DESCRIPTION = "Service to perform dataset operations.";
-
-      public static final String IS_UPGRADE_NEEDED = "dataset.upgrade.needed";
     }
 
     /**

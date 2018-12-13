@@ -21,7 +21,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import com.google.inject.Inject;
 
 import java.util.HashMap;
@@ -30,7 +30,7 @@ import java.util.Set;
 
 /**
  * <p>{@link MetadataReader} which should be used in local/in-memory mode where {@link MetadataAdmin} can be accessed
- * directly i.e. the process is running as cdap system user and it can access the {@link MetadataDataset} which belongs
+ * directly i.e. the process is running as cdap system user and it can access the {@link MetadataStore} which belongs
  * to cdap user.</p>
  *
  * <p>This implementation should not be used in distributed program container or any process which is not running as

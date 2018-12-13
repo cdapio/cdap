@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.RunCountUpgradeService;
-import co.cask.cdap.metadata.MetadataService;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -43,21 +42,18 @@ import javax.ws.rs.Path;
 public class UpgradeHttpHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new Gson();
-  private final MetadataService metadataService;
   private final RunCountUpgradeService runCountUpgradeService;
   private final Map<String, Boolean> upgradeStatus;
 
   @Inject
-  UpgradeHttpHandler(MetadataService metadataService, RunCountUpgradeService runCountUpgradeService) {
+  UpgradeHttpHandler(RunCountUpgradeService runCountUpgradeService) {
     this.upgradeStatus = new HashMap<>();
-    this.metadataService = metadataService;
     this.runCountUpgradeService = runCountUpgradeService;
   }
 
   @GET
   @Path("/status")
   public void getUpgradeStatus(HttpRequest request, HttpResponder responder) throws Exception {
-    upgradeStatus.put("metadata", metadataService.isMigrationInProcess());
     upgradeStatus.put("runCount", runCountUpgradeService.isRunning());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(upgradeStatus));
   }

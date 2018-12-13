@@ -39,7 +39,7 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataProvider;
@@ -565,25 +565,25 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     Assert.assertEquals(
       ImmutableMap.builder()
-        .put(ProgramType.FLOW.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpFlow.NAME,
+        .put(ProgramType.FLOW.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpFlow.NAME,
              AllProgramsApp.NoOpFlow.NAME)
-        .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpMR.NAME,
+        .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpMR.NAME,
              AllProgramsApp.NoOpMR.NAME)
-        .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpMR2.NAME,
+        .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpMR2.NAME,
              AllProgramsApp.NoOpMR2.NAME)
-        .put(ProgramType.SERVICE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR +
+        .put(ProgramType.SERVICE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR +
                AllProgramsApp.NoOpService.NAME, AllProgramsApp.NoOpService.NAME)
-        .put(ProgramType.SPARK.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpSpark.NAME,
+        .put(ProgramType.SPARK.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpSpark.NAME,
              AllProgramsApp.NoOpSpark.NAME)
-        .put(ProgramType.WORKER.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpWorker.NAME,
+        .put(ProgramType.WORKER.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpWorker.NAME,
              AllProgramsApp.NoOpWorker.NAME)
-        .put(ProgramType.WORKFLOW.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR
+        .put(ProgramType.WORKFLOW.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR
                + AllProgramsApp.NoOpWorkflow.NAME, AllProgramsApp.NoOpWorkflow.NAME)
         .put(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, app.getEntityName())
         .put(AbstractSystemMetadataWriter.VERSION_KEY, ApplicationId.DEFAULT_VERSION)
         .put(AbstractSystemMetadataWriter.DESCRIPTION_KEY, AllProgramsApp.DESCRIPTION)
-        .put("schedule" + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_NAME,
-             AllProgramsApp.SCHEDULE_NAME + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_DESCRIPTION)
+        .put("schedule" + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_NAME,
+             AllProgramsApp.SCHEDULE_NAME + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_DESCRIPTION)
         .build(),
       removeCreationTime(getProperties(app, MetadataScope.SYSTEM)));
     Assert.assertEquals(ImmutableSet.of(AllProgramsApp.class.getSimpleName()),
@@ -1347,28 +1347,28 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // using program types
     Assert.assertEquals(
       expected, searchMetadata(NamespaceId.DEFAULT,
-                               ProgramType.FLOW.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
+                               ProgramType.FLOW.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + "*",
                                EntityTypeSimpleName.APP));
     Assert.assertEquals(
       expected, searchMetadata(NamespaceId.DEFAULT,
-                               ProgramType.MAPREDUCE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
+                               ProgramType.MAPREDUCE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + "*",
                                EntityTypeSimpleName.APP));
     Assert.assertEquals(
       ImmutableSet.builder().addAll(expected).add(new MetadataSearchResultRecord(application)).build(),
       searchMetadata(NamespaceId.DEFAULT,
-                     ProgramType.SERVICE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
+                     ProgramType.SERVICE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + "*",
                      EntityTypeSimpleName.APP));
     Assert.assertEquals(
       expected, searchMetadata(NamespaceId.DEFAULT,
-                               ProgramType.SPARK.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
+                               ProgramType.SPARK.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + "*",
                                EntityTypeSimpleName.APP));
     Assert.assertEquals(
       expected, searchMetadata(NamespaceId.DEFAULT,
-                               ProgramType.WORKER.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
+                               ProgramType.WORKER.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + "*",
                                EntityTypeSimpleName.APP));
     Assert.assertEquals(
       expected, searchMetadata(NamespaceId.DEFAULT,
-                               ProgramType.WORKFLOW.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
+                               ProgramType.WORKFLOW.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + "*",
                                EntityTypeSimpleName.APP));
 
     // using schedule

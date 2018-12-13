@@ -86,8 +86,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
 
     // Set the host name to the one provided by Twill
     cConf.set(Constants.Dataset.Executor.ADDRESS, context.getHost().getHostName());
-    // Set config property to decide which instance runs the metadata upgrade thread.
-    cConf.set(Constants.Dataset.Executor.IS_UPGRADE_NEEDED, String.valueOf(context.getInstanceId() == 0));
 
     String txClientId = String.format("cdap.service.%s.%d", Constants.Service.DATASET_EXECUTOR,
                                       context.getInstanceId());
