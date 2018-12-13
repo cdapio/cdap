@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.ssh.TestSSHServer;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.runtime.spi.ssh.PortForwarding;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import co.cask.common.http.HttpMethod;
@@ -66,6 +67,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -155,7 +157,7 @@ public class MonitorSocksProxyTest {
     Assert.assertEquals(200, response.getResponseCode());
 
     Assert.assertEquals(1, sshSession.portForwardCreated.get());
-    Assert.assertEquals(1, sshSession.portForwardClosed.get());
+    Tasks.waitFor(1, () -> sshSession.portForwardClosed.get(), 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test
