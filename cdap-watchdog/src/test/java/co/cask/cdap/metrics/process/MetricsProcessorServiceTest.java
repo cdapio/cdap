@@ -74,11 +74,10 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     // Intentionally set queue size to a small value, so that MessagingMetricsProcessorService
     // internally can persist metrics when more messages are to be fetched
     MessagingMetricsProcessorService messagingMetricsProcessorService =
-      new MessagingMetricsProcessorService(cConf, injector.getInstance(DatasetFramework.class),
-                                           injector.getInstance(MetricDatasetFactory.class),
+      new MessagingMetricsProcessorService(cConf, injector.getInstance(MetricDatasetFactory.class),
                                            messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class), metricStore,
-                                           partitions, new NoopMetricsContext(), 50, 0, true);
+                                           partitions, new NoopMetricsContext(), 50, 0);
     messagingMetricsProcessorService.startAndWait();
 
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
@@ -93,11 +92,10 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     // Intentionally set queue size to a large value, so that MessagingMetricsProcessorService
     // internally only persists metrics during terminating.
     messagingMetricsProcessorService =
-      new MessagingMetricsProcessorService(cConf, injector.getInstance(DatasetFramework.class),
-                                           injector.getInstance(MetricDatasetFactory.class),
+      new MessagingMetricsProcessorService(cConf, injector.getInstance(MetricDatasetFactory.class),
                                            messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class), metricStore,
-                                           partitions, new NoopMetricsContext(), 50, 0, true);
+                                           partitions, new NoopMetricsContext(), 50, 0);
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics after MessagingMetricsProcessorService restarts and record expected metrics

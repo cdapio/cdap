@@ -82,12 +82,10 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
       // Create new MessagingMetricsProcessorService instance every time because the same instance cannot be started
       // again after it's stopped
       MessagingMetricsProcessorService messagingMetricsProcessorService =
-        new MessagingMetricsProcessorService(cConf, injector.getInstance(DatasetFramework.class),
-                                             injector.getInstance(MetricDatasetFactory.class), messagingService,
+        new MessagingMetricsProcessorService(cConf, injector.getInstance(MetricDatasetFactory.class), messagingService,
                                              injector.getInstance(SchemaGenerator.class),
                                              injector.getInstance(DatumReaderFactory.class), metricStore,
-                                             partitions, new NoopMetricsContext(), 50, 0,
-                                             true);
+                                             partitions, new NoopMetricsContext(), 50, 0);
       messagingMetricsProcessorService.startAndWait();
 
       // Wait for the 1 aggregated counter metric (with value 50) and 50 gauge metrics to be stored in the metricStore
