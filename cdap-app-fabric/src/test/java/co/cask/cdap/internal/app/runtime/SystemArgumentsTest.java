@@ -55,10 +55,10 @@ public class SystemArgumentsTest {
     ProgramId workerId = appId.worker("worker");
     ProgramId workflowID = appId.workflow("wf");
 
-    Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(mrId, args));
+    Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(mrId, args));
     Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(serviceId, args));
     Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(flowId, args));
-    Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(sparkId, args));
+    Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(sparkId, args));
     Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(workerId, args));
     Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(workflowID, args));
   }

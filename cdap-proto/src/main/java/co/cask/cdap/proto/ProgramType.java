@@ -35,6 +35,7 @@ public enum ProgramType {
     .setCategoryName("flows")
     .setPrettyName("Flow")
     .setListable(true)
+    .setApiProgramType(co.cask.cdap.api.app.ProgramType.FLOW)
     .build()),
 
   @SerializedName("Mapreduce")
@@ -43,6 +44,7 @@ public enum ProgramType {
     .setPrettyName("MapReduce")
     .setListable(true)
     .setSchedulableType(SchedulableProgramType.MAPREDUCE)
+    .setApiProgramType(co.cask.cdap.api.app.ProgramType.MAPREDUCE)
     .build()),
 
   @SerializedName("Workflow")
@@ -51,6 +53,7 @@ public enum ProgramType {
     .setPrettyName("Workflow")
     .setListable(true)
     .setSchedulableType(SchedulableProgramType.WORKFLOW)
+    .setApiProgramType(co.cask.cdap.api.app.ProgramType.WORKFLOW)
     .build()),
 
   @SerializedName("Service")
@@ -58,6 +61,7 @@ public enum ProgramType {
     .setCategoryName("services")
     .setPrettyName("Service")
     .setListable(true)
+    .setApiProgramType(co.cask.cdap.api.app.ProgramType.SERVICE)
     .build()),
 
   @SerializedName("Spark")
@@ -66,6 +70,7 @@ public enum ProgramType {
     .setPrettyName("Spark")
     .setListable(true)
     .setSchedulableType(SchedulableProgramType.SPARK)
+    .setApiProgramType(co.cask.cdap.api.app.ProgramType.SPARK)
     .build()),
 
   @SerializedName("Worker")
@@ -73,6 +78,7 @@ public enum ProgramType {
     .setCategoryName("workers")
     .setPrettyName("Worker")
     .setListable(true)
+    .setApiProgramType(co.cask.cdap.api.app.ProgramType.WORKER)
     .build()),
 
   CUSTOM_ACTION(9, Parameters.builder()
@@ -113,6 +119,10 @@ public enum ProgramType {
 
   public String getScope() {
     return name().toLowerCase();
+  }
+
+  public co.cask.cdap.api.app.ProgramType getApiProgramType() {
+    return parameters.getApiProgramType();
   }
 
   public SchedulableProgramType getSchedulableType() {
@@ -161,9 +171,11 @@ public enum ProgramType {
     private final boolean listable;
     private final String categoryName;
     private final SchedulableProgramType schedulableType;
+    private co.cask.cdap.api.app.ProgramType apiProgramType;
 
     Parameters(String prettyName, Boolean listable, String categoryName,
-                      @Nullable SchedulableProgramType schedulableType) {
+               @Nullable SchedulableProgramType schedulableType,
+               @Nullable co.cask.cdap.api.app.ProgramType apiProgramType) {
       if (prettyName == null) {
         throw new IllegalArgumentException("prettyName cannot be null");
       }
@@ -177,6 +189,7 @@ public enum ProgramType {
       this.listable = listable;
       this.categoryName = categoryName;
       this.schedulableType = schedulableType;
+      this.apiProgramType = apiProgramType;
     }
 
     @Nullable
@@ -196,6 +209,11 @@ public enum ProgramType {
       return categoryName;
     }
 
+    @Nullable
+    public co.cask.cdap.api.app.ProgramType getApiProgramType() {
+      return apiProgramType;
+    }
+
     public static Builder builder() {
       return new Builder();
     }
@@ -208,6 +226,7 @@ public enum ProgramType {
       private Boolean listable;
       private String categoryName;
       private SchedulableProgramType schedulableType;
+      private co.cask.cdap.api.app.ProgramType apiProgramType;
 
       public Builder setSchedulableType(SchedulableProgramType schedulableType) {
         this.schedulableType = schedulableType;
@@ -229,8 +248,13 @@ public enum ProgramType {
         return this;
       }
 
+      public Builder setApiProgramType(co.cask.cdap.api.app.ProgramType apiProgramType) {
+        this.apiProgramType = apiProgramType;
+        return this;
+      }
+
       public Parameters build() {
-        return new Parameters(prettyName, listable, categoryName, schedulableType);
+        return new Parameters(prettyName, listable, categoryName, schedulableType, apiProgramType);
       }
     }
   }

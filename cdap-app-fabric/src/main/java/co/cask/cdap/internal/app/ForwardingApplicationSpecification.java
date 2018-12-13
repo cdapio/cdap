@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -30,6 +31,7 @@ import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -122,5 +124,10 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, Plugin> getPlugins() {
     return delegate.getPlugins();
+  }
+
+  @Override
+  public Set<String> getProgramsByType(ProgramType programType) {
+    return delegate.getProgramsByType(programType);
   }
 }

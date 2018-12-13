@@ -82,9 +82,12 @@ public class ProfileMetadataTest extends AppFabricTestBase {
     ScheduleId scheduleId1 = defaultAppId.schedule(AppWithSchedule.SCHEDULE);
     ScheduleId scheduleId2 = defaultAppId.schedule(AppWithSchedule.SCHEDULE);
     ProgramId programId = defaultAppId.workflow(AppWithSchedule.WORKFLOW_NAME);
+    ProgramId mapReduceProgramId = defaultAppId.mr(AppWithSchedule.MAPREDUCE);
 
     // Verify the workflow and schedule has been updated to native profile
     Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -99,6 +102,8 @@ public class ProfileMetadataTest extends AppFabricTestBase {
     // Verify the workflow and schedule has been updated to my profile
     Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
@@ -111,6 +116,8 @@ public class ProfileMetadataTest extends AppFabricTestBase {
     // Verify the workflow and schedule has been updated to my profile 2
     Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
@@ -121,6 +128,8 @@ public class ProfileMetadataTest extends AppFabricTestBase {
 
     // Verify the workflow and schedule has been updated to my profile
     Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -133,6 +142,8 @@ public class ProfileMetadataTest extends AppFabricTestBase {
     // Verify the workflow and schedule has been updated to native profile
     Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
@@ -142,6 +153,8 @@ public class ProfileMetadataTest extends AppFabricTestBase {
 
     // Verify the workflow and schedule has been updated to native profile
     Tasks.waitFor(false, () -> getMetadataProperties(programId).containsKey("profile"),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(false, () -> getMetadataProperties(mapReduceProgramId).containsKey("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(false, () -> getMetadataProperties(scheduleId1).containsKey("profile"),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);

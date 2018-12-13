@@ -17,7 +17,6 @@
 
 package co.cask.cdap.metadata.profile;
 
-import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metadata.MetadataScope;
@@ -48,18 +47,19 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.store.NamespaceMDS;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Class to process the profile metadata request
@@ -67,6 +67,10 @@ import java.util.Set;
 public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(ProfileMetadataMessageProcessor.class);
   private static final String PROFILE_METADATA_KEY = "profile";
+  private static final Set<ProgramType> PROFILE_ALLOWED_PROGRAM_TYPES =
+    Arrays.stream(ProgramType.values())
+      .filter(SystemArguments::isProfileAllowed)
+      .collect(Collectors.toSet());
 
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
     new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
@@ -146,8 +150,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
           return;
         }
 
-        // Now we only support profile on Workflow type
-        if (programId.getType().equals(ProgramType.WORKFLOW)) {
+        if (SystemArguments.isProfileAllowed(programId.getType())) {
           updateProgramProfileMetadata(programId);
         }
         break;
@@ -181,7 +184,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     if (entity.getEntityType().equals(EntityType.APPLICATION)) {
       ApplicationId appId = (ApplicationId) message.getEntityId();
       ApplicationSpecification appSpec = message.getPayload(GSON, ApplicationSpecification.class);
-      for (ProgramId programId : getProgramsWithType(appId, ProgramType.WORKFLOW, appSpec.getWorkflows())) {
+      for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, appId)) {
         metadataDataset.removeProperties(programId.toMetadataEntity(), Collections.singleton(PROFILE_METADATA_KEY));
       }
       for (ScheduleId scheduleId : getSchedulesInApp(appId, appSpec.getProgramSchedules())) {
@@ -196,8 +199,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void updateAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec) {
-    for (String name : appSpec.getWorkflows().keySet()) {
-      WorkflowId programId = applicationId.workflow(name);
+    for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, applicationId)) {
       updateProgramProfileMetadata(programId);
     }
   }
@@ -241,19 +243,6 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   /**
-   * Get the program id from the program spec
-   */
-  private Set<ProgramId> getProgramsWithType(ApplicationId appId, ProgramType type,
-                                             Map<String, ? extends ProgramSpecification> programSpecs) {
-    Set<ProgramId> result = new HashSet<>();
-
-    for (String programName : programSpecs.keySet()) {
-      result.add(appId.program(type, programName));
-    }
-    return result;
-  }
-
-  /**
    * Get the schedule id from the schedule spec
    */
   private Set<ScheduleId> getSchedulesInApp(ApplicationId appId,
@@ -264,5 +253,18 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       result.add(appId.schedule(programName));
     }
     return result;
+  }
+
+  /**
+   * Gets all programIds which are defined in the appSpec which are allowed to use profiles.
+   */
+  private Set<ProgramId> getAllProfileAllowedPrograms(ApplicationSpecification appSpec, ApplicationId appId) {
+    Set<ProgramId> programIds = new HashSet<>();
+    for (ProgramType programType : PROFILE_ALLOWED_PROGRAM_TYPES) {
+      for (String name : appSpec.getProgramsByType(programType.getApiProgramType())) {
+        programIds.add(appId.program(programType, name));
+      }
+    }
+    return programIds;
   }
 }
