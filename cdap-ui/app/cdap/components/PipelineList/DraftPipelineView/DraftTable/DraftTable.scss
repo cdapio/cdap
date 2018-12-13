@@ -18,70 +18,50 @@
 @import '~components/PipelineList/DraftPipelineView/DraftPipelineView.scss';
 
 $table-bg-color: $grey-08;
-$table-border-color: $grey-06;
-$table-border: 1px solid $table-border-color;
 $row-hover-color: white;
+$row-color: $grey-01;
 
-$table-header-height: 40px;
 $type-width: 20%;
 $last-saved-width: 20%;
-$action-width: 45px;
-$name-offset: 25px;
+$action-width: 60px;
 
-.draft-table {
+.draft-table.grid-wrapper {
   background-color: $table-bg-color;
   padding: 0 4px;
   height: calc(100% - #{$header-height});
 
-  .table-header {
-    height: $table-header-height;
-    font-weight: bold;
-    border-bottom: 3px solid $table-border-color;
-    display: flex;
-    align-items: center;
-    line-height: 1;
-  }
+  .grid.grid-container {
+    max-height: 100%;
 
-  .table-column {
-    padding: 0 5px;
-  }
+    .grid-header {
+      background-color: $table-bg-color;
 
-  .table-body {
-    height: calc(100% - #{$table-header-height});
-    overflow-y: auto;
-  }
-
-  .table-row {
-    min-height: 55px;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    border-bottom: $table-border;
-
-    &:hover {
-      background-color: $row-hover-color;
+      > .grid-row {
+        border-width: 3px;
+      }
     }
-  }
 
-  .name {
-    width: calc(100% - #{$type-width} - #{$last-saved-width} - #{$action-width});
-    padding-left: $name-offset;
+    .grid-row {
+      grid-template-columns: 1fr $type-width $last-saved-width $action-width;
 
-    a {
-      color: $grey-01;
-      font-size: 16px;
+      > * {
+        &:first-child {
+          padding-left: 25px;
+        }
+
+        &:last-child {
+          padding-right: 25px;
+        }
+      }
     }
-  }
 
-  .type {
-    width: $type-width;
-  }
+    .grid-body .grid-row {
+      color: $row-color;
 
-  .last-saved {
-    width: $last-saved-width;
-  }
-
-  .action {
-    width: $action-width;
+      &:hover {
+        background-color: $row-hover-color;
+        text-decoration: none;
+      }
+    }
   }
 }

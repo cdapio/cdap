@@ -32,15 +32,11 @@ const PREFIX = 'features.PipelineList';
 const PipelineTableView: React.SFC<IProps> = ({ pipelines }) => {
   function renderBody() {
     if (pipelines.length === 0) {
-      return (
-        <div className="table-body">
-          <EmptyList type={VIEW_TYPES.deployed} />
-        </div>
-      );
+      return <EmptyList type={VIEW_TYPES.deployed} />;
     }
 
     return (
-      <div className="table-body">
+      <div className="grid-body">
         {pipelines.map((pipeline) => {
           return <PipelineTableRow key={pipeline.name} pipeline={pipeline} />;
         })}
@@ -49,19 +45,23 @@ const PipelineTableView: React.SFC<IProps> = ({ pipelines }) => {
   }
 
   return (
-    <div className="pipeline-list-table">
-      <div className="table-header">
-        <div className="table-column name">{T.translate(`${PREFIX}.pipelineName`)}</div>
-        <div className="table-column type">{T.translate(`${PREFIX}.type`)}</div>
-        <div className="table-column status">{T.translate(`${PREFIX}.status`)}</div>
-        <div className="table-column last-start">{T.translate(`${PREFIX}.lastStartTime`)}</div>
-        <div className="table-column next-run">{T.translate(`${PREFIX}.nextRun`)}</div>
-        <div className="table-column runs">{T.translate(`${PREFIX}.runs`)}</div>
-        <div className="table-column tags">{T.translate(`${PREFIX}.tags`)}</div>
-        <div className="table-column action" />
-      </div>
+    <div className="grid-wrapper pipeline-list-table">
+      <div className="grid grid-container">
+        <div className="grid-header">
+          <div className="grid-row">
+            <strong>{T.translate(`${PREFIX}.pipelineName`)}</strong>
+            <strong>{T.translate(`${PREFIX}.type`)}</strong>
+            <strong>{T.translate(`${PREFIX}.status`)}</strong>
+            <strong>{T.translate(`${PREFIX}.lastStartTime`)}</strong>
+            <strong>{T.translate(`${PREFIX}.nextRun`)}</strong>
+            <strong>{T.translate(`${PREFIX}.runs`)}</strong>
+            <strong>{T.translate(`${PREFIX}.tags`)}</strong>
+            <strong />
+          </div>
+        </div>
 
-      {renderBody()}
+        {renderBody()}
+      </div>
     </div>
   );
 };

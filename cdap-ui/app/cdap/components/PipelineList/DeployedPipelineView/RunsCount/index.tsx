@@ -26,7 +26,7 @@ interface IProps {
 const RunsCountView: React.SFC<IProps> = ({ runsCountMap, pipeline }) => {
   const runsCount = runsCountMap[pipeline.name] || 0;
 
-  return <div className="table-column runs">{runsCount}</div>;
+  return <div className="runs">{runsCount}</div>;
 };
 
 const mapStateToProps = (state, ownProp) => {

@@ -42,15 +42,15 @@ export default class DraftTableRow extends React.PureComponent<IProps> {
     });
 
     return (
-      <div className="table-row">
-        <div className="table-column name">
-          <a href={link}>{draft.name}</a>
+      <a href={link} className="grid-row">
+        <div className="name">
+          <h5>{draft.name}</h5>
         </div>
-        <div className="table-column type">{T.translate(`${PREFIX}.${draft.artifact.name}`)}</div>
-        <div className="table-column last-saved">{lastSaved}</div>
+        <div className="type">{T.translate(`${PREFIX}.${draft.artifact.name}`)}</div>
+        <div className="last-saved">{lastSaved}</div>
 
         <DraftActions draft={this.props.draft} />
-      </div>
+      </a>
     );
   }
 }

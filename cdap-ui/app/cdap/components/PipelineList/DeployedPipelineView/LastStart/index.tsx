@@ -28,7 +28,7 @@ const LastStartView: React.SFC<ILastStartViewProps> = ({ statusMap, pipeline }) 
   const pipelineStatus = statusMap[pipeline.name] || {};
   const lastStarting = pipelineStatus.lastStarting;
 
-  return <div className="table-column last-start">{humanReadableDate(lastStarting)}</div>;
+  return <div className="last-start">{humanReadableDate(lastStarting)}</div>;
 };
 
 const mapStateToProps = (state, ownProp) => {

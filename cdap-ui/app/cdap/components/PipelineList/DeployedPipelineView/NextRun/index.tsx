@@ -99,6 +99,6 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
   }
 
   public render() {
-    return <div className="table-column next-run">{this.renderContent()}</div>;
+    return <div className="next-run">{this.renderContent()}</div>;
   }
 }

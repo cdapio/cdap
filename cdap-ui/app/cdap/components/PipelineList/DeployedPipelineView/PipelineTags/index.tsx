@@ -26,7 +26,7 @@ interface IProps {
 
 const PipelineTags: React.SFC<IProps> = ({ pipeline }) => {
   return (
-    <div className="table-column tags">
+    <div className="tags">
       <Tags
         entity={{
           id: pipeline.name,
@@ -36,6 +36,7 @@ const PipelineTags: React.SFC<IProps> = ({ pipeline }) => {
         viewOnly={true}
         displayAll={true}
         isNativeLink={true}
+        preventDefault={true}
       />
     </div>
   );

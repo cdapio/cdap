@@ -32,15 +32,11 @@ const PREFIX = 'features.PipelineList';
 const DraftTableView: React.SFC<IProps> = ({ drafts }) => {
   function renderBody() {
     if (drafts.length === 0) {
-      return (
-        <div className="table-body">
-          <EmptyList type={VIEW_TYPES.draft} />
-        </div>
-      );
+      return <EmptyList type={VIEW_TYPES.draft} />;
     }
 
     return (
-      <div className="table-body">
+      <div className="grid-body">
         {drafts.map((draft) => {
           return <DraftTableRow draft={draft} key={draft.__ui__.draftId} />;
         })}
@@ -49,15 +45,21 @@ const DraftTableView: React.SFC<IProps> = ({ drafts }) => {
   }
 
   return (
-    <div className="draft-table">
-      <div className="table-header">
-        <div className="table-column name">{T.translate(`${PREFIX}.pipelineName`)}</div>
-        <div className="table-column type">{T.translate(`${PREFIX}.type`)}</div>
-        <div className="table-column last-saved">{T.translate(`${PREFIX}.lastSaved`)}</div>
-        <div className="table-column action" />
-      </div>
+    <div className="draft-table grid-wrapper">
+      <div className="grid grid-container">
+        <div className="grid-header">
+          <div className="grid-row">
+            <strong className="table-column name">{T.translate(`${PREFIX}.pipelineName`)}</strong>
+            <strong className="table-column type">{T.translate(`${PREFIX}.type`)}</strong>
+            <strong className="table-column last-saved">
+              {T.translate(`${PREFIX}.lastSaved`)}
+            </strong>
+            <strong className="table-column action" />
+          </div>
+        </div>
 
-      {renderBody()}
+        {renderBody()}
+      </div>
     </div>
   );
 };

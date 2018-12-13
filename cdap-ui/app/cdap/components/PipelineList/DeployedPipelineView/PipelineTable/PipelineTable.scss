@@ -18,108 +18,53 @@
 @import '~components/PipelineList/DeployedPipelineView/DeployedPipelineView.scss';
 
 $table-bg-color: white;
-$table-border-color: $grey-06;
-$table-border: 1px solid $table-border-color;
 $row-hover-color: $grey-08;
+$row-color: $grey-01;
 
-$table-header-height: 40px;
 $type-width: 100px;
 $runs-width: 100px;
 $status-width: 150px;
 $last-start-width: 200px;
 $next-run-width: 150px;
 $action-width: 60px;
-$col-width: calc((100% - #{$type-width} - #{$runs-width} - #{$status-width} - #{$last-start-width} - #{$next-run-width} - #{$action-width}) / 2);
 
-.pipeline-list-table {
+.pipeline-list-table.grid-wrapper {
   background-color: $table-bg-color;
   padding: 0 4px;
   height: calc(100% - #{$header-height});
 
-  .table-header {
-    height: $table-header-height;
-    font-weight: bold;
-    border-bottom: 3px solid $table-border-color;
-    display: flex;
-    align-items: center;
-    line-height: 1;
-  }
+  .grid.grid-container {
+    max-height: 100%;
 
-  .table-column {
-    padding: 0 5px;
-
-    &:first-child {
-      padding-left: 25px;
+    .grid-header > .grid-row {
+      border-width: 3px;
     }
 
-    &:last-child {
-      padding-right: 25px;
+    .grid-row {
+      grid-template-columns: 1fr $type-width $status-width $last-start-width $next-run-width $runs-width 1fr $action-width;
+
+      > * {
+        &:first-child {
+          padding-left: 25px;
+        }
+
+        &:last-child {
+          padding-right: 25px;
+        }
+      }
     }
-  }
 
-  .table-body {
-    height: calc(100% - #{$table-header-height});
-    overflow-y: auto;
-  }
+    .grid-body .grid-row {
+      color: $row-color;
 
-  .table-row-container {
-    border-bottom: $table-border;
-
-    &.expanded {
-      background-color: $row-hover-color;
-
-      .table-row:hover .pipeline-run,
-      .pipeline-run {
-        color: $orange-01;
+      &:hover {
+        background-color: $row-hover-color;
+        text-decoration: none;
       }
     }
   }
 
-  .table-row {
-    min-height: 55px;
-    display: flex;
-    align-items: center;
-    width: 100%;
-
-    &:hover {
-      background-color: $row-hover-color;
-
-      .pipeline-run { color: $blue-02; }
-    }
-  }
-
-  .name {
-    width: $col-width;
-
-    .pipeline-name {
-      line-height: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    a {
-      color: $grey-01;
-    }
-
-    .pipeline-run {
-      font-size: 11px;
-      color: $grey-03;
-      font-weight: 500;
-    }
-  }
-
-  .type {
-    width: $type-width;
-  }
-
-  .runs {
-    width: $runs-width;
-  }
-
   .status {
-    width: $status-width;
-
     .text { vertical-align: middle; }
     .fa { margin-right: 2px; }
     .status-light-grey { color: $grey-03; }
@@ -128,20 +73,7 @@ $col-width: calc((100% - #{$type-width} - #{$runs-width} - #{$status-width} - #{
     .status-light-red { color: $red-02; }
   }
 
-  .last-start {
-    width: $last-start-width;
-  }
-
-  .next-run {
-    width: $next-run-width;
-  }
-
-  .tags {
-    width: $col-width;
-  }
-
   .action {
-    width: $action-width;
     text-align: right;
   }
 }

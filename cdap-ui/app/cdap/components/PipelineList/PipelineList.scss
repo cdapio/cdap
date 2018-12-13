@@ -23,7 +23,7 @@ $header-link-color: $grey-01;
 
 .pipeline-list-view {
   // substracting the height of global header and footer
-  height: calc(100vh - 50px - 53px);
+  height: calc(100vh - 50px - 54px);
   background-color: $pipeline-bg-color;
 
   .cask-resourcecenter-button { top: 75px; }

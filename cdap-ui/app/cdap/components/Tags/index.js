@@ -38,6 +38,7 @@ export default class Tags extends Component {
     isNativeLink: false,
     viewOnly: false,
     displayAll: false,
+    preventDefault: false,
   };
 
   static propTypes = {
@@ -46,6 +47,7 @@ export default class Tags extends Component {
     isNativeLink: PropTypes.bool,
     viewOnly: PropTypes.bool,
     displayAll: PropTypes.bool,
+    preventDefault: PropTypes.bool,
   };
 
   state = {
@@ -247,6 +249,7 @@ export default class Tags extends Component {
               value={tag}
               scope={SCOPES.SYSTEM}
               isNativeLink={this.props.isNativeLink}
+              preventDefault={this.props.preventDefault}
               key={tag}
             />
           );
@@ -266,6 +269,7 @@ export default class Tags extends Component {
               scope={SCOPES.USER}
               isNativeLink={this.props.isNativeLink}
               viewOnly={this.props.viewOnly}
+              preventDefault={this.props.preventDefault}
               key={tag}
             />
           );
