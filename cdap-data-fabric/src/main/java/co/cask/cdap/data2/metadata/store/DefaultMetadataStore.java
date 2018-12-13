@@ -487,7 +487,7 @@ public class DefaultMetadataStore implements MetadataStore {
     });
   }
 
-  // TODO: there should be no public accessor for the dataset
+  // TODO (CDAP-14587): there should be no public accessor for the dataset
   public static MetadataDataset getMetadataDataset(DatasetContext context, DatasetFramework dsFramework,
                                                    MetadataScope scope) {
     try {
