@@ -51,31 +51,22 @@ import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OutputPassFilter;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spec.StageSpec;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+
 
 /**
  * Base Spark program to run a Hydrator pipeline.
  */
 public abstract class SparkPipelineRunner {
-  private static final Logger LOG = LoggerFactory.getLogger(SparkPipelineRunner.class);
 
   protected abstract SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                                    StageStatisticsCollector collector) throws Exception;
@@ -109,7 +100,6 @@ public abstract class SparkPipelineRunner {
       throw new IllegalStateException("Pipeline phase has no connections.");
     }
 
-    Collection<Runnable> sinkRunnables = new ArrayList<>();
     for (String stageName : pipelinePhase.getDag().getTopologicalOrder()) {
       StageSpec stageSpec = pipelinePhase.getStage(stageName);
       //noinspection ConstantConditions
@@ -195,8 +185,7 @@ public abstract class SparkPipelineRunner {
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
 
-        sinkRunnables.add(stageData.createStoreTask(stageSpec,
-                                                    Compat.convert(new BatchSinkFunction(pluginFunctionContext))));
+        stageData.store(stageSpec, Compat.convert(new BatchSinkFunction(pluginFunctionContext)));
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -241,7 +230,7 @@ public abstract class SparkPipelineRunner {
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        sinkRunnables.add(stageData.createStoreTask(stageSpec, sparkSink));
+        stageData.store(stageSpec, sparkSink);
 
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -350,31 +339,6 @@ public abstract class SparkPipelineRunner {
       }
 
       emittedRecords.put(stageName, emittedBuilder.build());
-    }
-
-    Collection<Future> sinkFutures = new ArrayList<>(sinkRunnables.size());
-    ExecutorService executorService = Executors.newFixedThreadPool(sinkRunnables.size(), new ThreadFactoryBuilder()
-      .setNameFormat("pipeline-sink-task")
-      .build());
-    for (Runnable runnable : sinkRunnables) {
-      sinkFutures.add(executorService.submit(runnable));
-    }
-
-    Throwable error = null;
-    Iterator<Future> futureIter = sinkFutures.iterator();
-    for (Future future : sinkFutures) {
-      try {
-        future.get();
-      } catch (ExecutionException e) {
-        error = e.getCause();
-        break;
-      } catch (InterruptedException e) {
-        break;
-      }
-    }
-    executorService.shutdownNow();
-    if (error != null) {
-      Throwables.propagate(error);
     }
   }
 
@@ -513,4 +477,3 @@ public abstract class SparkPipelineRunner {
     }
   }
 }
-
