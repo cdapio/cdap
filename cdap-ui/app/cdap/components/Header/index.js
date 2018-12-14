@@ -50,7 +50,7 @@ export default class Header extends Component {
     this.namespacesubscription = null;
     this.eventEmitter = ee(ee);
   }
-  componentWillMount() {
+  componentDidMount() {
     // Polls for namespace data
     this.namespacesubscription = MyNamespaceApi.pollList().subscribe((res) => {
       if (res.length > 0) {

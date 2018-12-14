@@ -8,11 +8,16 @@
     "jsx": "react",
     "skipLibCheck": true,
     "moduleResolution": "node",
+    "sourceMap": true,
     "importHelpers": false,
     "allowSyntheticDefaultImports": true,
     "lib": [
       "es2015",
       "dom"
+    ],
+    "typeRoots": [
+      "./typings",
+      "./node_modules/@types"
     ],
     "baseUrl": ".",
     "paths": {

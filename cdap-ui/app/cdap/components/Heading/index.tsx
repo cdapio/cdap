@@ -31,7 +31,7 @@ interface IHeadingProps {
     | HeadingTypes.h4
     | HeadingTypes.h5
     | HeadingTypes.h6;
-  label: string;
+  label: string | React.ReactNode;
   className?: string;
 }
 const Heading: React.SFC<IHeadingProps> = ({ type, label, className }) => {

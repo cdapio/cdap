@@ -17,7 +17,6 @@
 import T from 'i18n-react';
 T.setTexts(require('../cdap/text/text-en.yaml'));
 var Store = require('../cdap/services/NamespaceStore').default;
-var Header = require('../cdap/components/Header').default;
 var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
 var DataPrepHome = require('../cdap/components/DataPrepHome').default;
 var DataPrepHelper = require('../cdap/components/DataPrep/helper');
@@ -68,10 +67,11 @@ var IconSVG = require('../cdap/components/IconSVG').default;
 var PipelineConfigConstants = require('../cdap/components/PipelineConfigurations/PipelineConfigConstants');
 var AuthRefresher = require('../cdap/components/AuthRefresher').default;
 var ToggleSwitch = require('../cdap/components/ToggleSwitch').default;
+var PipelineList = require('../cdap/components/PipelineList').default;
+var AppHeader = require('../cdap/components/AppHeader').default;
 
 export {
   Store,
-  Header,
   DataPrepHome,
   DataPrepHelper,
   globalEvents,
@@ -117,4 +117,6 @@ export {
   PipelineConfigConstants,
   AuthRefresher,
   ToggleSwitch,
+  PipelineList,
+  AppHeader,
 };

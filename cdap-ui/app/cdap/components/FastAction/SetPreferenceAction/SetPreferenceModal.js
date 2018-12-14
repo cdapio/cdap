@@ -426,6 +426,7 @@ export default class SetPreferenceModal extends Component {
         className="confirmation-modal set-preference-modal cdap-modal"
         size="lg"
         backdrop="static"
+        zIndex="1201"
       >
         <ModalHeader className="modal-header">
           <div className="float-left">
