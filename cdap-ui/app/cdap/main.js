@@ -28,7 +28,7 @@ require('./styles/main.scss');
 import Loadable from 'react-loadable';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Home from 'components/Home';
-import Header from 'components/Header';
+import AppHeader from 'components/AppHeader';
 import Footer from 'components/Footer';
 import ConnectionExample from 'components/ConnectionExample';
 import cookie from 'react-cookie';
@@ -113,7 +113,7 @@ class CDAP extends Component {
       <BrowserRouter basename="/cdap">
         <div className="cdap-container">
           <Helmet title={Theme.productName} />
-          <Header />
+          <AppHeader />
           <LoadingIndicator />
           <StatusAlertMessage />
           {this.state.authorizationFailed ? (
@@ -192,8 +192,8 @@ class CDAP extends Component {
                   )}
                 />
                 {/*
-                    Eventually handling 404 should move to the error boundary and all container components will have the error object.
-                    */}
+                      Eventually handling 404 should move to the error boundary and all container components will have the error object.
+                      */}
                 <Route
                   render={(props) => (
                     <ErrorBoundary>

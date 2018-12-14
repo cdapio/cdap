@@ -15,6 +15,7 @@
  */
 
 @import '~styles/colors.scss';
+@import '~styles/variables.scss';
 
 $pipeline-view-header: 55px;
 $pipeline-bg-color: $grey-08;
@@ -23,7 +24,7 @@ $header-link-color: $grey-01;
 
 .pipeline-list-view {
   // substracting the height of global header and footer
-  height: calc(100vh - 50px - 53px);
+  height: calc(100vh - $height-of-header - 53px);
   background-color: $pipeline-bg-color;
 
   .cask-resourcecenter-button { top: 75px; }
@@ -40,6 +41,7 @@ $header-link-color: $grey-01;
     padding-left: 45px;
     line-height: $pipeline-view-header;
     margin-bottom: 0;
+    margin-top: 0;
 
     .option {
       cursor: pointer;

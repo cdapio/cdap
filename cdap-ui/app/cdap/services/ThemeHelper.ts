@@ -138,6 +138,8 @@ interface IFeatureNames {
   pipelines: string;
   reports: string;
   rulesEngine: string;
+  projectAdmin: string;
+  systemAdmin: string;
 }
 
 interface IThemeObj {
@@ -209,6 +211,8 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         pipelines: 'Pipelines',
         reports: 'Reports',
         rulesEngine: 'Rules',
+        projectAdmin: 'Project Admin',
+        systemAdmin: 'System Admin',
       },
     };
     if (isNilOrEmpty(contentJson)) {

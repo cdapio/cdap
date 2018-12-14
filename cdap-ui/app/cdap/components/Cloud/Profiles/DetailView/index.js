@@ -62,14 +62,6 @@ export default class ProfileDetailView extends Component {
   componentDidMount() {
     this.getProfile();
     this.getProvisioners();
-
-    if (this.state.isSystem) {
-      document.querySelector('#header-namespace-dropdown').style.display = 'none';
-    }
-  }
-
-  componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
   fetchAggregateMetrics = () => {

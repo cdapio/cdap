@@ -133,9 +133,9 @@ export default function AbstractWizard({
   isOpen,
   onClose,
   wizardType,
-  input,
-  backdrop,
-  displayCTA,
+  input = null,
+  backdrop = true,
+  displayCTA = true,
 }) {
   if (!isOpen) {
     return null;
