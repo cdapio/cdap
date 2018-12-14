@@ -66,4 +66,12 @@ public final class Fields {
   public static boolean isPrimaryKeyType(FieldType.Type type) {
     return FieldType.PRIMARY_KEY_TYPES.contains(type);
   }
+
+  public static Field<Integer> of(String name, int val) {
+    return new Field<>(name, val);
+  }
+
+  public static Field<String> of(String name, String val) {
+    return new Field<>(name, val);
+  }
 }

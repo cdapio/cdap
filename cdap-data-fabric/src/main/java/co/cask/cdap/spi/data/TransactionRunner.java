@@ -16,25 +16,12 @@
 
 package co.cask.cdap.spi.data;
 
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
-
-import java.io.IOException;
-import javax.annotation.Nullable;
+import co.cask.cdap.spi.data.transaction.TransactionException;
+import co.cask.cdap.spi.data.transaction.TxRunnable;
 
 /**
- * Defines admin operations on a {@link StructuredTable}
+ *
  */
-public interface StructuredTableAdmin {
-  /**
-   * Create a StructuredTable using the {@link StructuredTableSpecification}.
-   *
-   * @param spec table specification
-   */
-  void create(StructuredTableSpecification spec) throws IOException;
-
-  @Nullable
-  StructuredTableSpecification getSpecification(StructuredTableId tableId);
-
-  void drop(StructuredTableId tableId) throws IOException;
+public interface TransactionRunner {
+  void run(TxRunnable runnable) throws TransactionException;
 }
