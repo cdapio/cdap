@@ -45,6 +45,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -181,13 +182,18 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
         NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME)
       );
 
+      Set<ProgramType> allowCustomProfiles = EnumSet.of(ProgramType.MAPREDUCE, ProgramType.SPARK, ProgramType.WORKFLOW);
       for (ProgramId programId : programIds) {
         ProgramOptions options = programLifecycleService.createProgramOptions(programId, userArgs,
                                                                               systemArgs, false);
         Optional<ProfileId> opt = SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT,
                                                                        options.getArguments().asMap());
         Assert.assertTrue(opt.isPresent());
-        Assert.assertEquals(ProfileId.NATIVE, opt.get());
+        if (allowCustomProfiles.contains(programId.getType())) {
+          Assert.assertEquals(profileId, opt.get());
+        } else {
+          Assert.assertEquals(ProfileId.NATIVE, opt.get());
+        }
       }
     } finally {
       profileService.disableProfile(profileId);

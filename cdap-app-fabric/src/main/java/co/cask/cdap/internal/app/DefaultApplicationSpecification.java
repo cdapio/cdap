@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -30,8 +31,10 @@ import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -184,5 +187,25 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public Map<String, Plugin> getPlugins() {
     return plugins;
+  }
+
+  @Override
+  public Set<String> getProgramsByType(ProgramType programType) {
+    switch (programType) {
+      case SPARK:
+        return sparks.keySet();
+      case MAPREDUCE:
+        return mapReduces.keySet();
+      case FLOW:
+        return flows.keySet();
+      case WORKER:
+        return workers.keySet();
+      case SERVICE:
+        return services.keySet();
+      case WORKFLOW:
+        return workflows.keySet();
+      default:
+        return ImmutableSet.of();
+    }
   }
 }

@@ -36,6 +36,7 @@ import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -134,4 +135,9 @@ public interface ApplicationSpecification {
    * @return An immutable {@link Map} from plugin id to {@link Plugin}
    */
   Map<String, Plugin> getPlugins();
+
+  /**
+   * @return The names of all programs of a given {@link ProgramType}.
+   */
+  Set<String> getProgramsByType(ProgramType programType);
 }

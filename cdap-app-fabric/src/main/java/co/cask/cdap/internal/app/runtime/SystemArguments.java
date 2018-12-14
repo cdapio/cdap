@@ -357,10 +357,22 @@ public final class SystemArguments {
    * @return the profile id for the program run
    */
   public static ProfileId getProfileIdForProgram(ProgramId programId, Map<String, String> args) {
-    if (programId.getType() == ProgramType.WORKFLOW) {
+    if (isProfileAllowed(programId.getType())) {
       return getProfileIdFromArgs(programId.getNamespaceId(), args).orElse(ProfileId.NATIVE);
     }
     return ProfileId.NATIVE;
+  }
+
+  /**
+   * Determine if compute profile is allowed to be applied on the given program type.
+   *
+   * @param programType programType to check compatibility
+   * @return true if the program type can use profiles, otherwise false
+   */
+  public static boolean isProfileAllowed(ProgramType programType) {
+    return programType == ProgramType.WORKFLOW
+            || programType == ProgramType.MAPREDUCE
+            || programType == ProgramType.SPARK;
   }
 
   /**
