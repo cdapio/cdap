@@ -51,15 +51,10 @@ import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OutputPassFilter;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spec.StageSpec;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -70,6 +65,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
 
 /**
  * Base Spark program to run a Hydrator pipeline.
