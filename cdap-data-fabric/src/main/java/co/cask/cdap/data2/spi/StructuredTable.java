@@ -35,7 +35,7 @@ public interface StructuredTable {
    *
    * @param fields the fields to write
    */
-  void write(Collection<Field> fields);
+  void write(Collection<Field<?>> fields);
 
   /**
    * Read a single row from the table.
@@ -44,7 +44,7 @@ public interface StructuredTable {
    * @param columns the columns to read if not all the columns are needed
    * @return the row addressed by the primary key
    */
-  Optional<Row> read(Collection<Field> keys, Collection<String> columns);
+  Optional<Row> read(Collection<Field<?>> keys, Collection<String> columns);
 
   /**
    * Read a set of rows from the table matching the key range.
@@ -61,5 +61,5 @@ public interface StructuredTable {
    *
    * @param keys the primary key of the row to delete
    */
-  void delete(Collection<Field> keys);
+  void delete(Collection<Field<?>> keys);
 }

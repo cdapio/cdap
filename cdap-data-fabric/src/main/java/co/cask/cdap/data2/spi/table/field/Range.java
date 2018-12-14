@@ -31,19 +31,19 @@ public class Range {
     EXCLUSIVE
   }
 
-  private final Collection<Field> begin;
+  private final Collection<Field<?>> begin;
   private final Bounds beginBound;
-  private final Collection<Field> end;
+  private final Collection<Field<?>> end;
   private final Bounds endBound;
 
-  private Range(Collection<Field> begin, Bounds beginBound, Collection<Field> end, Bounds endBound) {
+  private Range(Collection<Field<?>> begin, Bounds beginBound, Collection<Field<?>> end, Bounds endBound) {
     this.begin = begin;
     this.beginBound = beginBound;
     this.end = end;
     this.endBound = endBound;
   }
 
-  public Collection<Field> getBegin() {
+  public Collection<Field<?>> getBegin() {
     return begin;
   }
 
@@ -51,7 +51,7 @@ public class Range {
     return beginBound;
   }
 
-  public Collection<Field> getEnd() {
+  public Collection<Field<?>> getEnd() {
     return end;
   }
 
