@@ -30,7 +30,7 @@ import java.util.Optional;
  * {@link StructuredTableSpecification} during the table creation.
  */
 // TODO: CDAP-14676 - Add IOException for table operations if needed when implementing SQL tables.
-public interface StructuredTable {
+public interface StructuredTable extends AutoCloseable {
   /**
    * Write the collection of fields to the table.
    * The fields contain both the primary key and the rest of the columns to write.

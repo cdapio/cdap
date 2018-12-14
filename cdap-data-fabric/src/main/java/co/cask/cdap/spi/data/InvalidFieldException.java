@@ -42,11 +42,10 @@ public class InvalidFieldException extends IllegalArgumentException {
    * Create an exception when a field is not defined as a primary key or an index, but is used as one
    * @param tableId table
    * @param fieldName wrongly used field name
-   * @param definition the message which specifies the wrong usage
+   * @param message the message which specifies the wrong usage
    */
-  public InvalidFieldException(StructuredTableId tableId, String fieldName, String definition) {
-    super(String.format("Field %s is not defined as %s of table %s",
-                        fieldName, definition, tableId.getName()));
+  public InvalidFieldException(StructuredTableId tableId, String fieldName, String message) {
+    super(String.format("Field %s of table %s %s", fieldName, tableId.getName(), message));
     this.tableId = tableId;
     this.fieldName = fieldName;
   }

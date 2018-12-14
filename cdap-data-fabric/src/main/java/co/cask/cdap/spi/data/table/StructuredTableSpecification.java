@@ -221,7 +221,7 @@ public final class StructuredTableSpecification {
           throw new InvalidFieldException(tableId, primaryKey);
         }
         if (!Fields.isPrimaryKeyType(type)) {
-          throw new InvalidFieldException(tableId, primaryKey, "primary key");
+          throw new InvalidFieldException(tableId, primaryKey, "is not defined as a primary key");
         }
       }
 
@@ -229,7 +229,7 @@ public final class StructuredTableSpecification {
       for (String index : indexes) {
         FieldType.Type type = typeMap.get(index);
         if (type == null) {
-          throw new InvalidFieldException(tableId, index, "index");
+          throw new InvalidFieldException(tableId, index, "is not defined as an index");
         }
       }
     }
