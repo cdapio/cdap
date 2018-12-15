@@ -26,17 +26,17 @@ public class Range {
   /**
    * Indicates if the endpoint is part of the range (INCLUSIVE) or not (EXCLUSIVE).
    */
-  public enum Bounds {
+  public enum Bound {
     INCLUSIVE,
     EXCLUSIVE
   }
 
   private final Collection<Field<?>> begin;
-  private final Bounds beginBound;
+  private final Bound beginBound;
   private final Collection<Field<?>> end;
-  private final Bounds endBound;
+  private final Bound endBound;
 
-  private Range(Collection<Field<?>> begin, Bounds beginBound, Collection<Field<?>> end, Bounds endBound) {
+  private Range(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
     this.begin = begin;
     this.beginBound = beginBound;
     this.end = end;
@@ -47,7 +47,7 @@ public class Range {
     return begin;
   }
 
-  public Bounds getBeginBound() {
+  public Bound getBeginBound() {
     return beginBound;
   }
 
@@ -55,7 +55,7 @@ public class Range {
     return end;
   }
 
-  public Bounds getEndBound() {
+  public Bound getEndBound() {
     return endBound;
   }
 }

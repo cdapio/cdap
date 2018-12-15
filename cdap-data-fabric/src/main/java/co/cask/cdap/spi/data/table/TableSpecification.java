@@ -161,7 +161,7 @@ public final class TableSpecification {
         throw new IllegalArgumentException("No primary keys specified for the table " + tableId);
       }
 
-      // A table may not have indexes
+      // A table need not have indexes
       if (indexes == null) {
         indexes = new String[0];
       }
@@ -185,7 +185,7 @@ public final class TableSpecification {
           throw new InvalidFieldException(tableId, primaryKey);
         }
         if (!Fields.isPrimaryKeyType(type)) {
-          throw new InvalidFieldException(tableId, primaryKey);
+          throw new InvalidFieldException(tableId, primaryKey, "primary key");
         }
       }
 
@@ -193,7 +193,7 @@ public final class TableSpecification {
       for (String index : indexes) {
         FieldType.Type type = typeMap.get(index);
         if (type == null) {
-          throw new InvalidFieldException(tableId, index);
+          throw new InvalidFieldException(tableId, index, "index");
         }
       }
     }

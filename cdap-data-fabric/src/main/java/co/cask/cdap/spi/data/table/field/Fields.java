@@ -23,8 +23,36 @@ public final class Fields {
   /**
    * @return the FieldType of INTEGER with the given name.
    */
-  public static FieldType integer(String name) {
+  public static FieldType intType(String name) {
     return new FieldType(name, FieldType.Type.INTEGER);
+  }
+
+  /**
+   * @return the FieldType of LONG with the given name.
+   */
+  public static FieldType longType(String name) {
+    return new FieldType(name, FieldType.Type.LONG);
+  }
+
+  /**
+   * @return the FieldType of STRING with the given name.
+   */
+  public static FieldType stringType(String name) {
+    return new FieldType(name, FieldType.Type.STRING);
+  }
+
+  /**
+   * @return the FieldType of FLOAT with the given name.
+   */
+  public static FieldType floatType(String name) {
+    return new FieldType(name, FieldType.Type.FLOAT);
+  }
+
+  /**
+   * @return the FieldType of DOUBLE with the given name.
+   */
+  public static FieldType doubleType(String name) {
+    return new FieldType(name, FieldType.Type.DOUBLE);
   }
 
   /**

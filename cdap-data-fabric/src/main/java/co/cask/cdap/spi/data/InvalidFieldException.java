@@ -17,21 +17,35 @@
 package co.cask.cdap.spi.data;
 
 import co.cask.cdap.spi.data.table.TableId;
+import co.cask.cdap.spi.data.table.field.FieldType;
 
 /**
  * Exception thrown when a field is not part of the table schema.
  */
-public class InvalidFieldException extends RuntimeException {
+public class InvalidFieldException extends IllegalArgumentException {
   private final String fieldName;
   private final TableId tableId;
 
   public InvalidFieldException(TableId tableId, String fieldName) {
-    super(String.format("Field %s is not part of the schema of table %s, or has wrong type",
+    super(String.format("Field %s is not part of the schema of table %s",
                         fieldName, tableId.getName()));
     this.tableId = tableId;
     this.fieldName = fieldName;
   }
 
+  public InvalidFieldException(TableId tableId, String fieldName, String definition) {
+    super(String.format("Field %s is not defined as %s of table %s",
+                        fieldName, definition, tableId.getName()));
+    this.tableId = tableId;
+    this.fieldName = fieldName;
+  }
+
+  public InvalidFieldException(TableId tableId, String fieldName, FieldType.Type expected, FieldType.Type actual) {
+    super(String.format("Wrong type expected for field %s in table %s. Expected %s, actual %s",
+                        fieldName, tableId.getName(), expected, actual));
+    this.tableId = tableId;
+    this.fieldName = fieldName;
+  }
   public TableId getTableId() {
     return tableId;
   }

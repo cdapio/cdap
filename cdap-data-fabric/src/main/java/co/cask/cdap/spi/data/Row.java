@@ -23,35 +23,35 @@ import javax.annotation.Nullable;
  */
 public interface Row {
   /**
-   * @return the value of the fieldName as integer.
+   * @return the value of the field named fieldName as integer.
    * @throws InvalidFieldException if the fieldName is not part of the table schema, or the type does not match.
    */
   @Nullable
   Integer getInteger(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the fieldName as long.
+   * @return the value of the field named fieldName as long.
    * @throws InvalidFieldException if the fieldName is not part of the table schema, or the type does not match.
    */
   @Nullable
   Long getLong(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the fieldName as string.
+   * @return the value of the field named fieldName as string.
    * @throws InvalidFieldException if the fieldName is not part of the table schema, or the type does not match.
    */
   @Nullable
   String getString(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the fieldName as float.
+   * @return the value of the field named fieldName as float.
    * @throws InvalidFieldException if the fieldName is not part of the table schema, or the type does not match.
    */
   @Nullable
   Float getFloat(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the fieldName as double.
+   * @return the value of the field named fieldName as double.
    * @throws InvalidFieldException if the fieldName is not part of the table schema, or the type does not match.
    */
   @Nullable
