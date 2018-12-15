@@ -27,7 +27,8 @@
     "build-storybook": "NODE_ENV=development build-storybook",
     "cypress": "cypress run",
     "cypress-open": "cypress open",
-    "test": "run-p jest cypress"
+    "test": "run-p jest cypress",
+    "ncc": "ncc build server.js -o server_dist"
   },
   "repository": {
     "type": "git",
@@ -52,6 +53,7 @@
     "@types/react-input-calendar": "0.0.34",
     "@types/react-router": "4.0.30",
     "@types/storybook__react": "3.0.9",
+    "@zeit/ncc": "0.5.5",
     "autoprefixer": "6.5.0",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "7.2.3",

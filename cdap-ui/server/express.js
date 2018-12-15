@@ -92,16 +92,57 @@ function extractUITheme(cdapConfig) {
 
   let uiThemeConfig = DEFAULT_CONFIG;
   let uiThemePath = cdapConfig[uiThemePropertyName];
+  /**
+   *
+   * The first check assumes that its linux based environment.
+   * FIXME: We should always make the user provide abolute path that way we don't do these hops.
+   */
   if (uiThemePath[0] !== '/') {
     // if path doesn't start with /, then it's a relative path
     // have to add the ellipses to navigate back to $CDAP_HOME, before
     // going through the path
-    uiThemePath = `../../${uiThemePath}`;
+    uiThemePath = path.join('..', uiThemePath);
   }
   try {
     if (require.resolve(uiThemePath)) {
       uiThemeConfig = require(uiThemePath);
       log.info(`UI using theme located at ${cdapConfig[uiThemePropertyName]}`);
+      return uiThemeConfig;
+    }
+  } catch (e) {
+    // Theme file not found in: ${uiThemePath}
+  }
+  try {
+    /**
+     * This extra check is required in a non-built environment (during development) as opposed to
+     *  a built environment like SDK or clusters where we have the node app built using ncc
+     *  which takes away the folder structure and builds everything to single file.
+     *
+     * Non-built folder structure
+     * ui/
+     *   server.js
+     *   server/
+     *     config/
+     *       themes/
+     *         default.json
+     *     parser.js -> file lookup happens here
+     *
+     * Built node app folder structure
+     *
+     * ui/
+     *   index.js -> file lookup happens here
+     *   server/
+     *     config/
+     *       themes/
+     *         default.json
+     *
+     * Going two levels up won't be correct in the new structure. Hence the check in first try catch.
+     */
+    uiThemePath = path.join('..', uiThemePath);
+    if (require.resolve(uiThemePath)) {
+      uiThemeConfig = require(uiThemePath);
+      log.info(`UI using theme located at ${cdapConfig[uiThemePropertyName]}`);
+      return uiThemeConfig;
     }
   } catch (e) {
     // The error can either be file doesn't exist, or file contains invalid json
