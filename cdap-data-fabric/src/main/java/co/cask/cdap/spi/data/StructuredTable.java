@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.spi;
+package co.cask.cdap.spi.data;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.data2.spi.table.field.Field;
-import co.cask.cdap.data2.spi.table.field.Range;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.Range;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -26,7 +26,7 @@ import java.util.Optional;
 /**
  * Abstraction for a table that contains rows and columns.
  * The schema of the table is fixed, and has to be specified in the
- * {@link co.cask.cdap.data2.spi.table.TableSpecification} during the table creation.
+ * {@link co.cask.cdap.spi.data.table.TableSpecification} during the table creation.
  */
 public interface StructuredTable {
   /**

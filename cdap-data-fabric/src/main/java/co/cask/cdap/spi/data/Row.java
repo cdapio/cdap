@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.spi;
+package co.cask.cdap.spi.data;
 
 import javax.annotation.Nullable;
 

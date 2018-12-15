@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.spi.table.field;
+package co.cask.cdap.spi.data.table.field;
 
 import java.util.Collection;
 

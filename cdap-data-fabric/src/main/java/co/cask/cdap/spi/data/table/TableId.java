@@ -14,12 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.spi.table;
+package co.cask.cdap.spi.data.table;
+
+import co.cask.cdap.spi.data.StructuredTable;
 
 import java.util.Objects;
 
 /**
- * Specifies the Id of a {@link co.cask.cdap.data2.spi.StructuredTable}.
+ * Specifies the Id of a {@link StructuredTable}.
  */
 public class TableId {
   private final String name;

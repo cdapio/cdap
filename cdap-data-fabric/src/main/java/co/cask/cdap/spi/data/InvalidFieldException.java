@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.spi;
+package co.cask.cdap.spi.data;
 
-import co.cask.cdap.data2.spi.table.TableId;
+import co.cask.cdap.spi.data.table.TableId;
 
 /**
  * Exception thrown when a field is not part of the table schema.

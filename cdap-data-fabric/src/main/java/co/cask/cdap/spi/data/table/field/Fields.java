@@ -14,18 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.data2.spi;
-
-import co.cask.cdap.data2.spi.table.TableSpecification;
+package co.cask.cdap.spi.data.table.field;
 
 /**
- * Defines admin operations on a {@link StructuredTable}
+ * Convenience methods to work on {@link Field} and {@link FieldType}.
  */
-public interface TableAdmin {
+public final class Fields {
   /**
-   * Create a StructuredTable using the {@link TableSpecification}.
-   *
-   * @param spec table specification
+   * @return the FieldType of INTEGER with the given name.
    */
-  void create(TableSpecification spec);
+  public static FieldType integer(String name) {
+    return new FieldType(name, FieldType.Type.INTEGER);
+  }
+
+  /**
+    * @return true if the type is allowed to be part of a primary key, false otherwise.
+   */
+  public static boolean isPrimaryKeyType(FieldType.Type type) {
+    return FieldType.PRIMARY_KEY_TYPES.contains(type);
+  }
 }

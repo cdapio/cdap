@@ -14,30 +14,44 @@
  * the License.
  */
 
-package co.cask.cdap.data2.spi.table.field;
+package co.cask.cdap.spi.data.table.field;
+
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Objects;
+import java.util.Set;
 
 /**
- * Represents a column of a table, and its value.
- * @param <T> the type of the value. Valid types for regular fields are int, long, double, float and string.
- *           Valid types for primary keys are int, long and string.
+ * Contains the name and type information of a {@link Field}.
  */
-public class Field<T> {
-  private final String name;
-  private final T value;
+public final class FieldType {
+  /**
+   * Supported data types.
+   */
+  public enum Type {
+    INTEGER,
+    LONG,
+    FLOAT,
+    DOUBLE,
+    STRING
+  }
 
-  public Field(String name, T value) {
+  static final Set<Type> PRIMARY_KEY_TYPES = ImmutableSet.of(Type.INTEGER, Type.LONG, Type.STRING);
+
+  private final String name;
+  private final Type type;
+
+  public FieldType(String name, Type type) {
     this.name = name;
-    this.value = value;
+    this.type = type;
   }
 
   public String getName() {
     return name;
   }
 
-  public T getValue() {
-    return value;
+  public Type getType() {
+    return type;
   }
 
   @Override
@@ -48,22 +62,22 @@ public class Field<T> {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Field field = (Field) o;
-    return Objects.equals(name, field.name) &&
-      Objects.equals(value, field.value);
+    FieldType fieldType = (FieldType) o;
+    return Objects.equals(name, fieldType.name) &&
+      type == fieldType.type;
   }
 
   @Override
   public int hashCode() {
 
-    return Objects.hash(name, value);
+    return Objects.hash(name, type);
   }
 
   @Override
   public String toString() {
-    return "Field{" +
+    return "FieldType{" +
       "name='" + name + '\'' +
-      ", value='" + value + '\'' +
+      ", type=" + type +
       '}';
   }
 }

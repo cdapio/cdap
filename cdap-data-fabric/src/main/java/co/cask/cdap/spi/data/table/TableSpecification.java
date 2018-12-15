@@ -14,11 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.spi.table;
+package co.cask.cdap.spi.data.table;
 
-import co.cask.cdap.data2.spi.InvalidFieldException;
-import co.cask.cdap.data2.spi.table.field.FieldType;
-import co.cask.cdap.data2.spi.table.field.Fields;
+import co.cask.cdap.spi.data.InvalidFieldException;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.table.field.FieldType;
+import co.cask.cdap.spi.data.table.field.Fields;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,7 +30,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Defines the specification of a {@link co.cask.cdap.data2.spi.StructuredTable}.
+ * Defines the specification of a {@link StructuredTable}.
  * The table specification contains:
  * <ul>
  *   <li>table Id - specifies the name of the table</li>
