@@ -61,7 +61,6 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
@@ -480,8 +479,6 @@ public class UpgradeTool {
     throws IOException, DatasetManagementException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
-    // artifacts
-    ArtifactStore.setupDatasets(datasetFramework);
     // Note: do no remove this block even if it's empty. Read the comment below and function doc above
     if (includeNewDatasets) {
       // Add all new system dataset introduced in the current release in this block. If no new dataset was introduced

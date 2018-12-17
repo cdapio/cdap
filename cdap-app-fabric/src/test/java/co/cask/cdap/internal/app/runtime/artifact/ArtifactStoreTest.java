@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactRange;
@@ -36,6 +37,14 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.nosql.NoSqlTableAdmin;
+import co.cask.cdap.data2.nosql.NoSqlTransactionRunner;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
@@ -46,6 +55,9 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.DefaultImpersonator;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
+import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TransactionRunner;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -56,7 +68,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
+import com.google.inject.Injector;
+import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -101,7 +117,28 @@ public class ArtifactStoreTest {
     CConfiguration cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
-    artifactStore = AppFabricTestHelper.getInjector(cConf).getInstance(ArtifactStore.class);
+    Injector injector = AppFabricTestHelper.getInjector(cConf);
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    NamespaceId testNamespace = NamespaceId.SYSTEM;
+    StructuredTableAdmin structuredTableAdmin = new NoSqlTableAdmin(datasetFramework, testNamespace);
+    TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
+    Transactional transactional = Transactions.createTransactionalWithRetry(
+        Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
+                                                                   new TransactionSystemClientAdapter(txClient),
+                                                                   testNamespace,
+                                                                   Collections.emptyMap(),
+                                                                   null, null)),
+        RetryStrategies.retryOnConflict(20, 100)
+    );
+    TransactionRunner transactionRunner = new NoSqlTransactionRunner(structuredTableAdmin, testNamespace,
+                                                                     transactional);
+    artifactStore = new ArtifactStore(cConf, datasetFramework,
+                                      injector.getInstance(NamespacedLocationFactory.class),
+                                      injector.getInstance(LocationFactory.class),
+                                      injector.getInstance(Impersonator.class),
+                                      structuredTableAdmin, transactionRunner
+                                      );
+    artifactStore.createTables();
   }
 
   @After
