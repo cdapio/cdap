@@ -45,7 +45,9 @@ public class NoSqlTransactionRunner implements TransactionRunner {
         datasetContext -> runnable.run(new NoSqlStructuredTableContext(namespaceId, datasetContext, tableAdmin))
       );
     } catch (TransactionFailureException e) {
-      throw new TransactionException("Failure executing NoSql transaction:", e);
+      // Unwrap the cause of the failure, if any
+      Throwable cause = e.getCause() == null ? e : e.getCause();
+      throw new TransactionException("Failure executing NoSql transaction:", cause);
     }
   }
 }
