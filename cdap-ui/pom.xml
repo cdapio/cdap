@@ -293,7 +293,9 @@
                 <configuration>
                   <target>
                     <copy todir = "${stage.opt.dir}">
-                      <fileset dir = "server_dist" />
+                      <fileset dir = "server_dist">
+                        <exclude name="node_modules/**" />
+                      </fileset>
                     </copy>
                   </target>
                 </configuration>
