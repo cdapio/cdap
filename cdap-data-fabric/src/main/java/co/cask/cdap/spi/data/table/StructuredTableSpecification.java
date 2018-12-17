@@ -39,12 +39,12 @@ import java.util.stream.Collectors;
  *   <li>indexes - the columns to index on. Only one column can be part of an index</li>
  * </ul>
  */
-public final class TableSpecification {
+public final class StructuredTableSpecification {
   // Only alphanumeric and _ characters allowed in identifiers. Also, has to begin with an alphabet
   // This is to satisfy both SQL and HBase identifier name rules
   private static final Pattern IDENTIFIER_NAME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
 
-  private final TableId tableId;
+  private final StructuredTableId tableId;
   private final List<FieldType> fields;
   private final List<String> primaryKeys;
   private final List<String> indexes;
@@ -52,14 +52,15 @@ public final class TableSpecification {
   /**
    * Use {@link Builder} to create instances.
    */
-  private TableSpecification(TableId tableId, List<FieldType> fields, List<String> primaryKeys, List<String> indexes) {
+  private StructuredTableSpecification(StructuredTableId tableId, List<FieldType> fields, List<String> primaryKeys,
+                                       List<String> indexes) {
     this.tableId = tableId;
     this.fields = Collections.unmodifiableList(fields);
     this.primaryKeys = Collections.unmodifiableList(primaryKeys);
     this.indexes = Collections.unmodifiableList(indexes);
   }
 
-  public TableId getTableId() {
+  public StructuredTableId getTableId() {
     return tableId;
   }
 
@@ -83,7 +84,7 @@ public final class TableSpecification {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TableSpecification that = (TableSpecification) o;
+    StructuredTableSpecification that = (StructuredTableSpecification) o;
     return Objects.equals(tableId, that.tableId) &&
       Objects.equals(fields, that.fields) &&
       Objects.equals(primaryKeys, that.primaryKeys) &&
@@ -97,7 +98,7 @@ public final class TableSpecification {
 
   @Override
   public String toString() {
-    return "TableSpecification{" +
+    return "StructuredTableSpecification{" +
       "tableId='" + tableId + '\'' +
       ", fields=" + fields +
       ", primaryKeys=" + primaryKeys +
@@ -106,15 +107,15 @@ public final class TableSpecification {
   }
 
   /**
-   * Builder used to create {@link TableSpecification}
+   * Builder used to create {@link StructuredTableSpecification}
    */
   public static final class Builder {
-    private TableId tableId;
+    private StructuredTableId tableId;
     private FieldType[] fieldTypes;
     private String[] primaryKeys;
     private String[] indexes;
 
-    public Builder withId(TableId id) {
+    public Builder withId(StructuredTableId id) {
       this.tableId = id;
       return this;
     }
@@ -134,15 +135,15 @@ public final class TableSpecification {
       return this;
     }
 
-    public TableSpecification build() {
+    public StructuredTableSpecification build() {
       validate();
-      return new TableSpecification(tableId, Arrays.asList(fieldTypes), Arrays.asList(primaryKeys),
-                                    Arrays.asList(indexes));
+      return new StructuredTableSpecification(tableId, Arrays.asList(fieldTypes), Arrays.asList(primaryKeys),
+                                              Arrays.asList(indexes));
     }
 
     private void validate() {
       if (tableId == null) {
-        throw new IllegalArgumentException("TableId cannot be empty");
+        throw new IllegalArgumentException("StructuredTableId cannot be empty");
       }
 
       // Validate the table name is made up of valid characters

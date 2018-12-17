@@ -16,16 +16,16 @@
 
 package co.cask.cdap.spi.data;
 
-import co.cask.cdap.spi.data.table.TableSpecification;
+import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 
 /**
  * Defines admin operations on a {@link StructuredTable}
  */
-public interface TableAdmin {
+public interface StructuredTableAdmin {
   /**
-   * Create a StructuredTable using the {@link TableSpecification}.
+   * Create a StructuredTable using the {@link StructuredTableSpecification}.
    *
    * @param spec table specification
    */
-  void create(TableSpecification spec);
+  void create(StructuredTableSpecification spec);
 }

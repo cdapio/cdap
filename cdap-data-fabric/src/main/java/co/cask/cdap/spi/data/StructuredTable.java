@@ -17,6 +17,7 @@
 package co.cask.cdap.spi.data;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.Range;
 
@@ -26,7 +27,7 @@ import java.util.Optional;
 /**
  * Abstraction for a table that contains rows and columns.
  * The schema of the table is fixed, and has to be specified in the
- * {@link co.cask.cdap.spi.data.table.TableSpecification} during the table creation.
+ * {@link StructuredTableSpecification} during the table creation.
  */
 public interface StructuredTable {
   /**
@@ -46,7 +47,7 @@ public interface StructuredTable {
    * @return the row addressed by the primary key
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types do not match.
    */
-  Optional<Row> read(Collection<Field<?>> keys, Collection<String> columns) throws InvalidFieldException;
+  Optional<StructuredRow> read(Collection<Field<?>> keys, Collection<String> columns) throws InvalidFieldException;
 
   /**
    * Read a set of rows from the table matching the key range.
@@ -57,7 +58,7 @@ public interface StructuredTable {
    * @return a {@link CloseableIterator} of rows
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types do not match.
    */
-  CloseableIterator<Row> scan(Range keyRange, int limit) throws InvalidFieldException;
+  CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException;
 
   /**
    * Delete a single row from the table.

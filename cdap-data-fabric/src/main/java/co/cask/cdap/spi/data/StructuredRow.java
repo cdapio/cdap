@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 /**
  * Represents a row of data from a {@link StructuredTable}.
  */
-public interface Row {
+public interface StructuredRow {
   /**
    * @return the value of the field named fieldName as integer.
    * @throws InvalidFieldException if the fieldName is not part of the table schema, or the type does not match.

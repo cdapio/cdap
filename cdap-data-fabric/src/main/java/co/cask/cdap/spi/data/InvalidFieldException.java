@@ -16,7 +16,7 @@
 
 package co.cask.cdap.spi.data;
 
-import co.cask.cdap.spi.data.table.TableId;
+import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.field.FieldType;
 
 /**
@@ -24,29 +24,30 @@ import co.cask.cdap.spi.data.table.field.FieldType;
  */
 public class InvalidFieldException extends IllegalArgumentException {
   private final String fieldName;
-  private final TableId tableId;
+  private final StructuredTableId tableId;
 
-  public InvalidFieldException(TableId tableId, String fieldName) {
+  public InvalidFieldException(StructuredTableId tableId, String fieldName) {
     super(String.format("Field %s is not part of the schema of table %s",
                         fieldName, tableId.getName()));
     this.tableId = tableId;
     this.fieldName = fieldName;
   }
 
-  public InvalidFieldException(TableId tableId, String fieldName, String definition) {
+  public InvalidFieldException(StructuredTableId tableId, String fieldName, String definition) {
     super(String.format("Field %s is not defined as %s of table %s",
                         fieldName, definition, tableId.getName()));
     this.tableId = tableId;
     this.fieldName = fieldName;
   }
 
-  public InvalidFieldException(TableId tableId, String fieldName, FieldType.Type expected, FieldType.Type actual) {
+  public InvalidFieldException(StructuredTableId tableId, String fieldName, FieldType.Type expected,
+                               FieldType.Type actual) {
     super(String.format("Wrong type expected for field %s in table %s. Expected %s, actual %s",
                         fieldName, tableId.getName(), expected, actual));
     this.tableId = tableId;
     this.fieldName = fieldName;
   }
-  public TableId getTableId() {
+  public StructuredTableId getTableId() {
     return tableId;
   }
 

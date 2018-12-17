@@ -23,21 +23,21 @@ import java.util.Objects;
 /**
  * Specifies the Id of a {@link StructuredTable}.
  */
-public class TableId {
+public class StructuredTableId {
   private final String name;
 
   /**
-   * Convenience method to create the TableId.
+   * Convenience method to create the StructuredTableId.
    *
    * @param name table name, the name can only contain alpha-numeric characters and underscore.
    *             The name has to start with an alphabet.
-   * @return the TableId for the given table name
+   * @return the StructuredTableId for the given table name
    */
-  public static TableId of(String name) {
-    return new TableId(name);
+  public static StructuredTableId of(String name) {
+    return new StructuredTableId(name);
   }
 
-  private TableId(String name) {
+  private StructuredTableId(String name) {
     this.name = name;
   }
 
@@ -53,7 +53,7 @@ public class TableId {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TableId tableId = (TableId) o;
+    StructuredTableId tableId = (StructuredTableId) o;
     return Objects.equals(name, tableId.name);
   }
 
@@ -65,7 +65,7 @@ public class TableId {
 
   @Override
   public String toString() {
-    return "TableId{" +
+    return "StructuredTableId{" +
       "name='" + name + '\'' +
       '}';
   }
