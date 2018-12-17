@@ -25,7 +25,6 @@ import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
-import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.workflow.NodeStatus;
@@ -317,8 +316,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       // publish metadata put
       Map<String, String> propertiesToAdd = ImmutableMap.of("a", "x", "b", "z");
       Set<String> tagsToAdd = ImmutableSet.of("t1", "t2");
-      metadataPublisher.publish(workflowRunId, new MetadataOperation(entity, MetadataOperation.Type.PUT,
-                                                                     new Metadata(propertiesToAdd, tagsToAdd)));
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
 
       // wait until meta data is written
       waitForMetadata(entity, metadataStore, 2, 2);
@@ -329,9 +327,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       Assert.assertEquals(tagsToAdd, meta.getTags());
 
       // publish metadata delete
-      metadataPublisher.publish(workflowRunId, new MetadataOperation(entity, MetadataOperation.Type.DELETE,
-                                                                     new Metadata(ImmutableMap.of("a", ""),
-                                                                                  ImmutableSet.of("t1", "t3"))));
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Delete(
+        entity, Collections.singleton("a"), ImmutableSet.of("t1", "t3")));
 
       // wait until meta data is written
       waitForMetadata(entity, metadataStore, 1, 1);
@@ -343,46 +340,39 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
       // publish metadata put properties
       metadataPublisher.publish(workflowRunId,
-                                new MetadataOperation(entity, MetadataOperation.Type.PUT,
-                                                      new Metadata(propertiesToAdd, Collections.emptySet())));
+                                new MetadataOperation.Put(entity, propertiesToAdd, Collections.emptySet()));
 
       // wait until meta data is written
       // one of the property key already exist so for that value will be just overwritten hence size is 2
       waitForMetadata(entity, metadataStore, 2, 1);
 
       // publish metadata put tags
-      metadataPublisher.publish(workflowRunId,
-                                new MetadataOperation(entity, MetadataOperation.Type.PUT,
-                                                      new Metadata(Collections.emptyMap(), tagsToAdd)));
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, Collections.emptyMap(), tagsToAdd));
 
       // wait until meta data is written
       // one of the tags already exists hence size is 2
       waitForMetadata(entity, metadataStore, 2, 2);
 
       // publish delete all properties
-      metadataPublisher.publish(workflowRunId,
-                                new MetadataOperation(entity, MetadataOperation.Type.DELETE_ALL_PROPERTIES, null));
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAllProperties(entity));
 
       // wait until meta data is written
       waitForMetadata(entity, metadataStore, 0, 2);
 
       // publish delete all tags
-      metadataPublisher.publish(workflowRunId,
-                                new MetadataOperation(entity, MetadataOperation.Type.DELETE_ALL_TAGS, null));
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAllTags(entity));
 
+      // wait until meta data is written
       waitForMetadata(entity, metadataStore, 0, 0);
 
       // publish metadata put tags
-      metadataPublisher.publish(workflowRunId,
-                                new MetadataOperation(entity, MetadataOperation.Type.PUT,
-                                                      new Metadata(propertiesToAdd, tagsToAdd)));
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
 
       // wait until meta data is written
       waitForMetadata(entity, metadataStore, 2, 2);
 
       // publish delete all
-      metadataPublisher.publish(workflowRunId,
-                                new MetadataOperation(entity, MetadataOperation.Type.DELETE_ALL, null));
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAll(entity));
 
       // wait until meta data is written
       waitForMetadata(entity, metadataStore, 0, 0);

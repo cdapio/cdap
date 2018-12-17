@@ -33,6 +33,7 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
+import co.cask.cdap.data2.metadata.writer.MetadataOperationTypeAdapter;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
@@ -43,6 +44,7 @@ import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.test.DataSetManager;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +66,9 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
 
   private static final Logger LOG = LoggerFactory.getLogger(MockSource.class);
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
+    .create();
   private static final Type SET_METADATA_OPERATION_TYPE = new TypeToken<Set<MetadataOperation>>() { }.getType();
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
@@ -237,15 +241,15 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
       switch (curOperation.getType()) {
         case PUT:
           // noinspection ConstantConditions
-          context.addTags(curOperation.getEntity(), curOperation.getMetadata().getTags());
-          context.addProperties(curOperation.getEntity(), curOperation.getMetadata().getProperties());
+          context.addTags(curOperation.getEntity(), ((MetadataOperation.Put) curOperation).getTags());
+          context.addProperties(curOperation.getEntity(), ((MetadataOperation.Put) curOperation).getProperties());
           break;
         case DELETE:
           // noinspection ConstantConditions
           context.removeTags(curOperation.getEntity(),
-                             curOperation.getMetadata().getTags().toArray(new String[0]));
+                             ((MetadataOperation.Delete) curOperation).getTags().toArray(new String[0]));
           context.removeProperties(curOperation.getEntity(),
-                                   curOperation.getMetadata().getProperties().keySet().toArray(new String[0]));
+                                   ((MetadataOperation.Delete) curOperation).getProperties().toArray(new String[0]));
           break;
         case DELETE_ALL:
           context.removeMetadata(curOperation.getEntity());

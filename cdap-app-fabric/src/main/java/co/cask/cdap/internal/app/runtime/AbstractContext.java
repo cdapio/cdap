@@ -100,6 +100,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
@@ -747,8 +748,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
     metadataPublisher.publish(programRunId,
-                             new MetadataOperation(metadataEntity, MetadataOperation.Type.PUT,
-                                                   new Metadata(properties, Collections.emptySet())));
+                              new MetadataOperation.Put(metadataEntity, properties, Collections.emptySet()));
   }
 
   @Override
@@ -758,50 +758,35 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
-    Set<String> tagsToAdd = new HashSet<>();
-    tags.forEach(tagsToAdd::add);
-    metadataPublisher.publish(programRunId, new MetadataOperation(metadataEntity, MetadataOperation.Type.PUT,
-                                                                 new Metadata(Collections.emptyMap(), tagsToAdd)));
+    metadataPublisher.publish(programRunId, new MetadataOperation.Put(
+      metadataEntity, Collections.emptyMap(), ImmutableSet.copyOf(tags)));
   }
 
   @Override
   public void removeMetadata(MetadataEntity metadataEntity) {
-    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity, MetadataOperation.Type.DELETE_ALL,
-                                                                null);
-    metadataPublisher.publish(programRunId, metadataOperation);
+    metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAll(metadataEntity));
   }
 
   @Override
   public void removeProperties(MetadataEntity metadataEntity) {
-    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity,
-                                                                MetadataOperation.Type.DELETE_ALL_PROPERTIES, null);
-    metadataPublisher.publish(programRunId, metadataOperation);
+    metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAllProperties(metadataEntity));
   }
 
   @Override
   public void removeProperties(MetadataEntity metadataEntity, String... keys) {
-    Map<String, String> props = new HashMap<>();
-    for (String key : keys) {
-      props.put(key, "");
-    }
-    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity, MetadataOperation.Type.DELETE,
-                                                        new Metadata(props, Collections.emptySet()));
-    metadataPublisher.publish(programRunId, metadataOperation);
+    metadataPublisher.publish(programRunId, new MetadataOperation.Delete(
+      metadataEntity, ImmutableSet.copyOf(keys), Collections.emptySet()));
   }
 
   @Override
   public void removeTags(MetadataEntity metadataEntity) {
-    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity,
-                                                                MetadataOperation.Type.DELETE_ALL_TAGS, null);
-    metadataPublisher.publish(programRunId, metadataOperation);
+    metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAllTags(metadataEntity));
   }
 
   @Override
   public void removeTags(MetadataEntity metadataEntity, String... tags) {
-    MetadataOperation metadataOperation = new MetadataOperation(metadataEntity, MetadataOperation.Type.DELETE,
-                                                                new Metadata(Collections.emptyMap(),
-                                                                             new HashSet<>(Arrays.asList(tags))));
-    metadataPublisher.publish(programRunId, metadataOperation);
+    metadataPublisher.publish(programRunId, new MetadataOperation.Delete(
+      metadataEntity, Collections.emptySet(), ImmutableSet.copyOf(tags)));
   }
 
   /**

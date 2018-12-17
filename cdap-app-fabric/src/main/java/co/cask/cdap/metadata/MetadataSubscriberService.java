@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.InvalidMetadataException;
@@ -38,6 +37,7 @@ import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
+import co.cask.cdap.data2.metadata.writer.MetadataOperationTypeAdapter;
 import co.cask.cdap.data2.registry.DatasetUsage;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
@@ -84,6 +84,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private static final Logger LOG = LoggerFactory.getLogger(MetadataSubscriberService.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
 
@@ -375,18 +376,23 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     @Override
     public void processMessage(MetadataMessage message) {
       MetadataOperation operation = message.getPayload(GSON, MetadataOperation.class);
-      Metadata metadata = operation.getMetadata();
       MetadataEntity entity = operation.getEntity();
-      LOG.trace("Received {} for entity {}: {}", operation, entity, metadata);
+      LOG.trace("Received {}", operation);
       // TODO: Authorize that the operation is allowed. Currently MetadataMessage does not carry user info
       switch (operation.getType()) {
+        case CREATE:
+        case DROP: {
+          // TODO (CDAP-14587) add support for system scope and adding on create only
+          throw new UnsupportedOperationException(operation.getType().toString());
+        }
         case PUT: {
+          MetadataOperation.Put put = (MetadataOperation.Put) operation;
           try {
-            if (metadata != null && metadata.getProperties() != null && !metadata.getProperties().isEmpty()) {
-              metadataAdmin.addProperties(entity, metadata.getProperties());
+            if (put.getProperties() != null && !put.getProperties().isEmpty()) {
+              metadataAdmin.addProperties(entity, put.getProperties());
             }
-            if (metadata != null && metadata.getTags() != null && !metadata.getTags().isEmpty()) {
-              Set<String> toAdd = metadata.getTags();
+            if (put.getTags() != null && !put.getTags().isEmpty()) {
+              Set<String> toAdd = put.getTags();
               metadataAdmin.addTags(entity, toAdd);
             }
           } catch (InvalidMetadataException e) {
@@ -396,13 +402,12 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           break;
         }
         case DELETE: {
-          if (metadata != null && metadata.getProperties() != null && !metadata.getProperties().isEmpty()) {
-            Set<String> toRemove = metadata.getProperties().keySet();
-            metadataAdmin.removeProperties(entity, toRemove);
+          MetadataOperation.Delete delete = (MetadataOperation.Delete) operation;
+          if (delete.getProperties() != null && !delete.getProperties().isEmpty()) {
+            metadataAdmin.removeProperties(entity, delete.getProperties());
           }
-          if (metadata != null && metadata.getTags() != null && !metadata.getTags().isEmpty()) {
-            Set<String> toRemove = metadata.getTags();
-            metadataAdmin.removeTags(entity, toRemove);
+          if (delete.getTags() != null && !delete.getTags().isEmpty()) {
+            metadataAdmin.removeTags(entity, delete.getTags());
           }
           break;
         }
