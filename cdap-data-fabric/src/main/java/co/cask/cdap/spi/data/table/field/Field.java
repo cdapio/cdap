@@ -23,7 +23,7 @@ import java.util.Objects;
  * @param <T> the type of the value. Valid types for regular fields are int, long, double, float and string.
  *           Valid types for primary keys are int, long and string.
  */
-public class Field<T> {
+public final class Field<T> {
   private final String name;
   private final T value;
 
@@ -32,10 +32,16 @@ public class Field<T> {
     this.value = value;
   }
 
+  /**
+   * @return the field name
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * @return the field value
+   */
   public T getValue() {
     return value;
   }
@@ -55,7 +61,6 @@ public class Field<T> {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(name, value);
   }
 

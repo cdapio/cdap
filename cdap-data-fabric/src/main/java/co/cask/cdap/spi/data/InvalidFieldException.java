@@ -26,6 +26,11 @@ public class InvalidFieldException extends IllegalArgumentException {
   private final String fieldName;
   private final StructuredTableId tableId;
 
+  /**
+   * Create an exception when a field is not part of a table schema
+   * @param tableId table
+   * @param fieldName missing field name
+   */
   public InvalidFieldException(StructuredTableId tableId, String fieldName) {
     super(String.format("Field %s is not part of the schema of table %s",
                         fieldName, tableId.getName()));
@@ -33,6 +38,12 @@ public class InvalidFieldException extends IllegalArgumentException {
     this.fieldName = fieldName;
   }
 
+  /**
+   * Create an exception when a field is not defined as a primary key or an index, but is used as one
+   * @param tableId table
+   * @param fieldName wrongly used field name
+   * @param definition the message which specifies the wrong usage
+   */
   public InvalidFieldException(StructuredTableId tableId, String fieldName, String definition) {
     super(String.format("Field %s is not defined as %s of table %s",
                         fieldName, definition, tableId.getName()));
@@ -40,17 +51,31 @@ public class InvalidFieldException extends IllegalArgumentException {
     this.fieldName = fieldName;
   }
 
+  /**
+   * Create an exception when a field is needs conversion to an incompatible type than what is defined.
+   * @param tableId table
+   * @param fieldName field name
+   * @param expected expected type of the field
+   * @param actual actual type of the field
+   */
   public InvalidFieldException(StructuredTableId tableId, String fieldName, FieldType.Type expected,
                                FieldType.Type actual) {
-    super(String.format("Wrong type expected for field %s in table %s. Expected %s, actual %s",
+    super(String.format("Wrong type for field %s in table %s. Expected %s, actual %s",
                         fieldName, tableId.getName(), expected, actual));
     this.tableId = tableId;
     this.fieldName = fieldName;
   }
+
+  /**
+   * @return the table id
+   */
   public StructuredTableId getTableId() {
     return tableId;
   }
 
+  /**
+   * @return return the field name causing the exception
+   */
   public String getFieldName() {
     return fieldName;
   }

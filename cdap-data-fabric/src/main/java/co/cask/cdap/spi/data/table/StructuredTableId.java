@@ -41,6 +41,9 @@ public class StructuredTableId {
     this.name = name;
   }
 
+  /**
+   * @return the table name
+   */
   public String getName() {
     return name;
   }
@@ -59,7 +62,6 @@ public class StructuredTableId {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(name);
   }
 

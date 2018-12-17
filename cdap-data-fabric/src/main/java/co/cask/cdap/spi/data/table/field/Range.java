@@ -22,7 +22,7 @@ import java.util.Collection;
  * Represents a range of fields.
  * The range has two endpoints - begin and end, to represent the beginning and the end of a range.
  */
-public class Range {
+public final class Range {
   /**
    * Indicates if the endpoint is part of the range (INCLUSIVE) or not (EXCLUSIVE).
    */
@@ -36,6 +36,13 @@ public class Range {
   private final Collection<Field<?>> end;
   private final Bound endBound;
 
+  /**
+   * Create a range with begin and end.
+   * @param begin the fields forming the beginning of the range
+   * @param beginBound the match type for the begin fields
+   * @param end the fields forming the end of the range
+   * @param endBound the match type for the end fields
+   */
   private Range(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
     this.begin = begin;
     this.beginBound = beginBound;
@@ -43,18 +50,30 @@ public class Range {
     this.endBound = endBound;
   }
 
+  /**
+   * @return the beginning of the range
+   */
   public Collection<Field<?>> getBegin() {
     return begin;
   }
 
+  /**
+   * @return the match type of the begin fields
+   */
   public Bound getBeginBound() {
     return beginBound;
   }
 
+  /**
+   * @return the end of the range
+   */
   public Collection<Field<?>> getEnd() {
     return end;
   }
 
+  /**
+   * @return the match type of the end fields
+   */
   public Bound getEndBound() {
     return endBound;
   }

@@ -41,15 +41,26 @@ public final class FieldType {
   private final String name;
   private final Type type;
 
+  /**
+   * Construct a field type with the given field name and type
+   * @param name field name
+   * @param type field type
+   */
   public FieldType(String name, Type type) {
     this.name = name;
     this.type = type;
   }
 
+  /**
+   * @return the field name
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * @return the field type
+   */
   public Type getType() {
     return type;
   }

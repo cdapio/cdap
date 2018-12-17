@@ -29,6 +29,7 @@ import java.util.Optional;
  * The schema of the table is fixed, and has to be specified in the
  * {@link StructuredTableSpecification} during the table creation.
  */
+// TODO: Add IOException for table operations if needed when implementing SQL tables.
 public interface StructuredTable {
   /**
    * Write the collection of fields to the table.
@@ -40,10 +41,19 @@ public interface StructuredTable {
   void write(Collection<Field<?>> fields) throws InvalidFieldException;
 
   /**
-   * Read a single row from the table.
+   * Read a single row with all the columns from the table.
    *
    * @param keys the primary key of the row to read
-   * @param columns the columns to read if not all the columns are needed
+   * @return the row addressed by the primary key
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types do not match.
+   */
+  Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException;
+
+  /**
+   * Read a single row with the specified columns from the table.
+   *
+   * @param keys the primary key of the row to read
+   * @param columns the columns to read. Empty collection returns all the columns
    * @return the row addressed by the primary key
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types do not match.
    */

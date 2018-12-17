@@ -45,33 +45,45 @@ public final class StructuredTableSpecification {
   private static final Pattern IDENTIFIER_NAME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
 
   private final StructuredTableId tableId;
-  private final List<FieldType> fields;
+  private final List<FieldType> fieldTypes;
   private final List<String> primaryKeys;
   private final List<String> indexes;
 
   /**
    * Use {@link Builder} to create instances.
    */
-  private StructuredTableSpecification(StructuredTableId tableId, List<FieldType> fields, List<String> primaryKeys,
+  private StructuredTableSpecification(StructuredTableId tableId, List<FieldType> fieldTypes, List<String> primaryKeys,
                                        List<String> indexes) {
     this.tableId = tableId;
-    this.fields = Collections.unmodifiableList(fields);
+    this.fieldTypes = Collections.unmodifiableList(fieldTypes);
     this.primaryKeys = Collections.unmodifiableList(primaryKeys);
     this.indexes = Collections.unmodifiableList(indexes);
   }
 
+  /**
+   * @return the table id of this table specification
+   */
   public StructuredTableId getTableId() {
     return tableId;
   }
 
-  public List<FieldType> getFields() {
-    return fields;
+  /**
+   * @return the field types of the table
+   */
+  public List<FieldType> getFieldTypes() {
+    return fieldTypes;
   }
 
+  /**
+   * @return the list of primary keys defined on the table
+   */
   public List<String> getPrimaryKeys() {
     return primaryKeys;
   }
 
+  /**
+   * @return the list of indexes defined on the table
+   */
   public List<String> getIndexes() {
     return indexes;
   }
@@ -86,21 +98,21 @@ public final class StructuredTableSpecification {
     }
     StructuredTableSpecification that = (StructuredTableSpecification) o;
     return Objects.equals(tableId, that.tableId) &&
-      Objects.equals(fields, that.fields) &&
+      Objects.equals(fieldTypes, that.fieldTypes) &&
       Objects.equals(primaryKeys, that.primaryKeys) &&
       Objects.equals(indexes, that.indexes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tableId, fields, primaryKeys, indexes);
+    return Objects.hash(tableId, fieldTypes, primaryKeys, indexes);
   }
 
   @Override
   public String toString() {
     return "StructuredTableSpecification{" +
       "tableId='" + tableId + '\'' +
-      ", fields=" + fields +
+      ", fieldTypes=" + fieldTypes +
       ", primaryKeys=" + primaryKeys +
       ", indexes=" + indexes +
       '}';
@@ -110,31 +122,59 @@ public final class StructuredTableSpecification {
    * Builder used to create {@link StructuredTableSpecification}
    */
   public static final class Builder {
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
+
     private StructuredTableId tableId;
     private FieldType[] fieldTypes;
     private String[] primaryKeys;
-    private String[] indexes;
+    private String[] indexes = EMPTY_STRING_ARRAY;
 
+    /**
+     * Set the table id. A table should have an id.
+     * @param id table id
+     * @return Builder instance
+     */
     public Builder withId(StructuredTableId id) {
       this.tableId = id;
       return this;
     }
 
+    /**
+     * Set the field types in the table schema. A table should have at least one field.
+     * @param fieldTypes list of field types
+     * @return Builder instance
+     */
     public Builder withFields(FieldType ...fieldTypes) {
       this.fieldTypes = fieldTypes;
       return this;
     }
 
+    /**
+     * Set the fields that form the primary keys of the table. A table should have at least one primary key.
+     * @param primaryKeys list of field names forming the primary keys
+     * @return Builder instance
+     */
     public Builder withPrimaryKeys(String ...primaryKeys) {
       this.primaryKeys = primaryKeys;
       return this;
     }
 
+    /**
+     * Set the fields that need to be indexed in the table. A table need not define any indexes.
+     * @param indexes list of field names for the index
+     * @return Builder instance
+     */
     public Builder withIndexes(String ...indexes) {
-      this.indexes = indexes;
+      if (indexes != null) {
+        this.indexes = indexes;
+      }
       return this;
     }
 
+    /**
+     * Build the table specification
+     * @return the table specification
+     */
     public StructuredTableSpecification build() {
       validate();
       return new StructuredTableSpecification(tableId, Arrays.asList(fieldTypes), Arrays.asList(primaryKeys),
@@ -155,16 +195,11 @@ public final class StructuredTableSpecification {
       }
 
       if (fieldTypes == null || fieldTypes.length == 0) {
-        throw new IllegalArgumentException("No fields specified for the table " + tableId);
+        throw new IllegalArgumentException("No fieldTypes specified for the table " + tableId);
       }
 
       if (primaryKeys == null || primaryKeys.length == 0) {
         throw new IllegalArgumentException("No primary keys specified for the table " + tableId);
-      }
-
-      // A table need not have indexes
-      if (indexes == null) {
-        indexes = new String[0];
       }
 
       // Validate the field names are made up of valid characters
