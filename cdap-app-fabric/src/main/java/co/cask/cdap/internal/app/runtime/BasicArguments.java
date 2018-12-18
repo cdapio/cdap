@@ -30,7 +30,7 @@ public final class BasicArguments implements Arguments {
   private final Map<String, String> options;
 
   public BasicArguments() {
-    this(ImmutableMap.<String, String>of());
+    this(ImmutableMap.of());
   }
 
   public BasicArguments(Map<String, String> options) {

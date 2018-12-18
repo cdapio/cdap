@@ -16,8 +16,10 @@
 
 package co.cask.cdap.api.common;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,12 +57,7 @@ public final class RuntimeArguments {
    * @return Array of Strings in POSIX compliant format.
    */
   public static String[] toPosixArray(Map<String, String> kvMap) {
-    String[] args = new String[kvMap.size()];
-    int index = 0;
-    for (Map.Entry<String, String> kv : kvMap.entrySet()) {
-      args[index++] = String.format("--%s=%s", kv.getKey(), kv.getValue());
-    }
-    return args;
+    return toPosixArray(kvMap.entrySet());
   }
 
   /**
@@ -69,11 +66,15 @@ public final class RuntimeArguments {
    * @return Array of Strings in POSIX compliant format.
    */
   public static String[] toPosixArray(Iterable<Map.Entry<String, String>> iterable) {
-    Map<String, String> userArgs = new HashMap<>();
+    List<String> args = new ArrayList<>();
     for (Map.Entry<String, String> kv : iterable) {
-      userArgs.put(kv.getKey(), kv.getValue());
+      String value = kv.getValue();
+      if (value == null) {
+        value = "";
+      }
+      args.add(String.format("--%s%s%s", kv.getKey(), value.isEmpty() ? "" : "=", value));
     }
-    return toPosixArray(userArgs);
+    return args.toArray(new String[0]);
   }
 
   /**
