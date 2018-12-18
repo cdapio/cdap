@@ -112,7 +112,8 @@ public class DatasetInstanceService {
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer,
-                                AuthenticationContext authenticationContext) {
+                                AuthenticationContext authenticationContext,
+                                MetadataPublisher metadataPublisher) {
     this.cConf = cConf;
     this.opExecutorClient = opExecutorClient;
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
@@ -121,6 +122,7 @@ public class DatasetInstanceService {
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.ownerAdmin = ownerAdmin;
+    this.metadataPublisher = metadataPublisher;
     this.metaCache = CacheBuilder.newBuilder().build(
       new CacheLoader<DatasetId, DatasetMeta>() {
         @Override
