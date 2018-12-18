@@ -29,6 +29,8 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -58,7 +60,7 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
   private static TransactionManager transactionManager;
 
   @BeforeClass
-  public static void init() throws Exception {
+  public static void init() {
     Injector injector = Guice.createInjector(
       new ConfigModule(CConfiguration.create(), new Configuration()),
       new DataSetServiceModules().getInMemoryModules(),
@@ -79,6 +81,7 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
           bind(ExploreClient.class).to(MockExploreClient.class);
           bind(ViewStore.class).to(MDSViewStore.class).in(Scopes.SINGLETON);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
         }
       }
     );
@@ -91,7 +94,7 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
   }
 
   @AfterClass
-  public static void destroy() throws Exception {
+  public static void destroy() {
     datasetService.stopAndWait();
     transactionManager.stopAndWait();
   }
