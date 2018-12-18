@@ -44,7 +44,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.config.PreferencesService;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.writer.MetadataOperation;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -129,7 +130,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final OwnerAdmin ownerAdmin;
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
-  private final MetadataStore metadataStore;
+  private final MetadataPublisher metadataPublisher;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final Impersonator impersonator;
@@ -145,7 +146,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               PreferencesService preferencesService, MetricStore metricStore, OwnerAdmin ownerAdmin,
                               ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
-                              MetadataStore metadataStore,
+                              MetadataPublisher metadataPublisher,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                               Impersonator impersonator, RouteStore routeStore,
                               MessagingService messagingService) {
@@ -160,7 +161,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.metricStore = metricStore;
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
-    this.metadataStore = metadataStore;
+    this.metadataPublisher = metadataPublisher;
     this.ownerAdmin = ownerAdmin;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
@@ -777,13 +778,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteAppMetadata(ApplicationId appId, ApplicationSpecification appSpec) {
     // Remove metadata for the Application itself.
-    metadataStore.removeMetadata(appId.toMetadataEntity());
+    metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(appId.toMetadataEntity()));
 
     // Remove metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
     // See https://issues.cask.co/browse/CDAP-3669
     for (ProgramId programId : getAllPrograms(appId, appSpec)) {
-      metadataStore.removeMetadata(programId.toMetadataEntity());
+      metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(programId.toMetadataEntity()));
     }
   }
 

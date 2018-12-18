@@ -18,41 +18,38 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
-import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.reflect.TypeToken;
 
-import java.util.Map;
-
 /**
  * Stage to write system metadata for an application.
  */
 public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithPrograms> {
 
-  private final MetadataStore metadataStore;
+  private final MetadataPublisher metadataPublisher;
+  private String creationTime;
 
-  public SystemMetadataWriterStage(MetadataStore metadataStore) {
+  public SystemMetadataWriterStage(MetadataPublisher metadataPublisher) {
     super(TypeToken.of(ApplicationWithPrograms.class));
-    this.metadataStore = metadataStore;
+    this.metadataPublisher = metadataPublisher;
   }
 
   @Override
-  public void process(ApplicationWithPrograms input) throws Exception {
+  public void process(ApplicationWithPrograms input) {
+    // use current time as creation time for app nd all programs
+    creationTime = String.valueOf(System.currentTimeMillis());
+
     // add system metadata for apps
     ApplicationId appId = input.getApplicationId();
     ApplicationSpecification appSpec = input.getSpecification();
-    // only update creation time if this is a new app
-    Map<String, String> properties = metadataStore.getProperties(MetadataScope.SYSTEM, appId.toMetadataEntity());
-    SystemMetadataWriter appSystemMetadataWriter =
-      new AppSystemMetadataWriter(metadataStore, appId, appSpec, !properties.isEmpty());
-    appSystemMetadataWriter.write();
+
+    new AppSystemMetadataWriter(metadataPublisher, appId, appSpec, creationTime).write();
 
     // add system metadata for programs
     writeProgramSystemMetadata(appId, ProgramType.FLOW, appSpec.getFlows().values());
@@ -70,10 +67,7 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
                                           Iterable<? extends ProgramSpecification> specs) {
     for (ProgramSpecification spec : specs) {
       ProgramId programId = appId.program(programType, spec.getName());
-      Map<String, String> properties = metadataStore.getProperties(MetadataScope.SYSTEM, programId.toMetadataEntity());
-      ProgramSystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, spec,
-                                                                           !properties.isEmpty());
-      writer.write();
+      new ProgramSystemMetadataWriter(metadataPublisher, programId, spec, creationTime).write();
     }
   }
 }

@@ -37,6 +37,7 @@ import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.SystemMetadataProvider;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
@@ -387,21 +388,27 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       // TODO: Authorize that the operation is allowed. Currently MetadataMessage does not carry user info
       switch (operation.getType()) {
         case CREATE: {
-          MetadataOperation.Create put = (MetadataOperation.Create) operation;
+          MetadataOperation.Create create = (MetadataOperation.Create) operation;
           try {
-            // validate all the new properties
-            boolean hasCreateProperties = validateProperties(put.getEntity(), put.getOnCreateProperties());
-            boolean hasProperties = validateProperties(put.getEntity(), put.getProperties());
-            boolean hasTags = validateTags(put.getEntity(), put.getTags());
+            // validate all the new metadata
+            boolean hasProperties = validateProperties(create.getEntity(), create.getProperties());
+            boolean hasTags = validateTags(create.getEntity(), create.getTags());
             // TODO (CDAP-14584): All the following operations should be one method
             // find the existing metadata
-            MetadataRecordV2 existing = metadataStore.getMetadata(MetadataScope.SYSTEM, put.getEntity());
+            MetadataRecordV2 existing = metadataStore.getMetadata(MetadataScope.SYSTEM, create.getEntity());
             // figure out what properties to set
-            Map<String, String> propertiesToSet = hasProperties ? new HashMap<>(put.getProperties()) : new HashMap<>();
-            if (hasCreateProperties) {
-              for (Map.Entry<String, String> entry : put.getOnCreateProperties().entrySet()) {
-                String existingValue = existing.getProperties().get(entry.getKey());
-                propertiesToSet.put(entry.getKey(), existingValue != null ? existingValue : entry.getValue());
+            Map<String, String> propertiesToSet =
+              hasProperties ? new HashMap<>(create.getProperties()) : new HashMap<>();
+            // creation time never changes: copy it to properties to set
+            if (existing.getProperties().containsKey(SystemMetadataProvider.CREATION_TIME_KEY)) {
+              propertiesToSet.put(SystemMetadataProvider.CREATION_TIME_KEY,
+                                  existing.getProperties().get(SystemMetadataProvider.CREATION_TIME_KEY));
+            }
+            // description must be preserved if new properties don't have it
+            if (!propertiesToSet.containsKey(SystemMetadataProvider.DESCRIPTION_KEY)) {
+              String description = existing.getProperties().get(SystemMetadataProvider.DESCRIPTION_KEY);
+              if (description != null) {
+                propertiesToSet.put(SystemMetadataProvider.DESCRIPTION_KEY, description);
               }
             }
             // now perform all updates: remove all tags and properties, set new tags and properties
@@ -410,7 +417,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
               metadataStore.setProperties(MetadataScope.SYSTEM, entity, propertiesToSet);
             }
             if (hasTags) {
-              metadataStore.addTags(MetadataScope.SYSTEM, entity, put.getTags());
+              metadataStore.addTags(MetadataScope.SYSTEM, entity, create.getTags());
             }
           } catch (InvalidMetadataException e) {
             LOG.warn("Ignoring invalid metadata operation {} from TMS: {}", operation,

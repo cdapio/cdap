@@ -18,6 +18,9 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.data2.metadata.MetadataConstants;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Collections;
 import java.util.Map;
@@ -37,6 +40,9 @@ public interface SystemMetadataProvider {
   String VERSION_KEY = "version";
   String EXPLORE_TAG = "explore";
 
+  String PLUGIN_KEY_PREFIX = "plugin";
+  String PLUGIN_VERSION_KEY_PREFIX = "plugin-version";
+
   /**
    * Define the {@link MetadataScope#SYSTEM system} metadata properties to add for this entity.
    */
@@ -55,5 +61,24 @@ public interface SystemMetadataProvider {
   @Nullable
   default String getSchemaToAdd() {
     return null;
+  }
+
+  static void addPlugin(PluginClass pluginClass, @Nullable String version,
+                        ImmutableMap.Builder<String, String> properties) {
+    String name = pluginClass.getName();
+    String type = pluginClass.getType();
+    // Need both name and type in the key because two plugins of different types could have the same name.
+    // However, the composite of name + type is guaranteed to be unique
+    properties.put(
+      PLUGIN_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name + MetadataConstants.KEYVALUE_SEPARATOR + type,
+      name + MetadataConstants.KEYVALUE_SEPARATOR + type
+    );
+    if (version != null) {
+      properties.put(
+        PLUGIN_VERSION_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name +
+          MetadataConstants.KEYVALUE_SEPARATOR + type,
+        name + MetadataConstants.KEYVALUE_SEPARATOR + version
+      );
+    }
   }
 }

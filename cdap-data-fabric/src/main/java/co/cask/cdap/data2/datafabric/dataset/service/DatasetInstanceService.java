@@ -36,11 +36,11 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetCreationResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.DelegateSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadata;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.DatasetInstanceOperation;
+import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
@@ -97,7 +97,6 @@ public class DatasetInstanceService {
   private final LoadingCache<DatasetId, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final MetadataStore metadataStore;
   private boolean publishCUD;
 
   private AuditPublisher auditPublisher;
@@ -110,7 +109,6 @@ public class DatasetInstanceService {
                                 @Named(DataSetServiceModules.NOAUTH_DATASET_TYPE_SERVICE)
                                   DatasetTypeService noAuthDatasetTypeService,
                                 DatasetInstanceManager instanceManager,
-                                MetadataStore metadataStore,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer,
@@ -120,7 +118,6 @@ public class DatasetInstanceService {
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
     this.noAuthDatasetTypeService = noAuthDatasetTypeService;
     this.instanceManager = instanceManager;
-    this.metadataStore = metadataStore;
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.ownerAdmin = ownerAdmin;
@@ -604,7 +601,7 @@ public class DatasetInstanceService {
 
     // Remove metadata for the dataset
     LOG.trace("Removing metadata for dataset {}", instance);
-    metadataStore.removeMetadata(instance.toMetadataEntity());
+    metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(instance.toMetadataEntity()));
     LOG.trace("Removed metadata for dataset {}", instance);
 
     publishAudit(instance, AuditType.DELETE);
@@ -678,7 +675,7 @@ public class DatasetInstanceService {
 
   private void publishMetadata(DatasetId dataset, SystemMetadata metadata) {
     if (metadata != null && !metadata.isEmpty()) {
-      SystemMetadataWriter metadataWriter = new DelegateSystemMetadataWriter(metadataStore, dataset, metadata);
+      SystemMetadataWriter metadataWriter = new DelegateSystemMetadataWriter(metadataPublisher, dataset, metadata);
       metadataWriter.write();
     }
   }

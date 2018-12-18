@@ -35,12 +35,14 @@ public class MetadataValidator {
   private static final CharMatcher KEY_AND_TAG_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
     .or(CharMatcher.inRange('0', '9'))
+    .or(CharMatcher.is(':'))
     .or(CharMatcher.is('_'))
     .or(CharMatcher.is('-'));
 
   private static final CharMatcher VALUE_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
     .or(CharMatcher.inRange('0', '9'))
+    .or(CharMatcher.is(':'))
     .or(CharMatcher.is('_'))
     .or(CharMatcher.is('-'))
     .or(CharMatcher.WHITESPACE);
@@ -75,8 +77,10 @@ public class MetadataValidator {
       validateLength(metadataEntity, entry.getKey());
 
       // validate value
-      validateValueFormat(metadataEntity, entry.getValue());
-      validateLength(metadataEntity, entry.getValue());
+      if (!"description".equals(entry.getKey()) && !"schema".equals(entry.getKey())) {
+        validateValueFormat(metadataEntity, entry.getValue());
+        validateLength(metadataEntity, entry.getValue());
+      }
     }
     return true;
   }
@@ -120,7 +124,7 @@ public class MetadataValidator {
     if (!KEY_AND_TAG_MATCHER.matchesAllOf(keyword)) {
       throw new InvalidMetadataException(metadataEntity, String.format(
         "Illegal format for '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), " +
-          "underscores and hyphens.", keyword));
+          "colons, underscores and hyphens.", keyword));
     }
   }
 

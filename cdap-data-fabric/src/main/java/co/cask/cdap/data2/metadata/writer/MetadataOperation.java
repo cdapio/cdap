@@ -98,26 +98,18 @@ public abstract class MetadataOperation {
    * an entity is modified.
    */
   public static class Create extends MetadataOperation {
-    private final Map<String, String> onCreateProperties;
     private final Map<String, String> properties;
     private final Set<String> tags;
 
     /**
      * @param entity The metadata entity that this operation applies to
-     * @param onCreateProperties Properties that should only be added if they did not exist yet
      * @param properties The properties to be deleted
      * @param tags The names of the tags to be deleted
      */
-    public Create(MetadataEntity entity, Map<String, String> onCreateProperties,
-                  Map<String, String> properties, Set<String> tags) {
+    public Create(MetadataEntity entity, Map<String, String> properties, Set<String> tags) {
       super(Type.CREATE, entity);
-      this.onCreateProperties = onCreateProperties;
       this.properties = ImmutableMap.copyOf(properties);
       this.tags = ImmutableSet.copyOf(tags);
-    }
-
-    public Map<String, String> getOnCreateProperties() {
-      return onCreateProperties;
     }
 
     public Map<String, String> getProperties() {
@@ -134,14 +126,13 @@ public abstract class MetadataOperation {
         return false;
       }
       Create that = (Create) o;
-      return Objects.equals(onCreateProperties, that.onCreateProperties)
-        && Objects.equals(properties, that.properties)
+      return Objects.equals(properties, that.properties)
         && Objects.equals(tags, that.tags);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(super.hashCode(), onCreateProperties, properties, tags);
+      return Objects.hash(super.hashCode(), properties, tags);
     }
 
     @Override
@@ -149,7 +140,6 @@ public abstract class MetadataOperation {
       return "Create{" +
         "type=" + type +
         ", entity=" + entity +
-        ", onCreateProperties=" + onCreateProperties +
         ", properties=" + properties +
         ", tags=" + tags +
         '}';

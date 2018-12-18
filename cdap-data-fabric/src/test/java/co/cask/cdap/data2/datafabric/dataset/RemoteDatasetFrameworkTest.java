@@ -48,7 +48,6 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
@@ -179,8 +178,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService,
                                                               authenticationContext);
     DatasetInstanceService instanceService = new DatasetInstanceService(cConf,
-                                                                        typeService, noAuthTypeService, instanceManager,
-                                                                        new NoOpMetadataStore(), opExecutor,
+                                                                        typeService, noAuthTypeService,
+                                                                        instanceManager, opExecutor,
                                                                         exploreFacade, namespaceQueryAdmin, ownerAdmin,
                                                                         authorizationEnforcer, authenticationContext);
     instanceService.setAuditPublisher(inMemoryAuditPublisher);

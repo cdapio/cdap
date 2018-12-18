@@ -45,6 +45,7 @@ import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.SystemMetadataProvider;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
@@ -312,6 +313,45 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
     subscriberService.startAndWait();
     try {
+      final String descriptionKey = SystemMetadataProvider.DESCRIPTION_KEY;
+      final String creationTimeKey = SystemMetadataProvider.CREATION_TIME_KEY;
+
+      // publish a create event
+      Map<String, String> props = ImmutableMap.of("x", "y", descriptionKey, "desc1", creationTimeKey, "123456");
+      Set<String> tags = ImmutableSet.of("sometag");
+      metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Create(entity, props, tags));
+
+      // wait until meta data is written
+      waitForSystemMetadata(entity, metadataStore, 3, 1);
+
+      // validate correctness of meta data after create
+      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+      Assert.assertEquals(props, meta.getProperties());
+      Assert.assertEquals(tags, meta.getTags());
+
+      // publish another create event with different create time, no description, different tags
+      Set<String> tags2 = ImmutableSet.of("another", "two");
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(
+        entity, ImmutableMap.of(creationTimeKey, "9876543", "new", "prop"), tags2));
+      // wait until meta data is written
+      waitForSystemMetadata(entity, metadataStore, 3, 2);
+
+      // validate correctness of meta data: creation time and description unchanged, other new property there
+      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+      Assert.assertEquals(ImmutableMap.of(creationTimeKey, "123456", descriptionKey, "desc1", "new", "prop"),
+                          meta.getProperties());
+      Assert.assertEquals(tags2, meta.getTags());
+
+      // publish another create event without create time, different description, no tags
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(
+        entity, ImmutableMap.of(descriptionKey, "some"), Collections.emptySet()));
+      // wait until meta data is written
+      waitForSystemMetadata(entity, metadataStore, 2, 0);
+
+      // validate correctness of meta data: same creation time, updated description and other props and tags
+      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+      Assert.assertEquals(ImmutableMap.of(creationTimeKey, "123456", descriptionKey, "some"), meta.getProperties());
+      Assert.assertEquals(Collections.emptySet(), meta.getTags());
 
       // publish metadata put
       Map<String, String> propertiesToAdd = ImmutableMap.of("a", "x", "b", "z");
@@ -382,32 +422,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
       // wait until meta data is written
       waitForMetadata(entity, metadataStore, 2, 2);
-
-      // publish a create event
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(entity,
-                                                                            ImmutableMap.of("crd", "1"),
-                                                                            ImmutableMap.of("x", "y"),
-                                                                            ImmutableSet.of("t", "tt")));
-      // wait until meta data is written
-      waitForSystemMetadata(entity, metadataStore, 2, 2);
-
-      // validate correctness of meta data after create
-      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
-      Assert.assertEquals(ImmutableMap.of("crd", "1", "x", "y"), meta.getProperties());
-      Assert.assertEquals(ImmutableSet.of("t", "tt"), meta.getTags());
-
-      // publish another create event
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(entity,
-                                                                            ImmutableMap.of("crd", "2"),
-                                                                            ImmutableMap.of("x", "z", "y", "y"),
-                                                                            ImmutableSet.of("a")));
-      // wait until meta data is written
-      waitForSystemMetadata(entity, metadataStore, 3, 1);
-
-      // validate correctness of meta data after create again
-      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
-      Assert.assertEquals(ImmutableMap.of("crd", "1", "x", "z", "y", "y"), meta.getProperties());
-      Assert.assertEquals(ImmutableSet.of("a"), meta.getTags());
 
       // publish drop entity
       metadataPublisher.publish(workflowRunId, new MetadataOperation.Drop(entity));

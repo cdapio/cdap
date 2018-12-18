@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.metadata.system;
 
-import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Map;
@@ -30,10 +30,10 @@ public class DelegateSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final SystemMetadataProvider metadataProvider;
 
-  public DelegateSystemMetadataWriter(MetadataStore metadataStore,
+  public DelegateSystemMetadataWriter(MetadataPublisher metadataPublisher,
                                       NamespacedEntityId entity,
                                       SystemMetadataProvider metadataProvider) {
-    super(metadataStore, entity);
+    super(metadataPublisher, entity);
     this.metadataProvider = metadataProvider;
   }
 

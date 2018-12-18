@@ -21,7 +21,7 @@ import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -79,7 +79,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final MetricStore metricStore;
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
-  private final MetadataStore metadataStore;
+  private final MetadataPublisher metadataPublisher;
   private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
   private final co.cask.cdap.scheduler.Scheduler programScheduler;
@@ -93,7 +93,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           StreamAdmin streamAdmin,
                           @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                          MetadataStore metadataStore,
+                          MetadataPublisher metadataPublisher,
                           Impersonator impersonator, AuthenticationContext authenticationContext,
                           Scheduler programScheduler,
                           AuthorizationEnforcer authorizationEnforcer) {
@@ -110,7 +110,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.metricStore = metricStore;
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
-    this.metadataStore = metadataStore;
+    this.metadataPublisher = metadataPublisher;
     this.impersonator = impersonator;
     this.authenticationContext = authenticationContext;
     this.programScheduler = programScheduler;
@@ -129,11 +129,11 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                                                      authenticationContext));
     pipeline.addLast(new CreateStreamsStage(streamAdmin, ownerAdmin, authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory, queueAdmin,
-                                                    metricStore, metadataStore, impersonator, programScheduler));
+                                                    metricStore, metadataPublisher, impersonator, programScheduler));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
-    pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
+    pipeline.addLast(new SystemMetadataWriterStage(metadataPublisher));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);
   }

@@ -27,7 +27,6 @@ import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -55,8 +54,8 @@ public class MessagingMetadataPublisher implements MetadataPublisher {
   }
 
   @Override
-  public void publish(ProgramRunId programRunId, MetadataOperation operation) {
-    MetadataMessage message = new MetadataMessage(Type.METADATA_OPERATION, programRunId, GSON.toJsonTree(operation));
+  public void publish(EntityId publisher, MetadataOperation operation) {
+    MetadataMessage message = new MetadataMessage(Type.METADATA_OPERATION, publisher, GSON.toJsonTree(operation));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
     LOG.trace("Publishing message {} to topic {}", message, topic);
     try {
