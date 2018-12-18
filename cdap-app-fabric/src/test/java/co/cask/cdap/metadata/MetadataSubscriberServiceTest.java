@@ -377,6 +377,44 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       // wait until meta data is written
       waitForMetadata(entity, metadataStore, 0, 0);
 
+      // publish metadata put tags
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
+
+      // wait until meta data is written
+      waitForMetadata(entity, metadataStore, 2, 2);
+
+      // publish a create event
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(entity,
+                                                                            ImmutableMap.of("crd", "1"),
+                                                                            ImmutableMap.of("x", "y"),
+                                                                            ImmutableSet.of("t", "tt")));
+      // wait until meta data is written
+      waitForSystemMetadata(entity, metadataStore, 2, 2);
+
+      // validate correctness of meta data after create
+      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+      Assert.assertEquals(ImmutableMap.of("crd", "1", "x", "y"), meta.getProperties());
+      Assert.assertEquals(ImmutableSet.of("t", "tt"), meta.getTags());
+
+      // publish another create event
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(entity,
+                                                                            ImmutableMap.of("crd", "2"),
+                                                                            ImmutableMap.of("x", "z", "y", "y"),
+                                                                            ImmutableSet.of("a")));
+      // wait until meta data is written
+      waitForSystemMetadata(entity, metadataStore, 3, 1);
+
+      // validate correctness of meta data after create again
+      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+      Assert.assertEquals(ImmutableMap.of("crd", "1", "x", "z", "y", "y"), meta.getProperties());
+      Assert.assertEquals(ImmutableSet.of("a"), meta.getTags());
+
+      // publish drop entity
+      metadataPublisher.publish(workflowRunId, new MetadataOperation.Drop(entity));
+      // wait until meta data is deleted
+      waitForSystemMetadata(entity, metadataStore, 0, 0);
+      waitForMetadata(entity, metadataStore, 0, 0);
+
     } finally {
       subscriberService.stopAndWait();
     }
@@ -571,6 +609,14 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                                int tagSize) throws TimeoutException, InterruptedException, ExecutionException {
     Tasks.waitFor(true, () -> {
       MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.USER, entity);
+      return record.getProperties().size() == propertiesSize && record.getTags().size() == tagSize;
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+  }
+
+  private void waitForSystemMetadata(MetadataEntity entity, MetadataStore metadataStore, int propertiesSize,
+                                     int tagSize) throws TimeoutException, InterruptedException, ExecutionException {
+    Tasks.waitFor(true, () -> {
+      MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
       return record.getProperties().size() == propertiesSize && record.getTags().size() == tagSize;
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }

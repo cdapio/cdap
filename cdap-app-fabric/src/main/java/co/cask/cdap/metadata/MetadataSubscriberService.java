@@ -22,10 +22,12 @@ import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -34,6 +36,7 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
@@ -71,7 +74,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -90,7 +92,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
-  private final MetadataAdmin metadataAdmin; // TODO: Refactor metadataStore to run within existing transaction
+  private final MetadataStore metadataStore; // TODO: Refactor metadataStore to run within existing transaction
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
 
@@ -102,7 +104,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
                             DatasetFramework datasetFramework, TransactionSystemClient txClient,
                             MetricsCollectionService metricsCollectionService,
-                            MetadataAdmin metadataAdmin) {
+                            MetadataStore metadataStore) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
       true, cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
@@ -122,7 +124,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.datasetFramework = datasetFramework;
-    this.metadataAdmin = metadataAdmin;
+    this.metadataStore = metadataStore;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
@@ -213,7 +215,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case WORKFLOW_STATE:
             return new WorkflowProcessor(datasetContext);
           case METADATA_OPERATION:
-            return new MetadataOperationProcessor();
+            return new MetadataOperationProcessor(cConf);
           case DATASET_OPERATION:
             return new DatasetOperationMessageProcessor(datasetFramework);
           case PROFILE_ASSIGNMENT:
@@ -371,7 +373,11 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    * The {@link MetadataMessageProcessor} for metadata operations.
    * It receives operations and applies them to the metadata store.
    */
-  private class MetadataOperationProcessor implements MetadataMessageProcessor {
+  private class MetadataOperationProcessor extends MetadataValidator implements MetadataMessageProcessor {
+
+    MetadataOperationProcessor(CConfiguration cConf) {
+      super(cConf);
+    }
 
     @Override
     public void processMessage(MetadataMessage message) {
@@ -380,20 +386,52 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       LOG.trace("Received {}", operation);
       // TODO: Authorize that the operation is allowed. Currently MetadataMessage does not carry user info
       switch (operation.getType()) {
-        case CREATE:
+        case CREATE: {
+          MetadataOperation.Create put = (MetadataOperation.Create) operation;
+          try {
+            // validate all the new properties
+            boolean hasCreateProperties = validateProperties(put.getEntity(), put.getOnCreateProperties());
+            boolean hasProperties = validateProperties(put.getEntity(), put.getProperties());
+            boolean hasTags = validateTags(put.getEntity(), put.getTags());
+            // TODO (CDAP-14584): All the following operations should be one method
+            // find the existing metadata
+            MetadataRecordV2 existing = metadataStore.getMetadata(MetadataScope.SYSTEM, put.getEntity());
+            // figure out what properties to set
+            Map<String, String> propertiesToSet = hasProperties ? new HashMap<>(put.getProperties()) : new HashMap<>();
+            if (hasCreateProperties) {
+              for (Map.Entry<String, String> entry : put.getOnCreateProperties().entrySet()) {
+                String existingValue = existing.getProperties().get(entry.getKey());
+                propertiesToSet.put(entry.getKey(), existingValue != null ? existingValue : entry.getValue());
+              }
+            }
+            // now perform all updates: remove all tags and properties, set new tags and properties
+            metadataStore.removeMetadata(MetadataScope.SYSTEM, entity);
+            if (!propertiesToSet.isEmpty()) {
+              metadataStore.setProperties(MetadataScope.SYSTEM, entity, propertiesToSet);
+            }
+            if (hasTags) {
+              metadataStore.addTags(MetadataScope.SYSTEM, entity, put.getTags());
+            }
+          } catch (InvalidMetadataException e) {
+            LOG.warn("Ignoring invalid metadata operation {} from TMS: {}", operation,
+                     GSON.toJson(message.getRawPayload()), e);
+          }
+          break;
+        }
         case DROP: {
-          // TODO (CDAP-14587) add support for system scope and adding on create only
-          throw new UnsupportedOperationException(operation.getType().toString());
+          metadataStore.removeMetadata(operation.getEntity());
+          break;
         }
         case PUT: {
           MetadataOperation.Put put = (MetadataOperation.Put) operation;
           try {
-            if (put.getProperties() != null && !put.getProperties().isEmpty()) {
-              metadataAdmin.addProperties(entity, put.getProperties());
+            boolean hasProperties = validateProperties(put.getEntity(), put.getProperties());
+            boolean hasTags = validateTags(put.getEntity(), put.getTags());
+            if (hasProperties) {
+              metadataStore.setProperties(put.getScope(), entity, put.getProperties());
             }
-            if (put.getTags() != null && !put.getTags().isEmpty()) {
-              Set<String> toAdd = put.getTags();
-              metadataAdmin.addTags(entity, toAdd);
+            if (hasTags) {
+              metadataStore.addTags(put.getScope(), entity, put.getTags());
             }
           } catch (InvalidMetadataException e) {
             LOG.warn("Ignoring invalid metadata operation {} from TMS: {}", operation,
@@ -404,23 +442,23 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         case DELETE: {
           MetadataOperation.Delete delete = (MetadataOperation.Delete) operation;
           if (delete.getProperties() != null && !delete.getProperties().isEmpty()) {
-            metadataAdmin.removeProperties(entity, delete.getProperties());
+            metadataStore.removeProperties(delete.getScope(), entity, delete.getProperties());
           }
           if (delete.getTags() != null && !delete.getTags().isEmpty()) {
-            metadataAdmin.removeTags(entity, delete.getTags());
+            metadataStore.removeTags(delete.getScope(), entity, delete.getTags());
           }
           break;
         }
         case DELETE_ALL: {
-          metadataAdmin.removeMetadata(entity);
+          metadataStore.removeMetadata(((MetadataOperation.DeleteAll) operation).getScope(), entity);
           break;
         }
         case DELETE_ALL_PROPERTIES: {
-          metadataAdmin.removeProperties(entity);
+          metadataStore.removeProperties(((MetadataOperation.DeleteAllProperties) operation).getScope(), entity);
           break;
         }
         case DELETE_ALL_TAGS: {
-          metadataAdmin.removeTags(entity);
+          metadataStore.removeTags(((MetadataOperation.DeleteAllTags) operation).getScope(), entity);
           break;
         }
         default:

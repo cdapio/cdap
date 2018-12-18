@@ -137,20 +137,17 @@ public class DefaultMetadataStore implements MetadataStore {
     this.auditPublisher = auditPublisher;
   }
 
-  /**
-   * Adds/updates metadata for the specified {@link MetadataEntity}.
-   */
   @Override
   public void setProperties(final MetadataScope scope, final MetadataEntity metadataEntity,
-                            final Map<String, String> currentProperties) {
-    MetadataChange metadataChange = execute(mds -> mds.setProperty(metadataEntity, currentProperties), scope);
+                            final Map<String, String> properties) {
+    MetadataChange metadataChange = execute(mds -> mds.setProperties(metadataEntity, properties), scope);
     MetadataRecordV2 previous = new MetadataRecordV2(metadataEntity, scope,
                                                      metadataChange.getExisting().getProperties(),
                                                      metadataChange.getExisting().getTags());
     final ImmutableMap.Builder<String, String> propAdditions = ImmutableMap.builder();
     final ImmutableMap.Builder<String, String> propDeletions = ImmutableMap.builder();
     // Iterating over properties all over again, because we want to move the diff calculation outside the transaction.
-    for (Map.Entry<String, String> entry : currentProperties.entrySet()) {
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
       String existingValue = previous.getProperties().get(entry.getKey());
       if (existingValue != null && existingValue.equals(entry.getValue())) {
         // Value already exists and is the same as the value being passed. No update necessary.

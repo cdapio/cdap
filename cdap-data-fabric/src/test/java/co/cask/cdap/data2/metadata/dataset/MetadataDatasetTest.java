@@ -123,7 +123,7 @@ public class MetadataDatasetTest {
     // Set some properties
     txnl.execute(() -> {
       dataset.setProperty(app1, "akey1", "avalue1");
-      MetadataChange metadataChange = dataset.setProperty(flow1, Collections.emptyMap());
+      MetadataChange metadataChange = dataset.setProperties(flow1, Collections.emptyMap());
       Assert.assertEquals(metadataChange.getExisting(), new Metadata(flow1, Collections.emptyMap(),
                                                                      Collections.emptySet()));
       Assert.assertEquals(metadataChange.getLatest(), new Metadata(flow1, Collections.emptyMap(),

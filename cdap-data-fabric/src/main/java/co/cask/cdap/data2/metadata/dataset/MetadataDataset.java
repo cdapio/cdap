@@ -264,7 +264,7 @@ public class MetadataDataset extends AbstractDataset {
    * overwritten)
    * @return {@link MetadataChange} representing the change in metadata for the metadataEntity
    */
-  public MetadataChange setProperty(MetadataEntity metadataEntity, Map<String, String> properties) {
+  public MetadataChange setProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
     Metadata previousMetadata, finalMetadata;
     Iterator<Map.Entry<String, String>> iterator = properties.entrySet().iterator();
     // properties can have none, one or more than one entry to be updated
