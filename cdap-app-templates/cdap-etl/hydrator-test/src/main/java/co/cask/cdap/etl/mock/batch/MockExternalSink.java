@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -29,18 +30,15 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.internal.app.runtime.batch.BasicOutputFormatProvider;
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
-import com.google.gson.Gson;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FilenameFilter;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,7 +54,6 @@ import javax.annotation.Nullable;
 public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, String> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   public static final String PLUGIN_NAME = "MockExternalSink";
-  private static final Gson GSON = new Gson();
   private final Config config;
 
   public MockExternalSink(Config config) {
@@ -74,7 +71,7 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) throws Exception {
+  public void prepareRun(BatchSinkContext context) {
     OutputFormatProvider outputFormatProvider =
       new BasicOutputFormatProvider(TextOutputFormat.class.getCanonicalName(),
                                     ImmutableMap.of(TextOutputFormat.OUTDIR, config.dirName));
@@ -91,7 +88,7 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<NullWritable, String>> emitter)
     throws Exception {
-    emitter.emit(new KeyValue<>(NullWritable.get(), GSON.toJson(input)));
+    emitter.emit(new KeyValue<>(NullWritable.get(), StructuredRecordStringConverter.toJsonString(input)));
   }
 
   /**
@@ -117,27 +114,21 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
    *
    * @param dirName directory where output files are found
    */
-  public static List<StructuredRecord> readOutput(String dirName) throws Exception {
+  public static List<StructuredRecord> readOutput(String dirName, Schema schema) throws Exception {
     File dir = new File(dirName);
-    File[] files = dir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.startsWith("part");
-      }
-    });
+    File[] files = dir.listFiles((directory, name) -> name.startsWith("part"));
     if (files == null) {
       return Collections.emptyList();
     }
 
     List<StructuredRecord> records = new ArrayList<>();
     for (File file : files) {
-      records.addAll(Lists.transform(Files.readLines(file, Charsets.UTF_8),
-                                     new Function<String, StructuredRecord>() {
-                                       @Override
-                                       public StructuredRecord apply(String input) {
-                                         return GSON.fromJson(input, StructuredRecord.class);
-                                       }
-                                     }));
+      try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          records.add(StructuredRecordStringConverter.fromJsonString(line, schema));
+        }
+      }
     }
     return records;
   }

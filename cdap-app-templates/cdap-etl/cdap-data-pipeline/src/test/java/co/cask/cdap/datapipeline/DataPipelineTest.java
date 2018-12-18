@@ -2722,8 +2722,8 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(ProgramRunStatus.COMPLETED, history.get(0).getStatus());
 
     // Assert output
-    Assert.assertEquals(allInput, MockExternalSink.readOutput(outputSubDir1.getAbsolutePath()));
-    Assert.assertEquals(allInput, MockExternalSink.readOutput(outputSubDir2.getAbsolutePath()));
+    Assert.assertEquals(allInput, MockExternalSink.readOutput(outputSubDir1.getAbsolutePath(), schema));
+    Assert.assertEquals(allInput, MockExternalSink.readOutput(outputSubDir2.getAbsolutePath(), schema));
 
     if (!backwardsCompatible) {
       // Assert that external datasets got created
