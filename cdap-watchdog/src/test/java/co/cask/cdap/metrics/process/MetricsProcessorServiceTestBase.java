@@ -29,6 +29,8 @@ import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.metrics.MetricsTestBase;
@@ -148,6 +150,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
         bind(MetricDatasetFactory.class).to(LocalMetricsDatasetFactory.class).in(Scopes.SINGLETON);
         bind(MetricStore.class).to(DefaultMetricStore.class).in(Scopes.SINGLETON);
+        bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
       }
     }));
     return list;
