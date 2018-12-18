@@ -20,6 +20,11 @@ package co.cask.cdap.spi.data.table.field;
  * Convenience methods to work on {@link Field} and {@link FieldType}.
  */
 public final class Fields {
+
+  private Fields() {
+    // to prevent instantiation of the class
+  }
+
   /**
    * @return the FieldType of INTEGER with the given name.
    */
@@ -56,7 +61,7 @@ public final class Fields {
   }
 
   /**
-    * @return true if the type is allowed to be part of a primary key, false otherwise.
+   * @return true if the type is allowed to be part of a primary key, false otherwise.
    */
   public static boolean isPrimaryKeyType(FieldType.Type type) {
     return FieldType.PRIMARY_KEY_TYPES.contains(type);

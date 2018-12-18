@@ -44,7 +44,8 @@ public interface StructuredTable {
    * Read a single row with all the columns from the table.
    *
    * @param keys the primary key of the row to read
-   * @return the row addressed by the primary key
+   * @return if the optional is not empty, the row addressed by the primary key.
+   * If the optional is empty then the row is missing in the table
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types do not match.
    */
   Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException;

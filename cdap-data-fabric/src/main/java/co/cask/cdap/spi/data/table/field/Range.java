@@ -43,7 +43,7 @@ public final class Range {
    * @param end the fields forming the end of the range
    * @param endBound the match type for the end fields
    */
-  private Range(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
+  public Range(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
     this.begin = begin;
     this.beginBound = beginBound;
     this.end = end;
