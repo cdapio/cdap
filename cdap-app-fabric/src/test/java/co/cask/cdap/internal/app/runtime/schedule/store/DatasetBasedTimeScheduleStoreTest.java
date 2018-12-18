@@ -30,6 +30,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.scheduler.LogPrintingJob;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -123,6 +125,7 @@ public class DatasetBasedTimeScheduleStoreTest {
                                       protected void configure() {
                                         bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
                                         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
+                                        bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
                                       }
                                     });
     txService = injector.getInstance(TransactionManager.class);

@@ -18,8 +18,6 @@ package co.cask.cdap.stream.store;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
@@ -32,6 +30,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -65,7 +65,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   private static NamespaceStore store;
 
   @BeforeClass
-  public static void init() throws Exception {
+  public static void init() {
     Injector injector = Guice.createInjector(
       new ConfigModule(CConfiguration.create(), new Configuration()),
       new DataSetServiceModules().getInMemoryModules(),
@@ -87,6 +87,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
           bind(Store.class).to(DefaultStore.class);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
+          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
         }
       }
     );
@@ -100,7 +101,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   }
 
   @AfterClass
-  public static void destroy() throws Exception {
+  public static void destroy() {
     datasetService.stopAndWait();
     transactionManager.stopAndWait();
   }
@@ -111,7 +112,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   }
 
   @Override
-  protected void createNamespace(String namespace) throws AlreadyExistsException {
+  protected void createNamespace(String namespace) {
     store.create(
       new NamespaceMeta.Builder()
         .setName(namespace)
@@ -120,7 +121,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   }
 
   @Override
-  protected void deleteNamespace(String namespaceId) throws NotFoundException {
+  protected void deleteNamespace(String namespaceId) {
     store.delete(new NamespaceId(namespaceId));
   }
 }

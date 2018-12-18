@@ -42,6 +42,7 @@ public class MetadataValidator {
   private static final CharMatcher VALUE_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
     .or(CharMatcher.inRange('0', '9'))
+    .or(CharMatcher.is('.'))
     .or(CharMatcher.is(':'))
     .or(CharMatcher.is('_'))
     .or(CharMatcher.is('-'))
@@ -136,7 +137,7 @@ public class MetadataValidator {
     if (!VALUE_MATCHER.matchesAllOf(keyword)) {
       throw new InvalidMetadataException(metadataEntity, String.format(
         "Illegal format for the value '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), " +
-          "underscores, hyphens and whitespaces.", keyword));
+          "periods, colons, underscores, hyphens and whitespaces.", keyword));
     }
   }
 

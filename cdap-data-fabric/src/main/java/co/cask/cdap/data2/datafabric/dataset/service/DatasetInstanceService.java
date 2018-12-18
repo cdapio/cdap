@@ -86,7 +86,6 @@ import javax.annotation.Nullable;
 public class DatasetInstanceService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
-  private final CConfiguration cConf;
   private final DatasetTypeService authorizationDatasetTypeService;
   private final DatasetTypeService noAuthDatasetTypeService;
   private final DatasetInstanceManager instanceManager;
@@ -97,7 +96,7 @@ public class DatasetInstanceService {
   private final LoadingCache<DatasetId, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private boolean publishCUD;
+  private final boolean publishCUD;
 
   private AuditPublisher auditPublisher;
   private MetadataPublisher metadataPublisher;
@@ -114,7 +113,6 @@ public class DatasetInstanceService {
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
                                 MetadataPublisher metadataPublisher) {
-    this.cConf = cConf;
     this.opExecutorClient = opExecutorClient;
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
     this.noAuthDatasetTypeService = noAuthDatasetTypeService;
@@ -123,6 +121,7 @@ public class DatasetInstanceService {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.ownerAdmin = ownerAdmin;
     this.metadataPublisher = metadataPublisher;
+    this.publishCUD = cConf.getBoolean(Constants.Dataset.Manager.PUBLISH_CUD, false);
     this.metaCache = CacheBuilder.newBuilder().build(
       new CacheLoader<DatasetId, DatasetMeta>() {
         @Override
@@ -139,12 +138,6 @@ public class DatasetInstanceService {
   @Inject(optional = true)
   public void setAuditPublisher(AuditPublisher auditPublisher) {
     this.auditPublisher = auditPublisher;
-  }
-
-  @Inject(optional = true)
-  public void setMetadataPublisher(MetadataPublisher metadataPublisher) {
-    this.metadataPublisher = metadataPublisher;
-    this.publishCUD = cConf.getBoolean(Constants.Dataset.Manager.PUBLISH_CUD, false);
   }
 
   /**
