@@ -442,11 +442,11 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       // Verify the workflow profile metadata is updated to default profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(),
                     () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to default profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(),
                     () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
 
       // set default namespace to use my profile
@@ -455,10 +455,10 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
       // Verify the workflow profile metadata is updated to my profile
       Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to my profile
       Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // set app level to use my profile 2
       preferencesService.setProperties(appId,
@@ -470,30 +470,30 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
       // Verify the workflow profile metadata is updated to MyProfile2 which is at app level
       Tasks.waitFor(myProfile2.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to MyProfile2 which is at app level
       Tasks.waitFor(myProfile2.getScopedName(), () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // remove the preferences at instance level, should not affect the metadata
       preferencesService.deleteProperties();
 
       // Verify the workflow profile metadata is updated to default profile
       Tasks.waitFor(myProfile2.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to default profile
       Tasks.waitFor(myProfile2.getScopedName(), () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // remove app level pref should let the programs/schedules use ns level pref
       preferencesService.deleteProperties(appId);
 
       // Verify the workflow profile metadata is updated to MyProfile
       Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to MyProfile
       Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // remove ns level pref so no pref is there
       preferencesService.deleteProperties(NamespaceId.DEFAULT);
@@ -501,11 +501,11 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       // Verify the workflow profile metadata is updated to default profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(),
                     () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to default profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(),
                     () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       // stop and clean up the store
       preferencesService.deleteProperties(NamespaceId.DEFAULT);
