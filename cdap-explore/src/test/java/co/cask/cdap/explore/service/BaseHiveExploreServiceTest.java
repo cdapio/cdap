@@ -43,6 +43,8 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreClient;
@@ -442,6 +444,7 @@ public class BaseHiveExploreServiceTest {
           handlerBinder.addBinding().to(StreamViewHttpHandler.class);
           CommonHandlers.add(handlerBinder);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
+          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
 
           // Use LocalFileTransactionStateStorage, so that we can use transaction snapshots for assertions in test
           install(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
@@ -507,6 +510,7 @@ public class BaseHiveExploreServiceTest {
           CommonHandlers.add(handlerBinder);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
         }
       }
     );

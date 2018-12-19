@@ -20,7 +20,13 @@ import co.cask.cdap.proto.id.EntityId;
 
 /**
  * A metadata publisher that does nothing.
+ *
+ * Note: this class is used for testing only. It should really be in the test directory for this module.
+ * However, explore tests depend on this class, and expore tests cannot include the data-fabric test jar,
+ * because that disables explore and fails all explore test classes.
+ *
  */
+// TODO (CDAP-14675): Move this class to tests.
 public class NoOpMetadataPublisher implements MetadataPublisher {
   @Override
   public void publish(EntityId publisher, MetadataOperation metadataOperation) {
