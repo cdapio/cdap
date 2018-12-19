@@ -92,6 +92,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   @Override
   public void processMessage(MetadataMessage message) {
+    LOG.trace("Processing message: {}", message);
+
     EntityId entityId = message.getEntityId();
 
     switch (message.getType()) {
@@ -125,6 +127,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
                       "updated. Ignoring the message {}", namespaceId, message);
           return;
         }
+        LOG.trace("Updating profile metadata for {}", entityId);
         for (ApplicationMeta meta : appMetadataStore.getAllApplications(namespaceId.getNamespace())) {
           updateAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec());
         }
@@ -199,12 +202,14 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void updateAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec) {
+    LOG.trace("Updating profile metadata for {}", applicationId);
     for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, applicationId)) {
       updateProgramProfileMetadata(programId);
     }
   }
 
   private void updateProgramProfileMetadata(ProgramId programId) {
+    LOG.trace("Updating profile metadata for {}", programId);
     ProfileId profileId = getResolvedProfileId(programId);
     setProfileMetadata(programId, profileId);
 
@@ -215,6 +220,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   private void updateScheduleProfileMetadata(ProgramSchedule schedule, ProfileId profileId) {
     ScheduleId scheduleId = schedule.getScheduleId();
+    LOG.trace("Updating profile metadata for {}", scheduleId);
+    // if we are able to get profile from preferences or schedule properties, use it
+    // otherwise default profile will be used
     Optional<ProfileId> scheduleProfileId =
       SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(), schedule.getProperties());
     profileId = scheduleProfileId.orElse(profileId);
@@ -222,8 +230,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void setProfileMetadata(NamespacedEntityId entityId, ProfileId profileId) {
-    // if we are able to get profile from preferences or schedule properties, use it
-    // otherwise default profile will be used
+    LOG.trace("Setting profile metadata for {} to {}", entityId, profileId);
     metadataDataset.setProperty(entityId.toMetadataEntity(), PROFILE_METADATA_KEY, profileId.getScopedName());
   }
 
