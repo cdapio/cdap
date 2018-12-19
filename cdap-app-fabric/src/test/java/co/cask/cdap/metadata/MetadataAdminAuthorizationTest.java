@@ -57,7 +57,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -88,12 +87,8 @@ public class MetadataAdminAuthorizationTest {
     authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
                      Collections.singleton(Action.ADMIN));
     // Starting the Appfabric server will create the default namespace
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
-      }
-    }, 5, TimeUnit.SECONDS);
+    Tasks.waitFor(true, () -> injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT),
+                  5, TimeUnit.SECONDS);
     authorizer.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
                       Collections.singleton(Action.ADMIN));
   }
@@ -153,7 +148,7 @@ public class MetadataAdminAuthorizationTest {
       new SearchRequest(NamespaceId.DEFAULT, "*", types, SortInfo.DEFAULT, 0,
                         Integer.MAX_VALUE, 0, null, false, EnumSet.allOf(EntityScope.class));
 
-    Assert.assertFalse(metadataAdmin.search(searchRequest).getResults().isEmpty());
+    Tasks.waitFor(false, () -> metadataAdmin.search(searchRequest).getResults().isEmpty(), 5, TimeUnit.SECONDS);
     SecurityRequestContext.setUserId("bob");
     Assert.assertTrue(metadataAdmin.search(searchRequest).getResults().isEmpty());
   }
