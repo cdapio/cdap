@@ -36,11 +36,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesService;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
-import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
 import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
@@ -52,7 +49,6 @@ import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.data2.registry.BasicUsageRegistry;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.registry.UsageWriter;
@@ -125,9 +121,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
   @Test
   public void testSubscriber() throws InterruptedException, ExecutionException, TimeoutException {
-    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testSubscriberLineage");
-    DatasetId fieldLineageDatasetId = NamespaceId.DEFAULT.dataset("testSubscriberFieldLineage");
-    DatasetId usageDatasetId = NamespaceId.DEFAULT.dataset("testSubscriberUsage");
 
     // Write out some lineage information
     LineageWriter lineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
@@ -135,8 +128,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     lineageWriter.addAccess(run1, dataset1, AccessType.READ);
     lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
 
-    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
-                                                                     getTxClient(), lineageDatasetId);
+    LineageStoreReader lineageReader = getInjector().getInstance(LineageStoreReader.class);
 
     // Try to read lineage, which should be empty since we haven't start the MetadataSubscriberService yet.
     Set<NamespacedEntityId> entities = lineageReader.getEntitiesForRun(run1);
@@ -185,68 +177,51 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     usageWriter.register(spark1, dataset1);
     usageWriter.registerAll(Collections.singleton(spark1), dataset3);
 
-    // Try to read usage, should have nothing
-    UsageRegistry usageRegistry = new BasicUsageRegistry(getDatasetFramework(), getTxClient(), usageDatasetId);
-    Assert.assertTrue(usageRegistry.getDatasets(spark1).isEmpty());
+    // Verifies lineage has been written
+    Set<NamespacedEntityId> expectedLineage = new HashSet<>(Arrays.asList(run1.getParent(), dataset1, dataset2));
+    Tasks.waitFor(true, () -> expectedLineage.equals(lineageReader.getEntitiesForRun(run1)),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    // Start the MetadataSubscriberService
-    MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
-    subscriberService
-      .setLineageDatasetId(lineageDatasetId)
-      .setFieldLineageDatasetId(fieldLineageDatasetId)
-      .setUsageDatasetId(usageDatasetId)
-      .startAndWait();
+    // Emit one more lineage
+    lineageWriter.addAccess(run1, stream1, AccessType.UNKNOWN, flowlet1);
+    expectedLineage.add(stream1);
+    Tasks.waitFor(true, () -> expectedLineage.equals(lineageReader.getEntitiesForRun(run1)),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    try {
-      // Verifies lineage has been written
-      Set<NamespacedEntityId> expectedLineage = new HashSet<>(Arrays.asList(run1.getParent(), dataset1, dataset2));
-      Tasks.waitFor(true, () -> expectedLineage.equals(lineageReader.getEntitiesForRun(run1)),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    // There shouldn't be any lineage for the "spark1" program, as only usage has been emitted.
+    Assert.assertTrue(lineageReader.getRelations(spark1, 0L, Long.MAX_VALUE, x -> true).isEmpty());
 
-      // Emit one more lineage
-      lineageWriter.addAccess(run1, stream1, AccessType.UNKNOWN, flowlet1);
-      expectedLineage.add(stream1);
-      Tasks.waitFor(true, () -> expectedLineage.equals(lineageReader.getEntitiesForRun(run1)),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    FieldLineageReader fieldLineageReader = getInjector().getInstance(FieldLineageReader.class);
 
-      // There shouldn't be any lineage for the "spark1" program, as only usage has been emitted.
-      Assert.assertTrue(lineageReader.getRelations(spark1, 0L, Long.MAX_VALUE, x -> true).isEmpty());
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(read);
+    expectedOperations.add(anotherWrite);
+    List<ProgramRunOperations> expected = new ArrayList<>();
+    // Descending order of program execution
+    expected.add(new ProgramRunOperations(Collections.singleton(spark1Run3), expectedOperations));
 
-      FieldLineageReader fieldLineageReader = new DefaultFieldLineageReader(getDatasetFramework(), getTxClient(),
-                                                                            fieldLineageDatasetId);
+    expectedOperations = new HashSet<>();
+    expectedOperations.add(read);
+    expectedOperations.add(write);
+    expected.add(new ProgramRunOperations(new HashSet<>(Arrays.asList(spark1Run1, spark1Run2)),
+                                          expectedOperations));
 
-      Set<Operation> expectedOperations = new HashSet<>();
-      expectedOperations.add(read);
-      expectedOperations.add(anotherWrite);
-      List<ProgramRunOperations> expected = new ArrayList<>();
-      // Descending order of program execution
-      expected.add(new ProgramRunOperations(Collections.singleton(spark1Run3), expectedOperations));
+    EndPointField endPointField = new EndPointField(EndPoint.of("ns", "endpoint2"), "offset");
+    Tasks.waitFor(expected, () -> fieldLineageReader.getIncomingOperations(endPointField, 1L, Long.MAX_VALUE - 1),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-      expectedOperations = new HashSet<>();
-      expectedOperations.add(read);
-      expectedOperations.add(write);
-      expected.add(new ProgramRunOperations(new HashSet<>(Arrays.asList(spark1Run1, spark1Run2)),
-                                            expectedOperations));
+    // Verifies usage has been written
+    Set<EntityId> expectedUsage = new HashSet<>(Arrays.asList(dataset1, dataset3));
+    UsageRegistry usageRegistry = getInjector().getInstance(UsageRegistry.class);
+    Tasks.waitFor(true, () -> expectedUsage.equals(usageRegistry.getDatasets(spark1)),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-      EndPointField endPointField = new EndPointField(EndPoint.of("ns", "endpoint2"), "offset");
-      Tasks.waitFor(expected, () -> fieldLineageReader.getIncomingOperations(endPointField, 1L, Long.MAX_VALUE - 1),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
-      // Verifies usage has been written
-      Set<EntityId> expectedUsage = new HashSet<>(Arrays.asList(dataset1, dataset3));
-      Tasks.waitFor(true, () -> expectedUsage.equals(usageRegistry.getDatasets(spark1)),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
-      // Emit one more usage
-      usageWriter.register(flow1, stream1);
-      expectedUsage.clear();
-      expectedUsage.add(stream1);
-      Tasks.waitFor(true, () -> expectedUsage.equals(usageRegistry.getStreams(flow1)),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
-    } finally {
-      subscriberService.stopAndWait();
-    }
+    // Emit one more usage
+    usageWriter.register(flow1, stream1);
+    expectedUsage.clear();
+    expectedUsage.add(stream1);
+    Tasks.waitFor(true, () -> expectedUsage.equals(usageRegistry.getStreams(flow1)),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test
@@ -267,34 +242,27 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     WorkflowToken workflowToken = store.getWorkflowToken(workflow1, workflowRunId.getRun());
     Assert.assertNull(workflowToken.get("key"));
 
-    // Start the MetadataSubscriberService
-    MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
-    subscriberService.startAndWait();
-    try {
-      // Verify the WorkflowToken
-      Tasks.waitFor("value", () ->
-        Optional.ofNullable(
-          store.getWorkflowToken(workflow1, workflowRunId.getRun()).get("key")
-        ).map(Value::toString).orElse(null)
+    // Verify the WorkflowToken
+    Tasks.waitFor("value", () ->
+                    Optional.ofNullable(
+                      store.getWorkflowToken(workflow1, workflowRunId.getRun()).get("key")
+                    ).map(Value::toString).orElse(null)
       , 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-      // Verify the workflow node state
-      Tasks.waitFor(NodeStatus.RUNNING, () ->
-        store.getWorkflowNodeStates(workflowRunId).stream().findFirst()
-             .map(WorkflowNodeStateDetail::getNodeStatus).orElse(null),
-        10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    // Verify the workflow node state
+    Tasks.waitFor(NodeStatus.RUNNING, () ->
+                    store.getWorkflowNodeStates(workflowRunId).stream().findFirst()
+                      .map(WorkflowNodeStateDetail::getNodeStatus).orElse(null),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-      // Update the node state
-      workflowStateWriter.addWorkflowNodeState(workflowRunId,
-                                               new WorkflowNodeStateDetail("action1", NodeStatus.COMPLETED));
-      // Verify the updated node state
-      Tasks.waitFor(NodeStatus.COMPLETED, () ->
-        store.getWorkflowNodeStates(workflowRunId).stream().findFirst()
-             .map(WorkflowNodeStateDetail::getNodeStatus).orElse(null),
-        10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    } finally {
-      subscriberService.stopAndWait();
-    }
+    // Update the node state
+    workflowStateWriter.addWorkflowNodeState(workflowRunId,
+                                             new WorkflowNodeStateDetail("action1", NodeStatus.COMPLETED));
+    // Verify the updated node state
+    Tasks.waitFor(NodeStatus.COMPLETED, () ->
+                    store.getWorkflowNodeStates(workflowRunId).stream().findFirst()
+                      .map(WorkflowNodeStateDetail::getNodeStatus).orElse(null),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test
@@ -308,135 +276,137 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Assert.assertTrue(meta.getProperties().isEmpty());
     Assert.assertTrue(meta.getTags().isEmpty());
 
-    // Start the MetadataSubscriberService
     MetadataPublisher metadataPublisher = getInjector().getInstance(MessagingMetadataPublisher.class);
-    MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
-    subscriberService.startAndWait();
-    try {
-      final String descriptionKey = SystemMetadataProvider.DESCRIPTION_KEY;
-      final String creationTimeKey = SystemMetadataProvider.CREATION_TIME_KEY;
+    final String descriptionKey = SystemMetadataProvider.DESCRIPTION_KEY;
+    final String creationTimeKey = SystemMetadataProvider.CREATION_TIME_KEY;
 
-      // publish a create event
-      Map<String, String> props = ImmutableMap.of("x", "y", descriptionKey, "desc1", creationTimeKey, "123456");
-      Set<String> tags = ImmutableSet.of("sometag");
-      metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Create(entity, props, tags));
+    // publish a create event
+    Map<String, String> props = ImmutableMap.of("x", "y", descriptionKey, "desc1", creationTimeKey, "123456");
+    Set<String> tags = ImmutableSet.of("sometag");
+    metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Create(entity, props, tags));
 
-      // wait until meta data is written
-      waitForSystemMetadata(entity, metadataStore, 3, 1);
+    // wait until meta data is written
+    waitForSystemMetadata(entity, metadataStore, 3, 1);
 
-      // validate correctness of meta data after create
-      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
-      Assert.assertEquals(props, meta.getProperties());
-      Assert.assertEquals(tags, meta.getTags());
+    // validate correctness of meta data after create
+    meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+    Assert.assertEquals(props, meta.getProperties());
+    Assert.assertEquals(tags, meta.getTags());
 
-      // publish another create event with different create time, no description, different tags
-      Set<String> tags2 = ImmutableSet.of("another", "two");
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(
-        entity, ImmutableMap.of(creationTimeKey, "9876543", "new", "prop"), tags2));
-      // wait until meta data is written
-      waitForSystemMetadata(entity, metadataStore, 3, 2);
+    // publish another create event with different create time, no description, different tags
+    Set<String> tags2 = ImmutableSet.of("another", "two");
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(
+      entity, ImmutableMap.of(creationTimeKey, "9876543", "new", "prop"), tags2));
+    // wait until meta data is written
+    waitForSystemMetadata(entity, metadataStore, 3, 2);
 
-      // validate correctness of meta data: creation time and description unchanged, other new property there
-      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
-      Assert.assertEquals(ImmutableMap.of(creationTimeKey, "123456", descriptionKey, "desc1", "new", "prop"),
-                          meta.getProperties());
-      Assert.assertEquals(tags2, meta.getTags());
+    // validate correctness of meta data: creation time and description unchanged, other new property there
+    meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+    Assert.assertEquals(ImmutableMap.of(creationTimeKey, "123456", descriptionKey, "desc1", "new", "prop"),
+                        meta.getProperties());
+    Assert.assertEquals(tags2, meta.getTags());
 
-      // publish another create event without create time, different description, no tags
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(
-        entity, ImmutableMap.of(descriptionKey, "some"), Collections.emptySet()));
-      // wait until meta data is written
-      waitForSystemMetadata(entity, metadataStore, 2, 0);
+    // publish another create event without create time, different description, no tags
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(
+      entity, ImmutableMap.of(descriptionKey, "some"), Collections.emptySet()));
+    // wait until meta data is written
+    waitForSystemMetadata(entity, metadataStore, 2, 0);
 
-      // validate correctness of meta data: same creation time, updated description and other props and tags
-      meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
-      Assert.assertEquals(ImmutableMap.of(creationTimeKey, "123456", descriptionKey, "some"), meta.getProperties());
-      Assert.assertEquals(Collections.emptySet(), meta.getTags());
+    // validate correctness of meta data: same creation time, updated description and other props and tags
+    meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+    Assert.assertEquals(ImmutableMap.of(creationTimeKey, "123456", descriptionKey, "some"), meta.getProperties());
+    Assert.assertEquals(Collections.emptySet(), meta.getTags());
 
-      // publish metadata put
-      Map<String, String> propertiesToAdd = ImmutableMap.of("a", "x", "b", "z");
-      Set<String> tagsToAdd = ImmutableSet.of("t1", "t2");
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
+    // publish metadata put
+    Map<String, String> propertiesToAdd = ImmutableMap.of("a", "x", "b", "z");
+    Set<String> tagsToAdd = ImmutableSet.of("t1", "t2");
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
 
-      // wait until meta data is written
-      waitForMetadata(entity, metadataStore, 2, 2);
+    // wait until meta data is written
+    waitForMetadata(entity, metadataStore, 2, 2);
 
-      // validate correctness of meta data written
-      meta = metadataStore.getMetadata(MetadataScope.USER, entity);
-      Assert.assertEquals(propertiesToAdd, meta.getProperties());
-      Assert.assertEquals(tagsToAdd, meta.getTags());
+    // validate correctness of meta data written
+    meta = metadataStore.getMetadata(MetadataScope.USER, entity);
+    Assert.assertEquals(propertiesToAdd, meta.getProperties());
+    Assert.assertEquals(tagsToAdd, meta.getTags());
 
-      // publish metadata delete
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Delete(
-        entity, Collections.singleton("a"), ImmutableSet.of("t1", "t3")));
+    // publish metadata delete
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.Delete(
+      entity, Collections.singleton("a"), ImmutableSet.of("t1", "t3")));
 
-      // wait until meta data is written
-      waitForMetadata(entity, metadataStore, 1, 1);
+    // wait until meta data is written
+    waitForMetadata(entity, metadataStore, 1, 1);
 
-      // validate correctness of meta data after delete
-      meta = metadataStore.getMetadata(MetadataScope.USER, entity);
-      Assert.assertEquals(ImmutableMap.of("b", "z"), meta.getProperties());
-      Assert.assertEquals(ImmutableSet.of("t2"), meta.getTags());
+    // validate correctness of meta data after delete
+    meta = metadataStore.getMetadata(MetadataScope.USER, entity);
+    Assert.assertEquals(ImmutableMap.of("b", "z"), meta.getProperties());
+    Assert.assertEquals(ImmutableSet.of("t2"), meta.getTags());
 
-      // publish metadata put properties
-      metadataPublisher.publish(workflowRunId,
-                                new MetadataOperation.Put(entity, propertiesToAdd, Collections.emptySet()));
+    // publish metadata put properties
+    metadataPublisher.publish(workflowRunId,
+                              new MetadataOperation.Put(entity, propertiesToAdd, Collections.emptySet()));
 
-      // wait until meta data is written
-      // one of the property key already exist so for that value will be just overwritten hence size is 2
-      waitForMetadata(entity, metadataStore, 2, 1);
+    // wait until meta data is written
+    // one of the property key already exist so for that value will be just overwritten hence size is 2
+    waitForMetadata(entity, metadataStore, 2, 1);
 
-      // publish metadata put tags
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, Collections.emptyMap(), tagsToAdd));
+    // publish metadata put tags
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, Collections.emptyMap(), tagsToAdd));
 
-      // wait until meta data is written
-      // one of the tags already exists hence size is 2
-      waitForMetadata(entity, metadataStore, 2, 2);
+    // wait until meta data is written
+    // one of the tags already exists hence size is 2
+    waitForMetadata(entity, metadataStore, 2, 2);
 
-      // publish delete all properties
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAllProperties(entity));
+    // publish delete all properties
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAllProperties(entity));
 
-      // wait until meta data is written
-      waitForMetadata(entity, metadataStore, 0, 2);
+    // wait until meta data is written
+    waitForMetadata(entity, metadataStore, 0, 2);
 
-      // publish delete all tags
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAllTags(entity));
+    // publish delete all tags
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAllTags(entity));
 
-      // wait until meta data is written
-      waitForMetadata(entity, metadataStore, 0, 0);
+    // wait until meta data is written
+    waitForMetadata(entity, metadataStore, 0, 0);
 
-      // publish metadata put tags
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
+    // publish metadata put tags
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
 
-      // wait until meta data is written
-      waitForMetadata(entity, metadataStore, 2, 2);
+    // wait until meta data is written
+    waitForMetadata(entity, metadataStore, 2, 2);
 
-      // publish delete all
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAll(entity));
+    // publish delete all
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAll(entity));
 
-      // wait until meta data is written
-      waitForMetadata(entity, metadataStore, 0, 0);
+    // wait until meta data is written
+    waitForMetadata(entity, metadataStore, 0, 0);
 
-      // publish metadata put tags
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
+    // publish metadata put tags
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
 
-      // wait until meta data is written
-      waitForMetadata(entity, metadataStore, 2, 2);
+    // wait until meta data is written
+    waitForMetadata(entity, metadataStore, 2, 2);
 
-      // publish drop entity
-      metadataPublisher.publish(workflowRunId, new MetadataOperation.Drop(entity));
-      // wait until meta data is deleted
-      waitForSystemMetadata(entity, metadataStore, 0, 0);
-      waitForMetadata(entity, metadataStore, 0, 0);
-
-    } finally {
-      subscriberService.stopAndWait();
-    }
+    // publish drop entity
+    metadataPublisher.publish(workflowRunId, new MetadataOperation.Drop(entity));
+    // wait until meta data is deleted
+    waitForSystemMetadata(entity, metadataStore, 0, 0);
+    waitForMetadata(entity, metadataStore, 0, 0);
   }
 
   @Test
   public void testProfileMetadata() throws Exception {
     Injector injector = getInjector();
+
+    ApplicationSpecification appSpec = Specifications.from(new AppWithWorkflow());
+    ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
+    ProgramId workflowId = appId.workflow("SampleWorkflow");
+    ScheduleId scheduleId = appId.schedule("tsched1");
+
+    // get the mds should be empty property since we haven't started the MetadataSubscriberService
+    MetadataStore mds = injector.getInstance(MetadataStore.class);
+    Assert.assertEquals(Collections.emptyMap(), mds.getProperties(workflowId.toMetadataEntity()));
+    Assert.assertEquals(Collections.emptyMap(), mds.getProperties(scheduleId.toMetadataEntity()));
 
     // set default namespace to use the profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds
@@ -446,10 +416,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                                                               ProfileId.NATIVE.getScopedName()));
 
     // add a app with workflow to app meta store
-    ApplicationSpecification appSpec = Specifications.from(new AppWithWorkflow());
-    ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
-    ProgramId workflowId = appId.workflow("SampleWorkflow");
-    ScheduleId scheduleId = appId.schedule("tsched1");
     Store store = injector.getInstance(DefaultStore.class);
     store.addApplication(appId, appSpec);
 
@@ -458,15 +424,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     scheduleService.add(new ProgramSchedule("tsched1", "one time schedule", workflowId,
                                             Collections.emptyMap(),
                                             new TimeTrigger("* * ? * 1"), ImmutableList.of()));
-
-    // get the mds should be empty property since we haven't started the MetadataSubscriberService
-    MetadataStore mds = injector.getInstance(MetadataStore.class);
-    Assert.assertEquals(Collections.emptyMap(), mds.getProperties(workflowId.toMetadataEntity()));
-    Assert.assertEquals(Collections.emptyMap(), mds.getProperties(scheduleId.toMetadataEntity()));
-
-    // Start the MetadataSubscriberService
-    MetadataSubscriberService subscriberService = injector.getInstance(MetadataSubscriberService.class);
-    subscriberService.startAndWait();
 
     // add a new profile in default namespace
     ProfileService profileService = injector.getInstance(ProfileService.class);
@@ -551,7 +508,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       // stop and clean up the store
-      subscriberService.stopAndWait();
       preferencesService.deleteProperties(NamespaceId.DEFAULT);
       preferencesService.deleteProperties();
       preferencesService.deleteProperties(appId);
@@ -593,10 +549,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     MetadataStore mds = injector.getInstance(MetadataStore.class);
     Assert.assertEquals(Collections.emptyMap(), mds.getProperties(workflowId.toMetadataEntity()));
 
-    // Start the MetadataSubscriberService
-    MetadataSubscriberService subscriberService = getInjector().getInstance(MetadataSubscriberService.class);
-    subscriberService.startAndWait();
-
     try {
       // Verify the workflow profile metadata is updated to my profile
       Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
@@ -611,7 +563,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       // stop and clean up the store
-      subscriberService.stopAndWait();
       preferencesService.deleteProperties(NamespaceId.DEFAULT);
       store.removeAllApplications(NamespaceId.DEFAULT);
       profileService.disableProfile(myProfile);
@@ -670,23 +621,11 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ProfileId.NATIVE.getScopedName(),
                         mds.getProperties(workflowId.toMetadataEntity()).get("profile"));
 
-    // get the subsciber service and start it
-    MetadataSubscriberService metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
-    metadataSubscriberService.startAndWait();
+    // publish app deletion message
+    publisher.publishAppDeletion(appId, trueSpec);
 
-    try {
-      // publish app deletion message
-      publisher.publishAppDeletion(appId, trueSpec);
-
-      // Verify the workflow profile metadata is removed because of the publish app deletion message
-      Tasks.waitFor(Collections.emptyMap(), () -> mds.getProperties(workflowId.toMetadataEntity()),
-                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    } finally {
-      metadataSubscriberService.stopAndWait();
-    }
-  }
-
-  private DatasetFramework getDatasetFramework() {
-    return getInjector().getInstance(DatasetFramework.class);
+    // Verify the workflow profile metadata is removed because of the publish app deletion message
+    Tasks.waitFor(Collections.emptyMap(), () -> mds.getProperties(workflowId.toMetadataEntity()),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 }

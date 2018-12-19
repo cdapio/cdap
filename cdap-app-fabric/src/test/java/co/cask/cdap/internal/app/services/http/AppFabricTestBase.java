@@ -106,6 +106,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -223,6 +224,7 @@ public abstract class AppFabricTestBase {
         protected void configure() {
           // needed because we set Kerberos to true in DefaultNamespaceAdminTest
           bind(UGIProvider.class).to(CurrentUGIProvider.class);
+          bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
         }
       }));
 

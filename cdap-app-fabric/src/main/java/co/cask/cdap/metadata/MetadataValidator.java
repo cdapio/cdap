@@ -78,10 +78,8 @@ public class MetadataValidator {
       validateLength(metadataEntity, entry.getKey());
 
       // validate value
-      if (!"description".equals(entry.getKey()) && !"schema".equals(entry.getKey())) {
-        validateValueFormat(metadataEntity, entry.getValue());
-        validateLength(metadataEntity, entry.getValue());
-      }
+      validateValueFormat(metadataEntity, entry.getValue());
+      validateLength(metadataEntity, entry.getValue());
     }
     return true;
   }
@@ -125,7 +123,7 @@ public class MetadataValidator {
     if (!KEY_AND_TAG_MATCHER.matchesAllOf(keyword)) {
       throw new InvalidMetadataException(metadataEntity, String.format(
         "Illegal format for '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), " +
-          "colons, underscores and hyphens.", keyword));
+          "underscores and hyphens.", keyword));
     }
   }
 
@@ -137,7 +135,7 @@ public class MetadataValidator {
     if (!VALUE_MATCHER.matchesAllOf(keyword)) {
       throw new InvalidMetadataException(metadataEntity, String.format(
         "Illegal format for the value '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), " +
-          "periods, colons, underscores, hyphens and whitespaces.", keyword));
+          "underscores, hyphens and whitespaces.", keyword));
     }
   }
 

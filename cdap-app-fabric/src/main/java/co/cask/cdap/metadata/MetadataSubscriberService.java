@@ -389,39 +389,34 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       switch (operation.getType()) {
         case CREATE: {
           MetadataOperation.Create create = (MetadataOperation.Create) operation;
-          try {
-            // validate all the new metadata
-            boolean hasProperties = validateProperties(create.getEntity(), create.getProperties());
-            boolean hasTags = validateTags(create.getEntity(), create.getTags());
-            // TODO (CDAP-14584): All the following operations should be one method
-            // find the existing metadata
-            MetadataRecordV2 existing = metadataStore.getMetadata(MetadataScope.SYSTEM, create.getEntity());
-            // figure out what properties to set
-            Map<String, String> propertiesToSet =
-              hasProperties ? new HashMap<>(create.getProperties()) : new HashMap<>();
-            // creation time never changes: copy it to properties to set
-            if (existing.getProperties().containsKey(SystemMetadataProvider.CREATION_TIME_KEY)) {
-              propertiesToSet.put(SystemMetadataProvider.CREATION_TIME_KEY,
-                                  existing.getProperties().get(SystemMetadataProvider.CREATION_TIME_KEY));
+          // all the new metadata is in System scope - no validation
+          boolean hasProperties = create.getProperties() != null && !create.getProperties().isEmpty();
+          boolean hasTags = create.getTags() != null && !create.getTags().isEmpty();
+          // TODO (CDAP-14584): All the following operations should be one method
+          // find the existing metadata
+          MetadataRecordV2 existing = metadataStore.getMetadata(MetadataScope.SYSTEM, create.getEntity());
+          // figure out what properties to set
+          Map<String, String> propertiesToSet =
+            hasProperties ? new HashMap<>(create.getProperties()) : new HashMap<>();
+          // creation time never changes: copy it to properties to set
+          if (existing.getProperties().containsKey(SystemMetadataProvider.CREATION_TIME_KEY)) {
+            propertiesToSet.put(SystemMetadataProvider.CREATION_TIME_KEY,
+                                existing.getProperties().get(SystemMetadataProvider.CREATION_TIME_KEY));
+          }
+          // description must be preserved if new properties don't have it
+          if (!propertiesToSet.containsKey(SystemMetadataProvider.DESCRIPTION_KEY)) {
+            String description = existing.getProperties().get(SystemMetadataProvider.DESCRIPTION_KEY);
+            if (description != null) {
+              propertiesToSet.put(SystemMetadataProvider.DESCRIPTION_KEY, description);
             }
-            // description must be preserved if new properties don't have it
-            if (!propertiesToSet.containsKey(SystemMetadataProvider.DESCRIPTION_KEY)) {
-              String description = existing.getProperties().get(SystemMetadataProvider.DESCRIPTION_KEY);
-              if (description != null) {
-                propertiesToSet.put(SystemMetadataProvider.DESCRIPTION_KEY, description);
-              }
-            }
-            // now perform all updates: remove all tags and properties, set new tags and properties
-            metadataStore.removeMetadata(MetadataScope.SYSTEM, entity);
-            if (!propertiesToSet.isEmpty()) {
-              metadataStore.setProperties(MetadataScope.SYSTEM, entity, propertiesToSet);
-            }
-            if (hasTags) {
-              metadataStore.addTags(MetadataScope.SYSTEM, entity, create.getTags());
-            }
-          } catch (InvalidMetadataException e) {
-            LOG.warn("Ignoring invalid metadata operation {} from TMS: {}", operation,
-                     GSON.toJson(message.getRawPayload()), e);
+          }
+          // now perform all updates: remove all tags and properties, set new tags and properties
+          metadataStore.removeMetadata(MetadataScope.SYSTEM, entity);
+          if (!propertiesToSet.isEmpty()) {
+            metadataStore.setProperties(MetadataScope.SYSTEM, entity, propertiesToSet);
+          }
+          if (hasTags) {
+            metadataStore.addTags(MetadataScope.SYSTEM, entity, create.getTags());
           }
           break;
         }
@@ -432,8 +427,14 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         case PUT: {
           MetadataOperation.Put put = (MetadataOperation.Put) operation;
           try {
-            boolean hasProperties = validateProperties(put.getEntity(), put.getProperties());
-            boolean hasTags = validateTags(put.getEntity(), put.getTags());
+            boolean hasProperties, hasTags;
+            if (MetadataScope.USER.equals(put.getScope())) {
+              hasProperties = validateProperties(put.getEntity(), put.getProperties());
+              hasTags = validateTags(put.getEntity(), put.getTags());
+            } else {
+              hasProperties = put.getProperties() != null && !put.getProperties().isEmpty();
+              hasTags = put.getTags() != null && !put.getTags().isEmpty();
+            }
             if (hasProperties) {
               metadataStore.setProperties(put.getScope(), entity, put.getProperties());
             }
