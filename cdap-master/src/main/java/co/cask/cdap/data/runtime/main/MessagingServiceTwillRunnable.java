@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,11 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
@@ -32,9 +32,6 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
-import co.cask.cdap.messaging.store.ForwardingTableFactory;
-import co.cask.cdap.messaging.store.TableFactory;
-import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -49,9 +46,7 @@ import org.apache.twill.api.TwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * A {@link TwillRunnable} for messaging system.
@@ -93,8 +88,8 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new ZKClientModule(),
+      new ZKDiscoveryModule(),
       new KafkaClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),

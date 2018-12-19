@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.route.store.RouteStore;
@@ -63,7 +63,7 @@ public class RoutingToDataSetsTest {
   public static void before() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules(),
+                                             new InMemoryDiscoveryModule(),
                                              new AppFabricTestModule(cConf));
 
     // Starting router

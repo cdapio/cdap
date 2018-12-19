@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,9 +22,9 @@ import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -243,7 +243,7 @@ public class LeaderElectionMessagingServiceTest {
     return Guice.createInjector(
       new ConfigModule(cConf),
       new ZKClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
+      new ZKDiscoveryModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override

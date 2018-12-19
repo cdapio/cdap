@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,11 +32,11 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -486,8 +486,8 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       new ConfigModule(cConf, HBaseConfiguration.create()),
       new IOModule(),
       new ZKClientModule(),
+      new ZKDiscoveryModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),

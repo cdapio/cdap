@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
@@ -65,14 +65,14 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   private static NamespaceStore store;
 
   @BeforeClass
-  public static void init() throws Exception {
+  public static void init() {
     Injector injector = Guice.createInjector(
       new ConfigModule(CConfiguration.create(), new Configuration()),
       new DataSetServiceModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricModules().getInMemoryModules(),
       new ExploreClientModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
       new NamespaceStoreModule().getStandaloneModules(),

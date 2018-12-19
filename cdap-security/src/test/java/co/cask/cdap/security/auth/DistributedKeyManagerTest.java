@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,9 @@ package co.cask.cdap.security.auth;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -71,10 +71,10 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     cConf2.set(Constants.Zookeeper.QUORUM, zkConnectString);
     injector1 = Guice.createInjector(new ConfigModule(cConf1, testUtil.getConfiguration()), new IOModule(),
                                      new SecurityModules().getDistributedModules(), new ZKClientModule(),
-                                     new DiscoveryRuntimeModule().getDistributedModules());
+                                     new ZKDiscoveryModule());
     injector2 = Guice.createInjector(new ConfigModule(cConf2, testUtil.getConfiguration()), new IOModule(),
                                      new SecurityModules().getDistributedModules(), new ZKClientModule(),
-                                     new DiscoveryRuntimeModule().getDistributedModules());
+                                     new ZKDiscoveryModule());
   }
 
   @AfterClass

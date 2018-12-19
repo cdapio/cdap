@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.data.view;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
@@ -58,13 +58,13 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
   private static TransactionManager transactionManager;
 
   @BeforeClass
-  public static void init() throws Exception {
+  public static void init() {
     Injector injector = Guice.createInjector(
       new ConfigModule(CConfiguration.create(), new Configuration()),
       new DataSetServiceModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),

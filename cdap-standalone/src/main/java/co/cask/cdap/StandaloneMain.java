@@ -28,8 +28,8 @@ import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
@@ -458,7 +458,7 @@ public class StandaloneMain {
       new ZKClientModule(),
       new KafkaClientModule(),
       new MetricsHandlerModule(),
-      new DiscoveryRuntimeModule().getStandaloneModules(),
+      new InMemoryDiscoveryModule(),
       new LocationRuntimeModule().getStandaloneModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new DataFabricModules(StandaloneMain.class.getName()).getStandaloneModules(),

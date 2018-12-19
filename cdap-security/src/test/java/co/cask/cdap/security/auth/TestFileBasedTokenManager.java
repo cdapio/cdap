@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,8 @@ package co.cask.cdap.security.auth;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.security.guice.FileBasedSecurityModule;
@@ -50,7 +50,7 @@ public class TestFileBasedTokenManager extends TestTokenManager {
     Injector injector = Guice.createInjector(new IOModule(),
                                              new ConfigModule(cConf),
                                              new FileBasedSecurityModule(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules());
+                                             new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
     tokenManager.startAndWait();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
@@ -71,14 +71,14 @@ public class TestFileBasedTokenManager extends TestTokenManager {
       new IOModule(),
       new ConfigModule(cConf),
       new FileBasedSecurityModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules()).getInstance(TokenManager.class);
+      new InMemoryDiscoveryModule()).getInstance(TokenManager.class);
     tokenManager.startAndWait();
 
     TokenManager tokenManager2 = Guice.createInjector(
       new IOModule(),
       new ConfigModule(cConf),
       new FileBasedSecurityModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules()).getInstance(TokenManager.class);
+      new InMemoryDiscoveryModule()).getInstance(TokenManager.class);
     tokenManager2.startAndWait();
 
     Assert.assertNotSame("ERROR: Both token managers refer to the same object.", tokenManager, tokenManager2);

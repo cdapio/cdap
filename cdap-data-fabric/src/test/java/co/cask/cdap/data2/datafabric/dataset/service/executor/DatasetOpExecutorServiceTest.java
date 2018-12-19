@@ -27,8 +27,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
@@ -120,7 +120,7 @@ public class DatasetOpExecutorServiceTest {
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
       new NonCustomLocationUnitTestModule().getModule(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),

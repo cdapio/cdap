@@ -20,7 +20,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
@@ -113,7 +113,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
         }
       },
       new TransactionMetricsModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
       new DataFabricModules().getDistributedModules(),
       Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
         @Override

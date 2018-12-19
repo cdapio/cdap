@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@ package co.cask.cdap.data2.transaction.stream.hbase;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -107,7 +107,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new NonCustomLocationUnitTestModule().getModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
       new TransactionMetricsModule(),
       new AbstractModule() {
         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.twill.TwillAppNames;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;

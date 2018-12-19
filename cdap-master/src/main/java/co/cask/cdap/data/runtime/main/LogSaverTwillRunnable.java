@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,11 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -98,9 +98,9 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new ZKClientModule(),
+      new ZKDiscoveryModule(),
       new KafkaClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new DataFabricModules(txClientId).getDistributedModules(),

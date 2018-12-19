@@ -24,7 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
@@ -112,7 +112,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // TODO: Refactor to use injector for everything
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, txConf),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),

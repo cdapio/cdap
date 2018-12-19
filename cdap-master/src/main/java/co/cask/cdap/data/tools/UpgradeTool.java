@@ -27,10 +27,10 @@ import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.utils.ProjectInfo;
@@ -194,7 +194,7 @@ public class UpgradeTool {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
       new ZKClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
+      new ZKDiscoveryModule(),
       new MessagingClientModule(),
       Modules.override(new DataSetsModules().getDistributedModules()).with(
         new AbstractModule() {

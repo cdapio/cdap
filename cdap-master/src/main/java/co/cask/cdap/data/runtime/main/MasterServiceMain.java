@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,12 +28,12 @@ import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.FileContextProvider;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.logging.LoggerLogHandler;
 import co.cask.cdap.common.runtime.DaemonMain;
@@ -555,8 +555,8 @@ public class MasterServiceMain extends DaemonMain {
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
+      new ZKDiscoveryModule(),
       new KafkaClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules("cdap.master").getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
