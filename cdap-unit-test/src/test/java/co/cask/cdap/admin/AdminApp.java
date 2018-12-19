@@ -18,7 +18,6 @@ package co.cask.cdap.admin;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
@@ -31,12 +30,7 @@ import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.OutputEmitter;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.service.AbstractService;
@@ -68,7 +62,6 @@ import scala.Tuple2;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -81,7 +74,6 @@ import javax.ws.rs.PathParam;
 
 public class AdminApp extends AbstractApplication {
 
-  public static final String FLOW_NAME = "AdminFlow";
   public static final String MAPREDUCE_NAME = "AdminMapReduce";
   public static final String SPARK_NAME = "AdminSpark";
   public static final String SPARK_SCALA_NAME = "AdminScalaSpark";
@@ -92,7 +84,6 @@ public class AdminApp extends AbstractApplication {
   @Override
   public void configure() {
     addStream("events");
-    addFlow(new AdminFlow());
     addMapReduce(new AdminMapReduce());
     addSpark(new AdminSpark());
     addSpark(new AdminScalaSpark());
@@ -296,56 +287,6 @@ public class AdminApp extends AbstractApplication {
       Throwables.propagate(e);
     }
 
-  }
-
-  public static class AdminFlow extends AbstractFlow {
-    @Override
-    protected void configure() {
-      setName(FLOW_NAME);
-      addFlowlet("splitter", new SplitterFlowlet());
-      addFlowlet("counter", new CounterFlowlet());
-      connectStream("events", "splitter");
-      connect("splitter", "counter");
-    }
-
-    public static class SplitterFlowlet extends AbstractFlowlet {
-
-      OutputEmitter<String> out;
-
-      @ProcessInput
-      public void process(StreamEvent event) {
-        for (String word : Bytes.toString(event.getBody()).split(" ")) {
-          out.emit(word.toLowerCase());
-        }
-      }
-    }
-
-    public static class CounterFlowlet extends AbstractFlowlet {
-
-      Map<Character, KeyValueTable> tables = new HashMap<>();
-
-      @ProcessInput
-      public void process(String word) throws DatasetManagementException {
-        Character c = word.charAt(0);
-        if (!tables.containsKey(c)) {
-          getContext().getAdmin().createDataset("counters_" + c, "keyValueTable", DatasetProperties.EMPTY);
-          tables.put(c, getContext().<KeyValueTable>getDataset("counters_" + c));
-        }
-        KeyValueTable counters = tables.get(c);
-        counters.increment(Bytes.toBytes(word), 1L);
-      }
-
-      @Override
-      public void destroy() {
-        for (Character c : tables.keySet()) {
-          try {
-            getContext().getAdmin().dropDataset("counters_" + c);
-          } catch (DatasetManagementException e) {
-            Throwables.propagate(e);
-          }
-        }
-      }
-    }
   }
 
   public static class AdminWorkflow extends AbstractWorkflow {

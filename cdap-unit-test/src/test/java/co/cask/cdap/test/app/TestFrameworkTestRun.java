@@ -127,7 +127,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -1066,35 +1065,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
   }
 
-
-  @Category(XSlowTests.class)
-  @Test(timeout = 240000)
-  public void testMultiInput() throws Exception {
-    ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
-    FlowManager flowManager = applicationManager.getFlowManager("JoinMultiFlow").start();
-
-    StreamManager s1 = getStreamManager("s1");
-    StreamManager s2 = getStreamManager("s2");
-    StreamManager s3 = getStreamManager("s3");
-
-    s1.send("testing 1");
-    s2.send("testing 2");
-    s3.send("testing 3");
-
-    RuntimeMetrics terminalMetrics = flowManager.getFlowletMetrics("Terminal");
-    terminalMetrics.waitForProcessed(3, 60, TimeUnit.SECONDS);
-    TimeUnit.SECONDS.sleep(1);
-
-    ServiceManager queryManager = applicationManager.getServiceManager("QueryService").start();
-    queryManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
-    URL serviceURL = queryManager.getServiceURL();
-    Gson gson = new Gson();
-
-    Assert.assertEquals("testing 1", gson.fromJson(callServiceGet(serviceURL, "input1"), String.class));
-    Assert.assertEquals("testing 2", gson.fromJson(callServiceGet(serviceURL, "input2"), String.class));
-    Assert.assertEquals("testing 3", gson.fromJson(callServiceGet(serviceURL, "input3"), String.class));
-  }
-
   @Category(XSlowTests.class)
   @Test(timeout = 360000)
   public void testApp() throws Exception {
@@ -1297,8 +1267,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     int txDefaulTimeoutWorker = 18;
     int txDefaulTimeoutWorkflow = 19;
     int txDefaulTimeoutAction = 20;
-    int txDefaulTimeoutFlow = 21;
-    int txDefaulTimeoutFlowlet = 22;
     int txDefaulTimeoutMapReduce = 23;
     int txDefaulTimeoutSpark = 24;
 
@@ -1331,9 +1299,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       WorkflowManager notxWFManager = appManager.getWorkflowManager(AppWithCustomTx.WORKFLOW_NOTX)
         .start(txTimeoutArguments(txDefaulTimeoutWorkflow,
                                   txDefaulTimeoutAction, "action", AppWithCustomTx.ACTION_NOTX));
-      FlowManager flowManager = appManager.getFlowManager(AppWithCustomTx.FLOW)
-        .start(txTimeoutArguments(txDefaulTimeoutFlow,
-                                  txDefaulTimeoutFlowlet, "flowlet", AppWithCustomTx.FLOWLET_NOTX));
       MapReduceManager txMRManager = appManager.getMapReduceManager(AppWithCustomTx.MAPREDUCE_TX)
         .start(txTimeoutArguments(txDefaulTimeoutMapReduce));
       MapReduceManager notxMRManager = appManager.getMapReduceManager(AppWithCustomTx.MAPREDUCE_NOTX)
@@ -1342,10 +1307,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         .start(txTimeoutArguments(txDefaulTimeoutSpark));
       SparkManager notxSparkManager = appManager.getSparkManager(AppWithCustomTx.SPARK_NOTX)
         .start(txTimeoutArguments(txDefaulTimeoutSpark));
-
-      flowManager.getFlowletMetrics(AppWithCustomTx.FLOWLET_NOTX).waitForProcessed(1, 10, TimeUnit.SECONDS);
-      flowManager.stop();
-      flowManager.waitForStopped(10, TimeUnit.SECONDS);
 
       serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
       callServicePut(serviceManager.getServiceURL(), "tx", "hello");
@@ -1509,24 +1470,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         { AppWithCustomTx.ACTION_NOTX, AppWithCustomTx.DESTROY_TX, AppWithCustomTx.TIMEOUT_ACTION_DESTROY },
         { AppWithCustomTx.ACTION_NOTX, AppWithCustomTx.DESTROY_TX_D, txDefaulTimeoutAction },
         { AppWithCustomTx.ACTION_NOTX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
-
-        // transactions attempted by the flow
-        { AppWithCustomTx.FLOWLET_TX, AppWithCustomTx.INITIALIZE, txDefaulTimeoutFlow },
-        { AppWithCustomTx.FLOWLET_TX, AppWithCustomTx.INITIALIZE_NEST, AppWithCustomTx.FAILED },
-        { AppWithCustomTx.FLOWLET_TX, AppWithCustomTx.RUNTIME, txDefaulTimeoutFlow },
-        { AppWithCustomTx.FLOWLET_TX, AppWithCustomTx.RUNTIME_NEST, AppWithCustomTx.FAILED },
-        { AppWithCustomTx.FLOWLET_TX, AppWithCustomTx.DESTROY, txDefaulTimeoutFlow },
-        { AppWithCustomTx.FLOWLET_TX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.INITIALIZE, null },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.INITIALIZE_TX, AppWithCustomTx.TIMEOUT_FLOWLET_INITIALIZE },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.INITIALIZE_TX_D, txDefaulTimeoutFlowlet },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.INITIALIZE_NEST, AppWithCustomTx.FAILED },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.RUNTIME, txDefaulTimeoutFlowlet },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.RUNTIME_NEST, AppWithCustomTx.FAILED },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.DESTROY, null },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.DESTROY_TX, AppWithCustomTx.TIMEOUT_FLOWLET_DESTROY },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.DESTROY_TX_D, txDefaulTimeoutFlowlet },
-        { AppWithCustomTx.FLOWLET_NOTX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
 
         // transactions attempted by the mapreduce's
         { AppWithCustomTx.MAPREDUCE_TX, AppWithCustomTx.INITIALIZE, txDefaulTimeoutMapReduce },
@@ -1835,59 +1778,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // also test the deprecated version of getDataset(). This can be removed when we remove the method
     mydatasetManager = getDataset("mydataset");
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
-  }
-
-  @Category(SlowTests.class)
-  @Test
-  public void testGenerator() throws InterruptedException, IOException, TimeoutException {
-    ApplicationManager applicationManager = deployApplication(testSpace, GenSinkApp2.class);
-    FlowManager flowManager = applicationManager.getFlowManager("GenSinkFlow").start();
-
-    // Check the flowlet metrics
-    RuntimeMetrics genMetrics = flowManager.getFlowletMetrics("GenFlowlet");
-
-    RuntimeMetrics sinkMetrics = flowManager.getFlowletMetrics("SinkFlowlet");
-
-    RuntimeMetrics batchSinkMetrics = flowManager.getFlowletMetrics("BatchSinkFlowlet");
-
-    // Generator generators 99 events + 99 batched events
-    sinkMetrics.waitFor("system.process.events.in", 198, 5, TimeUnit.SECONDS);
-    sinkMetrics.waitForProcessed(198, 5, TimeUnit.SECONDS);
-    Assert.assertEquals(0L, sinkMetrics.getException());
-
-    // Batch sink only get the 99 batch events
-    batchSinkMetrics.waitFor("system.process.events.in", 99, 5, TimeUnit.SECONDS);
-    batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
-    Assert.assertEquals(0L, batchSinkMetrics.getException());
-
-    Assert.assertEquals(1L, genMetrics.getException());
-  }
-
-  @Category(SlowTests.class)
-  @Test
-  public void testDynamicBatchSize() throws Exception {
-    ApplicationManager applicationManager = deployApplication(testSpace, GenSinkApp2.class);
-
-    DataSetManager<KeyValueTable> table = getDataset(testSpace.dataset("table"));
-
-    // Start the flow with runtime argument. It should set the batch size to 1.
-    FlowManager flowManager = applicationManager.getFlowManager("GenSinkFlow").start(Collections.singletonMap(
-      "flowlet.BatchSinkFlowlet.batch.size", "1"
-    ));
-
-    RuntimeMetrics batchSinkMetrics = flowManager.getFlowletMetrics("BatchSinkFlowlet");
-
-    // Batch sink only get the 99 batch events
-    batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
-    flowManager.stop();
-    flowManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
-
-    try (CloseableIterator<KeyValue<byte[], byte[]>> itor = table.get().scan(null, null)) {
-      // Should only see batch size of 1.
-      while (itor.hasNext()) {
-        Assert.assertEquals(1, Bytes.toInt(itor.next().getKey()));
-      }
-    }
   }
 
   @Test
