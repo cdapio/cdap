@@ -48,6 +48,7 @@ class TrackerMetadataController {
       scope: this.$scope,
       namespace: this.$state.params.namespace,
       entityType: entitySplit[0],
+      showCustom: true,
     };
 
     let metadataApi;

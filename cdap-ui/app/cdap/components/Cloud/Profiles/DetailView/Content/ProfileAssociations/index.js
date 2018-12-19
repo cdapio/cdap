@@ -120,11 +120,13 @@ export default class ProfileAssociations extends Component {
     if (namespace === SYSTEM_NAMESPACE) {
       apiObservable$ = MySearchApi.searchSystem({
         query: profileName,
+        showCustom: true,
       });
     } else {
       apiObservable$ = MySearchApi.search({
         namespace,
         query: profileName,
+        showCustom: true,
       });
     }
     apiObservable$.subscribe(
@@ -148,41 +150,42 @@ export default class ProfileAssociations extends Component {
   convertMetadataToAssociations = (metadata) => {
     let appsMap = {};
     metadata.forEach((m) => {
-      let existingEntry = appsMap[m.entityId.application];
+      const application = m.metadataEntity.details.application;
+      let existingEntry = appsMap[application];
       if (!existingEntry) {
         existingEntry = {
-          name: m.entityId.application,
-          namespace: m.entityId.namespace,
+          name: application,
+          namespace: m.metadataEntity.details.namespace,
           schedules: [],
           triggers: [],
           metadata: {
-            app: m.entityId.application,
-            namespace: m.entityId.namespace,
+            app: application,
+            namespace: m.metadataEntity.details.namespace,
           },
         };
-        appsMap[m.entityId.application] = existingEntry;
+        appsMap[application] = existingEntry;
       }
-      if (m.entityId.schedule) {
+      if (m.metadataEntity.details.schedule) {
         // fixed name for time based schedule.
-        if (m.entityId.schedule === GLOBALS.defaultScheduleId) {
-          appsMap[m.entityId.application] = {
+        if (m.metadataEntity.details.schedule === GLOBALS.defaultScheduleId) {
+          appsMap[application] = {
             ...existingEntry,
-            schedules: [...existingEntry.schedules, m.entityId],
+            schedules: [...existingEntry.schedules, m.metadataEntity.details],
           };
         } else {
-          appsMap[m.entityId.application] = {
+          appsMap[application] = {
             ...existingEntry,
-            triggers: [...existingEntry.triggers, m.entityId],
+            triggers: [...existingEntry.triggers, m.metadataEntity.details],
           };
         }
-      } else if (!isNilOrEmpty(m.entityId.type)) {
-        appsMap[m.entityId.application] = {
+      } else if (!isNilOrEmpty(m.metadataEntity.type)) {
+        appsMap[application] = {
           ...existingEntry,
           created: m.metadata.SYSTEM.properties['creation-time'],
           metadata: {
             ...existingEntry.metadata,
-            type: m.entityId.type,
-            program: m.entityId.program,
+            type: m.metadataEntity.type,
+            program: m.metadataEntity.details.program,
           },
         };
       }

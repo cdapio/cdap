@@ -115,6 +115,7 @@ export default class JustAddedSection extends Component {
       limit: numColumns,
       query: '*',
       sort: 'creation-time desc',
+      showCustom: true,
     };
 
     MySearchApi.search(params)

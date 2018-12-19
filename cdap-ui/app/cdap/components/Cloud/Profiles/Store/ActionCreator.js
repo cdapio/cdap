@@ -79,9 +79,10 @@ const convertMetadataToAssociations = (metadata) => {
   let schedulesCount = 0,
     triggersCount = 0;
   metadata.forEach((m) => {
-    if (m.entityId.schedule) {
+    const schedule = objectQuery(m, 'metadataEntity', 'details', 'schedule');
+    if (schedule) {
       // fixed name for time based schedule.
-      if (m.entityId.schedule === GLOBALS.defaultScheduleId) {
+      if (schedule === GLOBALS.defaultScheduleId) {
         schedulesCount += 1;
       } else {
         triggersCount += 1;
@@ -315,9 +316,16 @@ export const getProfiles = (namespace) => {
       let profileName = `profile:${scope}:${profile.name}`;
       let apiObservable$;
       if (namespace === SYSTEM_NAMESPACE) {
-        apiObservable$ = MySearchApi.searchSystem({ query: profileName });
+        apiObservable$ = MySearchApi.searchSystem({
+          query: profileName,
+          showCustom: true,
+        });
       } else {
-        apiObservable$ = MySearchApi.search({ namespace, query: profileName });
+        apiObservable$ = MySearchApi.search({
+          namespace,
+          query: profileName,
+          showCustom: true,
+        });
       }
       apiObservable$.subscribe((res) =>
         updateScheduleAndTriggersToStore(profile.name, res.results)

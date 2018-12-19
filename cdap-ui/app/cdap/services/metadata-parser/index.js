@@ -21,7 +21,7 @@ import { GLOBALS, SCOPES, SYSTEM_NAMESPACE } from 'services/global-constants';
 import { objectQuery } from 'services/helpers';
 
 export function parseMetadata(entity) {
-  let type = entity.entityId.entity;
+  let type = entity.metadataEntity.type;
 
   switch (type) {
     case EntityType.artifact:
@@ -58,11 +58,17 @@ export function getType(entity) {
   }
 }
 
+/**
+ * TODO:
+ * This function should be refactored. It should just return the entities count, and not care about the entity types.
+ *
+ * https://issues.cask.co/browse/CDAP-14639
+ */
 export function getCustomAppPipelineDatasetCounts(entities) {
-  let apps = entities.results.filter((entity) => entityIsApp(entity));
-  let pipelineCount = apps.filter((entity) => entityIsPipeline(entity)).length;
-  let customAppCount = apps.length - pipelineCount;
-  let datasetCount = entities.total - apps.length;
+  const apps = entities.results.filter((entity) => entityIsApp(entity));
+  const pipelineCount = apps.filter((entity) => entityIsPipeline(entity)).length;
+  const customAppCount = apps.length - pipelineCount;
+  const datasetCount = entities.total - apps.length;
   return {
     pipelineCount,
     customAppCount,
@@ -71,7 +77,7 @@ export function getCustomAppPipelineDatasetCounts(entities) {
 }
 
 function entityIsApp(entity) {
-  return objectQuery(entity, 'entityId', 'entity') === EntityType.application;
+  return objectQuery(entity, 'metadataEntity', 'type') === EntityType.application;
 }
 
 function entityIsPipeline(entity) {
@@ -83,18 +89,18 @@ function entityIsPipeline(entity) {
 
 function createArtifactObj(entity) {
   return {
-    id: entity.entityId.artifact,
-    type: entity.entityId.entity.toLowerCase(),
-    version: entity.entityId.version,
+    id: entity.metadataEntity.details.artifact,
+    type: entity.metadataEntity.type.toLowerCase(),
+    version: entity.metadataEntity.details.version,
     metadata: entity,
     scope:
-      entity.entityId.namespace.toLowerCase() === SYSTEM_NAMESPACE ? SCOPES.SYSTEM : SCOPES.USER,
+      entity.metadataEntity.details.namespace.toLowerCase() === SYSTEM_NAMESPACE ? SCOPES.SYSTEM : SCOPES.USER,
     icon: EntityIconMap['artifact'],
   };
 }
 
 function createApplicationObj(entity) {
-  let version = entity.entityId.version;
+  let version = entity.metadataEntity.details.version;
   if (version === '-SNAPSHOT') {
     version = '1.0.0-SNAPSHOT';
   }
@@ -107,8 +113,8 @@ function createApplicationObj(entity) {
   }
 
   return {
-    id: entity.entityId.application,
-    type: entity.entityId.entity.toLowerCase(),
+    id: entity.metadataEntity.details.application,
+    type: entity.metadataEntity.type.toLowerCase(),
     metadata: entity,
     version,
     icon,
@@ -118,8 +124,8 @@ function createApplicationObj(entity) {
 
 function createDatasetObj(entity) {
   return {
-    id: entity.entityId.dataset,
-    type: entity.entityId.entity.toLowerCase(),
+    id: entity.metadataEntity.details.dataset,
+    type: entity.metadataEntity.type.toLowerCase(),
     metadata: entity,
     icon: EntityIconMap['dataset'],
   };
@@ -127,19 +133,19 @@ function createDatasetObj(entity) {
 
 function createProgramObj(entity) {
   return {
-    id: entity.entityId.program,
-    applicationId: entity.entityId.application,
-    type: entity.entityId.entity.toLowerCase(),
-    programType: entity.entityId.type,
+    id: entity.metadataEntity.details.program,
+    applicationId: entity.metadataEntity.details.application,
+    type: entity.metadataEntity.type.toLowerCase(),
+    programType: entity.metadataEntity.details.type,
     metadata: entity,
-    icon: EntityIconMap[entity.entityId.type],
+    icon: EntityIconMap[entity.metadataEntity.details.type],
   };
 }
 
 function createStreamObj(entity) {
   return {
-    id: entity.entityId.stream,
-    type: entity.entityId.entity.toLowerCase(),
+    id: entity.metadataEntity.details.stream,
+    type: entity.metadataEntity.type.toLowerCase(),
     metadata: entity,
     icon: EntityIconMap['stream'],
   };
@@ -147,8 +153,8 @@ function createStreamObj(entity) {
 
 function createViewObj(entity) {
   return {
-    id: entity.entityId.view,
-    type: entity.entityId.entity.toLowerCase(),
+    id: entity.metadataEntity.details.view,
+    type: entity.metadataEntity.type.toLowerCase(),
     metadata: entity,
     icon: EntityIconMap['view'],
   };

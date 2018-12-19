@@ -148,6 +148,7 @@ export default class NamespaceDropdown extends Component {
       target: ['app', 'dataset', 'stream'],
       query: '*',
       sort: 'entity-name asc',
+      showCustom: true,
     };
     let numApplications = 0;
     let numStreams = 0;
@@ -155,7 +156,7 @@ export default class NamespaceDropdown extends Component {
     this.apiSubscription = MySearchApi.search(params).subscribe(
       (res) => {
         res.results.forEach((entity) => {
-          let entityType = entity.entityId.entity;
+          let entityType = entity.metadataEntity.type;
           if (entityType === EntityType.application) {
             numApplications += 1;
           } else if (entityType === EntityType.stream) {

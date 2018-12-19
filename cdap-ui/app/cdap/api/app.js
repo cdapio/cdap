@@ -28,5 +28,4 @@ export const MyAppApi = {
   getDeployedApp: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   batchStatus: apiCreator(dataSrc, 'POST', 'POLL', '/namespaces/:namespace/status'),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath),
-  getMetadata: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}/metadata`),
 };

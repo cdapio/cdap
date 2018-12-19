@@ -120,6 +120,7 @@ export default class SpotlightModal extends Component {
       target,
       limit: PAGE_SIZE,
       offset,
+      showCustom: true,
     }).subscribe((res) => {
       this.setState({
         searchResults: res,
