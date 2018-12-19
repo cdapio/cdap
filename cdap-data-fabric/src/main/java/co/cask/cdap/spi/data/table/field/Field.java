@@ -17,6 +17,7 @@
 package co.cask.cdap.spi.data.table.field;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represents a column of a table, and its value.
@@ -27,7 +28,7 @@ public final class Field<T> {
   private final String name;
   private final T value;
 
-  public Field(String name, T value) {
+  public Field(String name, @Nullable T value) {
     this.name = name;
     this.value = value;
   }
@@ -42,6 +43,7 @@ public final class Field<T> {
   /**
    * @return the field value
    */
+  @Nullable
   public T getValue() {
     return value;
   }
