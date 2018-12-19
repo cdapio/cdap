@@ -234,67 +234,6 @@ public class AuthorizationTest extends TestBase {
 
   @Test
   @Category(SlowTests.class)
-  public void testFlowStreamAuth() throws Exception {
-    createAuthNamespace();
-    Authorizer authorizer = getAuthorizer();
-    // set up privilege to deploy the app
-    setUpPrivilegeToDeployStreamAuthApp();
-    StreamId streamId1 = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
-    StreamId streamId2 = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM2);
-    Map<EntityId, Set<Action>> additionalPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
-      .put(streamId1, EnumSet.of(Action.READ, Action.WRITE))
-      .put(streamId2, EnumSet.of(Action.READ, Action.WRITE))
-      .put(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE), EnumSet.of(Action.READ, Action.WRITE))
-      .put(AUTH_NAMESPACE.app(StreamAuthApp.APP).flow(StreamAuthApp.FLOW), EnumSet.of(Action.EXECUTE))
-      .build();
-    setUpPrivilegeAndRegisterForDeletion(ALICE, additionalPrivileges);
-
-    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, StreamAuthApp.class);
-
-    final FlowManager flowManager = appManager.getFlowManager(StreamAuthApp.FLOW);
-    StreamManager streamManager = getStreamManager(streamId1);
-    StreamManager streamManager2 = getStreamManager(streamId2);
-    streamManager.send("Auth");
-    flowManager.start();
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        DataSetManager<KeyValueTable> kvTable = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
-        return kvTable.get().read("Auth") != null;
-      }
-    }, 5, TimeUnit.SECONDS);
-    flowManager.stop();
-    flowManager.waitForRun(ProgramRunStatus.KILLED, 60, TimeUnit.SECONDS);
-
-    // Now revoke the privileges for ALICE on the stream and grant her ADMIN and WRITE
-    authorizer.revoke(Authorizable.fromEntityId(streamId1), ALICE, EnumSet.allOf(Action.class));
-    authorizer.grant(Authorizable.fromEntityId(streamId1), ALICE, EnumSet.of(Action.WRITE, Action.ADMIN));
-    streamManager.send("Security");
-    streamManager2.send("Safety");
-    try {
-      flowManager.start();
-    } catch (UnauthorizedException e) {
-      // Expected
-    }
-    flowManager.waitForStopped(10, TimeUnit.SECONDS);
-
-    authorizer.grant(Authorizable.fromEntityId(streamId1), ALICE, ImmutableSet.of(Action.READ));
-    flowManager.start();
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        DataSetManager<KeyValueTable> kvTable = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
-        return kvTable.get().read("Security") != null;
-      }
-    }, 5, TimeUnit.SECONDS);
-    TimeUnit.MILLISECONDS.sleep(10);
-    flowManager.stop();
-    flowManager.waitForRuns(ProgramRunStatus.KILLED, 2, 5, TimeUnit.SECONDS);
-    appManager.delete();
-  }
-
-  @Test
-  @Category(SlowTests.class)
   public void testWorkerStreamAuth() throws Exception {
     createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
