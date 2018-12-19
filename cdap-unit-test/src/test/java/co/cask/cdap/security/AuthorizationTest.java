@@ -79,13 +79,11 @@ import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.app.AppWithSchedule;
 import co.cask.cdap.test.app.CrossNsDatasetAccessApp;
 import co.cask.cdap.test.app.DatasetCrossNSAccessWithMAPApp;
 import co.cask.cdap.test.app.DummyApp;
-import co.cask.cdap.test.app.StreamAuthApp;
 import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -230,158 +228,6 @@ public class AuthorizationTest extends TestBase {
     NamespaceMeta updated = new NamespaceMeta.Builder(AUTH_NAMESPACE_META).setDescription("new desc").build();
     namespaceAdmin.updateProperties(AUTH_NAMESPACE, updated);
     Assert.assertEquals(updated, namespaceAdmin.get(AUTH_NAMESPACE));
-  }
-
-  @Test
-  @Category(SlowTests.class)
-  public void testWorkerStreamAuth() throws Exception {
-    createAuthNamespace();
-    Authorizer authorizer = getAuthorizer();
-    setUpPrivilegeToDeployStreamAuthApp();
-
-    StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
-    Map<EntityId, Set<Action>> additionalPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
-      .put(streamId, EnumSet.of(Action.READ, Action.WRITE))
-      .put(AUTH_NAMESPACE.app(StreamAuthApp.APP).worker(StreamAuthApp.WORKER), EnumSet.of(Action.EXECUTE))
-      .build();
-    setUpPrivilegeAndRegisterForDeletion(ALICE, additionalPrivileges);
-
-    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, StreamAuthApp.class);
-    WorkerManager workerManager = appManager.getWorkerManager(StreamAuthApp.WORKER);
-    workerManager.start();
-    workerManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
-
-    StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM));
-    Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
-
-    // Now revoke write permission for Alice on that stream
-    authorizer.revoke(Authorizable.fromEntityId(streamId), ALICE, EnumSet.of(Action.WRITE));
-    workerManager.start();
-    workerManager.waitForRuns(ProgramRunStatus.FAILED, 1, 60, TimeUnit.SECONDS);
-
-    Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
-    appManager.delete();
-  }
-
-  @Test
-  @Category(SlowTests.class)
-  public void testSparkStreamAuth() throws Exception {
-    createAuthNamespace();
-    Authorizer authorizer = getAuthorizer();
-    setUpPrivilegeToDeployStreamAuthApp();
-    StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
-    Map<EntityId, Set<Action>> additionalPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
-      .put(streamId, EnumSet.of(Action.READ, Action.WRITE))
-      .put(AUTH_NAMESPACE.app(StreamAuthApp.APP).spark(StreamAuthApp.SPARK), EnumSet.of(Action.EXECUTE))
-      .put(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE), EnumSet.of(Action.READ, Action.WRITE))
-      .build();
-    setUpPrivilegeAndRegisterForDeletion(ALICE, additionalPrivileges);
-
-    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, StreamAuthApp.class);
-
-    StreamManager streamManager = getStreamManager(streamId);
-    streamManager.send("Hello");
-    final SparkManager sparkManager = appManager.getSparkManager(StreamAuthApp.SPARK);
-    sparkManager.start();
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
-
-    DataSetManager<KeyValueTable> kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
-    try (KeyValueTable kvTable = kvManager.get()) {
-      byte[] value = kvTable.read("Hello");
-      Assert.assertArrayEquals(Bytes.toBytes("Hello"), value);
-    }
-
-    streamManager.send("World");
-    // Revoke READ permission on STREAM for Alice
-    authorizer.revoke(Authorizable.fromEntityId(streamId), ALICE, EnumSet.of(Action.READ));
-    sparkManager.start();
-    sparkManager.waitForRun(ProgramRunStatus.FAILED, 1, TimeUnit.MINUTES);
-
-    kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
-    try (KeyValueTable kvTable = kvManager.get()) {
-      byte[] value = kvTable.read("World");
-      Assert.assertNull(value);
-    }
-
-    // Grant ALICE READ permission on STREAM and now Spark job should run successfully
-    authorizer.grant(Authorizable.fromEntityId(streamId), ALICE, ImmutableSet.of(Action.READ));
-    sparkManager.start();
-    sparkManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 1, TimeUnit.MINUTES);
-
-    kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
-    try (KeyValueTable kvTable = kvManager.get()) {
-      byte[] value = kvTable.read("World");
-      Assert.assertArrayEquals(Bytes.toBytes("World"), value);
-    }
-    appManager.delete();
-  }
-
-  @Test
-  @Category(SlowTests.class)
-  public void testMRStreamAuth() throws Exception {
-    createAuthNamespace();
-    Authorizer authorizer = getAuthorizer();
-    setUpPrivilegeToDeployStreamAuthApp();
-    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, StreamAuthApp.class);
-
-
-    StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
-    DatasetId datasetId = AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE);
-    Map<EntityId, Set<Action>> additionalPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
-      .put(streamId, EnumSet.of(Action.READ, Action.WRITE))
-      .put(AUTH_NAMESPACE.app(StreamAuthApp.APP).mr(StreamAuthApp.MAPREDUCE), EnumSet.of(Action.EXECUTE))
-      .put(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE), EnumSet.of(Action.READ, Action.WRITE))
-      .build();
-    setUpPrivilegeAndRegisterForDeletion(ALICE, additionalPrivileges);
-
-    StreamManager streamManager = getStreamManager(streamId);
-    streamManager.send("Hello");
-    final MapReduceManager mrManager = appManager.getMapReduceManager(StreamAuthApp.MAPREDUCE);
-    mrManager.start();
-    // Since Alice had the required permissions, she should be able to execute the MR job successfully
-    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
-
-    DataSetManager<KeyValueTable> kvManager = getDataset(datasetId);
-    try (KeyValueTable kvTable = kvManager.get()) {
-      byte[] value = kvTable.read("Hello");
-      Assert.assertArrayEquals(Bytes.toBytes("Hello"), value);
-    }
-
-    ProgramId mrId = AUTH_NAMESPACE.app(StreamAuthApp.APP).mr(StreamAuthApp.MAPREDUCE);
-    authorizer.grant(Authorizable.fromEntityId(mrId.getNamespaceId()), BOB, ImmutableSet.of(Action.ADMIN));
-
-    authorizer.grant(Authorizable.fromEntityId(mrId), BOB, EnumSet.of(Action.EXECUTE));
-    authorizer.grant(Authorizable.fromEntityId(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM)),
-                     BOB, EnumSet.of(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE)),
-                     BOB, EnumSet.of(Action.READ, Action.WRITE));
-    streamManager.send("World");
-
-    // Switch user to Bob. Note that he doesn't have READ access on the stream.
-    SecurityRequestContext.setUserId(BOB.getName());
-    mrManager.start();
-    mrManager.waitForRun(ProgramRunStatus.FAILED, 1, TimeUnit.MINUTES);
-
-    kvManager = getDataset(datasetId);
-    try (KeyValueTable kvTable = kvManager.get()) {
-      byte[] value = kvTable.read("World");
-      Assert.assertNull(value);
-    }
-
-    // Now grant Bob, READ access on the stream. MR job should execute successfully now.
-    authorizer.grant(Authorizable.fromEntityId(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM)),
-                     BOB, ImmutableSet.of(Action.READ));
-    mrManager.start();
-    mrManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 1, TimeUnit.MINUTES);
-
-    kvManager = getDataset(datasetId);
-    try (KeyValueTable kvTable = kvManager.get()) {
-      byte[] value = kvTable.read("World");
-      Assert.assertEquals("World", Bytes.toString(value));
-    }
-
-    SecurityRequestContext.setUserId(ALICE.getName());
-    appManager.delete();
   }
 
   @Test
@@ -1627,18 +1473,6 @@ public class AuthorizationTest extends TestBase {
     DataSetManager<KeyValueTable> outTableManager = getDataset(namespaceId.dataset(datasetName));
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
-  }
-
-  private void setUpPrivilegeToDeployStreamAuthApp() throws Exception {
-    Map<EntityId, Set<Action>> neededPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
-      .put(AUTH_NAMESPACE.app(StreamAuthApp.APP), EnumSet.of(Action.ADMIN))
-      .put(AUTH_NAMESPACE.artifact(StreamAuthApp.class.getSimpleName(), "1.0-SNAPSHOT"), EnumSet.of(Action.ADMIN))
-      .put(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM), EnumSet.of(Action.ADMIN))
-      .put(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM2), EnumSet.of(Action.ADMIN))
-      .put(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE), EnumSet.of(Action.ADMIN))
-      .put(AUTH_NAMESPACE.datasetType(KeyValueTable.class.getName()), EnumSet.of(Action.ADMIN))
-      .build();
-    setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
   }
 
   private void setUpPrivilegeAndRegisterForDeletion(Principal principal,
