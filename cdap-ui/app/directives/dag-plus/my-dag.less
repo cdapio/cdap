@@ -537,12 +537,14 @@ my-dag-plus {
       }
     }
 
-    .dag-popover-menu,
     .node-popover-menu {
       width: 85px;
       border: 1px solid black;
       background-color: white;
       z-index: 1000;
+      position: absolute;
+      right: -54px;
+      top: 52px;
 
       .menu-icon {
         color: @hamburger-hover-color;
@@ -550,10 +552,13 @@ my-dag-plus {
       }
 
       .menu-content {
-        padding: 5px 10px;
         color: @configure-btn-label-color;
 
+        hr { margin: 0; }
+
         .menu-content-action {
+          padding: 5px 10px;
+
           &:hover {
             background-color: @node-menu-action-bg-color;
           }
@@ -568,21 +573,7 @@ my-dag-plus {
             color: @node-menu-delete-color;
           }
         }
-
-        hr {
-          margin: 5px 0;
-        }
       }
-    }
-
-    .node-popover-menu {
-      position: absolute;
-      right: -54px;
-      top: 52px;
-    }
-
-    .dag-popover-menu {
-      position: fixed;
     }
 
     .comment-box {
