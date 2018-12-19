@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.admin.AdminAppTestRun;
 import co.cask.cdap.batch.stream.BatchStreamIntegrationTestRun;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.test.TestSuite;
-import co.cask.cdap.flow.stream.FlowStreamIntegrationTestRun;
 import co.cask.cdap.mapreduce.MapReduceStreamInputTestRun;
 import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
 import co.cask.cdap.service.FileUploadServiceTestRun;
@@ -50,7 +49,6 @@ import org.junit.runners.Suite;
   AdminAppTestRun.class,
   BatchStreamIntegrationTestRun.class,
   FileUploadServiceTestRun.class,
-  FlowStreamIntegrationTestRun.class,
   MapReduceStreamInputTestRun.class,
   MapReduceServiceIntegrationTestRun.class,
   MessagingAppTestRun.class,
