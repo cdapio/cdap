@@ -20,6 +20,7 @@ import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.batch.Input;
@@ -68,7 +69,9 @@ import scala.Tuple2;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -100,8 +103,41 @@ public class AdminApp extends AbstractApplication {
       protected void configure() {
         setName(SERVICE_NAME);
         addHandler(new DatasetAdminHandler());
+        addHandler(new CrossNamespaceHandler());
       }
     });
+  }
+
+  /**
+   * Handler to test cross namespace methods.
+   */
+  public static class CrossNamespaceHandler extends AbstractHttpServiceHandler {
+
+    @GET
+    @Path("/namespaces/{namespace}")
+    public void getNamespace(HttpServiceRequest request, HttpServiceResponder responder,
+                             @PathParam("namespace") String namespace) throws IOException {
+      Admin admin = getContext().getAdmin();
+      if (!admin.namespaceExists(namespace)) {
+        responder.sendError(404, String.format("namespace '%s' not found.", namespace));
+        return;
+      }
+    }
+
+    @GET
+    @Path("/namespaces/{namespace}/plugins")
+    public void getPlugins(HttpServiceRequest request, HttpServiceResponder responder,
+                           @PathParam("namespace") String namespace) throws IOException {
+      Admin admin = getContext().getAdmin();
+      if (!admin.namespaceExists(namespace)) {
+        responder.sendError(404, String.format("namespace '%s' not found.", namespace));
+        return;
+      }
+      List<ArtifactSummary> summaries = getContext().listArtifacts(namespace).stream()
+        .map(info -> ((ArtifactSummary) info))
+        .collect(Collectors.toList());
+      responder.sendJson(summaries);
+    }
   }
 
   public static class DatasetAdminHandler extends AbstractHttpServiceHandler {

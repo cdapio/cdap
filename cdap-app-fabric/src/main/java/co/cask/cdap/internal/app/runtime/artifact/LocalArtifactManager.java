@@ -56,6 +56,15 @@ public final class LocalArtifactManager extends AbstractArtifactManager {
 
   @Override
   public List<ArtifactInfo> listArtifacts() throws IOException {
+    return listArtifacts(namespaceId);
+  }
+
+  @Override
+  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException {
+    return listArtifacts(new NamespaceId(namespace));
+  }
+
+  private List<ArtifactInfo> listArtifacts(NamespaceId namespaceId) throws IOException {
     return Retries.callWithRetries(() -> {
       try {
         List<ArtifactInfo> result = new ArrayList<>(artifactRepository.getArtifactsInfo(namespaceId));

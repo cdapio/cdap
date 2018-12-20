@@ -36,6 +36,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -260,7 +261,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(PluginFinder.class),
         injector.getInstance(LocationFactory.class),
         injector.getInstance(MetadataReader.class),
-        injector.getInstance(MetadataPublisher.class)
+        injector.getInstance(MetadataPublisher.class),
+        injector.getInstance(NamespaceQueryAdmin.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;

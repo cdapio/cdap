@@ -88,11 +88,24 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
    */
   @Override
   public List<ArtifactInfo> listArtifacts() throws IOException {
+    return listArtifacts(namespaceId.getNamespace());
+  }
+
+  /**
+   * For the specified namespace, return the available artifacts in the namespace and also the artifacts in system
+   * namespace.
+   *
+   * If the app-fabric service is unavailable, it will be retried based on the passed in retry strategy.
+   *
+   * @return {@link List<ArtifactInfo>}
+   * @throws IOException If there are any exception while retrieving artifacts
+   */
+  @Override
+  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException {
     return Retries.callWithRetries(() -> {
       HttpRequest.Builder requestBuilder =
         remoteClient.requestBuilder(HttpMethod.GET,
-                                    String.format("namespaces/%s/artifact-internals/artifacts",
-                                                  namespaceId.getEntityName()));
+                                    String.format("namespaces/%s/artifact-internals/artifacts", namespace));
       // add header if auth is enabled
       if (authorizationEnabled) {
         requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());

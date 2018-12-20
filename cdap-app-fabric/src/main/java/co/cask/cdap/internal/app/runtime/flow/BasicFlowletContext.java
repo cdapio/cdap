@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
@@ -72,11 +73,13 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       SecureStoreManager secureStoreManager,
                       MessagingService messagingService,
                       MetadataReader metadataReader, MetadataPublisher metadataPublisher,
+                      NamespaceQueryAdmin namespaceQueryAdmin,
                       CConfiguration cConf) {
     super(program, programOptions, cConf, datasets, dsFramework, txClient, discoveryServiceClient, false,
           metricsService, ImmutableMap.of(Constants.Metrics.Tag.FLOWLET, flowletId.getFlowlet(),
                                           Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, messagingService, null, metadataReader, metadataPublisher);
+          secureStore, secureStoreManager, messagingService, null, metadataReader, metadataPublisher,
+          namespaceQueryAdmin);
 
     this.flowletId = flowletId;
     this.groupId = FlowUtils.generateConsumerGroupId(program.getId(), flowletId.getFlowlet());
@@ -89,7 +92,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<String, MetricsContext>() {
         @Override
-        public MetricsContext load(String key) throws Exception {
+        public MetricsContext load(String key) {
           return getProgramMetrics().childContext(Constants.Metrics.Tag.FLOWLET_QUEUE, key);
         }
       });
@@ -99,7 +102,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<ImmutablePair<String, String>, MetricsContext>() {
         @Override
-        public MetricsContext load(ImmutablePair<String, String> key) throws Exception {
+        public MetricsContext load(ImmutablePair<String, String> key) {
           return getProgramMetrics()
             .childContext(ImmutableMap.of(
               Constants.Metrics.Tag.PRODUCER, key.getFirst(),

@@ -29,6 +29,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -80,11 +81,13 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
                                  SecureStore secureStore, SecureStoreManager secureStoreManager,
                                  MessagingService messagingService,
                                  ArtifactManager artifactManager, MetadataReader metadataReader,
-                                 MetadataPublisher metadataPublisher) {
+                                 MetadataPublisher metadataPublisher,
+                                 NamespaceQueryAdmin namespaceQueryAdmin) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
+          namespaceQueryAdmin);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
@@ -123,6 +126,11 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   @Override
   public List<ArtifactInfo> listArtifacts() throws IOException {
     return artifactManager.listArtifacts();
+  }
+
+  @Override
+  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException {
+    return artifactManager.listArtifacts(namespace);
   }
 
   @Override

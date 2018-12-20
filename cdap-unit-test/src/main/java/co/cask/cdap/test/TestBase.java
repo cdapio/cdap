@@ -36,7 +36,6 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.preview.PreviewManager;
-import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;

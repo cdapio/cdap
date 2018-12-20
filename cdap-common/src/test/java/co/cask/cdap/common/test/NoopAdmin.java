@@ -104,4 +104,9 @@ public class NoopAdmin implements Admin {
   public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
     // no-op
   }
+
+  @Override
+  public boolean namespaceExists(String namespace) throws IOException {
+    return false;
+  }
 }
