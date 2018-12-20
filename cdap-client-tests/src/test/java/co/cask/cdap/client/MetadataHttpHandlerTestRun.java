@@ -593,8 +593,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                                 AllProgramsApp.NoOpFlow.DESCRIPTION, null);
     assertProgramSystemMetadata(app.worker(AllProgramsApp.NoOpWorker.NAME), "Realtime", null, null);
     assertProgramSystemMetadata(app.service(AllProgramsApp.NoOpService.NAME), "Realtime", null, null);
-    assertProgramSystemMetadata(app.mr(AllProgramsApp.NoOpMR.NAME), "Batch", null, null);
-    assertProgramSystemMetadata(app.spark(AllProgramsApp.NoOpSpark.NAME), "Batch", null, null);
+    assertProgramSystemMetadata(app.mr(AllProgramsApp.NoOpMR.NAME), "Batch", null, ProfileId.NATIVE);
+    assertProgramSystemMetadata(app.spark(AllProgramsApp.NoOpSpark.NAME), "Batch", null, ProfileId.NATIVE);
     assertProgramSystemMetadata(app.workflow(AllProgramsApp.NoOpWorkflow.NAME), "Batch",
                                 AllProgramsApp.NoOpWorkflow.DESCRIPTION, ProfileId.NATIVE);
 
