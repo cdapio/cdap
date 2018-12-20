@@ -53,7 +53,9 @@ import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
@@ -262,7 +264,15 @@ public class UpgradeTool {
           return dsFramework;
         }
 
-      });
+      },
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // TODO (CDAP-14677): find a better way to inject metadata publisher
+          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
+        }
+      }
+    );
   }
 
   /**

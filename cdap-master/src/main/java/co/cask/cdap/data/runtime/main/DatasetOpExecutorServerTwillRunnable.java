@@ -37,6 +37,8 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
@@ -131,6 +133,8 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
           bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          // TODO (CDAP-14677): find a better way to inject metadata publisher
+          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
         }
       });
   }
