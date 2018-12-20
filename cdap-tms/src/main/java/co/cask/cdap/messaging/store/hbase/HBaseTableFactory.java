@@ -106,6 +106,8 @@ public final class HBaseTableFactory implements TableFactory {
     this.tableUtil = tableUtil;
     this.tableDescriptors = new ConcurrentHashMap<>();
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
+    // Currently we don't support customizable table name yet, hence always get it from cConf.
+    // Later on it can be done by topic properties, with impersonation setting as well.
     this.metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
     this.messageTableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
     this.payloadTableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);

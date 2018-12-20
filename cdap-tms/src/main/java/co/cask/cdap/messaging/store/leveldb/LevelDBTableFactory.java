@@ -31,6 +31,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.iq80.leveldb.Options;
@@ -41,6 +44,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -82,31 +88,37 @@ public final class LevelDBTableFactory implements TableFactory {
                                  Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY)),
                                  TimeUnit.SECONDS);
 
-    // Currently we don't support customizable table name yet, hence always get it from cConf.
-    // Later on it can be done by topic properties, with impersonation setting as well.
     this.metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
     this.messageTableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
     this.payloadTableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
-    this.messageTableCache = CacheBuilder.newBuilder().build(new CacheLoader<TopicMetadata, LevelDBMessageTable>() {
+    this.messageTableCache = CacheBuilder.newBuilder()
+      .expireAfterAccess(1, TimeUnit.HOURS)
+      .removalListener((RemovalListener<TopicMetadata, LevelDBMessageTable>)
+                         removalNotification -> Closeables.closeQuietly(removalNotification.getValue()))
+      .build(new CacheLoader<TopicMetadata, LevelDBMessageTable>() {
       @ParametersAreNonnullByDefault
       @Override
       public LevelDBMessageTable load(TopicMetadata key) throws Exception {
         File dbPath = getDataDBPath(messageTableName, key.getTopicId(), key.getGeneration());
         LevelDBMessageTable messageTable =
           new LevelDBMessageTable(LEVEL_DB_FACTORY.open(dbPath, dbOptions), key);
-        LOG.info("Messaging message table created at {}", dbPath);
+        LOG.debug("Messaging message table created at {}", dbPath);
         return messageTable;
       }
     });
 
-    this.payloadTableCache = CacheBuilder.newBuilder().build(new CacheLoader<TopicMetadata, LevelDBPayloadTable>() {
+    this.payloadTableCache = CacheBuilder.newBuilder()
+      .expireAfterAccess(1, TimeUnit.HOURS)
+      .removalListener((RemovalListener<TopicMetadata, LevelDBPayloadTable>)
+                         removalNotification -> Closeables.closeQuietly(removalNotification.getValue()))
+      .build(new CacheLoader<TopicMetadata, LevelDBPayloadTable>() {
       @ParametersAreNonnullByDefault
       @Override
       public LevelDBPayloadTable load(TopicMetadata key) throws Exception {
         File dbPath = getDataDBPath(payloadTableName, key.getTopicId(), key.getGeneration());
         LevelDBPayloadTable payloadTable =
           new LevelDBPayloadTable(LEVEL_DB_FACTORY.open(dbPath, dbOptions), key);
-        LOG.info("Messaging payload table created at {}", dbPath);
+        LOG.debug("Messaging payload table created at {}", dbPath);
         return payloadTable;
       }
     });
@@ -125,12 +137,12 @@ public final class LevelDBTableFactory implements TableFactory {
   }
 
   @Override
-  public synchronized MessageTable createMessageTable(TopicMetadata topicMetadata) {
+  public MessageTable createMessageTable(TopicMetadata topicMetadata) {
     return messageTableCache.getUnchecked(topicMetadata);
   }
 
   @Override
-  public synchronized PayloadTable createPayloadTable(TopicMetadata topicMetadata) {
+  public PayloadTable createPayloadTable(TopicMetadata topicMetadata) {
     return payloadTableCache.getUnchecked(topicMetadata);
   }
 
@@ -179,7 +191,7 @@ public final class LevelDBTableFactory implements TableFactory {
           // Find the generations older than `cleanOlderThan`, that have data on disk, and remove them in reverse order.
           // We do it in reverse order, so that in case there is a failure in deleting one of them, we can repeat
           // the same process next iteration and not lose track of generations that need to be deleted.
-          List<File> filesToDelete = new ArrayList<>();
+          Deque<File> filesToDelete = new LinkedList<>();
           for (int olderGeneration = cleanOlderThan - 1; olderGeneration > 0; olderGeneration--) {
             File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(), olderGeneration, false);
             if (!dataDBPath.exists()) {
@@ -188,8 +200,9 @@ public final class LevelDBTableFactory implements TableFactory {
             filesToDelete.add(dataDBPath);
           }
 
-          for (int i = filesToDelete.size() - 1; i >= 0; i--) {
-            File dataDBPath = filesToDelete.get(i);
+          Iterator<File> descendingIterator = filesToDelete.descendingIterator();
+          while (descendingIterator.hasNext()) {
+            File dataDBPath = descendingIterator.next();
             LOG.info("Deleting file: {}", dataDBPath);
             DirUtils.deleteDirectoryContents(dataDBPath);
           }
@@ -202,7 +215,6 @@ public final class LevelDBTableFactory implements TableFactory {
       try {
         for (Map.Entry<TopicMetadata, LevelDBMessageTable> messageTableEntry : messageTableCache.asMap().entrySet()) {
           messageTableEntry.getValue().pruneMessages(messageTableEntry.getKey(), timeStamp);
-          System.out.println(messageTableEntry.getKey());
         }
         for (Map.Entry<TopicMetadata, LevelDBPayloadTable> payloadTableEntry : payloadTableCache.asMap().entrySet()) {
           payloadTableEntry.getValue().pruneMessages(payloadTableEntry.getKey(), timeStamp);
