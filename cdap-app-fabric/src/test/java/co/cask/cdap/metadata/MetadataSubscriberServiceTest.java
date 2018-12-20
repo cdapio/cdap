@@ -536,22 +536,23 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                                    Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
     profileService.saveProfile(myProfile, profile1);
 
+    // add a app with workflow to app meta store
+    ApplicationSpecification appSpec = Specifications.from(new AppWithWorkflow());
+    ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
+    ProgramId workflowId = appId.workflow("SampleWorkflow");
+
+    // get the metadata - should be empty since we haven't deployed the app
+    MetadataStore mds = injector.getInstance(MetadataStore.class);
+    Assert.assertEquals(Collections.emptyMap(), mds.getProperties(workflowId.toMetadataEntity()));
+
+    Store store = injector.getInstance(DefaultStore.class);
+    store.addApplication(appId, appSpec);
+
     // set default namespace to use the profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds
     PreferencesService preferencesService = injector.getInstance(PreferencesService.class);
     preferencesService.setProperties(NamespaceId.DEFAULT,
                                      Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:MyProfile"));
-
-    // add a app with workflow to app meta store
-    ApplicationSpecification appSpec = Specifications.from(new AppWithWorkflow());
-    ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
-    ProgramId workflowId = appId.workflow("SampleWorkflow");
-    Store store = injector.getInstance(DefaultStore.class);
-    store.addApplication(appId, appSpec);
-
-    // get the mds should be empty property since we haven't started the MetadataSubscriberService
-    MetadataStore mds = injector.getInstance(MetadataStore.class);
-    Assert.assertEquals(Collections.emptyMap(), mds.getProperties(workflowId.toMetadataEntity()));
 
     try {
       // Verify the workflow profile metadata is updated to my profile

@@ -39,6 +39,7 @@
     <logger name="co.cask.cdap.internal.provision.ProvisioningService" level="TRACE"/>
     <logger name="co.cask.cdap.metadata" level="TRACE"/>
     <logger name="co.cask.cdap.data2.metadata" level="TRACE"/>
+    <logger name="co.cask.cdap.data2.metadata.lineage" level="INFO"/>
     <logger name="co.cask.cdap.internal.profile" level="TRACE"/>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
