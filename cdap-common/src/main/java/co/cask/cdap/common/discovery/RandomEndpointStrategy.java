@@ -20,6 +20,8 @@ import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 /**
  * Randomly picks endpoint from the list of available endpoints.
@@ -29,12 +31,23 @@ public final class RandomEndpointStrategy extends AbstractEndpointStrategy {
   /**
    * Constructs a random endpoint strategy with the given {@link ServiceDiscovered}.
    */
-  public RandomEndpointStrategy(ServiceDiscovered serviceDiscovered) {
-    super(serviceDiscovered);
+  public RandomEndpointStrategy(Supplier<ServiceDiscovered> serviceDiscoveredSupplier) {
+    super(serviceDiscoveredSupplier);
   }
 
   @Override
-  public Discoverable pick() {
+  protected Discoverable pick(ServiceDiscovered serviceDiscovered) {
+    return pickRandom(serviceDiscovered);
+  }
+
+  /**
+   * Randomly picks a {@link Discoverable} from the given {@link ServiceDiscovered}.
+   *
+   * @param serviceDiscovered the {@link ServiceDiscovered} to pick from
+   * @return a {@link Discoverable} or {@code null} if there is no discoverable available
+   */
+  @Nullable
+  public static Discoverable pickRandom(ServiceDiscovered serviceDiscovered) {
     // Reservoir sampling
     Discoverable result = null;
     Iterator<Discoverable> itor = serviceDiscovered.iterator();

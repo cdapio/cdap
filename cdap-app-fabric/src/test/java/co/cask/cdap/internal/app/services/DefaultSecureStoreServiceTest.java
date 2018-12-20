@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -117,7 +117,7 @@ public class DefaultSecureStoreServiceTest {
   }
 
   private static void waitForService(String service) {
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(service));
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryServiceClient.discover(service));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", service);
   }

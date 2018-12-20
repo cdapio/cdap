@@ -337,7 +337,7 @@ public class TestBase {
       exploreExecutorService.startAndWait();
       // wait for explore service to be discoverable
       DiscoveryServiceClient discoveryService = injector.getInstance(DiscoveryServiceClient.class);
-      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() ->
         discoveryService.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE));
       Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                  "%s service is not up after 5 seconds", Constants.Service.EXPLORE_HTTP_USER_SERVICE);

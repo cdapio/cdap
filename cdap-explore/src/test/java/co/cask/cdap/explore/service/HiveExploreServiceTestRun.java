@@ -608,8 +608,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Class.forName(ExploreDriver.class.getName());
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(
-      Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
+    Discoverable discoverable = new RandomEndpointStrategy(
+      () -> discoveryServiceClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
 
     Assert.assertNotNull(discoverable);
     InetSocketAddress addr = discoverable.getSocketAddress();

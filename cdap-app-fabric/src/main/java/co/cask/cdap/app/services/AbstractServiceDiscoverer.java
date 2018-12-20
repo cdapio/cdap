@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +52,8 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   @Override
   public URL getServiceURL(String applicationId, String serviceId) {
     String discoveryName = String.format("service.%s.%s.%s", namespaceId, applicationId, serviceId);
-    ServiceDiscovered discovered = getDiscoveryServiceClient().discover(discoveryName);
-    return createURL(new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS), applicationId, serviceId);
+    return createURL(new RandomEndpointStrategy(() -> getDiscoveryServiceClient().discover(discoveryName))
+                       .pick(1, TimeUnit.SECONDS), applicationId, serviceId);
   }
 
   @Override

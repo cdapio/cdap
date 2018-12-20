@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,7 +86,7 @@ public class RemoteNamespaceQueryTest {
 
   private static void waitForService(DiscoveryServiceClient discoveryService, String discoverableName)
     throws InterruptedException {
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryService.discover(discoverableName));
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryService.discover(discoverableName));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", discoverableName);
   }

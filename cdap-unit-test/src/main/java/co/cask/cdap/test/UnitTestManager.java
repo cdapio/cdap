@@ -384,7 +384,7 @@ public class UnitTestManager extends AbstractTestManager {
     // this makes sure the Explore JDBC driver is loaded
     Class.forName(ExploreDriver.class.getName());
 
-    Discoverable discoverable = new StickyEndpointStrategy(
+    Discoverable discoverable = new StickyEndpointStrategy(() ->
       discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
 
     if (null == discoverable) {

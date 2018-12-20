@@ -54,7 +54,6 @@ import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -190,9 +189,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(
-      Constants.Service.DATASET_MANAGER)
-    );
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+      () -> discoveryServiceClient.discover(Constants.Service.DATASET_MANAGER));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", service);
 

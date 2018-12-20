@@ -27,7 +27,6 @@ import co.cask.common.http.HttpRequestConfig;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -55,7 +54,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE));
+        return new RandomEndpointStrategy(() -> discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE));
       }
     });
 

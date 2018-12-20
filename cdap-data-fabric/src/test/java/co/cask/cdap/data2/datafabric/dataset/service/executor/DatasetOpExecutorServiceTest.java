@@ -149,7 +149,7 @@ public class DatasetOpExecutorServiceTest {
 
     // find host
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
+    endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(Constants.Service.DATASET_MANAGER));
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +54,8 @@ public class TransactionServiceManager extends AbstractDistributedMasterServiceM
   @Override
   public boolean isServiceAvailable() {
     try {
-      ServiceDiscovered discovered = discoveryServiceClient.discover(serviceName);
-      Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(discoveryTimeout, TimeUnit.SECONDS);
+      Discoverable discoverable = new RandomEndpointStrategy(() -> discoveryServiceClient.discover(serviceName))
+        .pick(discoveryTimeout, TimeUnit.SECONDS);
       if (discoverable == null) {
         return false;
       }

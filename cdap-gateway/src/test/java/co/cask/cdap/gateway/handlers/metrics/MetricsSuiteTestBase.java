@@ -186,7 +186,8 @@ public abstract class MetricsSuiteTestBase {
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
 
-    EndpointStrategy metricsEndPoints = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METRICS));
+    EndpointStrategy metricsEndPoints = new RandomEndpointStrategy(
+      () -> discoveryClient.discover(Constants.Service.METRICS));
 
     Discoverable discoverable = metricsEndPoints.pick(1L, TimeUnit.SECONDS);
     Assert.assertNotNull("Could not discover metrics service", discoverable);

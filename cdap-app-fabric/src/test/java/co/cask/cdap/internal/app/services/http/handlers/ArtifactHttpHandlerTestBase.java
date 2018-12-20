@@ -40,7 +40,6 @@ import com.google.gson.GsonBuilder;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -72,8 +71,8 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     systemArtifactsDir = getInjector().getInstance(CConfiguration.class).get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
-    ServiceDiscovered metadataHttpDiscovered = discoveryClient.discover(Constants.Service.METADATA_SERVICE);
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(metadataHttpDiscovered);
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+      () -> discoveryClient.discover(Constants.Service.METADATA_SERVICE));
     Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
     String host = discoverable.getSocketAddress().getHostName();

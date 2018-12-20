@@ -136,7 +136,7 @@ public final class ZKDiscoveryModule extends PrivateModule {
         @Override
         public ZKDiscoveryService load(String key) {
           String ns = String.format("%s/%s", twillNamespace, key);
-          LOG.debug("Create ZKDiscoveryClient for " + ns);
+          LOG.info("Create ZKDiscoveryClient for {}", ns);
           return new ZKDiscoveryService(ZKClients.namespace(zkClient, ns));
         }
       };

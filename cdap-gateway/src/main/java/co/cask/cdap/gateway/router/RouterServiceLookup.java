@@ -31,7 +31,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +60,8 @@ public class RouterServiceLookup {
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<RouteDestination, EndpointStrategy>() {
         @Override
-        public EndpointStrategy load(RouteDestination key) throws Exception {
-          return loadCache(key);
+        public EndpointStrategy load(RouteDestination key) {
+          return discover(key);
         }
       });
     this.routeStore = routeStore;
@@ -71,7 +70,7 @@ public class RouterServiceLookup {
   }
 
   /**
-   * Returns the discoverable mapped to the given port.
+   * Returns the {@link EndpointStrategy} for picking endpoints that can serve the given request
    *
    * @param httpRequest supplies the header information for the lookup.
    * @return instance of EndpointStrategy if available null otherwise.
@@ -97,31 +96,15 @@ public class RouterServiceLookup {
     }
   }
 
-  private EndpointStrategy loadCache(RouteDestination cacheKey) throws Exception {
-    EndpointStrategy endpointStrategy = discover(cacheKey);
-
-    if (endpointStrategy.pick() == null) {
-      String message = String.format("No discoverable endpoints found for service %s", cacheKey);
-      LOG.debug(message);
-      throw new Exception(message);
-    }
-
-    return endpointStrategy;
-  }
-
   private EndpointStrategy discover(RouteDestination routeDestination) {
     LOG.debug("Looking up service name {}", routeDestination);
     // If its a user service, then use UserServiceEndpointStrategy Strategy
     String serviceName = routeDestination.getServiceName();
-    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(serviceName);
 
-    EndpointStrategy endpointStrategy = ServiceDiscoverable.isUserService(serviceName) ?
-      new UserServiceEndpointStrategy(serviceDiscovered, routeStore, ServiceDiscoverable.getId(serviceName),
+    return ServiceDiscoverable.isUserService(serviceName) ?
+      new UserServiceEndpointStrategy(() -> discoveryServiceClient.discover(serviceName),
+                                      routeStore, ServiceDiscoverable.getId(serviceName),
                                       fallbackStrategy, routeDestination.getVersion()) :
-      new RandomEndpointStrategy(serviceDiscovered);
-    if (endpointStrategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
-      LOG.debug("Discoverable endpoint {} not found", routeDestination);
-    }
-    return endpointStrategy;
+      new RandomEndpointStrategy(() -> discoveryServiceClient.discover(serviceName));
   }
 }

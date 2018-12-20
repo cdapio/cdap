@@ -94,7 +94,7 @@ public class ZKDiscoveryModuleTest {
       try {
         // Discover the master service
         Discoverable discoverable = new RandomEndpointStrategy(
-          discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP)).pick(10, TimeUnit.SECONDS);
+          () -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP)).pick(10, TimeUnit.SECONDS);
 
         Assert.assertNotNull(discoverable);
         Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, discoverable.getName());
@@ -134,7 +134,7 @@ public class ZKDiscoveryModuleTest {
           // Discover the user service
           DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
           Discoverable discoverable = new RandomEndpointStrategy(
-            discoveryServiceClient.discover(discoverableName)).pick(10, TimeUnit.SECONDS);
+            () -> discoveryServiceClient.discover(discoverableName)).pick(10, TimeUnit.SECONDS);
 
           Assert.assertNotNull(discoverable);
 

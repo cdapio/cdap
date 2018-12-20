@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,7 +54,7 @@ public class AppFabricServerTest {
     Assert.assertTrue(state == Service.State.RUNNING);
 
     final EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
-      discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
+      () -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
     Assert.assertNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS));
 
     state = server.stopAndWait();
@@ -89,7 +89,7 @@ public class AppFabricServerTest {
     Supplier<EndpointStrategy> endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
+        return new RandomEndpointStrategy(() -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
       }
     });
     Discoverable discoverable = endpointStrategySupplier.get().pick(3, TimeUnit.SECONDS);

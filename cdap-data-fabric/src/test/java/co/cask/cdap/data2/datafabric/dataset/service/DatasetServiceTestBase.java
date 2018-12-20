@@ -254,7 +254,7 @@ public abstract class DatasetServiceTestBase {
   }
 
   private static void waitForService(String service) {
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(service));
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryServiceClient.discover(service));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", service);
   }
