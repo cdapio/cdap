@@ -208,13 +208,11 @@ to allow additional data to arrive::
 
 To schedule a workflow named "cleanupWorkflow" to run whenever "dataProcessingWorkflow"
 (in the same namespace, application, and application version as "cleanupWorkflow")
-fails, and pass in the `src` directory in the "dataProcessingWorkflow" as the 
-`cleanup_dir` directory::
+fails::
 
   schedule(buildSchedule("onDataProcessingFail", ProgramType.WORKFLOW, "cleanupWorkflow")
-              .withProperties(ImmutableMap.of("triggering.properties.mapping", 
-                                              ImmutableMap.of("cleanup_dir", "src"))
-              .triggerOnProgramStatus(ProgramType.WORKFLOW, "dataProcessingWorkflow");
+              .triggerOnProgramStatus(ProgramType.WORKFLOW, "dataProcessingWorkflow",
+                                      ProgramStatus.FAILED);
 
 To ensure that the workflow runs at least once per hour::
 
