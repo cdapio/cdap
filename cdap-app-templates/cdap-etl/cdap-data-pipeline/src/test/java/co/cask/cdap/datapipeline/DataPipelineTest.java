@@ -2914,8 +2914,8 @@ public class DataPipelineTest extends HydratorTestBase {
     Set<MetadataOperation> operations = new HashSet<>(Collections.singletonList(op));
 
     // run pipeline with the metadata operations which need to be performed
-    runPipelineForMetadata(operations);
     MetadataAdmin metadataAdmin = getMetadataAdmin();
+    runPipelineForMetadata(metadataAdmin, operations);
     waitForMetadataProcessing(metadataAdmin, 2);
 
     // verify metadata written by the pipeline
@@ -2939,7 +2939,7 @@ public class DataPipelineTest extends HydratorTestBase {
                                ImmutableSet.of("kOne"), ImmutableSet.of("tOne"));
     operations = new HashSet<>(Collections.singleton(op));
 
-    runPipelineForMetadata(operations);
+    runPipelineForMetadata(metadataAdmin, operations);
 
     waitForMetadataProcessing(metadataAdmin, 1);
 
@@ -2970,7 +2970,8 @@ public class DataPipelineTest extends HydratorTestBase {
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
-  private void runPipelineForMetadata(Set<MetadataOperation> operations) throws Exception {
+  private void runPipelineForMetadata(MetadataAdmin metadataAdmin,
+                                      Set<MetadataOperation> operations) throws Exception {
     Schema schema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
@@ -2987,6 +2988,15 @@ public class DataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("MetadataTestApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // wait for the system metadata for the app and the dataset to show up - the pipeline validates them
+    Tasks.waitFor(false, () -> metadataAdmin
+                    .getProperties(MetadataScope.SYSTEM, appId.toMetadataEntity()).isEmpty(),
+                  10, TimeUnit.SECONDS);
+    Tasks.waitFor(false, () -> metadataAdmin
+                    .getProperties(MetadataScope.SYSTEM,
+                                   NamespaceId.DEFAULT.dataset("singleInput").toMetadataEntity()).isEmpty(),
+                  10, TimeUnit.SECONDS);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     int numRuns = workflowManager.getHistory().size();
