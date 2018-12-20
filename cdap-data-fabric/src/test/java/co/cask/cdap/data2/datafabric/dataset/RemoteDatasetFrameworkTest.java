@@ -195,9 +195,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     );
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", service);
-
-    createNamespace(NamespaceId.SYSTEM);
-    createNamespace(NAMESPACE_ID);
   }
 
   // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in
@@ -220,25 +217,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     }
   }
 
-  private void createNamespace (NamespaceId namespaceId) throws Exception {
-    // since the namespace admin here is an in memory one we need to create the location explicitly
-    namespacedLocationFactory.get(namespaceId).mkdirs();
-    // the framework.delete looks up namespace config through namespaceadmin add the meta there too.
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
-  }
-
-  private void deleteNamespace (NamespaceId namespaceId) throws Exception {
-    // since the namespace admin here is an in memory one we need to delete the location explicitly
-    namespacedLocationFactory.get(namespaceId).delete(true);
-    namespaceAdmin.delete(namespaceId);
-  }
-
   @After
-  public void after() throws Exception {
-    // since we stored namespace meta through admin so that framework.delete can lookup namespaceconfig clean the
-    // meta from there too
-    deleteNamespace(NAMESPACE_ID);
-    deleteNamespace(NamespaceId.SYSTEM);
+  public void after() {
     Futures.getUnchecked(Services.chainStop(service, opExecutorService, txManager));
   }
 

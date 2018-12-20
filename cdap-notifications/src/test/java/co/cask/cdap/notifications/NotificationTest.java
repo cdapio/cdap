@@ -26,9 +26,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
+import co.cask.cdap.common.guice.NamespaceQueryAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -139,7 +139,7 @@ public abstract class NotificationTest {
       new ExploreClientModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceQueryAdminTestModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),

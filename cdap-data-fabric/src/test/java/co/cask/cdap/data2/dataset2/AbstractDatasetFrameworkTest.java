@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,11 +34,11 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.data.ProgramContext;
 import co.cask.cdap.data2.audit.AuditModule;
@@ -84,7 +84,9 @@ import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.tephra.inmemory.MinimalTxSystemClient;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -152,7 +154,7 @@ public abstract class AbstractDatasetFrameworkTest {
       new ConfigModule(cConf),
       new NonCustomLocationUnitTestModule().getModule(),
       new TransactionInMemoryModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceAdminTestModule(),
       new AuditModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
@@ -179,8 +181,34 @@ public abstract class AbstractDatasetFrameworkTest {
     namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     ownerAdmin = injector.getInstance(OwnerAdmin.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
   }
+
+  @Before
+  public void beforeTest() throws Exception {
+    createNamespace(NamespaceId.SYSTEM);
+    createNamespace(NAMESPACE_ID);
+  }
+
+  @After
+  public void afterTest() throws Exception {
+    for (NamespaceMeta meta : namespaceAdmin.list()) {
+      deleteNamespace(meta.getNamespaceId());
+    }
+  }
+
+  private void createNamespace(NamespaceId namespaceId) throws Exception {
+    // since the namespace admin here is an in memory one we need to create the location explicitly
+    namespacedLocationFactory.get(namespaceId).mkdirs();
+    // the framework.delete looks up namespace config through namespaceadmin add the meta there too.
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+  }
+
+  private void deleteNamespace(NamespaceId namespaceId) throws Exception {
+    // since the namespace admin here is an in memory one we need to delete the location explicitly
+    namespacedLocationFactory.get(namespaceId).delete(true);
+    namespaceAdmin.delete(namespaceId);
+  }
+
 
   @Test
   public void testSimpleDataset() throws Exception {

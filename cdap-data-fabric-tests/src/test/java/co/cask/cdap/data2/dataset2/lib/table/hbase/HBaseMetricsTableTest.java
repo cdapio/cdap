@@ -23,7 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
+import co.cask.cdap.common.guice.NamespaceQueryAdminTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
@@ -89,7 +89,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                              new ZKDiscoveryModule(),
                                              new TransactionMetricsModule(),
                                              new LocationRuntimeModule().getDistributedModules(),
-                                             new NamespaceClientUnitTestModule().getModule(),
+                                             new NamespaceQueryAdminTestModule(),
                                              new SystemDatasetRuntimeModule().getDistributedModules(),
                                              new DataSetsModules().getInMemoryModules(),
                                              new AuthorizationTestModule(),

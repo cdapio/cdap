@@ -21,10 +21,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.NamespaceQueryAdminTestModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -65,7 +63,7 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
       new DataSetsModules().getStandaloneModules(),
       new DataFabricModules().getInMemoryModules(),
       new InMemoryDiscoveryModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceQueryAdminTestModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
@@ -73,7 +71,6 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(AbstractNamespaceClient.class).to(InMemoryNamespaceClient.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Singleton.class);
           bind(ExploreClient.class).to(MockExploreClient.class);

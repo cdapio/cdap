@@ -22,10 +22,10 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.NamespaceQueryAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.Encoder;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -137,7 +137,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
       new DataFabricModules().getInMemoryModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new ExploreClientModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceQueryAdminTestModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule()

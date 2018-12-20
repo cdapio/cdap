@@ -21,10 +21,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
+import co.cask.cdap.common.guice.NamespaceQueryAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -98,7 +98,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new TransactionMetricsModule(),
       new DataFabricLevelDBModule(),
       new InMemoryDiscoveryModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceQueryAdminTestModule(),
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
       new AuthorizationTestModule(),

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package co.cask.cdap.store;
 
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.guice.NamespaceQueryAdminTestModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
@@ -51,7 +51,7 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceQueryAdminTestModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule()

@@ -51,7 +51,7 @@ public interface NamespaceAdmin extends NamespaceQueryAdmin {
    * Deletes all datasets in the specified namespace.
    *
    * @param namespaceId the {@link NamespaceId} of the specified namespace
-   * @throws NotFoundException if the specified namespace does not exist
+   * @throws NamespaceNotFoundException if the specified namespace does not exist
    * @throws NamespaceCannotBeDeletedException if the deletion operation was unsuccessful
    */
   void deleteDatasets(NamespaceId namespaceId) throws Exception;
@@ -61,7 +61,7 @@ public interface NamespaceAdmin extends NamespaceQueryAdmin {
    *
    * @param namespaceId  the {@link NamespaceId} of the namespace to be updated
    * @param namespaceMeta namespace meta to update
-   * @throws NotFoundException if the specified namespace is not found
+   * @throws NamespaceNotFoundException if the specified namespace is not found
    */
   void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception;
 }

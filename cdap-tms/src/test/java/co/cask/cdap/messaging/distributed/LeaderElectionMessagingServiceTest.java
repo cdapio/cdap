@@ -26,7 +26,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -95,7 +95,7 @@ public class LeaderElectionMessagingServiceTest {
     cConf.set(Constants.MessagingSystem.SYSTEM_TOPICS, "topic");
     cConf.setLong(Constants.MessagingSystem.HA_FENCING_DELAY_SECONDS, 0L);
 
-    namespaceQueryAdmin = new InMemoryNamespaceClient();
+    namespaceQueryAdmin = new InMemoryNamespaceAdmin();
     levelDBTableFactory = new LevelDBTableFactory(cConf);
   }
 

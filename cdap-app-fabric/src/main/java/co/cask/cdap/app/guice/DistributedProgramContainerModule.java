@@ -29,7 +29,7 @@ import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -200,7 +200,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new LoggingModules().getDistributedModules());
     modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
     modules.add(new DataSetsModules().getDistributedModules());
-    modules.add(new NamespaceClientRuntimeModule().getDistributedModules());
+    modules.add(new NamespaceQueryAdminModule());
     modules.add(new DistributedProgramStreamModule());
   }
 

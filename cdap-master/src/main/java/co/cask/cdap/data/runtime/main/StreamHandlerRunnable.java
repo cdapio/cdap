@@ -25,7 +25,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -112,7 +112,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       new KafkaClientModule(),
       new MessagingClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new NamespaceQueryAdminModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new DataFabricModules(txClientId).getDistributedModules(),
@@ -124,7 +124,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new NamespaceQueryAdminModule(),
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),

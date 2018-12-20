@@ -44,7 +44,7 @@ public class DefaultNamespacedLocationFactoryTest {
     File locationFactoryPath = TEMP_FOLDER.newFolder();
     LocationFactory locationFactory = new LocalLocationFactory(locationFactoryPath);
 
-    NamespaceAdmin nsAdmin = new InMemoryNamespaceClient();
+    NamespaceAdmin nsAdmin = new InMemoryNamespaceAdmin();
 
     NamespaceId ns1 = new NamespaceId("ns1");
     NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(NamespaceId.DEFAULT).build();

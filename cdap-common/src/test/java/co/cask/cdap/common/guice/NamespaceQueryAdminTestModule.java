@@ -17,26 +17,17 @@ package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import com.google.inject.AbstractModule;
-import com.google.inject.Module;
-import com.google.inject.util.Modules;
+import com.google.inject.Scopes;
 
 /**
- * NamespaceClientRuntime binding for unit tests. These binding are similar to
- * {@link NamespaceClientRuntimeModule#getInMemoryModules()} but the {@link NamespaceQueryAdmin} is binded to a
- * {@link SimpleNamespaceQueryAdmin}. See documentation of {@link SimpleNamespaceQueryAdmin} for details.
+ * Guice module to provide binding for {@link NamespaceQueryAdmin}. It uses {@link SimpleNamespaceQueryAdmin}
+ * as the implementation such that all query of namespace would succeed.
  */
-public class NamespaceClientUnitTestModule {
-  public Module getModule() {
+public class NamespaceQueryAdminTestModule extends AbstractModule {
 
-    return Modules.override(new NamespaceClientRuntimeModule().getInMemoryModules()).with(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
-        }
-      }
-    );
+  @Override
+  protected void configure() {
+    bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class).in(Scopes.SINGLETON);
   }
 }

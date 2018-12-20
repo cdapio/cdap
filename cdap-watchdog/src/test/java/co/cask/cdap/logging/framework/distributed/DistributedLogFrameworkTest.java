@@ -28,11 +28,11 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.NamespaceQueryAdminTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.test.MockTwillContext;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -212,7 +212,7 @@ public class DistributedLogFrameworkTest {
       new TransactionModules().getInMemoryModules(),
       new TransactionExecutorModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceQueryAdminTestModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),

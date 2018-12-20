@@ -24,7 +24,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -102,7 +102,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
       new KafkaClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new NamespaceQueryAdminModule(),
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new DistributedLogFrameworkModule(twillContext),

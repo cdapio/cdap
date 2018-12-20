@@ -23,7 +23,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -95,7 +95,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    namespaceAdmin = new InMemoryNamespaceClient();
+    namespaceAdmin = new InMemoryNamespaceAdmin();
     final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf, namespaceAdmin);
 
     Injector injector = Guice.createInjector(

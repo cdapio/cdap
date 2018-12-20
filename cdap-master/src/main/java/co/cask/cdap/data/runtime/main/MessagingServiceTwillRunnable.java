@@ -26,7 +26,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -93,7 +93,7 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new MessagingServerRuntimeModule().getDistributedModules()
