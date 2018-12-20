@@ -23,7 +23,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
@@ -122,7 +122,7 @@ public class HBaseTableExporter {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new AuthenticationContextModules().getMasterModule(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new NamespaceQueryAdminModule(),
       new SecureStoreModules().getDistributedModules(),
       new AbstractModule() {
         @Override

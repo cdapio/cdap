@@ -24,13 +24,13 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
+import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -157,7 +157,7 @@ public abstract class DatasetServiceTestBase {
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
       new NonCustomLocationUnitTestModule().getModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceAdminTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),
       new AuthorizationTestModule(),

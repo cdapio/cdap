@@ -16,7 +16,7 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -37,7 +37,7 @@ import java.net.InetAddress;
  */
 public class AuthorizationUtilTest {
   private static CConfiguration cConf;
-  private static InMemoryNamespaceClient namespaceClient;
+  private static InMemoryNamespaceAdmin namespaceClient;
   private static AuthenticationContext authenticationContext;
   private static final NamespaceId namespaceId = new NamespaceId("AuthorizationUtilTest");
   private static final ApplicationId applicationId = namespaceId.app("someapp");
@@ -51,7 +51,7 @@ public class AuthorizationUtilTest {
     // http://lucene.472066.n3.nabble.com/KerberosName-rules-are-null-during-KerberosName-getShortName-
     // in-KerberosAuthenticationHandler-td4074309.html for more context
     username = UserGroupInformation.getCurrentUser().getShortUserName();
-    namespaceClient = new InMemoryNamespaceClient();
+    namespaceClient = new InMemoryNamespaceAdmin();
     authenticationContext = new AuthenticationTestContext();
   }
 

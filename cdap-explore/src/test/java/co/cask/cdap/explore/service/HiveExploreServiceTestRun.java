@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -124,15 +124,16 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCustomDatabaseAndTableName() throws Exception {
+    NamespaceId namespaceId = new NamespaceId("abc");
     DatasetId datasetId = NAMESPACE_ID.dataset("xyzTable");
-    exploreClient.addNamespace(new NamespaceMeta.Builder().setName("abc").build()).get();
+    createNamespace(namespaceId);
     try {
       testTableInfo(datasetId, null, null);
       testTableInfo(datasetId, null, "xyz");
       testTableInfo(datasetId, "cdap_abc", null);
       testTableInfo(datasetId, "cdap_abc", "xyz");
     } finally {
-      exploreClient.removeNamespace(new NamespaceId("abc"));
+      deleteNamespace(namespaceId);
     }
   }
 
@@ -198,7 +199,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Assert.assertEquals(ImmutableList.of(new TableNameInfo(OTHER_NAMESPACE_DATABASE, MY_TABLE_NAME)),
                         tables);
 
-    tables = exploreService.getTables("foobar");
+    tables = exploreService.getTables(NamespaceId.DEFAULT.getNamespace());
     Assert.assertEquals(ImmutableList.<TableNameInfo>of(), tables);
 
     exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get();
@@ -531,18 +532,24 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                         tableInfo);
     Assert.assertEquals(DatasetStorageHandler.class.getName(), tableInfo.getParameters().get("storage_handler"));
 
+    NamespaceId namespaceId = new NamespaceId("foo");
+    createNamespace(namespaceId);
     try {
-      exploreService.getTableInfo("foo", "foobar");
-      Assert.fail("Should throw TableNotFoundException on table foobar");
-    } catch (TableNotFoundException e) {
-      // Expected
-    }
+      try {
+        exploreService.getTableInfo(namespaceId.getNamespace(), "foobar");
+        Assert.fail("Should throw TableNotFoundException on table foobar");
+      } catch (TableNotFoundException e) {
+        // Expected
+      }
 
-    try {
-      exploreService.getTableInfo("foo", MY_TABLE_NAME);
-      Assert.fail("Should throw TableNotFoundException on table foo.my_table");
-    } catch (TableNotFoundException e) {
-      // Expected
+      try {
+        exploreService.getTableInfo(namespaceId.getNamespace(), MY_TABLE_NAME);
+        Assert.fail("Should throw TableNotFoundException on table foo.my_table");
+      } catch (TableNotFoundException e) {
+        // Expected
+      }
+    } finally {
+      deleteNamespace(namespaceId);
     }
 
     // Get info of a Hive table
@@ -759,42 +766,47 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testNamespaceCreationDeletion() throws Exception {
+    NamespaceId testNamespace = new NamespaceId("test");
     ListenableFuture<ExploreExecutionResult> future = exploreClient.schemas(null, null);
     assertStatementResult(future, true,
                           ImmutableList.of(
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")),
                           ImmutableList.of(
-                            new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")),
-                            new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
-                            new QueryResult(Lists.<Object>newArrayList("default", ""))));
+                            new QueryResult(Lists.newArrayList(NAMESPACE_DATABASE, "")),
+                            new QueryResult(Lists.newArrayList(OTHER_NAMESPACE_DATABASE, "")),
+                            new QueryResult(Lists.newArrayList(DEFAULT_DATABASE, ""))));
 
     future = exploreClient.addNamespace(new NamespaceMeta.Builder().setName("test").build());
     future.get();
 
-    future = exploreClient.schemas(null, null);
-    assertStatementResult(future, true,
-                          ImmutableList.of(
-                            new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
-                            new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")),
-                          ImmutableList.of(
-                            new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")),
-                            new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
-                            new QueryResult(Lists.<Object>newArrayList("cdap_test", "")),
-                            new QueryResult(Lists.<Object>newArrayList("default", ""))));
+    createNamespace(testNamespace);
+    try {
+      future = exploreClient.schemas(null, null);
+      assertStatementResult(future, true,
+                            ImmutableList.of(
+                              new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
+                              new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")),
+                            ImmutableList.of(
+                              new QueryResult(Lists.newArrayList(NAMESPACE_DATABASE, "")),
+                              new QueryResult(Lists.newArrayList(OTHER_NAMESPACE_DATABASE, "")),
+                              new QueryResult(Lists.newArrayList("cdap_" + testNamespace.getNamespace(), "")),
+                              new QueryResult(Lists.newArrayList(DEFAULT_DATABASE, ""))));
 
-    future = exploreClient.removeNamespace(new NamespaceId("test"));
-    future.get();
+      future = exploreClient.removeNamespace(testNamespace);
+      future.get();
 
-    future = exploreClient.schemas(null, null);
-    assertStatementResult(future, true,
-                          ImmutableList.of(
-                            new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
-                            new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")),
-                          ImmutableList.of(
-                            new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")),
-                            new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
-                            new QueryResult(Lists.<Object>newArrayList("default", ""))));
-
+      future = exploreClient.schemas(null, null);
+      assertStatementResult(future, true,
+                            ImmutableList.of(
+                              new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
+                              new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")),
+                            ImmutableList.of(
+                              new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")),
+                              new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
+                              new QueryResult(Lists.<Object>newArrayList(DEFAULT_DATABASE, ""))));
+    } finally {
+      deleteNamespace(testNamespace);
+    }
   }
 }

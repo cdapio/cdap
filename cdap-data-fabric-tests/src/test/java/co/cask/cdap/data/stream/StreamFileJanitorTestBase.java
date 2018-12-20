@@ -39,6 +39,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -95,6 +96,11 @@ public abstract class StreamFileJanitorTestBase {
     janitor = getJanitor();
     authorizer = getAuthorizer();
     SecurityRequestContext.setUserId(ALICE.getName());
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    getNamespaceAdmin().delete(NamespaceId.DEFAULT);
   }
 
   /**

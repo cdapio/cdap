@@ -24,7 +24,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.Charsets;
@@ -73,7 +73,7 @@ public class FileSecureStoreTest {
     conf.set(Constants.Security.Store.FILE_PATH, STORE_PATH);
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
-    InMemoryNamespaceClient namespaceClient = new InMemoryNamespaceClient();
+    InMemoryNamespaceAdmin namespaceClient = new InMemoryNamespaceAdmin();
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder()
       .setName(NAMESPACE1)
       .build();

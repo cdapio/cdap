@@ -17,8 +17,6 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.proto.id.NamespaceId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
@@ -38,8 +36,6 @@ public final class NamespaceMeta {
       .setName(NamespaceId.SYSTEM)
       .setDescription("The system namespace, which is used for internal purposes.")
       .build();
-
-  private static final Logger LOG = LoggerFactory.getLogger(NamespaceMeta.class);
 
   private final String name;
   private final String description;

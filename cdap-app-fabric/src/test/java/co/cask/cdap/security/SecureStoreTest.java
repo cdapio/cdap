@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.gateway.handlers.SecureStoreHandler;
@@ -94,7 +94,7 @@ public class SecureStoreTest {
         @Override
         protected void configure() {
           bind(AuthorizationEnforcer.class).to(NoOpAuthorizer.class);
-          bind(NamespaceAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
+          bind(NamespaceAdmin.class).to(InMemoryNamespaceAdmin.class).in(Scopes.SINGLETON);
           bind(NamespaceQueryAdmin.class).to(NamespaceAdmin.class);
         }
       }

@@ -22,11 +22,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
+import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -130,9 +129,9 @@ public class BaseHiveExploreServiceTest {
 
   protected static final NamespaceId NAMESPACE_ID = new NamespaceId("namespace");
   protected static final NamespaceId OTHER_NAMESPACE_ID = new NamespaceId("other");
-  protected static final String DEFAULT_DATABASE = "default";
-  protected static final String NAMESPACE_DATABASE = "cdap_namespace";
-  protected static final String OTHER_NAMESPACE_DATABASE = "cdap_other";
+  protected static final String DEFAULT_DATABASE = NamespaceId.DEFAULT.getNamespace();
+  protected static final String NAMESPACE_DATABASE = "cdap_" + NAMESPACE_ID.getNamespace();
+  protected static final String OTHER_NAMESPACE_DATABASE = "cdap_" + OTHER_NAMESPACE_ID.getNamespace();
   protected static final DatasetModuleId KEY_STRUCT_VALUE = NAMESPACE_ID.datasetModule("keyStructValue");
   protected static final DatasetId MY_TABLE = NAMESPACE_ID.dataset("my_table");
   protected static final String MY_TABLE_NAME = getDatasetHiveName(MY_TABLE);
@@ -232,7 +231,6 @@ public class BaseHiveExploreServiceTest {
     createNamespace(NamespaceId.DEFAULT);
     createNamespace(NAMESPACE_ID);
     createNamespace(OTHER_NAMESPACE_ID);
-
   }
 
   @AfterClass
@@ -427,7 +425,7 @@ public class BaseHiveExploreServiceTest {
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),
-      new NamespaceClientUnitTestModule().getModule(),
+      new NamespaceAdminTestModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -487,10 +485,7 @@ public class BaseHiveExploreServiceTest {
       new ViewAdminModules().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
-      // Bind NamespaceClient to in memory module since the standalone module is delegating which will need a binding
-      // for namespace admin to default namespace admin which needs a lot more stuff than what is needed for explore
-      // unit tests. Since this explore standalone module needs persistent of files this should not affect the tests.
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new NamespaceAdminTestModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),

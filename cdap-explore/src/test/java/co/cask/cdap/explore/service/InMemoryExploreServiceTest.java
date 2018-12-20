@@ -21,9 +21,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
+import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -105,7 +105,7 @@ public class InMemoryExploreServiceTest {
         new ExploreClientModule(),
         new ViewAdminModules().getInMemoryModules(),
         new StreamAdminModules().getInMemoryModules(),
-        new NamespaceClientRuntimeModule().getInMemoryModules(),
+        new NamespaceAdminTestModule(),
         new NamespaceStoreModule().getStandaloneModules(),
         new AuthorizationTestModule(),
         new AuthorizationEnforcementModule().getInMemoryModules(),

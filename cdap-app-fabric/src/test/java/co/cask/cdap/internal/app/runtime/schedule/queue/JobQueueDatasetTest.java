@@ -25,7 +25,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -137,7 +137,7 @@ public class JobQueueDatasetTest {
           bind(DatasetDefinitionRegistryFactory.class)
             .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
           bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
-          bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
+          bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceAdmin.class).in(Scopes.SINGLETON);
         }
       }
     );
