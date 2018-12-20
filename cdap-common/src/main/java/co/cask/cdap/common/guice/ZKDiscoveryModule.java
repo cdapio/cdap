@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.Constants;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
@@ -35,7 +34,6 @@ import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -116,8 +114,6 @@ public final class ZKDiscoveryModule extends PrivateModule {
       this.twillNamespace = configuration.get(Constants.CFG_TWILL_ZK_NAMESPACE);
       this.clients = CacheBuilder.newBuilder()
         .expireAfterAccess(CACHE_EXPIRES_MINUTES, TimeUnit.MINUTES)
-        .removalListener((RemovalListener<String, ZKDiscoveryService>) notification ->
-          Optional.ofNullable(notification.getValue()).ifPresent(ZKDiscoveryService::close))
         .build(createClientLoader());
     }
 
